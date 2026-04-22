@@ -62,3 +62,10 @@ GatewayException (根异常)
 - 接口: PascalCase + 能力描述（如 `ModelRouter`, `TokenCounter`）
 - 方法: camelCase + 动词开头
 - 常量: UPPER_SNAKE_CASE
+
+## Active Technologies
+- Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) (001-provider-adapter)
+- H2（开发调试）/ PostgreSQL 14+（生产） (001-provider-adapter)
+
+## Recent Changes
+- 001-provider-adapter: Added Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化)

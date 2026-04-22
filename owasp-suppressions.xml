@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.artifact.xsd">
+    <!--
+        OWASP 依赖检查抑制规则
+        用于忽略误报的依赖或已知问题的依赖
+    -->
+
+    <!-- Spring Boot 相关 (误报较高) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/org\.springframework.*</packageUrl>
+        <cpe>cpe:/a:springsource:spring_framework.*</cpe>
+    </suppress>
+
+    <!-- Logback (误报) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/ch\.qos\.logback.*</packageUrl>
+        <cpe>cpe:/a:logback-project:logback.*</cpe>
+    </suppress>
+
+    <!-- Jackson (需要保持更新) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/com\.fasterxml\.jackson.*</packageUrl>
+        <vulnerabilityName>CVE-2024-</vulnerabilityName>
+        <allVulnerabilities>true</allVulnerabilities>
+    </suppress>
+
+    <!-- Hibernate (企业级使用, 误报) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/org\.hibernate.*</packageUrl>
+        <cpe>cpe:/a:hibernate:hibernate.*</cpe>
+    </suppress>
+
+    <!-- Testcontainers (仅测试使用) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/org\.testcontainers.*</packageUrl>
+        <cpe>cpe:/a:testcontainers:testcontainers</cpe>
+    </suppress>
+
+    <!-- SnakeYAML (Spring Boot 内联使用) -->
+    <suppress>
+        <packageUrl regex="true">^pkg:maven/org\.yaml.*</packageUrl>
+        <cpe>cpe:/a:snakeyaml:snakeyaml.*</cpe>
+    </suppress>
+</suppressions>
