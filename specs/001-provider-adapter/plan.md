@@ -19,7 +19,7 @@
 **Project Type**: Web Service (API Gateway)
 **Performance Goals**: 单实例 10,000 QPS，适配器调用延迟 ≤10ms P95
 **Constraints**: 虚拟线程支持，OpenTelemetry 追踪，API 密钥 AES-256 加密
-**Scale/Scope**: ~100 团队 / ~10,000 用户 / ~1,000 渠道
+**Scale/Scope**: ~10,000 用户 / ~100 Provider / ~1,000 Model
 
 ## Constitution Check
 
@@ -51,7 +51,7 @@ specs/001-provider-adapter/
 ### Source Code (repository root)
 
 ```text
-gateway/src/main/java/com/codingas/gateway/
+gateway-core/src/main/java/com/codingas/gateway/
 ├── adapter/                         # 适配器层 (基础设施层)
 │   ├── LLMProviderAdapter.java     # 适配器接口
 │   ├── OpenAIAdapter.java           # OpenAI 实现
@@ -59,46 +59,52 @@ gateway/src/main/java/com/codingas/gateway/
 │   └── spi/                         # SPI 加载机制
 │       └── AdapterLoader.java
 ├── domain/                          # 领域模型
-│   ├── channel/                     # 渠道领域
-│   │   ├── Provider.java
-│   │   ├── Model.java
-│   │   ├── Channel.java
-│   │   ├── ChannelKey.java
-│   │   └── ChannelGroup.java
-│   └── audit/                       # 审计领域
-│       └── AuditEntity.java
+│   ├── entity/
+│   │   ├── Provider.java            # 模型提供商
+│   │   ├── Model.java               # 具体模型
+│   │   ├── ProviderApiKey.java      # Provider 调用凭证
+│   │   ├── GatewayApiKey.java        # 网关访问凭证
+│   │   ├── RouteGroup.java          # 路由分组
+│   │   └── RouteGroupProvider.java   # 路由分组与Provider关联
+│   └── enums/                       # 枚举
 ├── service/                         # 服务层
 │   └── ProviderService.java        # Provider 管理服务
+├── repository/                      # 数据访问层
+│   ├── ProviderRepository.java
+│   ├── ModelRepository.java
+│   ├── ProviderApiKeyRepository.java
+│   ├── GatewayApiKeyRepository.java
+│   ├── RouteGroupRepository.java
+│   └── RouteGroupProviderRepository.java
 ├── infrastructure/                  # 基础设施层
-│   ├── persistence/                 # 持久化
-│   │   └── jpa/
-│   │       ├── ProviderRepository.java
-│   │       └── ChannelRepository.java
 │   └── encryption/                  # 加密服务
 │       └── EncryptionService.java
-└── common/                         # 公共工具
-    └── exception/
-        └── ProviderException.java
+└── exception/                      # 异常
+    └── ProviderException.java
 
-gateway/src/main/resources/
+gateway-core/src/main/resources/
 ├── META-INF/services/               # SPI 配置
 │   └── com.codingas.gateway.adapter.LLMProviderAdapter
 └── db/migration/                    # Flyway 迁移脚本
 
-gateway/src/test/java/com/codingas/gateway/
-├── adapter/                         # 适配器测试
-│   └── OpenAIAdapterTest.java
-├── service/                         # 服务测试
-│   └── ProviderServiceTest.java
-└── integration/                     # 集成测试
-    └── AdapterLoaderTest.java
+gateway-adapter/src/main/java/com/codingas/gateway/adapter/
+└── spi/                            # 适配器实现
+
+gateway-web/src/main/java/com/codingas/gateway/web/
+└── controller/                      # REST API 控制器
 ```
 
-**Structure Decision**: 单项目结构（gateway/），适配器位于 `infrastructure` 层，符合 constitution 分层架构。
+**Structure Decision**: 多模块 Maven 项目（gateway-core/gateway-adapter/gateway-web），符合分层架构。
 
 ## Phase 1: Data Model
 
 详细实体设计见 `data-model.md`
+
+**Key Changes** (单租户 + 双 API Key 设计):
+- 移除 `Team`、`Channel`、`ChannelKey` 实体
+- 新增 `RouteGroup`（路由分组）和 `RouteGroupProvider`（路由关联）
+- 分离 `ProviderApiKey`（Provider 调用凭证）和 `GatewayApiKey`（网关访问凭证）
+- Provider 为全局共享，GatewayApiKey 属于用户维度
 
 ## Phase 1: Interface Contracts
 

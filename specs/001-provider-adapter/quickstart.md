@@ -9,7 +9,7 @@
 ## 前置条件
 
 - JDK 21+
-- Maven 3.8+ 或 Gradle 8+
+- Maven 3.8+
 - 对 Java SPI 机制有基本了解
 
 ---
@@ -22,11 +22,10 @@
 
 ```java
 public interface LLMProviderAdapter {
-    ChatCompletionResult chatCompletion(ChatCompletionRequest request);
-    MessagesResult messages(MessagesRequest request);
-    EmbeddingResult embeddings(EmbeddingRequest request);
+    Mono<LLMResponse> chat(LLMRequest request);
+    Flux<LLMResponse> chatStream(LLMRequest request);
+    Mono<LLMResponse> messages(LLMRequest request);
     ProviderCapabilities getCapabilities();
-    boolean isHealthy();
     ProviderType getProviderType();
 }
 ```
@@ -64,44 +63,31 @@ package com.codingas.gateway.adapter;
 public class MyProviderAdapter implements LLMProviderAdapter {
 
     @Override
-    public ChatCompletionResult chatCompletion(ChatCompletionRequest request) {
+    public Mono<LLMResponse> chat(LLMRequest request) {
         // 调用 MyProvider API
-        // 转换为标准 ChatCompletionResult 返回
+        // 转换为标准 LLMResponse 返回
     }
 
     @Override
-    public MessagesResult messages(MessagesRequest request) {
+    public Mono<LLMResponse> messages(LLMRequest request) {
         throw new UnsupportedOperationException("MyProvider 不支持 Anthropic 格式");
-    }
-
-    @Override
-    public EmbeddingResult embeddings(EmbeddingRequest request) {
-        // 实现嵌入逻辑
     }
 
     @Override
     public ProviderCapabilities getCapabilities() {
         return new ProviderCapabilities(
-            "MY_PROVIDER",
+            ProviderType.OTHER,
             true,   // supportsChatCompletion
             false,  // supportsMessages
             true,   // supportsEmbeddings
             false,  // supportsStreaming
-            false,  // supportsFunctionCalling
-            Set.of("my-model-v1", "my-model-v2"),
-            Map.of()
+            Set.of("my-model-v1", "my-model-v2")
         );
     }
 
     @Override
-    public boolean isHealthy() {
-        // 健康检查逻辑
-        return true;
-    }
-
-    @Override
     public ProviderType getProviderType() {
-        return ProviderType.OTHER;  // 或添加新的 ProviderType
+        return ProviderType.OTHER;
     }
 }
 ```
@@ -110,17 +96,19 @@ public class MyProviderAdapter implements LLMProviderAdapter {
 
 创建文件：
 ```
-gateway/src/main/resources/META-INF/services/com.codingas.gateway.adapter.LLMProviderAdapter
+gateway-adapter/src/main/resources/META-INF/services/com.codingas.gateway.adapter.LLMProviderAdapter
 ```
 
 内容：
 ```
+com.codingas.gateway.adapter.openai.OpenAIAdapter
+com.codingas.gateway.adapter.anthropic.AnthropicAdapter
 com.codingas.gateway.adapter.MyProviderAdapter
 ```
 
 ### Step 3: 配置 Provider
 
-在数据库中创建 Provider 记录：
+通过 Admin API 或数据库创建 Provider 记录：
 
 ```sql
 INSERT INTO providers (provider_code, provider_name, provider_type, base_url, priority, status)
@@ -138,30 +126,16 @@ Adapter Registry: Registered MyProviderAdapter for type OTHER
 
 ---
 
-## 配置说明
+## 实体关系
 
-### Provider 配置（application.yml）
-
-```yaml
-gateway:
-  provider:
-    my-provider:
-      base-url: ${MY_PROVIDER_API_URL}
-      timeout: 30000
-      max-connections: 100
-      retry:
-        max-attempts: 3
-        backoff-ms: 1000
 ```
+Provider (全局)
+  └── Model[] (全局)
+  └── ProviderApiKey[] (系统维度，管理员配置)
 
-### Channel 配置
-
-```yaml
-gateway:
-  channel:
-    defaults:
-      timeout: 30000
-      max-connections: 100
+User (用户)
+  └── GatewayApiKey[] (用户维度，网关访问凭证)
+  GatewayApiKey ──── Provider (关联)
 ```
 
 ---
@@ -175,7 +149,7 @@ gateway:
 class MyProviderAdapterTest {
 
     @Mock
-    private HttpClient httpClient;
+    private WebClient webClient;
 
     @InjectMocks
     private MyProviderAdapter adapter;
@@ -189,10 +163,10 @@ class MyProviderAdapterTest {
 
     @Test
     void shouldThrowProviderExceptionOnError() {
-        when(httpClient.post(any(), any())).thenThrow(new IOException("Network error"));
+        when(webClient.post(any(), any())).thenThrow(new IOException("Network error"));
 
         assertThrows(ProviderException.class, () ->
-            adapter.chatCompletion(new ChatCompletionRequest(...))
+            adapter.chat(new LLMRequest(...)).block()
         );
     }
 }
@@ -228,15 +202,15 @@ class AdapterLoaderIntegrationTest {
 
 ### Q: 如何处理 Provider 返回的非标准格式？
 
-A: 在适配器内部做格式转换，转换为标准 `ChatCompletionResult`。如果 Provider 返回完全不同的结构，抛出 `ProviderException(UPSTREAM_ERROR)` 并记录日志。
+A: 在适配器内部做格式转换，转换为标准 `LLMResponse`。如果 Provider 返回完全不同的结构，抛出 `ProviderException` 并记录日志。
 
-### Q: API Key 如何安全存储？
+### Q: Provider API Key 如何安全存储？
 
-A: `ChannelKey.api_key` 使用 AES-256 加密存储。加密/解密由 `EncryptionService` 提供，适配器使用明文 Key 调用 Provider API。
+A: `ProviderApiKey.encrypted_api_key` 使用 AES-256 加密存储。加密/解密由 `EncryptionService` 提供。
 
 ### Q: 如何实现 Key 自动轮换？
 
-A: 框架提供 `ChannelKeySelector`，按优先级和健康状态选择 Key。适配器通过 `ChannelKeySelector.getActiveKey(channelId)` 获取当前 Key。
+A: 通过 ProviderApiKey 的 priority 字段实现按优先级选择 Key（数值越大越优先）。
 
 ---
 
@@ -244,4 +218,4 @@ A: 框架提供 `ChannelKeySelector`，按优先级和健康状态选择 Key。�
 
 - 查看 `data-model.md` 了解实体详情
 - 查看 `contracts/adapter-interface.md` 了解接口契约
-- 运行 `/speckit.tasks` 生成实现任务列表
+- 查看 `tasks.md` 了解完整实现进度

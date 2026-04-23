@@ -1,6 +1,10 @@
 package com.codingas.gateway.adapter.openai;
 
 import com.codingas.gateway.adapter.LLMProviderAdapter;
+import com.codingas.gateway.adapter.common.ProviderCapabilities;
+import com.codingas.gateway.adapter.common.ProviderErrorType;
+import com.codingas.gateway.adapter.common.ProviderException;
+import com.codingas.gateway.adapter.common.ProviderType;
 import com.codingas.gateway.adapter.dto.LLMRequest;
 import com.codingas.gateway.adapter.dto.LLMResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +16,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * OpenAI 兼容接口适配器
@@ -42,6 +47,11 @@ public class OpenAIAdapter implements LLMProviderAdapter {
     @Override
     public String getProviderCode() {
         return PROVIDER_CODE;
+    }
+
+    @Override
+    public ProviderType getProviderType() {
+        return ProviderType.OPENAI;
     }
 
     @Override
@@ -80,8 +90,40 @@ public class OpenAIAdapter implements LLMProviderAdapter {
     }
 
     @Override
+    public Mono<LLMResponse> messages(LLMRequest request) {
+        // OpenAI 不支持 Anthropic 格式的 messages API
+        return Mono.error(new UnsupportedOperationException(
+                "OpenAI adapter does not support Anthropic messages format. Use chat() instead."));
+    }
+
+    @Override
     public boolean isAvailable() {
         return apiKey != null && !apiKey.isEmpty();
+    }
+
+    @Override
+    public boolean isHealthy() {
+        try {
+            // 简单的健康检查：验证 API Key 是否可用
+            return isAvailable();
+        } catch (Exception e) {
+            log.warn("OpenAI health check failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    @Override
+    public ProviderCapabilities getCapabilities() {
+        return new ProviderCapabilities(
+                ProviderType.OPENAI,
+                true,   // supportsChatCompletion
+                false,  // supportsMessages (Anthropic 格式)
+                true,   // supportsEmbeddings
+                true,   // supportsStreaming
+                true,   // supportsFunctionCalling
+                Set.of("gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo",
+                      "text-embedding-3-small", "text-embedding-3-large")
+        );
     }
 
     @Override
@@ -99,8 +141,8 @@ public class OpenAIAdapter implements LLMProviderAdapter {
         if (request.getMaxTokens() != null) {
             body.put("max_tokens", request.getMaxTokens());
         }
-        if (request.getStream() != null) {
-            body.put("stream", request.getStream());
+        if (request.isStream()) {
+            body.put("stream", true);
         }
         return body;
     }
@@ -138,7 +180,7 @@ public class OpenAIAdapter implements LLMProviderAdapter {
 
     @SuppressWarnings("unchecked")
     private LLMResponse.Usage parseUsage(Map<String, Object> response) {
-        var usage = (Map<String, Object>) response.get("usage");
+        var usage = (java.util.Map<String, Object>) response.get("usage");
         if (usage == null) {
             return null;
         }

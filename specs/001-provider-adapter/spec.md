@@ -2,8 +2,8 @@
 
 **Feature Branch**: `001-provider-adapter`
 **Created**: 2026-04-23
-**Status**: Draft
-**Input**: 创建 Provider 适配器框架，用于 LLM-Gateway 连接 OpenAI、Anthropic 等模型提供商。需定义 LLMProviderAdapter 接口、Provider/Model/Channel/ChannelKey 实体、实现开闭原则（对扩展开放、对修改关闭）。技术栈：Java 21 + Spring Boot 3.5.x
+**Status**: In Progress
+**Input**: 创建 Provider 适配器框架，用于 LLM-Gateway 连接 OpenAI、Anthropic 等模型提供商。需定义 LLMProviderAdapter 接口、Provider/Model/ProviderApiKey/GatewayApiKey 实体、实现开闭原则（对扩展开放、对修改关闭）。技术栈：Java 21 + Spring Boot 3.5.x
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -25,37 +25,21 @@
 
 ### User Story 2 - Provider 管理 (Priority: P2)
 
-管理员需要通过管理界面配置模型提供商，包括 API 密钥、端点地址、优先级等。
+管理员需要通过管理界面配置模型提供商，包括名称、API 端点、优先级等。
 
-**Why this priority**: 配置管理是运维的基础功能，没有它就无法动态管理渠道。
+**Why this priority**: 配置管理是运维的基础功能，没有它就无法动态管理 Provider。
 
 **Independent Test**: 可以通过 CRUD 测试验证管理员可以创建/读取/更新/删除 Provider 配置。
 
 **Acceptance Scenarios**:
 
-1. **Given** 管理员登录系统，**When** 创建新 Provider（名称、API Endpoint、API Key），**Then** Provider 被保存并可被路由引擎使用
-2. **Given** 已存在 Provider，**When** 管理员编辑其 API Key 或调整优先级，**Then** 变更立即生效（热加载）
-3. **Given** 已存在 Provider，**When** 管理员删除它，**Then** 该 Provider 关联的渠道一并被标记为不可用
+1. **Given** 管理员登录系统，**When** 创建新 Provider（名称、API Endpoint、类型），**Then** Provider 被保存并可被路由引擎使用
+2. **Given** 已存在 Provider，**When** 管理员编辑其配置或调整优先级，**Then** 变更立即生效（热加载）
+3. **Given** 已存在 Provider，**When** 管理员删除它，**Then** 该 Provider 被标记为 DELETED 状态
 
 ---
 
-### User Story 3 - Channel 与 ChannelKey 管理 (Priority: P2)
-
-管理员需要为每个 Provider 创建多个渠道（Channel），每个渠道可有多个 API Key（ChannelKey）实现密钥轮换。
-
-**Why this priority**: 密钥轮换是高可用策略的关键，确保单一 Key 失效不影响服务。
-
-**Independent Test**: 可以通过测试验证多 Key 场景下的自动轮换和故障转移。
-
-**Acceptance Scenarios**:
-
-1. **Given** 管理员配置了 Provider，**When** 为该 Provider 创建 Channel（关联 BaseURL、超时设置），**Then** Channel 被创建并可被路由选择
-2. **Given** 存在 Channel，**When** 管理员为该 Channel 添加多个 API Key，**Then** 系统按配置策略（轮询/权重）选择 Key
-3. **Given** Channel 有多个 API Key，**When** 当前使用中的 Key 达到速率限制或失败，**Then** 系统自动切换到下一个 Key
-
----
-
-### User Story 4 - 模型关联 (Priority: P3)
+### User Story 3 - 模型关联 (Priority: P2)
 
 系统需要维护 Provider 与其提供的模型之间的关联关系，支持模型映射。
 
@@ -70,35 +54,51 @@
 
 ---
 
-### Edge Cases
+### User Story 4 - 用户 API Key 管理 (Priority: P3)
+
+用户需要管理自己的 API Key，支持多 Provider、多 Key 配置实现密钥轮换。
+
+**Why this priority**: 密钥轮换是高可用策略的关键，确保单一 Key 失效不影响服务。
+
+**Independent Test**: 可以通过测试验证多 Key 场景下的自动轮换和故障转移。
+
+**Acceptance Scenarios**:
+
+1. **Given** 用户已认证，**When** 为某 Provider 创建多个 API Key，**Then** 系统按优先级选择 Key
+2. **Given** 用户有多个 API Key，**When** 当前使用中的 Key 达到速率限制或失败，**Then** 系统自动切换到下一个 Key
+
+---
+
+## Edge Cases
 
 - 当 Provider 的 API 返回非标准格式时，适配器应抛出明确的 ProviderException 而非静默失败
-- API Key 过期或无效时，适配器应返回认证错误并标记该 ChannelKey 为不可用
+- API Key 过期或无效时，适配器应返回认证错误并标记该 ProviderApiKey 为不可用
 - 网络超时后适配器应支持重试（可配置重试次数和间隔）
-- Channel 全部不可用时，路由引擎应返回 503 Service Unavailable
+- Provider 全部不可用时，路由引擎应返回 503 Service Unavailable
 
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
-- **FR-001**: 系统 MUST 提供 `LLMProviderAdapter` 接口，定义标准方法：`chatcompletion()`, `messages()`, `embeddings()`, `getCapabilities()`
+- **FR-001**: 系统 MUST 提供 `LLMProviderAdapter` 接口，定义标准方法：`chat()`, `chatStream()`, `messages()`, `getCapabilities()`
 - **FR-002**: 系统 MUST 支持 Provider 注册发现机制，通过 SPI（Service Provider Interface）自动发现并加载适配器实现
 - **FR-003**: 系统 MUST 支持 Provider 类型的扩展，新增 Provider 无需修改现有代码（开闭原则）
 - **FR-004**: 系统 MUST 提供 Provider 实体，包含：code、name、type（OPENAI/ANTHROPIC/OTHER）、base_url、priority、status
 - **FR-005**: 系统 MUST 提供 Model 实体，包含：code、provider_id、model_id（如 gpt-4o）、display_name、context_window、input_price、output_price
-- **FR-006**: 系统 MUST 提供 Channel 实体，包含：code、provider_id、name、base_url、timeout、max_connections、status
-- **FR-007**: 系统 MUST 提供 ChannelKey 实体，包含：channel_id、api_key（加密存储）、priority、status、last_used_at
-- **FR-008**: 系统 MUST 支持 Channel 多 API Key 配置，实现 Key 的自动轮换和故障转移
-- **FR-009**: 系统 MUST 支持 Provider/Channel/ChannelKey 的热加载，配置变更不中断进行中请求
-- **FR-010**: 系统 MUST 提供 Provider 能力查询接口，返回该 Provider 支持的功能（chatcompletion/messages/embeddings/streaming）
+- **FR-006**: 系统 MUST 提供两层 API Key 体系：
+  - **ProviderApiKey**（Provider 调用凭证）：网关调用大模型 Provider 的凭据，管理员配置，加密存储，支持多 Key 轮换
+  - **GatewayApiKey**（网关访问凭证）：用户调用 LLM-Gateway 网关的凭据，用户自管理，哈希存储，支持白名单控制
+- **FR-007**: 系统 MUST 支持 ProviderApiKey 多 Key 配置，实现 Key 的自动轮换和故障转移
+- **FR-008**: 系统 MUST 支持 Provider/Model 的热加载，配置变更不中断进行中请求
+- **FR-009**: 系统 MUST 提供 Provider 能力查询接口，返回该 Provider 支持的功能（chat/messages/embeddings/streaming）
 
 ### Key Entities
 
 - **Provider**: 模型提供商，如 OpenAI、Anthropic。包含连接配置（base_url、timeout）和凭证信息。
 - **Model**: 具体模型，如 gpt-4o、claude-sonnet-4-20250514。关联到 Provider，包含模型元数据。
-- **Channel**: Provider 下的具体连接实例，包含网络配置和多个 API Key。
-- **ChannelKey**: Channel 下的单个 API Key，支持加密存储和优先级管理。
-- **ChannelGroup**: 渠道分组，用于路由策略中的渠道聚合。
+- **ProviderApiKey**: 网关调用大模型 Provider 的凭据，属于系统维度，支持加密存储和优先级管理。
+- **GatewayApiKey**: 用户调用 LLM-Gateway 网关的凭据，属于用户维度，支持哈希存储和 IP/模型白名单。
+- **User**: 最终用户，拥有 GatewayApiKey 集合。
 
 ## Success Criteria *(mandatory)*
 
@@ -108,7 +108,7 @@
 - **SC-002**: 适配器接口方法调用准确率 ≥99.9%（参数转换不丢失信息）
 - **SC-003**: Provider 配置变更后热加载延迟 ≤100ms，不影响进行中请求
   - **测量方法**: 在无进行中请求时，修改 Provider 配置并记录 EnvironmentChangeEvent 到配置生效的时间，重复 10 次取平均值
-- **SC-004**: Channel 多 Key 场景下，故障转移时间 ≤500ms
+- **SC-004**: ProviderApiKey 多 Key 场景下，故障转移时间 ≤500ms
   - **测量方法**: 在 Key 标记为 unhealthy 后，记录到选择下一个可用 Key 的时间，重复 10 次取平均值
 - **SC-005**: 系统支持至少 10 种不同 Provider 类型而不出现架构腐化
 

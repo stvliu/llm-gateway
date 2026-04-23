@@ -76,6 +76,11 @@ public class LLMRequest {
     private boolean stream;
 
     /**
+     * 系统提示 (用于 Anthropic 等)
+     */
+    private String systemPrompt;
+
+    /**
      * 额外参数
      */
     private Map<String, Object> extraParams;

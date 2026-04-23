@@ -3,7 +3,13 @@
     "allow": [
       "mcp__plugin_ecc_exa__web_search_exa",
       "mcp__plugin_ecc_exa__web_fetch_exa",
-      "Bash(.specify/scripts/bash/create-new-feature.sh provider-adapter-framework *)"
+      "Bash(.specify/scripts/bash/create-new-feature.sh provider-adapter-framework *)",
+      "Bash(bash .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks)",
+      "Bash(./mvnw compile *)",
+      "Bash(curl -s http://localhost:8080/actuator/health)",
+      "Bash(curl -s http://localhost:8080/api/v1/providers)",
+      "Bash(find gateway-*/src/main/java -name \"*.java\")",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && cat {}')"
     ]
   }
 }

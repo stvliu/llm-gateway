@@ -59,9 +59,9 @@
 
 | 维度 | v1.0 目标 | v2.0 目标 (水平扩展) |
 |------|----------|---------------------|
-| **团队数** | ~100 | ~1000 |
-| **渠道数** | ~1,000 | ~10,000 |
 | **用户数** | ~10,000 | ~100,000 |
+| **Provider 数** | ~100 | ~500 |
+| **模型数** | ~1,000 | ~5,000 |
 | **QPS (单实例)** | 10,000 | 10,000 |
 | **集群 QPS (10 节点)** | 100,000 | 500,000 |
 
@@ -70,25 +70,25 @@
 | 术语 | 定义 |
 |------|------|
 | **Provider (提供商)** | 模型服务提供方，如 OpenAI、Anthropic、通义千问等 |
-| **Channel (渠道)** | 通往某个 Provider 的具体连接实例（含 API Key、BaseURL 等） |
-| **ChannelKey (渠道密钥)** | 渠道下的单个 API Key，支持多 Key 管理 |
+| **ProviderApiKey (Provider 调用凭证)** | 网关调用大模型 Provider 的凭据，管理员配置，支持多 Key 轮换 |
 | **Model (模型)** | 具体的 AI 模型，如 gpt-4o、claude-sonnet-4 等 |
-| **Team (团队)** | 团队隔离单元，替代租户概念（APIPark 模式） |
-| **Member (成员)** | 用户与团队的关联关系，支持多对多 |
-| **TokenLimit (Token限额)** | Token 用量控制单元，支持四级层级（团队/用户/API Key/用户×渠道）和灵活周期（天/周/月/总量） |
-| **Strategy (策略)** | 路由/限流等规则的配置集合 |
-| **StrategyNode (策略节点)** | 策略编排器中的单个节点（条件/路由/转换等） |
-| **ApiKey (API 密钥)** | 用户生成的调用凭证，格式为 `sk-xxxxxxxxxxxxxxxx` |
-| **TokenUsage (Token使用量)** | Token 实际消耗记录 |
-| **TokenLimitAlert (限额告警)** | Token 使用达到阈值时的告警记录 |
+| **RouteGroup (路由分组)** | 路由策略配置，支持负载均衡和故障转移 |
+| **RouteGroupProvider (路由关联)** | 路由分组与 Provider 的关联，含权重/优先级/健康状态 |
+| **GatewayApiKey (网关访问凭证)** | 用户调用 LLM-Gateway 网关的凭据，用户自管理 |
+| **TokenLimit (Token限额)** | 用户级别 Token 用量限额，支持周期重置（天/周/月/总量） |
 | **Trace ID** | 请求全链路追踪的唯一标识 |
 | **Request ID** | 单次 API 请求的唯一标识 |
-| **MCP (Model Context Protocol)** | 模型上下文协议，用于工具调用和 Agent 通信 |
-| **RAG (Retrieval-Augmented Generation)** | 检索增强生成，通过知识库检索增强模型回答 |
 | **PII (Personally Identifiable Information)** | 个人身份信息，如身份证号、手机号、邮箱等 |
-| **WORM (Write Once Read Many)** | 一次写入多次读取，用于审计日志存储 |
 | **SLA (Service Level Agreement)** | 服务级别协议，定义服务可用性指标 |
 | **Feature Flag** | 功能开关，用于运行时控制功能开启/关闭 |
+
+### 1.6 架构说明
+
+**单租户设计**: LLM-Gateway v1.0 采用单租户架构，所有用户共享全局的 Provider 和路由配置。
+
+**双 API Key 设计**:
+- **ProviderApiKey**: 系统调用 Provider 的凭证，加密存储，支持多 Key 轮换
+- **GatewayApiKey**: 用户调用网关的凭证，哈希存储，支持白名单控制 |
 
 ## Clarifications
 
@@ -213,7 +213,7 @@
 ├─────────────────────┤
 │   调度层            │  ← ModelRouter, TokenTracker, RateLimiter
 ├─────────────────────┤
-│   服务层            │  ← TeamService, ChannelService, BillingService, AuditService
+│   服务层            │  ← ProviderService, RouteGroupService, TokenLimitService, AuditService
 ├─────────────────────┤
 │   基础设施层        │  ← LLMProviderAdapter, DBRepository, RedisClient, OTelExporter
 └─────────────────────┘
@@ -302,9 +302,7 @@ llm-gateway/
 | | 场景路由 | P1 | 按场景(background/think/webSearch) |
 | | 可视化策略编排 | P1 | 零代码策略配置 | 企业版 |
 | | 自定义脚本扩展 | P1 | 高级用户自定义逻辑 | 企业版 |
-| **团队管理** | 团队管理 | P0 | Team 隔离边界 |
-| | 成员管理 | P0 | Member 多对多关联 |
-| | 角色管理 | P0 | 系统级/团队级角色 |
+| **团队管理** | 单租户 | P0 | 所有用户共享全局资源 |
 | **密钥管理** | API Key CRUD | P0 | 创建/查询/编辑/删除 |
 | | 额度限制 | P0 | API Key 用量上限 |
 | | 模型白名单 | P0 | 限制可访问模型 |
@@ -535,32 +533,26 @@ llm-gateway/
 
 ---
 
-#### 4.2.9 团队与成员管理模块
+#### 4.2.9 用户与角色管理模块
 
-**需求描述**: 基于 APIPark 模式，采用 Team 作为唯一隔离边界，支持团队/成员/角色三级管理。
+**需求描述**: 单租户架构，用户共享全局 Provider/RouteGroup 资源，支持基于角色的访问控制。
 
 **功能需求**:
 
 | ID | 功能 | 详细描述 | 验收标准 |
 |----|------|---------|---------|
-| MT-001 | 团队管理 | 创建/编辑/删除团队 | 团队间数据完全隔离 |
-| MT-002 | 成员管理 | 邀请/移除团队成员 | 成员可属于多个团队 |
-| MT-003 | 用户管理 | 用户注册/编辑/禁用/删除 | 支持批量操作 |
-| MT-004 | 用户邀请 | 通过邮件邀请用户加入团队 | 邀请链接有效期可配置 |
-| MT-005 | 角色管理 | 创建/编辑/删除角色（系统级/团队级） | 预设角色模板 |
-| MT-006 | 权限管理 | 为角色分配权限 | 基于权限码的细粒度控制 |
-| MT-007 | 角色绑定 | 将角色绑定到用户（团队级） | 支持多角色 |
-| MT-008 | 资源隔离 | 团队级渠道、API Key、Token限额隔离 | 跨团队不可见 |
-| MT-009 | 跨团队共享 | 可选的渠道/模型跨团队共享 | 需显式授权 |
-| MT-010 | 用户登录 | 用户名密码、邮箱验证码 | 密码 BCrypt 加密 |
-| MT-011 | OAuth 登录 | GitHub / Gitee / 企业 SSO | OAuth2 标准协议 |
-| MT-012 | 团队切换 | 用户可属于多个团队，支持切换 | 会话隔离 |
+| UM-001 | 用户管理 | 用户注册/编辑/禁用/删除 | 支持批量操作 |
+| UM-002 | 角色管理 | 创建/编辑/删除角色（系统级） | 预设角色模板 |
+| UM-003 | 权限管理 | 为角色分配权限 | 基于权限码的细粒度控制 |
+| UM-004 | 角色绑定 | 将角色绑定到用户 | 支持多角色 |
+| UM-005 | 用户登录 | 用户名密码、邮箱验证码 | 密码 BCrypt 加密 |
+| UM-006 | OAuth 登录 | GitHub / Gitee / 企业 SSO | OAuth2 标准协议 |
 
 **预设角色**:
 
 | 角色 | 权限范围 |
 |------|---------|
-| **团队管理员** | 团队级全部权限 |
+| **管理员** | 系统全部权限 |
 | **开发者** | 创建 API Key、查看日志、调用 API |
 | **观察者** | 仅查看用量和日志 |
 | **财务管理员** | 额度配置、用量查看 |
@@ -612,15 +604,10 @@ llm-gateway/
 **Token限额层级关系**:
 
 ```
-团队Token限额 (10,000,000 tokens/月)
-  │
-  ├── 用户 1 Token限额 (4,000,000 tokens/月)
-  │     ├── API Key 级限额: API Key A (2,000,000 tokens/月)
-  │     └── 用户×渠道限额: User1 × ChannelX (1,000,000 tokens/月)
-  │
-  └── 用户 2 Token限额 (6,000,000 tokens/月)
-        ├── API Key 级限额: API Key B (3,000,000 tokens/月)
-        └── 用户×渠道限额: User2 × ChannelX (2,000,000 tokens/月)
+用户Token限额
+├── 用户级别: User (max_tokens)
+├── Provider级别: User × Provider (可选)
+└── Model级别: User × Model (可选)
 
 周期类型:
 ├── DAILY:   每天重置 (如: 每天最多 100,000 tokens)
@@ -1113,7 +1100,7 @@ gateway-console/src/i18n/
 | `/api/v1/cache` | CRUD | 语义缓存管理 | Bearer Token (Admin) |
 | `/api/v1/audit-policies` | CRUD | 内容审核规则 | Bearer Token (Admin) |
 
-**说明**: 管理 API 采用 Team 作为隔离边界，替代传统的 Tenant/Project 概念。所有管理 API 请求自动关联到当前用户的 team_id，确保团队间数据隔离。
+**说明**: 管理 API 采用用户级别访问控制，所有资源（Provider、RouteGroup 等）全局共享。API 请求通过 GatewayApiKey 认证并关联到用户。
 
 **P2 模块 API 说明**: Agent 工具、语义缓存、会话上下文、RAG 知识库、内容审核等功能为企业版或 P2 版本特性，通过独立端点管理。
 
@@ -1294,117 +1281,72 @@ Link: <https://docs.example.com/migration/v2>; rel="successor-version"
 
 ### 6.1 实体域划分
 
-根据业务领域，将实体划分为以下六大域：
+根据业务领域，将实体划分为以下四大域：
 
 | 域 | 实体数 | 实体列表 |
 |---|--------|----------|
-| ① 身份与访问控制 | 5 | Team, User, Role, Permission, Member |
-| ② 渠道与模型 | 7 | Provider, Model, Channel, ChannelGroup, ChannelKey, Strategy, StrategyNode |
-| ③ 令牌与认证 | 3 | ApiToken, TokenQuota, TokenAccessLog |
-| ④ Token额度 | 3 | TokenLimit, TokenUsage, TokenLimitAlert |
-| ⑤ 日志与监控 | 4 | RequestLog, RequestBodyLog, AuditLog, ChannelHealthLog |
-| ⑥ 安全与风控 | 6 | ApiKeySecret, SensitiveWord, PiiRule, IpBlacklist, IpWhitelist, RateLimitRule |
-| **合计** | **30** | |
+| ① 身份与访问控制 | 1 | User |
+| ② 提供商与模型 | 4 | Provider, ProviderApiKey, Model, RouteGroup, RouteGroupProvider |
+| ③ 令牌与认证 | 2 | GatewayApiKey, TokenLimit |
+| ④ 日志与监控 | 3 | RequestLog, RequestBodyLog, AuditLog |
+| **合计** | **10** | |
 
 ### 6.2 核心实体清单
 
 | 实体 | 说明 | 物理标识 | 业务标识 |
 |------|------|---------|---------|
 | **① 身份与访问控制域** | | | |
-| Team | 团队 | `id BIGINT` | `team_code VARCHAR(64)` |
-| Member | 成员 | `id BIGINT` | - |
 | User | 用户 | `id BIGINT` | `user_code VARCHAR(64)` |
-| Role | 角色 | `id BIGINT` | `role_code VARCHAR(64)` |
-| Permission | 权限 | `id BIGINT` | `permission_code VARCHAR(128)` |
-| **② 渠道与模型域** | | | |
-| Provider | 供应商 | `id BIGINT` | `provider_code VARCHAR(64)` |
-| Model | 模型 | `id BIGINT` | `model_code VARCHAR(128)` |
-| Channel | 渠道 | `id BIGINT` | `channel_code VARCHAR(64)` |
-| ChannelGroup | 渠道分组 | `id BIGINT` | `group_code VARCHAR(64)` |
-| ChannelKey | 渠道密钥 | `id BIGINT` | - |
-| Strategy | 路由策略 | `id BIGINT` | `strategy_code VARCHAR(128)` |
-| StrategyNode | 策略节点 | `id BIGINT` | - |
-| **③ 密钥与认证域** | | | |
-| ApiKey | API 密钥 | `id BIGINT` | `key_code VARCHAR(128)` |
-| TokenQuota | 令牌额度 | `id BIGINT` | - |
-| TokenAccessLog | 令牌访问日志 | `id BIGINT` | - |
-| **④ Token额度域** | | | |
-| TokenLimit | Token限额 | `id BIGINT` | `limit_code VARCHAR(64)` |
-| TokenUsage | Token使用记录 | `id BIGINT` | - |
-| TokenLimitAlert | Token限额告警 | `id BIGINT` | - |
-| **⑤ 日志与监控域** | | | |
+| **② 提供商与模型域** | | | |
+| Provider | 模型提供商 | `id BIGINT` | `provider_code VARCHAR(64)` |
+| ProviderApiKey | Provider 调用凭证 | `id BIGINT` | `key_code VARCHAR(64)` |
+| Model | 具体模型 | `id BIGINT` | `model_code VARCHAR(128)` |
+| RouteGroup | 路由分组 | `id BIGINT` | `group_code VARCHAR(64)` |
+| RouteGroupProvider | 路由关联 | `id BIGINT` | - |
+| **③ 令牌与认证域** | | | |
+| GatewayApiKey | 网关访问凭证 | `id BIGINT` | `key_code VARCHAR(128)` |
+| TokenLimit | Token 限额 | `id BIGINT` | `limit_code VARCHAR(64)` |
+| **④ 日志与监控域** | | | |
 | RequestLog | 调用日志 | `id BIGINT` | `request_id VARCHAR(64)` |
 | RequestBodyLog | 请求体日志 | `id BIGINT` | - |
 | AuditLog | 审计日志 | `id BIGINT` | `audit_code VARCHAR(64)` |
-| ChannelHealthLog | 渠道健康日志 | `id BIGINT` | - |
-| **⑥ 安全与风控域** | | | |
-| ApiKeySecret | 密钥加密存储 | `id BIGINT` | - |
-| SensitiveWord | 敏感词 | `id BIGINT` | - |
-| PiiRule | PII 脱敏规则 | `id BIGINT` | `rule_code VARCHAR(64)` |
-| IpBlacklist | IP 黑名单 | `id BIGINT` | - |
-| IpWhitelist | IP 白名单 | `id BIGINT` | - |
-| RateLimitRule | 限流规则 | `id BIGINT` | `rule_code VARCHAR(64)` |
 
 ### 6.3 实体关系图
 
 #### 6.3.1 身份与访问控制域
 
 ```
-Team (1) ──── (N) Member (N) ──── (1) User
-  │                    │
-  │                    │ N:M
-  │                    ▼
-  │               ┌──────────┐
-  │               │   Role   │────────── (N) Permission
-  │               └────┬─────┘
-  │                    │
-  │                    │ N:M
-  │                    ▼
-  │               ┌──────────┐
-  │               │Permission│
-  │               └──────────┘
-
-User ──── 1:N ──── ApiKey ──── 1:1 ──── TokenQuota
-User ──── 1:N ──── AuditLog
+User (1) ──── (N) GatewayApiKey
+User (1) ──── (N) TokenLimit
 ```
 
-#### 6.3.2 渠道与模型域
+#### 6.3.2 提供商与模型域
 
 ```
+Provider (1) ──── (N) ProviderApiKey
 Provider (1) ──── (N) Model
-
-Channel (N) ──── (1) ChannelGroup
-  │
-  │ 1:1 (ApiKeySecret 分离存储)
-  ▼
-ChannelKey ──── (N) ApiKeySecret
-
-ChannelGroup (1) ──── (N) Channel (N) ──── (N) Model (M:N 关系)
-
-ChannelGroup ──── 1:N ──── Strategy ──── 1:N ──── StrategyNode
+Provider (1) ──── (N) RouteGroupProvider
+RouteGroup (1) ──── (N) RouteGroupProvider
+RouteGroupProvider (N) ──── (1) Provider
 ```
 
-#### 6.3.3 Token额度域
+#### 6.3.3 令牌与限额域
 
 ```
-TokenLimit (限额配置)
-├── 层级: TEAM / USER / TOKEN / USER_CHANNEL
+TokenLimit (用户限额)
+├── 层级: USER (用户级别)
 ├── 周期: DAILY / WEEKLY / MONTHLY / TOTAL
 ├── Token限额: max_tokens
-├── 请求次数限额: max_requests
-│
-├── 1:N ──── TokenUsage (使用记录)
-│               ├── used_tokens
-│               └── used_requests
-│
-└── 1:N ──── TokenLimitAlert
+├── 已用Token: used_tokens
+├── 请求次数限额: max_requests (可选)
+└── 周期类型: period_type
 
-层级关系:
-Team ──── 1:N ──── User ──── 1:N ──── ApiKey
-  │                   │
-  │                   └── 1:N ──── User × Channel (USER_CHANNEL)
-
-ApiKey (1) ──── (N) TokenLimit (API Key 级限额)
+GatewayApiKey (网关访问凭证)
+├── key_hash: 用于认证
+├── provider_id: 可访问的 Provider (NULL 表示全部)
+├── route_group_id: 路由分组 (NULL 表示默认)
+├── model_whitelist: 模型白名单 (可选)
+└── ip_whitelist: IP 白名单 (可选)
 ```
 
 #### 6.3.4 日志与监控域
@@ -1412,21 +1354,10 @@ ApiKey (1) ──── (N) TokenLimit (API Key 级限额)
 ```
 RequestLog ──── 1:1 ──── RequestBodyLog (可选)
 
-Channel ──── 1:N ──── ChannelHealthLog
-
 AuditLog (链式哈希: hash_chain = SHA256(前一条 + 当前内容))
 ```
 
-#### 6.3.5 安全与风控域
-
-```
-ApiKeySecret ──── 1:1 ──── ChannelKey (密钥加密存储)
-
-限流层级:
-RateLimitRule (scope_type: CHANNEL / CHANNEL_KEY / TOKEN / USER / TEAM)
-```
-
-#### 6.3.6 P2 模块实体简图
+#### 6.3.5 P2 模块实体简图
 
 以下为 P2/企业版高级功能的实体关系简化描述，实体定义在对应模块详细需求中。
 
@@ -1438,55 +1369,46 @@ Tool (1) ──── (N) ToolVersion
   │
   └── (1:N) ToolInvocationLog (工具调用记录)
 
-Prompt 工程:
+Prompt 工程 (企业版):
 PromptTemplate (1) ──── (N) PromptVersion
   │
   └── (1:N) PromptDecorator (装饰器链)
-  │
-  └── (N) Team (共享模板 via TeamPromptTemplate)
 
-会话上下文缓存:
+会话上下文缓存 (企业版):
 Session (1) ──── (N) SessionMessage
   │
   └── (N) User
-  └── (N) Channel
 
-RAG 知识库:
+RAG 知识库 (企业版):
 KnowledgeBase (1) ──── (N) KnowledgeChunk
-  │
-  └── (N) Team (多对多 via TeamKnowledgeBase)
   │
   └── (1) VectorStore (向量数据库 SPI 实现)
 
-内容审核:
+内容审核 (企业版):
 AuditPolicy (1) ──── (N) AuditRule
-  │
-  └── (N) Team (多对多 via TeamAuditPolicy)
   │
   └── (1:N) AuditLog (审核记录)
 
-语义缓存:
+语义缓存 (企业版):
 CacheEntry (1) ──── (N) CacheHitLog
-  │
-  └── (N) Team (缓存隔离)
 ```
 
-### 6.4 团队数据隔离模式
+### 6.4 单租户架构
 
-**v1.0 采用逻辑隔离模式**：共享数据库/schema，通过 `team_id` 字段实现行级数据隔离。
+**LLM-Gateway 采用单租户架构**：所有用户共享全局 Provider、RouteGroup 等资源，用户级别隔离仅通过 GatewayApiKey 和 TokenLimit 实现。
 
-| 隔离层级 | 实现方式 | 说明 |
-|---------|---------|------|
-| **行级隔离** | 每个业务表包含 `team_id BIGINT` 字段 | 所有查询自动追加 team_id 过滤条件 |
-| **索引策略** | 所有 team_id 相关查询必须包含复合索引 `(team_id, ...)` | 确保查询性能 |
-| **应用层强制** | MyBatis/JPA 拦截器自动注入 team_id 条件 | 防止应用层遗漏团队过滤 |
-| **成员关联** | 用户与团队通过 Member 表实现多对多关联 | 支持用户属于多个团队 |
+| 维度 | 说明 |
+|---------|------|
+| **Provider** | 全局共享，所有用户可见 |
+| **RouteGroup** | 全局共享，所有用户可用 |
+| **Model** | 全局共享，通过 Provider 关联 |
+| **GatewayApiKey** | 用户级别，每个用户可创建多个 |
+| **TokenLimit** | 用户级别，支持 Provider/Model 维度限制 |
 
-**安全约束**:
-- ✅ 所有 API 请求自动解析 Token 所属 team_id
-- ✅ 跨团队数据访问必须通过显式授权（MT-009 跨团队共享）
-- ✅ 应用层禁止手动编写不含 team_id 条件的查询
-- ❌ 禁止：任何接口返回非本团队的数据
+**资源隔离**:
+- ✅ GatewayApiKey 通过 user_id 关联，确保用户只能访问自己的 Key
+- ✅ TokenLimit 通过 user_id 关联，确保用户只能使用自己的额度
+- ✅ ProviderApiKey 由管理员配置，与用户无关
 
 ### 6.5 并发冲突处理
 
@@ -1515,30 +1437,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 
 ### 6.7 核心实体详细规格
 
-#### 6.7.1 Team（团队）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| team_code | VARCHAR(64) | 团队编码 | UNIQUE, NOT NULL |
-| team_name | VARCHAR(128) | 团队名称 | NOT NULL |
-| description | TEXT | 描述 | NULL |
-| admin_id | BIGINT | 团队管理员ID | FK → User.id, NULL |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-
-#### 6.7.2 Member（成员）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| user_id | BIGINT | 用户ID | FK → User.id, NOT NULL |
-| team_id | BIGINT | 团队ID | FK → Team.id, NOT NULL |
-| team_role | VARCHAR(32) | 团队内角色 | ADMIN / MEMBER |
-| joined_at | TIMESTAMP | 加入时间 | NOT NULL |
-
-**唯一约束**: `(user_id, team_id)` 联合唯一。
-
-#### 6.7.3 User（用户）
+#### 6.7.1 User（用户）
 
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
@@ -1554,103 +1453,155 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | pii_salt | VARCHAR(64) | PII脱敏盐值 | GDPR 删除权用 |
 | last_login_at | TIMESTAMP | 最后登录时间 | NULL |
 
-#### 6.7.4 ApiKey（API 密钥）
+**业务说明**: 单租户架构，所有用户共享全局 Provider/RouteGroup 资源。
 
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(128) | 密钥编码 | UNIQUE, NOT NULL |
-| key_hash | VARCHAR(256) | Key 哈希 | NOT NULL |
-| user_id | BIGINT | 用户ID | FK → User.id, NOT NULL |
-| team_id | BIGINT | 团队ID | FK → Team.id, NOT NULL |
-| key_status | ENUM | 状态 | ACTIVE / SUSPENDED / EXPIRED / DELETED |
-| quota | DECIMAL(20,6) | 额度上限 | NOT NULL |
-| used_quota | DECIMAL(20,6) | 已用额度 | NOT NULL, DEFAULT 0 |
-| expires_at | TIMESTAMP | 过期时间 | NULL 表示永不过期 |
-| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
-
-#### 6.7.5 Channel（渠道）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| channel_code | VARCHAR(64) | 渠道编码 | UNIQUE, NOT NULL |
-| channel_name | VARCHAR(128) | 渠道名称 | NOT NULL |
-| team_id | BIGINT | 所属团队 | FK → Team.id, NOT NULL |
-| provider_id | BIGINT | 所属供应商 | FK → Provider.id, NOT NULL |
-| group_id | BIGINT | 所属分组 | FK → ChannelGroup.id |
-| models | JSON | 支持的模型列表 | ["gpt-4o", "gpt-4-turbo"] |
-| status | ENUM | 状态 | ACTIVE / DISABLED / ERROR |
-| priority | INT | 优先级 | 数值越小优先级越高 |
-| timeout_seconds | INT | 超时时间 | 单位：秒，默认30 |
-| retry_count | INT | 重试次数 | 默认3 |
-| rpm_limit | INT | RPM限制 | 每分钟请求数 |
-| tpm_limit | INT | TPM限制 | 每分钟Token数 |
-| base_url | VARCHAR(512) | API地址 | 支持代理/镜像 |
-
-#### 6.7.6 TokenLimit（Token限额）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| limit_code | VARCHAR(64) | 限额编码 | UNIQUE, NOT NULL |
-| team_id | BIGINT | 所属团队 | FK → Team.id, NOT NULL |
-| scope_type | ENUM | 限额层级 | TEAM / USER / API_KEY / USER_CHANNEL |
-| scope_id | BIGINT | 层级ID | 对应团队/用户/API Key ID |
-| user_id | BIGINT | 用户ID | scope_type 为 USER_CHANNEL 时必填 |
-| channel_id | BIGINT | 渠道ID | scope_type 为 USER_CHANNEL 时必填 |
-| parent_limit_id | BIGINT | 父限额ID | 层级限额的父限额 |
-| token_limit_enabled | BOOLEAN | 是否启用Token限额 | DEFAULT true |
-| max_tokens | DECIMAL(20,6) | Token限额总量 | NULL 表示不限 |
-| period_type | ENUM | 周期类型 | DAILY / WEEKLY / MONTHLY / TOTAL |
-| period_day_of_week | INT | 周内日期 | 1-7，WEEKLY 时有效 |
-| period_day_of_month | INT | 月内日期 | 1-31，MONTHLY 时有效 |
-| request_limit_enabled | BOOLEAN | 是否启用请求次数限额 | DEFAULT false |
-| max_requests | INT | 请求次数限额 | 周期内最大请求次数，NULL 表示不限 |
-| exceeded_action | ENUM | 超限动作 | REJECT / DOWNGRADE |
-| switch_model_id | BIGINT | 降级切换模型 | exceeded_action 为 DOWNGRADE 时必填 |
-| switch_channel_id | BIGINT | 降级切换渠道 | 降级时使用的备用渠道 |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-
-#### 6.7.7 ApiKeySecret（密钥加密存储）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| secret_key | VARCHAR(512) | 加密后密钥 | AES-256-GCM 加密存储 |
-| key_version | INT | 密钥版本 | 用于密钥轮换 |
-| kek_version | INT | KEK版本 | 加密此密钥的 KEK 版本 |
-| rotated_at | TIMESTAMP | 上次轮换时间 | NULL 表示未轮换过 |
-| expires_at | TIMESTAMP | 密钥过期时间 | 上游 Key 的过期时间 |
-
-#### 6.7.8 Role（角色）
+#### 6.7.2 Role（角色）
 
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 主键 | PK, AUTO_INCREMENT |
 | role_code | VARCHAR(64) | 角色编码 | UNIQUE, NOT NULL |
 | name | VARCHAR(64) | 角色名称 | NOT NULL |
+| description | TEXT | 角色描述 | NULL |
 | role_type | ENUM | 角色类型 | SYSTEM / CUSTOM |
-| scope_type | ENUM | 权限范围 | SYSTEM / TEAM |
-| scope_id | BIGINT | 范围ID | 当 scope_type 为 TEAM 时必填 |
 | is_active | BOOLEAN | 是否启用 | DEFAULT true |
 
-**预设角色**:
+**预设角色**（SYSTEM 类型）:
 
-| 角色 | 编码 | 权限范围 | 说明 |
-|------|------|----------|------|
-| 团队管理员 | TEAM_ADMIN | TEAM | 团队级全部权限 |
-| 开发者 | DEVELOPER | TEAM | 创建 API Key、查看日志、调用API |
-| 观察者 | OBSERVER | TEAM | 仅查看用量和日志 |
-| 财务管理员 | FINANCE_ADMIN | TEAM | 预算配置、费用查看 |
+| 角色 | 编码 | 权限范围 |
+|------|------|----------|
+| 管理员 | ADMIN | 系统全部权限 |
+| 开发者 | DEVELOPER | 创建 API Key、查看日志、调用 API |
+| 观察者 | OBSERVER | 仅查看用量和日志 |
+| 财务管理员 | FINANCE_ADMIN | 额度配置、用量查看 |
 
-#### 6.7.9 Permission（权限）
+#### 6.7.3 Member（成员）
 
-**权限编码规范**: `resource:action` 格式。
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| user_id | BIGINT | 用户ID | FK → User.id, NOT NULL |
+| role_id | BIGINT | 角色ID | FK → Role.id, NOT NULL |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
 
-| 权限分类 | 示例权限码 |
-|----------|-----------|
-| user | user:create, user:read, user:update, user:delete |
+**唯一约束**: `(user_id, role_id)` 联合唯一。
+
+#### 6.7.4 Permission（权限）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| permission_code | VARCHAR(128) | 权限编码 | UNIQUE, NOT NULL |
+| name | VARCHAR(64) | 权限名称 | NOT NULL |
+| description | TEXT | 权限描述 | NULL |
+| category | VARCHAR(32) | 权限分类 | user / provider / model / token / log / setting |
+
+**权限编码规范**: `resource:action` 格式（如 `provider:create`, `token:read`）。
+
+#### 6.7.5 Provider（提供商）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| provider_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
+| provider_name | VARCHAR(128) | 显示名称 | NOT NULL |
+| provider_type | ENUM | 类型 | OPENAI / ANTHROPIC / GEMINI / ZHIPU / OTHER |
+| base_url | VARCHAR(256) | API 端点 | NOT NULL |
+| website_url | VARCHAR(512) | 官网 URL | NULL |
+| api_doc_url | VARCHAR(512) | API 文档 URL | NULL |
+| priority | INT | 优先级 | DEFAULT 100，数值越大越优先 |
+| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
+
+**业务说明**: Provider 是全局共享的，所有用户可见。`provider_type` 决定使用哪个 Adapter 实现类。
+
+#### 6.7.6 ProviderApiKey（Provider 调用凭证）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| key_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
+| provider_id | BIGINT | 所属 Provider | FK → Provider.id, NOT NULL |
+| key_name | VARCHAR(64) | Key 名称 | NULL |
+| api_key | VARCHAR(512) | API Key（加密存储） | NOT NULL |
+| priority | INT | 优先级（用于轮换） | DEFAULT 100 |
+| status | ENUM | 状态 | ACTIVE / DISABLED / EXHAUSTED / EXPIRED / DELETED |
+| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
+
+**业务规则**:
+- `api_key` 使用 AES-256 加密存储
+- 同一 Provider 下可有多个 Key（主备/轮换）
+- `status = EXHAUSTED` 时进入冷却期，不会被选择
+
+#### 6.7.7 GatewayApiKey（网关访问凭证）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| key_code | VARCHAR(128) | 业务标识 | UNIQUE, NOT NULL |
+| key_hash | VARCHAR(256) | API Key 哈希 | NOT NULL |
+| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
+| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
+| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NULL 表示默认 |
+| name | VARCHAR(64) | 密钥名称 | NULL |
+| status | ENUM | 状态 | ACTIVE / DISABLED / EXPIRED / DELETED |
+| expires_at | TIMESTAMP | 过期时间 | NULL 表示永不过期 |
+| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
+| model_whitelist | JSON | 允许使用的模型列表 | NULL 表示全部允许 |
+| ip_whitelist | JSON | IP 白名单（支持 CIDR） | NULL 表示全部允许 |
+
+**业务规则**:
+- `key_hash` 用于验证 API 调用时传入的 Key
+- `provider_id` 为 NULL 表示可访问所有 Provider
+- 同一用户可创建多个 Key（主备/轮换）
+
+#### 6.7.8 RouteGroup（路由分组）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| group_code | VARCHAR(64) | 分组编码 | UNIQUE, NOT NULL |
+| group_name | VARCHAR(128) | 分组名称 | NOT NULL |
+| strategy | ENUM | 路由策略 | ROUND_ROBIN / LEAST_LATENCY / PRIORITY |
+| failover_enabled | BOOLEAN | 是否启用故障转移 | DEFAULT true |
+| max_retry | INT | 最大重试次数 | DEFAULT 2 |
+| health_check_interval | INT | 健康检查间隔（秒） | DEFAULT 30 |
+| description | TEXT | 描述 | NULL |
+
+#### 6.7.9 RouteGroupProvider（路由关联）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NOT NULL |
+| provider_id | BIGINT | Provider | FK → Provider.id, NOT NULL |
+| weight | INT | 权重（用于负载均衡） | DEFAULT 100 |
+| priority | INT | 优先级（用于故障转移） | DEFAULT 100 |
+| status | ENUM | 状态 | ENABLED / DISABLED / UNHEALTHY |
+| health_status | ENUM | 健康状态 | HEALTHY / DEGRADED / UNHEALTHY |
+| consecutive_failures | INT | 连续失败次数 | DEFAULT 0 |
+| last_health_check_at | TIMESTAMP | 最后健康检查时间 | NULL |
+
+#### 6.7.10 TokenLimit（Token限额）
+
+| 属性 | 类型 | 说明 | 约束 |
+|------|------|------|------|
+| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
+| limit_code | VARCHAR(64) | 限额编码 | UNIQUE, NOT NULL |
+| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
+| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
+| model_id | BIGINT | 关联的 Model | FK → Model.id, NULL 表示全部 |
+| token_limit_enabled | BOOLEAN | 是否启用Token限额 | DEFAULT true |
+| max_tokens | DECIMAL(20,6) | Token限额总量 | NULL 表示不限 |
+| used_tokens | DECIMAL(20,6) | 已用Token量 | DEFAULT 0 |
+| request_limit_enabled | BOOLEAN | 是否启用请求次数限额 | DEFAULT false |
+| max_requests | INT | 请求次数限额 | NULL 表示不限 |
+| used_requests | INT | 已用请求次数 | DEFAULT 0 |
+| period_type | ENUM | 周期类型 | DAILY / WEEKLY / MONTHLY / TOTAL |
+| period_day_of_week | INT | 周内日期 | 1-7，WEEKLY 时有效 |
+| period_day_of_month | INT | 月内日期 | 1-31，MONTHLY 时有效 |
+| exceeded_action | ENUM | 超限动作 | REJECT / DOWNGRADE |
+| switch_model_id | BIGINT | 降级切换模型 | exceeded_action 为 DOWNGRADE 时必填 |
+| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
 | channel | channel:create, channel:read, channel:update, channel:delete |
 | token_limit | token_limit:create, token_limit:read, token_limit:update, token_limit:delete |
 | token | token:create, token:read, token:revoke |
@@ -1850,18 +1801,17 @@ ABAC（Attribute-Based Access Control）基于以下属性组合进行访问决�
 | **环境属性** | `env.time` | Time | `"14:30:00"` | 当前时间（用于工作时间限制） |
 | | `env.day_of_week` | String | `"Monday"` | 当前星期 |
 | | `env.is_holiday` | Boolean | `false` | 是否节假日 |
-| **资源属性** | `resource.type` | String | `"channel"` | 资源类型 |
-| | `resource.team_id` | Long | `1` | 资源所属团队 |
+| **资源属性** | `resource.type` | String | `"provider"` | 资源类型 |
 | | `resource.owner_id` | Long | `5` | 资源创建者 ID |
-| **操作属性** | `action` | String | `"channel:delete"` | 操作标识 |
+| **操作属性** | `action` | String | `"provider:delete"` | 操作标识 |
 | | `action.risk_level` | String | `"high"` | 操作风险等级 |
 
 **ABAC 规则示例**:
 ```
 ALLOW IF:
-  user.role CONTAINS 'org_admin'
-  OR (user.role CONTAINS 'developer' AND action IN ['channel:read', 'token:create'])
-  OR (user.role CONTAINS 'finance_admin' AND action STARTS_WITH 'budget:')
+  user.role CONTAINS 'admin'
+  OR (user.role CONTAINS 'developer' AND action IN ['provider:read', 'token:create'])
+  OR (user.role CONTAINS 'finance_admin' AND action STARTS_WITH 'token:')
   AND env.time BETWEEN '09:00' AND '18:00'  -- 仅工作时间允许高危操作
 ```
 
@@ -1909,7 +1859,7 @@ PII 自动检测应用于以下数据范围：
 | | 密钥泄露 | AES-256 加密 + Vault 集成 | §7.4 |
 | **Denial of Service** | 超频请求耗尽资源 | RPM/TPM 限流 + 熔断 | §7.1 [9], §4.2.3 CH-014 |
 | | 恶意大请求体 | 请求体大小限制（10MB） | §4.2.1 GW-009 |
-| **Elevation of Privilege** | 越权访问其他团队数据 | team_id 行级隔离 + RBAC | §6.3, §7.9 |
+| **Elevation of Privilege** | 越权访问其他用户数据 | RBAC + GatewayApiKey 关联 | §6.3, §7.9 |
 | | 越权访问管理功能 | RBAC + ABAC | §7.9 |
 
 ---
@@ -2428,10 +2378,9 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | 成本/延迟最优路由 | Phase 2 |
 | | 场景路由 | background/think/webSearch |
 | | 自定义脚本扩展 | 沙箱隔离 |
-| **团队管理** | 团队隔离 | team_id 行级隔离 |
-| | 成员与角色管理 | 系统级/团队级角色 |
-| | 跨团队共享 | 显式授权 |
-| **Token 限额** | 四级限额控制 | Team/User/Token/User×Channel |
+| **用户管理** | 单租户 | 所有用户共享全局资源 |
+| | 角色与权限 | 系统级角色 + 细粒度权限 |
+| **Token 限额** | 用户级别限额 | User / User×Provider / User×Model |
 | | 独立开关 | Token 限额/请求次数限额 独立控制 |
 | | 预扣额度 | 请求前预扣，防止超额 |
 | | 差额调整 | 多退少补 |
@@ -2493,8 +2442,8 @@ LLM-Gateway 采用分层架构，确保代码清晰、职责分明。
 ┌─────────────────────────────────────────────────────┐
 │                   Service Layer                      │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │ Router      │  │ Channel     │  │ Token       │ │
-│  │ Service     │  │ Manager     │  │ Metering    │ │
+│  │ Router      │  │ Provider    │  │ Token       │ │
+│  │ Service     │  │ Service     │  │ Metering    │ │
 │  └─────────────┘  └─────────────┘  └─────────────┘ │
 └─────────────────────────────────────────────────────┘
                          │
@@ -2511,9 +2460,9 @@ LLM-Gateway 采用分层架构，确保代码清晰、职责分明。
 
 | Flag 名称 | 默认值 | 控制功能 | 运行时可变 |
 |-----------|--------|---------|-----------|
-| `features.multi_tenant.enabled` | false | 多租户隔离 (team_id 过滤) | ❌ 启动时 |
+| `features.multi_tenant.enabled` | false | 单租户模式（固定） | ❌ 启动时 |
 | `features.rbac.enabled` | false | RBAC 权限控制 | ❌ 启动时 |
-| `features.budget.enabled` | false | 三级预算控制 | ❌ 启动时 |
+| `features.budget.enabled` | false | Token 限额控制 | ❌ 启动时 |
 | `features.strategy_orchestration.enabled` | false | 可视化策略编排 | ❌ 启动时 |
 | `features.otel.enabled` | false | OpenTelemetry 全链路 | ❌ 启动时 |
 | `features.prometheus.enabled` | false | Prometheus 指标导出 | ❌ 启动时 |
@@ -2522,7 +2471,7 @@ LLM-Gateway 采用分层架构，确保代码清晰、职责分明。
 
 #### 12.4.3 数据库策略
 
-所有业务表包含 `team_id` 字段，默认填 `SYSTEM`，确保团队数据隔离。
+单租户架构，Provider/RouteGroup 全局共享，GatewayApiKey/TokenLimit 按用户隔离。
 
 #### 12.4.4 API 版本策略
 

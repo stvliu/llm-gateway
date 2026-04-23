@@ -1,5 +1,8 @@
 package com.codingas.gateway.adapter;
 
+import com.codingas.gateway.adapter.common.ProviderCapabilities;
+import com.codingas.gateway.adapter.common.ProviderException;
+import com.codingas.gateway.adapter.common.ProviderType;
 import com.codingas.gateway.adapter.dto.LLMRequest;
 import com.codingas.gateway.adapter.dto.LLMResponse;
 import reactor.core.publisher.Flux;
@@ -29,6 +32,13 @@ public interface LLMProviderAdapter {
     String getProviderCode();
 
     /**
+     * 获取提供商类型
+     *
+     * @return 提供商类型枚举
+     */
+    ProviderType getProviderType();
+
+    /**
      * 发送非流式请求
      *
      * @param request LLM 请求
@@ -45,11 +55,33 @@ public interface LLMProviderAdapter {
     Flux<LLMResponse> chatStream(LLMRequest request);
 
     /**
+     * 发送 Anthropic 消息 API 请求
+     *
+     * @param request LLM 请求
+     * @return LLM 响应 (Anthropic 格式)
+     */
+    Mono<LLMResponse> messages(LLMRequest request);
+
+    /**
      * 检查适配器是否可用
      *
      * @return true 如果适配器已配置并可用
      */
     boolean isAvailable();
+
+    /**
+     * 健康检查
+     *
+     * @return true 表示 Provider 可用
+     */
+    boolean isHealthy();
+
+    /**
+     * 获取 Provider 能力描述
+     *
+     * @return ProviderCapabilities
+     */
+    ProviderCapabilities getCapabilities();
 
     /**
      * 获取默认超时时间 (秒)

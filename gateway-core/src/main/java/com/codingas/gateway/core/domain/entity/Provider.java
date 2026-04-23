@@ -1,5 +1,7 @@
 package com.codingas.gateway.core.domain.entity;
 
+import com.codingas.gateway.core.domain.enums.ProviderStatus;
+import com.codingas.gateway.core.domain.enums.ProviderType;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -8,7 +10,7 @@ import lombok.Setter;
  * 模型供应商实体
  */
 @Entity
-@Table(name = "model_providers")
+@Table(name = "providers")
 @Getter
 @Setter
 public class Provider extends BaseEntity {
@@ -24,6 +26,13 @@ public class Provider extends BaseEntity {
      */
     @Column(name = "provider_name", nullable = false, length = 128)
     private String providerName;
+
+    /**
+     * 供应商类型
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "provider_type", nullable = false, length = 32)
+    private ProviderType providerType;
 
     /**
      * 供应商官网 URL
@@ -45,12 +54,14 @@ public class Provider extends BaseEntity {
     private ProviderStatus status = ProviderStatus.ACTIVE;
 
     /**
-     * 供应商状态枚举
+     * 优先级 (数值越小优先级越高)
      */
-    public enum ProviderStatus {
-        /** 活跃 */
-        ACTIVE,
-        /** 停用 */
-        DISABLED
-    }
+    @Column(name = "priority")
+    private Integer priority = 100;
+
+    /**
+     * 自定义 API 端点
+     */
+    @Column(name = "base_url", length = 256)
+    private String baseUrl;
 }

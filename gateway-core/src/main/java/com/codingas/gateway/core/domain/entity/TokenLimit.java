@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 /**
  * Token 限额实体
  *
- * <p>支持四级 Token 限额: Team / User / API Key / User×Channel</p>
+ * <p>用户级别 Token 限额，与 User 关联。</p>
  */
 @Entity
 @Table(name = "token_limits")
@@ -24,41 +24,22 @@ public class TokenLimit extends BaseEntity {
     private String limitCode;
 
     /**
-     * 所属团队 ID
+     * 用户 ID
      */
-    @Column(name = "team_id", nullable = false)
-    private Long teamId;
-
-    /**
-     * 限额层级
-     */
-    @Enumerated(EnumType.STRING)
-    @Column(name = "scope_type", nullable = false, length = 32)
-    private ScopeType scopeType;
-
-    /**
-     * 层级 ID (对应团队/用户/API Key ID)
-     */
-    @Column(name = "scope_id")
-    private Long scopeId;
-
-    /**
-     * 用户 ID (scope_type 为 USER_CHANNEL 时必填)
-     */
-    @Column(name = "user_id")
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     /**
-     * 渠道 ID (scope_type 为 USER_CHANNEL 时必填)
+     * 关联的 Provider ID（NULL 表示全部 Provider）
      */
-    @Column(name = "channel_id")
-    private Long channelId;
+    @Column(name = "provider_id")
+    private Long providerId;
 
     /**
-     * 父限额 ID (层级限额的父限额)
+     * 关联的 Model ID（NULL 表示全部模型）
      */
-    @Column(name = "parent_limit_id")
-    private Long parentLimitId;
+    @Column(name = "model_id")
+    private Long modelId;
 
     /**
      * 是否启用 Token 限额
@@ -71,6 +52,12 @@ public class TokenLimit extends BaseEntity {
      */
     @Column(name = "max_tokens", precision = 20, scale = 6)
     private BigDecimal maxTokens;
+
+    /**
+     * 已用 Token 量
+     */
+    @Column(name = "used_tokens", precision = 20, scale = 6)
+    private BigDecimal usedTokens = BigDecimal.ZERO;
 
     /**
      * 周期类型
@@ -104,6 +91,12 @@ public class TokenLimit extends BaseEntity {
     private Integer maxRequests;
 
     /**
+     * 已用请求次数
+     */
+    @Column(name = "used_requests")
+    private Integer usedRequests = 0;
+
+    /**
      * 超限动作
      */
     @Enumerated(EnumType.STRING)
@@ -117,31 +110,11 @@ public class TokenLimit extends BaseEntity {
     private Long switchModelId;
 
     /**
-     * 降级切换渠道 ID
-     */
-    @Column(name = "switch_channel_id")
-    private Long switchChannelId;
-
-    /**
      * 限额状态
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
     private LimitStatus status = LimitStatus.ACTIVE;
-
-    /**
-     * 限额层级枚举
-     */
-    public enum ScopeType {
-        /** 团队级 */
-        TEAM,
-        /** 用户级 */
-        USER,
-        /** API Key 级 */
-        API_KEY,
-        /** 用户×渠道级 */
-        USER_CHANNEL
-    }
 
     /**
      * 周期类型枚举
