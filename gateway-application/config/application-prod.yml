@@ -1,0 +1,27 @@
+# ===================================================================
+# 生产环境配置
+# ===================================================================
+
+spring:
+  # 启用 Redis 缓存
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000  # 5分钟 TTL
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:0}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
+
+  autoconfigure:
+    exclude:
+      # 不再排除 Redis，让 Spring Boot 自动配置

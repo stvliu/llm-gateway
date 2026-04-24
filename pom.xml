@@ -283,6 +283,10 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot-maven-plugin.version}</version>
+                    <configuration>
+                        <!-- 父 pom 没有主类，只在子模块运行 -->
+                        <skip>true</skip>
+                    </configuration>
                 </plugin>
 
                 <!-- JaCoCo 覆盖率插件 -->

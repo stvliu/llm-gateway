@@ -24,7 +24,24 @@
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests)",
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests -U)",
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -pl gateway-application -am -DskipTests)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(.specify/scripts/bash/create-new-feature.sh 安全零信任 *)",
+      "Bash(xargs ls *)",
+      "Bash(xargs dirname *)",
+      "Bash(./mvnw test *)",
+      "Bash(java -jar gateway-application/target/gateway-application-*.jar)",
+      "Bash(java -cp \"target/classes:$\\(mvn dependency:build-classpath -Dmdep.outputFile=/dev/stdout -q \\)\" com.codingas.gateway.app.GatewayApplication)",
+      "Bash(./mvnw flyway:migrate -pl gateway-application -q)",
+      "Bash(xargs -I{} sh -c 'grep -l \"FailedAttemptTracker\\\\|@Configuration\\\\|@Bean\\\\|@Primary\\\\|@Profile\" \"{}\" 2>/dev/null')",
+      "Bash(xargs -I{} sh -c 'grep -l \"implements.*FailedAttemptTracker\\\\|extends.*FailedAttemptTracker\" \"{}\" 2>/dev/null')",
+      "Bash(xargs -I{} sh -c 'grep -n \"FailedAttemptTracker\\\\|@Configuration\\\\|@Bean\\\\|@Primary\\\\|@Profile\" \"{}\" 2>/dev/null')",
+      "Bash(xargs -I{} sh -c 'grep -l \"RedisFailedAttemptTracker\\\\|@Profile.*failed\\\\|@Primary.*FailedAttempt\" \"{}\" 2>/dev/null')",
+      "Bash(xargs -I{} sh -c 'grep -l \"@Profile\" \"{}\" 2>/dev/null')",
+      "Bash(pkill -f \"spring-boot:run\")",
+      "Bash(pkill -f \"gateway-application\")",
+      "Bash(java -cp gateway-application/target/gateway-application-1.0.0-SNAPSHOT.jar org.springframework.boot.loader.launch.JarLauncher)",
+      "Bash(pkill -f \"GatewayApplication\")",
+      "Bash(rm -rf /mnt/e/workspace/llm-gateway/gateway-*/target)"
     ]
   }
 }

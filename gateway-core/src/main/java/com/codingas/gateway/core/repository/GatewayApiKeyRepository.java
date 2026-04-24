@@ -1,9 +1,14 @@
 package com.codingas.gateway.core.repository;
 
 import com.codingas.gateway.core.domain.entity.GatewayApiKey;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,4 +37,10 @@ public interface GatewayApiKeyRepository extends JpaRepository<GatewayApiKey, Lo
      * 根据 Key 编码查询
      */
     Optional<GatewayApiKey> findByKeyCode(String keyCode);
+
+    /**
+     * 查询即将过期的 API Key（在指定时间范围内且未过期的）
+     */
+    @Query("SELECT k FROM GatewayApiKey k WHERE k.expiresAt IS NOT NULL AND k.expiresAt > :now AND k.expiresAt <= :threshold AND k.status = 'ACTIVE'")
+    Page<GatewayApiKey> findExpiringKeys(@Param("now") Instant now, @Param("threshold") Instant threshold, Pageable pageable);
 }

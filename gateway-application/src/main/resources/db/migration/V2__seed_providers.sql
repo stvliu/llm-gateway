@@ -2,7 +2,7 @@
 -- 初始化提供商种子数据
 
 -- OpenAI Provider
-INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority)
+INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority, created_by, created_at, updated_by, updated_at)
 VALUES (
     'openai',
     'OpenAI',
@@ -11,11 +11,15 @@ VALUES (
     'https://openai.com',
     'https://platform.openai.com/docs/api-reference',
     'ACTIVE',
-    100
+    100,
+    0,
+    CURRENT_TIMESTAMP,
+    NULL,
+    CURRENT_TIMESTAMP
 );
 
 -- Anthropic Provider
-INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority)
+INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority, created_by, created_at, updated_by, updated_at)
 VALUES (
     'anthropic',
     'Anthropic',
@@ -24,11 +28,15 @@ VALUES (
     'https://anthropic.com',
     'https://docs.anthropic.com/en/api/reference',
     'ACTIVE',
-    90
+    90,
+    0,
+    CURRENT_TIMESTAMP,
+    NULL,
+    CURRENT_TIMESTAMP
 );
 
 -- Azure OpenAI Provider
-INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority)
+INSERT INTO providers (provider_code, provider_name, provider_type, base_url, website_url, api_doc_url, status, priority, created_by, created_at, updated_by, updated_at)
 VALUES (
     'azure-openai',
     'Azure OpenAI',
@@ -37,5 +45,9 @@ VALUES (
     'https://azure.microsoft.com/services/cognitive-services/openai/',
     'https://learn.microsoft.com/azure/ai-services/openai/reference',
     'ACTIVE',
-    80
+    80,
+    0,
+    CURRENT_TIMESTAMP,
+    NULL,
+    CURRENT_TIMESTAMP
 );

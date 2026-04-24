@@ -53,6 +53,13 @@ public class User extends BaseEntity {
     private UserStatus status = UserStatus.ACTIVE;
 
     /**
+     * 角色
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 32)
+    private UserRole role = UserRole.USER;
+
+    /**
      * 邮箱已验证
      */
     @Column(name = "email_verified", nullable = false)
@@ -88,5 +95,17 @@ public class User extends BaseEntity {
         LOCKED,
         /** 已删除 */
         DELETED
+    }
+
+    /**
+     * 用户角色枚举
+     */
+    public enum UserRole {
+        /** 管理员 */
+        ADMIN,
+        /** 普通用户 */
+        USER,
+        /** 只读用户 */
+        READONLY
     }
 }
