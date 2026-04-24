@@ -66,6 +66,9 @@ GatewayException (根异常)
 ## Active Technologies
 - Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) (001-provider-adapter)
 - H2（开发调试）/ PostgreSQL 14+（生产） (001-provider-adapter)
+- Java 21 + Spring Boot 3.5.x, WebClient (spring-boot-starter-webflux), Reactor (Project Reactor), Jackson (002-openai-anthropic-adapters)
+- PostgreSQL 14+ (provider credentials, encrypted API keys) (002-openai-anthropic-adapters)
+- Java 21 + Spring Boot 3.5.x, Spring MVC (spring-boot-starter-web), RestClient, OkHttp 4.12.0, Jackson (002-openai-anthropic-adapters)
 
 ## Recent Changes
 - 001-provider-adapter: Added Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化)

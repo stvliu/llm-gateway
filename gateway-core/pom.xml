@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.llm.gateway</groupId>
+        <groupId>com.codingas.gateway</groupId>
         <artifactId>gateway</artifactId>
         <version>${revision}</version>
     </parent>
@@ -19,7 +19,7 @@
     <dependencies>
         <!-- Adapter 模块 -->
         <dependency>
-            <groupId>com.llm.gateway</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-adapter</artifactId>
             <version>${revision}</version>
         </dependency>
@@ -87,11 +87,5 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- H2 测试用 -->
-        <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 </project>

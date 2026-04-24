@@ -10,27 +10,17 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>gateway-adapter</artifactId>
+    <artifactId>gateway-dispatch</artifactId>
     <packaging>jar</packaging>
 
-    <name>Gateway Adapter</name>
-    <description>LLM-Gateway Adapter Layer - LLM Provider Adapters (OpenAI, Anthropic, etc.)</description>
+    <name>Gateway Dispatch</name>
+    <description>LLM-Gateway Dispatch Layer - Protocol Translation and Error Adaptation</description>
 
     <dependencies>
-        <!-- Spring Boot Web (includes spring-web, spring-context) -->
+        <!-- Spring Boot Web (MVC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- OkHttp for streaming SSE -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp-sse</artifactId>
         </dependency>
 
         <!-- JSON 处理 -->
@@ -43,15 +33,17 @@
             <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
+        <!-- 内部依赖 -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-adapter</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>mockwebserver</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

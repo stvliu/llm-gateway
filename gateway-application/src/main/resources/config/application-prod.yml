@@ -6,7 +6,7 @@
 logging:
   level:
     root: WARN
-    com.llm.gateway: INFO
+    com.codingasgateway: INFO
     org.springframework.web: WARN
     org.hibernate.SQL: WARN
   # JSON 格式日志

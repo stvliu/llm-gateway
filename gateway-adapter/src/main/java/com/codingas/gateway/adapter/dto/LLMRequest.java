@@ -86,6 +86,13 @@ public class LLMRequest {
     private Map<String, Object> extraParams;
 
     /**
+     * 超时时间 (秒)
+     *
+     * <p>覆盖默认超时时间。如果为 null，使用适配器的默认超时。</p>
+     */
+    private Integer timeoutSeconds;
+
+    /**
      * 消息类型
      */
     @Data

@@ -6,8 +6,8 @@
 logging:
   level:
     root: INFO
-    com.llm.gateway: DEBUG
-    com.llm.gateway.adapter: DEBUG
+    com.codingas.gateway: DEBUG
+    com.codingas.gateway.adapter: DEBUG
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE

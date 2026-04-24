@@ -31,4 +31,4 @@ spring.data.redis:
 logging:
   level:
     root: WARN
-    com.llm.gateway: INFO
+    com.codingas.gateway: INFO

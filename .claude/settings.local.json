@@ -9,7 +9,21 @@
       "Bash(curl -s http://localhost:8080/actuator/health)",
       "Bash(curl -s http://localhost:8080/api/v1/providers)",
       "Bash(find gateway-*/src/main/java -name \"*.java\")",
-      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && cat {}')"
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && cat {}')",
+      "Bash(.specify/scripts/bash/create-new-feature.sh 实现OpenAI 适配器、Anthropic 适配器 *)",
+      "Bash(/mnt/d/Java/apache-maven-3.9.14/bin/mvn compile *)",
+      "Bash(/mnt/d/Java/apache-maven-3.9.14/bin/mvn clean *)",
+      "Bash(unzip -l /usr/java/repo/com/squareup/okhttp3/okhttp/4.12.0/okhttp-4.12.0.jar)",
+      "Bash(kill %1)",
+      "Bash(wait)",
+      "Bash(java -cp \"$\\(mvn -q dependency:build-classpath -pl gateway-application -DincludeScope=runtime -Dmdep.outputFile=/dev/stdout\\):gateway-application/target/classes:gateway-web/target/classes:gateway-core/target/classes:gateway-adapter/target/classes\" com.codingas.gateway.app.GatewayApplication)",
+      "Bash(java -jar /mnt/e/workspace/llm-gateway/gateway-application/target/gateway-application-1.0.0-SNAPSHOT.jar)",
+      "Bash(java -jar target/gateway-application-1.0.0-SNAPSHOT.jar)",
+      "Bash(openssl rand *)",
+      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -am -DskipTests)",
+      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests)",
+      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests -U)",
+      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -pl gateway-application -am -DskipTests)"
     ]
   }
 }

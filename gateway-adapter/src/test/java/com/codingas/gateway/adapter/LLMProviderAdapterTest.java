@@ -6,12 +6,8 @@ import com.codingas.gateway.adapter.dto.LLMRequest;
 import com.codingas.gateway.adapter.dto.LLMResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -38,24 +34,33 @@ class LLMProviderAdapterTest {
     }
 
     @Test
-    @DisplayName("LLMProviderAdapter should have chat method returning Mono<LLMResponse>")
+    @DisplayName("LLMProviderAdapter should have chat method")
     void shouldHaveChatMethod() throws NoSuchMethodException {
+        // chat 方法签名: LLMResponse chat(LLMRequest request)
         Method method = LLMProviderAdapter.class.getMethod("chat", LLMRequest.class);
-        assertEquals(Mono.class, method.getReturnType());
+        assertEquals(LLMResponse.class, method.getReturnType());
     }
 
     @Test
-    @DisplayName("LLMProviderAdapter should have chatStream method returning Flux<LLMResponse>")
+    @DisplayName("LLMProviderAdapter should have chatStream method with StreamCallback")
     void shouldHaveChatStreamMethod() throws NoSuchMethodException {
-        Method method = LLMProviderAdapter.class.getMethod("chatStream", LLMRequest.class);
-        assertEquals(Flux.class, method.getReturnType());
+        // chatStream 方法签名: void chatStream(LLMRequest request, StreamCallback callback)
+        Method method = LLMProviderAdapter.class.getMethod("chatStream", LLMRequest.class, StreamCallback.class);
+        assertEquals(void.class, method.getReturnType());
     }
 
     @Test
-    @DisplayName("LLMProviderAdapter should have messages method returning Mono<LLMResponse>")
+    @DisplayName("LLMProviderAdapter should have messages method")
     void shouldHaveMessagesMethod() throws NoSuchMethodException {
         Method method = LLMProviderAdapter.class.getMethod("messages", LLMRequest.class);
-        assertEquals(Mono.class, method.getReturnType());
+        assertEquals(LLMResponse.class, method.getReturnType());
+    }
+
+    @Test
+    @DisplayName("LLMProviderAdapter should have messagesStream method with StreamCallback")
+    void shouldHaveMessagesStreamMethod() throws NoSuchMethodException {
+        Method method = LLMProviderAdapter.class.getMethod("messagesStream", LLMRequest.class, StreamCallback.class);
+        assertEquals(void.class, method.getReturnType());
     }
 
     @Test
@@ -69,6 +74,13 @@ class LLMProviderAdapterTest {
     @DisplayName("LLMProviderAdapter should have isHealthy method returning boolean")
     void shouldHaveIsHealthyMethod() throws NoSuchMethodException {
         Method method = LLMProviderAdapter.class.getMethod("isHealthy");
+        assertEquals(boolean.class, method.getReturnType());
+    }
+
+    @Test
+    @DisplayName("LLMProviderAdapter should have checkConnection method returning boolean")
+    void shouldHaveCheckConnectionMethod() throws NoSuchMethodException {
+        Method method = LLMProviderAdapter.class.getMethod("checkConnection");
         assertEquals(boolean.class, method.getReturnType());
     }
 

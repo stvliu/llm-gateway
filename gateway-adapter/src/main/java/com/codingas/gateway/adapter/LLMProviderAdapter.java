@@ -1,12 +1,9 @@
 package com.codingas.gateway.adapter;
 
 import com.codingas.gateway.adapter.common.ProviderCapabilities;
-import com.codingas.gateway.adapter.common.ProviderException;
 import com.codingas.gateway.adapter.common.ProviderType;
 import com.codingas.gateway.adapter.dto.LLMRequest;
 import com.codingas.gateway.adapter.dto.LLMResponse;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 /**
  * LLM 提供商适配器接口
@@ -15,8 +12,8 @@ import reactor.core.publisher.Mono;
  *
  * <p>设计原则:</p>
  * <ul>
- *   <li>使用响应式编程 (Reactor) 支持高并发</li>
- *   <li>流式响应使用 Flux 返回</li>
+ *   <li>使用 Spring MVC + RestClient (同步) 或 OkHttp (流式) 进行 HTTP 调用</li>
+ *   <li>流式响应使用 StreamCallback 回调</li>
  *   <li>协议转换在适配器层完成</li>
  * </ul>
  *
@@ -39,28 +36,36 @@ public interface LLMProviderAdapter {
     ProviderType getProviderType();
 
     /**
-     * 发送非流式请求
+     * 发送非流式请求 (使用 RestClient)
      *
      * @param request LLM 请求
      * @return LLM 响应
      */
-    Mono<LLMResponse> chat(LLMRequest request);
+    LLMResponse chat(LLMRequest request);
 
     /**
-     * 发送流式请求
+     * 发送流式请求 (使用 OkHttp)
      *
      * @param request LLM 请求
-     * @return 流式响应事件流
+     * @param callback 流式响应回调
      */
-    Flux<LLMResponse> chatStream(LLMRequest request);
+    void chatStream(LLMRequest request, StreamCallback callback);
 
     /**
-     * 发送 Anthropic 消息 API 请求
+     * 发送 Anthropic 消息 API 请求 (使用 RestClient)
      *
      * @param request LLM 请求
      * @return LLM 响应 (Anthropic 格式)
      */
-    Mono<LLMResponse> messages(LLMRequest request);
+    LLMResponse messages(LLMRequest request);
+
+    /**
+     * 发送 Anthropic 流式请求 (使用 OkHttp)
+     *
+     * @param request LLM 请求
+     * @param callback 流式响应回调
+     */
+    void messagesStream(LLMRequest request, StreamCallback callback);
 
     /**
      * 检查适配器是否可用
@@ -75,6 +80,15 @@ public interface LLMProviderAdapter {
      * @return true 表示 Provider 可用
      */
     boolean isHealthy();
+
+    /**
+     * 执行连接检查
+     *
+     * <p>实际验证与提供商的连接是否正常，用于故障转移判断。</p>
+     *
+     * @return true 如果连接正常
+     */
+    boolean checkConnection();
 
     /**
      * 获取 Provider 能力描述

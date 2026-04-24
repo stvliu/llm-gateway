@@ -1475,7 +1475,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | 观察者 | OBSERVER | 仅查看用量和日志 |
 | 财务管理员 | FINANCE_ADMIN | 额度配置、用量查看 |
 
-#### 6.7.3 Member（成员）
+#### 6.7.3 UserRole（用户角色关联）
 
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
@@ -1511,6 +1511,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | api_doc_url | VARCHAR(512) | API 文档 URL | NULL |
 | priority | INT | 优先级 | DEFAULT 100，数值越大越优先 |
 | status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 **业务说明**: Provider 是全局共享的，所有用户可见。`provider_type` 决定使用哪个 Adapter 实现类。
 
@@ -1526,6 +1530,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | priority | INT | 优先级（用于轮换） | DEFAULT 100 |
 | status | ENUM | 状态 | ACTIVE / DISABLED / EXHAUSTED / EXPIRED / DELETED |
 | last_used_at | TIMESTAMP | 最后使用时间 | NULL |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 **业务规则**:
 - `api_key` 使用 AES-256 加密存储
@@ -1548,6 +1556,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | last_used_at | TIMESTAMP | 最后使用时间 | NULL |
 | model_whitelist | JSON | 允许使用的模型列表 | NULL 表示全部允许 |
 | ip_whitelist | JSON | IP 白名单（支持 CIDR） | NULL 表示全部允许 |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 **业务规则**:
 - `key_hash` 用于验证 API 调用时传入的 Key
@@ -1566,6 +1578,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | max_retry | INT | 最大重试次数 | DEFAULT 2 |
 | health_check_interval | INT | 健康检查间隔（秒） | DEFAULT 30 |
 | description | TEXT | 描述 | NULL |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 #### 6.7.9 RouteGroupProvider（路由关联）
 
@@ -1580,6 +1596,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | health_status | ENUM | 健康状态 | HEALTHY / DEGRADED / UNHEALTHY |
 | consecutive_failures | INT | 连续失败次数 | DEFAULT 0 |
 | last_health_check_at | TIMESTAMP | 最后健康检查时间 | NULL |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 #### 6.7.10 TokenLimit（Token限额）
 
@@ -1602,11 +1622,10 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | exceeded_action | ENUM | 超限动作 | REJECT / DOWNGRADE |
 | switch_model_id | BIGINT | 降级切换模型 | exceeded_action 为 DOWNGRADE 时必填 |
 | status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-| channel | channel:create, channel:read, channel:update, channel:delete |
-| token_limit | token_limit:create, token_limit:read, token_limit:update, token_limit:delete |
-| token | token:create, token:read, token:revoke |
-| log | log:read, audit:read |
-| setting | setting:read, setting:update |
+| created_by | BIGINT | 创建人 | FK → users.id |
+| created_at | TIMESTAMP | 创建时间 | NOT NULL |
+| updated_by | BIGINT | 更新人 | FK → users.id |
+| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
 
 ---
 

@@ -8,7 +8,7 @@
     <!-- 属性定义 -->
     <springProperty scope="context" name="APP_NAME" source="spring.application.name" defaultValue="llm-gateway"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"/>
-    <property name="JSON_LOG_PATTERN" value="{"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}","level":"%level","thread":"%thread","logger":"%logger{36}","message":"%msg"}%n"/>
+    <property name="JSON_LOG_PATTERN" value="{&quot;timestamp&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}&quot;,&quot;level&quot;:&quot;%level&quot;,&quot;thread&quot;:&quot;%thread&quot;,&quot;logger&quot;:&quot;%logger{36}&quot;,&quot;message&quot;:&quot;%msg&quot;}%n"/>
 
     <!-- 控制台 Appender -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -56,8 +56,8 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.llm.gateway" level="DEBUG"/>
-        <logger name="com.llm.gateway.adapter" level="DEBUG"/>
+        <logger name="com.codingas.gateway" level="DEBUG"/>
+        <logger name="com.codingas.gateway.adapter" level="DEBUG"/>
         <logger name="org.springframework.web" level="DEBUG"/>
         <logger name="org.hibernate.SQL" level="DEBUG"/>
     </springProfile>
@@ -67,7 +67,7 @@
         <root level="WARN">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.llm.gateway" level="INFO"/>
+        <logger name="com.codingas.gateway" level="INFO"/>
     </springProfile>
 
     <!-- 生产环境配置 -->
@@ -75,7 +75,7 @@
         <root level="WARN">
             <appender-ref ref="ASYNC_FILE"/>
         </root>
-        <logger name="com.llm.gateway" level="INFO"/>
+        <logger name="com.codingas.gateway" level="INFO"/>
         <logger name="org.springframework" level="WARN"/>
         <logger name="org.hibernate" level="WARN"/>
     </springProfile>
@@ -85,6 +85,6 @@
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.llm.gateway" level="DEBUG"/>
+        <logger name="com.codingas.gateway" level="DEBUG"/>
     </springProfile>
 </configuration>

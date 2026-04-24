@@ -23,7 +23,7 @@ data:
     logging:
       level:
         root: WARN
-        com.llm.gateway: INFO
+        com.codingas.gateway: INFO
 
     # Actuator
     management:

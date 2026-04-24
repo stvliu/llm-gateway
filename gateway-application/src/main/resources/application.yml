@@ -25,6 +25,13 @@ server:
       enabled: true
   # 关闭信号
   shutdown: graceful
+  # Tomcat 连接数配置
+  tomcat:
+    threads:
+      max: 200
+      min-spare: 10
+    max-connections: 10000
+    accept-count: 100
 
 # ===================================================================
 # Spring Boot 应用配置
@@ -134,7 +141,7 @@ sa-token:
   # 开启注解鉴权
   annotation-enabled: true
   # 错误处理
-  error-handler: com.llm.gateway.web.config.SaTokenErrorHandler
+  error-handler: com.codingas.gateway.web.config.SaTokenErrorHandler
 
 # ===================================================================
 # API 限流配置
@@ -148,6 +155,11 @@ gateway.rate-limit:
 # 网关配置
 # ===================================================================
 gateway:
+  # 安全配置 (必须设置 encryption-key)
+  security:
+    # AES-256 加密密钥 (Base64 编码, 32 字节)
+    # 生成方式: openssl rand -base64 32
+    encryption-key: ${ENCRYPTION_KEY:}
   # LLM 路由配置
   llm:
     routing-strategy: PRIORITY
@@ -155,6 +167,15 @@ gateway:
     timeout-seconds: 30
     # 请求体大小限制
     max-request-body-size: 10MB
+  # 适配器配置
+  adapter:
+    openai:
+      base-url: https://api.openai.com
+      timeout-seconds: 30
+    anthropic:
+      base-url: https://api.anthropic.com
+      version: 2023-06-01
+      timeout-seconds: 30
   # CORS 配置
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
@@ -175,7 +196,7 @@ logging:
   level:
     root: INFO
     # 特定包的日志级别
-    com.llm.gateway: DEBUG
+    com.codingas.gateway: DEBUG
     org.springframework.web: INFO
     org.hibernate.SQL: WARN
     org.hibernate.type.descriptor.sql.BasicBinder: WARN
@@ -223,14 +244,3 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
   show-actuator: false
-
-# ===================================================================
-# 连接数配置
-# ===================================================================
-server:
-  tomcat:
-    threads:
-      max: 200
-      min-spare: 10
-    max-connections: 10000
-    accept-count: 100

@@ -6,7 +6,7 @@
 logging:
   level:
     root: WARN
-    com.llm.gateway: INFO
+    com.codingas.gateway: INFO
     org.springframework.web: WARN
 
 # 数据库 - 使用 H2 内存数据库

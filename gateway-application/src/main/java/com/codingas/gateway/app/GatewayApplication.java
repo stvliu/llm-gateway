@@ -2,7 +2,9 @@ package com.codingas.gateway.app;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
@@ -10,10 +12,12 @@ import org.springframework.scheduling.annotation.EnableAsync;
  *
  * <p>企业级 AI 模型 API 聚合分发与智能路由网关，支持 OpenAI 和 Anthropic 双 API 标准。</p>
  *
- * @see <a href="https://github.com/llm-gateway/llm-gateway">LLM-Gateway</a>
+ * @see <a href="https://github.com/stvliu/llm-gateway">LLM-Gateway</a>
  */
-@SpringBootApplication(scanBasePackages = "com.llm.gateway")
-@ConfigurationPropertiesScan(basePackages = "com.llm.gateway")
+@SpringBootApplication(scanBasePackages = "com.codingas.gateway")
+@ConfigurationPropertiesScan(basePackages = "com.codingas.gateway")
+@EnableJpaRepositories(basePackages = "com.codingas.gateway")
+@EntityScan(basePackages = "com.codingas.gateway")
 @EnableAsync
 public class GatewayApplication {
 

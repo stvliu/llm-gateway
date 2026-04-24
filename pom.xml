@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.llm.gateway</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
@@ -13,15 +13,18 @@
     <description>Enterprise AI Model API Gateway - OpenAI and Anthropic Compatible</description>
 
     <modules>
-        <module>gateway-application</module>
-        <module>gateway-web</module>
-        <module>gateway-core</module>
         <module>gateway-adapter</module>
+        <module>gateway-core</module>
+        <module>gateway-web</module>
+        <module>gateway-dispatch</module>
+        <module>gateway-application</module>
     </modules>
 
     <properties>
-        <!-- 版本管理 -->
+        <!-- 项目版本 -->
         <revision>1.0.0-SNAPSHOT</revision>
+
+        <!-- Java 配置 -->
         <java.version>21</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -30,23 +33,15 @@
         <!-- Spring Boot 版本 -->
         <spring-boot.version>3.5.13</spring-boot.version>
 
-        <!-- 第三方库版本 -->
-        <logback.version>1.5.12</logback.version>
-        <slf4j.version>2.0.16</slf4j.version>
-        <jackson.version>2.18.2</jackson.version>
-        <hibernate.version>7.0.4.Final</hibernate.version>
-        <postgresql.version>42.7.4</postgresql.version>
-        <h2.version>2.3.232</h2.version>
+        <!-- 第三方库版本（非 Spring Boot 生态） -->
         <redisson.version>3.52.0</redisson.version>
-        <lombok.version>1.18.36</lombok.version>
+        <okhttp.version>4.12.0</okhttp.version>
         <springdoc.version>2.8.4</springdoc.version>
         <sa-token.version>1.45.0</sa-token.version>
         <micrometer.version>1.12.6</micrometer.version>
         <opentelemetry.version>1.47.0</opentelemetry.version>
-        <flyway.version>9.22.3</flyway.version>
         <testcontainers.version>1.20.4</testcontainers.version>
-        <jacoco.version>0.8.12</jacoco.version>
-        <snakeyaml.version>2.3</snakeyaml.version>
+        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
 
         <!-- Maven 插件版本 -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -61,7 +56,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- Spring Boot 依赖 -->
+            <!-- Spring Boot 依赖 BOM -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
@@ -70,70 +65,29 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Spring Cloud (如需要) -->
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>2024.0.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- 日志 -->
-            <dependency>
-                <groupId>ch.qos.logback</groupId>
-                <artifactId>logback-classic</artifactId>
-                <version>${logback.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>${slf4j.version}</version>
-            </dependency>
-
-            <!-- JSON -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.fasterxml.jackson.datatype</groupId>
-                <artifactId>jackson-datatype-jsr310</artifactId>
-                <version>${jackson.version}</version>
-            </dependency>
-
-            <!-- Hibernate ORM -->
-            <dependency>
-                <groupId>org.hibernate.orm</groupId>
-                <artifactId>hibernate-core</artifactId>
-                <version>${hibernate.version}</version>
-            </dependency>
-
-            <!-- 数据库驱动 -->
-            <dependency>
-                <groupId>org.postgresql</groupId>
-                <artifactId>postgresql</artifactId>
-                <version>${postgresql.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.h2database</groupId>
-                <artifactId>h2</artifactId>
-                <version>${h2.version}</version>
-            </dependency>
-
             <!-- Redis -->
             <dependency>
-                    <groupId>org.redisson</groupId>
-                    <artifactId>redisson-spring-boot3-starter</artifactId>
-                    <version>${redisson.version}</version>
+                <groupId>org.redisson</groupId>
+                <artifactId>redisson-spring-boot3-starter</artifactId>
+                <version>${redisson.version}</version>
             </dependency>
 
-            <!-- Lombok -->
+            <!-- HTTP 客户端 -->
             <dependency>
-                <groupId>org.projectlombok</groupId>
-                <artifactId>lombok</artifactId>
-                <version>${lombok.version}</version>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>okhttp-sse</artifactId>
+                <version>${okhttp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.squareup.okhttp3</groupId>
+                <artifactId>mockwebserver</artifactId>
+                <version>${okhttp.version}</version>
+                <scope>test</scope>
             </dependency>
 
             <!-- OpenAPI 文档 -->
@@ -153,11 +107,6 @@
             <!-- 可观测性 -->
             <dependency>
                 <groupId>io.micrometer</groupId>
-                <artifactId>micrometer-registry-prometheus</artifactId>
-                <version>${micrometer.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>io.micrometer</groupId>
                 <artifactId>micrometer-tracing-bridge-otel</artifactId>
                 <version>${micrometer.version}</version>
             </dependency>
@@ -172,24 +121,15 @@
                 <version>${opentelemetry.version}</version>
             </dependency>
 
-            <!-- 数据库迁移 -->
+            <!-- 日志 -->
             <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-core</artifactId>
-                <version>${flyway.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-database-h2</artifactId>
-                <version>${flyway.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.flywaydb</groupId>
-                <artifactId>flyway-database-postgresql</artifactId>
-                <version>${flyway.version}</version>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>${logstash-logback-encoder.version}</version>
             </dependency>
 
-            <!-- 测试 -->
+
+            <!-- 测试工具 -->
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
@@ -220,29 +160,12 @@
                 <artifactId>toxiproxy</artifactId>
                 <version>${testcontainers.version}</version>
             </dependency>
-            <dependency>
-                <groupId>org.mockito</groupId>
-                <artifactId>mockito-core</artifactId>
-                <version>5.15.2</version>
-            </dependency>
-            <dependency>
-                <groupId>org.assertj</groupId>
-                <artifactId>assertj-core</artifactId>
-                <version>3.27.3</version>
-            </dependency>
 
             <!-- 安全扫描 -->
             <dependency>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
                 <version>10.0.4</version>
-            </dependency>
-
-            <!-- YAML 解析 (用于配置) -->
-            <dependency>
-                <groupId>org.yaml</groupId>
-                <artifactId>snakeyaml</artifactId>
-                <version>${snakeyaml.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -360,14 +283,6 @@
                     <groupId>org.springframework.boot</groupId>
                     <artifactId>spring-boot-maven-plugin</artifactId>
                     <version>${spring-boot-maven-plugin.version}</version>
-                    <configuration>
-                        <exclude>
-                            <exclude>
-                                <groupId>org.projectlombok</groupId>
-                                <artifactId>lombok</artifactId>
-                            </exclude>
-                        </exclude>
-                    </configuration>
                 </plugin>
 
                 <!-- JaCoCo 覆盖率插件 -->
@@ -395,7 +310,6 @@
         </pluginManagement>
 
         <plugins>
-            <!-- JaCoCo -->
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -457,8 +371,8 @@
 
     <!-- SCM 配置 -->
     <scm>
-        <connection>scm:git@github.com:llm-gateway/llm-gateway.git</connection>
-        <developerConnection>scm:git@github.com:llm-gateway/llm-gateway.git</developerConnection>
-        <url>https://github.com/llm-gateway/llm-gateway</url>
+        <connection>scm:git@github.com:stvliu/llm-gateway.git</connection>
+        <developerConnection>scm:git@github.com:stvliu/llm-gateway.git</developerConnection>
+        <url>https://github.com/stvliuy/llm-gateway</url>
     </scm>
 </project>
