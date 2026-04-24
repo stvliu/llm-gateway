@@ -1,116 +1,50 @@
 package com.codingas.gateway.core.security.encryption;
 
-import jakarta.annotation.PostConstruct;
+import com.codingas.gateway.core.infrastructure.encryption.EncryptionService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
-import java.security.SecureRandom;
-import java.util.Base64;
+import java.security.MessageDigest;
 
 /**
  * API Key 加密服务
  *
- * <p>使用 AES-256-GCM 对 GatewayApiKey 和 ProviderApiKey 进行加密存储。</p>
- * <p>密钥通过环境变量 API_KEY_ENCRYPTION_KEY 注入，不硬编码。</p>
+ * <p>封装 API Key 的加密/解密和哈希操作。</p>
+ * <p>实际加密委托给 {@link EncryptionService} (AES-256-GCM 实现)。</p>
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ApiKeyEncryptionService {
 
-    private static final String ALGORITHM = "AES/GCM/NoPadding";
-    private static final int GCM_IV_LENGTH = 12;
-    private static final int GCM_TAG_LENGTH = 128;
-    private static final String ENV_KEY = "API_KEY_ENCRYPTION_KEY";
-
-    private SecretKey secretKey;
-    private final SecureRandom secureRandom = new SecureRandom();
-
-    @PostConstruct
-    public void init() {
-        String keyBase64 = System.getenv(ENV_KEY);
-        if (keyBase64 == null || keyBase64.isBlank()) {
-            log.warn("API_KEY_ENCRYPTION_KEY not set, generating temporary key for development");
-            // Generate a temporary key for development only
-            KeyGenerator keyGen;
-            try {
-                keyGen = KeyGenerator.getInstance("AES");
-                keyGen.init(256, secureRandom);
-                secretKey = keyGen.generateKey();
-            } catch (Exception e) {
-                throw new IllegalStateException("Failed to generate encryption key", e);
-            }
-        } else {
-            byte[] keyBytes = Base64.getDecoder().decode(keyBase64);
-            if (keyBytes.length != 32) {
-                throw new IllegalStateException("API_KEY_ENCRYPTION_KEY must be 32 bytes (256 bits)");
-            }
-            secretKey = new SecretKeySpec(keyBytes, "AES");
-        }
-        log.info("ApiKeyEncryptionService initialized with AES-256-GCM");
-    }
+    private final EncryptionService encryptionService;
 
     /**
      * 加密 API Key
      *
      * @param plainText 明文 API Key
-     * @return 密文 (格式: base64(iv):base64(ciphertext))
+     * @return 密文
      */
     public String encrypt(String plainText) {
         if (plainText == null || plainText.isBlank()) {
             throw new IllegalArgumentException("Plain text cannot be null or empty");
         }
-        try {
-            byte[] iv = new byte[GCM_IV_LENGTH];
-            secureRandom.nextBytes(iv);
-
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
-
-            byte[] cipherText = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
-
-            String ivBase64 = Base64.getEncoder().encodeToString(iv);
-            String cipherBase64 = Base64.getEncoder().encodeToString(cipherText);
-            return ivBase64 + ":" + cipherBase64;
-        } catch (Exception e) {
-            throw new IllegalStateException("Encryption failed", e);
-        }
+        return encryptionService.encrypt(plainText);
     }
 
     /**
      * 解密 API Key
      *
-     * @param encryptedText 密文 (格式: base64(iv):base64(ciphertext))
+     * @param encryptedText 密文
      * @return 明文 API Key
      */
     public String decrypt(String encryptedText) {
         if (encryptedText == null || encryptedText.isBlank()) {
             throw new IllegalArgumentException("Encrypted text cannot be null or empty");
         }
-        try {
-            String[] parts = encryptedText.split(":");
-            if (parts.length != 2) {
-                throw new IllegalArgumentException("Invalid encrypted text format");
-            }
-
-            byte[] iv = Base64.getDecoder().decode(parts[0]);
-            byte[] cipherText = Base64.getDecoder().decode(parts[1]);
-
-            Cipher cipher = Cipher.getInstance(ALGORITHM);
-            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, iv);
-            cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
-
-            byte[] plainText = cipher.doFinal(cipherText);
-            return new String(plainText, StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            throw new IllegalStateException("Decryption failed", e);
-        }
+        return encryptionService.decrypt(encryptedText);
     }
 
     /**
@@ -143,7 +77,7 @@ public class ApiKeyEncryptionService {
             throw new IllegalArgumentException("API Key cannot be null or empty");
         }
         try {
-            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(apiKey.getBytes(StandardCharsets.UTF_8));
             return bytesToHex(hash);
         } catch (Exception e) {

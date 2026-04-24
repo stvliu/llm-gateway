@@ -1,10 +1,12 @@
 package com.codingas.gateway.core.infrastructure.encryption;
 
 import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
@@ -22,7 +24,9 @@ import java.util.Base64;
  * </ul>
  *
  * <p>加密格式: Base64(IV || 密文 || Auth Tag)</p>
+ * <p>密钥获取优先级: 1. Spring 配置 2. 环境变量 ENCRYPTION_KEY 3. 开发环境临时密钥</p>
  */
+@Slf4j
 @Component
 public class Aes256EncryptionService implements EncryptionService {
 
@@ -30,6 +34,7 @@ public class Aes256EncryptionService implements EncryptionService {
     private static final int KEY_SIZE = 256;
     private static final int IV_SIZE = 12; // 96 bits
     private static final int TAG_SIZE = 128; // 128 bits
+    private static final String ENV_KEY = "ENCRYPTION_KEY";
 
     @Value("${gateway.security.encryption-key:#{null}}")
     private String encryptionKey;
@@ -39,16 +44,26 @@ public class Aes256EncryptionService implements EncryptionService {
 
     @PostConstruct
     public void init() {
-        if (encryptionKey == null || encryptionKey.isBlank()) {
-            throw new IllegalStateException(
-                "gateway.security.encryption-key must be configured for AES-256 encryption");
+        // 优先级: 1. Spring 配置
+        String keySource = encryptionKey;
+        //2. 开发临时密钥
+        if (keySource == null || keySource.isBlank()) {
+            log.warn("No encryption key configured (gateway.security.encryption-key or ENCRYPTION_KEY), generating temporary key for development only");
+            try {
+                KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+                keyGen.init(KEY_SIZE, secureRandom);
+                this.secretKey = new SecretKeySpec(keyGen.generateKey().getEncoded(), "AES");
+            } catch (Exception e) {
+                throw new IllegalStateException("Failed to generate encryption key", e);
+            }
+        } else {
+            byte[] keyBytes = Base64.getDecoder().decode(keySource);
+            if (keyBytes.length != KEY_SIZE / 8) {
+                throw new IllegalStateException("Encryption key must be 256 bits (32 bytes) when decoded");
+            }
+            this.secretKey = new SecretKeySpec(keyBytes, "AES");
+            log.info("Aes256EncryptionService initialized with AES-256-GCM");
         }
-        byte[] keyBytes = Base64.getDecoder().decode(encryptionKey);
-        if (keyBytes.length != KEY_SIZE / 8) {
-            throw new IllegalStateException(
-                "Encryption key must be 256 bits (32 bytes) when decoded");
-        }
-        this.secretKey = new SecretKeySpec(keyBytes, "AES");
     }
 
     @Override
