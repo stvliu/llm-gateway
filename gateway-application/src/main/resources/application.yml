@@ -135,7 +135,7 @@ sa-token:
   # Token 有效期 (秒)
   timeout: 86400
   # Token 活跃时间 (秒)
-  activity-timeout: -1
+  active-timeout: -1
   # 是否允许同一账号并发登录
   concurrent: false
   # 开启注解鉴权

@@ -23,7 +23,8 @@
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -am -DskipTests)",
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests)",
       "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -DskipTests -U)",
-      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -pl gateway-application -am -DskipTests)"
+      "Bash(ENCRYPTION_KEY=\"cw+buH+6lTm8I7yxMtPEAzl1KsYb9RgW49UDR1TtDrE=\" mvn spring-boot:run -pl gateway-application -am -DskipTests)",
+      "Bash(git rm *)"
     ]
   }
 }
