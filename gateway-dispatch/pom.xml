@@ -39,6 +39,11 @@
             <artifactId>gateway-adapter</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-core</artifactId>
+            <version>${revision}</version>
+        </dependency>
 
         <!-- 测试 -->
         <dependency>
