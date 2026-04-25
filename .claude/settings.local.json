@@ -41,7 +41,17 @@
       "Bash(pkill -f \"gateway-application\")",
       "Bash(java -cp gateway-application/target/gateway-application-1.0.0-SNAPSHOT.jar org.springframework.boot.loader.launch.JarLauncher)",
       "Bash(pkill -f \"GatewayApplication\")",
-      "Bash(rm -rf /mnt/e/workspace/llm-gateway/gateway-*/target)"
+      "Bash(rm -rf /mnt/e/workspace/llm-gateway/gateway-*/target)",
+      "Bash(curl -v --connect-timeout 10 https://downloads.claude.ai/claude-code-releases/latest)",
+      "Bash(curl -v --connect-timeout 5 https://api.github.com/repos/anthropics/claude-code/releases/latest)",
+      "Bash(curl -s --connect-timeout 10 https://api.github.com/repos/anthropics/claude-code/releases/latest)",
+      "Read(//tmp/**)",
+      "Bash(curl -L --connect-timeout 30 -o claude-update.tar.gz https://github.com/anthropics/claude-code/releases/download/v2.1.119/claude-linux-x64.tar.gz)",
+      "mcp__plugin_ecc_github__list_commits",
+      "Bash(git *)",
+      "Bash(xargs cat *)",
+      "Bash(./mvnw validate *)",
+      "Bash(gh auth *)"
     ]
   }
 }
