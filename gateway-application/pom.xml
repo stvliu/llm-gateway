@@ -17,10 +17,17 @@
     <description>LLM-Gateway Application Entry Point</description>
 
     <dependencies>
-        <!-- Web 模块 -->
+        <!-- API 模块 -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-api</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- Security 模块 -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-security</artifactId>
             <version>${revision}</version>
         </dependency>
 

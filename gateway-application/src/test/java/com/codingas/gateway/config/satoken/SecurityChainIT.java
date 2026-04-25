@@ -2,10 +2,10 @@ package com.codingas.gateway.config.satoken;
 
 import com.codingas.gateway.app.GatewayApplication;
 import com.codingas.gateway.core.domain.entity.User;
-import com.codingas.gateway.core.security.authentication.AuthenticationService;
-import com.codingas.gateway.core.security.authentication.UserAuthResult;
-import com.codingas.gateway.core.security.interceptor.SecurityInterceptorChain;
-import com.codingas.gateway.core.security.ipblock.IpBlocklistService;
+import com.codingas.gateway.security.authentication.AuthenticationService;
+import com.codingas.gateway.security.authentication.UserAuthResult;
+import com.codingas.gateway.security.interceptor.SecurityInterceptorChain;
+import com.codingas.gateway.security.ipblock.IpBlocklistService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

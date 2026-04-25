@@ -1,6 +1,6 @@
 package com.codingas.gateway.web.advice;
 
-import com.codingas.gateway.core.security.masking.SensitiveDataMasker;
+import com.codingas.gateway.security.masking.SensitiveDataMasker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

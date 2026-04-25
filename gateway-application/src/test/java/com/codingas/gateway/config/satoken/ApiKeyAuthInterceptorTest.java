@@ -1,7 +1,7 @@
 package com.codingas.gateway.config.satoken;
 
-import com.codingas.gateway.core.security.authentication.AuthenticationService;
-import com.codingas.gateway.core.security.authentication.UserAuthResult;
+import com.codingas.gateway.security.authentication.AuthenticationService;
+import com.codingas.gateway.security.authentication.UserAuthResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;

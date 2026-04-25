@@ -1,7 +1,7 @@
 package com.codingas.gateway.config.satoken;
 
-import com.codingas.gateway.core.security.interceptor.AbstractGatewayInterceptor;
-import com.codingas.gateway.core.security.ipblock.IpBlocklistService;
+import com.codingas.gateway.security.interceptor.AbstractGatewayInterceptor;
+import com.codingas.gateway.security.ipblock.IpBlocklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

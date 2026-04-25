@@ -1,4 +1,4 @@
-package com.codingas.gateway.auth.authentication;
+package com.codingas.gateway.security.authentication;
 
 import com.codingas.gateway.core.domain.entity.User;
 

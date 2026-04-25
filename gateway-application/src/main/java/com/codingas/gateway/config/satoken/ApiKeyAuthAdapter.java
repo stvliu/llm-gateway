@@ -1,6 +1,6 @@
 package com.codingas.gateway.config.satoken;
 
-import com.codingas.gateway.core.security.authentication.AuthenticationService;
+import com.codingas.gateway.security.authentication.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

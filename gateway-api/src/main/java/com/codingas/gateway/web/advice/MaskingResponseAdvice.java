@@ -1,6 +1,6 @@
 package com.codingas.gateway.web.advice;
 
-import com.codingas.gateway.core.security.masking.SensitiveDataMasker;
+import com.codingas.gateway.security.masking.SensitiveDataMasker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
