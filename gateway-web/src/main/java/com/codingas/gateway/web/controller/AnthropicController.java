@@ -162,7 +162,6 @@ public class AnthropicController {
                 .temperature(request.getTemperature())
                 .maxTokens(request.getMaxTokens())
                 .stop(request.getStopSequences())
-                .tools(request.getTools())
                 .toolChoice(request.getToolChoice() != null
                         ? request.getToolChoice().getOrDefault("type", "auto").toString()
                         : null)

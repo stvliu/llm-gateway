@@ -161,7 +161,6 @@ public class OpenAIController {
                 .frequencyPenalty(request.getFrequencyPenalty())
                 .presencePenalty(request.getPresencePenalty())
                 .seed(request.getSeed())
-                .tools(request.getTools())
                 .toolChoice(request.getToolChoice())
                 .stream(request.getStream() != null && request.getStream())
                 .build();
