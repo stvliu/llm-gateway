@@ -1,4 +1,4 @@
-package com.codingas.gateway.core.exception;
+package com.codingas.gateway.common.exception;
 
 /**
  * 网关异常根类

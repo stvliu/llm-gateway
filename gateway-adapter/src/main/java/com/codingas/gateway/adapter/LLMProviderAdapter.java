@@ -2,8 +2,8 @@ package com.codingas.gateway.adapter;
 
 import com.codingas.gateway.adapter.common.ProviderCapabilities;
 import com.codingas.gateway.adapter.common.ProviderType;
-import com.codingas.gateway.adapter.dto.LLMRequest;
-import com.codingas.gateway.adapter.dto.LLMResponse;
+import com.codingas.gateway.common.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMResponse;
 
 /**
  * LLM 提供商适配器接口

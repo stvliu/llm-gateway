@@ -1,5 +1,6 @@
 package com.codingas.gateway.core.exception;
 
+import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.core.domain.enums.ProviderErrorType;
 
 /**

@@ -17,10 +17,10 @@
     <description>LLM-Gateway Core Layer - Domain Models, Services, and Business Logic</description>
 
     <dependencies>
-        <!-- Adapter 模块 -->
+        <!-- Gateway Common 模块 -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-adapter</artifactId>
+            <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
 

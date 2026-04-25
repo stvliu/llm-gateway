@@ -1,4 +1,4 @@
-package com.codingas.gateway.core.domain.entity;
+package com.codingas.gateway.common.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

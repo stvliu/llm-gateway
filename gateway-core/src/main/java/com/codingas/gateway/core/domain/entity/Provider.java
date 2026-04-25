@@ -1,5 +1,6 @@
 package com.codingas.gateway.core.domain.entity;
 
+import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.core.domain.enums.ProviderStatus;
 import com.codingas.gateway.core.domain.enums.ProviderType;
 import jakarta.persistence.*;

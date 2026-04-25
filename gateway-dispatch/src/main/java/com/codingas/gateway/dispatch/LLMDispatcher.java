@@ -2,8 +2,8 @@ package com.codingas.gateway.dispatch;
 
 import com.codingas.gateway.adapter.LLMProviderAdapter;
 import com.codingas.gateway.adapter.StreamCallback;
-import com.codingas.gateway.adapter.dto.LLMRequest;
-import com.codingas.gateway.adapter.dto.LLMResponse;
+import com.codingas.gateway.common.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup.RoutingStrategy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

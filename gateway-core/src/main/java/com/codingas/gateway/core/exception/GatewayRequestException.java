@@ -1,5 +1,7 @@
 package com.codingas.gateway.core.exception;
 
+import com.codingas.gateway.common.exception.GatewayException;
+
 /**
  * 请求级异常
  *

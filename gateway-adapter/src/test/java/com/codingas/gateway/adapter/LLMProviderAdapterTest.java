@@ -2,8 +2,8 @@ package com.codingas.gateway.adapter;
 
 import com.codingas.gateway.adapter.common.ProviderCapabilities;
 import com.codingas.gateway.adapter.common.ProviderType;
-import com.codingas.gateway.adapter.dto.LLMRequest;
-import com.codingas.gateway.adapter.dto.LLMResponse;
+import com.codingas.gateway.common.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

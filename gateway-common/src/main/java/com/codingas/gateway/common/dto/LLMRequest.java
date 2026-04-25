@@ -1,4 +1,4 @@
-package com.codingas.gateway.adapter.dto;
+package com.codingas.gateway.common.dto;
 
 import lombok.Builder;
 import lombok.Data;

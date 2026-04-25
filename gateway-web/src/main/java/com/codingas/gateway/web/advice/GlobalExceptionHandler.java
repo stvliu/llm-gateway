@@ -1,6 +1,6 @@
 package com.codingas.gateway.web.advice;
 
-import com.codingas.gateway.core.exception.GatewayException;
+import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.core.exception.GatewayRequestException;
 import com.codingas.gateway.core.exception.ProviderException;
 import com.codingas.gateway.core.exception.SecurityException;

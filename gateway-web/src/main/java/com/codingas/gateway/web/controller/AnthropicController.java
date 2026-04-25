@@ -1,7 +1,7 @@
 package com.codingas.gateway.web.controller;
 
-import com.codingas.gateway.adapter.dto.LLMRequest;
-import com.codingas.gateway.adapter.dto.LLMResponse;
+import com.codingas.gateway.common.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
 import com.codingas.gateway.dispatch.LLMDispatcher;
 import com.codingas.gateway.web.dto.AnthropicMessagesRequest;

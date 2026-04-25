@@ -1,7 +1,7 @@
 package com.codingas.gateway.dispatch;
 
 import com.codingas.gateway.adapter.LLMProviderAdapter;
-import com.codingas.gateway.adapter.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
 
 /**

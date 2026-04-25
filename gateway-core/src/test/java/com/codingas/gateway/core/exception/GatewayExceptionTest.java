@@ -1,5 +1,6 @@
 package com.codingas.gateway.core.exception;
 
+import com.codingas.gateway.common.exception.GatewayException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
