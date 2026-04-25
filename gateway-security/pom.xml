@@ -10,67 +10,49 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>gateway-web</artifactId>
+    <artifactId>gateway-security</artifactId>
     <packaging>jar</packaging>
 
-    <name>Gateway Web</name>
-    <description>LLM-Gateway Web Layer - Controllers and API</description>
+    <name>Gateway Security</name>
+    <description>LLM-Gateway Security Layer - Authentication, Authorization, IP Blocking, Rate Limiting, Audit</description>
 
     <dependencies>
-        <!-- Core 模块 -->
+        <!-- Gateway Common -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- Gateway Core (for entities and repositories) -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-core</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- Dispatch 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-dispatch</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- Adapter 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-adapter</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- Spring Boot Web -->
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
-        <!-- Spring Boot Validation -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
-
-        <!-- OpenAPI 文档 -->
         <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
-
-        <!-- Jackson -->
         <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
         <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

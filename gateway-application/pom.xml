@@ -20,7 +20,7 @@
         <!-- Web 模块 -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-web</artifactId>
+            <artifactId>gateway-api</artifactId>
             <version>${revision}</version>
         </dependency>
 

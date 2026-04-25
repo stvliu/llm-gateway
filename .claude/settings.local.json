@@ -51,7 +51,8 @@
       "Bash(git *)",
       "Bash(xargs cat *)",
       "Bash(./mvnw validate *)",
-      "Bash(gh auth *)"
+      "Bash(gh auth *)",
+      "Bash(xargs -I{} basename {} .java)"
     ]
   }
 }
