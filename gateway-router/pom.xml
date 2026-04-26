@@ -10,81 +10,51 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>gateway-api</artifactId>
+    <artifactId>gateway-router</artifactId>
     <packaging>jar</packaging>
 
-    <name>Gateway API</name>
-    <description>LLM-Gateway API Layer - REST Controllers and API Endpoints</description>
+    <name>Gateway Router</name>
+    <description>LLM-Gateway Router Layer - Intelligent Routing and Load Balancing</description>
 
     <dependencies>
-        <!-- Core 模块 -->
+        <!-- Gateway Common -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-core</artifactId>
+            <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- Security 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-security</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- Router 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-router</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- Dispatch 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-dispatch</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- Adapter 模块 -->
+        <!-- Gateway Adapter -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-adapter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- Spring Boot Web -->
+        <!-- Gateway Core (for entities) -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-core</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- Gateway Dispatch (for ProtocolTranslator) -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-dispatch</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Spring Boot Validation -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-validation</artifactId>
-        </dependency>
-
-        <!-- OpenAPI 文档 -->
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-        </dependency>
-
-        <!-- Jackson -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
         </dependency>
 
         <!-- 测试 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

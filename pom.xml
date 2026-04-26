@@ -17,6 +17,7 @@
         <module>gateway-security</module>
         <module>gateway-adapter</module>
         <module>gateway-core</module>
+        <module>gateway-router</module>
         <module>gateway-dispatch</module>
         <module>gateway-api</module>
         <module>gateway-application</module>
