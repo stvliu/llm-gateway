@@ -1,4 +1,4 @@
-package com.codingas.gateway.dispatch;
+package com.codingas.gateway.router;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;

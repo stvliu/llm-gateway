@@ -1,4 +1,4 @@
-package com.codingas.gateway.dispatch;
+package com.codingas.gateway.router;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

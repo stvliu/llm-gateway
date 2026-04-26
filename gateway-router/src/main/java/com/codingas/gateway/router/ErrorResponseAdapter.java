@@ -1,4 +1,4 @@
-package com.codingas.gateway.dispatch;
+package com.codingas.gateway.router;
 
 import lombok.extern.slf4j.Slf4j;
 
