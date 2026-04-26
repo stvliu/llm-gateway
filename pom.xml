@@ -13,14 +13,7 @@
     <description>Enterprise AI Model API Gateway - OpenAI and Anthropic Compatible</description>
 
     <modules>
-        <module>gateway-common</module>
-        <module>gateway-infrastructure</module>
-        <module>gateway-security</module>
-        <module>gateway-adapter</module>
-        <module>gateway-core</module>
-        <module>gateway-router</module>
-        <module>gateway-api</module>
-        <module>gateway-application</module>
+        <module>gateway-boot</module>
     </modules>
 
     <properties>
