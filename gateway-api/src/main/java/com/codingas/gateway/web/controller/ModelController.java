@@ -1,7 +1,7 @@
 package com.codingas.gateway.web.controller;
 
 import com.codingas.gateway.core.domain.entity.Model;
-import com.codingas.gateway.core.service.ModelService;
+import com.codingas.gateway.web.service.ModelManageUseCase;
 import com.codingas.gateway.web.dto.ApiResponse;
 import com.codingas.gateway.web.dto.CreateModelRequest;
 import com.codingas.gateway.web.dto.ModelResponse;
@@ -25,7 +25,7 @@ import java.util.List;
 @Tag(name = "Model Management", description = "模型管理接口")
 public class ModelController {
 
-    private final ModelService modelService;
+    private final ModelManageUseCase modelManageUseCase;
 
     @GetMapping
     @Operation(summary = "获取模型列表")
@@ -33,9 +33,9 @@ public class ModelController {
             @RequestParam(required = false) Long providerId) {
         List<Model> models;
         if (providerId != null) {
-            models = modelService.findByProviderId(providerId);
+            models = modelManageUseCase.findByProviderId(providerId);
         } else {
-            models = modelService.findAll();
+            models = modelManageUseCase.findAll();
         }
         List<ModelResponse> response = models.stream()
                 .map(ModelResponse::from)
@@ -46,7 +46,7 @@ public class ModelController {
     @GetMapping("/{id}")
     @Operation(summary = "获取模型详情")
     public ApiResponse<ModelResponse> getById(@PathVariable Long id) {
-        return modelService.findById(id)
+        return modelManageUseCase.findById(id)
                 .map(m -> ApiResponse.success(ModelResponse.from(m)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Model not found: " + id));
     }
@@ -54,7 +54,7 @@ public class ModelController {
     @GetMapping("/code/{modelCode}")
     @Operation(summary = "根据编码获取模型")
     public ApiResponse<ModelResponse> getByCode(@PathVariable String modelCode) {
-        return modelService.findByModelCode(modelCode)
+        return modelManageUseCase.findByModelCode(modelCode)
                 .map(m -> ApiResponse.success(ModelResponse.from(m)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Model not found: " + modelCode));
     }
@@ -63,7 +63,7 @@ public class ModelController {
     @Operation(summary = "创建模型")
     public ApiResponse<ModelResponse> create(@Valid @RequestBody CreateModelRequest request) {
         Model model = request.toEntity();
-        Model created = modelService.create(model);
+        Model created = modelManageUseCase.create(model);
         return ApiResponse.success(ModelResponse.from(created));
     }
 
@@ -73,14 +73,14 @@ public class ModelController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateModelRequest request) {
         Model model = request.toEntity();
-        Model updated = modelService.update(id, model);
+        Model updated = modelManageUseCase.update(id, model);
         return ApiResponse.success(ModelResponse.from(updated));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除模型")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        modelService.delete(id);
+        modelManageUseCase.delete(id);
         return ApiResponse.success();
     }
 }

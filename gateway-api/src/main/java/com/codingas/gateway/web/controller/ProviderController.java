@@ -2,7 +2,7 @@ package com.codingas.gateway.web.controller;
 
 import com.codingas.gateway.core.domain.entity.Provider;
 import com.codingas.gateway.core.domain.enums.ProviderStatus;
-import com.codingas.gateway.core.service.ProviderService;
+import com.codingas.gateway.web.service.ProviderManageUseCase;
 import com.codingas.gateway.web.dto.ApiResponse;
 import com.codingas.gateway.web.dto.CreateProviderRequest;
 import com.codingas.gateway.web.dto.ProviderResponse;
@@ -26,7 +26,7 @@ import java.util.List;
 @Tag(name = "Provider Management", description = "提供商管理接口")
 public class ProviderController {
 
-    private final ProviderService providerService;
+    private final ProviderManageUseCase providerManageUseCase;
 
     @GetMapping
     @Operation(summary = "获取提供商列表")
@@ -34,9 +34,9 @@ public class ProviderController {
             @RequestParam(required = false) ProviderStatus status) {
         List<Provider> providers;
         if (status != null) {
-            providers = providerService.findByStatus(status);
+            providers = providerManageUseCase.findByStatus(status);
         } else {
-            providers = providerService.findAll();
+            providers = providerManageUseCase.findAll();
         }
         List<ProviderResponse> response = providers.stream()
                 .map(ProviderResponse::from)
@@ -47,7 +47,7 @@ public class ProviderController {
     @GetMapping("/{id}")
     @Operation(summary = "获取提供商详情")
     public ApiResponse<ProviderResponse> getById(@PathVariable Long id) {
-        return providerService.findById(id)
+        return providerManageUseCase.findById(id)
                 .map(p -> ApiResponse.success(ProviderResponse.from(p)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Provider not found: " + id));
     }
@@ -56,7 +56,7 @@ public class ProviderController {
     @Operation(summary = "创建提供商")
     public ApiResponse<ProviderResponse> create(@Valid @RequestBody CreateProviderRequest request) {
         Provider provider = request.toEntity();
-        Provider created = providerService.create(provider);
+        Provider created = providerManageUseCase.create(provider);
         return ApiResponse.success(ProviderResponse.from(created));
     }
 
@@ -66,21 +66,21 @@ public class ProviderController {
             @PathVariable Long id,
             @Valid @RequestBody UpdateProviderRequest request) {
         Provider provider = request.toEntity();
-        Provider updated = providerService.update(id, provider);
+        Provider updated = providerManageUseCase.update(id, provider);
         return ApiResponse.success(ProviderResponse.from(updated));
     }
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除提供商")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        providerService.delete(id);
+        providerManageUseCase.delete(id);
         return ApiResponse.success();
     }
 
     @GetMapping("/code/{providerCode}")
     @Operation(summary = "根据编码获取提供商")
     public ApiResponse<ProviderResponse> getByCode(@PathVariable String providerCode) {
-        return providerService.findByProviderCode(providerCode)
+        return providerManageUseCase.findByProviderCode(providerCode)
                 .map(p -> ApiResponse.success(ProviderResponse.from(p)))
                 .orElse(ApiResponse.error("NOT_FOUND", "Provider not found: " + providerCode));
     }
