@@ -1,7 +1,7 @@
 package com.codingas.gateway.core.service;
 
 import com.codingas.gateway.core.domain.entity.Model;
-import com.codingas.gateway.core.repository.ModelRepository;
+import com.codingas.gateway.core.domain.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,43 +20,38 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ModelService {
 
-    private final ModelRepository modelRepository;
+    private final ModelGateway modelGateway;
 
     @Transactional(readOnly = true)
     public List<Model> findAll() {
-        return modelRepository.findAll();
+        return modelGateway.findAllActive();
     }
 
     @Transactional(readOnly = true)
     public Optional<Model> findById(Long id) {
-        return modelRepository.findById(id);
+        return modelGateway.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Optional<Model> findByModelCode(String modelCode) {
-        return modelRepository.findByModelCode(modelCode);
+        return modelGateway.findByModelCode(modelCode);
     }
 
     @Transactional(readOnly = true)
     public List<Model> findByProviderId(Long providerId) {
-        return modelRepository.findByProviderId(providerId);
-    }
-
-    @Transactional(readOnly = true)
-    public Optional<Model> findByProviderModelId(Long providerId, String providerModelId) {
-        return modelRepository.findByProviderIdAndProviderModelId(providerId, providerModelId);
+        return modelGateway.findByProviderCode(String.valueOf(providerId));
     }
 
     @Transactional
     public Model create(Model model) {
-        Model saved = modelRepository.save(model);
+        Model saved = modelGateway.save(model);
         log.info("Created model: {} ({})", saved.getDisplayName(), saved.getModelCode());
         return saved;
     }
 
     @Transactional
     public Model update(Long id, Model model) {
-        Model existing = modelRepository.findById(id)
+        Model existing = modelGateway.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Model not found: " + id));
 
         existing.setDisplayName(model.getDisplayName());
@@ -66,16 +61,16 @@ public class ModelService {
         existing.setCapabilities(model.getCapabilities());
         existing.setStatus(model.getStatus());
 
-        Model updated = modelRepository.save(existing);
+        Model updated = modelGateway.save(existing);
         log.info("Updated model: {} ({})", updated.getDisplayName(), updated.getModelCode());
         return updated;
     }
 
     @Transactional
     public void delete(Long id) {
-        Model model = modelRepository.findById(id)
+        Model model = modelGateway.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Model not found: " + id));
-        modelRepository.delete(model);
+        modelGateway.save(model);
         log.info("Deleted model: {}", id);
     }
 }

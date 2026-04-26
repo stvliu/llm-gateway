@@ -2,7 +2,7 @@ package com.codingas.gateway.core.service;
 
 import com.codingas.gateway.core.domain.entity.Provider;
 import com.codingas.gateway.core.domain.enums.ProviderStatus;
-import com.codingas.gateway.core.repository.ProviderRepository;
+import com.codingas.gateway.core.domain.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -22,27 +22,22 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProviderService {
 
-    private final ProviderRepository providerRepository;
+    private final ProviderGateway providerGateway;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Optional<Provider> findById(Long id) {
-        return providerRepository.findById(id);
+        return providerGateway.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Optional<Provider> findByProviderCode(String providerCode) {
-        return providerRepository.findByProviderCode(providerCode);
+        return providerGateway.findByProviderCode(providerCode);
     }
 
     @Transactional(readOnly = true)
     public List<Provider> findAll() {
-        return providerRepository.findAll();
-    }
-
-    @Transactional(readOnly = true)
-    public List<Provider> findByStatus(ProviderStatus status) {
-        return providerRepository.findByStatus(status);
+        return providerGateway.findAllActive();
     }
 
     @Transactional
@@ -50,7 +45,7 @@ public class ProviderService {
         if (provider.getStatus() == null) {
             provider.setStatus(ProviderStatus.ACTIVE);
         }
-        Provider saved = providerRepository.save(provider);
+        Provider saved = providerGateway.save(provider);
         log.info("Created provider: {} ({})", saved.getProviderName(), saved.getProviderCode());
         publishReloadEvent();
         return saved;
@@ -58,7 +53,7 @@ public class ProviderService {
 
     @Transactional
     public Provider update(Long id, Provider provider) {
-        Provider existing = providerRepository.findById(id)
+        Provider existing = providerGateway.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found: " + id));
 
         existing.setProviderName(provider.getProviderName());
@@ -67,7 +62,7 @@ public class ProviderService {
         existing.setPriority(provider.getPriority());
         existing.setStatus(provider.getStatus());
 
-        Provider updated = providerRepository.save(existing);
+        Provider updated = providerGateway.save(existing);
         log.info("Updated provider: {} ({})", updated.getProviderName(), updated.getProviderCode());
         publishReloadEvent();
         return updated;
@@ -75,11 +70,11 @@ public class ProviderService {
 
     @Transactional
     public void delete(Long id) {
-        Provider provider = providerRepository.findById(id)
+        Provider provider = providerGateway.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Provider not found: " + id));
 
         provider.setStatus(ProviderStatus.DELETED);
-        providerRepository.save(provider);
+        providerGateway.save(provider);
         log.info("Deleted provider: {}", id);
         publishReloadEvent();
     }
