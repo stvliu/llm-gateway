@@ -3,7 +3,7 @@ package com.codingas.gateway.web.controller;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
-import com.codingas.gateway.dispatch.LLMDispatcher;
+import com.codingas.gateway.router.LLMDispatcher;
 import com.codingas.gateway.web.dto.OpenAIChatRequest;
 import com.codingas.gateway.web.dto.OpenAIChatResponse;
 import lombok.RequiredArgsConstructor;
