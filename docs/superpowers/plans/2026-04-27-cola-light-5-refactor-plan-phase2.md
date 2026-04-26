@@ -16,7 +16,7 @@
 - `gateway-common/src/main/java/com/codingas/gateway/common/dto/LLMRequest.java` → `gateway-boot/common/dto/`
 - `gateway-common/src/main/java/com/codingas/gateway/common/dto/LLMResponse.java` → `gateway-boot/common/dto/`
 
-- [ ] 迁移 LLMRequest 和 LLMResponse
+- [x] 迁移 LLMRequest 和 LLMResponse
 
 ---
 
@@ -26,8 +26,8 @@
 - `gateway-core/src/main/java/com/codingas/gateway/core/service/ModelService.java` → `domain/router/service/`
 - `gateway-core/src/main/java/com/codingas/gateway/core/service/ProviderService.java` → `domain/router/service/`
 
-- [ ] 迁移 ModelService
-- [ ] 迁移 ProviderService
+- [x] 迁移 ModelService
+- [x] 迁移 ProviderService
 
 ---
 
@@ -40,11 +40,11 @@
 - `gateway-router/src/main/java/com/codingas/gateway/router/ProtocolTranslator.java` → `infrastructure/util/`
 - `gateway-router/src/main/java/com/codingas/gateway/router/ErrorResponseAdapter.java` → `infrastructure/adapter/`
 
-- [ ] 迁移 ModelRouter 接口
-- [ ] 迁移 DefaultModelRouter 实现
-- [ ] 迁移 LLMDispatcher
-- [ ] 迁移 ProtocolTranslator
-- [ ] 迁移 ErrorResponseAdapter
+- [x] 迁移 ModelRouter 接口
+- [x] 迁移 DefaultModelRouter 实现
+- [x] 迁移 LLMDispatcher
+- [x] 迁移 ProtocolTranslator
+- [x] 迁移 ErrorResponseAdapter
 
 ---
 
@@ -66,12 +66,12 @@
 - `gateway-security/src/main/java/com/codingas/gateway/security/encryption/ApiKeyEncryptionService.java` → `domain/security/service/`
 - `gateway-security/src/main/java/com/codingas/gateway/security/interceptor/AbstractGatewayInterceptor.java` → `infrastructure/security/`
 
-- [ ] 迁移 AuditContext, AuditService
-- [ ] 迁移 Notification 相关
-- [ ] 迁移 Authorization 相关
-- [ ] 迁移 BruteForce 相关
-- [ ] 迁移 Encryption 相关
-- [ ] 迁移 Interceptor
+- [x] 迁移 AuditContext, AuditService
+- [x] 迁移 Notification 相关
+- [x] 迁移 Authorization 相关
+- [x] 迁移 BruteForce 相关
+- [x] 迁移 Encryption 相关
+- [x] 迁移 Interceptor
 
 ---
 
@@ -86,8 +86,8 @@
 - `gateway-application/src/main/java/com/codingas/gateway/config/satoken/IPBlockCheckInterceptor.java` → `infrastructure/config/`
 - `gateway-application/src/main/java/com/codingas/gateway/config/satoken/SaTokenConfig.java` → `infrastructure/config/`
 
-- [ ] 迁移 Event Listener
-- [ ] 迁移 SaToken Config
+- [x] 迁移 Event Listener
+- [x] 迁移 SaToken Config
 
 ---
 
@@ -106,10 +106,10 @@
 - `gateway-adapter/src/main/java/com/codingas/gateway/adapter/spi/AdapterLoader.java` → `infrastructure/spi/`
 - `gateway-adapter/src/main/java/com/codingas/gateway/adapter/spi/AdapterRegistry.java` → `infrastructure/spi/`
 
-- [ ] 迁移 LLMProviderAdapter 接口
-- [ ] 迁移 Anthropic/OpenAI Adapter
-- [ ] 迁移 Provider 枚举和异常
-- [ ] 迁移 SPI
+- [x] 迁移 LLMProviderAdapter 接口
+- [x] 迁移 Anthropic/OpenAI Adapter
+- [x] 迁移 Provider 枚举和异常
+- [x] 迁移 SPI
 
 ---
 
@@ -122,11 +122,11 @@
 - `gateway-api/src/main/java/com/codingas/gateway/web/controller/OpenAIController.java` → `adapter/chat/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/controller/ProviderController.java` → `adapter/model/`
 
-- [ ] 迁移 AnthropicController
-- [ ] 迁移 HealthController
-- [ ] 迁移 ModelController
-- [ ] 迁移 OpenAIController
-- [ ] 迁移 ProviderController
+- [x] 迁移 AnthropicController
+- [x] 迁移 HealthController
+- [x] 迁移 ModelController
+- [x] 迁移 OpenAIController
+- [x] 迁移 ProviderController
 
 ---
 
@@ -140,14 +140,14 @@
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/CreateProviderRequest.java` → `adapter/model/dto/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/ModelResponse.java` → `adapter/model/dto/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/OpenAIChatRequest.java` → `adapter/chat/dto/`
-- `gateway-api/src/main/java/com/codingas/gateway/web/dto/OpenAIChatResponse.java` → `adapter/chat/dto/`
+- `gateway-api/src/main/java/com/web/dto/OpenAIChatResponse.java` → `adapter/chat/dto/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/ProviderResponse.java` → `adapter/model/dto/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/UpdateModelRequest.java` → `adapter/model/dto/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/dto/UpdateProviderRequest.java` → `adapter/model/dto/`
 
-- [ ] 迁移 chat DTO
-- [ ] 迁移 model DTO
-- [ ] 迁移 ApiResponse
+- [x] 迁移 chat DTO
+- [x] 迁移 model DTO
+- [x] 迁移 ApiResponse
 
 ---
 
@@ -161,9 +161,9 @@
 - `gateway-api/src/main/java/com/codingas/gateway/web/advice/MaskingResponseAdvice.java` → `infrastructure/advice/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/security/SecurityExceptionHandler.java` → `infrastructure/security/`
 
-- [ ] 迁移 Config
-- [ ] 迁移 Advice
-- [ ] 迁移 Security Handler
+- [x] 迁移 Config
+- [x] 迁移 Advice
+- [x] 迁移 Security Handler
 
 ---
 
@@ -174,14 +174,14 @@
 - `gateway-api/src/main/java/com/codingas/gateway/web/service/ModelManageUseCase.java` → `application/model/`
 - `gateway-api/src/main/java/com/codingas/gateway/web/service/ProviderManageUseCase.java` → `application/model/`
 
-- [ ] 迁移 UseCase
+- [x] 迁移 UseCase
 
 ---
 
 ### Task K: 全量编译和测试
 
-- [ ] 全量编译
-- [ ] 运行测试
+- [x] 全量编译
+- [x] 运行测试
 - [ ] 提交
 
 ---
