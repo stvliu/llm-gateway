@@ -24,6 +24,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- Gateway Core (for Entity and Repository) -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-core</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
