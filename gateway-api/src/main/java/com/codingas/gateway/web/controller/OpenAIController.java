@@ -3,9 +3,9 @@ package com.codingas.gateway.web.controller;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
-import com.codingas.gateway.router.LLMDispatcher;
 import com.codingas.gateway.web.dto.OpenAIChatRequest;
 import com.codingas.gateway.web.dto.OpenAIChatResponse;
+import com.codingas.gateway.web.service.LLMChatUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -21,6 +20,7 @@ import java.util.concurrent.Executors;
  * OpenAI 兼容 API 控制器
  *
  * <p>暴露 /v1/chat/completions 端点，兼容 OpenAI API 格式。</p>
+ * <p>遵循 COLA 5.0 架构：Controller 是 Adapter 层，负责接收请求和返回响应。</p>
  *
  * @see <a href="https://platform.openai.com/docs/api-reference/chat">OpenAI Chat API</a>
  */
@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class OpenAIController {
 
-    private final LLMDispatcher dispatcher;
+    private final LLMChatUseCase llmChatUseCase;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
@@ -67,8 +67,8 @@ public class OpenAIController {
         // 转换为内部请求格式
         LLMRequest llmRequest = toLLMRequest(request);
 
-        // 调用调度器
-        LLMResponse response = dispatcher.send(llmRequest, RouteGroup.RoutingStrategy.PRIORITY);
+        // 调用用例编排器
+        LLMResponse response = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.PRIORITY);
 
         // 转换为 OpenAI 响应格式
         return toOpenAIChatResponse(response);
@@ -88,8 +88,8 @@ public class OpenAIController {
                 LLMRequest llmRequest = toLLMRequest(request);
                 llmRequest.setStream(true);
 
-                // 调用调度器 (流式)
-                dispatcher.sendStream(llmRequest, RouteGroup.RoutingStrategy.PRIORITY,
+                // 调用用例编排器 (流式)
+                llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.PRIORITY,
                         new com.codingas.gateway.adapter.StreamCallback() {
                             @Override
                             public void onChunk(String data) {

@@ -40,6 +40,11 @@ public class ProviderService {
         return providerGateway.findAllActive();
     }
 
+    @Transactional(readOnly = true)
+    public List<Provider> findByStatus(ProviderStatus status) {
+        return providerGateway.findByStatus(status);
+    }
+
     @Transactional
     public Provider create(Provider provider) {
         if (provider.getStatus() == null) {

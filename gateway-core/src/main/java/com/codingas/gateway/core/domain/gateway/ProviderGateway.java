@@ -1,6 +1,7 @@
 package com.codingas.gateway.core.domain.gateway;
 
 import com.codingas.gateway.core.domain.entity.Provider;
+import com.codingas.gateway.core.domain.enums.ProviderStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,6 +29,14 @@ public interface ProviderGateway {
      * @return 提供商信息，不存在返回空
      */
     Optional<Provider> findById(Long providerId);
+
+    /**
+     * 根据状态查找提供商
+     *
+     * @param status 提供商状态
+     * @return 提供商列表
+     */
+    List<Provider> findByStatus(ProviderStatus status);
 
     /**
      * 查找所有活跃提供商

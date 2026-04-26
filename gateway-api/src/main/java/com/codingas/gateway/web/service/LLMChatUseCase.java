@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.usecase;
+package com.codingas.gateway.web.service;
 
 import com.codingas.gateway.adapter.StreamCallback;
 import com.codingas.gateway.common.dto.LLMRequest;
@@ -8,7 +8,7 @@ import com.codingas.gateway.router.LLMDispatcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -16,18 +16,18 @@ import java.util.concurrent.CompletableFuture;
  * LLM 聊天用例编排器
  *
  * <p>Application 层用例编排，无业务逻辑。</p>
- * <p>职责：协调认证、路由、LLM 调用和事件发布。</p>
+ * <p>职责：协调路由、LLM 调用和事件发布。</p>
  *
  * <p>遵循 COLA 5.0 架构：
  * <ul>
- *   <li>接收 API 层 DTO</li>
+ *   <li>接收 Controller 层的 DTO</li>
  *   <li>编排 Domain Service（通过 LLMDispatcher）</li>
  *   <li>发布领域事件（TokenUsedEvent）用于异步统计</li>
  *   <li>返回响应 DTO</li>
  * </ul>
  */
 @Slf4j
-@Component
+@Service
 @RequiredArgsConstructor
 public class LLMChatUseCase {
 

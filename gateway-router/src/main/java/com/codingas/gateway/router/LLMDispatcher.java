@@ -5,7 +5,7 @@ import com.codingas.gateway.adapter.StreamCallback;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup.RoutingStrategy;
-import com.codingas.gateway.dispatch.ProtocolTranslator;
+import com.codingas.gateway.router.ProtocolTranslator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

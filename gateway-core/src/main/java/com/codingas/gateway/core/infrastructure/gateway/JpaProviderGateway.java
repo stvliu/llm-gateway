@@ -32,6 +32,11 @@ public class JpaProviderGateway implements ProviderGateway {
     }
 
     @Override
+    public List<Provider> findByStatus(ProviderStatus status) {
+        return repository.findByStatus(status);
+    }
+
+    @Override
     public List<Provider> findAllActive() {
         return repository.findByStatus(ProviderStatus.ACTIVE);
     }

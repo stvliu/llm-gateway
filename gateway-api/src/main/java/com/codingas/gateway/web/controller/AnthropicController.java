@@ -3,9 +3,9 @@ package com.codingas.gateway.web.controller;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
-import com.codingas.gateway.router.LLMDispatcher;
 import com.codingas.gateway.web.dto.AnthropicMessagesRequest;
 import com.codingas.gateway.web.dto.AnthropicMessagesResponse;
+import com.codingas.gateway.web.service.LLMChatUseCase;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -30,7 +30,7 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class AnthropicController {
 
-    private final LLMDispatcher dispatcher;
+    private final LLMChatUseCase llmChatUseCase;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
@@ -67,8 +67,8 @@ public class AnthropicController {
         // 转换为内部请求格式
         LLMRequest llmRequest = toLLMRequest(request);
 
-        // 调用调度器
-        LLMResponse response = dispatcher.send(llmRequest, RouteGroup.RoutingStrategy.PRIORITY);
+        // 调用用例编排器
+        LLMResponse response = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.PRIORITY);
 
         // 转换为 Anthropic 响应格式
         return toAnthropicMessagesResponse(response);
@@ -88,8 +88,8 @@ public class AnthropicController {
                 LLMRequest llmRequest = toLLMRequest(request);
                 llmRequest.setStream(true);
 
-                // 调用调度器 (流式)
-                dispatcher.sendStream(llmRequest, RouteGroup.RoutingStrategy.PRIORITY,
+                // 调用用例编排器 (流式)
+                llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.PRIORITY,
                         new com.codingas.gateway.adapter.StreamCallback() {
                             @Override
                             public void onChunk(String data) {
