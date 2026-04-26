@@ -3,7 +3,7 @@ package com.codingas.gateway.core.service;
 import com.codingas.gateway.core.domain.entity.Provider;
 import com.codingas.gateway.core.domain.enums.ProviderStatus;
 import com.codingas.gateway.core.domain.enums.ProviderType;
-import com.codingas.gateway.core.repository.ProviderRepository;
+import com.codingas.gateway.core.domain.gateway.ProviderGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,13 +24,15 @@ import static org.mockito.Mockito.*;
 
 /**
  * ProviderService 单元测试
+ *
+ * <p>测试 ProviderService 通过 ProviderGateway 接口访问持久化数据。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProviderService Tests")
 class ProviderServiceTest {
 
     @Mock
-    private ProviderRepository providerRepository;
+    private ProviderGateway providerGateway;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -59,7 +61,7 @@ class ProviderServiceTest {
         @Test
         @DisplayName("返回 Provider 当存在时")
         void findById_existingProvider() {
-            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
 
             Optional<Provider> result = providerService.findById(1L);
 
@@ -70,7 +72,7 @@ class ProviderServiceTest {
         @Test
         @DisplayName("返回空 Optional 当不存在时")
         void findById_notFound() {
-            when(providerRepository.findById(99L)).thenReturn(Optional.empty());
+            when(providerGateway.findById(99L)).thenReturn(Optional.empty());
 
             Optional<Provider> result = providerService.findById(99L);
 
@@ -85,7 +87,7 @@ class ProviderServiceTest {
         @Test
         @DisplayName("根据 Provider 编码查询成功")
         void findByProviderCode_success() {
-            when(providerRepository.findByProviderCode("openai")).thenReturn(Optional.of(testProvider));
+            when(providerGateway.findByProviderCode("openai")).thenReturn(Optional.of(testProvider));
 
             Optional<Provider> result = providerService.findByProviderCode("openai");
 
@@ -96,7 +98,7 @@ class ProviderServiceTest {
         @Test
         @DisplayName("根据 Provider 编码查询失败")
         void findByProviderCode_notFound() {
-            when(providerRepository.findByProviderCode("unknown")).thenReturn(Optional.empty());
+            when(providerGateway.findByProviderCode("unknown")).thenReturn(Optional.empty());
 
             Optional<Provider> result = providerService.findByProviderCode("unknown");
 
@@ -109,10 +111,10 @@ class ProviderServiceTest {
     class FindAllTests {
 
         @Test
-        @DisplayName("返回所有 Provider")
-        void findAll_returnsAllProviders() {
+        @DisplayName("返回所有活跃 Provider")
+        void findAll_returnsActiveProviders() {
             List<Provider> providers = List.of(testProvider);
-            when(providerRepository.findAll()).thenReturn(providers);
+            when(providerGateway.findAllActive()).thenReturn(providers);
 
             List<Provider> result = providerService.findAll();
 
@@ -120,9 +122,9 @@ class ProviderServiceTest {
         }
 
         @Test
-        @DisplayName("返回空列表当没有 Provider 时")
+        @DisplayName("返回空列表当没有活跃 Provider 时")
         void findAll_emptyList() {
-            when(providerRepository.findAll()).thenReturn(List.of());
+            when(providerGateway.findAllActive()).thenReturn(List.of());
 
             List<Provider> result = providerService.findAll();
 
@@ -138,7 +140,7 @@ class ProviderServiceTest {
         @DisplayName("根据状态查询 Provider")
         void findByStatus_returnsProviders() {
             List<Provider> providers = List.of(testProvider);
-            when(providerRepository.findByStatus(ProviderStatus.ACTIVE)).thenReturn(providers);
+            when(providerGateway.findByStatus(ProviderStatus.ACTIVE)).thenReturn(providers);
 
             List<Provider> result = providerService.findByStatus(ProviderStatus.ACTIVE);
 
@@ -161,7 +163,7 @@ class ProviderServiceTest {
             newProvider.setBaseUrl("https://api.anthropic.com");
             newProvider.setPriority(90);
 
-            when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
+            when(providerGateway.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
                 p.setId(2L);
                 return p;
@@ -172,7 +174,7 @@ class ProviderServiceTest {
             assertThat(result.getId()).isEqualTo(2L);
 
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
-            verify(providerRepository).save(captor.capture());
+            verify(providerGateway).save(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(ProviderStatus.ACTIVE);
         }
 
@@ -185,7 +187,7 @@ class ProviderServiceTest {
             newProvider.setProviderType(ProviderType.OPENAI);
             // status 未设置
 
-            when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
+            when(providerGateway.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
                 p.setId(3L);
                 return p;
@@ -194,14 +196,14 @@ class ProviderServiceTest {
             providerService.create(newProvider);
 
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
-            verify(providerRepository).save(captor.capture());
+            verify(providerGateway).save(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(ProviderStatus.ACTIVE);
         }
 
         @Test
         @DisplayName("创建后发布配置变更事件")
         void create_publishesEvent() {
-            when(providerRepository.save(any(Provider.class))).thenReturn(testProvider);
+            when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             providerService.create(testProvider);
 
@@ -223,8 +225,8 @@ class ProviderServiceTest {
             updatedProvider.setPriority(150);
             updatedProvider.setStatus(ProviderStatus.ACTIVE);
 
-            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(providerGateway.save(any(Provider.class))).thenAnswer(inv -> inv.getArgument(0));
 
             Provider result = providerService.update(1L, updatedProvider);
 
@@ -236,7 +238,7 @@ class ProviderServiceTest {
         @Test
         @DisplayName("更新不存在的 Provider 抛出异常")
         void update_notFound() {
-            when(providerRepository.findById(99L)).thenReturn(Optional.empty());
+            when(providerGateway.findById(99L)).thenReturn(Optional.empty());
 
             Provider updatedProvider = new Provider();
             updatedProvider.setProviderName("Updated");
@@ -249,8 +251,8 @@ class ProviderServiceTest {
         @Test
         @DisplayName("更新后发布配置变更事件")
         void update_publishesEvent() {
-            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(providerRepository.save(any(Provider.class))).thenReturn(testProvider);
+            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             Provider updatedProvider = new Provider();
             updatedProvider.setProviderName("Updated");
@@ -267,20 +269,20 @@ class ProviderServiceTest {
         @Test
         @DisplayName("删除 Provider 成功 (软删除)")
         void delete_success() {
-            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(providerRepository.save(any(Provider.class))).thenReturn(testProvider);
+            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             providerService.delete(1L);
 
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
-            verify(providerRepository).save(captor.capture());
+            verify(providerGateway).save(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(ProviderStatus.DELETED);
         }
 
         @Test
         @DisplayName("删除不存在的 Provider 抛出异常")
         void delete_notFound() {
-            when(providerRepository.findById(99L)).thenReturn(Optional.empty());
+            when(providerGateway.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> providerService.delete(99L))
                     .isInstanceOf(IllegalArgumentException.class)
@@ -290,8 +292,8 @@ class ProviderServiceTest {
         @Test
         @DisplayName("删除后发布配置变更事件")
         void delete_publishesEvent() {
-            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(providerRepository.save(any(Provider.class))).thenReturn(testProvider);
+            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             providerService.delete(1L);
 
