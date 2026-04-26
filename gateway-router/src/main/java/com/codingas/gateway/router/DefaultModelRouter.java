@@ -6,8 +6,8 @@ import com.codingas.gateway.adapter.spi.AdapterRegistry;
 import com.codingas.gateway.core.domain.entity.Model;
 import com.codingas.gateway.core.domain.entity.Provider;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
-import com.codingas.gateway.core.service.ModelService;
-import com.codingas.gateway.core.service.ProviderService;
+import com.codingas.gateway.core.domain.gateway.ModelGateway;
+import com.codingas.gateway.core.domain.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -24,6 +24,8 @@ import java.util.NoSuchElementException;
  *   <li>ROUND_ROBIN - 按权重轮询（暂不支持）</li>
  *   <li>LEAST_LATENCY - 选择延迟最低的（暂不支持）</li>
  * </ul>
+ *
+ * <p>遵循 COLA 5.0 Gateway 模式：Domain 只依赖 Gateway 接口，不直接依赖服务。</p>
  */
 @Slf4j
 @Component
@@ -31,8 +33,8 @@ import java.util.NoSuchElementException;
 public class DefaultModelRouter implements ModelRouter {
 
     private final AdapterRegistry adapterRegistry;
-    private final ModelService modelService;
-    private final ProviderService providerService;
+    private final ModelGateway modelGateway;
+    private final ProviderGateway providerGateway;
 
     @Override
     public LLMProviderAdapter select(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
@@ -42,11 +44,11 @@ public class DefaultModelRouter implements ModelRouter {
     @Override
     public LLMProviderAdapter select(String modelCode, RouteGroup.RoutingStrategy strategy) {
         // 1. 根据模型代码查找模型信息
-        Model model = modelService.findByModelCode(modelCode)
+        Model model = modelGateway.findByModelCode(modelCode)
                 .orElseThrow(() -> new NoSuchElementException("Model not found: " + modelCode));
 
         // 2. 获取 Provider (通过 providerId)
-        Provider provider = providerService.findById(model.getProviderId())
+        Provider provider = providerGateway.findById(model.getProviderId())
                 .orElseThrow(() -> new NoSuchElementException(
                         "Provider not found: " + model.getProviderId()));
 
