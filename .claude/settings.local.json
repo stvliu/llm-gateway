@@ -59,7 +59,11 @@
       "Bash(sed -i 's/com\\\\.codingas\\\\.gateway\\\\.core\\\\.security\\\\.masking/com.codingas.gateway.security.masking/g' gateway-api/src/main/java/com/codingas/gateway/web/advice/MaskingResponseAdvice.java gateway-api/src/test/java/com/codingas/gateway/web/advice/MaskingResponseAdviceTest.java)",
       "Bash(xargs rm *)",
       "WebFetch(domain:www.apframework.com)",
-      "mcp__plugin_ecc_github__get_file_contents"
+      "mcp__plugin_ecc_github__get_file_contents",
+      "Bash(xargs -I{} basename {} echo \"\" echo \"=== Domain Gateway 接口 ===\")",
+      "Read(//mnt/e/workspace/llm-gateway/**)",
+      "WebFetch(domain:github.com)",
+      "Bash(./mvnw clean *)"
     ]
   }
 }

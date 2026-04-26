@@ -1,5 +1,17 @@
 # Security Interceptor Integration Implementation Plan
 
+> ⚠️ **状态**: 待调整
+>
+> **说明**: 本计划描述的功能需求（IP封锁、脱敏）仍然有效，但包路径需根据 COLA Light 5.0 架构调整。
+>
+> **调整要点**:
+> - `gateway-application/src/main/java/com/codingas/gateway/config/satoken/` → `infrastructure/config/`
+> - `gateway-web/src/main/java/com/codingas/gateway/web/advice/` → `adapter/xxx/controller/` 相关位置
+>
+> **替代方案**: 请参考 `docs/superpowers/specs/2026-04-27-cola-light-5-refactor-design.md`
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 集成 IP 封锁检查到认证拦截器，并为敏感数据脱敏添加全局响应拦截器

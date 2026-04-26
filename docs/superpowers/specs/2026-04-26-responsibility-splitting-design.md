@@ -1,9 +1,10 @@
-# LLM-Gateway 架构设计 v2.0
+# LLM-Gateway 架构设计 v3.0
 
-> **版本**: 2.0.0
-> **状态**: 草案
+> **版本**: 3.0.0
+> **状态**: 已确认
 > **创建日期**: 2026-04-26
-> **基于**: COLA 5.0 (Clean Object-Oriented and Layered Architecture)
+> **更新日期**: 2026-04-27
+> **基于**: COLA Light 5.0 (单模块架构，用 package 代替模块划分层次)
 
 ---
 
@@ -11,34 +12,30 @@
 
 ### 1.1 背景
 
-当前 `gateway-core` 是"杂物间"：
-- 所有 Entity 集中在 core
-- 所有 Service 集中在 core
-- 其他模块（security、router 等）只含部分 Service，Entity 仍在 core
-
-这导致：
-1. **模块内聚不足** — Entity + Service 分离在不同模块
-2. **跨域访问混乱** — 领域服务直接调用其他领域服务
-3. **core 难以维护** — 不断膨胀，职责不清
+当前项目采用多模块 Maven 架构，模块划分与 COLA 架构原则不一致：
+- `gateway-core` 过于臃肿，混杂 domain + service + repository
+- 模块边界与业务领域边界不一致
+- Gateway 接口与实现位置不明确
 
 ### 1.2 目标
 
-基于 **COLA 5.0** 架构思想，按**业务领域内聚**原则重构：
+采用 **COLA Light 5.0** 架构思想：
 
-- Entity + 领域服务 + Gateway 接口 放在同一模块
+- **单模块架构**：用 package 代替模块划分层次
 - **Gateway 接口定义在 domain 层**（依赖倒置）
 - **Gateway 实现在 infrastructure 层**
 - 跨域协作通过**应用服务层**编排
 - 旁路操作通过**领域事件**解耦
 
-### 1.3 COLA 5.0 核心概念
+### 1.3 COLA Light 5.0 核心概念
 
 | 概念 | 说明 |
 |------|------|
-| **Adapter** | 适配器层，用户输入输出接口 |
-| **Application** | 应用层，用例编排，无业务逻辑 |
+| **Adapter** | 适配器层，用户输入输出接口（按用例分包） |
+| **Application** | 应用层，用例编排，无业务逻辑（按用例分包） |
 | **Domain** | 领域层，核心业务逻辑，定义 Gateway 接口 |
 | **Infrastructure** | 基础设施层，实现 Domain Gateway |
+| **Common** | 公共组件，跨领域共享类型 |
 
 ---
 
@@ -47,58 +44,79 @@
 ### 2.1 分层结构（基于 Package）
 
 ```
-gateway/
-├── adapter/                 → REST API 端点
-│   ├── controller/          → Controller
-│   ├── dto/                 → 请求/响应 DTO
-│   └── config/              → Web 配置
-│
-├── application/             → 用例编排（无业务逻辑）
-│   └── llm/                 → LLM 调用用例
-│
-├── domain/                  → 核心业务逻辑
-│   ├── gateway/             → 网关接口（依赖倒置核心！）
-│   ├── security/            → 安全领域
-│   │   ├── entity/          → GatewayApiKey、IpBlocklist
-│   │   └── service/         → Domain Service
-│   ├── router/              → 路由领域
-│   │   ├── entity/          → Model、Provider、RouteGroup
-│   │   └── service/         → Domain Service
-│   ├── analytics/           → 分析领域
-│   │   ├── entity/          → TokenUsage、AuditLog
-│   │   └── service/         → Domain Service
-│   ├── adapter/             → 适配器领域
-│   │   ├── entity/          → ProviderApiKey
-│   │   └── service/         → LLM 调用能力
-│   └── BizException.java    → 业务异常
-│
-├── infrastructure/          → 技术实现
-│   ├── persistence/        → JPA Repository 实现
-│   ├── encryption/         → 加密服务实现
-│   └── external/           → 外部 API 调用实现
-│
-└── common/                  → 共享类型
-    ├── dto/                 → 通用 DTO
-    └── util/                → 通用工具
+gateway-boot/                          # Maven 单一模块
+├── pom.xml
+└── src/main/java/com/codingas/gateway/
+    ├── adapter/                       # 适配器层（按用例分包）
+    │   ├── auth/                     # 认证用例
+    │   │   ├── controller/
+    │   │   └── dto/
+    │   ├── chat/                     # 聊天用例
+    │   │   ├── controller/
+    │   │   └── dto/
+    │   ├── model/                   # 模型管理用例
+    │   │   ├── controller/
+    │   │   └── dto/
+    │   └── admin/                   # 管理用例
+    │       ├── controller/
+    │       └── dto/
+    │
+    ├── application/                   # 应用层（按用例分包）
+    │   ├── auth/
+    │   ├── chat/
+    │   └── model/
+    │
+    ├── domain/                        # 领域层
+    │   ├── gateway/                   # 跨领域 Gateway 接口
+    │   ├── security/                  # 安全领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── router/                    # 路由领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   └── analytics/                # 分析领域
+    │       ├── entity/
+    │       ├── service/
+    │       ├── gateway/
+    │       ├── enums/
+    │       └── exception/
+    │
+    ├── infrastructure/                # 基础设施层
+    │   ├── config/
+    │   ├── gateway/                  # Gateway 实现
+    │   │   ├── security/
+    │   │   ├── router/
+    │   │   └── analytics/
+    │   └── util/
+    │
+    └── common/                        # 公共组件
+        ├── constants/
+        ├── exception/
+        └── util/
 ```
 
-### 2.2 模块职责
+### 2.2 各层职责
 
-| 模块 | 职责 | 包含内容 |
-|------|------|---------|
-| **adapter** | HTTP 请求接收，返回响应 | Controller、业务 DTO |
-| **application** | 用例编排 | 应用服务，依赖 Domain Gateway 接口 |
-| **domain/gateway** | 网关接口定义 | 通往外部世界的门（持久化、外部服务） |
-| **domain/xxx** | 领域业务逻辑 | Entity + Service + Gateway 接口 |
-| **infrastructure** | 技术实现 | Gateway 实现、加密、持久化 |
-| **common** | 纯共享类型 | 通用异常、分页工具（无业务语义） |
+| 层 | 职责 | 包含内容 |
+|---|------|---------|
+| **adapter** | 接收请求、返回响应 | Controller、DTO（按用例分包） |
+| **application** | 用例编排，跨域协调 | Application Service（按用例分包） |
+| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
+| **infrastructure** | 技术实现 | Gateway 实现、配置、工具 |
+| **common** | 跨领域共享 | 基础异常、技术常量、工具类 |
 
 ### 2.3 依赖方向
 
 ```
-adapter
+adapter (Controller)
     ↓
-application
+application (用例编排)
     ↓
 domain/gateway ← 定义接口
     ↓
@@ -268,60 +286,60 @@ public class GatewayConfiguration {
 
 ```
 domain/
-├── gateway/                 → 网关接口（通往外部）
-│   ├── ApiKeyGateway.java
-│   ├── ModelGateway.java
-│   ├── TokenGateway.java
-│   └── AuditGateway.java
+├── gateway/                   # 跨领域 Gateway 接口
+│   └── ...                    # 通用 Gateway
 │
-├── security/               → 安全领域
-│   ├── entity/             → 实体
+├── security/                  # 安全领域
+│   ├── entity/               # 实体
+│   │   ├── User.java
 │   │   ├── GatewayApiKey.java
 │   │   └── IpBlocklist.java
-│   └── service/            → 领域服务
-│       ├── ApiKeyAuthService.java
-│       └── IpBlockService.java
+│   ├── service/              # 领域服务
+│   │   ├── AuthenticationService.java
+│   │   ├── RateLimitService.java
+│   │   └── RbacService.java
+│   ├── gateway/             # 安全领域 Gateway 接口
+│   │   ├── ApiKeyGateway.java
+│   │   └── AuditGateway.java
+│   ├── enums/
+│   │   └── ...
+│   └── exception/
+│       └── ...
 │
-├── router/                 → 路由领域
-│   ├── entity/             → 实体
+├── router/                   # 路由领域
+│   ├── entity/               # 实体
 │   │   ├── Model.java
 │   │   ├── Provider.java
 │   │   └── RouteGroup.java
-│   └── service/            → 领域服务
-│       └── ModelRouterService.java
+│   ├── service/              # 领域服务
+│   │   └── ModelRouterService.java
+│   ├── gateway/             # 路由领域 Gateway 接口
+│   │   ├── ModelGateway.java
+│   │   └── ProviderGateway.java
+│   ├── enums/
+│   └── exception/
 │
-├── analytics/              → 分析领域
-│   ├── entity/            → 实体
-│   │   ├── TokenUsage.java
-│   │   ├── AuditLog.java
-│   │   └── TokenLimit.java
-│   └── service/           → 领域服务
-│       ├── TokenTrackingService.java
-│       └── AuditService.java
-│
-├── adapter/               → 适配器领域
-│   ├── entity/           → 实体
-│   │   └── ProviderApiKey.java
-│   └── service/          → 领域服务
-│       └── LLMProviderService.java
-│
-├── Entity.java            → 基础实体接口
-└── BizException.java      → 业务异常基类
+└── analytics/               # 分析领域
+    ├── entity/              # 实体
+    │   ├── TokenUsage.java
+    │   ├── AuditLog.java
+    │   └── TokenLimit.java
+    ├── service/             # 领域服务
+    │   └── TokenTrackingService.java
+    ├── gateway/
+    ├── enums/
+    └── exception/
 ```
 
-### 4.2 Entity 归属
+### 4.2 Entity 与 Gateway 接口归属
 
-| 领域 | Entity | Gateway 接口 |
-|------|--------|-------------|
-| **security** | GatewayApiKey | ApiKeyGateway |
-| **security** | IpBlocklist | IpBlockGateway |
-| **router** | Model | ModelGateway |
-| **router** | Provider | ProviderGateway |
-| **router** | RouteGroup | RouteGroupGateway |
-| **analytics** | TokenUsage | TokenGateway |
-| **analytics** | AuditLog | AuditGateway |
-| **analytics** | TokenLimit | TokenLimitGateway |
-| **adapter** | ProviderApiKey | CredentialGateway |
+| 领域 | Entity | Gateway 接口 | 实现位置 |
+|------|--------|-------------|---------|
+| **security** | GatewayApiKey | ApiKeyGateway | infrastructure/security/gateway/ |
+| **security** | AuditLog | AuditGateway | infrastructure/security/gateway/ |
+| **router** | Model | ModelGateway | infrastructure/router/gateway/ |
+| **router** | Provider | ProviderGateway | infrastructure/router/gateway/ |
+| **analytics** | TokenLimit | TokenLimitGateway | infrastructure/analytics/gateway/ |
 
 ---
 
@@ -410,13 +428,15 @@ public class LLMChatService {
 
 ## 7. 与之前设计的对比
 
-| 对比项 | 之前设计 | COLA 5.0 设计 |
-|--------|---------|---------------|
-| **组织方式** | 多模块 Maven | 单模块 Package 分层 |
-| **接口定义** | 接口定义在调用方 | 接口定义在 domain/gateway/ |
+| 对比项 | 之前设计 | COLA Light 5.0 设计 |
+|--------|---------|---------------------|
+| **组织方式** | 多模块 Maven（8个模块） | 单模块 Package（gateway-boot） |
+| **接口定义** | 接口定义在调用方 | 接口定义在 domain/xxx/gateway/ |
 | **外部访问** | Service 接口 | Gateway 接口 |
 | **Domain 组织** | 按技术层拆分 | 按业务能力拆分（domain/xxx/） |
-| **Infrastructure** | 通用技术组件 | 实现 domain gateway |
+| **Infrastructure** | 通用技术组件 | 实现 domain/xxx/gateway/ |
+| **Controller/DTO** | 散落各模块 | adapter/xxx/（按用例分包） |
+| **Application Service** | 未明确分类 | application/xxx/（按用例分包） |
 
 ---
 
@@ -431,13 +451,29 @@ public class LLMChatService {
 
 ---
 
-## 9. 总结
+## 9. COLA Light 5.0 关键决策
+
+| 决策项 | 选择 |
+|--------|------|
+| Maven 模块数 | 单一模块 `gateway-boot` |
+| 包名 | `com.codingas.gateway` |
+| Gateway 接口放置 | `domain/xxx/gateway/` |
+| Gateway 实现放置 | `infrastructure/xxx/gateway/` |
+| Repository | 简化方案，Gateway 内部使用 JpaRepository |
+| Domain Service | 放 `domain/xxx/service/` |
+| Application Service | 放 `application/xxx/`（按用例分包） |
+| Controller/DTO | 放 `adapter/xxx/`（按用例分包） |
+| Exception | 基础放 common，领域放 domain，技术放 infrastructure |
+| Configuration | 放 `infrastructure/config/` |
+| 枚举 | 业务枚举放 domain，技术常量放 common |
+
+## 10. 总结
 
 **核心原则：**
-- **Gateway 模式**：接口定义在 domain 层，实现 in infrastructure 层
+- **Gateway 模式**：接口定义在 domain/xxx/gateway/，实现 in infrastructure/xxx/gateway/
 - **依赖倒置**：Domain 只知道 Gateway 接口，不知道实现
 - **业务内聚**：domain/xxx 按业务能力组织，Entity + Service + Gateway 在一起
-- **应用服务编排**：跨域协作在 application 层
+- **应用服务编排**：跨域协作在 application 层（按用例分包）
 - **旁路事件驱动**：统计、审计用事件异步处理
 
 **架构优势：**
@@ -445,3 +481,4 @@ public class LLMChatService {
 - 可测试性高：Domain 可 Mock Gateway 独立测试
 - 可扩展性强：新的外部依赖只需添加 Gateway 实现
 - 业务内聚：相关代码组织在一起
+- 单一模块：便于维护和团队协作

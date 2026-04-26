@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.security.gateway;
 
 import com.codingas.gateway.domain.security.entity.User;
 

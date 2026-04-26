@@ -1,5 +1,18 @@
 # Responsibility-Based Module Refactoring Plan
 
+> ⚠️ **状态**: 已废弃
+>
+> **原因**: 本计划基于多模块 Maven 架构，已被 COLA Light 5.0 单模块架构取代。
+>
+> **替代方案**: 请参考 `docs/superpowers/specs/2026-04-27-cola-light-5-refactor-design.md`
+>
+> **新架构要点**:
+> - 单一 Maven 模块 `gateway-boot`
+> - 用 package 代替模块划分层次
+> - 按 COLA Light 5.0 分层：adapter / application / domain / infrastructure / common
+
+---
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 解除 gateway-core ↔ gateway-adapter 循环依赖，重构为按职责拆分的模块结构
