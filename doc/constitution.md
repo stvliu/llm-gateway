@@ -165,54 +165,70 @@ Token 必须是所有成本追踪的核心单位。
 
 **定义**:
 ```
-系统按业务领域拆分模块，每个模块内聚其核心业务实体（Entity）和领域服务（Service）。
+系统按业务领域拆分模块，采用 COLA 5.0 架构思想。
+每个领域模块内聚 Entity、Domain Service 和 Gateway 接口。
+Gateway 接口定义在 domain 层，实现 in infrastructure 层（依赖倒置）。
 跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
 ```
 
-**分层结构**:
+**分层结构（基于 Package）**:
 ```
-gateway-api                  → Controller + 业务 DTO
+adapter/                 → REST API 端点（用户输入输出）
            ↓
-gateway-app-service          → 应用服务（用例编排）
+application/            → 用例编排（无业务逻辑）
            ↓
-    ┌───────┼───────┬──────────┐
-    ↓       ↓       ↓          ↓
-security  router  analytics  adapter
-    ↓       ↓       ↓          ↓
-infrastructure           common
+domain/
+  ├── gateway/          → 网关接口（通往外部世界的门）
+  ├── security/         → Entity + Domain Service
+  ├── router/           → Entity + Domain Service
+  ├── analytics/         → Entity + Domain Service
+  └── adapter/           → Entity + Domain Service
+           ↓
+infrastructure/         → Gateway 实现（持久化、外部服务）
+           ↓
+common/                → 纯共享类型（无业务语义）
+```
+
+**COLA Gateway 模式**:
+- Gateway 接口**定义在 domain/gateway/** 包中
+- Gateway 实现**在 infrastructure/** 包中
+- Domain 只依赖 Gateway 接口，不直接依赖外部资源
+- Infrastructure 通过依赖注入实现 Gateway
+
+```
+Domain        → Gateway 接口（定义）
+    ↓
+Infrastructure → Gateway 实现（注入）
 ```
 
 **模块职责**:
 
-| 模块 | 职责 | 包含内容 |
-|------|------|---------|
-| **gateway-api** | HTTP 请求接收，返回响应 | Controller、业务 DTO |
-| **gateway-app-service** | 用例编排 | 应用服务，依赖各领域服务接口 |
-| **gateway-security** | Entity + 领域服务 | GatewayApiKey、IpBlocklist + Service |
-| **gateway-router** | Entity + 领域服务 | Model、Provider、RouteGroup + Service |
-| **gateway-analytics** | Entity + 领域服务 | TokenUsage、AuditLog + Service |
-| **gateway-adapter** | Entity + 领域服务 | ProviderApiKey、Credentials + Service |
-| **gateway-infrastructure** | 基础设施 | BaseEntity、通用工具 |
-| **gateway-common** | 纯共享类型 | 通用异常、分页工具（无业务语义） |
+| 模块/包 | 职责 | 包含内容 |
+|---------|------|---------|
+| **adapter/** | HTTP 请求接收，返回响应 | Controller、业务 DTO |
+| **application/** | 用例编排 | 应用服务，依赖 Domain Service |
+| **domain/gateway/** | 网关接口定义 | 通往外部世界的门 |
+| **domain/xxx/** | 领域业务逻辑 | Entity + Domain Service |
+| **infrastructure/** | 技术实现 | Gateway 实现、加密、持久化 |
+| **common/** | 纯共享类型 | 通用异常、分页工具（无业务语义） |
 
 **跨域访问规则**:
 
 | 方式 | 场景 | 规则 |
 |------|------|------|
-| 应用服务编排 | 主流程（认证→路由→调用） | ✅ 正确做法 |
-| 领域事件 | 旁路（统计、审计） | ✅ 正确做法 |
-| 领域服务直接调用 | 主流程中 | ❌ 禁止 |
-
-**Entity 归属原则**:
-- Entity 属于其服务的业务领域，不集中在单一模块
-- 各领域模块只暴露 Service 接口，Entity 是内部实现细节
-- API 层和应用服务层不直接访问 Entity，只通过 Service 接口操作
+| Gateway 接口 | Domain 访问外部资源 | ✅ 定义在 domain/gateway/ |
+| 应用服务编排 | 主流程（认证→路由→调用） | ✅ Application 调用 Domain Service |
+| 领域事件 | 旁路（统计、审计） | ✅ 异步解耦 |
+| Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
+| Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过 Gateway |
 
 **违规示例**:
 - ❌ `LLMChatService` 直接调用 `ModelRepository` 获取 Entity
-- ✅ `LLMChatService` → `ModelRouterService` → `Model`（返回 DTO）
-- ❌ `gateway-security` 直接调用 `gateway-router` 的服务
-- ✅ `gateway-app-service` 编排两者的调用
+- ✅ `LLMChatService` → `ModelRouterService` → `ModelGateway` → `JpaModelGateway`
+- ❌ `DomainService` 直接使用 `EntityManager` 持久化
+- ✅ `DomainService` → `XxxGateway` → `JpaXxxGateway`
+- ❌ `gateway-security` Domain 直接调用 `gateway-router` 的服务
+- ✅ `application/` 编排两者的调用
 
 ### 2.3 领域模型纯洁性
 

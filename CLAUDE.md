@@ -21,26 +21,27 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 ## 架构约束
 
 - **分层依赖**: 上层依赖下层接口，禁止跨层调用或反向依赖
-- **职责拆分架构**: 按业务领域内聚 Entity + Service，跨域协作通过应用服务层编排
-  - **Entity 归属**: Entity 属于其服务的业务领域（security/router/analytics/adapter）
-  - **跨域访问**: 只通过 Service 接口，禁止领域服务直接互相调用
-  - **旁路事件**: 统计、审计等旁路操作用领域事件异步处理
+- **COLA Gateway 模式**: 接口定义在 domain/gateway/，实现 in infrastructure/
+- **依赖倒置**: Domain 只依赖 Gateway 接口，不直接依赖外部资源
+- **职责拆分架构**: 按业务领域内聚 Entity + Domain Service + Gateway
+  - **domain/gateway/**: Gateway 接口定义（通往外部世界的门）
+  - **domain/xxx/**: Entity + Domain Service（按业务能力组织）
+  - **infrastructure/**: Gateway 实现
+  - **跨域访问**: 只通过 Application 层编排，禁止 Domain 直接调用其他 Domain
 - **领域模型纯洁性**: JPA 实体只含 Getter/Setter，禁止含业务逻辑
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
 - **物理标识与业务标识分离**: 数据库用自增 BIGINT 主键，业务层用 `*_code` VARCHAR
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
 
-## 模块职责
+## 模块/包职责
 
-| 模块 | 职责 |
-|------|------|
-| **gateway-api** | Controller + 业务 DTO |
-| **gateway-app-service** | 用例编排，依赖各领域服务接口 |
-| **gateway-security** | Entity + 领域服务（认证、IP封锁） |
-| **gateway-router** | Entity + 领域服务（路由选择） |
-| **gateway-analytics** | Entity + 领域服务（Token统计、审计） |
-| **gateway-adapter** | Entity + 领域服务（LLM 适配器） |
-| **gateway-infrastructure** | BaseEntity、通用工具 |
+| 模块/包 | 职责 |
+|---------|------|
+| **adapter/** | Controller + 业务 DTO |
+| **application/** | 用例编排，依赖 Domain Service |
+| **domain/gateway/** | Gateway 接口定义 |
+| **domain/xxx/** | Entity + Domain Service（security/router/analytics/adapter） |
+| **infrastructure/** | Gateway 实现、加密、持久化 |
 | **gateway-common** | 纯共享类型（无业务语义） |
 
 ## 关键文件

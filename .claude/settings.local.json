@@ -57,7 +57,9 @@
       "Bash(sed -i 's/com\\\\.codingas\\\\.gateway\\\\.core\\\\.security\\\\.interceptor/com.codingas.gateway.security.interceptor/g' gateway-application/src/main/java/com/codingas/gateway/config/satoken/ApiKeyAuthInterceptor.java gateway-application/src/main/java/com/codingas/gateway/config/satoken/IPBlockCheckInterceptor.java gateway-application/src/main/java/com/codingas/gateway/config/satoken/SaTokenConfig.java gateway-application/src/test/java/com/codingas/gateway/config/satoken/ApiKeyAuthInterceptorTest.java gateway-application/src/test/java/com/codingas/gateway/config/satoken/IPBlockCheckInterceptorTest.java gateway-application/src/test/java/com/codingas/gateway/config/satoken/SecurityChainIT.java)",
       "Bash(sed -i 's/com\\\\.codingas\\\\.gateway\\\\.core\\\\.security\\\\.ipblock/com.codingas.gateway.security.ipblock/g' gateway-application/src/main/java/com/codingas/gateway/config/satoken/IPBlockCheckInterceptor.java gateway-application/src/test/java/com/codingas/gateway/config/satoken/IPBlockCheckInterceptorTest.java gateway-application/src/test/java/com/codingas/gateway/config/satoken/SecurityChainIT.java)",
       "Bash(sed -i 's/com\\\\.codingas\\\\.gateway\\\\.core\\\\.security\\\\.masking/com.codingas.gateway.security.masking/g' gateway-api/src/main/java/com/codingas/gateway/web/advice/MaskingResponseAdvice.java gateway-api/src/test/java/com/codingas/gateway/web/advice/MaskingResponseAdviceTest.java)",
-      "Bash(xargs rm *)"
+      "Bash(xargs rm *)",
+      "WebFetch(domain:www.apframework.com)",
+      "mcp__plugin_ecc_github__get_file_contents"
     ]
   }
 }
