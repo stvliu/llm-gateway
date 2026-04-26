@@ -38,13 +38,6 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- Gateway Dispatch (for ProtocolTranslator) -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-dispatch</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
         <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

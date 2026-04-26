@@ -38,13 +38,6 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- Dispatch 模块 -->
-        <dependency>
-            <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-dispatch</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
         <!-- Adapter 模块 -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
