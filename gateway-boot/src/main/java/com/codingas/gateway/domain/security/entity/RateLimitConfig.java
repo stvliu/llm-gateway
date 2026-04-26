@@ -6,6 +6,13 @@ import lombok.*;
 
 /**
  * 限流配置实体
+ *
+ * <p>定义令牌桶算法的限流参数。</p>
+ * <ul>
+ *   <li>requestsPerMinute: 每分钟允许的请求数</li>
+ *   <li>bucketSize: 令牌桶容量</li>
+ *   <li>refillRate: 令牌补充速率（每分钟补充的令牌数）</li>
+ * </ul>
  */
 @Entity
 @Table(name = "rate_limit_configs")

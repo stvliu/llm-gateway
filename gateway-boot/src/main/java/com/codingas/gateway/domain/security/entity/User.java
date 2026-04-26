@@ -7,6 +7,11 @@ import lombok.experimental.Accessors;
 
 /**
  * 用户实体
+ *
+ * <p>表示系统中的用户账户，包含认证和授权信息。</p>
+ *
+ * @see UserRole
+ * @see UserStatus
  */
 @Entity
 @Table(name = "users")

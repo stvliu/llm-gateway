@@ -9,6 +9,11 @@ import java.time.Instant;
 
 /**
  * 网关访问凭证实体
+ *
+ * <p>存储用户的 API Key 信息，包括密钥哈希、状态和有效期。</p>
+ * <p>实际密钥不在数据库中存储，仅存储其哈希值用于验证。</p>
+ *
+ * @see GatewayApiKeyStatus
  */
 @Entity
 @Table(name = "gateway_api_keys")

@@ -8,6 +8,9 @@ import java.time.Instant;
 
 /**
  * IP 黑名单实体
+ *
+ * <p>记录被封锁的 IP 地址，支持临时封锁和永久封锁。</p>
+ * <p>临时封锁在 expiresAt 时间后自动失效。</p>
  */
 @Entity
 @Table(name = "ip_blocklist")
