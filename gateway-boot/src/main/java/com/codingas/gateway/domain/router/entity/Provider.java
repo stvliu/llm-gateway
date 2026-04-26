@@ -4,8 +4,6 @@ import com.codingas.gateway.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.math.BigDecimal;
-
 /**
  * 提供商实体
  *
