@@ -4,6 +4,7 @@ import com.codingas.gateway.adapter.StreamCallback;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
+import com.codingas.gateway.core.domain.event.TokenUsedEvent;
 import com.codingas.gateway.router.LLMDispatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -118,11 +119,11 @@ class LLMChatUseCaseTest {
 
             llmChatUseCase.send(testRequest, RouteGroup.RoutingStrategy.PRIORITY);
 
-            ArgumentCaptor<LLMChatUseCase.TokenUsedEvent> eventCaptor =
-                    ArgumentCaptor.forClass(LLMChatUseCase.TokenUsedEvent.class);
+            ArgumentCaptor<TokenUsedEvent> eventCaptor =
+                    ArgumentCaptor.forClass(TokenUsedEvent.class);
             verify(eventPublisher).publishEvent(eventCaptor.capture());
 
-            LLMChatUseCase.TokenUsedEvent event = eventCaptor.getValue();
+            TokenUsedEvent event = eventCaptor.getValue();
             assertThat(event.model()).isEqualTo("gpt-4o");
             assertThat(event.promptTokens()).isEqualTo(10);
             assertThat(event.completionTokens()).isEqualTo(20);
@@ -146,7 +147,7 @@ class LLMChatUseCaseTest {
 
             llmChatUseCase.send(testRequest, RouteGroup.RoutingStrategy.PRIORITY);
 
-            verify(eventPublisher, never()).publishEvent(any(LLMChatUseCase.TokenUsedEvent.class));
+            verify(eventPublisher, never()).publishEvent(any(TokenUsedEvent.class));
         }
     }
 

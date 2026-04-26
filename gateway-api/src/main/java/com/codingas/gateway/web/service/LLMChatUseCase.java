@@ -4,12 +4,15 @@ import com.codingas.gateway.adapter.StreamCallback;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.core.domain.entity.RouteGroup;
+import com.codingas.gateway.core.domain.event.TokenUsedEvent;
 import com.codingas.gateway.router.LLMDispatcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -81,25 +84,37 @@ public class LLMChatUseCase {
      */
     private void publishTokenUsedEvent(LLMRequest request, LLMResponse response) {
         if (response.getUsage() != null) {
-            eventPublisher.publishEvent(new TokenUsedEvent(
-                    request.getModel(),
-                    response.getUsage().getPromptTokens(),
-                    response.getUsage().getCompletionTokens()
-            ));
+            TokenUsedEvent event = TokenUsedEvent.builder()
+                    .model(request.getModel())
+                    .promptTokens(response.getUsage().getPromptTokens())
+                    .completionTokens(response.getUsage().getCompletionTokens())
+                    .cost(calculateCost(request, response))
+                    .traceId(getTraceId())
+                    .occurredOn(Instant.now())
+                    .build();
+
+            eventPublisher.publishEvent(event);
             log.debug("Published TokenUsedEvent for model={}", request.getModel());
         }
     }
 
     /**
-     * Token 使用事件
+     * 计算费用
      *
-     * @param model 模型代码
-     * @param promptTokens 输入 Token 数
-     * @param completionTokens 输出 Token 数
+     * <p>TODO: 基于模型定价计算实际费用</p>
      */
-    public record TokenUsedEvent(
-            String model,
-            int promptTokens,
-            int completionTokens
-    ) {}
+    private BigDecimal calculateCost(LLMRequest request, LLMResponse response) {
+        // TODO: 从 ModelGateway 获取模型定价计算
+        return BigDecimal.ZERO;
+    }
+
+    /**
+     * 获取当前 Trace ID
+     *
+     * <p>TODO: 从 OpenTelemetry Context 获取</p>
+     */
+    private String getTraceId() {
+        // TODO: 从 OpenTelemetry Context 获取
+        return null;
+    }
 }
