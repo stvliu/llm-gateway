@@ -14,6 +14,7 @@
 
     <modules>
         <module>gateway-common</module>
+        <module>gateway-infrastructure</module>
         <module>gateway-security</module>
         <module>gateway-adapter</module>
         <module>gateway-core</module>

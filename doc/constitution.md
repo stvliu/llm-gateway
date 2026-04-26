@@ -161,7 +161,60 @@ Token 必须是所有成本追踪的核心单位。
 - ❌ `GatewayController` 直接调用 `DeepSeekAdapter`
 - ✅ `GatewayController` → `GatewayOrchestrator` → `ModelRouter` → `LLMProviderAdapter`
 
-### 2.2 领域模型纯洁性
+### 2.2 职责拆分架构（Responsibility-Split Architecture）
+
+**定义**:
+```
+系统按业务领域拆分模块，每个模块内聚其核心业务实体（Entity）和领域服务（Service）。
+跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
+```
+
+**分层结构**:
+```
+gateway-api                  → Controller + 业务 DTO
+           ↓
+gateway-app-service          → 应用服务（用例编排）
+           ↓
+    ┌───────┼───────┬──────────┐
+    ↓       ↓       ↓          ↓
+security  router  analytics  adapter
+    ↓       ↓       ↓          ↓
+infrastructure           common
+```
+
+**模块职责**:
+
+| 模块 | 职责 | 包含内容 |
+|------|------|---------|
+| **gateway-api** | HTTP 请求接收，返回响应 | Controller、业务 DTO |
+| **gateway-app-service** | 用例编排 | 应用服务，依赖各领域服务接口 |
+| **gateway-security** | Entity + 领域服务 | GatewayApiKey、IpBlocklist + Service |
+| **gateway-router** | Entity + 领域服务 | Model、Provider、RouteGroup + Service |
+| **gateway-analytics** | Entity + 领域服务 | TokenUsage、AuditLog + Service |
+| **gateway-adapter** | Entity + 领域服务 | ProviderApiKey、Credentials + Service |
+| **gateway-infrastructure** | 基础设施 | BaseEntity、通用工具 |
+| **gateway-common** | 纯共享类型 | 通用异常、分页工具（无业务语义） |
+
+**跨域访问规则**:
+
+| 方式 | 场景 | 规则 |
+|------|------|------|
+| 应用服务编排 | 主流程（认证→路由→调用） | ✅ 正确做法 |
+| 领域事件 | 旁路（统计、审计） | ✅ 正确做法 |
+| 领域服务直接调用 | 主流程中 | ❌ 禁止 |
+
+**Entity 归属原则**:
+- Entity 属于其服务的业务领域，不集中在单一模块
+- 各领域模块只暴露 Service 接口，Entity 是内部实现细节
+- API 层和应用服务层不直接访问 Entity，只通过 Service 接口操作
+
+**违规示例**:
+- ❌ `LLMChatService` 直接调用 `ModelRepository` 获取 Entity
+- ✅ `LLMChatService` → `ModelRouterService` → `Model`（返回 DTO）
+- ❌ `gateway-security` 直接调用 `gateway-router` 的服务
+- ✅ `gateway-app-service` 编排两者的调用
+
+### 2.3 领域模型纯洁性
 
 **定义**:
 ```
@@ -179,7 +232,7 @@ Token 必须是所有成本追踪的核心单位。
 - ❌ 复杂业务计算
 - ❌ 直接修改其他实体状态
 
-### 2.3 配置外部化
+### 2.4 配置外部化
 
 **定义**:
 ```
@@ -202,7 +255,7 @@ gateway:
     timeout-seconds: 30               # API 超时时间
 ```
 
-### 2.4 物理标识与业务标识分离
+### 2.5 物理标识与业务标识分离
 
 **定义**:
 ```
@@ -235,7 +288,7 @@ gateway:
 | 提示词 | `id BIGINT AUTO_INCREMENT` | `template_code VARCHAR(128)` |
 | 策略 | `id BIGINT AUTO_INCREMENT` | `strategy_code VARCHAR(128)` |
 
-### 2.5 全实体可审计（不可妥协）
+### 2.6 全实体可审计（不可妥协）
 
 **定义**:
 ```
