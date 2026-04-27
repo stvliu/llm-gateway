@@ -4,8 +4,6 @@ import com.codingas.gateway.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.Instant;
-
 /**
  * 审计日志实体
  *
@@ -33,7 +31,4 @@ public class AuditLog extends BaseEntity {
 
     @Column(name = "ip_address")
     private String ipAddress;
-
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt;
 }
