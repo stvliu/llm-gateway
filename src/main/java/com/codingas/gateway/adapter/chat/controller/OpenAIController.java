@@ -9,20 +9,18 @@ import com.codingas.gateway.domain.router.entity.RouteGroup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * OpenAI 兼容 API 控制器
+ * OpenAI 兼容 API 控制器 (WebFlux 版本)
  *
  * <p>暴露 /v1/chat/completions 端点，兼容 OpenAI API 格式。</p>
- * <p>遵循 COLA 5.0 架构：Controller 是 Adapter 层，负责接收请求和返回响应。</p>
- *
- * @see <a href="https://platform.openai.com/docs/api-reference/chat">OpenAI Chat API</a>
  */
 @Slf4j
 @RestController
@@ -31,28 +29,24 @@ import java.util.concurrent.Executors;
 public class OpenAIController {
 
     private final LLMChatUseCase llmChatUseCase;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * Chat Completions 端点
-     *
-     * <p>支持非流式和流式两种响应模式。</p>
      */
     @PostMapping("/chat/completions")
-    public Object chatCompletions(
+    public Mono<Object> chatCompletions(
             @RequestBody OpenAIChatRequest request,
             @RequestAttribute("userId") Long userId,
-            @RequestAttribute("apiKeyId") Long apiKeyId) {
+            @RequestAttribute("apiKeyId") Long apiKeyId,
+            ServerWebExchange exchange) {
 
         log.info("OpenAI chat request: model={}, userId={}, stream={}",
                 request.getModel(), userId, request.getStream());
 
-        // 验证请求
         validateRequest(request);
 
-        // 判断流式或非流式
         if (Boolean.TRUE.equals(request.getStream())) {
-            return chatCompletionsStream(request, userId, apiKeyId);
+            return chatCompletionsStream(request, userId, apiKeyId, exchange);
         } else {
             return chatCompletionsNonStream(request, userId, apiKeyId);
         }
@@ -61,59 +55,46 @@ public class OpenAIController {
     /**
      * 非流式响应
      */
-    private OpenAIChatResponse chatCompletionsNonStream(
+    private Mono<Object> chatCompletionsNonStream(
             OpenAIChatRequest request, Long userId, Long apiKeyId) {
 
-        // 转换为内部请求格式
         LLMRequest llmRequest = toLLMRequest(request);
 
-        // 调用用例编排器
-        LLMResponse response = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
-
-        // 转换为 OpenAI 响应格式
-        return toOpenAIChatResponse(response);
+        return llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED)
+                .map(this::toOpenAIChatResponse)
+                .map(ResponseEntity::ok);
     }
 
     /**
      * 流式响应
      */
-    private SseEmitter chatCompletionsStream(
-            OpenAIChatRequest request, Long userId, Long apiKeyId) {
+    private Mono<Object> chatCompletionsStream(
+            OpenAIChatRequest request, Long userId, Long apiKeyId, ServerWebExchange exchange) {
 
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        LLMRequest llmRequest = toLLMRequest(request);
+        llmRequest.setStream(true);
 
-        executor.submit(() -> {
-            try {
-                // 转换为内部请求格式
-                LLMRequest llmRequest = toLLMRequest(request);
-                llmRequest.setStream(true);
-
-                // 调用用例编排器 (流式)
-                llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED,
+        return llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED,
                         data -> {
-                            try {
-                                emitter.send(data, MediaType.TEXT_EVENT_STREAM);
-                            } catch (Exception e) {
-                                log.warn("SSE send error: {}", e.getMessage());
-                            }
-                        });
-
-            } catch (Exception e) {
-                log.error("Stream request error: {}", e.getMessage(), e);
-                try {
-                    emitter.completeWithError(e);
-                } catch (Exception ex) {
-                    log.warn("SSE completeWithError error: {}", ex.getMessage());
-                }
-            }
-        });
-
-        return emitter;
+                            exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_EVENT_STREAM);
+                            exchange.getResponse().writeWith(
+                                    Mono.just(getDataBuffer(exchange, data))
+                            ).subscribe();
+                        })
+                .then(Mono.just(ResponseEntity.ok().<Void>build()));
     }
 
-    /**
-     * 验证请求
-     */
+    private org.springframework.core.io.buffer.DataBuffer getDataBuffer(ServerWebExchange exchange, String data) {
+        try {
+            byte[] bytes = data.getBytes("UTF-8");
+            var buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+            return buffer;
+        } catch (Exception e) {
+            log.warn("Error creating data buffer: {}", e.getMessage());
+            return exchange.getResponse().bufferFactory().wrap(new byte[0]);
+        }
+    }
+
     private void validateRequest(OpenAIChatRequest request) {
         if (request.getModel() == null || request.getModel().isBlank()) {
             throw new IllegalArgumentException("model is required");
@@ -123,9 +104,6 @@ public class OpenAIController {
         }
     }
 
-    /**
-     * 转换为内部 LLMRequest
-     */
     private LLMRequest toLLMRequest(OpenAIChatRequest request) {
         List<LLMRequest.Message> messages = request.getMessages().stream()
                 .map(this::toLLMMessage)
@@ -171,18 +149,16 @@ public class OpenAIController {
                 .build();
     }
 
-    /**
-     * 转换为 OpenAI 响应格式
-     */
-    private OpenAIChatResponse toOpenAIChatResponse(LLMResponse response) {
+    private Object toOpenAIChatResponse(LLMResponse response) {
         if (response.getError() != null) {
-            return OpenAIChatResponse.builder()
-                    .error(OpenAIChatResponse.Error.builder()
-                            .message(response.getError().getMessage())
-                            .type(response.getError().getType())
-                            .code(response.getError().getCode())
-                            .build())
-                    .build();
+            return ResponseEntity.badRequest().body(
+                    OpenAIChatResponse.builder()
+                            .error(OpenAIChatResponse.Error.builder()
+                                    .message(response.getError().getMessage())
+                                    .type(response.getError().getType())
+                                    .code(response.getError().getCode())
+                                    .build())
+                            .build());
         }
 
         List<OpenAIChatResponse.Choice> choices = null;

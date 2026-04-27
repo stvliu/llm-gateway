@@ -1,64 +1,62 @@
-package com.codingas.gateway.infrastructure.security;
+package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.infrastructure.security.interceptor.SecurityInterceptorChain;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.server.WebFilter;
+import org.springframework.web.server.WebFilterChain;
+import reactor.core.publisher.Mono;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
- * Sa-Token 配置
+ * Sa-Token WebFlux 配置
  *
- * <p>使用 SecurityInterceptorChain 责任链管理多个拦截器。</p>
+ * <p>使用 WebFilter 替代 HandlerInterceptor 实现安全拦截链。</p>
  */
 @Slf4j
 @Configuration
-@RequiredArgsConstructor
-public class SaTokenConfig implements WebMvcConfigurer {
+public class SaTokenConfig {
 
-    private final SecurityInterceptorChain securityInterceptorChain;
+    private final List<SecurityFilterChain> filterChains;
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new SecurityChainInterceptorAdapter(securityInterceptorChain))
-                .addPathPatterns("/**")
-                .excludePathPatterns(
-                        "/health",
-                        "/ready",
-                        "/actuator/**",
-                        "/error"
-                )
-                .order(1);
+    public SaTokenConfig(List<SecurityFilterChain> filterChains) {
+        this.filterChains = filterChains;
     }
 
     /**
-     * 安全链拦截器适配器
-     *
-     * <p>将 SecurityInterceptorChain 适配为 Spring HandlerInterceptor。</p>
+     * 安全链过滤器
      */
-    @Slf4j
-    public static class SecurityChainInterceptorAdapter implements HandlerInterceptor {
-
-        private final SecurityInterceptorChain chain;
-
-        public SecurityChainInterceptorAdapter(SecurityInterceptorChain chain) {
-            this.chain = chain;
-        }
-
-        @Override
-        public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-            try {
-                return chain.execute(request, response);
-            } catch (Exception e) {
-                log.error("Error executing security chain", e);
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                return false;
+    @Bean
+    public WebFilter securityChainFilter() {
+        return (ServerWebExchange exchange, WebFilterChain chain) -> {
+            String path = exchange.getRequest().getPath().value();
+            if (shouldSkip(path)) {
+                return chain.filter(exchange);
             }
-        }
+
+            for (SecurityFilterChain filterChain : filterChains) {
+                if (!filterChain.filter(exchange)) {
+                    return exchange.getResponse().setComplete();
+                }
+            }
+
+            return chain.filter(exchange);
+        };
+    }
+
+    private boolean shouldSkip(String path) {
+        return path.startsWith("/health") ||
+               path.startsWith("/ready") ||
+               path.startsWith("/actuator") ||
+               path.equals("/error");
+    }
+
+    /**
+     * 安全过滤器链接口
+     */
+    public interface SecurityFilterChain {
+        boolean filter(ServerWebExchange exchange);
     }
 }

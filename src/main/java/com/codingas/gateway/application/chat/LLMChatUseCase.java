@@ -8,13 +8,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.function.Consumer;
 
 /**
- * LLM 聊天用例编排器
+ * LLM 聊天用例编排器 (响应式版本)
  *
  * <p>Application 层用例编排，负责 LLM 聊天请求的处理。</p>
  */
@@ -31,14 +32,13 @@ public class LLMChatUseCase {
      *
      * @param request LLM 请求
      * @param strategy 路由策略
-     * @return LLM 响应
+     * @return LLM 响应 Mono
      */
-    public LLMResponse send(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
+    public Mono<LLMResponse> send(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
         log.debug("UseCase: send request, model={}, strategy={}", request.getModel(), strategy);
 
-        LLMResponse response = llmDispatcher.send(request, strategy);
-        publishTokenUsedEvent(request, response);
-        return response;
+        return llmDispatcher.send(request, strategy)
+                .doOnSuccess(response -> publishTokenUsedEvent(request, response));
     }
 
     /**
@@ -47,10 +47,11 @@ public class LLMChatUseCase {
      * @param request LLM 请求
      * @param strategy 路由策略
      * @param onChunk 流式响应回调
+     * @return 完成信号 Mono
      */
-    public void sendStream(LLMRequest request, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk) {
+    public Mono<Void> sendStream(LLMRequest request, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk) {
         log.debug("UseCase: send stream request, model={}, strategy={}", request.getModel(), strategy);
-        llmDispatcher.sendStream(request, strategy, onChunk);
+        return llmDispatcher.sendStream(request, strategy, onChunk);
     }
 
     /**
