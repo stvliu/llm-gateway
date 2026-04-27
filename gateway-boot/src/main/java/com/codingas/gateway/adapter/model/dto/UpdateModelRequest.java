@@ -1,6 +1,8 @@
 package com.codingas.gateway.adapter.model.dto;
 
-import jakarta.validation.constraints.Size;
+import com.codingas.gateway.domain.router.entity.Model;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -11,15 +13,32 @@ import java.math.BigDecimal;
 @Data
 public class UpdateModelRequest {
 
-    @Size(max = 256, message = "Display name must not exceed 256 characters")
+    @NotBlank(message = "Display name is required")
     private String displayName;
 
-    @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
-    private String providerModelId;
+    @NotNull(message = "Provider ID is required")
+    private Long providerId;
 
     private Integer contextWindow;
     private BigDecimal inputPrice;
     private BigDecimal outputPrice;
     private String capabilities;
     private String status;
+
+    /**
+     * 转换为实体
+     */
+    public Model toEntity() {
+        Model model = new Model();
+        model.setDisplayName(this.displayName);
+        model.setProviderId(this.providerId);
+        model.setContextWindow(this.contextWindow);
+        model.setInputPrice(this.inputPrice);
+        model.setOutputPrice(this.outputPrice);
+        model.setCapabilities(this.capabilities);
+        if (this.status != null) {
+            model.setStatus(Model.ModelStatus.valueOf(this.status));
+        }
+        return model;
+    }
 }

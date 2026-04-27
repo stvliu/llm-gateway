@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.model.dto;
 
+import com.codingas.gateway.domain.router.entity.Provider;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,10 +16,28 @@ public class ProviderResponse {
     private String providerName;
     private String providerType;
     private String baseUrl;
-    private String websiteUrl;
-    private String apiDocUrl;
-    private String status;
     private Integer priority;
+    private Boolean enabled;
     private String createdAt;
     private String updatedAt;
+
+    /**
+     * 从实体转换为响应 DTO
+     */
+    public static ProviderResponse from(Provider provider) {
+        if (provider == null) {
+            return null;
+        }
+        return ProviderResponse.builder()
+                .id(provider.getId())
+                .providerCode(provider.getProviderCode())
+                .providerName(provider.getProviderName())
+                .providerType(provider.getProviderType() != null ? provider.getProviderType().name() : null)
+                .baseUrl(provider.getBaseUrl())
+                .priority(provider.getPriority())
+                .enabled(provider.getEnabled())
+                .createdAt(provider.getCreatedAt() != null ? provider.getCreatedAt().toString() : null)
+                .updatedAt(provider.getUpdatedAt() != null ? provider.getUpdatedAt().toString() : null)
+                .build();
+    }
 }
