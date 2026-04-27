@@ -1,7 +1,0 @@
-# LLM Provider Adapter SPI Registration
-#
-# Add your adapter implementation class name below to enable auto-discovery.
-# One class per line.
-
-com.codingas.gateway.adapter.openai.OpenAIAdapter
-com.codingas.gateway.adapter.anthropic.AnthropicAdapter
