@@ -2,6 +2,9 @@ package com.codingas.gateway.infrastructure.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
+import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ProviderException;
+import com.codingas.gateway.common.exception.SecurityException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,42 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * 处理请求级异常
+     */
+    @ExceptionHandler(GatewayRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleGatewayRequestException(GatewayRequestException ex) {
+        log.warn("Gateway request error: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * 处理提供商异常
+     */
+    @ExceptionHandler(ProviderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProviderException(ProviderException ex) {
+        log.error("Provider error: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
+                .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * 处理安全异常
+     */
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSecurityException(SecurityException ex) {
+        log.warn("Security error: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * 处理网关异常
+     */
     @ExceptionHandler(GatewayException.class)
     public ResponseEntity<ApiResponse<Void>> handleGatewayException(GatewayException ex) {
         log.error("Gateway error: {}", ex.getMessage(), ex);
@@ -27,6 +66,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
     }
 
+    /**
+     * 处理参数校验异常
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getFieldErrors().stream()
@@ -38,6 +80,9 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("VALIDATION_ERROR", message));
     }
 
+    /**
+     * 处理通用异常
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
         log.error("Unexpected error: {}", ex.getMessage(), ex);
