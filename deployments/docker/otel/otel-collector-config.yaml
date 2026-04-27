@@ -1,0 +1,53 @@
+# OpenTelemetry Collector 配置
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+    timeout: 10s
+    send_batch_size: 1024
+
+  # 内存限制
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+
+exporters:
+  # 日志导出
+  logging:
+    verbosity: detailed
+
+  # Jaeger 导出
+  jaeger:
+    endpoint: jaeger:14250
+    tls:
+      insecure: true
+
+  # Prometheus 导出 (用于 Grafana)
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "llm_gateway"
+    const_labels:
+      service: llm-gateway
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging, jaeger]
+
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging, prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging]

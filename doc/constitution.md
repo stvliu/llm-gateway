@@ -134,34 +134,144 @@ Token 必须是所有成本追踪的核心单位。
 
 ## 2. 架构约束
 
-### 2.1 分层架构（Layered Architecture）
+### 2.1 COLA Light 5.0 架构
 
 **定义**:
 ```
-系统必须严格遵循分层架构：Web 展现层 → 应用层 → 调度层 → 服务层 → 基础设施层
-上层依赖下层接口，禁止跨层调用或反向依赖。
+系统采用 COLA Light 5.0 架构：单模块架构，用 package 代替模块划分层次。
+按业务领域分包，Gateway 接口定义在 domain 层，实现 in infrastructure 层（依赖倒置）。
+跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
 ```
 
-**依赖关系**:
+**项目结构（Maven 单一模块）**:
 ```
-┌─────────────────────┐
-│   Web 展现层        │  ← React SPA (管理控制台)
-├─────────────────────┤
-│   应用层            │  ← REST Controller, CLI 命令
-├─────────────────────┤
-│   调度层            │  ← ModelRouter, TokenTracker, RateLimiter
-├─────────────────────┤
-│   服务层            │  ← GatewayOrchestrator, TranslationService
-├─────────────────────┤
-│   基础设施层        │  ← LLM Adapters, FileProcessors
-└─────────────────────┘
+gateway-boot/                          # Maven 单一模块
+└── src/main/java/com/codingas/gateway/
+    ├── adapter/                       # 适配器层（按用例分包）
+    │   ├── auth/controller/ & dto/
+    │   ├── chat/controller/ & dto/
+    │   ├── model/controller/ & dto/
+    │   └── admin/controller/ & dto/
+    ├── application/                   # 应用层（按用例分包）
+    │   ├── auth/
+    │   ├── chat/
+    │   └── model/
+    ├── domain/                        # 领域层
+    │   ├── gateway/                   # 跨领域 Gateway 接口
+    │   ├── security/                  # 安全领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── router/                    # 路由领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   └── analytics/                # 分析领域
+    │       ├── entity/
+    │       ├── service/
+    │       ├── gateway/
+    │       ├── enums/
+    │       └── exception/
+    ├── infrastructure/                # 基础设施层
+    │   ├── config/
+    │   ├── gateway/                  # Gateway 实现
+    │   │   ├── security/
+    │   │   ├── router/
+    │   │   └── analytics/
+    │   └── util/
+    └── common/                        # 公共组件
+        ├── constants/
+        ├── exception/
+        └── util/
 ```
+
+**各层职责**:
+
+| 层 | 职责 | 包含内容 |
+|---|------|---------|
+| **adapter** | 接收请求、返回响应 | Controller、DTO（按用例分包） |
+| **application** | 用例编排，跨域协调 | Application Service（按用例分包） |
+| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
+| **infrastructure** | 技术实现 | Gateway 实现、配置、工具 |
+| **common** | 跨领域共享 | 基础异常、技术常量、工具类 |
+
+### 2.2 Gateway 模式
+
+**定义**:
+```
+Gateway 接口定义在 domain/xxx/gateway/ 包中。
+Gateway 实现在 infrastructure/xxx/gateway/ 包中。
+Domain 只依赖 Gateway 接口，不直接依赖外部资源。
+Infrastructure 通过依赖注入实现 Gateway。
+```
+
+```
+Domain 层                     Infrastructure 层
+   │                                │
+   │   ┌─────────────────┐          │
+   │   │ XxxGateway     │          │
+   │   │ (接口定义)      │          │
+   │   └────────┬────────┘          │
+   │            │                     │
+   │            │ 实现                │
+   └────────────┼────────────────────┘
+                │
+         ┌──────┴──────┐
+         │ JpaXxx       │
+         │ Gateway      │
+         └─────────────┘
+```
+
+**Gateway 接口与实现放置规则**:
+
+| 组件 | 放置位置 |
+|------|---------|
+| Gateway 接口 | `domain/xxx/gateway/` |
+| Gateway 实现 | `infrastructure/xxx/gateway/` |
+
+### 2.3 服务分类
+
+**Domain Service（领域服务）**:
+- 职责：业务逻辑，领域规则
+- 放置：`domain/xxx/service/`
+- 示例：`AuthenticationService`, `RateLimitService`, `RbacService`
+
+**Application Service（应用服务）**:
+- 职责：用例编排，跨领域协调，不含业务逻辑
+- 放置：`application/xxx/`（按用例分包）
+- 示例：`AuthApplication`, `ChatApplication`, `ModelApplication`
+
+### 2.4 Exception 分类
+
+| 类型 | 放置位置 | 示例 |
+|------|---------|------|
+| 基础异常 | `common/exception/` | GatewayException |
+| 领域异常 | `domain/xxx/exception/` | AuthenticationException |
+| 基础设施异常 | `infrastructure/exception/` | ProviderException |
+
+### 2.5 跨域访问规则
+
+| 方式 | 场景 | 规则 |
+|------|------|------|
+| Gateway 接口 | Domain 访问外部资源 | ✅ 定义在 `domain/xxx/gateway/` |
+| 应用服务编排 | 主流程（认证→路由→调用） | ✅ Application 调用 Domain Service |
+| 领域事件 | 旁路（统计、审计） | ✅ 异步解耦 |
+| Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
+| Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过 Gateway |
 
 **违规示例**:
-- ❌ `GatewayController` 直接调用 `DeepSeekAdapter`
-- ✅ `GatewayController` → `GatewayOrchestrator` → `ModelRouter` → `LLMProviderAdapter`
+- ❌ `ChatApplication` 直接调用 `JpaModelRepository` 获取 Entity
+- ✅ `ChatApplication` → `ModelRouterService` → `ModelGateway` → `JpaModelGateway`
+- ❌ `DomainService` 直接使用 `EntityManager` 持久化
+- ✅ `DomainService` → `XxxGateway` → `JpaXxxGateway`
+- ❌ `security` Domain 直接调用 `router` Domain 的服务
+- ✅ `application/` 编排两者的调用
 
-### 2.2 领域模型纯洁性
+### 2.3 领域模型纯洁性
 
 **定义**:
 ```
@@ -179,7 +289,7 @@ Token 必须是所有成本追踪的核心单位。
 - ❌ 复杂业务计算
 - ❌ 直接修改其他实体状态
 
-### 2.3 配置外部化
+### 2.4 配置外部化
 
 **定义**:
 ```
@@ -202,7 +312,7 @@ gateway:
     timeout-seconds: 30               # API 超时时间
 ```
 
-### 2.4 物理标识与业务标识分离
+### 2.5 物理标识与业务标识分离
 
 **定义**:
 ```
@@ -235,7 +345,7 @@ gateway:
 | 提示词 | `id BIGINT AUTO_INCREMENT` | `template_code VARCHAR(128)` |
 | 策略 | `id BIGINT AUTO_INCREMENT` | `strategy_code VARCHAR(128)` |
 
-### 2.5 全实体可审计（不可妥协）
+### 2.6 全实体可审计（不可妥协）
 
 **定义**:
 ```

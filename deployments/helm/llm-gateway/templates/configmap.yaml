@@ -1,0 +1,36 @@
+# ===================================================================
+# LLM-Gateway ConfigMap Template
+# ===================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "llm-gateway.fullname" . }}-config
+  labels:
+    {{- include "llm-gateway.labels" . | nindent 4 }}
+data:
+  application-{{ .Values.springProfiles }}.yml: |
+    # Spring Boot Configuration
+    spring:
+      application:
+        name: llm-gateway
+
+    # Server Configuration
+    server:
+      port: {{ .Values.service.port }}
+
+    # Logging
+    logging:
+      level:
+        root: WARN
+        com.codingas.gateway: INFO
+
+    # Actuator
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info,metrics,prometheus
+      metrics:
+        tags:
+          application: ${spring.application.name}

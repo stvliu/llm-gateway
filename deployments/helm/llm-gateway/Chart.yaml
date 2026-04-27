@@ -1,0 +1,28 @@
+# ===================================================================
+# LLM-Gateway Helm Chart
+# ===================================================================
+
+apiVersion: v2
+name: llm-gateway
+description: Enterprise AI Model API Gateway - OpenAI and Anthropic Compatible
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - ai-gateway
+  - openai
+  - anthropic
+  - api-gateway
+  - llm
+
+home: https://github.com/llm-gateway/llm-gateway
+sources:
+  - https://github.com/llm-gateway/llm-gateway
+
+maintainers:
+  - name: LLM-Gateway Team
+    email: team@llm-gateway.dev
+    url: https://github.com/llm-gateway
+
+dependencies: []

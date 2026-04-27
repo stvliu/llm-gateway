@@ -1,0 +1,200 @@
+# ===================================================================
+# LLM-Gateway 开发环境 Docker Compose
+# ===================================================================
+# 使用方式:
+#   docker-compose up -d
+#   docker-compose logs -f gateway
+# ===================================================================
+
+services:
+  # -------------------------------------------------------------------
+  # PostgreSQL 数据库 (生产环境推荐)
+  # -------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: llm-gateway-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: llm_gateway
+      POSTGRES_USER: ${DB_USERNAME:-llm_gateway}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-llm_gateway_secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-llm_gateway} -d llm_gateway"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # Redis (缓存和限流)
+  # -------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: llm-gateway-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # Prometheus (指标采集)
+  # -------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: llm-gateway-prometheus
+    restart: unless-stopped
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # Grafana (可视化)
+  # -------------------------------------------------------------------
+  grafana:
+    image: grafana/grafana:11.4.2
+    container_name: llm-gateway-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin123}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # Jaeger (分布式追踪)
+  # -------------------------------------------------------------------
+  jaeger:
+    image: jaegertracing/all-in-one:1.62
+    container_name: llm-gateway-jaeger
+    restart: unless-stopped
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      SPAN_STORAGE_TYPE: badger
+      BADGER_EPHEMERAL: "true"
+    ports:
+      - "16686:16686"  # UI
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # OpenTelemetry Collector
+  # -------------------------------------------------------------------
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    container_name: llm-gateway-otel-collector
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus exporter
+      - "8889:8889"   # Prometheus exporter metrics
+    volumes:
+      - ./otel/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - jaeger
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # LLM-Gateway 应用
+  # -------------------------------------------------------------------
+  gateway:
+    build:
+      context: ../../gateway
+      dockerfile: deployments/docker/Dockerfile
+      args:
+        SPRING_PROFILES_ACTIVE: dev
+    container_name: llm-gateway
+    restart: unless-stopped
+    environment:
+      # Spring
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      # 数据库
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: llm_gateway
+      DB_USERNAME: ${DB_USERNAME:-llm_gateway}
+      DB_PASSWORD: ${DB_PASSWORD:-llm_gateway_secret}
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      # OpenTelemetry
+      OTEL_ENABLED: "true"
+      OTEL_ENDPOINT: http://otel-collector:4317
+      # 管理
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    ports:
+      - "8080:8080"
+      - "8081:8081"  # Actuator
+    volumes:
+      - ../../gateway:/app
+      - ./config:/app/config:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - llm-gateway-network
+
+# ===================================================================
+# 网络定义
+# ===================================================================
+networks:
+  llm-gateway-network:
+    driver: bridge
+    name: llm-gateway-network
+
+# ===================================================================
+# 卷定义
+# ===================================================================
+volumes:
+  postgres_data:
+    name: llm-gateway-postgres-data
+  redis_data:
+    name: llm-gateway-redis-data
+  prometheus_data:
+    name: llm-gateway-prometheus-data
+  grafana_data:
+    name: llm-gateway-grafana-data

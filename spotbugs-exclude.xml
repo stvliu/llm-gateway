@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!--
+        SpotBugs 排除规则
+        用于忽略误报或已知可接受的风险
+    -->
+
+    <!-- 测试代码排除 -->
+    <Match>
+        <Source name="~.*Test\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*Tests\.java"/>
+    </Match>
+    <Match>
+        <Source name="~.*TestCase\.java"/>
+    </Match>
+
+    <!-- DTO 和 Entity 类的 getter/setter 排除 -->
+    <Match>
+        <Or>
+            <Class name="~.*DTO"/>
+            <Class name="~.*Entity"/>
+            <Class name="~.*VO"/>
+            <Class name="~.*Request"/>
+            <Class name="~.*Response"/>
+        </Or>
+        <Bug pattern="EI_EXPOSE_REP"/>
+    </Match>
+
+    <!-- 特定已知可接受的问题 -->
+    <Match>
+        <Class name="~.*"/>
+        <Bug pattern="UWF_FIELD_NOT_INITIALIZED_IN_CONSTRUCTOR"/>
+        <Method name="~.*"/>
+    </Match>
+</FindBugsFilter>

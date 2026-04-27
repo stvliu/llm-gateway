@@ -1,0 +1,135 @@
+# ===================================================================
+# LLM-Gateway Helm Chart Values
+# ===================================================================
+
+# 镜像配置
+image:
+  repository: ghcr.io/llm-gateway/llm-gateway
+  pullPolicy: IfNotPresent
+  tag: ""
+
+# 副本数
+replicaCount: 1
+
+# 镜像拉取密钥 (用于私有仓库)
+imagePullSecrets: []
+
+# 服务账户
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# 名称覆盖
+nameOverride: ""
+fullnameOverride: ""
+
+# 服务配置
+service:
+  type: ClusterIP
+  port: 8080
+  metricsPort: 8081
+  annotations: {}
+
+# 入口配置
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+  hosts:
+    - host: llm-gateway.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# 资源配置
+resources:
+  limits:
+    cpu: 2000m
+    memory: 2Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# 探针配置
+livenessProbe:
+  enabled: true
+  path: /api/v1/health
+  initialDelaySeconds: 60
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+
+readinessProbe:
+  enabled: true
+  path: /api/v1/health
+  initialDelaySeconds: 30
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# 自动扩缩容 (HPA)
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# 节点选择器
+nodeSelector: {}
+
+# 容忍配置
+tolerations: []
+
+# 亲和性配置
+affinity: {}
+
+# Pod 优先级
+priorityClassName: ""
+
+# Pod 安全上下文
+podSecurityContext: {}
+
+# 容器安全上下文
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  fsGroup: 1001
+
+# 数据库配置
+database:
+  host: ""
+  port: 5432
+  name: llm_gateway
+  username: ""
+  password: ""
+  existingSecret: ""
+
+# Redis 配置
+redis:
+  host: ""
+  port: 6379
+  password: ""
+  existingSecret: ""
+
+# OpenTelemetry 配置
+opentelemetry:
+  enabled: true
+  endpoint: "http://otel-collector:4317"
+  serviceName: llm-gateway
+
+# Spring Profile
+springProfiles: prod
+
+# 环境变量
+env:
+  SPRING_PROFILES_ACTIVE: prod
+
+# 额外配置
+config:
+  # gateway.llm.routing-strategy: PRIORITY
+  # gateway.llm.max-retries: "3"
+  # gateway.llm.timeout-seconds: "30"
+  pass: []

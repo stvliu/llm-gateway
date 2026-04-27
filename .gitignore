@@ -1,1 +1,71 @@
-/.idea/
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+
+# Maven
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary
+*.tmp
+*.bak
+*.cache
+
+# Environment - CRITICAL: never commit API keys or secrets
+.env
+.env.*
+*.env
+!.env.example
+
+# Docker
+docker-compose.override.yml
+
+# Test output
+test-output/
+surefire-reports/
+.claude/
+.qwen/
+.github/
+.specify/
+node_modules/
+dist/
+data/
+
+.flattened-pom.xml
