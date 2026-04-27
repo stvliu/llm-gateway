@@ -4,8 +4,12 @@ import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -31,12 +35,22 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
     }
 
     @Override
+    public List<GatewayApiKey> findByUserId(Long userId) {
+        return repository.findByUserId(userId);
+    }
+
+    @Override
+    public Page<GatewayApiKey> findExpiringKeys(Instant now, Instant threshold, Pageable pageable) {
+        return repository.findExpiringKeys(now, threshold, pageable);
+    }
+
+    @Override
     public GatewayApiKey save(GatewayApiKey apiKey) {
         return repository.save(apiKey);
     }
 
     @Override
-    public void updateLastUsed(String keyCode, java.time.Instant lastUsed) {
+    public void updateLastUsed(String keyCode, Instant lastUsed) {
         repository.findByKeyCode(keyCode).ifPresent(key -> {
             key.setLastUsedAt(lastUsed);
             repository.save(key);
@@ -50,5 +64,7 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
 interface GatewayApiKeyRepository {
     Optional<GatewayApiKey> findByKeyHash(String keyHash);
     Optional<GatewayApiKey> findByKeyCode(String keyCode);
+    List<GatewayApiKey> findByUserId(Long userId);
+    Page<GatewayApiKey> findExpiringKeys(Instant now, Instant threshold, Pageable pageable);
     GatewayApiKey save(GatewayApiKey apiKey);
 }

@@ -63,7 +63,10 @@
       "Bash(xargs -I{} basename {} echo \"\" echo \"=== Domain Gateway 接口 ===\")",
       "Read(//mnt/e/workspace/llm-gateway/**)",
       "WebFetch(domain:github.com)",
-      "Bash(./mvnw clean *)"
+      "Bash(./mvnw clean *)",
+      "Bash(xargs basename *)",
+      "Bash(xargs -I{} basename {} echo \"\" echo \"--- Entities ---\" ls /mnt/e/workspace/llm-gateway/gateway-boot/src/main/java/com/codingas/gateway/domain/*/entity/*.java)",
+      "Bash(xargs -I{} basename {} echo \"\" echo \"--- Services ---\" ls /mnt/e/workspace/llm-gateway/gateway-boot/src/main/java/com/codingas/gateway/domain/*/service/*.java)"
     ]
   }
 }

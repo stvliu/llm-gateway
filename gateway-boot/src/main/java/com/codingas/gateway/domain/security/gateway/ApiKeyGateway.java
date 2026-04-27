@@ -1,6 +1,11 @@
 package com.codingas.gateway.domain.security.gateway;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
+import java.util.List;
 
 /**
  * API Key 网关接口
@@ -27,6 +32,24 @@ public interface ApiKeyGateway {
     GatewayApiKey findByKeyCode(String keyCode);
 
     /**
+     * 根据用户 ID 查找所有密钥
+     *
+     * @param userId 用户 ID
+     * @return 密钥列表
+     */
+    List<GatewayApiKey> findByUserId(Long userId);
+
+    /**
+     * 查询即将过期的 API Key
+     *
+     * @param now 当前时间
+     * @param threshold 过期阈值时间
+     * @param pageable 分页
+     * @return 即将过期的密钥分页
+     */
+    Page<GatewayApiKey> findExpiringKeys(Instant now, Instant threshold, Pageable pageable);
+
+    /**
      * 保存 API Key
      *
      * @param apiKey 密钥实体
@@ -40,5 +63,5 @@ public interface ApiKeyGateway {
      * @param keyCode 密钥代码
      * @param lastUsed 最后使用时间
      */
-    void updateLastUsed(String keyCode, java.time.Instant lastUsed);
+    void updateLastUsed(String keyCode, Instant lastUsed);
 }

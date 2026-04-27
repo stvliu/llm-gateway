@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.router.gateway;
 import com.codingas.gateway.domain.router.entity.Provider;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 提供商网关接口
@@ -15,17 +16,17 @@ public interface ProviderGateway {
      * 根据 ID 查找提供商
      *
      * @param id 提供商 ID
-     * @return 提供商信息，不存在返回 null
+     * @return 提供商信息，不存在返回空
      */
-    Provider findById(Long id);
+    Optional<Provider> findById(Long id);
 
     /**
      * 根据提供商代码查找提供商
      *
      * @param providerCode 提供商代码
-     * @return 提供商信息，不存在返回 null
+     * @return 提供商信息，不存在返回空
      */
-    Provider findByProviderCode(String providerCode);
+    Optional<Provider> findByProviderCode(String providerCode);
 
     /**
      * 查找所有活跃提供商

@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.router.gateway;
 import com.codingas.gateway.domain.router.entity.Model;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 模型网关接口
@@ -15,17 +16,17 @@ public interface ModelGateway {
      * 根据 ID 查找模型
      *
      * @param id 模型 ID
-     * @return 模型信息，不存在返回 null
+     * @return 模型信息，不存在返回空
      */
-    Model findById(Long id);
+    Optional<Model> findById(Long id);
 
     /**
      * 根据模型代码查找模型
      *
      * @param modelCode 模型代码
-     * @return 模型信息，不存在返回 null
+     * @return 模型信息，不存在返回空
      */
-    Model findByModelCode(String modelCode);
+    Optional<Model> findByModelCode(String modelCode);
 
     /**
      * 查找所有活跃模型

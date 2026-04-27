@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.security.service;
 
 import com.codingas.gateway.domain.security.entity.TokenLimit;
+import com.codingas.gateway.domain.security.gateway.TokenBucketRateLimiter;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +21,7 @@ public class RateLimitService {
     private static final int DEFAULT_REFILL_RATE = 10;
 
     private final TokenLimitGateway tokenLimitGateway;
+    private final TokenBucketRateLimiter rateLimiter;
 
     /**
      * 检查是否允许请求
@@ -37,24 +39,34 @@ public class RateLimitService {
         int capacity = DEFAULT_BUCKET_SIZE;
         int refillRate = DEFAULT_REFILL_RATE;
 
-        return TokenBucketRateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
+        return rateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
     }
 
+    /**
+     * 获取用户的 Token 限额
+     */
     public TokenLimit getTokenLimit(Long userId) {
         return tokenLimitGateway.findByUserId(userId);
     }
 
+    /**
+     * 检查当前限流策略（fail-open 或 fail-close）
+     *
+     * <p>fail-close 策略：当 QPS > 1000 时触发。</p>
+     */
     public boolean shouldFailClose(int currentQps) {
         return currentQps > 1000;
     }
-}
 
-/**
- * 令牌桶限流器
- */
-class TokenBucketRateLimiter {
-    public static boolean tryAcquire(String key, int capacity, int refillRate, int tokens) {
-        // TODO: 实现令牌桶算法
-        return true;
+    /**
+     * 获取限流状态
+     */
+    public TokenBucketStatus getStatus(Long apiKeyId) {
+        if (apiKeyId == null) {
+            return new TokenBucketStatus(DEFAULT_BUCKET_SIZE, DEFAULT_BUCKET_SIZE, DEFAULT_REFILL_RATE);
+        }
+
+        String limitKey = "api_key:" + apiKeyId;
+        return rateLimiter.getStatus(limitKey, DEFAULT_BUCKET_SIZE, DEFAULT_REFILL_RATE);
     }
 }

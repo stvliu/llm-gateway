@@ -33,6 +33,12 @@ public class GatewayApiKey extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    /**
+     * 密钥名称（如"主Key"、"备用Key"）
+     */
+    @Column(name = "name", length = 64)
+    private String name;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private GatewayApiKeyStatus status;

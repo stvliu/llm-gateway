@@ -29,12 +29,12 @@ public class ModelService {
 
     @Transactional(readOnly = true)
     public Optional<Model> findById(Long id) {
-        return Optional.ofNullable(modelGateway.findById(id));
+        return modelGateway.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Optional<Model> findByModelCode(String modelCode) {
-        return Optional.ofNullable(modelGateway.findByModelCode(modelCode));
+        return modelGateway.findByModelCode(modelCode);
     }
 
     @Transactional(readOnly = true)
@@ -51,11 +51,12 @@ public class ModelService {
 
     @Transactional
     public Model update(Long id, Model model) {
-        Model existing = modelGateway.findById(id);
-        if (existing == null) {
+        Optional<Model> existingOpt = modelGateway.findById(id);
+        if (existingOpt.isEmpty()) {
             throw new IllegalArgumentException("Model not found: " + id);
         }
 
+        Model existing = existingOpt.get();
         existing.setDisplayName(model.getDisplayName());
         existing.setContextWindow(model.getContextWindow());
         existing.setInputPrice(model.getInputPrice());
@@ -70,11 +71,11 @@ public class ModelService {
 
     @Transactional
     public void delete(Long id) {
-        Model model = modelGateway.findById(id);
-        if (model == null) {
+        Optional<Model> modelOpt = modelGateway.findById(id);
+        if (modelOpt.isEmpty()) {
             throw new IllegalArgumentException("Model not found: " + id);
         }
-        modelGateway.save(model);
+        modelGateway.save(modelOpt.get());
         log.info("Deleted model: {}", id);
     }
 }

@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 模型网关 JPA 实现
@@ -21,13 +22,13 @@ public class JpaModelGateway implements ModelGateway {
     private final ModelRepository repository;
 
     @Override
-    public Model findById(Long id) {
-        return repository.findById(id).orElse(null);
+    public Optional<Model> findById(Long id) {
+        return repository.findById(id);
     }
 
     @Override
-    public Model findByModelCode(String modelCode) {
-        return repository.findByModelCode(modelCode).orElse(null);
+    public Optional<Model> findByModelCode(String modelCode) {
+        return repository.findByModelCode(modelCode);
     }
 
     @Override
@@ -50,8 +51,8 @@ public class JpaModelGateway implements ModelGateway {
  * 模型仓储接口
  */
 interface ModelRepository {
-    java.util.Optional<Model> findById(Long id);
-    java.util.Optional<Model> findByModelCode(String modelCode);
+    Optional<Model> findById(Long id);
+    Optional<Model> findByModelCode(String modelCode);
     List<Model> findAllActive();
     List<Model> findByProviderId(Long providerId);
     Model save(Model model);

@@ -26,12 +26,12 @@ public class ProviderService {
 
     @Transactional(readOnly = true)
     public Optional<Provider> findById(Long id) {
-        return Optional.ofNullable(providerGateway.findById(id));
+        return providerGateway.findById(id);
     }
 
     @Transactional(readOnly = true)
     public Optional<Provider> findByProviderCode(String providerCode) {
-        return Optional.ofNullable(providerGateway.findByProviderCode(providerCode));
+        return providerGateway.findByProviderCode(providerCode);
     }
 
     @Transactional(readOnly = true)
@@ -52,11 +52,12 @@ public class ProviderService {
 
     @Transactional
     public Provider update(Long id, Provider provider) {
-        Provider existing = providerGateway.findById(id);
-        if (existing == null) {
+        Optional<Provider> existingOpt = providerGateway.findById(id);
+        if (existingOpt.isEmpty()) {
             throw new IllegalArgumentException("Provider not found: " + id);
         }
 
+        Provider existing = existingOpt.get();
         existing.setProviderName(provider.getProviderName());
         existing.setProviderType(provider.getProviderType());
         existing.setBaseUrl(provider.getBaseUrl());
@@ -71,11 +72,12 @@ public class ProviderService {
 
     @Transactional
     public void delete(Long id) {
-        Provider provider = providerGateway.findById(id);
-        if (provider == null) {
+        Optional<Provider> providerOpt = providerGateway.findById(id);
+        if (providerOpt.isEmpty()) {
             throw new IllegalArgumentException("Provider not found: " + id);
         }
 
+        Provider provider = providerOpt.get();
         provider.setEnabled(false);
         providerGateway.save(provider);
         log.info("Deleted provider: {}", id);

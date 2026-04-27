@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static java.util.Optional.ofNullable;
+
 /**
  * 模型路由服务
  *
@@ -38,13 +40,12 @@ public class ModelRouterService {
             return selectDefaultModel();
         }
 
-        Model model = modelGateway.findByModelCode(modelCode);
-        if (model != null && model.getStatus() == Model.ModelStatus.ACTIVE) {
-            return model;
-        }
-
-        log.warn("Model not found or inactive: modelCode={}, falling back to default", modelCode);
-        return selectDefaultModel();
+        return modelGateway.findByModelCode(modelCode)
+            .filter(m -> m.getStatus() == Model.ModelStatus.ACTIVE)
+            .orElseGet(() -> {
+                log.warn("Model not found or inactive: modelCode={}, falling back to default", modelCode);
+                return selectDefaultModel();
+            });
     }
 
     /**
@@ -53,15 +54,15 @@ public class ModelRouterService {
      * @return 默认模型
      */
     public Model selectDefaultModel() {
-        Model defaultModel = modelGateway.findByModelCode(DEFAULT_MODEL_CODE);
-        if (defaultModel != null && defaultModel.getStatus() == Model.ModelStatus.ACTIVE) {
-            return defaultModel;
-        }
-
-        List<Model> activeModels = modelGateway.findAllActive();
-        return activeModels.stream()
+        return ofNullable(modelGateway.findByModelCode(DEFAULT_MODEL_CODE)
             .filter(m -> m.getStatus() == Model.ModelStatus.ACTIVE)
-            .findFirst()
+            .orElseGet(() -> {
+                List<Model> activeModels = modelGateway.findAllActive();
+                return activeModels.stream()
+                    .filter(m -> m.getStatus() == Model.ModelStatus.ACTIVE)
+                    .findFirst()
+                    .orElse(null);
+            }))
             .orElseThrow(() -> new IllegalStateException("No active model available"));
     }
 
