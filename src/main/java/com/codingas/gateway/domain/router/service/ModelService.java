@@ -75,7 +75,9 @@ public class ModelService {
         if (modelOpt.isEmpty()) {
             throw new IllegalArgumentException("Model not found: " + id);
         }
-        modelGateway.save(modelOpt.get());
+        Model model = modelOpt.get();
+        model.setStatus(Model.ModelStatus.INACTIVE);
+        modelGateway.save(model);
         log.info("Deleted model: {}", id);
     }
 }
