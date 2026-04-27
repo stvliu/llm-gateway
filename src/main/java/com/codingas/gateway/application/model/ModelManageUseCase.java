@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.model;
 
-import com.codingas.gateway.adapter.model.dto.ModelResponse;
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.service.ModelService;
 import lombok.RequiredArgsConstructor;
