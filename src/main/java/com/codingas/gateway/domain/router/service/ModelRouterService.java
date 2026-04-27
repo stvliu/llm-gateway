@@ -4,6 +4,7 @@ import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
 import com.codingas.gateway.domain.router.gateway.ModelGateway;
 import com.codingas.gateway.domain.router.gateway.RouteGroupGateway;
+import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -23,10 +24,9 @@ import static java.util.Optional.ofNullable;
 @RequiredArgsConstructor
 public class ModelRouterService {
 
-    private static final String DEFAULT_MODEL_CODE = "openai/gpt-4o";
-
     private final ModelGateway modelGateway;
     private final RouteGroupGateway routeGroupGateway;
+    private final GatewayProperties properties;
 
     /**
      * 根据模型代码选择模型
@@ -54,7 +54,8 @@ public class ModelRouterService {
      * @return 默认模型
      */
     public Model selectDefaultModel() {
-        return ofNullable(modelGateway.findByModelCode(DEFAULT_MODEL_CODE)
+        String defaultModelCode = properties.getRouter().getDefaultModelCode();
+        return ofNullable(modelGateway.findByModelCode(defaultModelCode)
             .filter(m -> m.getStatus() == Model.ModelStatus.ACTIVE)
             .orElseGet(() -> {
                 List<Model> activeModels = modelGateway.findAllActive();

@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.security.service;
 import com.codingas.gateway.domain.security.entity.TokenLimit;
 import com.codingas.gateway.domain.security.gateway.TokenBucketRateLimiter;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,11 +18,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RateLimitService {
 
-    private static final int DEFAULT_BUCKET_SIZE = 100;
-    private static final int DEFAULT_REFILL_RATE = 10;
-
     private final TokenLimitGateway tokenLimitGateway;
     private final TokenBucketRateLimiter rateLimiter;
+    private final GatewayProperties properties;
 
     /**
      * 检查是否允许请求
@@ -35,9 +34,8 @@ public class RateLimitService {
         }
 
         String limitKey = "api_key:" + apiKeyId;
-        // TODO: 从 RateLimitConfig 获取配置，当前使用默认值
-        int capacity = DEFAULT_BUCKET_SIZE;
-        int refillRate = DEFAULT_REFILL_RATE;
+        int capacity = properties.getRateLimit().getBucketSize();
+        int refillRate = properties.getRateLimit().getRefillRate();
 
         return rateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
     }
@@ -52,10 +50,10 @@ public class RateLimitService {
     /**
      * 检查当前限流策略（fail-open 或 fail-close）
      *
-     * <p>fail-close 策略：当 QPS > 1000 时触发。</p>
+     * <p>fail-close 策略：当 QPS > 配置阈值时触发。</p>
      */
     public boolean shouldFailClose(int currentQps) {
-        return currentQps > 1000;
+        return currentQps > properties.getRateLimit().getQpsThreshold();
     }
 
     /**
@@ -63,10 +61,15 @@ public class RateLimitService {
      */
     public TokenBucketStatus getStatus(Long apiKeyId) {
         if (apiKeyId == null) {
-            return new TokenBucketStatus(DEFAULT_BUCKET_SIZE, DEFAULT_BUCKET_SIZE, DEFAULT_REFILL_RATE);
+            return new TokenBucketStatus(
+                    properties.getRateLimit().getBucketSize(),
+                    properties.getRateLimit().getBucketSize(),
+                    properties.getRateLimit().getRefillRate());
         }
 
         String limitKey = "api_key:" + apiKeyId;
-        return rateLimiter.getStatus(limitKey, DEFAULT_BUCKET_SIZE, DEFAULT_REFILL_RATE);
+        return rateLimiter.getStatus(limitKey,
+                properties.getRateLimit().getBucketSize(),
+                properties.getRateLimit().getRefillRate());
     }
 }

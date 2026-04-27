@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.security.service;
 
 import com.codingas.gateway.domain.security.gateway.IpBlockGateway;
+import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,10 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 public class BruteForceProtectionService {
 
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final int BLOCK_DURATION_MINUTES = 15;
-
     private final IpBlockGateway ipBlockGateway;
+    private final GatewayProperties properties;
     private final ConcurrentHashMap<String, AtomicInteger> failedAttempts = new ConcurrentHashMap<>();
 
     /**
@@ -31,13 +30,16 @@ public class BruteForceProtectionService {
      * @param clientIp 客户端 IP
      */
     public void recordFailedAttempt(String clientIp) {
+        int maxAttempts = properties.getSecurity().getMaxFailedAttempts();
+        int blockDuration = properties.getSecurity().getBlockDurationMinutes();
+
         int attempts = failedAttempts.computeIfAbsent(clientIp, k -> new AtomicInteger(0))
             .incrementAndGet();
 
-        if (attempts >= MAX_FAILED_ATTEMPTS) {
+        if (attempts >= maxAttempts) {
             log.warn("Blocking IP due to {} failed attempts: {}", attempts, clientIp);
             ipBlockGateway.block(clientIp, "Brute force protection",
-                null, Instant.now().plusSeconds(BLOCK_DURATION_MINUTES * 60L));
+                null, Instant.now().plusSeconds(blockDuration * 60L));
             failedAttempts.remove(clientIp);
         }
     }

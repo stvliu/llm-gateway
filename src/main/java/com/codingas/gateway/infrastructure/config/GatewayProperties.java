@@ -20,6 +20,8 @@ public class GatewayProperties {
     private CorsProperties cors = new CorsProperties();
     private OtelProperties otel = new OtelProperties();
     private RateLimitProperties rateLimit = new RateLimitProperties();
+    private SecurityProperties security = new SecurityProperties();
+    private RouterProperties router = new RouterProperties();
 
     @Getter
     @Setter
@@ -54,5 +56,21 @@ public class GatewayProperties {
         private boolean enabled = true;
         private int defaultRpm = 1000;
         private int defaultTpm = 100000;
+        private int bucketSize = 100;
+        private int refillRate = 10;
+        private int qpsThreshold = 1000;
+    }
+
+    @Getter
+    @Setter
+    public static class SecurityProperties {
+        private int maxFailedAttempts = 5;
+        private int blockDurationMinutes = 15;
+    }
+
+    @Getter
+    @Setter
+    public static class RouterProperties {
+        private String defaultModelCode = "openai/gpt-4o";
     }
 }
