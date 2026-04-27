@@ -1,6 +1,7 @@
-package com.codingas.gateway.infrastructure.security;
+package java.com.codingas.gateway.infrastructure.security;
 
 import com.codingas.gateway.domain.security.service.IpBlocklistService;
+import com.codingas.gateway.infrastructure.security.IPBlockCheckInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
