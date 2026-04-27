@@ -7,14 +7,10 @@
     <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway</artifactId>
     <version>${revision}</version>
-    <packaging>pom</packaging>
+    <packaging>jar</packaging>
 
     <name>LLM-Gateway</name>
     <description>Enterprise AI Model API Gateway - OpenAI and Anthropic Compatible</description>
-
-    <modules>
-        <module>gateway-boot</module>
-    </modules>
 
     <properties>
         <!-- 项目版本 -->
