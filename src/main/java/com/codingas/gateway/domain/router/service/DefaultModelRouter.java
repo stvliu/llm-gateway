@@ -4,10 +4,11 @@ import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.Provider;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.router.gateway.LLMProviderRegistry;
 import com.codingas.gateway.domain.router.gateway.ModelGateway;
+import com.codingas.gateway.domain.router.gateway.ModelRouter;
 import com.codingas.gateway.domain.router.gateway.ProviderGateway;
-import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
-import com.codingas.gateway.infrastructure.spi.AdapterRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,11 +31,11 @@ import java.util.NoSuchElementException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class DefaultModelRouter {
+public class DefaultModelRouter implements ModelRouter {
 
-    private final AdapterRegistry adapterRegistry;
     private final ModelGateway modelGateway;
     private final ProviderGateway providerGateway;
+    private final LLMProviderRegistry providerRegistry;
 
     /**
      * 根据请求和策略选择最佳 Provider
@@ -44,7 +45,8 @@ public class DefaultModelRouter {
      * @return 选中的 Provider 适配器
      * @throws NoSuchElementException 如果没有可用的 Provider
      */
-    public LLMProviderAdapter select(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
+    @Override
+    public LLMProviderPort select(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
         return select(request.getModel(), strategy);
     }
 
@@ -56,7 +58,8 @@ public class DefaultModelRouter {
      * @return 选中的 Provider 适配器
      * @throws NoSuchElementException 如果没有可用的 Provider
      */
-    public LLMProviderAdapter select(String modelCode, RouteGroup.RoutingStrategy strategy) {
+    @Override
+    public LLMProviderPort select(String modelCode, RouteGroup.RoutingStrategy strategy) {
         // 1. 根据模型代码查找模型信息
         Model model = modelGateway.findByModelCode(modelCode)
                 .orElseThrow(() -> new NoSuchElementException("Model not found: " + modelCode));
@@ -67,9 +70,9 @@ public class DefaultModelRouter {
                         "Provider not found: " + model.getProviderId()));
 
         // 3. 获取 Provider 类型并获取对应类型的适配器
-        LLMProviderAdapter adapter = adapterRegistry.getAdapter(provider.toProviderType())
+        LLMProviderPort adapter = providerRegistry.getAdapter(provider.toProviderType())
                 .orElseThrow(() -> new NoSuchElementException(
-                        "No adapter available for provider type: " + provider.getProviderType()));
+                        "No adapter available for provider type: " + provider.toProviderType()));
 
         // 4. 检查适配器是否可用
         if (!adapter.isAvailable()) {

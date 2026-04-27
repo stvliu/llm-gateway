@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.adapter;
+package com.codingas.gateway.domain.router.gateway;
 
 import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;
@@ -6,12 +6,11 @@ import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
 
 /**
- * LLM 提供商适配器接口
+ * LLM 提供商端口接口
  *
- * <p>所有 LLM 提供商 (OpenAI, Anthropic, 等) 必须实现此接口。</p>
- * <p>实现 Domain 层定义的 LLMProviderPort 接口。</p>
+ * <p>Domain 层定义的接口，Infrastructure 层通过 Adapter 实现。</p>
  */
-public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.gateway.LLMProviderPort {
+public interface LLMProviderPort {
 
     /**
      * 获取提供商编码
@@ -28,7 +27,7 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
     ProviderType getProviderType();
 
     /**
-     * 发送非流式请求 (使用 RestClient)
+     * 发送非流式请求
      *
      * @param request LLM 请求
      * @return LLM 响应
@@ -36,28 +35,20 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
     LLMResponse chat(LLMRequest request);
 
     /**
-     * 发送流式请求 (使用 OkHttp)
+     * 发送流式请求
      *
      * @param request LLM 请求
      * @param callback 流式响应回调
      */
-    void chatStream(LLMRequest request, StreamCallback callback);
+    void chatStream(LLMRequest request, com.codingas.gateway.infrastructure.adapter.StreamCallback callback);
 
     /**
-     * 发送 Anthropic 消息 API 请求 (使用 RestClient)
+     * 发送 Anthropic 消息 API 请求
      *
      * @param request LLM 请求
      * @return LLM 响应 (Anthropic 格式)
      */
     LLMResponse messages(LLMRequest request);
-
-    /**
-     * 发送 Anthropic 流式请求 (使用 OkHttp)
-     *
-     * @param request LLM 请求
-     * @param callback 流式响应回调
-     */
-    void messagesStream(LLMRequest request, StreamCallback callback);
 
     /**
      * 检查适配器是否可用
@@ -72,15 +63,6 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
      * @return true 表示 Provider 可用
      */
     boolean isHealthy();
-
-    /**
-     * 执行连接检查
-     *
-     * <p>实际验证与提供商的连接是否正常，用于故障转移判断。</p>
-     *
-     * @return true 如果连接正常
-     */
-    boolean checkConnection();
 
     /**
      * 获取 Provider 能力描述

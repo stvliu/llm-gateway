@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.security.interceptor;
 
 import com.codingas.gateway.domain.security.interceptor.GatewayInterceptor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
     public int order() {
@@ -39,7 +42,9 @@ public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
     protected void reject(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":{\"code\":\"ACCESS_DENIED\",\"message\":\"" + message + "\"}}");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(
+                new ErrorResponse("ACCESS_DENIED", message)));
     }
 
     /**
@@ -48,6 +53,13 @@ public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
     protected void unauthorized(HttpServletResponse response, String message) throws Exception {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":{\"code\":\"UNAUTHORIZED\",\"message\":\"" + message + "\"}}");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(
+                new ErrorResponse("UNAUTHORIZED", message)));
     }
+
+    /**
+     * JSON 错误响应结构
+     */
+    private record ErrorResponse(String code, String message) {}
 }

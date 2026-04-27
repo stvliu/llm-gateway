@@ -6,7 +6,7 @@ import com.codingas.gateway.domain.router.entity.RouteGroup;
 /**
  * 模型路由器接口
  *
- * <p>根据指定的路由策略选择一个合适的 LLM Provider Adapter。</p>
+ * <p>根据指定的路由策略选择一个合适的 LLM Provider。</p>
  */
 public interface ModelRouter {
 
@@ -18,7 +18,7 @@ public interface ModelRouter {
      * @return 选中的 Provider 适配器
      * @throws java.util.NoSuchElementException 如果没有可用的 Provider
      */
-    com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter select(LLMRequest request, RouteGroup.RoutingStrategy strategy);
+    LLMProviderPort select(LLMRequest request, RouteGroup.RoutingStrategy strategy);
 
     /**
      * 根据模型代码和策略选择最佳 Provider
@@ -28,5 +28,5 @@ public interface ModelRouter {
      * @return 选中的 Provider 适配器
      * @throws java.util.NoSuchElementException 如果没有可用的 Provider
      */
-    com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter select(String modelCode, RouteGroup.RoutingStrategy strategy);
+    LLMProviderPort select(String modelCode, RouteGroup.RoutingStrategy strategy);
 }

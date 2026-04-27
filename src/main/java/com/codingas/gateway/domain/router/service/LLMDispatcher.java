@@ -3,10 +3,9 @@ package com.codingas.gateway.domain.router.service;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
 import com.codingas.gateway.domain.router.gateway.ModelRouter;
-import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
-import com.codingas.gateway.infrastructure.adapter.StreamCallbackImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +34,7 @@ public class LLMDispatcher {
     public LLMResponse send(LLMRequest request, RouteGroup.RoutingStrategy strategy) {
         log.debug("Dispatching request, model={}, strategy={}", request.getModel(), strategy);
 
-        LLMProviderAdapter adapter = modelRouter.select(request, strategy);
+        LLMProviderPort adapter = modelRouter.select(request, strategy);
         log.debug("Selected provider: {}", adapter.getProviderCode());
 
         return adapter.chat(request);
@@ -51,10 +50,10 @@ public class LLMDispatcher {
     public void sendStream(LLMRequest request, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk) {
         log.debug("Dispatching stream request, model={}, strategy={}", request.getModel(), strategy);
 
-        LLMProviderAdapter adapter = modelRouter.select(request, strategy);
+        LLMProviderPort adapter = modelRouter.select(request, strategy);
         log.debug("Selected provider for stream: {}", adapter.getProviderCode());
 
-        StreamCallback callback = new StreamCallbackImpl(onChunk);
+        StreamCallback callback = new com.codingas.gateway.infrastructure.adapter.StreamCallbackImpl(onChunk);
         adapter.chatStream(request, callback);
     }
 }
