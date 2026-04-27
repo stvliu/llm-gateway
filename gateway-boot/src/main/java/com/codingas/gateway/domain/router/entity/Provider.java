@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.router.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
+import com.codingas.gateway.common.enums.ProviderType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,7 +26,7 @@ public class Provider extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider_type", nullable = false)
-    private ProviderType providerType;
+    private ProviderTypeEnum providerType;
 
     @Column(name = "base_url")
     private String baseUrl;
@@ -39,7 +40,30 @@ public class Provider extends BaseEntity {
     @Column(name = "enabled")
     private Boolean enabled;
 
-    public enum ProviderType {
+    /**
+     * 转换为通用 ProviderType 枚举
+     *
+     * @return common.enums.ProviderType
+     */
+    public ProviderType toProviderType() {
+        if (providerType == null) {
+            return null;
+        }
+        switch (providerType) {
+            case OPENAI:
+                return ProviderType.OPENAI;
+            case ANTHROPIC:
+                return ProviderType.ANTHROPIC;
+            case ZHIPU:
+                return ProviderType.ZHIPU;
+            case DOUBAO:
+            case CUSTOM:
+            default:
+                return ProviderType.OTHER;
+        }
+    }
+
+    public enum ProviderTypeEnum {
         OPENAI, ANTHROPIC, ZHIPU, DOUBAO, CUSTOM
     }
 }
