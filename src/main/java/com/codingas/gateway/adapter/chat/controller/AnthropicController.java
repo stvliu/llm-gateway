@@ -21,13 +21,13 @@ import java.util.concurrent.Executors;
 /**
  * Anthropic 兼容 API 控制器
  *
- * <p>暴露 /v1/messages 端点，兼容 Anthropic API 格式。</p>
+ * <p>暴露 /anthropic/v1/messages 端点，兼容 Anthropic API 格式。</p>
  *
  * @see <a href="https://docs.anthropic.com/en/api/reference/messages">Anthropic Messages API</a>
  */
 @Slf4j
 @RestController
-@RequestMapping("/v1")
+@RequestMapping("/anthropic/v1")
 @RequiredArgsConstructor
 public class AnthropicController {
 
