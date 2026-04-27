@@ -76,6 +76,12 @@
             <artifactId>okhttp-sse</artifactId>
         </dependency>
 
+        <!-- Sa-Token 安全框架 -->
+        <dependency>
+            <groupId>cn.dev33</groupId>
+            <artifactId>sa-token-spring-boot3-starter</artifactId>
+        </dependency>
+
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
