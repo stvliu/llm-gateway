@@ -1,9 +1,8 @@
 package com.codingas.gateway.infrastructure.adapter;
 
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
 
 /**
  * LLM 提供商适配器接口
@@ -11,13 +10,14 @@ import com.codingas.gateway.common.enums.ProviderType;
  * <p>所有 LLM 提供商 (OpenAI, Anthropic, 等) 必须实现此接口。</p>
  * <p>实现 Domain 层定义的 LLMProviderPort 接口。</p>
  */
-public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.gateway.LLMProviderPort {
+public interface LLMProviderAdapter extends LLMProviderPort {
 
     /**
      * 获取提供商编码
      *
      * @return 提供商唯一编码 (如 "openai", "anthropic")
      */
+    @Override
     String getProviderCode();
 
     /**
@@ -25,45 +25,15 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
      *
      * @return 提供商类型枚举
      */
+    @Override
     ProviderType getProviderType();
-
-    /**
-     * 发送非流式请求 (使用 RestClient)
-     *
-     * @param request LLM 请求
-     * @return LLM 响应
-     */
-    LLMResponse chat(LLMRequest request);
-
-    /**
-     * 发送流式请求 (使用 OkHttp)
-     *
-     * @param request LLM 请求
-     * @param callback 流式响应回调
-     */
-    void chatStream(LLMRequest request, StreamCallback callback);
-
-    /**
-     * 发送 Anthropic 消息 API 请求 (使用 RestClient)
-     *
-     * @param request LLM 请求
-     * @return LLM 响应 (Anthropic 格式)
-     */
-    LLMResponse messages(LLMRequest request);
-
-    /**
-     * 发送 Anthropic 流式请求 (使用 OkHttp)
-     *
-     * @param request LLM 请求
-     * @param callback 流式响应回调
-     */
-    void messagesStream(LLMRequest request, StreamCallback callback);
 
     /**
      * 检查适配器是否可用
      *
      * @return true 如果适配器已配置并可用
      */
+    @Override
     boolean isAvailable();
 
     /**
@@ -71,6 +41,7 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
      *
      * @return true 表示 Provider 可用
      */
+    @Override
     boolean isHealthy();
 
     /**
@@ -87,14 +58,6 @@ public interface LLMProviderAdapter extends com.codingas.gateway.domain.router.g
      *
      * @return ProviderCapabilities
      */
+    @Override
     ProviderCapabilities getCapabilities();
-
-    /**
-     * 获取默认超时时间 (秒)
-     *
-     * @return 超时时间
-     */
-    default int getDefaultTimeout() {
-        return 30;
-    }
 }

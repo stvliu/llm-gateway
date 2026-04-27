@@ -2,7 +2,6 @@ package com.codingas.gateway.adapter.chat.controller;
 
 import com.codingas.gateway.adapter.chat.dto.AnthropicMessagesRequest;
 import com.codingas.gateway.adapter.chat.dto.AnthropicMessagesResponse;
-import com.codingas.gateway.adapter.chat.dto.OpenAIChatRequest;
 import com.codingas.gateway.application.chat.LLMChatUseCase;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
@@ -10,20 +9,18 @@ import com.codingas.gateway.domain.router.entity.RouteGroup;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
- * Anthropic 兼容 API 控制器
+ * Anthropic 兼容 API 控制器 (WebFlux 版本)
  *
  * <p>暴露 /anthropic/v1/messages 端点，兼容 Anthropic API 格式。</p>
- *
- * @see <a href="https://docs.anthropic.com/en/api/reference/messages">Anthropic Messages API</a>
  */
 @Slf4j
 @RestController
@@ -32,28 +29,24 @@ import java.util.concurrent.Executors;
 public class AnthropicController {
 
     private final LLMChatUseCase llmChatUseCase;
-    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     /**
      * Messages 端点
-     *
-     * <p>支持非流式和流式两种响应模式。</p>
      */
     @PostMapping("/messages")
-    public Object messages(
+    public Mono<Object> messages(
             @RequestBody AnthropicMessagesRequest request,
             @RequestAttribute("userId") Long userId,
-            @RequestAttribute("apiKeyId") Long apiKeyId) {
+            @RequestAttribute("apiKeyId") Long apiKeyId,
+            ServerWebExchange exchange) {
 
         log.info("Anthropic messages request: model={}, userId={}, stream={}",
                 request.getModel(), userId, request.getStream());
 
-        // 验证请求
         validateRequest(request);
 
-        // 判断流式或非流式
         if (Boolean.TRUE.equals(request.getStream())) {
-            return messagesStream(request, userId, apiKeyId);
+            return messagesStream(request, userId, apiKeyId, exchange);
         } else {
             return messagesNonStream(request, userId, apiKeyId);
         }
@@ -62,59 +55,46 @@ public class AnthropicController {
     /**
      * 非流式响应
      */
-    private AnthropicMessagesResponse messagesNonStream(
+    private Mono<Object> messagesNonStream(
             AnthropicMessagesRequest request, Long userId, Long apiKeyId) {
 
-        // 转换为内部请求格式
         LLMRequest llmRequest = toLLMRequest(request);
 
-        // 调用用例编排器
-        LLMResponse response = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
-
-        // 转换为 Anthropic 响应格式
-        return toAnthropicMessagesResponse(response);
+        return llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED)
+                .map(this::toAnthropicMessagesResponse)
+                .map(ResponseEntity::ok);
     }
 
     /**
      * 流式响应
      */
-    private SseEmitter messagesStream(
-            AnthropicMessagesRequest request, Long userId, Long apiKeyId) {
+    private Mono<Object> messagesStream(
+            AnthropicMessagesRequest request, Long userId, Long apiKeyId, ServerWebExchange exchange) {
 
-        SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
+        LLMRequest llmRequest = toLLMRequest(request);
+        llmRequest.setStream(true);
 
-        executor.submit(() -> {
-            try {
-                // 转换为内部请求格式
-                LLMRequest llmRequest = toLLMRequest(request);
-                llmRequest.setStream(true);
-
-                // 调用用例编排器 (流式)
-                llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED,
+        return llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED,
                         data -> {
-                            try {
-                                emitter.send(data, MediaType.TEXT_EVENT_STREAM);
-                            } catch (Exception e) {
-                                log.warn("SSE send error: {}", e.getMessage());
-                            }
-                        });
-
-            } catch (Exception e) {
-                log.error("Stream request error: {}", e.getMessage(), e);
-                try {
-                    emitter.completeWithError(e);
-                } catch (Exception ex) {
-                    log.warn("SSE completeWithError error: {}", ex.getMessage());
-                }
-            }
-        });
-
-        return emitter;
+                            exchange.getResponse().getHeaders().setContentType(MediaType.TEXT_EVENT_STREAM);
+                            exchange.getResponse().writeWith(
+                                    Mono.just(getDataBuffer(exchange, data))
+                            ).subscribe();
+                        })
+                .then(Mono.just(ResponseEntity.ok().<Void>build()));
     }
 
-    /**
-     * 验证请求
-     */
+    private org.springframework.core.io.buffer.DataBuffer getDataBuffer(ServerWebExchange exchange, String data) {
+        try {
+            byte[] bytes = data.getBytes("UTF-8");
+            var buffer = exchange.getResponse().bufferFactory().wrap(bytes);
+            return buffer;
+        } catch (Exception e) {
+            log.warn("Error creating data buffer: {}", e.getMessage());
+            return exchange.getResponse().bufferFactory().wrap(new byte[0]);
+        }
+    }
+
     private void validateRequest(AnthropicMessagesRequest request) {
         if (request.getModel() == null || request.getModel().isBlank()) {
             throw new IllegalArgumentException("model is required");
@@ -127,9 +107,6 @@ public class AnthropicController {
         }
     }
 
-    /**
-     * 转换为内部 LLMRequest
-     */
     private LLMRequest toLLMRequest(AnthropicMessagesRequest request) {
         List<LLMRequest.Message> messages = request.getMessages().stream()
                 .map(this::toLLMMessage)
@@ -157,7 +134,6 @@ public class AnthropicController {
         if (msg.getContent() instanceof String str) {
             content = str;
         } else if (msg.getContent() instanceof List list) {
-            // 处理 content blocks
             StringBuilder textBuilder = new StringBuilder();
             for (Object block : list) {
                 if (block instanceof Map blockMap) {
@@ -186,18 +162,16 @@ public class AnthropicController {
                 .build();
     }
 
-    /**
-     * 转换为 Anthropic 响应格式
-     */
-    private AnthropicMessagesResponse toAnthropicMessagesResponse(LLMResponse response) {
+    private Object toAnthropicMessagesResponse(LLMResponse response) {
         if (response.getError() != null) {
-            return AnthropicMessagesResponse.builder()
-                    .error(AnthropicMessagesResponse.Error.builder()
-                            .message(response.getError().getMessage())
-                            .type(response.getError().getType())
-                            .code(response.getError().getCode())
-                            .build())
-                    .build();
+            return ResponseEntity.badRequest().body(
+                    AnthropicMessagesResponse.builder()
+                            .error(AnthropicMessagesResponse.Error.builder()
+                                    .message(response.getError().getMessage())
+                                    .type(response.getError().getType())
+                                    .code(response.getError().getCode())
+                                    .build())
+                            .build());
         }
 
         List<AnthropicMessagesResponse.ContentBlock> content = null;
@@ -214,7 +188,6 @@ public class AnthropicController {
                         .toList();
             }
 
-            // 构建 content blocks
             if (response.getContent().getText() != null && !response.getContent().getText().isEmpty()) {
                 content = List.of(AnthropicMessagesResponse.ContentBlock.builder()
                         .type("text")
@@ -223,10 +196,8 @@ public class AnthropicController {
             }
 
             if (toolUses != null && !toolUses.isEmpty()) {
-                // 添加 tool_use blocks
                 List<AnthropicMessagesResponse.ContentBlock> finalContent = content;
                 content = (finalContent == null ? List.of() : finalContent);
-                // 注：这里需要合并 text 和 tool_use blocks，简化处理
             }
         }
 

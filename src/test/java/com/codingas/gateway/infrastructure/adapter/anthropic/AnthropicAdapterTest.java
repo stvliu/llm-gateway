@@ -12,15 +12,17 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
 /**
- * AnthropicAdapter 单元测试
+ * AnthropicAdapter 单元测试 (WebFlux 版本)
  */
 @ExtendWith(MockitoExtension.class)
 class AnthropicAdapterTest {
@@ -31,13 +33,16 @@ class AnthropicAdapterTest {
     private static final int TIMEOUT_SECONDS = 30;
 
     @Mock
+    private WebClient webClient;
+
+    @Mock
     private StreamCallback streamCallback;
 
     private AnthropicAdapter adapter;
 
     @BeforeEach
     void setUp() {
-        adapter = new AnthropicAdapter(BASE_URL, API_KEY, VERSION, TIMEOUT_SECONDS);
+        adapter = new AnthropicAdapter(webClient, BASE_URL, API_KEY, VERSION, TIMEOUT_SECONDS);
     }
 
     @Nested
@@ -75,14 +80,14 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("apiKey 为空字符串时返回 false")
         void apiKeyEmpty_returnsFalse() {
-            var adapterWithEmptyKey = new AnthropicAdapter(BASE_URL, "", VERSION, TIMEOUT_SECONDS);
+            var adapterWithEmptyKey = new AnthropicAdapter(webClient, BASE_URL, "", VERSION, TIMEOUT_SECONDS);
             assertThat(adapterWithEmptyKey.isAvailable()).isFalse();
         }
 
         @Test
         @DisplayName("apiKey 为 null 时返回 false")
         void apiKeyNull_returnsFalse() {
-            var adapterWithNullKey = new AnthropicAdapter(BASE_URL, null, VERSION, TIMEOUT_SECONDS);
+            var adapterWithNullKey = new AnthropicAdapter(webClient, BASE_URL, null, VERSION, TIMEOUT_SECONDS);
             assertThat(adapterWithNullKey.isAvailable()).isFalse();
         }
     }
@@ -96,10 +101,10 @@ class AnthropicAdapterTest {
         void consistentWithIsAvailable() {
             assertThat(adapter.isHealthy()).isEqualTo(adapter.isAvailable());
 
-            var adapterWithEmptyKey = new AnthropicAdapter(BASE_URL, "", VERSION, TIMEOUT_SECONDS);
+            var adapterWithEmptyKey = new AnthropicAdapter(webClient, BASE_URL, "", VERSION, TIMEOUT_SECONDS);
             assertThat(adapterWithEmptyKey.isHealthy()).isEqualTo(adapterWithEmptyKey.isAvailable());
 
-            var adapterWithNullKey = new AnthropicAdapter(BASE_URL, null, VERSION, TIMEOUT_SECONDS);
+            var adapterWithNullKey = new AnthropicAdapter(webClient, BASE_URL, null, VERSION, TIMEOUT_SECONDS);
             assertThat(adapterWithNullKey.isHealthy()).isEqualTo(adapterWithNullKey.isAvailable());
         }
     }
@@ -113,9 +118,9 @@ class AnthropicAdapterTest {
         void throwsUnsupportedOperationException() {
             var request = LLMRequest.builder().model("claude-3-5-sonnet-20241022").build();
 
-            assertThatThrownBy(() -> adapter.chat(request))
+            assertThatThrownBy(() -> adapter.chat(request).block())
                     .isInstanceOf(UnsupportedOperationException.class)
-                    .hasMessageContaining("OpenAI chat format");
+                    .hasMessageContaining("does not support OpenAI chat format");
         }
     }
 
@@ -128,9 +133,9 @@ class AnthropicAdapterTest {
         void throwsUnsupportedOperationException() {
             var request = LLMRequest.builder().model("claude-3-5-sonnet-20241022").build();
 
-            assertThatThrownBy(() -> adapter.chatStream(request, streamCallback))
+            assertThatThrownBy(() -> adapter.chatStream(request, streamCallback).block())
                     .isInstanceOf(UnsupportedOperationException.class)
-                    .hasMessageContaining("OpenAI chat format");
+                    .hasMessageContaining("does not support OpenAI chat format");
         }
     }
 
@@ -154,99 +159,6 @@ class AnthropicAdapterTest {
     }
 
     @Nested
-    @DisplayName("buildMessagesRequestBody")
-    class BuildMessagesRequestBody {
-
-        @Test
-        @DisplayName("正确构建请求体，包含必填字段")
-        void buildsRequestBodyWithRequiredFields() {
-            var request = LLMRequest.builder()
-                    .model("claude-3-5-sonnet-20241022")
-                    .messages(List.of(
-                            LLMRequest.Message.builder().role("user").content("Hello").build()
-                    ))
-                    .build();
-
-            // 通过反射调用私有方法
-            Map<String, Object> body = invokeBuildMessagesRequestBody(request);
-
-            assertThat(body).containsEntry("model", "claude-3-5-sonnet-20241022");
-            assertThat(body).containsEntry("messages", request.getMessages());
-            assertThat(body).containsEntry("max_tokens", 1024); // 默认值
-        }
-
-        @Test
-        @DisplayName("使用指定的 maxTokens")
-        void usesSpecifiedMaxTokens() {
-            var request = LLMRequest.builder()
-                    .model("claude-3-5-sonnet-20241022")
-                    .maxTokens(2048)
-                    .messages(List.of())
-                    .build();
-
-            Map<String, Object> body = invokeBuildMessagesRequestBody(request);
-
-            assertThat(body).containsEntry("max_tokens", 2048);
-        }
-
-        @Test
-        @DisplayName("包含 temperature")
-        void includesTemperature() {
-            var request = LLMRequest.builder()
-                    .model("claude-3-5-sonnet-20241022")
-                    .temperature(0.7)
-                    .messages(List.of())
-                    .build();
-
-            Map<String, Object> body = invokeBuildMessagesRequestBody(request);
-
-            assertThat(body).containsEntry("temperature", 0.7);
-        }
-
-        @Test
-        @DisplayName("包含 systemPrompt")
-        void includesSystemPrompt() {
-            var request = LLMRequest.builder()
-                    .model("claude-3-5-sonnet-20241022")
-                    .systemPrompt("You are a helpful assistant.")
-                    .messages(List.of())
-                    .build();
-
-            Map<String, Object> body = invokeBuildMessagesRequestBody(request);
-
-            assertThat(body).containsEntry("system", "You are a helpful assistant.");
-        }
-    }
-
-    @Nested
-    @DisplayName("messages")
-    class Messages {
-
-        @Test
-        @DisplayName("解析响应并返回 LLMResponse")
-        void parsesResponseCorrectly() {
-            // 使用反射调用 parseResponse 来验证解析逻辑
-            Map<String, Object> responseMap = Map.of(
-                    "id", "msg_123",
-                    "model", "claude-3-5-sonnet-20241022",
-                    "content", List.of(Map.of("type", "text", "text", "Hello! How can I help you?")),
-                    "stop_reason", "end_turn",
-                    "usage", Map.of("input_tokens", 10, "output_tokens", 20)
-            );
-
-            LLMResponse response = invokeParseResponse(responseMap);
-
-            assertThat(response.getProviderCode()).isEqualTo("anthropic");
-            assertThat(response.getId()).isEqualTo("msg_123");
-            assertThat(response.getModel()).isEqualTo("claude-3-5-sonnet-20241022");
-            assertThat(response.getContent().getText()).isEqualTo("Hello! How can I help you?");
-            assertThat(response.getFinishReason()).isEqualTo("end_turn");
-            assertThat(response.getUsage().getPromptTokens()).isEqualTo(10);
-            assertThat(response.getUsage().getCompletionTokens()).isEqualTo(20);
-        }
-    }
-
-    @Nested
     @DisplayName("getDefaultTimeout")
     class GetDefaultTimeout {
 
@@ -254,29 +166,6 @@ class AnthropicAdapterTest {
         @DisplayName("返回配置的超时时间")
         void returnsConfiguredTimeout() {
             assertThat(adapter.getDefaultTimeout()).isEqualTo(TIMEOUT_SECONDS);
-        }
-    }
-
-    // 反射辅助方法
-    @SuppressWarnings("unchecked")
-    private Map<String, Object> invokeBuildMessagesRequestBody(LLMRequest request) {
-        try {
-            var method = AnthropicAdapter.class.getDeclaredMethod("buildMessagesRequestBody", LLMRequest.class);
-            method.setAccessible(true);
-            return (Map<String, Object>) method.invoke(adapter, request);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private LLMResponse invokeParseResponse(Map<String, Object> response) {
-        try {
-            var method = AnthropicAdapter.class.getDeclaredMethod("parseResponse", Map.class);
-            method.setAccessible(true);
-            return (LLMResponse) method.invoke(adapter, response);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
     }
 }

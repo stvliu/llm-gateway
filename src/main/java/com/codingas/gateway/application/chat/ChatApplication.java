@@ -8,11 +8,12 @@ import com.codingas.gateway.domain.router.service.ModelRouterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
 import java.util.function.Consumer;
 
 /**
- * 聊天用例应用服务
+ * 聊天用例应用服务 (响应式版本)
  *
  * <p>编排聊天请求处理，调用多个领域服务。</p>
  */
@@ -28,9 +29,9 @@ public class ChatApplication {
      * 处理聊天请求
      *
      * @param request 聊天请求
-     * @return 聊天响应
+     * @return 聊天响应 Mono
      */
-    public ChatResponse chat(ChatRequest request) {
+    public Mono<ChatResponse> chat(ChatRequest request) {
         log.debug("Processing chat request: model={}", request.model());
 
         // 1. 路由选择模型
@@ -46,17 +47,14 @@ public class ChatApplication {
         RouteGroup.RoutingStrategy strategy = request.strategy() != null
                 ? request.strategy()
                 : RouteGroup.RoutingStrategy.COST_OPTIMIZED;
-        LLMResponse response = llmChatUseCase.send(llmRequest, strategy);
 
-        log.info("Chat request processed: model={}", selectedModel.getModelCode());
-
-        // 4. 提取响应内容
-        String content = extractContent(response);
-
-        return new ChatResponse(
-                selectedModel.getModelCode(),
-                content
-        );
+        return llmChatUseCase.send(llmRequest, strategy)
+                .defaultIfEmpty(LLMResponse.builder().model(selectedModel.getModelCode()).build())
+                .map(response -> {
+                    log.info("Chat request processed: model={}", selectedModel.getModelCode());
+                    String content = extractContent(response);
+                    return new ChatResponse(selectedModel.getModelCode(), content);
+                });
     }
 
     /**
@@ -64,8 +62,9 @@ public class ChatApplication {
      *
      * @param request 聊天请求
      * @param onChunk 流式响应回调
+     * @return 完成信号 Mono
      */
-    public void chatStream(ChatRequest request, Consumer<String> onChunk) {
+    public Mono<Void> chatStream(ChatRequest request, Consumer<String> onChunk) {
         log.debug("Processing stream chat request: model={}", request.model());
 
         // 1. 路由选择模型
@@ -82,9 +81,9 @@ public class ChatApplication {
         RouteGroup.RoutingStrategy strategy = request.strategy() != null
                 ? request.strategy()
                 : RouteGroup.RoutingStrategy.COST_OPTIMIZED;
-        llmChatUseCase.sendStream(llmRequest, strategy, onChunk);
 
         log.info("Stream chat request processed: model={}", selectedModel.getModelCode());
+        return llmChatUseCase.sendStream(llmRequest, strategy, onChunk);
     }
 
     /**
