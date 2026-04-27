@@ -49,6 +49,7 @@ public class ChatApplication {
                 : RouteGroup.RoutingStrategy.COST_OPTIMIZED;
 
         return llmChatUseCase.send(llmRequest, strategy)
+                .defaultIfEmpty(LLMResponse.builder().model(selectedModel.getModelCode()).build())
                 .map(response -> {
                     log.info("Chat request processed: model={}", selectedModel.getModelCode());
                     String content = extractContent(response);

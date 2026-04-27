@@ -13,6 +13,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import reactor.core.publisher.Mono;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,10 +93,10 @@ class ChatApplicationTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.COST_OPTIMIZED)))
-                .thenReturn(testLLMResponse);
+                .thenReturn(Mono.just(testLLMResponse));
 
         // When
-        ChatApplication.ChatResponse response = chatApplication.chat(request);
+        ChatApplication.ChatResponse response = chatApplication.chat(request).block();
 
         // Then
         assertThat(response).isNotNull();
@@ -124,10 +126,10 @@ class ChatApplicationTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), eq(strategy)))
-                .thenReturn(testLLMResponse);
+                .thenReturn(Mono.just(testLLMResponse));
 
         // When
-        ChatApplication.ChatResponse response = chatApplication.chat(request);
+        ChatApplication.ChatResponse response = chatApplication.chat(request).block();
 
         // Then
         assertThat(response).isNotNull();
@@ -154,10 +156,10 @@ class ChatApplicationTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), any()))
-                .thenReturn(responseWithNullContent);
+                .thenReturn(Mono.just(responseWithNullContent));
 
         // When
-        ChatApplication.ChatResponse response = chatApplication.chat(request);
+        ChatApplication.ChatResponse response = chatApplication.chat(request).block();
 
         // Then
         assertThat(response).isNotNull();
@@ -178,10 +180,10 @@ class ChatApplicationTest {
         ChatApplication.ChatRequest request = new ChatApplication.ChatRequest(modelCode, messages);
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), any())).thenReturn(null);
+        when(llmChatUseCase.send(any(LLMRequest.class), any())).thenReturn(Mono.empty());
 
         // When
-        ChatApplication.ChatResponse response = chatApplication.chat(request);
+        ChatApplication.ChatResponse response = chatApplication.chat(request).block();
 
         // Then
         assertThat(response).isNotNull();
