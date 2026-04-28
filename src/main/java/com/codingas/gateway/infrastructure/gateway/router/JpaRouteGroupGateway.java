@@ -2,9 +2,10 @@ package com.codingas.gateway.infrastructure.gateway.router;
 
 import com.codingas.gateway.domain.router.entity.RouteGroup;
 import com.codingas.gateway.domain.router.gateway.RouteGroupGateway;
+import com.codingas.gateway.domain.router.repository.RouteGroupRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
@@ -14,7 +15,7 @@ import java.util.List;
  * <p>实现 RouteGroupGateway 接口，使用 JPA 进行持久化。</p>
  */
 @Slf4j
-@Repository
+@Component
 @RequiredArgsConstructor
 public class JpaRouteGroupGateway implements RouteGroupGateway {
 
@@ -39,14 +40,4 @@ public class JpaRouteGroupGateway implements RouteGroupGateway {
     public RouteGroup save(RouteGroup routeGroup) {
         return repository.save(routeGroup);
     }
-}
-
-/**
- * 路由分组仓储接口
- */
-interface RouteGroupRepository {
-    java.util.Optional<RouteGroup> findById(Long id);
-    java.util.Optional<RouteGroup> findByGroupCode(String groupCode);
-    List<RouteGroup> findAllActive();
-    RouteGroup save(RouteGroup routeGroup);
 }

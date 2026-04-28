@@ -41,9 +41,9 @@ public class RateLimitService {
     }
 
     /**
-     * 获取用户的 Token 限额
+     * 获取用户的 Token 限额列表
      */
-    public TokenLimit getTokenLimit(Long userId) {
+    public java.util.List<TokenLimit> getTokenLimits(Long userId) {
         return tokenLimitGateway.findByUserId(userId);
     }
 

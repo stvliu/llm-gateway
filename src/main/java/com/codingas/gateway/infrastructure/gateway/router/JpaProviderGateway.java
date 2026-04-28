@@ -2,9 +2,10 @@ package com.codingas.gateway.infrastructure.gateway.router;
 
 import com.codingas.gateway.domain.router.entity.Provider;
 import com.codingas.gateway.domain.router.gateway.ProviderGateway;
+import com.codingas.gateway.domain.router.repository.ProviderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,45 +16,54 @@ import java.util.Optional;
  * <p>实现 ProviderGateway 接口，使用 JPA 进行持久化。</p>
  */
 @Slf4j
-@Repository
+@Component
 @RequiredArgsConstructor
 public class JpaProviderGateway implements ProviderGateway {
 
-    private final ProviderRepository repository;
+    private final ProviderRepository providerRepository;
+
+    @Override
+    public Provider save(Provider provider) {
+        return providerRepository.save(provider);
+    }
 
     @Override
     public Optional<Provider> findById(Long id) {
-        return repository.findById(id);
+        return providerRepository.findById(id);
     }
 
     @Override
     public Optional<Provider> findByProviderCode(String providerCode) {
-        return repository.findByProviderCode(providerCode);
+        return providerRepository.findByProviderCode(providerCode);
+    }
+
+    @Override
+    public List<Provider> findAll() {
+        return providerRepository.findAll();
     }
 
     @Override
     public List<Provider> findAllActive() {
-        return repository.findAllActive();
+        return providerRepository.findAllActive();
     }
 
     @Override
     public List<Provider> findByEnabled(Boolean enabled) {
-        return repository.findByEnabled(enabled);
+        return providerRepository.findByEnabled(enabled);
     }
 
     @Override
-    public Provider save(Provider provider) {
-        return repository.save(provider);
+    public long count() {
+        return providerRepository.count();
     }
-}
 
-/**
- * 提供商仓储接口
- */
-interface ProviderRepository {
-    Optional<Provider> findById(Long id);
-    Optional<Provider> findByProviderCode(String providerCode);
-    List<Provider> findAllActive();
-    List<Provider> findByEnabled(Boolean enabled);
-    Provider save(Provider provider);
+    @Override
+    public void delete(Provider provider) {
+        providerRepository.delete(provider);
+    }
+
+    @Override
+    public boolean existsByProviderCode(String providerCode) {
+        return providerRepository.existsByProviderCode(providerCode);
+    }
 }

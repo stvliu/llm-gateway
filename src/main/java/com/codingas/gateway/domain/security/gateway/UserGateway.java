@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.security.gateway;
 
 import com.codingas.gateway.domain.security.entity.User;
-
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -12,18 +12,71 @@ import java.util.Optional;
 public interface UserGateway {
 
     /**
-     * 根据 ID 查找用户
-     *
-     * @param id 用户 ID
-     * @return 用户信息，不存在返回 null
-     */
-    Optional<User> findById(Long id);
-
-    /**
      * 保存用户
      *
      * @param user 用户实体
      * @return 保存后的实体
      */
     User save(User user);
+
+    /**
+     * 根据 ID 查找用户
+     *
+     * @param id 用户 ID
+     * @return 用户信息
+     */
+    Optional<User> findById(Long id);
+
+    /**
+     * 根据用户编码查找用户
+     *
+     * @param userCode 用户编码
+     * @return 用户信息
+     */
+    Optional<User> findByUserCode(String userCode);
+
+    /**
+     * 根据邮箱查找用户
+     *
+     * @param email 邮箱
+     * @return 用户信息
+     */
+    Optional<User> findByEmail(String email);
+
+    /**
+     * 查询所有用户
+     *
+     * @return 用户列表
+     */
+    List<User> findAll();
+
+    /**
+     * 统计用户总数
+     *
+     * @return 用户数量
+     */
+    long count();
+
+    /**
+     * 删除用户
+     *
+     * @param user 用户实体
+     */
+    void delete(User user);
+
+    /**
+     * 检查邮箱是否存在
+     *
+     * @param email 邮箱
+     * @return 是否存在
+     */
+    boolean existsByEmail(String email);
+
+    /**
+     * 检查用户名是否存在
+     *
+     * @param username 用户名
+     * @return 是否存在
+     */
+    boolean existsByUsername(String username);
 }

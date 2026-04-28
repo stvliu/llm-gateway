@@ -69,7 +69,8 @@
       "Bash(xargs -I{} basename {} echo \"\" echo \"--- Services ---\" ls /mnt/e/workspace/llm-gateway/gateway-boot/src/main/java/com/codingas/gateway/domain/*/service/*.java)",
       "Bash(echo \"Exit code: $?\")",
       "Bash(/mnt/d/Java/apache-maven-3.9.14/bin/mvn test *)",
-      "WebFetch(domain:gitee.com)"
+      "WebFetch(domain:gitee.com)",
+      "mcp__plugin_ecc_context7__query-docs"
     ]
   }
 }

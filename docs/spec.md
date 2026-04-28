@@ -2480,6 +2480,531 @@ v1.0 ──(升级)──▶ v1.1 ──(升级)──▶ v2.0
 | **Phase 5** | **前端管理后台**：Web UI + API 对接 |
 | **Phase 6** | **路由增强**：智能路由、故障切换、负载均衡 |
 
+---
+
+## 12.6 Phase 2: 核心 CRUD 功能
+
+> **目标**: 完成用户管理、Provider/Model 管理、API Key 管理、TokenLimit 管理的完整 CRUD 功能。
+
+### 12.6.1 API 端点总览
+
+| 资源 | 端点 | 方法 | 说明 | 认证 |
+|------|------|------|------|------|
+| **用户管理** | `/api/v1/users` | GET | 分页查询用户列表 | Admin |
+| | `/api/v1/users` | POST | 创建用户 | Admin |
+| | `/api/v1/users/{id}` | GET | 获取用户详情 | Admin |
+| | `/api/v1/users/{id}` | PUT | 更新用户 | Admin |
+| | `/api/v1/users/{id}` | DELETE | 删除用户（软删除） | Admin |
+| | `/api/v1/users/{id}/status` | PATCH | 更新用户状态 | Admin |
+| | `/api/v1/users/{id}/roles` | PUT | 分配用户角色 | Admin |
+| **Provider 管理** | `/api/v1/providers` | GET | 分页查询 Provider 列表 | Admin |
+| | `/api/v1/providers` | POST | 创建 Provider | Admin |
+| | `/api/v1/providers/{id}` | GET | 获取 Provider 详情 | Admin |
+| | `/api/v1/providers/{id}` | PUT | 更新 Provider | Admin |
+| | `/api/v1/providers/{id}` | DELETE | 删除 Provider（软删除） | Admin |
+| | `/api/v1/providers/{id}/test` | POST | 测试 Provider 连通性 | Admin |
+| **Model 管理** | `/api/v1/models` | GET | 分页查询 Model 列表 | Admin |
+| | `/api/v1/models` | POST | 创建 Model | Admin |
+| | `/api/v1/models/{id}` | GET | 获取 Model 详情 | Admin |
+| | `/api/v1/models/{id}` | PUT | 更新 Model | Admin |
+| | `/api/v1/models/{id}` | DELETE | 删除 Model（软删除） | Admin |
+| **API Key 管理** | `/api/v1/api-keys` | GET | 分页查询 API Key 列表 | 用户 |
+| | `/api/v1/api-keys` | POST | 创建 API Key | 用户 |
+| | `/api/v1/api-keys/{id}` | GET | 获取 API Key 详情 | 用户 |
+| | `/api/v1/api-keys/{id}` | PUT | 更新 API Key | 用户 |
+| | `/api/v1/api-keys/{id}` | DELETE | 删除 API Key（软删除） | 用户 |
+| | `/api/v1/api-keys/{id}/rotate` | POST | 轮换 API Key | 用户 |
+| | `/api/v1/api-keys/{id}/disable` | POST | 禁用 API Key | 用户 |
+| | `/api/v1/api-keys/{id}/enable` | POST | 启用 API Key | 用户 |
+| **TokenLimit 管理** | `/api/v1/token-limits` | GET | 分页查询 TokenLimit 列表 | Admin |
+| | `/api/v1/token-limits` | POST | 创建 TokenLimit | Admin |
+| | `/api/v1/token-limits/{id}` | GET | 获取 TokenLimit 详情 | Admin |
+| | `/api/v1/token-limits/{id}` | PUT | 更新 TokenLimit | Admin |
+| | `/api/v1/token-limits/{id}` | DELETE | 删除 TokenLimit（软删除） | Admin |
+| **角色管理** | `/api/v1/roles` | GET | 查询角色列表 | Admin |
+| | `/api/v1/roles` | POST | 创建角色 | Admin |
+| | `/api/v1/roles/{id}` | GET | 获取角色详情 | Admin |
+| | `/api/v1/roles/{id}` | PUT | 更新角色 | Admin |
+| | `/api/v1/roles/{id}` | DELETE | 删除角色 | Admin |
+| | `/api/v1/roles/{id}/permissions` | PUT | 分配角色权限 | Admin |
+
+### 12.6.2 统一响应格式
+
+所有管理 API 使用统一的响应信封格式：
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null,
+  "trace_id": "trace_789xyz",
+  "timestamp": "2026-04-28T10:30:00Z"
+}
+```
+
+### 12.6.3 User 管理
+
+#### DTO 结构
+
+**UserCreateRequest** (创建用户请求)
+```json
+{
+  "username": "string (required, 2-64 chars)",
+  "email": "string (required, valid email)",
+  "password": "string (required, 8-128 chars, must contain uppercase, lowercase, number)",
+  "phone": "string (optional, valid phone number)",
+  "role_codes": ["ADMIN", "DEVELOPER"] (required, at least one)
+}
+```
+
+**UserUpdateRequest** (更新用户请求)
+```json
+{
+  "username": "string (optional, 2-64 chars)",
+  "email": "string (optional, valid email)",
+  "phone": "string (optional, valid phone number)",
+  "avatar_url": "string (optional, valid URL)"
+}
+```
+
+**UserResponse** (用户响应)
+```json
+{
+  "id": 1,
+  "user_code": "USR20260428001",
+  "username": "john.doe",
+  "email": "john@example.com",
+  "phone": "13800138000",
+  "avatar_url": "https://example.com/avatar.jpg",
+  "status": "ACTIVE",
+  "email_verified": false,
+  "roles": [
+    {
+      "role_code": "ADMIN",
+      "name": "管理员"
+    }
+  ],
+  "last_login_at": "2026-04-28T10:00:00Z",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**UserStatusUpdateRequest** (更新状态请求)
+```json
+{
+  "status": "DISABLED" (required: ACTIVE, DISABLED, LOCKED)
+}
+```
+
+**UserRoleAssignRequest** (分配角色请求)
+```json
+{
+  "role_codes": ["ADMIN", "DEVELOPER"] (required)
+}
+```
+
+#### 分页查询参数
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | int | 1 | 页码 |
+| limit | int | 20 | 每页数量 (max 100) |
+| keyword | string | - | 搜索关键字 (username/email) |
+| status | string | - | 筛选状态 |
+| role_code | string | - | 筛选角色 |
+
+### 12.6.4 Provider 管理
+
+#### DTO 结构
+
+**ProviderCreateRequest** (创建 Provider 请求)
+```json
+{
+  "provider_code": "openai (required, 2-64 chars, unique)",
+  "provider_name": "OpenAI (required, 2-128 chars)",
+  "provider_type": "OPENAI (required: OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)",
+  "base_url": "https://api.openai.com (required, valid URL)",
+  "website_url": "https://openai.com (optional, valid URL)",
+  "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
+  "priority": 100 (optional, 1-1000)
+}
+```
+
+**ProviderUpdateRequest** (更新 Provider 请求)
+```json
+{
+  "provider_name": "OpenAI (optional, 2-128 chars)",
+  "base_url": "https://api.openai.com (optional, valid URL)",
+  "website_url": "https://openai.com (optional, valid URL)",
+  "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
+  "priority": 100 (optional, 1-1000),
+  "status": "ACTIVE (optional: ACTIVE/SUSPENDED)"
+}
+```
+
+**ProviderResponse** (Provider 响应)
+```json
+{
+  "id": 1,
+  "provider_code": "openai",
+  "provider_name": "OpenAI",
+  "provider_type": "OPENAI",
+  "base_url": "https://api.openai.com",
+  "website_url": "https://openai.com",
+  "api_doc_url": "https://platform.openai.com/docs",
+  "priority": 100,
+  "status": "ACTIVE",
+  "models": [
+    {
+      "id": 1,
+      "model_code": "gpt-4o",
+      "display_name": "GPT-4o",
+      "context_window": 128000,
+      "status": "ACTIVE"
+    }
+  ],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**ProviderTestRequest** (测试连通性请求)
+```json
+{
+  "api_key": "sk-xxx (required, 用于测试的 API Key)"
+}
+```
+
+**ProviderTestResponse** (测试连通性响应)
+```json
+{
+  "success": true,
+  "latency_ms": 150,
+  "message": "连接成功",
+  "models": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+}
+```
+
+### 12.6.5 Model 管理
+
+#### DTO 结构
+
+**ModelCreateRequest** (创建 Model 请求)
+```json
+{
+  "model_code": "gpt-4o (required, 2-128 chars, unique)",
+  "provider_id": 1 (required),
+  "provider_model_id": "gpt-4o (required, Provider 侧的模型 ID)",
+  "display_name": "GPT-4o (optional, 2-256 chars)",
+  "context_window": 128000 (optional),
+  "input_price": 2.5 (optional, 每 1M tokens 价格)",
+  "output_price": 10.0 (optional, 每 1M tokens 价格),
+  "capabilities": {
+    "vision": true,
+    "function_calling": true,
+    "streaming": true
+  } (optional)
+}
+```
+
+**ModelUpdateRequest** (更新 Model 请求)
+```json
+{
+  "display_name": "GPT-4o (optional)",
+  "context_window": 128000 (optional),
+  "input_price": 2.5 (optional),
+  "output_price": 10.0 (optional),
+  "capabilities": {
+    "vision": true,
+    "function_calling": true
+  } (optional),
+  "status": "ACTIVE (optional: ACTIVE/DEPRECATED)"
+}
+```
+
+**ModelResponse** (Model 响应)
+```json
+{
+  "id": 1,
+  "model_code": "gpt-4o",
+  "provider": {
+    "id": 1,
+    "provider_code": "openai",
+    "provider_name": "OpenAI"
+  },
+  "provider_model_id": "gpt-4o",
+  "display_name": "GPT-4o",
+  "context_window": 128000,
+  "input_price": 2.5,
+  "output_price": 10.0,
+  "capabilities": {
+    "vision": true,
+    "function_calling": true,
+    "streaming": true
+  },
+  "status": "ACTIVE",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.6 API Key 管理
+
+#### DTO 结构
+
+**ApiKeyCreateRequest** (创建 API Key 请求)
+```json
+{
+  "name": "My API Key (optional, 2-64 chars)",
+  "expires_at": "2027-12-31T23:59:59Z (optional, 永不过期 if null)",
+  "ip_whitelist": ["192.168.1.0/24", "10.0.0.1"] (optional, 空表示不限制),
+  "model_whitelist": ["gpt-4o", "gpt-4-turbo"] (optional, 空表示全部允许)
+}
+```
+
+**ApiKeyUpdateRequest** (更新 API Key 请求)
+```json
+{
+  "name": "My API Key (optional)",
+  "expires_at": "2027-12-31T23:59:59Z (optional)",
+  "ip_whitelist": ["192.168.1.0/24"] (optional),
+  "model_whitelist": ["gpt-4o"] (optional)
+}
+```
+
+**ApiKeyResponse** (API Key 响应)
+```json
+{
+  "id": 1,
+  "key_code": "AK20260428001",
+  "name": "My API Key",
+  "key_prefix": "sk-xxxxx",
+  "key_hint": "sk-xxxx...abcd (用于显示的掩码)",
+  "status": "ACTIVE",
+  "expires_at": "2027-12-31T23:59:59Z",
+  "last_used_at": "2026-04-28T10:00:00Z",
+  "ip_whitelist": ["192.168.1.0/24"],
+  "model_whitelist": ["gpt-4o"],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**ApiKeyCreateResponse** (创建 API Key 响应 - 包含完整 Key)
+```json
+{
+  "id": 1,
+  "key_code": "AK20260428001",
+  "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "name": "My API Key",
+  "expires_at": "2027-12-31T23:59:59Z",
+  "created_at": "2026-04-28T08:00:00Z"
+}
+```
+
+> **注意**: `api_key` 只在创建时返回一次，之后无法找回。
+
+### 12.6.7 TokenLimit 管理
+
+#### DTO 结构
+
+**TokenLimitCreateRequest** (创建 TokenLimit 请求)
+```json
+{
+  "limit_code": "TL20260428001 (required, unique)",
+  "user_id": 1 (required),
+  "provider_id": 1 (optional, null 表示所有 Provider)",
+  "model_id": 1 (optional, null 表示所有 Model)",
+  "max_tokens": 1000000 (required, token 数量)",
+  "period_type": "MONTHLY (required: DAILY/WEEKLY/MONTHLY/TOTAL)",
+  "period_day_of_week": 1 (optional, 1-7, WEEKLY 时必填),
+  "period_day_of_month": 1 (optional, 1-31, MONTHLY 时必填),
+  "exceeded_action": "REJECT (required: REJECT/DOWNGRADE)",
+  "switch_model_id": 2 (optional, DOWNGRADE 时必填)
+}
+```
+
+**TokenLimitUpdateRequest** (更新 TokenLimit 请求)
+```json
+{
+  "max_tokens": 2000000 (optional),
+  "period_type": "MONTHLY (optional)",
+  "period_day_of_week": 1 (optional),
+  "period_day_of_month": 1 (optional),
+  "exceeded_action": "DOWNGRADE (optional)",
+  "switch_model_id": 2 (optional),
+  "status": "ACTIVE (optional)
+}
+```
+
+**TokenLimitResponse** (TokenLimit 响应)
+```json
+{
+  "id": 1,
+  "limit_code": "TL20260428001",
+  "user": {
+    "id": 1,
+    "user_code": "USR20260428001",
+    "username": "john.doe"
+  },
+  "provider": {
+    "id": 1,
+    "provider_code": "openai",
+    "provider_name": "OpenAI"
+  },
+  "model": {
+    "id": 1,
+    "model_code": "gpt-4o",
+    "display_name": "GPT-4o"
+  },
+  "limit_type": "USER_CUSTOM",
+  "max_tokens": 1000000,
+  "used_tokens": 250000,
+  "remaining_tokens": 750000,
+  "usage_ratio": 0.25,
+  "period_type": "MONTHLY",
+  "period_day_of_week": null,
+  "period_day_of_month": 1,
+  "exceeded_action": "REJECT",
+  "switch_model": null,
+  "status": "ACTIVE",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.8 Role 管理
+
+#### DTO 结构
+
+**RoleCreateRequest** (创建角色请求)
+```json
+{
+  "role_code": "custom_role (required, unique)",
+  "name": "自定义角色 (required)",
+  "description": "描述 (optional)",
+  "permission_codes": ["provider:read", "model:create"] (required)
+}
+```
+
+**RoleUpdateRequest** (更新角色请求)
+```json
+{
+  "name": "自定义角色 (optional)",
+  "description": "描述 (optional)",
+  "is_active": true (optional),
+  "permission_codes": ["provider:read", "model:create", "token:read"] (optional)
+}
+```
+
+**RoleResponse** (角色响应)
+```json
+{
+  "id": 1,
+  "role_code": "custom_role",
+  "name": "自定义角色",
+  "description": "描述",
+  "role_type": "CUSTOM",
+  "is_active": true,
+  "permissions": [
+    {
+      "permission_code": "provider:read",
+      "name": "查看提供商",
+      "category": "provider"
+    }
+  ],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.9 错误码定义
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| INVALID_PARAMETER | 400 | 参数校验失败 |
+| DUPLICATE_RESOURCE | 409 | 资源已存在 |
+| RESOURCE_NOT_FOUND | 404 | 资源不存在 |
+| RESOURCE_INACTIVE | 400 | 资源已禁用 |
+| OPERATION_NOT_ALLOWED | 403 | 操作不允许 |
+| INTERNAL_ERROR | 500 | 内部错误 |
+
+### 12.6.10 任务列表
+
+#### Task 1: 用户管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/UserController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/user/UserApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/UserGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaUserGateway.java`
+
+#### Task 2: Provider 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/ProviderController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/provider/ProviderApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/router/gateway/ProviderGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/router/JpaProviderGateway.java`
+
+#### Task 3: Model 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/ModelController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/model/ModelApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/router/gateway/ModelGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/router/JpaModelGateway.java`
+
+#### Task 4: API Key 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/controller/ApiKeyController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyResponse.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyCreateResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/api-key/ApiKeyApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/ApiKeyGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaApiKeyGateway.java`
+
+#### Task 5: TokenLimit 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/TokenLimitController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/token-limit/TokenLimitApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/TokenLimitGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaTokenLimitGateway.java`
+
+#### Task 6: 角色管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/RoleController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/role/RoleApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/RoleGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaRoleGateway.java`
+
+#### Task 7: 数据库迁移
+
+**Files:**
+- Create: `src/main/resources/db/V2__add_indexes.sql`
+
+---
+
 ### 12.6 Phase 1 完成内容
 
 Phase 1 已完成以下工作：
