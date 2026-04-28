@@ -68,10 +68,11 @@ class RbacServiceTest {
      * 创建测试用 User 实体
      */
     private User createUser() {
-        return new User()
-                .setUserCode("test_user_code")
-                .setUsername("Test User")
-                .setEmail("test@example.com")
-                .setStatus(UserStatus.ACTIVE);
+        User user = new User();
+        user.setUserCode("test_user_code");
+        user.setUsername("Test User");
+        user.setEmail("test@example.com");
+        user.setStatus(UserStatus.ACTIVE);
+        return user;
     }
 }

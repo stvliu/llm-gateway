@@ -433,7 +433,7 @@ class UserServiceTest {
         @DisplayName("分配角色成功")
         void assignRoles_validRequest_assignsRoles() {
             // given
-            testUser.setUserRoles(new ArrayList<>());
+            testUser.getRoles().clear();
             when(userGateway.findById(1L)).thenReturn(Optional.of(testUser));
             when(roleGateway.findByRoleCodes(List.of("ADMIN", "USER"))).thenReturn(List.of(testRole));
             when(userGateway.save(any(User.class))).thenReturn(testUser);
@@ -478,14 +478,7 @@ class UserServiceTest {
         user.setEmailVerified(false);
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
-        user.setUserRoles(new ArrayList<>());
-
-        // 使用已经创建的 testRole
-        UserRole userRole = new UserRole();
-        userRole.setId(1L);
-        userRole.setUser(user);
-        userRole.setRole(testRole);
-        user.getUserRoles().add(userRole);
+        user.getRoles().clear();
 
         return user;
     }
