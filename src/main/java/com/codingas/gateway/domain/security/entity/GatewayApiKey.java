@@ -3,17 +3,16 @@ package com.codingas.gateway.domain.security.entity;
 import com.codingas.gateway.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-import lombok.experimental.Accessors;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 网关访问凭证实体
  *
- * <p>存储用户的 API Key 信息，包括密钥哈希、状态和有效期。</p>
- * <p>实际密钥不在数据库中存储，仅存储其哈希值用于验证。</p>
- *
- * @see GatewayApiKeyStatus
+ * <p>用户调用 LLM-Gateway 网关的凭据，格式为 sk-xxxxxxxx。</p>
  */
 @Entity
 @Table(name = "gateway_api_keys")
@@ -21,27 +20,24 @@ import java.time.Instant;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Accessors(chain = true)
 public class GatewayApiKey extends BaseEntity {
 
-    @Column(name = "key_code", nullable = false, unique = true, length = 64)
+    @Column(name = "key_code", nullable = false, unique = true, length = 128)
     private String keyCode;
 
-    @Column(name = "key_hash", nullable = false, unique = true)
+    @Column(name = "key_hash", nullable = false, length = 256)
     private String keyHash;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    /**
-     * 密钥名称（如"主Key"、"备用Key"）
-     */
     @Column(name = "name", length = 64)
     private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private GatewayApiKeyStatus status;
+    private ApiKeyStatus status = ApiKeyStatus.ACTIVE;
 
     @Column(name = "expires_at")
     private Instant expiresAt;
@@ -49,10 +45,21 @@ public class GatewayApiKey extends BaseEntity {
     @Column(name = "last_used_at")
     private Instant lastUsedAt;
 
-    @Column(name = "rate_limit_config_id")
-    private Long rateLimitConfigId;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "ip_whitelist", columnDefinition = "json")
+    private List<String> ipWhitelist;
 
-    public enum GatewayApiKeyStatus {
-        ACTIVE, INACTIVE, EXPIRED, REVOKED
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    public enum ApiKeyStatus {
+        /** 正常 */
+        ACTIVE,
+        /** 禁用 */
+        DISABLED,
+        /** 已过期 */
+        EXPIRED,
+        /** 已删除 */
+        DELETED
     }
 }
