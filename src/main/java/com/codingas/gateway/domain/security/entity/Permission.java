@@ -1,29 +1,31 @@
 package com.codingas.gateway.domain.security.entity;
 
+import com.codingas.gateway.common.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
 /**
- * 权限常量定义
+ * 权限实体
+ *
+ * <p>细粒度权限码，定义到具体的操作级别。</p>
  */
-public final class Permission {
+@Entity
+@Table(name = "permissions")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class Permission extends BaseEntity {
 
-    private Permission() {}
+    @Column(name = "permission_code", nullable = false, unique = true, length = 128)
+    private String permissionCode;
 
-    // API 权限
-    public static final String API_CALL = "api:call";
-    public static final String API_READ = "api:read";
-    public static final String API_WRITE = "api:write";
+    @Column(name = "name", nullable = false, length = 64)
+    private String name;
 
-    // 模型权限
-    public static final String MODEL_ACCESS = "model:access";
-    public static final String MODEL_ADMIN = "model:admin";
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
-    // 管理权限
-    public static final String ADMIN_ALL = "*";
-    public static final String USER_ADMIN = "admin:user";
-    public static final String USER_MANAGE = "admin:manage";
-
-    // 密钥权限
-    public static final String KEY_CREATE = "key:create";
-    public static final String KEY_READ = "key:read";
-    public static final String KEY_UPDATE = "key:update";
-    public static final String KEY_DELETE = "key:delete";
+    @Column(name = "category", length = 32)
+    private String category;
 }
