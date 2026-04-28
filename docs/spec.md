@@ -2471,11 +2471,46 @@ v1.0 ──(升级)──▶ v1.1 ──(升级)──▶ v2.0
 
 ### 12.5 开发路线图
 
-| 阶段 | 发布时间 (目标) | 交付内容 |
-|------|----------------|---------|
-| **Phase 1** | TBD | **标准版 v1.0**：API 网关、渠道管理、Token 认证、Token 计量、Docker 部署 |
+| 阶段 | 交付内容 |
+|------|---------|
+| **Phase 1** | ✅ **基础框架与实体完善**：实体设计、枚举定义、数据库迁移脚本 |
+| **Phase 2** | **核心 CRUD 功能**：用户管理、Provider & Model 管理、API Key 管理、TokenLimit 管理 |
+| **Phase 3** | **预警与计量**：AlertRule 管理、AlertNotification 管理、UsageLog 记录、预警引擎 |
+| **Phase 4** | **其他功能**：用量报表、操作日志、系统设置 |
+| **Phase 5** | **前端管理后台**：Web UI + API 对接 |
+| **Phase 6** | **路由增强**：智能路由、故障切换、负载均衡 |
 
-### 12.6 MVP (Phase 1) 范围
+### 12.6 Phase 1 完成内容
+
+Phase 1 已完成以下工作：
+
+#### 12.6.1 新增/修改实体
+
+| 实体 | 变更类型 | 说明 |
+|------|----------|------|
+| User | 重构 | 新增 phone, avatarUrl, emailVerified, oauthProviders, piiSalt, lastLoginAt, deletedAt |
+| Role | 重构 | 从常量类转为 JPA 实体，支持 SYSTEM/CUSTOM 类型和软删除 |
+| Permission | 重构 | 从常量类转为 JPA 实体，细粒度权限码 |
+| UserRole | 新增 | 用户-角色多对多关联实体 |
+| Provider | 重构 | 使用 ProviderType 枚举，新增 websiteUrl, apiDocUrl |
+| Model | 重构 | 新增 providerModelId, contextWindow, input/outputPrice, capabilities (JSON) |
+| GatewayApiKey | 重构 | 使用 User 实体引用，新增 ipWhitelist |
+| TokenLimit | 重构 | 支持 user/provider/model 三维限额，新增 periodType, exceededAction |
+| UsageLog | 新增 | 记录每次 API 调用详情 |
+| AlertRule | 新增 | 预警规则配置 (USAGE/HEALTH/QUOTA) |
+| AlertNotification | 新增 | 预警通知记录 |
+
+#### 12.6.2 新增枚举
+- UserStatus (ACTIVE/DISABLED/LOCKED/DELETED)
+- UserRole (ADMIN/DEVELOPER/OBSERVER/FINANCE_ADMIN)
+- ProviderType (OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)
+- PeriodType (DAILY/WEEKLY/MONTHLY/TOTAL)
+- ExceededAction (REJECT/DOWNGRADE)
+
+#### 12.6.3 数据库迁移
+- V1__init_schema.sql: 包含完整的 12 张表和索引
+
+### 12.7 MVP (Phase 1) 范围
 
 MVP 必须包含以下最小可用功能：
 
@@ -2491,7 +2526,7 @@ MVP 必须包含以下最小可用功能：
 | 管理控制台 | 基础仪表盘、渠道管理页面、API_Key管理 |
 | 部署 | Docker Compose 一键部署 |
 
-### 12.7 版本号语义
+### 12.8 版本号语义
 
 遵循 Semantic Versioning:
 
@@ -2505,7 +2540,7 @@ MVP 必须包含以下最小可用功能：
 |---------|---------|------|
 | 标准版 | `v{major}.{minor}.{patch}` | `v1.0.0` |
 
-### 12.8 API 破坏性变更迁移策略
+### 12.9 API 破坏性变更迁移策略
 
 当 API 发生破坏性变更时（如端点路径变更、请求/响应格式变更），采用**双版本共存过渡期**策略：
 
