@@ -124,17 +124,17 @@ public class GatewayApiKeyExpirationNotifier {
      * 发送过期警告
      */
     private boolean sendExpirationWarning(GatewayApiKey apiKey) {
-        User user = userGateway.findById(apiKey.getUserId()).orElse(null);
+        User user = userGateway.findById(apiKey.getUser().getId()).orElse(null);
         if (user == null) {
             log.warn("User not found for API Key: keyCode={}, userId={}",
-                apiKey.getKeyCode(), apiKey.getUserId());
+                apiKey.getKeyCode(), apiKey.getUser().getId());
             return false;
         }
 
         // 发送通知（邮件/短信/Webhook）
         return notificationService.sendExpirationWarning(
             user.getEmail(),
-            user.getUserName(),
+            user.getUsername(),
             apiKey.getKeyCode(),
             apiKey.getName(),
             apiKey.getExpiresAt()

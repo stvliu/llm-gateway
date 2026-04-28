@@ -55,12 +55,12 @@ class DefaultModelRouterTest {
         model.setId(1L);
         model.setModelCode("openai/gpt-4o");
         model.setStatus(Model.ModelStatus.ACTIVE);
-        model.setProviderId(1L);
 
         Provider provider = new Provider();
         provider.setId(1L);
         provider.setProviderCode("openai");
-        provider.setProviderType(Provider.ProviderTypeEnum.OPENAI);
+        provider.setProviderType(ProviderType.OPENAI);
+        model.setProvider(provider);
 
         when(modelGateway.findByModelCode("openai/gpt-4o")).thenReturn(Optional.of(model));
         when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
@@ -88,7 +88,10 @@ class DefaultModelRouterTest {
         Model model = new Model();
         model.setId(1L);
         model.setModelCode("test/model");
-        model.setProviderId(99L);
+
+        Provider provider = new Provider();
+        provider.setId(99L);
+        model.setProvider(provider);
 
         when(modelGateway.findByModelCode("test/model")).thenReturn(Optional.of(model));
         when(providerGateway.findById(99L)).thenReturn(Optional.empty());

@@ -33,6 +33,7 @@
         <opentelemetry.version>1.47.0</opentelemetry.version>
         <testcontainers.version>1.20.4</testcontainers.version>
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
+        <flyway.version>11.0.0</flyway.version>
 
         <!-- Maven 插件版本 -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
@@ -95,7 +96,7 @@
                 <version>${opentelemetry.version}</version>
             </dependency>
 
-            <!-- 日志 -->
+<!-- 日志 -->
             <dependency>
                 <groupId>net.logstash.logback</groupId>
                 <artifactId>logstash-logback-encoder</artifactId>
@@ -141,6 +142,18 @@
                 <artifactId>dependency-check-maven</artifactId>
                 <version>10.0.4</version>
             </dependency>
+
+            <!-- Flyway -->
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-h2</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -155,6 +168,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- Flyway 数据库迁移 -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
         </dependency>
 
         <!-- Spring Boot Validation -->

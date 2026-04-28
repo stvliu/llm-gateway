@@ -35,7 +35,7 @@ public class ProviderResponse {
                 .providerType(provider.getProviderType() != null ? provider.getProviderType().name() : null)
                 .baseUrl(provider.getBaseUrl())
                 .priority(provider.getPriority())
-                .enabled(provider.getEnabled())
+                .enabled(provider.getStatus() == Provider.ProviderStatus.ACTIVE)
                 .createdAt(provider.getCreatedAt() != null ? provider.getCreatedAt().toString() : null)
                 .updatedAt(provider.getUpdatedAt() != null ? provider.getUpdatedAt().toString() : null)
                 .build();

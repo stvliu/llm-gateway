@@ -1,8 +1,10 @@
 package com.codingas.gateway.application.auth;
 
+import com.codingas.gateway.common.enums.UserRole;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.service.AuthenticationService;
 import com.codingas.gateway.domain.security.service.RbacService;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,18 +43,18 @@ class AuthApplicationTest {
             // given
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
-            AuthenticationService.UserAuthResult expectedResult = new AuthenticationService.UserAuthResult(
-                1L, "user-001", User.UserRole.USER, 100L, "key-code-001"
+            UserAuthResult expectedResult = new UserAuthResult(
+                1L, "user-001", UserRole.DEVELOPER, 100L, "key-code-001"
             );
             when(authenticationService.authenticate(apiKey)).thenReturn(expectedResult);
 
             // when
-            AuthenticationService.UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
+            UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
 
             // then
             assertThat(result).isEqualTo(expectedResult);
             assertThat(result.userId()).isEqualTo(1L);
-            assertThat(result.keyCode()).isEqualTo("key-code-001");
+            assertThat(result.apiKeyCode()).isEqualTo("key-code-001");
             verify(authenticationService).authenticate(apiKey);
         }
 
@@ -65,7 +67,7 @@ class AuthApplicationTest {
             when(authenticationService.authenticate(apiKey)).thenReturn(null);
 
             // when
-            AuthenticationService.UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
+            UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
 
             // then
             assertThat(result).isNull();
@@ -81,7 +83,7 @@ class AuthApplicationTest {
             when(authenticationService.authenticate(apiKey)).thenReturn(null);
 
             // when
-            AuthenticationService.UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
+            UserAuthResult result = authApplication.authenticate(apiKey, clientIp);
 
             // then
             assertThat(result).isNull();
@@ -103,7 +105,6 @@ class AuthApplicationTest {
             User user = new User();
             user.setId(userId);
             user.setUserCode("user-001");
-            user.setRole(User.UserRole.USER);
 
             when(authenticationService.getUserById(userId)).thenReturn(Optional.of(user));
             when(rbacService.hasPermission(user, resource, action)).thenReturn(true);
@@ -127,7 +128,6 @@ class AuthApplicationTest {
             User user = new User();
             user.setId(userId);
             user.setUserCode("user-002");
-            user.setRole(User.UserRole.READONLY);
 
             when(authenticationService.getUserById(userId)).thenReturn(Optional.of(user));
             when(rbacService.hasPermission(user, resource, action)).thenReturn(false);
@@ -169,7 +169,6 @@ class AuthApplicationTest {
             User adminUser = new User();
             adminUser.setId(userId);
             adminUser.setUserCode("admin-001");
-            adminUser.setRole(User.UserRole.ADMIN);
 
             when(authenticationService.getUserById(userId)).thenReturn(Optional.of(adminUser));
             when(rbacService.hasPermission(adminUser, resource, action)).thenReturn(true);

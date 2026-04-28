@@ -31,14 +31,14 @@
 
 ### 1.1 项目定位
 
-**LLM-Gateway** 是新一代企业级 AI 模型 API 聚合分发与智能路由网关，定位为 APIPark 的竞品项目，专注于企业中台、大型团队和政企客户的需求。
+**LLM-Gateway** 是新一代企业级 AI 模型 API 聚合分发与智能路由网关，定位为 APIPark 的竞品项目，专注于企业中台、政企客户的需求。
 
 ### 1.2 核心价值主张
 
 | 利益相关者 | 核心价值 |
 |-----------|---------|
 | **开发者** | 一次接入，通过标准 OpenAI/Anthropic API 调用 50+ 主流模型 |
-| **架构师** | 团队隔离、零信任安全、全链路可观测、云原生部署 |
+| **架构师** | 用户隔离、零信任安全、全链路可观测、云原生部署 |
 | **管理者** | Token限额控制、用量透明化、合规审计链、ROI 分析 |
 | **运维人员** | K8s 原生、Prometheus/Grafana 集成、零停机升级 |
 
@@ -84,7 +84,7 @@
 
 ### 1.6 架构说明
 
-**单租户设计**: LLM-Gateway v1.0 采用单租户架构，所有用户共享全局的 Provider 和路由配置。
+**LLM-Gateway** 是新一代企业级 AI 模型 API 聚合分发与智能路由网关，定位为 APIPark 的竞品项目，专注于企业中台、政企客户的需求。
 
 **双 API Key 设计**:
 - **ProviderApiKey**: 系统调用 Provider 的凭证，加密存储，支持多 Key 轮换
@@ -93,7 +93,7 @@
 ## Clarifications
 
 ### Session 2026-04-13
-- Q: v1.0 设计目标应支撑的团队规模是多少？ → A: 中型规模（~100 团队、1000 渠道、10000 用户）
+- Q: v1.0 设计目标应支撑的用户规模是多少？ → A: 中型规模（~10000 用户）
 - Q: 当 API 发生破坏性变更时，迁移策略是什么？ → A: 双版本共存过渡期（新/旧版本并行 6 个月）
 - Q: 多管理员并发修改同一配置时，冲突处理策略是什么？ → A: 乐观锁 + 最后写入胜出 + 变更通知
 
@@ -125,14 +125,13 @@
 
 | 维度 | VoAPI | LLM-Gateway |
 |------|-------|---------------|
-| **目标用户** | 个人开发者/小团队/商业化运营 | 企业中台/大型团队/政企客户 |
+| **目标用户** | 个人开发者/小型商业化运营 | 企业中台/政企客户 |
 | **部署模式** | 单机 Docker | K8s 云原生、集群部署 |
 | **API 兼容** | OpenAI 兼容 | **OpenAI + Anthropic 双标准** |
-| **多租户** | 简单用户体系 | 团队/成员/角色/权限隔离 |
 | **规则引擎** | JS 脚本（用户自行编写） | 可视化策略编排（零代码）+ 脚本扩展 |
 | **安全合规** | 基础认证/限流 | 零信任、国密算法、PII 脱敏、完整审计链 |
 | **可观测性** | 基础监控看板 | OpenTelemetry 原生、全链路追踪 |
-| **成本治理** | 简单计费 | 三级预算控制 + 超预算自动策略 |
+| **成本治理** | 简单计费 | Token 限额 + 超限自动策略 |
 | **扩展生态** | 云端规则市场（Pro 版） | 插件化架构 + MCP 协议原生支持 |
 | **API 生命周期** | 基础调用 | 设计→发布→调用→下线完整流程 |
 | **消费者订阅** | 无 | API Portal + 订阅审批机制 |
@@ -180,7 +179,7 @@
 │  └──────────────────────────────────────────────────────┘    │
 │  ┌──────────────────────────────────────────────────────┐    │
 │  │              可观测性 & 成本治理                      │    │
-│  │  OpenTelemetry 追踪 | 预算控制 | 审计日志 | 指标采集  │    │
+│  │  OpenTelemetry 追踪 | Token 限额 | 审计日志 | 指标采集  │    │
 │  └──────────────────────────────────────────────────────┘    │
 └────────────────────────────┬─────────────────────────────────┘
                              │
@@ -302,14 +301,14 @@ llm-gateway/
 | | 场景路由 | P1 | 按场景(background/think/webSearch) |
 | | 可视化策略编排 | P1 | 零代码策略配置 | 企业版 |
 | | 自定义脚本扩展 | P1 | 高级用户自定义逻辑 | 企业版 |
-| **团队管理** | 单租户 | P0 | 所有用户共享全局资源 |
+| **用户管理** | 单用户 | P0 | 所有用户共享全局资源 |
 | **密钥管理** | API Key CRUD | P0 | 创建/查询/编辑/删除 |
 | | 额度限制 | P0 | API Key 用量上限 |
 | | 模型白名单 | P0 | 限制可访问模型 |
 | | IP 限制 | P1 | API Key 级 IP 白名单 |
 | | 过期时间 | P0 | API Key 有效期 |
 | **Token 计量** | Token 计量 | P0 | 输入/输出 Token 分别统计 |
-| **Token额度** | Token限额 | P0 | 团队/用户/令牌/用户×渠道Token用量控制 |
+| **Token额度** | Token限额 | P0 | 用户/API Key/用户×渠道 Token 用量控制 |
 | | 请求次数配额 | P1 | 时间周期内请求次数限制 |
 | **安全与风控** | 认证中间件 | P0 | Token 验证 |
 | | IP 白/黑名单 | P0 | 访问控制 |
@@ -535,7 +534,7 @@ llm-gateway/
 
 #### 4.2.9 用户与角色管理模块
 
-**需求描述**: 单租户架构，用户共享全局 Provider/RouteGroup 资源，支持基于角色的访问控制。
+**需求描述**: 用户共享全局 Provider/RouteGroup 资源，支持基于角色的访问控制。
 
 **功能需求**:
 
@@ -567,7 +566,7 @@ llm-gateway/
 
 | ID | 功能 | 详细描述 | 验收标准 |
 |----|------|---------|---------|
-| AK-001 | API Key 创建 | 生成 API Key，关联用户/团队 | Key 格式: `sk-xxxxxxxxxxxxxxxx` |
+| AK-001 | API Key 创建 | 生成 API Key，关联用户 | Key 格式: `sk-xxxxxxxxxxxxxxxx` |
 | AK-002 | API Key 编辑 | 修改额度、模型白名单等 | 热加载 |
 | AK-003 | API Key 删除 | 软删除 API Key | 立即失效 |
 | AK-004 | API Key 查询 | 按条件查询 API Key 列表 | 支持分页 |
@@ -583,21 +582,20 @@ llm-gateway/
 
 #### 4.2.11 Token额度模块
 
-**需求描述**: Token 用量限额控制，四级 Token 限额（团队/用户/API Key/用户×渠道）+ 请求次数配额。网关仅跟踪 Token 使用量，不计算实际费用。
+**需求描述**: Token 用量限额控制，多级 Token 限额（用户/API Key/用户×渠道）+ 请求次数配额。网关仅跟踪 Token 使用量，不计算实际费用。
 
 **功能需求**:
 
 | ID | 功能 | 详细描述 | 验收标准 | 版本 |
 |----|------|---------|---------|------|
 | BL-001 | Token 计量 | 分别统计输入/输出 Token | 准确率 ≥99.9% | 标准版 |
-| BL-002 | 团队级限额 | 设置团队级Token限额 | 超限触发策略 | 标准版 |
-| BL-003 | 用户级限额 | 设置用户级Token限额 | 总和不超过团队限额 |
+| BL-003 | 用户级限额 | 设置用户级Token限额 | 超限触发策略 |
 | BL-004 | API Key 级限额 | 设置 API Key 级 Token 限额 | 超限拒绝 |
 | BL-005 | 用户×渠道限额 | 设置用户×渠道Token限额 | 精细化配额控制 |
 | BL-006 | 预扣额度 | 请求前预扣预估Token量 | 防止超额使用 |
 | BL-007 | 差额调整 | 响应后按实际 Token 量调整使用量 | 多退少补 |
 | BL-008 | 超限策略 | 拒绝/降级模型 | 策略可配置 |
-| BL-009 | 额度报表 | 按团队/用户/API Key 生成用量报表 | 支持导出 CSV |
+| BL-009 | 额度报表 | 按用户/API Key 生成用量报表 | 支持导出 CSV |
 | BL-010 | 限额告警 | Token使用达到阈值时告警 | 如 80%、100% |
 | BL-011 | 请求次数配额 | 按时间周期限制请求次数 | 支持 RPM/TPM 外的补充限制 |
 
@@ -606,14 +604,9 @@ llm-gateway/
 ```
 用户Token限额
 ├── 用户级别: User (max_tokens)
+├── API Key级别: API Key (max_tokens)
 ├── Provider级别: User × Provider (可选)
 └── Model级别: User × Model (可选)
-
-周期类型:
-├── DAILY:   每天重置 (如: 每天最多 100,000 tokens)
-├── WEEKLY:  每周重置 (如: 每周一重置，每周 500,000 tokens)
-├── MONTHLY: 每月重置 (如: 每月1日重置，每月 2,000,000 tokens)
-└── TOTAL:   不重置 (累计总量限制)
 ```
 
 ---
@@ -656,7 +649,7 @@ llm-gateway/
 | OB-005 | Prometheus 导出 | 标准 Prometheus 指标格式 | `/metrics` 端点 |
 | OB-006 | 渠道延迟监控 | 每个渠道的实时延迟 | 历史趋势图 |
 | OB-007 | 错误率监控 | 渠道/模型级错误率 | 阈值告警 |
-| OB-008 | 预算使用率 | 实时显示各层级预算使用情况 | 可视化仪表盘 |
+| OB-008 | Token限额使用率 | 实时显示各层级限额使用情况 | 可视化仪表盘 |
 | OB-009 | 仪表盘 | 内置 Grafana 仪表盘模板 | 开箱即用 |
 | OB-010 | 日志查询 | 多维度日志检索 | 按时间/用户/模型/渠道过滤 |
 
@@ -666,11 +659,9 @@ llm-gateway/
 |--------|------|------|------|
 | `http_request_duration_seconds` | Histogram | method, path, status | 请求延迟 |
 | `http_requests_total` | Counter | method, path, status | 请求总数 |
-| `llm_token_total` | Counter | model, type(input/output), tenant | Token 消耗 |
-| `llm_channel_latency_seconds` | Histogram | channel, model | 渠道延迟 |
-| `llm_channel_errors_total` | Counter | channel, error_type | 渠道错误 |
-| `llm_budget_usage_ratio` | Gauge | tenant, project, user | 预算使用率 |
-| `llm_active_users` | Gauge | tenant | 活跃用户数 |
+| `llm_token_total` | Counter | model, type(input/output), user | Token 消耗 |
+| `llm_quota_usage_ratio` | Gauge | user | Token限额使用率 |
+| `llm_active_users` | Gauge | user | 活跃用户数 |
 
 ---
 
@@ -829,7 +820,7 @@ Agent 工具市场 = 工具注册中心 + 工具编排引擎 + 工具分发网�
 | CM-002 | 语义匹配 | 新请求到来时计算向量相似度，匹配历史缓存 | 匹配延迟 ≤10ms (P95) |
 | CM-003 | 缓存 TTL | 缓存可设置过期时间，避免返回过时答案 | 默认 TTL 1 小时，可配置 |
 | CM-004 | 缓存命中统计 | 统计缓存命中率、节省的 Token 数量和费用 | 实时仪表盘可展示 |
-| CM-005 | 缓存作用域 | 缓存可按租户/项目隔离 | 跨租户缓存不共享 |
+| CM-005 | 缓存作用域 | 缓存可按用户隔离 | 跨用户缓存不共享 |
 | CM-006 | 缓存失效 | 支持手动清除缓存条目 | API 接口和 UI 可操作 |
 | CM-007 | 流式缓存绕过 | 流式请求可配置是否跳过缓存 | 默认流式不缓存（避免缓存不完整内容） |
 
@@ -867,7 +858,7 @@ Agent 工具市场 = 工具注册中心 + 工具编排引擎 + 工具分发网�
 | PE-001 | Prompt 模板 | 在网关定义标准提示模板（Markdown + 变量占位符） | 支持 `{{variable}}` 变量替换 |
 | PE-002 | Prompt 装饰器 | 在用户提示前后自动附加内容（企业声明、格式要求等） | 可配置前置装饰器和后置装饰器 |
 | PE-003 | 系统指令约束 | 统一附加系统指令（system message），约束模型行为 | 所有请求自动注入，不可被用户覆盖 |
-| PE-004 | 模板变量注入 | 根据用户属性/租户配置动态填充模板变量 | 支持 `{{user_name}}`, `{{tenant_name}}`, `{{date}}` 等 |
+| PE-004 | 模板变量注入 | 根据用户属性动态填充模板变量 | 支持 `{{user_name}}`, `{{date}}` 等 |
 | PE-005 | 请求改写 | 检测到不当请求时自动改写（如去除敏感内容） | 改写规则可配置 |
 | PE-006 | 请求拒绝 | 检测到违规请求时拒绝并返回标准错误 | 拒绝规则与内容审核联动 |
 | PE-007 | 模板版本管理 | Prompt 模板支持版本化管理，可回滚 | 版本切换不影响进行中请求 |
@@ -1021,7 +1012,7 @@ gateway-console/src/i18n/
 |----|------|---------|---------|
 | I18N-001 | API 错误消息国际化 | 错误消息支持中文和英文 | 通过 `Accept-Language` Header 选择语言 |
 | I18N-002 | 管理控制台国际化 | React SPA 管理界面支持中/英切换 | 界面元素 100% 翻译 |
-| I18N-003 | 邮件通知国际化 | 预算告警、License 到期等邮件支持双语 | 邮件模板按用户语言偏好发送 |
+| I18N-003 | 邮件通知国际化 | Token限额告警、License 到期等邮件支持双语 | 邮件模板按用户语言偏好发送 |
 | I18N-004 | 用户语言偏好 | 用户可设置个人语言偏好 | 存储在用户 Profile 中 |
 | I18N-005 | 组织默认语言 | 组织可设置默认语言 | 新用户继承组织默认语言 |
 | I18N-006 | API 文档国际化 | SpringDoc OpenAPI 生成的文档支持双语 | 中文/英文两套文档 |
@@ -1079,8 +1070,6 @@ gateway-console/src/i18n/
 
 | 端点 | 方法 | 说明 | 认证 |
 |------|------|------|------|
-| `/api/v1/teams` | CRUD | 团队管理 | Bearer Token (Admin) |
-| `/api/v1/members` | CRUD | 成员管理 | Bearer Token (Admin) |
 | `/api/v1/users` | CRUD | 用户管理 | Bearer Token (Admin) |
 | `/api/v1/channels` | CRUD | 渠道管理 | Bearer Token (Admin) |
 | `/api/v1/channel-groups` | CRUD | 渠道分组 | Bearer Token (Admin) |
@@ -1114,7 +1103,7 @@ gateway-console/src/i18n/
 
 ### 5.3 标准错误响应格式
 
-**OpenAI 格式**（所有 OpenAI 兼容端点和限流/预算等通用错误）:
+**OpenAI 格式**（所有 OpenAI 兼容端点和限流/Token限额等通用错误）:
 ```json
 {
   "error": {
@@ -1172,8 +1161,7 @@ gateway-console/src/i18n/
   "success": true,
   "data": {
     "id": 1,
-    "team_code": "team_abc123",
-    "team_name": "研发团队",
+    "username": "john.doe",
     "status": "ACTIVE"
   },
   "error": null,
@@ -1189,8 +1177,8 @@ gateway-console/src/i18n/
   "data": null,
   "error": {
     "code": "INVALID_PARAMETER",
-    "message": "团队名称不能为空",
-    "details": { "field": "team_name" }
+    "message": "用户名不能为空",
+    "details": { "field": "username" }
   },
   "trace_id": "trace_789xyz",
   "timestamp": "2026-04-23T10:30:00Z"
@@ -1230,14 +1218,14 @@ gateway-console/src/i18n/
 |------------|---------|---------|
 | 400 | `invalid_request_error` | 请求体格式错误、缺少必填字段、枚举值无效 |
 | 401 | `authentication_error` / `invalid_request_error` | Token 无效、过期、格式错误 |
-| 402 | `payment_required` / `insufficient_quota` | 额度超限、预算超限（REJECT 策略） |
+| 402 | `payment_required` / `insufficient_quota` | 额度超限（REJECT 策略） |
 | 403 | `permission_error` / `forbidden` | 模型不在白名单、IP 不在白名单 |
 | 404 | `not_found_error` | 请求的模型不存在或无可用渠道 |
 | 408 | `timeout_error` | 上游渠道请求超时 |
 | 429 | `rate_limit_error` | RPM/TPM 超限 |
 | 500 | `api_error` | 所有渠道均失败 |
 | 502 | `upstream_error` | 上游渠道返回非预期格式 |
-| 503 | `service_unavailable` | 无可用渠道、预算超限（REJECT 策略） |
+| 503 | `service_unavailable` | 无可用渠道（REJECT 策略） |
 | 504 | `upstream_timeout` | 上游渠道网关超时 |
 
 ### 5.4 限流响应头
@@ -1393,24 +1381,7 @@ AuditPolicy (1) ──── (N) AuditRule
 CacheEntry (1) ──── (N) CacheHitLog
 ```
 
-### 6.4 单租户架构
-
-**LLM-Gateway 采用单租户架构**：所有用户共享全局 Provider、RouteGroup 等资源，用户级别隔离仅通过 GatewayApiKey 和 TokenLimit 实现。
-
-| 维度 | 说明 |
-|---------|------|
-| **Provider** | 全局共享，所有用户可见 |
-| **RouteGroup** | 全局共享，所有用户可用 |
-| **Model** | 全局共享，通过 Provider 关联 |
-| **GatewayApiKey** | 用户级别，每个用户可创建多个 |
-| **TokenLimit** | 用户级别，支持 Provider/Model 维度限制 |
-
-**资源隔离**:
-- ✅ GatewayApiKey 通过 user_id 关联，确保用户只能访问自己的 Key
-- ✅ TokenLimit 通过 user_id 关联，确保用户只能使用自己的额度
-- ✅ ProviderApiKey 由管理员配置，与用户无关
-
-### 6.5 并发冲突处理
+### 6.4 并发冲突处理
 
 **乐观锁 + 最后写入胜出 (LWW) + 变更通知**:
 
@@ -1453,7 +1424,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | pii_salt | VARCHAR(64) | PII脱敏盐值 | GDPR 删除权用 |
 | last_login_at | TIMESTAMP | 最后登录时间 | NULL |
 
-**业务说明**: 单租户架构，所有用户共享全局 Provider/RouteGroup 资源。
+**业务说明**: 所有用户共享全局 Provider/RouteGroup 资源。
 
 #### 6.7.2 Role（角色）
 
@@ -1644,7 +1615,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | **密钥生命周期管理** | 支持对接 Vault/KMS，密钥自动轮换、细粒度授权、到期提醒 | 企业安全运营中心 (SOC) 要求 |
 | **数据主权控制** | 数据本地化配置、跨境传输审计与阻断 | 数据出境合规 (CAC 评估) |
 | **行列级数据权限** | RBAC + ABAC 双重控制，实现字段级、行级数据可见性隔离 | 多部门协作、外包场景权限管控 |
-| **安全评分与基线** | 内置安全基线扫描与实时安全评分，持续监控合规状态 | 安全团队日常运维抓手 |
+| **安全评分与基线** | 内置安全基线扫描与实时安全评分，持续监控合规状态 | 安全运维抓手 |
 
 ### 7.1 零信任安全架构
 
@@ -1673,7 +1644,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 [7] 额度检查 ──────── 超限 → 402
     │ 通过
     ▼
-[8] 预算检查 ──────── 超限 → 执行策略
+[8] TokenLimit 检查 ──────── 超限 → 执行策略
     │ 通过
     ▼
 [9] 限流检查 ──────── 超限 → 429
@@ -1759,7 +1730,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 |---------|---------|
 | **用户管理** | 用户创建/删除/禁用、角色变更、密码重置 |
 | **渠道管理** | 渠道创建/编辑/删除、API Key 轮换 |
-| **策略变更** | 路由策略创建/修改/删除、预算调整 |
+| **策略变更** | 路由策略创建/修改/删除、TokenLimit 调整 |
 | **安全事件** | 登录失败、IP 黑名单命中、Token 过期 |
 | **数据访问** | 批量导出、敏感数据查询、日志下载 |
 | **系统变更** | 配置变更、版本升级、数据库迁移 |
@@ -1793,7 +1764,7 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 
 ### 7.8 零信任 10 层安全检查逐层标准
 
-| 层级 | 检查项 | 通过标准 | 失败响应 | 延迟预算 | 依赖不可用时行为 |
+| 层级 | 检查项 | 通过标准 | 失败响应 | 最大延迟 | 依赖不可用时行为 |
 |------|--------|---------|---------|---------|---------------|
 | [1] TLS 验证 | 请求使用 HTTPS、TLS ≥1.2 | 连接建立成功 | 连接拒绝 | 0ms（TCP 层） | 连接不可用 → 拒绝 |
 | [2] Token 认证 | `Authorization: Bearer sk-xxx` 有效 | Token 存在于数据库且未过期 | 401 `invalid_api_key` | ≤2ms（Redis 缓存） | Redis 不可用 → DB 查询；DB 不可用 → 503 `service_unavailable`（fail-closed） |
@@ -1802,11 +1773,11 @@ deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
 | [5] 模型白名单 | 请求模型在 Token 的 model_whitelist 中 | 模型匹配（空名单 = 全部允许） | 403 `model_not_allowed` | ≤1ms | — |
 | [6] IP 白名单 | 源 IP 在 Token 的 ip_whitelist 中 | CIDR 匹配（空名单 = 全部允许） | 403 `ip_not_allowed` | ≤1ms | — |
 | [7] 额度检查 | used_quota + 预估费用 ≤ quota | 预扣额度检查 | 402 `quota_exceeded` | ≤2ms | Redis 不可用 → DB 查询；DB 不可用 → 503（fail-closed） |
-| [8] 预算检查 | 各层级预算未超限 | 预算使用率 < 100% | 执行 exceeded_action（REJECT → 503 / DOWNGRADE / SWITCH） | ≤3ms | DB 不可用 → fail-closed（拒绝，防止超额消费） |
+| [8] TokenLimit 检查 | 各层级限额未超限 | 限额使用率 < 100% | 执行 exceeded_action（REJECT → 503 / DOWNGRADE / SWITCH） | ≤3ms | DB 不可用 → fail-closed（拒绝，防止超额使用） |
 | [9] 限流检查 | RPM/TPM 未超阈值 | Redis 原子计数 | 429 `rate_limit_exceeded` + `Retry-After` 头 | ≤2ms | Redis 不可用 → fail-open（跳过限流，记录审计告警） |
 | [10] 敏感词过滤 | 请求内容不包含敏感词 | 规则匹配 | 400 `content_violation` | ≤1ms | 规则引擎不可用 → 跳过（fail-open，记录审计） |
 
-**10 层总延迟预算**: ≤15ms (P95)，其中 Token 认证和预算检查为关键路径。
+**10 层总延迟**: ≤15ms (P95)，其中 Token 认证和 TokenLimit 检查为关键路径。
 
 ### 7.9 ABAC 属性定义
 
@@ -1927,7 +1898,6 @@ PII 自动检测应用于以下数据范围：
   "trace_id": "trace_abc123",
   "request_id": "req_def456",
   "user_id": "user_789",
-  "team_code": "acme-corp",
   "model": "openai/gpt-4o",
   "channel": "ch_001",
   "event": "request.completed",
@@ -1944,8 +1914,8 @@ PII 自动检测应用于以下数据范围：
 |--------|------|------|---------|
 | 渠道失败率 | >5% (5 分钟内) | WARN | 邮件/Webhook |
 | 渠道失败率 | >20% (5 分钟内) | ERROR | 邮件/Webhook/短信 |
-| 预算使用率 | >80% | WARN | 邮件 |
-| 预算使用率 | >100% | ERROR | 邮件/Webhook |
+| Token限额使用率 | >80% | WARN | 邮件 |
+| Token限额使用率 | >100% | ERROR | 邮件/Webhook |
 | 平均延迟 | P95 > 500ms | WARN | 邮件 |
 | Token 计量异常 | 偏差 >1% | ERROR | 邮件/Webhook |
 
@@ -2126,7 +2096,7 @@ services:
 - 测量周期: 自然月
 - 不可用定义: 网关对所有渠道返回 5xx 错误持续时间 ≥1 分钟
 - 排除情况: 单个渠道故障 (不影响 SLA，仅影响该渠道可用性)
-- 允许停机预算: ≤43.2 分钟/月 (99.9%)
+- 允许停机: ≤43.2 分钟/月 (99.9%)
 - 测量方式: 外部探针每 30 秒发送健康检查请求到 `/api/v1/health`，记录成功/失败率
 
 **性能 SLA 测量**:
@@ -2221,7 +2191,7 @@ services:
 |------|---------|---------|------|
 | **实时仪表盘** | Token 使用趋势图、各模型调用量占比、渠道延迟热力图 | 数据延迟 ≤1s | v1.0 |
 | **告警通知** | 额度快用完时邮件/钉钉通知；渠道故障即时告警；异常请求模式预警 | 告警触达率 ≥99% | v1.0 |
-| **使用分析** | 团队/个人用量排行榜、成本归因、ROI 报表 | 支持 CSV/Excel 导出 | v1.0 |
+| **使用分析** | 个人用量排行榜、成本归因、ROI 报表 | 支持 CSV/Excel 导出 | v1.0 |
 | **调用链追踪** | 请求全链路追踪，支持从日志快速定位问题 | Trace ID 可点击跳转 | v1.0 |
 | **健康报告** | 每周/每月自动生成系统健康报告，推送给管理员 | 报告生成成功率 ≥99% | v2.0 |
 
@@ -2274,7 +2244,7 @@ services:
 | | 吞吐量基准 | 持续 30 分钟压测 |
 | | 并发连接数 | 10K concurrent connections |
 | **安全测试** | 认证流程 | 边界条件覆盖 |
-| | 权限隔离 | 跨团队数据隔离验证 |
+| | 权限隔离 | 跨用户数据隔离验证 |
 | | 敏感数据脱敏 | 日志审查验证 |
 
 ---
@@ -2287,8 +2257,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 
 | 版本 | 目标客户 | 部署模式 | 核心价值 | 商业模式 |
 |------|---------|---------|---------|---------|
-| **标准版 (Standard)** | 个人开发者/小团队 | 自托管 Docker | 基础 API 网关，快速上手 | 开源免费 |
-| **企业版 (Enterprise)** | 中大型企业/政企客户 | K8s 集群高可用 | 团队隔离、安全合规、全链路可观测 | 商业授权 |
+| **标准版 (Standard)** | 个人开发者/小型商业化运营 | 自托管 Docker | 基础 API 网关，快速上手 | 开源免费 |
+| **企业版 (Enterprise)** | 中大型企业/政企客户 | K8s 集群高可用 | 多用户隔离、安全合规、全链路可观测 | 商业授权 |
 
 ### 12.2 版本功能矩阵
 
@@ -2320,15 +2290,14 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | 延迟最优路由 | - | ✅ |
 | | 场景路由 | - | ✅ |
 | | 自定义脚本扩展 | - | ✅ |
-| **团队管理** | 团队隔离 | - | ✅ |
-| | 成员与角色管理 | - | ✅ |
-| | 跨团队共享 | - | ✅ |
+| **用户管理** | 用户管理 | - | ✅ |
+| | 跨用户共享 | - | ✅ |
 | **API Key 管理** | API Key CRUD | ✅ | ✅ |
 | | 模型白名单 | - | ✅ |
 | | IP 白名单 | - | ✅ |
 | | 过期时间 | ✅ | ✅ |
 | **Token 计量** | Token 计量 | ✅ | ✅ |
-| **Token 限额** | 四级限额控制 | - | ✅ |
+| **Token 限额** | 多级限额控制 | - | ✅ |
 | | 独立开关 (Token/次数) | - | ✅ |
 | | 预扣额度 | - | ✅ |
 | | 差额调整 | - | ✅ |
@@ -2397,7 +2366,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | 成本/延迟最优路由 | Phase 2 |
 | | 场景路由 | background/think/webSearch |
 | | 自定义脚本扩展 | 沙箱隔离 |
-| **用户管理** | 单租户 | 所有用户共享全局资源 |
+| **用户管理** | - | 所有用户共享全局资源 |
 | | 角色与权限 | 系统级角色 + 细粒度权限 |
 | **Token 限额** | 用户级别限额 | User / User×Provider / User×Model |
 | | 独立开关 | Token 限额/请求次数限额 独立控制 |
@@ -2479,7 +2448,7 @@ LLM-Gateway 采用分层架构，确保代码清晰、职责分明。
 
 | Flag 名称 | 默认值 | 控制功能 | 运行时可变 |
 |-----------|--------|---------|-----------|
-| `features.multi_tenant.enabled` | false | 单租户模式（固定） | ❌ 启动时 |
+| `features.token_limit.enabled` | true | Token 限额控制 | ✅ 启动时 |
 | `features.rbac.enabled` | false | RBAC 权限控制 | ❌ 启动时 |
 | `features.budget.enabled` | false | Token 限额控制 | ❌ 启动时 |
 | `features.strategy_orchestration.enabled` | false | 可视化策略编排 | ❌ 启动时 |
@@ -2490,7 +2459,7 @@ LLM-Gateway 采用分层架构，确保代码清晰、职责分明。
 
 #### 12.4.3 数据库策略
 
-单租户架构，Provider/RouteGroup 全局共享，GatewayApiKey/TokenLimit 按用户隔离。
+全局共享架构，Provider/RouteGroup 全局共享，GatewayApiKey/TokenLimit 按用户隔离。
 
 #### 12.4.4 API 版本策略
 

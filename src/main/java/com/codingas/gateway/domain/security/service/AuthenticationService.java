@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.security.service;
 
+import com.codingas.gateway.common.enums.UserStatus;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
@@ -58,13 +59,12 @@ public class AuthenticationService {
             return null;
         }
 
-        Optional<User> optUser = userGateway.findById(gatewayKey.getUserId());
-        if (optUser.isEmpty()) {
-            log.debug("User not found for API Key: userId={}", gatewayKey.getUserId());
+        User user = gatewayKey.getUser();
+        if (user == null) {
+            log.debug("User not found for API Key");
             return null;
         }
 
-        User user = optUser.get();
         if (!isUserActive(user)) {
             log.debug("User is not active: status={}", user.getStatus());
             return null;
@@ -75,7 +75,7 @@ public class AuthenticationService {
         return new UserAuthResult(
             user.getId(),
             user.getUserCode(),
-            user.getRole(),
+            null,  // role from UserRole entity, not directly on User
             gatewayKey.getId(),
             gatewayKey.getKeyCode()
         );
@@ -89,7 +89,7 @@ public class AuthenticationService {
     }
 
     private boolean isKeyActive(GatewayApiKey key) {
-        return key.getStatus() == GatewayApiKey.GatewayApiKeyStatus.ACTIVE;
+        return key.getStatus() == GatewayApiKey.ApiKeyStatus.ACTIVE;
     }
 
     private boolean isKeyExpired(GatewayApiKey key) {
@@ -100,19 +100,11 @@ public class AuthenticationService {
     }
 
     private boolean isUserActive(User user) {
-        return user.getStatus() == User.UserStatus.ACTIVE;
+        return user.getStatus() == UserStatus.ACTIVE;
     }
 
     private String hashKey(String apiKey) {
         // TODO: 使用 EncryptionService
         return String.valueOf(apiKey.hashCode());
     }
-
-    public record UserAuthResult(
-        Long userId,
-        String userCode,
-        User.UserRole role,
-        Long apiKeyId,
-        String keyCode
-    ) {}
 }

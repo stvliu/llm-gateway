@@ -64,15 +64,15 @@ public class DefaultModelRouter implements ModelRouter {
         Model model = modelGateway.findByModelCode(modelCode)
                 .orElseThrow(() -> new NoSuchElementException("Model not found: " + modelCode));
 
-        // 2. 获取 Provider (通过 providerId)
-        Provider provider = providerGateway.findById(model.getProviderId())
+        // 2. 获取 Provider (通过 provider)
+        Provider provider = providerGateway.findById(model.getProvider().getId())
                 .orElseThrow(() -> new NoSuchElementException(
-                        "Provider not found: " + model.getProviderId()));
+                        "Provider not found: " + model.getProvider().getId()));
 
         // 3. 获取 Provider 类型并获取对应类型的适配器
-        LLMProviderPort adapter = providerRegistry.getAdapter(provider.toProviderType())
+        LLMProviderPort adapter = providerRegistry.getAdapter(provider.getProviderType())
                 .orElseThrow(() -> new NoSuchElementException(
-                        "No adapter available for provider type: " + provider.toProviderType()));
+                        "No adapter available for provider type: " + provider.getProviderType()));
 
         // 4. 检查适配器是否可用
         if (!adapter.isAvailable()) {

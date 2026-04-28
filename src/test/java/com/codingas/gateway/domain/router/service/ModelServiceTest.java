@@ -50,7 +50,7 @@ class ModelServiceTest {
         modelService.delete(1L);
 
         verify(modelGateway).save(any(Model.class));
-        assertThat(activeModel.getStatus()).isEqualTo(Model.ModelStatus.INACTIVE);
+        assertThat(activeModel.getStatus()).isEqualTo(Model.ModelStatus.DELETED);
     }
 
     @Test

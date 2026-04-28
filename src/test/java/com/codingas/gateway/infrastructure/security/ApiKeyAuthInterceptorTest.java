@@ -1,6 +1,8 @@
 package com.codingas.gateway.infrastructure.security;
 
+import com.codingas.gateway.common.enums.UserRole;
 import com.codingas.gateway.domain.security.service.AuthenticationService;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,7 +41,7 @@ class ApiKeyAuthInterceptorTest {
         // given
         when(request.getHeader("X-API-Key")).thenReturn("sk-test123");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new AuthenticationService.UserAuthResult(1L, "user1", null, 1L, "key1"));
+                .thenReturn(new UserAuthResult(1L, "user1", UserRole.DEVELOPER, 1L, "key1"));
 
         // when
         boolean result = interceptor.preHandle(request, response);

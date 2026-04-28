@@ -35,11 +35,11 @@ class ProviderServiceTest {
     private ProviderService providerService;
 
     @Test
-    @DisplayName("delete 应将提供商 enabled 设置为 false")
-    void delete_setsEnabledToFalse() {
+    @DisplayName("delete 应将提供商 status 设置为 DELETED")
+    void delete_setsStatusToDeleted() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setEnabled(true);
+        provider.setStatus(Provider.ProviderStatus.ACTIVE);
 
         when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
         when(providerGateway.save(any(Provider.class))).thenReturn(provider);
@@ -47,7 +47,7 @@ class ProviderServiceTest {
         providerService.delete(1L);
 
         verify(providerGateway).save(any(Provider.class));
-        assertThat(provider.getEnabled()).isFalse();
+        assertThat(provider.getStatus()).isEqualTo(Provider.ProviderStatus.DELETED);
     }
 
     @Test
@@ -61,16 +61,16 @@ class ProviderServiceTest {
     }
 
     @Test
-    @DisplayName("create enabled 为 null 应设置为 true")
-    void create_nullEnabled_setsToTrue() {
+    @DisplayName("create status 为 null 应设置为 ACTIVE")
+    void create_nullStatus_setsToActive() {
         Provider provider = new Provider();
         provider.setProviderCode("openai");
-        provider.setEnabled(null);
+        provider.setStatus(null);
 
         when(providerGateway.save(any(Provider.class))).thenReturn(provider);
 
         Provider result = providerService.create(provider);
 
-        assertThat(result.getEnabled()).isTrue();
+        assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
     }
 }

@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.common.enums.UserRole;
 
 /**
  * 用户认证结果
@@ -16,7 +16,7 @@ import com.codingas.gateway.domain.security.entity.User;
 public record UserAuthResult(
     Long userId,
     String userCode,
-    User.UserRole role,
+    UserRole role,
     Long apiKeyId,
     String apiKeyCode
 ) {
