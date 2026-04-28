@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.model;
 
+import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.router.entity.Provider;
 import com.codingas.gateway.domain.router.service.ProviderService;
 import org.junit.jupiter.api.DisplayName;
@@ -163,10 +164,10 @@ class ProviderManageUseCaseTest {
         provider.setId(id);
         provider.setProviderCode(providerCode);
         provider.setProviderName(providerName);
-        provider.setProviderType(Provider.ProviderTypeEnum.OPENAI);
+        provider.setProviderType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.example.com");
         provider.setPriority(1);
-        provider.setEnabled(true);
+        provider.setStatus(Provider.ProviderStatus.ACTIVE);
         return provider;
     }
 }

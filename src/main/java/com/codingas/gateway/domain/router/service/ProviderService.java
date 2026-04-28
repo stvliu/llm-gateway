@@ -41,8 +41,8 @@ public class ProviderService {
 
     @Transactional
     public Provider create(Provider provider) {
-        if (provider.getEnabled() == null) {
-            provider.setEnabled(true);
+        if (provider.getStatus() == null) {
+            provider.setStatus(Provider.ProviderStatus.ACTIVE);
         }
         Provider saved = providerGateway.save(provider);
         log.info("Created provider: {} ({})", saved.getProviderName(), saved.getProviderCode());
@@ -62,7 +62,7 @@ public class ProviderService {
         existing.setProviderType(provider.getProviderType());
         existing.setBaseUrl(provider.getBaseUrl());
         existing.setPriority(provider.getPriority());
-        existing.setEnabled(provider.getEnabled());
+        existing.setStatus(provider.getStatus());
 
         Provider updated = providerGateway.save(existing);
         log.info("Updated provider: {} ({})", updated.getProviderName(), updated.getProviderCode());
@@ -78,7 +78,7 @@ public class ProviderService {
         }
 
         Provider provider = providerOpt.get();
-        provider.setEnabled(false);
+        provider.setStatus(Provider.ProviderStatus.DELETED);
         providerGateway.save(provider);
         log.info("Deleted provider: {}", id);
         publishReloadEvent();

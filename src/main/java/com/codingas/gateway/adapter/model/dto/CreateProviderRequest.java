@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.model.dto;
 
+import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.router.entity.Provider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -36,10 +37,12 @@ public class CreateProviderRequest {
         Provider provider = new Provider();
         provider.setProviderCode(this.providerCode);
         provider.setProviderName(this.providerName);
-        provider.setProviderType(Provider.ProviderTypeEnum.valueOf(this.providerType));
+        provider.setProviderType(ProviderType.valueOf(this.providerType));
         provider.setBaseUrl(this.baseUrl);
         provider.setPriority(this.priority);
-        provider.setEnabled(this.enabled);
+        provider.setStatus(this.enabled != null && this.enabled
+                ? Provider.ProviderStatus.ACTIVE
+                : Provider.ProviderStatus.SUSPENDED);
         return provider;
     }
 }

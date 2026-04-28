@@ -1,23 +1,118 @@
 spring:
   application:
-    name: gateway-boot
+    name: llm-gateway
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
+  # 数据源配置（默认 H2 开发环境，生产切换 MySQL/PostgreSQL）
   datasource:
-    url: jdbc:h2:mem:gateway;DB_CLOSE_DELAY=-1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
+    url: ${DB_URL:jdbc:h2:mem:gateway;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    hikari:
+      maximum-pool-size: ${HIKARI_MAX_POOL_SIZE:20}
+      minimum-idle: ${HIKARI_MIN_IDLE:5}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # JPA 配置（由 Flyway 管理数据库结构）
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        use_sql_comments: false
+    open-in-view: false
+
+  # Flyway 数据库迁移配置
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+
+  # H2 Console（仅开发环境）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # 缓存配置（默认本地内存，兼容 Redis）
+  cache:
+    type: simple
+    cache-null-values: false
+
+  # Redis 配置（可选，启用时设置 type: redis）
+  data:
+    redis:
+      enabled: false
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      database: 0
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 3000ms
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+    min-response-size: 1024
 
+# SaToken 安全配置
+sa-token:
+  token-name: Authorization
+  timeout: 7200
+  active-timeout: -1
+  is-concurrent: true
+  is-share: false
+  token-style: uuid
+  is-log: true
+  is-read-cookie: false
+  is-read-header: true
+
+# WebClient HTTP 客户端配置
+webclient:
+  connect-timeout: 5000
+  read-timeout: 60000
+  write-timeout: 30000
+  max-in-memory-size: 10MB
+
+# 可观测性配置
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,prometheus
+        include: health,info,prometheus,metrics,traces
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.codingas.gateway: DEBUG
+    org.springframework.web: INFO
+    org.springframework.http: DEBUG
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

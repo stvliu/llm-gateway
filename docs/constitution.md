@@ -116,19 +116,19 @@ API 密钥等敏感信息必须加密存储，禁止明文或硬编码。
 **定义**:
 ```
 Token 必须是所有成本追踪的核心单位。
-每个请求必须分别追踪输入/输出 Token，预算控制必须强制执行。
+每个请求必须分别追踪输入/输出 Token，Token 限额控制必须强制执行。
 ```
 
 **推论**:
 - ✅ 每个请求分别统计输入/输出 Token
-- ✅ 团队/项目/用户/模型四级预算控制
-- ✅ 超预算后执行预设策略（拒绝/降级/切换）
+- ✅ 用户/模型 Token 限额控制
+- ✅ 超限后执行预设策略（拒绝/降级/切换）
 - ❌ 禁止：遗漏 Token 统计
-- ❌ 禁止：超预算后静默放行
+- ❌ 禁止：超限后静默放行
 
 **验证规则**:
 - Token 计量准确率 ≥99.9%
-- 预算超限后必须触发对应策略
+- 超限后必须触发对应策略
 
 ---
 
@@ -317,7 +317,7 @@ gateway:
 **定义**:
 ```
 数据层（持久化层）对象使用物理标识（如自增 BIGINT 主键），核心目标是保证数据存储的唯一性、
-查询效率与稳定性。业务层/领域层对象使用业务标识（如 tenant_code、model_code、request_id），
+查询效率与稳定性。业务层/领域层对象使用业务标识（如 model_code、request_id），
 核心目标是承载业务规则、提供用户可读性并作为业务交互的入口。
 ```
 
@@ -333,13 +333,11 @@ gateway:
 
 | 实体 | 物理标识（数据层） | 业务标识（业务层） |
 |------|-------------------|-------------------|
-| 租户 | `id BIGINT AUTO_INCREMENT` | `team_code VARCHAR(64)` |
-| 项目 | `id BIGINT AUTO_INCREMENT` | `project_code VARCHAR(64)` |
 | 用户 | `id BIGINT AUTO_INCREMENT` | `user_code VARCHAR(64)` |
 | 模型 | `id BIGINT AUTO_INCREMENT` | `model_code VARCHAR(128)` |
 | 实例 | `id BIGINT AUTO_INCREMENT` | `instance_code VARCHAR(128)` |
 | 请求 | `id BIGINT AUTO_INCREMENT` | `request_id VARCHAR(64)` |
-| 预算 | `id BIGINT AUTO_INCREMENT` | `budget_code VARCHAR(64)` |
+| Token限额 | `id BIGINT AUTO_INCREMENT` | `quota_code VARCHAR(64)` |
 | 告警 | `id BIGINT AUTO_INCREMENT` | `alert_code VARCHAR(64)` |
 | 审计 | `id BIGINT AUTO_INCREMENT` | `audit_code VARCHAR(64)` |
 | 提示词 | `id BIGINT AUTO_INCREMENT` | `template_code VARCHAR(128)` |

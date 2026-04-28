@@ -56,7 +56,7 @@ class ModelRouterServiceTest {
         inactiveModel = new Model();
         inactiveModel.setId(2L);
         inactiveModel.setModelCode("openai/gpt-3.5");
-        inactiveModel.setStatus(Model.ModelStatus.INACTIVE);
+        inactiveModel.setStatus(Model.ModelStatus.DELETED);
     }
 
     @Nested

@@ -33,24 +33,10 @@ public class ApiKeyStpInterface implements StpInterface {
         }
 
         List<String> permissions = new ArrayList<>();
-
-        // 根据角色添加权限
-        if (user.getRole() != null) {
-            permissions.add("role:" + user.getRole().name().toLowerCase());
-
-            switch (user.getRole()) {
-                case ADMIN -> {
-                    permissions.add("*"); // 管理员拥有所有权限
-                }
-                case USER -> {
-                    permissions.add("api:call");
-                    permissions.add("api:read");
-                }
-                case READONLY -> {
-                    permissions.add("api:read");
-                }
-            }
-        }
+        // TODO: 从 UserRole 关联中获取权限
+        // 目前暂时返回基础权限
+        permissions.add("api:call");
+        permissions.add("api:read");
 
         return permissions;
     }
@@ -63,10 +49,12 @@ public class ApiKeyStpInterface implements StpInterface {
         }
 
         User user = userGateway.findById((Long) loginId).orElse(null);
-        if (user == null || user.getRole() == null) {
+        if (user == null) {
             return new ArrayList<>();
         }
 
-        return List.of(user.getRole().name());
+        // TODO: 从 UserRole 关联中获取角色
+        // 目前暂时返回空列表
+        return new ArrayList<>();
     }
 }

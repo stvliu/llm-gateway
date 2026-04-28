@@ -76,7 +76,7 @@ public class ModelService {
             throw new IllegalArgumentException("Model not found: " + id);
         }
         Model model = modelOpt.get();
-        model.setStatus(Model.ModelStatus.INACTIVE);
+        model.setStatus(Model.ModelStatus.DELETED);
         modelGateway.save(model);
         log.info("Deleted model: {}", id);
     }

@@ -35,7 +35,7 @@ public class ModelResponse {
                 .id(model.getId())
                 .modelCode(model.getModelCode())
                 .displayName(model.getDisplayName())
-                .providerId(model.getProviderId())
+                .providerId(model.getProvider() != null ? model.getProvider().getId() : null)
                 .contextWindow(model.getContextWindow())
                 .inputPrice(model.getInputPrice())
                 .outputPrice(model.getOutputPrice())

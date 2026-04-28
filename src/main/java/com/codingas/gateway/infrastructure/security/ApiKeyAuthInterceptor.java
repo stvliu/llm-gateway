@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.security;
 
 import com.codingas.gateway.domain.security.service.AuthenticationService;
-import com.codingas.gateway.domain.security.service.AuthenticationService.UserAuthResult;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import com.codingas.gateway.infrastructure.security.interceptor.AbstractGatewayInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

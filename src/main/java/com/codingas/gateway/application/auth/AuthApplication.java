@@ -2,6 +2,7 @@ package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.domain.security.service.AuthenticationService;
 import com.codingas.gateway.domain.security.service.RbacService;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,11 +27,11 @@ public class AuthApplication {
      * @param clientIp 客户端 IP
      * @return 认证结果
      */
-    public AuthenticationService.UserAuthResult authenticate(String apiKey, String clientIp) {
+    public UserAuthResult authenticate(String apiKey, String clientIp) {
         var result = authenticationService.authenticate(apiKey);
         if (result != null) {
             log.info("API Key authenticated: userId={}, keyCode={}, ip={}",
-                result.userId(), result.keyCode(), clientIp);
+                result.userId(), result.apiKeyCode(), clientIp);
         } else {
             log.warn("API Key authentication failed: ip={}", clientIp);
         }

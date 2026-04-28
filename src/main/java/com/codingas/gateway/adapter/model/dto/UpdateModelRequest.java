@@ -1,11 +1,13 @@
 package com.codingas.gateway.adapter.model.dto;
 
 import com.codingas.gateway.domain.router.entity.Model;
+import com.codingas.gateway.domain.router.entity.Provider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * 更新模型请求 DTO
@@ -22,7 +24,7 @@ public class UpdateModelRequest {
     private Integer contextWindow;
     private BigDecimal inputPrice;
     private BigDecimal outputPrice;
-    private String capabilities;
+    private Map<String, Boolean> capabilities;
     private String status;
 
     /**
@@ -31,7 +33,9 @@ public class UpdateModelRequest {
     public Model toEntity() {
         Model model = new Model();
         model.setDisplayName(this.displayName);
-        model.setProviderId(this.providerId);
+        Provider providerEntity = new Provider();
+        providerEntity.setId(this.providerId);
+        model.setProvider(providerEntity);
         model.setContextWindow(this.contextWindow);
         model.setInputPrice(this.inputPrice);
         model.setOutputPrice(this.outputPrice);

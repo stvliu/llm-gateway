@@ -6,10 +6,10 @@ package com.codingas.gateway.common.enums;
  * <p>定义了支持的 LLM 提供商类型。</p>
  */
 public enum ProviderType {
-    /** OpenAI 格式 */
+    /** OpenAI */
     OPENAI,
 
-    /** Anthropic 格式 */
+    /** Anthropic */
     ANTHROPIC,
 
     /** Google Gemini */
@@ -17,6 +17,15 @@ public enum ProviderType {
 
     /** 智谱 GLM */
     ZHIPU,
+
+    /** 通义千问 */
+    QWEN,
+
+    /** 火山引擎 */
+    VOLCENGINE,
+
+    /** 文心一言 */
+    WENXIN,
 
     /** 其他类型 */
     OTHER

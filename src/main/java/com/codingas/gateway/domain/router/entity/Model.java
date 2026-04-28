@@ -3,16 +3,22 @@ package com.codingas.gateway.domain.router.entity;
 import com.codingas.gateway.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Map;
 
 /**
  * 模型实体
  *
- * <p>表示可用的 AI 模型。</p>
+ * <p>表示具体的 AI 模型，是调用的最小单位。</p>
  */
 @Entity
-@Table(name = "models")
+@Table(name = "models", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"provider_id", "provider_model_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
@@ -22,11 +28,15 @@ public class Model extends BaseEntity {
     @Column(name = "model_code", nullable = false, unique = true, length = 128)
     private String modelCode;
 
-    @Column(name = "display_name", nullable = false)
-    private String displayName;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private Provider provider;
 
-    @Column(name = "provider_id", nullable = false)
-    private Long providerId;
+    @Column(name = "provider_model_id", nullable = false, length = 128)
+    private String providerModelId;
+
+    @Column(name = "display_name", length = 256)
+    private String displayName;
 
     @Column(name = "context_window")
     private Integer contextWindow;
@@ -37,14 +47,23 @@ public class Model extends BaseEntity {
     @Column(name = "output_price", precision = 10, scale = 6)
     private BigDecimal outputPrice;
 
-    @Column(name = "capabilities", columnDefinition = "TEXT")
-    private String capabilities;
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "capabilities", columnDefinition = "json")
+    private Map<String, Boolean> capabilities;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status")
-    private ModelStatus status;
+    @Column(name = "status", nullable = false)
+    private ModelStatus status = ModelStatus.ACTIVE;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
 
     public enum ModelStatus {
-        ACTIVE, INACTIVE, DEPRECATED
+        /** 正常 */
+        ACTIVE,
+        /** 已废弃 */
+        DEPRECATED,
+        /** 已删除 */
+        DELETED
     }
 }

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -23,7 +24,7 @@ public class JpaTokenLimitGateway implements TokenLimitGateway {
     @Override
     public TokenLimit findByUserId(Long userId) {
         return repository.findAll().stream()
-                .filter(t -> t.getUserId() != null && t.getUserId().equals(userId))
+                .filter(t -> t.getUser() != null && t.getUser().getId().equals(userId))
                 .findFirst()
                 .orElse(null);
     }
@@ -36,11 +37,11 @@ public class JpaTokenLimitGateway implements TokenLimitGateway {
     @Override
     public void deductUsage(Long userId, Long inputTokens, Long outputTokens) {
         repository.findAll().stream()
-                .filter(t -> t.getUserId() != null && t.getUserId().equals(userId))
+                .filter(t -> t.getUser() != null && t.getUser().getId().equals(userId))
                 .findFirst()
                 .ifPresent(t -> {
-                    Long currentUsed = t.getMonthlyUsed() != null ? t.getMonthlyUsed() : 0L;
-                    t.setMonthlyUsed(currentUsed + inputTokens + outputTokens);
+                    BigDecimal currentUsed = t.getUsedTokens() != null ? t.getUsedTokens() : BigDecimal.ZERO;
+                    t.setUsedTokens(currentUsed.add(BigDecimal.valueOf(inputTokens + outputTokens)));
                     repository.save(t);
                 });
     }

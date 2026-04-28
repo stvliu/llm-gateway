@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.domain.router.entity.Model;
+import com.codingas.gateway.domain.router.entity.Provider;
 import com.codingas.gateway.domain.router.service.ModelService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -164,7 +165,9 @@ class ModelManageUseCaseTest {
         model.setId(id);
         model.setModelCode(modelCode);
         model.setDisplayName(displayName);
-        model.setProviderId(1L);
+        Provider provider = new Provider();
+        provider.setId(1L);
+        model.setProvider(provider);
         model.setContextWindow(8000);
         model.setInputPrice(new BigDecimal("0.03"));
         model.setOutputPrice(new BigDecimal("0.06"));
