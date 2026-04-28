@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.admin.controller;
 
 import com.codingas.gateway.adapter.admin.dto.user.*;
-import com.codingas.gateway.application.user.UserApplication;
+import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserApplication userApplication;
+    private final UserService userService;
 
     /**
      * 创建用户
      */
     @PostMapping
     public ApiResponse<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
-        return ApiResponse.success(userApplication.create(request));
+        return ApiResponse.success(userService.create(request));
     }
 
     /**
@@ -33,7 +33,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public ApiResponse<UserResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(userApplication.getById(id));
+        return ApiResponse.success(userService.getById(id));
     }
 
     /**
@@ -41,7 +41,7 @@ public class UserController {
      */
     @GetMapping
     public ApiResponse<PageResponse<UserResponse>> query(@ModelAttribute UserQueryRequest request) {
-        return ApiResponse.success(userApplication.query(request));
+        return ApiResponse.success(userService.query(request));
     }
 
     /**
@@ -51,7 +51,7 @@ public class UserController {
     public ApiResponse<UserResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return ApiResponse.success(userApplication.update(id, request));
+        return ApiResponse.success(userService.update(id, request));
     }
 
     /**
@@ -59,7 +59,7 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        userApplication.delete(id);
+        userService.delete(id);
         return ApiResponse.success();
     }
 
@@ -70,7 +70,7 @@ public class UserController {
     public ApiResponse<UserResponse> updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UserStatusUpdateRequest request) {
-        return ApiResponse.success(userApplication.updateStatus(id, request));
+        return ApiResponse.success(userService.updateStatus(id, request));
     }
 
     /**
@@ -80,6 +80,6 @@ public class UserController {
     public ApiResponse<UserResponse> assignRoles(
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
-        return ApiResponse.success(userApplication.assignRoles(id, request));
+        return ApiResponse.success(userService.assignRoles(id, request));
     }
 }

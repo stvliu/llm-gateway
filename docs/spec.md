@@ -1265,123 +1265,150 @@ Link: <https://docs.example.com/migration/v2>; rel="successor-version"
 
 ---
 
-## 六、数据模型需求
+## 六、业务领域模型
 
-### 6.1 实体域划分
+### 6.1 业务域划分
 
-根据业务领域，将实体划分为以下四大域：
+根据业务本质，将实体划分为以下五大域：
 
-| 域 | 实体数 | 实体列表 |
-|---|--------|----------|
-| ① 身份与访问控制 | 1 | User |
-| ② 提供商与模型 | 4 | Provider, ProviderApiKey, Model, RouteGroup, RouteGroupProvider |
-| ③ 令牌与认证 | 2 | GatewayApiKey, TokenLimit |
-| ④ 日志与监控 | 3 | RequestLog, RequestBodyLog, AuditLog |
-| **合计** | **10** | |
+| 序号 | 业务域 / Domain | 核心职责 / Core Responsibilities |
+|------|----------------|--------------------------------|
+| 1 | 安全域 / Security | 认证、授权、访问凭证、额度配额、脱敏、加解密等 / Authentication, Authorization, Access Credentials, Quota, Data Masking, Encryption |
+| 2 | 模型供给域 / Model Supply | 提供商、模型、提供商访问凭证 / Provider, Model, Provider Access Credential |
+| 3 | 会话交互域 / Session Interaction | 对话、消息、响应片段、用量记录 / Conversation, Message, Response Chunk, Usage Record |
+| 4 | 运维监控域 / Operations & Monitoring | 告警、通知 / Alert, Notification |
+| 5 | 审计合规域 / Audit & Compliance | 操作审计 / Operation Audit |
 
-### 6.2 核心实体清单
+### 6.2 实体与实体关系
 
-| 实体 | 说明 | 物理标识 | 业务标识 |
-|------|------|---------|---------|
-| **① 身份与访问控制域** | | | |
-| User | 用户 | `id BIGINT` | `user_code VARCHAR(64)` |
-| **② 提供商与模型域** | | | |
-| Provider | 模型提供商 | `id BIGINT` | `provider_code VARCHAR(64)` |
-| ProviderApiKey | Provider 调用凭证 | `id BIGINT` | `key_code VARCHAR(64)` |
-| Model | 具体模型 | `id BIGINT` | `model_code VARCHAR(128)` |
-| RouteGroup | 路由分组 | `id BIGINT` | `group_code VARCHAR(64)` |
-| RouteGroupProvider | 路由关联 | `id BIGINT` | - |
-| **③ 令牌与认证域** | | | |
-| GatewayApiKey | 网关访问凭证 | `id BIGINT` | `key_code VARCHAR(128)` |
-| TokenLimit | Token 限额 | `id BIGINT` | `limit_code VARCHAR(64)` |
-| **④ 日志与监控域** | | | |
-| RequestLog | 调用日志 | `id BIGINT` | `request_id VARCHAR(64)` |
-| RequestBodyLog | 请求体日志 | `id BIGINT` | - |
-| AuditLog | 审计日志 | `id BIGINT` | `audit_code VARCHAR(64)` |
+#### 6.2.1 安全域 / Security Domain
 
-### 6.3 实体关系图
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 用户 / User | 系统使用者 / System User |
+| 网关访问凭证 / Gateway Access Credential | 用户 创建 网关访问凭证；用户 持有 多个网关访问凭证 / User creates Gateway Access Credential; User holds multiple Gateway Access Credentials |
+| 额度配额 / Quota | 用户 配置 额度配额 / User configures Quota |
+| IP黑名单 / IP Blocklist | 系统 屏蔽 IP / System blocks IP |
+| 敏感词规则 / Sensitive Rule | 系统 应用 敏感词规则 / System applies Sensitive Rules |
 
-#### 6.3.1 身份与访问控制域
+#### 6.2.2 模型供给域 / Model Supply Domain
 
-```
-User (1) ──── (N) GatewayApiKey
-User (1) ──── (N) TokenLimit
-```
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 提供商 / Provider | 提供商 提供 多个模型 / Provider provides multiple Models |
+| 模型 / Model | 模型 必须归属 于一个提供商 / Model must belong to one Provider |
+| 提供商访问凭证 / Provider Access Credential | 提供商访问凭证 用于访问 一个提供商；提供商 可配置 多个提供商访问凭证 / Provider Access Credential is used to access one Provider; Provider can configure multiple Provider Access Credentials |
 
-#### 6.3.2 提供商与模型域
+#### 6.2.3 会话交互域 / Session Interaction Domain
 
-```
-Provider (1) ──── (N) ProviderApiKey
-Provider (1) ──── (N) Model
-Provider (1) ──── (N) RouteGroupProvider
-RouteGroup (1) ──── (N) RouteGroupProvider
-RouteGroupProvider (N) ──── (1) Provider
-```
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 对话 / Conversation | 用户 发起 多个对话 / User initiates multiple Conversations |
+| 消息 / Message | 对话 包含 多条消息 / Conversation contains multiple Messages |
+| 响应片段 / Response Chunk | 消息 包含 多个响应片段 / Message contains multiple Response Chunks |
+| 用量记录 / Usage Record | 系统 记录 用量 / System records Usage |
+| 调用日志 / Call Log | 系统 记录 调用日志 / System records Call Log |
 
-#### 6.3.3 令牌与限额域
+#### 6.2.4 运维监控域 / Operations & Monitoring Domain
 
-```
-TokenLimit (用户限额)
-├── 层级: USER (用户级别)
-├── 周期: DAILY / WEEKLY / MONTHLY / TOTAL
-├── Token限额: max_tokens
-├── 已用Token: used_tokens
-├── 请求次数限额: max_requests (可选)
-└── 周期类型: period_type
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 告警规则 / Alert Rule | 系统 配置 告警规则 / System configures Alert Rule |
+| 告警通知 / Alert Notification | 告警规则 触发 告警通知 / Alert Rule triggers Alert Notification |
 
-GatewayApiKey (网关访问凭证)
-├── key_hash: 用于认证
-├── provider_id: 可访问的 Provider (NULL 表示全部)
-├── route_group_id: 路由分组 (NULL 表示默认)
-├── model_whitelist: 模型白名单 (可选)
-└── ip_whitelist: IP 白名单 (可选)
-```
+#### 6.2.5 审计合规域 / Audit & Compliance Domain
 
-#### 6.3.4 日志与监控域
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 审计日志 / Audit Log | 系统 记录 审计日志 / System records Audit Log |
+
+### 6.3 业务关系总览
+
+#### 6.3.1 安全域 / Security Domain
 
 ```
-RequestLog ──── 1:1 ──── RequestBodyLog (可选)
-
-AuditLog (链式哈希: hash_chain = SHA256(前一条 + 当前内容))
+用户 (User)
+├── 创建 多个 网关访问凭证 (Gateway Access Credential)
+├── 配置 多个 额度配额 (Quota)
+├── 系统 屏蔽 IP (IP Blocklist)
+└── 系统 应用 敏感词规则 (Sensitive Rule)
 ```
 
-#### 6.3.5 P2 模块实体简图
-
-以下为 P2/企业版高级功能的实体关系简化描述，实体定义在对应模块详细需求中。
+#### 6.3.2 模型供给域 / Model Supply Domain
 
 ```
-Agent 工具市场:
-Tool (1) ──── (N) ToolVersion
-  │
-  └── (N) ToolCategory (多对多 via ToolCategoryMapping)
-  │
-  └── (1:N) ToolInvocationLog (工具调用记录)
+提供商 (Provider)
+├── 提供 多个 模型 (Model)
+└── 可配置 多个 提供商访问凭证 (Provider Access Credential)
 
-Prompt 工程 (企业版):
-PromptTemplate (1) ──── (N) PromptVersion
-  │
-  └── (1:N) PromptDecorator (装饰器链)
-
-会话上下文缓存 (企业版):
-Session (1) ──── (N) SessionMessage
-  │
-  └── (N) User
-
-RAG 知识库 (企业版):
-KnowledgeBase (1) ──── (N) KnowledgeChunk
-  │
-  └── (1) VectorStore (向量数据库 SPI 实现)
-
-内容审核 (企业版):
-AuditPolicy (1) ──── (N) AuditRule
-  │
-  └── (1:N) AuditLog (审核记录)
-
-语义缓存 (企业版):
-CacheEntry (1) ──── (N) CacheHitLog
+模型 (Model)
+└── 必须归属 于一个 提供商 (Provider)
 ```
 
-### 6.4 并发冲突处理
+#### 6.3.3 会话交互域 / Session Interaction Domain
+
+```
+对话 (Conversation)
+├── 用户 发起 多个 对话
+└── 包含 多条 消息 (Message)
+
+消息 (Message)
+└── 包含 多个 响应片段 (Response Chunk)
+
+用量记录 (Usage Record)
+└── 系统 记录 用量
+
+调用日志 (Call Log)
+└── 系统 记录 调用日志
+```
+
+#### 6.3.4 运维监控域 / Operations & Monitoring Domain
+
+```
+告警规则 (Alert Rule)
+└── 触发 多条 告警通知 (Alert Notification)
+```
+
+#### 6.3.5 审计合规域 / Audit & Compliance Domain
+
+```
+审计日志 (Audit Log)
+└── 系统 记录 审计日志
+```
+
+### 6.4 P2 模块业务域（待补充）
+
+以下为 P2/企业版高级功能的业务域，待后续补充。
+
+---
+
+## 七、数据模型
+
+### 7.1 命名规范
+
+**表名规范**: `snake_case` + 复数形式（如 `users`, `providers`）
+
+**字段命名**: `snake_case`（如 `user_code`, `provider_name`）
+
+### 7.2 审计字段
+
+**所有业务实体表必须包含**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| created_by | BIGINT | 创建人 ID (FK → users.id) |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_by | BIGINT | 最后更新人 ID |
+| updated_at | TIMESTAMP | 更新时间 |
+
+**软删除实体额外包含**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| deleted_by | BIGINT NULL | 删除人 ID |
+| deleted_at | TIMESTAMP NULL | 删除时间 |
+
+### 7.3 并发控制
 
 **乐观锁 + 最后写入胜出 (LWW) + 变更通知**:
 
@@ -1394,213 +1421,17 @@ CacheEntry (1) ──── (N) CacheHitLog
 | **变更通知** | 通过 WebSocket/SSE 推送给其他在线管理员 |
 | **审计记录** | 每次成功写入记录审计日志，包含变更前后的版本号 |
 
-### 6.6 审计字段要求
+### 7.4 实体表结构（待补充）
 
-**所有业务实体表必须包含**:
-```sql
-created_by    BIGINT       -- 创建人 ID (FK → users.id, 系统生成填 0L)
-created_at    TIMESTAMP    -- 创建时间
-updated_by    BIGINT       -- 最后更新人 ID
-updated_at    TIMESTAMP    -- 最后更新时间
-deleted_by    BIGINT NULL  -- 删除人 ID (软删除)
-deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
-```
-
-### 6.7 核心实体详细规格
-
-#### 6.7.1 User（用户）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| user_code | VARCHAR(64) | 用户编码 | UNIQUE, NOT NULL |
-| username | VARCHAR(64) | 用户名 | NOT NULL |
-| email | VARCHAR(128) | 邮箱 | UNIQUE, NOT NULL |
-| password_hash | VARCHAR(256) | 密码哈希 | BCrypt 加密，cost≥12 |
-| phone | VARCHAR(32) | 手机号 | NULL |
-| status | ENUM | 状态 | ACTIVE / DISABLED / LOCKED / DELETED |
-| email_verified | BOOLEAN | 邮箱已验证 | DEFAULT false |
-| oauth_providers | JSON | OAuth提供者列表 | GitHub / Gitee / LinuxDO |
-| pii_salt | VARCHAR(64) | PII脱敏盐值 | GDPR 删除权用 |
-| last_login_at | TIMESTAMP | 最后登录时间 | NULL |
-
-**业务说明**: 所有用户共享全局 Provider/RouteGroup 资源。
-
-#### 6.7.2 Role（角色）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| role_code | VARCHAR(64) | 角色编码 | UNIQUE, NOT NULL |
-| name | VARCHAR(64) | 角色名称 | NOT NULL |
-| description | TEXT | 角色描述 | NULL |
-| role_type | ENUM | 角色类型 | SYSTEM / CUSTOM |
-| is_active | BOOLEAN | 是否启用 | DEFAULT true |
-
-**预设角色**（SYSTEM 类型）:
-
-| 角色 | 编码 | 权限范围 |
-|------|------|----------|
-| 管理员 | ADMIN | 系统全部权限 |
-| 开发者 | DEVELOPER | 创建 API Key、查看日志、调用 API |
-| 观察者 | OBSERVER | 仅查看用量和日志 |
-| 财务管理员 | FINANCE_ADMIN | 额度配置、用量查看 |
-
-#### 6.7.3 UserRole（用户角色关联）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| user_id | BIGINT | 用户ID | FK → User.id, NOT NULL |
-| role_id | BIGINT | 角色ID | FK → Role.id, NOT NULL |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-
-**唯一约束**: `(user_id, role_id)` 联合唯一。
-
-#### 6.7.4 Permission（权限）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| permission_code | VARCHAR(128) | 权限编码 | UNIQUE, NOT NULL |
-| name | VARCHAR(64) | 权限名称 | NOT NULL |
-| description | TEXT | 权限描述 | NULL |
-| category | VARCHAR(32) | 权限分类 | user / provider / model / token / log / setting |
-
-**权限编码规范**: `resource:action` 格式（如 `provider:create`, `token:read`）。
-
-#### 6.7.5 Provider（提供商）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| provider_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
-| provider_name | VARCHAR(128) | 显示名称 | NOT NULL |
-| provider_type | ENUM | 类型 | OPENAI / ANTHROPIC / GEMINI / ZHIPU / OTHER |
-| base_url | VARCHAR(256) | API 端点 | NOT NULL |
-| website_url | VARCHAR(512) | 官网 URL | NULL |
-| api_doc_url | VARCHAR(512) | API 文档 URL | NULL |
-| priority | INT | 优先级 | DEFAULT 100，数值越大越优先 |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务说明**: Provider 是全局共享的，所有用户可见。`provider_type` 决定使用哪个 Adapter 实现类。
-
-#### 6.7.6 ProviderApiKey（Provider 调用凭证）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
-| provider_id | BIGINT | 所属 Provider | FK → Provider.id, NOT NULL |
-| key_name | VARCHAR(64) | Key 名称 | NULL |
-| api_key | VARCHAR(512) | API Key（加密存储） | NOT NULL |
-| priority | INT | 优先级（用于轮换） | DEFAULT 100 |
-| status | ENUM | 状态 | ACTIVE / DISABLED / EXHAUSTED / EXPIRED / DELETED |
-| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务规则**:
-- `api_key` 使用 AES-256 加密存储
-- 同一 Provider 下可有多个 Key（主备/轮换）
-- `status = EXHAUSTED` 时进入冷却期，不会被选择
-
-#### 6.7.7 GatewayApiKey（网关访问凭证）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(128) | 业务标识 | UNIQUE, NOT NULL |
-| key_hash | VARCHAR(256) | API Key 哈希 | NOT NULL |
-| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
-| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
-| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NULL 表示默认 |
-| name | VARCHAR(64) | 密钥名称 | NULL |
-| status | ENUM | 状态 | ACTIVE / DISABLED / EXPIRED / DELETED |
-| expires_at | TIMESTAMP | 过期时间 | NULL 表示永不过期 |
-| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
-| model_whitelist | JSON | 允许使用的模型列表 | NULL 表示全部允许 |
-| ip_whitelist | JSON | IP 白名单（支持 CIDR） | NULL 表示全部允许 |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务规则**:
-- `key_hash` 用于验证 API 调用时传入的 Key
-- `provider_id` 为 NULL 表示可访问所有 Provider
-- 同一用户可创建多个 Key（主备/轮换）
-
-#### 6.7.8 RouteGroup（路由分组）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| group_code | VARCHAR(64) | 分组编码 | UNIQUE, NOT NULL |
-| group_name | VARCHAR(128) | 分组名称 | NOT NULL |
-| strategy | ENUM | 路由策略 | ROUND_ROBIN / LEAST_LATENCY / PRIORITY |
-| failover_enabled | BOOLEAN | 是否启用故障转移 | DEFAULT true |
-| max_retry | INT | 最大重试次数 | DEFAULT 2 |
-| health_check_interval | INT | 健康检查间隔（秒） | DEFAULT 30 |
-| description | TEXT | 描述 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-#### 6.7.9 RouteGroupProvider（路由关联）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NOT NULL |
-| provider_id | BIGINT | Provider | FK → Provider.id, NOT NULL |
-| weight | INT | 权重（用于负载均衡） | DEFAULT 100 |
-| priority | INT | 优先级（用于故障转移） | DEFAULT 100 |
-| status | ENUM | 状态 | ENABLED / DISABLED / UNHEALTHY |
-| health_status | ENUM | 健康状态 | HEALTHY / DEGRADED / UNHEALTHY |
-| consecutive_failures | INT | 连续失败次数 | DEFAULT 0 |
-| last_health_check_at | TIMESTAMP | 最后健康检查时间 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-#### 6.7.10 TokenLimit（Token限额）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| limit_code | VARCHAR(64) | 限额编码 | UNIQUE, NOT NULL |
-| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
-| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
-| model_id | BIGINT | 关联的 Model | FK → Model.id, NULL 表示全部 |
-| token_limit_enabled | BOOLEAN | 是否启用Token限额 | DEFAULT true |
-| max_tokens | DECIMAL(20,6) | Token限额总量 | NULL 表示不限 |
-| used_tokens | DECIMAL(20,6) | 已用Token量 | DEFAULT 0 |
-| request_limit_enabled | BOOLEAN | 是否启用请求次数限额 | DEFAULT false |
-| max_requests | INT | 请求次数限额 | NULL 表示不限 |
-| used_requests | INT | 已用请求次数 | DEFAULT 0 |
-| period_type | ENUM | 周期类型 | DAILY / WEEKLY / MONTHLY / TOTAL |
-| period_day_of_week | INT | 周内日期 | 1-7，WEEKLY 时有效 |
-| period_day_of_month | INT | 月内日期 | 1-31，MONTHLY 时有效 |
-| exceeded_action | ENUM | 超限动作 | REJECT / DOWNGRADE |
-| switch_model_id | BIGINT | 降级切换模型 | exceeded_action 为 DOWNGRADE 时必填 |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
+以下为各业务域实体的详细表结构，待补充。
 
 ---
 
-## 七、安全与合规需求
+## 八、安全与合规需求
+
+---
+
+## 八、安全与合规需求
 
 ### 7.0 安全合规差异化定位
 
@@ -1854,7 +1685,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 八、可观测性需求
+## 九、可观测性需求
 
 ### 8.1 全链路追踪
 
@@ -1921,7 +1752,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 九、性能需求
+## 十、性能需求
 
 ### 9.1 核心性能指标
 
@@ -1962,7 +1793,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 十、部署与运维需求
+## 十一、部署与运维需求
 
 ### 10.1 部署模式
 
@@ -2106,7 +1937,7 @@ services:
 
 ---
 
-## 十一、非功能性需求
+## 十二、非功能性需求
 
 ### 11.1 可测试性
 
@@ -2249,7 +2080,7 @@ services:
 
 ---
 
-## 十二、版本规划
+## 十三、版本规划
 
 ### 12.1 产品版本定义
 

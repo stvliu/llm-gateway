@@ -1,34 +1,30 @@
 package com.codingas.gateway.domain.security.entity;
+import com.codingas.gateway.domain.DomainEntity;
+import com.codingas.gateway.domain.BaseEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
+
+import java.time.Instant;
 
 /**
  * 审计日志实体
  *
  * <p>记录用户的关键操作行为。</p>
  */
-@Entity
-@Table(name = "audit_logs")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class AuditLog extends BaseEntity {
 
-    @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "action", nullable = false)
     private String action;
 
-    @Column(name = "resource")
     private String resource;
 
-    @Column(name = "result")
     private String result;
 
-    @Column(name = "ip_address")
     private String ipAddress;
 }

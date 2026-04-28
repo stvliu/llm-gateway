@@ -4,7 +4,7 @@ import com.codingas.gateway.adapter.admin.dto.provider.ProviderCreateRequest;
 import com.codingas.gateway.adapter.admin.dto.provider.ProviderQueryRequest;
 import com.codingas.gateway.adapter.admin.dto.provider.ProviderResponse;
 import com.codingas.gateway.adapter.admin.dto.provider.ProviderUpdateRequest;
-import com.codingas.gateway.application.provider.ProviderApplication;
+import com.codingas.gateway.application.provider.ProviderService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ProviderController {
 
-    private final ProviderApplication providerApplication;
+    private final ProviderService providerService;
 
     /**
      * 创建提供商
      */
     @PostMapping
     public ApiResponse<ProviderResponse> create(@Valid @RequestBody ProviderCreateRequest request) {
-        return ApiResponse.success(providerApplication.create(request));
+        return ApiResponse.success(providerService.create(request));
     }
 
     /**
@@ -36,7 +36,7 @@ public class ProviderController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ProviderResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(providerApplication.getById(id));
+        return ApiResponse.success(providerService.getById(id));
     }
 
     /**
@@ -44,7 +44,7 @@ public class ProviderController {
      */
     @GetMapping
     public ApiResponse<PageResponse<ProviderResponse>> query(@ModelAttribute ProviderQueryRequest request) {
-        return ApiResponse.success(providerApplication.query(request));
+        return ApiResponse.success(providerService.query(request));
     }
 
     /**
@@ -54,7 +54,7 @@ public class ProviderController {
     public ApiResponse<ProviderResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ProviderUpdateRequest request) {
-        return ApiResponse.success(providerApplication.update(id, request));
+        return ApiResponse.success(providerService.update(id, request));
     }
 
     /**
@@ -62,7 +62,7 @@ public class ProviderController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        providerApplication.delete(id);
+        providerService.delete(id);
         return ApiResponse.success();
     }
 
@@ -73,6 +73,6 @@ public class ProviderController {
     public ApiResponse<ProviderResponse> setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(providerApplication.setEnabled(id, enabled));
+        return ApiResponse.success(providerService.setEnabled(id, enabled));
     }
 }

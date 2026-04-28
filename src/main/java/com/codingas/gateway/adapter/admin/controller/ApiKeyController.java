@@ -4,7 +4,7 @@ import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyCreateRequest;
 import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyQueryRequest;
 import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyResponse;
 import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyUpdateRequest;
-import com.codingas.gateway.application.apikey.ApiKeyApplication;
+import com.codingas.gateway.application.apikey.ApiKeyService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ApiKeyController {
 
-    private final ApiKeyApplication apiKeyApplication;
+    private final ApiKeyService apiKeyService;
 
     /**
      * 创建 API Key
      */
     @PostMapping
     public ApiResponse<ApiKeyResponse> create(@Valid @RequestBody ApiKeyCreateRequest request) {
-        return ApiResponse.success(apiKeyApplication.create(request));
+        return ApiResponse.success(apiKeyService.create(request));
     }
 
     /**
@@ -36,7 +36,7 @@ public class ApiKeyController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ApiKeyResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(apiKeyApplication.getById(id));
+        return ApiResponse.success(apiKeyService.getById(id));
     }
 
     /**
@@ -44,7 +44,7 @@ public class ApiKeyController {
      */
     @GetMapping
     public ApiResponse<PageResponse<ApiKeyResponse>> query(@ModelAttribute ApiKeyQueryRequest request) {
-        return ApiResponse.success(apiKeyApplication.query(request));
+        return ApiResponse.success(apiKeyService.query(request));
     }
 
     /**
@@ -54,7 +54,7 @@ public class ApiKeyController {
     public ApiResponse<ApiKeyResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ApiKeyUpdateRequest request) {
-        return ApiResponse.success(apiKeyApplication.update(id, request));
+        return ApiResponse.success(apiKeyService.update(id, request));
     }
 
     /**
@@ -62,7 +62,7 @@ public class ApiKeyController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        apiKeyApplication.delete(id);
+        apiKeyService.delete(id);
         return ApiResponse.success();
     }
 
@@ -73,6 +73,6 @@ public class ApiKeyController {
     public ApiResponse<ApiKeyResponse> setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(apiKeyApplication.setEnabled(id, enabled));
+        return ApiResponse.success(apiKeyService.setEnabled(id, enabled));
     }
 }

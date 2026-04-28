@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.admin.controller;
 
-import com.codingas.gateway.application.user.UserApplication;
+import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.enums.UserStatus;
 import com.codingas.gateway.adapter.admin.dto.user.*;
@@ -39,7 +39,7 @@ class UserControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private UserApplication userApplication;
+    private UserService userService;
 
     private UserResponse testUserResponse;
 
@@ -64,7 +64,7 @@ class UserControllerTest {
             request.setPassword("password123");
             request.setRoleCodes(List.of("ADMIN"));
 
-            when(userApplication.create(any(UserCreateRequest.class))).thenReturn(testUserResponse);
+            when(userService.create(any(UserCreateRequest.class))).thenReturn(testUserResponse);
 
             // when & then
             webTestClient.post()
@@ -78,7 +78,7 @@ class UserControllerTest {
                 .jsonPath("$.data.id").isEqualTo(1)
                 .jsonPath("$.data.username").isEqualTo("testuser");
 
-            verify(userApplication).create(any(UserCreateRequest.class));
+            verify(userService).create(any(UserCreateRequest.class));
         }
 
         @Test
@@ -168,7 +168,7 @@ class UserControllerTest {
         @DisplayName("用户存在返回 200")
         void getById_existingUser_returns200() {
             // given
-            when(userApplication.getById(1L)).thenReturn(testUserResponse);
+            when(userService.getById(1L)).thenReturn(testUserResponse);
 
             // when & then
             webTestClient.get()
@@ -181,7 +181,7 @@ class UserControllerTest {
                 .jsonPath("$.data.userCode").isEqualTo("USR001")
                 .jsonPath("$.data.username").isEqualTo("testuser");
 
-            verify(userApplication).getById(1L);
+            verify(userService).getById(1L);
         }
     }
 
@@ -198,7 +198,7 @@ class UserControllerTest {
             PageResponse<UserResponse> pageResponse = PageResponse.of(
                 List.of(testUserResponse), 1, 20, 1
             );
-            when(userApplication.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
+            when(userService.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
 
             // when & then
             webTestClient.get()
@@ -219,7 +219,7 @@ class UserControllerTest {
             PageResponse<UserResponse> pageResponse = PageResponse.of(
                 List.of(testUserResponse), 1, 20, 1
             );
-            when(userApplication.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
+            when(userService.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
 
             // when & then
             webTestClient.get()
@@ -238,7 +238,7 @@ class UserControllerTest {
             PageResponse<UserResponse> pageResponse = PageResponse.of(
                 List.of(testUserResponse), 1, 20, 1
             );
-            when(userApplication.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
+            when(userService.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
 
             // when & then
             webTestClient.get()
@@ -264,7 +264,7 @@ class UserControllerTest {
             request.setUsername("updateduser");
             request.setEmail("updated@example.com");
 
-            when(userApplication.update(eq(1L), any(UserUpdateRequest.class)))
+            when(userService.update(eq(1L), any(UserUpdateRequest.class)))
                 .thenReturn(testUserResponse);
 
             // when & then
@@ -278,7 +278,7 @@ class UserControllerTest {
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.data.id").isEqualTo(1);
 
-            verify(userApplication).update(eq(1L), any(UserUpdateRequest.class));
+            verify(userService).update(eq(1L), any(UserUpdateRequest.class));
         }
 
         @Test
@@ -324,7 +324,7 @@ class UserControllerTest {
         @DisplayName("删除用户成功返回 200")
         void delete_existingUser_returns200() {
             // given
-            doNothing().when(userApplication).delete(1L);
+            doNothing().when(userService).delete(1L);
 
             // when & then
             webTestClient.delete()
@@ -334,7 +334,7 @@ class UserControllerTest {
                 .expectBody()
                 .jsonPath("$.success").isEqualTo(true);
 
-            verify(userApplication).delete(1L);
+            verify(userService).delete(1L);
         }
     }
 
@@ -351,7 +351,7 @@ class UserControllerTest {
             UserStatusUpdateRequest request = new UserStatusUpdateRequest();
             request.setStatus(UserStatus.DISABLED);
 
-            when(userApplication.updateStatus(eq(1L), any(UserStatusUpdateRequest.class)))
+            when(userService.updateStatus(eq(1L), any(UserStatusUpdateRequest.class)))
                 .thenReturn(testUserResponse);
 
             // when & then
@@ -365,7 +365,7 @@ class UserControllerTest {
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.data.id").isEqualTo(1);
 
-            verify(userApplication).updateStatus(eq(1L), any(UserStatusUpdateRequest.class));
+            verify(userService).updateStatus(eq(1L), any(UserStatusUpdateRequest.class));
         }
 
         @Test
@@ -398,7 +398,7 @@ class UserControllerTest {
             UserRoleAssignRequest request = new UserRoleAssignRequest();
             request.setRoleCodes(List.of("ADMIN", "USER"));
 
-            when(userApplication.assignRoles(eq(1L), any(UserRoleAssignRequest.class)))
+            when(userService.assignRoles(eq(1L), any(UserRoleAssignRequest.class)))
                 .thenReturn(testUserResponse);
 
             // when & then
@@ -412,7 +412,7 @@ class UserControllerTest {
                 .jsonPath("$.success").isEqualTo(true)
                 .jsonPath("$.data.id").isEqualTo(1);
 
-            verify(userApplication).assignRoles(eq(1L), any(UserRoleAssignRequest.class));
+            verify(userService).assignRoles(eq(1L), any(UserRoleAssignRequest.class));
         }
 
         @Test

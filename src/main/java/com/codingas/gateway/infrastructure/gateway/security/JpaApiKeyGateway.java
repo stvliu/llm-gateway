@@ -2,7 +2,8 @@ package com.codingas.gateway.infrastructure.gateway.security;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
-import com.codingas.gateway.domain.security.repository.GatewayApiKeyRepository;
+import com.codingas.gateway.infrastructure.security.GatewayApiKeyDo;
+import com.codingas.gateway.infrastructure.security.GatewayApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -12,11 +13,12 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * API Key 网关 JPA 实现
  *
- * <p>实现 ApiKeyGateway 接口，使用 JPA 进行持久化。</p>
+ * <p>实现 ApiKeyGateway 接口，负责 DO ↔ Entity 转换。</p>
  */
 @Slf4j
 @Component
@@ -27,37 +29,44 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
 
     @Override
     public GatewayApiKey save(GatewayApiKey apiKey) {
-        return gatewayApiKeyRepository.save(apiKey);
+        GatewayApiKeyDo doEntity = toDo(apiKey);
+        GatewayApiKeyDo saved = gatewayApiKeyRepository.save(doEntity);
+        return toEntity(saved);
     }
 
     @Override
     public Optional<GatewayApiKey> findById(Long id) {
-        return gatewayApiKeyRepository.findById(id);
+        return gatewayApiKeyRepository.findById(id).map(this::toEntity);
     }
 
     @Override
     public GatewayApiKey findByKeyHash(String keyHash) {
-        return gatewayApiKeyRepository.findByKeyHash(keyHash).orElse(null);
+        return gatewayApiKeyRepository.findByKeyHash(keyHash).map(this::toEntity).orElse(null);
     }
 
     @Override
     public GatewayApiKey findByKeyCode(String keyCode) {
-        return gatewayApiKeyRepository.findByKeyCode(keyCode).orElse(null);
+        return gatewayApiKeyRepository.findByKeyCode(keyCode).map(this::toEntity).orElse(null);
     }
 
     @Override
     public List<GatewayApiKey> findByUserId(Long userId) {
-        return gatewayApiKeyRepository.findByUserId(userId);
+        return gatewayApiKeyRepository.findByUserId(userId).stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
     }
 
     @Override
     public List<GatewayApiKey> findAll() {
-        return gatewayApiKeyRepository.findAll();
+        return gatewayApiKeyRepository.findAll().stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
     }
 
     @Override
     public Page<GatewayApiKey> findExpiringKeys(Instant now, Instant threshold, Pageable pageable) {
-        return gatewayApiKeyRepository.findExpiringKeys(now, threshold, pageable);
+        return gatewayApiKeyRepository.findExpiringKeys(now, threshold, pageable)
+            .map(this::toEntity);
     }
 
     @Override
@@ -67,7 +76,7 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
 
     @Override
     public void delete(GatewayApiKey apiKey) {
-        gatewayApiKeyRepository.delete(apiKey);
+        gatewayApiKeyRepository.delete(toDo(apiKey));
     }
 
     @Override
@@ -81,5 +90,56 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
             key.setLastUsedAt(lastUsed);
             gatewayApiKeyRepository.save(key);
         });
+    }
+
+    /**
+     * DO 转 Entity
+     */
+    private GatewayApiKey toEntity(GatewayApiKeyDo doEntity) {
+        if (doEntity == null) {
+            return null;
+        }
+        GatewayApiKey entity = new GatewayApiKey();
+        entity.setId(doEntity.getId());
+        entity.setKeyCode(doEntity.getKeyCode());
+        entity.setKeyHash(doEntity.getKeyHash());
+        entity.setName(doEntity.getName());
+        entity.setExpiresAt(doEntity.getExpiresAt());
+        entity.setLastUsedAt(doEntity.getLastUsedAt());
+        entity.setIpWhitelist(doEntity.getIpWhitelist());
+        entity.setDeletedAt(doEntity.getDeletedAt());
+        entity.setCreatedAt(doEntity.getCreatedAt());
+        entity.setUpdatedAt(doEntity.getUpdatedAt());
+        // 枚举转换
+        if (doEntity.getStatus() != null) {
+            entity.setStatus(GatewayApiKey.ApiKeyStatus.valueOf(doEntity.getStatus().name()));
+        }
+        // User 关联暂不处理，由调用方通过 UserGateway 获取
+        return entity;
+    }
+
+    /**
+     * Entity 转 DO
+     */
+    private GatewayApiKeyDo toDo(GatewayApiKey entity) {
+        if (entity == null) {
+            return null;
+        }
+        GatewayApiKeyDo doEntity = new GatewayApiKeyDo();
+        if (entity.getId() != null) {
+            doEntity.setId(entity.getId());
+        }
+        doEntity.setKeyCode(entity.getKeyCode());
+        doEntity.setKeyHash(entity.getKeyHash());
+        doEntity.setName(entity.getName());
+        doEntity.setExpiresAt(entity.getExpiresAt());
+        doEntity.setLastUsedAt(entity.getLastUsedAt());
+        doEntity.setIpWhitelist(entity.getIpWhitelist());
+        doEntity.setDeletedAt(entity.getDeletedAt());
+        // 枚举转换
+        if (entity.getStatus() != null) {
+            doEntity.setStatus(GatewayApiKeyDo.ApiKeyStatus.valueOf(entity.getStatus().name()));
+        }
+        return doEntity;
     }
 }

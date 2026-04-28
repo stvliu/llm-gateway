@@ -1,11 +1,10 @@
 package com.codingas.gateway.domain.analytics.entity;
+import com.codingas.gateway.domain.DomainEntity;
+import com.codingas.gateway.domain.BaseEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.enums.PeriodType;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,50 +15,32 @@ import java.util.List;
  *
  * <p>定义预警触发条件，包括用量预警、健康预警、额度预警。</p>
  */
-@Entity
-@Table(name = "alert_rules")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class AlertRule extends BaseEntity {
 
-    @Column(name = "rule_code", nullable = false, unique = true, length = 64)
     private String ruleCode;
 
-    @Column(name = "name", nullable = false, length = 128)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "alert_type", nullable = false)
     private AlertType alertType;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
     private TargetType targetType;
 
-    @Column(name = "target_id")
     private Long targetId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "condition_type")
     private ConditionType conditionType;
 
-    @Column(name = "threshold_value", precision = 20, scale = 6)
     private BigDecimal thresholdValue;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "period_type")
     private PeriodType periodType;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "notification_channels", columnDefinition = "json")
     private List<NotificationChannel> notificationChannels;
 
-    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     public enum AlertType {
@@ -88,5 +69,12 @@ public class AlertRule extends BaseEntity {
         EMAIL,
         IM,
         SMS
+    }
+
+    /**
+     * 检查规则是否激活
+     */
+    public boolean isActive() {
+        return Boolean.TRUE.equals(isActive);
     }
 }

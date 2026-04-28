@@ -4,7 +4,7 @@ import com.codingas.gateway.adapter.admin.dto.model.ModelCreateRequest;
 import com.codingas.gateway.adapter.admin.dto.model.ModelQueryRequest;
 import com.codingas.gateway.adapter.admin.dto.model.ModelResponse;
 import com.codingas.gateway.adapter.admin.dto.model.ModelUpdateRequest;
-import com.codingas.gateway.application.model.ModelApplication;
+import com.codingas.gateway.application.model.ModelService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ModelController {
 
-    private final ModelApplication modelApplication;
+    private final ModelService modelService;
 
     /**
      * 创建模型
      */
     @PostMapping
     public ApiResponse<ModelResponse> create(@Valid @RequestBody ModelCreateRequest request) {
-        return ApiResponse.success(modelApplication.create(request));
+        return ApiResponse.success(modelService.create(request));
     }
 
     /**
@@ -36,7 +36,7 @@ public class ModelController {
      */
     @GetMapping("/{id}")
     public ApiResponse<ModelResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(modelApplication.getById(id));
+        return ApiResponse.success(modelService.getById(id));
     }
 
     /**
@@ -44,7 +44,7 @@ public class ModelController {
      */
     @GetMapping
     public ApiResponse<PageResponse<ModelResponse>> query(@ModelAttribute ModelQueryRequest request) {
-        return ApiResponse.success(modelApplication.query(request));
+        return ApiResponse.success(modelService.query(request));
     }
 
     /**
@@ -54,7 +54,7 @@ public class ModelController {
     public ApiResponse<ModelResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody ModelUpdateRequest request) {
-        return ApiResponse.success(modelApplication.update(id, request));
+        return ApiResponse.success(modelService.update(id, request));
     }
 
     /**
@@ -62,7 +62,7 @@ public class ModelController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        modelApplication.delete(id);
+        modelService.delete(id);
         return ApiResponse.success();
     }
 
@@ -73,6 +73,6 @@ public class ModelController {
     public ApiResponse<ModelResponse> setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(modelApplication.setEnabled(id, enabled));
+        return ApiResponse.success(modelService.setEnabled(id, enabled));
     }
 }

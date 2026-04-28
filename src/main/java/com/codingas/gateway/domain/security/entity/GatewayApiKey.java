@@ -1,10 +1,9 @@
 package com.codingas.gateway.domain.security.entity;
+import com.codingas.gateway.domain.DomainEntity;
+import com.codingas.gateway.domain.BaseEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,42 +13,28 @@ import java.util.List;
  *
  * <p>用户调用 LLM-Gateway 网关的凭据，格式为 sk-xxxxxxxx。</p>
  */
-@Entity
-@Table(name = "gateway_api_keys")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class GatewayApiKey extends BaseEntity {
 
-    @Column(name = "key_code", nullable = false, unique = true, length = 128)
     private String keyCode;
 
-    @Column(name = "key_hash", nullable = false, length = 256)
     private String keyHash;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(name = "name", length = 64)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private ApiKeyStatus status = ApiKeyStatus.ACTIVE;
 
-    @Column(name = "expires_at")
     private Instant expiresAt;
 
-    @Column(name = "last_used_at")
     private Instant lastUsedAt;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "ip_whitelist", columnDefinition = "json")
     private List<String> ipWhitelist;
 
-    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     public enum ApiKeyStatus {
@@ -61,5 +46,18 @@ public class GatewayApiKey extends BaseEntity {
         EXPIRED,
         /** 已删除 */
         DELETED
+    }
+
+    /**
+     * 检查凭证是否有效
+     */
+    public boolean isValid() {
+        if (ApiKeyStatus.ACTIVE.equals(status)) {
+            if (expiresAt != null && Instant.now().isAfter(expiresAt)) {
+                return false;
+            }
+            return true;
+        }
+        return false;
     }
 }

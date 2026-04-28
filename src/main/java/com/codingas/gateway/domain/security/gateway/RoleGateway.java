@@ -51,4 +51,12 @@ public interface RoleGateway {
      * @return 是否存在
      */
     boolean existsByRoleCode(String roleCode);
+
+    /**
+     * 保存用户角色关联
+     *
+     * @param userId 用户 ID
+     * @param roleIds 角色 ID 列表
+     */
+    void saveUserRoles(Long userId, List<Long> roleIds);
 }

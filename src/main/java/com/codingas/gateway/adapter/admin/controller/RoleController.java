@@ -4,7 +4,7 @@ import com.codingas.gateway.adapter.admin.dto.role.RoleCreateRequest;
 import com.codingas.gateway.adapter.admin.dto.role.RoleQueryRequest;
 import com.codingas.gateway.adapter.admin.dto.role.RoleResponse;
 import com.codingas.gateway.adapter.admin.dto.role.RoleUpdateRequest;
-import com.codingas.gateway.application.role.RoleApplication;
+import com.codingas.gateway.application.role.RoleService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -21,14 +21,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class RoleController {
 
-    private final RoleApplication roleApplication;
+    private final RoleService roleService;
 
     /**
      * 创建角色
      */
     @PostMapping
     public ApiResponse<RoleResponse> create(@Valid @RequestBody RoleCreateRequest request) {
-        return ApiResponse.success(roleApplication.create(request));
+        return ApiResponse.success(roleService.create(request));
     }
 
     /**
@@ -36,7 +36,7 @@ public class RoleController {
      */
     @GetMapping("/{id}")
     public ApiResponse<RoleResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(roleApplication.getById(id));
+        return ApiResponse.success(roleService.getById(id));
     }
 
     /**
@@ -44,7 +44,7 @@ public class RoleController {
      */
     @GetMapping
     public ApiResponse<PageResponse<RoleResponse>> query(@ModelAttribute RoleQueryRequest request) {
-        return ApiResponse.success(roleApplication.query(request));
+        return ApiResponse.success(roleService.query(request));
     }
 
     /**
@@ -54,7 +54,7 @@ public class RoleController {
     public ApiResponse<RoleResponse> update(
             @PathVariable Long id,
             @Valid @RequestBody RoleUpdateRequest request) {
-        return ApiResponse.success(roleApplication.update(id, request));
+        return ApiResponse.success(roleService.update(id, request));
     }
 
     /**
@@ -62,7 +62,7 @@ public class RoleController {
      */
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
-        roleApplication.delete(id);
+        roleService.delete(id);
         return ApiResponse.success();
     }
 
@@ -73,6 +73,6 @@ public class RoleController {
     public ApiResponse<RoleResponse> setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(roleApplication.setEnabled(id, enabled));
+        return ApiResponse.success(roleService.setEnabled(id, enabled));
     }
 }

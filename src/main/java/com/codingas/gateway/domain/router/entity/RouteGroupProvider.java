@@ -1,34 +1,35 @@
 package com.codingas.gateway.domain.router.entity;
+import com.codingas.gateway.domain.DomainEntity;
+import com.codingas.gateway.domain.BaseEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 路由分组与提供商的关联实体
  *
  * <p>表示路由分组与提供商之间的多对多关系。</p>
  */
-@Entity
-@Table(name = "route_group_providers")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class RouteGroupProvider extends BaseEntity {
 
-    @Column(name = "route_group_id", nullable = false)
     private Long routeGroupId;
 
-    @Column(name = "provider_id", nullable = false)
     private Long providerId;
 
-    @Column(name = "weight")
     private Integer weight;
 
-    @Column(name = "priority")
     private Integer priority;
 
-    @Column(name = "enabled")
     private Boolean enabled;
+
+    /**
+     * 检查是否启用
+     */
+    public boolean isEnabled() {
+        return Boolean.TRUE.equals(enabled);
+    }
 }
