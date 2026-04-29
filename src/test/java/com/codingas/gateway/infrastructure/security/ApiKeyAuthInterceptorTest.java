@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.security;
 
 import com.codingas.gateway.common.enums.UserRole;
-import com.codingas.gateway.domain.security.service.AuthenticationService;
+import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 class ApiKeyAuthInterceptorTest {
 
     @Mock
-    private AuthenticationService authenticationService;
+    private AuthenticationDomainService authenticationService;
 
     @Mock
     private HttpServletRequest request;

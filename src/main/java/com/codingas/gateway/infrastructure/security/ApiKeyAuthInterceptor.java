@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.service.AuthenticationService;
+import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import com.codingas.gateway.infrastructure.security.interceptor.AbstractGatewayInterceptor;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +21,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
     public static final String API_KEY_HEADER = "X-API-Key";
     public static final String USER_ID_ATTR = "userId";
 
-    private final AuthenticationService authenticationService;
+    private final AuthenticationDomainService authenticationService;
 
     @Override
     public String name() {

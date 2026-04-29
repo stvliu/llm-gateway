@@ -1,0 +1,30 @@
+package com.codingas.gateway.application.auth;
+
+import com.codingas.gateway.domain.security.service.UserAuthResult;
+
+/**
+ * 认证应用服务接口
+ *
+ * <p>编排认证相关的领域服务，不含业务逻辑。</p>
+ */
+public interface AuthService {
+
+    /**
+     * 认证 API Key
+     *
+     * @param apiKey API Key
+     * @param clientIp 客户端 IP
+     * @return 认证结果
+     */
+    UserAuthResult authenticate(String apiKey, String clientIp);
+
+    /**
+     * 检查用户权限
+     *
+     * @param userId 用户 ID
+     * @param resource 资源
+     * @param action 操作
+     * @return 是否有权
+     */
+    boolean checkPermission(Long userId, String resource, String action);
+}

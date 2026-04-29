@@ -1,10 +1,9 @@
 package com.codingas.gateway.domain.router.entity;
+import com.codingas.gateway.domain.DomainEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import jakarta.persistence.*;
+import com.codingas.gateway.domain.BaseEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -15,47 +14,30 @@ import java.util.Map;
  *
  * <p>表示具体的 AI 模型，是调用的最小单位。</p>
  */
-@Entity
-@Table(name = "models", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"provider_id", "provider_model_id"})
-})
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class Model extends BaseEntity {
 
-    @Column(name = "model_code", nullable = false, unique = true, length = 128)
     private String modelCode;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "provider_id", nullable = false)
     private Provider provider;
 
-    @Column(name = "provider_model_id", nullable = false, length = 128)
     private String providerModelId;
 
-    @Column(name = "display_name", length = 256)
     private String displayName;
 
-    @Column(name = "context_window")
     private Integer contextWindow;
 
-    @Column(name = "input_price", precision = 10, scale = 6)
     private BigDecimal inputPrice;
 
-    @Column(name = "output_price", precision = 10, scale = 6)
     private BigDecimal outputPrice;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "capabilities", columnDefinition = "json")
     private Map<String, Boolean> capabilities;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private ModelStatus status = ModelStatus.ACTIVE;
 
-    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     public enum ModelStatus {
@@ -65,5 +47,12 @@ public class Model extends BaseEntity {
         DEPRECATED,
         /** 已删除 */
         DELETED
+    }
+
+    /**
+     * 检查模型是否可用
+     */
+    public boolean isAvailable() {
+        return ModelStatus.ACTIVE.equals(status);
     }
 }

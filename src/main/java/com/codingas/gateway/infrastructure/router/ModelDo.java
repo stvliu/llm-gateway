@@ -1,0 +1,66 @@
+package com.codingas.gateway.infrastructure.router;
+
+import com.codingas.gateway.infrastructure.common.BaseDo;
+import jakarta.persistence.*;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Map;
+
+/**
+ * 模型 DO
+ *
+ * <p>JPA 实体，对应数据库 models 表。</p>
+ */
+@Entity
+@Table(name = "models", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"provider_id", "provider_model_id"})
+})
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ModelDo extends BaseDo {
+
+    @Column(name = "model_code", nullable = false, unique = true, length = 128)
+    private String modelCode;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private ProviderDo provider;
+
+    @Column(name = "provider_model_id", nullable = false, length = 128)
+    private String providerModelId;
+
+    @Column(name = "display_name", length = 256)
+    private String displayName;
+
+    @Column(name = "context_window")
+    private Integer contextWindow;
+
+    @Column(name = "input_price", precision = 10, scale = 6)
+    private BigDecimal inputPrice;
+
+    @Column(name = "output_price", precision = 10, scale = 6)
+    private BigDecimal outputPrice;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "capabilities", columnDefinition = "json")
+    private Map<String, Boolean> capabilities;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private ModelStatus status = ModelStatus.ACTIVE;
+
+    @Column(name = "deleted_at")
+    private Instant deletedAt;
+
+    public enum ModelStatus {
+        ACTIVE,
+        DEPRECATED,
+        DELETED
+    }
+}

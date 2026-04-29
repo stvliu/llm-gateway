@@ -13,6 +13,14 @@ import java.util.Optional;
 public interface ModelGateway {
 
     /**
+     * 保存模型
+     *
+     * @param model 模型实体
+     * @return 保存后的实体
+     */
+    Model save(Model model);
+
+    /**
      * 根据 ID 查找模型
      *
      * @param id 模型 ID
@@ -27,6 +35,13 @@ public interface ModelGateway {
      * @return 模型信息，不存在返回空
      */
     Optional<Model> findByModelCode(String modelCode);
+
+    /**
+     * 查询所有模型
+     *
+     * @return 模型列表
+     */
+    List<Model> findAll();
 
     /**
      * 查找所有活跃模型
@@ -44,10 +59,24 @@ public interface ModelGateway {
     List<Model> findByProviderId(Long providerId);
 
     /**
-     * 保存模型
+     * 统计模型总数
+     *
+     * @return 模型数量
+     */
+    long count();
+
+    /**
+     * 删除模型
      *
      * @param model 模型实体
-     * @return 保存后的实体
      */
-    Model save(Model model);
+    void delete(Model model);
+
+    /**
+     * 检查模型代码是否存在
+     *
+     * @param modelCode 模型代码
+     * @return 是否存在
+     */
+    boolean existsByModelCode(String modelCode);
 }

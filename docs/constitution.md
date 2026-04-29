@@ -235,15 +235,31 @@ Domain 层                     Infrastructure 层
 
 ### 2.3 服务分类
 
-**Domain Service（领域服务）**:
+**Domain Service（领域服务）**：
 - 职责：业务逻辑，领域规则
 - 放置：`domain/xxx/service/`
-- 示例：`AuthenticationService`, `RateLimitService`, `RbacService`
+- 命名：能力名 + `DomainService` 后缀
+- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `RbacDomainService`
 
-**Application Service（应用服务）**:
+**Application Service（应用服务）**：
 - 职责：用例编排，跨领域协调，不含业务逻辑
 - 放置：`application/xxx/`（按用例分包）
-- 示例：`AuthApplication`, `ChatApplication`, `ModelApplication`
+- 命名：能力名 + `Service` 后缀
+- 示例：`AuthenticationService`, `RateLimitService`, `TokenCounterService`
+
+**命名区分原则**：
+| 层 | 命名模式 | 语义 |
+|---|---------|------|
+| Domain | `XxxDomainService` | 领域能力，表示"能做什么" |
+| Application | `XxxService` | 应用服务，表示"执行什么操作" |
+
+**示例对照**：
+```
+domain/security/service/AuthenticationDomainService     # 领域认证能力
+domain/security/service/RateLimitDomainService           # 领域限流能力
+application/auth/AuthenticationService                    # 应用认证服务
+application/auth/TokenLimitService                       # 应用限额服务
+```
 
 ### 2.4 Exception 分类
 
@@ -277,10 +293,24 @@ Domain 层                     Infrastructure 层
 ```
 所有 JPA 实体必须保持纯洁，禁止包含业务逻辑。
 业务逻辑必须封装于 @Service 类中。
+Domain Entity 是业务领域的实体及实体关系，与基础设施的具体实现（DB/JPA、NoSQL、缓存、第三方系统）无关。
+Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节，防止第三方系统变化导致领域层腐化。
 ```
+
+**Domain Entity 原则**:
+- ✅ 使用对象引用表达业务领域关系（如 `User user`, `List<Role> roles`）
+- ✅ 反映业务实体及其关联，不暴露任何技术实现细节
+- ✅ 纯 POJO，依赖 `BaseEntity`（无 JPA 注解）
+
+**Gateway（防腐层）原则**:
+- ✅ Gateway 接口定义在 `domain/xxx/gateway/`，实现 `infrastructure/xxx/gateway/`
+- ✅ Gateway 实现负责 **DO ↔ Entity 转换**（DO 是 JPA 实体，含 `@Entity`、`@ManyToOne` 等）
+- ✅ 领域层只依赖 Gateway 接口，完全不知道 JPA、数据库、ORM 的存在
+- ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改 Gateway 实现，领域层不受影响
 
 **实体允许的内容**:
 - ✅ Getter/Setter
+- ✅ 对象引用（表达业务关系）
 - ✅ `@PrePersist`, `@PreUpdate` 生命周期回调
 - ✅ `toString()`, `equals()`, `hashCode()`
 
@@ -288,6 +318,41 @@ Domain 层                     Infrastructure 层
 - ❌ 调用外部 API
 - ❌ 复杂业务计算
 - ❌ 直接修改其他实体状态
+- ❌ 任何 JPA、数据库、ORM 注解或依赖
+
+**架构示意**:
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      Application Layer                       │
+│                  (用例编排，调用 Domain Service)               │
+└─────────────────────────┬───────────────────────────────────┘
+                          │
+┌─────────────────────────▼───────────────────────────────────┐
+│                       Domain Layer                            │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
+│  │ Domain       │    │ Domain       │    │ Domain       │ │
+│  │ Entity       │    │ Service      │    │ Gateway      │ │
+│  │ (纯POJO)     │    │ (业务逻辑)   │    │ (接口)       │ │
+│  │ User         │    │              │    │ XxxGateway   │ │
+│  │ Model ──→    │    │              │    │              │ │
+│  │ Provider     │    │              │    │              │ │
+│  └──────────────┘    └──────────────┘    └──────┬───────┘ │
+└─────────────────────────────────────────────────┼───────────┘
+                                                  │ 依赖接口
+┌─────────────────────────────────────────────────▼───────────┐
+│                   Infrastructure Layer                         │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │              JpaXxxGateway (Gateway 实现)              │   │
+│  │         负责 DO ↔ Entity 转换                         │   │
+│  └──────────────────────────────────────────────────────┘   │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
+│  │    DO        │    │    DO        │    │    DO        │   │
+│  │ (JPA实体)    │    │ (JPA实体)    │    │ (JPA实体)    │   │
+│  │ @Entity      │    │ @Entity      │    │ @Entity      │   │
+│  │ @ManyToOne   │    │ @ManyToOne   │    │ @ManyToOne   │   │
+│  └──────────────┘    └──────────────┘    └──────────────┘   │
+└───────────────────────────────────────────────────────────────┘
+```
 
 ### 2.4 配置外部化
 
@@ -409,12 +474,10 @@ GatewayException (根异常)
 
 **并发安全保证**:
 - ✅ JDK 21 虚拟线程提供轻量级并发,无需手动管理线程池
-
-
-**并发安全保证**:
 - ✅ `TokenQuotaTracker` 使用 `AtomicInteger` 保证线程安全
 - ✅ `LLMProviderAdapter` 必须是无状态的，支持多线程并发调用
 - ✅ 请求记录按任务 ID 分区写入，避免行锁竞争
+- ✅ LLM HTTP 客户端使用 OkHttp，虚拟线程中阻塞调用自动挂起
 
 ---
 

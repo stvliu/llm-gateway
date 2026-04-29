@@ -2,7 +2,7 @@ package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.domain.router.service.ProviderService;
+import com.codingas.gateway.domain.router.service.ProviderDomainService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.*;
 class ProviderManageUseCaseTest {
 
     @Mock
-    private ProviderService providerService;
+    private ProviderDomainService providerService;
 
     @InjectMocks
     private ProviderManageUseCase providerManageUseCase;

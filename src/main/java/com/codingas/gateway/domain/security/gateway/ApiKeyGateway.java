@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * API Key 网关接口
@@ -14,6 +15,22 @@ import java.util.List;
  * <p>Domain 不直接依赖持久化，通过此接口操作。</p>
  */
 public interface ApiKeyGateway {
+
+    /**
+     * 保存 API Key
+     *
+     * @param apiKey 密钥实体
+     * @return 保存后的实体
+     */
+    GatewayApiKey save(GatewayApiKey apiKey);
+
+    /**
+     * 根据 ID 查找 API Key
+     *
+     * @param id 密钥 ID
+     * @return 密钥信息，不存在返回空
+     */
+    Optional<GatewayApiKey> findById(Long id);
 
     /**
      * 根据 Key Hash 查找 API Key
@@ -40,6 +57,13 @@ public interface ApiKeyGateway {
     List<GatewayApiKey> findByUserId(Long userId);
 
     /**
+     * 查询所有密钥
+     *
+     * @return 密钥列表
+     */
+    List<GatewayApiKey> findAll();
+
+    /**
      * 查询即将过期的 API Key
      *
      * @param now 当前时间
@@ -50,12 +74,26 @@ public interface ApiKeyGateway {
     Page<GatewayApiKey> findExpiringKeys(Instant now, Instant threshold, Pageable pageable);
 
     /**
-     * 保存 API Key
+     * 统计密钥总数
+     *
+     * @return 密钥数量
+     */
+    long count();
+
+    /**
+     * 删除密钥
      *
      * @param apiKey 密钥实体
-     * @return 保存后的实体
      */
-    GatewayApiKey save(GatewayApiKey apiKey);
+    void delete(GatewayApiKey apiKey);
+
+    /**
+     * 检查 Key 代码是否存在
+     *
+     * @param keyCode 密钥代码
+     * @return 是否存在
+     */
+    boolean existsByKeyCode(String keyCode);
 
     /**
      * 更新最后使用时间

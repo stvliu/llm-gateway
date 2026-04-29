@@ -261,6 +261,7 @@ llm-gateway/
 |------|---------|------|
 | **后端语言** | Java 21 | 虚拟线程、模式匹配、Record |
 | **Web 框架** | Spring Boot 3.5.x + Spring MVC | 企业级标准生态 |
+| **HTTP 客户端** | OkHttp 4.12 + 虚拟线程 | 同步调用，自动挂起/恢复 |
 | **并发模型** | JDK 21 虚拟线程 | 轻量级高并发，无需响应式 |
 | **ORM** | Spring Data JPA | 类型安全、编译期检查 |
 | **缓存** | 标准版：内存缓存；企业版：Redis (Redssion 客户端) | 分布式限流、会话管理 |
@@ -1265,123 +1266,179 @@ Link: <https://docs.example.com/migration/v2>; rel="successor-version"
 
 ---
 
-## 六、数据模型需求
+## 六、业务领域模型
 
-### 6.1 实体域划分
+### 6.1 业务域划分
 
-根据业务领域，将实体划分为以下四大域：
+根据业务本质，将实体划分为以下五大域：
 
-| 域 | 实体数 | 实体列表 |
-|---|--------|----------|
-| ① 身份与访问控制 | 1 | User |
-| ② 提供商与模型 | 4 | Provider, ProviderApiKey, Model, RouteGroup, RouteGroupProvider |
-| ③ 令牌与认证 | 2 | GatewayApiKey, TokenLimit |
-| ④ 日志与监控 | 3 | RequestLog, RequestBodyLog, AuditLog |
-| **合计** | **10** | |
+| 序号 | 业务域 / Domain | 核心职责 / Core Responsibilities |
+|------|----------------|--------------------------------|
+| 1 | 安全域 / Security | 认证、授权、访问凭证、额度配额、脱敏、加解密等 / Authentication, Authorization, Access Credentials, Quota, Data Masking, Encryption |
+| 2 | 模型供给域 / Model Supply | 提供商、模型、提供商访问凭证 / Provider, Model, Provider Access Credential |
+| 3 | 会话交互域 / Session Interaction | 对话、消息、响应片段、用量记录 / Conversation, Message, Response Chunk, Usage Record |
+| 4 | 运维监控域 / Operations & Monitoring | 告警、通知 / Alert, Notification |
+| 5 | 审计合规域 / Audit & Compliance | 操作审计 / Operation Audit |
 
-### 6.2 核心实体清单
+### 6.2 实体与实体关系
 
-| 实体 | 说明 | 物理标识 | 业务标识 |
-|------|------|---------|---------|
-| **① 身份与访问控制域** | | | |
-| User | 用户 | `id BIGINT` | `user_code VARCHAR(64)` |
-| **② 提供商与模型域** | | | |
-| Provider | 模型提供商 | `id BIGINT` | `provider_code VARCHAR(64)` |
-| ProviderApiKey | Provider 调用凭证 | `id BIGINT` | `key_code VARCHAR(64)` |
-| Model | 具体模型 | `id BIGINT` | `model_code VARCHAR(128)` |
-| RouteGroup | 路由分组 | `id BIGINT` | `group_code VARCHAR(64)` |
-| RouteGroupProvider | 路由关联 | `id BIGINT` | - |
-| **③ 令牌与认证域** | | | |
-| GatewayApiKey | 网关访问凭证 | `id BIGINT` | `key_code VARCHAR(128)` |
-| TokenLimit | Token 限额 | `id BIGINT` | `limit_code VARCHAR(64)` |
-| **④ 日志与监控域** | | | |
-| RequestLog | 调用日志 | `id BIGINT` | `request_id VARCHAR(64)` |
-| RequestBodyLog | 请求体日志 | `id BIGINT` | - |
-| AuditLog | 审计日志 | `id BIGINT` | `audit_code VARCHAR(64)` |
+#### 6.2.1 安全域 / Security Domain
 
-### 6.3 实体关系图
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 用户 / User | 系统使用者 / System User |
+| 网关访问凭证 / Gateway Access Credential | 用户 创建 网关访问凭证；用户 持有 多个网关访问凭证 / User creates Gateway Access Credential; User holds multiple Gateway Access Credentials |
+| 额度配额 / Quota | 用户 配置 额度配额 / User configures Quota |
+| IP黑名单 / IP Blocklist | 系统 屏蔽 IP / System blocks IP |
+| 敏感词规则 / Sensitive Rule | 系统 应用 敏感词规则 / System applies Sensitive Rules |
 
-#### 6.3.1 身份与访问控制域
+#### 6.2.2 模型供给域 / Model Supply Domain
 
-```
-User (1) ──── (N) GatewayApiKey
-User (1) ──── (N) TokenLimit
-```
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 提供商 / Provider | 提供商 提供 多个模型 / Provider provides multiple Models |
+| 模型 / Model | 模型 必须归属 于一个提供商 / Model must belong to one Provider |
+| 提供商访问凭证 / Provider Access Credential | 提供商访问凭证 用于访问 一个提供商；提供商 可配置 多个提供商访问凭证 / Provider Access Credential is used to access one Provider; Provider can configure multiple Provider Access Credentials |
 
-#### 6.3.2 提供商与模型域
+#### 6.2.3 会话交互域 / Session Interaction Domain
 
-```
-Provider (1) ──── (N) ProviderApiKey
-Provider (1) ──── (N) Model
-Provider (1) ──── (N) RouteGroupProvider
-RouteGroup (1) ──── (N) RouteGroupProvider
-RouteGroupProvider (N) ──── (1) Provider
-```
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 对话 / Conversation | 用户 发起 多个对话 / User initiates multiple Conversations |
+| 消息 / Message | 对话 包含 多条消息 / Conversation contains multiple Messages |
+| 响应片段 / Response Chunk | 消息 包含 多个响应片段 / Message contains multiple Response Chunks |
+| 用量记录 / Usage Record | 系统 记录 用量 / System records Usage |
+| 调用日志 / Call Log | 系统 记录 调用日志 / System records Call Log |
 
-#### 6.3.3 令牌与限额域
+#### 6.2.4 运维监控域 / Operations & Monitoring Domain
 
-```
-TokenLimit (用户限额)
-├── 层级: USER (用户级别)
-├── 周期: DAILY / WEEKLY / MONTHLY / TOTAL
-├── Token限额: max_tokens
-├── 已用Token: used_tokens
-├── 请求次数限额: max_requests (可选)
-└── 周期类型: period_type
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 告警规则 / Alert Rule | 系统 配置 告警规则 / System configures Alert Rule |
+| 告警通知 / Alert Notification | 告警规则 触发 告警通知 / Alert Rule triggers Alert Notification |
 
-GatewayApiKey (网关访问凭证)
-├── key_hash: 用于认证
-├── provider_id: 可访问的 Provider (NULL 表示全部)
-├── route_group_id: 路由分组 (NULL 表示默认)
-├── model_whitelist: 模型白名单 (可选)
-└── ip_whitelist: IP 白名单 (可选)
-```
+#### 6.2.5 审计合规域 / Audit & Compliance Domain
 
-#### 6.3.4 日志与监控域
+| 实体 / Entity | 业务关系 / Business Relations |
+|----------------|------------------------------|
+| 审计日志 / Audit Log | 系统 记录 审计日志 / System records Audit Log |
+
+### 6.3 业务关系总览
+
+#### 6.3.1 安全域 / Security Domain
 
 ```
-RequestLog ──── 1:1 ──── RequestBodyLog (可选)
-
-AuditLog (链式哈希: hash_chain = SHA256(前一条 + 当前内容))
+用户 (User)
+├── 创建 多个 网关访问凭证 (Gateway Access Credential)
+├── 配置 多个 额度配额 (Quota)
+├── 系统 屏蔽 IP (IP Blocklist)
+└── 系统 应用 敏感词规则 (Sensitive Rule)
 ```
 
-#### 6.3.5 P2 模块实体简图
-
-以下为 P2/企业版高级功能的实体关系简化描述，实体定义在对应模块详细需求中。
+#### 6.3.2 模型供给域 / Model Supply Domain
 
 ```
-Agent 工具市场:
-Tool (1) ──── (N) ToolVersion
-  │
-  └── (N) ToolCategory (多对多 via ToolCategoryMapping)
-  │
-  └── (1:N) ToolInvocationLog (工具调用记录)
+提供商 (Provider)
+├── 提供 多个 模型 (Model)
+└── 可配置 多个 提供商访问凭证 (Provider Access Credential)
 
-Prompt 工程 (企业版):
-PromptTemplate (1) ──── (N) PromptVersion
-  │
-  └── (1:N) PromptDecorator (装饰器链)
-
-会话上下文缓存 (企业版):
-Session (1) ──── (N) SessionMessage
-  │
-  └── (N) User
-
-RAG 知识库 (企业版):
-KnowledgeBase (1) ──── (N) KnowledgeChunk
-  │
-  └── (1) VectorStore (向量数据库 SPI 实现)
-
-内容审核 (企业版):
-AuditPolicy (1) ──── (N) AuditRule
-  │
-  └── (1:N) AuditLog (审核记录)
-
-语义缓存 (企业版):
-CacheEntry (1) ──── (N) CacheHitLog
+模型 (Model)
+└── 必须归属 于一个 提供商 (Provider)
 ```
 
-### 6.4 并发冲突处理
+#### 6.3.3 会话交互域 / Session Interaction Domain
+
+```
+对话 (Conversation)
+├── 用户 发起 多个 对话
+└── 包含 多条 消息 (Message)
+
+消息 (Message)
+└── 包含 多个 响应片段 (Response Chunk)
+
+用量记录 (Usage Record)
+└── 系统 记录 用量
+
+调用日志 (Call Log)
+└── 系统 记录 调用日志
+```
+
+#### 6.3.4 运维监控域 / Operations & Monitoring Domain
+
+```
+告警规则 (Alert Rule)
+└── 触发 多条 告警通知 (Alert Notification)
+```
+
+#### 6.3.5 审计合规域 / Audit & Compliance Domain
+
+```
+审计日志 (Audit Log)
+└── 系统 记录 审计日志
+```
+
+### 6.4 P2 模块业务域（待补充）
+
+以下为 P2/企业版高级功能的业务域，待后续补充。
+
+---
+
+## 七、数据模型
+
+### 7.1 命名规范
+
+**表名规范**: `snake_case` + 复数形式（如 `users`, `providers`）
+
+**字段命名**: `snake_case`（如 `user_code`, `provider_name`）
+
+### 7.2 服务层命名规范
+
+**Domain Service（领域服务）**：
+- 职责：业务逻辑，领域规则
+- 放置：`domain/xxx/service/`
+- 命名：能力名 + `DomainService` 后缀
+- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `RbacDomainService`
+
+**Application Service（应用服务）**：
+- 职责：用例编排，跨领域协调，不含业务逻辑
+- 放置：`application/xxx/`（按用例分包）
+- 命名：能力名 + `Service` 后缀
+- 示例：`AuthenticationService`, `RateLimitService`, `TokenCounterService`
+
+**命名区分原则**：
+
+| 层 | 命名模式 | 语义 |
+|---|---------|------|
+| Domain | `XxxDomainService` | 领域能力，表示"能做什么" |
+| Application | `XxxService` | 应用服务，表示"执行什么操作" |
+
+**示例对照**：
+```
+domain/security/service/AuthenticationDomainService     # 领域认证能力
+domain/security/service/RateLimitDomainService           # 领域限流能力
+application/auth/AuthenticationService                  # 应用认证服务
+application/auth/TokenLimitService                       # 应用限额服务
+```
+
+### 7.3 审计字段
+
+**所有业务实体表必须包含**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| created_by | BIGINT | 创建人 ID (FK → users.id) |
+| created_at | TIMESTAMP | 创建时间 |
+| updated_by | BIGINT | 最后更新人 ID |
+| updated_at | TIMESTAMP | 更新时间 |
+
+**软删除实体额外包含**:
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| deleted_by | BIGINT NULL | 删除人 ID |
+| deleted_at | TIMESTAMP NULL | 删除时间 |
+
+### 7.3 并发控制
 
 **乐观锁 + 最后写入胜出 (LWW) + 变更通知**:
 
@@ -1394,213 +1451,17 @@ CacheEntry (1) ──── (N) CacheHitLog
 | **变更通知** | 通过 WebSocket/SSE 推送给其他在线管理员 |
 | **审计记录** | 每次成功写入记录审计日志，包含变更前后的版本号 |
 
-### 6.6 审计字段要求
+### 7.4 实体表结构（待补充）
 
-**所有业务实体表必须包含**:
-```sql
-created_by    BIGINT       -- 创建人 ID (FK → users.id, 系统生成填 0L)
-created_at    TIMESTAMP    -- 创建时间
-updated_by    BIGINT       -- 最后更新人 ID
-updated_at    TIMESTAMP    -- 最后更新时间
-deleted_by    BIGINT NULL  -- 删除人 ID (软删除)
-deleted_at    TIMESTAMP NULL -- 删除时间 (软删除)
-```
-
-### 6.7 核心实体详细规格
-
-#### 6.7.1 User（用户）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| user_code | VARCHAR(64) | 用户编码 | UNIQUE, NOT NULL |
-| username | VARCHAR(64) | 用户名 | NOT NULL |
-| email | VARCHAR(128) | 邮箱 | UNIQUE, NOT NULL |
-| password_hash | VARCHAR(256) | 密码哈希 | BCrypt 加密，cost≥12 |
-| phone | VARCHAR(32) | 手机号 | NULL |
-| status | ENUM | 状态 | ACTIVE / DISABLED / LOCKED / DELETED |
-| email_verified | BOOLEAN | 邮箱已验证 | DEFAULT false |
-| oauth_providers | JSON | OAuth提供者列表 | GitHub / Gitee / LinuxDO |
-| pii_salt | VARCHAR(64) | PII脱敏盐值 | GDPR 删除权用 |
-| last_login_at | TIMESTAMP | 最后登录时间 | NULL |
-
-**业务说明**: 所有用户共享全局 Provider/RouteGroup 资源。
-
-#### 6.7.2 Role（角色）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| role_code | VARCHAR(64) | 角色编码 | UNIQUE, NOT NULL |
-| name | VARCHAR(64) | 角色名称 | NOT NULL |
-| description | TEXT | 角色描述 | NULL |
-| role_type | ENUM | 角色类型 | SYSTEM / CUSTOM |
-| is_active | BOOLEAN | 是否启用 | DEFAULT true |
-
-**预设角色**（SYSTEM 类型）:
-
-| 角色 | 编码 | 权限范围 |
-|------|------|----------|
-| 管理员 | ADMIN | 系统全部权限 |
-| 开发者 | DEVELOPER | 创建 API Key、查看日志、调用 API |
-| 观察者 | OBSERVER | 仅查看用量和日志 |
-| 财务管理员 | FINANCE_ADMIN | 额度配置、用量查看 |
-
-#### 6.7.3 UserRole（用户角色关联）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| user_id | BIGINT | 用户ID | FK → User.id, NOT NULL |
-| role_id | BIGINT | 角色ID | FK → Role.id, NOT NULL |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-
-**唯一约束**: `(user_id, role_id)` 联合唯一。
-
-#### 6.7.4 Permission（权限）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| permission_code | VARCHAR(128) | 权限编码 | UNIQUE, NOT NULL |
-| name | VARCHAR(64) | 权限名称 | NOT NULL |
-| description | TEXT | 权限描述 | NULL |
-| category | VARCHAR(32) | 权限分类 | user / provider / model / token / log / setting |
-
-**权限编码规范**: `resource:action` 格式（如 `provider:create`, `token:read`）。
-
-#### 6.7.5 Provider（提供商）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| provider_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
-| provider_name | VARCHAR(128) | 显示名称 | NOT NULL |
-| provider_type | ENUM | 类型 | OPENAI / ANTHROPIC / GEMINI / ZHIPU / OTHER |
-| base_url | VARCHAR(256) | API 端点 | NOT NULL |
-| website_url | VARCHAR(512) | 官网 URL | NULL |
-| api_doc_url | VARCHAR(512) | API 文档 URL | NULL |
-| priority | INT | 优先级 | DEFAULT 100，数值越大越优先 |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务说明**: Provider 是全局共享的，所有用户可见。`provider_type` 决定使用哪个 Adapter 实现类。
-
-#### 6.7.6 ProviderApiKey（Provider 调用凭证）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
-| provider_id | BIGINT | 所属 Provider | FK → Provider.id, NOT NULL |
-| key_name | VARCHAR(64) | Key 名称 | NULL |
-| api_key | VARCHAR(512) | API Key（加密存储） | NOT NULL |
-| priority | INT | 优先级（用于轮换） | DEFAULT 100 |
-| status | ENUM | 状态 | ACTIVE / DISABLED / EXHAUSTED / EXPIRED / DELETED |
-| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务规则**:
-- `api_key` 使用 AES-256 加密存储
-- 同一 Provider 下可有多个 Key（主备/轮换）
-- `status = EXHAUSTED` 时进入冷却期，不会被选择
-
-#### 6.7.7 GatewayApiKey（网关访问凭证）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(128) | 业务标识 | UNIQUE, NOT NULL |
-| key_hash | VARCHAR(256) | API Key 哈希 | NOT NULL |
-| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
-| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
-| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NULL 表示默认 |
-| name | VARCHAR(64) | 密钥名称 | NULL |
-| status | ENUM | 状态 | ACTIVE / DISABLED / EXPIRED / DELETED |
-| expires_at | TIMESTAMP | 过期时间 | NULL 表示永不过期 |
-| last_used_at | TIMESTAMP | 最后使用时间 | NULL |
-| model_whitelist | JSON | 允许使用的模型列表 | NULL 表示全部允许 |
-| ip_whitelist | JSON | IP 白名单（支持 CIDR） | NULL 表示全部允许 |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-**业务规则**:
-- `key_hash` 用于验证 API 调用时传入的 Key
-- `provider_id` 为 NULL 表示可访问所有 Provider
-- 同一用户可创建多个 Key（主备/轮换）
-
-#### 6.7.8 RouteGroup（路由分组）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| group_code | VARCHAR(64) | 分组编码 | UNIQUE, NOT NULL |
-| group_name | VARCHAR(128) | 分组名称 | NOT NULL |
-| strategy | ENUM | 路由策略 | ROUND_ROBIN / LEAST_LATENCY / PRIORITY |
-| failover_enabled | BOOLEAN | 是否启用故障转移 | DEFAULT true |
-| max_retry | INT | 最大重试次数 | DEFAULT 2 |
-| health_check_interval | INT | 健康检查间隔（秒） | DEFAULT 30 |
-| description | TEXT | 描述 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-#### 6.7.9 RouteGroupProvider（路由关联）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| route_group_id | BIGINT | 路由分组 | FK → RouteGroup.id, NOT NULL |
-| provider_id | BIGINT | Provider | FK → Provider.id, NOT NULL |
-| weight | INT | 权重（用于负载均衡） | DEFAULT 100 |
-| priority | INT | 优先级（用于故障转移） | DEFAULT 100 |
-| status | ENUM | 状态 | ENABLED / DISABLED / UNHEALTHY |
-| health_status | ENUM | 健康状态 | HEALTHY / DEGRADED / UNHEALTHY |
-| consecutive_failures | INT | 连续失败次数 | DEFAULT 0 |
-| last_health_check_at | TIMESTAMP | 最后健康检查时间 | NULL |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
-
-#### 6.7.10 TokenLimit（Token限额）
-
-| 属性 | 类型 | 说明 | 约束 |
-|------|------|------|------|
-| id | BIGINT | 主键 | PK, AUTO_INCREMENT |
-| limit_code | VARCHAR(64) | 限额编码 | UNIQUE, NOT NULL |
-| user_id | BIGINT | 所属用户 | FK → User.id, NOT NULL |
-| provider_id | BIGINT | 关联的 Provider | FK → Provider.id, NULL 表示全部 |
-| model_id | BIGINT | 关联的 Model | FK → Model.id, NULL 表示全部 |
-| token_limit_enabled | BOOLEAN | 是否启用Token限额 | DEFAULT true |
-| max_tokens | DECIMAL(20,6) | Token限额总量 | NULL 表示不限 |
-| used_tokens | DECIMAL(20,6) | 已用Token量 | DEFAULT 0 |
-| request_limit_enabled | BOOLEAN | 是否启用请求次数限额 | DEFAULT false |
-| max_requests | INT | 请求次数限额 | NULL 表示不限 |
-| used_requests | INT | 已用请求次数 | DEFAULT 0 |
-| period_type | ENUM | 周期类型 | DAILY / WEEKLY / MONTHLY / TOTAL |
-| period_day_of_week | INT | 周内日期 | 1-7，WEEKLY 时有效 |
-| period_day_of_month | INT | 月内日期 | 1-31，MONTHLY 时有效 |
-| exceeded_action | ENUM | 超限动作 | REJECT / DOWNGRADE |
-| switch_model_id | BIGINT | 降级切换模型 | exceeded_action 为 DOWNGRADE 时必填 |
-| status | ENUM | 状态 | ACTIVE / SUSPENDED / DELETED |
-| created_by | BIGINT | 创建人 | FK → users.id |
-| created_at | TIMESTAMP | 创建时间 | NOT NULL |
-| updated_by | BIGINT | 更新人 | FK → users.id |
-| updated_at | TIMESTAMP | 更新时间 | NOT NULL |
+以下为各业务域实体的详细表结构，待补充。
 
 ---
 
-## 七、安全与合规需求
+## 八、安全与合规需求
+
+---
+
+## 八、安全与合规需求
 
 ### 7.0 安全合规差异化定位
 
@@ -1854,7 +1715,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 八、可观测性需求
+## 九、可观测性需求
 
 ### 8.1 全链路追踪
 
@@ -1921,7 +1782,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 九、性能需求
+## 十、性能需求
 
 ### 9.1 核心性能指标
 
@@ -1962,7 +1823,7 @@ PII 自动检测应用于以下数据范围：
 
 ---
 
-## 十、部署与运维需求
+## 十一、部署与运维需求
 
 ### 10.1 部署模式
 
@@ -2106,7 +1967,7 @@ services:
 
 ---
 
-## 十一、非功能性需求
+## 十二、非功能性需求
 
 ### 11.1 可测试性
 
@@ -2249,7 +2110,7 @@ services:
 
 ---
 
-## 十二、版本规划
+## 十三、版本规划
 
 ### 12.1 产品版本定义
 
@@ -2471,11 +2332,571 @@ v1.0 ──(升级)──▶ v1.1 ──(升级)──▶ v2.0
 
 ### 12.5 开发路线图
 
-| 阶段 | 发布时间 (目标) | 交付内容 |
-|------|----------------|---------|
-| **Phase 1** | TBD | **标准版 v1.0**：API 网关、渠道管理、Token 认证、Token 计量、Docker 部署 |
+| 阶段 | 交付内容 |
+|------|---------|
+| **Phase 1** | ✅ **基础框架与实体完善**：实体设计、枚举定义、数据库迁移脚本 |
+| **Phase 2** | **核心 CRUD 功能**：用户管理、Provider & Model 管理、API Key 管理、TokenLimit 管理 |
+| **Phase 3** | **预警与计量**：AlertRule 管理、AlertNotification 管理、UsageLog 记录、预警引擎 |
+| **Phase 4** | **其他功能**：用量报表、操作日志、系统设置 |
+| **Phase 5** | **前端管理后台**：Web UI + API 对接 |
+| **Phase 6** | **路由增强**：智能路由、故障切换、负载均衡 |
 
-### 12.6 MVP (Phase 1) 范围
+---
+
+## 12.6 Phase 2: 核心 CRUD 功能
+
+> **目标**: 完成用户管理、Provider/Model 管理、API Key 管理、TokenLimit 管理的完整 CRUD 功能。
+
+### 12.6.1 API 端点总览
+
+| 资源 | 端点 | 方法 | 说明 | 认证 |
+|------|------|------|------|------|
+| **用户管理** | `/api/v1/users` | GET | 分页查询用户列表 | Admin |
+| | `/api/v1/users` | POST | 创建用户 | Admin |
+| | `/api/v1/users/{id}` | GET | 获取用户详情 | Admin |
+| | `/api/v1/users/{id}` | PUT | 更新用户 | Admin |
+| | `/api/v1/users/{id}` | DELETE | 删除用户（软删除） | Admin |
+| | `/api/v1/users/{id}/status` | PATCH | 更新用户状态 | Admin |
+| | `/api/v1/users/{id}/roles` | PUT | 分配用户角色 | Admin |
+| **Provider 管理** | `/api/v1/providers` | GET | 分页查询 Provider 列表 | Admin |
+| | `/api/v1/providers` | POST | 创建 Provider | Admin |
+| | `/api/v1/providers/{id}` | GET | 获取 Provider 详情 | Admin |
+| | `/api/v1/providers/{id}` | PUT | 更新 Provider | Admin |
+| | `/api/v1/providers/{id}` | DELETE | 删除 Provider（软删除） | Admin |
+| | `/api/v1/providers/{id}/test` | POST | 测试 Provider 连通性 | Admin |
+| **Model 管理** | `/api/v1/models` | GET | 分页查询 Model 列表 | Admin |
+| | `/api/v1/models` | POST | 创建 Model | Admin |
+| | `/api/v1/models/{id}` | GET | 获取 Model 详情 | Admin |
+| | `/api/v1/models/{id}` | PUT | 更新 Model | Admin |
+| | `/api/v1/models/{id}` | DELETE | 删除 Model（软删除） | Admin |
+| **API Key 管理** | `/api/v1/api-keys` | GET | 分页查询 API Key 列表 | 用户 |
+| | `/api/v1/api-keys` | POST | 创建 API Key | 用户 |
+| | `/api/v1/api-keys/{id}` | GET | 获取 API Key 详情 | 用户 |
+| | `/api/v1/api-keys/{id}` | PUT | 更新 API Key | 用户 |
+| | `/api/v1/api-keys/{id}` | DELETE | 删除 API Key（软删除） | 用户 |
+| | `/api/v1/api-keys/{id}/rotate` | POST | 轮换 API Key | 用户 |
+| | `/api/v1/api-keys/{id}/disable` | POST | 禁用 API Key | 用户 |
+| | `/api/v1/api-keys/{id}/enable` | POST | 启用 API Key | 用户 |
+| **TokenLimit 管理** | `/api/v1/token-limits` | GET | 分页查询 TokenLimit 列表 | Admin |
+| | `/api/v1/token-limits` | POST | 创建 TokenLimit | Admin |
+| | `/api/v1/token-limits/{id}` | GET | 获取 TokenLimit 详情 | Admin |
+| | `/api/v1/token-limits/{id}` | PUT | 更新 TokenLimit | Admin |
+| | `/api/v1/token-limits/{id}` | DELETE | 删除 TokenLimit（软删除） | Admin |
+| **角色管理** | `/api/v1/roles` | GET | 查询角色列表 | Admin |
+| | `/api/v1/roles` | POST | 创建角色 | Admin |
+| | `/api/v1/roles/{id}` | GET | 获取角色详情 | Admin |
+| | `/api/v1/roles/{id}` | PUT | 更新角色 | Admin |
+| | `/api/v1/roles/{id}` | DELETE | 删除角色 | Admin |
+| | `/api/v1/roles/{id}/permissions` | PUT | 分配角色权限 | Admin |
+
+### 12.6.2 统一响应格式
+
+所有管理 API 使用统一的响应信封格式：
+
+```json
+{
+  "success": true,
+  "data": { ... },
+  "error": null,
+  "trace_id": "trace_789xyz",
+  "timestamp": "2026-04-28T10:30:00Z"
+}
+```
+
+### 12.6.3 User 管理
+
+#### DTO 结构
+
+**UserCreateRequest** (创建用户请求)
+```json
+{
+  "username": "string (required, 2-64 chars)",
+  "email": "string (required, valid email)",
+  "password": "string (required, 8-128 chars, must contain uppercase, lowercase, number)",
+  "phone": "string (optional, valid phone number)",
+  "role_codes": ["ADMIN", "DEVELOPER"] (required, at least one)
+}
+```
+
+**UserUpdateRequest** (更新用户请求)
+```json
+{
+  "username": "string (optional, 2-64 chars)",
+  "email": "string (optional, valid email)",
+  "phone": "string (optional, valid phone number)",
+  "avatar_url": "string (optional, valid URL)"
+}
+```
+
+**UserResponse** (用户响应)
+```json
+{
+  "id": 1,
+  "user_code": "USR20260428001",
+  "username": "john.doe",
+  "email": "john@example.com",
+  "phone": "13800138000",
+  "avatar_url": "https://example.com/avatar.jpg",
+  "status": "ACTIVE",
+  "email_verified": false,
+  "roles": [
+    {
+      "role_code": "ADMIN",
+      "name": "管理员"
+    }
+  ],
+  "last_login_at": "2026-04-28T10:00:00Z",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**UserStatusUpdateRequest** (更新状态请求)
+```json
+{
+  "status": "DISABLED" (required: ACTIVE, DISABLED, LOCKED)
+}
+```
+
+**UserRoleAssignRequest** (分配角色请求)
+```json
+{
+  "role_codes": ["ADMIN", "DEVELOPER"] (required)
+}
+```
+
+#### 分页查询参数
+| 参数 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| page | int | 1 | 页码 |
+| limit | int | 20 | 每页数量 (max 100) |
+| keyword | string | - | 搜索关键字 (username/email) |
+| status | string | - | 筛选状态 |
+| role_code | string | - | 筛选角色 |
+
+### 12.6.4 Provider 管理
+
+#### DTO 结构
+
+**ProviderCreateRequest** (创建 Provider 请求)
+```json
+{
+  "provider_code": "openai (required, 2-64 chars, unique)",
+  "provider_name": "OpenAI (required, 2-128 chars)",
+  "provider_type": "OPENAI (required: OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)",
+  "base_url": "https://api.openai.com (required, valid URL)",
+  "website_url": "https://openai.com (optional, valid URL)",
+  "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
+  "priority": 100 (optional, 1-1000)
+}
+```
+
+**ProviderUpdateRequest** (更新 Provider 请求)
+```json
+{
+  "provider_name": "OpenAI (optional, 2-128 chars)",
+  "base_url": "https://api.openai.com (optional, valid URL)",
+  "website_url": "https://openai.com (optional, valid URL)",
+  "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
+  "priority": 100 (optional, 1-1000),
+  "status": "ACTIVE (optional: ACTIVE/SUSPENDED)"
+}
+```
+
+**ProviderResponse** (Provider 响应)
+```json
+{
+  "id": 1,
+  "provider_code": "openai",
+  "provider_name": "OpenAI",
+  "provider_type": "OPENAI",
+  "base_url": "https://api.openai.com",
+  "website_url": "https://openai.com",
+  "api_doc_url": "https://platform.openai.com/docs",
+  "priority": 100,
+  "status": "ACTIVE",
+  "models": [
+    {
+      "id": 1,
+      "model_code": "gpt-4o",
+      "display_name": "GPT-4o",
+      "context_window": 128000,
+      "status": "ACTIVE"
+    }
+  ],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**ProviderTestRequest** (测试连通性请求)
+```json
+{
+  "api_key": "sk-xxx (required, 用于测试的 API Key)"
+}
+```
+
+**ProviderTestResponse** (测试连通性响应)
+```json
+{
+  "success": true,
+  "latency_ms": 150,
+  "message": "连接成功",
+  "models": ["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"]
+}
+```
+
+### 12.6.5 Model 管理
+
+#### DTO 结构
+
+**ModelCreateRequest** (创建 Model 请求)
+```json
+{
+  "model_code": "gpt-4o (required, 2-128 chars, unique)",
+  "provider_id": 1 (required),
+  "provider_model_id": "gpt-4o (required, Provider 侧的模型 ID)",
+  "display_name": "GPT-4o (optional, 2-256 chars)",
+  "context_window": 128000 (optional),
+  "input_price": 2.5 (optional, 每 1M tokens 价格)",
+  "output_price": 10.0 (optional, 每 1M tokens 价格),
+  "capabilities": {
+    "vision": true,
+    "function_calling": true,
+    "streaming": true
+  } (optional)
+}
+```
+
+**ModelUpdateRequest** (更新 Model 请求)
+```json
+{
+  "display_name": "GPT-4o (optional)",
+  "context_window": 128000 (optional),
+  "input_price": 2.5 (optional),
+  "output_price": 10.0 (optional),
+  "capabilities": {
+    "vision": true,
+    "function_calling": true
+  } (optional),
+  "status": "ACTIVE (optional: ACTIVE/DEPRECATED)"
+}
+```
+
+**ModelResponse** (Model 响应)
+```json
+{
+  "id": 1,
+  "model_code": "gpt-4o",
+  "provider": {
+    "id": 1,
+    "provider_code": "openai",
+    "provider_name": "OpenAI"
+  },
+  "provider_model_id": "gpt-4o",
+  "display_name": "GPT-4o",
+  "context_window": 128000,
+  "input_price": 2.5,
+  "output_price": 10.0,
+  "capabilities": {
+    "vision": true,
+    "function_calling": true,
+    "streaming": true
+  },
+  "status": "ACTIVE",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.6 API Key 管理
+
+#### DTO 结构
+
+**ApiKeyCreateRequest** (创建 API Key 请求)
+```json
+{
+  "name": "My API Key (optional, 2-64 chars)",
+  "expires_at": "2027-12-31T23:59:59Z (optional, 永不过期 if null)",
+  "ip_whitelist": ["192.168.1.0/24", "10.0.0.1"] (optional, 空表示不限制),
+  "model_whitelist": ["gpt-4o", "gpt-4-turbo"] (optional, 空表示全部允许)
+}
+```
+
+**ApiKeyUpdateRequest** (更新 API Key 请求)
+```json
+{
+  "name": "My API Key (optional)",
+  "expires_at": "2027-12-31T23:59:59Z (optional)",
+  "ip_whitelist": ["192.168.1.0/24"] (optional),
+  "model_whitelist": ["gpt-4o"] (optional)
+}
+```
+
+**ApiKeyResponse** (API Key 响应)
+```json
+{
+  "id": 1,
+  "key_code": "AK20260428001",
+  "name": "My API Key",
+  "key_prefix": "sk-xxxxx",
+  "key_hint": "sk-xxxx...abcd (用于显示的掩码)",
+  "status": "ACTIVE",
+  "expires_at": "2027-12-31T23:59:59Z",
+  "last_used_at": "2026-04-28T10:00:00Z",
+  "ip_whitelist": ["192.168.1.0/24"],
+  "model_whitelist": ["gpt-4o"],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+**ApiKeyCreateResponse** (创建 API Key 响应 - 包含完整 Key)
+```json
+{
+  "id": 1,
+  "key_code": "AK20260428001",
+  "api_key": "sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "name": "My API Key",
+  "expires_at": "2027-12-31T23:59:59Z",
+  "created_at": "2026-04-28T08:00:00Z"
+}
+```
+
+> **注意**: `api_key` 只在创建时返回一次，之后无法找回。
+
+### 12.6.7 TokenLimit 管理
+
+#### DTO 结构
+
+**TokenLimitCreateRequest** (创建 TokenLimit 请求)
+```json
+{
+  "limit_code": "TL20260428001 (required, unique)",
+  "user_id": 1 (required),
+  "provider_id": 1 (optional, null 表示所有 Provider)",
+  "model_id": 1 (optional, null 表示所有 Model)",
+  "max_tokens": 1000000 (required, token 数量)",
+  "period_type": "MONTHLY (required: DAILY/WEEKLY/MONTHLY/TOTAL)",
+  "period_day_of_week": 1 (optional, 1-7, WEEKLY 时必填),
+  "period_day_of_month": 1 (optional, 1-31, MONTHLY 时必填),
+  "exceeded_action": "REJECT (required: REJECT/DOWNGRADE)",
+  "switch_model_id": 2 (optional, DOWNGRADE 时必填)
+}
+```
+
+**TokenLimitUpdateRequest** (更新 TokenLimit 请求)
+```json
+{
+  "max_tokens": 2000000 (optional),
+  "period_type": "MONTHLY (optional)",
+  "period_day_of_week": 1 (optional),
+  "period_day_of_month": 1 (optional),
+  "exceeded_action": "DOWNGRADE (optional)",
+  "switch_model_id": 2 (optional),
+  "status": "ACTIVE (optional)
+}
+```
+
+**TokenLimitResponse** (TokenLimit 响应)
+```json
+{
+  "id": 1,
+  "limit_code": "TL20260428001",
+  "user": {
+    "id": 1,
+    "user_code": "USR20260428001",
+    "username": "john.doe"
+  },
+  "provider": {
+    "id": 1,
+    "provider_code": "openai",
+    "provider_name": "OpenAI"
+  },
+  "model": {
+    "id": 1,
+    "model_code": "gpt-4o",
+    "display_name": "GPT-4o"
+  },
+  "limit_type": "USER_CUSTOM",
+  "max_tokens": 1000000,
+  "used_tokens": 250000,
+  "remaining_tokens": 750000,
+  "usage_ratio": 0.25,
+  "period_type": "MONTHLY",
+  "period_day_of_week": null,
+  "period_day_of_month": 1,
+  "exceeded_action": "REJECT",
+  "switch_model": null,
+  "status": "ACTIVE",
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.8 Role 管理
+
+#### DTO 结构
+
+**RoleCreateRequest** (创建角色请求)
+```json
+{
+  "role_code": "custom_role (required, unique)",
+  "name": "自定义角色 (required)",
+  "description": "描述 (optional)",
+  "permission_codes": ["provider:read", "model:create"] (required)
+}
+```
+
+**RoleUpdateRequest** (更新角色请求)
+```json
+{
+  "name": "自定义角色 (optional)",
+  "description": "描述 (optional)",
+  "is_active": true (optional),
+  "permission_codes": ["provider:read", "model:create", "token:read"] (optional)
+}
+```
+
+**RoleResponse** (角色响应)
+```json
+{
+  "id": 1,
+  "role_code": "custom_role",
+  "name": "自定义角色",
+  "description": "描述",
+  "role_type": "CUSTOM",
+  "is_active": true,
+  "permissions": [
+    {
+      "permission_code": "provider:read",
+      "name": "查看提供商",
+      "category": "provider"
+    }
+  ],
+  "created_at": "2026-04-28T08:00:00Z",
+  "updated_at": "2026-04-28T10:00:00Z"
+}
+```
+
+### 12.6.9 错误码定义
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| INVALID_PARAMETER | 400 | 参数校验失败 |
+| DUPLICATE_RESOURCE | 409 | 资源已存在 |
+| RESOURCE_NOT_FOUND | 404 | 资源不存在 |
+| RESOURCE_INACTIVE | 400 | 资源已禁用 |
+| OPERATION_NOT_ALLOWED | 403 | 操作不允许 |
+| INTERNAL_ERROR | 500 | 内部错误 |
+
+### 12.6.10 任务列表
+
+#### Task 1: 用户管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/UserController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/UserResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/user/UserApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/UserGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaUserGateway.java`
+
+#### Task 2: Provider 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/ProviderController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ProviderResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/provider/ProviderApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/router/gateway/ProviderGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/router/JpaProviderGateway.java`
+
+#### Task 3: Model 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/ModelController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/ModelResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/model/ModelApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/router/gateway/ModelGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/router/JpaModelGateway.java`
+
+#### Task 4: API Key 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/controller/ApiKeyController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyResponse.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/api-key/dto/ApiKeyCreateResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/api-key/ApiKeyApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/ApiKeyGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaApiKeyGateway.java`
+
+#### Task 5: TokenLimit 管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/TokenLimitController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/TokenLimitResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/token-limit/TokenLimitApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/TokenLimitGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaTokenLimitGateway.java`
+
+#### Task 6: 角色管理 CRUD
+
+**Files:**
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/RoleController.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleCreateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleUpdateRequest.java`
+- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleResponse.java`
+- Create: `src/main/java/com/codingas/gateway/application/role/RoleApplication.java`
+- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/RoleGateway.java`
+- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaRoleGateway.java`
+
+#### Task 7: 数据库迁移
+
+**Files:**
+- Create: `src/main/resources/db/V2__add_indexes.sql`
+
+---
+
+### 12.6 Phase 1 完成内容
+
+Phase 1 已完成以下工作：
+
+#### 12.6.1 新增/修改实体
+
+| 实体 | 变更类型 | 说明 |
+|------|----------|------|
+| User | 重构 | 新增 phone, avatarUrl, emailVerified, oauthProviders, piiSalt, lastLoginAt, deletedAt |
+| Role | 重构 | 从常量类转为 JPA 实体，支持 SYSTEM/CUSTOM 类型和软删除 |
+| Permission | 重构 | 从常量类转为 JPA 实体，细粒度权限码 |
+| UserRole | 新增 | 用户-角色多对多关联实体 |
+| Provider | 重构 | 使用 ProviderType 枚举，新增 websiteUrl, apiDocUrl |
+| Model | 重构 | 新增 providerModelId, contextWindow, input/outputPrice, capabilities (JSON) |
+| GatewayApiKey | 重构 | 使用 User 实体引用，新增 ipWhitelist |
+| TokenLimit | 重构 | 支持 user/provider/model 三维限额，新增 periodType, exceededAction |
+| UsageLog | 新增 | 记录每次 API 调用详情 |
+| AlertRule | 新增 | 预警规则配置 (USAGE/HEALTH/QUOTA) |
+| AlertNotification | 新增 | 预警通知记录 |
+
+#### 12.6.2 新增枚举
+- UserStatus (ACTIVE/DISABLED/LOCKED/DELETED)
+- UserRole (ADMIN/DEVELOPER/OBSERVER/FINANCE_ADMIN)
+- ProviderType (OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)
+- PeriodType (DAILY/WEEKLY/MONTHLY/TOTAL)
+- ExceededAction (REJECT/DOWNGRADE)
+
+#### 12.6.3 数据库迁移
+- V1__init_schema.sql: 包含完整的 12 张表和索引
+
+### 12.7 MVP (Phase 1) 范围
 
 MVP 必须包含以下最小可用功能：
 
@@ -2491,7 +2912,7 @@ MVP 必须包含以下最小可用功能：
 | 管理控制台 | 基础仪表盘、渠道管理页面、API_Key管理 |
 | 部署 | Docker Compose 一键部署 |
 
-### 12.7 版本号语义
+### 12.8 版本号语义
 
 遵循 Semantic Versioning:
 
@@ -2505,7 +2926,7 @@ MVP 必须包含以下最小可用功能：
 |---------|---------|------|
 | 标准版 | `v{major}.{minor}.{patch}` | `v1.0.0` |
 
-### 12.8 API 破坏性变更迁移策略
+### 12.9 API 破坏性变更迁移策略
 
 当 API 发生破坏性变更时（如端点路径变更、请求/响应格式变更），采用**双版本共存过渡期**策略：
 

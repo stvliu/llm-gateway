@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.service.IpBlocklistService;
+import com.codingas.gateway.domain.security.service.IpBlocklistDomainService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.*;
 class IPBlockCheckInterceptorTest {
 
     @Mock
-    private IpBlocklistService ipBlocklistService;
+    private IpBlocklistDomainService ipBlocklistService;
 
     @Mock
     private HttpServletRequest request;

@@ -1,7 +1,6 @@
 package com.codingas.gateway.adapter.model.dto;
 
 import com.codingas.gateway.domain.router.entity.Model;
-import com.codingas.gateway.domain.router.entity.Provider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -33,9 +32,8 @@ public class UpdateModelRequest {
     public Model toEntity() {
         Model model = new Model();
         model.setDisplayName(this.displayName);
-        Provider providerEntity = new Provider();
-        providerEntity.setId(this.providerId);
-        model.setProvider(providerEntity);
+        // 注意：Provider 需要通过 Service 层注入，这里只设置 ID
+        model.setProvider(null);
         model.setContextWindow(this.contextWindow);
         model.setInputPrice(this.inputPrice);
         model.setOutputPrice(this.outputPrice);

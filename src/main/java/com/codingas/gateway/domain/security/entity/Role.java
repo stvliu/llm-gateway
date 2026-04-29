@@ -1,8 +1,9 @@
 package com.codingas.gateway.domain.security.entity;
+import com.codingas.gateway.domain.DomainEntity;
+import com.codingas.gateway.domain.BaseEntity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import jakarta.persistence.*;
 import lombok.*;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
 
@@ -11,31 +12,22 @@ import java.time.Instant;
  *
  * <p>权限集合，用于简化权限管理和批量授权。</p>
  */
-@Entity
-@Table(name = "roles")
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@Data
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+@Slf4j
 public class Role extends BaseEntity {
 
-    @Column(name = "role_code", nullable = false, unique = true, length = 64)
     private String roleCode;
 
-    @Column(name = "name", nullable = false, length = 64)
     private String name;
 
-    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "role_type", nullable = false)
     private RoleType roleType = RoleType.CUSTOM;
 
-    @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
-    @Column(name = "deleted_at")
     private Instant deletedAt;
 
     public enum RoleType {
@@ -43,5 +35,12 @@ public class Role extends BaseEntity {
         SYSTEM,
         /** 自定义角色 */
         CUSTOM
+    }
+
+    /**
+     * 检查角色是否激活
+     */
+    public boolean isActive() {
+        return Boolean.TRUE.equals(isActive);
     }
 }

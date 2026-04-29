@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.service.AuthenticationService;
+import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ApiKeyAuthAdapter {
 
-    private final AuthenticationService authenticationService;
+    private final AuthenticationDomainService authenticationService;
 
     /**
      * 验证 API Key
