@@ -19,17 +19,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ModelService 单元测试
+ * ModelDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelService")
-class ModelServiceTest {
+@DisplayName("ModelDomainService")
+class ModelDomainServiceTest {
 
     @Mock
     private ModelGateway modelGateway;
 
     @InjectMocks
-    private ModelService modelService;
+    private ModelDomainService modelService;
 
     private Model activeModel;
 

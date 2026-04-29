@@ -2,8 +2,8 @@ package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.common.enums.UserRole;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.service.AuthenticationService;
-import com.codingas.gateway.domain.security.service.RbacService;
+import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.security.service.RbacDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,10 +25,10 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock
-    private AuthenticationService authenticationService;
+    private AuthenticationDomainService authenticationService;
 
     @Mock
-    private RbacService rbacService;
+    private RbacDomainService rbacService;
 
     @InjectMocks
     private AuthServiceImpl authService;

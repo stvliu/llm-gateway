@@ -12,7 +12,7 @@ import java.time.Instant;
  */
 @Slf4j
 @Service
-public class DefaultNotificationService implements NotificationService {
+public class DefaultNotificationDomainService implements NotificationDomainService {
 
     @Override
     public boolean sendExpirationWarning(String email, String username, String keyCode, String keyName, Instant expiresAt) {

@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class BruteForceProtectionService {
+public class BruteForceProtectionDomainService {
 
     private final IpBlockGateway ipBlockGateway;
     private final GatewayProperties properties;

@@ -23,10 +23,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * ModelRouterService 单元测试
+ * ModelRouterDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-class ModelRouterServiceTest {
+class ModelRouterDomainServiceTest {
 
     @Mock
     private ModelGateway modelGateway;
@@ -41,7 +41,7 @@ class ModelRouterServiceTest {
     private GatewayProperties.RouterProperties routerProperties;
 
     @InjectMocks
-    private ModelRouterService modelRouterService;
+    private ModelRouterDomainService modelRouterService;
 
     private Model activeModel;
     private Model inactiveModel;

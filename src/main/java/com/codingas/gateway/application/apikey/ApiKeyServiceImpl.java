@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionService;
+import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,7 +35,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
     private final ApiKeyGateway apiKeyGateway;
     private final UserGateway userGateway;
-    private final ApiKeyEncryptionService encryptionService;
+    private final ApiKeyEncryptionDomainService encryptionService;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 

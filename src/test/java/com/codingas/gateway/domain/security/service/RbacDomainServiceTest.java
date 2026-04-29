@@ -11,16 +11,16 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * RbacService 单元测试
+ * RbacDomainService 单元测试
  */
-@DisplayName("RbacService 权限控制测试")
-class RbacServiceTest {
+@DisplayName("RbacDomainService 权限控制测试")
+class RbacDomainServiceTest {
 
-    private RbacService rbacService;
+    private RbacDomainService rbacService;
 
     @BeforeEach
     void setUp() {
-        rbacService = new RbacService();
+        rbacService = new RbacDomainService();
     }
 
     @Nested

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class IpBlocklistService {
+public class IpBlocklistDomainService {
 
     private final IpBlockGateway ipBlockGateway;
 

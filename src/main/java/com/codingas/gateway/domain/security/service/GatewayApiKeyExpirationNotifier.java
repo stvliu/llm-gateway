@@ -30,7 +30,7 @@ public class GatewayApiKeyExpirationNotifier {
 
     private final ApiKeyGateway apiKeyGateway;
     private final UserGateway userGateway;
-    private final NotificationService notificationService;
+    private final NotificationDomainService notificationService;
 
     /**
      * 定时扫描即将过期的 Key（每天凌晨 2 点执行）

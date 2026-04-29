@@ -46,7 +46,10 @@
       "Bash(echo \"Exit code: $?\")",
       "Bash(grep -v \"^$\")",
       "Read(//tmp/**)",
-      "Read(//mnt/e/workspace/llm-gateway/**)"
+      "Read(//mnt/e/workspace/llm-gateway/**)",
+      "Bash(gh pr *)",
+      "Bash(echo \"Compile: $?\")",
+      "Bash(echo \"Exit: $?\")"
     ]
   }
 }

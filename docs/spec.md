@@ -261,6 +261,7 @@ llm-gateway/
 |------|---------|------|
 | **后端语言** | Java 21 | 虚拟线程、模式匹配、Record |
 | **Web 框架** | Spring Boot 3.5.x + Spring MVC | 企业级标准生态 |
+| **HTTP 客户端** | OkHttp 4.12 + 虚拟线程 | 同步调用，自动挂起/恢复 |
 | **并发模型** | JDK 21 虚拟线程 | 轻量级高并发，无需响应式 |
 | **ORM** | Spring Data JPA | 类型安全、编译期检查 |
 | **缓存** | 标准版：内存缓存；企业版：Redis (Redssion 客户端) | 分布式限流、会话管理 |
@@ -1390,7 +1391,36 @@ Link: <https://docs.example.com/migration/v2>; rel="successor-version"
 
 **字段命名**: `snake_case`（如 `user_code`, `provider_name`）
 
-### 7.2 审计字段
+### 7.2 服务层命名规范
+
+**Domain Service（领域服务）**：
+- 职责：业务逻辑，领域规则
+- 放置：`domain/xxx/service/`
+- 命名：能力名 + `DomainService` 后缀
+- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `RbacDomainService`
+
+**Application Service（应用服务）**：
+- 职责：用例编排，跨领域协调，不含业务逻辑
+- 放置：`application/xxx/`（按用例分包）
+- 命名：能力名 + `Service` 后缀
+- 示例：`AuthenticationService`, `RateLimitService`, `TokenCounterService`
+
+**命名区分原则**：
+
+| 层 | 命名模式 | 语义 |
+|---|---------|------|
+| Domain | `XxxDomainService` | 领域能力，表示"能做什么" |
+| Application | `XxxService` | 应用服务，表示"执行什么操作" |
+
+**示例对照**：
+```
+domain/security/service/AuthenticationDomainService     # 领域认证能力
+domain/security/service/RateLimitDomainService           # 领域限流能力
+application/auth/AuthenticationService                  # 应用认证服务
+application/auth/TokenLimitService                       # 应用限额服务
+```
+
+### 7.3 审计字段
 
 **所有业务实体表必须包含**:
 

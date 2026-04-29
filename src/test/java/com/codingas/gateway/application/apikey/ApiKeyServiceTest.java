@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionService;
+import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ class ApiKeyServiceTest {
     private UserGateway userGateway;
 
     @Mock
-    private ApiKeyEncryptionService encryptionService;
+    private ApiKeyEncryptionDomainService encryptionService;
 
     @InjectMocks
     private ApiKeyServiceImpl apiKeyService;

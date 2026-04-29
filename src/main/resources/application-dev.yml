@@ -1,0 +1,34 @@
+# ==============================================
+# Dev 开发环境配置
+# ==============================================
+
+spring:
+  # H2 Console 启用
+  h2:
+    console:
+      enabled: true
+      settings:
+        web-allow-others: false
+
+  # 开发环境 JPA 配置
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+  # 开发环境日志
+  logging:
+    level:
+      root: INFO
+      com.codingas.gateway: DEBUG
+      org.springframework.web: INFO
+      org.hibernate.SQL: WARN
+
+# 服务端口
+server:
+  port: 8080
+
+# SaToken 日志启用
+sa-token:
+  is-log: true

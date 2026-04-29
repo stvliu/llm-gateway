@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RbacService {
+public class RbacDomainService {
 
     /**
      * 检查用户是否有权访问指定资源

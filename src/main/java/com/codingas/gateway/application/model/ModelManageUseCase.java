@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.domain.router.entity.Model;
-import com.codingas.gateway.domain.router.service.ModelService;
+import com.codingas.gateway.domain.router.service.ModelDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ModelManageUseCase {
 
-    private final ModelService modelService;
+    private final ModelDomainService modelService;
 
     /**
      * 查询所有模型

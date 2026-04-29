@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.domain.router.service.ProviderService;
+import com.codingas.gateway.domain.router.service.ProviderDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ProviderManageUseCase {
 
-    private final ProviderService providerService;
+    private final ProviderDomainService providerService;
 
     /**
      * 查询所有提供商

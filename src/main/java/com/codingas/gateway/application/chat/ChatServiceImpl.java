@@ -4,7 +4,7 @@ import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.ModelRouterService;
+import com.codingas.gateway.domain.router.service.ModelRouterDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 
-    private final ModelRouterService modelRouterService;
+    private final ModelRouterDomainService modelRouterService;
     private final LLMChatUseCase llmChatUseCase;
 
     /**

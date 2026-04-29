@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.service.IpBlocklistService;
+import com.codingas.gateway.domain.security.service.IpBlocklistDomainService;
 import com.codingas.gateway.infrastructure.security.interceptor.AbstractGatewayInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class IPBlockCheckInterceptor extends AbstractGatewayInterceptor {
 
-    private final IpBlocklistService ipBlocklistService;
+    private final IpBlocklistDomainService ipBlocklistService;
 
     @Override
     public String name() {

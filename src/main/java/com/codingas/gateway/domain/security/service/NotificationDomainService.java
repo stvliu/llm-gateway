@@ -7,7 +7,7 @@ import java.time.Instant;
  *
  * <p>用于发送 API Key 过期提醒等通知。</p>
  */
-public interface NotificationService {
+public interface NotificationDomainService {
 
     /**
      * 发送 API Key 过期警告

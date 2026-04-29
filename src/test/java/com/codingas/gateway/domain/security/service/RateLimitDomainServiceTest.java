@@ -18,11 +18,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
- * RateLimitService 单元测试
+ * RateLimitDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RateLimitService")
-class RateLimitServiceTest {
+@DisplayName("RateLimitDomainService")
+class RateLimitDomainServiceTest {
 
     @Mock
     private TokenLimitGateway tokenLimitGateway;
@@ -45,7 +45,7 @@ class RateLimitServiceTest {
     @Test
     @DisplayName("isAllowed 应使用配置的 bucketSize 和 refillRate")
     void isAllowed_usesConfiguredValues() {
-        RateLimitService service = new RateLimitService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
 
         boolean result = service.isAllowed(1L);
@@ -56,7 +56,7 @@ class RateLimitServiceTest {
     @Test
     @DisplayName("isAllowed apiKeyId 为 null 应返回 true")
     void isAllowed_nullApiKey_returnsTrue() {
-        RateLimitService service = new RateLimitService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
 
         boolean result = service.isAllowed(null);
 
@@ -66,7 +66,7 @@ class RateLimitServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 超过阈值应返回 true")
     void shouldFailClose_exceedsThreshold_returnsTrue() {
-        RateLimitService service = new RateLimitService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
 
         boolean result = service.shouldFailClose(1001);
 
@@ -76,7 +76,7 @@ class RateLimitServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 未超过阈值应返回 false")
     void shouldFailClose_belowThreshold_returnsFalse() {
-        RateLimitService service = new RateLimitService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
 
         boolean result = service.shouldFailClose(999);
 

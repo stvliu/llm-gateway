@@ -17,17 +17,17 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * IpBlocklistService 单元测试
+ * IpBlocklistDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("IpBlocklistService")
-class IpBlocklistServiceTest {
+@DisplayName("IpBlocklistDomainService")
+class IpBlocklistDomainServiceTest {
 
     @Mock
     private IpBlockGateway ipBlockGateway;
 
     @InjectMocks
-    private IpBlocklistService ipBlocklistService;
+    private IpBlocklistDomainService ipBlocklistService;
 
     @Test
     @DisplayName("isBlocked null IP 应返回 false")

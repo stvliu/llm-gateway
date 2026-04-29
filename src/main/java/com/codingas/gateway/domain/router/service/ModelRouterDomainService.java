@@ -22,7 +22,7 @@ import static java.util.Optional.ofNullable;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ModelRouterService {
+public class ModelRouterDomainService {
 
     private final ModelGateway modelGateway;
     private final RouteGroupGateway routeGroupGateway;

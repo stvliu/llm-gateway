@@ -4,7 +4,7 @@ import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.ModelRouterService;
+import com.codingas.gateway.domain.router.service.ModelRouterDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.when;
 class ChatServiceTest {
 
     @Mock
-    private ModelRouterService modelRouterService;
+    private ModelRouterDomainService modelRouterService;
 
     @Mock
     private LLMChatUseCase llmChatUseCase;

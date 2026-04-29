@@ -1,0 +1,46 @@
+# ==============================================
+# Production 生产环境配置
+# ==============================================
+
+spring:
+  # 禁用 H2 Console
+  h2:
+    console:
+      enabled: false
+
+  # 生产环境 JPA 配置
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 100
+
+  # Hikari 连接池优化
+  datasource:
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+
+  # 缓存配置 - 生产环境可切换 Redis
+  cache:
+    type: simple
+    simple:
+      maximum-size: 5000
+
+  # 生产环境日志
+  logging:
+    level:
+      root: WARN
+      com.codingas.gateway: INFO
+      org.springframework: WARN
+      org.hibernate: WARN
+
+# 服务端口
+server:
+  port: ${SERVER_PORT:8080}
+
+# SaToken 日志禁用
+sa-token:
+  is-log: false

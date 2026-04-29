@@ -474,12 +474,10 @@ GatewayException (根异常)
 
 **并发安全保证**:
 - ✅ JDK 21 虚拟线程提供轻量级并发,无需手动管理线程池
-
-
-**并发安全保证**:
 - ✅ `TokenQuotaTracker` 使用 `AtomicInteger` 保证线程安全
 - ✅ `LLMProviderAdapter` 必须是无状态的，支持多线程并发调用
 - ✅ 请求记录按任务 ID 分区写入，避免行锁竞争
+- ✅ LLM HTTP 客户端使用 OkHttp，虚拟线程中阻塞调用自动挂起
 
 ---
 

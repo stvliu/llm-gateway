@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.domain.security.service.AuthenticationService;
-import com.codingas.gateway.domain.security.service.RbacService;
+import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.security.service.RbacDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final AuthenticationService authenticationService;
-    private final RbacService rbacService;
+    private final AuthenticationDomainService authenticationService;
+    private final RbacDomainService rbacService;
 
     /**
      * 认证 API Key

@@ -17,11 +17,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * AuditService 单元测试
+ * AuditDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuditService")
-class AuditServiceTest {
+@DisplayName("AuditDomainService")
+class AuditDomainServiceTest {
 
     @Mock
     private AuditGateway auditGateway;
@@ -30,7 +30,7 @@ class AuditServiceTest {
     private SensitiveDataMasker sensitiveDataMasker;
 
     @InjectMocks
-    private AuditService auditService;
+    private AuditDomainService auditService;
 
     @Test
     @DisplayName("logAuthSuccess 应保存成功审计日志")

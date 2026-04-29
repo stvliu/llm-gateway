@@ -19,11 +19,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 
 /**
- * BruteForceProtectionService 单元测试
+ * BruteForceProtectionDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("BruteForceProtectionService")
-class BruteForceProtectionServiceTest {
+@DisplayName("BruteForceProtectionDomainService")
+class BruteForceProtectionDomainServiceTest {
 
     @Mock
     private IpBlockGateway ipBlockGateway;
@@ -42,7 +42,7 @@ class BruteForceProtectionServiceTest {
     @Test
     @DisplayName("recordFailedAttempt 未达上限应记录但不封禁")
     void recordFailedAttempt_belowLimit_recordsOnly() {
-        BruteForceProtectionService service = new BruteForceProtectionService(ipBlockGateway, properties);
+        BruteForceProtectionDomainService service = new BruteForceProtectionDomainService(ipBlockGateway, properties);
 
         service.recordFailedAttempt("192.168.1.1");
         service.recordFailedAttempt("192.168.1.1");
@@ -54,7 +54,7 @@ class BruteForceProtectionServiceTest {
     @Test
     @DisplayName("recordFailedAttempt 达到上限应封禁 IP")
     void recordFailedAttempt_reachesLimit_blocksIp() {
-        BruteForceProtectionService service = new BruteForceProtectionService(ipBlockGateway, properties);
+        BruteForceProtectionDomainService service = new BruteForceProtectionDomainService(ipBlockGateway, properties);
 
         service.recordFailedAttempt("192.168.1.100");
         service.recordFailedAttempt("192.168.1.100");
@@ -70,7 +70,7 @@ class BruteForceProtectionServiceTest {
     @Test
     @DisplayName("clearFailedAttempts 应清除记录后重新计数")
     void clearFailedAttempts_clearsRecordAndResetsCount() {
-        BruteForceProtectionService service = new BruteForceProtectionService(ipBlockGateway, properties);
+        BruteForceProtectionDomainService service = new BruteForceProtectionDomainService(ipBlockGateway, properties);
 
         service.recordFailedAttempt("192.168.1.1");
         service.recordFailedAttempt("192.168.1.1");

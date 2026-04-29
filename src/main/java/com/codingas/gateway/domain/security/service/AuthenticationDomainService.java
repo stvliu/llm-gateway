@@ -21,7 +21,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService {
+public class AuthenticationDomainService {
 
     private static final String CACHE_NAME = "auth";
 

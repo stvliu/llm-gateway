@@ -19,7 +19,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ProviderService {
+public class ProviderDomainService {
 
     private final ProviderGateway providerGateway;
     private final ApplicationEventPublisher eventPublisher;

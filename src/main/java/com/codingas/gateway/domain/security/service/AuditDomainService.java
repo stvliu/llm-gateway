@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AuditService {
+public class AuditDomainService {
 
     private final AuditGateway auditGateway;
     private final SensitiveDataMasker sensitiveDataMasker;

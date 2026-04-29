@@ -2,7 +2,7 @@ package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.domain.router.service.ModelService;
+import com.codingas.gateway.domain.router.service.ModelDomainService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ import static org.mockito.Mockito.*;
 class ModelManageUseCaseTest {
 
     @Mock
-    private ModelService modelService;
+    private ModelDomainService modelService;
 
     @InjectMocks
     private ModelManageUseCase modelManageUseCase;

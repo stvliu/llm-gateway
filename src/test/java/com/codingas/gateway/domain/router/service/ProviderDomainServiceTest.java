@@ -19,11 +19,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ProviderService 单元测试
+ * ProviderDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProviderService")
-class ProviderServiceTest {
+@DisplayName("ProviderDomainService")
+class ProviderDomainServiceTest {
 
     @Mock
     private ProviderGateway providerGateway;
@@ -32,7 +32,7 @@ class ProviderServiceTest {
     private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
-    private ProviderService providerService;
+    private ProviderDomainService providerService;
 
     @Test
     @DisplayName("delete 应将提供商 status 设置为 DELETED")

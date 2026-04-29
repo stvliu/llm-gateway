@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RateLimitService {
+public class RateLimitDomainService {
 
     private final TokenLimitGateway tokenLimitGateway;
     private final TokenBucketRateLimiter rateLimiter;

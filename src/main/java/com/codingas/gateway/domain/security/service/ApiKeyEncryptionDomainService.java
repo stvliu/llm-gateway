@@ -17,7 +17,7 @@ import java.security.MessageDigest;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ApiKeyEncryptionService {
+public class ApiKeyEncryptionDomainService {
 
     private final EncryptionService encryptionService;
 
