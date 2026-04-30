@@ -1,6 +1,6 @@
 # LLM-Gateway 项目需求规格说明书
 
-> **文档版本**: v4.8
+> **文档版本**: v4.9
 > **项目版本**: v1.0.0
 > **生成日期**: 2026-04-18
 > **状态**: 草案
@@ -12,6 +12,12 @@
 - [一、项目概述](#一项目概述)
 - [二、竞品分析与差异化定位](#二竞品分析与差异化定位)
 - [三、系统架构](#三系统架构)
+  - [3.1 整体架构图](#31-整体架构图)
+  - [3.2 多模块结构](#32-多模块结构)
+  - [3.3 分层架构](#33-分层架构)
+  - [3.3.1 业务域定义](#331-业务域定义)
+  - [3.4 前端架构](#34-前端架构gateway-console)
+  - [3.5 技术栈](#35-技术栈)
 - [四、核心功能需求](#四核心功能需求)
 - [五、API 接口需求](#五api-接口需求)
 - [六、数据模型需求](#六数据模型需求)
@@ -50,7 +56,7 @@
 | **当前版本** | v1.0.0 (规划) |
 | **开发语言** | Java 21 |
 | **核心框架** | Spring Boot 3.5.x + Spring MVC + 虚拟线程 |
-| **数据库** | H2（默认），兼容 MySQL 8.0+ / PostgreSQL 14+ |
+| **数据库** | H2（默认），兼容 MySQL 5.5+ / PostgreSQL 13+ |
 | **缓存** | 标准版：内存缓存；企业版：Redis 6.0+ |
 | **默认端口** | 8080 |
 | **开源协议** | 待定 (Apache-2.0 推荐) |
@@ -115,7 +121,7 @@ LLM-Gateway 的本质是：
 - Q: API Key 加密算法选择 → A: AES-256-CBC（仅加密，无完整性验证，需额外 HMAC）
 - Q: 密码重置方式 → A: 同时支持邮箱验证码和管理员重置
 - Q: 前端技术栈 → A: React 19 + TypeScript + Ant Desing 5.x），参照 Ant Design Pro
-- Q: 数据库选择 → A: 默认 H2，兼容 MySQL 8.0+ 和 PostgreSQL 14+（参照 jmix-crm）
+- Q: 数据库选择 → A: 默认 H2，兼容 MySQL 5.5+ 和 PostgreSQL 13+（参照 jmix-crm）
 - Q: 登录页面及前端页面设计 → A: 参照 jmix-2.8.0 及 jmix-crm 的登录页面和前端 UI 设计
 - Q: 用户注册方式 → A: 同时支持邮箱注册和管理员创建用户
 - Q: 缓存策略 → A: 标准版使用内存缓存，企业版使用 Redis 6.0+
@@ -164,81 +170,15 @@ LLM-Gateway 的本质是：
 
 ### 3.1 整体架构图
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                        客户端层                               │
-│  Claude Code / ChatGPT Next Web / 网关控制台 / 自研客户端      │
-└────────────────────────────┬─────────────────────────────────┘
-                             │ HTTP / SSE (OpenAI 或 Anthropic 格式)
-┌────────────────────────────▼─────────────────────────────────┐
-│                     LLM-Gateway 网关层                      │
-│  ┌─────────────┐  ┌──────────────┐  ┌──────────────────┐    │
-│  │  认证中间件  │  │  策略引擎    │  │  智能路由分发    │    │
-│  │  Token 验证  │  │  可视化编排  │  │  负载均衡        │    │
-│  │  IP/UA 过滤  │  │  请求转换    │  │  故障转移        │    │
-│  └─────────────┘  └──────────────┘  └──────────────────┘    │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │              协议转换与适配层                         │    │
-│  │  OpenAI ↔ Anthropic ↔ Gemini ↔ 各厂商原生格式        │    │
-│  └──────────────────────────────────────────────────────┘    │
-│  ┌──────────────────────────────────────────────────────┐    │
-│  │              可观测性 & 成本治理                      │    │
-│  │  OpenTelemetry 追踪 | Token 限额 | 审计日志 | 指标采集  │    │
-│  └──────────────────────────────────────────────────────┘    │
-└────────────────────────────┬─────────────────────────────────┘
-                             │
-┌────────────────────────────▼─────────────────────────────────┐
-│                     上游渠道层                               │
-│  OpenAI / Anthropic / Gemini / 通义千问 / 文心 / DeepSeek   │
-│  Ollama / 智谱 / 讯飞 / 百川 / Moonshot / 硅基流动 ...       │
-└──────────────────────────────────────────────────────────────┘
+详见 [应用架构 - 系统架构图](./应用架构.md#10-系统架构图)
 
-数据持久化层:
-  开发/调试用H2数据库，并兼容MySQL/PostgreSQL以支持生产环境部署 (业务数据)
-  开发/调试用内存，生产环境用Redis (缓存 + 会话 + 分布式限流)
-  
-可观测性层:
-  OpenTelemetry Collector
-  Prometheus (指标采集)
-  Grafana / Jaeger (可视化)
-```
+### 3.2 多模块结构
 
-### 3.2 分层架构
+详见 [应用架构 - 多模块结构](./应用架构.md#11-多模块结构)
 
-本项目采用 **COLA Light 5.0 架构**，按业务领域分包，Gateway 接口定义在 domain 层，实现 in infrastructure 层。
+### 3.3 分层架构
 
-```
-llm-gateway/
-└── src/main/java/com/codingas/gateway/
-    ├── adapter/                       # 适配器层（接入层）
-    │   ├── chat/                    # OpenAI/Anthropic 兼容端点
-    │   ├── model/                   # 模型管理 API
-    │   └── admin/                   # 管理后台 API
-    ├── application/                   # 应用层（用例编排）
-    │   ├── chat/                    # 代理转发用例
-    │   ├── auth/                    # 认证用例
-    │   └── model/                   # 模型管理用例
-    ├── domain/                        # 领域层
-    │   ├── gateway/                   # 跨领域 Gateway 接口
-    │   ├── router/                   # 路由领域
-    │   ├── proxy/                    # 代理领域
-    │   ├── supply/                   # 模型供给领域
-    │   ├── security/                 # 安全控制领域
-    │   ├── quota/                    # 限额配额领域
-    │   ├── audit/                    # 审计合规领域
-    │   └── alert/                   # 告警管理领域
-    ├── infrastructure/                # 基础设施层
-    │   ├── gateway/                  # Gateway 实现
-    │   │   ├── supply/             # Provider/Model 持久化
-    │   │   ├── security/           # User/ApiKey 持久化
-    │   │   ├── quota/              # Redis 限流实现
-    │   │   ├── audit/              # 审计持久化
-    │   │   └── llm/                # OpenAI/Anthropic 代理实现
-    │   └── config/                  # 配置类
-    └── common/                        # 公共组件
-        ├── exception/               # 基础异常
-        └── constants/               # 常量
-```
+详见 [应用架构 - 分层定义](./应用架构.md#21-分层定义) 和 [技术架构 - 分层架构](./技术架构.md#22-分层架构)
 
 **约束**: 上层只能依赖下层接口，禁止跨层调用或反向依赖。
 
@@ -260,59 +200,13 @@ llm-gateway/
 - **核心域**：网关差异化竞争力所在，缺失则失去存在价值
 - **支撑域**：企业级客户刚需，为核心域提供保障机制
 
-### 3.3 前端架构（gateway-console）
+### 3.4 前端架构（gateway-console）
 
-```
-llm-gateway/
-├── gateway-console/          # 前端管理控制台（独立项目）
-│   ├── src/
-│   │   ├── api/             # API 客户端（调用后端 REST API）
-│   │   ├── components/       # 通用组件
-│   │   ├── pages/           # 页面组件
-│   │   ├── hooks/           # 自定义 Hooks
-│   │   ├── store/           # 状态管理（Zustand/Jotai）
-│   │   ├── i18n/            # 国际化
-│   │   └── utils/           # 工具函数
-│   └── package.json
-├── gateway/                 # 后端网关（Java/Spring Boot）
-└── ...
-```
+详见 [技术架构 - gateway-console 前端模块](./技术架构.md#3-gateway-console-前端模块)
 
-**前后端通信**：
-- 后端提供 REST API，前端通过 API 客户端调用
-- 认证：前端获取 JWT Token，携带在请求头中
-- 实时数据：SSE 或 WebSocket 用于日志实时推送
+### 3.5 技术栈
 
-**前端技术栈**：
-| 技术 | 用途 |
-|------|------|
-| React 19 + TypeScript | UI 框架 |
-| Ant Design 5.x | 组件库，参考 Ant Design Pro |
-| React Router | 路由管理 |
-| Zustand / Jotai | 状态管理 |
-| Axios / Fetch | HTTP 客户端 |
-| React Query / TanStack Query | 服务端状态 |
-| i18next | 国际化 |
-| Vite | 构建工具 |
-
-### 3.4 技术栈
-
-| 层级 | 技术选型 | 说明 |
-|------|---------|------|
-| **后端语言** | Java 21 | 虚拟线程、模式匹配、Record |
-| **Web 框架** | Spring Boot 3.5.x + Spring MVC | 企业级标准生态 |
-| **HTTP 客户端** | OkHttp 5.3.2 + 虚拟线程 | 同步调用，自动挂起/恢复 |
-| **并发模型** | JDK 21 虚拟线程 | 轻量级高并发，无需响应式 |
-| **ORM** | Spring Data JPA | 类型安全、编译期检查 |
-| **缓存** | 标准版：内存缓存；企业版：Redis (Redssion 客户端) | 分布式限流、会话管理 |
-| **数据库** | H2（默认），兼容 MySQL 8.0+ / PostgreSQL 14+ | 主从可选 |
-| **日志** | Logback + SLF4J | 结构化 JSON 日志 |
-| **可观测性** | Micrometer + OpenTelemetry | 指标、追踪、日志导出 |
-| **API 文档** | SpringDoc OpenAPI (Swagger) | 自动生成 API 文档 |
-| **安全** | Sa-Token | 认证、鉴权、OAuth2 |
-| **构建工具** | Maven / Gradle | 多模块构建 |
-| **前端** | React + TypeScript + Ant Design 组件 | 管理控制台，参考 Ant Design Pro |
-| **容器化** | Docker + Kubernetes | 云原生部署 |
+详见 [技术架构 - 技术栈](./技术架构.md#21-技术栈)
 
 ---
 
@@ -1086,226 +980,11 @@ gateway-console/src/i18n/
 
 ## 五、API 接口需求
 
-### 5.1 外部 API（网关端点）
+### 5.1 接口契约
 
-#### 5.1.1 OpenAI 兼容端点
+详见 [应用架构 - 接口契约](./应用架构.md#接口契约)
 
-| 端点 | 方法 | 说明 | 认证 |
-|------|------|------|------|
-| `/v1/chat/completions` | POST | 文本对话 | Bearer Token |
-| `/v1/completions` | POST | 文本补全 | Bearer Token |
-| `/v1/embeddings` | POST | 向量化 | Bearer Token |
-| `/v1/images/generations` | POST | 图像生成 | Bearer Token |
-| `/v1/audio/transcriptions` | POST | 语音识别 | Bearer Token |
-| `/v1/audio/translations` | POST | 语音翻译 | Bearer Token |
-| `/v1/audio/speech` | POST | 语音合成 | Bearer Token |
-| `/v1/moderations` | POST | 内容审核 | Bearer Token |
-
-#### 5.1.2 Anthropic 兼容端点
-
-| 端点 | 方法 | 说明 | 认证 |
-|------|------|------|------|
-| `/v1/messages` | POST | 消息对话 | x-api-key Header |
-
-#### 5.1.3 管理 API
-
-| 端点 | 方法 | 说明 | 认证 |
-|------|------|------|------|
-| `/api/v1/users` | CRUD | 用户管理 | Bearer Token (Admin) |
-| `/api/v1/channels` | CRUD | 渠道管理 | Bearer Token (Admin) |
-| `/api/v1/channel-groups` | CRUD | 渠道分组 | Bearer Token (Admin) |
-| `/api/v1/models` | GET | 模型目录 | Bearer Token |
-| `/api/v1/providers` | CRUD | 供应商管理 | Bearer Token (Admin) |
-| `/api/v1/api-keys` | CRUD | API Key 管理 | Bearer Token |
-| `/api/v1/strategies` | CRUD | 策略管理 | Bearer Token (Admin) |
-| `/api/v1/token-limits` | CRUD | Token限额管理 | Bearer Token (Admin) |
-| `/api/v1/logs` | GET | 日志查询 | Bearer Token |
-| `/api/v1/metrics` | GET | 指标查询 | Bearer Token |
-| `/api/v1/health` | GET | 健康检查 | 无 |
-| `/api/v1/plugins` | CRUD | 插件管理 | Bearer Token (Admin) |
-| `/api/v1/tools` | CRUD | Agent 工具管理 | Bearer Token (Admin) |
-| `/api/v1/prompts` | CRUD | Prompt 模板管理 | Bearer Token |
-| `/api/v1/knowledge` | CRUD | 知识库管理 | Bearer Token (Admin) |
-| `/api/v1/sessions` | CRUD | 会话管理 | Bearer Token |
-| `/api/v1/cache` | CRUD | 语义缓存管理 | Bearer Token (Admin) |
-| `/api/v1/audit-policies` | CRUD | 内容审核规则 | Bearer Token (Admin) |
-
-**说明**: 管理 API 采用用户级别访问控制，所有资源（Provider、RouteGroup 等）全局共享。API 请求通过 GatewayApiKey 认证并关联到用户。
-
-**P2 模块 API 说明**: Agent 工具、语义缓存、会话上下文、RAG 知识库、内容审核等功能为企业版或 P2 版本特性，通过独立端点管理。
-
-### 5.2 API 认证方式
-
-| 认证方式 | 使用场景 | Header 格式 |
-|---------|---------|------------|
-| **Bearer Token** | 外部 API 调用、管理 API | `Authorization: Bearer sk-xxx` |
-| **x-api-key** | Anthropic 兼容端点 | `x-api-key: sk-xxx` |
-| **Session Cookie** | 管理控制台 Web 界面 | `Cookie: session=xxx` |
-
-### 5.3 标准错误响应格式
-
-**OpenAI 格式**（所有 OpenAI 兼容端点和限流/Token限额等通用错误）:
-```json
-{
-  "error": {
-    "message": "Invalid API key provided.",
-    "type": "invalid_request_error",
-    "param": "api_key",
-    "code": "invalid_api_key"
-  },
-  "request_id": "req_abc123def456",
-  "trace_id": "trace_789xyz"
-}
-```
-
-**Anthropic 格式**（仅 `/v1/messages` 端点的 Anthropic 原生错误）:
-```json
-{
-  "type": "error",
-  "error": {
-    "type": "authentication_error",
-    "message": "Invalid API key"
-  },
-  "request_id": "req_abc123def456",
-  "trace_id": "trace_789xyz"
-}
-```
-
-**统一规则**: 两种格式的错误响应均包含 `request_id` 和 `trace_id` 字段（Anthropic 官方格式中追加）。
-
-**内部错误响应扩展**（适用于代理 Provider 请求返回的错误，包含上游 Provider 原始信息）:
-```json
-{
-  "error": {
-    "message": "Rate limit exceeded",
-    "type": "rate_limit_error",
-    "code": "PROVIDER_429",
-    "provider": "openai",
-    "raw_code": "insufficient_quota",
-    "raw_message": "You exceeded your configured rate limit"
-  },
-  "request_id": "req_abc123def456",
-  "trace_id": "trace_789xyz"
-}
-```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `message` | string | 网关错误消息，对用户友好 |
-| `type` | string | 错误类型分类 |
-| `code` | string | 网关错误码（如 `PROVIDER_429`） |
-| `provider` | string | 上游 Provider 标识 |
-| `raw_code` | string | Provider 原始错误码 |
-| `raw_message` | string | Provider 原始错误消息 |
-
-### 5.4 Management API 统一响应格式
-
-**适用范围**: `/api/v1/*` 管理 API（不包括 Proxy API `/v1/*`）
-
-**响应信封结构**:
-```json
-{
-  "success": true,
-  "data": { ... },
-  "error": null,
-  "trace_id": "trace_789xyz",
-  "timestamp": "2026-04-23T10:30:00Z"
-}
-```
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `success` | boolean | 操作是否成功 |
-| `data` | object / null | 成功时返回数据，失败时为 null |
-| `error` | object / null | 失败时包含错误信息，成功时为 null |
-| `trace_id` | string | OpenTelemetry 追踪 ID |
-| `timestamp` | string | ISO 8601 时间戳 |
-
-**成功响应示例**:
-```json
-{
-  "success": true,
-  "data": {
-    "id": 1,
-    "username": "john.doe",
-    "status": "ACTIVE"
-  },
-  "error": null,
-  "trace_id": "trace_789xyz",
-  "timestamp": "2026-04-23T10:30:00Z"
-}
-```
-
-**错误响应示例**:
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "INVALID_PARAMETER",
-    "message": "用户名不能为空",
-    "details": { "field": "username" }
-  },
-  "trace_id": "trace_789xyz",
-  "timestamp": "2026-04-23T10:30:00Z"
-}
-```
-
-**分页响应格式**:
-```json
-{
-  "success": true,
-  "data": {
-    "items": [ ... ],
-    "pagination": {
-      "page": 1,
-      "limit": 20,
-      "total": 100,
-      "total_pages": 5
-    }
-  },
-  "error": null,
-  "trace_id": "trace_789xyz",
-  "timestamp": "2026-04-23T10:30:00Z"
-}
-```
-
-**与 Proxy API 的区分**:
-
-| API 类型 | 路径 | 响应格式 |
-|----------|------|---------|
-| Proxy API (OpenAI) | `/v1/chat/completions` | OpenAI 原生格式 |
-| Proxy API (Anthropic) | `/v1/messages` | Anthropic 原生格式 |
-| Management API | `/api/v1/*` | 统一 ApiResponse 信封 |
-
-**HTTP 状态码映射**（统一适用于两种格式）:
-
-| HTTP 状态码 | 错误类型 | 触发场景 |
-|------------|---------|---------|
-| 400 | `invalid_request_error` | 请求体格式错误、缺少必填字段、枚举值无效 |
-| 401 | `authentication_error` / `invalid_request_error` | Token 无效、过期、格式错误 |
-| 402 | `payment_required` / `insufficient_quota` | 额度超限（REJECT 策略） |
-| 403 | `permission_error` / `forbidden` | 模型不在白名单、IP 不在白名单 |
-| 404 | `not_found_error` | 请求的模型不存在或无可用渠道 |
-| 408 | `timeout_error` | 上游渠道请求超时 |
-| 429 | `rate_limit_error` | RPM/TPM 超限 |
-| 500 | `api_error` | 所有渠道均失败 |
-| 502 | `upstream_error` | 上游渠道返回非预期格式 |
-| 503 | `service_unavailable` | 无可用渠道（REJECT 策略） |
-| 504 | `upstream_timeout` | 上游渠道网关超时 |
-
-### 5.4 限流响应头
-
-所有返回 429 的响应必须包含以下标准头：
-
-| 头名 | 类型 | 说明 | 示例 |
-|------|------|------|------|
-| `Retry-After` | 秒数 | 建议客户端重试等待时间 | `30` |
-| `X-RateLimit-Limit` | 整数 | 当前限流阈值 | `1000` |
-| `X-RateLimit-Remaining` | 整数 | 剩余可用请求数（窗口内） | `0` |
-| `X-RateLimit-Reset` | Unix 时间戳 | 限流窗口重置时间 | `1712937660` |
-
-### 5.5 API 版本策略
+---
 
 **网关 API 版本控制**: 使用 URL 路径版本（`/v1/`, `/v2/`），不使用 Header 版本。
 
@@ -1335,116 +1014,313 @@ Link: <https://docs.example.com/migration/v2>; rel="successor-version"
 
 ### 6.1 业务域划分
 
-根据业务本质，将实体划分为以下五大域：
+根据业务本质，将实体划分为以下 **7 个业务域**：
 
-| 序号 | 业务域 / Domain | 核心职责 / Core Responsibilities |
-|------|----------------|--------------------------------|
-| 1 | 安全域 / Security | 认证、授权、访问凭证、额度配额、脱敏、加解密等 / Authentication, Authorization, Access Credentials, Quota, Data Masking, Encryption |
-| 2 | 模型供给域 / Model Supply | 提供商、模型、提供商访问凭证 / Provider, Model, Provider Access Credential |
-| 3 | 会话交互域 / Session Interaction | 对话、消息、响应片段、用量记录 / Conversation, Message, Response Chunk, Usage Record |
-| 4 | 运维监控域 / Operations & Monitoring | 告警、通知 / Alert, Notification |
-| 5 | 审计合规域 / Audit & Compliance | 操作审计 / Operation Audit |
+| # | 业务域 | 英文名 | 核心问题 | 核心职责 | 定位 |
+|---|--------|--------|---------|---------|------|
+| 1 | 路由 | router | **怎么路由？** | 路由决策、供应商选择 | **核心域** |
+| 2 | 代理 | proxy | **怎么转发？** | 代理转发、请求发送 | **核心域** |
+| 3 | 模型供给 | supply | **有什么可用？** | Provider、Model、ProviderApiKey 管理 | 支撑域 |
+| 4 | 安全控制 | security | **谁能访问？** | 身份认证、访问授权、敏感数据保护 | 支撑域 |
+| 5 | 限额配额 | quota | **可以用多少？** | Token 限额，用量记录、限流控制 | 支撑域 |
+| 6 | 审计合规 | audit | **谁做了什么？** | 操作审计、调用记录 | 支撑域 |
+| 7 | 告警管理 | alert | **出了什么问题？** | 告警规则、通知发送 | 支撑域 |
+
+**域定位说明**：
+- **核心域**：网关差异化竞争力所在，缺失则失去存在价值
+- **支撑域**：企业级客户刚需，为核心域提供保障机制
 
 ### 6.2 实体与实体关系
 
-#### 6.2.1 安全域 / Security Domain
+#### 6.2.1 router/ — 路由域
 
-| 实体 / Entity | 业务关系 / Business Relations |
-|----------------|------------------------------|
-| 用户 / User | 系统使用者 / System User |
-| 网关访问凭证 / Gateway Access Credential | 用户 创建 网关访问凭证；用户 持有 多个网关访问凭证 / User creates Gateway Access Credential; User holds multiple Gateway Access Credentials |
-| 额度配额 / Quota | 用户 配置 额度配额 / User configures Quota |
-| IP黑名单 / IP Blocklist | 系统 屏蔽 IP / System blocks IP |
-| 敏感词规则 / Sensitive Rule | 系统 应用 敏感词规则 / System applies Sensitive Rules |
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| RouteGroup | 路由分组 | 一组路由策略配置，支持负载均衡和故障转移 |
+| RouteGroupProvider | 路由关联 | 路由分组与 Provider 的关联，含权重/优先级/健康状态 |
 
-#### 6.2.2 模型供给域 / Model Supply Domain
+**实体关系**：
+```
+RouteGroup
+├── 聚合 RouteGroupProvider（一个分组包含多个路由关联）
+├── 配置负载均衡策略（权重分配）
+└── 配置故障转移策略（备用 Provider）
 
-| 实体 / Entity | 业务关系 / Business Relations |
-|----------------|------------------------------|
-| 提供商 / Provider | 提供商 提供 多个模型 / Provider provides multiple Models |
-| 模型 / Model | 模型 必须归属 于一个提供商 / Model must belong to one Provider |
-| 提供商访问凭证 / Provider Access Credential | 提供商访问凭证 用于访问 一个提供商；提供商 可配置 多个提供商访问凭证 / Provider Access Credential is used to access one Provider; Provider can configure multiple Provider Access Credentials |
+RouteGroupProvider
+├── 关联 Provider（一个路由关联指向一个 Provider）
+├── 持有权重配置（用于负载均衡流量分配）
+├── 持有优先级配置（高优先级优先使用）
+├── 持有健康状态（由健康检查更新）
+└── 当 Provider 不可用时自动跳过
+```
 
-#### 6.2.3 会话交互域 / Session Interaction Domain
+#### 6.2.2 proxy/ — 代理域
 
-| 实体 / Entity | 业务关系 / Business Relations |
-|----------------|------------------------------|
-| 对话 / Conversation | 用户 发起 多个对话 / User initiates multiple Conversations |
-| 消息 / Message | 对话 包含 多条消息 / Conversation contains multiple Messages |
-| 响应片段 / Response Chunk | 消息 包含 多个响应片段 / Message contains multiple Response Chunks |
-| 用量记录 / Usage Record | 系统 记录 用量 / System records Usage |
-| 调用日志 / Call Log | 系统 记录 调用日志 / System records Call Log |
+proxy 域通过 ProxyGateway 接口实现，不管理实体。核心接口：
 
-#### 6.2.4 运维监控域 / Operations & Monitoring Domain
+| 接口 | 英文名 | 说明 |
+|------|--------|------|
+| ProxyGateway | 代理网关 | 转发请求到 LLM Provider 的能力接口 |
 
-| 实体 / Entity | 业务关系 / Business Relations |
-|----------------|------------------------------|
-| 告警规则 / Alert Rule | 系统 配置 告警规则 / System configures Alert Rule |
-| 告警通知 / Alert Notification | 告警规则 触发 告警通知 / Alert Rule triggers Alert Notification |
+**实体关系**：
+```
+ProxyGateway（接口）
+├── 定义转发方法：forward(request) → response
+├── 定义流式方法：forwardStream(request, consumer)
+├── 由 OpenAIProxyGateway 实现（OpenAI 格式）
+└── 由 AnthropicProxyGateway 实现（Anthropic 格式）
 
-#### 6.2.5 审计合规域 / Audit & Compliance Domain
+ProxyDomainService
+├── 调用 ProxyGateway 执行实际转发
+├── 编排认证、限额、路由流程
+└── 不保存对话内容，不维护会话状态
+```
 
-| 实体 / Entity | 业务关系 / Business Relations |
-|----------------|------------------------------|
-| 审计日志 / Audit Log | 系统 记录 审计日志 / System records Audit Log |
+#### 6.2.3 supply/ — 模型供给域
+
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| Provider | 模型提供商 | 模型服务提供方，如 OpenAI、Anthropic |
+| Model | AI 模型 | 具体的大模型，如 gpt-4o、claude-sonnet-4 |
+| ProviderApiKey | Provider 凭证 | 网关调用 Provider 的凭据，管理员配置，支持多 Key 轮换 |
+
+**实体关系**：
+```
+Provider
+├── 提供多个 Model（一个 Provider 下有多个可用模型）
+├── 配置多个 ProviderApiKey（一个 Provider 支持多组凭证）
+├── 由管理员创建/启用/禁用
+├── 标识 BaseURL、状态（启用/禁用）
+└── 被路由决策查询用于执行调用
+
+Model
+├── 必须归属一个 Provider（不能独立存在）
+├── 标识模型能力（上下文长度、多模态、Tool Use 支持）
+└── 可被路由关联引用（指定可用模型）
+
+ProviderApiKey
+├── 用于访问一个 Provider（凭证绑定到特定 Provider）
+├── 支持多 Key 轮换（自动选择可用 Key）
+├── 加密存储
+├── 持有 RPM/TPM 限制（上游 Provider 限制）
+└── 失效时由健康检查自动禁用
+```
+
+#### 6.2.4 security/ — 安全控制域
+
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| User | 系统用户 | 网关使用者，含角色枚举 |
+| GatewayApiKey | 网关凭证 | 用户调用网关的凭证，用户自管理 |
+| IpBlocklist | IP 黑名单 | 系统屏蔽的 IP 地址 |
+| SensitiveDataRule | 敏感数据规则 | PII 检测与脱敏规则 |
+
+**实体关系**：
+```
+User
+├── 持有 role: UserRole（枚举：ADMIN / USER）
+├── 创建多个 GatewayApiKey（用户持有自己的凭证）
+├── 操作产生 AuditLog（谁做了什么）
+├── 登录触发身份认证
+└── 密码 BCrypt 加密存储
+
+GatewayApiKey
+├── 被 User 创建（用户生成自己的 Key）
+├── 用于请求认证（携带在请求头中）
+├── 可设置 IP 白名单（限制访问来源）
+├── 可设置模型白名单（限制可用模型）
+├── 过期时间可配置
+└── 哈希存储（不可还原）
+
+IpBlocklist
+├── 被系统全局应用（所有请求都检查）
+├── 由管理员配置
+├── 支持 IP/CIDR 格式
+└── 命中时返回 403
+
+SensitiveDataRule
+├── 被应用到请求/响应进行脱敏
+├── 包含检测规则（正则、关键词）
+├── 定义脱敏方式（掩码、哈希、删除）
+└── 覆盖 PII 类型：手机号、身份证、邮箱、银行卡等
+```
+
+#### 6.2.5 quota/ — 限额配额域
+
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| TokenLimit | Token 限额 | 用户/Key/渠道的 Token 用量上限 |
+| RateLimitConfig | 限流配置 | RPM/TPM 请求次数限制 |
+| UsageRecord | 用量记录 | API 调用消耗的 Token 统计记录 |
+
+**实体关系**：
+```
+TokenLimit
+├── 约束 User（用户级限额）
+├── 约束 GatewayApiKey（Key 级限额）
+├── 可选约束 Provider（用户×渠道限额）
+├── 超限时触发预设策略（REJECT → 402 / DOWNGRADE / SWITCH）
+├── 支持周期重置（天/周/月/总量）
+└── 预扣机制：请求前预估用量并冻结
+
+RateLimitConfig
+├── 约束 GatewayApiKey（Key 级 RPM/TPM）
+├── 超限时返回 429 + Retry-After 头
+├── 独立于 TokenLimit（两种不同的限制机制）
+└── 支持 RPM（每分钟请求数）和 TPM（每分钟 Token 数）
+
+UsageRecord
+├── 归属 GatewayApiKey（记录 Key 的用量）
+├── 记录输入 Token 数量
+├── 记录输出 Token 数量
+├── 用于限额计算
+├── 支持按时间聚合（天/周/月统计）
+└── 由路由执行调用后产生
+```
+
+#### 6.2.6 audit/ — 审计合规域
+
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| AuditLog | 审计日志 | 管理操作记录 |
+| CallLog | 调用日志 | API 调用元数据记录（用于追溯） |
+
+**实体关系**：
+```
+AuditLog
+├── 记录操作者（User）
+├── 记录操作类型（操作码）
+├── 记录操作内容（变更前后数据）
+├── 记录操作时间（时间戳）
+├── 记录操作结果（成功/失败）
+├── 记录客户端 IP（来源追溯）
+├── 使用链式哈希（每条包含前一条哈希值）
+├── WORM 存储（不可修改/删除）
+└── 满足 SOX/GDPR/等保合规要求
+
+CallLog
+├── 归属 GatewayApiKey（记录凭证的调用）
+├── 记录调用元数据：
+│   ├── User
+│   ├── Provider
+│   ├── 请求时间、响应时间
+│   ├── 状态码、错误信息
+│   └── Trace ID（追踪标识）
+├── 用于用量统计和审计追溯
+└── 由路由执行调用后产生
+```
+
+#### 6.2.7 alert/ — 告警管理域
+
+| 实体 | 英文名 | 说明 |
+|------|--------|------|
+| AlertRule | 告警规则 | 告警触发条件定义 |
+| AlertTemplate | 告警模板 | 通知格式模板 |
+| AlertNotification | 告警通知 | 告警发送记录 |
+
+**实体关系**：
+```
+AlertRule
+├── 定义触发条件（阈值、表达式）
+├── 关联 AlertTemplate（使用模板格式化通知）
+├── 由领域事件触发
+├── 触发后产生 AlertNotification
+├── 可属于不同业务域：
+│   ├── 安全告警（登录异常、额度超限）
+│   ├── 路由告警（Provider 不可用、失败率上升）
+│   ├── 供给告警（Key 余额不足、模型下线）
+│   └── 系统告警（服务异常、配置变更）
+└── 支持静默期配置（避免重复告警）
+
+AlertTemplate
+├── 定义通知格式（标题、内容结构）
+├── 被多个 AlertRule 引用（模板复用）
+├── 支持多种渠道（邮件、Webhook、短信）
+├── 包含变量占位符
+└── 支持多语言（中文/英文）
+
+AlertNotification
+├── 由 AlertRule 触发产生
+├── 使用 AlertTemplate 格式化
+├── 记录：
+│   ├── 触发时间
+│   ├── 告警内容
+│   ├── 通知渠道
+│   ├── 发送状态（成功/失败）
+│   └── 确认状态（已确认/未确认）
+└── 可被用户确认（Ack）
+```
 
 ### 6.3 业务关系总览
 
-#### 6.3.1 安全域 / Security Domain
+#### 6.3.1 核心业务链路
 
 ```
-用户 (User)
-├── 创建 多个 网关访问凭证 (Gateway Access Credential)
-├── 配置 多个 额度配额 (Quota)
-├── 系统 屏蔽 IP (IP Blocklist)
-└── 系统 应用 敏感词规则 (Sensitive Rule)
+请求入口
+    │
+    ▼
+┌─────────────────────────────────────────────┐
+│  security — 安全控制                         │
+│  User ──持有──► GatewayApiKey               │
+│       ──受限于──► TokenLimit (quota/)       │
+└─────────────────────┬───────────────────────┘
+                      │ 认证通过
+                      ▼
+┌─────────────────────────────────────────────┐
+│  quota — 限额配额                            │
+│  GatewayApiKey ──受控于──► TokenLimit       │
+│                 ──受控于──► RateLimitConfig │
+└─────────────────────┬───────────────────────┘
+                      │ 限额检查通过
+                      ▼
+┌─────────────────────────────────────────────┐
+│  router — 路由（核心）                       │
+│  RouteGroup ──包含──► RouteGroupProvider   │
+│                       │                     │
+│                       ▼                     │
+│                   Provider                  │
+│                       │                     │
+│                       ▼                     │
+│                   Model                    │
+└─────────────────────┬───────────────────────┘
+                      │
+      ┌───────────────┼───────────────┐
+      ▼               ▼               ▼
+┌──────────┐   ┌──────────┐   ┌──────────┐
+│  audit   │   │  alert   │
+│ 谁做了什么│   │出了什么问题│
+│           │   │           │
+│ AuditLog │   │ AlertRule │
+│  CallLog │   │ AlertNotif│
+└──────────┘   └──────────┘
 ```
 
-#### 6.3.2 模型供给域 / Model Supply Domain
+#### 6.3.2 关键业务语义
 
-```
-提供商 (Provider)
-├── 提供 多个 模型 (Model)
-└── 可配置 多个 提供商访问凭证 (Provider Access Credential)
+| 业务动作 | 关系描述 |
+|---------|---------|
+| 用户持有凭证 | User 创建/拥有 GatewayApiKey |
+| 凭证受限额约束 | GatewayApiKey 被 TokenLimit 限制 |
+| 调用产生用量 | CallLog 产生 UsageRecord |
+| 调用触发告警 | CallLog 触发 AlertRule |
+| 路由选择 Provider | RouteGroup 包含 RouteGroupProvider |
+| Provider 提供模型 | Provider 提供 Model |
+| 凭证用于调用 | ProviderApiKey 用于 Provider 调用 |
+| 操作产生审计 | User 操作产生 AuditLog |
+| 告警使用模板 | AlertRule 使用 AlertTemplate 格式化通知 |
 
-模型 (Model)
-└── 必须归属 于一个 提供商 (Provider)
-```
+### 6.4 业务一致性约束
 
-#### 6.3.3 会话交互域 / Session Interaction Domain
-
-```
-对话 (Conversation)
-├── 用户 发起 多个 对话
-└── 包含 多条 消息 (Message)
-
-消息 (Message)
-└── 包含 多个 响应片段 (Response Chunk)
-
-用量记录 (Usage Record)
-└── 系统 记录 用量
-
-调用日志 (Call Log)
-└── 系统 记录 调用日志
-```
-
-#### 6.3.4 运维监控域 / Operations & Monitoring Domain
-
-```
-告警规则 (Alert Rule)
-└── 触发 多条 告警通知 (Alert Notification)
-```
-
-#### 6.3.5 审计合规域 / Audit & Compliance Domain
-
-```
-审计日志 (Audit Log)
-└── 系统 记录 审计日志
-```
-
-### 6.4 P2 模块业务域（待补充）
-
-以下为 P2/企业版高级功能的业务域，待后续补充。
+| 约束 | 说明 |
+|------|------|
+| RouteGroup 必须关联至少一个 RouteGroupProvider | 路由分组不能为空 |
+| RouteGroupProvider 引用的 Provider 必须存在 | 路由关联必须指向有效 Provider |
+| Model 必须归属于一个 Provider | 模型不能独立存在 |
+| ProviderApiKey 必须关联一个 Provider | 凭证不能独立存在 |
+| TokenLimit 必须指定限制类型和周期 | 限额不能无限制 |
+| GatewayApiKey 必须归属于一个 User | 凭证不能是无主之物 |
+| AuditLog.previous_hash 必须指向前一条记录 | 形成链式校验 |
+| AlertRule 必须关联一个 AlertTemplate | 告警必须有格式化模板 |
 
 ---
 
@@ -3029,3 +2905,4 @@ MVP 必须包含以下最小可用功能：
 |------|------|---------|--------|
 | v1.0 | 2026-04-13 | 初始版本 | - |
 | v4.8 | 2026-04-30 | 更新 3.2 分层架构：采用 COLA Light 5.0 架构；新增 3.2.1 业务域定义章节（7 个业务域） | - |
+| v4.9 | 2026-04-30 | 对齐架构文档：修正第六章业务域模型为7域（router/proxy/supply/security/quota/audit/alert）；添加 OkHttp 5.3.2 版本；补充错误响应 raw_code/raw_message/provider 字段；修复章节编号 | - |
