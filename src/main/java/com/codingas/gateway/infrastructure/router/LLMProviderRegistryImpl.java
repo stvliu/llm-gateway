@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.gateway.router;
 
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
-import com.codingas.gateway.domain.model.gateway.LLMProviderRegistry;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.router.gateway.LLMProviderRegistry;
 import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.spi.AdapterRegistry;
 import lombok.RequiredArgsConstructor;

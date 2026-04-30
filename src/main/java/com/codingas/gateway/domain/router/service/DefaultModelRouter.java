@@ -1,14 +1,14 @@
-package com.codingas.gateway.domain.model.service;
+package com.codingas.gateway.domain.router.service;
 
 import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
-import com.codingas.gateway.domain.model.gateway.LLMProviderRegistry;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ModelRouter;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.router.gateway.LLMProviderRegistry;
+import com.codingas.gateway.domain.router.gateway.ModelRouter;
+import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

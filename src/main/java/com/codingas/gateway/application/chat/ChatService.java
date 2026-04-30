@@ -2,7 +2,7 @@ package com.codingas.gateway.application.chat;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.supply.entity.RouteGroup;
 
 import java.util.List;
 import java.util.function.Consumer;

@@ -1,7 +1,7 @@
-package com.codingas.gateway.domain.model.service;
+package com.codingas.gateway.domain.supply.service;
 
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

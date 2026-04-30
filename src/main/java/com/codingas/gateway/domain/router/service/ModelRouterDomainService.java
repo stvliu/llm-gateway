@@ -1,9 +1,9 @@
-package com.codingas.gateway.domain.model.service;
+package com.codingas.gateway.domain.router.service;
 
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.RouteGroupGateway;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.RouteGroupGateway;
+import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

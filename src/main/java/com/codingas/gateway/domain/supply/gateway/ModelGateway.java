@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.model.gateway;
+package com.codingas.gateway.domain.supply.gateway;
 
-import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.supply.entity.Model;
 
 import java.util.List;
 import java.util.Optional;

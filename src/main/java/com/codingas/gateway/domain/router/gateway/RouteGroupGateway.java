@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.model.gateway;
+package com.codingas.gateway.domain.router.gateway;
 
-import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
 
 import java.util.List;
 

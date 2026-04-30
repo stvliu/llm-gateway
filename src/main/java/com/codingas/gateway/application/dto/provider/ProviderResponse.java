@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.admin.dto.provider;
 
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.model.entity.Provider.ProviderStatus;
+import com.codingas.gateway.domain.supply.entity.Provider.ProviderStatus;
 import lombok.Data;
 
 import java.time.Instant;

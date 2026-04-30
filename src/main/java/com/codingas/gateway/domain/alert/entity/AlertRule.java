@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.operations.entity;
+package com.codingas.gateway.domain.alert.entity;
 import com.codingas.gateway.domain.DomainEntity;
 import com.codingas.gateway.domain.BaseEntity;
 

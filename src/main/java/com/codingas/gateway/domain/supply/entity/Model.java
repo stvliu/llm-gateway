@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.model.entity;
+package com.codingas.gateway.domain.supply.entity;
 import com.codingas.gateway.domain.DomainEntity;
 
 import com.codingas.gateway.domain.BaseEntity;

@@ -1,10 +1,10 @@
-package com.codingas.gateway.domain.model.service;
+package com.codingas.gateway.domain.router.service;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
-import com.codingas.gateway.domain.model.gateway.ModelRouter;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.router.gateway.ModelRouter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.codingas.gateway.infrastructure.adapter.StreamCallbackImpl;
 import lombok.RequiredArgsConstructor;

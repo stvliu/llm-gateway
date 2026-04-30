@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.model.gateway;
+package com.codingas.gateway.domain.router.gateway;
 
 import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;

@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.entity;
+package com.codingas.gateway.domain.quota.entity;
 import com.codingas.gateway.domain.DomainEntity;
 import com.codingas.gateway.domain.BaseEntity;
 

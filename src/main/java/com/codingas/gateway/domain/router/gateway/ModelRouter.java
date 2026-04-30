@@ -1,7 +1,7 @@
-package com.codingas.gateway.domain.model.gateway;
+package com.codingas.gateway.domain.router.gateway;
 
 import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
 
 /**
  * 模型路由器接口

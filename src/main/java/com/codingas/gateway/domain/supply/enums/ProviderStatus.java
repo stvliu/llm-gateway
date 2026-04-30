@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.model.enums;
+package com.codingas.gateway.domain.supply.enums;
 
 /**
  * 提供商状态枚举
