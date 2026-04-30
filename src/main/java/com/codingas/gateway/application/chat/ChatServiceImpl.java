@@ -2,9 +2,9 @@ package com.codingas.gateway.application.chat;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.service.ModelRouterDomainService;
+import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.entity.RouteGroup;
+import com.codingas.gateway.domain.supply.service.ModelRouterDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

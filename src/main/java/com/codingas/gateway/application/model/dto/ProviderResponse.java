@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.model.dto;
 
-import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.supply.entity.Provider;
 import lombok.Builder;
 import lombok.Data;
 

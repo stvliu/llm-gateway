@@ -49,7 +49,9 @@
       "Read(//mnt/e/workspace/llm-gateway/**)",
       "Bash(gh pr *)",
       "Bash(echo \"Compile: $?\")",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(grep -v \"^\\\\s*$\")",
+      "mcp__plugin_ecc_context7__resolve-library-id"
     ]
   }
 }

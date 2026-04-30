@@ -4,7 +4,7 @@ import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;

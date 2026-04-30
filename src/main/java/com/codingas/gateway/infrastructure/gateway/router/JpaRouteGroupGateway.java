@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.gateway.router;
 
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.gateway.RouteGroupGateway;
+import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.router.gateway.RouteGroupGateway;
 import com.codingas.gateway.infrastructure.router.RouteGroupDo;
 import com.codingas.gateway.infrastructure.router.RouteGroupRepository;
 import lombok.RequiredArgsConstructor;
