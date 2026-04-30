@@ -1,44 +1,43 @@
 package com.codingas.gateway.infrastructure.adapter.anthropic;
 
-import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
-import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
+import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import okhttp3.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Anthropic Claude 适配器
  *
  * <p>实现 Anthropic 消息 API 格式的适配器。</p>
- * <p>使用 Spring WebFlux WebClient 进行 HTTP 通信。</p>
+ * <p>使用 OkHttp 进行 HTTP 通信。</p>
  */
 @Slf4j
-public class AnthropicAdapter implements LLMProviderAdapter {
+public class AnthropicAdapter implements LLMProviderPort {
 
     public static final String PROVIDER_CODE = "anthropic";
     private static final String MESSAGES_URL = "/v1/messages";
 
-    private final WebClient webClient;
+    private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final String baseUrl;
     private final String apiKey;
     private final String version;
     private final int timeoutSeconds;
 
-    public AnthropicAdapter(WebClient webClient, String baseUrl, String apiKey, String version, int timeoutSeconds) {
-        this.webClient = webClient;
+    public AnthropicAdapter(OkHttpClient httpClient, String baseUrl, String apiKey, String version, int timeoutSeconds) {
+        this.httpClient = httpClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.version = version != null ? version : "2023-06-01";
@@ -57,74 +56,107 @@ public class AnthropicAdapter implements LLMProviderAdapter {
     }
 
     @Override
-    public Mono<LLMResponse> chat(LLMRequest request) {
-        return Mono.error(new UnsupportedOperationException(
-                "Anthropic adapter does not support OpenAI chat format. Use messages() instead."));
+    public LLMResponse chat(LLMRequest request) {
+        throw new UnsupportedOperationException(
+                "Anthropic adapter does not support OpenAI chat format. Use messages() instead.");
     }
 
     @Override
-    public Mono<Void> chatStream(LLMRequest request, StreamCallback callback) {
-        return Mono.error(new UnsupportedOperationException(
-                "Anthropic adapter does not support OpenAI chat format. Use messagesStream() instead."));
+    public void chatStream(LLMRequest request, StreamCallback callback) {
+        throw new UnsupportedOperationException(
+                "Anthropic adapter does not support OpenAI chat format. Use messagesStream() instead.");
     }
 
     @Override
-    public Mono<LLMResponse> messages(LLMRequest request) {
+    public LLMResponse messages(LLMRequest request) {
         log.info("Anthropic messages request: model={}, stream=false", request.getModel());
 
         Map<String, Object> requestBody = buildMessagesRequestBody(request);
 
-        return webClient.post()
-                .uri(baseUrl + MESSAGES_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("anthropic-version", version)
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(this::parseResponse)
-                .doOnSuccess(llmResponse -> log.info("Anthropic messages response: id={}, model={}",
-                        llmResponse.getId(), llmResponse.getModel()))
-                .doOnError(e -> log.error("Anthropic messages error: model={}, error={}",
-                        request.getModel(), e.getMessage(), e))
-                .onErrorMap(e -> new RuntimeException("Anthropic messages request failed", e));
+        try {
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+            Request httpRequest = new Request.Builder()
+                    .url(baseUrl + MESSAGES_URL)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("anthropic-version", version)
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = httpClient.newCall(httpRequest).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new RuntimeException("Anthropic messages request failed: " + response);
+                }
+
+                String responseBody = response.body().string();
+                LLMResponse llmResponse = parseResponse(responseBody);
+                log.info("Anthropic messages response: id={}, model={}", llmResponse.getId(), llmResponse.getModel());
+                return llmResponse;
+            }
+        } catch (IOException e) {
+            log.error("Anthropic messages error: model={}, error={}", request.getModel(), e.getMessage(), e);
+            throw new RuntimeException("Anthropic messages request failed", e);
+        }
     }
 
     @Override
-    public Mono<Void> messagesStream(LLMRequest request, StreamCallback callback) {
+    public void messagesStream(LLMRequest request, StreamCallback callback) {
         log.info("Anthropic messages stream request: model={}, stream=true", request.getModel());
 
         request.setStream(true);
         Map<String, Object> requestBody = buildMessagesRequestBody(request);
 
-        return webClient.post()
-                .uri(baseUrl + MESSAGES_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("anthropic-version", version)
-                .accept(MediaType.TEXT_EVENT_STREAM)
-                .bodyValue(requestBody)
-                .exchangeToFlux(response -> response.bodyToFlux(String.class))
-                .filter(data -> !data.isEmpty() && !"[DONE]".equals(data))
-                .doOnNext(data -> {
-                    log.debug("Anthropic stream chunk: {}", data);
-                    callback.onChunk(data);
-                })
-                .doOnComplete(() -> {
-                    log.info("Anthropic stream completed");
-                    callback.onComplete();
-                })
-                .doOnError(error -> {
-                    log.error("Anthropic stream error: {}", error.getMessage(), error);
-                    callback.onError(error);
-                })
-                .then()
-                .onErrorMap(e -> {
-                    if (e instanceof RuntimeException) {
-                        return (RuntimeException) e;
+        try {
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+            Request httpRequest = new Request.Builder()
+                    .url(baseUrl + MESSAGES_URL)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("anthropic-version", version)
+                    .header("Accept", "text/event-stream")
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            httpClient.newCall(httpRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    log.error("Anthropic stream error: {}", e.getMessage(), e);
+                    callback.onError(e);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    try (ResponseBody body = response.body()) {
+                        if (body == null) {
+                            callback.onError(new RuntimeException("Empty response body"));
+                            return;
+                        }
+
+                        java.io.BufferedReader reader = new java.io.BufferedReader(body.charStream());
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (!line.isEmpty() && line.startsWith("data: ")) {
+                                String data = line.substring(6);
+                                if (!"[DONE]".equals(data)) {
+                                    log.debug("Anthropic stream chunk: {}", data);
+                                    callback.onChunk(data);
+                                }
+                            }
+                        }
+                        log.info("Anthropic stream completed");
+                        callback.onComplete();
+                    } catch (Exception e) {
+                        log.error("Anthropic stream error: {}", e.getMessage(), e);
+                        callback.onError(e);
                     }
-                    return new RuntimeException("Anthropic stream request failed", e);
-                });
+                }
+            });
+        } catch (Exception e) {
+            log.error("Anthropic stream error: {}", e.getMessage(), e);
+            callback.onError(e);
+        }
     }
 
     @Override
@@ -142,25 +174,29 @@ public class AnthropicAdapter implements LLMProviderAdapter {
         }
     }
 
-    @Override
     public boolean checkConnection() {
-        // 使用轻量级请求验证连接
         Map<String, Object> body = new HashMap<>();
         body.put("model", "claude-haiku-3-5-20250514");
         body.put("messages", List.of(Map.of("role", "user", "content", "ping")));
         body.put("max_tokens", 1);
 
-        return webClient.post()
-                .uri(baseUrl + MESSAGES_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header("anthropic-version", version)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(bodyStr -> true)
-                .onErrorReturn(false)
-                .block();
+        try {
+            String jsonBody = objectMapper.writeValueAsString(body);
+            Request request = new Request.Builder()
+                    .url(baseUrl + MESSAGES_URL)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("anthropic-version", version)
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                return response.isSuccessful();
+            }
+        } catch (Exception e) {
+            log.warn("Anthropic connection check failed: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Override

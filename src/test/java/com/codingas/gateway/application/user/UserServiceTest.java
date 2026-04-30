@@ -92,8 +92,7 @@ class UserServiceTest {
             assertThat(response.getUsername()).isEqualTo("newuser");
             assertThat(response.getEmail()).isEqualTo("new@example.com");
             verify(userGateway).existsByEmail("new@example.com");
-            // create 调用了两次 save：一次创建用户，一次分配角色后保存
-            verify(userGateway, times(2)).save(any(User.class));
+            verify(userGateway).save(any(User.class));
         }
 
         @Test

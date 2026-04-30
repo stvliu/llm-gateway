@@ -2,18 +2,17 @@ package com.codingas.gateway.application.chat;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.router.entity.Model;
-import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.ModelRouterDomainService;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.model.service.ModelRouterDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
 import java.util.function.Consumer;
 
 /**
- * 聊天用例应用服务实现 (响应式版本)
+ * 聊天用例应用服务实现
  *
  * <p>编排聊天请求处理，调用多个领域服务。</p>
  */
@@ -29,10 +28,10 @@ public class ChatServiceImpl implements ChatService {
      * 处理聊天请求
      *
      * @param request 聊天请求
-     * @return 聊天响应 Mono
+     * @return 聊天响应
      */
     @Override
-    public Mono<ChatResponse> chat(ChatRequest request) {
+    public ChatResponse chat(ChatRequest request) {
         log.debug("Processing chat request: model={}", request.model());
 
         // 1. 路由选择模型
@@ -49,13 +48,11 @@ public class ChatServiceImpl implements ChatService {
                 ? request.strategy()
                 : RouteGroup.RoutingStrategy.COST_OPTIMIZED;
 
-        return llmChatUseCase.send(llmRequest, strategy)
-                .defaultIfEmpty(LLMResponse.builder().model(selectedModel.getModelCode()).build())
-                .map(response -> {
-                    log.info("Chat request processed: model={}", selectedModel.getModelCode());
-                    String content = extractContent(response);
-                    return new ChatResponse(selectedModel.getModelCode(), content);
-                });
+        LLMResponse response = llmChatUseCase.send(llmRequest, strategy);
+
+        log.info("Chat request processed: model={}", selectedModel.getModelCode());
+        String content = extractContent(response);
+        return new ChatResponse(selectedModel.getModelCode(), content);
     }
 
     /**
@@ -63,10 +60,9 @@ public class ChatServiceImpl implements ChatService {
      *
      * @param request 聊天请求
      * @param onChunk 流式响应回调
-     * @return 完成信号 Mono
      */
     @Override
-    public Mono<Void> chatStream(ChatRequest request, Consumer<String> onChunk) {
+    public void chatStream(ChatRequest request, Consumer<String> onChunk) {
         log.debug("Processing stream chat request: model={}", request.model());
 
         // 1. 路由选择模型
@@ -84,8 +80,8 @@ public class ChatServiceImpl implements ChatService {
                 ? request.strategy()
                 : RouteGroup.RoutingStrategy.COST_OPTIMIZED;
 
+        llmChatUseCase.sendStream(llmRequest, strategy, onChunk);
         log.info("Stream chat request processed: model={}", selectedModel.getModelCode());
-        return llmChatUseCase.sendStream(llmRequest, strategy, onChunk);
     }
 
     /**

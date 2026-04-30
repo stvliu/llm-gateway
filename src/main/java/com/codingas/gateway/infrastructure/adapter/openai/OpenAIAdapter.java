@@ -1,43 +1,42 @@
 package com.codingas.gateway.infrastructure.adapter.openai;
 
-import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
-import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.gateway.LLMProviderPort;
+import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
+import okhttp3.*;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * OpenAI 兼容接口适配器
  *
  * <p>实现 OpenAI API 兼容端点的适配器。</p>
- * <p>使用 Spring WebFlux WebClient 进行 HTTP 通信。</p>
+ * <p>使用 OkHttp 进行 HTTP 通信。</p>
  */
 @Slf4j
-public class OpenAIAdapter implements LLMProviderAdapter {
+public class OpenAIAdapter implements LLMProviderPort {
 
     public static final String PROVIDER_CODE = "openai";
     private static final String CHAT_COMPLETIONS_URL = "/v1/chat/completions";
 
-    private final WebClient webClient;
+    private final OkHttpClient httpClient;
     private final String baseUrl;
     private final String apiKey;
     private final int timeoutSeconds;
     private final ObjectMapper objectMapper;
 
-    public OpenAIAdapter(WebClient webClient, String baseUrl, String apiKey, int timeoutSeconds) {
-        this.webClient = webClient;
+    public OpenAIAdapter(OkHttpClient httpClient, String baseUrl, String apiKey, int timeoutSeconds) {
+        this.httpClient = httpClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
@@ -55,72 +54,105 @@ public class OpenAIAdapter implements LLMProviderAdapter {
     }
 
     @Override
-    public Mono<LLMResponse> chat(LLMRequest request) {
+    public LLMResponse chat(LLMRequest request) {
         log.info("OpenAI chat request: model={}, stream=false", request.getModel());
 
         Map<String, Object> requestBody = buildRequestBody(request);
 
-        return webClient.post()
-                .uri(baseUrl + CHAT_COMPLETIONS_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .bodyValue(requestBody)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(this::parseResponse)
-                .doOnSuccess(llmResponse -> log.info("OpenAI chat response: id={}, model={}",
-                        llmResponse.getId(), llmResponse.getModel()))
-                .doOnError(e -> log.error("OpenAI chat error: model={}, error={}",
-                        request.getModel(), e.getMessage(), e))
-                .onErrorMap(e -> new RuntimeException("OpenAI chat request failed", e));
+        try {
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+            Request httpRequest = new Request.Builder()
+                    .url(baseUrl + CHAT_COMPLETIONS_URL)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = httpClient.newCall(httpRequest).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new RuntimeException("OpenAI chat request failed: " + response);
+                }
+
+                String responseBody = response.body().string();
+                LLMResponse llmResponse = parseResponse(responseBody);
+                log.info("OpenAI chat response: id={}, model={}", llmResponse.getId(), llmResponse.getModel());
+                return llmResponse;
+            }
+        } catch (IOException e) {
+            log.error("OpenAI chat error: model={}, error={}", request.getModel(), e.getMessage(), e);
+            throw new RuntimeException("OpenAI chat request failed", e);
+        }
     }
 
     @Override
-    public Mono<Void> chatStream(LLMRequest request, StreamCallback callback) {
+    public void chatStream(LLMRequest request, StreamCallback callback) {
         log.info("OpenAI chat stream request: model={}, stream=true", request.getModel());
 
         request.setStream(true);
         Map<String, Object> requestBody = buildRequestBody(request);
 
-        return webClient.post()
-                .uri(baseUrl + CHAT_COMPLETIONS_URL)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .accept(MediaType.TEXT_EVENT_STREAM)
-                .bodyValue(requestBody)
-                .exchangeToFlux(response -> response.bodyToFlux(String.class))
-                .filter(data -> !data.isEmpty() && !"[DONE]".equals(data))
-                .doOnNext(data -> {
-                    log.debug("OpenAI stream chunk: {}", data);
-                    callback.onChunk(data);
-                })
-                .doOnComplete(() -> {
-                    log.info("OpenAI stream completed");
-                    callback.onComplete();
-                })
-                .doOnError(error -> {
-                    log.error("OpenAI stream error: {}", error.getMessage(), error);
-                    callback.onError(error);
-                })
-                .then()
-                .onErrorMap(e -> {
-                    if (e instanceof RuntimeException) {
-                        return (RuntimeException) e;
+        try {
+            String jsonBody = objectMapper.writeValueAsString(requestBody);
+
+            Request httpRequest = new Request.Builder()
+                    .url(baseUrl + CHAT_COMPLETIONS_URL)
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "text/event-stream")
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            httpClient.newCall(httpRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    log.error("OpenAI stream error: {}", e.getMessage(), e);
+                    callback.onError(e);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    try (ResponseBody body = response.body()) {
+                        if (body == null) {
+                            callback.onError(new RuntimeException("Empty response body"));
+                            return;
+                        }
+
+                        java.io.BufferedReader reader = new java.io.BufferedReader(body.charStream());
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (!line.isEmpty() && line.startsWith("data: ")) {
+                                String data = line.substring(6);
+                                if (!"[DONE]".equals(data)) {
+                                    log.debug("OpenAI stream chunk: {}", data);
+                                    callback.onChunk(data);
+                                }
+                            }
+                        }
+                        log.info("OpenAI stream completed");
+                        callback.onComplete();
+                    } catch (Exception e) {
+                        log.error("OpenAI stream error: {}", e.getMessage(), e);
+                        callback.onError(e);
                     }
-                    return new RuntimeException("OpenAI stream request failed", e);
-                });
+                }
+            });
+        } catch (Exception e) {
+            log.error("OpenAI stream error: {}", e.getMessage(), e);
+            callback.onError(e);
+        }
     }
 
     @Override
-    public Mono<LLMResponse> messages(LLMRequest request) {
-        return Mono.error(new UnsupportedOperationException(
-                "OpenAI adapter does not support Anthropic messages format. Use chat() instead."));
+    public LLMResponse messages(LLMRequest request) {
+        throw new UnsupportedOperationException(
+                "OpenAI adapter does not support Anthropic messages format. Use chat() instead.");
     }
 
     @Override
-    public Mono<Void> messagesStream(LLMRequest request, StreamCallback callback) {
-        return Mono.error(new UnsupportedOperationException(
-                "OpenAI adapter does not support Anthropic messages format. Use chatStream() instead."));
+    public void messagesStream(LLMRequest request, StreamCallback callback) {
+        throw new UnsupportedOperationException(
+                "OpenAI adapter does not support Anthropic messages format. Use chatStream() instead.");
     }
 
     @Override
@@ -138,17 +170,19 @@ public class OpenAIAdapter implements LLMProviderAdapter {
         }
     }
 
-    @Override
     public boolean checkConnection() {
-        // 使用 models 端点进行轻量级连接检查
-        return webClient.get()
-                .uri(baseUrl + "/v1/models")
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + apiKey)
-                .retrieve()
-                .bodyToMono(String.class)
-                .map(body -> true)
-                .onErrorReturn(false)
-                .block();
+        Request request = new Request.Builder()
+                .url(baseUrl + "/v1/models")
+                .header("Authorization", "Bearer " + apiKey)
+                .get()
+                .build();
+
+        try (Response response = httpClient.newCall(request).execute()) {
+            return response.isSuccessful();
+        } catch (Exception e) {
+            log.warn("OpenAI connection check failed: {}", e.getMessage());
+            return false;
+        }
     }
 
     @Override

@@ -7,10 +7,10 @@ import com.codingas.gateway.adapter.admin.dto.tokenlimit.TokenLimitUpdateRequest
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.router.entity.Model;
-import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.domain.router.gateway.ModelGateway;
-import com.codingas.gateway.domain.router.gateway.ProviderGateway;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.gateway.ModelGateway;
+import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.security.entity.TokenLimit;
 import com.codingas.gateway.domain.security.entity.TokenLimit.TokenLimitStatus;
 import com.codingas.gateway.domain.security.entity.User;
