@@ -1,6 +1,6 @@
 # LLM-Gateway 项目需求规格说明书
 
-> **文档版本**: v4.7
+> **文档版本**: v4.8
 > **项目版本**: v1.0.0
 > **生成日期**: 2026-04-18
 > **状态**: 草案
@@ -85,7 +85,11 @@
 ### 1.6 架构说明
 
 **LLM-Gateway** 是新一代企业级 AI 模型 API 聚合分发与智能路由网关，定位为 APIPark 的竞品项目，专注于企业中台、政企客户的需求。
-
+LLM-Gateway 的本质是：
+- 路由 — 选择 Provider/Model
+- 代理 — 转发请求到 LLM Provider
+- 控制 — 认证、限流、审计
+- 
 **双 API Key 设计**:
 - **ProviderApiKey**: 系统调用 Provider 的凭证，加密存储，支持多 Key 轮换
 - **GatewayApiKey**: 用户调用网关的凭证，哈希存储，支持白名单控制 |
@@ -201,24 +205,60 @@
 
 ### 3.2 分层架构
 
+本项目采用 **COLA Light 5.0 架构**，按业务领域分包，Gateway 接口定义在 domain 层，实现 in infrastructure 层。
+
 ```
-(gateway-console)
-┌─────────────────────┐
-│   Web展现层/命令行   │  ←  React SPA (管理控制台)
-┌─────────────────────┐
-│   接口层             │  ← REST Controller( API),
-├─────────────────────┤
-│   应用层            │  ← GatewayOrchestrator, 策略编排服务
-├─────────────────────┤
-│   调度层            │  ← ModelRouter, TokenTracker, RateLimiter
-├─────────────────────┤
-│   服务层            │  ← ProviderService, RouteGroupService, TokenLimitService, AuditService
-├─────────────────────┤
-│   基础设施层        │  ← LLMProviderAdapter, DBRepository, RedisClient, OTelExporter
-└─────────────────────┘
+llm-gateway/
+└── src/main/java/com/codingas/gateway/
+    ├── adapter/                       # 适配器层（接入层）
+    │   ├── chat/                    # OpenAI/Anthropic 兼容端点
+    │   ├── model/                   # 模型管理 API
+    │   └── admin/                   # 管理后台 API
+    ├── application/                   # 应用层（用例编排）
+    │   ├── chat/                    # 代理转发用例
+    │   ├── auth/                    # 认证用例
+    │   └── model/                   # 模型管理用例
+    ├── domain/                        # 领域层
+    │   ├── gateway/                   # 跨领域 Gateway 接口
+    │   ├── router/                   # 路由领域
+    │   ├── proxy/                    # 代理领域
+    │   ├── supply/                   # 模型供给领域
+    │   ├── security/                 # 安全控制领域
+    │   ├── quota/                    # 限额配额领域
+    │   ├── audit/                    # 审计合规领域
+    │   └── alert/                   # 告警管理领域
+    ├── infrastructure/                # 基础设施层
+    │   ├── gateway/                  # Gateway 实现
+    │   │   ├── supply/             # Provider/Model 持久化
+    │   │   ├── security/           # User/ApiKey 持久化
+    │   │   ├── quota/              # Redis 限流实现
+    │   │   ├── audit/              # 审计持久化
+    │   │   └── llm/                # OpenAI/Anthropic 代理实现
+    │   └── config/                  # 配置类
+    └── common/                        # 公共组件
+        ├── exception/               # 基础异常
+        └── constants/               # 常量
 ```
 
 **约束**: 上层只能依赖下层接口，禁止跨层调用或反向依赖。
+
+### 3.2.1 业务域定义
+
+系统包含 **7 个业务域**：
+
+| # | 业务域 | 英文名 | 核心问题 | 定位 | 说明 |
+|---|--------|--------|---------|------|------|
+| 1 | 路由 | router | 怎么路由？ | 核心域 | 路由决策、供应商选择、负载均衡 |
+| 2 | 代理 | proxy | 怎么转发？ | 核心域 | 协议转换、请求转发、响应处理 |
+| 3 | 模型供给 | supply | 有什么可用？ | 支撑域 | Provider/Model/ApiKey 管理 |
+| 4 | 安全控制 | security | 谁能访问？ | 支撑域 | 认证、授权、脱敏、IP 控制 |
+| 5 | 限额配额 | quota | 可以用多少？ | 支撑域 | Token 限额、用量记录、限流 |
+| 6 | 审计合规 | audit | 谁做了什么？ | 支撑域 | 操作审计、调用记录 |
+| 7 | 告警管理 | alert | 出了什么问题？ | 支撑域 | 告警规则、通知发送 |
+
+**域定位说明**：
+- **核心域**：网关差异化竞争力所在，缺失则失去存在价值
+- **支撑域**：企业级客户刚需，为核心域提供保障机制
 
 ### 3.3 前端架构（gateway-console）
 
@@ -2967,3 +3007,4 @@ MVP 必须包含以下最小可用功能：
 | 版本 | 日期 | 变更内容 | 变更人 |
 |------|------|---------|--------|
 | v1.0 | 2026-04-13 | 初始版本 | - |
+| v4.8 | 2026-04-30 | 更新 3.2 分层架构：采用 COLA Light 5.0 架构；新增 3.2.1 业务域定义章节（7 个业务域） | - |
