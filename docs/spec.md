@@ -321,9 +321,9 @@
 
 ---
 
-#### 2.2.8 智能路由模块
+#### 2.2.8 路由模块
 
-**需求描述**: 根据策略配置，智能选择最优渠道和模型。
+**需求描述**: 根据策略配置选择渠道和模型。
 
 **功能需求**:
 
@@ -370,12 +370,10 @@
 
 **预设角色**:
 
-| 角色 | 权限范围 |
-|------|---------|
-| **管理员** | 系统全部权限 |
-| **开发者** | 创建 API Key、查看日志、调用 API |
-| **观察者** | 仅查看用量和日志 |
-| **财务管理员** | 额度配置、用量查看 |
+| 角色 | 权限范围                          |
+|------|-------------------------------|
+| **管理员** | 系统全部权限                        |
+| **开发者** | 创建 API Key、查看日志、查看Token用量、调用 API |
 
 ---
 
@@ -754,7 +752,7 @@
 ```json
 {
   "success": true,
-  "data": { ... },
+  "data": {  },
   "error": null,
   "trace_id": "trace_789xyz",
   "timestamp": "2026-04-28T10:30:00Z"
@@ -787,7 +785,7 @@
   "error": {
     "code": "INVALID_PARAMETER",
     "message": "参数校验失败",
-    "details": [...]
+    "details": []
   },
   "trace_id": "trace_789xyz"
 }
@@ -1403,7 +1401,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 ```json
 {
   "success": true,
-  "data": { ... },
+  "data": {  },
   "error": null,
   "trace_id": "trace_789xyz",
   "timestamp": "2026-04-28T10:30:00Z"
@@ -1421,7 +1419,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "email": "string (required, valid email)",
   "password": "string (required, 8-128 chars, must contain uppercase, lowercase, number)",
   "phone": "string (optional, valid phone number)",
-  "role_codes": ["ADMIN", "DEVELOPER"] (required, at least one)
+  "role_codes": ["ADMIN", "DEVELOPER"] 
 }
 ```
 
@@ -1461,14 +1459,14 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 **UserStatusUpdateRequest** (更新状态请求)
 ```json
 {
-  "status": "DISABLED" (required: ACTIVE, DISABLED, LOCKED)
+  "status": "DISABLED"
 }
 ```
 
 **UserRoleAssignRequest** (分配角色请求)
 ```json
 {
-  "role_codes": ["ADMIN", "DEVELOPER"] (required)
+  "role_codes": ["ADMIN", "DEVELOPER"]
 }
 ```
 
@@ -1494,7 +1492,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "base_url": "https://api.openai.com (required, valid URL)",
   "website_url": "https://openai.com (optional, valid URL)",
   "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
-  "priority": 100 (optional, 1-1000)
+  "priority": 100
 }
 ```
 
@@ -1505,7 +1503,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "base_url": "https://api.openai.com (optional, valid URL)",
   "website_url": "https://openai.com (optional, valid URL)",
   "api_doc_url": "https://platform.openai.com/docs (optional, valid URL)",
-  "priority": 100 (optional, 1-1000),
+  "priority": 100,
   "status": "ACTIVE (optional: ACTIVE/SUSPENDED)"
 }
 ```
@@ -1561,17 +1559,17 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 ```json
 {
   "model_code": "gpt-4o (required, 2-128 chars, unique)",
-  "provider_id": 1 (required),
+  "provider_id": 1,
   "provider_model_id": "gpt-4o (required, Provider 侧的模型 ID)",
   "display_name": "GPT-4o (optional, 2-256 chars)",
-  "context_window": 128000 (optional),
-  "input_price": 2.5 (optional, 每 1M tokens 价格)",
-  "output_price": 10.0 (optional, 每 1M tokens 价格),
+  "context_window": 128000 ,
+  "input_price": 2.5,
+  "output_price": 10.0,
   "capabilities": {
     "vision": true,
     "function_calling": true,
     "streaming": true
-  } (optional)
+  }
 }
 ```
 
@@ -1579,13 +1577,13 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 ```json
 {
   "display_name": "GPT-4o (optional)",
-  "context_window": 128000 (optional),
-  "input_price": 2.5 (optional),
-  "output_price": 10.0 (optional),
+  "context_window": 128000,
+  "input_price": 2.5,
+  "output_price": 10.0,
   "capabilities": {
     "vision": true,
     "function_calling": true
-  } (optional),
+  } ,
   "status": "ACTIVE (optional: ACTIVE/DEPRECATED)"
 }
 ```
@@ -1625,8 +1623,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 {
   "name": "My API Key (optional, 2-64 chars)",
   "expires_at": "2027-12-31T23:59:59Z (optional, 永不过期 if null)",
-  "ip_whitelist": ["192.168.1.0/24", "10.0.0.1"] (optional, 空表示不限制),
-  "model_whitelist": ["gpt-4o", "gpt-4-turbo"] (optional, 空表示全部允许)
+  "ip_whitelist": ["192.168.1.0/24", "10.0.0.1"],
+  "model_whitelist": ["gpt-4o", "gpt-4-turbo"] 
 }
 ```
 
@@ -1635,8 +1633,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 {
   "name": "My API Key (optional)",
   "expires_at": "2027-12-31T23:59:59Z (optional)",
-  "ip_whitelist": ["192.168.1.0/24"] (optional),
-  "model_whitelist": ["gpt-4o"] (optional)
+  "ip_whitelist": ["192.168.1.0/24"],
+  "model_whitelist": ["gpt-4o"]
 }
 ```
 
@@ -1680,28 +1678,28 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 ```json
 {
   "limit_code": "TL20260428001 (required, unique)",
-  "user_id": 1 (required),
-  "provider_id": 1 (optional, null 表示所有 Provider)",
-  "model_id": 1 (optional, null 表示所有 Model)",
-  "max_tokens": 1000000 (required, token 数量)",
+  "user_id": 1 ,
+  "provider_id": 1,
+  "model_id": 1,
+  "max_tokens": 1000000 ,
   "period_type": "MONTHLY (required: DAILY/WEEKLY/MONTHLY/TOTAL)",
-  "period_day_of_week": 1 (optional, 1-7, WEEKLY 时必填),
-  "period_day_of_month": 1 (optional, 1-31, MONTHLY 时必填),
+  "period_day_of_week": 1,
+  "period_day_of_month": 1,
   "exceeded_action": "REJECT (required: REJECT/DOWNGRADE)",
-  "switch_model_id": 2 (optional, DOWNGRADE 时必填)
+  "switch_model_id": 2
 }
 ```
 
 **TokenLimitUpdateRequest** (更新 TokenLimit 请求)
 ```json
 {
-  "max_tokens": 2000000 (optional),
-  "period_type": "MONTHLY (optional)",
-  "period_day_of_week": 1 (optional),
-  "period_day_of_month": 1 (optional),
-  "exceeded_action": "DOWNGRADE (optional)",
-  "switch_model_id": 2 (optional),
-  "status": "ACTIVE (optional)
+  "max_tokens": 2000000,
+  "period_type": "MONTHLY",
+  "period_day_of_week": 1,
+  "period_day_of_month": 1,
+  "exceeded_action": "DOWNGRADE",
+  "switch_model_id": 2,
+  "status": "ACTIVE"
 }
 ```
 
@@ -1751,7 +1749,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "role_code": "custom_role (required, unique)",
   "name": "自定义角色 (required)",
   "description": "描述 (optional)",
-  "permission_codes": ["provider:read", "model:create"] (required)
+  "permission_codes": ["provider:read", "model:create"]
 }
 ```
 
@@ -1760,8 +1758,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 {
   "name": "自定义角色 (optional)",
   "description": "描述 (optional)",
-  "is_active": true (optional),
-  "permission_codes": ["provider:read", "model:create", "token:read"] (optional)
+  "is_active": true,
+  "permission_codes": ["provider:read", "model:create", "token:read"]
 }
 ```
 
