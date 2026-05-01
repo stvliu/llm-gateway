@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.gateway.security;
 
-import com.codingas.gateway.domain.security.entity.TokenLimit;
+import com.codingas.gateway.domain.quota.entity.TokenLimit;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.infrastructure.security.TokenLimitDo;
 import com.codingas.gateway.infrastructure.security.TokenLimitRepository;

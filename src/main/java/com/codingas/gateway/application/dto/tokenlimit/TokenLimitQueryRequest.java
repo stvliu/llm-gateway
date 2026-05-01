@@ -2,7 +2,7 @@ package com.codingas.gateway.adapter.admin.dto.tokenlimit;
 
 import com.codingas.gateway.adapter.admin.dto.model.ModelQueryRequest;
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.security.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.quota.entity.TokenLimit.TokenLimitStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

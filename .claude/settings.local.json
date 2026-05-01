@@ -53,5 +53,6 @@
       "Bash(grep -v \"^\\\\s*$\")",
       "mcp__plugin_ecc_context7__resolve-library-id"
     ]
-  }
+  },
+  "outputStyle": "default"
 }

@@ -2,8 +2,8 @@ package com.codingas.gateway.adapter.admin.dto.tokenlimit;
 
 import com.codingas.gateway.common.enums.ExceededAction;
 import com.codingas.gateway.common.enums.PeriodType;
-import com.codingas.gateway.domain.security.entity.TokenLimit.LimitType;
-import com.codingas.gateway.domain.security.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.quota.entity.TokenLimit.LimitType;
+import com.codingas.gateway.domain.quota.entity.TokenLimit.TokenLimitStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;
