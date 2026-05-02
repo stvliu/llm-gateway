@@ -5,7 +5,7 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.0.0 |
+| 版本 | 2.3.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
 | 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
@@ -167,7 +167,7 @@ gateway-boot/                          # Maven 单一模块
     │   ├── proxy/                     # 代理领域（核心域）
     │   │   ├── service/
     │   │   └── gateway/
-    │   ├── provider/                  # 模型供给领域
+    │   ├── model/                     # 模型广场领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
@@ -598,3 +598,4 @@ GatewayException (根异常)
 | v2.0.0 | 2026-04-08 | 初始版本 |
 | v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
+| v2.3.0 | 2026-05-02 | **领域命名调整**：provider 域更名为 model（模型广场）；与信息架构 v3.5、应用架构 v3.0、数据架构 v1.4 保持一致 |
