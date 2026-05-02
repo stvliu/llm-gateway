@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.model.dto;
 
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.model.entity.Provider;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;

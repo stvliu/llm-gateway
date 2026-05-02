@@ -2,7 +2,7 @@ package com.codingas.gateway.infrastructure.adapter;
 
 import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.proxy.gateway.LLMProviderPort;
 
 /**
  * LLM 提供商适配器接口

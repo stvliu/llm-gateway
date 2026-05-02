@@ -1,4 +1,4 @@
-package com.codingas.gateway.adapter.admin.dto.user;
+package com.codingas.gateway.application.dto.user;
 
 import com.codingas.gateway.common.dto.PageRequest;
 import com.codingas.gateway.common.enums.UserStatus;

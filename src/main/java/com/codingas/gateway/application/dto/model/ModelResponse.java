@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.admin.dto.model;
 
-import com.codingas.gateway.domain.supply.entity.Model.ModelStatus;
+import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
 import lombok.Data;
 
 import java.math.BigDecimal;

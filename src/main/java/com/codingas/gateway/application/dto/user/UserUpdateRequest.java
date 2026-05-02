@@ -1,4 +1,4 @@
-package com.codingas.gateway.adapter.admin.dto.user;
+package com.codingas.gateway.application.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;

@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.adapter.admin.dto.user.*;
+import com.codingas.gateway.application.dto.user.*;
 import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;

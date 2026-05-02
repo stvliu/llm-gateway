@@ -1,13 +1,11 @@
 package com.codingas.gateway.application.user;
 
-import com.codingas.gateway.adapter.admin.dto.user.*;
+import com.codingas.gateway.application.dto.user.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.entity.Role;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
-import com.codingas.gateway.domain.security.gateway.RoleGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +28,6 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserGateway userGateway;
-    private final RoleGateway roleGateway;
 
     /**
      * 创建用户
@@ -54,12 +51,12 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(hashPassword(request.getPassword()));
         user.setPhone(request.getPhone());
 
-        User savedUser = userGateway.save(user);
-
-        // 分配角色
-        if (request.getRoleCodes() != null && !request.getRoleCodes().isEmpty()) {
-            assignRoles(savedUser, request.getRoleCodes());
+        // 设置角色（默认为 USER）
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            user.setRole(request.getRole());
         }
+
+        User savedUser = userGateway.save(user);
 
         return toResponse(savedUser);
     }
@@ -165,6 +162,8 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 分配用户角色
+     *
+     * <p>简化角色模型：直接设置 User.role 字段。</p>
      */
     @Override
     @Transactional
@@ -172,19 +171,13 @@ public class UserServiceImpl implements UserService {
         User user = userGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        assignRoles(user, request.getRoleCodes());
+        // 简化角色模型：取第一个角色代码设置
+        if (request.getRoleCodes() != null && !request.getRoleCodes().isEmpty()) {
+            String roleCode = request.getRoleCodes().get(0);
+            user.setRole(roleCode);
+        }
 
         return toResponse(userGateway.save(user));
-    }
-
-    /**
-     * 分配角色辅助方法
-     */
-    private void assignRoles(User user, List<String> roleCodes) {
-        // 查找角色
-        List<Role> roles = roleGateway.findByRoleCodes(roleCodes);
-        user.getRoles().clear();
-        user.getRoles().addAll(roles);
     }
 
     /**
@@ -235,22 +228,10 @@ public class UserServiceImpl implements UserService {
         response.setAvatarUrl(user.getAvatarUrl());
         response.setStatus(user.getStatus());
         response.setEmailVerified(user.getEmailVerified());
+        response.setRole(user.getRole());
         response.setLastLoginAt(user.getLastLoginAt());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());
-
-        // 转换角色
-        if (user.getRoles() != null && !user.getRoles().isEmpty()) {
-            List<UserResponse.RoleInfo> roleInfos = user.getRoles().stream()
-                .map(role -> {
-                    UserResponse.RoleInfo info = new UserResponse.RoleInfo();
-                    info.setRoleCode(role.getRoleCode());
-                    info.setName(role.getName());
-                    return info;
-                })
-                .collect(Collectors.toList());
-            response.setRoles(roleInfos);
-        }
 
         return response;
     }

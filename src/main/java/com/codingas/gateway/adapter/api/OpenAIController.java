@@ -5,7 +5,7 @@ import com.codingas.gateway.adapter.chat.dto.OpenAIChatResponse;
 import com.codingas.gateway.application.chat.LLMChatUseCase;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.router.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

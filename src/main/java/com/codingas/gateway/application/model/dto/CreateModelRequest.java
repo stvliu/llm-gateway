@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.model.dto;
 
-import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.model.entity.Model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

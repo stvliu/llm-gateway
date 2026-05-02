@@ -1,4 +1,4 @@
-package com.codingas.gateway.adapter.admin.dto.user;
+package com.codingas.gateway.application.dto.user;
 
 import com.codingas.gateway.common.enums.UserStatus;
 import jakarta.validation.constraints.NotNull;

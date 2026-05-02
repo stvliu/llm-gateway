@@ -1,14 +1,11 @@
 package com.codingas.gateway.application.user;
 
-import com.codingas.gateway.adapter.admin.dto.user.*;
+import com.codingas.gateway.application.dto.user.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.common.enums.UserStatus;
-import com.codingas.gateway.domain.security.entity.Role;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.entity.UserRole;
-import com.codingas.gateway.domain.security.gateway.RoleGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,7 +25,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 /**
@@ -41,20 +37,13 @@ class UserServiceTest {
     @Mock
     private UserGateway userGateway;
 
-    @Mock
-    private RoleGateway roleGateway;
-
     @InjectMocks
     private UserServiceImpl userService;
 
     private User testUser;
-    private Role testRole;
 
     @BeforeEach
     void setUp() {
-        // 先创建 testRole
-        testRole = createTestRole(1L, "ADMIN", "Administrator");
-        // 再创建 testUser
         testUser = createTestUser(1L, "USR001", "testuser", "test@example.com");
     }
 
@@ -73,7 +62,7 @@ class UserServiceTest {
             request.setEmail("new@example.com");
             request.setPassword("password123");
             request.setPhone("13800138000");
-            request.setRoleCodes(List.of("ADMIN"));
+            request.setRole("ADMIN");
 
             when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
@@ -81,7 +70,6 @@ class UserServiceTest {
                 user.setId(2L);
                 return user;
             });
-            when(roleGateway.findByRoleCodes(List.of("ADMIN"))).thenReturn(List.of(testRole));
 
             // when
             UserResponse response = userService.create(request);
@@ -96,6 +84,32 @@ class UserServiceTest {
         }
 
         @Test
+        @DisplayName("创建用户时角色默认为 USER")
+        void create_withoutRole_defaultsToUser() {
+            // given
+            UserCreateRequest request = new UserCreateRequest();
+            request.setUsername("newuser");
+            request.setEmail("new@example.com");
+            request.setPassword("password123");
+
+            when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
+            when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
+                User user = invocation.getArgument(0);
+                user.setId(2L);
+                return user;
+            });
+
+            // when
+            userService.create(request);
+
+            // then
+            ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+            verify(userGateway).save(userCaptor.capture());
+            // 默认值在 User 实体中定义为 "USER"
+            assertThat(userCaptor.getValue().getRole()).isEqualTo("USER");
+        }
+
+        @Test
         @DisplayName("邮箱已存在时抛出 DuplicateResourceException")
         void create_duplicateEmail_throwsException() {
             // given
@@ -103,7 +117,6 @@ class UserServiceTest {
             request.setUsername("newuser");
             request.setEmail("existing@example.com");
             request.setPassword("password123");
-            request.setRoleCodes(List.of("ADMIN"));
 
             when(userGateway.existsByEmail("existing@example.com")).thenReturn(true);
 
@@ -124,7 +137,6 @@ class UserServiceTest {
             request.setUsername("newuser");
             request.setEmail("new@example.com");
             request.setPassword("plainPassword123");
-            request.setRoleCodes(List.of("ADMIN"));
 
             when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
@@ -132,16 +144,14 @@ class UserServiceTest {
                 user.setId(2L);
                 return user;
             });
-            when(roleGateway.findByRoleCodes(anyList())).thenReturn(List.of(testRole));
 
             // when
             userService.create(request);
 
-            // then - 获取第一次保存的用户（创建用户时）
+            // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
-            verify(userGateway, atLeastOnce()).save(userCaptor.capture());
-            List<User> capturedUsers = userCaptor.getAllValues();
-            User savedUser = capturedUsers.get(0); // 第一次 save 是创建用户
+            verify(userGateway).save(userCaptor.capture());
+            User savedUser = userCaptor.getValue();
             assertThat(savedUser.getPasswordHash()).isNotEqualTo("plainPassword123");
             assertThat(savedUser.getPasswordHash()).hasSize(64); // SHA-256 hex length
         }
@@ -432,19 +442,18 @@ class UserServiceTest {
         @DisplayName("分配角色成功")
         void assignRoles_validRequest_assignsRoles() {
             // given
-            testUser.getRoles().clear();
             when(userGateway.findById(1L)).thenReturn(Optional.of(testUser));
-            when(roleGateway.findByRoleCodes(List.of("ADMIN", "USER"))).thenReturn(List.of(testRole));
             when(userGateway.save(any(User.class))).thenReturn(testUser);
 
             UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of("ADMIN", "USER"));
+            request.setRoleCodes(List.of("ADMIN"));
 
             // when
             UserResponse response = userService.assignRoles(1L, request);
 
             // then
             assertThat(response).isNotNull();
+            assertThat(testUser.getRole()).isEqualTo("ADMIN");
             verify(userGateway).save(testUser);
         }
 
@@ -475,20 +484,10 @@ class UserServiceTest {
         user.setPhone("13800138000");
         user.setStatus(UserStatus.ACTIVE);
         user.setEmailVerified(false);
+        user.setRole("USER");
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
-        user.getRoles().clear();
 
         return user;
-    }
-
-    private Role createTestRole(Long id, String roleCode, String name) {
-        Role role = new Role();
-        role.setId(id);
-        role.setRoleCode(roleCode);
-        role.setName(name);
-        role.setDescription("Test role");
-        role.setIsActive(true);
-        return role;
     }
 }

@@ -1,9 +1,8 @@
-package com.codingas.gateway.adapter.admin.dto.user;
+package com.codingas.gateway.application.dto.user;
 
 import com.codingas.gateway.common.enums.UserStatus;
 import lombok.Data;
 import java.time.Instant;
-import java.util.List;
 
 /**
  * 用户响应
@@ -18,14 +17,11 @@ public class UserResponse {
     private String avatarUrl;
     private UserStatus status;
     private Boolean emailVerified;
-    private List<RoleInfo> roles;
+    /**
+     * 用户角色：ADMIN（管理员）/ USER（普通用户）
+     */
+    private String role;
     private Instant lastLoginAt;
     private Instant createdAt;
     private Instant updatedAt;
-
-    @Data
-    public static class RoleInfo {
-        private String roleCode;
-        private String name;
-    }
 }

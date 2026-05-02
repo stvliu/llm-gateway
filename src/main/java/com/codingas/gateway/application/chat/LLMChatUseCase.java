@@ -2,8 +2,8 @@ package com.codingas.gateway.application.chat;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.LLMDispatcher;
+import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.service.LLMDispatcher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;

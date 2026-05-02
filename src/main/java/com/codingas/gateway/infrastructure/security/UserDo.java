@@ -9,8 +9,6 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 用户 DO
@@ -47,6 +45,12 @@ public class UserDo extends BaseDo {
     @Column(name = "status", nullable = false)
     private UserStatus status = UserStatus.ACTIVE;
 
+    /**
+     * 用户角色：ADMIN（管理员）/ USER（普通用户）
+     */
+    @Column(name = "role", length = 32)
+    private String role = "USER";
+
     @Column(name = "email_verified")
     private Boolean emailVerified = false;
 
@@ -62,7 +66,4 @@ public class UserDo extends BaseDo {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<UserRoleDo> userRoles = new ArrayList<>();
 }

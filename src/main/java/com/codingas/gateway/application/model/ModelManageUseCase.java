@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.model;
 
-import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.service.ModelDomainService;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.service.ModelDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

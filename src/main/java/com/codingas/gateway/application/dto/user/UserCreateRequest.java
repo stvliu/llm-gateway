@@ -1,10 +1,9 @@
-package com.codingas.gateway.adapter.admin.dto.user;
+package com.codingas.gateway.application.dto.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import java.util.List;
 
 /**
  * 创建用户请求
@@ -25,6 +24,9 @@ public class UserCreateRequest {
 
     private String phone;
 
-    @NotBlank(message = "必须至少分配一个角色")
-    private List<String> roleCodes;
+    /**
+     * 用户角色：ADMIN（管理员）/ USER（普通用户）
+     * 默认为 USER
+     */
+    private String role;
 }
