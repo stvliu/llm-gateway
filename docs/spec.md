@@ -1,6 +1,6 @@
 # LLM-Gateway 项目需求规格说明书
 
-> **文档版本**: v6.3
+> **文档版本**: v6.6
 > **项目版本**: v1.0.0
 > **生成日期**: 2026-05-02
 > **状态**: 草案
@@ -115,7 +115,7 @@
 | T-002 | **ProviderApiKey (Provider 调用凭证)** | 网关调用大模型 Provider 的凭据，管理员配置，支持多 Key 轮换 |
 | T-003 | **Model (模型)** | 具体的 AI 模型，如 gpt-4o、claude-sonnet-4 等 |
 | T-004 | **RouteGroup (路由分组)** | 路由策略配置，支持负载均衡和故障转移 |
-| T-005 | **RouteGroupProvider (路由关联)** | 路由分组与 Provider 的关联，含权重/优先级/健康状态 |
+| T-005 | **RouteGroupChannel (路由关联)** | 路由分组与 Channel 的关联，含权重/优先级/健康状态 |
 | T-006 | **GatewayApiKey (网关访问凭证)** | 用户调用 LLM-Gateway 网关的凭据，用户自管理 |
 | T-007 | **TokenLimit (Token限额)** | 用户级别 Token 用量限额，支持周期重置（天/周/月/总量） |
 | T-008 | **Trace ID** | 请求全链路追踪的唯一标识 |
@@ -123,6 +123,9 @@
 | T-010 | **PII (Personally Identifiable Information)** | 个人身份信息，如身份证号、手机号、邮箱等 |
 | T-011 | **SLA (Service Level Agreement)** | 服务级别协议，定义服务可用性指标 |
 | T-012 | **Feature Flag** | 功能开关，用于运行时控制功能开启/关闭 |
+| T-013 | **SemanticCache (语义缓存)** | 相似请求的缓存条目，含请求向量、响应内容、TTL，用于降低成本 |
+| T-014 | **UserOAuth (用户OAuth身份)** | 用户的第三方 OAuth 身份标识，支持 GitHub/飞书/钉钉等登录方式 |
+| T-015 | **License (许可证)** | 企业版授权凭证，含授权方、被授权方、有效期、功能列表、用户数限制 |
 
 ### 1.6 文档管理
 
@@ -157,9 +160,9 @@
 | | 模型别名映射 | P0 | 将请求中的模型别名映射到实际模型 |
 | | 可视化策略编排 | P1 | 零代码策略配置 | 企业版 |
 | | 自定义脚本扩展 | P1 | 高级用户自定义逻辑 | 企业版 |
-| **语义缓存** | 语义缓存 | P1 | 相似请求返回缓存，降低成本 |
-| | 缓存 TTL (Time To Live) | P1 | 缓存过期时间配置 |
-| | 缓存命中率统计 | P1 | 实时统计缓存效果 |
+| **语义缓存** | 语义缓存 | P1 | 相似请求返回缓存，降低成本 | 企业版 |
+| | 缓存 TTL (Time To Live) | P1 | 缓存过期时间配置 | 企业版 |
+| | 缓存命中率统计 | P1 | 实时统计缓存效果 | 企业版 |
 | **用户管理** | 单用户 | P0 | 所有用户共享全局资源 |
 | **密钥管理** | API Key CRUD | P0 | 创建/查询/编辑/删除 |
 | | 额度限制 | P0 | API Key 用量上限 |
@@ -308,6 +311,8 @@
 | CH-004 | 渠道查询 | 按条件查询渠道列表 | 支持分页、排序 | 标准版 |
 | CH-005 | 渠道测试 | 测试渠道连通性 | 返回测试结果 | 标准版 |
 | CH-006 | 渠道分组 | 创建/编辑/删除渠道分组 | 支持按组路由 | 标准版 |
+
+> **概念映射**: CH-006"渠道分组"功能在信息架构中对应 **RouteGroup（路由分组）** + **RouteGroupChannel（路由关联）** 业务对象。渠道按用途/价格分组后，通过 RouteGroupChannel 关联到 RouteGroup，实现按组路由和负载均衡。
 | CH-007 | 多 Key 管理 | 单渠道添加/删除/禁用多个 API Key | Key 级故障隔离 | 标准版 |
 | CH-008 | 优先级设置 | 设置渠道优先级 | 高优先级优先使用 | 标准版 |
 | CH-009 | 权重设置 | 同优先级按权重分配流量 | 流量分配符合权重比例 | 标准版 |
@@ -391,30 +396,38 @@
 
 ---
 
-#### 2.2.7 用户与角色管理模块
+#### 2.2.7 用户管理模块
 
-**需求描述**: 用户共享全局 Provider/RouteGroup 资源，支持基于角色的访问控制。
+**需求描述**: 用户共享全局 Provider/RouteGroup 资源，采用两级角色模型（管理员/普通用户）。
 
 **功能需求**:
 
 | ID | 功能 | 详细描述 | 验收标准 | 版本 |
 |----|------|---------|---------|------|
 | UM-001 | 用户管理 | 用户注册/编辑/禁用/删除 | 支持批量操作 | 标准版 |
-| UM-002 | 角色管理 | 创建/编辑/删除角色（系统级） | 预设角色模板 | 标准版 |
-| UM-003 | 权限管理 | 为角色分配权限 | 基于权限码的细粒度控制 | 标准版 |
-| UM-004 | 角色绑定 | 将角色绑定到用户 | 支持多角色 | 标准版 |
-| UM-005 | 用户登录 | 用户名密码、邮箱验证码 | 密码 BCrypt 加密 | 标准版 |
-| UM-006 | OAuth 登录 | GitHub / Gitee | OAuth2 标准协议 | 标准版 |
-| UM-007 | 企业 OAuth 登录 | 飞书、钉钉、GitHub Enterprise | OAuth2 标准协议 | 企业版 |
+| UM-002 | 角色分配 | 设置用户为管理员或普通用户 | 管理员可设置其他用户角色 | 标准版 |
+| UM-003 | 用户登录 | 用户名密码、邮箱验证码 | 密码 BCrypt 加密 | 标准版 |
+| UM-004 | OAuth 登录 | GitHub / Gitee | OAuth2 标准协议 | 标准版 |
+| UM-005 | 企业 OAuth 登录 | 飞书、钉钉、GitHub Enterprise | OAuth2 标准协议 | 企业版 |
 
-**预设角色**:
+**角色定义**:
 
 | 角色 | 权限范围 |
 |------|---------|
-| **管理员** | 系统全部权限 |
-| **开发者** | 创建 API Key、查看日志、查看用量、调用 API |
-| **观察者** | 仅查看用量和日志（只读权限） |
-| **用量审计员** | 用量报表查看、Token限额查看、无配置权限 |
+| **管理员（ADMIN）** | 全部管理权限（Provider/Model/Channel/TokenLimit 配置）+ 查看所有用户数据 + API 调用 |
+| **普通用户（USER）** | 创建/管理自己的 API Key + 调用 API + 查看自己的用量 |
+
+**权限边界**:
+
+| 操作 | 管理员 | 普通用户 |
+|------|--------|---------|
+| Provider/Channel/Model 管理 | ✅ | ❌ |
+| TokenLimit 配置 | ✅ | ❌ |
+| 用户管理 | ✅ | ❌ |
+| 查看所有用户用量/日志 | ✅ | ❌ |
+| 创建/管理自己的 API Key | ✅ | ✅ |
+| 调用 API | ✅ | ✅ |
+| 查看自己的用量 | ✅ | ✅ |
 
 ---
 
@@ -613,19 +626,19 @@
 
 | ID | 功能 | 详细描述 | 验收标准 | 版本 |
 |----|------|---------|---------|------|
-| CM-001 | 语义缓存 | 将请求及响应缓存，相似请求返回缓存答案 | 缓存命中率 ≥60%，误匹配率 ≤5%，相似度阈值默认 0.95 | 标准版 |
-| CM-002 | 缓存 TTL | 缓存可设置过期时间，避免返回过时答案 | 默认 TTL 1 小时，可配置 | 标准版 |
-| CM-003 | 缓存命中统计 | 统计缓存命中率、节省的 Token 数量 | 实时仪表盘可展示 | 标准版 |
-| CM-004 | 缓存作用域 | 缓存可按用户隔离 | 跨用户缓存不共享 | 标准版 |
-| CM-005 | 缓存失效 | 支持手动清除缓存条目 | API 接口和 UI 可操作 | 标准版 |
-| CM-006 | 流式缓存绕过 | 流式请求可配置是否跳过缓存 | 默认流式不缓存 | 标准版 |
-| CM-007 | 向量存储 | 使用 Redis Stack 或向量数据库存储缓存向量 | 支持相似度检索 | 标准版 |
-| CM-008 | 缓存预热 | 系统启动时预加载热点缓存 | 可配置预热策略 | 标准版 |
-| CM-009 | 缓存穿透防护 | 对不存在的缓存 Key 进行防护 | 空值缓存 + 布隆过滤器 | 标准版 |
+| CM-001 | 语义缓存 | 将请求及响应缓存，相似请求返回缓存答案 | 缓存命中率 ≥60%，误匹配率 ≤5%，相似度阈值默认 0.95 | 企业版 |
+| CM-002 | 缓存 TTL | 缓存可设置过期时间，避免返回过时答案 | 默认 TTL 1 小时，可配置 | 企业版 |
+| CM-003 | 缓存命中统计 | 统计缓存命中率、节省的 Token 数量 | 实时仪表盘可展示 | 企业版 |
+| CM-004 | 缓存作用域 | 缓存可按用户隔离 | 跨用户缓存不共享 | 企业版 |
+| CM-005 | 缓存失效 | 支持手动清除缓存条目 | API 接口和 UI 可操作 | 企业版 |
+| CM-006 | 流式缓存绕过 | 流式请求可配置是否跳过缓存 | 默认流式不缓存 | 企业版 |
+| CM-007 | 向量存储 | 使用 pgvector 扩展存储缓存向量（需 PostgreSQL） | 支持相似度检索 | 企业版 |
+| CM-008 | 缓存预热 | 系统启动时预加载热点缓存 | 可配置预热策略 | 企业版 |
+| CM-009 | 缓存穿透防护 | 对不存在的缓存 Key 进行防护 | 空值缓存 + 布隆过滤器 | 企业版 |
 
 **技术实现**:
 - Embedding 模型：LangChain4j 内置支持
-- 向量存储：Redis Stack（轻量）/ Milvus（专业）
+- 向量存储：pgvector（PostgreSQL 扩展，企业版专属）
 - 相似度阈值：默认 0.95，可配置范围 0.80-0.99
 - 相似度算法：余弦相似度（Cosine Similarity）
 - 缓存容量：默认 10000 条，可配置
@@ -1292,10 +1305,10 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | 模型别名映射 | ✅ | ✅ |
 | | 可视化策略编排 | - | ✅ |
 | | 自定义脚本扩展 | - | ✅ |
-| **语义缓存** | 语义缓存 | ✅ | ✅ |
-| | 缓存命中统计 | ✅ | ✅ |
+| **语义缓存** | 语义缓存 | - | ✅ |
+| | 缓存命中统计 | - | ✅ |
 | **用户管理** | 用户 CRUD（创建/编辑/禁用/删除） | ✅ | ✅ |
-| | 角色与权限（RBAC: Role-Based Access Control） | - | ✅ |
+| | 角色设置（ADMIN/USER） | ✅ | ✅ |
 | **API Key 管理** | API Key CRUD | ✅ | ✅ |
 | | 模型白名单 | ✅ | ✅ |
 | | IP 白名单 | ✅ | ✅ |
@@ -1439,7 +1452,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | `/api/v1/users/{id}` | PUT | 更新用户 | Admin |
 | | `/api/v1/users/{id}` | DELETE | 删除用户（软删除） | Admin |
 | | `/api/v1/users/{id}/status` | PATCH | 更新用户状态 | Admin |
-| | `/api/v1/users/{id}/roles` | PUT | 分配用户角色 | Admin |
+| | `/api/v1/users/{id}/role` | PATCH | 设置用户角色 | Admin |
 | **Provider 管理** | `/api/v1/providers` | GET | 分页查询 Provider 列表 | Admin |
 | | `/api/v1/providers` | POST | 创建 Provider | Admin |
 | | `/api/v1/providers/{id}` | GET | 获取 Provider 详情 | Admin |
@@ -1464,12 +1477,6 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | | `/api/v1/token-limits/{id}` | GET | 获取 TokenLimit 详情 | Admin |
 | | `/api/v1/token-limits/{id}` | PUT | 更新 TokenLimit | Admin |
 | | `/api/v1/token-limits/{id}` | DELETE | 删除 TokenLimit（软删除） | Admin |
-| **角色管理** | `/api/v1/roles` | GET | 查询角色列表 | Admin |
-| | `/api/v1/roles` | POST | 创建角色 | Admin |
-| | `/api/v1/roles/{id}` | GET | 获取角色详情 | Admin |
-| | `/api/v1/roles/{id}` | PUT | 更新角色 | Admin |
-| | `/api/v1/roles/{id}` | DELETE | 删除角色 | Admin |
-| | `/api/v1/roles/{id}/permissions` | PUT | 分配角色权限 | Admin |
 
 ### 9.6.2 统一响应格式
 
@@ -1497,7 +1504,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | email | string | ✅ | 有效邮箱格式 | 邮箱地址 |
 | password | string | ✅ | 8-128 字符，须包含大小写字母和数字 | 密码 |
 | phone | string | ❌ | 有效手机号 | 手机号 |
-| role_codes | string[] | ❌ | 角色编码列表 | 绑定角色 |
+| role | string | ❌ | ADMIN/USER | 角色（默认 USER） |
 
 ```json
 {
@@ -1505,7 +1512,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "email": "john@example.com",
   "password": "SecurePass123",
   "phone": "13800138000",
-  "role_codes": ["ADMIN", "DEVELOPER"]
+  "role": "USER"
 }
 ```
 
@@ -1525,6 +1532,18 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 }
 ```
 
+**UserRoleUpdateRequest** (设置用户角色请求)
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| role | string | ✅ | 角色：ADMIN/USER |
+
+```json
+{
+  "role": "ADMIN"
+}
+```
+
 **UserResponse** (用户响应)
 
 | 字段 | 类型 | 说明 |
@@ -1535,9 +1554,9 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | email | string | 邮箱地址 |
 | phone | string | 手机号 |
 | avatar_url | string | 头像地址 |
+| role | string | 角色：ADMIN/USER |
 | status | string | 状态：ACTIVE/DISABLED/LOCKED |
 | email_verified | boolean | 邮箱是否验证 |
-| roles | RoleInfo[] | 角色列表 |
 | last_login_at | string | 最后登录时间 (ISO 8601) |
 | created_at | string | 创建时间 (ISO 8601) |
 | updated_at | string | 更新时间 (ISO 8601) |
@@ -1550,14 +1569,9 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
   "email": "john@example.com",
   "phone": "13800138000",
   "avatar_url": "https://example.com/avatar.jpg",
+  "role": "USER",
   "status": "ACTIVE",
   "email_verified": false,
-  "roles": [
-    {
-      "role_code": "ADMIN",
-      "name": "管理员"
-    }
-  ],
   "last_login_at": "2026-04-28T10:00:00Z",
   "created_at": "2026-04-28T08:00:00Z",
   "updated_at": "2026-04-28T10:00:00Z"
@@ -1576,18 +1590,6 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 }
 ```
 
-**UserRoleAssignRequest** (分配角色请求)
-
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| role_codes | string[] | ✅ | 角色编码列表 |
-
-```json
-{
-  "role_codes": ["ADMIN", "DEVELOPER"]
-}
-```
-
 #### 分页查询参数
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
@@ -1595,7 +1597,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 | limit | int | 20 | 每页数量 (max 100) |
 | keyword | string | - | 搜索关键字 (username/email) |
 | status | string | - | 筛选状态 |
-| role_code | string | - | 筛选角色 |
+| role | string | - | 筛选角色（ADMIN/USER） |
 
 ### 9.6.4 Provider 管理
 
@@ -1857,52 +1859,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 }
 ```
 
-### 9.6.8 Role 管理
-
-#### DTO 结构
-
-**RoleCreateRequest** (创建角色请求)
-```json
-{
-  "role_code": "custom_role (required, unique)",
-  "name": "自定义角色 (required)",
-  "description": "描述 (optional)",
-  "permission_codes": ["provider:read", "model:create"]
-}
-```
-
-**RoleUpdateRequest** (更新角色请求)
-```json
-{
-  "name": "自定义角色 (optional)",
-  "description": "描述 (optional)",
-  "is_active": true,
-  "permission_codes": ["provider:read", "model:create", "token:read"]
-}
-```
-
-**RoleResponse** (角色响应)
-```json
-{
-  "id": 1,
-  "role_code": "custom_role",
-  "name": "自定义角色",
-  "description": "描述",
-  "role_type": "CUSTOM",
-  "is_active": true,
-  "permissions": [
-    {
-      "permission_code": "provider:read",
-      "name": "查看提供商",
-      "category": "provider"
-    }
-  ],
-  "created_at": "2026-04-28T08:00:00Z",
-  "updated_at": "2026-04-28T10:00:00Z"
-}
-```
-
-### 9.6.9 错误码定义
+### 9.6.8 错误码定义
 
 | 错误码 | HTTP 状态码 | 说明 |
 |--------|-------------|------|
@@ -1971,18 +1928,7 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 - Create: `src/main/java/com/codingas/gateway/domain/security/gateway/TokenLimitGateway.java`
 - Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaTokenLimitGateway.java`
 
-#### Task 6: 角色管理 CRUD
-
-**Files:**
-- Create: `src/main/java/com/codingas/gateway/adapter/admin/controller/RoleController.java`
-- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleCreateRequest.java`
-- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleUpdateRequest.java`
-- Create: `src/main/java/com/codingas/gateway/adapter/admin/dto/RoleResponse.java`
-- Create: `src/main/java/com/codingas/gateway/application/role/RoleApplication.java`
-- Create: `src/main/java/com/codingas/gateway/domain/security/gateway/RoleGateway.java`
-- Create: `src/main/java/com/codingas/gateway/infrastructure/gateway/security/JpaRoleGateway.java`
-
-#### Task 7: 数据库迁移
+#### Task 6: 数据库迁移
 
 **Files:**
 - Create: `src/main/resources/db/V2__add_indexes.sql`
@@ -1997,10 +1943,7 @@ Phase 1 已完成以下工作：
 
 | 实体 | 变更类型 | 说明 |
 |------|----------|------|
-| User | 重构 | 新增 phone, avatarUrl, emailVerified, oauthProviders, piiSalt, lastLoginAt, deletedAt |
-| Role | 重构 | 从常量类转为 JPA 实体，支持 SYSTEM/CUSTOM 类型和软删除 |
-| Permission | 重构 | 从常量类转为 JPA 实体，细粒度权限码 |
-| UserRole | 新增 | 用户-角色多对多关联实体 |
+| User | 重构 | 新增 phone, avatarUrl, emailVerified, oauthProviders, piiSalt, lastLoginAt, deletedAt, role（枚举字段） |
 | Provider | 重构 | 使用 ProviderType 枚举，新增 websiteUrl, apiDocUrl |
 | Model | 重构 | 新增 providerModelId, contextWindow, input/outputPrice, capabilities (JSON) |
 | GatewayApiKey | 重构 | 使用 User 实体引用，新增 ipWhitelist |
@@ -2011,13 +1954,13 @@ Phase 1 已完成以下工作：
 
 #### 9.7.2 新增枚举
 - UserStatus (ACTIVE/DISABLED/LOCKED/DELETED)
-- UserRole (ADMIN/DEVELOPER/OBSERVER/USAGE_AUDITOR)
+- UserRole (ADMIN/USER)
 - ProviderType (OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER)
 - PeriodType (DAILY/WEEKLY/MONTHLY/TOTAL)
 - ExceededAction (REJECT/DOWNGRADE)
 
 #### 9.7.3 数据库迁移
-- V1__init_schema.sql: 包含完整的 12 张表和索引
+- V1__init_schema.sql: 包含完整的表结构和索引
 
 ### 9.8 MVP 范围
 
@@ -2102,6 +2045,9 @@ MVP 必须包含以下最小可用功能：
 
 | 版本 | 日期 | 变更内容 | 变更人 |
 |------|------|---------|--------|
+| v6.6 | 2026-05-02 | 语义缓存标记为企业版专属：功能全景矩阵添加版本标记（2.1节）；语义缓存模块全部改为企业版（2.2.16节）；版本对比矩阵修正（九、9.2节）；向量存储技术实现改为 pgvector | - |
+| v6.5 | 2026-05-02 | 对齐信息架构：补充术语表 T-013/T-014/T-015（SemanticCache/UserOAuth/License）；澄清 CH-006 渠道分组与 RouteGroup 的概念映射 | - |
+| v6.4 | 2026-05-02 | 对齐信息架构：修正术语表 T-005（RouteGroupProvider → RouteGroupChannel） | - |
 | v6.3 | 2026-05-02 | API 文档拆分：新建 `api-spec.md` 文档，完整定义 OpenAI API 和 Anthropic API 兼容规范（端点、请求/响应格式、协议转换、错误格式）；简化 spec.md 第三章为概览引用 | - |
 | v6.2 | 2026-05-02 | 评审修复：P0-修复章节编号冲突(13.x→9.x)；P0-补充智能降级回切策略(RT-004a/b/c)；P0-补充语义缓存准确率(CM-001)；P1-分阶段QPS目标(v1.0:5K/v2.0:10K)；P1-放宽语义缓存延迟(10ms→50ms)；P1-新增License管理模块(2.2.22)；P2-细化目标客户画像(1.2.1)；P2-重构User DTO格式(9.6.3) | - |
 | v6.0 | 2026-05-02 | 基于竞品分析重构定位：删除 API Portal 和 Prompt 服务模块；删除成本智能路由；新增智能降级为核心竞争力；新增语义缓存模块；更新差异化竞争力定位（更合规、更安全、更智能、更易用） | - |

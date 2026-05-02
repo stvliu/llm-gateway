@@ -167,7 +167,7 @@ gateway-boot/                          # Maven 单一模块
     │   ├── proxy/                     # 代理领域（核心域）
     │   │   ├── service/
     │   │   └── gateway/
-    │   ├── supply/                    # 模型供给领域
+    │   ├── provider/                  # 模型供给领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
@@ -200,7 +200,7 @@ gateway-boot/                          # Maven 单一模块
     ├── infrastructure/                # 基础设施层
     │   ├── config/
     │   ├── gateway/                  # Gateway 实现
-    │   │   ├── supply/              # Provider/Model 持久化
+    │   │   ├── provider/             # Provider/Model 持久化
     │   │   ├── security/            # User/ApiKey 持久化
     │   │   ├── quota/               # 限流实现
     │   │   ├── audit/               # 审计持久化
@@ -590,10 +590,11 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.1.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-04-30
+**版本**: 2.2.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-02
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
 | v2.0.0 | 2026-04-08 | 初始版本 |
-| v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/supply/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
+| v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
+| v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
