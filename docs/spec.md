@@ -1,6 +1,6 @@
 # LLM-Gateway 项目需求规格说明书
 
-> **文档版本**: v6.2
+> **文档版本**: v6.3
 > **项目版本**: v1.0.0
 > **生成日期**: 2026-05-02
 > **状态**: 草案
@@ -795,21 +795,33 @@
 
 ## 三、API 接口需求
 
-### 3.1 网关 API（OpenAI / Anthropic 兼容）
+### 3.1 网关 API 概览
 
-| 端点 | 方法 | 说明 | 认证 |
-|------|------|------|------|
-| `/v1/chat/completions` | POST | OpenAI 兼容聊天完成 | GatewayApiKey |
-| `/v1/messages` | POST | Anthropic 兼容消息 | GatewayApiKey |
-| `/v1/completions` | POST | OpenAI 兼容补全 | GatewayApiKey |
-| `/v1/embeddings` | POST | 向量嵌入 | GatewayApiKey |
-| `/v1/images/generations` | POST | 图像生成 | GatewayApiKey |
-| `/v1/audio/*` | POST | 音频处理 | GatewayApiKey |
-| `/v1/moderations` | POST | 内容审核 | GatewayApiKey |
+> **详细接口规范**: 端点定义、请求/响应格式、协议转换规则、错误格式等参见 [API 接口规范](./api-spec.md)。
+
+LLM-Gateway 提供双协议兼容的网关 API：
+
+| 协议 | 兼容标准 | 核心端点 |
+|------|---------|---------|
+| **OpenAI API** | OpenAI API Reference | `/v1/chat/completions`、`/v1/embeddings`、`/v1/images/*`、`/v1/audio/*`、`/v1/moderations` |
+| **Anthropic API** | Anthropic Messages API | `/v1/messages`、`/v1/messages/batches` |
+
+**核心端点总览**:
+
+| 端点 | 方法 | 说明 | 优先级 |
+|------|------|------|--------|
+| `/v1/chat/completions` | POST | OpenAI 兼容聊天补全 | P0 |
+| `/v1/messages` | POST | Anthropic 兼容消息 | P0 |
+| `/v1/embeddings` | POST | 向量嵌入 | P0 |
+| `/v1/models` | GET | 模型列表 | P1 |
+| `/v1/images/generations` | POST | 图像生成 | P1 |
+| `/v1/audio/speech` | POST | 文字转语音 (TTS) | P1 |
+| `/v1/audio/transcriptions` | POST | 语音转文字 (STT) | P1 |
+| `/v1/moderations` | POST | 内容审核 | P1 |
 
 **流式响应**: `stream: true` 参数控制，首 token 延迟 ≤100ms (P95)。
 
-### 3.2 管理 API
+### 3.2 管理 API 概览
 
 管理 API 路径：`/api/v1/{resource}`
 
@@ -849,8 +861,6 @@
 }
 ```
 
-> 业务领域模型与数据模型详情参见 [应用架构](./应用架构.md)
-
 ### 3.4 错误码汇总
 
 **网关 API 错误响应格式**（OpenAI 兼容）:
@@ -867,39 +877,18 @@
 }
 ```
 
-**管理 API 错误响应格式**:
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "INVALID_PARAMETER",
-    "message": "参数校验失败",
-    "details": []
-  },
-  "trace_id": "trace_789xyz"
-}
-```
+**管理 API 错误码**:
 
-**错误码对照表**:
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| `INVALID_PARAMETER` | 400 | 参数校验失败 |
+| `DUPLICATE_RESOURCE` | 409 | 资源已存在 |
+| `RESOURCE_NOT_FOUND` | 404 | 资源不存在 |
+| `RESOURCE_INACTIVE` | 400 | 资源已禁用 |
+| `OPERATION_NOT_ALLOWED` | 403 | 操作不允许 |
+| `INTERNAL_ERROR` | 500 | 内部错误 |
 
-| 错误码 | HTTP 状态码 | 适用场景 | 说明 |
-|--------|-------------|---------|------|
-| `invalid_api_key` | 401 | 网关 API | API Key 无效或已失效 |
-| `api_key_expired` | 401 | 网关 API | API Key 已过期 |
-| `quota_exceeded` | 402 | 网关 API | 额度超限 |
-| `rate_limit_exceeded` | 429 | 网关 API | 请求超限（RPM/TPM） |
-| `content_violation` | 400 | 网关 API | 内容违规 |
-| `model_not_allowed` | 403 | 网关 API | 模型不在白名单 |
-| `ip_not_allowed` | 403 | 网关 API | IP 不在白名单 |
-| `INVALID_PARAMETER` | 400 | 管理 API | 参数校验失败 |
-| `DUPLICATE_RESOURCE` | 409 | 管理 API | 资源已存在 |
-| `RESOURCE_NOT_FOUND` | 404 | 管理 API | 资源不存在 |
-| `RESOURCE_INACTIVE` | 400 | 管理 API | 资源已禁用 |
-| `OPERATION_NOT_ALLOWED` | 403 | 管理 API | 操作不允许 |
-| `INTERNAL_ERROR` | 500 | 管理 API | 内部错误 |
-
-> 详细错误码定义（包括 Provider 错误、限流策略错误）：参见 [应用架构](./应用架构.md) 接口章节。
+> 完整错误码定义（网关 API + 管理 API）参见 [API 接口规范](./api-spec.md) 第五章。
 
 ---
 
@@ -2113,6 +2102,7 @@ MVP 必须包含以下最小可用功能：
 
 | 版本 | 日期 | 变更内容 | 变更人 |
 |------|------|---------|--------|
+| v6.3 | 2026-05-02 | API 文档拆分：新建 `api-spec.md` 文档，完整定义 OpenAI API 和 Anthropic API 兼容规范（端点、请求/响应格式、协议转换、错误格式）；简化 spec.md 第三章为概览引用 | - |
 | v6.2 | 2026-05-02 | 评审修复：P0-修复章节编号冲突(13.x→9.x)；P0-补充智能降级回切策略(RT-004a/b/c)；P0-补充语义缓存准确率(CM-001)；P1-分阶段QPS目标(v1.0:5K/v2.0:10K)；P1-放宽语义缓存延迟(10ms→50ms)；P1-新增License管理模块(2.2.22)；P2-细化目标客户画像(1.2.1)；P2-重构User DTO格式(9.6.3) | - |
 | v6.0 | 2026-05-02 | 基于竞品分析重构定位：删除 API Portal 和 Prompt 服务模块；删除成本智能路由；新增智能降级为核心竞争力；新增语义缓存模块；更新差异化竞争力定位（更合规、更安全、更智能、更易用） | - |
 | v5.9 | 2026-05-01 | 需求准确性评估：修复 MEDIUM 问题（非流式延迟承诺改为网关处理延迟、安全评分需求落地、告警阈值修正）；修复 LOW 问题（9.7编号冲突、MVP范围定义、角色命名修正、重复内容清理） | - |
