@@ -51,7 +51,13 @@
       "Bash(echo \"Compile: $?\")",
       "Bash(echo \"Exit: $?\")",
       "Bash(grep -v \"^\\\\s*$\")",
-      "mcp__plugin_ecc_context7__resolve-library-id"
+      "WebSearch",
+      "WebFetch",
+      "mcp__plugin_ecc_context7__resolve-library-id",
+      "Bash(grep -B 3 \"^| ID | 功能 | 详细描述 | 验收标准 |$\" /mnt/e/workspace/llm-gateway/docs/spec.md)",
+      "Bash(grep -v \"^--$\")",
+      "Bash(grep -v \"^|$\")",
+      "Bash(grep *)"
     ]
   },
   "outputStyle": "default"
