@@ -1,7 +1,6 @@
 package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.security.service.RbacDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +10,7 @@ import org.springframework.stereotype.Service;
  * 认证应用服务实现
  *
  * <p>编排认证相关的领域服务，不含业务逻辑。</p>
+ * <p>简化权限模型：通过 User.role 字段判断管理员/普通用户。</p>
  */
 @Slf4j
 @Service
@@ -18,7 +18,6 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
     private final AuthenticationDomainService authenticationService;
-    private final RbacDomainService rbacService;
 
     /**
      * 认证 API Key
@@ -42,6 +41,8 @@ public class AuthServiceImpl implements AuthService {
     /**
      * 检查用户权限
      *
+     * <p>简化权限模型：管理员(ADMIN)拥有所有权限，普通用户(USER)仅拥有个人权限。</p>
+     *
      * @param userId 用户 ID
      * @param resource 资源
      * @param action 操作
@@ -50,7 +51,14 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean checkPermission(Long userId, String resource, String action) {
         var userOpt = authenticationService.getUserById(userId);
-        return userOpt.map(user -> rbacService.hasPermission(user, resource, action))
-            .orElse(false);
+        return userOpt.map(user -> {
+            // 管理员拥有所有权限
+            if (user.isAdmin()) {
+                return true;
+            }
+            // 普通用户仅能访问自己的资源
+            // TODO: 根据具体业务场景实现细粒度权限控制
+            return false;
+        }).orElse(false);
     }
 }

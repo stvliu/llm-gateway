@@ -2,9 +2,9 @@ package com.codingas.gateway.application.chat;
 
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.domain.router.entity.Model;
-import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.ModelRouterDomainService;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.model.service.ModelRouterDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -12,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -93,10 +91,10 @@ class ChatServiceTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.COST_OPTIMIZED)))
-                .thenReturn(Mono.just(testLLMResponse));
+                .thenReturn(testLLMResponse);
 
         // When
-        ChatService.ChatResponse response = chatService.chat(request).block();
+        ChatService.ChatResponse response = chatService.chat(request);
 
         // Then
         assertThat(response).isNotNull();
@@ -126,10 +124,10 @@ class ChatServiceTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), eq(strategy)))
-                .thenReturn(Mono.just(testLLMResponse));
+                .thenReturn(testLLMResponse);
 
         // When
-        ChatService.ChatResponse response = chatService.chat(request).block();
+        ChatService.ChatResponse response = chatService.chat(request);
 
         // Then
         assertThat(response).isNotNull();
@@ -156,10 +154,10 @@ class ChatServiceTest {
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
         when(llmChatUseCase.send(any(LLMRequest.class), any()))
-                .thenReturn(Mono.just(responseWithNullContent));
+                .thenReturn(responseWithNullContent);
 
         // When
-        ChatService.ChatResponse response = chatService.chat(request).block();
+        ChatService.ChatResponse response = chatService.chat(request);
 
         // Then
         assertThat(response).isNotNull();
@@ -180,10 +178,10 @@ class ChatServiceTest {
         ChatService.ChatRequest request = new ChatService.ChatRequest(modelCode, messages);
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), any())).thenReturn(Mono.empty());
+        when(llmChatUseCase.send(any(LLMRequest.class), any())).thenReturn(null);
 
         // When
-        ChatService.ChatResponse response = chatService.chat(request).block();
+        ChatService.ChatResponse response = chatService.chat(request);
 
         // Then
         assertThat(response).isNotNull();

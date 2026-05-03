@@ -5,10 +5,10 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.0.0 |
+| 版本 | 2.3.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
-| 技术栈 | Java 21 + Spring Boot 3.2.x + PostgreSQL 14+ + Redis 6.0+ |
+| 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
 
 ---
 
@@ -158,19 +158,40 @@ gateway-boot/                          # Maven 单一模块
     │   └── model/
     ├── domain/                        # 领域层
     │   ├── gateway/                   # 跨领域 Gateway 接口
-    │   ├── security/                  # 安全领域
+    │   ├── router/                    # 路由领域（核心域）
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
     │   │   ├── enums/
     │   │   └── exception/
-    │   ├── router/                    # 路由领域
+    │   ├── proxy/                     # 代理领域（核心域）
+    │   │   ├── service/
+    │   │   └── gateway/
+    │   ├── model/                     # 模型广场领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
     │   │   ├── enums/
     │   │   └── exception/
-    │   └── analytics/                # 分析领域
+    │   ├── security/                  # 安全控制领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── quota/                     # 限额配额领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── audit/                     # 审计合规领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   ├── enums/
+    │   │   └── exception/
+    │   └── alert/                     # 告警管理领域
     │       ├── entity/
     │       ├── service/
     │       ├── gateway/
@@ -179,9 +200,12 @@ gateway-boot/                          # Maven 单一模块
     ├── infrastructure/                # 基础设施层
     │   ├── config/
     │   ├── gateway/                  # Gateway 实现
-    │   │   ├── security/
-    │   │   ├── router/
-    │   │   └── analytics/
+    │   │   ├── provider/             # Provider/Model 持久化
+    │   │   ├── security/            # User/ApiKey 持久化
+    │   │   ├── quota/               # 限流实现
+    │   │   ├── audit/               # 审计持久化
+    │   │   ├── alert/               # 告警持久化
+    │   │   └── llm/                 # OpenAI/Anthropic 代理实现
     │   └── util/
     └── common/                        # 公共组件
         ├── constants/
@@ -566,4 +590,12 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.0.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-04-08
+**版本**: 2.2.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-02
+
+**变更记录**:
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v2.0.0 | 2026-04-08 | 初始版本 |
+| v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
+| v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
+| v2.3.0 | 2026-05-02 | **领域命名调整**：provider 域更名为 model（模型广场）；与信息架构 v3.5、应用架构 v3.0、数据架构 v1.4 保持一致 |

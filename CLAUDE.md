@@ -16,7 +16,7 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 2. **安全零信任**: 所有请求必须经过认证、鉴权、限流、脱敏四层检查；API Key 必须加密存储
 3. **测试驱动开发**: 核心服务层覆盖率 ≥90%，规则引擎 ≥85%，适配器层 ≥80%
 4. **可观测性内建**: 所有请求必须支持 OpenTelemetry 标准追踪，带 Trace ID 全链路追踪
-5. **Token 成本透明**: 每个请求分别统计输入/输出 Token，四级预算控制（团队/用户/令牌/用户×渠道）
+5. **Token 成本透明**: 每个请求分别统计输入/输出 Token，二级预算控制（用户/令牌）
 
 ## 架构约束
 
@@ -39,12 +39,12 @@ gateway-boot/                          # Maven 单一模块
 └── src/main/java/com/codingas/gateway/
     ├── adapter/                       # 适配器层（按用例分包）
     │   ├── auth/controller/ & dto/
-    │   ├── chat/controller/ & dto/
+    │   ├── proxy/controller/ & dto/
     │   ├── model/controller/ & dto/
     │   └── admin/controller/ & dto/
     ├── application/                   # 应用层（按用例分包）
     │   ├── auth/
-    │   ├── chat/
+    │   ├── proxy/
     │   └── model/
     ├── domain/                        # 领域层
     │   ├── gateway/                   # 跨领域 Gateway 接口

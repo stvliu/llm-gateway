@@ -1,16 +1,16 @@
 package com.codingas.gateway.application.provider;
 
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderResponse;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderUpdateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
+import com.codingas.gateway.application.provider.dto.ProviderResponse;
+import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.domain.router.entity.Provider.ProviderStatus;
-import com.codingas.gateway.domain.router.gateway.ProviderGateway;
+import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.entity.Provider.ProviderStatus;
+import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -3,8 +3,8 @@ package com.codingas.gateway.application.chat;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.event.TokenUsedEvent;
-import com.codingas.gateway.domain.router.entity.RouteGroup;
-import com.codingas.gateway.domain.router.service.LLMDispatcher;
+import com.codingas.gateway.domain.model.entity.RouteGroup;
+import com.codingas.gateway.domain.model.service.LLMDispatcher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,8 +15,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
-
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -79,10 +77,10 @@ class LLMChatUseCaseTest {
     void send_success() {
         // Given
         RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.COST_OPTIMIZED;
-        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(Mono.just(testResponse));
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(testResponse);
 
         // When
-        LLMResponse result = llmChatUseCase.send(testRequest, strategy).block();
+        LLMResponse result = llmChatUseCase.send(testRequest, strategy);
 
         // Then
         assertThat(result).isNotNull();
@@ -105,10 +103,10 @@ class LLMChatUseCaseTest {
     void send_responseIsNull_noEventPublished() {
         // Given
         RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.COST_OPTIMIZED;
-        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(Mono.empty());
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(null);
 
         // When
-        LLMResponse result = llmChatUseCase.send(testRequest, strategy).block();
+        LLMResponse result = llmChatUseCase.send(testRequest, strategy);
 
         // Then
         assertThat(result).isNull();
@@ -132,10 +130,10 @@ class LLMChatUseCaseTest {
                         .build())
                 .usage(null)
                 .build();
-        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(Mono.just(responseWithNullUsage));
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(responseWithNullUsage);
 
         // When
-        LLMResponse result = llmChatUseCase.send(testRequest, strategy).block();
+        LLMResponse result = llmChatUseCase.send(testRequest, strategy);
 
         // Then
         assertThat(result).isNotNull();
@@ -150,7 +148,7 @@ class LLMChatUseCaseTest {
         // Given
         RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.COST_OPTIMIZED;
         Consumer<String> mockCallback = mock(Consumer.class);
-        when(llmDispatcher.sendStream(any(LLMRequest.class), eq(strategy), any())).thenReturn(Mono.empty());
+        doNothing().when(llmDispatcher).sendStream(any(LLMRequest.class), eq(strategy), any());
 
         // When
         llmChatUseCase.sendStream(testRequest, strategy, mockCallback);
@@ -164,10 +162,10 @@ class LLMChatUseCaseTest {
     void send_withDifferentStrategy() {
         // Given
         RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.LATENCY_OPTIMIZED;
-        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(Mono.just(testResponse));
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(testResponse);
 
         // When
-        LLMResponse result = llmChatUseCase.send(testRequest, strategy).block();
+        LLMResponse result = llmChatUseCase.send(testRequest, strategy);
 
         // Then
         assertThat(result).isNotNull();

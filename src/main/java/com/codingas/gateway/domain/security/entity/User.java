@@ -7,14 +7,13 @@ import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
  * 用户实体
  *
  * <p>表示系统中的用户账户，包含认证和授权信息。</p>
+ * <p>简化角色模型：通过 role 字段区分 ADMIN/USER 双角色。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -36,6 +35,11 @@ public class User extends BaseEntity {
 
     private UserStatus status = UserStatus.ACTIVE;
 
+    /**
+     * 用户角色：ADMIN（管理员）/ USER（普通用户）
+     */
+    private String role = "USER";
+
     private Boolean emailVerified = false;
 
     private Map<String, String> oauthProviders;
@@ -45,8 +49,6 @@ public class User extends BaseEntity {
     private Instant lastLoginAt;
 
     private Instant deletedAt;
-
-    private List<Role> roles = new ArrayList<>();
 
     /**
      * 检查用户是否激活
@@ -60,5 +62,12 @@ public class User extends BaseEntity {
      */
     public boolean isEmailVerified() {
         return Boolean.TRUE.equals(emailVerified);
+    }
+
+    /**
+     * 检查是否为管理员
+     */
+    public boolean isAdmin() {
+        return "ADMIN".equals(role);
     }
 }

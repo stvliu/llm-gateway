@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.security.gateway;
 
-import com.codingas.gateway.domain.security.entity.TokenLimit;
+import com.codingas.gateway.domain.quota.entity.TokenLimit;
 
 import java.util.List;
 import java.util.Optional;
