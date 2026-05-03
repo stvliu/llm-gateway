@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.apikey;
 
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyUpdateRequest;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyResponse;
+import com.codingas.gateway.application.apikey.dto.ApiKeyCreateRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyQueryRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyUpdateRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;

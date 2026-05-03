@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.user;
 
-import com.codingas.gateway.application.dto.user.*;
+import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;

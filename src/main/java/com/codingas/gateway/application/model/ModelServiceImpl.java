@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.model;
 
-import com.codingas.gateway.adapter.admin.dto.model.ModelCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.model.ModelQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.model.ModelResponse;
-import com.codingas.gateway.adapter.admin.dto.model.ModelUpdateRequest;
+import com.codingas.gateway.application.model.dto.ModelCreateRequest;
+import com.codingas.gateway.application.model.dto.ModelQueryRequest;
+import com.codingas.gateway.application.model.dto.ModelResponse;
+import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;

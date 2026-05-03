@@ -1,9 +1,9 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyResponse;
-import com.codingas.gateway.adapter.admin.dto.apikey.ApiKeyUpdateRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyCreateRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyQueryRequest;
+import com.codingas.gateway.application.apikey.dto.ApiKeyResponse;
+import com.codingas.gateway.application.apikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.application.apikey.ApiKeyService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;

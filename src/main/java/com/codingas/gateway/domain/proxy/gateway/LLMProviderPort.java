@@ -4,7 +4,7 @@ import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.infrastructure.adapter.StreamCallback;
+import com.codingas.gateway.infrastructure.proxy.gateway.rpc.StreamCallback;
 
 /**
  * LLM 提供商端口接口

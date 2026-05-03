@@ -1,10 +1,10 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.adapter.admin.dto.tokenlimit.TokenLimitCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.tokenlimit.TokenLimitQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.tokenlimit.TokenLimitResponse;
-import com.codingas.gateway.adapter.admin.dto.tokenlimit.TokenLimitUpdateRequest;
-import com.codingas.gateway.application.tokenlimit.TokenLimitService;
+import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
+import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
+import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
+import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
+import com.codingas.gateway.application.quota.TokenLimitService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;

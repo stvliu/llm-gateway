@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.provider;
 
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderCreateRequest;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderQueryRequest;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderResponse;
-import com.codingas.gateway.adapter.admin.dto.provider.ProviderUpdateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
+import com.codingas.gateway.application.provider.dto.ProviderResponse;
+import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
