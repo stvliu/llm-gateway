@@ -13,6 +13,17 @@ import java.util.function.Consumer;
 public class StreamCallbackImpl implements StreamCallback {
 
     private final Consumer<String> onChunk;
+    private final Runnable onCompleteCallback;
+    private final Consumer<Throwable> onErrorCallback;
+
+    /**
+     * 简化构造函数（使用空回调）
+     */
+    public StreamCallbackImpl(Consumer<String> onChunk) {
+        this.onChunk = onChunk;
+        this.onCompleteCallback = () -> {};
+        this.onErrorCallback = t -> {};
+    }
 
     @Override
     public void onChunk(String data) {
@@ -21,11 +32,15 @@ public class StreamCallbackImpl implements StreamCallback {
 
     @Override
     public void onComplete() {
-        // 默认实现为空
+        if (onCompleteCallback != null) {
+            onCompleteCallback.run();
+        }
     }
 
     @Override
     public void onError(Throwable t) {
-        // 默认实现为空
+        if (onErrorCallback != null) {
+            onErrorCallback.accept(t);
+        }
     }
 }

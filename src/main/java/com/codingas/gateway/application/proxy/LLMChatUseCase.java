@@ -49,8 +49,22 @@ public class LLMChatUseCase {
      * @param onChunk 流式响应回调
      */
     public void sendStream(LLMRequest request, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk) {
+        sendStream(request, strategy, onChunk, () -> {}, e -> log.error("Stream error: {}", e.getMessage()));
+    }
+
+    /**
+     * 发送流式请求（带完成和错误回调）
+     *
+     * @param request LLM 请求
+     * @param strategy 路由策略
+     * @param onChunk 流式响应回调
+     * @param onComplete 完成回调
+     * @param onError 错误回调
+     */
+    public void sendStream(LLMRequest request, RouteGroup.RoutingStrategy strategy,
+                          Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError) {
         log.debug("UseCase: send stream request, model={}, strategy={}", request.getModel(), strategy);
-        llmDispatcher.sendStream(request, strategy, onChunk);
+        llmDispatcher.sendStream(request, strategy, onChunk, onComplete, onError);
     }
 
     /**
