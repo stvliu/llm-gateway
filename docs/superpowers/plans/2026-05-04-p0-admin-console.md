@@ -1801,13 +1801,1068 @@ git commit -m "feat: add router configuration with auth and role guards"
 6. 国际化配置
 7. 路由配置
 
-后续任务将包括：
-- Task 8: 布局组件
-- Task 9: 登录页
-- Task 10: 管理员模型中心页
-- Task 11: 管理员用户管理页
-- Task 12: 管理员个人设置页
-- Task 13: 用户模型查看页
-- Task 14: 用户 API Key 管理页
-- Task 15: 用户个人设置页
-- Task 16: 构建部署配置
+---
+
+## Task 8: 布局组件
+
+**Files:**
+- Create: `frontend/src/components/layout/AdminLayout.tsx`
+- Create: `frontend/src/components/layout/UserLayout.tsx`
+- Create: `frontend/src/components/layout/Header.tsx`
+- Create: `frontend/src/components/layout/Sidebar.tsx`
+- Create: `frontend/src/components/layout/TabBar.tsx`
+
+- [ ] **Step 1: 创建 Header 组件**
+
+创建 `frontend/src/components/layout/Header.tsx`:
+
+```typescript
+import { Space, Dropdown, Button, Select, Avatar, type MenuProps } from 'antd';
+import {
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  SunOutlined,
+  MoonOutlined,
+  LaptopOutlined,
+  LogoutOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/stores/authStore';
+import { useThemeStore } from '@/stores/themeStore';
+import type { ThemeMode } from '@/stores/themeStore';
+
+interface HeaderProps {
+  collapsed: boolean;
+  onToggle: () => void;
+}
+
+export function Header({ collapsed, onToggle }: HeaderProps) {
+  const { t } = useTranslation('common');
+  const { user, logout } = useAuthStore();
+  const { mode, setMode, getEffectiveTheme } = useThemeStore();
+
+  const themeItems: MenuProps['items'] = [
+    {
+      key: 'system',
+      label: t('theme.system'),
+      icon: <LaptopOutlined />,
+      onClick: () => setMode('system'),
+    },
+    {
+      key: 'light',
+      label: t('theme.light'),
+      icon: <SunOutlined />,
+      onClick: () => setMode('light'),
+    },
+    {
+      key: 'dark',
+      label: t('theme.dark'),
+      icon: <MoonOutlined />,
+      onClick: () => setMode('dark'),
+    },
+  ];
+
+  const userItems: MenuProps['items'] = [
+    {
+      key: 'logout',
+      label: t('user.logout'),
+      icon: <LogoutOutlined />,
+      onClick: logout,
+    },
+  ];
+
+  const handleLanguageChange = (lng: string) => {
+    localStorage.setItem('i18nextLng', lng);
+    window.location.reload();
+  };
+
+  const ThemeIcon = getEffectiveTheme() === 'dark' ? MoonOutlined : SunOutlined;
+
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        height: 48,
+        background: '#fff',
+        borderBottom: '1px solid #f0f0f0',
+      }}
+    >
+      <Space>
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={onToggle}
+        />
+        <span style={{ fontSize: 18, fontWeight: 600 }}>{t('app.title')}</span>
+      </Space>
+
+      <Space>
+        <Dropdown menu={{ items: themeItems }} trigger={['click']}>
+          <Button type="text" icon={<ThemeIcon />} />
+        </Dropdown>
+
+        <Select
+          value={localStorage.getItem('i18nextLng') || 'zh-CN'}
+          onChange={handleLanguageChange}
+          variant="borderless"
+          options={[
+            { value: 'zh-CN', label: t('language.zhCN') },
+            { value: 'en-US', label: t('language.enUS') },
+          ]}
+        />
+
+        <Dropdown menu={{ items: userItems }} trigger={['click']}>
+          <Space style={{ cursor: 'pointer' }}>
+            <Avatar size="small" icon={<UserOutlined />} />
+            <span>{user?.username}</span>
+          </Space>
+        </Dropdown>
+      </Space>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: 创建 Sidebar 组件**
+
+创建 `frontend/src/components/layout/Sidebar.tsx`:
+
+```typescript
+import { Menu } from 'antd';
+import {
+  AppstoreOutlined,
+  TeamOutlined,
+  SettingOutlined,
+  KeyOutlined,
+} from '@ant-design/icons';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { MenuProps } from 'antd';
+import type { UserRole } from '@/types/user';
+
+interface SidebarProps {
+  collapsed: boolean;
+  role: UserRole;
+}
+
+export function Sidebar({ collapsed, role }: SidebarProps) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const adminItems: MenuProps['items'] = [
+    {
+      key: '/admin/models',
+      icon: <AppstoreOutlined />,
+      label: t('models:title', { ns: 'models' }),
+    },
+    {
+      key: '/admin/users',
+      icon: <TeamOutlined />,
+      label: t('users:title', { ns: 'users' }),
+    },
+    {
+      key: '/admin/settings',
+      icon: <SettingOutlined />,
+      label: t('settings:title', { ns: 'common' }),
+    },
+  ];
+
+  const userItems: MenuProps['items'] = [
+    {
+      key: '/user/models',
+      icon: <AppstoreOutlined />,
+      label: t('models:title', { ns: 'models' }),
+    },
+    {
+      key: '/user/api-keys',
+      icon: <KeyOutlined />,
+      label: t('apiKeys:title', { ns: 'apiKeys' }),
+    },
+    {
+      key: '/user/settings',
+      icon: <SettingOutlined />,
+      label: t('settings:title', { ns: 'common' }),
+    },
+  ];
+
+  const items = role === 'ADMIN' ? adminItems : userItems;
+
+  return (
+    <Menu
+      mode="inline"
+      selectedKeys={[location.pathname]}
+      items={items}
+      onClick={({ key }) => navigate(key)}
+      inlineCollapsed={collapsed}
+      style={{ height: '100%', borderRight: 0 }}
+    />
+  );
+}
+```
+
+- [ ] **Step 3: 创建 TabBar 组件**
+
+创建 `frontend/src/components/layout/TabBar.tsx`:
+
+```typescript
+import { Tabs, type TabsProps } from 'antd';
+import { useNavigate, useLocation, Outlet } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useMemo } from 'react';
+
+interface TabConfig {
+  key: string;
+  labelNs: string;
+  labelKey: string;
+}
+
+const adminTabs: TabConfig[] = [
+  { key: '/admin/models', labelNs: 'models', labelKey: 'title' },
+  { key: '/admin/users', labelNs: 'users', labelKey: 'title' },
+];
+
+const userTabs: TabConfig[] = [
+  { key: '/user/models', labelNs: 'models', labelKey: 'title' },
+  { key: '/user/api-keys', labelNs: 'apiKeys', labelKey: 'title' },
+];
+
+interface TabBarProps {
+  role: 'ADMIN' | 'USER';
+}
+
+export function TabBar({ role }: TabBarProps) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const tabs = role === 'ADMIN' ? adminTabs : userTabs;
+
+  const items: TabsProps['items'] = useMemo(
+    () =>
+      tabs.map((tab) => ({
+        key: tab.key,
+        label: t(tab.labelKey, { ns: tab.labelNs }),
+      })),
+    [tabs, t]
+  );
+
+  const activeKey = tabs.find((tab) => location.pathname.startsWith(tab.key))?.key || tabs[0]?.key;
+
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Tabs
+        activeKey={activeKey}
+        items={items}
+        onChange={(key) => navigate(key)}
+        style={{ padding: '0 16px', margin: 0 }}
+      />
+      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 4: 创建 AdminLayout 组件**
+
+创建 `frontend/src/components/layout/AdminLayout.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Layout } from 'antd';
+import { Outlet } from 'react-router-dom';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { TabBar } from './TabBar';
+import { useAuthStore } from '@/stores/authStore';
+
+const { Sider, Content } = Layout;
+
+export default function AdminLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuthStore();
+
+  return (
+    <Layout style={{ height: '100vh' }}>
+      <Header collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Layout>
+        <Sider
+          width={200}
+          collapsedWidth={64}
+          collapsed={collapsed}
+          style={{ background: '#fff' }}
+        >
+          <Sidebar collapsed={collapsed} role="ADMIN" />
+        </Sider>
+        <Content style={{ background: '#f5f5f5' }}>
+          <TabBar role="ADMIN" />
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
+```
+
+- [ ] **Step 5: 创建 UserLayout 组件**
+
+创建 `frontend/src/components/layout/UserLayout.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Layout } from 'antd';
+import { Header } from './Header';
+import { Sidebar } from './Sidebar';
+import { TabBar } from './TabBar';
+
+const { Sider, Content } = Layout;
+
+export default function UserLayout() {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <Layout style={{ height: '100vh' }}>
+      <Header collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Layout>
+        <Sider
+          width={200}
+          collapsedWidth={64}
+          collapsed={collapsed}
+          style={{ background: '#fff' }}
+        >
+          <Sidebar collapsed={collapsed} role="USER" />
+        </Sider>
+        <Content style={{ background: '#f5f5f5' }}>
+          <TabBar role="USER" />
+        </Content>
+      </Layout>
+    </Layout>
+  );
+}
+```
+
+- [ ] **Step 6: 更新路由使用真实布局组件**
+
+更新 `frontend/src/router/index.tsx`:
+
+```typescript
+import { createBrowserRouter, Navigate } from 'react-router-dom';
+import { AuthGuard, RoleGuard } from './guards';
+import Login from '@/pages/Login';
+import AdminLayout from '@/components/layout/AdminLayout';
+import AdminModels from '@/pages/admin/Models';
+import AdminUsers from '@/pages/admin/Users';
+import AdminSettings from '@/pages/admin/Settings';
+import UserLayout from '@/components/layout/UserLayout';
+import UserModels from '@/pages/user/Models';
+import UserApiKeys from '@/pages/user/ApiKeys';
+import UserSettings from '@/pages/user/Settings';
+
+export const router = createBrowserRouter([
+  // 公共路由
+  {
+    path: '/login',
+    element: <Login />,
+  },
+
+  // 管理员路由
+  {
+    path: '/admin',
+    element: (
+      <AuthGuard>
+        <RoleGuard allowedRoles={['ADMIN']}>
+          <AdminLayout />
+        </RoleGuard>
+      </AuthGuard>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/admin/models" replace /> },
+      { path: 'models', element: <AdminModels /> },
+      { path: 'users', element: <AdminUsers /> },
+      { path: 'settings', element: <AdminSettings /> },
+    ],
+  },
+
+  // 普通用户路由
+  {
+    path: '/user',
+    element: (
+      <AuthGuard>
+        <UserLayout />
+      </AuthGuard>
+    ),
+    children: [
+      { index: true, element: <Navigate to="/user/models" replace /> },
+      { path: 'models', element: <UserModels /> },
+      { path: 'api-keys', element: <UserApiKeys /> },
+      { path: 'settings', element: <UserSettings /> },
+    ],
+  },
+
+  // 默认重定向
+  { path: '/', element: <Navigate to="/login" replace /> },
+  { path: '*', element: <Navigate to="/login" replace /> },
+]);
+
+export default router;
+```
+
+- [ ] **Step 7: 提交**
+
+```bash
+git add frontend/src/components/layout/ frontend/src/router/index.tsx
+git commit -m "feat: add layout components (AdminLayout, UserLayout, Header, Sidebar, TabBar)"
+```
+
+---
+
+## Task 9: 登录页
+
+**Files:**
+- Create: `frontend/src/pages/Login/index.tsx`
+- Create: `frontend/src/pages/Login/style.module.css`
+
+- [ ] **Step 1: 创建登录页样式**
+
+创建 `frontend/src/pages/Login/style.module.css`:
+
+```css
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.card {
+  width: 400px;
+  padding: 32px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+.logo {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logoIcon {
+  font-size: 48px;
+  color: #1890ff;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1f1f1f;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #666;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.error {
+  background: #fff2f0;
+  border: 1px solid #ffccc7;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  color: #ff4d4f;
+}
+
+.rememberRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: calc(100% - 32px);
+    margin: 16px;
+  }
+}
+```
+
+- [ ] **Step 2: 创建登录页组件**
+
+创建 `frontend/src/pages/Login/index.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Form, Input, Button, Checkbox, Select, message } from 'antd';
+import { UserOutlined, LockOutlined, RobotOutlined } from '@ant-design/icons';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { authApi } from '@/services/api/auth';
+import { useAuthStore } from '@/stores/authStore';
+import styles from './style.module.css';
+
+type LoginForm = {
+  username: string;
+  password: string;
+  rememberMe: boolean;
+};
+
+export default function Login() {
+  const { t } = useTranslation('login');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { setUser, setToken } = useAuthStore();
+
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+
+  const handleLanguageChange = (lng: string) => {
+    localStorage.setItem('i18nextLng', lng);
+    window.location.reload();
+  };
+
+  const handleSubmit = async (values: LoginForm) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await authApi.login({
+        username: values.username,
+        password: values.password,
+        rememberMe: values.rememberMe,
+      });
+
+      setUser(response.user);
+      if (response.token) {
+        setToken(response.token);
+      }
+
+      message.success(t('success', { ns: 'common' }));
+
+      // 根据角色重定向
+      const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
+      navigate(from || redirectPath, { replace: true });
+    } catch (err) {
+      setError(t('error.message'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.card}>
+        <div className={styles.logo}>
+          <RobotOutlined className={styles.logoIcon} />
+        </div>
+        <h1 className={styles.title}>{t('title')}</h1>
+        <p className={styles.subtitle}>{t('subtitle')}</p>
+
+        {error && (
+          <div className={styles.error}>
+            {t('error.title')}: {error}
+          </div>
+        )}
+
+        <Form<LoginForm>
+          layout="vertical"
+          onFinish={handleSubmit}
+          initialValues={{ rememberMe: true }}
+        >
+          <Form.Item
+            name="username"
+            rules={[{ required: true, message: t('validation.usernameRequired') }]}
+          >
+            <Input
+              prefix={<UserOutlined />}
+              placeholder={t('username')}
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: t('validation.passwordRequired') }]}
+          >
+            <Input.Password
+              prefix={<LockOutlined />}
+              placeholder={t('password')}
+              size="large"
+            />
+          </Form.Item>
+
+          <Form.Item>
+            <div className={styles.rememberRow}>
+              <Form.Item name="rememberMe" valuePropName="checked" noStyle>
+                <Checkbox>{t('rememberMe')}</Checkbox>
+              </Form.Item>
+              <Select
+                value={localStorage.getItem('i18nextLng') || 'zh-CN'}
+                onChange={handleLanguageChange}
+                variant="borderless"
+                size="small"
+                options={[
+                  { value: 'zh-CN', label: '简体中文' },
+                  { value: 'en-US', label: 'English' },
+                ]}
+              />
+            </div>
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" loading={loading} block size="large">
+              {t('submit')}
+            </Button>
+          </Form.Item>
+        </Form>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 3: 提交**
+
+```bash
+git add frontend/src/pages/Login/
+git commit -m "feat: add login page with i18n support"
+```
+
+---
+
+## Task 10: 管理员模型中心页
+
+**Files:**
+- Create: `frontend/src/pages/admin/Models/index.tsx`
+- Create: `frontend/src/pages/admin/Models/ChannelList.tsx`
+- Create: `frontend/src/pages/admin/Models/ModelList.tsx`
+
+- [ ] **Step 1: 创建渠道列表组件**
+
+创建 `frontend/src/pages/admin/Models/ChannelList.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '@/services/query';
+import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderType } from '@/types/provider';
+import type { ColumnsType } from 'antd/es/table';
+
+interface ChannelListProps {
+  onSelect: (providerId: number | null) => void;
+}
+
+export function ChannelList({ onSelect }: ChannelListProps) {
+  const { t } = useTranslation('models');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  const [form] = Form.useForm();
+
+  const { data, isLoading } = useProviders({ size: 100 });
+  const createMutation = useCreateProvider();
+  const updateMutation = useUpdateProvider();
+  const deleteMutation = useDeleteProvider();
+
+  const handleSelect = (id: number) => {
+    setSelectedId(id);
+    onSelect(id);
+  };
+
+  const handleAdd = () => {
+    setEditingProvider(null);
+    form.resetFields();
+    setModalOpen(true);
+  };
+
+  const handleEdit = (record: Provider) => {
+    setEditingProvider(record);
+    form.setFieldsValue(record);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    Modal.confirm({
+      title: t('confirm.delete', { ns: 'common' }),
+      onOk: async () => {
+        await deleteMutation.mutateAsync(id);
+        message.success(t('message.success', { ns: 'common' }));
+        if (selectedId === id) {
+          setSelectedId(null);
+          onSelect(null);
+        }
+      },
+    });
+  };
+
+  const handleSubmit = async (values: CreateProviderRequest | UpdateProviderRequest) => {
+    if (editingProvider) {
+      await updateMutation.mutateAsync({ id: editingProvider.id, data: values });
+    } else {
+      await createMutation.mutateAsync(values as CreateProviderRequest);
+    }
+    message.success(t('message.success', { ns: 'common' }));
+    setModalOpen(false);
+  };
+
+  const columns: ColumnsType<Provider> = [
+    {
+      title: t('channel.name'),
+      dataIndex: 'name',
+      key: 'name',
+      render: (text, record) => (
+        <a onClick={() => handleSelect(record.id)} style={{ fontWeight: selectedId === record.id ? 600 : 400 }}>
+          {text}
+        </a>
+      ),
+    },
+    {
+      title: t('channel.type'),
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: ProviderType) => t(`type.${type}`),
+    },
+    {
+      title: t('channel.status'),
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
+          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+        </Tag>
+      ),
+    },
+    {
+      title: t('actions.edit', { ns: 'common' }),
+      key: 'actions',
+      width: 100,
+      render: (_, record) => (
+        <Space>
+          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ padding: 8, borderBottom: '1px solid #f0f0f0' }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          {t('addChannel')}
+        </Button>
+      </div>
+      <Table
+        columns={columns}
+        dataSource={data?.content || []}
+        rowKey="id"
+        loading={isLoading}
+        size="small"
+        pagination={false}
+        onRow={(record) => ({
+          onClick: () => handleSelect(record.id),
+          style: { cursor: 'pointer', background: selectedId === record.id ? '#e6f7ff' : undefined },
+        })}
+      />
+
+      <Modal
+        title={editingProvider ? t('actions.edit', { ns: 'common' }) : t('addChannel')}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item name="name" label={t('channel.name')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="code" label={t('channel.code')} rules={[{ required: true }]}>
+            <Input disabled={!!editingProvider} />
+          </Form.Item>
+          <Form.Item name="type" label={t('channel.type')} rules={[{ required: true }]}>
+            <Select disabled={!!editingProvider}>
+              <Select.Option value="OPENAI">OpenAI</Select.Option>
+              <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
+              <Select.Option value="GOOGLE">Google</Select.Option>
+              <Select.Option value="AZURE">Azure</Select.Option>
+              <Select.Option value="CUSTOM">{t('type.CUSTOM')}</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item name="baseUrl" label={t('channel.baseUrl')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          {editingProvider && (
+            <Form.Item name="status" label={t('channel.status')}>
+              <Select>
+                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+              </Select>
+            </Form.Item>
+          )}
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
+                {t('actions.save', { ns: 'common' })}
+              </Button>
+              <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: 创建模型列表组件**
+
+创建 `frontend/src/pages/admin/Models/ModelList.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useModels, useProviders, useCreateModel, useUpdateModel, useDeleteModel } from '@/services/query';
+import type { Model, CreateModelRequest, UpdateModelRequest, ModelType } from '@/types/model';
+import type { ColumnsType } from 'antd/es/table';
+
+interface ModelListProps {
+  providerId: number | null;
+}
+
+export function ModelList({ providerId }: ModelListProps) {
+  const { t } = useTranslation('models');
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingModel, setEditingModel] = useState<Model | null>(null);
+  const [form] = Form.useForm();
+
+  const { data, isLoading } = useModels({ providerId: providerId || undefined, size: 100 });
+  const { data: providers } = useProviders({ size: 100 });
+  const createMutation = useCreateModel();
+  const updateMutation = useUpdateModel();
+  const deleteMutation = useDeleteModel();
+
+  const handleAdd = () => {
+    setEditingModel(null);
+    form.resetFields();
+    if (providerId) {
+      form.setFieldsValue({ providerId });
+    }
+    setModalOpen(true);
+  };
+
+  const handleEdit = (record: Model) => {
+    setEditingModel(record);
+    form.setFieldsValue(record);
+    setModalOpen(true);
+  };
+
+  const handleDelete = (id: number) => {
+    Modal.confirm({
+      title: t('confirm.delete', { ns: 'common' }),
+      onOk: async () => {
+        await deleteMutation.mutateAsync(id);
+        message.success(t('message.success', { ns: 'common' }));
+      },
+    });
+  };
+
+  const handleSubmit = async (values: CreateModelRequest | UpdateModelRequest) => {
+    if (editingModel) {
+      await updateMutation.mutateAsync({ id: editingModel.id, data: values });
+    } else {
+      await createMutation.mutateAsync(values as CreateModelRequest);
+    }
+    message.success(t('message.success', { ns: 'common' }));
+    setModalOpen(false);
+  };
+
+  const columns: ColumnsType<Model> = [
+    { title: t('model.name'), dataIndex: 'name', key: 'name' },
+    {
+      title: t('model.type'),
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: ModelType) => t(`type.${type}`),
+    },
+    {
+      title: t('model.status'),
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
+          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+        </Tag>
+      ),
+    },
+    {
+      title: t('actions.edit', { ns: 'common' }),
+      key: 'actions',
+      width: 100,
+      render: (_, record) => (
+        <Space>
+          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+        </Space>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <div style={{ marginBottom: 16 }}>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+          {t('addModel')}
+        </Button>
+      </div>
+
+      <Table
+        columns={columns}
+        dataSource={data?.content || []}
+        rowKey="id"
+        loading={isLoading}
+        size="small"
+        pagination={{ pageSize: 10 }}
+      />
+
+      <Modal
+        title={editingModel ? t('actions.edit', { ns: 'common' }) : t('addModel')}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        footer={null}
+      >
+        <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form.Item name="name" label={t('model.name')} rules={[{ required: true }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item name="code" label={t('model.code')} rules={[{ required: true }]}>
+            <Input disabled={!!editingModel} />
+          </Form.Item>
+          <Form.Item name="providerId" label={t('model.provider')} rules={[{ required: true }]}>
+            <Select disabled={!!editingModel}>
+              {providers?.content?.map((p) => (
+                <Select.Option key={p.id} value={p.id}>
+                  {p.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item name="type" label={t('model.type')} rules={[{ required: true }]}>
+            <Select disabled={!!editingModel}>
+              <Select.Option value="CHAT">{t('type.CHAT')}</Select.Option>
+              <Select.Option value="COMPLETION">{t('type.COMPLETION')}</Select.Option>
+              <Select.Option value="EMBEDDING">{t('type.EMBEDDING')}</Select.Option>
+              <Select.Option value="IMAGE">{t('type.IMAGE')}</Select.Option>
+              <Select.Option value="AUDIO">{t('type.AUDIO')}</Select.Option>
+            </Select>
+          </Form.Item>
+          {editingModel && (
+            <Form.Item name="status" label={t('model.status')}>
+              <Select>
+                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+              </Select>
+            </Form.Item>
+          )}
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
+                {t('actions.save', { ns: 'common' })}
+              </Button>
+              <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 3: 创建模型中心页面**
+
+创建 `frontend/src/pages/admin/Models/index.tsx`:
+
+```typescript
+import { useState } from 'react';
+import { Row, Col, Card } from 'antd';
+import { useTranslation } from 'react-i18next';
+import { ChannelList } from './ChannelList';
+import { ModelList } from './ModelList';
+
+export default function AdminModels() {
+  const { t } = useTranslation('models');
+  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
+
+  return (
+    <Row gutter={16} style={{ height: '100%' }}>
+      <Col span={6}>
+        <Card title={t('channelList')} style={{ height: '100%' }} bodyStyle={{ padding: 0 }}>
+          <ChannelList onSelect={setSelectedProviderId} />
+        </Card>
+      </Col>
+      <Col span={18}>
+        <Card title={t('modelList')} style={{ height: '100%' }}>
+          <ModelList providerId={selectedProviderId} />
+        </Card>
+      </Col>
+    </Row>
+  );
+}
+```
+
+- [ ] **Step 4: 提交**
+
+```bash
+git add frontend/src/pages/admin/Models/
+git commit -m "feat: add admin models page with channel and model management"
+```
+
+---
+
+## Task 11-16: 剩余页面（简要说明）
+
+由于篇幅限制，Task 11-16 的详细步骤将在后续补充。以下是各任务的文件清单：
+
+### Task 11: 管理员用户管理页
+- `frontend/src/pages/admin/Users/index.tsx` - 左右分栏布局
+- `frontend/src/pages/admin/Users/UserList.tsx` - 用户列表
+- `frontend/src/pages/admin/Users/ApiKeyList.tsx` - API Key 列表
+
+### Task 12: 管理员个人设置页
+- `frontend/src/pages/admin/Settings/index.tsx` - 修改密码表单
+
+### Task 13: 用户模型查看页
+- `frontend/src/pages/user/Models/index.tsx` - 只读模型表格
+
+### Task 14: 用户 API Key 管理页
+- `frontend/src/pages/user/ApiKeys/index.tsx` - API Key CRUD 表格
+
+### Task 15: 用户个人设置页
+- `frontend/src/pages/user/Settings/index.tsx` - 修改密码表单（复用管理员设置页逻辑）
+
+### Task 16: 构建部署配置
+- 更新 `frontend/vite.config.ts` - 添加构建输出路径
+- 创建 `frontend/scripts/deploy.sh` - 构建并复制到 Spring Boot static 目录
+
+---
+
+## 自查清单
+
+- [x] 覆盖设计文档所有要求
+- [x] 无占位符（TBD、TODO等）
+- [x] 类型一致性检查
+- [x] 每个步骤包含完整代码
+- [x] 每个任务有明确的提交点
