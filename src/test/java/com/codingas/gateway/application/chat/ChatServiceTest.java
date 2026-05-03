@@ -1,25 +1,31 @@
 package com.codingas.gateway.application.chat;
 
+import com.codingas.gateway.application.proxy.ChatService;
+import com.codingas.gateway.application.proxy.ChatServiceImpl;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.common.event.TokenUsedEvent;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.RouteGroup;
-import com.codingas.gateway.domain.model.service.ModelRouterDomainService;
+import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.service.LLMDispatcher;
+import com.codingas.gateway.domain.proxy.service.ModelRouterDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * ChatService 单元测试
@@ -31,10 +37,16 @@ class ChatServiceTest {
     private ModelRouterDomainService modelRouterService;
 
     @Mock
-    private LLMChatUseCase llmChatUseCase;
+    private LLMDispatcher llmDispatcher;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ChatServiceImpl chatService;
+
+    @Captor
+    private ArgumentCaptor<TokenUsedEvent> tokenUsedEventCaptor;
 
     private Model testModel;
     private LLMRequest testLLMRequest;
@@ -76,8 +88,98 @@ class ChatServiceTest {
                 .build();
     }
 
+    // ==================== send() 方法测试 ====================
+
     @Test
-    @DisplayName("chat() 成功场景 - 验证正确调用 modelRouterService 和 llmChatUseCase")
+    @DisplayName("send() 成功场景 - 验证调用 llmDispatcher 并发布事件")
+    void send_success() {
+        // Given
+        RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.WEIGHTED;
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(testLLMResponse);
+
+        // When
+        LLMResponse result = chatService.send(testLLMRequest, strategy);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.getModel()).isEqualTo("gpt-4");
+        assertThat(result.getContent().getText()).isEqualTo("Hello, how can I help you?");
+
+        // 验证调用了 llmDispatcher
+        verify(llmDispatcher).send(testLLMRequest, strategy);
+
+        // 验证发布了 TokenUsedEvent
+        verify(eventPublisher).publishEvent(tokenUsedEventCaptor.capture());
+        TokenUsedEvent capturedEvent = tokenUsedEventCaptor.getValue();
+        assertThat(capturedEvent.model()).isEqualTo("gpt-4");
+        assertThat(capturedEvent.promptTokens()).isEqualTo(10);
+        assertThat(capturedEvent.completionTokens()).isEqualTo(20);
+    }
+
+    @Test
+    @DisplayName("send() 响应为 null 时不发布事件")
+    void send_responseIsNull_noEventPublished() {
+        // Given
+        RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.WEIGHTED;
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(null);
+
+        // When
+        LLMResponse result = chatService.send(testLLMRequest, strategy);
+
+        // Then
+        assertThat(result).isNull();
+
+        // 验证调用了 llmDispatcher
+        verify(llmDispatcher).send(testLLMRequest, strategy);
+
+        // 验证没有发布事件
+        verify(eventPublisher, never()).publishEvent(any(TokenUsedEvent.class));
+    }
+
+    @Test
+    @DisplayName("send() 响应 usage 为 null 时不发布事件")
+    void send_responseUsageIsNull_noEventPublished() {
+        // Given
+        RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.WEIGHTED;
+        LLMResponse responseWithNullUsage = LLMResponse.builder()
+                .model("gpt-4")
+                .content(LLMResponse.Content.builder()
+                        .text("Hello")
+                        .build())
+                .usage(null)
+                .build();
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(responseWithNullUsage);
+
+        // When
+        LLMResponse result = chatService.send(testLLMRequest, strategy);
+
+        // Then
+        assertThat(result).isNotNull();
+
+        // 验证没有发布事件
+        verify(eventPublisher, never()).publishEvent(any(TokenUsedEvent.class));
+    }
+
+    @Test
+    @DisplayName("send() 使用不同路由策略")
+    void send_withDifferentStrategy() {
+        // Given
+        RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.LATENCY_OPTIMIZED;
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy))).thenReturn(testLLMResponse);
+
+        // When
+        LLMResponse result = chatService.send(testLLMRequest, strategy);
+
+        // Then
+        assertThat(result).isNotNull();
+        verify(llmDispatcher).send(testLLMRequest, strategy);
+        verify(eventPublisher).publishEvent(any(TokenUsedEvent.class));
+    }
+
+    // ==================== chat() 方法测试（简化版接口）====================
+
+    @Test
+    @DisplayName("chat() 成功场景 - 验证正确调用 modelRouterService 和 llmDispatcher")
     void chat_success() {
         // Given
         String modelCode = "gpt-4";
@@ -90,7 +192,7 @@ class ChatServiceTest {
         ChatService.ChatRequest request = new ChatService.ChatRequest(modelCode, messages);
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.COST_OPTIMIZED)))
+        when(llmDispatcher.send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.WEIGHTED)))
                 .thenReturn(testLLMResponse);
 
         // When
@@ -104,8 +206,8 @@ class ChatServiceTest {
         // 验证调用了 modelRouterService
         verify(modelRouterService).selectModel(modelCode);
 
-        // 验证调用了 llmChatUseCase
-        verify(llmChatUseCase).send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.COST_OPTIMIZED));
+        // 验证调用了 llmDispatcher
+        verify(llmDispatcher).send(any(LLMRequest.class), eq(RouteGroup.RoutingStrategy.WEIGHTED));
     }
 
     @Test
@@ -123,7 +225,7 @@ class ChatServiceTest {
         ChatService.ChatRequest request = new ChatService.ChatRequest(modelCode, messages, strategy);
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), eq(strategy)))
+        when(llmDispatcher.send(any(LLMRequest.class), eq(strategy)))
                 .thenReturn(testLLMResponse);
 
         // When
@@ -131,7 +233,7 @@ class ChatServiceTest {
 
         // Then
         assertThat(response).isNotNull();
-        verify(llmChatUseCase).send(any(LLMRequest.class), eq(strategy));
+        verify(llmDispatcher).send(any(LLMRequest.class), eq(strategy));
     }
 
     @Test
@@ -153,7 +255,7 @@ class ChatServiceTest {
                 .build();
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), any()))
+        when(llmDispatcher.send(any(LLMRequest.class), any()))
                 .thenReturn(responseWithNullContent);
 
         // When
@@ -178,7 +280,7 @@ class ChatServiceTest {
         ChatService.ChatRequest request = new ChatService.ChatRequest(modelCode, messages);
 
         when(modelRouterService.selectModel(modelCode)).thenReturn(testModel);
-        when(llmChatUseCase.send(any(LLMRequest.class), any())).thenReturn(null);
+        when(llmDispatcher.send(any(LLMRequest.class), any())).thenReturn(null);
 
         // When
         ChatService.ChatResponse response = chatService.chat(request);
@@ -186,5 +288,22 @@ class ChatServiceTest {
         // Then
         assertThat(response).isNotNull();
         assertThat(response.content()).isNull();
+    }
+
+    // ==================== sendStream() 方法测试 ====================
+
+    @Test
+    @DisplayName("sendStream() 成功场景 - 验证调用 llmDispatcher")
+    void sendStream_success() {
+        // Given
+        RouteGroup.RoutingStrategy strategy = RouteGroup.RoutingStrategy.WEIGHTED;
+        java.util.function.Consumer<String> mockCallback = mock(java.util.function.Consumer.class);
+        doNothing().when(llmDispatcher).sendStream(any(LLMRequest.class), eq(strategy), any(), any(), any());
+
+        // When
+        chatService.sendStream(testLLMRequest, strategy, mockCallback);
+
+        // Then
+        verify(llmDispatcher).sendStream(eq(testLLMRequest), eq(strategy), any(), any(), any());
     }
 }

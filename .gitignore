@@ -69,3 +69,6 @@ dist/
 data/
 
 .flattened-pom.xml
+/.mvn/
+/.claude/
+/.specify/

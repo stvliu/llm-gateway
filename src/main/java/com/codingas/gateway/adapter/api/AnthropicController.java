@@ -2,7 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.dto.AnthropicMessagesRequest;
 import com.codingas.gateway.application.proxy.dto.AnthropicMessagesResponse;
-import com.codingas.gateway.application.proxy.LLMChatUseCase;
+import com.codingas.gateway.application.proxy.ChatService;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
@@ -12,12 +12,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
  * Anthropic 兼容 API 控制器
@@ -30,7 +28,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class AnthropicController {
 
-    private final LLMChatUseCase llmChatUseCase;
+    private final ChatService chatService;
 
     /**
      * Messages 端点
@@ -62,7 +60,7 @@ public class AnthropicController {
 
         LLMRequest llmRequest = toLLMRequest(request);
 
-        LLMResponse llmResponse = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse = chatService.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
 
         return ResponseEntity.ok(toAnthropicMessagesResponse(llmResponse));
     }
@@ -80,22 +78,38 @@ public class AnthropicController {
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
 
-        SseEmitter emitter = new SseEmitter();
+        java.io.PrintWriter writer = response.getWriter();
+        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+
+        chatService.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+            try {
+                writer.write("data: " + data + "\n\n");
+                writer.flush();
+            } catch (Exception e) {
+                log.warn("Error sending SSE data: {}", e.getMessage());
+                latch.countDown();
+            }
+        }, () -> {
+            try {
+                writer.write("data: [DONE]\n\n");
+                writer.flush();
+            } catch (Exception e) {
+                log.warn("Error writing stream done: {}", e.getMessage());
+            }
+            latch.countDown();
+        }, error -> {
+            log.error("Stream error: {}", error.getMessage());
+            latch.countDown();
+        });
+
         try {
-            llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
-                try {
-                    emitter.send(SseEmitter.event().data(data));
-                } catch (IOException e) {
-                    log.warn("Error sending SSE data: {}", e.getMessage());
-                }
-            });
-            emitter.complete();
-        } catch (Exception e) {
-            log.error("Error in stream: {}", e.getMessage());
-            emitter.completeWithError(e);
+            latch.await(120, java.util.concurrent.TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Stream interrupted");
         }
 
-        return ResponseEntity.ok().body(emitter);
+        return null;
     }
 
     private void validateRequest(AnthropicMessagesRequest request) {
