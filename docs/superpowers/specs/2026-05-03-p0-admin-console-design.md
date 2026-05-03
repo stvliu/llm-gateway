@@ -16,7 +16,6 @@ LLM-Gateway P0 阶段管理控制台，支持管理员和普通用户两种角�
 | 路由 | React Router | 7.x |
 | HTTP 客户端 | Axios | 1.x |
 | 国际化 | react-i18next | 14.x |
-| 认证 | Sa-Token | 1.39.x |
 
 ## 部署方案
 
@@ -441,12 +440,50 @@ function App() {
 
 ## 认证方案
 
-Sa-Token 双模式支持：
+后端使用 Sa-Token 提供认证服务，前端通过以下方式对接：
 
-1. **Session-Cookie 模式**：浏览器访问，自动携带 Cookie
-2. **Token 模式**：API 调用，Header 携带 `Authorization: Bearer {token}`
+1. **Session-Cookie 模式**：浏览器自动携带 Cookie，前端无需额外处理
+2. **Token 模式**：登录后获取 Token，存储于 localStorage，请求时通过 Header 携带
 
-前端默认使用 Session-Cookie 模式。
+前端默认使用 Session-Cookie 模式，企业版可切换为 Token 模式。
+
+### 登录流程
+
+```
+用户输入账号密码
+    │
+    ▼
+POST /api/v1/auth/login
+    │
+    ├── 成功 → 存储用户信息到 Zustand → 重定向到对应路由
+    │
+    └── 失败 → 显示错误提示
+```
+
+### Axios 拦截器配置
+
+```typescript
+// 请求拦截器：Token 模式下自动携带 Token
+axios.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// 响应拦截器：处理 401 未授权
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // 跳转登录页
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
 
 ## 开发环境配置
 
