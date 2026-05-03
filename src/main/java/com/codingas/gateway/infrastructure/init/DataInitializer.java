@@ -124,35 +124,38 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化火山引擎 Provider
      */
     private void initVolcengineProvider() {
-        // 检查是否已存在
+        Provider provider;
+
+        // 检查 Provider 是否已存在
         if (providerGateway.existsByProviderCode("volcengine")) {
-            log.info("Volcengine provider already exists, skipping provider initialization");
-            return;
-        }
-
-        // 创建 Provider
-        Provider provider = new Provider();
-        provider.setProviderCode("volcengine");
-        provider.setProviderName("火山引擎");
-        provider.setProviderType(ProviderType.VOLCENGINE);
-        provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
-        provider.setWebsiteUrl("https://www.volcengine.com");
-        provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
-        provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
-
-        Provider savedProvider = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", provider.getProviderName(), savedProvider.getId());
-
-        // 创建 Provider API Key
-        if (volcengineApiKey != null && !volcengineApiKey.isBlank()) {
-            initProviderApiKey(savedProvider);
+            log.info("Volcengine provider already exists, fetching existing provider");
+            provider = providerGateway.findByProviderCode("volcengine")
+                    .orElseThrow(() -> new IllegalStateException("Provider exists but cannot be found"));
         } else {
-            log.warn("Volcengine API key not configured, skipping ProviderApiKey initialization");
+            // 创建 Provider
+            provider = new Provider();
+            provider.setProviderCode("volcengine");
+            provider.setProviderName("火山引擎");
+            provider.setProviderType(ProviderType.VOLCENGINE);
+            provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
+            provider.setWebsiteUrl("https://www.volcengine.com");
+            provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
+            provider.setPriority(100);
+            provider.setStatus(Provider.ProviderStatus.ACTIVE);
+
+            provider = providerGateway.save(provider);
+            log.info("Created provider: {} (id={})", provider.getProviderName(), provider.getId());
+
+            // 创建 Provider API Key
+            if (volcengineApiKey != null && !volcengineApiKey.isBlank()) {
+                initProviderApiKey(provider);
+            } else {
+                log.warn("Volcengine API key not configured, skipping ProviderApiKey initialization");
+            }
         }
 
-        // 创建模型
-        initVolcengineModels(savedProvider);
+        // 始终检查并创建模型（无论 provider 是否已存在）
+        initVolcengineModels(provider);
     }
 
     /**
@@ -208,12 +211,23 @@ public class DataInitializer implements CommandLineRunner {
             new BigDecimal("0.0006")
         );
 
-        // 豆包 Seed 2.0 Pro (用户指定的模型)
+        // 豆包 Seed 2.0 Pro
         createModel(
             provider,
             "doubao-seed-2-0-pro-260215",
             "doubao-seed-2-0-pro-260215",
             "豆包 Seed 2.0 Pro",
+            128000,
+            new BigDecimal("0.001"),
+            new BigDecimal("0.002")
+        );
+
+        // 豆包 Seed 2.0 Code Preview (用户测试模型)
+        createModel(
+            provider,
+            "doubao-seed-2-0-code-preview-260215",
+            "doubao-seed-2-0-code-preview-260215",
+            "豆包 Seed 2.0 Code Preview",
             128000,
             new BigDecimal("0.001"),
             new BigDecimal("0.002")

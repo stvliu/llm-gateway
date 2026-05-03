@@ -2,7 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.dto.OpenAIChatRequest;
 import com.codingas.gateway.application.proxy.dto.OpenAIChatResponse;
-import com.codingas.gateway.application.proxy.LLMChatUseCase;
+import com.codingas.gateway.application.proxy.ChatService;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class OpenAIController {
 
-    private final LLMChatUseCase llmChatUseCase;
+    private final ChatService chatService;
 
     /**
      * Chat Completions 端点
@@ -63,7 +63,7 @@ public class OpenAIController {
 
         LLMRequest llmRequest = toLLMRequest(request);
 
-        LLMResponse llmResponse = llmChatUseCase.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse = chatService.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
 
         return ResponseEntity.ok(toOpenAIChatResponse(llmResponse));
     }
@@ -91,7 +91,7 @@ public class OpenAIController {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        llmChatUseCase.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+        chatService.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
             try {
                 writer.write("data: " + data + "\n\n");
                 writer.flush();
