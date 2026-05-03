@@ -2,8 +2,7 @@ package com.codingas.gateway.application.proxy.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 import java.util.Map;
@@ -14,6 +13,8 @@ import java.util.Map;
  * <p>对应 OpenAI /v1/chat/completions 端点的请求格式。</p>
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class OpenAIChatRequest {
@@ -46,6 +47,8 @@ public class OpenAIChatRequest {
     private Boolean stream;
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Message {
         private String role;
@@ -61,6 +64,8 @@ public class OpenAIChatRequest {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ToolCall {
         private String id;
@@ -69,6 +74,8 @@ public class OpenAIChatRequest {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class FunctionCall {
         private String name;

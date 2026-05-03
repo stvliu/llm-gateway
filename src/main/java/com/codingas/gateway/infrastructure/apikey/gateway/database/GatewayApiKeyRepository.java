@@ -4,6 +4,8 @@ import com.codingas.gateway.infrastructure.apikey.gateway.database.dataobject.Ga
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -12,9 +14,17 @@ import java.util.Optional;
 
 @Repository
 public interface GatewayApiKeyRepository extends JpaRepository<GatewayApiKeyDo, Long> {
-    Optional<GatewayApiKeyDo> findByKeyHash(String keyHash);
-    Optional<GatewayApiKeyDo> findByKeyCode(String keyCode);
+
+    @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user WHERE k.keyHash = :keyHash")
+    Optional<GatewayApiKeyDo> findByKeyHash(@Param("keyHash") String keyHash);
+
+    @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user WHERE k.keyCode = :keyCode")
+    Optional<GatewayApiKeyDo> findByKeyCode(@Param("keyCode") String keyCode);
+
     List<GatewayApiKeyDo> findByUserId(Long userId);
-    Page<GatewayApiKeyDo> findExpiringKeys(Instant now, Instant threshold, Pageable pageable);
+
+    @Query("SELECT k FROM GatewayApiKeyDo k WHERE k.expiresAt BETWEEN :now AND :threshold AND k.status = 'ACTIVE'")
+    Page<GatewayApiKeyDo> findExpiringKeys(@Param("now") Instant now, @Param("threshold") Instant threshold, Pageable pageable);
+
     boolean existsByKeyCode(String keyCode);
 }

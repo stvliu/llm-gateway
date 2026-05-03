@@ -1,9 +1,11 @@
 package com.codingas.gateway.infrastructure.apikey.gateway;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
+import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.infrastructure.apikey.gateway.database.dataobject.GatewayApiKeyDo;
 import com.codingas.gateway.infrastructure.apikey.gateway.database.GatewayApiKeyRepository;
+import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -114,7 +116,13 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         if (doEntity.getStatus() != null) {
             entity.setStatus(GatewayApiKey.ApiKeyStatus.valueOf(doEntity.getStatus().name()));
         }
-        // User 关联暂不处理，由调用方通过 UserGateway 获取
+        // User 关联
+        if (doEntity.getUser() != null) {
+            User user = new User();
+            user.setId(doEntity.getUser().getId());
+            user.setUsername(doEntity.getUser().getUsername());
+            entity.setUser(user);
+        }
         return entity;
     }
 
@@ -139,6 +147,12 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         // 枚举转换
         if (entity.getStatus() != null) {
             doEntity.setStatus(GatewayApiKeyDo.ApiKeyStatus.valueOf(entity.getStatus().name()));
+        }
+        // User 关联 - 只需要设置 ID
+        if (entity.getUser() != null && entity.getUser().getId() != null) {
+            UserDo userDo = new UserDo();
+            userDo.setId(entity.getUser().getId());
+            doEntity.setUser(userDo);
         }
         return doEntity;
     }

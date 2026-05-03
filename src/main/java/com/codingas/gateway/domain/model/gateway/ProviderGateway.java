@@ -51,12 +51,12 @@ public interface ProviderGateway {
     List<Provider> findAllActive();
 
     /**
-     * 根据启用状态查找提供商
+     * 根据状态查找提供商
      *
-     * @param enabled 是否启用
+     * @param status 提供商状态
      * @return 提供商列表
      */
-    List<Provider> findByEnabled(Boolean enabled);
+    List<Provider> findByStatus(Provider.ProviderStatus status);
 
     /**
      * 统计提供商总数

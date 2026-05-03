@@ -35,7 +35,7 @@ public class RouteGroupGatewayImpl implements RouteGroupGateway {
 
     @Override
     public List<RouteGroup> findAllActive() {
-        return repository.findAllActive().stream()
+        return repository.findByEnabledTrue().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }

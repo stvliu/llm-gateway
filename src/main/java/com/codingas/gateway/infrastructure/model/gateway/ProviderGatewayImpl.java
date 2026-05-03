@@ -50,14 +50,14 @@ public class ProviderGatewayImpl implements ProviderGateway {
 
     @Override
     public List<Provider> findAllActive() {
-        return providerRepository.findAllActive().stream()
+        return providerRepository.findByStatus(ProviderDo.ProviderStatus.ACTIVE).stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
 
     @Override
-    public List<Provider> findByEnabled(Boolean enabled) {
-        return providerRepository.findByEnabled(enabled).stream()
+    public List<Provider> findByStatus(Provider.ProviderStatus status) {
+        return providerRepository.findByStatus(ProviderDo.ProviderStatus.valueOf(status.name())).stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }

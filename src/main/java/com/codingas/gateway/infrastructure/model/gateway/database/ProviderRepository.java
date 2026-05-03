@@ -10,7 +10,6 @@ import java.util.Optional;
 @Repository
 public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
     Optional<ProviderDo> findByProviderCode(String providerCode);
-    List<ProviderDo> findAllActive();
-    List<ProviderDo> findByEnabled(Boolean enabled);
+    List<ProviderDo> findByStatus(ProviderDo.ProviderStatus status);
     boolean existsByProviderCode(String providerCode);
 }

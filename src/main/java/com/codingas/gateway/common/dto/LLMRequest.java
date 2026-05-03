@@ -1,7 +1,6 @@
 package com.codingas.gateway.common.dto;
 
-import lombok.Builder;
-import lombok.Data;
+import lombok.*;
 
 import java.util.List;
 import java.util.Map;
@@ -12,6 +11,8 @@ import java.util.Map;
  * <p>统一的 LLM 请求格式，内部使用 OpenAI 格式作为中间表示。</p>
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class LLMRequest {
 
@@ -96,6 +97,8 @@ public class LLMRequest {
      * 消息类型
      */
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Message {
         /**
@@ -128,6 +131,8 @@ public class LLMRequest {
      * 工具调用
      */
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ToolCall {
         /**
@@ -150,6 +155,8 @@ public class LLMRequest {
      * 函数调用
      */
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class FunctionCall {
         /**
@@ -167,6 +174,8 @@ public class LLMRequest {
      * 工具定义
      */
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ToolDefinition {
         /**
@@ -184,6 +193,8 @@ public class LLMRequest {
      * 函数定义
      */
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Function {
         /**
