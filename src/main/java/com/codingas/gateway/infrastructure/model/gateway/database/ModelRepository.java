@@ -2,6 +2,8 @@ package com.codingas.gateway.infrastructure.model.gateway.database;
 
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -9,8 +11,15 @@ import java.util.Optional;
 
 @Repository
 public interface ModelRepository extends JpaRepository<ModelDo, Long> {
-    Optional<ModelDo> findByModelCode(String modelCode);
-    List<ModelDo> findAllActive();
-    List<ModelDo> findByProviderId(Long providerId);
+
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.modelCode = :modelCode")
+    Optional<ModelDo> findByModelCode(@Param("modelCode") String modelCode);
+
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.status = :status")
+    List<ModelDo> findByStatus(@Param("status") ModelDo.ModelStatus status);
+
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.provider.id = :providerId")
+    List<ModelDo> findByProviderId(@Param("providerId") Long providerId);
+
     boolean existsByModelCode(String modelCode);
 }

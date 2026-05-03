@@ -1,11 +1,12 @@
 package com.codingas.gateway.infrastructure.security;
 
+import com.codingas.gateway.adapter.interceptor.AbstractGatewayInterceptor;
 import com.codingas.gateway.domain.security.service.IpBlocklistDomainService;
-import com.codingas.gateway.infrastructure.security.interceptor.AbstractGatewayInterceptor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 /**
  * IP 封锁检查拦截器
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>责任链第一个拦截器，在认证前检查 IP 是否被封锁。</p>
  */
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class IPBlockCheckInterceptor extends AbstractGatewayInterceptor {
 

@@ -1,9 +1,11 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
 import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
+import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
+import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -50,7 +52,7 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findAllActive() {
-        return modelRepository.findAllActive().stream()
+        return modelRepository.findByStatus(ModelDo.ModelStatus.ACTIVE).stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
@@ -100,7 +102,24 @@ public class ModelGatewayImpl implements ModelGateway {
         if (doEntity.getStatus() != null) {
             entity.setStatus(Model.ModelStatus.valueOf(doEntity.getStatus().name()));
         }
-        // Provider 关联暂不处理，由调用方通过 ProviderGateway 获取
+        // Provider 关联转换
+        if (doEntity.getProvider() != null) {
+            Provider provider = new Provider();
+            provider.setId(doEntity.getProvider().getId());
+            provider.setProviderCode(doEntity.getProvider().getProviderCode());
+            provider.setProviderName(doEntity.getProvider().getProviderName());
+            if (doEntity.getProvider().getProviderType() != null) {
+                provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(
+                        doEntity.getProvider().getProviderType().name()));
+            }
+            provider.setBaseUrl(doEntity.getProvider().getBaseUrl());
+            provider.setPriority(doEntity.getProvider().getPriority());
+            if (doEntity.getProvider().getStatus() != null) {
+                provider.setStatus(Provider.ProviderStatus.valueOf(
+                        doEntity.getProvider().getStatus().name()));
+            }
+            entity.setProvider(provider);
+        }
         return entity;
     }
 
@@ -126,6 +145,12 @@ public class ModelGatewayImpl implements ModelGateway {
         // 枚举转换
         if (entity.getStatus() != null) {
             doEntity.setStatus(ModelDo.ModelStatus.valueOf(entity.getStatus().name()));
+        }
+        // Provider 关联 - 只需要设置 ID
+        if (entity.getProvider() != null && entity.getProvider().getId() != null) {
+            ProviderDo providerDo = new ProviderDo();
+            providerDo.setId(entity.getProvider().getId());
+            doEntity.setProvider(providerDo);
         }
         return doEntity;
     }

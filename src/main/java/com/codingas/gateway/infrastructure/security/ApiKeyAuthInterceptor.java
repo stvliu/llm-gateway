@@ -1,10 +1,11 @@
 package com.codingas.gateway.infrastructure.security;
 
+import com.codingas.gateway.adapter.interceptor.AbstractGatewayInterceptor;
 import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
-import com.codingas.gateway.infrastructure.security.interceptor.AbstractGatewayInterceptor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,12 +14,19 @@ import jakarta.servlet.http.HttpServletResponse;
  * API Key 认证拦截器
  *
  * <p>责任链第二个拦截器，验证 API Key 并加载用户信息。</p>
+ * <p>支持两种认证方式：</p>
+ * <ul>
+ *   <li>Authorization: Bearer sk-xxx（OpenAI 风格）</li>
+ *   <li>X-API-Key: sk-xxx（自定义 header）</li>
+ * </ul>
  */
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
     public static final String API_KEY_HEADER = "X-API-Key";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String USER_ID_ATTR = "userId";
 
     private final AuthenticationDomainService authenticationService;
@@ -35,7 +43,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response) {
-        String apiKey = request.getHeader(API_KEY_HEADER);
+        String apiKey = extractApiKey(request);
 
         if (apiKey == null || apiKey.isBlank()) {
             log.warn("Missing API Key in request to {}", request.getRequestURI());
@@ -66,5 +74,21 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
         log.debug("API Key authenticated: userId={}, keyCode={}",
                 userInfo.userId(), userInfo.userCode());
         return true;
+    }
+
+    /**
+     * 从请求中提取 API Key
+     *
+     * <p>优先从 Authorization: Bearer header 提取，其次从 X-API-Key header 提取。</p>
+     */
+    private String extractApiKey(HttpServletRequest request) {
+        // 先尝试 Authorization: Bearer 格式
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            return authHeader.substring(7).trim();
+        }
+
+        // 再尝试 X-API-Key header
+        return request.getHeader(API_KEY_HEADER);
     }
 }

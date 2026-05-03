@@ -22,10 +22,11 @@ import java.util.Set;
  * <p>使用 OkHttp 进行 HTTP 通信。</p>
  */
 @Slf4j
-public class OpenAIAdapter implements LLMProviderPort {
+public class OpenAIAdapter implements LLMProviderAdapter {
 
     public static final String PROVIDER_CODE = "openai";
-    private static final String CHAT_COMPLETIONS_URL = "/v1/chat/completions";
+    /** OpenAI Chat Completions API 路径 */
+    protected static final String CHAT_COMPLETIONS_URL = "/v1/chat/completions";
 
     private final OkHttpClient httpClient;
     private final String baseUrl;
@@ -60,12 +61,17 @@ public class OpenAIAdapter implements LLMProviderPort {
         try {
             String jsonBody = objectMapper.writeValueAsString(requestBody);
 
-            Request httpRequest = new Request.Builder()
-                    .url(baseUrl + CHAT_COMPLETIONS_URL)
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(getChatCompletionsUrl())
                     .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
-                    .build();
+                    .header("Content-Type", "application/json");
+
+            // 子类可覆盖添加额外头部
+            addExtraHeaders(requestBuilder);
+
+            requestBuilder.post(RequestBody.create(jsonBody, MediaType.parse("application/json")));
+
+            Request httpRequest = requestBuilder.build();
 
             try (Response response = httpClient.newCall(httpRequest).execute()) {
                 if (!response.isSuccessful()) {
@@ -93,13 +99,18 @@ public class OpenAIAdapter implements LLMProviderPort {
         try {
             String jsonBody = objectMapper.writeValueAsString(requestBody);
 
-            Request httpRequest = new Request.Builder()
-                    .url(baseUrl + CHAT_COMPLETIONS_URL)
+            Request.Builder requestBuilder = new Request.Builder()
+                    .url(getChatCompletionsUrl())
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
-                    .header("Accept", "text/event-stream")
-                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
-                    .build();
+                    .header("Accept", "text/event-stream");
+
+            // 子类可覆盖添加额外头部
+            addExtraHeaders(requestBuilder);
+
+            requestBuilder.post(RequestBody.create(jsonBody, MediaType.parse("application/json")));
+
+            Request httpRequest = requestBuilder.build();
 
             httpClient.newCall(httpRequest).enqueue(new Callback() {
                 @Override
@@ -291,5 +302,28 @@ public class OpenAIAdapter implements LLMProviderPort {
                 .completionTokens(usage.get("completion_tokens") != null ? ((Number) usage.get("completion_tokens")).intValue() : null)
                 .totalTokens(usage.get("total_tokens") != null ? ((Number) usage.get("total_tokens")).intValue() : null)
                 .build();
+    }
+
+    /**
+     * 获取 Chat Completions API 的完整 URL
+     *
+     * <p>子类可覆盖此方法以支持不同的 API 路径。</p>
+     * <p>例如火山引擎使用 /v3/chat/completions</p>
+     *
+     * @return 完整的 API URL
+     */
+    protected String getChatCompletionsUrl() {
+        return baseUrl + CHAT_COMPLETIONS_URL;
+    }
+
+    /**
+     * 添加额外的请求头
+     *
+     * <p>子类可覆盖此方法以添加额外的请求头。</p>
+     *
+     * @param requestBuilder 请求构建器
+     */
+    protected void addExtraHeaders(Request.Builder requestBuilder) {
+        // 默认无操作，子类可覆盖
     }
 }

@@ -10,5 +10,10 @@ import java.util.Optional;
 @Repository
 public interface RouteGroupRepository extends JpaRepository<RouteGroupDo, Long> {
     Optional<RouteGroupDo> findByGroupCode(String groupCode);
-    List<RouteGroupDo> findAllActive();
+
+    /**
+     * 查找所有启用的路由分组
+     * <p>JPA 方法命名约定：findByEnabledTrue 表示 enabled = true</p>
+     */
+    List<RouteGroupDo> findByEnabledTrue();
 }
