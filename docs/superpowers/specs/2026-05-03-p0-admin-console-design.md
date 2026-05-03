@@ -15,6 +15,7 @@ LLM-Gateway P0 阶段管理控制台，支持管理员和普通用户两种角�
 | 服务端状态 | TanStack Query | 5.x |
 | 路由 | React Router | 7.x |
 | HTTP 客户端 | Axios | 1.x |
+| 国际化 | react-i18next | 14.x |
 | 认证 | Sa-Token | 1.39.x |
 
 ## 部署方案
@@ -236,6 +237,20 @@ frontend/
 │   │   ├── provider.ts
 │   │   ├── model.ts
 │   │   └── apiKey.ts
+│   ├── locales/
+│   │   ├── zh-CN/
+│   │   │   ├── common.json
+│   │   │   ├── login.json
+│   │   │   ├── models.json
+│   │   │   ├── users.json
+│   │   │   └── apiKeys.json
+│   │   └── en-US/
+│   │       ├── common.json
+│   │       ├── login.json
+│   │       ├── models.json
+│   │       ├── users.json
+│   │       └── apiKeys.json
+│   ├── i18n.ts
 │   └── styles/
 │       ├── global.css
 │       └── variables.css
@@ -262,6 +277,167 @@ frontend/
 | 用户 | `/api/v1/users/{id}` | GET/PUT/DELETE | 详情/更新/删除 |
 | API Key | `/api/v1/api-keys` | GET/POST | 列表/创建 |
 | API Key | `/api/v1/api-keys/{id}` | GET/PUT/DELETE | 详情/更新/删除 |
+
+## 国际化方案
+
+使用 react-i18next 实现多语言支持。
+
+### 支持语言
+
+| 语言 | 代码 | 说明 |
+|------|------|------|
+| 简体中文 | zh-CN | 默认语言 |
+| English | en-US | 英文 |
+
+### 目录结构
+
+```
+frontend/src/
+├── locales/
+│   ├── zh-CN/
+│   │   ├── common.json      # 通用文本
+│   │   ├── login.json       # 登录页
+│   │   ├── models.json      # 模型中心
+│   │   ├── users.json       # 用户管理
+│   │   └── apiKeys.json     # API Key 管理
+│   └── en-US/
+│       ├── common.json
+│       ├── login.json
+│       ├── models.json
+│       ├── users.json
+│       └── apiKeys.json
+└── i18n.ts                  # i18n 配置
+```
+
+### 配置示例
+
+```typescript
+// src/i18n.ts
+import i18n from 'i18next';
+import { initReactI18next } from 'react-i18next';
+
+import zhCNCommon from './locales/zh-CN/common.json';
+import zhCNLogin from './locales/zh-CN/login.json';
+import enUSCommon from './locales/en-US/common.json';
+import enUSLogin from './locales/en-US/login.json';
+
+i18n.use(initReactI18next).init({
+  resources: {
+    'zh-CN': { common: zhCNCommon, login: zhCNLogin },
+    'en-US': { common: enUSCommon, login: enUSLogin },
+  },
+  lng: 'zh-CN',
+  fallbackLng: 'zh-CN',
+  defaultNS: 'common',
+  interpolation: { escapeValue: false },
+});
+
+export default i18n;
+```
+
+### 翻译文件示例
+
+```json
+// locales/zh-CN/common.json
+{
+  "actions": {
+    "add": "新增",
+    "edit": "编辑",
+    "delete": "删除",
+    "save": "保存",
+    "cancel": "取消",
+    "search": "搜索",
+    "reset": "重置"
+  },
+  "status": {
+    "enabled": "启用",
+    "disabled": "禁用"
+  },
+  "confirm": {
+    "delete": "确定要删除吗？"
+  }
+}
+```
+
+```json
+// locales/en-US/common.json
+{
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "reset": "Reset"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete?"
+  }
+}
+```
+
+### 使用方式
+
+```tsx
+import { useTranslation } from 'react-i18next';
+
+function ModelList() {
+  const { t } = useTranslation('models');
+  
+  return (
+    <Button>{t('actions.add')}</Button>
+  );
+}
+```
+
+### 语言切换
+
+```tsx
+import { useTranslation } from 'react-i18next';
+
+function LanguageSwitcher() {
+  const { i18n } = useTranslation();
+  
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+    localStorage.setItem('lang', lng);
+  };
+  
+  return (
+    <Select
+      value={i18n.language}
+      onChange={changeLanguage}
+      options={[
+        { value: 'zh-CN', label: '简体中文' },
+        { value: 'en-US', label: 'English' },
+      ]}
+    />
+  );
+}
+```
+
+### Ant Design 国际化
+
+```tsx
+import { ConfigProvider } from 'antd';
+import zhCN from 'antd/locale/zh_CN';
+import enUS from 'antd/locale/en_US';
+
+function App() {
+  const { i18n } = useTranslation();
+  
+  return (
+    <ConfigProvider locale={i18n.language === 'zh-CN' ? zhCN : enUS}>
+      {/* ... */}
+    </ConfigProvider>
+  );
+}
+```
 
 ## 认证方案
 
