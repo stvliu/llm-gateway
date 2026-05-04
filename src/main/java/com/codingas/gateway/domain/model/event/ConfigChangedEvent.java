@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.model.event;
 import com.codingas.gateway.common.event.DomainEvent;
 
 import java.time.Instant;
+import java.util.Objects;
 
 /**
  * 配置变更事件
@@ -29,9 +30,9 @@ public class ConfigChangedEvent implements DomainEvent {
     }
 
     public ConfigChangedEvent(ConfigType configType, ChangeType changeType, Long entityId) {
-        this.configType = configType;
-        this.changeType = changeType;
-        this.entityId = entityId;
+        this.configType = Objects.requireNonNull(configType, "configType must not be null");
+        this.changeType = Objects.requireNonNull(changeType, "changeType must not be null");
+        this.entityId = Objects.requireNonNull(entityId, "entityId must not be null");
         this.occurredOn = Instant.now();
     }
 
