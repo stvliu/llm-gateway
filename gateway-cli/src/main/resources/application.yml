@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: gateway-cli
+  shell:
+    interactive:
+      enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.codingas.gateway: DEBUG
