@@ -5,23 +5,10 @@ import AdminLayout from '@/components/layout/AdminLayout';
 import UserLayout from '@/components/layout/UserLayout';
 import AdminModels from '@/pages/admin/Models';
 import AdminUsers from '@/pages/admin/Users';
-
-// 临时占位组件，后续实现
-function AdminSettings() {
-  return <div>Admin Settings Page (to be implemented)</div>;
-}
-
-function UserModels() {
-  return <div>User Models Page (to be implemented)</div>;
-}
-
-function UserApiKeys() {
-  return <div>User API Keys Page (to be implemented)</div>;
-}
-
-function UserSettings() {
-  return <div>User Settings Page (to be implemented)</div>;
-}
+import AdminSettings from '@/pages/admin/Settings';
+import UserModels from '@/pages/user/Models';
+import UserApiKeys from '@/pages/user/ApiKeys';
+import UserSettings from '@/pages/user/Settings';
 
 export const router = createBrowserRouter([
   // 公共路由
