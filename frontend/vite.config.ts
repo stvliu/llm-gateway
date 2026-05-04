@@ -19,7 +19,17 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: 'dist',
+    // 构建输出到 Spring Boot 的 static 目录
+    outDir: '../gateway-boot/src/main/resources/static',
+    emptyOutDir: true,
     sourcemap: false,
+    rollupOptions: {
+      output: {
+        // 静态资源文件名
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+      },
+    },
   },
 });
