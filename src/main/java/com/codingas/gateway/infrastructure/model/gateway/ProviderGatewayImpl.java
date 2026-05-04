@@ -77,6 +77,12 @@ public class ProviderGatewayImpl implements ProviderGateway {
         return providerRepository.existsByProviderCode(providerCode);
     }
 
+    @Override
+    public long getMaxVersion() {
+        Long maxVersion = providerRepository.findMaxVersion();
+        return maxVersion != null ? maxVersion : 0L;
+    }
+
     /**
      * DO 转 Entity
      */

@@ -22,4 +22,12 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
     List<ModelDo> findByProviderId(@Param("providerId") Long providerId);
 
     boolean existsByModelCode(String modelCode);
+
+    /**
+     * 获取最大版本号
+     *
+     * @return 最大版本号，无数据返回 null
+     */
+    @Query("SELECT MAX(m.version) FROM ModelDo m")
+    Long findMaxVersion();
 }

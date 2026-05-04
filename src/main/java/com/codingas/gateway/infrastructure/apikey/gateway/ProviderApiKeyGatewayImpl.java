@@ -44,6 +44,12 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
         return toEntity(saved);
     }
 
+    @Override
+    public long getMaxVersion() {
+        Long maxVersion = repository.findMaxVersion();
+        return maxVersion != null ? maxVersion : 0L;
+    }
+
     /**
      * DO 转 Entity
      */

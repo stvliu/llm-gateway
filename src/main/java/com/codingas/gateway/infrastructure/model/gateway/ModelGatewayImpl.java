@@ -79,6 +79,12 @@ public class ModelGatewayImpl implements ModelGateway {
         return modelRepository.existsByModelCode(modelCode);
     }
 
+    @Override
+    public long getMaxVersion() {
+        Long maxVersion = modelRepository.findMaxVersion();
+        return maxVersion != null ? maxVersion : 0L;
+    }
+
     /**
      * DO 转 Entity
      */
