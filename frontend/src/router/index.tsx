@@ -4,12 +4,9 @@ import Login from '@/pages/Login';
 import AdminLayout from '@/components/layout/AdminLayout';
 import UserLayout from '@/components/layout/UserLayout';
 import AdminModels from '@/pages/admin/Models';
+import AdminUsers from '@/pages/admin/Users';
 
 // 临时占位组件，后续实现
-function AdminUsers() {
-  return <div>Admin Users Page (to be implemented)</div>;
-}
-
 function AdminSettings() {
   return <div>Admin Settings Page (to be implemented)</div>;
 }
