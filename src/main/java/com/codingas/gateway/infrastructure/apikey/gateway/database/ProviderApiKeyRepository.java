@@ -16,4 +16,9 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
      * 根据密钥编码查找
      */
     Optional<ProviderApiKeyDo> findByKeyCode(String keyCode);
+
+    /**
+     * 根据提供商 ID 查找
+     */
+    Optional<ProviderApiKeyDo> findByProviderId(Long providerId);
 }
