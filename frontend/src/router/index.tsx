@@ -1,19 +1,10 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthGuard, RoleGuard } from './guards';
+import Login from '@/pages/Login';
+import AdminLayout from '@/components/layout/AdminLayout';
+import UserLayout from '@/components/layout/UserLayout';
 
 // 临时占位组件，后续实现
-function Login() {
-  return <div>Login Page (to be implemented)</div>;
-}
-
-function AdminLayout(_props: { children?: React.ReactNode }) {
-  return <div>Admin Layout (to be implemented)</div>;
-}
-
-function UserLayout(_props: { children?: React.ReactNode }) {
-  return <div>User Layout (to be implemented)</div>;
-}
-
 function AdminModels() {
   return <div>Admin Models Page (to be implemented)</div>;
 }
