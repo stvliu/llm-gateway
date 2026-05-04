@@ -5,12 +5,16 @@ import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
+import java.util.HexFormat;
 import java.util.Optional;
 
 /**
@@ -20,13 +24,21 @@ import java.util.Optional;
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class AuthenticationDomainService {
 
     private static final String CACHE_NAME = "auth";
+    private static final String HASH_ALGORITHM = "SHA-256";
 
     private final ApiKeyGateway apiKeyGateway;
     private final UserGateway userGateway;
+
+    @Value("${gateway.security.api-key.salt:default-salt-change-in-production}")
+    private String hashSalt;
+
+    public AuthenticationDomainService(ApiKeyGateway apiKeyGateway, UserGateway userGateway) {
+        this.apiKeyGateway = apiKeyGateway;
+        this.userGateway = userGateway;
+    }
 
     /**
      * 认证 API Key
@@ -34,7 +46,7 @@ public class AuthenticationDomainService {
      * @param apiKey API Key
      * @return 认证结果，不存在或无效返回 null
      */
-    @Cacheable(value = CACHE_NAME, key = "'auth:' + #apiKey.hashCode()", unless = "#result == null")
+    @Cacheable(value = CACHE_NAME, key = "'auth:' + #apiKey", unless = "#result == null")
     public UserAuthResult authenticate(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
             log.debug("Empty API Key provided");
@@ -103,8 +115,24 @@ public class AuthenticationDomainService {
         return user.getStatus() == UserStatus.ACTIVE;
     }
 
+    /**
+     * 使用 SHA-256 哈希 API Key
+     *
+     * <p>配合配置的 salt，提供安全的 API Key 哈希存储。</p>
+     *
+     * @param apiKey 原始 API Key
+     * @return 哈希后的字符串（十六进制格式）
+     */
     private String hashKey(String apiKey) {
-        // TODO: 使用 EncryptionService
-        return String.valueOf(apiKey.hashCode());
+        try {
+            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
+            // 组合 salt 和 apiKey
+            String saltedKey = hashSalt + apiKey;
+            byte[] hashBytes = digest.digest(saltedKey.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(hashBytes);
+        } catch (NoSuchAlgorithmException e) {
+            // SHA-256 是 Java 标准实现，不应发生
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
     }
 }

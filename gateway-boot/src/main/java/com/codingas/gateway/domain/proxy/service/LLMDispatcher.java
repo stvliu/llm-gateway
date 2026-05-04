@@ -5,8 +5,8 @@ import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 import com.codingas.gateway.domain.proxy.gateway.LLMProviderPort;
 import com.codingas.gateway.domain.proxy.gateway.ModelRouter;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.StreamCallback;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.StreamCallbackImpl;
+import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
+import com.codingas.gateway.domain.proxy.gateway.StreamCallbackFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 public class LLMDispatcher {
 
     private final ModelRouter modelRouter;
+    private final StreamCallbackFactory streamCallbackFactory;
 
     /**
      * 发送非流式请求
@@ -68,7 +69,7 @@ public class LLMDispatcher {
         LLMProviderPort adapter = modelRouter.select(request, strategy);
         log.debug("Selected provider for stream: {}", adapter.getProviderCode());
 
-        StreamCallback callback = new StreamCallbackImpl(onChunk, onComplete, onError);
+        StreamCallback callback = streamCallbackFactory.create(onChunk, onComplete, onError);
         adapter.chatStream(request, callback);
     }
 }

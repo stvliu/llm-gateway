@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain;
+package com.codingas.gateway.common.entity;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

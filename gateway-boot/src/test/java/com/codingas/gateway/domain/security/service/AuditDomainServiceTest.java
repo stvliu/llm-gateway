@@ -1,8 +1,9 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.AuditContext;
-import com.codingas.gateway.domain.security.entity.AuditLog;
-import com.codingas.gateway.domain.security.gateway.AuditGateway;
+import com.codingas.gateway.domain.audit.AuditContext;
+import com.codingas.gateway.domain.audit.entity.AuditLog;
+import com.codingas.gateway.domain.audit.gateway.AuditGateway;
+import com.codingas.gateway.domain.audit.service.AuditDomainService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

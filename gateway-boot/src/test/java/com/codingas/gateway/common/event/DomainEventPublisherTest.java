@@ -19,9 +19,14 @@ class DomainEventPublisherTest {
     }
 
     @Test
-    @DisplayName("DomainEventPublisher should be usable as lambda (functional interface)")
-    void shouldBeUsableAsLambda() {
-        DomainEventPublisher publisher = event -> {};  // lambda expression
+    @DisplayName("DomainEventPublisher should be usable as anonymous class")
+    void shouldBeUsableAsAnonymousClass() {
+        DomainEventPublisher publisher = new DomainEventPublisher() {
+            @Override
+            public <T extends DomainEvent> void publish(T event) {
+                // no-op for testing
+            }
+        };
         assertThatCode(() -> publisher.publish(new TestEvent()))
             .doesNotThrowAnyException();
     }

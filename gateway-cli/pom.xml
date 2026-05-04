@@ -6,7 +6,7 @@
 
     <parent>
         <groupId>com.codingas.gateway</groupId>
-        <artifactId>gateway</artifactId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
     </parent>
 

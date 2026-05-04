@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.model;
 
+import com.codingas.gateway.application.provider.ProviderManageUseCase;
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.service.ProviderDomainService;

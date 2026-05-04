@@ -4,6 +4,7 @@ import com.codingas.gateway.common.security.EncryptionService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
@@ -12,6 +13,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Base64;
 
 /**
@@ -37,23 +39,45 @@ public class Aes256EncryptionService implements EncryptionService {
     private static final int TAG_SIZE = 128; // 128 bits
     private static final String ENV_KEY = "ENCRYPTION_KEY";
 
+    /**
+     * 允许使用临时密钥的 Spring profiles
+     * 仅用于开发和测试环境，生产环境必须配置密钥
+     */
+    private static final String[] DEV_PROFILES = {"dev", "test", "local", "development"};
+
     @Value("${gateway.security.encryption-key:#{null}}")
     private String encryptionKey;
 
+    private final Environment environment;
     private SecretKeySpec secretKey;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    public Aes256EncryptionService(Environment environment) {
+        this.environment = environment;
+    }
 
     @PostConstruct
     public void init() {
         // 优先级: 1. Spring 配置
         String keySource = encryptionKey;
-        //2. 开发临时密钥
+
         if (keySource == null || keySource.isBlank()) {
-            log.warn("No encryption key configured (gateway.security.encryption-key or ENCRYPTION_KEY), generating temporary key for development only");
+            // 检查是否为开发环境
+            if (!isDevelopmentEnvironment()) {
+                // 生产环境必须配置加密密钥
+                throw new IllegalStateException(
+                    "Encryption key must be configured in production environment. " +
+                    "Set 'gateway.security.encryption-key' property or 'ENCRYPTION_KEY' environment variable."
+                );
+            }
+            // 开发环境允许使用临时密钥
+            log.warn("No encryption key configured, generating temporary key for development only. " +
+                     "DO NOT use this in production!");
             try {
                 KeyGenerator keyGen = KeyGenerator.getInstance("AES");
                 keyGen.init(KEY_SIZE, secureRandom);
                 this.secretKey = new SecretKeySpec(keyGen.generateKey().getEncoded(), "AES");
+                log.warn("Using temporary encryption key - encrypted data will be lost after restart!");
             } catch (Exception e) {
                 throw new IllegalStateException("Failed to generate encryption key", e);
             }
@@ -65,6 +89,17 @@ public class Aes256EncryptionService implements EncryptionService {
             this.secretKey = new SecretKeySpec(keyBytes, "AES");
             log.info("Aes256EncryptionService initialized with AES-256-GCM");
         }
+    }
+
+    /**
+     * 判断是否为开发环境
+     *
+     * @return true 如果是开发或测试环境
+     */
+    private boolean isDevelopmentEnvironment() {
+        String[] activeProfiles = environment.getActiveProfiles();
+        return Arrays.stream(activeProfiles)
+            .anyMatch(profile -> Arrays.asList(DEV_PROFILES).contains(profile.toLowerCase()));
     }
 
     @Override

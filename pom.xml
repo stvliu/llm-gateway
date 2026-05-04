@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.codingas.gateway</groupId>
-    <artifactId>gateway</artifactId>
+    <artifactId>gateway-project</artifactId>
     <version>${revision}</version>
     <packaging>pom</packaging>
 

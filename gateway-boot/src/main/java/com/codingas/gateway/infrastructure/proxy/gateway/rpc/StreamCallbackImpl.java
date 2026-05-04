@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
+import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import lombok.RequiredArgsConstructor;
 
 import java.util.function.Consumer;
