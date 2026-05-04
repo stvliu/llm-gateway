@@ -79,4 +79,15 @@ public interface ModelGateway {
      * @return 是否存在
      */
     boolean existsByModelCode(String modelCode);
+
+    /**
+     * 获取最大版本号
+     *
+     * <p>用于变更检测。</p>
+     *
+     * @return 最大版本号，无数据返回 0
+     */
+    default long getMaxVersion() {
+        return 0L;
+    }
 }

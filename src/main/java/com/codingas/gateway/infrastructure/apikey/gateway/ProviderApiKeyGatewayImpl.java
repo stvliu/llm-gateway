@@ -33,10 +33,21 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
     }
 
     @Override
+    public Optional<ProviderApiKey> findByProviderId(Long providerId) {
+        return repository.findByProviderId(providerId).map(this::toEntity);
+    }
+
+    @Override
     public ProviderApiKey save(ProviderApiKey providerApiKey) {
         ProviderApiKeyDo doEntity = toDo(providerApiKey);
         ProviderApiKeyDo saved = repository.save(doEntity);
         return toEntity(saved);
+    }
+
+    @Override
+    public long getMaxVersion() {
+        Long maxVersion = repository.findMaxVersion();
+        return maxVersion != null ? maxVersion : 0L;
     }
 
     /**

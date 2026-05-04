@@ -184,16 +184,6 @@ management:
 gateway:
   llm:
     timeout-seconds: 30
-    # OpenAI 配置
-    openai:
-      base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-      api-key: ${OPENAI_API_KEY:}
-      enabled: false
-    # 火山引擎配置
-    volcengine:
-      base-url: ${VOLCENGINE_BASE_URL:https://ark.cn-beijing.volces.com/api/v3}
-      api-key: ${VOLCENGINE_API_KEY:1fb8bdcf-3383-426d-9f3d-4c2979895c58}
-      enabled: true
 
 # ==============================================
 # 日志配置（由 logback-spring.xml 管理）

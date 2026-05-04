@@ -1,0 +1,135 @@
+package com.codingas.gateway.infrastructure.config;
+
+import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.gateway.ModelGateway;
+import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
+import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 配置缓存服务
+ *
+ * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。</p>
+ * <p>负责 Provider、Model、ProviderApiKey 的缓存管理。</p>
+ */
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class ConfigCacheService {
+
+    private final ProviderGateway providerGateway;
+    private final ModelGateway modelGateway;
+    private final ProviderApiKeyGateway apiKeyGateway;
+    private final EncryptionService encryptionService;
+
+    // ========== Provider 操作 ==========
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "#id")
+    public Optional<Provider> getProviderById(Long id) {
+        return providerGateway.findById(id);
+    }
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "'code:' + #providerCode")
+    public Optional<Provider> getProviderByCode(String providerCode) {
+        return providerGateway.findByProviderCode(providerCode);
+    }
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "'all'")
+    public List<Provider> getAllProviders() {
+        return providerGateway.findAll();
+    }
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "'active'")
+    public List<Provider> getActiveProviders() {
+        return providerGateway.findAllActive();
+    }
+
+    // ========== Model 操作 ==========
+
+    @Cacheable(value = CacheNames.MODELS, key = "#id")
+    public Optional<Model> getModelById(Long id) {
+        return modelGateway.findById(id);
+    }
+
+    @Cacheable(value = CacheNames.MODELS, key = "'code:' + #modelCode")
+    public Optional<Model> getModelByCode(String modelCode) {
+        return modelGateway.findByModelCode(modelCode);
+    }
+
+    @Cacheable(value = CacheNames.MODELS, key = "'all'")
+    public List<Model> getAllModels() {
+        return modelGateway.findAll();
+    }
+
+    @Cacheable(value = CacheNames.MODELS, key = "'active'")
+    public List<Model> getActiveModels() {
+        return modelGateway.findAllActive();
+    }
+
+    @Cacheable(value = CacheNames.MODELS, key = "'provider:' + #providerId")
+    public List<Model> getModelsByProviderId(Long providerId) {
+        return modelGateway.findByProviderId(providerId);
+    }
+
+    // ========== API Key 操作（敏感数据，仅本地缓存）==========
+
+    /**
+     * 获取 API Key（解密后）
+     *
+     * <p>敏感数据，使用本地专用缓存。</p>
+     */
+    @Cacheable(value = CacheNames.API_KEYS_LOCAL,
+               key = "#providerId",
+               cacheManager = "localCacheManager")
+    public Optional<ProviderApiKey> getApiKeyByProviderId(Long providerId) {
+        return apiKeyGateway.findByProviderId(providerId)
+            .map(this::decryptApiKey);
+    }
+
+    /**
+     * 解密 API Key
+     */
+    private ProviderApiKey decryptApiKey(ProviderApiKey apiKey) {
+        if (apiKey.getEncryptedApiKey() != null) {
+            String decrypted = encryptionService.decrypt(apiKey.getEncryptedApiKey());
+            apiKey.setApiKey(decrypted);
+        }
+        return apiKey;
+    }
+
+    // ========== 缓存刷新 ==========
+
+    @CacheEvict(value = CacheNames.PROVIDERS, allEntries = true)
+    public void refreshProviders() {
+        log.info("Providers cache refreshed");
+    }
+
+    @CacheEvict(value = CacheNames.MODELS, allEntries = true)
+    public void refreshModels() {
+        log.info("Models cache refreshed");
+    }
+
+    @CacheEvict(value = CacheNames.API_KEYS_LOCAL,
+                allEntries = true,
+                cacheManager = "localCacheManager")
+    public void refreshApiKeys() {
+        log.info("API Keys cache refreshed");
+    }
+
+    public void refreshAll() {
+        refreshProviders();
+        refreshModels();
+        refreshApiKeys();
+        log.info("All caches refreshed");
+    }
+}

@@ -1,0 +1,33 @@
+{
+  "title": "Model Center",
+  "channelList": "Channel List",
+  "modelList": "Model List",
+  "addChannel": "Add Channel",
+  "addModel": "Add Model",
+  "channel": {
+    "name": "Channel Name",
+    "code": "Channel Code",
+    "type": "Channel Type",
+    "baseUrl": "API URL",
+    "status": "Status"
+  },
+  "model": {
+    "name": "Model Name",
+    "code": "Model Code",
+    "type": "Model Type",
+    "provider": "Provider",
+    "status": "Status"
+  },
+  "type": {
+    "OPENAI": "OpenAI",
+    "ANTHROPIC": "Anthropic",
+    "GOOGLE": "Google",
+    "AZURE": "Azure",
+    "CUSTOM": "Custom",
+    "CHAT": "Chat",
+    "COMPLETION": "Completion",
+    "EMBEDDING": "Embedding",
+    "IMAGE": "Image",
+    "AUDIO": "Audio"
+  }
+}

@@ -1,0 +1,13 @@
+# 标准版（单实例）配置
+spring:
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
+
+gateway:
+  config:
+    event:
+      mode: local
+    cache:
+      version-check-interval: 30s

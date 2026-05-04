@@ -1,0 +1,16 @@
+{
+  "title": "LLM Gateway",
+  "subtitle": "欢迎使用 LLM Gateway",
+  "username": "用户名",
+  "password": "密码",
+  "rememberMe": "记住我",
+  "submit": "登录",
+  "error": {
+    "title": "登录失败",
+    "message": "用户名或密码错误"
+  },
+  "validation": {
+    "usernameRequired": "请输入用户名",
+    "passwordRequired": "请输入密码"
+  }
+}

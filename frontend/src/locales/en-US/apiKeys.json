@@ -1,0 +1,11 @@
+{
+  "title": "My API Keys",
+  "add": "Add API Key",
+  "name": "Name",
+  "key": "Key Value",
+  "status": "Status",
+  "createdAt": "Created At",
+  "copySuccess": "API Key copied",
+  "createSuccess": "Created successfully, please copy and save the key immediately",
+  "confirmDelete": "Are you sure you want to delete this API Key?"
+}
