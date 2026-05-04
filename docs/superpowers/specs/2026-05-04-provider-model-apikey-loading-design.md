@@ -148,7 +148,74 @@ WHERE id = ? AND version = ?;
 
 ---
 
-## 4. 缓存设计
+## 4. 分层结构设计
+
+**遵循 COLA Light 5.0 架构原则：**
+
+```
+common/
+├── event/
+│   ├── DomainEvent.java              # 领域事件基类（通用）
+│   └── DomainEventPublisher.java     # 事件发布接口（通用）
+├── exception/
+│   └── GatewayException.java
+└── constants/
+    └── ...
+
+domain/
+├── model/
+│   ├── entity/
+│   │   ├── Provider.java
+│   │   ├── Model.java
+│   │   └── ProviderApiKey.java
+│   ├── gateway/
+│   │   ├── ProviderGateway.java
+│   │   ├── ModelGateway.java
+│   │   └── ProviderApiKeyGateway.java
+│   ├── service/
+│   │   ├── ProviderDomainService.java
+│   │   └── ModelDomainService.java
+│   ├── enums/
+│   │   └── ProviderStatus.java
+│   ├── exception/
+│   │   └── ModelNotFoundException.java
+│   └── event/
+│       └── ConfigChangedEvent.java
+├── audit/
+│   ├── entity/
+│   ├── gateway/
+│   ├── service/
+│   └── event/
+│       └── AuditEvent.java
+├── quota/
+│   ├── entity/
+│   ├── gateway/
+│   ├── service/
+│   └── event/
+│       └── TokenUsedEvent.java
+└── security/
+    └── event/
+        └── ApiKeyExpiringEvent.java
+
+application/
+└── config/
+    └── ConfigCacheService.java          # 缓存服务（应用层）
+
+infrastructure/
+├── config/
+│   ├── CacheConfig.java                 # 缓存配置
+│   ├── CacheNames.java                  # 缓存名称常量
+│   └── RedisEventConfig.java            # Redis 事件配置
+└── event/
+    ├── LocalDomainEventPublisher.java   # 本地事件实现
+    └── RedisDomainEventPublisher.java   # 远程事件实现
+```
+
+**分层原则：**
+- `common/` - 只放通用抽象（基类、接口、工具、异常）
+- `domain/` - 按业务能力划分，事件内聚到具体领域
+- `application/` - 用例编排，跨域协调
+- `infrastructure/` - 技术实现，配置，Gateway 实现
 
 ### 4.1 CacheManager 配置
 
@@ -508,20 +575,64 @@ public class ConfigCacheService {
 
 ## 5. 事件机制设计
 
-### 5.1 事件类型定义
+### 5.1 领域事件基类
+
+```java
+/**
+ * 领域事件基类
+ *
+ * <p>位置：common/event/DomainEvent.java</p>
+ * <p>所有领域事件的基类，提供通用属性。</p>
+ */
+public abstract class DomainEvent {
+    private final Instant occurredAt;
+
+    protected DomainEvent() {
+        this.occurredAt = Instant.now();
+    }
+
+    public Instant getOccurredAt() {
+        return occurredAt;
+    }
+}
+```
+
+### 5.2 事件发布接口
+
+```java
+/**
+ * 领域事件发布器
+ *
+ * <p>位置：common/event/DomainEventPublisher.java</p>
+ * <p>通用接口，支持本地和远程两种实现。</p>
+ */
+public interface DomainEventPublisher {
+
+    /**
+     * 发布领域事件
+     *
+     * @param event 领域事件
+     * @param <T> 事件类型
+     */
+    <T extends DomainEvent> void publish(T event);
+}
+```
+
+### 5.3 配置变更事件
 
 ```java
 /**
  * 配置变更事件
  *
- * <p>支持本地和远程两种传输方式。</p>
+ * <p>位置：domain/model/event/ConfigChangedEvent.java</p>
+ * <p>属于 model 领域，支持本地和远程两种传输方式。</p>
  */
-public record ConfigChangedEvent(
-    ConfigType configType,
-    ChangeType changeType,
-    Long entityId,
-    Instant timestamp
-) {
+public class ConfigChangedEvent extends DomainEvent {
+
+    private final ConfigType configType;
+    private final ChangeType changeType;
+    private final Long entityId;
+
     public enum ConfigType {
         PROVIDER,
         MODEL,
@@ -534,69 +645,64 @@ public record ConfigChangedEvent(
         DELETED
     }
 
+    public ConfigChangedEvent(ConfigType configType, ChangeType changeType, Long entityId) {
+        super();
+        this.configType = configType;
+        this.changeType = changeType;
+        this.entityId = entityId;
+    }
+
+    // Getters
+    public ConfigType getConfigType() { return configType; }
+    public ChangeType getChangeType() { return changeType; }
+    public Long getEntityId() { return entityId; }
+
     public static ConfigChangedEvent of(ConfigType configType, ChangeType changeType, Long entityId) {
-        return new ConfigChangedEvent(configType, changeType, entityId, Instant.now());
+        return new ConfigChangedEvent(configType, changeType, entityId);
     }
 }
 ```
 
-### 5.2 统一事件发布接口
-
-```java
-/**
- * 配置事件发布器
- *
- * <p>统一接口，支持本地和远程两种实现。</p>
- */
-public interface ConfigEventPublisher {
-
-    /**
-     * 发布配置变更事件
-     *
-     * @param event 配置变更事件
-     */
-    void publish(ConfigChangedEvent event);
-}
-```
-
-### 5.3 本地事件实现（标准版）
+### 5.4 本地事件实现（标准版）
 
 ```java
 /**
  * 本地事件发布器
  *
+ * <p>位置：infrastructure/event/LocalDomainEventPublisher.java</p>
  * <p>使用 Spring ApplicationEvent，适用于单实例部署。</p>
  */
 @Component
 @Profile({"local", "dev", "standalone"})
 @Slf4j
-public class LocalConfigEventPublisher implements ConfigEventPublisher {
+public class LocalDomainEventPublisher implements DomainEventPublisher {
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
     @Override
-    public void publish(ConfigChangedEvent event) {
+    public <T extends DomainEvent> void publish(T event) {
         log.debug("Publishing local event: {}", event);
         eventPublisher.publishEvent(event);
     }
 }
 ```
 
-### 5.4 Redis 远程事件实现（企业版）
+### 5.5 Redis 远程事件实现（企业版）
 
 ```java
 /**
  * Redis 远程事件发布器
  *
+ * <p>位置：infrastructure/event/RedisDomainEventPublisher.java</p>
  * <p>使用 Redis Pub/Sub，适用于多实例部署。</p>
  */
 @Component
 @Profile({"cluster", "enterprise"})
 @Slf4j
-public class RedisConfigEventPublisher implements ConfigEventPublisher {
+public class RedisDomainEventPublisher implements DomainEventPublisher {
 
-    private static final String CHANNEL = "gateway:config:changed";
+    private static final String CHANNEL_PREFIX = "gateway:domain:event:";
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -605,51 +711,59 @@ public class RedisConfigEventPublisher implements ConfigEventPublisher {
     private ObjectMapper objectMapper;
 
     @Override
-    public void publish(ConfigChangedEvent event) {
+    public <T extends DomainEvent> void publish(T event) {
         try {
+            String channel = CHANNEL_PREFIX + event.getClass().getSimpleName();
             String payload = objectMapper.writeValueAsString(event);
-            redisTemplate.convertAndSend(CHANNEL, payload);
-            log.debug("Published Redis event: {}", event);
+            redisTemplate.convertAndSend(channel, payload);
+            log.debug("Published Redis event to {}: {}", channel, event);
         } catch (Exception e) {
             log.error("Failed to publish Redis event: {}", event, e);
-            // 降级：仍然触发本地事件
             throw new RuntimeException("Redis publish failed", e);
         }
     }
 }
 ```
 
-### 5.5 Redis 订阅者配置
+### 5.6 Redis 订阅者配置
 
 ```java
 /**
  * Redis 消息监听器配置
+ *
+ * <p>位置：infrastructure/config/RedisEventConfig.java</p>
  */
 @Configuration
 @Profile({"cluster", "enterprise"})
 public class RedisEventConfig {
 
-    private static final String CHANNEL = "gateway:config:changed";
-
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(
             RedisConnectionFactory connectionFactory,
-            ConfigEventMessageListener messageListener) {
+            ConfigChangedEventListener configChangedEventListener) {
 
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
         container.setConnectionFactory(connectionFactory);
-        container.addMessageListener(messageListener, new ChannelTopic(CHANNEL));
+        container.addMessageListener(
+            configChangedEventListener,
+            new ChannelTopic("gateway:domain:event:ConfigChangedEvent"));
         return container;
     }
 }
+```
 
+### 5.7 事件监听器
+
+```java
 /**
- * Redis 配置事件监听器
+ * 配置变更事件监听器
+ *
+ * <p>位置：infrastructure/event/ConfigChangedEventListener.java</p>
+ * <p>处理本地和 Redis 远程事件。</p>
  */
 @Component
-@Profile({"cluster", "enterprise"})
 @Slf4j
-public class ConfigEventMessageListener implements MessageListener {
+public class ConfigChangedEventListener implements MessageListener {
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -657,50 +771,32 @@ public class ConfigEventMessageListener implements MessageListener {
     @Autowired
     private ConfigCacheService cacheService;
 
+    // ========== Redis 消息监听 ==========
+
     @Override
     public void onMessage(Message message, byte[] pattern) {
         try {
             String payload = new String(message.getBody());
             ConfigChangedEvent event = objectMapper.readValue(payload, ConfigChangedEvent.class);
             log.info("Received Redis config event: {}", event);
-
-            // 刷新对应缓存
             handleEvent(event);
         } catch (Exception e) {
             log.error("Failed to handle Redis message: {}", message, e);
         }
     }
 
-    private void handleEvent(ConfigChangedEvent event) {
-        switch (event.configType()) {
-            case PROVIDER -> cacheService.refreshProviders();
-            case MODEL -> cacheService.refreshModels();
-            case PROVIDER_API_KEY -> cacheService.refreshApiKeys();
-        }
-    }
-}
-```
-
-### 5.6 本地事件监听器
-
-```java
-/**
- * 本地配置事件监听器
- *
- * <p>所有部署模式通用。</p>
- */
-@Component
-@Slf4j
-public class ConfigEventListener {
-
-    @Autowired
-    private ConfigCacheService cacheService;
+    // ========== 本地事件监听 ==========
 
     @EventListener
-    public void onConfigChanged(ConfigChangedEvent event) {
+    public void onLocalEvent(ConfigChangedEvent event) {
         log.info("Received local config event: {}", event);
+        handleEvent(event);
+    }
 
-        switch (event.configType()) {
+    // ========== 事件处理 ==========
+
+    private void handleEvent(ConfigChangedEvent event) {
+        switch (event.getConfigType()) {
             case PROVIDER -> cacheService.refreshProviders();
             case MODEL -> cacheService.refreshModels();
             case PROVIDER_API_KEY -> cacheService.refreshApiKeys();
@@ -709,20 +805,21 @@ public class ConfigEventListener {
 }
 ```
 
-### 5.7 统一事件发布服务
+### 5.8 事件发布服务
 
 ```java
 /**
  * 配置事件服务
  *
- * <p>提供统一的事件发布入口，自动选择本地或远程实现。</p>
+ * <p>位置：application/config/ConfigEventService.java</p>
+ * <p>提供统一的事件发布入口。</p>
  */
 @Service
 @Slf4j
 public class ConfigEventService {
 
     @Autowired
-    private ConfigEventPublisher eventPublisher;
+    private DomainEventPublisher eventPublisher;
 
     /**
      * 发布配置变更事件
