@@ -3,12 +3,9 @@ import { AuthGuard, RoleGuard } from './guards';
 import Login from '@/pages/Login';
 import AdminLayout from '@/components/layout/AdminLayout';
 import UserLayout from '@/components/layout/UserLayout';
+import AdminModels from '@/pages/admin/Models';
 
 // 临时占位组件，后续实现
-function AdminModels() {
-  return <div>Admin Models Page (to be implemented)</div>;
-}
-
 function AdminUsers() {
   return <div>Admin Users Page (to be implemented)</div>;
 }
