@@ -29,10 +29,29 @@ public interface ProviderApiKeyGateway {
     Optional<ProviderApiKey> findById(Long id);
 
     /**
+     * 根据提供商 ID 查找 API 密钥
+     *
+     * @param providerId 提供商 ID
+     * @return API 密钥信息，不存在返回空
+     */
+    Optional<ProviderApiKey> findByProviderId(Long providerId);
+
+    /**
      * 保存提供商 API 密钥
      *
      * @param providerApiKey API 密钥实体
      * @return 保存后的实体
      */
     ProviderApiKey save(ProviderApiKey providerApiKey);
+
+    /**
+     * 获取最大版本号
+     *
+     * <p>用于变更检测。</p>
+     *
+     * @return 最大版本号，无数据返回 0
+     */
+    default long getMaxVersion() {
+        return 0L;
+    }
 }
