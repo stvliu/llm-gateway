@@ -41,7 +41,10 @@
       "Bash(java -cp \"target/classes:target/test-classes:$\\(mvn dependency:build-classpath -q -DincludeScope=test)",
       "Bash(java -cp \"target/classes:$\\(mvn dependency:build-classpath -q -DincludeScope=compile)",
       "Bash(xargs cat *)",
-      "Bash(pnpm exec *)"
+      "Bash(pnpm exec *)",
+      "Bash(node -e ' *)",
+      "Bash(chmod +x *)",
+      "Bash(curl -s -X POST http://localhost:8080/v1/chat/completions -H 'Authorization: Bearer sk-test-volcengine-key-001' -H 'Content-Type: application/json' -d '{ *)"
     ]
   },
   "outputStyle": "default"

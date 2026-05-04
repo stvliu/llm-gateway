@@ -31,53 +31,44 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 - **物理标识与业务标识分离**: 数据库用自增 BIGINT 主键，业务层用 `*_code` VARCHAR
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
 
-## 项目结构（COLA Light 5.0 单模块）
+## 项目结构（多模块 Maven 项目）
 
 ```
-gateway-boot/                          # Maven 单一模块
-├── pom.xml
-└── src/main/java/com/codingas/gateway/
-    ├── adapter/                       # 适配器层（按用例分包）
-    │   ├── auth/controller/ & dto/
-    │   ├── proxy/controller/ & dto/
-    │   ├── model/controller/ & dto/
-    │   └── admin/controller/ & dto/
-    ├── application/                   # 应用层（按用例分包）
-    │   ├── auth/
-    │   ├── proxy/
-    │   └── model/
-    ├── domain/                        # 领域层
-    │   ├── gateway/                   # 跨领域 Gateway 接口
-    │   ├── security/                 # 安全领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   ├── router/                   # 路由领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   └── analytics/               # 分析领域
-    │       ├── entity/
-    │       ├── service/
-    │       ├── gateway/
-    │       ├── enums/
-    │       └── exception/
-    ├── infrastructure/                # 基础设施层
-    │   ├── config/
-    │   ├── gateway/                 # Gateway 实现
-    │   │   ├── security/
-    │   │   ├── router/
-    │   │   └── analytics/
-    │   └── util/
-    └── common/                        # 公共组件
-        ├── constants/
-        ├── exception/
-        └── util/
+gateway/                              # 项目根目录（父 POM）
+├── pom.xml                           # 父 POM，打包类型: pom
+├── gateway-boot/                     # 后端模块（所有层）
+│   ├── pom.xml
+│   └── src/main/java/com/codingas/gateway/
+│       ├── adapter/                  # 适配器层（按用例分包）
+│       │   ├── api/                  # 所有 API Controller
+│       │   └── interceptor/          # 拦截器
+│       ├── application/              # 应用层（按用例分包）
+│       ├── domain/                   # 领域层
+│       │   ├── gateway/              # 跨领域 Gateway 接口
+│       │   ├── proxy/                # 模型代理领域
+│       │   ├── model/                # 模型广场领域
+│       │   ├── security/             # 访问控制领域
+│       │   ├── quota/                # 用量管控领域
+│       │   ├── audit/                # 审计追溯领域
+│       │   └── alert/                # 告警通知领域
+│       ├── infrastructure/           # 基础设施层
+│       │   ├── config/
+│       │   ├── gateway/              # Gateway 实现
+│       │   ├── security/
+│       │   └── util/
+│       └── common/                   # 公共组件
+├── gateway-console/                  # Web UI 模块（独立前端项目）
+│   └── frontend/                     # React/Vue 前端代码
+└── gateway-cli/                      # CLI 模块（骨架）
+    ├── pom.xml
+    └── src/main/java/com/codingas/gateway/cli/
 ```
+
+| 模块 | 职责 | 与 gateway-boot 关系 |
+|------|------|---------------------|
+| gateway-boot | 后端模块，包含所有层 | - |
+| gateway-console | Web 管理界面 | API 消费者（HTTP 调用） |
+| gateway-cli | 命令行管理工具 | API 消费者（HTTP 调用） |
 
 ## 各层职责
 
@@ -113,7 +104,20 @@ gateway-boot/                          # Maven 单一模块
 ## 开发命令
 
 ```bash
-# 尚未确定具体构建命令，项目仍在规划阶段
+# 构建所有模块
+./mvnw clean install
+
+# 构建并跳过测试
+./mvnw clean install -DskipTests
+
+# 只构建 gateway-boot 模块
+./mvnw clean install -pl gateway-boot
+
+# 运行 gateway-boot
+./mvnw spring-boot:run -pl gateway-boot
+
+# 运行 gateway-cli
+./mvnw spring-boot:run -pl gateway-cli
 ```
 
 ## 数据库规范
