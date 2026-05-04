@@ -150,58 +150,72 @@ WHERE id = ? AND version = ?;
 
 ## 4. 缓存设计
 
-### 4.1 Spring Cache 配置
+### 4.1 CacheManager 配置
 
-**标准版（Caffeine 本地缓存）：**
-
-```yaml
-# application-standalone.yaml
-spring:
-  cache:
-    type: caffeine
-    caffeine:
-      spec: maximumSize=1000,expireAfterWrite=1h
-```
+**核心设计：两个独立 CacheManager**
+- `localCacheManager` - 本地缓存（Caffeine），始终存在，用于敏感数据
+- `distributedCacheManager` - 分布式缓存（Redis），企业版启用，用于非敏感数据
+- `@Primary` 决定默认使用哪个
 
 ```java
+/**
+ * 缓存配置
+ *
+ * <p>提供两个独立的 CacheManager：</p>
+ * <ul>
+ *   <li>localCacheManager - 本地缓存（Caffeine），用于敏感数据</li>
+ *   <li>distributedCacheManager - 分布式缓存（Redis），企业版启用</li>
+ * </ul>
+ */
 @Configuration
-@Profile({"local", "dev", "standalone"})
-public class LocalCacheConfig {
+@Slf4j
+public class CacheConfig {
 
-    @Bean
-    public CacheManager cacheManager() {
-        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        cacheManager.setCaffeine(Caffeine.newBuilder()
+    // ========== 本地缓存管理器（始终存在）==========
+
+    /**
+     * 本地缓存管理器
+     *
+     * <p>用于敏感数据（API Key），始终使用 Caffeine 本地缓存。</p>
+     * <p>标准版和企业版都使用此缓存管理器存储敏感数据。</p>
+     */
+    @Bean("localCacheManager")
+    public CacheManager localCacheManager() {
+        CaffeineCacheManager manager = new CaffeineCacheManager();
+        manager.setCaffeine(Caffeine.newBuilder()
             .maximumSize(1000)
-            .expireAfterWrite(Duration.ofHours(1)));
-        return cacheManager;
+            .expireAfterWrite(Duration.ofHours(1))
+            .recordStats());
+        log.info("Local cache manager (Caffeine) initialized");
+        return manager;
     }
-}
-```
 
-**企业版（Redis 分布式缓存 + Caffeine 本地二级缓存）：**
+    // ========== 标准版：默认使用本地缓存 ==========
 
-```yaml
-# application-cluster.yaml
-spring:
-  cache:
-    type: redis
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-  data:
-    redis:
-      cache:
-        time-to-live: 1h
-```
-
-```java
-@Configuration
-@Profile({"cluster", "enterprise"})
-public class DistributedCacheConfig {
-
+    /**
+     * 标准版默认缓存管理器
+     *
+     * <p>单实例部署，所有数据使用本地缓存。</p>
+     */
     @Bean
-    public CacheManager cacheManager(RedisConnectionFactory factory) {
+    @Primary
+    @Profile({"local", "dev", "standalone"})
+    public CacheManager defaultCacheManagerStandalone(
+            @Qualifier("localCacheManager") CacheManager localCacheManager) {
+        log.info("Using local cache as default (standalone mode)");
+        return localCacheManager;
+    }
+
+    // ========== 企业版：默认使用分布式缓存 ==========
+
+    /**
+     * 分布式缓存管理器
+     *
+     * <p>用于非敏感数据（Provider、Model），多实例共享。</p>
+     */
+    @Bean("distributedCacheManager")
+    @Profile({"cluster", "enterprise"})
+    public CacheManager distributedCacheManager(RedisConnectionFactory factory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
             .entryTtl(Duration.ofHours(1))
             .serializeKeysWith(RedisSerializationContext.SerializationPair
@@ -209,11 +223,47 @@ public class DistributedCacheConfig {
             .serializeValuesWith(RedisSerializationContext.SerializationPair
                 .fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
+        log.info("Distributed cache manager (Redis) initialized");
         return RedisCacheManager.builder(factory)
             .cacheDefaults(config)
             .build();
     }
+
+    /**
+     * 企业版默认缓存管理器
+     *
+     * <p>多实例部署，非敏感数据默认使用 Redis。</p>
+     */
+    @Bean
+    @Primary
+    @Profile({"cluster", "enterprise"})
+    public CacheManager defaultCacheManagerCluster(
+            @Qualifier("distributedCacheManager") CacheManager distributedCacheManager) {
+        log.info("Using distributed cache as default (cluster mode)");
+        return distributedCacheManager;
+    }
 }
+```
+
+**配置文件：**
+
+```yaml
+# application-standalone.yaml (标准版)
+spring:
+  profiles:
+    active: standalone
+  cache:
+    type: caffeine
+
+# application-cluster.yaml (企业版)
+spring:
+  profiles:
+    active: cluster
+  cache:
+    type: redis
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
 ```
 
 ### 4.2 缓存名称定义
@@ -363,38 +413,95 @@ public class ConfigCacheService {
 
 ### 4.4 API Key 本地缓存隔离
 
-**确保敏感数据不进入 Redis：**
+**关键：通过 `cacheManager` 参数显式指定**
 
 ```java
-@Configuration
-public class ApiKeyLocalCacheConfig {
+@Service
+@Slf4j
+public class ConfigCacheService {
+
+    // ========== Provider 操作（使用默认 CacheManager）==========
+    // 标准版：Caffeine 本地缓存
+    // 企业版：Redis 分布式缓存
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "#id")
+    public Optional<Provider> getProviderById(Long id) {
+        return providerGateway.findById(id);
+    }
+
+    @Cacheable(value = CacheNames.PROVIDERS, key = "'code:' + #providerCode")
+    public Optional<Provider> getProviderByCode(String providerCode) {
+        return providerGateway.findByProviderCode(providerCode);
+    }
+
+    // ========== Model 操作（使用默认 CacheManager）==========
+
+    @Cacheable(value = CacheNames.MODELS, key = "#id")
+    public Optional<Model> getModelById(Long id) {
+        return modelGateway.findById(id);
+    }
+
+    @Cacheable(value = CacheNames.MODELS, key = "'code:' + #modelCode")
+    public Optional<Model> getModelByCode(String modelCode) {
+        return modelGateway.findByModelCode(modelCode);
+    }
+
+    // ========== API Key 操作（强制使用本地 CacheManager）==========
+    // 关键：cacheManager = "localCacheManager" 确保不进入 Redis
 
     /**
-     * API Key 专用本地缓存
+     * 获取 API Key（解密后）
      *
-     * <p>不使用 Redis，仅在本地内存中缓存。</p>
+     * <p>敏感数据，强制使用本地缓存管理器。</p>
+     * <p>无论标准版还是企业版，API Key 都只存在本地内存中。</p>
      */
-    @Bean
-    @Primary
-    @Profile({"cluster", "enterprise"})
-    public CacheManager compositeCacheManager(
-            RedisCacheManager redisCacheManager) {
+    @Cacheable(value = CacheNames.API_KEYS_LOCAL,
+               key = "#providerId",
+               cacheManager = "localCacheManager")  // 关键：显式指定本地缓存
+    public Optional<ProviderApiKey> getApiKeyByProviderId(Long providerId) {
+        return apiKeyGateway.findByProviderId(providerId)
+            .map(this::decryptApiKey);
+    }
 
-        // API Key 使用独立的 Caffeine 缓存
-        CaffeineCacheManager localCacheManager = new CaffeineCacheManager();
-        localCacheManager.setCaffeine(Caffeine.newBuilder()
-            .maximumSize(100)
-            .expireAfterWrite(Duration.ofMinutes(30)));
-
-        // 组合缓存管理器
-        CompositeCacheManager compositeCacheManager = new CompositeCacheManager(
-            localCacheManager,  // 优先本地（apiKeysLocal）
-            redisCacheManager   // 其他走 Redis
-        );
-        compositeCacheManager.setFallbackToNoOpCache(false);
-        return compositeCacheManager;
+    /**
+     * 刷新 API Key 缓存
+     */
+    @CacheEvict(value = CacheNames.API_KEYS_LOCAL,
+                allEntries = true,
+                cacheManager = "localCacheManager")  // 同样需要指定
+    public void refreshApiKeys() {
+        log.info("API Keys cache refreshed");
     }
 }
+```
+
+**缓存隔离总结：**
+
+| 缓存名称 | 标准版存储位置 | 企业版存储位置 | 数据类型 |
+|---------|--------------|--------------|---------|
+| `providers` | Caffeine（本地） | Redis（分布式） | 非敏感 |
+| `models` | Caffeine（本地） | Redis（分布式） | 非敏感 |
+| `apiKeysLocal` | Caffeine（本地） | Caffeine（本地） | 敏感 |
+
+**企业版数据流：**
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      企业版缓存架构                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   getProviderById()  ───► @Cacheable                        │
+│                              ↓                              │
+│                     distributedCacheManager                 │
+│                              ↓                              │
+│                           Redis  ✅ 共享                    │
+│                                                             │
+│   getApiKeyByProviderId() ───► @Cacheable(cacheManager="localCacheManager")
+│                                   ↓                         │
+│                          localCacheManager                  │
+│                                   ↓                         │
+│                           Caffeine  ✅ 仅本地               │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -908,7 +1015,7 @@ gateway:
 ### 11.3 依赖配置
 
 ```xml
-<!-- 标准版依赖 -->
+<!-- 基础依赖（标准版必需） -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-cache</artifactId>
@@ -918,11 +1025,27 @@ gateway:
     <artifactId>caffeine</artifactId>
 </dependency>
 
-<!-- 企业版额外依赖 -->
+<!-- 企业版额外依赖（用于分布式缓存和事件广播） -->
 <dependency>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-data-redis</artifactId>
 </dependency>
+```
+
+### 11.4 启动验证
+
+**标准版启动日志：**
+```
+INFO  CacheConfig - Local cache manager (Caffeine) initialized
+INFO  CacheConfig - Using local cache as default (standalone mode)
+```
+
+**企业版启动日志：**
+```
+INFO  CacheConfig - Local cache manager (Caffeine) initialized
+INFO  CacheConfig - Distributed cache manager (Redis) initialized
+INFO  CacheConfig - Using distributed cache as default (cluster mode)
+INFO  RedisEventConfig - Redis message listener container started
 ```
 
 ---
