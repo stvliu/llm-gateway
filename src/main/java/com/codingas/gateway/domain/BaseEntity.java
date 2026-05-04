@@ -20,6 +20,13 @@ public abstract class BaseEntity {
 
     protected Instant updatedAt;
 
+    /**
+     * 乐观锁版本号
+     *
+     * <p>用于并发控制和变更检测。</p>
+     */
+    protected Long version = 0L;
+
     public Long getId() {
         return id;
     }
