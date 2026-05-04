@@ -46,6 +46,12 @@ export const useAuthStore = create<AuthState>()(
         token: state.token,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => (state) => {
+        // 同步 token 到 localStorage 供 API client 使用
+        if (state?.token) {
+          localStorage.setItem('token', state.token);
+        }
+      },
     }
   )
 );
