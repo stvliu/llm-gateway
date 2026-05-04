@@ -1,0 +1,47 @@
+{
+  "app": {
+    "title": "LLM Gateway",
+    "copyright": "© 2024 LLM Gateway"
+  },
+  "actions": {
+    "add": "Add",
+    "edit": "Edit",
+    "delete": "Delete",
+    "save": "Save",
+    "cancel": "Cancel",
+    "search": "Search",
+    "reset": "Reset",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "copy": "Copy",
+    "enable": "Enable",
+    "disable": "Disable",
+    "resetPassword": "Reset Password"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled"
+  },
+  "confirm": {
+    "delete": "Are you sure you want to delete?",
+    "enable": "Are you sure you want to enable?",
+    "disable": "Are you sure you want to disable?"
+  },
+  "message": {
+    "success": "Operation successful",
+    "error": "Operation failed",
+    "copied": "Copied to clipboard"
+  },
+  "theme": {
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark"
+  },
+  "language": {
+    "zhCN": "简体中文",
+    "enUS": "English"
+  },
+  "user": {
+    "logout": "Logout"
+  }
+}

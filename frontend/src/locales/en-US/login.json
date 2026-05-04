@@ -1,0 +1,16 @@
+{
+  "title": "LLM Gateway",
+  "subtitle": "Welcome to LLM Gateway",
+  "username": "Username",
+  "password": "Password",
+  "rememberMe": "Remember me",
+  "submit": "Login",
+  "error": {
+    "title": "Login failed",
+    "message": "Invalid username or password"
+  },
+  "validation": {
+    "usernameRequired": "Please enter username",
+    "passwordRequired": "Please enter password"
+  }
+}

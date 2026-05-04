@@ -1,0 +1,26 @@
+{
+  "title": "User Management",
+  "userList": "User List",
+  "apiKeyList": "API Key List",
+  "addUser": "Add User",
+  "addApiKey": "Add API Key",
+  "user": {
+    "username": "Username",
+    "email": "Email",
+    "role": "Role",
+    "status": "Status",
+    "createdAt": "Created At"
+  },
+  "apiKey": {
+    "name": "Name",
+    "key": "Key Value",
+    "status": "Status",
+    "createdAt": "Created At",
+    "copySuccess": "API Key copied",
+    "createSuccess": "Created successfully, please copy and save the key immediately"
+  },
+  "role": {
+    "ADMIN": "Admin",
+    "USER": "User"
+  }
+}

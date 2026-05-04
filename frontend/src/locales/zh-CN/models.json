@@ -1,0 +1,33 @@
+{
+  "title": "模型中心",
+  "channelList": "渠道列表",
+  "modelList": "模型列表",
+  "addChannel": "新增渠道",
+  "addModel": "新增模型",
+  "channel": {
+    "name": "渠道名称",
+    "code": "渠道代码",
+    "type": "渠道类型",
+    "baseUrl": "API 地址",
+    "status": "状态"
+  },
+  "model": {
+    "name": "模型名称",
+    "code": "模型代码",
+    "type": "模型类型",
+    "provider": "所属渠道",
+    "status": "状态"
+  },
+  "type": {
+    "OPENAI": "OpenAI",
+    "ANTHROPIC": "Anthropic",
+    "GOOGLE": "Google",
+    "AZURE": "Azure",
+    "CUSTOM": "自定义",
+    "CHAT": "对话",
+    "COMPLETION": "补全",
+    "EMBEDDING": "向量",
+    "IMAGE": "图像",
+    "AUDIO": "音频"
+  }
+}
