@@ -27,7 +27,21 @@
       "Bash(kill %1)",
       "Bash(wait)",
       "Read(//tmp/**)",
-      "Read(//mnt/e/workspace/llm-gateway/**)"
+      "Read(//mnt/e/workspace/llm-gateway/**)",
+      "Bash(npm install *)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm tsc *)",
+      "Bash(npx tsc *)",
+      "Bash(javac -d /tmp/test-classes -sourcepath src/test/java:src/main/java src/test/java/com/codingas/gateway/domain/BaseEntityTest.java)",
+      "Bash(javac *)",
+      "Bash(javap *)",
+      "Bash(npm run *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm eslint *)",
+      "Bash(java -cp \"target/classes:target/test-classes:$\\(mvn dependency:build-classpath -q -DincludeScope=test)",
+      "Bash(java -cp \"target/classes:$\\(mvn dependency:build-classpath -q -DincludeScope=compile)",
+      "Bash(xargs cat *)",
+      "Bash(pnpm exec *)"
     ]
   },
   "outputStyle": "default"

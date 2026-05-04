@@ -3,6 +3,17 @@
 **日期:** 2026-05-04
 **状态:** 已批准
 **作者:** Claude & Liu Ye
+**版本:** v1.2
+
+---
+
+## 变更记录
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.2 | 2026-05-04 | **分层修正**：ConfigCacheService 和 ConfigEventPublisher 从应用层移至基础设施层 `infrastructure/config/`，因为它们是技术实现而非业务编排；Domain 层无需新增缓存接口 |
+| v1.1 | 2026-05-04 | **架构评审修复**：调整应用层包路径，补充分层原则说明 |
+| v1.0 | 2026-05-04 | 初始版本 |
 
 ---
 
@@ -197,25 +208,30 @@ domain/
     └── event/
         └── ApiKeyExpiringEvent.java
 
-application/
-└── config/
-    └── ConfigCacheService.java          # 缓存服务（应用层）
-
 infrastructure/
 ├── config/
 │   ├── CacheConfig.java                 # 缓存配置
 │   ├── CacheNames.java                  # 缓存名称常量
+│   ├── ConfigCacheService.java          # 配置缓存服务（技术实现）
+│   ├── ConfigEventPublisher.java        # 配置事件发布（技术实现）
 │   └── RedisEventConfig.java            # Redis 事件配置
 └── event/
     ├── LocalDomainEventPublisher.java   # 本地事件实现
-    └── RedisDomainEventPublisher.java   # 远程事件实现
+    ├── RedisDomainEventPublisher.java   # 远程事件实现
+    └── ConfigChangedEventListener.java  # 配置变更监听器
 ```
 
 **分层原则：**
 - `common/` - 只放通用抽象（基类、接口、工具、异常）
-- `domain/` - 按业务能力划分，事件内聚到具体领域
-- `application/` - 用例编排，跨域协调
-- `infrastructure/` - 技术实现，配置，Gateway 实现
+- `domain/` - 按业务能力划分，事件内聚到具体领域，Gateway 接口定义业务资源持久化
+- `application/` - 按用例分包，编排跨域协调（如 ChatApplicationService）
+- `infrastructure/` - 技术实现，配置，Gateway 实现，缓存服务
+
+**ConfigCacheService 放基础设施层的原因：**
+
+1. **技术实现性质**：是对 Spring Cache 的封装，属于技术基础设施，非业务编排
+2. **不新增接口**：Domain 层已有 `ProviderGateway`、`ModelGateway` 等接口，无需再抽象"缓存接口"
+3. **职责清晰**：基础设施层统一管理技术实现（缓存、消息、持久化）
 
 ### 4.1 CacheManager 配置
 
@@ -358,7 +374,9 @@ public final class CacheNames {
 /**
  * 配置缓存服务
  *
- * <p>使用 Spring Cache 统一缓存抽象。</p>
+ * <p>位置：infrastructure/config/ConfigCacheService.java</p>
+ * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。</p>
+ * <p>负责 Provider、Model、ProviderApiKey 的缓存管理。</p>
  */
 @Service
 @Slf4j
@@ -809,14 +827,14 @@ public class ConfigChangedEventListener implements MessageListener {
 
 ```java
 /**
- * 配置事件服务
+ * 配置事件发布
  *
- * <p>位置：application/config/ConfigEventService.java</p>
- * <p>提供统一的事件发布入口。</p>
+ * <p>位置：infrastructure/config/ConfigEventPublisher.java</p>
+ * <p>提供统一的事件发布入口，属于技术基础设施。</p>
  */
 @Service
 @Slf4j
-public class ConfigEventService {
+public class ConfigEventPublisher {
 
     @Autowired
     private DomainEventPublisher eventPublisher;
