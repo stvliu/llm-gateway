@@ -1,29 +1,18 @@
 package com.codingas.gateway.infrastructure.init;
 
-import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.common.enums.UserStatus;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
 
 /**
  * 开发环境数据初始化器
@@ -33,9 +22,9 @@ import java.util.Map;
  * <ul>
  *   <li>测试用户</li>
  *   <li>网关 API Key</li>
- *   <li>火山引擎 Provider</li>
- *   <li>豆包模型</li>
  * </ul>
+ *
+ * <p>注意：Provider、ProviderApiKey、Model 数据已通过 Flyway 迁移脚本初始化。</p>
  */
 @Slf4j
 @Component
@@ -43,15 +32,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ProviderApiKeyGateway providerApiKeyGateway;
     private final UserGateway userGateway;
     private final ApiKeyGateway apiKeyGateway;
     private final PasswordEncoder passwordEncoder;
-
-    @Value("${gateway.llm.volcengine.api-key:}")
-    private String volcengineApiKey;
 
     /** 测试用的 Gateway API Key */
     private static final String TEST_API_KEY = "sk-test-volcengine-key-001";
@@ -62,7 +45,6 @@ public class DataInitializer implements CommandLineRunner {
 
         try {
             initTestUser();
-            initVolcengineProvider();
 
             log.info("Data initialization completed successfully");
         } catch (Exception e) {
@@ -118,156 +100,5 @@ public class DataInitializer implements CommandLineRunner {
 
         apiKeyGateway.save(apiKey);
         log.info("Created test API key: {}", TEST_API_KEY);
-    }
-
-    /**
-     * 初始化火山引擎 Provider
-     */
-    private void initVolcengineProvider() {
-        Provider provider;
-
-        // 检查 Provider 是否已存在
-        if (providerGateway.existsByProviderCode("volcengine")) {
-            log.info("Volcengine provider already exists, fetching existing provider");
-            provider = providerGateway.findByProviderCode("volcengine")
-                    .orElseThrow(() -> new IllegalStateException("Provider exists but cannot be found"));
-        } else {
-            // 创建 Provider
-            provider = new Provider();
-            provider.setProviderCode("volcengine");
-            provider.setProviderName("火山引擎");
-            provider.setProviderType(ProviderType.VOLCENGINE);
-            provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
-            provider.setWebsiteUrl("https://www.volcengine.com");
-            provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
-            provider.setPriority(100);
-            provider.setStatus(Provider.ProviderStatus.ACTIVE);
-
-            provider = providerGateway.save(provider);
-            log.info("Created provider: {} (id={})", provider.getProviderName(), provider.getId());
-
-            // 创建 Provider API Key
-            if (volcengineApiKey != null && !volcengineApiKey.isBlank()) {
-                initProviderApiKey(provider);
-            } else {
-                log.warn("Volcengine API key not configured, skipping ProviderApiKey initialization");
-            }
-        }
-
-        // 始终检查并创建模型（无论 provider 是否已存在）
-        initVolcengineModels(provider);
-    }
-
-    /**
-     * 初始化火山引擎 API Key
-     */
-    private void initProviderApiKey(Provider provider) {
-        ProviderApiKey apiKey = new ProviderApiKey();
-        apiKey.setKeyCode("VOLCENGINE_KEY_001");
-        apiKey.setProviderId(provider.getId());
-        apiKey.setKeyName("火山引擎主密钥");
-        apiKey.setApiKey(volcengineApiKey);
-        apiKey.setPriority(100);
-        apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
-
-        providerApiKeyGateway.save(apiKey);
-        log.info("Created Provider API key for Volcengine");
-    }
-
-    /**
-     * 初始化火山引擎模型
-     */
-    private void initVolcengineModels(Provider provider) {
-        // 豆包 Pro 32K
-        createModel(
-            provider,
-            "doubao-pro-32k",
-            "doubao-pro-32k",
-            "豆包 Pro 32K",
-            32768,
-            new BigDecimal("0.0008"),
-            new BigDecimal("0.002")
-        );
-
-        // 豆包 Pro 128K
-        createModel(
-            provider,
-            "doubao-pro-128k",
-            "doubao-pro-128k",
-            "豆包 Pro 128K",
-            131072,
-            new BigDecimal("0.005"),
-            new BigDecimal("0.009")
-        );
-
-        // 豆包 Lite 32K
-        createModel(
-            provider,
-            "doubao-lite-32k",
-            "doubao-lite-32k",
-            "豆包 Lite 32K",
-            32768,
-            new BigDecimal("0.0003"),
-            new BigDecimal("0.0006")
-        );
-
-        // 豆包 Seed 2.0 Pro
-        createModel(
-            provider,
-            "doubao-seed-2-0-pro-260215",
-            "doubao-seed-2-0-pro-260215",
-            "豆包 Seed 2.0 Pro",
-            128000,
-            new BigDecimal("0.001"),
-            new BigDecimal("0.002")
-        );
-
-        // 豆包 Seed 2.0 Code Preview (用户测试模型)
-        createModel(
-            provider,
-            "doubao-seed-2-0-code-preview-260215",
-            "doubao-seed-2-0-code-preview-260215",
-            "豆包 Seed 2.0 Code Preview",
-            128000,
-            new BigDecimal("0.001"),
-            new BigDecimal("0.002")
-        );
-    }
-
-    /**
-     * 创建模型
-     */
-    private void createModel(
-            Provider provider,
-            String modelCode,
-            String providerModelId,
-            String displayName,
-            int contextWindow,
-            BigDecimal inputPrice,
-            BigDecimal outputPrice) {
-
-        // 检查是否已存在
-        if (modelGateway.existsByModelCode(modelCode)) {
-            log.debug("Model {} already exists, skipping", modelCode);
-            return;
-        }
-
-        Model model = new Model();
-        model.setModelCode(modelCode);
-        model.setProvider(provider);
-        model.setProviderModelId(providerModelId);
-        model.setDisplayName(displayName);
-        model.setContextWindow(contextWindow);
-        model.setInputPrice(inputPrice);
-        model.setOutputPrice(outputPrice);
-        model.setCapabilities(Map.of(
-            "chat", true,
-            "streaming", true,
-            "function_calling", true
-        ));
-        model.setStatus(Model.ModelStatus.ACTIVE);
-
-        modelGateway.save(model);
-        log.info("Created model: {} (code={})", displayName, modelCode);
     }
 }
