@@ -7,7 +7,6 @@
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
-[![Build Status](https://github.com/codingas/llm-gateway/actions/workflows/build.yml/badge.svg)](https://github.com/codingas/llm-gateway/actions)
 
 [快速开始](#快速开始) · [功能特性](#功能特性) · [架构设计](#架构设计) · [API 文档](#api-文档) · [部署指南](#部署指南)
 
