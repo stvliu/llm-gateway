@@ -43,5 +43,8 @@
   },
   "user": {
     "logout": "退出登录"
+  },
+  "settings": {
+    "title": "个人设置"
   }
 }

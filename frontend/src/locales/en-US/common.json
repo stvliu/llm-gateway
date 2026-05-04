@@ -43,5 +43,8 @@
   },
   "user": {
     "logout": "Logout"
+  },
+  "settings": {
+    "title": "Settings"
   }
 }
