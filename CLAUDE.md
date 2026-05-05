@@ -57,8 +57,7 @@ gateway/                              # 项目根目录（父 POM）
 │       │   ├── security/
 │       │   └── util/
 │       └── common/                   # 公共组件
-├── gateway-console/                  # Web UI 模块（独立前端项目）
-│   └── frontend/                     # React/Vue 前端代码
+├── gateway-console                   # React/Vue 前端代码
 └── gateway-cli/                      # CLI 模块（骨架）
     ├── pom.xml
     └── src/main/java/com/codingas/gateway/cli/
