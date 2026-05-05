@@ -255,6 +255,30 @@
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-maven-plugin.version}</version>
+                    <configuration>
+                        <excludes>
+                            <!-- 排除实体类 -->
+                            <exclude>**/entity/**</exclude>
+                            <!-- 排除数据对象 -->
+                            <exclude>**/dataobject/**</exclude>
+                            <!-- 排除 DTO -->
+                            <exclude>**/dto/**</exclude>
+                            <!-- 排除枚举 -->
+                            <exclude>**/*Enum*</exclude>
+                            <exclude>**/enums/**</exclude>
+                            <!-- 排除异常类 -->
+                            <exclude>**/*Exception*</exclude>
+                            <!-- 排除配置类 -->
+                            <exclude>**/*Config*</exclude>
+                            <exclude>**/*Properties*</exclude>
+                            <!-- 排除初始化类 -->
+                            <exclude>**/*Initializer*</exclude>
+                            <!-- 排除应用主类 -->
+                            <exclude>**/*Application*</exclude>
+                            <!-- 排除 Converter -->
+                            <exclude>**/*Converter*</exclude>
+                        </excludes>
+                    </configuration>
                     <executions>
                         <execution>
                             <id>prepare-agent</id>

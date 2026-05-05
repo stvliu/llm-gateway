@@ -140,6 +140,7 @@ class UserServiceImplTest {
             User user2 = createTestUser();
             user2.setId(2L);
             user2.setUsername("other");
+            user2.setEmail("other@example.com");
             when(userGateway.findAll()).thenReturn(List.of(user1, user2));
 
             UserQueryRequest request = new UserQueryRequest();
