@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
 import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;
+import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import okhttp3.OkHttpClient;
@@ -10,8 +11,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
 
 /**
  * OpenAIAdapter 单元测试
@@ -56,9 +60,56 @@ class OpenAIAdapterTest {
         }
 
         @Test
+        @DisplayName("isAvailable 无 API Key 时返回 false")
+        void isAvailable_withoutApiKey_returnsFalse() {
+            OpenAIAdapter noKeyAdapter = new OpenAIAdapter(httpClient, "https://api.openai.com", null, 30);
+            assertThat(noKeyAdapter.isAvailable()).isFalse();
+        }
+
+        @Test
+        @DisplayName("isAvailable 空字符串 API Key 时返回 false")
+        void isAvailable_emptyApiKey_returnsFalse() {
+            OpenAIAdapter emptyKeyAdapter = new OpenAIAdapter(httpClient, "https://api.openai.com", "", 30);
+            assertThat(emptyKeyAdapter.isAvailable()).isFalse();
+        }
+
+        @Test
         @DisplayName("getDefaultTimeout 返回配置的超时时间")
         void getDefaultTimeout_returnsConfigured() {
             assertThat(adapter.getDefaultTimeout()).isEqualTo(30);
+        }
+    }
+
+    @Nested
+    @DisplayName("isHealthy 测试")
+    class IsHealthyTests {
+
+        @Test
+        @DisplayName("isAvailable 时 isHealthy 返回 true")
+        void isHealthy_whenAvailable_returnsTrue() {
+            assertThat(adapter.isHealthy()).isTrue();
+        }
+
+        @Test
+        @DisplayName("无 API Key 时 isHealthy 返回 false")
+        void isHealthy_whenNotAvailable_returnsFalse() {
+            OpenAIAdapter noKeyAdapter = new OpenAIAdapter(httpClient, "https://api.openai.com", null, 30);
+            assertThat(noKeyAdapter.isHealthy()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("checkConnection 测试")
+    class CheckConnectionTests {
+
+        @Test
+        @DisplayName("连接检查失败返回 false")
+        void checkConnection_connectionFailed_returnsFalse() {
+            // 无效的 URL 会连接失败
+            OpenAIAdapter invalidAdapter = new OpenAIAdapter(
+                httpClient, "https://invalid-url-that-does-not-exist.com", "test-key", 5
+            );
+            assertThat(invalidAdapter.checkConnection()).isFalse();
         }
     }
 
@@ -74,6 +125,15 @@ class OpenAIAdapterTest {
             assertThat(capabilities).isNotNull();
             assertThat(capabilities.supportsStreaming()).isTrue();
             assertThat(capabilities.supportsFunctionCalling()).isTrue();
+            assertThat(capabilities.providerType()).isEqualTo(ProviderType.OPENAI);
+        }
+
+        @Test
+        @DisplayName("支持特定模型列表")
+        void getCapabilities_supportsModels() {
+            ProviderCapabilities capabilities = adapter.getCapabilities();
+
+            assertThat(capabilities.supportedModels()).contains("gpt-4o", "gpt-4o-mini", "gpt-4-turbo");
         }
     }
 
@@ -84,13 +144,51 @@ class OpenAIAdapterTest {
         @Test
         @DisplayName("无效请求抛出异常")
         void chat_invalidRequest_throwsException() {
-            // given
             LLMRequest request = LLMRequest.builder()
                 .model("gpt-4")
                 .build();
 
-            // when & then - 由于没有真实的 API 端点，会抛出异常
-            org.assertj.core.api.Assertions.assertThatThrownBy(() -> adapter.chat(request))
+            assertThatThrownBy(() -> adapter.chat(request))
+                .isInstanceOf(RuntimeException.class);
+        }
+
+        @Test
+        @DisplayName("带完整参数的请求")
+        void chat_withFullParams_throwsException() {
+            LLMRequest request = LLMRequest.builder()
+                .model("gpt-4")
+                .messages(List.of(
+                    LLMRequest.Message.builder().role("user").content("Hello").build()
+                ))
+                .temperature(0.7)
+                .maxTokens(100)
+                .build();
+
+            assertThatThrownBy(() -> adapter.chat(request))
+                .isInstanceOf(RuntimeException.class);
+        }
+
+        @Test
+        @DisplayName("带 tools 参数的请求")
+        void chat_withTools_throwsException() {
+            LLMRequest request = LLMRequest.builder()
+                .model("gpt-4")
+                .messages(List.of(
+                    LLMRequest.Message.builder().role("user").content("Hello").build()
+                ))
+                .tools(List.of(
+                    LLMRequest.ToolDefinition.builder()
+                        .type("function")
+                        .function(LLMRequest.Function.builder()
+                            .name("get_weather")
+                            .description("Get weather")
+                            .build())
+                        .build()
+                ))
+                .toolChoice("auto")
+                .build();
+
+            assertThatThrownBy(() -> adapter.chat(request))
                 .isInstanceOf(RuntimeException.class);
         }
     }
@@ -102,17 +200,99 @@ class OpenAIAdapterTest {
         @Test
         @DisplayName("流式请求调用回调")
         void chatStream_callsCallback() {
-            // given
             LLMRequest request = LLMRequest.builder()
                 .model("gpt-4")
+                .messages(List.of(
+                    LLMRequest.Message.builder().role("user").content("Hello").build()
+                ))
                 .build();
             StreamCallback callback = mock(StreamCallback.class);
 
-            // when - 由于是异步调用，这里只是验证不会抛出异常
             adapter.chatStream(request, callback);
 
-            // then - 验证方法能正常调用（异步请求会失败但不会立即抛出异常）
             assertThat(adapter.isAvailable()).isTrue();
+        }
+
+        @Test
+        @DisplayName("流式请求带温度参数")
+        void chatStream_withTemperature_callsCallback() {
+            LLMRequest request = LLMRequest.builder()
+                .model("gpt-4")
+                .messages(List.of(
+                    LLMRequest.Message.builder().role("user").content("Hello").build()
+                ))
+                .temperature(0.5)
+                .build();
+            StreamCallback callback = mock(StreamCallback.class);
+
+            adapter.chatStream(request, callback);
+
+            assertThat(adapter.isAvailable()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("messages 方法测试")
+    class MessagesTests {
+
+        @Test
+        @DisplayName("messages 抛出 UnsupportedOperationException")
+        void messages_throwsUnsupportedOperationException() {
+            LLMRequest request = LLMRequest.builder()
+                .model("claude-3")
+                .build();
+
+            assertThatThrownBy(() -> adapter.messages(request))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("does not support Anthropic messages format");
+        }
+    }
+
+    @Nested
+    @DisplayName("messagesStream 方法测试")
+    class MessagesStreamTests {
+
+        @Test
+        @DisplayName("messagesStream 抛出 UnsupportedOperationException")
+        void messagesStream_throwsUnsupportedOperationException() {
+            LLMRequest request = LLMRequest.builder()
+                .model("claude-3")
+                .build();
+            StreamCallback callback = mock(StreamCallback.class);
+
+            assertThatThrownBy(() -> adapter.messagesStream(request, callback))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("does not support Anthropic messages format");
+        }
+    }
+
+    @Nested
+    @DisplayName("getChatCompletionsUrl 测试")
+    class GetChatCompletionsUrlTests {
+
+        @Test
+        @DisplayName("返回正确的 API URL")
+        void getChatCompletionsUrl_returnsCorrectUrl() {
+            // 通过反射或子类测试
+            TestableOpenAIAdapter testableAdapter = new TestableOpenAIAdapter(
+                httpClient, "https://api.openai.com", "test-key", 30
+            );
+
+            assertThat(testableAdapter.exposedGetChatCompletionsUrl())
+                .isEqualTo("https://api.openai.com/v1/chat/completions");
+        }
+    }
+
+    /**
+     * 可测试的 OpenAIAdapter 子类，暴露受保护的方法
+     */
+    static class TestableOpenAIAdapter extends OpenAIAdapter {
+        public TestableOpenAIAdapter(OkHttpClient httpClient, String baseUrl, String apiKey, int timeoutSeconds) {
+            super(httpClient, baseUrl, apiKey, timeoutSeconds);
+        }
+
+        public String exposedGetChatCompletionsUrl() {
+            return getChatCompletionsUrl();
         }
     }
 }
