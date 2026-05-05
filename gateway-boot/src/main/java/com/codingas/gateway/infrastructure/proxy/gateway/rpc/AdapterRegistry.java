@@ -1,7 +1,10 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
 import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
+import com.codingas.gateway.domain.proxy.gateway.LLMGatewayRegistry;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -12,19 +15,21 @@ import java.util.Optional;
  * 适配器注册表
  *
  * <p>管理所有注册的 LLM 适配器，按提供商类型索引。</p>
+ * <p>实现 Domain 层的 LLMGatewayRegistry 接口，提供技术防腐能力。</p>
  */
 @Slf4j
-public class AdapterRegistry {
+@Component
+public class AdapterRegistry implements LLMGatewayRegistry {
 
-    private final Map<ProviderType, LLMProviderAdapter> adaptersByType = new EnumMap<>(ProviderType.class);
-    private final Map<String, LLMProviderAdapter> adaptersByCode = new java.util.HashMap<>();
+    private final Map<ProviderType, LLMAdapter> adaptersByType = new EnumMap<>(ProviderType.class);
+    private final Map<String, LLMAdapter> adaptersByCode = new java.util.HashMap<>();
 
     /**
      * 注册单个适配器
      *
      * @param adapter 适配器实例
      */
-    public void register(LLMProviderAdapter adapter) {
+    public void register(LLMAdapter adapter) {
         adaptersByType.put(adapter.getProviderType(), adapter);
         adaptersByCode.put(adapter.getProviderCode(), adapter);
         log.debug("Registered adapter: {} -> {}",
@@ -37,21 +42,11 @@ public class AdapterRegistry {
      *
      * @param adapters 适配器列表
      */
-    public void registerAll(List<LLMProviderAdapter> adapters) {
-        for (LLMProviderAdapter adapter : adapters) {
+    public void registerAll(List<LLMAdapter> adapters) {
+        for (LLMAdapter adapter : adapters) {
             register(adapter);
         }
         log.info("Registered {} adapters", adapters.size());
-    }
-
-    /**
-     * 根据 ProviderType 获取适配器
-     *
-     * @param providerType 提供商类型
-     * @return 适配器实例
-     */
-    public Optional<LLMProviderAdapter> getAdapter(ProviderType providerType) {
-        return Optional.ofNullable(adaptersByType.get(providerType));
     }
 
     /**
@@ -60,7 +55,7 @@ public class AdapterRegistry {
      * @param providerCode 提供商编码
      * @return 适配器实例
      */
-    public Optional<LLMProviderAdapter> getAdapter(String providerCode) {
+    public Optional<LLMAdapter> getAdapter(String providerCode) {
         return Optional.ofNullable(adaptersByCode.get(providerCode));
     }
 
@@ -69,7 +64,7 @@ public class AdapterRegistry {
      *
      * @return 适配器列表
      */
-    public List<LLMProviderAdapter> getAllAdapters() {
+    public List<LLMAdapter> getAllAdapters() {
         return List.copyOf(adaptersByCode.values());
     }
 
@@ -91,5 +86,20 @@ public class AdapterRegistry {
      */
     public boolean hasAdapter(String providerCode) {
         return adaptersByCode.containsKey(providerCode);
+    }
+
+    // ==================== 实现 LLMGatewayRegistry 接口 ====================
+
+    @Override
+    public Optional<LLMGateway> getGateway(ProviderType providerType) {
+        return Optional.ofNullable(adaptersByType.get(providerType))
+                .map(adapter -> (LLMGateway) adapter);
+    }
+
+    @Override
+    public Iterable<LLMGateway> getAllGateways() {
+        return () -> adaptersByCode.values().stream()
+                .map(adapter -> (LLMGateway) adapter)
+                .iterator();
     }
 }

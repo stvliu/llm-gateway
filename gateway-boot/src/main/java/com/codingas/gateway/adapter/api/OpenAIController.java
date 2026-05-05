@@ -2,7 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.dto.OpenAIChatRequest;
 import com.codingas.gateway.application.proxy.dto.OpenAIChatResponse;
-import com.codingas.gateway.application.proxy.ChatService;
+import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @RequiredArgsConstructor
 public class OpenAIController {
 
-    private final ChatService chatService;
+    private final ProxyService proxyService;
 
     /**
      * Chat Completions 端点
@@ -63,7 +63,12 @@ public class OpenAIController {
 
         LLMRequest llmRequest = toLLMRequest(request);
 
-        LLMResponse llmResponse = chatService.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+
+        // 错误响应直接返回 400
+        if (llmResponse.getError() != null) {
+            return ResponseEntity.badRequest().body(toOpenAIChatResponse(llmResponse));
+        }
 
         return ResponseEntity.ok(toOpenAIChatResponse(llmResponse));
     }
@@ -91,7 +96,7 @@ public class OpenAIController {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        chatService.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+        proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
             try {
                 writer.write("data: " + data + "\n\n");
                 writer.flush();
@@ -185,14 +190,13 @@ public class OpenAIController {
 
     private Object toOpenAIChatResponse(LLMResponse response) {
         if (response.getError() != null) {
-            return ResponseEntity.badRequest().body(
-                    OpenAIChatResponse.builder()
-                            .error(OpenAIChatResponse.Error.builder()
-                                    .message(response.getError().getMessage())
-                                    .type(response.getError().getType())
-                                    .code(response.getError().getCode())
-                                    .build())
-                            .build());
+            return OpenAIChatResponse.builder()
+                    .error(OpenAIChatResponse.Error.builder()
+                            .message(response.getError().getMessage())
+                            .type(response.getError().getType())
+                            .code(response.getError().getCode())
+                            .build())
+                    .build();
         }
 
         List<OpenAIChatResponse.Choice> choices = null;

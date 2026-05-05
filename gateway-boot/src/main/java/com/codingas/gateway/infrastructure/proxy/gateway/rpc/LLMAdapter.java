@@ -2,15 +2,15 @@ package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
 import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.proxy.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
 
 /**
- * LLM 提供商适配器接口
+ * LLM 适配器接口
  *
  * <p>所有 LLM 提供商 (OpenAI, Anthropic, 等) 必须实现此接口。</p>
- * <p>实现 Domain 层定义的 LLMProviderPort 接口。</p>
+ * <p>实现 Domain 层定义的 LLMGateway 接口。</p>
  */
-public interface LLMProviderAdapter extends LLMProviderPort {
+public interface LLMAdapter extends LLMGateway {
 
     /**
      * 获取提供商编码

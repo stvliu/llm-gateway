@@ -6,11 +6,12 @@ import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
 
 /**
- * LLM 提供商端口接口
+ * LLM 网关接口
  *
+ * <p>技术防腐层，隔离外部 LLM API 调用细节。</p>
  * <p>Domain 层定义的接口，Infrastructure 层通过 Adapter 实现。</p>
  */
-public interface LLMProviderPort {
+public interface LLMGateway {
 
     /**
      * 获取提供商编码
