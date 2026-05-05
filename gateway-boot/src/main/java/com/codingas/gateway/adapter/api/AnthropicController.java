@@ -62,6 +62,16 @@ public class AnthropicController {
 
         LLMResponse llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
 
+        if (llmResponse.getError() != null) {
+            return ResponseEntity.badRequest().body(
+                    AnthropicMessagesResponse.builder()
+                            .error(AnthropicMessagesResponse.Error.builder()
+                                    .message(llmResponse.getError().getMessage())
+                                    .type(llmResponse.getError().getType())
+                                    .code(llmResponse.getError().getCode())
+                                    .build())
+                            .build());
+        }
         return ResponseEntity.ok(toAnthropicMessagesResponse(llmResponse));
     }
 
