@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.security.entity;
-import com.codingas.gateway.domain.DomainEntity;
-import com.codingas.gateway.domain.BaseEntity;
+import com.codingas.gateway.common.entity.DomainEntity;
+import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.common.enums.UserStatus;
 import lombok.*;

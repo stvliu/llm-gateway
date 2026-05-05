@@ -44,7 +44,23 @@
       "Bash(pnpm exec *)",
       "Bash(node -e ' *)",
       "Bash(chmod +x *)",
-      "Bash(curl -s -X POST http://localhost:8080/v1/chat/completions -H 'Authorization: Bearer sk-test-volcengine-key-001' -H 'Content-Type: application/json' -d '{ *)"
+      "Bash(curl -s -X POST http://localhost:8080/v1/chat/completions -H 'Authorization: Bearer sk-test-volcengine-key-001' -H 'Content-Type: application/json' -d '{ *)",
+      "Bash(grep -v \"\\\\${\")",
+      "Bash(awk -F',' 'NR>1 {missed+=$4+$5; covered+=$5} END {total=missed+covered; print \"Instruction Coverage: \" covered/total*100 \"%\"}')",
+      "Bash(awk -F',' 'NR>1 && $4>0 {total=$4+$5; if\\(total>0\\) cov=$5/total*100; if\\(cov<50 && $5>0\\) print $3 \": \" cov \"%\"}')",
+      "Bash(sort -t: -k2 -n)",
+      "Bash(awk -F',' 'NR>1 {total=$4+$5; if\\(total>0\\) {coverage=$5/total*100; if\\(coverage<50\\) print coverage \"%\", $1}}')",
+      "Bash(awk -F',' 'NR>1 && $4+$5>100 {total=$4+$5; coverage=$5/total*100; printf \"%.1f%% %s \\(%d instructions\\)\\\\n\", coverage, $3, total}')",
+      "Bash(awk -F',' 'NR>1 {missed+=$4+$5; covered+=$5} END {total=missed+covered; print \"Instruction Coverage: \" covered/total*100 \"% \\(\" covered \"/\" total \" instructions\\)\"}')",
+      "Bash(awk -F',' 'NR>1 {missed+=$4+$5; covered+=$5} END {total=missed+covered; print \"指令覆盖率: \" covered/total*100 \"% \\(\" covered \"/\" total \"\\)\"}')",
+      "Bash(export PLAYWRIGHT_DOWNLOAD_HOST=https://npmmirror.com/mirrors/playwright)",
+      "Read(//home/liuye/.claude/skills/gstack/**)",
+      "Bash(bunx playwright *)",
+      "Read(//mnt/c/Program Files/Google/Chrome/Application/**)",
+      "Read(//mnt/c/Program Files \\(x86\\)/Google/Chrome/Application/**)",
+      "Bash(awk -F',' 'NR>1 && $4+$5>100 {total=$4+$5; coverage=$5/total*100; printf \"%.1f%% %s \\(%d\\)\\\\n\", coverage, $3, total}')",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -30 {}')",
+      "Bash(xargs -I{} dirname {})"
     ]
   },
   "outputStyle": "default"

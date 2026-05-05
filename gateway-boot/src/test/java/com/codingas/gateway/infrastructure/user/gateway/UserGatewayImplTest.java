@@ -1,0 +1,295 @@
+package com.codingas.gateway.infrastructure.user.gateway;
+
+import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.infrastructure.user.gateway.database.UserRepository;
+import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+/**
+ * UserGatewayImpl 单元测试
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("UserGatewayImpl 测试")
+class UserGatewayImplTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @InjectMocks
+    private UserGatewayImpl gateway;
+
+    @Nested
+    @DisplayName("save 方法测试")
+    class SaveTests {
+
+        @Test
+        @DisplayName("保存 User 成功")
+        void save_validEntity_returnsSaved() {
+            // given
+            User entity = createTestEntity();
+            UserDo savedDo = createTestDo();
+
+            when(userRepository.save(any())).thenReturn(savedDo);
+
+            // when
+            User result = gateway.save(entity);
+
+            // then
+            assertThat(result).isNotNull();
+            assertThat(result.getUserCode()).isEqualTo("user-001");
+            verify(userRepository).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("findById 方法测试")
+    class FindByIdTests {
+
+        @Test
+        @DisplayName("找到 User 返回实体")
+        void findById_existingId_returnsEntity() {
+            // given
+            UserDo doEntity = createTestDo();
+            when(userRepository.findById(1L)).thenReturn(Optional.of(doEntity));
+
+            // when
+            Optional<User> result = gateway.findById(1L);
+
+            // then
+            assertThat(result).isPresent();
+            assertThat(result.get().getUserCode()).isEqualTo("user-001");
+        }
+
+        @Test
+        @DisplayName("未找到返回空")
+        void findById_nonExistingId_returnsEmpty() {
+            // given
+            when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+            // when
+            Optional<User> result = gateway.findById(999L);
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("findByUserCode 方法测试")
+    class FindByUserCodeTests {
+
+        @Test
+        @DisplayName("通过编码找到 User")
+        void findByUserCode_existingCode_returnsEntity() {
+            // given
+            UserDo doEntity = createTestDo();
+            when(userRepository.findByUserCode("user-001")).thenReturn(Optional.of(doEntity));
+
+            // when
+            Optional<User> result = gateway.findByUserCode("user-001");
+
+            // then
+            assertThat(result).isPresent();
+            assertThat(result.get().getUserCode()).isEqualTo("user-001");
+        }
+
+        @Test
+        @DisplayName("未找到返回空")
+        void findByUserCode_nonExistingCode_returnsEmpty() {
+            // given
+            when(userRepository.findByUserCode("unknown")).thenReturn(Optional.empty());
+
+            // when
+            Optional<User> result = gateway.findByUserCode("unknown");
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("findByEmail 方法测试")
+    class FindByEmailTests {
+
+        @Test
+        @DisplayName("通过邮箱找到 User")
+        void findByEmail_existingEmail_returnsEntity() {
+            // given
+            UserDo doEntity = createTestDo();
+            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(doEntity));
+
+            // when
+            Optional<User> result = gateway.findByEmail("test@example.com");
+
+            // then
+            assertThat(result).isPresent();
+            assertThat(result.get().getEmail()).isEqualTo("test@example.com");
+        }
+    }
+
+    @Nested
+    @DisplayName("findAll 方法测试")
+    class FindAllTests {
+
+        @Test
+        @DisplayName("返回所有 User")
+        void findAll_returnsAll() {
+            // given
+            UserDo doEntity1 = createTestDo();
+            UserDo doEntity2 = createTestDo();
+            doEntity2.setId(2L);
+            doEntity2.setUserCode("user-002");
+            when(userRepository.findAll()).thenReturn(List.of(doEntity1, doEntity2));
+
+            // when
+            List<User> result = gateway.findAll();
+
+            // then
+            assertThat(result).hasSize(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("count 方法测试")
+    class CountTests {
+
+        @Test
+        @DisplayName("返回总数")
+        void count_returnsCount() {
+            // given
+            when(userRepository.count()).thenReturn(100L);
+
+            // when
+            long result = gateway.count();
+
+            // then
+            assertThat(result).isEqualTo(100L);
+        }
+    }
+
+    @Nested
+    @DisplayName("delete 方法测试")
+    class DeleteTests {
+
+        @Test
+        @DisplayName("删除成功")
+        void delete_existingEntity_deletes() {
+            // given
+            User entity = createTestEntity();
+            doNothing().when(userRepository).delete(any());
+
+            // when
+            gateway.delete(entity);
+
+            // then
+            verify(userRepository).delete(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("existsByEmail 方法测试")
+    class ExistsByEmailTests {
+
+        @Test
+        @DisplayName("邮箱存在返回 true")
+        void existsByEmail_existingEmail_returnsTrue() {
+            // given
+            when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+
+            // when
+            boolean result = gateway.existsByEmail("test@example.com");
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("邮箱不存在返回 false")
+        void existsByEmail_nonExistingEmail_returnsFalse() {
+            // given
+            when(userRepository.existsByEmail("unknown@example.com")).thenReturn(false);
+
+            // when
+            boolean result = gateway.existsByEmail("unknown@example.com");
+
+            // then
+            assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("existsByUsername 方法测试")
+    class ExistsByUsernameTests {
+
+        @Test
+        @DisplayName("用户名存在返回 true")
+        void existsByUsername_existingUsername_returnsTrue() {
+            // given
+            when(userRepository.existsByUsername("testuser")).thenReturn(true);
+
+            // when
+            boolean result = gateway.existsByUsername("testuser");
+
+            // then
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("用户名不存在返回 false")
+        void existsByUsername_nonExistingUsername_returnsFalse() {
+            // given
+            when(userRepository.existsByUsername("unknown")).thenReturn(false);
+
+            // when
+            boolean result = gateway.existsByUsername("unknown");
+
+            // then
+            assertThat(result).isFalse();
+        }
+    }
+
+    // Helper methods
+    private User createTestEntity() {
+        User entity = new User();
+        entity.setId(1L);
+        entity.setUserCode("user-001");
+        entity.setUsername("testuser");
+        entity.setEmail("test@example.com");
+        entity.setPasswordHash("hashed_password");
+        entity.setPhone("13800138000");
+        entity.setStatus(UserStatus.ACTIVE);
+        entity.setEmailVerified(true);
+        return entity;
+    }
+
+    private UserDo createTestDo() {
+        UserDo doEntity = new UserDo();
+        doEntity.setId(1L);
+        doEntity.setUserCode("user-001");
+        doEntity.setUsername("testuser");
+        doEntity.setEmail("test@example.com");
+        doEntity.setPasswordHash("hashed_password");
+        doEntity.setPhone("13800138000");
+        doEntity.setStatus(UserStatus.ACTIVE);
+        doEntity.setEmailVerified(true);
+        doEntity.setCreatedAt(Instant.now());
+        doEntity.setUpdatedAt(Instant.now());
+        return doEntity;
+    }
+}

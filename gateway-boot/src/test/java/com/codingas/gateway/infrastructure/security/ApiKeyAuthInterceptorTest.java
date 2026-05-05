@@ -1,6 +1,5 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.common.enums.UserRole;
 import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletRequest;
@@ -36,12 +35,31 @@ class ApiKeyAuthInterceptorTest {
     }
 
     @Test
-    @DisplayName("有效API Key通过检查")
-    void validApiKey_passes() throws Exception {
+    @DisplayName("有效API Key通过检查 - Bearer token")
+    void validApiKey_bearerToken_passes() throws Exception {
         // given
+        when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
+        when(authenticationService.authenticate("sk-test123"))
+                .thenReturn(new UserAuthResult(1L, "user1", "USER", 1L, "key1"));
+
+        // when
+        boolean result = interceptor.preHandle(request, response);
+
+        // then
+        assertThat(result).isTrue();
+        verify(request).setAttribute("userId", 1L);
+        verify(request).setAttribute("userCode", "user1");
+        verify(request).setAttribute("apiKeyId", 1L);
+    }
+
+    @Test
+    @DisplayName("有效API Key通过检查 - X-API-Key header")
+    void validApiKey_xApiKeyHeader_passes() throws Exception {
+        // given
+        when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn("sk-test123");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new UserAuthResult(1L, "user1", UserRole.DEVELOPER, 1L, "key1"));
+                .thenReturn(new UserAuthResult(1L, "user1", "USER", 1L, "key1"));
 
         // when
         boolean result = interceptor.preHandle(request, response);
@@ -57,6 +75,7 @@ class ApiKeyAuthInterceptorTest {
     @DisplayName("缺少API Key返回401")
     void missingApiKey_returns401() throws Exception {
         // given
+        when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/test");
         when(response.getWriter()).thenReturn(new MockPrintWriter());
@@ -73,6 +92,7 @@ class ApiKeyAuthInterceptorTest {
     @DisplayName("无效API Key返回401")
     void invalidApiKey_returns401() throws Exception {
         // given
+        when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn("sk-invalid");
         when(authenticationService.authenticate("sk-invalid")).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/test");

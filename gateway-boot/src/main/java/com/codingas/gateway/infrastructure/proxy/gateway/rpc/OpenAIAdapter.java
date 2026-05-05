@@ -4,7 +4,7 @@ import com.codingas.gateway.common.ProviderCapabilities;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.proxy.gateway.LLMProviderPort;
+import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
@@ -22,7 +22,7 @@ import java.util.Set;
  * <p>使用 OkHttp 进行 HTTP 通信。</p>
  */
 @Slf4j
-public class OpenAIAdapter implements LLMProviderAdapter {
+public class OpenAIAdapter implements LLMAdapter {
 
     public static final String PROVIDER_CODE = "openai";
     /** OpenAI Chat Completions API 路径 */

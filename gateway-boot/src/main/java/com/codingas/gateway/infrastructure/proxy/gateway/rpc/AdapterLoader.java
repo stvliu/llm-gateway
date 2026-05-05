@@ -9,7 +9,7 @@ import java.util.ServiceLoader;
 /**
  * 适配器加载器
  *
- * <p>使用 Java SPI 机制加载所有 LLMProviderAdapter 实现类。</p>
+ * <p>使用 Java SPI 机制加载所有 LLMAdapter 实现类。</p>
  */
 @Slf4j
 public class AdapterLoader {
@@ -19,12 +19,12 @@ public class AdapterLoader {
      *
      * @return 适配器列表
      */
-    public static List<LLMProviderAdapter> loadAdapters() {
-        List<LLMProviderAdapter> adapters = new ArrayList<>();
-        ServiceLoader<LLMProviderAdapter> loader = ServiceLoader.load(LLMProviderAdapter.class);
+    public static List<LLMAdapter> loadAdapters() {
+        List<LLMAdapter> adapters = new ArrayList<>();
+        ServiceLoader<LLMAdapter> loader = ServiceLoader.load(LLMAdapter.class);
 
-        for (LLMProviderAdapter adapter : loader) {
-            log.info("Discovered LLM provider adapter: {} (type={})",
+        for (LLMAdapter adapter : loader) {
+            log.info("Discovered LLM adapter: {} (type={})",
                     adapter.getProviderCode(),
                     adapter.getProviderType());
             adapters.add(adapter);

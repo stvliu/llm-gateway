@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.adapter;
 
+import com.codingas.gateway.infrastructure.proxy.gateway.rpc.ErrorResponseAdapter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

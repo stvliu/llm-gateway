@@ -2,7 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.dto.AnthropicMessagesRequest;
 import com.codingas.gateway.application.proxy.dto.AnthropicMessagesResponse;
-import com.codingas.gateway.application.proxy.ChatService;
+import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.common.dto.LLMRequest;
 import com.codingas.gateway.common.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
@@ -28,7 +28,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnthropicController {
 
-    private final ChatService chatService;
+    private final ProxyService proxyService;
 
     /**
      * Messages 端点
@@ -60,7 +60,7 @@ public class AnthropicController {
 
         LLMRequest llmRequest = toLLMRequest(request);
 
-        LLMResponse llmResponse = chatService.send(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
 
         return ResponseEntity.ok(toAnthropicMessagesResponse(llmResponse));
     }
@@ -81,7 +81,7 @@ public class AnthropicController {
         java.io.PrintWriter writer = response.getWriter();
         java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
 
-        chatService.sendStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+        proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
             try {
                 writer.write("data: " + data + "\n\n");
                 writer.flush();

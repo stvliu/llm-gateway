@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.alert.entity;
 
-import com.codingas.gateway.domain.DomainEntity;
-import com.codingas.gateway.domain.BaseEntity;
+import com.codingas.gateway.common.entity.DomainEntity;
+import com.codingas.gateway.common.entity.BaseEntity;
 
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

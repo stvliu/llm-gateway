@@ -1,9 +1,7 @@
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.common.enums.UserRole;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.security.service.RbacDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,9 +25,6 @@ class AuthServiceTest {
     @Mock
     private AuthenticationDomainService authenticationService;
 
-    @Mock
-    private RbacDomainService rbacService;
-
     @InjectMocks
     private AuthServiceImpl authService;
 
@@ -44,7 +39,7 @@ class AuthServiceTest {
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
             UserAuthResult expectedResult = new UserAuthResult(
-                1L, "user-001", UserRole.DEVELOPER, 100L, "key-code-001"
+                1L, "user-001", "USER", 100L, "key-code-001"
             );
             when(authenticationService.authenticate(apiKey)).thenReturn(expectedResult);
 
@@ -96,18 +91,18 @@ class AuthServiceTest {
     class CheckPermissionTests {
 
         @Test
-        @DisplayName("当用户存在且有权限时，返回 true")
-        void checkPermission_userHasPermission_returnsTrue() {
+        @DisplayName("当用户是管理员时，返回 true")
+        void checkPermission_adminUser_returnsTrue() {
             // given
             Long userId = 1L;
-            String resource = "chat:completion";
-            String action = "create";
-            User user = new User();
-            user.setId(userId);
-            user.setUserCode("user-001");
+            String resource = "any:resource";
+            String action = "any:action";
+            User adminUser = new User();
+            adminUser.setId(userId);
+            adminUser.setUserCode("admin-001");
+            adminUser.setRole("ADMIN");
 
-            when(authenticationService.getUserById(userId)).thenReturn(Optional.of(user));
-            when(rbacService.hasPermission(user, resource, action)).thenReturn(true);
+            when(authenticationService.getUserById(userId)).thenReturn(Optional.of(adminUser));
 
             // when
             boolean result = authService.checkPermission(userId, resource, action);
@@ -115,30 +110,6 @@ class AuthServiceTest {
             // then
             assertThat(result).isTrue();
             verify(authenticationService).getUserById(userId);
-            verify(rbacService).hasPermission(user, resource, action);
-        }
-
-        @Test
-        @DisplayName("当用户存在但无权限时，返回 false")
-        void checkPermission_userHasNoPermission_returnsFalse() {
-            // given
-            Long userId = 2L;
-            String resource = "admin:users";
-            String action = "delete";
-            User user = new User();
-            user.setId(userId);
-            user.setUserCode("user-002");
-
-            when(authenticationService.getUserById(userId)).thenReturn(Optional.of(user));
-            when(rbacService.hasPermission(user, resource, action)).thenReturn(false);
-
-            // when
-            boolean result = authService.checkPermission(userId, resource, action);
-
-            // then
-            assertThat(result).isFalse();
-            verify(authenticationService).getUserById(userId);
-            verify(rbacService).hasPermission(user, resource, action);
         }
 
         @Test
@@ -156,30 +127,28 @@ class AuthServiceTest {
             // then
             assertThat(result).isFalse();
             verify(authenticationService).getUserById(userId);
-            verifyNoInteractions(rbacService);
         }
 
         @Test
-        @DisplayName("当用户是管理员时，直接返回 true")
-        void checkPermission_adminUser_returnsTrue() {
+        @DisplayName("当用户是普通用户时，返回 false（当前简化实现）")
+        void checkPermission_regularUser_returnsFalse() {
             // given
-            Long userId = 1L;
-            String resource = "any:resource";
-            String action = "any:action";
-            User adminUser = new User();
-            adminUser.setId(userId);
-            adminUser.setUserCode("admin-001");
+            Long userId = 2L;
+            String resource = "admin:users";
+            String action = "delete";
+            User regularUser = new User();
+            regularUser.setId(userId);
+            regularUser.setUserCode("user-002");
+            regularUser.setRole("USER");
 
-            when(authenticationService.getUserById(userId)).thenReturn(Optional.of(adminUser));
-            when(rbacService.hasPermission(adminUser, resource, action)).thenReturn(true);
+            when(authenticationService.getUserById(userId)).thenReturn(Optional.of(regularUser));
 
             // when
             boolean result = authService.checkPermission(userId, resource, action);
 
             // then
-            assertThat(result).isTrue();
+            assertThat(result).isFalse();
             verify(authenticationService).getUserById(userId);
-            verify(rbacService).hasPermission(adminUser, resource, action);
         }
     }
 }
