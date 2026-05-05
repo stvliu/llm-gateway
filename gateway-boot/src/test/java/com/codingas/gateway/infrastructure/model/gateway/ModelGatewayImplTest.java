@@ -56,7 +56,7 @@ class ModelGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getModelCode()).isEqualTo("model-001");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(modelRepository).save(any());
         }
     }
@@ -77,7 +77,7 @@ class ModelGatewayImplTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getModelCode()).isEqualTo("model-001");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -95,39 +95,6 @@ class ModelGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("findByModelCode 方法测试")
-    class FindByModelCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 Model")
-        void findByModelCode_existingCode_returnsEntity() {
-            // given
-            ModelDo doEntity = createTestDo();
-            when(modelRepository.findByModelCode("model-001")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<Model> result = gateway.findByModelCode("model-001");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getModelCode()).isEqualTo("model-001");
-        }
-
-        @Test
-        @DisplayName("未找到返回空")
-        void findByModelCode_nonExistingCode_returnsEmpty() {
-            // given
-            when(modelRepository.findByModelCode("unknown")).thenReturn(Optional.empty());
-
-            // when
-            Optional<Model> result = gateway.findByModelCode("unknown");
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
     @DisplayName("findAll 方法测试")
     class FindAllTests {
 
@@ -138,7 +105,6 @@ class ModelGatewayImplTest {
             ModelDo doEntity1 = createTestDo();
             ModelDo doEntity2 = createTestDo();
             doEntity2.setId(2L);
-            doEntity2.setModelCode("model-002");
             when(modelRepository.findAll()).thenReturn(List.of(doEntity1, doEntity2));
 
             // when
@@ -227,37 +193,6 @@ class ModelGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("existsByModelCode 方法测试")
-    class ExistsByModelCodeTests {
-
-        @Test
-        @DisplayName("编码存在返回 true")
-        void existsByModelCode_existingCode_returnsTrue() {
-            // given
-            when(modelRepository.existsByModelCode("model-001")).thenReturn(true);
-
-            // when
-            boolean result = gateway.existsByModelCode("model-001");
-
-            // then
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("编码不存在返回 false")
-        void existsByModelCode_nonExistingCode_returnsFalse() {
-            // given
-            when(modelRepository.existsByModelCode("unknown")).thenReturn(false);
-
-            // when
-            boolean result = gateway.existsByModelCode("unknown");
-
-            // then
-            assertThat(result).isFalse();
-        }
-    }
-
-    @Nested
     @DisplayName("getMaxVersion 方法测试")
     class GetMaxVersionTests {
 
@@ -292,7 +227,6 @@ class ModelGatewayImplTest {
     private Model createTestEntity() {
         Model entity = new Model();
         entity.setId(1L);
-        entity.setModelCode("model-001");
         entity.setProviderModelId("gpt-4");
         entity.setDisplayName("GPT-4");
         entity.setContextWindow(8192);
@@ -303,7 +237,6 @@ class ModelGatewayImplTest {
 
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderCode("openai");
         provider.setProviderName("OpenAI");
         provider.setProviderType(ProviderType.OPENAI);
         entity.setProvider(provider);
@@ -314,7 +247,6 @@ class ModelGatewayImplTest {
     private ModelDo createTestDo() {
         ModelDo doEntity = new ModelDo();
         doEntity.setId(1L);
-        doEntity.setModelCode("model-001");
         doEntity.setProviderModelId("gpt-4");
         doEntity.setDisplayName("GPT-4");
         doEntity.setContextWindow(8192);
@@ -327,7 +259,6 @@ class ModelGatewayImplTest {
 
         ProviderDo providerDo = new ProviderDo();
         providerDo.setId(1L);
-        providerDo.setProviderCode("openai");
         providerDo.setProviderName("OpenAI");
         providerDo.setProviderType(ProviderType.OPENAI);
         providerDo.setStatus(ProviderDo.ProviderStatus.ACTIVE);

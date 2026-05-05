@@ -52,7 +52,7 @@ class ProviderGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getProviderCode()).isEqualTo("openai");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(providerRepository).save(any());
         }
     }
@@ -73,7 +73,7 @@ class ProviderGatewayImplTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -91,39 +91,6 @@ class ProviderGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("findByProviderCode 方法测试")
-    class FindByProviderCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 Provider")
-        void findByProviderCode_existingCode_returnsEntity() {
-            // given
-            ProviderDo doEntity = createTestDo();
-            when(providerRepository.findByProviderCode("openai")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<Provider> result = gateway.findByProviderCode("openai");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
-        }
-
-        @Test
-        @DisplayName("未找到返回空")
-        void findByProviderCode_nonExistingCode_returnsEmpty() {
-            // given
-            when(providerRepository.findByProviderCode("unknown")).thenReturn(Optional.empty());
-
-            // when
-            Optional<Provider> result = gateway.findByProviderCode("unknown");
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
     @DisplayName("findAll 方法测试")
     class FindAllTests {
 
@@ -134,7 +101,6 @@ class ProviderGatewayImplTest {
             ProviderDo doEntity1 = createTestDo();
             ProviderDo doEntity2 = createTestDo();
             doEntity2.setId(2L);
-            doEntity2.setProviderCode("anthropic");
             when(providerRepository.findAll()).thenReturn(List.of(doEntity1, doEntity2));
 
             // when
@@ -222,37 +188,6 @@ class ProviderGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("existsByProviderCode 方法测试")
-    class ExistsByProviderCodeTests {
-
-        @Test
-        @DisplayName("编码存在返回 true")
-        void existsByProviderCode_existingCode_returnsTrue() {
-            // given
-            when(providerRepository.existsByProviderCode("openai")).thenReturn(true);
-
-            // when
-            boolean result = gateway.existsByProviderCode("openai");
-
-            // then
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("编码不存在返回 false")
-        void existsByProviderCode_nonExistingCode_returnsFalse() {
-            // given
-            when(providerRepository.existsByProviderCode("unknown")).thenReturn(false);
-
-            // when
-            boolean result = gateway.existsByProviderCode("unknown");
-
-            // then
-            assertThat(result).isFalse();
-        }
-    }
-
-    @Nested
     @DisplayName("getMaxVersion 方法测试")
     class GetMaxVersionTests {
 
@@ -287,7 +222,6 @@ class ProviderGatewayImplTest {
     private Provider createTestEntity() {
         Provider entity = new Provider();
         entity.setId(1L);
-        entity.setProviderCode("openai");
         entity.setProviderName("OpenAI");
         entity.setProviderType(ProviderType.OPENAI);
         entity.setBaseUrl("https://api.openai.com");
@@ -299,7 +233,6 @@ class ProviderGatewayImplTest {
     private ProviderDo createTestDo() {
         ProviderDo doEntity = new ProviderDo();
         doEntity.setId(1L);
-        doEntity.setProviderCode("openai");
         doEntity.setProviderName("OpenAI");
         doEntity.setProviderType(ProviderType.OPENAI);
         doEntity.setBaseUrl("https://api.openai.com");

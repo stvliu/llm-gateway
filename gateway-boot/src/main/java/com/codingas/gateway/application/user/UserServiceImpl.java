@@ -1,20 +1,24 @@
 package com.codingas.gateway.application.user;
 
+import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
+import com.codingas.gateway.application.auth.dto.LoginRequest;
+import com.codingas.gateway.application.auth.dto.LoginResponse;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.common.enums.UserStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -28,6 +32,7 @@ import java.util.stream.Collectors;
 public class UserServiceImpl implements UserService {
 
     private final UserGateway userGateway;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * 创建用户
@@ -40,15 +45,11 @@ public class UserServiceImpl implements UserService {
             throw new DuplicateResourceException("User", "email");
         }
 
-        // 生成用户编码
-        String userCode = generateUserCode();
-
         // 创建用户
         User user = new User();
-        user.setUserCode(userCode);
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
-        user.setPasswordHash(hashPassword(request.getPassword()));
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setPhone(request.getPhone());
 
         // 设置角色（默认为 USER）
@@ -181,38 +182,68 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 生成用户编码
+     * 用户登录
      */
-    private String generateUserCode() {
-        return "USR" + System.currentTimeMillis();
+    @Override
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        // 查找用户
+        User user = userGateway.findByUsername(request.username())
+            .orElseThrow(() -> new IllegalArgumentException("用户名或密码错误"));
+
+        // 检查用户状态
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("用户已被禁用");
+        }
+
+        // 验证密码
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("用户名或密码错误");
+        }
+
+        // 更新最后登录时间
+        user.setLastLoginAt(Instant.now());
+        userGateway.save(user);
+
+        // 生成 Token (简化版，实际应使用 JWT)
+        String token = generateToken(user);
+
+        // 构建响应
+        LoginResponse.UserResponse userResponse = new LoginResponse.UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole()
+        );
+
+        return new LoginResponse(userResponse, token);
     }
 
     /**
-     * 密码哈希 (使用 SHA-256)
+     * 修改密码
      */
-    private String hashPassword(String password) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            return bytesToHex(hash);
-        } catch (Exception e) {
-            throw new IllegalStateException("Password hashing failed", e);
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userGateway.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        // 验证当前密码
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new IllegalArgumentException("当前密码错误");
         }
+
+        // 更新密码
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userGateway.save(user);
     }
 
     /**
-     * 字节数组转十六进制字符串
+     * 生成 Token (简化版)
      */
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder hexString = new StringBuilder();
-        for (byte b : bytes) {
-            String hex = Integer.toHexString(0xff & b);
-            if (hex.length() == 1) {
-                hexString.append('0');
-            }
-            hexString.append(hex);
-        }
-        return hexString.toString();
+    private String generateToken(User user) {
+        // 简化实现，生成一个唯一标识
+        return UUID.randomUUID().toString().replace("-", "");
     }
 
     /**
@@ -221,7 +252,6 @@ public class UserServiceImpl implements UserService {
     private UserResponse toResponse(User user) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
-        response.setUserCode(user.getUserCode());
         response.setUsername(user.getUsername());
         response.setEmail(user.getEmail());
         response.setPhone(user.getPhone());

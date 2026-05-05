@@ -39,8 +39,8 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
-    public Optional<Model> findByModelCode(String modelCode) {
-        return modelRepository.findByModelCode(modelCode).map(this::toEntity);
+    public Optional<Model> findByProviderModelId(String providerModelId) {
+        return modelRepository.findByProviderModelId(providerModelId).map(this::toEntity);
     }
 
     @Override
@@ -75,11 +75,6 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
-    public boolean existsByModelCode(String modelCode) {
-        return modelRepository.existsByModelCode(modelCode);
-    }
-
-    @Override
     public long getMaxVersion() {
         Long maxVersion = modelRepository.findMaxVersion();
         return maxVersion != null ? maxVersion : 0L;
@@ -94,7 +89,6 @@ public class ModelGatewayImpl implements ModelGateway {
         }
         Model entity = new Model();
         entity.setId(doEntity.getId());
-        entity.setModelCode(doEntity.getModelCode());
         entity.setProviderModelId(doEntity.getProviderModelId());
         entity.setDisplayName(doEntity.getDisplayName());
         entity.setContextWindow(doEntity.getContextWindow());
@@ -112,7 +106,6 @@ public class ModelGatewayImpl implements ModelGateway {
         if (doEntity.getProvider() != null) {
             Provider provider = new Provider();
             provider.setId(doEntity.getProvider().getId());
-            provider.setProviderCode(doEntity.getProvider().getProviderCode());
             provider.setProviderName(doEntity.getProvider().getProviderName());
             if (doEntity.getProvider().getProviderType() != null) {
                 provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(
@@ -140,7 +133,6 @@ public class ModelGatewayImpl implements ModelGateway {
         if (entity.getId() != null) {
             doEntity.setId(entity.getId());
         }
-        doEntity.setModelCode(entity.getModelCode());
         doEntity.setProviderModelId(entity.getProviderModelId());
         doEntity.setDisplayName(entity.getDisplayName());
         doEntity.setContextWindow(entity.getContextWindow());

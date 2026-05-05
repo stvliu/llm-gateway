@@ -68,11 +68,10 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
         // 存储用户信息到请求属性
         request.setAttribute(USER_ID_ATTR, userInfo.userId());
-        request.setAttribute("userCode", userInfo.userCode());
         request.setAttribute("apiKeyId", userInfo.apiKeyId());
 
-        log.debug("API Key authenticated: userId={}, keyCode={}",
-                userInfo.userId(), userInfo.userCode());
+        log.debug("API Key authenticated: userId={}, apiKeyId={}",
+                userInfo.userId(), userInfo.apiKeyId());
         return true;
     }
 

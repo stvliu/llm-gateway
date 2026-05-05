@@ -30,8 +30,8 @@ public class AuthServiceImpl implements AuthService {
     public UserAuthResult authenticate(String apiKey, String clientIp) {
         var result = authenticationService.authenticate(apiKey);
         if (result != null) {
-            log.info("API Key authenticated: userId={}, keyCode={}, ip={}",
-                result.userId(), result.apiKeyCode(), clientIp);
+            log.info("API Key authenticated: userId={}, apiKeyId={}, ip={}",
+                result.userId(), result.apiKeyId(), clientIp);
         } else {
             log.warn("API Key authentication failed: ip={}", clientIp);
         }

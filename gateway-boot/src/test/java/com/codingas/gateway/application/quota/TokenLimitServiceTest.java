@@ -4,15 +4,14 @@ import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.common.enums.ExceededAction;
 import com.codingas.gateway.common.enums.PeriodType;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.quota.entity.TokenLimit;
-import com.codingas.gateway.domain.quota.entity.TokenLimit.LimitType;
-import com.codingas.gateway.domain.quota.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.LimitType;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -68,25 +67,21 @@ class TokenLimitServiceTest {
         // 初始化测试用户
         testUser = new User();
         testUser.setId(1L);
-        testUser.setUserCode("USER001");
         testUser.setUsername("testuser");
 
         // 初始化测试提供商
         testProvider = new Provider();
         testProvider.setId(1L);
-        testProvider.setProviderCode("PROVIDER001");
         testProvider.setProviderName("OpenAI");
 
         // 初始化测试模型
         testModel = new Model();
         testModel.setId(1L);
-        testModel.setModelCode("MODEL001");
         testModel.setDisplayName("GPT-4");
 
         // 初始化测试 Token 限额
         testTokenLimit = new TokenLimit();
         testTokenLimit.setId(1L);
-        testTokenLimit.setLimitCode("LIMIT001");
         testTokenLimit.setUser(testUser);
         testTokenLimit.setProvider(testProvider);
         testTokenLimit.setModel(testModel);
@@ -101,7 +96,6 @@ class TokenLimitServiceTest {
 
         // 初始化创建请求
         createRequest = new TokenLimitCreateRequest();
-        createRequest.setLimitCode("LIMIT001");
         createRequest.setUserId(1L);
         createRequest.setProviderId(1L);
         createRequest.setModelId(1L);
@@ -119,7 +113,6 @@ class TokenLimitServiceTest {
         @DisplayName("创建 Token 限额成功")
         void create_success() {
             // given
-            when(tokenLimitGateway.existsByLimitCode(createRequest.getLimitCode())).thenReturn(false);
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
             when(providerGateway.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
             when(modelGateway.findById(createRequest.getModelId())).thenReturn(Optional.of(testModel));
@@ -130,7 +123,6 @@ class TokenLimitServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.getLimitCode()).isEqualTo(testTokenLimit.getLimitCode());
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
@@ -141,7 +133,6 @@ class TokenLimitServiceTest {
             assertThat(response.getRemainingTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(response.getStatus()).isEqualTo(TokenLimitStatus.ACTIVE);
 
-            verify(tokenLimitGateway).existsByLimitCode(createRequest.getLimitCode());
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
             verify(modelGateway).findById(createRequest.getModelId());
@@ -149,25 +140,9 @@ class TokenLimitServiceTest {
         }
 
         @Test
-        @DisplayName("创建 Token 限额失败 - 限额代码重复")
-        void create_duplicateLimitCode_throwsDuplicateResourceException() {
-            // given
-            when(tokenLimitGateway.existsByLimitCode(createRequest.getLimitCode())).thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createRequest))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("TokenLimit")
-                .hasMessageContaining("limitCode");
-
-            verify(tokenLimitGateway).existsByLimitCode(createRequest.getLimitCode());
-        }
-
-        @Test
         @DisplayName("创建 Token 限额失败 - 用户不存在")
         void create_userNotFound_throwsResourceNotFoundException() {
             // given
-            when(tokenLimitGateway.existsByLimitCode(createRequest.getLimitCode())).thenReturn(false);
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.empty());
 
             // when & then
@@ -176,7 +151,6 @@ class TokenLimitServiceTest {
                 .hasMessageContaining("User")
                 .hasMessageContaining(String.valueOf(createRequest.getUserId()));
 
-            verify(tokenLimitGateway).existsByLimitCode(createRequest.getLimitCode());
             verify(userGateway).findById(createRequest.getUserId());
         }
 
@@ -184,7 +158,6 @@ class TokenLimitServiceTest {
         @DisplayName("创建 Token 限额失败 - 提供商不存在")
         void create_providerNotFound_throwsResourceNotFoundException() {
             // given
-            when(tokenLimitGateway.existsByLimitCode(createRequest.getLimitCode())).thenReturn(false);
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
             when(providerGateway.findById(createRequest.getProviderId())).thenReturn(Optional.empty());
 
@@ -194,7 +167,6 @@ class TokenLimitServiceTest {
                 .hasMessageContaining("Provider")
                 .hasMessageContaining(String.valueOf(createRequest.getProviderId()));
 
-            verify(tokenLimitGateway).existsByLimitCode(createRequest.getLimitCode());
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
         }
@@ -203,7 +175,6 @@ class TokenLimitServiceTest {
         @DisplayName("创建 Token 限额失败 - 模型不存在")
         void create_modelNotFound_throwsResourceNotFoundException() {
             // given
-            when(tokenLimitGateway.existsByLimitCode(createRequest.getLimitCode())).thenReturn(false);
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
             when(providerGateway.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
             when(modelGateway.findById(createRequest.getModelId())).thenReturn(Optional.empty());
@@ -214,7 +185,6 @@ class TokenLimitServiceTest {
                 .hasMessageContaining("Model")
                 .hasMessageContaining(String.valueOf(createRequest.getModelId()));
 
-            verify(tokenLimitGateway).existsByLimitCode(createRequest.getLimitCode());
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
             verify(modelGateway).findById(createRequest.getModelId());
@@ -237,7 +207,6 @@ class TokenLimitServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(testTokenLimit.getId());
-            assertThat(response.getLimitCode()).isEqualTo(testTokenLimit.getLimitCode());
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());

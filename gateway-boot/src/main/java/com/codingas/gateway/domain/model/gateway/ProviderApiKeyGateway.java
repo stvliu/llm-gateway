@@ -13,14 +13,6 @@ import java.util.Optional;
 public interface ProviderApiKeyGateway {
 
     /**
-     * 根据提供商编码查找 API 密钥
-     *
-     * @param providerCode 提供商编码
-     * @return API 密钥信息，不存在返回空
-     */
-    Optional<ProviderApiKey> findByProviderCode(String providerCode);
-
-    /**
      * 根据密钥 ID 查找 API 密钥
      *
      * @param id 密钥 ID

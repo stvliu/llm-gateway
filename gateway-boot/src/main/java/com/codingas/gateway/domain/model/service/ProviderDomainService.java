@@ -30,11 +30,6 @@ public class ProviderDomainService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<Provider> findByProviderCode(String providerCode) {
-        return providerGateway.findByProviderCode(providerCode);
-    }
-
-    @Transactional(readOnly = true)
     public List<Provider> findAll() {
         return providerGateway.findAllActive();
     }
@@ -45,7 +40,7 @@ public class ProviderDomainService {
             provider.setStatus(Provider.ProviderStatus.ACTIVE);
         }
         Provider saved = providerGateway.save(provider);
-        log.info("Created provider: {} ({})", saved.getProviderName(), saved.getProviderCode());
+        log.info("Created provider: {} (id={})", saved.getProviderName(), saved.getId());
         publishReloadEvent();
         return saved;
     }
@@ -65,7 +60,7 @@ public class ProviderDomainService {
         existing.setStatus(provider.getStatus());
 
         Provider updated = providerGateway.save(existing);
-        log.info("Updated provider: {} ({})", updated.getProviderName(), updated.getProviderCode());
+        log.info("Updated provider: {} (id={})", updated.getProviderName(), updated.getId());
         publishReloadEvent();
         return updated;
     }

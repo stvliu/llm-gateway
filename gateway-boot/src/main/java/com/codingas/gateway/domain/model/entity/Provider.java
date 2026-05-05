@@ -19,8 +19,6 @@ import java.time.Instant;
 @Slf4j
 public class Provider extends BaseEntity {
 
-    private String providerCode;
-
     private String providerName;
 
     private ProviderType providerType;

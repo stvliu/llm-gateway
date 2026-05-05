@@ -2,10 +2,10 @@ package com.codingas.gateway.infrastructure.apikey.gateway;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.infrastructure.apikey.gateway.database.GatewayApiKeyRepository;
-import com.codingas.gateway.infrastructure.apikey.gateway.database.dataobject.GatewayApiKeyDo;
-import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
-import org.junit.jupiter.api.BeforeEach;
+import com.codingas.gateway.infrastructure.security.database.GatewayApiKeyRepository;
+import com.codingas.gateway.infrastructure.security.database.dataobject.GatewayApiKeyDo;
+import com.codingas.gateway.infrastructure.security.ApiKeyGatewayImpl;
+import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ class ApiKeyGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getKeyCode()).isEqualTo("key-001");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(repository).save(any());
         }
     }
@@ -77,7 +77,7 @@ class ApiKeyGatewayImplTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getKeyCode()).isEqualTo("key-001");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -128,26 +128,6 @@ class ApiKeyGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("findByKeyCode 方法测试")
-    class FindByKeyCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 API Key")
-        void findByKeyCode_existingCode_returnsEntity() {
-            // given
-            GatewayApiKeyDo doEntity = createTestDo();
-            when(repository.findByKeyCode("key-001")).thenReturn(Optional.of(doEntity));
-
-            // when
-            GatewayApiKey result = gateway.findByKeyCode("key-001");
-
-            // then
-            assertThat(result).isNotNull();
-            assertThat(result.getKeyCode()).isEqualTo("key-001");
-        }
-    }
-
-    @Nested
     @DisplayName("findByUserId 方法测试")
     class FindByUserIdTests {
 
@@ -178,7 +158,6 @@ class ApiKeyGatewayImplTest {
             GatewayApiKeyDo doEntity1 = createTestDo();
             GatewayApiKeyDo doEntity2 = createTestDo();
             doEntity2.setId(2L);
-            doEntity2.setKeyCode("key-002");
             when(repository.findAll()).thenReturn(List.of(doEntity1, doEntity2));
 
             // when
@@ -227,51 +206,20 @@ class ApiKeyGatewayImplTest {
     }
 
     @Nested
-    @DisplayName("existsByKeyCode 方法测试")
-    class ExistsByKeyCodeTests {
-
-        @Test
-        @DisplayName("编码存在返回 true")
-        void existsByKeyCode_existingCode_returnsTrue() {
-            // given
-            when(repository.existsByKeyCode("key-001")).thenReturn(true);
-
-            // when
-            boolean result = gateway.existsByKeyCode("key-001");
-
-            // then
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("编码不存在返回 false")
-        void existsByKeyCode_nonExistingCode_returnsFalse() {
-            // given
-            when(repository.existsByKeyCode("unknown")).thenReturn(false);
-
-            // when
-            boolean result = gateway.existsByKeyCode("unknown");
-
-            // then
-            assertThat(result).isFalse();
-        }
-    }
-
-    @Nested
     @DisplayName("updateLastUsed 方法测试")
     class UpdateLastUsedTests {
 
         @Test
         @DisplayName("更新最后使用时间")
-        void updateLastUsed_existingCode_updatesTime() {
+        void updateLastUsed_existingId_updatesTime() {
             // given
             GatewayApiKeyDo doEntity = createTestDo();
             Instant now = Instant.now();
-            when(repository.findByKeyCode("key-001")).thenReturn(Optional.of(doEntity));
+            when(repository.findById(1L)).thenReturn(Optional.of(doEntity));
             when(repository.save(any())).thenReturn(doEntity);
 
             // when
-            gateway.updateLastUsed("key-001", now);
+            gateway.updateLastUsed(1L, now);
 
             // then
             verify(repository).save(any());
@@ -304,7 +252,6 @@ class ApiKeyGatewayImplTest {
     private GatewayApiKey createTestEntity() {
         GatewayApiKey entity = new GatewayApiKey();
         entity.setId(1L);
-        entity.setKeyCode("key-001");
         entity.setKeyHash("hash123");
         entity.setName("Test Key");
         entity.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
@@ -317,7 +264,6 @@ class ApiKeyGatewayImplTest {
     private GatewayApiKeyDo createTestDo() {
         GatewayApiKeyDo doEntity = new GatewayApiKeyDo();
         doEntity.setId(1L);
-        doEntity.setKeyCode("key-001");
         doEntity.setKeyHash("hash123");
         doEntity.setName("Test Key");
         doEntity.setStatus(GatewayApiKeyDo.ApiKeyStatus.ACTIVE);

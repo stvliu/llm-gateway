@@ -20,8 +20,6 @@ import java.time.Instant;
 @Slf4j
 public class ProviderApiKey extends BaseEntity {
 
-    private String keyCode;
-
     private Long providerId;
 
     private String keyName;

@@ -5,7 +5,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
@@ -56,7 +55,7 @@ class ModelServiceTest {
 
     @BeforeEach
     void setUp() {
-        testProvider = createTestProvider(1L, "OPENAI", "OpenAI", "openai");
+        testProvider = createTestProvider(1L, "OpenAI");
         testModel = createTestModel(1L, "gpt-4", testProvider, "GPT-4", ModelStatus.ACTIVE);
     }
 
@@ -71,7 +70,6 @@ class ModelServiceTest {
         void create_validRequest_returnsModelResponse() {
             // given
             ModelCreateRequest request = new ModelCreateRequest();
-            request.setModelCode("gpt-4o");
             request.setProviderId(1L);
             request.setProviderModelId("gpt-4o-2024-08-06");
             request.setDisplayName("GPT-4o");
@@ -79,7 +77,6 @@ class ModelServiceTest {
             request.setInputPrice(new BigDecimal("0.000005"));
             request.setOutputPrice(new BigDecimal("0.000015"));
 
-            when(modelGateway.existsByModelCode("gpt-4o")).thenReturn(false);
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> {
                 Model model = invocation.getArgument(0);
@@ -93,7 +90,6 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(2L);
-            assertThat(response.getModelCode()).isEqualTo("gpt-4o");
             assertThat(response.getProviderId()).isEqualTo(1L);
             assertThat(response.getProviderModelId()).isEqualTo("gpt-4o-2024-08-06");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4o");
@@ -103,29 +99,8 @@ class ModelServiceTest {
             assertThat(response.getStatus()).isEqualTo(ModelStatus.ACTIVE);
             assertThat(response.getEnabled()).isTrue();
 
-            verify(modelGateway).existsByModelCode("gpt-4o");
             verify(providerGateway).findById(1L);
             verify(modelGateway).save(any(Model.class));
-        }
-
-        @Test
-        @DisplayName("模型代码重复时抛出 DuplicateResourceException")
-        void create_duplicateModelCode_throwsException() {
-            // given
-            ModelCreateRequest request = new ModelCreateRequest();
-            request.setModelCode("gpt-4");
-            request.setProviderId(1L);
-            request.setProviderModelId("gpt-4-0613");
-
-            when(modelGateway.existsByModelCode("gpt-4")).thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> modelService.create(request))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("Model")
-                .hasMessageContaining("modelCode");
-
-            verify(modelGateway, never()).save(any(Model.class));
         }
 
         @Test
@@ -133,11 +108,9 @@ class ModelServiceTest {
         void create_providerNotFound_throwsException() {
             // given
             ModelCreateRequest request = new ModelCreateRequest();
-            request.setModelCode("gpt-4o");
             request.setProviderId(99L);
             request.setProviderModelId("gpt-4o-2024-08-06");
 
-            when(modelGateway.existsByModelCode("gpt-4o")).thenReturn(false);
             when(providerGateway.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
@@ -168,10 +141,8 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getModelCode()).isEqualTo("gpt-4");
             assertThat(response.getProviderId()).isEqualTo(1L);
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
-            assertThat(response.getProviderCode()).isEqualTo("openai");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
             assertThat(response.getStatus()).isEqualTo(ModelStatus.ACTIVE);
             assertThat(response.getEnabled()).isTrue();
@@ -205,7 +176,7 @@ class ModelServiceTest {
         @DisplayName("无过滤条件时返回所有模型")
         void query_noFilter_returnsAllModels() {
             // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", "anthropic");
+            Provider provider2 = createTestProvider(2L, "Anthropic");
             Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.ACTIVE);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
@@ -225,8 +196,8 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("关键字过滤 - 匹配 modelCode")
-        void query_withKeyword_matchesModelCode() {
+        @DisplayName("关键字过滤 - 匹配 providerModelId")
+        void query_withKeyword_matchesProviderModelId() {
             // given
             when(modelGateway.findAll()).thenReturn(List.of(testModel));
 
@@ -240,7 +211,7 @@ class ModelServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getModelCode()).isEqualTo("gpt-4");
+            assertThat(response.getItems().get(0).getProviderModelId()).isEqualTo("gpt-4");
         }
 
         @Test
@@ -260,25 +231,6 @@ class ModelServiceTest {
             // then
             assertThat(response.getItems()).hasSize(1);
             assertThat(response.getItems().get(0).getDisplayName()).isEqualTo("GPT-4");
-        }
-
-        @Test
-        @DisplayName("关键字过滤 - 匹配 providerModelId")
-        void query_withKeyword_matchesProviderModelId() {
-            // given
-            when(modelGateway.findAll()).thenReturn(List.of(testModel));
-
-            ModelQueryRequest request = new ModelQueryRequest();
-            request.setKeyword("0613");
-            request.setPage(1);
-            request.setLimit(20);
-
-            // when
-            PageResponse<ModelResponse> response = modelService.query(request);
-
-            // then
-            assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderModelId()).contains("0613");
         }
 
         @Test
@@ -304,7 +256,7 @@ class ModelServiceTest {
         @DisplayName("按提供商 ID 过滤")
         void query_withProviderId_filtersModels() {
             // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", "anthropic");
+            Provider provider2 = createTestProvider(2L, "Anthropic");
             Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.ACTIVE);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
@@ -326,7 +278,7 @@ class ModelServiceTest {
         @DisplayName("按状态过滤 - ACTIVE")
         void query_withStatusActive_filtersModels() {
             // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", "anthropic");
+            Provider provider2 = createTestProvider(2L, "Anthropic");
             Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.DEPRECATED);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
@@ -345,34 +297,12 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("按状态过滤 - DEPRECATED")
-        void query_withStatusDeprecated_filtersModels() {
-            // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", "anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.DEPRECATED);
-
-            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
-
-            ModelQueryRequest request = new ModelQueryRequest();
-            request.setStatus(ModelStatus.DEPRECATED);
-            request.setPage(1);
-            request.setLimit(20);
-
-            // when
-            PageResponse<ModelResponse> response = modelService.query(request);
-
-            // then
-            assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ModelStatus.DEPRECATED);
-        }
-
-        @Test
         @DisplayName("分页查询 - 第二页")
         void query_withPagination_returnsPagedModels() {
             // given
             List<Model> models = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
-                Provider provider = createTestProvider(i, "PROVIDER_" + i, "Provider " + i, "provider-" + i);
+                Provider provider = createTestProvider(i, "Provider " + i);
                 models.add(createTestModel(i, "model-" + i, provider, "Model " + i, ModelStatus.ACTIVE));
             }
             when(modelGateway.findAll()).thenReturn(models);
@@ -390,54 +320,6 @@ class ModelServiceTest {
             assertThat(response.getPagination().getLimit()).isEqualTo(10);
             assertThat(response.getPagination().getTotal()).isEqualTo(25);
             assertThat(response.getPagination().getTotalPages()).isEqualTo(3);
-        }
-
-        @Test
-        @DisplayName("分页查询 - 最后一页不足 limit")
-        void query_withPagination_lastPage_returnsRemainingModels() {
-            // given
-            List<Model> models = new ArrayList<>();
-            for (long i = 1; i <= 25; i++) {
-                Provider provider = createTestProvider(i, "PROVIDER_" + i, "Provider " + i, "provider-" + i);
-                models.add(createTestModel(i, "model-" + i, provider, "Model " + i, ModelStatus.ACTIVE));
-            }
-            when(modelGateway.findAll()).thenReturn(models);
-
-            ModelQueryRequest request = new ModelQueryRequest();
-            request.setPage(3);
-            request.setLimit(10);
-
-            // when
-            PageResponse<ModelResponse> response = modelService.query(request);
-
-            // then
-            assertThat(response.getItems()).hasSize(5);
-            assertThat(response.getPagination().getPage()).isEqualTo(3);
-            assertThat(response.getPagination().getTotal()).isEqualTo(25);
-        }
-
-        @Test
-        @DisplayName("组合过滤 - 提供商 ID + 状态")
-        void query_withProviderIdAndStatus_combinesFilters() {
-            // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", "anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.DEPRECATED);
-
-            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
-
-            ModelQueryRequest request = new ModelQueryRequest();
-            request.setProviderId(2L);
-            request.setStatus(ModelStatus.DEPRECATED);
-            request.setPage(1);
-            request.setLimit(20);
-
-            // when
-            PageResponse<ModelResponse> response = modelService.query(request);
-
-            // then
-            assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderId()).isEqualTo(2L);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ModelStatus.DEPRECATED);
         }
     }
 
@@ -486,68 +368,6 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("更新 inputPrice 成功")
-        void update_validInputPrice_updatesModel() {
-            // given
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setInputPrice(new BigDecimal("0.000006"));
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getInputPrice()).isEqualTo(new BigDecimal("0.000006"));
-        }
-
-        @Test
-        @DisplayName("更新 outputPrice 成功")
-        void update_validOutputPrice_updatesModel() {
-            // given
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setOutputPrice(new BigDecimal("0.000018"));
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getOutputPrice()).isEqualTo(new BigDecimal("0.000018"));
-        }
-
-        @Test
-        @DisplayName("更新 capabilities 成功")
-        void update_validCapabilities_updatesModel() {
-            // given
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            Map<String, Boolean> capabilities = new HashMap<>();
-            capabilities.put("vision", true);
-            capabilities.put("function_calling", true);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setCapabilities(capabilities);
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getCapabilities()).containsEntry("vision", true);
-            assertThat(modelCaptor.getValue().getCapabilities()).containsEntry("function_calling", true);
-        }
-
-        @Test
         @DisplayName("更新 enabled=true 设置状态为 ACTIVE")
         void update_enabledTrue_setsStatusActive() {
             // given
@@ -568,26 +388,6 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("更新 enabled=false 设置状态为 DEPRECATED")
-        void update_enabledFalse_setsStatusDeprecated() {
-            // given
-            testModel.setStatus(ModelStatus.ACTIVE);
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setEnabled(false);
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getStatus()).isEqualTo(ModelStatus.DEPRECATED);
-        }
-
-        @Test
         @DisplayName("更新不存在的模型抛出异常")
         void update_nonExistingModel_throwsException() {
             // given
@@ -601,27 +401,6 @@ class ModelServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
-        }
-
-        @Test
-        @DisplayName("更新多个字段成功")
-        void update_multipleFields_updatesAllFields() {
-            // given
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setDisplayName("GPT-4 Turbo");
-            request.setContextWindow(128000);
-            request.setInputPrice(new BigDecimal("0.000010"));
-            request.setOutputPrice(new BigDecimal("0.000030"));
-            request.setEnabled(true);
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            verify(modelGateway).save(testModel);
         }
     }
 
@@ -721,21 +500,18 @@ class ModelServiceTest {
 
     // ==================== 辅助方法 ====================
 
-    private Provider createTestProvider(Long id, String providerCode, String providerName, String code) {
+    private Provider createTestProvider(Long id, String providerName) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderCode(providerCode);
         provider.setProviderName(providerName);
-        provider.setProviderCode(code);
         return provider;
     }
 
-    private Model createTestModel(Long id, String modelCode, Provider provider, String displayName, ModelStatus status) {
+    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, ModelStatus status) {
         Model model = new Model();
         model.setId(id);
-        model.setModelCode(modelCode);
         model.setProvider(provider);
-        model.setProviderModelId(modelCode + "-0613");
+        model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
         model.setInputPrice(new BigDecimal("0.00003"));

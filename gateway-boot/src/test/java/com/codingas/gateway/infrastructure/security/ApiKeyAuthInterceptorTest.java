@@ -40,7 +40,7 @@ class ApiKeyAuthInterceptorTest {
         // given
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new UserAuthResult(1L, "user1", "USER", 1L, "key1"));
+                .thenReturn(new UserAuthResult(1L, "USER", 1L));
 
         // when
         boolean result = interceptor.preHandle(request, response);
@@ -48,7 +48,6 @@ class ApiKeyAuthInterceptorTest {
         // then
         assertThat(result).isTrue();
         verify(request).setAttribute("userId", 1L);
-        verify(request).setAttribute("userCode", "user1");
         verify(request).setAttribute("apiKeyId", 1L);
     }
 
@@ -59,7 +58,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn("sk-test123");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new UserAuthResult(1L, "user1", "USER", 1L, "key1"));
+                .thenReturn(new UserAuthResult(1L, "USER", 1L));
 
         // when
         boolean result = interceptor.preHandle(request, response);
@@ -67,7 +66,6 @@ class ApiKeyAuthInterceptorTest {
         // then
         assertThat(result).isTrue();
         verify(request).setAttribute("userId", 1L);
-        verify(request).setAttribute("userCode", "user1");
         verify(request).setAttribute("apiKeyId", 1L);
     }
 

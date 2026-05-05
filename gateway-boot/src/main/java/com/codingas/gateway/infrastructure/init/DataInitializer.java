@@ -20,7 +20,8 @@ import java.time.Instant;
  * <p>在应用启动时初始化测试数据（仅 local/dev 环境）。</p>
  * <p>初始化内容：</p>
  * <ul>
- *   <li>测试用户</li>
+ *   <li>管理员用户：admin/admin (ADMIN 角色)</li>
+ *   <li>测试用户：test/test (USER 角色)</li>
  *   <li>网关 API Key</li>
  * </ul>
  *
@@ -44,6 +45,7 @@ public class DataInitializer implements CommandLineRunner {
         log.info("Starting data initialization for local/dev environment...");
 
         try {
+            initAdminUser();
             initTestUser();
 
             log.info("Data initialization completed successfully");
@@ -53,21 +55,43 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
+     * 初始化管理员用户
+     */
+    private void initAdminUser() {
+        // 检查是否已存在
+        if (userGateway.existsByUsername("admin")) {
+            log.info("Admin user already exists, skipping");
+            return;
+        }
+
+        // 创建管理员用户
+        User user = new User();
+        user.setUsername("admin");
+        user.setEmail("admin@example.com");
+        user.setPasswordHash(passwordEncoder.encode("admin"));
+        user.setStatus(UserStatus.ACTIVE);
+        user.setRole("ADMIN");
+        user.setEmailVerified(true);
+
+        User savedUser = userGateway.save(user);
+        log.info("Created admin user: {} (id={})", user.getUsername(), savedUser.getId());
+    }
+
+    /**
      * 初始化测试用户
      */
     private void initTestUser() {
         // 检查是否已存在
-        if (userGateway.existsByUsername("testuser")) {
+        if (userGateway.existsByUsername("test")) {
             log.info("Test user already exists, skipping user initialization");
             return;
         }
 
         // 创建测试用户
         User user = new User();
-        user.setUserCode("USR001");
-        user.setUsername("testuser");
+        user.setUsername("test");
         user.setEmail("test@example.com");
-        user.setPasswordHash(passwordEncoder.encode("password123"));
+        user.setPasswordHash(passwordEncoder.encode("test"));
         user.setStatus(UserStatus.ACTIVE);
         user.setRole("USER");
         user.setEmailVerified(true);
@@ -84,13 +108,12 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initGatewayApiKey(User user) {
         // 检查是否已存在
-        if (apiKeyGateway.existsByKeyCode(TEST_API_KEY)) {
+        if (apiKeyGateway.count() > 0) {
             log.info("Test API key already exists, skipping");
             return;
         }
 
         GatewayApiKey apiKey = new GatewayApiKey();
-        apiKey.setKeyCode(TEST_API_KEY);
         // 使用与 AuthenticationDomainService 相同的 hash 方法
         apiKey.setKeyHash(String.valueOf(TEST_API_KEY.hashCode()));
         apiKey.setUser(user);

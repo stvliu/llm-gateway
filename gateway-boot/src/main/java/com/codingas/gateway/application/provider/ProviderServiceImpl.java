@@ -37,14 +37,8 @@ public class ProviderServiceImpl implements ProviderService {
     @Override
     @Transactional
     public ProviderResponse create(ProviderCreateRequest request) {
-        // 检查提供商代码唯一性
-        if (providerGateway.existsByProviderCode(request.getProviderCode())) {
-            throw new DuplicateResourceException("Provider", "providerCode");
-        }
-
         // 创建提供商
         Provider provider = new Provider();
-        provider.setProviderCode(request.getProviderCode());
         provider.setProviderName(request.getProviderName());
         provider.setProviderType(request.getProviderType());
         provider.setBaseUrl(request.getBaseUrl());
@@ -78,8 +72,7 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             providers = providers.stream()
-                .filter(p -> p.getProviderCode().toLowerCase().contains(keyword)
-                    || p.getProviderName().toLowerCase().contains(keyword))
+                .filter(p -> p.getProviderName().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
@@ -178,7 +171,6 @@ public class ProviderServiceImpl implements ProviderService {
     private ProviderResponse toResponse(Provider provider) {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
-        response.setProviderCode(provider.getProviderCode());
         response.setProviderName(provider.getProviderName());
         response.setProviderType(provider.getProviderType());
         response.setBaseUrl(provider.getBaseUrl());

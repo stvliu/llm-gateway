@@ -63,7 +63,6 @@ class ApiKeyServiceTest {
 
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             when(userGateway.findById(1L)).thenReturn(Optional.of(user));
@@ -95,7 +94,6 @@ class ApiKeyServiceTest {
             verify(apiKeyGateway).save(captor.capture());
 
             GatewayApiKey savedKey = captor.getValue();
-            assertThat(savedKey.getKeyCode()).startsWith("sk-");
             assertThat(savedKey.getName()).isEqualTo("Test API Key");
             assertThat(savedKey.getUser()).isEqualTo(user);
             assertThat(savedKey.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
@@ -132,12 +130,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey apiKey = new GatewayApiKey();
             apiKey.setId(100L);
-            apiKey.setKeyCode("sk-test-key");
             apiKey.setKeyHash("hashed");
             apiKey.setUser(user);
             apiKey.setName("Test Key");
@@ -153,7 +149,6 @@ class ApiKeyServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(100L);
-            assertThat(response.getKeyCode()).isEqualTo("sk-test-key");
             assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getUsername()).isEqualTo("testuser");
             assertThat(response.getName()).isEqualTo("Test Key");
@@ -188,12 +183,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
-            apiKey1.setKeyCode("sk-key-1");
             apiKey1.setKeyHash("hash1");
             apiKey1.setUser(user);
             apiKey1.setName("Key 1");
@@ -203,7 +196,6 @@ class ApiKeyServiceTest {
 
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
-            apiKey2.setKeyCode("sk-key-2");
             apiKey2.setKeyHash("hash2");
             apiKey2.setUser(user);
             apiKey2.setName("Key 2");
@@ -232,12 +224,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
-            apiKey1.setKeyCode("sk-search-me");
             apiKey1.setKeyHash("hash1");
             apiKey1.setUser(user);
             apiKey1.setName("Search Key");
@@ -247,7 +237,6 @@ class ApiKeyServiceTest {
 
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
-            apiKey2.setKeyCode("sk-other-key");
             apiKey2.setKeyHash("hash2");
             apiKey2.setUser(user);
             apiKey2.setName("Other Key");
@@ -276,17 +265,14 @@ class ApiKeyServiceTest {
             // given
             User user1 = new User();
             user1.setId(1L);
-            user1.setUserCode("user-001");
             user1.setUsername("user1");
 
             User user2 = new User();
             user2.setId(2L);
-            user2.setUserCode("user-002");
             user2.setUsername("user2");
 
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
-            apiKey1.setKeyCode("sk-key-1");
             apiKey1.setKeyHash("hash1");
             apiKey1.setUser(user1);
             apiKey1.setName("User1 Key");
@@ -296,7 +282,6 @@ class ApiKeyServiceTest {
 
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
-            apiKey2.setKeyCode("sk-key-2");
             apiKey2.setKeyHash("hash2");
             apiKey2.setUser(user2);
             apiKey2.setName("User2 Key");
@@ -325,12 +310,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey activeKey = new GatewayApiKey();
             activeKey.setId(1L);
-            activeKey.setKeyCode("sk-active-key");
             activeKey.setKeyHash("hash1");
             activeKey.setUser(user);
             activeKey.setName("Active Key");
@@ -340,7 +323,6 @@ class ApiKeyServiceTest {
 
             GatewayApiKey disabledKey = new GatewayApiKey();
             disabledKey.setId(2L);
-            disabledKey.setKeyCode("sk-disabled-key");
             disabledKey.setKeyHash("hash2");
             disabledKey.setUser(user);
             disabledKey.setName("Disabled Key");
@@ -393,12 +375,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
-            existingKey.setKeyCode("sk-old-key");
             existingKey.setKeyHash("old-hash");
             existingKey.setUser(user);
             existingKey.setName("Old Name");
@@ -455,12 +435,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
-            existingKey.setKeyCode("sk-to-delete");
             existingKey.setKeyHash("hash");
             existingKey.setUser(user);
             existingKey.setStatus(ApiKeyStatus.ACTIVE);
@@ -506,12 +484,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
-            existingKey.setKeyCode("sk-key");
             existingKey.setKeyHash("hash");
             existingKey.setUser(user);
             existingKey.setStatus(ApiKeyStatus.DISABLED);
@@ -537,12 +513,10 @@ class ApiKeyServiceTest {
             // given
             User user = new User();
             user.setId(1L);
-            user.setUserCode("user-001");
             user.setUsername("testuser");
 
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
-            existingKey.setKeyCode("sk-key");
             existingKey.setKeyHash("hash");
             existingKey.setUser(user);
             existingKey.setStatus(ApiKeyStatus.ACTIVE);

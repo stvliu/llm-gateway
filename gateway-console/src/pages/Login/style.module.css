@@ -1,31 +1,51 @@
+/* 登录页面布局 - 参考 jmix-crm 设计 */
 .container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: white;
+}
+
+/* 左侧登录面板 */
+.loginPanel {
+  flex: 0 0 clamp(360px, 36vw, 480px);
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  padding: 40px 32px;
 }
 
+/* 登录表单容器 */
 .card {
-  width: 400px;
+  width: 100%;
+  max-width: 360px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
   padding: 32px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 }
 
+/* Logo 区域 */
 .logo {
   text-align: center;
   margin-bottom: 24px;
 }
 
-.logoIcon {
-  font-size: 48px;
-  color: #1890ff;
+.logoImage {
+  width: 160px;
+  height: auto;
+  filter: brightness(0);
 }
 
+/* 标题 */
 .title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 600;
   color: #1f1f1f;
   text-align: center;
@@ -39,24 +59,101 @@
   margin-bottom: 24px;
 }
 
+/* 错误提示 */
 .error {
   background: #fff2f0;
   border: 1px solid #ffccc7;
-  border-radius: 4px;
-  padding: 8px 12px;
+  border-radius: 6px;
+  padding: 12px 16px;
   margin-bottom: 16px;
   color: #ff4d4f;
+  font-size: 14px;
 }
 
+/* 记住我和语言切换行 */
 .rememberRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 8px;
 }
 
+/* 右侧欢迎图片区域 */
+.welcomeImage {
+  flex: 1 1 clamp(400px, 64vw, 1000px);
+  height: 100vh;
+  background-image: url('@/assets/images/backgrounds/welcome.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-color: #f0f5ff;
+  position: relative;
+  z-index: 2;
+  margin-left: clamp(-2vw, -4vw, -100px);
+}
+
+/* 响应式：小屏幕隐藏图片 */
+@media (max-width: 900px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .loginPanel {
+    flex: 1;
+    min-width: 100%;
+    min-height: 100vh;
+  }
+
+  .welcomeImage {
+    display: none;
+  }
+}
+
+/* 移动端优化 */
 @media (max-width: 480px) {
   .card {
-    width: calc(100% - 32px);
+    padding: 24px;
     margin: 16px;
   }
+
+  .logoImage {
+    width: 140px;
+  }
+
+  .title {
+    font-size: 20px;
+  }
+}
+
+/* 表单样式覆盖 - 适配深色背景 */
+.loginPanel :global(.ant-input),
+.loginPanel :global(.ant-input-password),
+.loginPanel :global(.ant-select-selector) {
+  background: #fff !important;
+}
+
+.loginPanel :global(.ant-checkbox-wrapper) {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.loginPanel :global(.ant-checkbox-inner) {
+  background: #fff;
+}
+
+/* 底部链接 */
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+.footer a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: #fff;
+  text-decoration: underline;
 }

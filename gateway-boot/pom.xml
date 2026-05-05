@@ -201,11 +201,82 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <!-- Flyway 数据库迁移插件 -->
+            <plugin>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-maven-plugin</artifactId>
+                <version>${flyway.version}</version>
+                <configuration>
+                    <!-- 数据库连接配置（通过 Profile 覆盖） -->
+                    <url>${flyway.url}</url>
+                    <user>${flyway.user}</user>
+                    <password>${flyway.password}</password>
+                    <driver>${flyway.driver}</driver>
+                    <!-- 迁移脚本位置（通过 Profile 配置不同数据库的脚本） -->
+                    <locations>
+                        <location>${flyway.locations}</location>
+                    </locations>
+                    <!-- 清理数据库（仅开发环境使用） -->
+                    <cleanDisabled>true</cleanDisabled>
+                    <!-- 校验迁移脚本 -->
+                    <validateOnMigrate>true</validateOnMigrate>
+                    <!-- 允许乱序迁移 -->
+                    <outOfOrder>false</outOfOrder>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.h2database</groupId>
+                        <artifactId>h2</artifactId>
+                        <version>${h2.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.postgresql</groupId>
+                        <artifactId>postgresql</artifactId>
+                        <version>${postgresql.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
+
+        <!-- 默认属性值（H2 本地开发） -->
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+            </resource>
+        </resources>
     </build>
 
     <!-- Profile 定义 -->
     <profiles>
+        <!-- H2 本地开发环境（默认） -->
+        <profile>
+            <id>h2</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <flyway.url>jdbc:h2:file:${project.basedir}/../data/gateway;MODE=PostgreSQL</flyway.url>
+                <flyway.user>sa</flyway.user>
+                <flyway.password></flyway.password>
+                <flyway.driver>org.h2.Driver</flyway.driver>
+                <flyway.locations>classpath:db/migration</flyway.locations>
+            </properties>
+        </profile>
+
+        <!-- PostgreSQL 环境 -->
+        <profile>
+            <id>postgresql</id>
+            <properties>
+                <flyway.url>${env.DB_URL}</flyway.url>
+                <flyway.user>${env.DB_USERNAME}</flyway.user>
+                <flyway.password>${env.DB_PASSWORD}</flyway.password>
+                <flyway.driver>org.postgresql.Driver</flyway.driver>
+                <flyway.locations>filesystem:docs/db/postgresql</flyway.locations>
+            </properties>
+        </profile>
+
         <!-- Docker 构建 -->
         <profile>
             <id>docker</id>

@@ -82,14 +82,12 @@ public class AuthenticationDomainService {
             return null;
         }
 
-        apiKeyGateway.updateLastUsed(gatewayKey.getKeyCode(), Instant.now());
+        apiKeyGateway.updateLastUsed(gatewayKey.getId(), Instant.now());
 
         return new UserAuthResult(
             user.getId(),
-            user.getUserCode(),
             null,  // role from UserRole entity, not directly on User
-            gatewayKey.getId(),
-            gatewayKey.getKeyCode()
+            gatewayKey.getId()
         );
     }
 

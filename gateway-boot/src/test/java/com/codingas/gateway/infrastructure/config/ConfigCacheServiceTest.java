@@ -61,21 +61,7 @@ class ConfigCacheServiceTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
-        }
-
-        @Test
-        @DisplayName("通过编码获取 Provider")
-        void getProviderByCode_found_returnsProvider() {
-            // given
-            Provider provider = createTestProvider();
-            when(providerGateway.findByProviderCode("openai")).thenReturn(Optional.of(provider));
-
-            // when
-            Optional<Provider> result = cacheService.getProviderByCode("openai");
-
-            // then
-            assertThat(result).isPresent();
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -118,20 +104,6 @@ class ConfigCacheServiceTest {
 
             // when
             Optional<Model> result = cacheService.getModelById(1L);
-
-            // then
-            assertThat(result).isPresent();
-        }
-
-        @Test
-        @DisplayName("通过编码获取 Model")
-        void getModelByCode_found_returnsModel() {
-            // given
-            Model model = createTestModel();
-            when(modelGateway.findByModelCode("gpt-4")).thenReturn(Optional.of(model));
-
-            // when
-            Optional<Model> result = cacheService.getModelByCode("gpt-4");
 
             // then
             assertThat(result).isPresent();
@@ -251,7 +223,6 @@ class ConfigCacheServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderCode("openai");
         provider.setProviderName("OpenAI");
         provider.setStatus(Provider.ProviderStatus.ACTIVE);
         return provider;
@@ -260,7 +231,6 @@ class ConfigCacheServiceTest {
     private Model createTestModel() {
         Model model = new Model();
         model.setId(1L);
-        model.setModelCode("gpt-4");
         model.setDisplayName("GPT-4");
         model.setStatus(Model.ModelStatus.ACTIVE);
         return model;

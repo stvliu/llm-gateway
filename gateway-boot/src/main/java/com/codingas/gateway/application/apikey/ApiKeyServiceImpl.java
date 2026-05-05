@@ -51,12 +51,10 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
         // 生成 API Key
         String rawKey = generateRawKey();
-        String keyCode = "sk-" + generateKeySuffix();
         String keyHash = encryptionService.hashKey(rawKey);
 
         // 创建 API Key
         GatewayApiKey apiKey = new GatewayApiKey();
-        apiKey.setKeyCode(keyCode);
         apiKey.setKeyHash(keyHash);
         apiKey.setUser(user);
         apiKey.setName(request.getName());
@@ -92,8 +90,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             apiKeys = apiKeys.stream()
-                .filter(k -> k.getKeyCode().toLowerCase().contains(keyword)
-                    || (k.getName() != null && k.getName().toLowerCase().contains(keyword)))
+                .filter(k -> k.getName() != null && k.getName().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
@@ -186,21 +183,11 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     }
 
     /**
-     * 生成密钥后缀
-     */
-    private String generateKeySuffix() {
-        byte[] bytes = new byte[16];
-        SECURE_RANDOM.nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    /**
      * 转换为响应 DTO
      */
     private ApiKeyResponse toResponse(GatewayApiKey apiKey) {
         ApiKeyResponse response = new ApiKeyResponse();
         response.setId(apiKey.getId());
-        response.setKeyCode(apiKey.getKeyCode());
         response.setUserId(apiKey.getUser().getId());
         response.setUsername(apiKey.getUser().getUsername());
         response.setName(apiKey.getName());

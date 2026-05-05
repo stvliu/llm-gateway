@@ -40,7 +40,7 @@ class ApiKeyAuthAdapterTest {
         void authenticate_validKey_returnsUserId() {
             // Given
             String apiKey = "sk-valid-key";
-            UserAuthResult authResult = new UserAuthResult(1L, "user_code", "USER", 1L, "key_code");
+            UserAuthResult authResult = new UserAuthResult(1L, "USER", 1L);
             when(authenticationService.authenticate(apiKey)).thenReturn(authResult);
 
             // When

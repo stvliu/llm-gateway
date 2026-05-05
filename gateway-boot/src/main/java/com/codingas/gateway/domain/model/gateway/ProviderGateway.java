@@ -29,14 +29,6 @@ public interface ProviderGateway {
     Optional<Provider> findById(Long id);
 
     /**
-     * 根据提供商代码查找提供商
-     *
-     * @param providerCode 提供商代码
-     * @return 提供商信息，不存在返回空
-     */
-    Optional<Provider> findByProviderCode(String providerCode);
-
-    /**
      * 查询所有提供商
      *
      * @return 提供商列表
@@ -71,14 +63,6 @@ public interface ProviderGateway {
      * @param provider 提供商实体
      */
     void delete(Provider provider);
-
-    /**
-     * 检查提供商代码是否存在
-     *
-     * @param providerCode 提供商代码
-     * @return 是否存在
-     */
-    boolean existsByProviderCode(String providerCode);
 
     /**
      * 获取最大版本号

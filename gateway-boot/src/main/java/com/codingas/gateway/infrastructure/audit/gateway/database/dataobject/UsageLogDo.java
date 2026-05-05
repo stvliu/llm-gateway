@@ -3,12 +3,10 @@ package com.codingas.gateway.infrastructure.audit.gateway.database.dataobject;
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
-import com.codingas.gateway.infrastructure.apikey.gateway.database.dataobject.GatewayApiKeyDo;
-import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
+import com.codingas.gateway.infrastructure.security.database.dataobject.GatewayApiKeyDo;
+import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.Instant;
 
 /**
  * 使用记录 DO
@@ -26,9 +24,6 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UsageLogDo extends BaseDo {
-
-    @Column(name = "log_code", nullable = false, unique = true, length = 64)
-    private String logCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "gateway_api_key_id", nullable = false)

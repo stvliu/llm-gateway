@@ -58,7 +58,7 @@ class AuthenticationDomainServiceTest {
             GatewayApiKey gatewayKey = createActiveApiKey(user);
 
             when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
-            doNothing().when(apiKeyGateway).updateLastUsed(anyString(), any(Instant.class));
+            doNothing().when(apiKeyGateway).updateLastUsed(anyLong(), any(Instant.class));
 
             // when
             UserAuthResult result = authService.authenticate(apiKey);
@@ -66,10 +66,8 @@ class AuthenticationDomainServiceTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.userId()).isEqualTo(1L);
-            assertThat(result.userCode()).isEqualTo("user-001");
             assertThat(result.apiKeyId()).isEqualTo(100L);
-            assertThat(result.apiKeyCode()).isEqualTo("key-001");
-            verify(apiKeyGateway).updateLastUsed(eq("key-001"), any(Instant.class));
+            verify(apiKeyGateway).updateLastUsed(eq(100L), any(Instant.class));
         }
 
         @Test
@@ -194,7 +192,7 @@ class AuthenticationDomainServiceTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getUserCode()).isEqualTo("user-001");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -215,7 +213,6 @@ class AuthenticationDomainServiceTest {
     private User createActiveUser() {
         User user = new User();
         user.setId(1L);
-        user.setUserCode("user-001");
         user.setUsername("Test User");
         user.setEmail("test@example.com");
         user.setStatus(UserStatus.ACTIVE);
@@ -226,7 +223,6 @@ class AuthenticationDomainServiceTest {
     private GatewayApiKey createActiveApiKey(User user) {
         GatewayApiKey key = new GatewayApiKey();
         key.setId(100L);
-        key.setKeyCode("key-001");
         key.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
         key.setExpiresAt(Instant.now().plus(30, ChronoUnit.DAYS));
         key.setUser(user);

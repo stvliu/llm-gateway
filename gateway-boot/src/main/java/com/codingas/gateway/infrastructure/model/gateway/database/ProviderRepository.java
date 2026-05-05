@@ -6,13 +6,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
-    Optional<ProviderDo> findByProviderCode(String providerCode);
     List<ProviderDo> findByStatus(ProviderDo.ProviderStatus status);
-    boolean existsByProviderCode(String providerCode);
 
     /**
      * 获取最大版本号

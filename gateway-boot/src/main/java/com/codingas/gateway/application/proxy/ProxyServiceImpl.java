@@ -52,7 +52,7 @@ public class ProxyServiceImpl implements ProxyService {
         log.debug("Proxying request: model={}, strategy={}", request.getModel(), strategy);
 
         // 1. 路由选择：获取模型和提供商信息（通过 Domain Service）
-        ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProvider(request.getModel());
+        ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProviderByProviderModelId(request.getModel());
 
         // 2. 路由选择：获取可用的 LLM Gateway（通过 Domain Service）
         LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getProviderType());
@@ -84,7 +84,7 @@ public class ProxyServiceImpl implements ProxyService {
         log.debug("Proxying stream request: model={}, strategy={}", request.getModel(), strategy);
 
         // 1. 路由选择：获取模型和提供商信息（通过 Domain Service）
-        ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProvider(request.getModel());
+        ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProviderByProviderModelId(request.getModel());
 
         // 2. 路由选择：获取可用的 LLM Gateway（通过 Domain Service）
         LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getProviderType());

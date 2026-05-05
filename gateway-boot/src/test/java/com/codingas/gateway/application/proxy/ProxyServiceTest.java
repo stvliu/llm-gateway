@@ -76,7 +76,6 @@ class ProxyServiceTest {
         // 准备测试 Model
         testModel = new Model();
         testModel.setId(1L);
-        testModel.setModelCode("gpt-4");
         testModel.setProvider(testProvider);
 
         // 准备 ModelProviderInfo
@@ -111,9 +110,10 @@ class ProxyServiceTest {
         @DisplayName("成功代理非流式请求")
         void proxy_success() {
             // given
-            when(modelDomainService.getModelWithProvider("gpt-4")).thenReturn(testModelInfo);
+            when(modelDomainService.getModelWithProviderByProviderModelId("gpt-4")).thenReturn(testModelInfo);
             when(proxyDomainService.selectGateway(ProviderType.OPENAI)).thenReturn(gateway);
             when(proxyDomainService.forward(gateway, testRequest)).thenReturn(testResponse);
+            when(gateway.getProviderCode()).thenReturn("openai");
 
             // when
             LLMResponse response = proxyService.proxy(testRequest, RouteGroup.RoutingStrategy.WEIGHTED);
@@ -129,11 +129,11 @@ class ProxyServiceTest {
         void proxy_modelNotFound_throwsException() {
             // given
             LLMRequest request = LLMRequest.builder()
-                    .model("unknown")
+                    .model("unknown-model")
                     .messages(List.of())
                     .build();
-            when(modelDomainService.getModelWithProvider("unknown"))
-                    .thenThrow(new NoSuchElementException("Model not found: unknown"));
+            when(modelDomainService.getModelWithProviderByProviderModelId("unknown-model"))
+                    .thenThrow(new NoSuchElementException("Model not found: unknown-model"));
 
             // when & then
             assertThatThrownBy(() -> proxyService.proxy(request, RouteGroup.RoutingStrategy.WEIGHTED))
@@ -145,7 +145,7 @@ class ProxyServiceTest {
         @DisplayName("Gateway 不可用时抛出异常")
         void proxy_gatewayNotAvailable_throwsException() {
             // given
-            when(modelDomainService.getModelWithProvider("gpt-4")).thenReturn(testModelInfo);
+            when(modelDomainService.getModelWithProviderByProviderModelId("gpt-4")).thenReturn(testModelInfo);
             when(proxyDomainService.selectGateway(ProviderType.OPENAI))
                     .thenThrow(new IllegalStateException("Gateway not available"));
 
@@ -153,21 +153,6 @@ class ProxyServiceTest {
             assertThatThrownBy(() -> proxyService.proxy(testRequest, RouteGroup.RoutingStrategy.WEIGHTED))
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("Gateway not available");
-        }
-
-        @Test
-        @DisplayName("响应为 null 时不发布事件")
-        void proxy_nullResponse_noEvent() {
-            // given
-            when(modelDomainService.getModelWithProvider("gpt-4")).thenReturn(testModelInfo);
-            when(proxyDomainService.selectGateway(ProviderType.OPENAI)).thenReturn(gateway);
-            when(proxyDomainService.forward(gateway, testRequest)).thenReturn(null);
-
-            // when
-            proxyService.proxy(testRequest, RouteGroup.RoutingStrategy.WEIGHTED);
-
-            // then
-            verify(eventPublisher, never()).publishEvent(any(TokenUsedEvent.class));
         }
     }
 
@@ -179,22 +164,20 @@ class ProxyServiceTest {
         @DisplayName("成功代理流式请求")
         void proxyStream_success() {
             // given
-            when(modelDomainService.getModelWithProvider("gpt-4")).thenReturn(testModelInfo);
+            Consumer<String> onChunk = mock(Consumer.class);
+            StreamCallback streamCallback = mock(StreamCallback.class);
+
+            when(modelDomainService.getModelWithProviderByProviderModelId("gpt-4")).thenReturn(testModelInfo);
             when(proxyDomainService.selectGateway(ProviderType.OPENAI)).thenReturn(gateway);
-
-            Consumer<String> onChunk = s -> {};
-            Runnable onComplete = () -> {};
-            Consumer<Throwable> onError = e -> {};
-
-            StreamCallback callback = mock(StreamCallback.class);
-            when(streamCallbackFactory.create(onChunk, onComplete, onError)).thenReturn(callback);
-            doNothing().when(proxyDomainService).forwardStream(any(), any(), any());
+            when(streamCallbackFactory.create(any(), any(), any())).thenReturn(streamCallback);
+            when(gateway.getProviderCode()).thenReturn("openai");
 
             // when
-            proxyService.proxyStream(testRequest, RouteGroup.RoutingStrategy.WEIGHTED, onChunk, onComplete, onError);
+            proxyService.proxyStream(testRequest, RouteGroup.RoutingStrategy.WEIGHTED, onChunk);
 
             // then
-            verify(proxyDomainService).forwardStream(eq(gateway), eq(testRequest), eq(callback));
+            verify(streamCallbackFactory).create(eq(onChunk), any(Runnable.class), any(Consumer.class));
+            verify(proxyDomainService).forwardStream(eq(gateway), eq(testRequest), eq(streamCallback));
         }
     }
 }

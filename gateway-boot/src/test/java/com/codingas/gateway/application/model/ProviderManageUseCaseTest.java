@@ -41,8 +41,8 @@ class ProviderManageUseCaseTest {
         @DisplayName("返回所有提供商")
         void findAll_returnsAllProviders() {
             // given
-            Provider provider1 = createProvider(1L, "openai", "OpenAI");
-            Provider provider2 = createProvider(2L, "anthropic", "Anthropic");
+            Provider provider1 = createProvider(1L, "OpenAI");
+            Provider provider2 = createProvider(2L, "Anthropic");
             when(providerService.findAll()).thenReturn(List.of(provider1, provider2));
 
             // when
@@ -50,8 +50,8 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getProviderCode()).isEqualTo("openai");
-            assertThat(result.get(1).getProviderCode()).isEqualTo("anthropic");
+            assertThat(result.get(0).getProviderName()).isEqualTo("OpenAI");
+            assertThat(result.get(1).getProviderName()).isEqualTo("Anthropic");
             verify(providerService).findAll();
         }
     }
@@ -65,7 +65,7 @@ class ProviderManageUseCaseTest {
         void findById_existingProvider_returnsProvider() {
             // given
             Long id = 1L;
-            Provider provider = createProvider(id, "openai", "OpenAI");
+            Provider provider = createProvider(id, "OpenAI");
             when(providerService.findById(id)).thenReturn(Optional.of(provider));
 
             // when
@@ -73,7 +73,7 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
+            assertThat(result.get().getProviderName()).isEqualTo("OpenAI");
             verify(providerService).findById(id);
         }
 
@@ -101,8 +101,8 @@ class ProviderManageUseCaseTest {
         @DisplayName("创建提供商成功")
         void create_validProvider_returnsCreatedProvider() {
             // given
-            Provider inputProvider = createProvider(null, "openai", "OpenAI");
-            Provider savedProvider = createProvider(1L, "openai", "OpenAI");
+            Provider inputProvider = createProvider(null, "OpenAI");
+            Provider savedProvider = createProvider(1L, "OpenAI");
             when(providerService.create(any(Provider.class))).thenReturn(savedProvider);
 
             // when
@@ -110,7 +110,7 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getProviderCode()).isEqualTo("openai");
+            assertThat(result.getProviderName()).isEqualTo("OpenAI");
             verify(providerService).create(any(Provider.class));
         }
     }
@@ -124,8 +124,8 @@ class ProviderManageUseCaseTest {
         void update_validProvider_returnsUpdatedProvider() {
             // given
             Long id = 1L;
-            Provider updateProvider = createProvider(null, "openai", "OpenAI Updated");
-            Provider updatedProvider = createProvider(id, "openai", "OpenAI Updated");
+            Provider updateProvider = createProvider(null, "OpenAI Updated");
+            Provider updatedProvider = createProvider(id, "OpenAI Updated");
             when(providerService.update(eq(id), any(Provider.class))).thenReturn(updatedProvider);
 
             // when
@@ -160,10 +160,9 @@ class ProviderManageUseCaseTest {
     /**
      * 创建测试用 Provider 对象
      */
-    private Provider createProvider(Long id, String providerCode, String providerName) {
+    private Provider createProvider(Long id, String providerName) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderCode(providerCode);
         provider.setProviderName(providerName);
         provider.setProviderType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.example.com");

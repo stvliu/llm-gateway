@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.alert.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
+import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -22,9 +22,6 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 public class AlertNotificationDo extends BaseDo {
-
-    @Column(name = "notification_code", nullable = false, unique = true, length = 64)
-    private String notificationCode;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "alert_rule_id", nullable = false)

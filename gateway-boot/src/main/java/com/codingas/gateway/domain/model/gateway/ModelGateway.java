@@ -29,12 +29,12 @@ public interface ModelGateway {
     Optional<Model> findById(Long id);
 
     /**
-     * 根据模型代码查找模型
+     * 根据提供商模型 ID 查找模型
      *
-     * @param modelCode 模型代码
+     * @param providerModelId 提供商模型 ID（如 "gpt-4"）
      * @return 模型信息，不存在返回空
      */
-    Optional<Model> findByModelCode(String modelCode);
+    Optional<Model> findByProviderModelId(String providerModelId);
 
     /**
      * 查询所有模型
@@ -71,14 +71,6 @@ public interface ModelGateway {
      * @param model 模型实体
      */
     void delete(Model model);
-
-    /**
-     * 检查模型代码是否存在
-     *
-     * @param modelCode 模型代码
-     * @return 是否存在
-     */
-    boolean existsByModelCode(String modelCode);
 
     /**
      * 获取最大版本号

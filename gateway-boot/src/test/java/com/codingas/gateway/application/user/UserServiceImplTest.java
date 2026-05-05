@@ -250,7 +250,6 @@ class UserServiceImplTest {
     private User createTestUser() {
         User user = new User();
         user.setId(1L);
-        user.setUserCode("user-001");
         user.setUsername("testuser");
         user.setEmail("test@example.com");
         user.setStatus(UserStatus.ACTIVE);

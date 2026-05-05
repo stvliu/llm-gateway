@@ -41,14 +41,6 @@ public interface ApiKeyGateway {
     GatewayApiKey findByKeyHash(String keyHash);
 
     /**
-     * 根据 Key Code 查找 API Key
-     *
-     * @param keyCode 密钥代码
-     * @return 密钥信息，不存在返回 null
-     */
-    GatewayApiKey findByKeyCode(String keyCode);
-
-    /**
      * 根据用户 ID 查找所有密钥
      *
      * @param userId 用户 ID
@@ -88,18 +80,10 @@ public interface ApiKeyGateway {
     void delete(GatewayApiKey apiKey);
 
     /**
-     * 检查 Key 代码是否存在
-     *
-     * @param keyCode 密钥代码
-     * @return 是否存在
-     */
-    boolean existsByKeyCode(String keyCode);
-
-    /**
      * 更新最后使用时间
      *
-     * @param keyCode 密钥代码
+     * @param id 密钥 ID
      * @param lastUsed 最后使用时间
      */
-    void updateLastUsed(String keyCode, Instant lastUsed);
+    void updateLastUsed(Long id, Instant lastUsed);
 }

@@ -20,9 +20,6 @@ import java.time.Instant;
 @AllArgsConstructor
 public class ProviderDo extends BaseDo {
 
-    @Column(name = "provider_code", nullable = false, unique = true, length = 64)
-    private String providerCode;
-
     @Column(name = "provider_name", nullable = false, length = 128)
     private String providerName;
 

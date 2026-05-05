@@ -11,8 +11,8 @@ import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.quota.entity.TokenLimit;
-import com.codingas.gateway.domain.quota.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -47,11 +47,6 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     @Override
     @Transactional
     public TokenLimitResponse create(TokenLimitCreateRequest request) {
-        // 检查限额代码唯一性
-        if (tokenLimitGateway.existsByLimitCode(request.getLimitCode())) {
-            throw new DuplicateResourceException("TokenLimit", "limitCode");
-        }
-
         // 查找用户
         User user = userGateway.findById(request.getUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User", request.getUserId()));
@@ -79,7 +74,6 @@ public class TokenLimitServiceImpl implements TokenLimitService {
 
         // 创建限额
         TokenLimit tokenLimit = new TokenLimit();
-        tokenLimit.setLimitCode(request.getLimitCode());
         tokenLimit.setUser(user);
         tokenLimit.setProvider(provider);
         tokenLimit.setModel(model);
@@ -118,7 +112,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getLimitCode().toLowerCase().contains(keyword))
+                .filter(t -> t.getUser().getUsername().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
@@ -230,7 +224,6 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     private TokenLimitResponse toResponse(TokenLimit tokenLimit) {
         TokenLimitResponse response = new TokenLimitResponse();
         response.setId(tokenLimit.getId());
-        response.setLimitCode(tokenLimit.getLimitCode());
         response.setUserId(tokenLimit.getUser().getId());
         response.setUsername(tokenLimit.getUser().getUsername());
         if (tokenLimit.getProvider() != null) {

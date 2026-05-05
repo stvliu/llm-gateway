@@ -19,8 +19,6 @@ import java.util.List;
 @Slf4j
 public class GatewayApiKey extends BaseEntity {
 
-    private String keyCode;
-
     private String keyHash;
 
     private User user;

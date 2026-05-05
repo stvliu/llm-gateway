@@ -41,6 +41,10 @@
         <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <flyway.version>11.0.0</flyway.version>
 
+        <!-- 数据库驱动版本（Flyway Maven 插件需要） -->
+        <h2.version>2.3.232</h2.version>
+        <postgresql.version>42.7.4</postgresql.version>
+
         <!-- Maven 插件版本 -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>

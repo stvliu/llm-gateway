@@ -3,6 +3,7 @@ package com.codingas.gateway.infrastructure.model.gateway;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 import com.codingas.gateway.infrastructure.model.gateway.database.RouteGroupRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.RouteGroupDo;
+import com.codingas.gateway.infrastructure.proxy.gateway.rpc.RouteGroupGatewayImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -48,7 +49,7 @@ class RouteGroupGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getGroupCode()).isEqualTo("group-001");
+            assertThat(result.getId()).isEqualTo(1L);
         }
 
         @Test
@@ -59,39 +60,6 @@ class RouteGroupGatewayImplTest {
 
             // when
             RouteGroup result = gateway.findById(999L);
-
-            // then
-            assertThat(result).isNull();
-        }
-    }
-
-    @Nested
-    @DisplayName("findByGroupCode 方法测试")
-    class FindByGroupCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到路由分组")
-        void findByGroupCode_existingCode_returnsEntity() {
-            // given
-            RouteGroupDo doEntity = createTestDo();
-            when(repository.findByGroupCode("group-001")).thenReturn(Optional.of(doEntity));
-
-            // when
-            RouteGroup result = gateway.findByGroupCode("group-001");
-
-            // then
-            assertThat(result).isNotNull();
-            assertThat(result.getGroupCode()).isEqualTo("group-001");
-        }
-
-        @Test
-        @DisplayName("未找到返回 null")
-        void findByGroupCode_nonExistingCode_returnsNull() {
-            // given
-            when(repository.findByGroupCode("unknown")).thenReturn(Optional.empty());
-
-            // when
-            RouteGroup result = gateway.findByGroupCode("unknown");
 
             // then
             assertThat(result).isNull();
@@ -136,7 +104,7 @@ class RouteGroupGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getGroupCode()).isEqualTo("group-001");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(repository).save(any());
         }
     }
@@ -145,7 +113,6 @@ class RouteGroupGatewayImplTest {
     private RouteGroup createTestEntity() {
         RouteGroup entity = new RouteGroup();
         entity.setId(1L);
-        entity.setGroupCode("group-001");
         entity.setGroupName("Default Group");
         entity.setStrategy(RouteGroup.RoutingStrategy.WEIGHTED);
         entity.setEnabled(true);
@@ -155,7 +122,6 @@ class RouteGroupGatewayImplTest {
     private RouteGroupDo createTestDo() {
         RouteGroupDo doEntity = new RouteGroupDo();
         doEntity.setId(1L);
-        doEntity.setGroupCode("group-001");
         doEntity.setGroupName("Default Group");
         doEntity.setStrategy(RouteGroupDo.RoutingStrategy.WEIGHTED);
         doEntity.setEnabled(true);

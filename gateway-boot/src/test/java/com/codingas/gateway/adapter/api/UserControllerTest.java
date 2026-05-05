@@ -190,7 +190,6 @@ class UserControllerTest {
     private UserResponse createTestResponse() {
         UserResponse response = new UserResponse();
         response.setId(1L);
-        response.setUserCode("user-001");
         response.setUsername("testuser");
         response.setEmail("test@example.com");
         response.setStatus(UserStatus.ACTIVE);

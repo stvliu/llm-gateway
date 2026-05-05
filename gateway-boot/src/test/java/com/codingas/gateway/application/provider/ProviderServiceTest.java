@@ -47,7 +47,7 @@ class ProviderServiceTest {
 
     @BeforeEach
     void setUp() {
-        testProvider = createTestProvider(1L, "OPENAI", "OpenAI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
+        testProvider = createTestProvider(1L, "OpenAI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
     }
 
     // ==================== create 测试 ====================
@@ -61,13 +61,11 @@ class ProviderServiceTest {
         void create_validRequest_returnsProviderResponse() {
             // given
             ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderCode("ANTHROPIC");
             request.setProviderName("Anthropic");
             request.setProviderType(ProviderType.ANTHROPIC);
             request.setBaseUrl("https://api.anthropic.com");
             request.setPriority(50);
 
-            when(providerGateway.existsByProviderCode("ANTHROPIC")).thenReturn(false);
             when(providerGateway.save(any(Provider.class))).thenAnswer(invocation -> {
                 Provider provider = invocation.getArgument(0);
                 provider.setId(2L);
@@ -80,47 +78,25 @@ class ProviderServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(2L);
-            assertThat(response.getProviderCode()).isEqualTo("ANTHROPIC");
             assertThat(response.getProviderName()).isEqualTo("Anthropic");
             assertThat(response.getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
             assertThat(response.getPriority()).isEqualTo(50);
             assertThat(response.getStatus()).isEqualTo(ProviderStatus.ACTIVE);
             assertThat(response.getEnabled()).isTrue();
-            verify(providerGateway).existsByProviderCode("ANTHROPIC");
             verify(providerGateway).save(any(Provider.class));
         }
 
-        @Test
-        @DisplayName("提供商代码重复时抛出 DuplicateResourceException")
-        void create_duplicateProviderCode_throwsException() {
-            // given
-            ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderCode("OPENAI");
-            request.setProviderName("OpenAI Duplicate");
-            request.setProviderType(ProviderType.OPENAI);
-
-            when(providerGateway.existsByProviderCode("OPENAI")).thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> providerService.create(request))
-                .isInstanceOf(DuplicateResourceException.class)
-                .hasMessageContaining("Provider")
-                .hasMessageContaining("providerCode");
-
-            verify(providerGateway, never()).save(any(Provider.class));
-        }
+        // 测试已移除重复代码检查，因为 providerCode 字段已被删除
 
         @Test
         @DisplayName("创建时未指定优先级则使用默认值100")
         void create_noPriorityProvided_usesDefaultPriority() {
             // given
             ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderCode("NEW");
             request.setProviderName("New Provider");
             request.setProviderType(ProviderType.OPENAI);
             // priority 为 null
 
-            when(providerGateway.existsByProviderCode("NEW")).thenReturn(false);
             when(providerGateway.save(any(Provider.class))).thenAnswer(invocation -> {
                 Provider provider = invocation.getArgument(0);
                 provider.setId(3L);
@@ -153,7 +129,6 @@ class ProviderServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getProviderCode()).isEqualTo("OPENAI");
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
             verify(providerGateway).findById(1L);
         }
@@ -182,7 +157,7 @@ class ProviderServiceTest {
         @DisplayName("无过滤条件时返回所有提供商")
         void query_noFilter_returnsAllProviders() {
             // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
+            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -220,7 +195,7 @@ class ProviderServiceTest {
         @DisplayName("关键字按代码或名称匹配")
         void query_keywordMatchesCodeOrName() {
             // given
-            Provider provider2 = createTestProvider(2L, "GOOGLE", "Google AI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
+            Provider provider2 = createTestProvider(2L, "Google AI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -233,7 +208,7 @@ class ProviderServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderCode()).isEqualTo("GOOGLE");
+            assertThat(response.getItems().get(0).getProviderName()).isEqualTo("Google AI");
         }
 
         @Test
@@ -259,7 +234,7 @@ class ProviderServiceTest {
         @DisplayName("按状态过滤提供商")
         void query_withStatus_filtersProviders() {
             // given
-            Provider suspendedProvider = createTestProvider(2L, "SUSPENDED", "Suspended Provider", ProviderType.OPENAI, ProviderStatus.SUSPENDED);
+            Provider suspendedProvider = createTestProvider(2L, "Suspended Provider", ProviderType.OPENAI, ProviderStatus.SUSPENDED);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, suspendedProvider));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -281,7 +256,7 @@ class ProviderServiceTest {
             // given
             List<Provider> providers = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
-                providers.add(createTestProvider(i, "PROV" + String.format("%03d", i), "Provider " + i, ProviderType.OPENAI, ProviderStatus.ACTIVE));
+                providers.add(createTestProvider(i, "Provider " + i, ProviderType.OPENAI, ProviderStatus.ACTIVE));
             }
             when(providerGateway.findAll()).thenReturn(providers);
 
@@ -323,8 +298,8 @@ class ProviderServiceTest {
         @DisplayName("组合过滤条件")
         void query_combinedFilters_appliesAllFilters() {
             // given
-            Provider provider2 = createTestProvider(2L, "ANTHROPIC", "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
-            Provider suspendedProvider = createTestProvider(3L, "SUSPENDED", "Suspended Provider", ProviderType.ANTHROPIC, ProviderStatus.SUSPENDED);
+            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
+            Provider suspendedProvider = createTestProvider(3L, "Suspended Provider", ProviderType.ANTHROPIC, ProviderStatus.SUSPENDED);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2, suspendedProvider));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -524,16 +499,15 @@ class ProviderServiceTest {
 
     // ==================== 辅助方法 ====================
 
-    private Provider createTestProvider(Long id, String providerCode, String providerName,
+    private Provider createTestProvider(Long id, String providerName,
                                         ProviderType providerType, ProviderStatus status) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderCode(providerCode);
         provider.setProviderName(providerName);
         provider.setProviderType(providerType);
-        provider.setBaseUrl("https://api." + providerCode.toLowerCase() + ".com");
-        provider.setWebsiteUrl("https://" + providerCode.toLowerCase() + ".com");
-        provider.setApiDocUrl("https://docs." + providerCode.toLowerCase() + ".com");
+        provider.setBaseUrl("https://api.example.com");
+        provider.setWebsiteUrl("https://example.com");
+        provider.setApiDocUrl("https://docs.example.com");
         provider.setPriority(100);
         provider.setStatus(status);
         provider.setCreatedAt(Instant.now());

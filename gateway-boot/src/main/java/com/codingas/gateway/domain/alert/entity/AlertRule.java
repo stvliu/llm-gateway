@@ -21,8 +21,6 @@ import java.util.List;
 @Slf4j
 public class AlertRule extends BaseEntity {
 
-    private String ruleCode;
-
     private String name;
 
     private AlertType alertType;

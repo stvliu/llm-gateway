@@ -2,9 +2,9 @@ package com.codingas.gateway.infrastructure.user.gateway;
 
 import com.codingas.gateway.common.enums.UserStatus;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.infrastructure.user.gateway.database.UserRepository;
-import com.codingas.gateway.infrastructure.user.gateway.database.dataobject.UserDo;
-import org.junit.jupiter.api.BeforeEach;
+import com.codingas.gateway.infrastructure.security.UserGatewayImpl;
+import com.codingas.gateway.infrastructure.security.database.UserRepository;
+import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,7 +52,7 @@ class UserGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getUserCode()).isEqualTo("user-001");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(userRepository).save(any());
         }
     }
@@ -73,7 +73,7 @@ class UserGatewayImplTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getUserCode()).isEqualTo("user-001");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -84,39 +84,6 @@ class UserGatewayImplTest {
 
             // when
             Optional<User> result = gateway.findById(999L);
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("findByUserCode 方法测试")
-    class FindByUserCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 User")
-        void findByUserCode_existingCode_returnsEntity() {
-            // given
-            UserDo doEntity = createTestDo();
-            when(userRepository.findByUserCode("user-001")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<User> result = gateway.findByUserCode("user-001");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getUserCode()).isEqualTo("user-001");
-        }
-
-        @Test
-        @DisplayName("未找到返回空")
-        void findByUserCode_nonExistingCode_returnsEmpty() {
-            // given
-            when(userRepository.findByUserCode("unknown")).thenReturn(Optional.empty());
-
-            // when
-            Optional<User> result = gateway.findByUserCode("unknown");
 
             // then
             assertThat(result).isEmpty();
@@ -154,7 +121,6 @@ class UserGatewayImplTest {
             UserDo doEntity1 = createTestDo();
             UserDo doEntity2 = createTestDo();
             doEntity2.setId(2L);
-            doEntity2.setUserCode("user-002");
             when(userRepository.findAll()).thenReturn(List.of(doEntity1, doEntity2));
 
             // when
@@ -268,7 +234,6 @@ class UserGatewayImplTest {
     private User createTestEntity() {
         User entity = new User();
         entity.setId(1L);
-        entity.setUserCode("user-001");
         entity.setUsername("testuser");
         entity.setEmail("test@example.com");
         entity.setPasswordHash("hashed_password");
@@ -281,7 +246,6 @@ class UserGatewayImplTest {
     private UserDo createTestDo() {
         UserDo doEntity = new UserDo();
         doEntity.setId(1L);
-        doEntity.setUserCode("user-001");
         doEntity.setUsername("testuser");
         doEntity.setEmail("test@example.com");
         doEntity.setPasswordHash("hashed_password");

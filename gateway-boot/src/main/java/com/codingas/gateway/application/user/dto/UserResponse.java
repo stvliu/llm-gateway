@@ -10,7 +10,6 @@ import java.time.Instant;
 @Data
 public class UserResponse {
     private Long id;
-    private String userCode;
     private String username;
     private String email;
     private String phone;
