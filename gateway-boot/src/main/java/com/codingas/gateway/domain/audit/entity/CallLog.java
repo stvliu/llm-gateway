@@ -19,8 +19,6 @@ import java.time.Instant;
 @Slf4j
 public class CallLog extends BaseEntity {
 
-    private String logCode;
-
     private String traceId;
 
     private Long gatewayApiKeyId;
@@ -41,7 +39,7 @@ public class CallLog extends BaseEntity {
 
     private Integer responseStatus;
 
-    private String providerCode;
+    private Long providerId;
 
     private String modelName;
 

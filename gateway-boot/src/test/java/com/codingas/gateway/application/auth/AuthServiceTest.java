@@ -39,7 +39,7 @@ class AuthServiceTest {
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
             UserAuthResult expectedResult = new UserAuthResult(
-                1L, "user-001", "USER", 100L, "key-code-001"
+                1L, "USER", 100L
             );
             when(authenticationService.authenticate(apiKey)).thenReturn(expectedResult);
 
@@ -49,7 +49,7 @@ class AuthServiceTest {
             // then
             assertThat(result).isEqualTo(expectedResult);
             assertThat(result.userId()).isEqualTo(1L);
-            assertThat(result.apiKeyCode()).isEqualTo("key-code-001");
+            assertThat(result.apiKeyId()).isEqualTo(100L);
             verify(authenticationService).authenticate(apiKey);
         }
 
@@ -99,7 +99,6 @@ class AuthServiceTest {
             String action = "any:action";
             User adminUser = new User();
             adminUser.setId(userId);
-            adminUser.setUserCode("admin-001");
             adminUser.setRole("ADMIN");
 
             when(authenticationService.getUserById(userId)).thenReturn(Optional.of(adminUser));
@@ -138,7 +137,6 @@ class AuthServiceTest {
             String action = "delete";
             User regularUser = new User();
             regularUser.setId(userId);
-            regularUser.setUserCode("user-002");
             regularUser.setRole("USER");
 
             when(authenticationService.getUserById(userId)).thenReturn(Optional.of(regularUser));

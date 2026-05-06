@@ -6,16 +6,12 @@ package com.codingas.gateway.domain.security.service;
  * <p>包含认证成功后的用户信息和关联的 API Key 信息。</p>
  *
  * @param userId 用户ID
- * @param userCode 用户编码
  * @param role 用户角色（ADMIN/USER）
  * @param apiKeyId API Key ID
- * @param apiKeyCode API Key 编码
  */
 public record UserAuthResult(
     Long userId,
-    String userCode,
     String role,
-    Long apiKeyId,
-    String apiKeyCode
+    Long apiKeyId
 ) {
 }

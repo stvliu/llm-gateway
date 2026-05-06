@@ -17,9 +17,6 @@ import lombok.*;
 @AllArgsConstructor
 public class RouteGroupDo extends BaseDo {
 
-    @Column(name = "group_code", nullable = false, unique = true, length = 64)
-    private String groupCode;
-
     @Column(name = "group_name", nullable = false)
     private String groupName;
 

@@ -24,9 +24,6 @@ import java.util.List;
 @AllArgsConstructor
 public class AlertRuleDo extends BaseDo {
 
-    @Column(name = "rule_code", nullable = false, unique = true, length = 64)
-    private String ruleCode;
-
     @Column(name = "name", nullable = false, length = 128)
     private String name;
 

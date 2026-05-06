@@ -50,8 +50,8 @@ class ModelManageUseCaseTest {
 
             // then
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getModelCode()).isEqualTo("gpt-4");
-            assertThat(result.get(1).getModelCode()).isEqualTo("gpt-3.5");
+            assertThat(result.get(0).getProviderModelId()).isEqualTo("gpt-4");
+            assertThat(result.get(1).getProviderModelId()).isEqualTo("gpt-3.5");
             verify(modelService).findAll();
         }
     }
@@ -73,7 +73,7 @@ class ModelManageUseCaseTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getModelCode()).isEqualTo("gpt-4");
+            assertThat(result.get().getProviderModelId()).isEqualTo("gpt-4");
             verify(modelService).findById(id);
         }
 
@@ -110,7 +110,7 @@ class ModelManageUseCaseTest {
 
             // then
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getModelCode()).isEqualTo("gpt-4");
+            assertThat(result.getProviderModelId()).isEqualTo("gpt-4");
             verify(modelService).create(any(Model.class));
         }
     }
@@ -160,10 +160,10 @@ class ModelManageUseCaseTest {
     /**
      * 创建测试用 Model 对象
      */
-    private Model createModel(Long id, String modelCode, String displayName) {
+    private Model createModel(Long id, String providerModelId, String displayName) {
         Model model = new Model();
         model.setId(id);
-        model.setModelCode(modelCode);
+        model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         Provider provider = new Provider();
         provider.setId(1L);

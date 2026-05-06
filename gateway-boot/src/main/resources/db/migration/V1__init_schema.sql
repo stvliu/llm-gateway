@@ -6,7 +6,6 @@
 -- ============================================
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    user_code VARCHAR(64) NOT NULL UNIQUE,
     username VARCHAR(64) NOT NULL,
     email VARCHAR(128),
     password_hash VARCHAR(256),
@@ -26,7 +25,6 @@ CREATE TABLE users (
 );
 
 CREATE INDEX idx_users_username ON users(username);
-CREATE INDEX idx_users_user_code ON users(user_code);
 CREATE INDEX idx_users_email ON users(email);
 CREATE INDEX idx_users_status ON users(status);
 
@@ -35,7 +33,6 @@ CREATE INDEX idx_users_status ON users(status);
 -- ============================================
 CREATE TABLE gateway_api_keys (
     id BIGSERIAL PRIMARY KEY,
-    key_code VARCHAR(128) NOT NULL UNIQUE,
     key_hash VARCHAR(256) NOT NULL,
     user_id BIGINT NOT NULL,
     name VARCHAR(64),
@@ -61,7 +58,6 @@ CREATE INDEX idx_gateway_api_keys_expires ON gateway_api_keys(expires_at);
 -- ============================================
 CREATE TABLE providers (
     id BIGSERIAL PRIMARY KEY,
-    provider_code VARCHAR(64) NOT NULL UNIQUE,
     provider_name VARCHAR(128) NOT NULL,
     provider_type VARCHAR(32) NOT NULL,
     base_url VARCHAR(256),
@@ -76,7 +72,6 @@ CREATE TABLE providers (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_providers_provider_code ON providers(provider_code);
 CREATE INDEX idx_providers_status ON providers(status);
 
 -- ============================================
@@ -84,7 +79,6 @@ CREATE INDEX idx_providers_status ON providers(status);
 -- ============================================
 CREATE TABLE provider_api_keys (
     id BIGSERIAL PRIMARY KEY,
-    key_code VARCHAR(64) NOT NULL UNIQUE,
     provider_id BIGINT NOT NULL,
     key_name VARCHAR(64),
     api_key VARCHAR(512) NOT NULL,
@@ -107,7 +101,6 @@ CREATE INDEX idx_provider_api_keys_provider_id ON provider_api_keys(provider_id)
 -- ============================================
 CREATE TABLE models (
     id BIGSERIAL PRIMARY KEY,
-    model_code VARCHAR(128) NOT NULL UNIQUE,
     provider_id BIGINT NOT NULL,
     provider_model_id VARCHAR(128) NOT NULL,
     display_name VARCHAR(256),
@@ -125,7 +118,6 @@ CREATE TABLE models (
     CONSTRAINT uk_models_provider_model UNIQUE (provider_id, provider_model_id)
 );
 
-CREATE INDEX idx_models_model_code ON models(model_code);
 CREATE INDEX idx_models_provider ON models(provider_id);
 CREATE INDEX idx_models_status ON models(status);
 
@@ -134,7 +126,6 @@ CREATE INDEX idx_models_status ON models(status);
 -- ============================================
 CREATE TABLE route_groups (
     id BIGSERIAL PRIMARY KEY,
-    group_code VARCHAR(64) NOT NULL UNIQUE,
     group_name VARCHAR(128) NOT NULL,
     strategy VARCHAR(32) NOT NULL,
     enabled BOOLEAN DEFAULT TRUE,
@@ -144,7 +135,7 @@ CREATE TABLE route_groups (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_route_groups_group_code ON route_groups(group_code);
+CREATE INDEX idx_route_groups_name ON route_groups(group_name);
 
 -- ============================================
 -- 路由分组与提供商关联表
@@ -172,7 +163,6 @@ CREATE INDEX idx_route_group_providers_provider ON route_group_providers(provide
 -- ============================================
 CREATE TABLE token_limits (
     id BIGSERIAL PRIMARY KEY,
-    limit_code VARCHAR(64) NOT NULL UNIQUE,
     user_id BIGINT NOT NULL,
     provider_id BIGINT,
     model_id BIGINT,
@@ -193,7 +183,6 @@ CREATE TABLE token_limits (
     CONSTRAINT uk_token_limits_user_provider_model UNIQUE (user_id, provider_id, model_id)
 );
 
-CREATE INDEX idx_token_limits_limit_code ON token_limits(limit_code);
 CREATE INDEX idx_token_limits_user ON token_limits(user_id);
 CREATE INDEX idx_token_limits_provider ON token_limits(provider_id);
 CREATE INDEX idx_token_limits_model ON token_limits(model_id);
@@ -203,7 +192,6 @@ CREATE INDEX idx_token_limits_model ON token_limits(model_id);
 -- ============================================
 CREATE TABLE rate_limit_configs (
     id BIGSERIAL PRIMARY KEY,
-    config_code VARCHAR(64) NOT NULL UNIQUE,
     name VARCHAR(128),
     requests_per_minute INT,
     bucket_size INT,
@@ -215,7 +203,7 @@ CREATE TABLE rate_limit_configs (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_rate_limit_configs_config_code ON rate_limit_configs(config_code);
+CREATE INDEX idx_rate_limit_configs_name ON rate_limit_configs(name);
 
 -- ============================================
 -- 审计日志表
@@ -242,7 +230,6 @@ CREATE INDEX idx_audit_logs_created ON audit_logs(created_at);
 -- ============================================
 CREATE TABLE usage_logs (
     id BIGSERIAL PRIMARY KEY,
-    log_code VARCHAR(64) NOT NULL UNIQUE,
     gateway_api_key_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     provider_id BIGINT NOT NULL,
@@ -266,7 +253,6 @@ CREATE TABLE usage_logs (
     CONSTRAINT fk_usage_logs_model FOREIGN KEY (model_id) REFERENCES models(id)
 );
 
-CREATE INDEX idx_usage_logs_log_code ON usage_logs(log_code);
 CREATE INDEX idx_usage_user_created ON usage_logs(user_id, created_at);
 CREATE INDEX idx_usage_provider_created ON usage_logs(provider_id, created_at);
 CREATE INDEX idx_usage_key_created ON usage_logs(gateway_api_key_id, created_at);
@@ -276,7 +262,6 @@ CREATE INDEX idx_usage_key_created ON usage_logs(gateway_api_key_id, created_at)
 -- ============================================
 CREATE TABLE alert_rules (
     id BIGSERIAL PRIMARY KEY,
-    rule_code VARCHAR(64) NOT NULL UNIQUE,
     name VARCHAR(128) NOT NULL,
     alert_type VARCHAR(32) NOT NULL,
     target_type VARCHAR(32) NOT NULL,
@@ -293,7 +278,6 @@ CREATE TABLE alert_rules (
     updated_by BIGINT
 );
 
-CREATE INDEX idx_alert_rules_rule_code ON alert_rules(rule_code);
 CREATE INDEX idx_alert_rules_type ON alert_rules(alert_type);
 CREATE INDEX idx_alert_rules_active ON alert_rules(is_active);
 
@@ -302,7 +286,6 @@ CREATE INDEX idx_alert_rules_active ON alert_rules(is_active);
 -- ============================================
 CREATE TABLE alert_notifications (
     id BIGSERIAL PRIMARY KEY,
-    notification_code VARCHAR(64) NOT NULL UNIQUE,
     alert_rule_id BIGINT NOT NULL,
     target_user_id BIGINT NOT NULL,
     channel VARCHAR(32) NOT NULL,
@@ -320,7 +303,6 @@ CREATE TABLE alert_notifications (
     CONSTRAINT fk_alert_notifications_user FOREIGN KEY (target_user_id) REFERENCES users(id)
 );
 
-CREATE INDEX idx_alert_notifications_code ON alert_notifications(notification_code);
 CREATE INDEX idx_alert_notifications_rule ON alert_notifications(alert_rule_id);
 CREATE INDEX idx_alert_notifications_user ON alert_notifications(target_user_id);
 CREATE INDEX idx_alert_notifications_status ON alert_notifications(status);

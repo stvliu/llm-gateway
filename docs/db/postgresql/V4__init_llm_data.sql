@@ -1,0 +1,142 @@
+-- V4__init_llm_data.sql (PostgreSQL 版本)
+-- 初始化大模型 Provider、API Key 和 Model 数据
+-- 使用 INSERT ... ON CONFLICT 语法（PostgreSQL 兼容）
+--
+-- 使用方法：
+-- 1. 将此脚本复制到 db/migration/ 目录，替换 H2 版本
+-- 2. 或在生产环境中单独执行
+
+-- ============================================
+-- 插入 Provider（火山引擎）
+-- ============================================
+INSERT INTO providers (
+    provider_code, provider_name, provider_type, base_url,
+    website_url, api_doc_url, priority, status,
+    created_at, version
+) VALUES (
+    'volcengine', '火山引擎', 'VOLCENGINE', 'https://ark.cn-beijing.volces.com/api/v3',
+    'https://www.volcengine.com', 'https://www.volcengine.com/docs/82379/1298454', 100, 'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (provider_code) DO NOTHING;
+
+-- ============================================
+-- 插入 Provider API Key
+-- ============================================
+INSERT INTO provider_api_keys (
+    key_code, provider_id, key_name, api_key, encrypted_api_key,
+    priority, status, created_at, version
+) VALUES (
+    'VOLCENGINE_KEY_001',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    '火山引擎主密钥',
+    '1fb8bdcf-3383-426d-9f3d-4c2979895c58',
+    NULL,
+    100, 'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (key_code) DO NOTHING;
+
+-- ============================================
+-- 插入模型数据
+-- ============================================
+
+-- 豆包 Pro 32K
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-pro-32k',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-pro-32k',
+    '豆包 Pro 32K',
+    32768,
+    0.0008, 0.002,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;
+
+-- 豆包 Pro 128K
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-pro-128k',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-pro-128k',
+    '豆包 Pro 128K',
+    131072,
+    0.005, 0.009,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;
+
+-- 豆包 Lite 32K
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-lite-32k',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-lite-32k',
+    '豆包 Lite 32K',
+    32768,
+    0.0003, 0.0006,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;
+
+-- 豆包 Seed 2.0 Pro
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-seed-2-0-pro-260215',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-seed-2-0-pro-260215',
+    '豆包 Seed 2.0 Pro',
+    128000,
+    0.001, 0.002,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;
+
+-- 豆包 Seed 2.0 Code Preview
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-seed-2-0-code-preview-260215',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-seed-2-0-code-preview-260215',
+    '豆包 Seed 2.0 Code Preview',
+    128000,
+    0.001, 0.002,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;
+
+-- 豆包 Seed 2.0 Mini（用户测试模型）
+INSERT INTO models (
+    model_code, provider_id, provider_model_id, display_name,
+    context_window, input_price, output_price, capabilities, status,
+    created_at, version
+) VALUES (
+    'doubao-seed-2-0-mini-260215',
+    (SELECT id FROM providers WHERE provider_code = 'volcengine'),
+    'doubao-seed-2-0-mini-260215',
+    '豆包 Seed 2.0 Mini',
+    128000,
+    0.0005, 0.001,
+    '{"chat": true, "streaming": true, "function_calling": true}',
+    'ACTIVE',
+    CURRENT_TIMESTAMP, 0
+) ON CONFLICT (model_code) DO NOTHING;

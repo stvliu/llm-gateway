@@ -28,14 +28,6 @@ public interface UserGateway {
     Optional<User> findById(Long id);
 
     /**
-     * 根据用户编码查找用户
-     *
-     * @param userCode 用户编码
-     * @return 用户信息
-     */
-    Optional<User> findByUserCode(String userCode);
-
-    /**
      * 根据邮箱查找用户
      *
      * @param email 邮箱
@@ -79,4 +71,12 @@ public interface UserGateway {
      * @return 是否存在
      */
     boolean existsByUsername(String username);
+
+    /**
+     * 根据用户名查找用户
+     *
+     * @param username 用户名
+     * @return 用户信息
+     */
+    Optional<User> findByUsername(String username);
 }

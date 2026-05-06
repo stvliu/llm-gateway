@@ -36,11 +36,14 @@ export interface LoginRequest {
   rememberMe?: boolean;
 }
 
-/** 登录响应 */
-export interface LoginResponse {
-  user: User;
+/** 登录响应数据 */
+export interface LoginResponseData {
+  user: CurrentUser;
   token?: string;
 }
+
+/** 登录响应（包装在 ApiResponse 中） */
+export type LoginResponse = LoginResponseData;
 
 /** 当前用户信息 */
 export interface CurrentUser {

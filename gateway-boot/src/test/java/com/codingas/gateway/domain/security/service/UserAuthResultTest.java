@@ -15,25 +15,19 @@ class UserAuthResultTest {
     @DisplayName("创建认证结果成功")
     void create_validParams_success() {
         // when
-        UserAuthResult result = new UserAuthResult(
-            1L, "user-001", "ADMIN", 100L, "api-key-001"
-        );
+        UserAuthResult result = new UserAuthResult(1L, "ADMIN", 100L);
 
         // then
         assertThat(result.userId()).isEqualTo(1L);
-        assertThat(result.userCode()).isEqualTo("user-001");
         assertThat(result.role()).isEqualTo("ADMIN");
         assertThat(result.apiKeyId()).isEqualTo(100L);
-        assertThat(result.apiKeyCode()).isEqualTo("api-key-001");
     }
 
     @Test
     @DisplayName("创建普通用户认证结果")
     void create_userRole_success() {
         // when
-        UserAuthResult result = new UserAuthResult(
-            2L, "user-002", "USER", 101L, "api-key-002"
-        );
+        UserAuthResult result = new UserAuthResult(2L, "USER", 101L);
 
         // then
         assertThat(result.role()).isEqualTo("USER");
@@ -43,8 +37,8 @@ class UserAuthResultTest {
     @DisplayName("equals 和 hashCode 测试")
     void equals_sameValues_equal() {
         // given
-        UserAuthResult result1 = new UserAuthResult(1L, "user-001", "ADMIN", 100L, "api-key-001");
-        UserAuthResult result2 = new UserAuthResult(1L, "user-001", "ADMIN", 100L, "api-key-001");
+        UserAuthResult result1 = new UserAuthResult(1L, "ADMIN", 100L);
+        UserAuthResult result2 = new UserAuthResult(1L, "ADMIN", 100L);
 
         // then
         assertThat(result1).isEqualTo(result2);
@@ -55,14 +49,13 @@ class UserAuthResultTest {
     @DisplayName("toString 包含所有字段")
     void toString_containsAllFields() {
         // given
-        UserAuthResult result = new UserAuthResult(1L, "user-001", "ADMIN", 100L, "api-key-001");
+        UserAuthResult result = new UserAuthResult(1L, "ADMIN", 100L);
 
         // when
         String str = result.toString();
 
         // then
         assertThat(str).contains("userId=1");
-        assertThat(str).contains("userCode=user-001");
         assertThat(str).contains("role=ADMIN");
     }
 }

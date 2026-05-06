@@ -20,8 +20,6 @@ import java.util.Map;
 @Slf4j
 public class Model extends BaseEntity {
 
-    private String modelCode;
-
     private Provider provider;
 
     private String providerModelId;

@@ -5,7 +5,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
@@ -40,18 +39,12 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse create(ModelCreateRequest request) {
-        // 检查模型代码唯一性
-        if (modelGateway.existsByModelCode(request.getModelCode())) {
-            throw new DuplicateResourceException("Model", "modelCode");
-        }
-
         // 查找提供商
         Provider provider = providerGateway.findById(request.getProviderId())
             .orElseThrow(() -> new ResourceNotFoundException("Provider", request.getProviderId()));
 
         // 创建模型
         Model model = new Model();
-        model.setModelCode(request.getModelCode());
         model.setProvider(provider);
         model.setProviderModelId(request.getProviderModelId());
         model.setDisplayName(request.getDisplayName());
@@ -86,8 +79,7 @@ public class ModelServiceImpl implements ModelService {
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             models = models.stream()
-                .filter(m -> m.getModelCode().toLowerCase().contains(keyword)
-                    || (m.getDisplayName() != null && m.getDisplayName().toLowerCase().contains(keyword))
+                .filter(m -> (m.getDisplayName() != null && m.getDisplayName().toLowerCase().contains(keyword))
                     || m.getProviderModelId().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
@@ -183,10 +175,8 @@ public class ModelServiceImpl implements ModelService {
     private ModelResponse toResponse(Model model) {
         ModelResponse response = new ModelResponse();
         response.setId(model.getId());
-        response.setModelCode(model.getModelCode());
         response.setProviderId(model.getProvider().getId());
         response.setProviderName(model.getProvider().getProviderName());
-        response.setProviderCode(model.getProvider().getProviderCode());
         response.setProviderModelId(model.getProviderModelId());
         response.setDisplayName(model.getDisplayName());
         response.setContextWindow(model.getContextWindow());

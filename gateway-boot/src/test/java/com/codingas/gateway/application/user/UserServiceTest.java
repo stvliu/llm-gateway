@@ -44,7 +44,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        testUser = createTestUser(1L, "USR001", "testuser", "test@example.com");
+        testUser = createTestUser(1L, "testuser", "test@example.com");
     }
 
     // ==================== create 测试 ====================
@@ -175,7 +175,6 @@ class UserServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getUserCode()).isEqualTo("USR001");
             assertThat(response.getUsername()).isEqualTo("testuser");
             verify(userGateway).findById(1L);
         }
@@ -204,7 +203,7 @@ class UserServiceTest {
         @DisplayName("返回所有用户")
         void query_noFilter_returnsAllUsers() {
             // given
-            User user2 = createTestUser(2L, "USR002", "user2", "user2@example.com");
+            User user2 = createTestUser(2L, "user2", "user2@example.com");
             when(userGateway.findAll()).thenReturn(List.of(testUser, user2));
 
             UserQueryRequest request = new UserQueryRequest();
@@ -263,7 +262,7 @@ class UserServiceTest {
             // given
             List<User> users = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
-                users.add(createTestUser(i, "USR" + String.format("%03d", i), "user" + i, "user" + i + "@example.com"));
+                users.add(createTestUser(i, "user" + i, "user" + i + "@example.com"));
             }
             when(userGateway.findAll()).thenReturn(users);
 
@@ -474,10 +473,9 @@ class UserServiceTest {
 
     // ==================== 辅助方法 ====================
 
-    private User createTestUser(Long id, String userCode, String username, String email) {
+    private User createTestUser(Long id, String username, String email) {
         User user = new User();
         user.setId(id);
-        user.setUserCode(userCode);
         user.setUsername(username);
         user.setEmail(email);
         user.setPasswordHash("hashedPassword");

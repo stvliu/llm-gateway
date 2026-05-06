@@ -35,32 +35,32 @@ class RoutingDomainServiceTest {
     }
 
     @Nested
-    @DisplayName("findByGroupCode 测试")
-    class FindByGroupCodeTests {
+    @DisplayName("findById 测试")
+    class FindByIdTests {
 
         @Test
-        @DisplayName("根据代码查找路由分组")
-        void findByGroupCode_found() {
+        @DisplayName("根据 ID 查找路由分组")
+        void findById_found() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", true);
-            when(routeGroupGateway.findByGroupCode("group-1")).thenReturn(group);
+            RouteGroup group = createTestRouteGroup(1L, true);
+            when(routeGroupGateway.findById(1L)).thenReturn(group);
 
             // When
-            Optional<RouteGroup> result = service.findByGroupCode("group-1");
+            Optional<RouteGroup> result = service.findById(1L);
 
             // Then
             assertThat(result).isPresent();
-            assertThat(result.get().getGroupCode()).isEqualTo("group-1");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
         @DisplayName("找不到分组返回空")
-        void findByGroupCode_notFound() {
+        void findById_notFound() {
             // Given
-            when(routeGroupGateway.findByGroupCode("unknown")).thenReturn(null);
+            when(routeGroupGateway.findById(999L)).thenReturn(null);
 
             // When
-            Optional<RouteGroup> result = service.findByGroupCode("unknown");
+            Optional<RouteGroup> result = service.findById(999L);
 
             // Then
             assertThat(result).isEmpty();
@@ -68,19 +68,9 @@ class RoutingDomainServiceTest {
 
         @Test
         @DisplayName("null 参数返回空")
-        void findByGroupCode_nullCode() {
+        void findById_nullId() {
             // When
-            Optional<RouteGroup> result = service.findByGroupCode(null);
-
-            // Then
-            assertThat(result).isEmpty();
-        }
-
-        @Test
-        @DisplayName("空白字符串返回空")
-        void findByGroupCode_blankCode() {
-            // When
-            Optional<RouteGroup> result = service.findByGroupCode("  ");
+            Optional<RouteGroup> result = service.findById(null);
 
             // Then
             assertThat(result).isEmpty();
@@ -95,8 +85,8 @@ class RoutingDomainServiceTest {
         @DisplayName("查找所有活跃分组")
         void findAllActive() {
             // Given
-            RouteGroup group1 = createTestRouteGroup("group-1", true);
-            RouteGroup group2 = createTestRouteGroup("group-2", true);
+            RouteGroup group1 = createTestRouteGroup(1L, true);
+            RouteGroup group2 = createTestRouteGroup(2L, true);
             when(routeGroupGateway.findAllActive()).thenReturn(List.of(group1, group2));
 
             // When
@@ -128,11 +118,11 @@ class RoutingDomainServiceTest {
         @DisplayName("分组存在且启用返回 true")
         void isRouteGroupAvailable_enabled() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", true);
-            when(routeGroupGateway.findByGroupCode("group-1")).thenReturn(group);
+            RouteGroup group = createTestRouteGroup(1L, true);
+            when(routeGroupGateway.findById(1L)).thenReturn(group);
 
             // When
-            boolean result = service.isRouteGroupAvailable("group-1");
+            boolean result = service.isRouteGroupAvailable(1L);
 
             // Then
             assertThat(result).isTrue();
@@ -142,11 +132,11 @@ class RoutingDomainServiceTest {
         @DisplayName("分组存在但未启用返回 false")
         void isRouteGroupAvailable_disabled() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", false);
-            when(routeGroupGateway.findByGroupCode("group-1")).thenReturn(group);
+            RouteGroup group = createTestRouteGroup(1L, false);
+            when(routeGroupGateway.findById(1L)).thenReturn(group);
 
             // When
-            boolean result = service.isRouteGroupAvailable("group-1");
+            boolean result = service.isRouteGroupAvailable(1L);
 
             // Then
             assertThat(result).isFalse();
@@ -156,10 +146,10 @@ class RoutingDomainServiceTest {
         @DisplayName("分组不存在返回 false")
         void isRouteGroupAvailable_notFound() {
             // Given
-            when(routeGroupGateway.findByGroupCode("unknown")).thenReturn(null);
+            when(routeGroupGateway.findById(999L)).thenReturn(null);
 
             // When
-            boolean result = service.isRouteGroupAvailable("unknown");
+            boolean result = service.isRouteGroupAvailable(999L);
 
             // Then
             assertThat(result).isFalse();
@@ -174,12 +164,12 @@ class RoutingDomainServiceTest {
         @DisplayName("获取分组路由策略")
         void getRoutingStrategy_found() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", true);
+            RouteGroup group = createTestRouteGroup(1L, true);
             group.setStrategy(RouteGroup.RoutingStrategy.FAILOVER);
-            when(routeGroupGateway.findByGroupCode("group-1")).thenReturn(group);
+            when(routeGroupGateway.findById(1L)).thenReturn(group);
 
             // When
-            RouteGroup.RoutingStrategy result = service.getRoutingStrategy("group-1");
+            RouteGroup.RoutingStrategy result = service.getRoutingStrategy(1L);
 
             // Then
             assertThat(result).isEqualTo(RouteGroup.RoutingStrategy.FAILOVER);
@@ -189,10 +179,10 @@ class RoutingDomainServiceTest {
         @DisplayName("分组不存在返回默认策略")
         void getRoutingStrategy_notFound_returnsDefault() {
             // Given
-            when(routeGroupGateway.findByGroupCode("unknown")).thenReturn(null);
+            when(routeGroupGateway.findById(999L)).thenReturn(null);
 
             // When
-            RouteGroup.RoutingStrategy result = service.getRoutingStrategy("unknown");
+            RouteGroup.RoutingStrategy result = service.getRoutingStrategy(999L);
 
             // Then
             assertThat(result).isEqualTo(RouteGroup.RoutingStrategy.WEIGHTED);
@@ -202,12 +192,12 @@ class RoutingDomainServiceTest {
         @DisplayName("分组未启用返回默认策略")
         void getRoutingStrategy_disabled_returnsDefault() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", false);
+            RouteGroup group = createTestRouteGroup(1L, false);
             group.setStrategy(RouteGroup.RoutingStrategy.FAILOVER);
-            when(routeGroupGateway.findByGroupCode("group-1")).thenReturn(group);
+            when(routeGroupGateway.findById(1L)).thenReturn(group);
 
             // When
-            RouteGroup.RoutingStrategy result = service.getRoutingStrategy("group-1");
+            RouteGroup.RoutingStrategy result = service.getRoutingStrategy(1L);
 
             // Then
             assertThat(result).isEqualTo(RouteGroup.RoutingStrategy.WEIGHTED);
@@ -222,7 +212,7 @@ class RoutingDomainServiceTest {
         @DisplayName("保存路由分组")
         void save() {
             // Given
-            RouteGroup group = createTestRouteGroup("group-1", true);
+            RouteGroup group = createTestRouteGroup(1L, true);
             when(routeGroupGateway.save(any())).thenReturn(group);
 
             // When
@@ -235,9 +225,9 @@ class RoutingDomainServiceTest {
     }
 
     // Helper methods
-    private RouteGroup createTestRouteGroup(String code, boolean enabled) {
+    private RouteGroup createTestRouteGroup(Long id, boolean enabled) {
         RouteGroup group = new RouteGroup();
-        group.setGroupCode(code);
+        group.setId(id);
         group.setEnabled(enabled);
         group.setStrategy(RouteGroup.RoutingStrategy.WEIGHTED);
         return group;

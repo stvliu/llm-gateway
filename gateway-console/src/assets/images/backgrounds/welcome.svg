@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f0f5ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e6f7ff;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1890ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#722ed1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="600" fill="url(#bgGrad)"/>
+
+  <!-- Decorative circles -->
+  <circle cx="650" cy="100" r="80" fill="#1890ff" opacity="0.1"/>
+  <circle cx="700" cy="500" r="120" fill="#722ed1" opacity="0.08"/>
+  <circle cx="100" cy="450" r="60" fill="#1890ff" opacity="0.1"/>
+
+  <!-- Main illustration - AI Gateway concept -->
+  <g transform="translate(200, 150)">
+    <!-- Central hub -->
+    <circle cx="200" cy="150" r="60" fill="url(#primaryGrad)" opacity="0.9"/>
+    <circle cx="200" cy="150" r="40" fill="white"/>
+    <circle cx="200" cy="150" r="20" fill="url(#primaryGrad)"/>
+
+    <!-- Connection lines -->
+    <line x1="200" y1="90" x2="200" y2="20" stroke="#1890ff" stroke-width="3" opacity="0.6"/>
+    <line x1="200" y1="210" x2="200" y2="280" stroke="#1890ff" stroke-width="3" opacity="0.6"/>
+    <line x1="140" y1="150" x2="60" y2="150" stroke="#1890ff" stroke-width="3" opacity="0.6"/>
+    <line x1="260" y1="150" x2="340" y2="150" stroke="#1890ff" stroke-width="3" opacity="0.6"/>
+
+    <!-- Diagonal lines -->
+    <line x1="157" y1="107" x2="100" y2="50" stroke="#722ed1" stroke-width="2" opacity="0.5"/>
+    <line x1="243" y1="107" x2="300" y2="50" stroke="#722ed1" stroke-width="2" opacity="0.5"/>
+    <line x1="157" y1="193" x2="100" y2="250" stroke="#722ed1" stroke-width="2" opacity="0.5"/>
+    <line x1="243" y1="193" x2="300" y2="250" stroke="#722ed1" stroke-width="2" opacity="0.5"/>
+
+    <!-- Provider nodes -->
+    <circle cx="200" cy="20" r="25" fill="#10a37f" opacity="0.9"/>
+    <text x="200" y="26" font-size="14" fill="white" text-anchor="middle" font-weight="bold">AI</text>
+
+    <circle cx="200" cy="280" r="25" fill="#d97757" opacity="0.9"/>
+    <text x="200" y="286" font-size="14" fill="white" text-anchor="middle" font-weight="bold">A</text>
+
+    <circle cx="60" cy="150" r="25" fill="#4285f4" opacity="0.9"/>
+    <text x="60" y="156" font-size="12" fill="white" text-anchor="middle" font-weight="bold">G</text>
+
+    <circle cx="340" cy="150" r="25" fill="#ff6b35" opacity="0.9"/>
+    <text x="340" y="156" font-size="11" fill="white" text-anchor="middle" font-weight="bold">AZ</text>
+
+    <!-- Corner nodes -->
+    <circle cx="100" cy="50" r="18" fill="#667eea" opacity="0.8"/>
+    <circle cx="300" cy="50" r="18" fill="#764ba2" opacity="0.8"/>
+    <circle cx="100" cy="250" r="18" fill="#11998e" opacity="0.8"/>
+    <circle cx="300" cy="250" r="18" fill="#38ef7d" opacity="0.8"/>
+  </g>
+
+  <!-- Text -->
+  <text x="400" y="520" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" fill="#1f1f1f" text-anchor="middle" font-weight="600">
+    统一接入，智能路由
+  </text>
+  <text x="400" y="560" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="16" fill="#666" text-anchor="middle">
+    OpenAI / Anthropic / Google / Azure
+  </text>
+</svg>

@@ -55,7 +55,7 @@ class ProviderDomainServiceTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -69,26 +69,6 @@ class ProviderDomainServiceTest {
 
             // then
             assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("findByProviderCode 方法测试")
-    class FindByProviderCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 Provider")
-        void findByProviderCode_existingCode_returnsEntity() {
-            // given
-            Provider provider = createTestProvider();
-            when(providerGateway.findByProviderCode("openai")).thenReturn(Optional.of(provider));
-
-            // when
-            Optional<Provider> result = service.findByProviderCode("openai");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getProviderCode()).isEqualTo("openai");
         }
     }
 
@@ -225,7 +205,6 @@ class ProviderDomainServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderCode("openai");
         provider.setProviderName("OpenAI");
         provider.setProviderType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.openai.com");

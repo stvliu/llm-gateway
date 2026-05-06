@@ -1,0 +1,5 @@
+-- V6__clear_seed_data.sql
+-- 占位脚本
+--
+-- V4 的数据初始化已迁移到 DataInitializer
+-- 此脚本保留为空，以保持 Flyway 版本号连续

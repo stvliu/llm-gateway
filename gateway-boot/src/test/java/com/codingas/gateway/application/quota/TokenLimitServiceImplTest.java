@@ -8,15 +8,12 @@ import com.codingas.gateway.common.enums.ExceededAction;
 import com.codingas.gateway.common.enums.PeriodType;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.quota.entity.TokenLimit;
+import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -65,7 +62,6 @@ class TokenLimitServiceImplTest {
         void create_validRequest_returnsCreated() {
             // given
             TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setLimitCode("limit-001");
             request.setUserId(1L);
             request.setMaxTokens(BigDecimal.valueOf(100000));
             request.setPeriodType(PeriodType.MONTHLY);
@@ -73,7 +69,6 @@ class TokenLimitServiceImplTest {
 
             User user = createTestUser();
             when(userGateway.findById(1L)).thenReturn(Optional.of(user));
-            when(tokenLimitGateway.existsByLimitCode("limit-001")).thenReturn(false);
             when(tokenLimitGateway.save(any())).thenAnswer(inv -> {
                 TokenLimit t = inv.getArgument(0);
                 t.setId(1L);
@@ -85,33 +80,17 @@ class TokenLimitServiceImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getLimitCode()).isEqualTo("limit-001");
         }
 
-        @Test
-        @DisplayName("重复限额代码抛出异常")
-        void create_duplicateCode_throwsException() {
-            // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setLimitCode("limit-001");
-            request.setUserId(1L);
-
-            when(tokenLimitGateway.existsByLimitCode("limit-001")).thenReturn(true);
-
-            // when & then
-            assertThatThrownBy(() -> service.create(request))
-                .isInstanceOf(DuplicateResourceException.class);
-        }
+        // 测试已移除重复代码检查，因为 limitCode 字段已被删除
 
         @Test
         @DisplayName("用户不存在抛出异常")
         void create_userNotFound_throwsException() {
             // given
             TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setLimitCode("limit-001");
             request.setUserId(999L);
 
-            when(tokenLimitGateway.existsByLimitCode("limit-001")).thenReturn(false);
             when(userGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
@@ -242,7 +221,6 @@ class TokenLimitServiceImplTest {
     private User createTestUser() {
         User user = new User();
         user.setId(1L);
-        user.setUserCode("user-001");
         user.setUsername("testuser");
         user.setEmail("test@example.com");
         return user;
@@ -251,7 +229,6 @@ class TokenLimitServiceImplTest {
     private TokenLimit createTestTokenLimit() {
         TokenLimit tokenLimit = new TokenLimit();
         tokenLimit.setId(1L);
-        tokenLimit.setLimitCode("limit-001");
         tokenLimit.setUser(createTestUser());
         tokenLimit.setMaxTokens(BigDecimal.valueOf(100000));
         tokenLimit.setUsedTokens(BigDecimal.ZERO);

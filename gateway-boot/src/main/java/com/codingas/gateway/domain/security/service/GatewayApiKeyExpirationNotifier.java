@@ -58,7 +58,7 @@ public class GatewayApiKeyExpirationNotifier {
                     failedCount++;
                 }
             } catch (Exception e) {
-                log.error("Failed to send expiration warning for key: {}", apiKey.getKeyCode(), e);
+                log.error("Failed to send expiration warning for key: {}", apiKey.getId(), e);
                 failedCount++;
             }
         }
@@ -98,7 +98,7 @@ public class GatewayApiKeyExpirationNotifier {
                     failedCount++;
                 }
             } catch (Exception e) {
-                log.error("Failed to send expiration warning for key: {}", apiKey.getKeyCode(), e);
+                log.error("Failed to send expiration warning for key: {}", apiKey.getId(), e);
                 failedCount++;
             }
         }
@@ -111,7 +111,7 @@ public class GatewayApiKeyExpirationNotifier {
      */
     @Transactional(readOnly = true)
     public boolean manualNotify(Long apiKeyId) {
-        GatewayApiKey apiKey = apiKeyGateway.findByKeyCode(String.valueOf(apiKeyId));
+        GatewayApiKey apiKey = apiKeyGateway.findById(apiKeyId).orElse(null);
         if (apiKey == null) {
             log.warn("API Key not found for manual notification: id={}", apiKeyId);
             return false;
@@ -126,7 +126,7 @@ public class GatewayApiKeyExpirationNotifier {
     private boolean sendExpirationWarning(GatewayApiKey apiKey) {
         User user = apiKey.getUser();
         if (user == null) {
-            log.warn("User not found for API Key: keyCode={}", apiKey.getKeyCode());
+            log.warn("User not found for API Key: id={}", apiKey.getId());
             return false;
         }
 
@@ -134,7 +134,7 @@ public class GatewayApiKeyExpirationNotifier {
         return notificationService.sendExpirationWarning(
             user.getEmail(),
             user.getUsername(),
-            apiKey.getKeyCode(),
+            String.valueOf(apiKey.getId()),
             apiKey.getName(),
             apiKey.getExpiresAt()
         );

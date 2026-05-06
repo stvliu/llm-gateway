@@ -39,11 +39,6 @@ public class ConfigCacheService {
         return providerGateway.findById(id);
     }
 
-    @Cacheable(value = CacheNames.PROVIDERS, key = "'code:' + #providerCode")
-    public Optional<Provider> getProviderByCode(String providerCode) {
-        return providerGateway.findByProviderCode(providerCode);
-    }
-
     @Cacheable(value = CacheNames.PROVIDERS, key = "'all'")
     public List<Provider> getAllProviders() {
         return providerGateway.findAll();
@@ -59,11 +54,6 @@ public class ConfigCacheService {
     @Cacheable(value = CacheNames.MODELS, key = "#id")
     public Optional<Model> getModelById(Long id) {
         return modelGateway.findById(id);
-    }
-
-    @Cacheable(value = CacheNames.MODELS, key = "'code:' + #modelCode")
-    public Optional<Model> getModelByCode(String modelCode) {
-        return modelGateway.findByModelCode(modelCode);
     }
 
     @Cacheable(value = CacheNames.MODELS, key = "'all'")

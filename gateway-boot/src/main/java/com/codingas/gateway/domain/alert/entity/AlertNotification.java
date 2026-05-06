@@ -19,8 +19,6 @@ import java.util.Map;
 @Slf4j
 public class AlertNotification extends BaseEntity {
 
-    private String notificationCode;
-
     private Long alertRuleId;
 
     private Long targetUserId;

@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.security.gateway;
 
-import com.codingas.gateway.domain.quota.entity.TokenLimit;
+import com.codingas.gateway.domain.usage.entity.TokenLimit;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,14 +27,6 @@ public interface TokenLimitGateway {
      * @return 限额信息，不存在返回空
      */
     Optional<TokenLimit> findById(Long id);
-
-    /**
-     * 根据限额代码查找限额
-     *
-     * @param limitCode 限额代码
-     * @return 限额信息，不存在返回空
-     */
-    Optional<TokenLimit> findByLimitCode(String limitCode);
 
     /**
      * 根据用户 ID 查找限额列表
@@ -65,13 +57,6 @@ public interface TokenLimitGateway {
      */
     void delete(TokenLimit tokenLimit);
 
-    /**
-     * 检查限额代码是否存在
-     *
-     * @param limitCode 限额代码
-     * @return 是否存在
-     */
-    boolean existsByLimitCode(String limitCode);
 
     /**
      * 扣减已使用量

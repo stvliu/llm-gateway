@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.apikey.gateway;
 
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.infrastructure.apikey.gateway.database.ProviderApiKeyRepository;
-import com.codingas.gateway.infrastructure.apikey.gateway.database.dataobject.ProviderApiKeyDo;
+import com.codingas.gateway.infrastructure.model.gateway.database.ProviderApiKeyRepository;
+import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,39 +30,6 @@ class ProviderApiKeyGatewayImplTest {
 
     @InjectMocks
     private ProviderApiKeyGatewayImpl gateway;
-
-    @Nested
-    @DisplayName("findByProviderCode 方法测试")
-    class FindByProviderCodeTests {
-
-        @Test
-        @DisplayName("通过提供商编码找到 API Key")
-        void findByProviderCode_existingCode_returnsEntity() {
-            // given
-            ProviderApiKeyDo doEntity = createTestDo();
-            when(repository.findByKeyCode("openai-key")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<ProviderApiKey> result = gateway.findByProviderCode("openai-key");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getKeyCode()).isEqualTo("openai-key");
-        }
-
-        @Test
-        @DisplayName("未找到返回空")
-        void findByProviderCode_nonExistingCode_returnsEmpty() {
-            // given
-            when(repository.findByKeyCode("unknown")).thenReturn(Optional.empty());
-
-            // when
-            Optional<ProviderApiKey> result = gateway.findByProviderCode("unknown");
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
 
     @Nested
     @DisplayName("findById 方法测试")
@@ -122,39 +89,8 @@ class ProviderApiKeyGatewayImplTest {
 
             // then
             assertThat(result).isNotNull();
-            assertThat(result.getKeyCode()).isEqualTo("openai-key");
+            assertThat(result.getId()).isEqualTo(1L);
             verify(repository).save(any());
-        }
-    }
-
-    @Nested
-    @DisplayName("getMaxVersion 方法测试")
-    class GetMaxVersionTests {
-
-        @Test
-        @DisplayName("返回最大版本号")
-        void getMaxVersion_returnsMaxVersion() {
-            // given
-            when(repository.findMaxVersion()).thenReturn(5L);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(5L);
-        }
-
-        @Test
-        @DisplayName("无版本时返回 0")
-        void getMaxVersion_noVersions_returnsZero() {
-            // given
-            when(repository.findMaxVersion()).thenReturn(null);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(0L);
         }
     }
 
@@ -162,7 +98,6 @@ class ProviderApiKeyGatewayImplTest {
     private ProviderApiKey createTestEntity() {
         ProviderApiKey entity = new ProviderApiKey();
         entity.setId(1L);
-        entity.setKeyCode("openai-key");
         entity.setProviderId(1L);
         entity.setKeyName("OpenAI API Key");
         entity.setApiKey("sk-test-key");
@@ -174,7 +109,6 @@ class ProviderApiKeyGatewayImplTest {
     private ProviderApiKeyDo createTestDo() {
         ProviderApiKeyDo doEntity = new ProviderApiKeyDo();
         doEntity.setId(1L);
-        doEntity.setKeyCode("openai-key");
         doEntity.setProviderId(1L);
         doEntity.setKeyName("OpenAI API Key");
         doEntity.setApiKey("sk-test-key");

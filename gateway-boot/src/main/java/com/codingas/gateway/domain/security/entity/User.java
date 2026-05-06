@@ -21,8 +21,6 @@ import java.util.Map;
 @Slf4j
 public class User extends BaseEntity {
 
-    private String userCode;
-
     private String username;
 
     private String email;

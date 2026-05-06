@@ -25,9 +25,6 @@ import java.util.Map;
 @AllArgsConstructor
 public class ModelDo extends BaseDo {
 
-    @Column(name = "model_code", nullable = false, unique = true, length = 128)
-    private String modelCode;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "provider_id", nullable = false)
     private ProviderDo provider;

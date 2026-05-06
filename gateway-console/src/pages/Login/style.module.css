@@ -1,62 +1,225 @@
-.container {
+/* 登录页面布局 - Jmix CRM 风格 */
+
+.login-view-layout {
+  padding: 0;
+  background: white;
   min-height: 100vh;
+  height: 100%;
+  width: 100%;
+}
+
+.container {
   display: flex;
-  align-items: center;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 左侧登录面板 - 主色背景 */
+.loginPanel {
+  flex: 0 0 clamp(360px, 36vw, 520px);
+  background: #006af5;
+  display: flex;
+  flex-direction: column;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
+/* 登录表单容器 - 透明背景 */
 .card {
-  width: 400px;
-  padding: 32px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  max-width: calc(32px * 12);
+  background: transparent;
+  padding: var(--lumo-space-l, 24px);
+  border-radius: var(--lumo-border-radius-m, 8px);
+  width: 100%;
 }
 
-.logo {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.logoIcon {
-  font-size: 48px;
-  color: #1890ff;
-}
-
+/* 标题 */
 .title {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1f1f1f;
+  font-size: 20px;
+  font-weight: 800;
+  color: white;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .subtitle {
   font-size: 14px;
-  color: #666;
+  color: rgba(255, 255, 255, 0.8);
   text-align: center;
   margin-bottom: 24px;
 }
 
+/* 错误提示 */
 .error {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  border-radius: 4px;
-  padding: 8px 12px;
+  background-color: rgba(255, 77, 79, 0.1);
+  padding: 12px 16px;
+  padding-left: 24px;
+  border-radius: 8px;
   margin-bottom: 16px;
   color: #ff4d4f;
+  font-size: 14px;
+  position: relative;
 }
 
+.error::before {
+  content: '!';
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  background: #ff4d4f;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 记住我和语言切换行 */
 .rememberRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
 }
 
+.rememberRow :global(.ant-select) {
+  width: 100%;
+  max-width: 8em;
+}
+
+.rememberRow :global(.ant-select-selector) {
+  background: white !important;
+  border-radius: 4px !important;
+}
+
+/* 右侧欢迎图片区域 */
+.welcomeImage {
+  flex: 1 1 clamp(520px, 64vw, 1200px);
+  height: 100%;
+  padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 3vw, 3rem);
+  background-image: url('@/assets/images/backgrounds/welcome.svg');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-color: white;
+  pointer-events: none;
+  position: relative;
+  z-index: 2;
+  margin-left: clamp(-2vw, -4vw, -200px);
+}
+
+/* 响应式：小屏幕隐藏图片 */
+@media (max-width: 1100px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .loginPanel {
+    flex: 1;
+    min-width: 100%;
+  }
+
+  .welcomeImage {
+    display: none;
+  }
+}
+
+/* 移动端优化 */
 @media (max-width: 480px) {
   .card {
-    width: calc(100% - 32px);
-    margin: 16px;
+    padding: 16px;
   }
+
+  .title {
+    font-size: 18px;
+  }
+}
+
+/* 表单样式覆盖 - 白色输入框 */
+.loginPanel :global(.ant-input),
+.loginPanel :global(.ant-input-password),
+.loginPanel :global(.ant-input-affix-wrapper) {
+  background: white !important;
+  border-color: transparent;
+  border-radius: 4px;
+  color: #1a1a1a;
+}
+
+.loginPanel :global(.ant-input::placeholder) {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.loginPanel :global(.ant-input-affix-wrapper .ant-input) {
+  background: transparent !important;
+}
+
+.loginPanel :global(.ant-input:focus),
+.loginPanel :global(.ant-input-affix-wrapper:focus),
+.loginPanel :global(.ant-input-affix-wrapper-focused) {
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.loginPanel :global(.ant-form-item-label > label) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.loginPanel :global(.ant-form-item-label > label::after) {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Checkbox 白色样式 */
+.loginPanel :global(.ant-checkbox-wrapper) {
+  color: white;
+}
+
+.loginPanel :global(.ant-checkbox-inner) {
+  background: white;
+  border-color: white;
+}
+
+.loginPanel :global(.ant-checkbox-checked .ant-checkbox-inner) {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+/* 登录按钮 - 白色背景黑色文字 */
+.loginPanel :global(.ant-btn-primary) {
+  color: #1a1a1a;
+  background-color: white;
+  border-color: white;
+  border-radius: 4px;
+  font-weight: 500;
+  height: 40px;
+}
+
+.loginPanel :global(.ant-btn-primary:hover) {
+  color: #1a1a1a;
+  background-color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+/* 底部链接 */
+.footer {
+  margin-top: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+}
+
+.footer a {
+  color: rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: white;
+  text-decoration: underline;
 }

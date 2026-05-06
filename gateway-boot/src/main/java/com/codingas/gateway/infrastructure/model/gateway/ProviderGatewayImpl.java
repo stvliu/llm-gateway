@@ -37,11 +37,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
     }
 
     @Override
-    public Optional<Provider> findByProviderCode(String providerCode) {
-        return providerRepository.findByProviderCode(providerCode).map(this::toEntity);
-    }
-
-    @Override
     public List<Provider> findAll() {
         return providerRepository.findAll().stream()
             .map(this::toEntity)
@@ -72,17 +67,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         providerRepository.delete(toDo(provider));
     }
 
-    @Override
-    public boolean existsByProviderCode(String providerCode) {
-        return providerRepository.existsByProviderCode(providerCode);
-    }
-
-    @Override
-    public long getMaxVersion() {
-        Long maxVersion = providerRepository.findMaxVersion();
-        return maxVersion != null ? maxVersion : 0L;
-    }
-
     /**
      * DO 转 Entity
      */
@@ -92,7 +76,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         }
         Provider entity = new Provider();
         entity.setId(doEntity.getId());
-        entity.setProviderCode(doEntity.getProviderCode());
         entity.setProviderName(doEntity.getProviderName());
         entity.setBaseUrl(doEntity.getBaseUrl());
         entity.setWebsiteUrl(doEntity.getWebsiteUrl());
@@ -122,7 +105,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         if (entity.getId() != null) {
             doEntity.setId(entity.getId());
         }
-        doEntity.setProviderCode(entity.getProviderCode());
         doEntity.setProviderName(entity.getProviderName());
         doEntity.setBaseUrl(entity.getBaseUrl());
         doEntity.setWebsiteUrl(entity.getWebsiteUrl());

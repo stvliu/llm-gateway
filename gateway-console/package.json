@@ -1,5 +1,5 @@
 {
-  "name": "llm-gateway-admin",
+  "name": "llm-gateway-console",
   "private": true,
   "version": "1.0.0",
   "type": "module",

@@ -16,8 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RouteGroup extends BaseEntity {
 
-    private String groupCode;
-
     private String groupName;
 
     private RoutingStrategy strategy;

@@ -17,8 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class AlertTemplate extends BaseEntity {
 
-    private String templateCode;
-
     private String name;
 
     private String subject;

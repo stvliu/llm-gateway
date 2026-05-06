@@ -71,7 +71,7 @@ class ModelDomainServiceTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getModelCode()).isEqualTo("model-001");
+            assertThat(result.get().getId()).isEqualTo(1L);
         }
 
         @Test
@@ -85,26 +85,6 @@ class ModelDomainServiceTest {
 
             // then
             assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("findByModelCode 方法测试")
-    class FindByModelCodeTests {
-
-        @Test
-        @DisplayName("通过编码找到 Model")
-        void findByModelCode_existingCode_returnsEntity() {
-            // given
-            Model model = createTestModel();
-            when(modelGateway.findByModelCode("model-001")).thenReturn(Optional.of(model));
-
-            // when
-            Optional<Model> result = service.findByModelCode("model-001");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getModelCode()).isEqualTo("model-001");
         }
     }
 
@@ -142,7 +122,7 @@ class ModelDomainServiceTest {
             Model result = service.create(model);
 
             // then
-            assertThat(result.getModelCode()).isEqualTo("model-001");
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -224,7 +204,6 @@ class ModelDomainServiceTest {
     private Model createTestModel() {
         Model model = new Model();
         model.setId(1L);
-        model.setModelCode("model-001");
         model.setProviderModelId("gpt-4");
         model.setDisplayName("GPT-4");
         model.setContextWindow(8192);
@@ -235,7 +214,6 @@ class ModelDomainServiceTest {
 
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderCode("openai");
         provider.setProviderName("OpenAI");
         provider.setProviderType(ProviderType.OPENAI);
         model.setProvider(provider);

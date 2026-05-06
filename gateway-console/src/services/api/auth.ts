@@ -1,10 +1,11 @@
 import { api } from './client';
-import type { LoginRequest, LoginResponse, CurrentUser } from '@/types/user';
+import type { LoginRequest, LoginResponseData, CurrentUser } from '@/types/user';
+import type { ApiResponse } from '@/types/api';
 
 export const authApi = {
   /** 登录 */
   login: (data: LoginRequest) =>
-    api.post<LoginResponse>('/auth/login', data),
+    api.post<ApiResponse<LoginResponseData>>('/auth/login', data),
 
   /** 登出 */
   logout: () =>

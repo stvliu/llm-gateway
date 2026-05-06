@@ -11,6 +11,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import logoSvg from '@/assets/images/logo-full.svg';
 
 interface HeaderProps {
   collapsed: boolean;
@@ -77,7 +78,7 @@ export function Header({ collapsed, onToggle }: HeaderProps) {
           icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
           onClick={onToggle}
         />
-        <span style={{ fontSize: 18, fontWeight: 600 }}>{t('app.title')}</span>
+        <img src={logoSvg} alt="LLM Gateway" style={{ height: 28, width: 'auto' }} />
       </Space>
 
       <Space>

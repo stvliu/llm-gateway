@@ -8,7 +8,7 @@ import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.enums.ExceededAction;
 import com.codingas.gateway.common.enums.PeriodType;
-import com.codingas.gateway.domain.quota.entity.TokenLimit;
+import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

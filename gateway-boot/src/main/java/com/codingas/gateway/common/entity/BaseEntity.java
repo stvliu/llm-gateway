@@ -10,6 +10,9 @@ import java.time.Instant;
  *
  * <p>提供公共字段，无 JPA 依赖。领域实体应继承此类。</p>
  *
+ * <p>注意：version 字段是 JPA/数据库层的实现细节，不应暴露给领域层。</p>
+ * <p>乐观锁由 Gateway 实现层处理。</p>
+ *
  * <p>审计字段：</p>
  * <ul>
  *   <li>createdBy - 创建人ID</li>
@@ -43,11 +46,4 @@ public abstract class BaseEntity {
      * 更新时间
      */
     protected Instant updatedAt;
-
-    /**
-     * 乐观锁版本号
-     *
-     * <p>用于并发控制和变更检测。</p>
-     */
-    protected Long version = 0L;
 }

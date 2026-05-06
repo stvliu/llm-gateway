@@ -41,7 +41,7 @@ public class ModelManageUseCase {
      * 创建模型
      */
     public Model create(Model model) {
-        log.info("UseCase: create model, code={}", model.getModelCode());
+        log.info("UseCase: create model, displayName={}", model.getDisplayName());
         return modelService.create(model);
     }
 

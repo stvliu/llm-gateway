@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.metrics;
 
+import com.codingas.gateway.infrastructure.security.metrics.SecurityMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -20,14 +20,6 @@ public interface RouteGroupGateway {
     RouteGroup findById(Long id);
 
     /**
-     * 根据分组代码查找路由分组
-     *
-     * @param groupCode 分组代码
-     * @return 分组信息，不存在返回 null
-     */
-    RouteGroup findByGroupCode(String groupCode);
-
-    /**
      * 查找所有活跃路由分组
      *
      * @return 活跃分组列表

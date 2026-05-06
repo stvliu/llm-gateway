@@ -1,5 +1,8 @@
 package com.codingas.gateway.application.user;
 
+import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
+import com.codingas.gateway.application.auth.dto.LoginRequest;
+import com.codingas.gateway.application.auth.dto.LoginResponse;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 
@@ -44,4 +47,20 @@ public interface UserService {
      * 分配用户角色
      */
     UserResponse assignRoles(Long id, UserRoleAssignRequest request);
+
+    /**
+     * 用户登录
+     *
+     * @param request 登录请求
+     * @return 登录响应（包含用户信息和令牌）
+     */
+    LoginResponse login(LoginRequest request);
+
+    /**
+     * 修改密码
+     *
+     * @param userId 用户 ID
+     * @param request 修改密码请求
+     */
+    void changePassword(Long userId, ChangePasswordRequest request);
 }

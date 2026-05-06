@@ -15,6 +15,7 @@ import java.time.Instant;
  * DO 基类
  *
  * <p>提供审计字段和 ID 主键，用于 JPA 实体继承。</p>
+ * <p>已移除乐观锁机制以降低复杂度。</p>
  */
 @Getter
 @Setter

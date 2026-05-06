@@ -25,16 +25,16 @@ public class RoutingDomainService {
     private final RouteGroupGateway routeGroupGateway;
 
     /**
-     * 根据分组代码查找路由分组
+     * 根据 ID 查找路由分组
      *
-     * @param groupCode 分组代码
+     * @param id 分组 ID
      * @return 路由分组
      */
-    public Optional<RouteGroup> findByGroupCode(String groupCode) {
-        if (groupCode == null || groupCode.isBlank()) {
+    public Optional<RouteGroup> findById(Long id) {
+        if (id == null) {
             return Optional.empty();
         }
-        RouteGroup group = routeGroupGateway.findByGroupCode(groupCode);
+        RouteGroup group = routeGroupGateway.findById(id);
         return Optional.ofNullable(group);
     }
 
@@ -50,11 +50,11 @@ public class RoutingDomainService {
     /**
      * 验证路由分组是否可用
      *
-     * @param groupCode 分组代码
+     * @param id 分组 ID
      * @return true 如果分组存在且启用
      */
-    public boolean isRouteGroupAvailable(String groupCode) {
-        return findByGroupCode(groupCode)
+    public boolean isRouteGroupAvailable(Long id) {
+        return findById(id)
                 .map(RouteGroup::isEnabled)
                 .orElse(false);
     }
@@ -64,11 +64,11 @@ public class RoutingDomainService {
      *
      * <p>如果分组不存在或未启用，返回默认策略。</p>
      *
-     * @param groupCode 分组代码
+     * @param id 分组 ID
      * @return 路由策略
      */
-    public RouteGroup.RoutingStrategy getRoutingStrategy(String groupCode) {
-        return findByGroupCode(groupCode)
+    public RouteGroup.RoutingStrategy getRoutingStrategy(Long id) {
+        return findById(id)
                 .filter(RouteGroup::isEnabled)
                 .map(RouteGroup::getStrategy)
                 .orElse(RouteGroup.RoutingStrategy.WEIGHTED);

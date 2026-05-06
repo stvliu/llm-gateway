@@ -17,6 +17,7 @@ import org.springframework.data.domain.PageImpl;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,7 +106,7 @@ class GatewayApiKeyExpirationNotifierTest {
         void manualNotify_keyFound_returnsTrue() {
             // given
             GatewayApiKey key = createTestApiKey();
-            when(apiKeyGateway.findByKeyCode("1")).thenReturn(key);
+            when(apiKeyGateway.findById(1L)).thenReturn(Optional.of(key));
             when(notificationService.sendExpirationWarning(any(), any(), any(), any(), any())).thenReturn(true);
 
             // when
@@ -119,7 +120,7 @@ class GatewayApiKeyExpirationNotifierTest {
         @DisplayName("Key 不存在返回 false")
         void manualNotify_keyNotFound_returnsFalse() {
             // given
-            when(apiKeyGateway.findByKeyCode("999")).thenReturn(null);
+            when(apiKeyGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when
             boolean result = notifier.manualNotify(999L);
@@ -133,7 +134,6 @@ class GatewayApiKeyExpirationNotifierTest {
     private GatewayApiKey createTestApiKey() {
         GatewayApiKey key = new GatewayApiKey();
         key.setId(1L);
-        key.setKeyCode("key-001");
         key.setName("Test Key");
         key.setExpiresAt(Instant.now().plusSeconds(86400 * 5));
 

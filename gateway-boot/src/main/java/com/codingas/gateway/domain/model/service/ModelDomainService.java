@@ -46,39 +46,67 @@ public class ModelDomainService {
     }
 
     /**
-     * 根据模型代码查找模型
+     * 根据 ID 查找模型，不存在则抛出异常
      */
     @Transactional(readOnly = true)
-    public Optional<Model> findByModelCode(String modelCode) {
-        return modelGateway.findByModelCode(modelCode);
+    public Model getById(Long id) {
+        return modelGateway.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Model not found: " + id));
     }
 
     /**
-     * 根据模型代码查找模型，不存在则抛出异常
+     * 根据提供商模型 ID 查找模型
+     *
+     * @param providerModelId 提供商模型 ID（如 "gpt-4"）
+     * @return 模型信息
      */
     @Transactional(readOnly = true)
-    public Model getByModelCode(String modelCode) {
-        return modelGateway.findByModelCode(modelCode)
-                .orElseThrow(() -> new NoSuchElementException("Model not found: " + modelCode));
+    public Optional<Model> findByProviderModelId(String providerModelId) {
+        return modelGateway.findByProviderModelId(providerModelId);
     }
 
     /**
-     * 根据模型代码获取模型及其提供商信息
+     * 根据提供商模型 ID 获取模型及其提供商信息
      *
-     * <p>封装 Model 和 Provider 的关联查询，避免调用方分别访问 Gateway。</p>
+     * <p>封装 Model 和 Provider 的关联查询，用于 API 请求处理。</p>
      *
-     * @param modelCode 模型代码
+     * @param providerModelId 提供商模型 ID（如 "gpt-4"）
      * @return 模型与提供商信息
      * @throws NoSuchElementException 模型或提供商不存在
      */
     @Transactional(readOnly = true)
-    public ModelProviderInfo getModelWithProvider(String modelCode) {
-        Model model = modelGateway.findByModelCode(modelCode)
-                .orElseThrow(() -> new NoSuchElementException("Model not found: " + modelCode));
+    public ModelProviderInfo getModelWithProviderByProviderModelId(String providerModelId) {
+        Model model = modelGateway.findByProviderModelId(providerModelId)
+                .orElseThrow(() -> new NoSuchElementException("Model not found: " + providerModelId));
 
         Long providerId = model.getProvider() != null ? model.getProvider().getId() : null;
         if (providerId == null) {
-            throw new NoSuchElementException("Model has no provider: " + modelCode);
+            throw new NoSuchElementException("Model has no provider: " + providerModelId);
+        }
+
+        Provider provider = providerGateway.findById(providerId)
+                .orElseThrow(() -> new NoSuchElementException("Provider not found: " + providerId));
+
+        return new ModelProviderInfo(model, provider);
+    }
+
+    /**
+     * 根据模型 ID 获取模型及其提供商信息
+     *
+     * <p>封装 Model 和 Provider 的关联查询，避免调用方分别访问 Gateway。</p>
+     *
+     * @param id 模型 ID
+     * @return 模型与提供商信息
+     * @throws NoSuchElementException 模型或提供商不存在
+     */
+    @Transactional(readOnly = true)
+    public ModelProviderInfo getModelWithProvider(Long id) {
+        Model model = modelGateway.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Model not found: " + id));
+
+        Long providerId = model.getProvider() != null ? model.getProvider().getId() : null;
+        if (providerId == null) {
+            throw new NoSuchElementException("Model has no provider: " + id);
         }
 
         Provider provider = providerGateway.findById(providerId)
@@ -103,7 +131,7 @@ public class ModelDomainService {
     @Transactional
     public Model create(Model model) {
         Model saved = modelGateway.save(model);
-        log.info("Created model: {} ({})", saved.getDisplayName(), saved.getModelCode());
+        log.info("Created model: {} (id={})", saved.getDisplayName(), saved.getId());
         return saved;
     }
 
@@ -126,7 +154,7 @@ public class ModelDomainService {
         existing.setStatus(model.getStatus());
 
         Model updated = modelGateway.save(existing);
-        log.info("Updated model: {} ({})", updated.getDisplayName(), updated.getModelCode());
+        log.info("Updated model: {} (id={})", updated.getDisplayName(), updated.getId());
         return updated;
     }
 
