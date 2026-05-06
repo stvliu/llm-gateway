@@ -67,12 +67,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         providerRepository.delete(toDo(provider));
     }
 
-    @Override
-    public long getMaxVersion() {
-        Long maxVersion = providerRepository.findMaxVersion();
-        return maxVersion != null ? maxVersion : 0L;
-    }
-
     /**
      * DO 转 Entity
      */

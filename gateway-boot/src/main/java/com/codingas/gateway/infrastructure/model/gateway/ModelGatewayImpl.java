@@ -74,12 +74,6 @@ public class ModelGatewayImpl implements ModelGateway {
         modelRepository.delete(toDo(model));
     }
 
-    @Override
-    public long getMaxVersion() {
-        Long maxVersion = modelRepository.findMaxVersion();
-        return maxVersion != null ? maxVersion : 0L;
-    }
-
     /**
      * DO 转 Entity
      */

@@ -3,8 +3,14 @@ package com.codingas.gateway.infrastructure.config;
 import com.codingas.gateway.adapter.interceptor.SecurityInterceptorChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 /**
  * Web MVC 配置
@@ -27,5 +33,37 @@ public class WebConfig implements WebMvcConfigurer {
                 return securityInterceptorChain.execute(request, response);
             }
         }).addPathPatterns("/v1/**");
+    }
+
+    /**
+     * SPA 路由支持
+     *
+     * <p>将非 API、非静态资源的请求转发到 index.html，让前端路由处理。</p>
+     */
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/**")
+            .addResourceLocations("classpath:/static/")
+            .resourceChain(true)
+            .addResolver(new PathResourceResolver() {
+                @Override
+                protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                    Resource requestedResource = location.createRelative(resourcePath);
+
+                    // 如果请求的资源存在，直接返回
+                    if (requestedResource.exists() && requestedResource.isReadable()) {
+                        return requestedResource;
+                    }
+
+                    // API 请求不转发
+                    if (resourcePath.startsWith("api/") || resourcePath.startsWith("v1/") ||
+                        resourcePath.startsWith("actuator/")) {
+                        return null;
+                    }
+
+                    // 其他请求转发到 index.html（SPA 路由）
+                    return new ClassPathResource("/static/index.html");
+                }
+            });
     }
 }

@@ -187,37 +187,6 @@ class ProviderGatewayImplTest {
         }
     }
 
-    @Nested
-    @DisplayName("getMaxVersion 方法测试")
-    class GetMaxVersionTests {
-
-        @Test
-        @DisplayName("返回最大版本号")
-        void getMaxVersion_returnsMaxVersion() {
-            // given
-            when(providerRepository.findMaxVersion()).thenReturn(3L);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(3L);
-        }
-
-        @Test
-        @DisplayName("无版本时返回 0")
-        void getMaxVersion_noVersions_returnsZero() {
-            // given
-            when(providerRepository.findMaxVersion()).thenReturn(null);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(0L);
-        }
-    }
-
     // Helper methods
     private Provider createTestEntity() {
         Provider entity = new Provider();

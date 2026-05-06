@@ -93,6 +93,11 @@ public class UserGatewayImpl implements UserGateway {
         user.setPiiSalt(doEntity.getPiiSalt());
         user.setLastLoginAt(doEntity.getLastLoginAt());
         user.setDeletedAt(doEntity.getDeletedAt());
+        user.setRole(doEntity.getRole());
+        user.setCreatedBy(doEntity.getCreatedBy());
+        user.setCreatedAt(doEntity.getCreatedAt());
+        user.setUpdatedBy(doEntity.getUpdatedBy());
+        user.setUpdatedAt(doEntity.getUpdatedAt());
         // 角色关联暂不处理，由调用方通过 RoleGateway 获取
         return user;
     }
@@ -119,6 +124,7 @@ public class UserGatewayImpl implements UserGateway {
         doEntity.setPiiSalt(user.getPiiSalt());
         doEntity.setLastLoginAt(user.getLastLoginAt());
         doEntity.setDeletedAt(user.getDeletedAt());
+        doEntity.setRole(user.getRole());
         return doEntity;
     }
 }

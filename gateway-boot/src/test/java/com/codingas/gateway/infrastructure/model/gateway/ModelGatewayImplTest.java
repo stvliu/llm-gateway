@@ -192,37 +192,6 @@ class ModelGatewayImplTest {
         }
     }
 
-    @Nested
-    @DisplayName("getMaxVersion 方法测试")
-    class GetMaxVersionTests {
-
-        @Test
-        @DisplayName("返回最大版本号")
-        void getMaxVersion_returnsMaxVersion() {
-            // given
-            when(modelRepository.findMaxVersion()).thenReturn(5L);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(5L);
-        }
-
-        @Test
-        @DisplayName("无版本时返回 0")
-        void getMaxVersion_noVersions_returnsZero() {
-            // given
-            when(modelRepository.findMaxVersion()).thenReturn(null);
-
-            // when
-            long result = gateway.getMaxVersion();
-
-            // then
-            assertThat(result).isEqualTo(0L);
-        }
-    }
-
     // Helper methods
     private Model createTestEntity() {
         Model entity = new Model();

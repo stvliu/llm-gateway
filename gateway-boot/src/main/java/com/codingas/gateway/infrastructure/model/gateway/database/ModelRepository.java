@@ -20,12 +20,4 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
 
     @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.provider.id = :providerId")
     List<ModelDo> findByProviderId(@Param("providerId") Long providerId);
-
-    /**
-     * 获取最大版本号
-     *
-     * @return 最大版本号，无数据返回 null
-     */
-    @Query("SELECT MAX(m.version) FROM ModelDo m")
-    Long findMaxVersion();
 }
