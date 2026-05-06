@@ -1,0 +1,22 @@
+{
+  "title": "APIKey Pool",
+  "add": "Add API Key",
+  "name": "Name",
+  "key": "API Key",
+  "provider": "Provider",
+  "status": "Status",
+  "priority": "Priority",
+  "expiresAt": "Expires At",
+  "neverExpire": "Never Expire",
+  "selectProvider": "Select Provider",
+  "dragHint": "💡 Drag the left icon to adjust priority. Higher priority keys are used first.",
+  "enable": "Enable",
+  "disable": "Disable",
+  "confirm.toggle": "Are you sure you want to {action} this API Key?",
+  "namePlaceholder": "Default: key + number",
+  "keyPlaceholder": "Enter API Key, can also include API URL and other configs",
+  "status.NORMAL": "Normal",
+  "status.EXCEEDED": "Exceeded",
+  "status.EXPIRED": "Expired",
+  "status.DISABLED": "Disabled"
+}

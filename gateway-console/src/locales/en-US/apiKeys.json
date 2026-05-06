@@ -1,11 +1,16 @@
 {
-  "title": "My API Keys",
+  "title": "API Key Management",
   "add": "Add API Key",
   "name": "Name",
   "key": "Key Value",
   "status": "Status",
   "createdAt": "Created At",
+  "lastUsedAt": "Last Used",
+  "username": "User",
+  "user": "Owner",
   "copySuccess": "API Key copied",
   "createSuccess": "Created successfully, please copy and save the key immediately",
-  "confirmDelete": "Are you sure you want to delete this API Key?"
+  "confirmDelete": "Are you sure you want to delete this API Key?",
+  "keyCreated": "API Key created (shown only once):",
+  "searchPlaceholder": "Search user or key name"
 }

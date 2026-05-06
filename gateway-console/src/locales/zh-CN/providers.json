@@ -1,0 +1,14 @@
+{
+  "title": "提供商管理",
+  "add": "新增提供商",
+  "name": "名称",
+  "code": "编码",
+  "type": "类型",
+  "baseUrl": "Base URL",
+  "status": "状态",
+  "type.OPENAI": "OpenAI",
+  "type.ANTHROPIC": "Anthropic",
+  "type.GOOGLE": "Google",
+  "type.AZURE": "Azure",
+  "type.CUSTOM": "自定义"
+}

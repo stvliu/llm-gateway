@@ -4,12 +4,14 @@
   "apiKeyList": "API Key List",
   "addUser": "Add User",
   "addApiKey": "Add API Key",
+  "searchPlaceholder": "Search username or email",
   "user": {
     "username": "Username",
     "email": "Email",
     "role": "Role",
     "status": "Status",
-    "createdAt": "Created At"
+    "createdAt": "Created At",
+    "password": "Password"
   },
   "apiKey": {
     "name": "Name",

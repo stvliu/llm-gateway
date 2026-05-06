@@ -101,7 +101,7 @@
 
 /* 右侧欢迎图片区域 */
 .welcomeImage {
-  flex: 1 1 clamp(520px, 64vw, 1200px);
+  flex: 1 1 clamp(480px, 60vw, 1100px);
   height: 100%;
   padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 3vw, 3rem);
   background-image: url('@/assets/images/backgrounds/welcome.svg');

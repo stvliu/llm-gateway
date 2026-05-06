@@ -1,0 +1,14 @@
+{
+  "title": "Provider Management",
+  "add": "Add Provider",
+  "name": "Name",
+  "code": "Code",
+  "type": "Type",
+  "baseUrl": "Base URL",
+  "status": "Status",
+  "type.OPENAI": "OpenAI",
+  "type.ANTHROPIC": "Anthropic",
+  "type.GOOGLE": "Google",
+  "type.AZURE": "Azure",
+  "type.CUSTOM": "Custom"
+}

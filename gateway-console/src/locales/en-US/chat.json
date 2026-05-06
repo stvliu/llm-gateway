@@ -1,0 +1,12 @@
+{
+  "title": "AI Assistant",
+  "emptyMessage": "Start a conversation",
+  "inputPlaceholder": "Type a message...",
+  "inputHint": "Press Enter to send, Shift+Enter for new line",
+  "clear": "Clear conversation",
+  "close": "Close",
+  "error": {
+    "apiError": "Request failed: {{message}}",
+    "unexpected": "An unexpected error occurred"
+  }
+}
