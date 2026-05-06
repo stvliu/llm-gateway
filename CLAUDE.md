@@ -28,7 +28,6 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 - **职责拆分架构**: 按业务领域内聚 Entity + Domain Service + Gateway
 - **领域模型纯洁性**: JPA 实体只含 Getter/Setter，禁止含业务逻辑
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
-- **物理标识与业务标识分离**: 数据库用自增 BIGINT 主键，业务层用 `*_code` VARCHAR
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
 
 ## 项目结构（多模块 Maven 项目）
@@ -123,7 +122,6 @@ gateway/                              # 项目根目录（父 POM）
 
 - 表名: snake_case + 复数（如 `model_providers`, `routing_strategies`）
 - 主键: `id BIGINT AUTO_INCREMENT`
-- 业务标识: `*_code VARCHAR(64/128)` + UNIQUE 约束
 - 外键关联: 使用物理 ID（`*_id BIGINT`）
 - 审计字段: `created_by/updated_by` 使用 BIGINT FK → users.id
 

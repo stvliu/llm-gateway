@@ -63,7 +63,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| user_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | username | VARCHAR(64) | 用户名 |
 | email | VARCHAR(128) | 邮箱 (UNIQUE) |
 | password_hash | VARCHAR(256) | 密码哈希 (BCrypt) |
@@ -81,7 +80,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| role_code | VARCHAR(64) | 角色编码 (UNIQUE) |
 | name | VARCHAR(64) | 角色名称 |
 | description | TEXT | 描述 |
 | role_type | ENUM | SYSTEM/CUSTOM |
@@ -128,7 +126,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| provider_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | provider_name | VARCHAR(128) | 显示名称 |
 | provider_type | ENUM | OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER |
 | base_url | VARCHAR(256) | API 端点 |
@@ -157,7 +154,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| model_code | VARCHAR(128) | 业务标识 (UNIQUE) |
 | provider_id | BIGINT FK | 所属 Provider |
 | provider_model_id | VARCHAR(128) | Provider 侧模型 ID |
 | display_name | VARCHAR(256) | 显示名称 |
@@ -178,7 +174,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| key_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | provider_id | BIGINT FK | 所属 Provider |
 | key_name | VARCHAR(64) | Key 名称 (如"主Key") |
 | api_key | VARCHAR(512) | API Key (AES-256 加密) |
@@ -199,7 +194,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| key_code | VARCHAR(128) | 业务标识 (UNIQUE) |
 | key_hash | VARCHAR(256) | API Key 哈希 (用于验证) |
 | user_id | BIGINT FK | 所属用户 |
 | name | VARCHAR(64) | 密钥名称 |
@@ -224,7 +218,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| limit_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | user_id | BIGINT FK | 所属用户 |
 | provider_id | BIGINT FK | 关联 Provider (NULL 表示全部) |
 | model_id | BIGINT FK | 关联 Model (NULL 表示全部) |
@@ -259,7 +252,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| log_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | gateway_api_key_id | BIGINT FK | 使用的 Gateway API Key |
 | user_id | BIGINT FK | 所属用户 |
 | provider_id | BIGINT FK | 调用的 Provider |
@@ -282,7 +274,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| rule_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | name | VARCHAR(128) | 规则名称 |
 | alert_type | ENUM | USAGE / HEALTH / QUOTA |
 | target_type | ENUM | USER / PROVIDER / API_KEY |
@@ -310,7 +301,6 @@ LLM Gateway 是企业级 AI 模型 API 聚合分发与智能路由网关（APIPa
 | 属性 | 类型 | 说明 |
 |------|------|------|
 | id | BIGINT | 主键 |
-| notification_code | VARCHAR(64) | 业务标识 (UNIQUE) |
 | alert_rule_id | BIGINT FK | 关联预警规则 |
 | target_user_id | BIGINT FK | 通知目标用户 |
 | channel | ENUM | SYSTEM / EMAIL / IM / SMS |

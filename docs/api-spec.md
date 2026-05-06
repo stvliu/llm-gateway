@@ -1246,17 +1246,87 @@ anthropic-version: 2023-06-01
 | 端点 | 方法 | 说明 | 认证 |
 |------|------|------|------|
 | `/api/v1/channels/{channelId}/keys` | GET | 获取渠道下所有 Key 列表 | Admin |
+| `/api/v1/channels/{channelId}/keys` | POST | 创建 Key | Admin |
 | `/api/v1/channels/{channelId}/keys/{keyId}` | GET | 获取 Key 详情 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}` | PUT | 更新 Key 信息 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}` | DELETE | 删除 Key | Admin |
 | `/api/v1/channels/{channelId}/keys/{keyId}/priority` | PUT | 调整 Key 优先级 | Admin |
 | `/api/v1/channels/{channelId}/keys/priorities` | PUT | 批量调整 Key 优先级 | Admin |
 | `/api/v1/channels/{channelId}/keys/{keyId}/disable` | POST | 禁用 Key | Admin |
 | `/api/v1/channels/{channelId}/keys/{keyId}/enable` | POST | 启用 Key | Admin |
 | `/api/v1/channels/{channelId}/keys/{keyId}/health` | GET | 获取 Key 健康状态 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}/check-recovery` | POST | 手动触发恢复检查 | Admin |
 | `/api/v1/channels/{channelId}/selection-strategy` | PUT | 更新 Key 选择策略 | Admin |
 
 ---
 
-### 7.2 获取 Key 列表
+### 7.2 创建 Key
+
+**端点**: `POST /api/v1/channels/{channelId}/keys`
+
+**请求体**:
+
+```json
+{
+  "key_name": "主 Key",
+  "api_key": "sk-xxxxxxxxxxxxxxxx",
+  "is_default": false,
+  "priority": 100,
+  "rpm_limit": 60,
+  "tpm_limit": 100000,
+  "expires_at": "2027-12-31T23:59:59Z"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| key_name | String | ✅ | 1-64 字符 | Key 名称，用于标识 |
+| api_key | String | ✅ | 1-256 字符 | Provider 的 API Key 明文（存储时加密） |
+| is_default | Boolean | ❌ | 默认 false | 是否为默认 Key（渠道下第一个 Key 自动成为默认 Key） |
+| priority | Integer | ❌ | 1-1000，默认 50 | 优先级数值，数值越大优先级越高 |
+| rpm_limit | Integer | ❌ | ≥1 | 每分钟请求数限制（可选，受上游 Provider 限制） |
+| tpm_limit | Integer | ❌ | ≥1 | 每分钟 Token 数限制（可选，受上游 Provider 限制） |
+| expires_at | DateTime | ❌ | ISO 8601 | 过期时间（可选，过期后自动禁用） |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "api_key_code": "KEY001",
+    "key_name": "主 Key",
+    "key_hint": "sk-****abcd",
+    "status": "ACTIVE",
+    "is_default": true,
+    "priority": 100,
+    "rpm_limit": 60,
+    "tpm_limit": 100000,
+    "expires_at": "2027-12-31T23:59:59Z",
+    "created_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**业务规则**:
+- 渠道下第一个 Key 自动成为默认 Key（`is_default` 自动设为 true）
+- API Key 明文仅在创建时返回一次，后续只能看到 `key_hint`
+- 创建后 Key 状态默认为 `ACTIVE`
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| CHANNEL_NOT_FOUND | 404 | 渠道不存在 |
+| INVALID_API_KEY_FORMAT | 400 | API Key 格式无效 |
+| DUPLICATE_API_KEY | 409 | 该 API Key 已存在于该渠道 |
+
+---
+
+### 7.3 获取 Key 列表
 
 **端点**: `GET /api/v1/channels/{channelId}/keys`
 
