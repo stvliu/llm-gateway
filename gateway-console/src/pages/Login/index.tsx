@@ -39,15 +39,17 @@ export default function Login() {
         rememberMe: values.rememberMe,
       });
 
-      setUser(response.user);
-      if (response.token) {
-        setToken(response.token);
+      // 后端响应格式: { success, data: { user, token } }
+      const userData = response.data;
+      setUser(userData.user);
+      if (userData.token) {
+        setToken(userData.token);
       }
 
       message.success(t('success', { ns: 'common' }));
 
       // 根据角色重定向
-      const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
+      const redirectPath = userData.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
       navigate(from || redirectPath, { replace: true });
     } catch {
       setError(t('error.message'));
