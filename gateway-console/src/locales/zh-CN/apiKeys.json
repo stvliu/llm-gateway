@@ -1,11 +1,16 @@
 {
-  "title": "我的 API Key",
+  "title": "API Key 管理",
   "add": "新增 API Key",
   "name": "名称",
   "key": "Key 值",
   "status": "状态",
   "createdAt": "创建时间",
+  "lastUsedAt": "最后使用",
+  "username": "用户",
+  "user": "所属用户",
   "copySuccess": "API Key 已复制",
   "createSuccess": "创建成功，请立即复制保存 Key 值",
-  "confirmDelete": "确定要删除此 API Key 吗？"
+  "confirmDelete": "确定要删除此 API Key 吗？",
+  "keyCreated": "API Key 已创建（仅显示一次）：",
+  "searchPlaceholder": "搜索用户或 Key 名称"
 }

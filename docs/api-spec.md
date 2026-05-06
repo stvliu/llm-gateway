@@ -1233,3 +1233,301 @@ anthropic-version: 2023-06-01
 | 版本 | 日期 | 变更内容 |
 |------|------|---------|
 | v1.0 | 2026-05-02 | 初始版本，完整定义 OpenAI 和 Anthropic API 兼容规范 |
+| v1.1 | 2026-05-06 | 新增第七章管理 API - Provider API Key 管理 API |
+
+---
+
+## 七、管理 API - Provider API Key 管理
+
+> **说明**: 本章节定义 Provider API Key 资源池管理相关的 API 接口。
+
+### 7.1 API Key 管理端点总览
+
+| 端点 | 方法 | 说明 | 认证 |
+|------|------|------|------|
+| `/api/v1/channels/{channelId}/keys` | GET | 获取渠道下所有 Key 列表 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}` | GET | 获取 Key 详情 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}/priority` | PUT | 调整 Key 优先级 | Admin |
+| `/api/v1/channels/{channelId}/keys/priorities` | PUT | 批量调整 Key 优先级 | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}/disable` | POST | 禁用 Key | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}/enable` | POST | 启用 Key | Admin |
+| `/api/v1/channels/{channelId}/keys/{keyId}/health` | GET | 获取 Key 健康状态 | Admin |
+| `/api/v1/channels/{channelId}/selection-strategy` | PUT | 更新 Key 选择策略 | Admin |
+
+---
+
+### 7.2 获取 Key 列表
+
+**端点**: `GET /api/v1/channels/{channelId}/keys`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "api_key_code": "KEY001",
+      "key_name": "主 Key",
+      "key_hint": "sk-****abcd",
+      "status": "ACTIVE",
+      "is_default": true,
+      "priority": 100,
+      "health_status": "HEALTHY",
+      "success_count": 1523,
+      "error_count": 3,
+      "rpm_limit": 60,
+      "tpm_limit": 100000,
+      "last_used_at": "2026-05-06T10:00:00Z",
+      "created_at": "2026-05-01T08:00:00Z"
+    }
+  ],
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.3 调整 Key 优先级
+
+**端点**: `PUT /api/v1/channels/{channelId}/keys/{keyId}/priority`
+
+**请求体**:
+
+```json
+{
+  "priority": 100
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| priority | Integer | ✅ | 1-1000 | 优先级数值，数值越大优先级越高 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "priority": 100,
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CHANNEL_NOT_FOUND | 404 | 渠道不存在 |
+
+---
+
+### 7.4 批量调整 Key 优先级
+
+**端点**: `PUT /api/v1/channels/{channelId}/keys/priorities`
+
+**请求体**:
+
+```json
+{
+  "items": [
+    {"api_key_code": "KEY001", "priority": 100},
+    {"api_key_code": "KEY002", "priority": 90},
+    {"api_key_code": "KEY003", "priority": 80}
+  ]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| items | Array | ✅ | Key 优先级列表 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "updated_count": 3,
+    "items": [
+      {"api_key_code": "KEY001", "priority": 100},
+      {"api_key_code": "KEY002", "priority": 90},
+      {"api_key_code": "KEY003", "priority": 80}
+    ]
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.5 禁用 Key
+
+**端点**: `POST /api/v1/channels/{channelId}/keys/{keyId}/disable`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "status": "DISABLED",
+    "disabled_reason": "MANUAL",
+    "disabled_at": "2026-05-06T10:00:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CANNOT_DISABLE_LAST_KEY | 400 | 无法禁用渠道中最后一个 Key |
+| CANNOT_DISABLE_DEFAULT_KEY | 400 | 无法禁用默认 Key |
+
+---
+
+### 7.6 启用 Key
+
+**端点**: `POST /api/v1/channels/{channelId}/keys/{keyId}/enable`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "status": "ACTIVE",
+    "enabled_at": "2026-05-06T10:00:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**说明**: 
+- 已过期的 Key 无法通过此接口启用，需更新过期时间后自动恢复
+- 启用后该 Key 可在下一个 AI 服务调用时正常被使用
+
+---
+
+### 7.7 获取 Key 健康状态
+
+**端点**: `GET /api/v1/channels/{channelId}/keys/{keyId}/health`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "status": "ACTIVE",
+    "health_status": "HEALTHY",
+    "last_success_at": "2026-05-06T10:00:00Z",
+    "last_error_at": null,
+    "error_count": 0,
+    "success_count": 1523,
+    "success_rate": 0.998,
+    "rpm_current": 12,
+    "rpm_limit": 60,
+    "recovery_at": null
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**health_status 枚举**:
+
+| 值 | 说明 |
+|------|------|
+| HEALTHY | 健康 |
+| DEGRADED | 降级中（有错误但未超阈值） |
+| UNHEALTHY | 不健康（被禁用或错误率高） |
+| UNKNOWN | 未知（无调用记录） |
+
+---
+
+### 7.8 更新 Key 选择策略
+
+**端点**: `PUT /api/v1/channels/{channelId}/selection-strategy`
+
+**请求体**:
+
+```json
+{
+  "strategy": "PRIORITY_FIRST"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| strategy | String | ✅ | PRIORITY_FIRST / ROUND_ROBIN / WEIGHTED | Key 选择策略 |
+
+**策略说明**:
+
+| 策略 | 说明 | 适用场景 |
+|------|------|---------|
+| PRIORITY_FIRST | 按优先级选择，高优先级优先 | 成本敏感场景，优先使用高优先级 Key |
+| ROUND_ROBIN | 轮询选择，均匀分布 | 负载均衡场景，均匀使用所有 Key |
+| WEIGHTED | 按权重随机选择 | 流量分配场景，按权重比例分配 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "channel_id": 1,
+    "strategy": "PRIORITY_FIRST",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.9 Key 状态枚举
+
+| 状态 | 说明 |
+|------|------|
+| ACTIVE | 活跃，可正常使用 |
+| DISABLED | 已禁用，手动禁用 |
+| EXPIRED | 已过期，超过有效期 |
+| RATE_LIMITED | 限流中，触发上游限流 |
+| OVERQUOTA | 超配额，额度已耗尽 |
+| ERROR | 异常，调用错误达到阈值 |
+| DELETED | 已删除 |
+
+---
+
+### 7.10 禁用原因枚举
+
+| 原因 | 说明 |
+|------|------|
+| INVALID_KEY | 无效 Key |
+| RATE_LIMITED | 触发限流 |
+| OVERQUOTA | 超配额 |
+| ERROR | 调用异常 |
+| MANUAL | 手动禁用 |

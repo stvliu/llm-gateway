@@ -13,13 +13,56 @@ import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import logoSvg from '@/assets/images/logo-full.svg';
 
-interface HeaderProps {
+interface LeftHeaderProps {
+  collapsed: boolean;
+}
+
+interface RightHeaderProps {
   collapsed: boolean;
   onToggle: () => void;
 }
 
-export function Header({ collapsed, onToggle }: HeaderProps) {
+const headerStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  padding: '0 16px',
+  height: 48,
+  background: '#fff',
+  borderBottom: '1px solid #f0f0f0',
+};
+
+export function LeftHeader({ collapsed }: LeftHeaderProps) {
   const { t } = useTranslation('common');
+
+  return (
+    <div style={headerStyle}>
+      <img
+        src={logoSvg}
+        alt={t('app.title')}
+        style={{
+          height: 28,
+          width: 'auto',
+          opacity: collapsed ? 0 : 1,
+          transition: 'opacity 0.2s',
+        }}
+      />
+      {!collapsed && (
+        <span style={{
+          marginLeft: 12,
+          fontSize: 16,
+          fontWeight: 600,
+          color: '#1f1f1f',
+          whiteSpace: 'nowrap',
+        }}>
+          {t('app.title')}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
+  const { t, i18n } = useTranslation('common');
   const { user, logout } = useAuthStore();
   const { setMode, getEffectiveTheme } = useThemeStore();
 
@@ -54,32 +97,18 @@ export function Header({ collapsed, onToggle }: HeaderProps) {
   ];
 
   const handleLanguageChange = (lng: string) => {
-    localStorage.setItem('i18nextLng', lng);
-    window.location.reload();
+    i18n.changeLanguage(lng);
   };
 
   const ThemeIcon = getEffectiveTheme() === 'dark' ? MoonOutlined : SunOutlined;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        height: 48,
-        background: '#fff',
-        borderBottom: '1px solid #f0f0f0',
-      }}
-    >
-      <Space>
-        <Button
-          type="text"
-          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          onClick={onToggle}
-        />
-        <img src={logoSvg} alt="LLM Gateway" style={{ height: 28, width: 'auto' }} />
-      </Space>
+    <div style={{ ...headerStyle, justifyContent: 'space-between' }}>
+      <Button
+        type="text"
+        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        onClick={onToggle}
+      />
 
       <Space>
         <Dropdown menu={{ items: themeItems }} trigger={['click']}>
@@ -87,7 +116,7 @@ export function Header({ collapsed, onToggle }: HeaderProps) {
         </Dropdown>
 
         <Select
-          value={localStorage.getItem('i18nextLng') || 'zh-CN'}
+          value={i18n.language || 'zh-CN'}
           onChange={handleLanguageChange}
           variant="borderless"
           options={[

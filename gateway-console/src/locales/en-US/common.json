@@ -1,4 +1,16 @@
 {
+  "menu": {
+    "home": "Home",
+    "modelCenter": "Model Center",
+    "userCenter": "User Center",
+    "providers": "Providers",
+    "models": "Models",
+    "apiKeyPool": "APIKey Pool",
+    "users": "Users",
+    "apiKeys": "API Keys",
+    "myApiKeys": "My API Keys",
+    "settings": "Settings"
+  },
   "app": {
     "title": "LLM Gateway",
     "copyright": "© 2024 LLM Gateway"

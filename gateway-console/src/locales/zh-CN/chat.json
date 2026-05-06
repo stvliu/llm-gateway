@@ -1,0 +1,12 @@
+{
+  "title": "AI 助手",
+  "emptyMessage": "开始对话吧",
+  "inputPlaceholder": "输入消息...",
+  "inputHint": "按 Enter 发送，Shift+Enter 换行",
+  "clear": "清空对话",
+  "close": "关闭",
+  "error": {
+    "apiError": "请求失败: {{message}}",
+    "unexpected": "发生未知错误"
+  }
+}

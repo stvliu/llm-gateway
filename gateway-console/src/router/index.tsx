@@ -3,9 +3,14 @@ import { AuthGuard, RoleGuard } from './guards';
 import Login from '@/pages/Login';
 import AdminLayout from '@/components/layout/AdminLayout';
 import UserLayout from '@/components/layout/UserLayout';
+import AdminDashboard from '@/pages/admin/Dashboard';
+import AdminProviders from '@/pages/admin/Providers';
 import AdminModels from '@/pages/admin/Models';
+import AdminApiKeyPool from '@/pages/admin/ApiKeyPool';
 import AdminUsers from '@/pages/admin/Users';
+import AdminApiKeys from '@/pages/admin/ApiKeys';
 import AdminSettings from '@/pages/admin/Settings';
+import UserDashboard from '@/pages/user/Dashboard';
 import UserModels from '@/pages/user/Models';
 import UserApiKeys from '@/pages/user/ApiKeys';
 import UserSettings from '@/pages/user/Settings';
@@ -28,9 +33,13 @@ export const router = createBrowserRouter([
       </AuthGuard>
     ),
     children: [
-      { index: true, element: <Navigate to="/admin/models" replace /> },
+      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
+      { path: 'dashboard', element: <AdminDashboard /> },
+      { path: 'providers', element: <AdminProviders /> },
       { path: 'models', element: <AdminModels /> },
+      { path: 'api-key-pool', element: <AdminApiKeyPool /> },
       { path: 'users', element: <AdminUsers /> },
+      { path: 'api-keys', element: <AdminApiKeys /> },
       { path: 'settings', element: <AdminSettings /> },
     ],
   },
@@ -44,7 +53,8 @@ export const router = createBrowserRouter([
       </AuthGuard>
     ),
     children: [
-      { index: true, element: <Navigate to="/user/models" replace /> },
+      { index: true, element: <Navigate to="/user/dashboard" replace /> },
+      { path: 'dashboard', element: <UserDashboard /> },
       { path: 'models', element: <UserModels /> },
       { path: 'api-keys', element: <UserApiKeys /> },
       { path: 'settings', element: <UserSettings /> },
