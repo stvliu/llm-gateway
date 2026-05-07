@@ -124,7 +124,13 @@ public class GatewayApiKeyExpirationNotifier {
      * 发送过期警告
      */
     private boolean sendExpirationWarning(GatewayApiKey apiKey) {
-        User user = apiKey.getUser();
+        Long userId = apiKey.getUserId();
+        if (userId == null) {
+            log.warn("User ID not found for API Key: id={}", apiKey.getId());
+            return false;
+        }
+
+        User user = userGateway.findById(userId).orElse(null);
         if (user == null) {
             log.warn("User not found for API Key: id={}", apiKey.getId());
             return false;

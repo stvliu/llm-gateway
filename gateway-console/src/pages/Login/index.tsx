@@ -84,7 +84,6 @@ export default function Login() {
               <Input
                 prefix={<UserOutlined />}
                 placeholder={t('username')}
-                size="large"
               />
             </Form.Item>
 
@@ -95,7 +94,6 @@ export default function Login() {
               <Input.Password
                 prefix={<LockOutlined />}
                 placeholder={t('password')}
-                size="large"
               />
             </Form.Item>
 
@@ -118,7 +116,7 @@ export default function Login() {
             </Form.Item>
 
             <Form.Item>
-              <Button type="primary" htmlType="submit" loading={loading} block size="large">
+              <Button type="primary" htmlType="submit" loading={loading} block>
                 {t('submit')}
               </Button>
             </Form.Item>

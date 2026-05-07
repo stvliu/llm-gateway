@@ -163,7 +163,8 @@ public class DataInitializer implements CommandLineRunner {
     private void createModel(Provider provider, String providerModelId, String displayName,
                              int contextWindow, BigDecimal inputPrice, BigDecimal outputPrice) {
         Model model = new Model();
-        model.setProvider(provider);
+        model.setProviderId(provider.getId());
+        model.setProviderName(provider.getProviderName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(contextWindow);
@@ -242,7 +243,8 @@ public class DataInitializer implements CommandLineRunner {
         GatewayApiKey apiKey = new GatewayApiKey();
         // 使用与 AuthenticationDomainService 相同的 hash 方法
         apiKey.setKeyHash(String.valueOf(TEST_API_KEY.hashCode()));
-        apiKey.setUser(user);
+        apiKey.setUserId(user.getId());
+        apiKey.setUsername(user.getUsername());
         apiKey.setName("测试用 API Key");
         apiKey.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
         apiKey.setExpiresAt(Instant.now().plusSeconds(365 * 24 * 60 * 60)); // 1 年有效期

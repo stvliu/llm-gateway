@@ -6,12 +6,15 @@ import { LeftHeader, RightHeader } from './Header';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '@/components/chat';
 import { useChatStore } from '@/stores/chatStore';
+import { useThemeStore } from '@/stores/themeStore';
 
 const { Sider, Content } = Layout;
 
 export default function UserLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { isOpen, setOpen } = useChatStore();
+  const { getEffectiveTheme } = useThemeStore();
+  const isDark = getEffectiveTheme() === 'dark';
 
   return (
     <Layout style={{ height: '100vh' }}>
@@ -20,14 +23,23 @@ export default function UserLayout() {
           width={200}
           collapsedWidth={64}
           collapsed={collapsed}
-          style={{ background: '#fff', borderRight: '1px solid #d9d9d9' }}
+          style={{
+            background: isDark ? '#141414' : '#fff',
+            borderRight: isDark ? '1px solid #303030' : '1px solid #d9d9d9',
+          }}
         >
           <LeftHeader collapsed={collapsed} />
           <Sidebar collapsed={collapsed} role="USER" />
         </Sider>
         <Layout>
           <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-          <Content style={{ background: '#f5f5f5', padding: 16, overflow: 'auto' }}>
+          <Content
+            style={{
+              background: isDark ? '#000000' : '#f5f5f5',
+              padding: 16,
+              overflow: 'auto',
+            }}
+          >
             <Outlet />
           </Content>
         </Layout>

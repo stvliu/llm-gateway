@@ -143,7 +143,7 @@ class ApiKeyGatewayImplTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getUser().getId()).isEqualTo(1L);
+            assertThat(result.get(0).getUserId()).isEqualTo(1L);
         }
     }
 
@@ -257,7 +257,8 @@ class ApiKeyGatewayImplTest {
         entity.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
         User user = new User();
         user.setId(1L);
-        entity.setUser(user);
+        entity.setUserId(user.getId());
+        entity.setUsername("testuser");
         return entity;
     }
 

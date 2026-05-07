@@ -71,7 +71,13 @@ public class AuthenticationDomainService {
             return null;
         }
 
-        User user = gatewayKey.getUser();
+        Long userId = gatewayKey.getUserId();
+        if (userId == null) {
+            log.debug("User ID not found for API Key");
+            return null;
+        }
+
+        User user = userGateway.findById(userId).orElse(null);
         if (user == null) {
             log.debug("User not found for API Key");
             return null;

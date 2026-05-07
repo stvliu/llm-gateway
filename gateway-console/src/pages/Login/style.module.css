@@ -1,12 +1,4 @@
-/* 登录页面布局 - Jmix CRM 风格 */
-
-.login-view-layout {
-  padding: 0;
-  background: white;
-  min-height: 100vh;
-  height: 100%;
-  width: 100%;
-}
+/* 登录页面布局 - Jmix B2B CRM 风格 */
 
 .container {
   display: flex;
@@ -16,10 +8,10 @@
   overflow: hidden;
 }
 
-/* 左侧登录面板 - 主色背景 */
+/* 左侧登录面板 - 纯蓝色背景 */
 .loginPanel {
   flex: 0 0 clamp(360px, 36vw, 520px);
-  background: #006af5;
+  background: rgb(0, 106, 245);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -28,20 +20,21 @@
   z-index: 1;
 }
 
-/* 登录表单容器 - 透明背景 */
+/* 登录表单容器 - 透明背景融入蓝色 */
 .card {
-  max-width: calc(32px * 12);
+  max-width: 384px;
   background: transparent;
-  padding: var(--lumo-space-l, 24px);
-  border-radius: var(--lumo-border-radius-m, 8px);
+  padding: 32px;
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 /* 标题 */
 .title {
-  font-size: 20px;
-  font-weight: 800;
-  color: white;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
   text-align: center;
   margin-bottom: 4px;
 }
@@ -55,9 +48,9 @@
 
 /* 错误提示 */
 .error {
-  background-color: rgba(255, 77, 79, 0.1);
+  background-color: rgba(255, 255, 255, 0.95);
   padding: 12px 16px;
-  padding-left: 24px;
+  padding-left: 32px;
   border-radius: 8px;
   margin-bottom: 16px;
   color: #ff4d4f;
@@ -68,7 +61,9 @@
 .error::before {
   content: '!';
   position: absolute;
-  left: 8px;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 16px;
   height: 16px;
   background: #ff4d4f;
@@ -89,30 +84,18 @@
   margin-bottom: 16px;
 }
 
-.rememberRow :global(.ant-select) {
-  width: 100%;
-  max-width: 8em;
-}
-
-.rememberRow :global(.ant-select-selector) {
-  background: white !important;
-  border-radius: 4px !important;
-}
-
 /* 右侧欢迎图片区域 */
 .welcomeImage {
-  flex: 1 1 clamp(480px, 60vw, 1100px);
-  height: 100%;
-  padding: clamp(1.5rem, 4vw, 4rem) clamp(1rem, 3vw, 3rem);
+  flex: 1 1 clamp(520px, 64vw, 1200px);
+  min-height: 100vh;
   background-image: url('@/assets/images/backgrounds/welcome.svg');
   background-repeat: no-repeat;
   background-position: center;
   background-size: cover;
-  background-color: white;
+  background-color: #ffffff;
   pointer-events: none;
   position: relative;
-  z-index: 2;
-  margin-left: clamp(-2vw, -4vw, -200px);
+  z-index: 0;
 }
 
 /* 响应式：小屏幕隐藏图片 */
@@ -134,76 +117,136 @@
 /* 移动端优化 */
 @media (max-width: 480px) {
   .card {
-    padding: 16px;
+    padding: 24px;
+    margin: 16px;
   }
 
   .title {
-    font-size: 18px;
+    font-size: 20px;
   }
 }
 
-/* 表单样式覆盖 - 白色输入框 */
+/* Form Label 样式 - Jmix 风格 */
+.loginPanel :global(.ant-form-item-label > label) {
+  color: #D1CFCF;
+  font-weight: 500;
+}
+
+.loginPanel :global(.ant-form-item-label > label::after) {
+  content: '';
+}
+
+/* 表单样式覆盖 - Jmix 风格 */
 .loginPanel :global(.ant-input),
 .loginPanel :global(.ant-input-password),
-.loginPanel :global(.ant-input-affix-wrapper) {
-  background: white !important;
-  border-color: transparent;
-  border-radius: 4px;
-  color: #1a1a1a;
+.loginPanel :global(.ant-input-affix-wrapper),
+.loginPanel :global(.ant-input-affix-wrapper-input) {
+  border-radius: 8px;
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  border: none;
+  color: #000000;
+}
+
+/* 覆盖浏览器自动填充样式 */
+.loginPanel :global(.ant-input:-webkit-autofill),
+.loginPanel :global(.ant-input:-webkit-autofill:hover),
+.loginPanel :global(.ant-input:-webkit-autofill:focus),
+.loginPanel :global(.ant-input:-webkit-autofill:active),
+.loginPanel :global(.ant-input-affix-wrapper:-webkit-autofill),
+.loginPanel :global(.ant-input-affix-wrapper:-webkit-autofill:hover),
+.loginPanel :global(.ant-input-affix-wrapper:-webkit-autofill:focus),
+.loginPanel :global(.ant-input-affix-wrapper input:-webkit-autofill),
+.loginPanel :global(.ant-input-affix-wrapper input:-webkit-autofill:hover),
+.loginPanel :global(.ant-input-affix-wrapper input:-webkit-autofill:focus) {
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #000000 !important;
+  caret-color: #000000 !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+.loginPanel :global(.ant-input-affix-wrapper:hover),
+.loginPanel :global(.ant-input-affix-wrapper:focus),
+.loginPanel :global(.ant-input-affix-wrapper-focused),
+.loginPanel :global(.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.loginPanel :global(.ant-input-affix-wrapper input.ant-input) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+}
+
+.loginPanel :global(.ant-input:hover),
+.loginPanel :global(.ant-input:focus),
+.loginPanel :global(.ant-input:focus-within) {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
 }
 
 .loginPanel :global(.ant-input::placeholder) {
   color: rgba(0, 0, 0, 0.45);
 }
 
-.loginPanel :global(.ant-input-affix-wrapper .ant-input) {
-  background: transparent !important;
-}
-
 .loginPanel :global(.ant-input:focus),
 .loginPanel :global(.ant-input-affix-wrapper:focus),
 .loginPanel :global(.ant-input-affix-wrapper-focused) {
-  border-color: rgba(255, 255, 255, 0.5);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  border-color: transparent;
+  box-shadow: none;
 }
 
-.loginPanel :global(.ant-form-item-label > label) {
-  color: rgba(255, 255, 255, 0.8);
+/* 输入框聚焦/悬停时 label 变白 */
+.loginPanel :global(.ant-form-item:focus-within .ant-form-item-label > label),
+.loginPanel :global(.ant-form-item:hover .ant-form-item-label > label) {
+  color: #ffffff;
 }
 
-.loginPanel :global(.ant-form-item-label > label::after) {
-  color: rgba(255, 255, 255, 0.5);
+/* 输入框前缀图标 */
+.loginPanel :global(.ant-input-prefix) {
+  color: rgba(0, 0, 0, 0.45);
 }
 
-/* Checkbox 白色样式 */
+/* Checkbox 样式 - 纯白文字 */
 .loginPanel :global(.ant-checkbox-wrapper) {
-  color: white;
+  color: #ffffff;
+  font-weight: 500;
 }
 
 .loginPanel :global(.ant-checkbox-inner) {
-  background: white;
-  border-color: white;
+  background-color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .loginPanel :global(.ant-checkbox-checked .ant-checkbox-inner) {
-  background: #1a1a1a;
-  border-color: #1a1a1a;
+  background-color: #000000;
+  border-color: #000000;
 }
 
-/* 登录按钮 - 白色背景黑色文字 */
+/* 登录按钮 - 黑底白字 */
 .loginPanel :global(.ant-btn-primary) {
-  color: #1a1a1a;
-  background-color: white;
-  border-color: white;
-  border-radius: 4px;
-  font-weight: 500;
-  height: 40px;
+  border-radius: 8px;
+  font-weight: 600;
+  background: #000000 !important;
+  background-color: #000000 !important;
+  border: none !important;
+  color: #ffffff !important;
+  transition: none;
 }
 
-.loginPanel :global(.ant-btn-primary:hover) {
-  color: #1a1a1a;
-  background-color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.9);
+.loginPanel :global(.ant-btn-primary:hover),
+.loginPanel :global(.ant-btn-primary:focus),
+.loginPanel :global(.ant-btn-primary:active),
+.loginPanel :global(.ant-btn-primary:visited) {
+  background: #000000 !important;
+  background-color: #000000 !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.loginPanel :global(.ant-btn-primary::before),
+.loginPanel :global(.ant-btn-primary::after) {
+  display: none !important;
 }
 
 /* 底部链接 */
@@ -212,14 +255,44 @@
   text-align: center;
   color: rgba(255, 255, 255, 0.7);
   font-size: 12px;
+  position: relative;
+  z-index: 2;
 }
 
 .footer a {
   color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
+  transition: color 0.2s ease;
 }
 
 .footer a:hover {
   color: white;
   text-decoration: underline;
+}
+
+/* 语言选择器样式 - 透明背景带边框 */
+.rememberRow :global(.ant-select) {
+  width: 100%;
+  max-width: 8em;
+}
+
+.rememberRow :global(.ant-select-selector) {
+  border-radius: 6px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(4px);
+}
+
+.rememberRow :global(.ant-select-arrow) {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.rememberRow :global(.ant-select-selection-item) {
+  color: #ffffff;
+  font-weight: 500;
+}
+
+.rememberRow :global(.ant-select:hover .ant-select-selector) {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.6) !important;
 }

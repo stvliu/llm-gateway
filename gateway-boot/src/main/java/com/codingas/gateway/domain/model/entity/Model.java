@@ -13,6 +13,7 @@ import java.util.Map;
  * 模型实体
  *
  * <p>表示具体的 AI 模型，是调用的最小单位。</p>
+ * <p>关联 Provider 通过 providerId 引用，不持有 Provider 对象。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -20,7 +21,9 @@ import java.util.Map;
 @Slf4j
 public class Model extends BaseEntity {
 
-    private Provider provider;
+    private Long providerId;
+
+    private String providerName;
 
     private String providerModelId;
 

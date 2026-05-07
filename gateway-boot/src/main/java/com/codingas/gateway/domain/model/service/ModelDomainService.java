@@ -79,7 +79,7 @@ public class ModelDomainService {
         Model model = modelGateway.findByProviderModelId(providerModelId)
                 .orElseThrow(() -> new NoSuchElementException("Model not found: " + providerModelId));
 
-        Long providerId = model.getProvider() != null ? model.getProvider().getId() : null;
+        Long providerId = model.getProviderId();
         if (providerId == null) {
             throw new NoSuchElementException("Model has no provider: " + providerModelId);
         }
@@ -104,7 +104,7 @@ public class ModelDomainService {
         Model model = modelGateway.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Model not found: " + id));
 
-        Long providerId = model.getProvider() != null ? model.getProvider().getId() : null;
+        Long providerId = model.getProviderId();
         if (providerId == null) {
             throw new NoSuchElementException("Model has no provider: " + id);
         }

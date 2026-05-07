@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.infrastructure.security.database.dataobject.GatewayApiKeyDo;
 import com.codingas.gateway.infrastructure.security.database.GatewayApiKeyRepository;
@@ -105,12 +104,10 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         if (doEntity.getStatus() != null) {
             entity.setStatus(GatewayApiKey.ApiKeyStatus.valueOf(doEntity.getStatus().name()));
         }
-        // User 关联
+        // User 关联 - 使用 ID 引用
         if (doEntity.getUser() != null) {
-            User user = new User();
-            user.setId(doEntity.getUser().getId());
-            user.setUsername(doEntity.getUser().getUsername());
-            entity.setUser(user);
+            entity.setUserId(doEntity.getUser().getId());
+            entity.setUsername(doEntity.getUser().getUsername());
         }
         return entity;
     }
@@ -137,9 +134,9 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
             doEntity.setStatus(GatewayApiKeyDo.ApiKeyStatus.valueOf(entity.getStatus().name()));
         }
         // User 关联 - 只需要设置 ID
-        if (entity.getUser() != null && entity.getUser().getId() != null) {
+        if (entity.getUserId() != null) {
             UserDo userDo = new UserDo();
-            userDo.setId(entity.getUser().getId());
+            userDo.setId(entity.getUserId());
             doEntity.setUser(userDo);
         }
         return doEntity;

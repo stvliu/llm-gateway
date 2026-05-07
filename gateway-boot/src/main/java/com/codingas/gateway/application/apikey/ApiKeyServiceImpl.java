@@ -56,7 +56,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         // 创建 API Key
         GatewayApiKey apiKey = new GatewayApiKey();
         apiKey.setKeyHash(keyHash);
-        apiKey.setUser(user);
+        apiKey.setUserId(user.getId());
+        apiKey.setUsername(user.getUsername());
         apiKey.setName(request.getName());
         apiKey.setExpiresAt(request.getExpiresAt());
         apiKey.setIpWhitelist(request.getIpWhitelist());
@@ -96,7 +97,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
 
         if (request.getUserId() != null) {
             apiKeys = apiKeys.stream()
-                .filter(k -> k.getUser().getId().equals(request.getUserId()))
+                .filter(k -> k.getUserId().equals(request.getUserId()))
                 .collect(Collectors.toList());
         }
 
@@ -188,8 +189,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     private ApiKeyResponse toResponse(GatewayApiKey apiKey) {
         ApiKeyResponse response = new ApiKeyResponse();
         response.setId(apiKey.getId());
-        response.setUserId(apiKey.getUser().getId());
-        response.setUsername(apiKey.getUser().getUsername());
+        response.setUserId(apiKey.getUserId());
+        response.setUsername(apiKey.getUsername());
         response.setName(apiKey.getName());
         response.setStatus(apiKey.getStatus());
         response.setExpiresAt(apiKey.getExpiresAt());

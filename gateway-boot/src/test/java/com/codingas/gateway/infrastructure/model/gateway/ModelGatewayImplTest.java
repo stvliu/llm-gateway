@@ -2,7 +2,6 @@ package com.codingas.gateway.infrastructure.model.gateway;
 
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
@@ -151,7 +150,7 @@ class ModelGatewayImplTest {
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getProvider().getId()).isEqualTo(1L);
+            assertThat(result.get(0).getProviderId()).isEqualTo(1L);
         }
     }
 
@@ -204,11 +203,8 @@ class ModelGatewayImplTest {
         entity.setCapabilities(Map.of("chat", true, "streaming", true));
         entity.setStatus(Model.ModelStatus.ACTIVE);
 
-        Provider provider = new Provider();
-        provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setProviderType(ProviderType.OPENAI);
-        entity.setProvider(provider);
+        entity.setProviderId(1L);
+        entity.setProviderName("OpenAI");
 
         return entity;
     }

@@ -10,6 +10,7 @@ import {
   Spin,
   Tooltip,
 } from 'antd';
+import type { TextAreaRef } from 'antd/es/input/TextArea';
 import {
   SendOutlined,
   ClearOutlined,
@@ -31,7 +32,7 @@ export function ChatPanel() {
   const { t } = useTranslation('chat');
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<TextAreaRef>(null);
 
   const {
     messages,

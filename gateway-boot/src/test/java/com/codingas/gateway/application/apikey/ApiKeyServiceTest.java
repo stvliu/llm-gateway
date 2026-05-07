@@ -95,7 +95,8 @@ class ApiKeyServiceTest {
 
             GatewayApiKey savedKey = captor.getValue();
             assertThat(savedKey.getName()).isEqualTo("Test API Key");
-            assertThat(savedKey.getUser()).isEqualTo(user);
+            assertThat(savedKey.getUserId()).isEqualTo(user.getId());
+            assertThat(savedKey.getUsername()).isEqualTo(user.getUsername());
             assertThat(savedKey.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
         }
 
@@ -135,7 +136,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey = new GatewayApiKey();
             apiKey.setId(100L);
             apiKey.setKeyHash("hashed");
-            apiKey.setUser(user);
+            apiKey.setUserId(user.getId());
+            apiKey.setUsername(user.getUsername());
             apiKey.setName("Test Key");
             apiKey.setStatus(ApiKeyStatus.ACTIVE);
             apiKey.setCreatedAt(Instant.now());
@@ -188,7 +190,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
             apiKey1.setKeyHash("hash1");
-            apiKey1.setUser(user);
+            apiKey1.setUserId(user.getId());
+            apiKey1.setUsername(user.getUsername());
             apiKey1.setName("Key 1");
             apiKey1.setStatus(ApiKeyStatus.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
@@ -197,7 +200,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
             apiKey2.setKeyHash("hash2");
-            apiKey2.setUser(user);
+            apiKey2.setUserId(user.getId());
+            apiKey2.setUsername(user.getUsername());
             apiKey2.setName("Key 2");
             apiKey2.setStatus(ApiKeyStatus.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
@@ -229,7 +233,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
             apiKey1.setKeyHash("hash1");
-            apiKey1.setUser(user);
+            apiKey1.setUserId(user.getId());
+            apiKey1.setUsername(user.getUsername());
             apiKey1.setName("Search Key");
             apiKey1.setStatus(ApiKeyStatus.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
@@ -238,7 +243,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
             apiKey2.setKeyHash("hash2");
-            apiKey2.setUser(user);
+            apiKey2.setUserId(user.getId());
+            apiKey2.setUsername(user.getUsername());
             apiKey2.setName("Other Key");
             apiKey2.setStatus(ApiKeyStatus.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
@@ -274,7 +280,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey1 = new GatewayApiKey();
             apiKey1.setId(1L);
             apiKey1.setKeyHash("hash1");
-            apiKey1.setUser(user1);
+            apiKey1.setUserId(user1.getId());
+            apiKey1.setUsername(user1.getUsername());
             apiKey1.setName("User1 Key");
             apiKey1.setStatus(ApiKeyStatus.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
@@ -283,7 +290,8 @@ class ApiKeyServiceTest {
             GatewayApiKey apiKey2 = new GatewayApiKey();
             apiKey2.setId(2L);
             apiKey2.setKeyHash("hash2");
-            apiKey2.setUser(user2);
+            apiKey2.setUserId(user2.getId());
+            apiKey2.setUsername(user2.getUsername());
             apiKey2.setName("User2 Key");
             apiKey2.setStatus(ApiKeyStatus.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
@@ -315,7 +323,8 @@ class ApiKeyServiceTest {
             GatewayApiKey activeKey = new GatewayApiKey();
             activeKey.setId(1L);
             activeKey.setKeyHash("hash1");
-            activeKey.setUser(user);
+            activeKey.setUserId(user.getId());
+            activeKey.setUsername(user.getUsername());
             activeKey.setName("Active Key");
             activeKey.setStatus(ApiKeyStatus.ACTIVE);
             activeKey.setCreatedAt(Instant.now());
@@ -324,7 +333,8 @@ class ApiKeyServiceTest {
             GatewayApiKey disabledKey = new GatewayApiKey();
             disabledKey.setId(2L);
             disabledKey.setKeyHash("hash2");
-            disabledKey.setUser(user);
+            disabledKey.setUserId(user.getId());
+            disabledKey.setUsername(user.getUsername());
             disabledKey.setName("Disabled Key");
             disabledKey.setStatus(ApiKeyStatus.DISABLED);
             disabledKey.setCreatedAt(Instant.now());
@@ -380,7 +390,8 @@ class ApiKeyServiceTest {
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
             existingKey.setKeyHash("old-hash");
-            existingKey.setUser(user);
+            existingKey.setUserId(user.getId());
+            existingKey.setUsername(user.getUsername());
             existingKey.setName("Old Name");
             existingKey.setStatus(ApiKeyStatus.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
@@ -440,7 +451,8 @@ class ApiKeyServiceTest {
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
             existingKey.setKeyHash("hash");
-            existingKey.setUser(user);
+            existingKey.setUserId(user.getId());
+            existingKey.setUsername(user.getUsername());
             existingKey.setStatus(ApiKeyStatus.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
 
@@ -489,7 +501,8 @@ class ApiKeyServiceTest {
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
             existingKey.setKeyHash("hash");
-            existingKey.setUser(user);
+            existingKey.setUserId(user.getId());
+            existingKey.setUsername(user.getUsername());
             existingKey.setStatus(ApiKeyStatus.DISABLED);
             existingKey.setCreatedAt(Instant.now());
             existingKey.setUpdatedAt(Instant.now());
@@ -518,7 +531,8 @@ class ApiKeyServiceTest {
             GatewayApiKey existingKey = new GatewayApiKey();
             existingKey.setId(100L);
             existingKey.setKeyHash("hash");
-            existingKey.setUser(user);
+            existingKey.setUserId(user.getId());
+            existingKey.setUsername(user.getUsername());
             existingKey.setStatus(ApiKeyStatus.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
             existingKey.setUpdatedAt(Instant.now());

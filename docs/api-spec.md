@@ -1360,7 +1360,135 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.3 调整 Key 优先级
+### 7.4 获取 Key 详情
+
+**端点**: `GET /api/v1/channels/{channelId}/keys/{keyId}`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "api_key_code": "KEY001",
+    "key_name": "主 Key",
+    "key_hint": "sk-****abcd",
+    "status": "ACTIVE",
+    "is_default": true,
+    "priority": 100,
+    "health_status": "HEALTHY",
+    "success_count": 1523,
+    "error_count": 3,
+    "rpm_limit": 60,
+    "tpm_limit": 100000,
+    "disabled_reason": null,
+    "recover_at": null,
+    "expires_at": "2027-12-31T23:59:59Z",
+    "last_used_at": "2026-05-06T10:00:00Z",
+    "created_at": "2026-05-01T08:00:00Z",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CHANNEL_NOT_FOUND | 404 | 渠道不存在 |
+
+---
+
+### 7.5 更新 Key 信息
+
+**端点**: `PUT /api/v1/channels/{channelId}/keys/{keyId}`
+
+**请求体**:
+
+```json
+{
+  "key_name": "更新后的名称",
+  "rpm_limit": 100,
+  "tpm_limit": 200000,
+  "expires_at": "2028-12-31T23:59:59Z"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| key_name | String | ❌ | 1-64 字符 | Key 名称 |
+| rpm_limit | Integer | ❌ | ≥1 | 每分钟请求数限制 |
+| tpm_limit | Integer | ❌ | ≥1 | 每分钟 Token 数限制 |
+| expires_at | DateTime | ❌ | ISO 8601 | 过期时间 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "key_name": "更新后的名称",
+    "rpm_limit": 100,
+    "tpm_limit": 200000,
+    "expires_at": "2028-12-31T23:59:59Z",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CHANNEL_NOT_FOUND | 404 | 渠道不存在 |
+
+---
+
+### 7.6 删除 Key
+
+**端点**: `DELETE /api/v1/channels/{channelId}/keys/{keyId}`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "deleted_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**业务规则**（KP-008 默认 Key 保护）:
+- 渠道下只剩一个 Key 时禁止删除
+- 默认 Key 禁止删除
+- 删除操作为软删除（状态变为 `DELETED`）
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CHANNEL_NOT_FOUND | 404 | 渠道不存在 |
+| CANNOT_DELETE_LAST_KEY | 400 | 无法删除渠道中最后一个 Key |
+| CANNOT_DELETE_DEFAULT_KEY | 400 | 无法删除默认 Key |
+
+---
+
+### 7.7 调整 Key 优先级
 
 **端点**: `PUT /api/v1/channels/{channelId}/keys/{keyId}/priority`
 
@@ -1400,7 +1528,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.4 批量调整 Key 优先级
+### 7.8 批量调整 Key 优先级
 
 **端点**: `PUT /api/v1/channels/{channelId}/keys/priorities`
 
@@ -1440,7 +1568,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.5 禁用 Key
+### 7.9 禁用 Key
 
 **端点**: `POST /api/v1/channels/{channelId}/keys/{keyId}/disable`
 
@@ -1472,7 +1600,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.6 启用 Key
+### 7.10 启用 Key
 
 **端点**: `POST /api/v1/channels/{channelId}/keys/{keyId}/enable`
 
@@ -1499,7 +1627,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.7 获取 Key 健康状态
+### 7.11 获取 Key 健康状态
 
 **端点**: `GET /api/v1/channels/{channelId}/keys/{keyId}/health`
 
@@ -1537,7 +1665,46 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.8 更新 Key 选择策略
+### 7.12 手动触发恢复检查
+
+**端点**: `POST /api/v1/channels/{channelId}/keys/{keyId}/check-recovery`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "api_key_code": "KEY001",
+    "previous_status": "RATE_LIMITED",
+    "current_status": "ACTIVE",
+    "recovered": true,
+    "checked_at": "2026-05-06T10:30:00Z",
+    "message": "Key 已成功恢复"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**说明**:
+- 手动触发对被禁用 Key 的可用性检查
+- 发送测试请求验证 Key 是否可用
+- 如果可用，自动将状态恢复为 `ACTIVE`
+- 适用于需要立即恢复的场景，无需等待定时任务
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| KEY_ALREADY_ACTIVE | 400 | Key 已处于 ACTIVE 状态，无需恢复 |
+
+---
+
+### 7.13 更新 Key 选择策略
 
 **端点**: `PUT /api/v1/channels/{channelId}/selection-strategy`
 
@@ -1578,7 +1745,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.9 Key 状态枚举
+### 7.14 Key 状态枚举
 
 | 状态 | 说明 |
 |------|------|
@@ -1592,7 +1759,7 @@ anthropic-version: 2023-06-01
 
 ---
 
-### 7.10 禁用原因枚举
+### 7.15 禁用原因枚举
 
 | 原因 | 说明 |
 |------|------|
@@ -1601,3 +1768,13 @@ anthropic-version: 2023-06-01
 | OVERQUOTA | 超配额 |
 | ERROR | 调用异常 |
 | MANUAL | 手动禁用 |
+
+---
+
+## 版本历史
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.2 | 2026-05-06 | 补充完整的 CRUD 接口：创建 Key（7.2）、获取详情（7.4）、更新 Key（7.5）、删除 Key（7.6）；新增手动触发恢复检查接口（7.15） |
+| v1.1 | 2026-05-06 | 新增第七章管理 API - Provider API Key 管理 API |
+| v1.0 | 2026-05-02 | 初始版本 |
