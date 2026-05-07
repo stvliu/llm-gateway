@@ -1,0 +1,40 @@
+{
+  "template_code": "deepseek",
+  "template_name": "DeepSeek",
+  "provider_type": "DEEPSEEK",
+  "provider_config": {
+    "provider_name": "DeepSeek",
+    "base_url": "https://api.deepseek.com",
+    "website_url": "https://deepseek.com",
+    "api_doc_url": "https://platform.deepseek.com/docs"
+  },
+  "models_config": [
+    {
+      "provider_model_id": "deepseek-chat",
+      "display_name": "DeepSeek Chat",
+      "context_window": 64000,
+      "input_price": 0.14,
+      "output_price": 0.28,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "deepseek-coder",
+      "display_name": "DeepSeek Coder",
+      "context_window": 64000,
+      "input_price": 0.14,
+      "output_price": 0.28,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    }
+  ],
+  "description": "DeepSeek API，高性价比国产大模型，支持对话和代码生成",
+  "icon_url": "https://cdn.example.com/icons/deepseek.png",
+  "tags": ["国内", "高性价比", "代码"]
+}
