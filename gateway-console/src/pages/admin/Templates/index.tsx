@@ -12,6 +12,7 @@ import {
   Card,
   Tabs,
   Descriptions,
+  Upload,
 } from 'antd';
 import {
   PlusOutlined,
@@ -29,6 +30,7 @@ import {
   useDeleteTemplate,
   usePublishTemplate,
   useApplyTemplate,
+  useImportTemplates,
 } from '@/services/query';
 import type {
   ProviderTemplate,
@@ -60,6 +62,7 @@ export default function AdminTemplates() {
   const deleteMutation = useDeleteTemplate();
   const publishMutation = usePublishTemplate();
   const applyMutation = useApplyTemplate();
+  const importMutation = useImportTemplates();
 
   const handleTabChange = (key: string) => {
     const type = key as TemplateType;
@@ -257,7 +260,22 @@ export default function AdminTemplates() {
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             {t('add')}
           </Button>
-          <Button icon={<UploadOutlined />}>{t('import')}</Button>
+          <Upload
+            accept=".zip"
+            showUploadList={false}
+            beforeUpload={(file) => {
+              const formData = new FormData();
+              formData.append('file', file);
+              importMutation.mutate(formData, {
+                onSuccess: () => {
+                  message.success(t('message.importSuccess'));
+                },
+              });
+              return false;
+            }}
+          >
+            <Button icon={<UploadOutlined />}>{t('import')}</Button>
+          </Upload>
         </Space>
       </div>
 
