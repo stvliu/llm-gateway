@@ -270,6 +270,9 @@ export default function AdminTemplates() {
                 onSuccess: () => {
                   message.success(t('message.importSuccess'));
                 },
+                onError: () => {
+                  message.error(t('message.importFailed'));
+                },
               });
               return false;
             }}
