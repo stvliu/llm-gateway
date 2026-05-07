@@ -37,6 +37,9 @@ class UserServiceTest {
     @Mock
     private UserGateway userGateway;
 
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl userService;
 
@@ -60,11 +63,12 @@ class UserServiceTest {
             UserCreateRequest request = new UserCreateRequest();
             request.setUsername("newuser");
             request.setEmail("new@example.com");
-            request.setPassword("password123");
+            request.setPassword("plainPassword123");
             request.setPhone("13800138000");
             request.setRole("ADMIN");
 
             when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
                 User user = invocation.getArgument(0);
                 user.setId(2L);
@@ -90,9 +94,10 @@ class UserServiceTest {
             UserCreateRequest request = new UserCreateRequest();
             request.setUsername("newuser");
             request.setEmail("new@example.com");
-            request.setPassword("password123");
+            request.setPassword("plainPassword123");
 
             when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
                 User user = invocation.getArgument(0);
                 user.setId(2L);
@@ -139,6 +144,7 @@ class UserServiceTest {
             request.setPassword("plainPassword123");
 
             when(userGateway.existsByEmail("new@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> {
                 User user = invocation.getArgument(0);
                 user.setId(2L);
@@ -152,8 +158,7 @@ class UserServiceTest {
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
             verify(userGateway).save(userCaptor.capture());
             User savedUser = userCaptor.getValue();
-            assertThat(savedUser.getPasswordHash()).isNotEqualTo("plainPassword123");
-            assertThat(savedUser.getPasswordHash()).hasSize(64); // SHA-256 hex length
+            assertThat(savedUser.getPasswordHash()).isEqualTo("encodedPassword");
         }
     }
 

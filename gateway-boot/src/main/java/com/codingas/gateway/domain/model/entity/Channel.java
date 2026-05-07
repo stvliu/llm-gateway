@@ -35,11 +35,25 @@ public class Channel extends BaseEntity {
 
     private Integer weight;
 
+    private KeySelectionStrategy keySelectionStrategy = KeySelectionStrategy.PRIORITY_FIRST;
+
     private ChannelStatus status = ChannelStatus.ACTIVE;
 
     private Instant lastHealthCheckAt;
 
     private Integer consecutiveFailures;
+
+    /**
+     * Key 选择策略枚举
+     */
+    public enum KeySelectionStrategy {
+        /** 优先级优先 */
+        PRIORITY_FIRST,
+        /** 轮询 */
+        ROUND_ROBIN,
+        /** 加权 */
+        WEIGHTED
+    }
 
     public enum ChannelStatus {
         /** 活跃 */

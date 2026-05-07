@@ -1,8 +1,11 @@
 package com.codingas.gateway.application.template;
 
-import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
-import com.codingas.gateway.application.template.dto.TemplateResponse;
-import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
+import com.codingas.gateway.application.template.dto.*;
+import com.codingas.gateway.domain.model.entity.Channel;
+import com.codingas.gateway.domain.model.entity.Model;
+import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.gateway.*;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -16,7 +19,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Provider 模板应用服务
@@ -27,6 +34,10 @@ import java.time.Instant;
 public class ProviderTemplateService {
 
     private final ProviderTemplateGateway gateway;
+    private final ProviderGateway providerGateway;
+    private final ChannelGateway channelGateway;
+    private final ModelGateway modelGateway;
+    private final ProviderApiKeyGateway providerApiKeyGateway;
 
     /**
      * 创建自定义模板
@@ -146,6 +157,114 @@ public class ProviderTemplateService {
         template.setMarketStatus(MarketStatus.PUBLISHED);
         template.setPublishAt(Instant.now());
         gateway.save(template);
+    }
+
+    /**
+     * 应用模板创建 Provider、Channel、Model、ApiKey
+     */
+    @Transactional
+    public ApplyTemplateResult applyTemplate(Long templateId, ApplyTemplateRequest request, Long userId) {
+        ProviderTemplate template = gateway.findById(templateId)
+            .orElseThrow(() -> new IllegalArgumentException("模板不存在: " + templateId));
+
+        // 1. 创建 Provider
+        Provider provider = new Provider();
+        provider.setProviderName(template.getTemplateName());
+        provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(template.getProviderType()));
+        Map<String, Object> providerConfig = template.getProviderConfig();
+        if (providerConfig != null) {
+            if (providerConfig.containsKey("base_url")) {
+                provider.setBaseUrl((String) providerConfig.get("base_url"));
+            }
+            if (providerConfig.containsKey("website_url")) {
+                provider.setWebsiteUrl((String) providerConfig.get("website_url"));
+            }
+            if (providerConfig.containsKey("api_doc_url")) {
+                provider.setApiDocUrl((String) providerConfig.get("api_doc_url"));
+            }
+        }
+        provider.setPriority(100);
+        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        Provider savedProvider = providerGateway.save(provider);
+
+        // 2. 创建 Channel
+        Channel channel = new Channel();
+        channel.setName(request.getChannelName() != null ? request.getChannelName() : template.getTemplateName());
+        channel.setChannelCode("ch_" + template.getTemplateCode() + "_" + System.currentTimeMillis());
+        channel.setPriority(request.getChannelPriority() != null ? request.getChannelPriority() : 100);
+        channel.setProviderId(savedProvider.getId());
+        channel.setStatus(Channel.ChannelStatus.ACTIVE);
+        Channel savedChannel = channelGateway.save(channel);
+
+        // 3. 创建 Model
+        List<Long> modelIds = new ArrayList<>();
+        List<String> modelNames = new ArrayList<>();
+        List<Map<String, Object>> modelsConfig = template.getModelsConfig();
+        if (modelsConfig != null) {
+            for (Map<String, Object> modelConfig : modelsConfig) {
+                Model model = new Model();
+                model.setProviderId(savedProvider.getId());
+                model.setProviderName(template.getTemplateName());
+                model.setProviderModelId((String) modelConfig.get("provider_model_id"));
+                model.setDisplayName((String) modelConfig.get("display_name"));
+                if (modelConfig.containsKey("context_window")) {
+                    model.setContextWindow(((Number) modelConfig.get("context_window")).intValue());
+                }
+                if (modelConfig.containsKey("input_price")) {
+                    Object inputPrice = modelConfig.get("input_price");
+                    if (inputPrice instanceof Number) {
+                        model.setInputPrice(BigDecimal.valueOf(((Number) inputPrice).doubleValue()));
+                    }
+                }
+                if (modelConfig.containsKey("output_price")) {
+                    Object outputPrice = modelConfig.get("output_price");
+                    if (outputPrice instanceof Number) {
+                        model.setOutputPrice(BigDecimal.valueOf(((Number) outputPrice).doubleValue()));
+                    }
+                }
+                if (modelConfig.containsKey("capabilities")) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Boolean> caps = (Map<String, Boolean>) modelConfig.get("capabilities");
+                    model.setCapabilities(caps);
+                }
+                model.setStatus(Model.ModelStatus.ACTIVE);
+                Model savedModel = modelGateway.save(model);
+                modelIds.add(savedModel.getId());
+                modelNames.add(savedModel.getDisplayName());
+            }
+        }
+
+        // 4. 创建 ApiKey
+        ProviderApiKey apiKey = new ProviderApiKey();
+        apiKey.setProviderId(savedProvider.getId());
+        apiKey.setChannelId(savedChannel.getId());
+        apiKey.setKeyName(template.getTemplateName() + " API Key");
+        apiKey.setApiKey(request.getApiKey());
+        apiKey.setEncryptedApiKey(encryptApiKey(request.getApiKey()));
+        apiKey.setPriority(100);
+        apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
+        providerApiKeyGateway.save(apiKey);
+
+        // 5. 增加模板使用次数
+        gateway.incrementDownloadCount(templateId);
+
+        return ApplyTemplateResult.builder()
+            .providerId(savedProvider.getId())
+            .providerName(savedProvider.getProviderName())
+            .channelId(savedChannel.getId())
+            .channelName(savedChannel.getName())
+            .modelIds(modelIds)
+            .modelNames(modelNames)
+            .createdAt(savedProvider.getCreatedAt())
+            .build();
+    }
+
+    /**
+     * 简单的 API Key 加密（实际应使用更安全的加密方式）
+     */
+    private String encryptApiKey(String apiKey) {
+        // 实际项目中应该使用 AES 等加密算法，这里只是占位
+        return apiKey;
     }
 
     private TemplateResponse toResponse(ProviderTemplate template) {

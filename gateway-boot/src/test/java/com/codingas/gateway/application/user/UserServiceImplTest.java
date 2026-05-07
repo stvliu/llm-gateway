@@ -33,6 +33,9 @@ class UserServiceImplTest {
     @Mock
     private UserGateway userGateway;
 
+    @Mock
+    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+
     @InjectMocks
     private UserServiceImpl service;
 
@@ -50,6 +53,7 @@ class UserServiceImplTest {
             request.setPassword("password123");
 
             when(userGateway.existsByEmail("test@example.com")).thenReturn(false);
+            when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
             when(userGateway.save(any())).thenAnswer(inv -> {
                 User u = inv.getArgument(0);
                 u.setId(1L);
