@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -56,6 +58,9 @@ class ProviderTemplateServiceTest {
     @Mock
     private ProviderApiKeyGateway providerApiKeyGateway;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     private ProviderTemplateService service;
 
     @BeforeEach
@@ -65,7 +70,8 @@ class ProviderTemplateServiceTest {
             providerGateway,
             channelGateway,
             modelGateway,
-            providerApiKeyGateway
+            providerApiKeyGateway,
+            objectMapper
         );
     }
 

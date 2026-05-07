@@ -10,6 +10,7 @@ import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -19,11 +20,17 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Provider 模板应用服务
@@ -38,6 +45,7 @@ public class ProviderTemplateService {
     private final ChannelGateway channelGateway;
     private final ModelGateway modelGateway;
     private final ProviderApiKeyGateway providerApiKeyGateway;
+    private final ObjectMapper objectMapper;
 
     /**
      * 创建自定义模板
@@ -256,6 +264,115 @@ public class ProviderTemplateService {
             .modelIds(modelIds)
             .modelNames(modelNames)
             .createdAt(savedProvider.getCreatedAt())
+            .build();
+    }
+
+    /**
+     * 导出模板为 JSON 文件
+     */
+    public void exportTemplate(Long id, OutputStream out) {
+        ProviderTemplate template = gateway.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("模板不存在: " + id));
+
+        try (ZipOutputStream zipOut = new ZipOutputStream(out)) {
+            ZipEntry entry = new ZipEntry(template.getTemplateCode() + ".json");
+            zipOut.putNextEntry(entry);
+
+            TemplateExportDto exportDto = toExportDto(template);
+            String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportDto);
+            zipOut.write(json.getBytes(StandardCharsets.UTF_8));
+
+            zipOut.closeEntry();
+        } catch (Exception e) {
+            throw new RuntimeException("导出模板失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 批量导出模板为 ZIP 文件
+     */
+    public void exportTemplates(List<Long> ids, OutputStream out) {
+        try (ZipOutputStream zipOut = new ZipOutputStream(out)) {
+            for (Long id : ids) {
+                ProviderTemplate template = gateway.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("模板不存在: " + id));
+
+                ZipEntry entry = new ZipEntry(template.getTemplateCode() + ".json");
+                zipOut.putNextEntry(entry);
+
+                TemplateExportDto exportDto = toExportDto(template);
+                String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(exportDto);
+                zipOut.write(json.getBytes(StandardCharsets.UTF_8));
+
+                zipOut.closeEntry();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("导出模板失败: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 从 ZIP 文件导入模板
+     */
+    @Transactional
+    public List<TemplateResponse> importTemplates(InputStream in, Long userId, String username) {
+        List<TemplateResponse> results = new ArrayList<>();
+
+        try (ZipInputStream zipIn = new ZipInputStream(in)) {
+            ZipEntry entry;
+            while ((entry = zipIn.getNextEntry()) != null) {
+                if (entry.isDirectory() || !entry.getName().endsWith(".json")) {
+                    continue;
+                }
+
+                String json = new String(zipIn.readAllBytes(), StandardCharsets.UTF_8);
+                TemplateExportDto exportDto = objectMapper.readValue(json, TemplateExportDto.class);
+
+                // 转换为创建请求
+                TemplateCreateRequest request = new TemplateCreateRequest();
+                request.setTemplateCode(generateImportCode(exportDto.getTemplateCode()));
+                request.setTemplateName(exportDto.getTemplateName());
+                request.setProviderType(exportDto.getProviderType());
+                request.setProviderConfig(exportDto.getProviderConfig());
+                request.setModelsConfig(exportDto.getModelsConfig());
+                request.setDescription(exportDto.getDescription());
+                request.setIconUrl(exportDto.getIconUrl());
+                request.setTags(exportDto.getTags());
+
+                TemplateResponse response = createTemplate(request, userId, username);
+                results.add(response);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("导入模板失败: " + e.getMessage(), e);
+        }
+
+        return results;
+    }
+
+    /**
+     * 生成导入时的模板编码（避免冲突）
+     */
+    private String generateImportCode(String originalCode) {
+        String baseCode = originalCode + "_import";
+        if (!gateway.existsByTemplateCode(baseCode)) {
+            return baseCode;
+        }
+        return baseCode + "_" + System.currentTimeMillis();
+    }
+
+    /**
+     * 转换为导出 DTO
+     */
+    private TemplateExportDto toExportDto(ProviderTemplate template) {
+        return TemplateExportDto.builder()
+            .templateCode(template.getTemplateCode())
+            .templateName(template.getTemplateName())
+            .providerType(template.getProviderType())
+            .providerConfig(template.getProviderConfig())
+            .modelsConfig(template.getModelsConfig())
+            .description(template.getDescription())
+            .iconUrl(template.getIconUrl())
+            .tags(template.getTags())
             .build();
     }
 

@@ -51,6 +51,11 @@ public class ProviderApiKey extends BaseEntity {
     private Instant expiresAt;
 
     /**
+     * 连续失败次数（用于健康检测）
+     */
+    private Integer consecutiveFailures;
+
+    /**
      * API Key 状态枚举
      */
     public enum ProviderApiKeyStatus {
