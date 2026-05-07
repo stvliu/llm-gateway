@@ -13,6 +13,7 @@ import com.codingas.gateway.domain.model.gateway.ChannelGateway;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -61,6 +62,9 @@ class ProviderTemplateServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Mock
+    private ApiKeyEncryptionDomainService encryptionService;
+
     private ProviderTemplateService service;
 
     @BeforeEach
@@ -71,7 +75,8 @@ class ProviderTemplateServiceTest {
             channelGateway,
             modelGateway,
             providerApiKeyGateway,
-            objectMapper
+            objectMapper,
+            encryptionService
         );
     }
 
@@ -248,6 +253,8 @@ class ProviderTemplateServiceTest {
         });
         when(providerApiKeyGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(providerTemplateGateway).incrementDownloadCount(1L);
+        when(encryptionService.hashKey(any())).thenReturn("hashed-key");
+        when(encryptionService.encrypt(any())).thenReturn("encrypted-key");
 
         // Act
         ApplyTemplateResult result = service.applyTemplate(1L, request, 1L);
@@ -281,7 +288,11 @@ class ProviderTemplateServiceTest {
         ArgumentCaptor<ProviderApiKey> apiKeyCaptor = ArgumentCaptor.forClass(ProviderApiKey.class);
         verify(providerApiKeyGateway).save(apiKeyCaptor.capture());
         ProviderApiKey savedApiKey = apiKeyCaptor.getValue();
-        assertThat(savedApiKey.getApiKey()).isEqualTo("sk-test-key");
+        // apiKey should be hashed, encryptedApiKey should be set
+        assertThat(savedApiKey.getApiKey()).isNotEqualTo("sk-test-key");
+        assertThat(savedApiKey.getEncryptedApiKey()).isNotNull();
+        verify(encryptionService).hashKey("sk-test-key");
+        verify(encryptionService).encrypt("sk-test-key");
 
         // Verify download count incremented
         verify(providerTemplateGateway).incrementDownloadCount(1L);
@@ -319,6 +330,8 @@ class ProviderTemplateServiceTest {
         });
         when(providerApiKeyGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
         doNothing().when(providerTemplateGateway).incrementDownloadCount(1L);
+        when(encryptionService.hashKey(any())).thenReturn("hashed-key");
+        when(encryptionService.encrypt(any())).thenReturn("encrypted-key");
 
         // Act
         ApplyTemplateResult result = service.applyTemplate(1L, request, 1L);

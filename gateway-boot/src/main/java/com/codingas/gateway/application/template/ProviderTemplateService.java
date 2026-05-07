@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.*;
+import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -46,6 +47,7 @@ public class ProviderTemplateService {
     private final ModelGateway modelGateway;
     private final ProviderApiKeyGateway providerApiKeyGateway;
     private final ObjectMapper objectMapper;
+    private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
      * 创建自定义模板
@@ -242,13 +244,13 @@ public class ProviderTemplateService {
             }
         }
 
-        // 4. 创建 ApiKey
+        // 4. 创建 ApiKey（加密存储）
         ProviderApiKey apiKey = new ProviderApiKey();
         apiKey.setProviderId(savedProvider.getId());
         apiKey.setChannelId(savedChannel.getId());
         apiKey.setKeyName(template.getTemplateName() + " API Key");
-        apiKey.setApiKey(request.getApiKey());
-        apiKey.setEncryptedApiKey(encryptApiKey(request.getApiKey()));
+        apiKey.setApiKey(encryptionService.hashKey(request.getApiKey()));
+        apiKey.setEncryptedApiKey(encryptionService.encrypt(request.getApiKey()));
         apiKey.setPriority(100);
         apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
         providerApiKeyGateway.save(apiKey);
@@ -374,14 +376,6 @@ public class ProviderTemplateService {
             .iconUrl(template.getIconUrl())
             .tags(template.getTags())
             .build();
-    }
-
-    /**
-     * 简单的 API Key 加密（实际应使用更安全的加密方式）
-     */
-    private String encryptApiKey(String apiKey) {
-        // 实际项目中应该使用 AES 等加密算法，这里只是占位
-        return apiKey;
     }
 
     private TemplateResponse toResponse(ProviderTemplate template) {
