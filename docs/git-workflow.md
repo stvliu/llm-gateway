@@ -45,13 +45,23 @@ curl -X POST "https://用户名:私人令牌@gitee.com/api/v5/repos/用户名/�
   -d '{"title":"PR标题","head":"源分支","base":"master","body":"PR描述"}'
 ```
 
-**本项目示例**（直接复制修改 `title`、`head`、`body` 即可）：
+**本项目示例**（自动从 `~/.git-credentials` 读取认证信息）：
 
 ```bash
-curl -X POST "https://ezxbao_liuye:a84b631eaca50b981db4af4286e467f4@gitee.com/api/v5/repos/ezxbao_liuye/llm-gateway/pulls" \
+# 自动读取 credentials 中的 token 创建 PR
+CREDENTIALS=$(grep gitee ~/.git-credentials | head -1)
+TOKEN=$(echo "$CREDENTIALS" | sed 's/.*:\([^@]*\)@.*/\1/')
+USER=$(echo "$CREDENTIALS" | sed 's/.*\/\/\([^:]*\):.*/\1/')
+
+curl -X POST "https://${USER}:${TOKEN}@gitee.com/api/v5/repos/${USER}/llm-gateway/pulls" \
   -H "Content-Type: application/json" \
   -d '{"title":"feat: 新功能描述","head":"feature/xxx","base":"master","body":"## 改动\n- 改动1\n- 改动2\n\n## 测试\n- [x] 测试通过"}'
 ```
+
+**说明**：
+- 自动从 `~/.git-credentials` 读取用户名和 token
+- 只需修改 `title`、`head`（分支名）、`body`（描述）
+- 无需在文档中暴露私人令牌
 
 ### 前置配置（仅需一次）
 
