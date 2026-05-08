@@ -35,62 +35,45 @@ git push origin master
 
 ## Gitee 创建 Pull Request
 
-### 方式一：通过 API 创建 PR
+### 快速创建 PR（推荐）
 
-使用 Gitee REST API v5 可以直接创建 Pull Request。
-
-#### 1. 配置认证
-
-首先配置 Git credentials（推荐方式）：
-
-```bash
-echo "https://用户名:私人令牌@gitee.com" > ~/.git-credentials
-```
-
-获取私人令牌：Gitee → 设置 → 私人令牌 → 生成新令牌
-
-#### 2. 创建 PR 命令
+一行命令创建 PR，直接复制使用：
 
 ```bash
 curl -X POST "https://用户名:私人令牌@gitee.com/api/v5/repos/用户名/仓库名/pulls" \
   -H "Content-Type: application/json" \
-  -d '{
-    "title": "PR标题",
-    "head": "源分支名",
-    "base": "目标分支名",
-    "body": "PR描述内容"
-  }'
+  -d '{"title":"PR标题","head":"源分支","base":"master","body":"PR描述"}'
 ```
 
-#### 3. 实际示例
+**本项目示例**（直接复制修改标题和描述即可）：
 
 ```bash
 curl -X POST "https://ezxbao_liuye:YOUR_TOKEN@gitee.com/api/v5/repos/ezxbao_liuye/llm-gateway/pulls" \
   -H "Content-Type: application/json" \
-  -d '{
-    "title": "refactor(architecture): 重构异常和拦截器架构",
-    "head": "refactor/entity-id-reference",
-    "base": "master",
-    "body": "## 概述\n\n重构异常和拦截器架构。\n\n## 测试\n- ✅ 所有单元测试通过"
-  }'
+  -d '{"title":"feat: 新功能描述","head":"feature/xxx","base":"master","body":"## 改动\n- 改动1\n- 改动2\n\n## 测试\n- [x] 测试通过"}'
 ```
 
-#### 4. API 返回结果
+### 前置配置（仅需一次）
+
+#### 1. 获取私人令牌
+
+Gitee → 设置 → 私人令牌 → 生成新令牌（勾选 `projects` 权限）
+
+#### 2. 配置 Git credentials
+
+```bash
+echo "https://用户名:私人令牌@gitee.com" >> ~/.git-credentials
+```
+
+配置后，推送和 PR 创建都会自动使用此认证信息。
+
+### API 返回结果
 
 成功创建后返回 JSON，包含：
 - `html_url`: PR 页面链接
 - `number`: PR 编号
 - `state`: PR 状态（open/closed/merged）
 - `mergeable`: 是否可合并
-
-### 方式二：通过 Web 界面创建
-
-访问仓库页面 → Pull Requests → 新建 Pull Request
-
-PR 创建链接格式：
-```
-https://gitee.com/用户名/仓库名/pull/new/用户名?源分支..目标分支
-```
 
 ## 提交消息规范
 
