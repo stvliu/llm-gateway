@@ -1,9 +1,11 @@
-package com.codingas.gateway.common.exception;
+package com.codingas.gateway.domain.proxy.exception;
+
+import com.codingas.gateway.common.exception.GatewayException;
 
 /**
- * 提供商级异常
+ * 提供商异常
  *
- * <p>表示 AI 服务提供商相关的错误。</p>
+ * <p>表示调用外部模型提供商时发生的错误。</p>
  */
 public class ProviderException extends GatewayException {
 

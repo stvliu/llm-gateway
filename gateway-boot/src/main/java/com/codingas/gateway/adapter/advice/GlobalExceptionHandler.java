@@ -1,9 +1,9 @@
-package com.codingas.gateway.infrastructure.advice;
+package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.proxy.exception.ProviderException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,17 +22,6 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     /**
-     * 处理资源未找到异常
-     */
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        log.warn("Resource not found: {}", ex.getMessage());
-        return ResponseEntity
-                .status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.error("RESOURCE_NOT_FOUND", ex.getMessage()));
-    }
-
-    /**
      * 处理请求级异常
      */
     @ExceptionHandler(GatewayRequestException.class)
@@ -40,6 +29,17 @@ public class GlobalExceptionHandler {
         log.warn("Gateway request error: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * 处理提供商异常
+     */
+    @ExceptionHandler(ProviderException.class)
+    public ResponseEntity<ApiResponse<Void>> handleProviderException(ProviderException ex) {
+        log.error("Provider error: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_GATEWAY)
                 .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
     }
 

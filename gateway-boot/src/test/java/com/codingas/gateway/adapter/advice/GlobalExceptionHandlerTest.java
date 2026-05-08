@@ -1,10 +1,9 @@
-package com.codingas.gateway.infrastructure.advice;
+package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.common.exception.ProviderException;
-import com.codingas.gateway.common.exception.SecurityException;
+import com.codingas.gateway.domain.proxy.exception.ProviderException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +25,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * GlobalExceptionHandler 单元测试
+ *
+ * <p>注意：SecurityException 由 SecurityExceptionHandler 处理，不在本测试范围内。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler 单元测试")
@@ -83,28 +84,6 @@ class GlobalExceptionHandlerTest {
             assertThat(response.getBody().isSuccess()).isFalse();
             assertThat(response.getBody().getError().getCode()).isEqualTo("PROVIDER_001");
             assertThat(response.getBody().getError().getMessage()).isEqualTo("Provider unavailable");
-        }
-    }
-
-    @Nested
-    @DisplayName("SecurityException 处理")
-    class HandleSecurityExceptionTests {
-
-        @Test
-        @DisplayName("应返回 FORBIDDEN 状态码")
-        void handleSecurityException_returnsForbidden() {
-            // given
-            SecurityException ex = new SecurityException("SEC_001", "Access denied");
-
-            // when
-            ResponseEntity<ApiResponse<Void>> response = handler.handleSecurityException(ex);
-
-            // then
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().isSuccess()).isFalse();
-            assertThat(response.getBody().getError().getCode()).isEqualTo("SEC_001");
-            assertThat(response.getBody().getError().getMessage()).isEqualTo("Access denied");
         }
     }
 

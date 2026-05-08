@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security;
+package com.codingas.gateway.adapter.interceptor;
 
 import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
