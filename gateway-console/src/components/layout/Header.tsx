@@ -22,17 +22,19 @@ interface RightHeaderProps {
   onToggle: () => void;
 }
 
-const headerStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  padding: '0 16px',
-  height: 48,
-  background: '#fff',
-  borderBottom: '1px solid #f0f0f0',
-};
-
 export function LeftHeader({ collapsed }: LeftHeaderProps) {
   const { t } = useTranslation('common');
+  const { getEffectiveTheme } = useThemeStore();
+  const isDark = getEffectiveTheme() === 'dark';
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 16px',
+    height: 48,
+    background: isDark ? '#141414' : '#fff',
+    borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+  };
 
   return (
     <div style={headerStyle}>
@@ -51,7 +53,7 @@ export function LeftHeader({ collapsed }: LeftHeaderProps) {
           marginLeft: 12,
           fontSize: 16,
           fontWeight: 600,
-          color: '#1f1f1f',
+          color: isDark ? 'rgba(255, 255, 255, 0.85)' : '#1f1f1f',
           whiteSpace: 'nowrap',
         }}>
           {t('app.title')}
@@ -65,6 +67,16 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
   const { t, i18n } = useTranslation('common');
   const { user, logout } = useAuthStore();
   const { setMode, getEffectiveTheme } = useThemeStore();
+  const isDark = getEffectiveTheme() === 'dark';
+
+  const headerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0 16px',
+    height: 48,
+    background: isDark ? '#141414' : '#fff',
+    borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+  };
 
   const themeItems: MenuProps['items'] = [
     {
@@ -100,7 +112,7 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
     i18n.changeLanguage(lng);
   };
 
-  const ThemeIcon = getEffectiveTheme() === 'dark' ? MoonOutlined : SunOutlined;
+  const ThemeIcon = isDark ? MoonOutlined : SunOutlined;
 
   return (
     <div style={{ ...headerStyle, justifyContent: 'space-between' }}>
@@ -128,7 +140,9 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
         <Dropdown menu={{ items: userItems }} trigger={['click']}>
           <Space style={{ cursor: 'pointer' }}>
             <Avatar size="small" icon={<UserOutlined />} />
-            <span>{user?.username}</span>
+            <span style={{ color: isDark ? 'rgba(255, 255, 255, 0.85)' : undefined }}>
+              {user?.username}
+            </span>
           </Space>
         </Dropdown>
       </Space>

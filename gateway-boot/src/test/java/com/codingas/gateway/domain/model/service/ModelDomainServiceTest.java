@@ -1,8 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
-import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -212,11 +210,8 @@ class ModelDomainServiceTest {
         model.setCapabilities(Map.of("chat", true, "streaming", true));
         model.setStatus(Model.ModelStatus.ACTIVE);
 
-        Provider provider = new Provider();
-        provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setProviderType(ProviderType.OPENAI);
-        model.setProvider(provider);
+        model.setProviderId(1L);
+        model.setProviderName("OpenAI");
 
         return model;
     }

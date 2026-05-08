@@ -1,7 +1,13 @@
 package com.codingas.gateway.domain.model.gateway;
 
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,34 +20,73 @@ public interface ProviderApiKeyGateway {
 
     /**
      * 根据密钥 ID 查找 API 密钥
-     *
-     * @param id 密钥 ID
-     * @return API 密钥信息，不存在返回空
      */
     Optional<ProviderApiKey> findById(Long id);
 
     /**
-     * 根据提供商 ID 查找 API 密钥
-     *
-     * @param providerId 提供商 ID
-     * @return API 密钥信息，不存在返回空
+     * 根据 Provider ID 查找所有 API 密钥
      */
-    Optional<ProviderApiKey> findByProviderId(Long providerId);
+    List<ProviderApiKey> findByProviderId(Long providerId);
+
+    /**
+     * 根据 Provider ID 查找所有 API 密钥（分页）
+     */
+    Page<ProviderApiKey> findByProviderId(Long providerId, Pageable pageable);
+
+    /**
+     * 根据 Provider ID 和状态查找 API 密钥（分页）
+     */
+    Page<ProviderApiKey> findByProviderIdAndStatus(Long providerId, ProviderApiKeyStatus status, Pageable pageable);
+
+    /**
+     * 根据 Provider ID 和关键字查找 API 密钥（分页）
+     */
+    Page<ProviderApiKey> findByProviderIdAndKeyword(Long providerId, String keyword, Pageable pageable);
+
+    /**
+     * 根据 Provider ID、状态和关键字查找 API 密钥（分页）
+     */
+    Page<ProviderApiKey> findByProviderIdAndStatusAndKeyword(Long providerId, ProviderApiKeyStatus status, String keyword, Pageable pageable);
+
+    /**
+     * 根据 Provider ID 查找活跃的 API 密钥
+     *
+     * <p>活跃状态包括：ACTIVE、RATE_LIMITED、OVERQUOTA、ERROR</p>
+     */
+    List<ProviderApiKey> findActiveKeysByProviderId(Long providerId);
+
+    /**
+     * 查找 Provider 的默认 API 密钥
+     */
+    Optional<ProviderApiKey> findDefaultKeyByProviderId(Long providerId);
+
+    /**
+     * 统计 Provider 下的 API 密钥数量
+     */
+    long countByProviderId(Long providerId);
 
     /**
      * 保存提供商 API 密钥
-     *
-     * @param providerApiKey API 密钥实体
-     * @return 保存后的实体
      */
     ProviderApiKey save(ProviderApiKey providerApiKey);
 
     /**
+     * 更新 API 密钥状态
+     */
+    void updateStatus(Long id, ProviderApiKeyStatus status, ProviderApiKeyDisabledReason reason);
+
+    /**
+     * 更新最后使用时间
+     */
+    void updateLastUsedAt(Long id, Instant lastUsedAt);
+
+    /**
+     * 清除 Provider 下其他 Key 的默认标记
+     */
+    void clearDefaultFlagForOtherKeys(Long providerId, Long excludeId);
+
+    /**
      * 获取最大版本号
-     *
-     * <p>用于变更检测。</p>
-     *
-     * @return 最大版本号，无数据返回 0
      */
     default long getMaxVersion() {
         return 0L;

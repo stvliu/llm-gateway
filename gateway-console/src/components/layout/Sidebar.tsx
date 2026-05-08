@@ -8,6 +8,7 @@ import {
   KeyOutlined,
   CloudServerOutlined,
   ApiOutlined,
+  CloudDownloadOutlined,
 } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -48,6 +49,11 @@ export function Sidebar({ collapsed, role }: SidebarProps) {
           key: '/admin/providers',
           icon: <CloudServerOutlined />,
           label: t('menu.providers', { ns: 'common' }),
+        },
+        {
+          key: '/admin/templates',
+          icon: <CloudDownloadOutlined />,
+          label: t('menu.templates', { ns: 'common' }),
         },
         {
           key: '/admin/api-key-pool',

@@ -58,6 +58,7 @@ class AuthenticationDomainServiceTest {
             GatewayApiKey gatewayKey = createActiveApiKey(user);
 
             when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
             doNothing().when(apiKeyGateway).updateLastUsed(anyLong(), any(Instant.class));
 
             // when
@@ -225,7 +226,10 @@ class AuthenticationDomainServiceTest {
         key.setId(100L);
         key.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
         key.setExpiresAt(Instant.now().plus(30, ChronoUnit.DAYS));
-        key.setUser(user);
+        if (user != null) {
+            key.setUserId(user.getId());
+            key.setUsername(user.getUsername());
+        }
         return key;
     }
 }

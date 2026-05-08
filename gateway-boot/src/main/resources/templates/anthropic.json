@@ -1,0 +1,52 @@
+{
+  "template_code": "anthropic",
+  "template_name": "Anthropic Claude",
+  "provider_type": "ANTHROPIC",
+  "provider_config": {
+    "provider_name": "Anthropic",
+    "base_url": "https://api.anthropic.com",
+    "website_url": "https://anthropic.com",
+    "api_doc_url": "https://docs.anthropic.com"
+  },
+  "models_config": [
+    {
+      "provider_model_id": "claude-sonnet-4-20250514",
+      "display_name": "Claude Sonnet 4",
+      "context_window": 200000,
+      "input_price": 3.0,
+      "output_price": 15.0,
+      "capabilities": {
+        "vision": true,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "claude-opus-4-20250514",
+      "display_name": "Claude Opus 4",
+      "context_window": 200000,
+      "input_price": 15.0,
+      "output_price": 75.0,
+      "capabilities": {
+        "vision": true,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "claude-3-5-haiku-20241022",
+      "display_name": "Claude 3.5 Haiku",
+      "context_window": 200000,
+      "input_price": 0.8,
+      "output_price": 4.0,
+      "capabilities": {
+        "vision": true,
+        "function_calling": true,
+        "streaming": true
+      }
+    }
+  ],
+  "description": "Anthropic Claude API，支持 Claude Sonnet 4、Claude Opus 4、Claude 3.5 Haiku 等模型",
+  "icon_url": "https://cdn.example.com/icons/anthropic.png",
+  "tags": ["国际", "多模态", "主流"]
+}

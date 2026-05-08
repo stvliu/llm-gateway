@@ -40,7 +40,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| provider_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
 | provider_name | VARCHAR(128) | 显示名称 | NOT NULL |
 | provider_type | ENUM | 类型 | OPENAI / ANTHROPIC / GEMINI / ZHIPU / OTHER |
 | base_url | VARCHAR(256) | API 端点 | NOT NULL |
@@ -67,7 +66,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
 | provider_id | BIGINT | 所属 Provider | FK → providers.id, NOT NULL |
 | key_name | VARCHAR(64) | Key 名称（如"主Key"） | NULL |
 | api_key | VARCHAR(512) | API Key（加密存储） | NOT NULL |
@@ -98,7 +96,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| model_code | VARCHAR(128) | 业务标识 | UNIQUE, NOT NULL |
 | provider_id | BIGINT | 所属 Provider | FK → providers.id, NOT NULL |
 | provider_model_id | VARCHAR(128) | Provider 侧模型 ID | NOT NULL（如 gpt-4o） |
 | display_name | VARCHAR(256) | 显示名称 | NOT NULL |
@@ -133,7 +130,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| group_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
 | group_name | VARCHAR(128) | 显示名称 | NOT NULL |
 | strategy | ENUM | 路由策略 | ROUND_ROBIN / LEAST_LATENCY / PRIORITY |
 | failover_enabled | BOOLEAN | 是否启用故障转移 | DEFAULT TRUE |
@@ -200,7 +196,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| key_code | VARCHAR(128) | 业务标识 | UNIQUE, NOT NULL |
 | key_hash | VARCHAR(256) | API Key 哈希（用于验证） | NOT NULL |
 | user_id | BIGINT | 所属用户 | FK → users.id, NOT NULL |
 | provider_id | BIGINT | 关联的 Provider | FK → providers.id, NULL 表示全部 |
@@ -235,7 +230,6 @@
 | 属性 | 类型 | 说明 | 约束 |
 |------|------|------|------|
 | id | BIGINT | 物理主键 | PK, AUTO_INCREMENT |
-| limit_code | VARCHAR(64) | 业务标识 | UNIQUE, NOT NULL |
 | user_id | BIGINT | 所属用户 | FK → users.id, NOT NULL |
 | provider_id | BIGINT | 关联的 Provider | FK → providers.id, NULL 表示全部 |
 | model_id | BIGINT | 关联的 Model | FK → models.id, NULL 表示全部 |

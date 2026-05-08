@@ -76,7 +76,8 @@ class ProxyServiceTest {
         // 准备测试 Model
         testModel = new Model();
         testModel.setId(1L);
-        testModel.setProvider(testProvider);
+        testModel.setProviderId(testProvider.getId());
+        testModel.setProviderName(testProvider.getProviderName());
 
         // 准备 ModelProviderInfo
         testModelInfo = new ModelDomainService.ModelProviderInfo(testModel, testProvider);

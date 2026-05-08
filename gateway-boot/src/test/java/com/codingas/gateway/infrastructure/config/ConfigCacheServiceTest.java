@@ -141,16 +141,15 @@ class ConfigCacheServiceTest {
     class ApiKeyTests {
 
         @Test
-        @DisplayName("获取 API Key 并解密")
-        void getApiKeyByProviderId_found_decrypts() {
+        @DisplayName("获取 API Key")
+        void getApiKeyByProviderId_found_returnsApiKey() {
             // given
             ProviderApiKey apiKey = new ProviderApiKey();
             apiKey.setId(1L);
             apiKey.setProviderId(1L);
-            apiKey.setEncryptedApiKey("encrypted-value");
+            apiKey.setApiKey("decrypted-value");
 
-            when(apiKeyGateway.findByProviderId(1L)).thenReturn(Optional.of(apiKey));
-            when(encryptionService.decrypt("encrypted-value")).thenReturn("decrypted-value");
+            when(apiKeyGateway.findByProviderId(1L)).thenReturn(List.of(apiKey));
 
             // when
             Optional<ProviderApiKey> result = cacheService.getApiKeyByProviderId(1L);
@@ -164,7 +163,7 @@ class ConfigCacheServiceTest {
         @DisplayName("API Key 不存在")
         void getApiKeyByProviderId_notFound_returnsEmpty() {
             // given
-            when(apiKeyGateway.findByProviderId(999L)).thenReturn(Optional.empty());
+            when(apiKeyGateway.findByProviderId(999L)).thenReturn(List.of());
 
             // when
             Optional<ProviderApiKey> result = cacheService.getApiKeyByProviderId(999L);

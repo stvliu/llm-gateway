@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
@@ -96,22 +95,10 @@ public class ModelGatewayImpl implements ModelGateway {
         if (doEntity.getStatus() != null) {
             entity.setStatus(Model.ModelStatus.valueOf(doEntity.getStatus().name()));
         }
-        // Provider 关联转换
+        // Provider 关联 - 使用 ID 引用
         if (doEntity.getProvider() != null) {
-            Provider provider = new Provider();
-            provider.setId(doEntity.getProvider().getId());
-            provider.setProviderName(doEntity.getProvider().getProviderName());
-            if (doEntity.getProvider().getProviderType() != null) {
-                provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(
-                        doEntity.getProvider().getProviderType().name()));
-            }
-            provider.setBaseUrl(doEntity.getProvider().getBaseUrl());
-            provider.setPriority(doEntity.getProvider().getPriority());
-            if (doEntity.getProvider().getStatus() != null) {
-                provider.setStatus(Provider.ProviderStatus.valueOf(
-                        doEntity.getProvider().getStatus().name()));
-            }
-            entity.setProvider(provider);
+            entity.setProviderId(doEntity.getProvider().getId());
+            entity.setProviderName(doEntity.getProvider().getProviderName());
         }
         return entity;
     }
@@ -139,9 +126,9 @@ public class ModelGatewayImpl implements ModelGateway {
             doEntity.setStatus(ModelDo.ModelStatus.valueOf(entity.getStatus().name()));
         }
         // Provider 关联 - 只需要设置 ID
-        if (entity.getProvider() != null && entity.getProvider().getId() != null) {
+        if (entity.getProviderId() != null) {
             ProviderDo providerDo = new ProviderDo();
-            providerDo.setId(entity.getProvider().getId());
+            providerDo.setId(entity.getProviderId());
             doEntity.setProvider(providerDo);
         }
         return doEntity;

@@ -8,7 +8,6 @@ import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
-import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -39,13 +38,14 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse create(ModelCreateRequest request) {
-        // 查找提供商
-        Provider provider = providerGateway.findById(request.getProviderId())
-            .orElseThrow(() -> new ResourceNotFoundException("Provider", request.getProviderId()));
+        // 验证提供商存在
+        if (providerGateway.findById(request.getProviderId()).isEmpty()) {
+            throw new ResourceNotFoundException("Provider", request.getProviderId());
+        }
 
         // 创建模型
         Model model = new Model();
-        model.setProvider(provider);
+        model.setProviderId(request.getProviderId());
         model.setProviderModelId(request.getProviderModelId());
         model.setDisplayName(request.getDisplayName());
         model.setContextWindow(request.getContextWindow());
@@ -86,7 +86,7 @@ public class ModelServiceImpl implements ModelService {
 
         if (request.getProviderId() != null) {
             models = models.stream()
-                .filter(m -> m.getProvider().getId().equals(request.getProviderId()))
+                .filter(m -> m.getProviderId().equals(request.getProviderId()))
                 .collect(Collectors.toList());
         }
 
@@ -175,8 +175,8 @@ public class ModelServiceImpl implements ModelService {
     private ModelResponse toResponse(Model model) {
         ModelResponse response = new ModelResponse();
         response.setId(model.getId());
-        response.setProviderId(model.getProvider().getId());
-        response.setProviderName(model.getProvider().getProviderName());
+        response.setProviderId(model.getProviderId());
+        response.setProviderName(model.getProviderName());
         response.setProviderModelId(model.getProviderModelId());
         response.setDisplayName(model.getDisplayName());
         response.setContextWindow(model.getContextWindow());

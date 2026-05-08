@@ -12,6 +12,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.*;
  * GatewayApiKeyExpirationNotifier 单元测试
  */
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("GatewayApiKeyExpirationNotifier 测试")
 class GatewayApiKeyExpirationNotifierTest {
 
@@ -51,8 +54,13 @@ class GatewayApiKeyExpirationNotifierTest {
         void manualScan_keysFound_returnsResult() {
             // given
             GatewayApiKey key = createTestApiKey();
+            User user = new User();
+            user.setId(1L);
+            user.setEmail("test@example.com");
+            user.setUsername("testuser");
             Page<GatewayApiKey> page = new PageImpl<>(List.of(key));
             when(apiKeyGateway.findExpiringKeys(any(), any(), any())).thenReturn(page);
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
             when(notificationService.sendExpirationWarning(any(), any(), any(), any(), any())).thenReturn(true);
 
             // when
@@ -106,7 +114,12 @@ class GatewayApiKeyExpirationNotifierTest {
         void manualNotify_keyFound_returnsTrue() {
             // given
             GatewayApiKey key = createTestApiKey();
+            User user = new User();
+            user.setId(1L);
+            user.setEmail("test@example.com");
+            user.setUsername("testuser");
             when(apiKeyGateway.findById(1L)).thenReturn(Optional.of(key));
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
             when(notificationService.sendExpirationWarning(any(), any(), any(), any(), any())).thenReturn(true);
 
             // when
@@ -141,7 +154,8 @@ class GatewayApiKeyExpirationNotifierTest {
         user.setId(1L);
         user.setEmail("test@example.com");
         user.setUsername("testuser");
-        key.setUser(user);
+        key.setUserId(user.getId());
+        key.setUsername(user.getUsername());
 
         return key;
     }

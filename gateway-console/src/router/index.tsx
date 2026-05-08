@@ -10,6 +10,7 @@ import AdminApiKeyPool from '@/pages/admin/ApiKeyPool';
 import AdminUsers from '@/pages/admin/Users';
 import AdminApiKeys from '@/pages/admin/ApiKeys';
 import AdminSettings from '@/pages/admin/Settings';
+import AdminTemplates from '@/pages/admin/Templates';
 import UserDashboard from '@/pages/user/Dashboard';
 import UserModels from '@/pages/user/Models';
 import UserApiKeys from '@/pages/user/ApiKeys';
@@ -41,6 +42,7 @@ export const router = createBrowserRouter([
       { path: 'users', element: <AdminUsers /> },
       { path: 'api-keys', element: <AdminApiKeys /> },
       { path: 'settings', element: <AdminSettings /> },
+      { path: 'templates', element: <AdminTemplates /> },
     ],
   },
 

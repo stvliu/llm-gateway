@@ -378,6 +378,44 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 └───────────────────────────────────────────────────────────────┘
 ```
 
+**Entity 与 DO 关联模式**:
+
+| 层级 | 关联方式 | 原则 |
+|------|---------|------|
+| **Entity 层** | **统一使用 ID 引用** | Entity 只持有 ID，不持有其他 Entity 引用 |
+| **DO 层** | 按场景选择 | 主从关系可用 JPA `@ManyToOne`；中间表/弱引用使用 ID 引用 |
+
+**Entity 层 ID 引用原则**:
+
+- ✅ Entity 是纯数据载体，只持有关联对象的 ID
+- ✅ 需要关联数据时，通过 Domain Service 或 Gateway 按需加载
+- ✅ 避免隐式 N+1 查询风险
+- ✅ 符合聚合根边界原则
+
+```
+// 推荐：Entity 使用 ID 引用
+@Data
+public class Model extends BaseEntity {
+    private Long providerId;        // ID 引用
+    // ...
+}
+
+// 不推荐：Entity 使用对象引用
+@Data
+public class Model extends BaseEntity {
+    private Provider provider;      // ❌ 避免对象引用
+    // ...
+}
+```
+
+**DO 层关联策略**:
+
+| 场景 | 建议方式 | 说明 |
+|------|---------|------|
+| 主从关系（强依赖） | 可用 JPA `@ManyToOne` | 简化查询，禁用级联删除 |
+| 中间表/关联表 | ID 引用 | 避免 JPA 关联带来的复杂性 |
+| 弱引用关系 | ID 引用 | 手动 JOIN 查询 |
+
 ### 2.4 配置外部化
 
 **定义**:
@@ -400,39 +438,7 @@ gateway:
     max-retries: 3                    # 最大重试次数
     timeout-seconds: 30               # API 超时时间
 ```
-
-### 2.5 物理标识与业务标识分离
-
-**定义**:
-```
-数据层（持久化层）对象使用物理标识（如自增 BIGINT 主键），核心目标是保证数据存储的唯一性、
-查询效率与稳定性。业务层/领域层对象使用业务标识（如 model_code、request_id），
-核心目标是承载业务规则、提供用户可读性并作为业务交互的入口。
-```
-
-**推论**:
-- ✅ 所有数据库表使用 `id BIGINT AUTO_INCREMENT` 作为物理主键
-- ✅ 每张业务表必须有对应的业务标识字段（`*_code` VARCHAR，UNIQUE 约束）
-- ✅ 表间外键关联使用物理 ID（`*_id BIGINT`）
-- ✅ 对外 API、日志、审计使用业务标识
-- ❌ 禁止：将业务标识用作表间关联（性能差、可变性高）
-- ❌ 禁止：将物理主键暴露给外部客户端（缺乏可读性、存在信息泄露风险）
-
-**示例对照**:
-
-| 实体 | 物理标识（数据层） | 业务标识（业务层） |
-|------|-------------------|-------------------|
-| 用户 | `id BIGINT AUTO_INCREMENT` | `user_code VARCHAR(64)` |
-| 模型 | `id BIGINT AUTO_INCREMENT` | `model_code VARCHAR(128)` |
-| 实例 | `id BIGINT AUTO_INCREMENT` | `instance_code VARCHAR(128)` |
-| 请求 | `id BIGINT AUTO_INCREMENT` | `request_id VARCHAR(64)` |
-| Token限额 | `id BIGINT AUTO_INCREMENT` | `quota_code VARCHAR(64)` |
-| 告警 | `id BIGINT AUTO_INCREMENT` | `alert_code VARCHAR(64)` |
-| 审计 | `id BIGINT AUTO_INCREMENT` | `audit_code VARCHAR(64)` |
-| 提示词 | `id BIGINT AUTO_INCREMENT` | `template_code VARCHAR(128)` |
-| 策略 | `id BIGINT AUTO_INCREMENT` | `strategy_code VARCHAR(128)` |
-
-### 2.6 全实体可审计（不可妥协）
+### 2.5 全实体可审计（不可妥协）
 
 **定义**:
 ```
@@ -590,7 +596,7 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.2.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-02
+**版本**: 2.3.1 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-06
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
@@ -599,3 +605,4 @@ GatewayException (根异常)
 | v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
 | v2.3.0 | 2026-05-02 | **领域命名调整**：provider 域更名为 model（模型广场）；与信息架构 v3.5、应用架构 v3.0、数据架构 v1.4 保持一致 |
+| v2.3.1 | 2026-05-06 | **Entity 与 DO 关联模式**：新增 Entity 层统一使用 ID 引用原则；明确 DO 层关联策略（主从关系可用 JPA 关联，中间表使用 ID 引用） |

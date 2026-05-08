@@ -31,6 +31,16 @@ public class Provider extends BaseEntity {
 
     private Integer priority = 100;
 
+    /**
+     * 调用超时时间（毫秒）
+     */
+    private Integer timeout = 30000;
+
+    /**
+     * 最大重试次数
+     */
+    private Integer maxRetries = 3;
+
     private ProviderStatus status = ProviderStatus.ACTIVE;
 
     private Instant deletedAt;

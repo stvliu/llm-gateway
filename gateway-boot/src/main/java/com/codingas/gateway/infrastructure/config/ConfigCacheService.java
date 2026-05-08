@@ -83,18 +83,8 @@ public class ConfigCacheService {
                cacheManager = "localCacheManager")
     public Optional<ProviderApiKey> getApiKeyByProviderId(Long providerId) {
         return apiKeyGateway.findByProviderId(providerId)
-            .map(this::decryptApiKey);
-    }
-
-    /**
-     * 解密 API Key
-     */
-    private ProviderApiKey decryptApiKey(ProviderApiKey apiKey) {
-        if (apiKey.getEncryptedApiKey() != null) {
-            String decrypted = encryptionService.decrypt(apiKey.getEncryptedApiKey());
-            apiKey.setApiKey(decrypted);
-        }
-        return apiKey;
+            .stream()
+            .findFirst();
     }
 
     // ========== 缓存刷新 ==========

@@ -21,7 +21,9 @@ public class GatewayApiKey extends BaseEntity {
 
     private String keyHash;
 
-    private User user;
+    private Long userId;
+
+    private String username;
 
     private String name;
 

@@ -165,9 +165,8 @@ class ModelManageUseCaseTest {
         model.setId(id);
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
-        Provider provider = new Provider();
-        provider.setId(1L);
-        model.setProvider(provider);
+        model.setProviderId(1L);
+        model.setProviderName("OpenAI");
         model.setContextWindow(8000);
         model.setInputPrice(new BigDecimal("0.03"));
         model.setOutputPrice(new BigDecimal("0.06"));

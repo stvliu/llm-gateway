@@ -137,7 +137,7 @@ String keyHash = sha256(fullKey);
 |------|------|------|
 | id | BIGINT | 主键 |
 | user_id | BIGINT | 用户 ID |
-| request_id | VARCHAR(64) | 请求唯一标识（业务标识） |
+| request_id | VARCHAR(64) | 请求唯一标识|
 | model_code | VARCHAR(128) | 调用的模型 |
 | provider_code | VARCHAR(64) | Provider 标识 |
 | input_tokens | BIGINT | 输入 Token 数 |
@@ -247,7 +247,6 @@ public boolean checkRateLimit(String apiKey) {
 -- 用户表（从 SSO 同步）
 CREATE TABLE users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_code VARCHAR(64) NOT NULL UNIQUE COMMENT '业务标识',
     username VARCHAR(128) NOT NULL COMMENT '用户名（来自SSO）',
     email VARCHAR(256) COMMENT '邮箱',
     role VARCHAR(32) NOT NULL DEFAULT 'USER' COMMENT '角色：ADMIN/USER',
@@ -264,7 +263,6 @@ CREATE TABLE users (
 -- API Key 表
 CREATE TABLE api_keys (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    key_code VARCHAR(64) NOT NULL UNIQUE COMMENT '业务标识',
     key_hash VARCHAR(128) NOT NULL UNIQUE COMMENT 'Key哈希（用于验证）',
     user_id BIGINT NOT NULL COMMENT '关联用户',
     key_name VARCHAR(128) COMMENT 'Key名称（用户自定义）',

@@ -109,21 +109,7 @@ Token 必须是所有成本追踪的核心单位。每个请求必须分别追�
 
 **配置优先级**：`命令行参数 > 环境变量 > application-local.yml > application.yml > 数据库默认值`
 
-### 2.4 物理标识与业务标识分离
-
-**物理标识**（数据层）：`id BIGINT AUTO_INCREMENT`，核心目标是保证数据存储的唯一性、查询效率与稳定性。
-
-**业务标识**（领域层）：`*_code VARCHAR`，核心目标是承载业务规则、提供用户可读性并作为业务交互的入口。
-
-**规则**：
-- 所有数据库表使用 `id BIGINT AUTO_INCREMENT` 作为物理主键
-- 每张业务表必须有对应的业务标识字段（`*_code VARCHAR`，UNIQUE 约束）
-- 表间外键关联使用物理 ID（`*_id BIGINT`）
-- 对外 API、日志、审计使用业务标识
-- 禁止将业务标识用作表间关联（性能差、可变性高）
-- 禁止将物理主键暴露给外部客户端（缺乏可读性、存在信息泄露风险）
-
-### 2.5 全实体可审计（不可妥协）
+### 2.4 全实体可审计（不可妥协）
 
 每个业务实体表必须包含完整的审计字段，记录谁在何时创建、修改和删除了数据。
 
@@ -153,20 +139,20 @@ Token 必须是所有成本追踪的核心单位。每个请求必须分别追�
 
 ### 3.2 核心实体命名规范
 
-| 实体 | 物理主键 | 业务标识 | 外键 |
+| 实体 | 物理主键 | 外键 |
 |------|---------|---------|------|
-| Team | `id BIGINT` | `team_code VARCHAR(64)` | `admin_id BIGINT → User.id` |
-| User | `id BIGINT` | `user_code VARCHAR(64)` | - |
-| Role | `id BIGINT` | `role_code VARCHAR(64)` | - |
-| Member | `id BIGINT` | - | `user_id BIGINT`, `team_id BIGINT` |
+| Team | `id BIGINT` | `admin_id BIGINT → User.id` |
+| User | `id BIGINT` | - |
+| Role | `id BIGINT` | - |
+| Member | `id BIGINT` |`user_id BIGINT`, `team_id BIGINT` |
 | Provider | `id BIGINT` | `provider_code VARCHAR(64)` | - |
-| Model | `id BIGINT` | `model_code VARCHAR(128)` | `provider_id BIGINT → Provider.id` |
-| Channel | `id BIGINT` | `channel_code VARCHAR(64)` | `team_id`, `provider_id`, `group_id` |
-| ChannelGroup | `id BIGINT` | `group_code VARCHAR(64)` | `team_id BIGINT → Team.id` |
+| Model | `id BIGINT` | `provider_id BIGINT → Provider.id` |
+| Channel | `id BIGINT` |`team_id`, `provider_id`, `group_id` |
+| ChannelGroup | `id BIGINT` | `team_id BIGINT → Team.id` |
 | ChannelKey | `id BIGINT` | - | `channel_id`, `secret_id BIGINT → ApiKeySecret.id` |
-| Strategy | `id BIGINT` | `strategy_code VARCHAR(128)` | `team_id BIGINT → Team.id` |
-| TokenLimit | `id BIGINT` | `limit_code VARCHAR(64)` | `scope_id`, `user_id`, `channel_id` |
-| ApiToken | `id BIGINT` | `token_key VARCHAR(128)` | `user_id`, `team_id BIGINT` |
+| Strategy | `id BIGINT` |`team_id BIGINT → Team.id` |
+| TokenLimit | `id BIGINT` | `scope_id`, `user_id`, `channel_id` |
+| ApiToken | `id BIGINT` | `user_id`, `team_id BIGINT` |
 
 ---
 

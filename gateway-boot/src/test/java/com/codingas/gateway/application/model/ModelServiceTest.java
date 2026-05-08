@@ -510,7 +510,8 @@ class ModelServiceTest {
     private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, ModelStatus status) {
         Model model = new Model();
         model.setId(id);
-        model.setProvider(provider);
+        model.setProviderId(provider.getId());
+        model.setProviderName(provider.getProviderName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
