@@ -1,5 +1,11 @@
 import { api } from './client';
-import type { User, CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import type {
+  User,
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserStatusUpdateRequest,
+  UserRoleAssignRequest,
+} from '@/types/user';
 import type { PageResponse, PageParams } from '@/types/api';
 
 export const userApi = {
@@ -22,6 +28,14 @@ export const userApi = {
   /** 删除用户 */
   delete: (id: number) =>
     api.delete<void>(`/users/${id}`),
+
+  /** 更新用户状态 */
+  updateStatus: (id: number, data: UserStatusUpdateRequest) =>
+    api.patch<User>(`/users/${id}/status`, data),
+
+  /** 分配用户角色 */
+  assignRoles: (id: number, data: UserRoleAssignRequest) =>
+    api.put<User>(`/users/${id}/roles`, data),
 
   /** 重置密码 */
   resetPassword: (id: number) =>
