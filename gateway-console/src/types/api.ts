@@ -1,23 +1,31 @@
 /** 分页请求参数 */
 export interface PageParams {
   page?: number;
-  size?: number;
+  limit?: number;
 }
 
-/** 分页响应 */
+/** 分页响应（与后端 PageResponse 一致） */
 export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
+  items: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
-/** API 响应包装 */
+/** API 响应包装（与后端 ApiResponse 一致） */
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
-  message?: string;
+  error?: {
+    code: string;
+    message: string;
+    details?: unknown;
+  };
+  traceId: string;
+  timestamp: string;
 }
 
 /** 通用状态枚举 */

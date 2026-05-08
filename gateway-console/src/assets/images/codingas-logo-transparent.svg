@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1890ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#722ed1;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Main illustration - AI Gateway concept -->
+  <g transform="translate(0, 0)">
+    <!-- Central hub -->
+    <circle cx="256" cy="256" r="77" fill="url(#primaryGrad)" opacity="0.9"/>
+    <circle cx="256" cy="256" r="51" fill="white"/>
+    <circle cx="256" cy="256" r="26" fill="url(#primaryGrad)"/>
+
+    <!-- Connection lines -->
+    <line x1="256" y1="179" x2="256" y2="89" stroke="#1890ff" stroke-width="4" opacity="0.6"/>
+    <line x1="256" y1="332" x2="256" y2="422" stroke="#1890ff" stroke-width="4" opacity="0.6"/>
+    <line x1="179" y1="256" x2="77" y2="256" stroke="#1890ff" stroke-width="4" opacity="0.6"/>
+    <line x1="333" y1="256" x2="435" y2="256" stroke="#1890ff" stroke-width="4" opacity="0.6"/>
+
+    <!-- Diagonal lines -->
+    <line x1="201" y1="200" x2="128" y2="127" stroke="#722ed1" stroke-width="3" opacity="0.5"/>
+    <line x1="311" y1="200" x2="384" y2="127" stroke="#722ed1" stroke-width="3" opacity="0.5"/>
+    <line x1="201" y1="311" x2="128" y2="384" stroke="#722ed1" stroke-width="3" opacity="0.5"/>
+    <line x1="311" y1="311" x2="384" y2="384" stroke="#722ed1" stroke-width="3" opacity="0.5"/>
+
+    <!-- Provider nodes -->
+    <circle cx="256" cy="89" r="32" fill="#10a37f" opacity="0.9"/>
+
+    <circle cx="256" cy="422" r="32" fill="#d97757" opacity="0.9"/>
+
+    <circle cx="77" cy="256" r="32" fill="#4285f4" opacity="0.9"/>
+
+    <circle cx="435" cy="256" r="32" fill="#ff6b35" opacity="0.9"/>
+
+    <!-- Corner nodes -->
+    <circle cx="128" cy="127" r="23" fill="#667eea" opacity="0.8"/>
+    <circle cx="384" cy="127" r="23" fill="#764ba2" opacity="0.8"/>
+    <circle cx="128" cy="384" r="23" fill="#11998e" opacity="0.8"/>
+    <circle cx="384" cy="384" r="23" fill="#38ef7d" opacity="0.8"/>
+  </g>
+</svg>

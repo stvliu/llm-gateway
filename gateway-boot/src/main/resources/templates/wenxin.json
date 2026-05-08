@@ -1,0 +1,66 @@
+{
+  "template_code": "wenxin",
+  "template_name": "文心一言",
+  "provider_type": "WENXIN",
+  "provider_config": {
+    "provider_name": "百度智能云",
+    "base_url": "https://aip.baidubce.com/rpc/2.0/ai_custom/v1/wenxinworkshop",
+    "website_url": "https://yiyan.baidu.com",
+    "api_doc_url": "https://cloud.baidu.com/doc/WENXINWORKSHOP/index.html",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "models_config": [
+    {
+      "provider_model_id": "ernie-4.0-8k",
+      "display_name": "ERNIE 4.0 8K",
+      "context_window": 8192,
+      "input_price": 0.03,
+      "output_price": 0.06,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "ernie-4.0-turbo-8k",
+      "display_name": "ERNIE 4.0 Turbo 8K",
+      "context_window": 8192,
+      "input_price": 0.012,
+      "output_price": 0.012,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "ernie-3.5-8k",
+      "display_name": "ERNIE 3.5 8K",
+      "context_window": 8192,
+      "input_price": 0.004,
+      "output_price": 0.008,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "ernie-speed-8k",
+      "display_name": "ERNIE Speed 8K",
+      "context_window": 8192,
+      "input_price": 0.001,
+      "output_price": 0.002,
+      "capabilities": {
+        "vision": false,
+        "function_calling": false,
+        "streaming": true
+      }
+    }
+  ],
+  "description": "百度文心一言 API，支持 ERNIE 4.0、ERNIE 3.5 等模型，中文理解能力强",
+  "icon_url": "https://cdn.example.com/icons/wenxin.png",
+  "tags": ["国内", "中文优化", "百度"]
+}

@@ -161,21 +161,25 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         doEntity.setAuthorId(entity.getAuthorId());
         doEntity.setAuthorName(entity.getAuthorName());
         doEntity.setPublishAt(entity.getPublishAt());
-        doEntity.setDownloadCount(entity.getDownloadCount());
+        doEntity.setDownloadCount(entity.getDownloadCount() != null ? entity.getDownloadCount() : 0);
         doEntity.setTags(entity.getTags());
         doEntity.setDescription(entity.getDescription());
         doEntity.setIconUrl(entity.getIconUrl());
         doEntity.setDeletedAt(entity.getDeletedAt());
 
-        // 枚举转换
+        // 枚举转换（设置默认值）
         if (entity.getTemplateType() != null) {
             doEntity.setTemplateType(ProviderTemplateDo.TemplateType.valueOf(entity.getTemplateType().name()));
         }
         if (entity.getMarketStatus() != null) {
             doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.valueOf(entity.getMarketStatus().name()));
+        } else {
+            doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.PRIVATE);
         }
         if (entity.getStatus() != null) {
             doEntity.setStatus(ProviderTemplateDo.TemplateStatus.valueOf(entity.getStatus().name()));
+        } else {
+            doEntity.setStatus(ProviderTemplateDo.TemplateStatus.ACTIVE);
         }
         return doEntity;
     }

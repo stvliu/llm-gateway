@@ -112,7 +112,7 @@ export function ProviderList({ onSelect }: ProviderListProps) {
       </div>
       <Table
         columns={columns}
-        dataSource={data?.content || []}
+        dataSource={data?.items || []}
         rowKey="id"
         loading={isLoading}
         size="small"
@@ -135,12 +135,20 @@ export function ProviderList({ onSelect }: ProviderListProps) {
           </Form.Item>
           <Form.Item name="providerType" label={t('provider.type')} rules={[{ required: true }]}>
             <Select disabled={!!editingProvider}>
-              <Select.Option value="OPENAI">OpenAI</Select.Option>
-              <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
-              <Select.Option value="GOOGLE">Google</Select.Option>
-              <Select.Option value="AZURE">Azure</Select.Option>
-              <Select.Option value="VOLCENGINE">火山引擎</Select.Option>
-              <Select.Option value="CUSTOM">{t('type.CUSTOM')}</Select.Option>
+              <Select.Option value="OPENAI">{t('type.OPENAI')}</Select.Option>
+              <Select.Option value="ANTHROPIC">{t('type.ANTHROPIC')}</Select.Option>
+              <Select.Option value="GEMINI">{t('type.GEMINI')}</Select.Option>
+              <Select.Option value="DEEPSEEK">{t('type.DEEPSEEK')}</Select.Option>
+              <Select.Option value="MOONSHOT">{t('type.MOONSHOT')}</Select.Option>
+              <Select.Option value="ZHIPU">{t('type.ZHIPU')}</Select.Option>
+              <Select.Option value="YI">{t('type.YI')}</Select.Option>
+              <Select.Option value="BAICHUAN">{t('type.BAICHUAN')}</Select.Option>
+              <Select.Option value="MINIMAX">{t('type.MINIMAX')}</Select.Option>
+              <Select.Option value="SILICONFLOW">{t('type.SILICONFLOW')}</Select.Option>
+              <Select.Option value="VOLCENGINE">{t('type.VOLCENGINE')}</Select.Option>
+              <Select.Option value="QWEN">{t('type.QWEN')}</Select.Option>
+              <Select.Option value="WENXIN">{t('type.WENXIN')}</Select.Option>
+              <Select.Option value="OTHER">{t('type.OTHER')}</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item name="baseUrl" label={t('provider.baseUrl')}>

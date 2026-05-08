@@ -16,7 +16,7 @@ export const providerApiKeyKeys = {
 
 export function useProviderApiKeys(params?: PageParams & { providerId?: number }) {
   return useQuery({
-    queryKey: providerApiKeyKeys.list(params),
+    queryKey: providerApiKeyKeys.list(params as Record<string, unknown>),
     queryFn: () => providerApiKeyApi.list(params),
   });
 }

@@ -284,7 +284,7 @@ export default function AdminTemplates() {
 
       <Table
         columns={activeTab === 'USER' ? columns : officialColumns}
-        dataSource={data?.content || []}
+        dataSource={data?.items || []}
         rowKey="id"
         loading={isLoading}
         pagination={{ pageSize: 10 }}
@@ -307,11 +307,20 @@ export default function AdminTemplates() {
           </Form.Item>
           <Form.Item name="providerType" label={t('providerType')} rules={[{ required: true }]}>
             <Select disabled={!!editingTemplate}>
-              <Select.Option value="OPENAI">OpenAI</Select.Option>
-              <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
-              <Select.Option value="DEEPSEEK">DeepSeek</Select.Option>
-              <Select.Option value="QWEN">Qwen</Select.Option>
-              <Select.Option value="OTHER">Other</Select.Option>
+              <Select.Option value="OPENAI">{t('providerType.OPENAI')}</Select.Option>
+              <Select.Option value="ANTHROPIC">{t('providerType.ANTHROPIC')}</Select.Option>
+              <Select.Option value="GEMINI">{t('providerType.GEMINI')}</Select.Option>
+              <Select.Option value="DEEPSEEK">{t('providerType.DEEPSEEK')}</Select.Option>
+              <Select.Option value="MOONSHOT">{t('providerType.MOONSHOT')}</Select.Option>
+              <Select.Option value="ZHIPU">{t('providerType.ZHIPU')}</Select.Option>
+              <Select.Option value="YI">{t('providerType.YI')}</Select.Option>
+              <Select.Option value="BAICHUAN">{t('providerType.BAICHUAN')}</Select.Option>
+              <Select.Option value="MINIMAX">{t('providerType.MINIMAX')}</Select.Option>
+              <Select.Option value="SILICONFLOW">{t('providerType.SILICONFLOW')}</Select.Option>
+              <Select.Option value="VOLCENGINE">{t('providerType.VOLCENGINE')}</Select.Option>
+              <Select.Option value="QWEN">{t('providerType.QWEN')}</Select.Option>
+              <Select.Option value="WENXIN">{t('providerType.WENXIN')}</Select.Option>
+              <Select.Option value="OTHER">{t('providerType.OTHER')}</Select.Option>
             </Select>
           </Form.Item>
           <Form.Item name="description" label={t('description')}>

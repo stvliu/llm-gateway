@@ -1,0 +1,54 @@
+{
+  "template_code": "baichuan",
+  "template_name": "百川智能",
+  "provider_type": "BAICHUAN",
+  "provider_config": {
+    "provider_name": "百川智能",
+    "base_url": "https://api.baichuan-ai.com",
+    "website_url": "https://baichuan-ai.com",
+    "api_doc_url": "https://platform.baichuan-ai.com/docs",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "models_config": [
+    {
+      "provider_model_id": "Baichuan4",
+      "display_name": "Baichuan 4",
+      "context_window": 32768,
+      "input_price": 0.012,
+      "output_price": 0.012,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "Baichuan3-Turbo",
+      "display_name": "Baichuan 3 Turbo",
+      "context_window": 32768,
+      "input_price": 0.008,
+      "output_price": 0.008,
+      "capabilities": {
+        "vision": false,
+        "function_calling": true,
+        "streaming": true
+      }
+    },
+    {
+      "provider_model_id": "Baichuan2-Turbo",
+      "display_name": "Baichuan 2 Turbo",
+      "context_window": 4096,
+      "input_price": 0.004,
+      "output_price": 0.004,
+      "capabilities": {
+        "vision": false,
+        "function_calling": false,
+        "streaming": true
+      }
+    }
+  ],
+  "description": "百川智能 API，王小川创立的国产大模型，擅长中文理解和生成",
+  "icon_url": "https://cdn.example.com/icons/baichuan.png",
+  "tags": ["国内", "中文优化"]
+}

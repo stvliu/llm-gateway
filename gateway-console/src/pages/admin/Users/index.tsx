@@ -117,7 +117,7 @@ export default function AdminUsers() {
 
       <Table
         columns={columns}
-        dataSource={data?.content || []}
+        dataSource={data?.items || []}
         rowKey="id"
         loading={isLoading}
         pagination={{ pageSize: 10 }}

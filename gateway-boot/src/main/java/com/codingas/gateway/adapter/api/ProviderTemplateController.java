@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.application.template.OfficialTemplateSyncService;
 import com.codingas.gateway.application.template.ProviderTemplateService;
 import com.codingas.gateway.application.template.dto.ApplyTemplateRequest;
 import com.codingas.gateway.application.template.dto.ApplyTemplateResult;
@@ -11,6 +12,7 @@ import com.codingas.gateway.domain.template.entity.TemplateType;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,12 +24,14 @@ import java.util.List;
 /**
  * Provider 模板管理接口
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/templates")
 @RequiredArgsConstructor
 public class ProviderTemplateController {
 
     private final ProviderTemplateService service;
+    private final OfficialTemplateSyncService syncService;
 
     /**
      * 分页查询模板列表
@@ -147,4 +151,23 @@ public class ProviderTemplateController {
         List<TemplateResponse> results = service.importTemplates(file.getInputStream(), userId, username);
         return ResponseEntity.ok(results);
     }
+
+    /**
+     * 手动同步内置模板
+     */
+    @PostMapping("/sync")
+    public ResponseEntity<?> syncBuiltinTemplates() {
+        try {
+            OfficialTemplateSyncService.SyncResult result = syncService.syncBuiltinTemplates();
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Sync failed", e);
+            return ResponseEntity.internalServerError()
+                .body(java.util.Map.of(
+                    "error", e.getMessage(),
+                    "type", e.getClass().getSimpleName()
+                ));
+        }
+    }
+
 }

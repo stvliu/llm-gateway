@@ -5,7 +5,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.application.model.ModelService;
-import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,52 +26,51 @@ public class ModelController {
      * 创建模型
      */
     @PostMapping
-    public ApiResponse<ModelResponse> create(@Valid @RequestBody ModelCreateRequest request) {
-        return ApiResponse.success(modelService.create(request));
+    public ModelResponse create(@Valid @RequestBody ModelCreateRequest request) {
+        return modelService.create(request);
     }
 
     /**
      * 获取模型详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<ModelResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(modelService.getById(id));
+    public ModelResponse getById(@PathVariable Long id) {
+        return modelService.getById(id);
     }
 
     /**
      * 查询模型列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<ModelResponse>> query(@ModelAttribute ModelQueryRequest request) {
-        return ApiResponse.success(modelService.query(request));
+    public PageResponse<ModelResponse> query(@ModelAttribute ModelQueryRequest request) {
+        return modelService.query(request);
     }
 
     /**
      * 更新模型
      */
     @PutMapping("/{id}")
-    public ApiResponse<ModelResponse> update(
+    public ModelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ModelUpdateRequest request) {
-        return ApiResponse.success(modelService.update(id, request));
+        return modelService.update(id, request);
     }
 
     /**
      * 删除模型
      */
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         modelService.delete(id);
-        return ApiResponse.success();
     }
 
     /**
      * 启用/禁用模型
      */
     @PatchMapping("/{id}/enabled")
-    public ApiResponse<ModelResponse> setEnabled(
+    public ModelResponse setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(modelService.setEnabled(id, enabled));
+        return modelService.setEnabled(id, enabled);
     }
 }

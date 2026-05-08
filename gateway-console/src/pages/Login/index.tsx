@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/services/api/auth';
 import { useAuthStore } from '@/stores/authStore';
+import { isServiceUnavailableError } from '@/services/api/client';
 import styles from './style.module.css';
 
 type LoginForm = {
@@ -51,8 +52,13 @@ export default function Login() {
       // 根据角色重定向
       const redirectPath = userData.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
       navigate(from || redirectPath, { replace: true });
-    } catch {
-      setError(t('error.message'));
+    } catch (err: unknown) {
+      // 区分服务不可用和认证失败
+      if (isServiceUnavailableError(err)) {
+        setError(t('error.serviceUnavailable'));
+      } else {
+        setError(t('error.message'));
+      }
     } finally {
       setLoading(false);
     }

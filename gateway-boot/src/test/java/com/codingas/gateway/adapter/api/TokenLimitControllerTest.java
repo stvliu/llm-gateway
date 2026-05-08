@@ -29,6 +29,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * TokenLimitController 单元测试
+ *
+ * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TokenLimitController 测试")
@@ -55,11 +57,10 @@ class TokenLimitControllerTest {
             when(tokenLimitService.create(any())).thenReturn(response);
 
             // when
-            var result = controller.create(request);
+            TokenLimitResponse result = controller.create(request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getLimitCode()).isEqualTo("limit-001");
+            assertThat(result.getLimitCode()).isEqualTo("limit-001");
         }
     }
 
@@ -75,11 +76,10 @@ class TokenLimitControllerTest {
             when(tokenLimitService.getById(1L)).thenReturn(response);
 
             // when
-            var result = controller.getById(1L);
+            TokenLimitResponse result = controller.getById(1L);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getId()).isEqualTo(1L);
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -98,11 +98,10 @@ class TokenLimitControllerTest {
             when(tokenLimitService.query(any(TokenLimitQueryRequest.class))).thenReturn(pageResponse);
 
             // when
-            var result = controller.query(new TokenLimitQueryRequest());
+            PageResponse<TokenLimitResponse> result = controller.query(new TokenLimitQueryRequest());
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getItems()).hasSize(1);
+            assertThat(result.getItems()).hasSize(1);
         }
     }
 
@@ -121,10 +120,10 @@ class TokenLimitControllerTest {
             when(tokenLimitService.update(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.update(1L, request);
+            TokenLimitResponse result = controller.update(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result).isNotNull();
         }
     }
 
@@ -139,10 +138,9 @@ class TokenLimitControllerTest {
             doNothing().when(tokenLimitService).delete(1L);
 
             // when
-            var result = controller.delete(1L);
+            controller.delete(1L);
 
-            // then
-            assertThat(result.isSuccess()).isTrue();
+            // then - void 方法，无返回值验证
         }
     }
 
@@ -159,10 +157,10 @@ class TokenLimitControllerTest {
             when(tokenLimitService.resetUsage(1L)).thenReturn(response);
 
             // when
-            var result = controller.resetUsage(1L);
+            TokenLimitResponse result = controller.resetUsage(1L);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getUsedTokens()).isEqualByComparingTo(BigDecimal.ZERO);
         }
     }
 

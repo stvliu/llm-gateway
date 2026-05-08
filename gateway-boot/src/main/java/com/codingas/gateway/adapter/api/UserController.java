@@ -2,7 +2,6 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.application.user.UserService;
-import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,62 +23,61 @@ public class UserController {
      * 创建用户
      */
     @PostMapping
-    public ApiResponse<UserResponse> create(@Valid @RequestBody UserCreateRequest request) {
-        return ApiResponse.success(userService.create(request));
+    public UserResponse create(@Valid @RequestBody UserCreateRequest request) {
+        return userService.create(request);
     }
 
     /**
      * 获取用户详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<UserResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(userService.getById(id));
+    public UserResponse getById(@PathVariable Long id) {
+        return userService.getById(id);
     }
 
     /**
      * 查询用户列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<UserResponse>> query(@ModelAttribute UserQueryRequest request) {
-        return ApiResponse.success(userService.query(request));
+    public PageResponse<UserResponse> query(@ModelAttribute UserQueryRequest request) {
+        return userService.query(request);
     }
 
     /**
      * 更新用户
      */
     @PutMapping("/{id}")
-    public ApiResponse<UserResponse> update(
+    public UserResponse update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return ApiResponse.success(userService.update(id, request));
+        return userService.update(id, request);
     }
 
     /**
      * 删除用户
      */
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         userService.delete(id);
-        return ApiResponse.success();
     }
 
     /**
      * 更新用户状态
      */
     @PatchMapping("/{id}/status")
-    public ApiResponse<UserResponse> updateStatus(
+    public UserResponse updateStatus(
             @PathVariable Long id,
             @Valid @RequestBody UserStatusUpdateRequest request) {
-        return ApiResponse.success(userService.updateStatus(id, request));
+        return userService.updateStatus(id, request);
     }
 
     /**
      * 分配用户角色
      */
     @PutMapping("/{id}/roles")
-    public ApiResponse<UserResponse> assignRoles(
+    public UserResponse assignRoles(
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
-        return ApiResponse.success(userService.assignRoles(id, request));
+        return userService.assignRoles(id, request);
     }
 }

@@ -5,7 +5,6 @@ import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.application.gatewayapikey.ApiKeyService;
-import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,52 +26,51 @@ public class ApiKeyController {
      * 创建 API Key
      */
     @PostMapping
-    public ApiResponse<ApiKeyResponse> create(@Valid @RequestBody ApiKeyCreateRequest request) {
-        return ApiResponse.success(apiKeyService.create(request));
+    public ApiKeyResponse create(@Valid @RequestBody ApiKeyCreateRequest request) {
+        return apiKeyService.create(request);
     }
 
     /**
      * 获取 API Key 详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<ApiKeyResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(apiKeyService.getById(id));
+    public ApiKeyResponse getById(@PathVariable Long id) {
+        return apiKeyService.getById(id);
     }
 
     /**
      * 查询 API Key 列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<ApiKeyResponse>> query(@ModelAttribute ApiKeyQueryRequest request) {
-        return ApiResponse.success(apiKeyService.query(request));
+    public PageResponse<ApiKeyResponse> query(@ModelAttribute ApiKeyQueryRequest request) {
+        return apiKeyService.query(request);
     }
 
     /**
      * 更新 API Key
      */
     @PutMapping("/{id}")
-    public ApiResponse<ApiKeyResponse> update(
+    public ApiKeyResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ApiKeyUpdateRequest request) {
-        return ApiResponse.success(apiKeyService.update(id, request));
+        return apiKeyService.update(id, request);
     }
 
     /**
      * 删除 API Key
      */
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         apiKeyService.delete(id);
-        return ApiResponse.success();
     }
 
     /**
      * 启用/禁用 API Key
      */
     @PatchMapping("/{id}/enabled")
-    public ApiResponse<ApiKeyResponse> setEnabled(
+    public ApiKeyResponse setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ApiResponse.success(apiKeyService.setEnabled(id, enabled));
+        return apiKeyService.setEnabled(id, enabled);
     }
 }

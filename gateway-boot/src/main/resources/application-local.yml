@@ -12,10 +12,10 @@ spring:
 
   # 开发环境 JPA 配置
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   # 开发环境日志
   logging:
@@ -23,7 +23,7 @@ spring:
       root: INFO
       com.codingas.gateway: DEBUG
       org.springframework.web: DEBUG
-      org.hibernate.SQL: DEBUG
+      org.hibernate.SQL: INFO
 
 # 服务端口
 server:
@@ -32,3 +32,9 @@ server:
 # SaToken 日志启用
 sa-token:
   is-log: true
+
+# 开发环境固定加密密钥（仅用于本地开发，生产环境必须使用环境变量）
+# 生成方式: openssl rand -base64 32
+gateway:
+  security:
+    encryption-key: "/Bbkef9IJsNr43Mfu6nc8ksHTzDFqmB6kOmLaNHnq5M="
