@@ -104,7 +104,7 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initProviderApiKey(Provider provider) {
         // 检查是否已存在
-        if (providerApiKeyGateway.findByProviderId(provider.getId()).isPresent()) {
+        if (!providerApiKeyGateway.findByProviderId(provider.getId()).isEmpty()) {
             log.info("Provider API key already exists, skipping");
             return;
         }

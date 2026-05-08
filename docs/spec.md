@@ -115,7 +115,7 @@
 | T-002 | **ProviderApiKey (Provider 调用凭证)** | 网关调用大模型 Provider 的凭据，管理员配置，支持多 Key 轮换 |
 | T-003 | **Model (模型)** | 具体的 AI 模型，如 gpt-4o、claude-sonnet-4 等 |
 | T-004 | **RouteGroup (路由分组)** | 路由策略配置，支持负载均衡和故障转移 |
-| T-005 | **RouteGroupChannel (路由关联)** | 路由分组与 Channel 的关联，含权重/优先级/健康状态 |
+| T-005 | **RouteGroupProviderApiKey (路由关联)** | 路由分组与 ProviderApiKey 的关联，含权重/优先级 |
 | T-006 | **GatewayApiKey (网关访问凭证)** | 用户调用 LLM-Gateway 网关的凭据，用户自管理 |
 | T-007 | **TokenLimit (Token限额)** | 用户级别 Token 用量限额，支持周期重置（天/周/月/总量） |
 | T-008 | **Trace ID** | 请求全链路追踪的唯一标识 |
@@ -129,10 +129,10 @@
 
 #### API Key 类型对照表
 
-| 类型 | 数据库表 | 业务标识字段 | 代码命名 | 说明 |
-|------|---------|-------------|---------|------|
-| 网关凭证 | `gateway_api_keys` | `key_code` | GatewayApiKey | 用户调用网关的凭证（sk-xxx 格式） |
-| Provider 凭证 | `provider_api_keys` | `api_key_code` | ProviderApiKey | 网关调用 Provider 的凭证（管理员配置） |
+| 类型 | 数据库表 | 代码命名 | 说明 |
+|------|---------|-------------|--------|------|
+| 网关凭证 | `gateway_api_keys`| GatewayApiKey | 用户调用网关的凭证（sk-xxx 格式） |
+| Provider 凭证 | `provider_api_keys` | ProviderApiKey | 网关调用 Provider 的凭证（管理员配置） |
 
 > **重要区分**：两种 API Key 分别服务于不同的调用链路：
 > - **GatewayApiKey**：用户 → 网关（用户自管理，用于身份认证）
@@ -339,9 +339,9 @@
 | CH-003 | 渠道删除 | 软删除渠道 | 不影响进行中请求 | 标准版 |
 | CH-004 | 渠道查询 | 按条件查询渠道列表 | 支持分页、排序 | 标准版 |
 | CH-005 | 渠道测试 | 测试渠道连通性 | 返回测试结果 | 标准版 |
-| CH-006 | 渠道分组 | 创建/编辑/删除渠道分组 | 支持按组路由 | 标准版 |
+| CH-006 | 路由分组 | 创建/编辑/删除路由分组 | 支持按组路由 | 标准版 |
 
-> **概念映射**: CH-006"渠道分组"功能在信息架构中对应 **RouteGroup（路由分组）** + **RouteGroupChannel（路由关联）** 业务对象。渠道按用途/价格分组后，通过 RouteGroupChannel 关联到 RouteGroup，实现按组路由和负载均衡。
+> **概念映射**: CH-006"路由分组"功能在信息架构中对应 **RouteGroup（路由分组）** + **RouteGroupProviderApiKey（路由关联）** 业务对象。Provider 按用途/价格分组后，通过 RouteGroupProviderApiKey 关联到 RouteGroup，实现按组路由和负载均衡。
 | CH-007 | 多 Key 管理 | 单渠道添加/删除/禁用多个 API Key | Key 级故障隔离 | 标准版 |
 | CH-008 | 优先级设置 | 设置渠道优先级 | 高优先级优先使用 | 标准版 |
 | CH-009 | 权重设置 | 同优先级按权重分配流量 | 流量分配符合权重比例 | 标准版 |
@@ -443,14 +443,14 @@
 
 | 角色 | 权限范围 |
 |------|---------|
-| **管理员（ADMIN）** | 全部管理权限（Provider/Model/Channel/TokenLimit 配置）+ 查看所有用户数据 + API 调用 |
+| **管理员（ADMIN）** | 全部管理权限（Provider/Model/TokenLimit 配置）+ 查看所有用户数据 + API 调用 |
 | **普通用户（USER）** | 创建/管理自己的 API Key + 调用 API + 查看自己的用量 |
 
 **权限边界**:
 
 | 操作 | 管理员 | 普通用户 |
 |------|--------|---------|
-| Provider/Channel/Model 管理 | ✅ | ❌ |
+| Provider/Model 管理 | ✅ | ❌ |
 | TokenLimit 配置 | ✅ | ❌ |
 | 用户管理 | ✅ | ❌ |
 | 查看所有用户用量/日志 | ✅ | ❌ |
@@ -1008,7 +1008,7 @@ LLM-Gateway 基于"永不信任，始终验证"原则构建，所有请求必须
 [协议转换] ────── Span 4: protocol.transform
     │
     ▼
-[渠道调用] ────── Span 5: channel.call.{channel_code}
+[Provider 调用] ────── Span 5: provider.call.{provider_code}
     │
     ▼
 [响应处理] ────── Span 6: response.process
@@ -1031,7 +1031,7 @@ LLM-Gateway 基于"永不信任，始终验证"原则构建，所有请求必须
   "request_id": "req_def456",
   "user_id": "user_789",
   "model": "openai/gpt-4o",
-  "channel": "ch_001",
+  "provider": "provider_001",
   "event": "request.completed",
   "duration_ms": 245,
   "input_tokens": 1500,
@@ -2087,6 +2087,7 @@ MVP 必须包含以下最小可用功能：
 
 | 版本 | 日期 | 变更内容 | 变更人 |
 |------|------|---------|--------|
+| v6.8 | 2026-05-08 | 架构简化：移除 Channel 概念，RouteGroupChannel → RouteGroupProviderApiKey；更新术语表 T-005；更新权限矩阵；更新日志规范中的 channel → provider | - |
 | v6.7 | 2026-05-07 | **API Key 资源池需求**：新增 KP-008~KP-013 需求项（默认 Key 保护、扩展 Key 状态、可视化优先级调整、自动故障转移、健康检测与恢复、多策略 Key 选择）；补充术语表 API Key 类型对照表 |
 | v6.6 | 2026-05-02 | 语义缓存标记为企业版专属：功能全景矩阵添加版本标记（2.1节）；语义缓存模块全部改为企业版（2.2.16节）；版本对比矩阵修正（九、9.2节）；向量存储技术实现改为 pgvector | - |
 | v6.5 | 2026-05-02 | 对齐信息架构：补充术语表 T-013/T-014/T-015（SemanticCache/UserOAuth/License）；澄清 CH-006 渠道分组与 RouteGroup 的概念映射 | - |

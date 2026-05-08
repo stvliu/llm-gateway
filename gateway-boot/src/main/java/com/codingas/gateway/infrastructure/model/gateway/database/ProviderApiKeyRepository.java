@@ -2,6 +2,8 @@ package com.codingas.gateway.infrastructure.model.gateway.database;
 
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo.ProviderApiKeyStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,32 +21,49 @@ import java.util.Optional;
 public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo, Long> {
 
     /**
-     * 根据提供商 ID 查找（旧架构，向后兼容）
+     * 根据 Provider ID 查找所有 Key
      */
-    Optional<ProviderApiKeyDo> findByProviderId(Long providerId);
+    List<ProviderApiKeyDo> findByProviderId(Long providerId);
 
     /**
-     * 根据渠道 ID 查找所有 Key
+     * 根据 Provider ID 查找所有 Key（分页）
      */
-    List<ProviderApiKeyDo> findByChannelId(Long channelId);
+    Page<ProviderApiKeyDo> findByProviderId(Long providerId, Pageable pageable);
 
     /**
-     * 根据渠道 ID 查找活跃 Key
+     * 根据 Provider ID 和状态查找 Key（分页）
      */
-    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.channelId = :channelId " +
+    Page<ProviderApiKeyDo> findByProviderIdAndStatus(Long providerId, ProviderApiKeyStatus status, Pageable pageable);
+
+    /**
+     * 根据 Provider ID 和关键字查找 Key（分页）
+     */
+    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId AND LOWER(k.keyName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<ProviderApiKeyDo> findByProviderIdAndKeyword(Long providerId, @Param("keyword") String keyword, Pageable pageable);
+
+    /**
+     * 根据 Provider ID、状态和关键字查找 Key（分页）
+     */
+    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId AND k.status = :status AND LOWER(k.keyName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<ProviderApiKeyDo> findByProviderIdAndStatusAndKeyword(Long providerId, @Param("status") ProviderApiKeyStatus status, @Param("keyword") String keyword, Pageable pageable);
+
+    /**
+     * 根据 Provider ID 查找活跃 Key
+     */
+    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId " +
            "AND k.status IN ('ACTIVE', 'RATE_LIMITED', 'OVERQUOTA', 'ERROR') " +
            "AND (k.expiresAt IS NULL OR k.expiresAt > :now)")
-    List<ProviderApiKeyDo> findActiveKeysByChannelId(@Param("channelId") Long channelId, @Param("now") Instant now);
+    List<ProviderApiKeyDo> findActiveKeysByProviderId(@Param("providerId") Long providerId, @Param("now") Instant now);
 
     /**
-     * 查找渠道的默认 Key
+     * 查找 Provider 的默认 Key
      */
-    Optional<ProviderApiKeyDo> findByChannelIdAndIsDefaultTrue(Long channelId);
+    Optional<ProviderApiKeyDo> findByProviderIdAndIsDefaultTrue(Long providerId);
 
     /**
-     * 统计渠道下的 Key 数量
+     * 统计 Provider 下的 Key 数量
      */
-    long countByChannelId(Long channelId);
+    long countByProviderId(Long providerId);
 
     /**
      * 更新 Key 状态
@@ -52,7 +71,7 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
     @Modifying
     @Query("UPDATE ProviderApiKeyDo k SET k.status = :status, k.disabledReason = :reason WHERE k.id = :id")
     void updateStatus(@Param("id") Long id, @Param("status") ProviderApiKeyStatus status,
-                      @Param("reason") com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo.ProviderApiKeyDisabledReason reason);
+                      @Param("reason") ProviderApiKeyDo.ProviderApiKeyDisabledReason reason);
 
     /**
      * 更新最后使用时间
@@ -62,9 +81,9 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
     void updateLastUsedAt(@Param("id") Long id, @Param("lastUsedAt") Instant lastUsedAt);
 
     /**
-     * 清除渠道下其他 Key 的默认标记
+     * 清除 Provider 下其他 Key 的默认标记
      */
     @Modifying
-    @Query("UPDATE ProviderApiKeyDo k SET k.isDefault = false WHERE k.channelId = :channelId AND k.id != :excludeId")
-    void clearDefaultFlagForOtherKeys(@Param("channelId") Long channelId, @Param("excludeId") Long excludeId);
+    @Query("UPDATE ProviderApiKeyDo k SET k.isDefault = false WHERE k.providerId = :providerId AND k.id != :excludeId")
+    void clearDefaultFlagForOtherKeys(@Param("providerId") Long providerId, @Param("excludeId") Long excludeId);
 }

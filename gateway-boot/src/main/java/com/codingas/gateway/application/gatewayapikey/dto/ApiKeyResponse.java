@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.apikey.dto;
+package com.codingas.gateway.application.gatewayapikey.dto;
 
 import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
 import lombok.Data;
@@ -13,7 +13,6 @@ import java.util.List;
 public class ApiKeyResponse {
 
     private Long id;
-    private String keyCode;
     private Long userId;
     private String username;
     private String name;

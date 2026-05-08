@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.apikey.dto;
+package com.codingas.gateway.application.gatewayapikey.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

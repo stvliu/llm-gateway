@@ -39,6 +39,18 @@ public class ProviderDo extends BaseDo {
     @Column(name = "priority")
     private Integer priority = 100;
 
+    /**
+     * 调用超时时间（毫秒）
+     */
+    @Column(name = "timeout")
+    private Integer timeout = 30000;
+
+    /**
+     * 最大重试次数
+     */
+    @Column(name = "max_retries")
+    private Integer maxRetries = 3;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ProviderStatus status = ProviderStatus.ACTIVE;

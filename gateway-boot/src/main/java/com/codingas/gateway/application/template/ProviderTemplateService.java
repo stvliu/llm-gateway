@@ -1,12 +1,10 @@
 package com.codingas.gateway.application.template;
 
 import com.codingas.gateway.application.template.dto.*;
-import com.codingas.gateway.domain.model.entity.Channel;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.*;
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -43,11 +41,9 @@ public class ProviderTemplateService {
 
     private final ProviderTemplateGateway gateway;
     private final ProviderGateway providerGateway;
-    private final ChannelGateway channelGateway;
     private final ModelGateway modelGateway;
     private final ProviderApiKeyGateway providerApiKeyGateway;
     private final ObjectMapper objectMapper;
-    private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
      * 创建自定义模板
@@ -170,7 +166,7 @@ public class ProviderTemplateService {
     }
 
     /**
-     * 应用模板创建 Provider、Channel、Model、ApiKey
+     * 应用模板创建 Provider、Model、ApiKey
      */
     @Transactional
     public ApplyTemplateResult applyTemplate(Long templateId, ApplyTemplateRequest request, Long userId) {
@@ -192,21 +188,18 @@ public class ProviderTemplateService {
             if (providerConfig.containsKey("api_doc_url")) {
                 provider.setApiDocUrl((String) providerConfig.get("api_doc_url"));
             }
+            if (providerConfig.containsKey("timeout")) {
+                provider.setTimeout(((Number) providerConfig.get("timeout")).intValue());
+            }
+            if (providerConfig.containsKey("max_retries")) {
+                provider.setMaxRetries(((Number) providerConfig.get("max_retries")).intValue());
+            }
         }
         provider.setPriority(100);
         provider.setStatus(Provider.ProviderStatus.ACTIVE);
         Provider savedProvider = providerGateway.save(provider);
 
-        // 2. 创建 Channel
-        Channel channel = new Channel();
-        channel.setName(request.getChannelName() != null ? request.getChannelName() : template.getTemplateName());
-        channel.setChannelCode("ch_" + template.getTemplateCode() + "_" + System.currentTimeMillis());
-        channel.setPriority(request.getChannelPriority() != null ? request.getChannelPriority() : 100);
-        channel.setProviderId(savedProvider.getId());
-        channel.setStatus(Channel.ChannelStatus.ACTIVE);
-        Channel savedChannel = channelGateway.save(channel);
-
-        // 3. 创建 Model
+        // 2. 创建 Model
         List<Long> modelIds = new ArrayList<>();
         List<String> modelNames = new ArrayList<>();
         List<Map<String, Object>> modelsConfig = template.getModelsConfig();
@@ -244,25 +237,21 @@ public class ProviderTemplateService {
             }
         }
 
-        // 4. 创建 ApiKey（加密存储）
+        // 3. 创建 ApiKey（Gateway 层加密存储）
         ProviderApiKey apiKey = new ProviderApiKey();
         apiKey.setProviderId(savedProvider.getId());
-        apiKey.setChannelId(savedChannel.getId());
         apiKey.setKeyName(template.getTemplateName() + " API Key");
-        apiKey.setApiKey(encryptionService.hashKey(request.getApiKey()));
-        apiKey.setEncryptedApiKey(encryptionService.encrypt(request.getApiKey()));
+        apiKey.setApiKey(request.getApiKey());
         apiKey.setPriority(100);
         apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
         providerApiKeyGateway.save(apiKey);
 
-        // 5. 增加模板使用次数
+        // 4. 增加模板使用次数
         gateway.incrementDownloadCount(templateId);
 
         return ApplyTemplateResult.builder()
             .providerId(savedProvider.getId())
             .providerName(savedProvider.getProviderName())
-            .channelId(savedChannel.getId())
-            .channelName(savedChannel.getName())
             .modelIds(modelIds)
             .modelNames(modelNames)
             .createdAt(savedProvider.getCreatedAt())

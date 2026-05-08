@@ -1,4 +1,4 @@
-package com.codingas.gateway.adapter.admin.controller;
+package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.template.ProviderTemplateService;
 import com.codingas.gateway.application.template.dto.ApplyTemplateRequest;

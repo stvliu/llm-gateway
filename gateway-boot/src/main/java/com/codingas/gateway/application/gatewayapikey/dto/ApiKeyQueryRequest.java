@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.apikey.dto;
+package com.codingas.gateway.application.gatewayapikey.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;

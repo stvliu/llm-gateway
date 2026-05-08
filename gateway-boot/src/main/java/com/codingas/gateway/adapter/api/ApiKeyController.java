@@ -1,10 +1,10 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.apikey.dto.ApiKeyCreateRequest;
-import com.codingas.gateway.application.apikey.dto.ApiKeyQueryRequest;
-import com.codingas.gateway.application.apikey.dto.ApiKeyResponse;
-import com.codingas.gateway.application.apikey.dto.ApiKeyUpdateRequest;
-import com.codingas.gateway.application.apikey.ApiKeyService;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyCreateRequest;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
+import com.codingas.gateway.application.gatewayapikey.ApiKeyService;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;

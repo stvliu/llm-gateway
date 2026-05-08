@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
  * 启动时同步模板
  */
 @Slf4j
-@Component
+//@Component
 @RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "template.git", name = "sync-on-startup", havingValue = "true", matchIfMissing = true)
 public class TemplateSyncRunner implements ApplicationRunner {

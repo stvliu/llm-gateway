@@ -15,8 +15,6 @@ public class ApplyTemplateResult {
 
     private Long providerId;
     private String providerName;
-    private Long channelId;
-    private String channelName;
     private List<Long> modelIds;
     private List<String> modelNames;
     private Instant createdAt;

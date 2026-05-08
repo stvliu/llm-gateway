@@ -1,13 +1,12 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.apikey.ApiKeyService;
-import com.codingas.gateway.application.apikey.dto.ApiKeyCreateRequest;
-import com.codingas.gateway.application.apikey.dto.ApiKeyQueryRequest;
-import com.codingas.gateway.application.apikey.dto.ApiKeyResponse;
-import com.codingas.gateway.application.apikey.dto.ApiKeyUpdateRequest;
+import com.codingas.gateway.application.gatewayapikey.ApiKeyService;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyCreateRequest;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -59,7 +58,7 @@ class ApiKeyControllerTest {
 
             // then
             assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getKeyCode()).isEqualTo("key-001");
+            assertThat(result.getData().getId()).isEqualTo(1L);
         }
     }
 
@@ -185,7 +184,6 @@ class ApiKeyControllerTest {
     private ApiKeyResponse createTestResponse() {
         ApiKeyResponse response = new ApiKeyResponse();
         response.setId(1L);
-        response.setKeyCode("key-001");
         response.setUserId(1L);
         response.setUsername("testuser");
         response.setName("Test Key");

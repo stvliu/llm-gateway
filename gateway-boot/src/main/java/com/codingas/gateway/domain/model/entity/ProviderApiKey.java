@@ -21,20 +21,17 @@ import java.time.Instant;
 public class ProviderApiKey extends BaseEntity {
 
     /**
-     * 关联的 Provider ID（旧架构，向后兼容）
+     * 关联的 Provider ID
      */
     private Long providerId;
 
-    /**
-     * 关联的渠道 ID（新架构）
-     */
-    private Long channelId;
-
     private String keyName;
 
+    /**
+     * Provider API Key（明文）
+     * <p>在 Domain 层以明文形式存在，由 Infrastructure 层负责加密存储和解密读取。</p>
+     */
     private String apiKey;
-
-    private String encryptedApiKey;
 
     private Integer priority = 100;
 
@@ -49,6 +46,16 @@ public class ProviderApiKey extends BaseEntity {
     private Instant lastUsedAt;
 
     private Instant expiresAt;
+
+    /**
+     * 每分钟请求数限制
+     */
+    private Integer rpmLimit;
+
+    /**
+     * 每分钟 Token 数限制
+     */
+    private Long tpmLimit;
 
     /**
      * 连续失败次数（用于健康检测）
@@ -99,13 +106,11 @@ public class ProviderApiKey extends BaseEntity {
      * <p>可用状态包括：ACTIVE、RATE_LIMITED（可恢复）、OVERQUOTA（可恢复）、ERROR（可恢复）</p>
      */
     public boolean isAvailable() {
-        // 永久禁用状态不可用
         if (status == ProviderApiKeyStatus.DISABLED ||
             status == ProviderApiKeyStatus.EXPIRED ||
             status == ProviderApiKeyStatus.DELETED) {
             return false;
         }
-        // 检查是否过期
         if (expiresAt != null && Instant.now().isAfter(expiresAt)) {
             return false;
         }

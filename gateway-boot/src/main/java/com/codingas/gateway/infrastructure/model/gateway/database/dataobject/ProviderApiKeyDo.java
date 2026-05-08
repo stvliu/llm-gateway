@@ -14,7 +14,6 @@ import java.time.Instant;
 @Entity
 @Table(name = "provider_api_keys", indexes = {
     @Index(name = "idx_provider_id", columnList = "provider_id"),
-    @Index(name = "idx_channel_id", columnList = "channel_id"),
     @Index(name = "idx_status", columnList = "status")
 })
 @Getter
@@ -23,26 +22,14 @@ import java.time.Instant;
 @AllArgsConstructor
 public class ProviderApiKeyDo extends BaseDo {
 
-    /**
-     * 关联的 Provider ID（旧架构，向后兼容）
-     */
     @Column(name = "provider_id")
     private Long providerId;
-
-    /**
-     * 关联的渠道 ID（新架构）
-     */
-    @Column(name = "channel_id")
-    private Long channelId;
 
     @Column(name = "key_name", length = 64)
     private String keyName;
 
     @Column(name = "api_key", nullable = false, length = 512)
     private String apiKey;
-
-    @Column(name = "encrypted_api_key", length = 512)
-    private String encryptedApiKey;
 
     @Column(name = "priority")
     private Integer priority = 100;
@@ -66,6 +53,12 @@ public class ProviderApiKeyDo extends BaseDo {
 
     @Column(name = "expires_at")
     private Instant expiresAt;
+
+    @Column(name = "rpm_limit")
+    private Integer rpmLimit;
+
+    @Column(name = "tpm_limit")
+    private Long tpmLimit;
 
     /**
      * API Key 状态枚举
