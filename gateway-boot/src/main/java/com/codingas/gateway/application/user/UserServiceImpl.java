@@ -9,6 +9,7 @@ import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.common.enums.UserStatus;
 import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -189,16 +190,16 @@ public class UserServiceImpl implements UserService {
     public LoginResponse login(LoginRequest request) {
         // 查找用户
         User user = userGateway.findByUsername(request.username())
-            .orElseThrow(() -> new IllegalArgumentException("用户名或密码错误"));
+            .orElseThrow(() -> new AuthenticationFailedException("用户名或密码错误"));
 
         // 检查用户状态
         if (!user.isActive()) {
-            throw new IllegalArgumentException("用户已被禁用");
+            throw new AuthenticationFailedException("用户已被禁用");
         }
 
         // 验证密码
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("用户名或密码错误");
+            throw new AuthenticationFailedException("用户名或密码错误");
         }
 
         // 更新最后登录时间

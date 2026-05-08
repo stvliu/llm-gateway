@@ -40,17 +40,16 @@ export default function Login() {
         rememberMe: values.rememberMe,
       });
 
-      // 后端响应格式: { success, data: { user, token } }
-      const userData = response.data;
-      setUser(userData.user);
-      if (userData.token) {
-        setToken(userData.token);
+      // 响应拦截器已解包，response 就是 { user, token }
+      setUser(response.user);
+      if (response.token) {
+        setToken(response.token);
       }
 
       message.success(t('success', { ns: 'common' }));
 
       // 根据角色重定向
-      const redirectPath = userData.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
+      const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
       navigate(from || redirectPath, { replace: true });
     } catch (err: unknown) {
       // 区分服务不可用和认证失败

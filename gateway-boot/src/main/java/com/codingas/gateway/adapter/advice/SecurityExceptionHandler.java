@@ -55,7 +55,7 @@ public class SecurityExceptionHandler {
         log.warn("Authentication failed: {}", e.getMessage());
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
-            .body(ApiResponse.error(e.getCode(), "Authentication failed. Please check your API Key."));
+            .body(ApiResponse.error(e.getCode(), e.getMessage()));
     }
 
     /**
