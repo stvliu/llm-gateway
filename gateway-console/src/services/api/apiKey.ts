@@ -22,4 +22,8 @@ export const apiKeyApi = {
   /** 删除 API Key */
   delete: (id: number) =>
     api.delete<void>(`/api-keys/${id}`),
+
+  /** 启用/禁用 API Key */
+  setEnabled: (id: number, enabled: boolean) =>
+    api.patch<ApiKey>(`/api-keys/${id}/enabled`, null, { params: { enabled } }),
 };
