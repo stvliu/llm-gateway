@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+    <rect width="200" height="200" fill="#0A0A14" rx="24"/>
+
+    <g stroke="#FFFFFF" stroke-width="2" opacity="0.3">
+        <line x1="100" y1="70" x2="100" y2="30"/>
+        <line x1="100" y1="130" x2="100" y2="170"/>
+        <line x1="70" y1="100" x2="30" y2="100"/>
+        <line x1="130" y1="100" x2="170" y2="100"/>
+        <line x1="78" y1="78" x2="50" y2="50"/>
+        <line x1="122" y1="78" x2="150" y2="50"/>
+        <line x1="78" y1="122" x2="50" y2="150"/>
+        <line x1="122" y1="122" x2="150" y2="150"/>
+    </g>
+
+    <circle cx="100" cy="100" r="45" fill="#FFFFFF" opacity="0.9"/>
+    <circle cx="100" cy="100" r="28" fill="#0A0A14"/>
+    <circle cx="100" cy="100" r="14" fill="#FFFFFF"/>
+
+    <circle cx="100" cy="30" r="16" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="100" cy="170" r="16" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="30" cy="100" r="16" fill="#FFFFFF" opacity="0.8"/>
+    <circle cx="170" cy="100" r="16" fill="#FFFFFF" opacity="0.8"/>
+
+    <circle cx="50" cy="50" r="10" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="150" cy="50" r="10" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="50" cy="150" r="10" fill="#FFFFFF" opacity="0.5"/>
+    <circle cx="150" cy="150" r="10" fill="#FFFFFF" opacity="0.5"/>
+</svg>

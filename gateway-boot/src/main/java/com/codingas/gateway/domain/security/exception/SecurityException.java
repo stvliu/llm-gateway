@@ -1,4 +1,6 @@
-package com.codingas.gateway.common.exception;
+package com.codingas.gateway.domain.security.exception;
+
+import com.codingas.gateway.common.exception.GatewayException;
 
 /**
  * 安全级异常
