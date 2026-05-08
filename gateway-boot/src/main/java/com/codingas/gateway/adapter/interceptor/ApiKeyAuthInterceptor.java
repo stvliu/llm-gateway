@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.Set;
+
 /**
  * API Key 认证拦截器
  *
@@ -27,6 +29,12 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String USER_ID_ATTR = "userId";
 
+    /** 不需要 API Key 认证的路径 */
+    private static final Set<String> PUBLIC_PATHS = Set.of(
+            "/api/v1/auth/login",
+            "/api/v1/auth/logout"
+    );
+
     private final AuthenticationDomainService authenticationService;
 
     @Override
@@ -41,6 +49,14 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response) {
+        String requestURI = request.getRequestURI();
+
+        // 公开路径不需要认证
+        if (PUBLIC_PATHS.contains(requestURI)) {
+            log.debug("Public path, skipping auth: {}", requestURI);
+            return true;
+        }
+
         String apiKey = extractApiKey(request);
 
         if (apiKey == null || apiKey.isBlank()) {
