@@ -22,4 +22,8 @@ export const providerApi = {
   /** 删除渠道 */
   delete: (id: number) =>
     api.delete<void>(`/providers/${id}`),
+
+  /** 启用/禁用渠道 */
+  setEnabled: (id: number, enabled: boolean) =>
+    api.patch<Provider>(`/providers/${id}/enabled`, null, { params: { enabled } }),
 };
