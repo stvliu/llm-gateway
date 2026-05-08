@@ -6,13 +6,29 @@ import type {
   ApplyTemplateRequest,
   ApplyTemplateResult,
   TemplateListParams,
+  SpringPage,
 } from '@/types/template';
 import type { PageResponse, PageParams } from '@/types/api';
 
+/** 转换 Spring Data Page 为 PageResponse */
+function adaptPage<T>(page: SpringPage<T>): PageResponse<T> {
+  return {
+    items: page.content,
+    pagination: {
+      page: page.pageable.pageNumber,
+      limit: page.pageable.pageSize,
+      total: page.totalElements,
+      totalPages: page.totalPages,
+    },
+  };
+}
+
 export const templateApi = {
   /** 获取模板列表 */
-  list: (params?: TemplateListParams & PageParams) =>
-    api.get<PageResponse<ProviderTemplate>>('/templates', { params }),
+  list: async (params?: TemplateListParams & PageParams): Promise<PageResponse<ProviderTemplate>> => {
+    const page = await api.get<SpringPage<ProviderTemplate>>('/templates', { params });
+    return adaptPage(page);
+  },
 
   /** 获取模板详情 */
   get: (id: number) =>
