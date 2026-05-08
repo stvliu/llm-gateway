@@ -8,12 +8,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Set;
-
 /**
  * API Key 认证拦截器
  *
  * <p>责任链第二个拦截器，验证 API Key 并加载用户信息。</p>
+ * <p>仅处理 /v1/ 开头的 API 调用路径（OpenAI/Anthropic 兼容接口）。</p>
  * <p>支持两种认证方式：</p>
  * <ul>
  *   <li>Authorization: Bearer sk-xxx（OpenAI 风格）</li>
@@ -29,11 +28,8 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String USER_ID_ATTR = "userId";
 
-    /** 不需要 API Key 认证的路径 */
-    private static final Set<String> PUBLIC_PATHS = Set.of(
-            "/api/v1/auth/login",
-            "/api/v1/auth/logout"
-    );
+    /** API Key 认证的路径前缀 */
+    private static final String API_KEY_PATH_PREFIX = "/v1/";
 
     private final AuthenticationDomainService authenticationService;
 
@@ -44,16 +40,16 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public int order() {
-        return 2; // IP检查之后
+        return 2; // Token检查之后
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response) {
         String requestURI = request.getRequestURI();
 
-        // 公开路径不需要认证
-        if (PUBLIC_PATHS.contains(requestURI)) {
-            log.debug("Public path, skipping auth: {}", requestURI);
+        // 非 API Key 认证路径，跳过
+        if (!requestURI.startsWith(API_KEY_PATH_PREFIX)) {
+            log.debug("Not API Key path, skipping: {}", requestURI);
             return true;
         }
 

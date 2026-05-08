@@ -77,7 +77,11 @@
       "Bash(java -jar target/gateway-boot-1.0.0-SNAPSHOT.jar)",
       "Bash(./mvnw.cmd compile *)",
       "mcp__plugin_ecc_github__create_pull_request",
-      "Bash(../mvnw spring-boot:run -Dspring-boot.run.profiles=local)"
+      "Bash(../mvnw spring-boot:run -Dspring-boot.run.profiles=local)",
+      "Bash(pkill -f \"gateway-boot-1.0.0-SNAPSHOT.jar\")",
+      "Bash(rm -rf gateway-boot/data/gateway*)",
+      "Bash(rm -rf data/gateway*)",
+      "Bash(ls -la data/)"
     ]
   },
   "outputStyle": "default"

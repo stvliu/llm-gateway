@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
 import com.codingas.gateway.application.auth.dto.LoginRequest;
 import com.codingas.gateway.application.auth.dto.LoginResponse;
@@ -34,7 +35,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public void logout() {
-        // JWT 无状态认证，服务端无需处理登出
+        userService.logout();
     }
 
     /**
@@ -42,14 +43,8 @@ public class AuthController {
      */
     @GetMapping("/me")
     public UserResponse getCurrentUser() {
-        // TODO: 从 SecurityContext 获取当前用户 ID
-        // 目前返回模拟数据
-        UserResponse response = new UserResponse();
-        response.setId(1L);
-        response.setUsername("admin");
-        response.setEmail("admin@example.com");
-        response.setRole("ADMIN");
-        return response;
+        Long userId = StpUtil.getLoginIdAsLong();
+        return userService.getById(userId);
     }
 
     /**
@@ -57,7 +52,7 @@ public class AuthController {
      */
     @PostMapping("/change-password")
     public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
-        // TODO: 从 SecurityContext 获取当前用户 ID
-        userService.changePassword(1L, request);
+        Long userId = StpUtil.getLoginIdAsLong();
+        userService.changePassword(userId, request);
     }
 }

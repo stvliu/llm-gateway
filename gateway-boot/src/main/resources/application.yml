@@ -115,6 +115,7 @@ server:
 # ==============================================
 sa-token:
   token-name: Authorization
+  token-prefix: Bearer
   timeout: 7200
   active-timeout: -1
   is-concurrent: true

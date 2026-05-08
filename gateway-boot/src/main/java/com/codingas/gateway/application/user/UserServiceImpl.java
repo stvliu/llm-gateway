@@ -12,13 +12,13 @@ import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import cn.dev33.satoken.stp.StpUtil;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -205,8 +205,9 @@ public class UserServiceImpl implements UserService {
         user.setLastLoginAt(Instant.now());
         userGateway.save(user);
 
-        // 生成 Token (简化版，实际应使用 JWT)
-        String token = generateToken(user);
+        // 使用 SaToken 登录
+        StpUtil.login(user.getId());
+        String token = StpUtil.getTokenValue();
 
         // 构建响应
         LoginResponse.UserResponse userResponse = new LoginResponse.UserResponse(
@@ -239,11 +240,11 @@ public class UserServiceImpl implements UserService {
     }
 
     /**
-     * 生成 Token (简化版)
+     * 用户登出
      */
-    private String generateToken(User user) {
-        // 简化实现，生成一个唯一标识
-        return UUID.randomUUID().toString().replace("-", "");
+    @Override
+    public void logout() {
+        StpUtil.logout();
     }
 
     /**

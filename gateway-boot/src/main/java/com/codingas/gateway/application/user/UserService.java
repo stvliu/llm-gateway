@@ -57,6 +57,11 @@ public interface UserService {
     LoginResponse login(LoginRequest request);
 
     /**
+     * 用户登出
+     */
+    void logout();
+
+    /**
      * 修改密码
      *
      * @param userId 用户 ID
