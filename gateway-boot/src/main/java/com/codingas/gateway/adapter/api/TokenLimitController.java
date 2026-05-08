@@ -5,7 +5,6 @@ import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.application.quota.TokenLimitService;
-import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,50 +26,49 @@ public class TokenLimitController {
      * 创建 Token 限额
      */
     @PostMapping
-    public ApiResponse<TokenLimitResponse> create(@Valid @RequestBody TokenLimitCreateRequest request) {
-        return ApiResponse.success(tokenLimitService.create(request));
+    public TokenLimitResponse create(@Valid @RequestBody TokenLimitCreateRequest request) {
+        return tokenLimitService.create(request);
     }
 
     /**
      * 获取 Token 限额详情
      */
     @GetMapping("/{id}")
-    public ApiResponse<TokenLimitResponse> getById(@PathVariable Long id) {
-        return ApiResponse.success(tokenLimitService.getById(id));
+    public TokenLimitResponse getById(@PathVariable Long id) {
+        return tokenLimitService.getById(id);
     }
 
     /**
      * 查询 Token 限额列表
      */
     @GetMapping
-    public ApiResponse<PageResponse<TokenLimitResponse>> query(@ModelAttribute TokenLimitQueryRequest request) {
-        return ApiResponse.success(tokenLimitService.query(request));
+    public PageResponse<TokenLimitResponse> query(@ModelAttribute TokenLimitQueryRequest request) {
+        return tokenLimitService.query(request);
     }
 
     /**
      * 更新 Token 限额
      */
     @PutMapping("/{id}")
-    public ApiResponse<TokenLimitResponse> update(
+    public TokenLimitResponse update(
             @PathVariable Long id,
             @Valid @RequestBody TokenLimitUpdateRequest request) {
-        return ApiResponse.success(tokenLimitService.update(id, request));
+        return tokenLimitService.update(id, request);
     }
 
     /**
      * 删除 Token 限额
      */
     @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         tokenLimitService.delete(id);
-        return ApiResponse.success();
     }
 
     /**
      * 重置已使用量
      */
     @PatchMapping("/{id}/reset-usage")
-    public ApiResponse<TokenLimitResponse> resetUsage(@PathVariable Long id) {
-        return ApiResponse.success(tokenLimitService.resetUsage(id));
+    public TokenLimitResponse resetUsage(@PathVariable Long id) {
+        return tokenLimitService.resetUsage(id);
     }
 }

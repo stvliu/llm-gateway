@@ -98,7 +98,7 @@ export function ModelList({ providerId }: ModelListProps) {
 
       <Table
         columns={columns}
-        dataSource={data?.content || []}
+        dataSource={data?.items || []}
         rowKey="id"
         loading={isLoading}
         size="small"
@@ -120,7 +120,7 @@ export function ModelList({ providerId }: ModelListProps) {
           </Form.Item>
           <Form.Item name="providerId" label={t('model.provider')} rules={[{ required: true }]}>
             <Select disabled={!!editingModel}>
-              {providers?.content?.map((p) => (
+              {providers?.items?.map((p: { id: number; name: string }) => (
                 <Select.Option key={p.id} value={p.id}>
                   {p.name}
                 </Select.Option>

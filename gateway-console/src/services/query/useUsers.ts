@@ -1,6 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userApi } from '@/services/api/user';
-import type { CreateUserRequest, UpdateUserRequest } from '@/types/user';
+import type {
+  CreateUserRequest,
+  UpdateUserRequest,
+  UserStatusUpdateRequest,
+  UserRoleAssignRequest,
+} from '@/types/user';
 
 export const userKeys = {
   all: ['users'] as const,
@@ -60,5 +65,29 @@ export function useDeleteUser() {
 export function useResetPassword() {
   return useMutation({
     mutationFn: (id: number) => userApi.resetPassword(id),
+  });
+}
+
+export function useUpdateUserStatus() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UserStatusUpdateRequest }) =>
+      userApi.updateStatus(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
+  });
+}
+
+export function useAssignUserRoles() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UserRoleAssignRequest }) =>
+      userApi.assignRoles(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
+    },
   });
 }

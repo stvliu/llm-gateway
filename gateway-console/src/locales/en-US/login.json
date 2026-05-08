@@ -7,7 +7,8 @@
   "submit": "Login",
   "error": {
     "title": "Login failed",
-    "message": "Invalid username or password"
+    "message": "Invalid username or password",
+    "serviceUnavailable": "Service temporarily unavailable, please try again later"
   },
   "validation": {
     "usernameRequired": "Please enter username",

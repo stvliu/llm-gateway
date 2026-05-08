@@ -1,33 +1,49 @@
 {
   "title": "模型中心",
-  "channelList": "渠道列表",
+  "providerList": "供应商列表",
   "modelList": "模型列表",
-  "addChannel": "新增渠道",
+  "addProvider": "新增供应商",
   "addModel": "新增模型",
-  "channel": {
-    "name": "渠道名称",
-    "code": "渠道代码",
-    "type": "渠道类型",
+  "provider": {
+    "name": "供应商名称",
+    "type": "供应商类型",
     "baseUrl": "API 地址",
+    "timeout": "超时时间",
+    "maxRetries": "最大重试次数",
     "status": "状态"
   },
   "model": {
     "name": "模型名称",
-    "code": "模型代码",
+    "code": "模型编码",
     "type": "模型类型",
-    "provider": "所属渠道",
+    "provider": "所属供应商",
     "status": "状态"
   },
   "type": {
     "OPENAI": "OpenAI",
     "ANTHROPIC": "Anthropic",
-    "GOOGLE": "Google",
-    "AZURE": "Azure",
-    "CUSTOM": "自定义",
+    "GEMINI": "Google Gemini",
+    "DEEPSEEK": "DeepSeek（深度求索）",
+    "MOONSHOT": "Moonshot（月之暗面）",
+    "ZHIPU": "智谱 GLM",
+    "YI": "零一万物",
+    "BAICHUAN": "百川智能",
+    "MINIMAX": "MiniMax",
+    "SILICONFLOW": "SiliconFlow（硅基流动）",
+    "VOLCENGINE": "火山引擎",
+    "QWEN": "通义千问",
+    "WENXIN": "文心一言",
+    "OTHER": "其他",
     "CHAT": "对话",
     "COMPLETION": "补全",
     "EMBEDDING": "向量",
     "IMAGE": "图像",
     "AUDIO": "音频"
+  },
+  "status": {
+    "active": "正常",
+    "suspended": "暂停",
+    "enabled": "启用",
+    "disabled": "禁用"
   }
 }

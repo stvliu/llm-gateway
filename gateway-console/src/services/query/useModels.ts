@@ -56,3 +56,15 @@ export function useDeleteModel() {
     },
   });
 }
+
+export function useSetEnabledModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
+      modelApi.setEnabled(id, enabled),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: modelKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: modelKeys.lists() });
+    },
+  });
+}

@@ -1,14 +1,15 @@
 {
   "title": "Model Center",
-  "channelList": "Channel List",
+  "providerList": "Provider List",
   "modelList": "Model List",
-  "addChannel": "Add Channel",
+  "addProvider": "Add Provider",
   "addModel": "Add Model",
-  "channel": {
-    "name": "Channel Name",
-    "code": "Channel Code",
-    "type": "Channel Type",
+  "provider": {
+    "name": "Provider Name",
+    "type": "Provider Type",
     "baseUrl": "API URL",
+    "timeout": "Timeout",
+    "maxRetries": "Max Retries",
     "status": "Status"
   },
   "model": {
@@ -21,13 +22,28 @@
   "type": {
     "OPENAI": "OpenAI",
     "ANTHROPIC": "Anthropic",
-    "GOOGLE": "Google",
-    "AZURE": "Azure",
-    "CUSTOM": "Custom",
+    "GEMINI": "Google Gemini",
+    "DEEPSEEK": "DeepSeek",
+    "MOONSHOT": "Moonshot (Kimi)",
+    "ZHIPU": "Zhipu GLM",
+    "YI": "Yi (01.AI)",
+    "BAICHUAN": "Baichuan",
+    "MINIMAX": "MiniMax",
+    "SILICONFLOW": "SiliconFlow",
+    "VOLCENGINE": "Volcengine",
+    "QWEN": "Qwen (Alibaba)",
+    "WENXIN": "Wenxin (Baidu)",
+    "OTHER": "Other",
     "CHAT": "Chat",
     "COMPLETION": "Completion",
     "EMBEDDING": "Embedding",
     "IMAGE": "Image",
     "AUDIO": "Audio"
+  },
+  "status": {
+    "active": "Active",
+    "suspended": "Suspended",
+    "enabled": "Enabled",
+    "disabled": "Disabled"
   }
 }

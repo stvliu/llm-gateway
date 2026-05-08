@@ -56,3 +56,15 @@ export function useDeleteApiKey() {
     },
   });
 }
+
+export function useSetEnabledApiKey() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
+      apiKeyApi.setEnabled(id, enabled),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: apiKeyKeys.lists() });
+    },
+  });
+}

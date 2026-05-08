@@ -32,7 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
                                      Object handler) throws Exception {
                 return securityInterceptorChain.execute(request, response);
             }
-        }).addPathPatterns("/v1/**");
+        }).addPathPatterns("/api/**", "/v1/**");
     }
 
     /**

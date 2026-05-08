@@ -7,7 +7,6 @@ import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.entity.Model;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,6 +27,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * ModelController 单元测试
+ *
+ * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ModelController 测试")
@@ -54,11 +55,10 @@ class ModelControllerTest {
             when(modelService.create(any())).thenReturn(response);
 
             // when
-            var result = controller.create(request);
+            ModelResponse result = controller.create(request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getModelCode()).isEqualTo("gpt-4");
+            assertThat(result.getModelCode()).isEqualTo("gpt-4");
         }
     }
 
@@ -74,11 +74,10 @@ class ModelControllerTest {
             when(modelService.getById(1L)).thenReturn(response);
 
             // when
-            var result = controller.getById(1L);
+            ModelResponse result = controller.getById(1L);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getId()).isEqualTo(1L);
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -97,11 +96,10 @@ class ModelControllerTest {
             when(modelService.query(any(ModelQueryRequest.class))).thenReturn(pageResponse);
 
             // when
-            var result = controller.query(new ModelQueryRequest());
+            PageResponse<ModelResponse> result = controller.query(new ModelQueryRequest());
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getItems()).hasSize(1);
+            assertThat(result.getItems()).hasSize(1);
         }
     }
 
@@ -120,10 +118,10 @@ class ModelControllerTest {
             when(modelService.update(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.update(1L, request);
+            ModelResponse result = controller.update(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result).isNotNull();
         }
     }
 
@@ -138,10 +136,9 @@ class ModelControllerTest {
             doNothing().when(modelService).delete(1L);
 
             // when
-            var result = controller.delete(1L);
+            controller.delete(1L);
 
-            // then
-            assertThat(result.isSuccess()).isTrue();
+            // then - void 方法，无返回值验证
         }
     }
 
@@ -158,10 +155,10 @@ class ModelControllerTest {
             when(modelService.setEnabled(1L, true)).thenReturn(response);
 
             // when
-            var result = controller.setEnabled(1L, true);
+            ModelResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.ACTIVE);
         }
 
         @Test
@@ -173,10 +170,10 @@ class ModelControllerTest {
             when(modelService.setEnabled(1L, false)).thenReturn(response);
 
             // when
-            var result = controller.setEnabled(1L, false);
+            ModelResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.DEPRECATED);
         }
     }
 

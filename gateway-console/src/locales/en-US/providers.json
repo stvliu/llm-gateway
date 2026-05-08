@@ -4,11 +4,22 @@
   "name": "Name",
   "code": "Code",
   "type": "Type",
-  "baseUrl": "Base URL",
+  "baseUrl": "API URL",
   "status": "Status",
-  "type.OPENAI": "OpenAI",
-  "type.ANTHROPIC": "Anthropic",
-  "type.GOOGLE": "Google",
-  "type.AZURE": "Azure",
-  "type.CUSTOM": "Custom"
+  "type": {
+    "OPENAI": "OpenAI",
+    "ANTHROPIC": "Anthropic",
+    "GEMINI": "Google Gemini",
+    "DEEPSEEK": "DeepSeek",
+    "MOONSHOT": "Moonshot (Kimi)",
+    "ZHIPU": "Zhipu GLM",
+    "YI": "Yi (01.AI)",
+    "BAICHUAN": "Baichuan",
+    "MINIMAX": "MiniMax",
+    "SILICONFLOW": "SiliconFlow",
+    "VOLCENGINE": "Volcengine",
+    "QWEN": "Qwen (Alibaba)",
+    "WENXIN": "Wenxin (Baidu)",
+    "OTHER": "Other"
+  }
 }

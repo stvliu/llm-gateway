@@ -1,11 +1,11 @@
 package com.codingas.gateway.adapter.api;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
 import com.codingas.gateway.application.auth.dto.LoginRequest;
 import com.codingas.gateway.application.auth.dto.LoginResponse;
 import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.application.user.dto.UserResponse;
-import com.codingas.gateway.common.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -26,42 +26,33 @@ public class AuthController {
      * 用户登录
      */
     @PostMapping("/login")
-    public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        LoginResponse response = userService.login(request);
-        return ApiResponse.success(response);
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
+        return userService.login(request);
     }
 
     /**
      * 用户登出
      */
     @PostMapping("/logout")
-    public ApiResponse<Void> logout() {
-        // JWT 无状态认证，服务端无需处理登出
-        return ApiResponse.success();
+    public void logout() {
+        userService.logout();
     }
 
     /**
      * 获取当前用户信息
      */
     @GetMapping("/me")
-    public ApiResponse<UserResponse> getCurrentUser() {
-        // TODO: 从 SecurityContext 获取当前用户 ID
-        // 目前返回模拟数据
-        UserResponse response = new UserResponse();
-        response.setId(1L);
-        response.setUsername("admin");
-        response.setEmail("admin@example.com");
-        response.setRole("ADMIN");
-        return ApiResponse.success(response);
+    public UserResponse getCurrentUser() {
+        Long userId = StpUtil.getLoginIdAsLong();
+        return userService.getById(userId);
     }
 
     /**
      * 修改密码
      */
     @PostMapping("/change-password")
-    public ApiResponse<Void> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
-        // TODO: 从 SecurityContext 获取当前用户 ID
-        userService.changePassword(1L, request);
-        return ApiResponse.success();
+    public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        userService.changePassword(userId, request);
     }
 }

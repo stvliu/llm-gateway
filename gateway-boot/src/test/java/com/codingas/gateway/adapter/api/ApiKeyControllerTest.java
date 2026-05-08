@@ -26,6 +26,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * ApiKeyController 单元测试
+ *
+ * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApiKeyController 测试")
@@ -54,11 +56,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.create(any())).thenReturn(response);
 
             // when
-            var result = controller.create(request);
+            ApiKeyResponse result = controller.create(request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getId()).isEqualTo(1L);
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -74,11 +75,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.getById(1L)).thenReturn(response);
 
             // when
-            var result = controller.getById(1L);
+            ApiKeyResponse result = controller.getById(1L);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getId()).isEqualTo(1L);
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -97,11 +97,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.query(any(ApiKeyQueryRequest.class))).thenReturn(pageResponse);
 
             // when
-            var result = controller.query(new ApiKeyQueryRequest());
+            PageResponse<ApiKeyResponse> result = controller.query(new ApiKeyQueryRequest());
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getItems()).hasSize(1);
+            assertThat(result.getItems()).hasSize(1);
         }
     }
 
@@ -120,10 +119,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.update(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.update(1L, request);
+            ApiKeyResponse result = controller.update(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result).isNotNull();
         }
     }
 
@@ -138,10 +137,9 @@ class ApiKeyControllerTest {
             doNothing().when(apiKeyService).delete(1L);
 
             // when
-            var result = controller.delete(1L);
+            controller.delete(1L);
 
-            // then
-            assertThat(result.isSuccess()).isTrue();
+            // then - void 方法，无返回值验证
         }
     }
 
@@ -158,10 +156,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.setEnabled(1L, true)).thenReturn(response);
 
             // when
-            var result = controller.setEnabled(1L, true);
+            ApiKeyResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
         }
 
         @Test
@@ -173,10 +171,10 @@ class ApiKeyControllerTest {
             when(apiKeyService.setEnabled(1L, false)).thenReturn(response);
 
             // when
-            var result = controller.setEnabled(1L, false);
+            ApiKeyResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getStatus()).isEqualTo(ApiKeyStatus.DISABLED);
         }
     }
 

@@ -23,6 +23,8 @@ import static org.mockito.Mockito.when;
 
 /**
  * UserController 单元测试
+ *
+ * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserController 测试")
@@ -49,11 +51,10 @@ class UserControllerTest {
             when(userService.create(any())).thenReturn(response);
 
             // when
-            var result = controller.create(request);
+            UserResponse result = controller.create(request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getUsername()).isEqualTo("testuser");
+            assertThat(result.getUsername()).isEqualTo("testuser");
         }
     }
 
@@ -69,11 +70,10 @@ class UserControllerTest {
             when(userService.getById(1L)).thenReturn(response);
 
             // when
-            var result = controller.getById(1L);
+            UserResponse result = controller.getById(1L);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getId()).isEqualTo(1L);
+            assertThat(result.getId()).isEqualTo(1L);
         }
     }
 
@@ -92,11 +92,10 @@ class UserControllerTest {
             when(userService.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
 
             // when
-            var result = controller.query(new UserQueryRequest());
+            PageResponse<UserResponse> result = controller.query(new UserQueryRequest());
 
             // then
-            assertThat(result.isSuccess()).isTrue();
-            assertThat(result.getData().getItems()).hasSize(1);
+            assertThat(result.getItems()).hasSize(1);
         }
     }
 
@@ -115,10 +114,10 @@ class UserControllerTest {
             when(userService.update(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.update(1L, request);
+            UserResponse result = controller.update(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result).isNotNull();
         }
     }
 
@@ -133,10 +132,10 @@ class UserControllerTest {
             doNothing().when(userService).delete(1L);
 
             // when
-            var result = controller.delete(1L);
+            controller.delete(1L);
 
-            // then
-            assertThat(result.isSuccess()).isTrue();
+            // then - void 方法，无返回值验证
+            // 方法执行成功即测试通过
         }
     }
 
@@ -156,10 +155,10 @@ class UserControllerTest {
             when(userService.updateStatus(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.updateStatus(1L, request);
+            UserResponse result = controller.updateStatus(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getStatus()).isEqualTo(UserStatus.DISABLED);
         }
     }
 
@@ -179,10 +178,10 @@ class UserControllerTest {
             when(userService.assignRoles(eq(1L), any())).thenReturn(response);
 
             // when
-            var result = controller.assignRoles(1L, request);
+            UserResponse result = controller.assignRoles(1L, request);
 
             // then
-            assertThat(result.isSuccess()).isTrue();
+            assertThat(result.getRole()).isEqualTo("ADMIN");
         }
     }
 

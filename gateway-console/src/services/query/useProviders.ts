@@ -56,3 +56,15 @@ export function useDeleteProvider() {
     },
   });
 }
+
+export function useSetEnabledProvider() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
+      providerApi.setEnabled(id, enabled),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: providerKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: providerKeys.lists() });
+    },
+  });
+}

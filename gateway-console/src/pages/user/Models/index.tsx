@@ -34,7 +34,7 @@ export default function UserModels() {
     <Card title={t('title')}>
       <Table
         columns={columns}
-        dataSource={data?.content || []}
+        dataSource={data?.items || []}
         rowKey="id"
         loading={isLoading}
         pagination={{ pageSize: 10 }}

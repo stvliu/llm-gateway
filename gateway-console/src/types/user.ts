@@ -52,3 +52,13 @@ export interface CurrentUser {
   email: string;
   role: UserRole;
 }
+
+/** 用户状态更新请求 */
+export interface UserStatusUpdateRequest {
+  status: Status;
+}
+
+/** 用户角色分配请求 */
+export interface UserRoleAssignRequest {
+  roles: UserRole[];
+}
