@@ -80,3 +80,16 @@ export interface TemplateListParams {
   page?: number;
   limit?: number;
 }
+
+/** Spring Data Page 响应格式 */
+export interface SpringPage<T> {
+  content: T[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+  };
+  totalElements: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
