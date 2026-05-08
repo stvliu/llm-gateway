@@ -45,10 +45,10 @@ curl -X POST "https://用户名:私人令牌@gitee.com/api/v5/repos/用户名/�
   -d '{"title":"PR标题","head":"源分支","base":"master","body":"PR描述"}'
 ```
 
-**本项目示例**（直接复制修改标题和描述即可）：
+**本项目示例**（直接复制修改 `title`、`head`、`body` 即可）：
 
 ```bash
-curl -X POST "https://ezxbao_liuye:YOUR_TOKEN@gitee.com/api/v5/repos/ezxbao_liuye/llm-gateway/pulls" \
+curl -X POST "https://ezxbao_liuye:a84b631eaca50b981db4af4286e467f4@gitee.com/api/v5/repos/ezxbao_liuye/llm-gateway/pulls" \
   -H "Content-Type: application/json" \
   -d '{"title":"feat: 新功能描述","head":"feature/xxx","base":"master","body":"## 改动\n- 改动1\n- 改动2\n\n## 测试\n- [x] 测试通过"}'
 ```
