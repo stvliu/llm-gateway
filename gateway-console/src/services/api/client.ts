@@ -28,6 +28,14 @@ instance.interceptors.request.use(
  * 判断是否为服务不可用错误
  */
 function isServiceUnavailableError(error: unknown): boolean {
+  // 检查自定义错误码
+  if (error instanceof Error) {
+    const errorCode = (error as unknown as Record<string, unknown>).code;
+    if (errorCode === 'SERVICE_UNAVAILABLE') {
+      return true;
+    }
+  }
+
   // 检查 AxiosError
   if (error instanceof AxiosError) {
     const status = error.response?.status;
@@ -61,6 +69,7 @@ function isServiceUnavailableError(error: unknown): boolean {
       message.includes('connection refused') ||
       message.includes('timeout') ||
       message.includes('service unavailable') ||
+      message.includes('backend service unavailable') ||
       name.includes('networkerror') ||
       name.includes('typeerror') // fetch 失败时可能是 TypeError
     ) {
@@ -68,6 +77,21 @@ function isServiceUnavailableError(error: unknown): boolean {
     }
   }
 
+  return false;
+}
+
+/**
+ * 检查响应是否为意外的 HTML 页面（Vite 代理失败时可能返回前端页面）
+ */
+function isUnexpectedHtmlResponse(response: unknown): boolean {
+  if (response && typeof response === 'object') {
+    const resp = response as { data?: unknown; status?: number };
+    const data = resp.data;
+    // 检查响应数据是否为 HTML 页面
+    if (typeof data === 'string' && data.includes('<!DOCTYPE html>')) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -93,6 +117,23 @@ function getErrorMessage(error: unknown): string {
 // 响应拦截器
 instance.interceptors.response.use(
   (response) => {
+    // 检查是否为意外的 HTML 页面响应（Vite 代理失败时可能返回前端页面）
+    if (isUnexpectedHtmlResponse(response)) {
+      const endpoint = response.config?.url;
+      const errorMessage = 'Backend service unavailable - received HTML instead of API response';
+
+      if (isDev) {
+        setServiceUnavailable(true, endpoint, errorMessage);
+      } else {
+        setServiceUnavailable(true, endpoint, errorMessage);
+      }
+
+      // 抛出错误以便调用方处理
+      const error = new Error(errorMessage);
+      (error as unknown as Record<string, unknown>).code = 'SERVICE_UNAVAILABLE';
+      return Promise.reject(error);
+    }
+
     // 自动解包 ApiResponse.data
     const data = response.data;
     if (data && typeof data === 'object' && 'success' in data) {
