@@ -22,4 +22,8 @@ export const modelApi = {
   /** 删除模型 */
   delete: (id: number) =>
     api.delete<void>(`/models/${id}`),
+
+  /** 启用/禁用模型 */
+  setEnabled: (id: number, enabled: boolean) =>
+    api.patch<Model>(`/models/${id}/enabled`, null, { params: { enabled } }),
 };
