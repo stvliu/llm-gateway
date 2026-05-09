@@ -48,16 +48,6 @@ public class ModelDo extends BaseDo {
     @Column(name = "capabilities", columnDefinition = "json")
     private Map<String, Boolean> capabilities;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private ModelStatus status = ModelStatus.ACTIVE;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    public enum ModelStatus {
-        ACTIVE,
-        DEPRECATED,
-        DELETED
-    }
+    @Column(name = "enabled", nullable = false)
+    private Boolean enabled = true;
 }

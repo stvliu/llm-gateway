@@ -116,7 +116,7 @@ public class AuthenticationDomainService {
     }
 
     private boolean isUserActive(User user) {
-        return user.getStatus() == UserStatus.ACTIVE;
+        return user.getStatus() == UserStatus.ENABLED;
     }
 
     /**

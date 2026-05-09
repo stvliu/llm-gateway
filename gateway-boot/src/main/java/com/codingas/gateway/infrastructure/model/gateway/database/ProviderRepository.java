@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
-    List<ProviderDo> findByStatus(ProviderDo.ProviderStatus status);
+    List<ProviderDo> findByEnabledTrue();
 }

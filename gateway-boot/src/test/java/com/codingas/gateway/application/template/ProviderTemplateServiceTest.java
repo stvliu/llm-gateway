@@ -224,8 +224,8 @@ class ProviderTemplateServiceTest {
         ArgumentCaptor<Provider> providerCaptor = ArgumentCaptor.forClass(Provider.class);
         verify(providerGateway).save(providerCaptor.capture());
         Provider savedProvider = providerCaptor.getValue();
-        assertThat(savedProvider.getProviderName()).isEqualTo("Test Provider");
-        assertThat(savedProvider.getProviderType().name()).isEqualTo("OTHER");
+        assertThat(savedProvider.getName()).isEqualTo("Test Provider");
+        assertThat(savedProvider.getType().name()).isEqualTo("OTHER");
 
         ArgumentCaptor<ProviderApiKey> apiKeyCaptor = ArgumentCaptor.forClass(ProviderApiKey.class);
         verify(providerApiKeyGateway).save(apiKeyCaptor.capture());

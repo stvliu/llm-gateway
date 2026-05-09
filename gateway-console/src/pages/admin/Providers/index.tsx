@@ -3,7 +3,8 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } 
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '@/services/query';
-import type { Provider, CreateProviderRequest, ProviderType } from '@/types/provider';
+import type { Provider, CreateProviderRequest } from '@/types/provider';
+import type { ProviderType } from '@/types/api';
 import type { ColumnsType } from 'antd/es/table';
 
 // TODO: 接入后端 API (已部分实现，使用 useProviders hooks)
@@ -58,18 +59,13 @@ export default function AdminProviders() {
   const columns: ColumnsType<Provider> = [
     {
       title: t('name'),
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'providerName',
+      key: 'providerName',
     },
     {
-      title: t('code'),
-      dataIndex: 'code',
-      key: 'code',
-    },
-    {
-      title: t('type'),
-      dataIndex: 'type',
-      key: 'type',
+      title: t('type.label'),
+      dataIndex: 'providerType',
+      key: 'providerType',
       render: (type: ProviderType) => t(`type.${type}`),
     },
     {
@@ -80,11 +76,11 @@ export default function AdminProviders() {
     },
     {
       title: t('status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      dataIndex: 'enabled',
+      key: 'enabled',
+      render: (enabled: boolean) => (
+        <Tag color={enabled ? 'green' : 'red'}>
+          {t(`status.${enabled ? 'enabled' : 'disabled'}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -124,13 +120,10 @@ export default function AdminProviders() {
         footer={null}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="name" label={t('name')} rules={[{ required: true }]}>
+          <Form.Item name="providerName" label={t('name')} rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="code" label={t('code')} rules={[{ required: true }]}>
-            <Input disabled={!!editingProvider} />
-          </Form.Item>
-          <Form.Item name="type" label={t('type')} rules={[{ required: true }]}>
+          <Form.Item name="providerType" label={t('type')} rules={[{ required: true }]}>
             <Select disabled={!!editingProvider}>
               <Select.Option value="OPENAI">{t('type.OPENAI')}</Select.Option>
               <Select.Option value="ANTHROPIC">{t('type.ANTHROPIC')}</Select.Option>
@@ -152,10 +145,10 @@ export default function AdminProviders() {
             <Input />
           </Form.Item>
           {editingProvider && (
-            <Form.Item name="status" label={t('status')}>
+            <Form.Item name="enabled" label={t('status')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value={true}>{t('status.enabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value={false}>{t('status.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

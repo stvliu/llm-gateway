@@ -175,8 +175,8 @@ public class ProviderTemplateService {
 
         // 1. 创建 Provider
         Provider provider = new Provider();
-        provider.setProviderName(template.getTemplateName());
-        provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(template.getProviderType()));
+        provider.setName(template.getTemplateName());
+        provider.setType(com.codingas.gateway.common.enums.ProviderType.valueOf(template.getProviderType()));
         Map<String, Object> providerConfig = template.getProviderConfig();
         if (providerConfig != null) {
             if (providerConfig.containsKey("base_url")) {
@@ -196,7 +196,7 @@ public class ProviderTemplateService {
             }
         }
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setEnabled(true);
         Provider savedProvider = providerGateway.save(provider);
 
         // 2. 创建 Model
@@ -230,7 +230,7 @@ public class ProviderTemplateService {
                     Map<String, Boolean> caps = (Map<String, Boolean>) modelConfig.get("capabilities");
                     model.setCapabilities(caps);
                 }
-                model.setStatus(Model.ModelStatus.ACTIVE);
+                model.setEnabled(true);
                 Model savedModel = modelGateway.save(model);
                 modelIds.add(savedModel.getId());
                 modelNames.add(savedModel.getDisplayName());
@@ -251,7 +251,7 @@ public class ProviderTemplateService {
 
         return ApplyTemplateResult.builder()
             .providerId(savedProvider.getId())
-            .providerName(savedProvider.getProviderName())
+            .providerName(savedProvider.getName())
             .modelIds(modelIds)
             .modelNames(modelNames)
             .createdAt(savedProvider.getCreatedAt())

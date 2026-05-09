@@ -7,7 +7,6 @@ import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -222,8 +221,8 @@ class ConfigCacheServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setName("OpenAI");
+        provider.setStatus(Provider.true);
         return provider;
     }
 
@@ -231,7 +230,7 @@ class ConfigCacheServiceTest {
         Model model = new Model();
         model.setId(1L);
         model.setDisplayName("GPT-4");
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setStatus(Model.true);
         return model;
     }
 }

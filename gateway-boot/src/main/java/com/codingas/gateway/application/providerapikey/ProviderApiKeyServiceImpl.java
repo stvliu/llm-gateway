@@ -112,8 +112,12 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         if (request.getWeight() != null) {
             key.setWeight(request.getWeight());
         }
-        if (request.getIsDefault() != null) {
-            key.setIsDefault(request.getIsDefault());
+        if (request.getIsDefault() != null && request.getIsDefault()) {
+            // 设置为默认 Key 时，先清除其他 Key 的默认标记
+            providerApiKeyGateway.clearDefaultFlagForOtherKeys(key.getProviderId(), id);
+            key.setIsDefault(true);
+        } else if (request.getIsDefault() != null) {
+            key.setIsDefault(false);
         }
         if (request.getStatus() != null) {
             key.setStatus(request.getStatus());

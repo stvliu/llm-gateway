@@ -151,7 +151,7 @@ public class ModelDomainService {
         existing.setInputPrice(model.getInputPrice());
         existing.setOutputPrice(model.getOutputPrice());
         existing.setCapabilities(model.getCapabilities());
-        existing.setStatus(model.getStatus());
+        existing.setEnabled(model.getEnabled());
 
         Model updated = modelGateway.save(existing);
         log.info("Updated model: {} (id={})", updated.getDisplayName(), updated.getId());
@@ -168,8 +168,7 @@ public class ModelDomainService {
             throw new IllegalArgumentException("Model not found: " + id);
         }
         Model model = modelOpt.get();
-        model.setStatus(Model.ModelStatus.DELETED);
-        modelGateway.save(model);
+        modelGateway.delete(model);
         log.info("Deleted model: {}", id);
     }
 

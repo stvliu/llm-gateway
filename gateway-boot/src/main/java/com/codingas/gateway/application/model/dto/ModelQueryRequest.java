@@ -1,7 +1,6 @@
 package com.codingas.gateway.application.model.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,5 +15,5 @@ public class ModelQueryRequest extends PageRequest {
 
     private Long providerId;
 
-    private ModelStatus status;
+    private Boolean enabled;
 }

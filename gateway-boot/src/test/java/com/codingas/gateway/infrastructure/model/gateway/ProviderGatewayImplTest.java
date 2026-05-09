@@ -4,7 +4,6 @@ import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.infrastructure.model.gateway.database.ProviderRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -120,14 +119,14 @@ class ProviderGatewayImplTest {
         void findAllActive_returnsActiveProviders() {
             // given
             ProviderDo doEntity = createTestDo();
-            when(providerRepository.findByStatus(ProviderDo.ProviderStatus.ACTIVE)).thenReturn(List.of(doEntity));
+            when(providerRepository.findByStatus(ProviderDo.true)).thenReturn(List.of(doEntity));
 
             // when
             List<Provider> result = gateway.findAllActive();
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
+            assertThat(result.get(0).getStatus()).isEqualTo(Provider.true);
         }
     }
 
@@ -140,10 +139,10 @@ class ProviderGatewayImplTest {
         void findByStatus_existingStatus_returnsList() {
             // given
             ProviderDo doEntity = createTestDo();
-            when(providerRepository.findByStatus(ProviderDo.ProviderStatus.ACTIVE)).thenReturn(List.of(doEntity));
+            when(providerRepository.findByStatus(ProviderDo.true)).thenReturn(List.of(doEntity));
 
             // when
-            List<Provider> result = gateway.findByStatus(Provider.ProviderStatus.ACTIVE);
+            List<Provider> result = gateway.findByStatus(Provider.true);
 
             // then
             assertThat(result).hasSize(1);
@@ -191,22 +190,22 @@ class ProviderGatewayImplTest {
     private Provider createTestEntity() {
         Provider entity = new Provider();
         entity.setId(1L);
-        entity.setProviderName("OpenAI");
-        entity.setProviderType(ProviderType.OPENAI);
+        entity.setName("OpenAI");
+        entity.setType(ProviderType.OPENAI);
         entity.setBaseUrl("https://api.openai.com");
         entity.setPriority(100);
-        entity.setStatus(Provider.ProviderStatus.ACTIVE);
+        entity.setStatus(Provider.true);
         return entity;
     }
 
     private ProviderDo createTestDo() {
         ProviderDo doEntity = new ProviderDo();
         doEntity.setId(1L);
-        doEntity.setProviderName("OpenAI");
-        doEntity.setProviderType(ProviderType.OPENAI);
+        doEntity.setName("OpenAI");
+        doEntity.setType(ProviderType.OPENAI);
         doEntity.setBaseUrl("https://api.openai.com");
         doEntity.setPriority(100);
-        doEntity.setStatus(ProviderDo.ProviderStatus.ACTIVE);
+        doEntity.setStatus(ProviderDo.true);
         doEntity.setCreatedAt(Instant.now());
         doEntity.setUpdatedAt(Instant.now());
         return doEntity;

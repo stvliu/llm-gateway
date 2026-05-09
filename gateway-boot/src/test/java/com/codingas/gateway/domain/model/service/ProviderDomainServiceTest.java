@@ -3,7 +3,6 @@ package com.codingas.gateway.domain.model.service;
 import com.codingas.gateway.common.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -107,7 +106,7 @@ class ProviderDomainServiceTest {
             Provider result = service.create(provider);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
+            assertThat(result.getStatus()).isEqualTo(Provider.true);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
 
@@ -116,14 +115,14 @@ class ProviderDomainServiceTest {
         void create_withStatus_preservesStatus() {
             // given
             Provider provider = createTestProvider();
-            provider.setStatus(Provider.ProviderStatus.SUSPENDED);
+            provider.setStatus(Provider.false);
             when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // when
             Provider result = service.create(provider);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.SUSPENDED);
+            assertThat(result.getStatus()).isEqualTo(Provider.false);
         }
     }
 
@@ -137,11 +136,11 @@ class ProviderDomainServiceTest {
             // given
             Provider existing = createTestProvider();
             Provider updateData = new Provider();
-            updateData.setProviderName("Updated Name");
-            updateData.setProviderType(ProviderType.ANTHROPIC);
+            updateData.setName("Updated Name");
+            updateData.setType(ProviderType.ANTHROPIC);
             updateData.setBaseUrl("https://new.url");
             updateData.setPriority(50);
-            updateData.setStatus(Provider.ProviderStatus.SUSPENDED);
+            updateData.setStatus(Provider.false);
 
             when(providerGateway.findById(1L)).thenReturn(Optional.of(existing));
             when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -150,7 +149,7 @@ class ProviderDomainServiceTest {
             Provider result = service.update(1L, updateData);
 
             // then
-            assertThat(result.getProviderName()).isEqualTo("Updated Name");
+            assertThat(result.getName()).isEqualTo("Updated Name");
             assertThat(result.getPriority()).isEqualTo(50);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
@@ -184,7 +183,7 @@ class ProviderDomainServiceTest {
             service.delete(1L);
 
             // then
-            assertThat(provider.getStatus()).isEqualTo(Provider.ProviderStatus.DELETED);
+            assertThat(provider.getStatus()).isEqualTo(Boolean.DELETED);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
 
@@ -205,11 +204,11 @@ class ProviderDomainServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setProviderType(ProviderType.OPENAI);
+        provider.setName("OpenAI");
+        provider.setType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.openai.com");
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setStatus(Provider.true);
         return provider;
     }
 }

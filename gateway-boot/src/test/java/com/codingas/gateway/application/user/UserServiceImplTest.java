@@ -256,7 +256,7 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ENABLED);
         user.setRole("USER");
         return user;
     }

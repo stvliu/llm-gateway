@@ -249,7 +249,7 @@ class UserServiceTest {
             when(userGateway.findAll()).thenReturn(List.of(testUser));
 
             UserQueryRequest request = new UserQueryRequest();
-            request.setStatus(UserStatus.ACTIVE);
+            request.setStatus(UserStatus.ENABLED);
             request.setPage(1);
             request.setLimit(20);
 
@@ -258,7 +258,7 @@ class UserServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(response.getItems().get(0).getStatus()).isEqualTo(UserStatus.ENABLED);
         }
 
         @Test
@@ -485,7 +485,7 @@ class UserServiceTest {
         user.setEmail(email);
         user.setPasswordHash("hashedPassword");
         user.setPhone("13800138000");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ENABLED);
         user.setEmailVerified(false);
         user.setRole("USER");
         user.setCreatedAt(Instant.now());

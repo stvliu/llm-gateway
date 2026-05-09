@@ -1,31 +1,52 @@
-import type { Status } from './api';
+import type { ProviderType } from './api';
+import type { ProviderApiKey } from './providerApiKey';
 
-/** 渠道类型 */
-export type ProviderType = 'OPENAI' | 'ANTHROPIC' | 'GOOGLE' | 'AZURE' | 'CUSTOM';
+export type { ProviderType };
 
-/** 渠道信息 */
+/** Provider Key 统计信息 */
+export interface ProviderKeyStats {
+  providerId: number;
+  totalCount: number;
+  activeCount: number;
+}
+
+/** Provider Key 信息响应 */
+export interface ProviderKeysResponse {
+  defaultKey: ProviderApiKey | null;
+  keys: ProviderApiKey[];
+}
+
+/** 供应商信息（与后端 ProviderResponse 一致） */
 export interface Provider {
   id: number;
-  name: string;
-  code: string;
-  type: ProviderType;
+  providerName: string;
+  providerType: ProviderType;
   baseUrl: string;
-  status: Status;
+  websiteUrl?: string;
+  apiDocUrl?: string;
+  priority?: number;
+  enabled: boolean;
   createdAt: string;
   updatedAt: string;
+  keyStats?: ProviderKeyStats;
 }
 
-/** 创建渠道请求 */
+/** 创建供应商请求 */
 export interface CreateProviderRequest {
-  name: string;
-  code: string;
-  type: ProviderType;
+  providerName: string;
+  providerType: ProviderType;
   baseUrl: string;
+  websiteUrl?: string;
+  apiDocUrl?: string;
+  priority?: number;
 }
 
-/** 更新渠道请求 */
+/** 更新供应商请求 */
 export interface UpdateProviderRequest {
-  name?: string;
+  providerName?: string;
   baseUrl?: string;
-  status?: Status;
+  websiteUrl?: string;
+  apiDocUrl?: string;
+  priority?: number;
+  enabled?: boolean;
 }

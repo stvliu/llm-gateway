@@ -64,7 +64,7 @@ public class ProtocolTranslator {
      */
     public LLMResponse fromAnthropicResponse(Map<String, Object> anthropicResponse) {
         return LLMResponse.builder()
-                .providerCode("anthropic")
+                .provider("anthropic")
                 .id((String) anthropicResponse.get("id"))
                 .model((String) anthropicResponse.get("model"))
                 .content(parseAnthropicContent(anthropicResponse))

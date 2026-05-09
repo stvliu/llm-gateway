@@ -3,7 +3,7 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } 
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
-import type { User, CreateUserRequest, UserRole } from '@/types/user';
+import type { User, CreateUserRequest, UserRole, UserStatus } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminUsers() {
@@ -81,11 +81,18 @@ export default function AdminUsers() {
       title: t('user.status'),
       dataIndex: 'status',
       key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
-        </Tag>
-      ),
+      render: (status: UserStatus) => {
+        const colorMap: Record<UserStatus, string> = {
+          ENABLED: 'green',
+          DISABLED: 'red',
+          LOCKED: 'orange',
+        };
+        return (
+          <Tag color={colorMap[status] || 'default'}>
+            {t(`status.${status.toLowerCase()}`)}
+          </Tag>
+        );
+      },
     },
     {
       title: t('user.createdAt'),
@@ -150,8 +157,9 @@ export default function AdminUsers() {
           {editingUser && (
             <Form.Item name="status" label={t('user.status')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="ENABLED">{t('status.enabled')}</Select.Option>
+                <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
+                <Select.Option value="LOCKED">{t('status.locked')}</Select.Option>
               </Select>
             </Form.Item>
           )}

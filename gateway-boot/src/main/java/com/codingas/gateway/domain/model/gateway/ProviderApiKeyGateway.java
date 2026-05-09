@@ -86,6 +86,14 @@ public interface ProviderApiKeyGateway {
     void clearDefaultFlagForOtherKeys(Long providerId, Long excludeId);
 
     /**
+     * 批量获取 Provider 的 Key 统计信息
+     *
+     * @param providerIds Provider ID 列表
+     * @return Map&lt;providerId, KeyStats&gt;
+     */
+    java.util.Map<Long, com.codingas.gateway.application.provider.dto.ProviderKeyStats> getKeyStatsByProviderIds(java.util.List<Long> providerIds);
+
+    /**
      * 获取最大版本号
      */
     default long getMaxVersion() {

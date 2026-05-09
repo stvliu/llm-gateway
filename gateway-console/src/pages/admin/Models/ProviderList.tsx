@@ -81,12 +81,12 @@ export function ProviderList({ onSelect }: ProviderListProps) {
       render: (type: ProviderType) => t(`type.${type}`),
     },
     {
-      title: t('provider.status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ACTIVE' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      title: t('provider.enabled'),
+      dataIndex: 'enabled',
+      key: 'enabled',
+      render: (enabled: boolean) => (
+        <Tag color={enabled ? 'green' : 'red'}>
+          {t(`status.${enabled ? 'enabled' : 'disabled'}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -161,10 +161,10 @@ export function ProviderList({ onSelect }: ProviderListProps) {
             <InputNumber min={0} max={10} style={{ width: '100%' }} />
           </Form.Item>
           {editingProvider && (
-            <Form.Item name="status" label={t('provider.status')}>
+            <Form.Item name="enabled" label={t('provider.enabled')}>
               <Select>
-                <Select.Option value="ACTIVE">{t('status.active', { ns: 'common' })}</Select.Option>
-                <Select.Option value="SUSPENDED">{t('status.suspended', { ns: 'common' })}</Select.Option>
+                <Select.Option value={true}>{t('status.enabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value={false}>{t('status.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

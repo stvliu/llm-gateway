@@ -4,10 +4,16 @@ import type { Status } from './api';
 export interface ProviderApiKey {
   id: number;
   providerId: number;
-  providerName: string;
-  name: string;
-  apiKeyPreview: string;
+  keyName: string;
+  keyHint: string;
+  priority?: number;
+  weight?: number;
+  isDefault: boolean;
   status: Status;
+  rpmLimit?: number;
+  tpmLimit?: number;
+  lastUsedAt?: string;
+  expiresAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -15,7 +21,7 @@ export interface ProviderApiKey {
 /** 创建 Provider API Key 请求 */
 export interface CreateProviderApiKeyRequest {
   providerId: number;
-  name: string;
+  keyName: string;
   apiKey: string;
 }
 
@@ -23,12 +29,19 @@ export interface CreateProviderApiKeyRequest {
 export interface CreateProviderApiKeyResponse {
   id: number;
   providerId: number;
-  name: string;
+  keyName: string;
   apiKey: string;
 }
 
 /** 更新 Provider API Key 请求 */
 export interface UpdateProviderApiKeyRequest {
-  name?: string;
+  keyName?: string;
+  apiKey?: string;
+  priority?: number;
+  weight?: number;
+  isDefault?: boolean;
   status?: Status;
+  rpmLimit?: number;
+  tpmLimit?: number;
+  expiresAt?: string;
 }

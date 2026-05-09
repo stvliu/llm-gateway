@@ -7,7 +7,6 @@ import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +20,6 @@ import java.util.stream.Collectors;
 
 /**
  * 模型应用服务实现
- *
- * <p>处理模型管理的业务逻辑。</p>
  */
 @Slf4j
 @Service
@@ -52,7 +49,7 @@ public class ModelServiceImpl implements ModelService {
         model.setInputPrice(request.getInputPrice());
         model.setOutputPrice(request.getOutputPrice());
         model.setCapabilities(request.getCapabilities());
-        model.setStatus(ModelStatus.ACTIVE);
+        model.setEnabled(true);
 
         Model savedModel = modelGateway.save(model);
         return toResponse(savedModel);
@@ -90,9 +87,9 @@ public class ModelServiceImpl implements ModelService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getEnabled() != null) {
             models = models.stream()
-                .filter(m -> m.getStatus() == request.getStatus())
+                .filter(m -> m.getEnabled().equals(request.getEnabled()))
                 .collect(Collectors.toList());
         }
 
@@ -139,22 +136,21 @@ public class ModelServiceImpl implements ModelService {
             model.setCapabilities(request.getCapabilities());
         }
         if (request.getEnabled() != null) {
-            model.setStatus(request.getEnabled() ? ModelStatus.ACTIVE : ModelStatus.DEPRECATED);
+            model.setEnabled(request.getEnabled());
         }
 
         return toResponse(modelGateway.save(model));
     }
 
     /**
-     * 删除模型（软删除）
+     * 删除模型
      */
     @Override
     @Transactional
     public void delete(Long id) {
         Model model = modelGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        model.setDeletedAt(Instant.now());
-        modelGateway.save(model);
+        modelGateway.delete(model);
     }
 
     /**
@@ -165,7 +161,7 @@ public class ModelServiceImpl implements ModelService {
     public ModelResponse setEnabled(Long id, boolean enabled) {
         Model model = modelGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        model.setStatus(enabled ? ModelStatus.ACTIVE : ModelStatus.DEPRECATED);
+        model.setEnabled(enabled);
         return toResponse(modelGateway.save(model));
     }
 
@@ -183,8 +179,7 @@ public class ModelServiceImpl implements ModelService {
         response.setInputPrice(model.getInputPrice());
         response.setOutputPrice(model.getOutputPrice());
         response.setCapabilities(model.getCapabilities());
-        response.setStatus(model.getStatus());
-        response.setEnabled(model.getStatus() == ModelStatus.ACTIVE);
+        response.setEnabled(model.getEnabled());
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
         return response;

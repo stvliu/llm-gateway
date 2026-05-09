@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
+import com.codingas.gateway.application.provider.dto.ProviderKeyStats;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -113,6 +116,26 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
     @Transactional
     public void clearDefaultFlagForOtherKeys(Long providerId, Long excludeId) {
         repository.clearDefaultFlagForOtherKeys(providerId, excludeId);
+    }
+
+    @Override
+    public Map<Long, ProviderKeyStats> getKeyStatsByProviderIds(List<Long> providerIds) {
+        if (providerIds == null || providerIds.isEmpty()) {
+            return Map.of();
+        }
+
+        Map<Long, ProviderKeyStats> result = new HashMap<>();
+
+        for (Long providerId : providerIds) {
+            List<ProviderApiKeyDo> keys = repository.findByProviderId(providerId);
+            int totalCount = keys.size();
+            int activeCount = (int) keys.stream()
+                .filter(k -> k.getStatus() == ProviderApiKeyDo.ProviderApiKeyStatus.ACTIVE)
+                .count();
+            result.put(providerId, new ProviderKeyStats(providerId, totalCount, activeCount));
+        }
+
+        return result;
     }
 
     private ProviderApiKey toEntity(ProviderApiKeyDo doEntity) {

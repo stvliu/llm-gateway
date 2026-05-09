@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { Provider, CreateProviderRequest, UpdateProviderRequest } from '@/types/provider';
+import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderKeysResponse } from '@/types/provider';
 import type { PageResponse, PageParams } from '@/types/api';
 
 export const providerApi = {
@@ -26,4 +26,8 @@ export const providerApi = {
   /** 启用/禁用渠道 */
   setEnabled: (id: number, enabled: boolean) =>
     api.patch<Provider>(`/providers/${id}/enabled`, null, { params: { enabled } }),
+
+  /** 获取 Provider 的 Key 信息 */
+  getKeys: (id: number) =>
+    api.get<ProviderKeysResponse>(`/providers/${id}/keys`),
 };

@@ -43,14 +43,6 @@ public interface ProviderGateway {
     List<Provider> findAllActive();
 
     /**
-     * 根据状态查找提供商
-     *
-     * @param status 提供商状态
-     * @return 提供商列表
-     */
-    List<Provider> findByStatus(Provider.ProviderStatus status);
-
-    /**
      * 统计提供商总数
      *
      * @return 提供商数量

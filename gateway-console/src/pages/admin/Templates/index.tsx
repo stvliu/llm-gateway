@@ -138,12 +138,13 @@ export default function AdminTemplates() {
       key: 'templateCode',
     },
     {
-      title: t('providerType'),
+      title: '供应商类型',
       dataIndex: 'providerType',
       key: 'providerType',
+      render: (type: string) => t(`providerType.${type}`),
     },
     {
-      title: t('marketStatus'),
+      title: t('marketStatus.label'),
       dataIndex: 'marketStatus',
       key: 'marketStatus',
       render: (status: MarketStatus) => {

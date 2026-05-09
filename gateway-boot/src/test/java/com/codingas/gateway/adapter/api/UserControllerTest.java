@@ -191,7 +191,7 @@ class UserControllerTest {
         response.setId(1L);
         response.setUsername("testuser");
         response.setEmail("test@example.com");
-        response.setStatus(UserStatus.ACTIVE);
+        response.setStatus(UserStatus.ENABLED);
         response.setEmailVerified(true);
         response.setRole("USER");
         response.setCreatedAt(Instant.now());

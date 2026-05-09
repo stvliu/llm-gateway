@@ -5,7 +5,6 @@ import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
@@ -228,7 +227,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         response.setUsername(tokenLimit.getUser().getUsername());
         if (tokenLimit.getProvider() != null) {
             response.setProviderId(tokenLimit.getProvider().getId());
-            response.setProviderName(tokenLimit.getProvider().getProviderName());
+            response.setProviderName(tokenLimit.getProvider().getName());
         }
         if (tokenLimit.getModel() != null) {
             response.setModelId(tokenLimit.getModel().getId());

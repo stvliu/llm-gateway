@@ -1,6 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
@@ -72,5 +73,13 @@ public class ProviderController {
             @PathVariable Long id,
             @RequestParam boolean enabled) {
         return providerService.setEnabled(id, enabled);
+    }
+
+    /**
+     * 获取 Provider 的 Key 信息
+     */
+    @GetMapping("/{id}/keys")
+    public ProviderKeysResponse getProviderKeys(@PathVariable Long id) {
+        return providerService.getProviderKeys(id);
     }
 }

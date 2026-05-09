@@ -29,7 +29,9 @@
     "copy": "Copy",
     "enable": "Enable",
     "disable": "Disable",
-    "resetPassword": "Reset Password"
+    "resetPassword": "Reset Password",
+    "clearSelection": "Clear Selection",
+    "view": "View"
   },
   "status": {
     "enabled": "Enabled",

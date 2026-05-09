@@ -41,7 +41,7 @@ public class ProviderManageUseCase {
      * 创建提供商
      */
     public Provider create(Provider provider) {
-        log.info("UseCase: create provider, name={}", provider.getProviderName());
+        log.info("UseCase: create provider, name={}", provider.getName());
         return providerService.create(provider);
     }
 

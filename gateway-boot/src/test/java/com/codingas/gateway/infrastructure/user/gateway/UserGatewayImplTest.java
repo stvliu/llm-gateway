@@ -238,7 +238,7 @@ class UserGatewayImplTest {
         entity.setEmail("test@example.com");
         entity.setPasswordHash("hashed_password");
         entity.setPhone("13800138000");
-        entity.setStatus(UserStatus.ACTIVE);
+        entity.setStatus(UserStatus.ENABLED);
         entity.setEmailVerified(true);
         return entity;
     }
@@ -250,7 +250,7 @@ class UserGatewayImplTest {
         doEntity.setEmail("test@example.com");
         doEntity.setPasswordHash("hashed_password");
         doEntity.setPhone("13800138000");
-        doEntity.setStatus(UserStatus.ACTIVE);
+        doEntity.setStatus(UserStatus.ENABLED);
         doEntity.setEmailVerified(true);
         doEntity.setCreatedAt(Instant.now());
         doEntity.setUpdatedAt(Instant.now());

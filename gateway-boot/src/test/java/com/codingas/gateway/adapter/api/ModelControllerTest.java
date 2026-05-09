@@ -58,7 +58,7 @@ class ModelControllerTest {
             ModelResponse result = controller.create(request);
 
             // then
-            assertThat(result.getModelCode()).isEqualTo("gpt-4");
+            assertThat(result.getProviderModelId()).isEqualTo("gpt-4");
         }
     }
 
@@ -151,14 +151,14 @@ class ModelControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setStatus(Model.ModelStatus.ACTIVE);
+            response.setStatus(Model.true);
             when(modelService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.ACTIVE);
+            assertThat(result.getStatus()).isEqualTo(Model.true);
         }
 
         @Test
@@ -166,14 +166,14 @@ class ModelControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setStatus(Model.ModelStatus.DEPRECATED);
+            response.setStatus(Model.false);
             when(modelService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.DEPRECATED);
+            assertThat(result.getStatus()).isEqualTo(Model.false);
         }
     }
 
@@ -181,7 +181,7 @@ class ModelControllerTest {
     private ModelResponse createTestResponse() {
         ModelResponse response = new ModelResponse();
         response.setId(1L);
-        response.setModelCode("gpt-4");
+        response.setProviderModelId("gpt-4");
         response.setProviderId(1L);
         response.setProviderName("OpenAI");
         response.setProviderCode("openai");
@@ -189,7 +189,7 @@ class ModelControllerTest {
         response.setContextWindow(8192);
         response.setInputPrice(BigDecimal.valueOf(0.03));
         response.setOutputPrice(BigDecimal.valueOf(0.06));
-        response.setStatus(Model.ModelStatus.ACTIVE);
+        response.setStatus(Model.true);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

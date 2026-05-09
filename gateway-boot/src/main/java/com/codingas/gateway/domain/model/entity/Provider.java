@@ -18,10 +18,9 @@ import java.time.Instant;
 @DomainEntity
 @Slf4j
 public class Provider extends BaseEntity {
+    private String name;
 
-    private String providerName;
-
-    private ProviderType providerType;
+    private ProviderType type;
 
     private String baseUrl;
 
@@ -41,23 +40,12 @@ public class Provider extends BaseEntity {
      */
     private Integer maxRetries = 3;
 
-    private ProviderStatus status = ProviderStatus.ACTIVE;
-
-    private Instant deletedAt;
-
-    public enum ProviderStatus {
-        /** 正常 */
-        ACTIVE,
-        /** 暂停 */
-        SUSPENDED,
-        /** 已删除 */
-        DELETED
-    }
+    private Boolean enabled = true;
 
     /**
      * 检查提供商是否可用
      */
     public boolean isAvailable() {
-        return ProviderStatus.ACTIVE.equals(status);
+        return Boolean.TRUE.equals(enabled);
     }
 }

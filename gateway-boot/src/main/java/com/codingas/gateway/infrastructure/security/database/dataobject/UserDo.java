@@ -40,7 +40,7 @@ public class UserDo extends BaseDo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.ENABLED;
 
     /**
      * 用户角色：ADMIN（管理员）/ USER（普通用户）

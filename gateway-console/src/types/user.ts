@@ -1,7 +1,8 @@
-import type { Status } from './api';
-
 /** 用户角色 */
 export type UserRole = 'ADMIN' | 'USER';
+
+/** 用户状态 */
+export type UserStatus = 'ENABLED' | 'DISABLED' | 'LOCKED';
 
 /** 用户信息 */
 export interface User {
@@ -9,7 +10,7 @@ export interface User {
   username: string;
   email: string;
   role: UserRole;
-  status: Status;
+  status: UserStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -26,7 +27,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   email?: string;
   role?: UserRole;
-  status?: Status;
+  status?: UserStatus;
 }
 
 /** 登录请求 */
@@ -55,7 +56,7 @@ export interface CurrentUser {
 
 /** 用户状态更新请求 */
 export interface UserStatusUpdateRequest {
-  status: Status;
+  status: UserStatus;
 }
 
 /** 用户角色分配请求 */

@@ -10,14 +10,16 @@
     "baseUrl": "API URL",
     "timeout": "Timeout",
     "maxRetries": "Max Retries",
-    "status": "Status"
+    "status": "Status",
+    "enabled": "Status"
   },
   "model": {
     "name": "Model Name",
-    "code": "Model Code",
+    "providerModelId": "Provider Model ID",
     "type": "Model Type",
     "provider": "Provider",
-    "status": "Status"
+    "status": "Status",
+    "enabled": "Status"
   },
   "type": {
     "OPENAI": "OpenAI",
@@ -43,7 +45,59 @@
   "status": {
     "active": "Active",
     "suspended": "Suspended",
+    "deprecated": "Deprecated",
     "enabled": "Enabled",
     "disabled": "Disabled"
+  },
+  "viewMode": {
+    "card": "Card View",
+    "table": "Table View"
+  },
+  "search": {
+    "placeholder": "Search Provider or Model",
+    "filterByType": "Filter by Type",
+    "filterByStatus": "Filter by Status",
+    "filterByModelType": "Filter by Model Type",
+    "searchBtn": "Search"
+  },
+  "empty": {
+    "noProvider": "No providers configured",
+    "noProviderDesc": "Providers are the source of AI models. Add a provider to start configuring models.",
+    "noModel": "No models configured for this provider",
+    "noModelDesc": "Click the button below to add your first model",
+    "noSearchResult": "No matching results found",
+    "noSearchResultDesc": "Please try different search criteria"
+  },
+  "detail": {
+    "viewDetail": "View Details",
+    "providerDetail": "Provider Details",
+    "modelDetail": "Model Details",
+    "basicInfo": "Basic Information",
+    "modelCount": "Model Count",
+    "activeModelCount": "Active Models",
+    "apiKeyCount": "API Key Count",
+    "recentActivity": "Recent Activity",
+    "modelList": "Model List",
+    "createdAt": "Created At",
+    "updatedAt": "Updated At",
+    "usageStats": "Usage Statistics",
+    "totalRequests": "Total Requests",
+    "successRate": "Success Rate",
+    "avgLatency": "Avg Latency",
+    "tokenUsage": "Token Usage",
+    "contextWindow": "Context Window",
+    "inputPrice": "Input Price",
+    "outputPrice": "Output Price",
+    "collapse": "Collapse",
+    "expand": "Expand",
+    "notFound": "Data not found"
+  },
+  "table": {
+    "selected": "{{count}} items selected",
+    "total": "Total {{count}} items"
+  },
+  "confirm": {
+    "deleteProviderDesc": "Are you sure you want to delete provider \"{{name}}\"? Associated models will also be deleted.",
+    "deleteModelDesc": "Are you sure you want to delete model \"{{name}}\"?"
   }
 }

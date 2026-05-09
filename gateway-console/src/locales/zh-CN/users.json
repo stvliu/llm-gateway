@@ -24,5 +24,10 @@
   "role": {
     "ADMIN": "管理员",
     "USER": "普通用户"
+  },
+  "status": {
+    "enabled": "启用",
+    "disabled": "禁用",
+    "locked": "锁定"
   }
 }

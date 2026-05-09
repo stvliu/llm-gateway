@@ -72,7 +72,7 @@ class TokenLimitServiceTest {
         // 初始化测试提供商
         testProvider = new Provider();
         testProvider.setId(1L);
-        testProvider.setProviderName("OpenAI");
+        testProvider.setName("OpenAI");
 
         // 初始化测试模型
         testModel = new Model();
@@ -126,7 +126,7 @@ class TokenLimitServiceTest {
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getProviderName());
+            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
             assertThat(response.getModelId()).isEqualTo(testModel.getId());
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
@@ -210,7 +210,7 @@ class TokenLimitServiceTest {
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getProviderName());
+            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
             assertThat(response.getModelId()).isEqualTo(testModel.getId());
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());

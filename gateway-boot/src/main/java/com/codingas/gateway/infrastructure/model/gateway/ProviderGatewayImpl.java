@@ -14,8 +14,6 @@ import java.util.stream.Collectors;
 
 /**
  * 提供商网关 JPA 实现
- *
- * <p>实现 ProviderGateway 接口，负责 DO ↔ Entity 转换。</p>
  */
 @Slf4j
 @Component
@@ -45,14 +43,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
 
     @Override
     public List<Provider> findAllActive() {
-        return providerRepository.findByStatus(ProviderDo.ProviderStatus.ACTIVE).stream()
-            .map(this::toEntity)
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<Provider> findByStatus(Provider.ProviderStatus status) {
-        return providerRepository.findByStatus(ProviderDo.ProviderStatus.valueOf(status.name())).stream()
+        return providerRepository.findByEnabledTrue().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
@@ -76,20 +67,16 @@ public class ProviderGatewayImpl implements ProviderGateway {
         }
         Provider entity = new Provider();
         entity.setId(doEntity.getId());
-        entity.setProviderName(doEntity.getProviderName());
+        entity.setName(doEntity.getName());
         entity.setBaseUrl(doEntity.getBaseUrl());
         entity.setWebsiteUrl(doEntity.getWebsiteUrl());
         entity.setApiDocUrl(doEntity.getApiDocUrl());
         entity.setPriority(doEntity.getPriority());
-        entity.setDeletedAt(doEntity.getDeletedAt());
+        entity.setEnabled(doEntity.getEnabled());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
-        // 枚举转换
-        if (doEntity.getProviderType() != null) {
-            entity.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(doEntity.getProviderType().name()));
-        }
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(Provider.ProviderStatus.valueOf(doEntity.getStatus().name()));
+        if (doEntity.getType() != null) {
+            entity.setType(doEntity.getType());
         }
         return entity;
     }
@@ -105,18 +92,14 @@ public class ProviderGatewayImpl implements ProviderGateway {
         if (entity.getId() != null) {
             doEntity.setId(entity.getId());
         }
-        doEntity.setProviderName(entity.getProviderName());
+        doEntity.setName(entity.getName());
         doEntity.setBaseUrl(entity.getBaseUrl());
         doEntity.setWebsiteUrl(entity.getWebsiteUrl());
         doEntity.setApiDocUrl(entity.getApiDocUrl());
         doEntity.setPriority(entity.getPriority());
-        doEntity.setDeletedAt(entity.getDeletedAt());
-        // 枚举转换
-        if (entity.getProviderType() != null) {
-            doEntity.setProviderType(entity.getProviderType());
-        }
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(ProviderDo.ProviderStatus.valueOf(entity.getStatus().name()));
+        doEntity.setEnabled(entity.getEnabled());
+        if (entity.getType() != null) {
+            doEntity.setType(entity.getType());
         }
         return doEntity;
     }

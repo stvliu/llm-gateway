@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.provider;
 
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
@@ -42,4 +43,9 @@ public interface ProviderService {
      * 启用/禁用提供商
      */
     ProviderResponse setEnabled(Long id, boolean enabled);
+
+    /**
+     * 获取 Provider 的 Key 信息（默认 Key + 列表）
+     */
+    ProviderKeysResponse getProviderKeys(Long providerId);
 }

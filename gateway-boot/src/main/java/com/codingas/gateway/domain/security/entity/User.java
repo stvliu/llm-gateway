@@ -31,7 +31,7 @@ public class User extends BaseEntity {
 
     private String avatarUrl;
 
-    private UserStatus status = UserStatus.ACTIVE;
+    private UserStatus status = UserStatus.ENABLED;
 
     /**
      * 用户角色：ADMIN（管理员）/ USER（普通用户）
@@ -52,7 +52,7 @@ public class User extends BaseEntity {
      * 检查用户是否激活
      */
     public boolean isActive() {
-        return UserStatus.ACTIVE.equals(status);
+        return UserStatus.ENABLED.equals(status);
     }
 
     /**

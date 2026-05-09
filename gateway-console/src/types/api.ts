@@ -30,3 +30,6 @@ export interface ApiResponse<T> {
 
 /** 通用状态枚举 */
 export type Status = 'ENABLED' | 'DISABLED';
+
+/** 供应商类型 */
+export type ProviderType = 'OPENAI' | 'ANTHROPIC' | 'AZURE' | 'GOOGLE' | 'CUSTOM';

@@ -7,7 +7,7 @@ import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
+import com.codingas.gateway.domain.model.entity.Boolean;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
@@ -24,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -56,7 +55,7 @@ class ModelServiceTest {
     @BeforeEach
     void setUp() {
         testProvider = createTestProvider(1L, "OpenAI");
-        testModel = createTestModel(1L, "gpt-4", testProvider, "GPT-4", ModelStatus.ACTIVE);
+        testModel = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
     }
 
     // ==================== create 测试 ====================
@@ -96,7 +95,7 @@ class ModelServiceTest {
             assertThat(response.getContextWindow()).isEqualTo(128000);
             assertThat(response.getInputPrice()).isEqualTo(new BigDecimal("0.000005"));
             assertThat(response.getOutputPrice()).isEqualTo(new BigDecimal("0.000015"));
-            assertThat(response.getStatus()).isEqualTo(ModelStatus.ACTIVE);
+            assertThat(response.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
 
             verify(providerGateway).findById(1L);
@@ -144,7 +143,7 @@ class ModelServiceTest {
             assertThat(response.getProviderId()).isEqualTo(1L);
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            assertThat(response.getStatus()).isEqualTo(ModelStatus.ACTIVE);
+            assertThat(response.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
 
             verify(modelGateway).findById(1L);
@@ -177,7 +176,7 @@ class ModelServiceTest {
         void query_noFilter_returnsAllModels() {
             // given
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.ACTIVE);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
@@ -257,7 +256,7 @@ class ModelServiceTest {
         void query_withProviderId_filtersModels() {
             // given
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.ACTIVE);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
@@ -279,12 +278,12 @@ class ModelServiceTest {
         void query_withStatusActive_filtersModels() {
             // given
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", ModelStatus.DEPRECATED);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
 
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
             ModelQueryRequest request = new ModelQueryRequest();
-            request.setStatus(ModelStatus.ACTIVE);
+            request.setStatus(true);
             request.setPage(1);
             request.setLimit(20);
 
@@ -293,7 +292,7 @@ class ModelServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ModelStatus.ACTIVE);
+            assertThat(response.getItems().get(0).getStatus()).isEqualTo(true);
         }
 
         @Test
@@ -303,7 +302,7 @@ class ModelServiceTest {
             List<Model> models = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
                 Provider provider = createTestProvider(i, "Provider " + i);
-                models.add(createTestModel(i, "model-" + i, provider, "Model " + i, ModelStatus.ACTIVE));
+                models.add(createTestModel(i, "model-" + i, provider, "Model " + i, true));
             }
             when(modelGateway.findAll()).thenReturn(models);
 
@@ -371,7 +370,7 @@ class ModelServiceTest {
         @DisplayName("更新 enabled=true 设置状态为 ACTIVE")
         void update_enabledTrue_setsStatusActive() {
             // given
-            testModel.setStatus(ModelStatus.DEPRECATED);
+            testModel.setStatus(false);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenReturn(testModel);
 
@@ -384,7 +383,7 @@ class ModelServiceTest {
             // then
             ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
             verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getStatus()).isEqualTo(ModelStatus.ACTIVE);
+            assertThat(modelCaptor.getValue().getStatus()).isEqualTo(true);
         }
 
         @Test
@@ -452,7 +451,7 @@ class ModelServiceTest {
         @DisplayName("启用模型成功")
         void setEnabled_true_activatesModel() {
             // given
-            testModel.setStatus(ModelStatus.DEPRECATED);
+            testModel.setStatus(false);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -460,8 +459,8 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, true);
 
             // then
-            assertThat(testModel.getStatus()).isEqualTo(ModelStatus.ACTIVE);
-            assertThat(response.getStatus()).isEqualTo(ModelStatus.ACTIVE);
+            assertThat(testModel.getStatus()).isEqualTo(true);
+            assertThat(response.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
             verify(modelGateway).save(testModel);
         }
@@ -470,7 +469,7 @@ class ModelServiceTest {
         @DisplayName("禁用模型成功")
         void setEnabled_false_deprecatesModel() {
             // given
-            testModel.setStatus(ModelStatus.ACTIVE);
+            testModel.setStatus(true);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -478,8 +477,8 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getStatus()).isEqualTo(ModelStatus.DEPRECATED);
-            assertThat(response.getStatus()).isEqualTo(ModelStatus.DEPRECATED);
+            assertThat(testModel.getStatus()).isEqualTo(false);
+            assertThat(response.getStatus()).isEqualTo(false);
             assertThat(response.getEnabled()).isFalse();
             verify(modelGateway).save(testModel);
         }
@@ -503,7 +502,7 @@ class ModelServiceTest {
     private Provider createTestProvider(Long id, String providerName) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderName(providerName);
+        provider.setName(providerName);
         return provider;
     }
 
@@ -511,7 +510,7 @@ class ModelServiceTest {
         Model model = new Model();
         model.setId(id);
         model.setProviderId(provider.getId());
-        model.setProviderName(provider.getProviderName());
+        model.setProviderName(provider.getName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);

@@ -1,31 +1,39 @@
-import type { Status } from './api';
-
 /** 模型类型 */
 export type ModelType = 'CHAT' | 'COMPLETION' | 'EMBEDDING' | 'IMAGE' | 'AUDIO';
 
-/** 模型信息 */
+/** 模型信息（与后端 ModelResponse 一致） */
 export interface Model {
   id: number;
-  name: string;
-  code: string;
   providerId: number;
   providerName: string;
-  type: ModelType;
-  status: Status;
+  providerModelId?: string;
+  displayName?: string;
+  contextWindow?: number;
+  inputPrice?: number;
+  outputPrice?: number;
+  capabilities?: Record<string, boolean>;
+  enabled: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 /** 创建模型请求 */
 export interface CreateModelRequest {
-  name: string;
-  code: string;
   providerId: number;
-  type: ModelType;
+  providerModelId?: string;
+  displayName?: string;
+  contextWindow?: number;
+  inputPrice?: number;
+  outputPrice?: number;
+  capabilities?: Record<string, boolean>;
 }
 
 /** 更新模型请求 */
 export interface UpdateModelRequest {
-  name?: string;
-  status?: Status;
+  displayName?: string;
+  contextWindow?: number;
+  inputPrice?: number;
+  outputPrice?: number;
+  capabilities?: Record<string, boolean>;
+  enabled?: boolean;
 }

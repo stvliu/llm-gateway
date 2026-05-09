@@ -5,7 +5,6 @@ import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -123,14 +122,14 @@ class ModelGatewayImplTest {
         void findAllActive_returnsActiveModels() {
             // given
             ModelDo doEntity = createTestDo();
-            when(modelRepository.findByStatus(ModelDo.ModelStatus.ACTIVE)).thenReturn(List.of(doEntity));
+            when(modelRepository.findByStatus(ModelDo.true)).thenReturn(List.of(doEntity));
 
             // when
             List<Model> result = gateway.findAllActive();
 
             // then
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getStatus()).isEqualTo(Model.ModelStatus.ACTIVE);
+            assertThat(result.get(0).getStatus()).isEqualTo(Model.true);
         }
     }
 
@@ -201,7 +200,7 @@ class ModelGatewayImplTest {
         entity.setInputPrice(BigDecimal.valueOf(0.03));
         entity.setOutputPrice(BigDecimal.valueOf(0.06));
         entity.setCapabilities(Map.of("chat", true, "streaming", true));
-        entity.setStatus(Model.ModelStatus.ACTIVE);
+        entity.setStatus(Model.true);
 
         entity.setProviderId(1L);
         entity.setProviderName("OpenAI");
@@ -218,15 +217,15 @@ class ModelGatewayImplTest {
         doEntity.setInputPrice(BigDecimal.valueOf(0.03));
         doEntity.setOutputPrice(BigDecimal.valueOf(0.06));
         doEntity.setCapabilities(Map.of("chat", true, "streaming", true));
-        doEntity.setStatus(ModelDo.ModelStatus.ACTIVE);
+        doEntity.setStatus(ModelDo.true);
         doEntity.setCreatedAt(Instant.now());
         doEntity.setUpdatedAt(Instant.now());
 
         ProviderDo providerDo = new ProviderDo();
         providerDo.setId(1L);
-        providerDo.setProviderName("OpenAI");
-        providerDo.setProviderType(ProviderType.OPENAI);
-        providerDo.setStatus(ProviderDo.ProviderStatus.ACTIVE);
+        providerDo.setName("OpenAI");
+        providerDo.setType(ProviderType.OPENAI);
+        providerDo.setStatus(ProviderDo.true);
         doEntity.setProvider(providerDo);
 
         return doEntity;

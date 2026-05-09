@@ -151,14 +151,14 @@ class ProviderControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ProviderResponse response = createTestResponse();
-            response.setStatus(Provider.ProviderStatus.ACTIVE);
+            response.setStatus(Provider.true);
             when(providerService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ProviderResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
+            assertThat(result.getStatus()).isEqualTo(Provider.true);
         }
 
         @Test
@@ -166,14 +166,14 @@ class ProviderControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ProviderResponse response = createTestResponse();
-            response.setStatus(Provider.ProviderStatus.SUSPENDED);
+            response.setStatus(Provider.false);
             when(providerService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ProviderResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.SUSPENDED);
+            assertThat(result.getStatus()).isEqualTo(Provider.false);
         }
     }
 
@@ -186,7 +186,7 @@ class ProviderControllerTest {
         response.setProviderType(ProviderType.OPENAI);
         response.setBaseUrl("https://api.openai.com");
         response.setPriority(100);
-        response.setStatus(Provider.ProviderStatus.ACTIVE);
+        response.setStatus(Provider.true);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

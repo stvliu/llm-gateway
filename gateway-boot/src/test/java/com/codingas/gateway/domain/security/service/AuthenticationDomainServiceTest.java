@@ -216,7 +216,7 @@ class AuthenticationDomainServiceTest {
         user.setId(1L);
         user.setUsername("Test User");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ENABLED);
         user.setRole("USER");
         return user;
     }

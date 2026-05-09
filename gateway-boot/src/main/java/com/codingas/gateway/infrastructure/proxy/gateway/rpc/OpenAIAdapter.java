@@ -240,7 +240,7 @@ public class OpenAIAdapter implements LLMAdapter {
         try {
             Map<String, Object> response = objectMapper.readValue(responseBody, Map.class);
             return LLMResponse.builder()
-                    .providerCode(PROVIDER_CODE)
+                    .provider(PROVIDER_CODE)
                     .id((String) response.get("id"))
                     .model((String) response.get("model"))
                     .created(response.get("created") != null ? ((Number) response.get("created")).longValue() : null)

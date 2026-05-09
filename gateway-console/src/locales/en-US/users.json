@@ -24,5 +24,10 @@
   "role": {
     "ADMIN": "Admin",
     "USER": "User"
+  },
+  "status": {
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "locked": "Locked"
   }
 }

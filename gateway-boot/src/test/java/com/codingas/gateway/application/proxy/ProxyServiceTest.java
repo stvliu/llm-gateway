@@ -71,13 +71,13 @@ class ProxyServiceTest {
         // 准备测试 Provider
         testProvider = new Provider();
         testProvider.setId(1L);
-        testProvider.setProviderType(ProviderType.OPENAI);
+        testProvider.setType(ProviderType.OPENAI);
 
         // 准备测试 Model
         testModel = new Model();
         testModel.setId(1L);
         testModel.setProviderId(testProvider.getId());
-        testModel.setProviderName(testProvider.getProviderName());
+        testModel.setProviderName(testProvider.getName());
 
         // 准备 ModelProviderInfo
         testModelInfo = new ModelDomainService.ModelProviderInfo(testModel, testProvider);

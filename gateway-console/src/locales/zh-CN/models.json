@@ -10,14 +10,16 @@
     "baseUrl": "API 地址",
     "timeout": "超时时间",
     "maxRetries": "最大重试次数",
-    "status": "状态"
+    "status": "状态",
+    "enabled": "状态"
   },
   "model": {
     "name": "模型名称",
-    "code": "模型编码",
+    "providerModelId": "供应商模型 ID",
     "type": "模型类型",
     "provider": "所属供应商",
-    "status": "状态"
+    "status": "状态",
+    "enabled": "状态"
   },
   "type": {
     "OPENAI": "OpenAI",
@@ -43,7 +45,59 @@
   "status": {
     "active": "正常",
     "suspended": "暂停",
+    "deprecated": "已废弃",
     "enabled": "启用",
     "disabled": "禁用"
+  },
+  "viewMode": {
+    "card": "卡片视图",
+    "table": "表格视图"
+  },
+  "search": {
+    "placeholder": "搜索供应商或模型",
+    "filterByType": "按类型筛选",
+    "filterByStatus": "按状态筛选",
+    "filterByModelType": "按模型类型筛选",
+    "searchBtn": "搜索"
+  },
+  "empty": {
+    "noProvider": "还没有配置任何供应商",
+    "noProviderDesc": "供应商是 AI 模型的来源，添加后即可配置模型",
+    "noModel": "该供应商还没有配置模型",
+    "noModelDesc": "点击下方按钮添加第一个模型",
+    "noSearchResult": "未找到匹配的结果",
+    "noSearchResultDesc": "请尝试其他搜索条件"
+  },
+  "detail": {
+    "viewDetail": "查看详情",
+    "providerDetail": "供应商详情",
+    "modelDetail": "模型详情",
+    "basicInfo": "基本信息",
+    "modelCount": "模型数量",
+    "activeModelCount": "活跃模型",
+    "apiKeyCount": "API Key 数量",
+    "recentActivity": "最近活动",
+    "modelList": "模型列表",
+    "createdAt": "创建时间",
+    "updatedAt": "更新时间",
+    "usageStats": "使用统计",
+    "totalRequests": "总请求数",
+    "successRate": "成功率",
+    "avgLatency": "平均延迟",
+    "tokenUsage": "Token 用量",
+    "contextWindow": "上下文窗口",
+    "inputPrice": "输入价格",
+    "outputPrice": "输出价格",
+    "collapse": "收起",
+    "expand": "展开",
+    "notFound": "未找到数据"
+  },
+  "table": {
+    "selected": "已选择 {{count}} 项",
+    "total": "共 {{count}} 条"
+  },
+  "confirm": {
+    "deleteProviderDesc": "确定要删除供应商 \"{{name}}\" 吗？关联的模型也将被删除。",
+    "deleteModelDesc": "确定要删除模型 \"{{name}}\" 吗？"
   }
 }

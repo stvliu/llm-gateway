@@ -86,16 +86,16 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         Provider provider = new Provider();
-        provider.setProviderName("火山引擎");
-        provider.setProviderType(ProviderType.VOLCENGINE);
+        provider.setName("火山引擎");
+        provider.setType(ProviderType.VOLCENGINE);
         provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
         provider.setWebsiteUrl("https://www.volcengine.com");
         provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setEnabled(true);
 
         Provider savedProvider = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", provider.getProviderName(), savedProvider.getId());
+        log.info("Created provider: {} (id={})", provider.getName(), savedProvider.getId());
         return savedProvider;
     }
 
@@ -154,7 +154,7 @@ public class DataInitializer implements CommandLineRunner {
         createModel(provider, "doubao-seed-2-0-mini-260215", "豆包 Seed 2.0 Mini",
                 128000, new BigDecimal("0.0005"), new BigDecimal("0.001"));
 
-        log.info("Created {} models for provider: {}", modelGateway.count(), provider.getProviderName());
+        log.info("Created {} models for provider: {}", modelGateway.count(), provider.getName());
     }
 
     /**
@@ -164,7 +164,7 @@ public class DataInitializer implements CommandLineRunner {
                              int contextWindow, BigDecimal inputPrice, BigDecimal outputPrice) {
         Model model = new Model();
         model.setProviderId(provider.getId());
-        model.setProviderName(provider.getProviderName());
+        model.setProviderName(provider.getName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(contextWindow);
@@ -175,7 +175,7 @@ public class DataInitializer implements CommandLineRunner {
                 "streaming", true,
                 "function_calling", true
         ));
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setEnabled(true);
 
         modelGateway.save(model);
         log.debug("Created model: {}", displayName);
@@ -196,7 +196,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("admin");
         user.setEmail("admin@example.com");
         user.setPasswordHash(passwordEncoder.encode("admin"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ENABLED);
         user.setRole("ADMIN");
         user.setEmailVerified(true);
 
@@ -219,7 +219,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("test");
         user.setEmail("test@example.com");
         user.setPasswordHash(passwordEncoder.encode("test"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setStatus(UserStatus.ENABLED);
         user.setRole("USER");
         user.setEmailVerified(true);
 

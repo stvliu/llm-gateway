@@ -6,10 +6,9 @@ import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.Provider.ProviderStatus;
+import com.codingas.gateway.domain.model.entity.Boolean;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -47,7 +46,7 @@ class ProviderServiceTest {
 
     @BeforeEach
     void setUp() {
-        testProvider = createTestProvider(1L, "OpenAI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
+        testProvider = createTestProvider(1L, "OpenAI", ProviderType.OPENAI, true);
     }
 
     // ==================== create 测试 ====================
@@ -81,7 +80,7 @@ class ProviderServiceTest {
             assertThat(response.getProviderName()).isEqualTo("Anthropic");
             assertThat(response.getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
             assertThat(response.getPriority()).isEqualTo(50);
-            assertThat(response.getStatus()).isEqualTo(ProviderStatus.ACTIVE);
+            assertThat(response.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
             verify(providerGateway).save(any(Provider.class));
         }
@@ -157,7 +156,7 @@ class ProviderServiceTest {
         @DisplayName("无过滤条件时返回所有提供商")
         void query_noFilter_returnsAllProviders() {
             // given
-            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
+            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, true);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -195,7 +194,7 @@ class ProviderServiceTest {
         @DisplayName("关键字按代码或名称匹配")
         void query_keywordMatchesCodeOrName() {
             // given
-            Provider provider2 = createTestProvider(2L, "Google AI", ProviderType.OPENAI, ProviderStatus.ACTIVE);
+            Provider provider2 = createTestProvider(2L, "Google AI", ProviderType.OPENAI, true);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
@@ -234,11 +233,11 @@ class ProviderServiceTest {
         @DisplayName("按状态过滤提供商")
         void query_withStatus_filtersProviders() {
             // given
-            Provider suspendedProvider = createTestProvider(2L, "Suspended Provider", ProviderType.OPENAI, ProviderStatus.SUSPENDED);
+            Provider suspendedProvider = createTestProvider(2L, "Suspended Provider", ProviderType.OPENAI, false);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, suspendedProvider));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
-            request.setStatus(ProviderStatus.SUSPENDED);
+            request.setStatus(false);
             request.setPage(1);
             request.setLimit(20);
 
@@ -247,7 +246,7 @@ class ProviderServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ProviderStatus.SUSPENDED);
+            assertThat(response.getItems().get(0).getStatus()).isEqualTo(false);
         }
 
         @Test
@@ -256,7 +255,7 @@ class ProviderServiceTest {
             // given
             List<Provider> providers = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
-                providers.add(createTestProvider(i, "Provider " + i, ProviderType.OPENAI, ProviderStatus.ACTIVE));
+                providers.add(createTestProvider(i, "Provider " + i, ProviderType.OPENAI, true));
             }
             when(providerGateway.findAll()).thenReturn(providers);
 
@@ -298,13 +297,13 @@ class ProviderServiceTest {
         @DisplayName("组合过滤条件")
         void query_combinedFilters_appliesAllFilters() {
             // given
-            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, ProviderStatus.ACTIVE);
-            Provider suspendedProvider = createTestProvider(3L, "Suspended Provider", ProviderType.ANTHROPIC, ProviderStatus.SUSPENDED);
+            Provider provider2 = createTestProvider(2L, "Anthropic", ProviderType.ANTHROPIC, true);
+            Provider suspendedProvider = createTestProvider(3L, "Suspended Provider", ProviderType.ANTHROPIC, false);
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, provider2, suspendedProvider));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
             request.setProviderType(ProviderType.ANTHROPIC);
-            request.setStatus(ProviderStatus.ACTIVE);
+            request.setStatus(true);
             request.setPage(1);
             request.setLimit(20);
 
@@ -314,7 +313,7 @@ class ProviderServiceTest {
             // then
             assertThat(response.getItems()).hasSize(1);
             assertThat(response.getItems().get(0).getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ProviderStatus.ACTIVE);
+            assertThat(response.getItems().get(0).getStatus()).isEqualTo(true);
         }
     }
 
@@ -357,7 +356,7 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.update(1L, request);
 
             // then
-            assertThat(testProvider.getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
+            assertThat(testProvider.getType()).isEqualTo(ProviderType.ANTHROPIC);
             verify(providerGateway).save(testProvider);
         }
 
@@ -365,7 +364,7 @@ class ProviderServiceTest {
         @DisplayName("更新提供商启用状态成功")
         void update_enabledTrue_setsActiveStatus() {
             // given
-            testProvider.setStatus(ProviderStatus.SUSPENDED);
+            testProvider.setStatus(false);
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
@@ -376,7 +375,7 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.update(1L, request);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(ProviderStatus.ACTIVE);
+            assertThat(testProvider.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
         }
 
@@ -394,7 +393,7 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.update(1L, request);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(ProviderStatus.SUSPENDED);
+            assertThat(testProvider.getStatus()).isEqualTo(false);
             assertThat(response.getEnabled()).isFalse();
         }
 
@@ -456,7 +455,7 @@ class ProviderServiceTest {
         @DisplayName("启用提供商成功")
         void setEnabled_true_enablesProvider() {
             // given
-            testProvider.setStatus(ProviderStatus.SUSPENDED);
+            testProvider.setStatus(false);
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(providerGateway.save(any(Provider.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -464,7 +463,7 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.setEnabled(1L, true);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(ProviderStatus.ACTIVE);
+            assertThat(testProvider.getStatus()).isEqualTo(true);
             assertThat(response.getEnabled()).isTrue();
             verify(providerGateway).save(testProvider);
         }
@@ -480,7 +479,7 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.setEnabled(1L, false);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(ProviderStatus.SUSPENDED);
+            assertThat(testProvider.getStatus()).isEqualTo(false);
             assertThat(response.getEnabled()).isFalse();
             verify(providerGateway).save(testProvider);
         }
@@ -503,8 +502,8 @@ class ProviderServiceTest {
                                         ProviderType providerType, ProviderStatus status) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderName(providerName);
-        provider.setProviderType(providerType);
+        provider.setName(providerName);
+        provider.setType(providerType);
         provider.setBaseUrl("https://api.example.com");
         provider.setWebsiteUrl("https://example.com");
         provider.setApiDocUrl("https://docs.example.com");

@@ -3,10 +3,10 @@
   "add": "Add Provider",
   "name": "Name",
   "code": "Code",
-  "type": "Type",
   "baseUrl": "API URL",
   "status": "Status",
   "type": {
+    "label": "Type",
     "OPENAI": "OpenAI",
     "ANTHROPIC": "Anthropic",
     "GEMINI": "Google Gemini",

@@ -139,7 +139,7 @@ class ModelDomainServiceTest {
             updateData.setInputPrice(BigDecimal.valueOf(0.05));
             updateData.setOutputPrice(BigDecimal.valueOf(0.10));
             updateData.setCapabilities(Map.of("chat", true, "vision", true));
-            updateData.setStatus(Model.ModelStatus.DEPRECATED);
+            updateData.setStatus(Model.false);
 
             when(modelGateway.findById(1L)).thenReturn(Optional.of(existing));
             when(modelGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -150,7 +150,7 @@ class ModelDomainServiceTest {
             // then
             assertThat(result.getDisplayName()).isEqualTo("Updated Display Name");
             assertThat(result.getContextWindow()).isEqualTo(16384);
-            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.DEPRECATED);
+            assertThat(result.getStatus()).isEqualTo(Model.false);
         }
 
         @Test
@@ -182,7 +182,7 @@ class ModelDomainServiceTest {
             service.delete(1L);
 
             // then
-            assertThat(model.getStatus()).isEqualTo(Model.ModelStatus.DELETED);
+            assertThat(model.getStatus()).isEqualTo(Boolean.DELETED);
         }
 
         @Test
@@ -208,7 +208,7 @@ class ModelDomainServiceTest {
         model.setInputPrice(BigDecimal.valueOf(0.03));
         model.setOutputPrice(BigDecimal.valueOf(0.06));
         model.setCapabilities(Map.of("chat", true, "streaming", true));
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setStatus(Model.true);
 
         model.setProviderId(1L);
         model.setProviderName("OpenAI");

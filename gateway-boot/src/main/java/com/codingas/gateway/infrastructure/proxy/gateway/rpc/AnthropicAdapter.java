@@ -247,7 +247,7 @@ public class AnthropicAdapter implements LLMAdapter {
         try {
             Map<String, Object> response = objectMapper.readValue(responseBody, Map.class);
             return LLMResponse.builder()
-                    .providerCode(PROVIDER_CODE)
+                    .provider(PROVIDER_CODE)
                     .id((String) response.get("id"))
                     .model((String) response.get("model"))
                     .content(parseContent(response))

@@ -37,23 +37,12 @@ public class Model extends BaseEntity {
 
     private Map<String, Boolean> capabilities;
 
-    private ModelStatus status = ModelStatus.ACTIVE;
-
-    private Instant deletedAt;
-
-    public enum ModelStatus {
-        /** 正常 */
-        ACTIVE,
-        /** 已废弃 */
-        DEPRECATED,
-        /** 已删除 */
-        DELETED
-    }
+    private Boolean enabled = true;
 
     /**
      * 检查模型是否可用
      */
     public boolean isAvailable() {
-        return ModelStatus.ACTIVE.equals(status);
+        return Boolean.TRUE.equals(enabled);
     }
 }
