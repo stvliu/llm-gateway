@@ -138,7 +138,7 @@ export default function AdminTemplates() {
       key: 'templateCode',
     },
     {
-      title: '供应商类型',
+      title: t('providerTypeLabel'),
       dataIndex: 'providerType',
       key: 'providerType',
       render: (type: string) => t(`providerType.${type}`),
@@ -206,9 +206,10 @@ export default function AdminTemplates() {
       key: 'templateName',
     },
     {
-      title: t('providerType'),
+      title: t('providerTypeLabel'),
       dataIndex: 'providerType',
       key: 'providerType',
+      render: (type: string) => t(`providerType.${type}`),
     },
     {
       title: t('modelCount'),

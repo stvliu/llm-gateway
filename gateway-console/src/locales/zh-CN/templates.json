@@ -8,11 +8,11 @@
   "import": "导入模板",
   "name": "模板名称",
   "code": "模板编码",
-  "providerType": "供应商类型",
+  "providerTypeLabel": "供应商类型",
   "description": "描述",
   "modelCount": "模型数量",
   "downloadCount": "下载次数",
-  "marketStatus": {
+  "marketState": {
     "label": "市场状态",
     "PRIVATE": "私有",
     "PENDING": "待审核",
