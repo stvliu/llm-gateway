@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tag, Space, Typography, Tooltip } from 'antd';
+import { Tag, Space, Typography, Tooltip, theme } from 'antd';
 import {
   MessageOutlined,
   ApiOutlined,
@@ -12,6 +12,7 @@ import { useTemplates } from '@/services/query';
 import type { ModelConfig } from '@/types/template';
 
 const { Text } = Typography;
+const { useToken } = theme;
 
 interface ModelTemplate {
   id: string;
@@ -108,6 +109,7 @@ export function ModelTemplateSelector({
   onCustomAdd,
 }: ModelTemplateSelectorProps) {
   const { t } = useTranslation('models');
+  const { token } = useToken();
 
   const { data: templatesData, isLoading } = useTemplates({
     providerType,
@@ -235,7 +237,7 @@ export function ModelTemplateSelector({
           style={{
             flex: 1,
             height: 1,
-            background: '#d9d9d9',
+            background: token.colorBorder,
           }}
         />
         <Text type="secondary" style={{ fontSize: 12 }}>
@@ -245,7 +247,7 @@ export function ModelTemplateSelector({
           style={{
             flex: 1,
             height: 1,
-            background: '#d9d9d9',
+            background: token.colorBorder,
           }}
         />
       </div>
@@ -275,8 +277,8 @@ export function ModelTemplateSelector({
                   padding: '4px 10px',
                   margin: 0,
                   fontSize: 12,
-                  background: '#fafafa',
-                  border: '1px solid #d9d9d9',
+                  background: token.colorBgContainer,
+                  border: `1px solid ${token.colorBorder}`,
                 }}
                 onClick={() => onSelect(template)}
               >
@@ -298,7 +300,7 @@ export function ModelTemplateSelector({
             padding: '4px 12px',
             margin: 0,
             background: 'transparent',
-            border: '1px dashed #d9d9d9',
+            border: `1px dashed ${token.colorBorder}`,
           }}
           onClick={onCustomAdd}
         >
