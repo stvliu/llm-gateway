@@ -8,10 +8,16 @@
     "name": "Provider Name",
     "type": "Provider Type",
     "baseUrl": "API URL",
+    "websiteUrl": "Website URL",
+    "apiDocUrl": "API Documentation",
     "timeout": "Timeout",
     "maxRetries": "Max Retries",
     "state": "Status",
-    "enabled": "Status"
+    "enabled": "Status",
+    "selectTemplate": "Select a template for quick setup",
+    "orCustom": "Or configure manually",
+    "customAdd": "Custom Provider",
+    "models": "models"
   },
   "model": {
     "name": "Model Name",
@@ -19,7 +25,19 @@
     "type": "Model Type",
     "provider": "Provider",
     "state": "Status",
-    "enabled": "Status"
+    "enabled": "Status",
+    "capabilities": "Capabilities",
+    "selectProvider": "Please select a provider first"
+  },
+  "template": {
+    "quickAdd": "Quick Add",
+    "orSelect": "Or select other models",
+    "selectFromList": "Select from list",
+    "customAdd": "Custom Model",
+    "perMillion": "M tokens"
+  },
+  "message": {
+    "modelAdded": "Model added successfully"
   },
   "type": {
     "OPENAI": "OpenAI",
