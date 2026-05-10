@@ -82,7 +82,7 @@ export function ProviderCard({
   return (
     <Card
       style={{
-        marginBottom: 16,
+        height: '100%',
         border: 'none',
         boxShadow: isDark
           ? '0 2px 8px rgba(0, 0, 0, 0.3)'
