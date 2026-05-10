@@ -173,17 +173,17 @@ class ModelDomainServiceTest {
 
         @Test
         @DisplayName("删除 Model 成功")
-        void delete_existingModel_marksAsDeleted() {
+        void delete_existingModel_deletesSuccessfully() {
             // given
             Model model = createTestModel();
             when(modelGateway.findById(1L)).thenReturn(Optional.of(model));
-            when(modelGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            doNothing().when(modelGateway).delete(model);
 
             // when
             service.delete(1L);
 
             // then
-            assertThat(model.getState()).isEqualTo(ModelState.DELETED);
+            verify(modelGateway).delete(model);
         }
 
         @Test

@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.model.service;
 
 import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import org.junit.jupiter.api.DisplayName;
@@ -174,17 +174,17 @@ class ProviderDomainServiceTest {
 
         @Test
         @DisplayName("删除 Provider 成功")
-        void delete_existingProvider_marksAsDeleted() {
+        void delete_existingProvider_deletesSuccessfully() {
             // given
             Provider provider = createTestProvider();
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
-            when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            doNothing().when(providerGateway).delete(provider);
 
             // when
             service.delete(1L);
 
             // then
-            assertThat(provider.getState()).isEqualTo(ProviderState.DELETED);
+            verify(providerGateway).delete(provider);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
 

@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.proxy.gateway;
 
-import com.codingas.gateway.common.ProviderCapabilities;
+import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.model.enums.ProviderType;

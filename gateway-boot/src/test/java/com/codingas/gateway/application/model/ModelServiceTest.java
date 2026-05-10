@@ -414,15 +414,13 @@ class ModelServiceTest {
         void delete_existingModel_softDeletes() {
             // given
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
+            doNothing().when(modelGateway).delete(any(Model.class));
 
             // when
             modelService.delete(1L);
 
             // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
+            verify(modelGateway).delete(any(Model.class));
         }
 
         @Test
@@ -477,9 +475,8 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(testModel.getState()).isEqualTo(ModelState.DISABLED);
+            assertThat(response.getState()).isEqualTo(ModelState.DISABLED);
             verify(modelGateway).save(testModel);
         }
 
@@ -517,7 +514,7 @@ class ModelServiceTest {
         model.setInputPrice(new BigDecimal("0.00003"));
         model.setOutputPrice(new BigDecimal("0.00006"));
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
-        model.setState(ModelState.ACTIVE);
+        model.setState(status ? ModelState.ACTIVE : ModelState.DISABLED);
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;

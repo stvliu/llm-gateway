@@ -1,4 +1,4 @@
-package com.codingas.gateway.common;
+package com.codingas.gateway.domain.model.entity;
 
 import com.codingas.gateway.domain.model.enums.ProviderType;
 

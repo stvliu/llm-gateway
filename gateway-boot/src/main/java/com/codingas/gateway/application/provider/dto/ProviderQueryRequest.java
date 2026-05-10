@@ -2,7 +2,7 @@ package com.codingas.gateway.application.provider.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
 import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
