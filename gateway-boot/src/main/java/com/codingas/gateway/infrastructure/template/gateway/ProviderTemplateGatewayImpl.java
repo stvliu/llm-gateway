@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.template.gateway;
 
+import com.codingas.gateway.domain.template.enums.TemplateState;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -56,10 +57,7 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         ProviderTemplateDo.TemplateType doTemplateType = templateType != null
             ? ProviderTemplateDo.TemplateType.valueOf(templateType.name())
             : null;
-        ProviderTemplateDo.MarketStatus doMarketStatus = marketStatus != null
-            ? ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name())
-            : null;
-        return repository.findByConditions(doTemplateType, providerType, keyword, doMarketStatus, pageable)
+        return repository.findByConditions(doTemplateType, providerType, keyword, marketStatus, pageable)
             .map(this::toEntity);
     }
 
@@ -94,7 +92,7 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
 
     @Override
     public void updateMarketStatus(Long id, MarketStatus marketStatus) {
-        repository.updateMarketStatus(id, ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name()));
+        repository.updateMarketStatus(id, marketStatus);
     }
 
     @Override
@@ -136,8 +134,8 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         if (doEntity.getMarketStatus() != null) {
             entity.setMarketStatus(MarketStatus.valueOf(doEntity.getMarketStatus().name()));
         }
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(ProviderTemplate.TemplateStatus.valueOf(doEntity.getStatus().name()));
+        if (doEntity.getState() != null) {
+            entity.setState(doEntity.getState());
         }
         return entity;
     }
@@ -172,14 +170,14 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
             doEntity.setTemplateType(ProviderTemplateDo.TemplateType.valueOf(entity.getTemplateType().name()));
         }
         if (entity.getMarketStatus() != null) {
-            doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.valueOf(entity.getMarketStatus().name()));
+            doEntity.setMarketStatus(entity.getMarketStatus());
         } else {
-            doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.PRIVATE);
+            doEntity.setMarketStatus(MarketStatus.PRIVATE);
         }
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(ProviderTemplateDo.TemplateStatus.valueOf(entity.getStatus().name()));
+        if (entity.getState() != null) {
+            doEntity.setState(entity.getState());
         } else {
-            doEntity.setStatus(ProviderTemplateDo.TemplateStatus.ACTIVE);
+            doEntity.setState(TemplateState.ACTIVE);
         }
         return doEntity;
     }

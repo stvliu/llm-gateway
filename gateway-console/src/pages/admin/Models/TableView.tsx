@@ -119,7 +119,7 @@ export function TableView({
       filteredProviders = filteredProviders.filter((p) => p.providerType === filters.providerType);
     }
     if (filters.enabled) {
-      filteredProviders = filteredProviders.filter((p) => p.enabled === (filters.enabled === 'ENABLED'));
+      filteredProviders = filteredProviders.filter((p) => p.state === 'ACTIVE');
     }
 
     return filteredProviders.map((provider) => {
@@ -183,7 +183,7 @@ export function TableView({
         if (record.type === 'provider') {
           return (
             <Space>
-              <StatusIndicator status={record.provider.enabled ? 'ENABLED' : 'DISABLED'} showLabel={false} />
+              <StatusIndicator status={record.provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} showLabel={false} />
               <a onClick={() => onViewProviderDetail(record.provider)}>
                 {record.provider.providerName}
               </a>
@@ -225,16 +225,16 @@ export function TableView({
       },
     },
     {
-      title: t('provider.enabled'),
-      dataIndex: 'status',
-      key: 'status',
+      title: t('provider.state'),
+      dataIndex: 'state',
+      key: 'state',
       width: 100,
       render: (_, record) => {
         if (record.type === 'provider') {
-          return <StatusIndicator status={record.provider.enabled ? 'ENABLED' : 'DISABLED'} size="small" />;
+          return <StatusIndicator status={record.provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} size="small" />;
         }
         if (record.model) {
-          return <StatusIndicator status={record.model.enabled ? 'ENABLED' : 'DISABLED'} size="small" />;
+          return <StatusIndicator status={record.model.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} size="small" />;
         }
         return null;
       },

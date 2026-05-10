@@ -3,8 +3,7 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typogra
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query';
-import type { ApiKey } from '@/types/apiKey';
-import type { Status } from '@/types/api';
+import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
 import type { ColumnsType } from 'antd/es/table';
 
 const { Paragraph } = Typography;
@@ -45,13 +44,13 @@ export default function UserApiKeys() {
     });
   };
 
-  const handleSubmit = async (values: { name: string; status?: Status }) => {
+  const handleSubmit = async (values: { name: string; state?: GatewayApiKeyState }) => {
     if (editingApiKey) {
       await updateMutation.mutateAsync({ id: editingApiKey.id, data: values });
       message.success(t('message.success', { ns: 'common' }));
     } else {
       const result = await createMutation.mutateAsync({ name: values.name, userId: 0 }); // userId will be set by backend
-      setNewKey(result.key);
+      setNewKey(result.rawKey);
       message.success(t('createSuccess'));
     }
     setModalOpen(false);
@@ -70,12 +69,12 @@ export default function UserApiKeys() {
       ),
     },
     {
-      title: t('status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      title: t('state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state: GatewayApiKeyState) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -127,10 +126,10 @@ export default function UserApiKeys() {
             <Input />
           </Form.Item>
           {editingApiKey && (
-            <Form.Item name="status" label={t('status')}>
+            <Form.Item name="state" label={t('state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

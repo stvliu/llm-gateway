@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.usage.gateway;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.infrastructure.usage.gateway.database.TokenLimitRepository;
 import com.codingas.gateway.infrastructure.usage.gateway.database.dataobject.TokenLimitDo;

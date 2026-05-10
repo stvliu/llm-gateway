@@ -49,7 +49,7 @@ export function ProviderCard({
   const isDark = getEffectiveTheme() === 'dark';
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
-  const activeModels = models.filter((m) => m.enabled);
+  const activeModels = models.filter((m) => m.state === 'ACTIVE');
 
   const dropdownItems = [
     {
@@ -101,7 +101,7 @@ export function ProviderCard({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <StatusIndicator status={provider.enabled ? 'ENABLED' : 'DISABLED'} showLabel={false} />
+          <StatusIndicator status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} showLabel={false} />
           <span
             style={{
               fontSize: 16,
@@ -147,7 +147,7 @@ export function ProviderCard({
             {t('provider.type')}: {t(`type.${provider.providerType}`, { ns: 'providers' })}
           </span>
           <span>
-            {t('provider.enabled')}: <StatusIndicator status={provider.enabled ? 'ENABLED' : 'DISABLED'} size="small" />
+            {t('provider.state')}: <StatusIndicator status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} size="small" />
           </span>
           <span>
             {t('detail.modelCount')}: {models.length}

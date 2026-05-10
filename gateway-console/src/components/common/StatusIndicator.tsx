@@ -1,7 +1,7 @@
 import { Tooltip } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-export type StatusType = 'ENABLED' | 'DISABLED' | 'ACTIVE' | 'SUSPENDED';
+export type StatusType = 'ACTIVE' | 'DISABLED' | 'LOCKED';
 
 interface StatusIndicatorProps {
   status: StatusType;
@@ -11,8 +11,9 @@ interface StatusIndicatorProps {
 
 /**
  * 状态指示器组件
- * - 启用/活跃：绿色脉动动画
- * - 禁用/暂停：灰色静止
+ * - 活跃：绿色脉动动画
+ * - 禁用：灰色静止
+ * - 锁定：红色静止
  */
 export function StatusIndicator({
   status,
@@ -23,18 +24,22 @@ export function StatusIndicator({
 
   const getStatusConfig = () => {
     switch (status) {
-      case 'ENABLED':
       case 'ACTIVE':
         return {
           color: 'green',
-          label: t(`status.${status.toLowerCase()}`),
+          label: t('state.active', { ns: 'common' }),
           pulse: true,
         };
       case 'DISABLED':
-      case 'SUSPENDED':
         return {
           color: 'default',
-          label: t(`status.${status.toLowerCase()}`),
+          label: t('state.disabled', { ns: 'common' }),
+          pulse: false,
+        };
+      case 'LOCKED':
+        return {
+          color: 'red',
+          label: t('state.locked', { ns: 'common' }),
           pulse: false,
         };
       default:
@@ -48,6 +53,17 @@ export function StatusIndicator({
 
   const config = getStatusConfig();
   const dotSize = size === 'small' ? 6 : 8;
+
+  const getColorCode = () => {
+    switch (config.color) {
+      case 'green':
+        return '#52c41a';
+      case 'red':
+        return '#ff4d4f';
+      default:
+        return '#d9d9d9';
+    }
+  };
 
   return (
     <Tooltip title={showLabel ? undefined : config.label}>
@@ -63,7 +79,7 @@ export function StatusIndicator({
             width: dotSize,
             height: dotSize,
             borderRadius: '50%',
-            backgroundColor: config.color === 'green' ? '#52c41a' : '#d9d9d9',
+            backgroundColor: getColorCode(),
             animation: config.pulse ? 'pulse 2s infinite' : 'none',
           }}
         />

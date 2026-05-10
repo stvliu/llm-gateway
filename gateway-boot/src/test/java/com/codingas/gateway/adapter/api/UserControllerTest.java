@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -191,7 +191,7 @@ class UserControllerTest {
         response.setId(1L);
         response.setUsername("testuser");
         response.setEmail("test@example.com");
-        response.setStatus(UserStatus.ENABLED);
+        response.setStatus(UserStatus.ACTIVE);
         response.setEmailVerified(true);
         response.setRole("USER");
         response.setCreatedAt(Instant.now());

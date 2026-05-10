@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderDo;
@@ -72,7 +73,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
         entity.setWebsiteUrl(doEntity.getWebsiteUrl());
         entity.setApiDocUrl(doEntity.getApiDocUrl());
         entity.setPriority(doEntity.getPriority());
-        entity.setEnabled(doEntity.getEnabled());
+        entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
         if (doEntity.getType() != null) {
@@ -97,7 +98,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
         doEntity.setWebsiteUrl(entity.getWebsiteUrl());
         doEntity.setApiDocUrl(entity.getApiDocUrl());
         doEntity.setPriority(entity.getPriority());
-        doEntity.setEnabled(entity.getEnabled());
+        doEntity.setState(entity.getState());
         if (entity.getType() != null) {
             doEntity.setType(entity.getType());
         }

@@ -33,9 +33,21 @@
     "clearSelection": "Clear Selection",
     "view": "View"
   },
-  "status": {
+  "state": {
+    "creating": "Creating",
+    "active": "Active",
+    "suspended": "Suspended",
+    "deleting": "Deleting",
+    "deleted": "Deleted",
+    "failed": "Failed",
     "enabled": "Enabled",
-    "disabled": "Disabled"
+    "disabled": "Disabled",
+    "expired": "Expired",
+    "revoked": "Revoked",
+    "rateLimited": "Rate Limited",
+    "overquota": "Over Quota",
+    "degraded": "Degraded",
+    "compromised": "Compromised"
   },
   "confirm": {
     "delete": "Are you sure you want to delete?",

@@ -143,7 +143,7 @@ export function ModelDrawer({
             >
               {model.displayName || model.providerModelId || `Model ${model.id}`}
             </Tag>
-            <StatusIndicator status={model.enabled ? 'ENABLED' : 'DISABLED'} />
+            <StatusIndicator status={model.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} />
           </div>
 
           {/* 基本信息 */}
@@ -166,8 +166,8 @@ export function ModelDrawer({
             <Descriptions.Item label={t('detail.outputPrice')}>
               {model.outputPrice ? `$${model.outputPrice}/1K tokens` : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label={t('model.enabled')}>
-              <StatusIndicator status={model.enabled ? 'ENABLED' : 'DISABLED'} />
+            <Descriptions.Item label={t('model.state')}>
+              <StatusIndicator status={model.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} />
             </Descriptions.Item>
             <Descriptions.Item label={t('detail.createdAt')}>
               {new Date(model.createdAt).toLocaleString()}

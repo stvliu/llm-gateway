@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
@@ -151,7 +152,7 @@ public class ModelDomainService {
         existing.setInputPrice(model.getInputPrice());
         existing.setOutputPrice(model.getOutputPrice());
         existing.setCapabilities(model.getCapabilities());
-        existing.setEnabled(model.getEnabled());
+        existing.setState(model.getState());
 
         Model updated = modelGateway.save(existing);
         log.info("Updated model: {} (id={})", updated.getDisplayName(), updated.getId());

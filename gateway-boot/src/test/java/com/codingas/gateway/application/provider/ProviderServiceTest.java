@@ -5,11 +5,12 @@ import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.Boolean;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +39,9 @@ class ProviderServiceTest {
 
     @Mock
     private ProviderGateway providerGateway;
+
+    @Mock
+    private ProviderApiKeyGateway providerApiKeyGateway;
 
     @InjectMocks
     private ProviderServiceImpl providerService;
@@ -80,8 +84,7 @@ class ProviderServiceTest {
             assertThat(response.getProviderName()).isEqualTo("Anthropic");
             assertThat(response.getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
             assertThat(response.getPriority()).isEqualTo(50);
-            assertThat(response.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(response.getState()).isEqualTo(ProviderState.ACTIVE);
             verify(providerGateway).save(any(Provider.class));
         }
 
@@ -237,7 +240,7 @@ class ProviderServiceTest {
             when(providerGateway.findAll()).thenReturn(List.of(testProvider, suspendedProvider));
 
             ProviderQueryRequest request = new ProviderQueryRequest();
-            request.setStatus(false);
+            request.setState(ProviderState.ACTIVE);
             request.setPage(1);
             request.setLimit(20);
 
@@ -246,7 +249,7 @@ class ProviderServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(false);
+            assertThat(response.getItems().getFirst().getState()).isEqualTo(ProviderState.ACTIVE);
         }
 
         @Test
@@ -303,7 +306,7 @@ class ProviderServiceTest {
 
             ProviderQueryRequest request = new ProviderQueryRequest();
             request.setProviderType(ProviderType.ANTHROPIC);
-            request.setStatus(true);
+            request.setState(ProviderState.ACTIVE);
             request.setPage(1);
             request.setLimit(20);
 
@@ -312,8 +315,8 @@ class ProviderServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(true);
+            assertThat(response.getItems().getFirst().getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
+            assertThat(response.getItems().getFirst().getState()).isEqualTo(ProviderState.ACTIVE);
         }
     }
 
@@ -364,19 +367,19 @@ class ProviderServiceTest {
         @DisplayName("更新提供商启用状态成功")
         void update_enabledTrue_setsActiveStatus() {
             // given
-            testProvider.setStatus(false);
+            testProvider.setState(ProviderState.ACTIVE);
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             ProviderUpdateRequest request = new ProviderUpdateRequest();
-            request.setEnabled(true);
+            request.setState(ProviderState.ACTIVE);
 
             // when
             ProviderResponse response = providerService.update(1L, request);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(testProvider.getState()).isEqualTo(ProviderState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ProviderState.ACTIVE);
         }
 
         @Test
@@ -387,14 +390,14 @@ class ProviderServiceTest {
             when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             ProviderUpdateRequest request = new ProviderUpdateRequest();
-            request.setEnabled(false);
+            request.setState(ProviderState.ACTIVE);
 
             // when
             ProviderResponse response = providerService.update(1L, request);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(false);
-            assertThat(response.getEnabled()).isFalse();
+            assertThat(testProvider.getState()).isEqualTo(ProviderState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ProviderState.ACTIVE);
         }
 
         @Test
@@ -419,18 +422,16 @@ class ProviderServiceTest {
     class DeleteTests {
 
         @Test
-        @DisplayName("删除提供商成功（软删除）")
-        void delete_existingProvider_softDeletes() {
+        @DisplayName("删除提供商成功")
+        void delete_existingProvider_deletes() {
             // given
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(providerGateway.save(any(Provider.class))).thenReturn(testProvider);
 
             // when
             providerService.delete(1L);
 
             // then
-            assertThat(testProvider.getDeletedAt()).isNotNull();
-            verify(providerGateway).save(testProvider);
+            verify(providerGateway).delete(testProvider);
         }
 
         @Test
@@ -455,7 +456,7 @@ class ProviderServiceTest {
         @DisplayName("启用提供商成功")
         void setEnabled_true_enablesProvider() {
             // given
-            testProvider.setStatus(false);
+            testProvider.setState(ProviderState.ACTIVE);
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(providerGateway.save(any(Provider.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -463,8 +464,8 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.setEnabled(1L, true);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(testProvider.getState()).isEqualTo(ProviderState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ProviderState.ACTIVE);
             verify(providerGateway).save(testProvider);
         }
 
@@ -479,8 +480,8 @@ class ProviderServiceTest {
             ProviderResponse response = providerService.setEnabled(1L, false);
 
             // then
-            assertThat(testProvider.getStatus()).isEqualTo(false);
-            assertThat(response.getEnabled()).isFalse();
+            assertThat(testProvider.getState()).isEqualTo(ProviderState.DISABLED);
+            assertThat(response.getState()).isEqualTo(ProviderState.DISABLED);
             verify(providerGateway).save(testProvider);
         }
 
@@ -499,7 +500,7 @@ class ProviderServiceTest {
     // ==================== 辅助方法 ====================
 
     private Provider createTestProvider(Long id, String providerName,
-                                        ProviderType providerType, ProviderStatus status) {
+                                        ProviderType providerType, Boolean active) {
         Provider provider = new Provider();
         provider.setId(id);
         provider.setName(providerName);
@@ -508,7 +509,7 @@ class ProviderServiceTest {
         provider.setWebsiteUrl("https://example.com");
         provider.setApiDocUrl("https://docs.example.com");
         provider.setPriority(100);
-        provider.setStatus(status);
+        provider.setState(active ? ProviderState.ACTIVE : ProviderState.DISABLED);
         provider.setCreatedAt(Instant.now());
         provider.setUpdatedAt(Instant.now());
         return provider;

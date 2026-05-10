@@ -75,12 +75,12 @@ export default function AdminProviders() {
       ellipsis: true,
     },
     {
-      title: t('status'),
-      dataIndex: 'enabled',
-      key: 'enabled',
-      render: (enabled: boolean) => (
-        <Tag color={enabled ? 'green' : 'red'}>
-          {t(`status.${enabled ? 'enabled' : 'disabled'}`, { ns: 'common' })}
+      title: t('state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state: string) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -145,10 +145,10 @@ export default function AdminProviders() {
             <Input />
           </Form.Item>
           {editingProvider && (
-            <Form.Item name="enabled" label={t('status')}>
+            <Form.Item name="state" label={t('state')}>
               <Select>
-                <Select.Option value={true}>{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value={false}>{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

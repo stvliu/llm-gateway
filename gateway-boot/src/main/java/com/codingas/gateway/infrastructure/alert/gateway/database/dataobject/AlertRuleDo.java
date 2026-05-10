@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.alert.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

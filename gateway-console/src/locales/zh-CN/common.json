@@ -33,9 +33,21 @@
     "clearSelection": "清除选择",
     "view": "查看"
   },
-  "status": {
+  "state": {
+    "creating": "创建中",
+    "active": "正常",
+    "suspended": "暂停",
+    "deleting": "删除中",
+    "deleted": "已删除",
+    "failed": "失败",
     "enabled": "启用",
-    "disabled": "禁用"
+    "disabled": "禁用",
+    "expired": "已过期",
+    "revoked": "已撤销",
+    "rateLimited": "限流中",
+    "overquota": "配额超限",
+    "degraded": "降级中",
+    "compromised": "已泄露"
   },
   "confirm": {
     "delete": "确定要删除吗？",

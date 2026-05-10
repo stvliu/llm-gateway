@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.quota.dto;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.LimitType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

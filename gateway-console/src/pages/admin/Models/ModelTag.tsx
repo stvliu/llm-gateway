@@ -69,7 +69,7 @@ function getModelTypeColor(type: ModelType): string {
 export function ModelTag({ model, onEdit, onDelete, onViewDetail }: ModelTagProps) {
   const { t } = useTranslation('models');
 
-  const isDisabled = !model.enabled;
+  const isDisabled = model.state !== 'ACTIVE';
   const modelType = inferModelType(model) as ModelType;
   const displayName = model.displayName || model.providerModelId || `Model ${model.id}`;
 
@@ -116,7 +116,7 @@ export function ModelTag({ model, onEdit, onDelete, onViewDetail }: ModelTagProp
           <span style={{ fontSize: 12 }}>{getModelTypeIcon(modelType)}</span>
           <span>{displayName}</span>
           {isDisabled && (
-            <Tooltip title={t('status.disabled', { ns: 'common' })}>
+            <Tooltip title={t('state.disabled', { ns: 'common' })}>
               <span style={{ fontSize: 10, color: '#999' }}>⏸</span>
             </Tooltip>
           )}

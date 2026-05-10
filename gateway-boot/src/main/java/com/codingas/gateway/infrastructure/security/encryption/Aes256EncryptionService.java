@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security.encryption;
 
-import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.security.service.EncryptionService;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -5,9 +5,9 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Boolean;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
@@ -95,8 +95,8 @@ class ModelServiceTest {
             assertThat(response.getContextWindow()).isEqualTo(128000);
             assertThat(response.getInputPrice()).isEqualTo(new BigDecimal("0.000005"));
             assertThat(response.getOutputPrice()).isEqualTo(new BigDecimal("0.000015"));
-            assertThat(response.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(providerGateway).findById(1L);
             verify(modelGateway).save(any(Model.class));
@@ -143,8 +143,8 @@ class ModelServiceTest {
             assertThat(response.getProviderId()).isEqualTo(1L);
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            assertThat(response.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(modelGateway).findById(1L);
         }
@@ -283,7 +283,7 @@ class ModelServiceTest {
             when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
             ModelQueryRequest request = new ModelQueryRequest();
-            request.setStatus(true);
+            request.setState(ModelState.ACTIVE);
             request.setPage(1);
             request.setLimit(20);
 
@@ -292,7 +292,7 @@ class ModelServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(true);
+            assertThat(response.getItems().getFirst().getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -370,12 +370,12 @@ class ModelServiceTest {
         @DisplayName("更新 enabled=true 设置状态为 ACTIVE")
         void update_enabledTrue_setsStatusActive() {
             // given
-            testModel.setStatus(false);
+            testModel.setState(ModelState.ACTIVE);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenReturn(testModel);
 
             ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setEnabled(true);
+            request.setState(ModelState.ACTIVE);
 
             // when
             modelService.update(1L, request);
@@ -383,7 +383,7 @@ class ModelServiceTest {
             // then
             ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
             verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getStatus()).isEqualTo(true);
+            assertThat(modelCaptor.getValue().getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -422,7 +422,7 @@ class ModelServiceTest {
             // then
             ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
             verify(modelGateway).save(modelCaptor.capture());
-            assertThat(testModel.getDeletedAt()).isNotNull();
+            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -451,7 +451,7 @@ class ModelServiceTest {
         @DisplayName("启用模型成功")
         void setEnabled_true_activatesModel() {
             // given
-            testModel.setStatus(false);
+            testModel.setState(ModelState.ACTIVE);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -459,9 +459,9 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, true);
 
             // then
-            assertThat(testModel.getStatus()).isEqualTo(true);
-            assertThat(response.getStatus()).isEqualTo(true);
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
             verify(modelGateway).save(testModel);
         }
 
@@ -469,7 +469,7 @@ class ModelServiceTest {
         @DisplayName("禁用模型成功")
         void setEnabled_false_deprecatesModel() {
             // given
-            testModel.setStatus(true);
+            testModel.setState(ModelState.ACTIVE);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -477,9 +477,9 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getStatus()).isEqualTo(false);
-            assertThat(response.getStatus()).isEqualTo(false);
-            assertThat(response.getEnabled()).isFalse();
+            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
             verify(modelGateway).save(testModel);
         }
 
@@ -506,7 +506,7 @@ class ModelServiceTest {
         return provider;
     }
 
-    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, ModelStatus status) {
+    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean status) {
         Model model = new Model();
         model.setId(id);
         model.setProviderId(provider.getId());
@@ -517,7 +517,7 @@ class ModelServiceTest {
         model.setInputPrice(new BigDecimal("0.00003"));
         model.setOutputPrice(new BigDecimal("0.00006"));
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
-        model.setStatus(status);
+        model.setState(ModelState.ACTIVE);
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;

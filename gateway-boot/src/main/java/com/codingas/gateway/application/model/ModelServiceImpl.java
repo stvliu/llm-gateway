@@ -5,6 +5,7 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
@@ -49,7 +50,7 @@ public class ModelServiceImpl implements ModelService {
         model.setInputPrice(request.getInputPrice());
         model.setOutputPrice(request.getOutputPrice());
         model.setCapabilities(request.getCapabilities());
-        model.setEnabled(true);
+        model.setState(ModelState.ACTIVE);
 
         Model savedModel = modelGateway.save(model);
         return toResponse(savedModel);
@@ -87,9 +88,9 @@ public class ModelServiceImpl implements ModelService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getEnabled() != null) {
+        if (request.getState() != null) {
             models = models.stream()
-                .filter(m -> m.getEnabled().equals(request.getEnabled()))
+                .filter(m -> m.getState().equals(request.getState()))
                 .collect(Collectors.toList());
         }
 
@@ -135,8 +136,8 @@ public class ModelServiceImpl implements ModelService {
         if (request.getCapabilities() != null) {
             model.setCapabilities(request.getCapabilities());
         }
-        if (request.getEnabled() != null) {
-            model.setEnabled(request.getEnabled());
+        if (request.getState() != null) {
+            model.setState(request.getState());
         }
 
         return toResponse(modelGateway.save(model));
@@ -161,7 +162,7 @@ public class ModelServiceImpl implements ModelService {
     public ModelResponse setEnabled(Long id, boolean enabled) {
         Model model = modelGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        model.setEnabled(enabled);
+        model.setState(enabled ? ModelState.ACTIVE : ModelState.DISABLED);
         return toResponse(modelGateway.save(model));
     }
 
@@ -179,7 +180,7 @@ public class ModelServiceImpl implements ModelService {
         response.setInputPrice(model.getInputPrice());
         response.setOutputPrice(model.getOutputPrice());
         response.setCapabilities(model.getCapabilities());
-        response.setEnabled(model.getEnabled());
+        response.setState(model.getState());
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
         return response;

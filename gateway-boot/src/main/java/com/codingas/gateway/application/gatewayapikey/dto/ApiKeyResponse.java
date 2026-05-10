@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.gatewayapikey.dto;
 
-import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import lombok.Data;
 
 import java.time.Instant;
@@ -16,7 +16,7 @@ public class ApiKeyResponse {
     private Long userId;
     private String username;
     private String name;
-    private ApiKeyStatus status;
+    private GatewayApiKeyState state;
     private Instant expiresAt;
     private Instant lastUsedAt;
     private List<String> ipWhitelist;

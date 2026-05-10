@@ -16,6 +16,9 @@ export interface ProviderKeysResponse {
   keys: ProviderApiKey[];
 }
 
+/** 提供商状态枚举（简化设计，企业内部场景） */
+export type ProviderState = 'ACTIVE' | 'DISABLED' | 'DELETED';
+
 /** 供应商信息（与后端 ProviderResponse 一致） */
 export interface Provider {
   id: number;
@@ -25,7 +28,7 @@ export interface Provider {
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
-  enabled: boolean;
+  state: ProviderState;
   createdAt: string;
   updatedAt: string;
   keyStats?: ProviderKeyStats;
@@ -48,5 +51,5 @@ export interface UpdateProviderRequest {
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
-  enabled?: boolean;
+  state?: ProviderState;
 }

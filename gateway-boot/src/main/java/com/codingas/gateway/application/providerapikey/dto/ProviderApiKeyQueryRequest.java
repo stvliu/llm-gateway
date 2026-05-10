@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.providerapikey.dto;
 
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import lombok.Data;
 
 /**
@@ -13,7 +13,7 @@ public class ProviderApiKeyQueryRequest {
 
     private String keyword;
 
-    private ProviderApiKeyStatus status;
+    private ProviderApiKeyState state;
 
     private Integer page = 1;
 

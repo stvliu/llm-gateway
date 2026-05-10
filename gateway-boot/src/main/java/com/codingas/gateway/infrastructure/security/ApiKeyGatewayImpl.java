@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.security;
 
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.infrastructure.security.database.dataobject.GatewayApiKeyDo;
@@ -101,8 +102,8 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
         // 枚举转换
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(GatewayApiKey.ApiKeyStatus.valueOf(doEntity.getStatus().name()));
+        if (doEntity.getState() != null) {
+            entity.setState(doEntity.getState());
         }
         // User 关联 - 使用 ID 引用
         if (doEntity.getUser() != null) {
@@ -130,8 +131,8 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         doEntity.setIpWhitelist(entity.getIpWhitelist());
         doEntity.setDeletedAt(entity.getDeletedAt());
         // 枚举转换
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(GatewayApiKeyDo.ApiKeyStatus.valueOf(entity.getStatus().name()));
+        if (entity.getState() != null) {
+            doEntity.setState(entity.getState());
         }
         // User 关联 - 只需要设置 ID
         if (entity.getUserId() != null) {

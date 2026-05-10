@@ -8,6 +8,7 @@ import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -47,7 +48,7 @@ public class ProviderServiceImpl implements ProviderService {
         provider.setWebsiteUrl(request.getWebsiteUrl());
         provider.setApiDocUrl(request.getApiDocUrl());
         provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        provider.setEnabled(true);
+        provider.setState(ProviderState.ACTIVE);
 
         Provider savedProvider = providerGateway.save(provider);
         return toResponse(savedProvider);
@@ -84,9 +85,9 @@ public class ProviderServiceImpl implements ProviderService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getEnabled() != null) {
+        if (request.getState() != null) {
             providers = providers.stream()
-                .filter(p -> p.getEnabled().equals(request.getEnabled()))
+                .filter(p -> p.getState().equals(request.getState()))
                 .collect(Collectors.toList());
         }
 
@@ -142,8 +143,8 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getPriority() != null) {
             provider.setPriority(request.getPriority());
         }
-        if (request.getEnabled() != null) {
-            provider.setEnabled(request.getEnabled());
+        if (request.getState() != null) {
+            provider.setState(request.getState());
         }
 
         return toResponse(providerGateway.save(provider));
@@ -168,7 +169,7 @@ public class ProviderServiceImpl implements ProviderService {
     public ProviderResponse setEnabled(Long id, boolean enabled) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        provider.setEnabled(enabled);
+        provider.setState(enabled ? ProviderState.ACTIVE : ProviderState.DISABLED);
         return toResponse(providerGateway.save(provider));
     }
 
@@ -201,12 +202,12 @@ public class ProviderServiceImpl implements ProviderService {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
         response.setProviderName(provider.getName());
-        response.setProviderType(provider.getType() != null ? provider.getType().name() : null);
+        response.setProviderType(provider.getType() != null ? provider.getType() : null);
         response.setBaseUrl(provider.getBaseUrl());
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());
         response.setPriority(provider.getPriority());
-        response.setEnabled(provider.getEnabled());
+        response.setState(provider.getState());
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;

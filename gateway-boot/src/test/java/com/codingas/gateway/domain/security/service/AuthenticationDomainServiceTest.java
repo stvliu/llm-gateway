@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
@@ -98,7 +99,7 @@ class AuthenticationDomainServiceTest {
             // given
             User user = createActiveUser();
             GatewayApiKey inactiveKey = createActiveApiKey(user);
-            inactiveKey.setStatus(GatewayApiKey.ApiKeyStatus.DISABLED);
+            inactiveKey.setState(GatewayApiKeyState.DISABLED);
 
             when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(inactiveKey);
 
@@ -216,7 +217,7 @@ class AuthenticationDomainServiceTest {
         user.setId(1L);
         user.setUsername("Test User");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ENABLED);
+        user.setStatus(UserStatus.ACTIVE);
         user.setRole("USER");
         return user;
     }
@@ -224,7 +225,7 @@ class AuthenticationDomainServiceTest {
     private GatewayApiKey createActiveApiKey(User user) {
         GatewayApiKey key = new GatewayApiKey();
         key.setId(100L);
-        key.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
+        key.setState(GatewayApiKeyState.ACTIVE);
         key.setExpiresAt(Instant.now().plus(30, ChronoUnit.DAYS));
         if (user != null) {
             key.setUserId(user.getId());

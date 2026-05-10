@@ -1,9 +1,9 @@
 package com.codingas.gateway.domain.proxy.gateway;
 
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 
 /**
  * LLM 网关接口

@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.gatewayapikey.dto;
 
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -19,5 +20,5 @@ public class ApiKeyUpdateRequest {
 
     private List<String> ipWhitelist;
 
-    private Boolean enabled;
+    private GatewayApiKeyState state;
 }

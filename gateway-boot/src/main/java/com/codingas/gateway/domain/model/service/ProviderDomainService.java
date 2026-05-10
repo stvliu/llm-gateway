@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -36,8 +37,8 @@ public class ProviderDomainService {
 
     @Transactional
     public Provider create(Provider provider) {
-        if (provider.getEnabled() == null) {
-            provider.setEnabled(true);
+        if (provider.getState() == null) {
+            provider.setState(ProviderState.ACTIVE);
         }
         Provider saved = providerGateway.save(provider);
         log.info("Created provider: {} (id={})", saved.getName(), saved.getId());
@@ -57,7 +58,7 @@ public class ProviderDomainService {
         existing.setType(provider.getType());
         existing.setBaseUrl(provider.getBaseUrl());
         existing.setPriority(provider.getPriority());
-        existing.setEnabled(provider.getEnabled());
+        existing.setState(provider.getState());
 
         Provider updated = providerGateway.save(existing);
         log.info("Updated provider: {} (id={})", updated.getName(), updated.getId());

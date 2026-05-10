@@ -1,6 +1,8 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.security.service.EncryptionService;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -222,7 +224,7 @@ class ConfigCacheServiceTest {
         Provider provider = new Provider();
         provider.setId(1L);
         provider.setName("OpenAI");
-        provider.setStatus(Provider.true);
+        provider.setState(ProviderState.ACTIVE);
         return provider;
     }
 
@@ -230,7 +232,7 @@ class ConfigCacheServiceTest {
         Model model = new Model();
         model.setId(1L);
         model.setDisplayName("GPT-4");
-        model.setStatus(Model.true);
+        model.setState(ModelState.ACTIVE);
         return model;
     }
 }

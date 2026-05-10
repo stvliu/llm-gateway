@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security.database.dataobject;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,7 +40,7 @@ public class UserDo extends BaseDo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private UserStatus status = UserStatus.ENABLED;
+    private UserStatus status = UserStatus.ACTIVE;
 
     /**
      * 用户角色：ADMIN（管理员）/ USER（普通用户）

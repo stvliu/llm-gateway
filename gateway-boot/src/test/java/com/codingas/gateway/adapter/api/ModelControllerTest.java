@@ -6,6 +6,7 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.entity.Model;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -49,7 +50,6 @@ class ModelControllerTest {
         void create_validRequest_returnsCreated() {
             // given
             ModelCreateRequest request = new ModelCreateRequest();
-            request.setModelCode("gpt-4");
 
             ModelResponse response = createTestResponse();
             when(modelService.create(any())).thenReturn(response);
@@ -151,14 +151,14 @@ class ModelControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setStatus(Model.true);
+            response.setState(ModelState.ACTIVE);
             when(modelService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Model.true);
+            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -166,14 +166,14 @@ class ModelControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setStatus(Model.false);
+            response.setState(ModelState.ACTIVE);
             when(modelService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Model.false);
+            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
         }
     }
 
@@ -184,12 +184,11 @@ class ModelControllerTest {
         response.setProviderModelId("gpt-4");
         response.setProviderId(1L);
         response.setProviderName("OpenAI");
-        response.setProviderCode("openai");
         response.setDisplayName("GPT-4");
         response.setContextWindow(8192);
         response.setInputPrice(BigDecimal.valueOf(0.03));
         response.setOutputPrice(BigDecimal.valueOf(0.06));
-        response.setStatus(Model.true);
+        response.setState(ModelState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.provider.dto;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

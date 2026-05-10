@@ -2,7 +2,7 @@ package com.codingas.gateway.domain.security.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +31,7 @@ public class User extends BaseEntity {
 
     private String avatarUrl;
 
-    private UserStatus status = UserStatus.ENABLED;
+    private UserStatus status = UserStatus.ACTIVE;
 
     /**
      * 用户角色：ADMIN（管理员）/ USER（普通用户）
@@ -52,7 +52,7 @@ public class User extends BaseEntity {
      * 检查用户是否激活
      */
     public boolean isActive() {
-        return UserStatus.ENABLED.equals(status);
+        return UserStatus.ACTIVE.equals(status);
     }
 
     /**

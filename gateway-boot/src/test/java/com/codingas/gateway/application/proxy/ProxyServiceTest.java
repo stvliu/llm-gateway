@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.event.TokenUsedEvent;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.service.ModelDomainService;

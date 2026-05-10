@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.quota;
 
-import com.codingas.gateway.common.event.TokenUsedEvent;
+import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;

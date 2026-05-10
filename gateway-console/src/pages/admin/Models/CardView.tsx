@@ -65,7 +65,7 @@ export function CardView({
 
     // 状态筛选
     if (filters.enabled) {
-      result = result.filter((p) => p.enabled === (filters.enabled === 'ENABLED'));
+      result = result.filter((p) => p.state === 'ACTIVE');
     }
 
     return result;

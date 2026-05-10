@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.template.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
+import com.codingas.gateway.domain.template.enums.TemplateState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -62,26 +63,16 @@ public class ProviderTemplate extends BaseEntity {
     private String iconUrl;
 
     /** 状态 */
-    private TemplateStatus status = TemplateStatus.ACTIVE;
+    private TemplateState state = TemplateState.ACTIVE;
 
     /** 软删除时间 */
     private Instant deletedAt;
 
     /**
-     * 模板状态枚举
-     */
-    public enum TemplateStatus {
-        /** 启用 */
-        ACTIVE,
-        /** 禁用 */
-        DISABLED
-    }
-
-    /**
      * 检查模板是否可用
      */
     public boolean isAvailable() {
-        return TemplateStatus.ACTIVE.equals(status) && deletedAt == null;
+        return TemplateState.ACTIVE.equals(state) && deletedAt == null;
     }
 
     /**

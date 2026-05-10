@@ -6,7 +6,7 @@ import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -152,14 +152,14 @@ class ApiKeyControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ApiKeyResponse response = createTestResponse();
-            response.setStatus(ApiKeyStatus.ACTIVE);
+            response.setState(GatewayApiKeyState.ACTIVE);
             when(apiKeyService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ApiKeyResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(result.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
         }
 
         @Test
@@ -167,14 +167,14 @@ class ApiKeyControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ApiKeyResponse response = createTestResponse();
-            response.setStatus(ApiKeyStatus.DISABLED);
+            response.setState(GatewayApiKeyState.DISABLED);
             when(apiKeyService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ApiKeyResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(ApiKeyStatus.DISABLED);
+            assertThat(result.getState()).isEqualTo(GatewayApiKeyState.DISABLED);
         }
     }
 
@@ -185,7 +185,7 @@ class ApiKeyControllerTest {
         response.setUserId(1L);
         response.setUsername("testuser");
         response.setName("Test Key");
-        response.setStatus(ApiKeyStatus.ACTIVE);
+        response.setState(GatewayApiKeyState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

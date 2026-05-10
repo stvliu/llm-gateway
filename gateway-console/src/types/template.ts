@@ -4,6 +4,7 @@
 
 export type TemplateType = 'OFFICIAL' | 'USER';
 export type MarketStatus = 'PRIVATE' | 'PENDING' | 'PUBLISHED' | 'REJECTED';
+export type TemplateState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 
 export interface ProviderTemplate {
   id: number;
@@ -21,7 +22,7 @@ export interface ProviderTemplate {
   tags: string[];
   description: string;
   iconUrl: string;
-  status: string;
+  state: TemplateState;
   createdAt: string;
   updatedAt: string;
   modelCount: number;

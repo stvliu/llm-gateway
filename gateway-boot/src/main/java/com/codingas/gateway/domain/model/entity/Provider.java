@@ -2,11 +2,10 @@ package com.codingas.gateway.domain.model.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
 
 /**
  * 提供商实体
@@ -40,12 +39,12 @@ public class Provider extends BaseEntity {
      */
     private Integer maxRetries = 3;
 
-    private Boolean enabled = true;
+    private ProviderState state = ProviderState.ACTIVE;
 
     /**
      * 检查提供商是否可用
      */
     public boolean isAvailable() {
-        return Boolean.TRUE.equals(enabled);
+        return ProviderState.ACTIVE.equals(state);
     }
 }

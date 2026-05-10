@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.provider.dto;
 
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.enums.ProviderType;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -26,5 +27,5 @@ public class ProviderUpdateRequest {
 
     private Integer priority;
 
-    private Boolean enabled;
+    private ProviderState state;
 }

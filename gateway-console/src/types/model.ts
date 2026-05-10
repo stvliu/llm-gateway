@@ -1,6 +1,9 @@
 /** 模型类型 */
 export type ModelType = 'CHAT' | 'COMPLETION' | 'EMBEDDING' | 'IMAGE' | 'AUDIO';
 
+/** 模型状态枚举 */
+export type ModelState = 'ACTIVE' | 'DISABLED' | 'DELETED';
+
 /** 模型信息（与后端 ModelResponse 一致） */
 export interface Model {
   id: number;
@@ -12,7 +15,7 @@ export interface Model {
   inputPrice?: number;
   outputPrice?: number;
   capabilities?: Record<string, boolean>;
-  enabled: boolean;
+  state: ModelState;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,5 +38,5 @@ export interface UpdateModelRequest {
   inputPrice?: number;
   outputPrice?: number;
   capabilities?: Record<string, boolean>;
-  enabled?: boolean;
+  state?: ModelState;
 }

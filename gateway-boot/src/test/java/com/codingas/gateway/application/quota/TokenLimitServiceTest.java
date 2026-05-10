@@ -2,8 +2,8 @@ package com.codingas.gateway.application.quota;
 
 import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
@@ -131,7 +131,7 @@ class TokenLimitServiceTest {
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(response.getRemainingTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
-            assertThat(response.getStatus()).isEqualTo(TokenLimitStatus.ACTIVE);
+            assertThat(response.getEnabled()).isTrue();
 
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
@@ -215,7 +215,7 @@ class TokenLimitServiceTest {
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(response.getUsedTokens()).isEqualByComparingTo(testTokenLimit.getUsedTokens());
-            assertThat(response.getStatus()).isEqualTo(TokenLimitStatus.ACTIVE);
+            assertThat(response.getEnabled()).isTrue();
 
             verify(tokenLimitGateway).findById(1L);
         }

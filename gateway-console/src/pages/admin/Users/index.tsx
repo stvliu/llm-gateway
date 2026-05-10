@@ -83,7 +83,7 @@ export default function AdminUsers() {
       key: 'status',
       render: (status: UserStatus) => {
         const colorMap: Record<UserStatus, string> = {
-          ENABLED: 'green',
+          ACTIVE: 'green',
           DISABLED: 'red',
           LOCKED: 'orange',
         };
@@ -157,7 +157,7 @@ export default function AdminUsers() {
           {editingUser && (
             <Form.Item name="status" label={t('user.status')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled')}</Select.Option>
+                <Select.Option value="ACTIVE">{t('status.active')}</Select.Option>
                 <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
                 <Select.Option value="LOCKED">{t('status.locked')}</Select.Option>
               </Select>

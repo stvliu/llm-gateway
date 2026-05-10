@@ -301,9 +301,9 @@ package com.codingas.gateway.infrastructure.adapter.openai;
 import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -457,9 +457,9 @@ package com.codingas.gateway.infrastructure.adapter.anthropic;
 import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -702,8 +702,8 @@ git commit -m "refactor: update LLMDispatcher to return Mono
 ```java
 package com.codingas.gateway.infrastructure.adapter.openai;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -859,8 +859,8 @@ git commit -m "test: add OpenAIAdapterTest with WebClient
 ```java
 package com.codingas.gateway.infrastructure.adapter.anthropic;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -985,8 +985,8 @@ git commit -m "test: add AnthropicAdapterTest with WebClient
 ```java
 package com.codingas.gateway.domain.router.service;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.router.entity.RouteGroup;
 import com.codingas.gateway.domain.router.gateway.LLMProviderPort;
 import com.codingas.gateway.domain.router.gateway.ModelRouter;

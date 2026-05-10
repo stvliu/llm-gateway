@@ -1,8 +1,7 @@
 package com.codingas.gateway.application.providerapikey.dto;
 
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import lombok.Data;
 
 import java.time.Instant;
@@ -20,15 +19,13 @@ public class ProviderApiKeyResponse {
     private Integer priority;
     private Integer weight;
     private Boolean isDefault;
-    private ProviderApiKeyStatus status;
+    private ProviderApiKeyState state;
     private String healthStatus;
     private Long successCount;
     private Long errorCount;
     private Integer rpmLimit;
     private Long tpmLimit;
-    private ProviderApiKeyDisabledReason disabledReason;
     private Instant lastUsedAt;
-    private Instant expiresAt;
     private Instant createdAt;
     private Instant updatedAt;
 
@@ -44,11 +41,10 @@ public class ProviderApiKeyResponse {
         response.setPriority(key.getPriority());
         response.setWeight(key.getWeight());
         response.setIsDefault(key.getIsDefault());
-        response.setStatus(key.getStatus());
+        response.setState(key.getState());
         response.setRpmLimit(key.getRpmLimit());
         response.setTpmLimit(key.getTpmLimit());
         response.setLastUsedAt(key.getLastUsedAt());
-        response.setExpiresAt(key.getExpiresAt());
         response.setCreatedAt(key.getCreatedAt());
         response.setUpdatedAt(key.getUpdatedAt());
         return response;

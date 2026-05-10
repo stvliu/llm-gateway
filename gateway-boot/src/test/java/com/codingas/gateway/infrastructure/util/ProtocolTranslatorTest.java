@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.util;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -281,7 +281,7 @@ class ProtocolTranslatorTest {
             // then
             assertThat(result.getId()).isEqualTo("msg_abc123");
             assertThat(result.getModel()).isEqualTo("claude-sonnet-4-20250514");
-            assertThat(result.getProviderCode()).isEqualTo("anthropic");
+            assertThat(result.getProvider()).isEqualTo("anthropic");
             assertThat(result.getFinishReason()).isEqualTo("end_turn");
             assertThat(result.getContent().getText()).isEqualTo("Hello, how can I help you?");
             assertThat(result.getUsage().getPromptTokens()).isEqualTo(100);

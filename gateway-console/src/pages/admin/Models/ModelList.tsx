@@ -66,12 +66,12 @@ export function ModelList({ providerId }: ModelListProps) {
       render: (type: ModelType) => t(`type.${type}`),
     },
     {
-      title: t('model.enabled'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`)}
+      title: t('model.state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state: string) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -137,10 +137,10 @@ export function ModelList({ providerId }: ModelListProps) {
             </Select>
           </Form.Item>
           {editingModel && (
-            <Form.Item name="enabled" label={t('model.enabled')}>
+            <Form.Item name="state" label={t('model.state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled')}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

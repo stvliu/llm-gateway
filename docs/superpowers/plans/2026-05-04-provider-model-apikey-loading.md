@@ -962,8 +962,8 @@ git commit -m "feat: add LocalDomainEventPublisher for standalone deployment"
 ```java
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.security.service.EncryptionService;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -1093,7 +1093,7 @@ Expected: FAIL - cannot find symbol ConfigCacheService
 ```java
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.security.service.EncryptionService;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;

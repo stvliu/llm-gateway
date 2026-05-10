@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.user.dto;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 

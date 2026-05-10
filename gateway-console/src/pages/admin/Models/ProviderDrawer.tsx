@@ -59,14 +59,11 @@ export function ProviderDrawer({
    */
   const renderKeyStatus = (key: ProviderApiKey) => {
     const statusMap: Record<string, { color: string; text: string }> = {
-      ACTIVE: { color: '#52c41a', text: t('detail.keyActive', { defaultValue: '活跃' }) },
-      DISABLED: { color: '#ff4d4f', text: t('status.disabled', { ns: 'common' }) },
-      EXPIRED: { color: '#ff4d4f', text: t('detail.keyExpired', { defaultValue: '过期' }) },
-      RATE_LIMITED: { color: '#faad14', text: t('detail.keyRateLimited', { defaultValue: '限流' }) },
-      OVERQUOTA: { color: '#faad14', text: t('detail.keyOverquota', { defaultValue: '超额' }) },
-      ERROR: { color: '#ff4d4f', text: t('detail.keyError', { defaultValue: '错误' }) },
+      ACTIVE: { color: '#52c41a', text: t('state.active', { ns: 'common' }) },
+      DISABLED: { color: '#ff4d4f', text: t('state.disabled', { ns: 'common' }) },
+      DELETED: { color: '#999', text: t('state.deleted', { ns: 'common' }) },
     };
-    const status = statusMap[key.status] || { color: '#999', text: key.status };
+    const status = statusMap[key.state] || { color: '#999', text: key.state };
     return <Tag color={status.color}>{status.text}</Tag>;
   };
 
@@ -107,15 +104,15 @@ export function ProviderDrawer({
           <Descriptions column={1} bordered size="small">
             <Descriptions.Item label={t('provider.name')}>
               <Space>
-                <StatusIndicator status={provider.enabled ? 'ENABLED' : 'DISABLED'} showLabel={false} />
+                <StatusIndicator status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} showLabel={false} />
                 {provider.providerName}
               </Space>
             </Descriptions.Item>
             <Descriptions.Item label={t('provider.type')}>
               <Tag color="blue">{t(`type.${provider.providerType}`, { ns: 'providers' })}</Tag>
             </Descriptions.Item>
-            <Descriptions.Item label={t('provider.enabled')}>
-              <StatusIndicator status={provider.enabled ? 'ENABLED' : 'DISABLED'} />
+            <Descriptions.Item label={t('provider.state')}>
+              <StatusIndicator status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} />
             </Descriptions.Item>
             <Descriptions.Item label={t('provider.baseUrl')}>
               <code>{provider.baseUrl || '-'}</code>
@@ -243,7 +240,7 @@ export function ProviderDrawer({
                   ]}
                 >
                   <List.Item.Meta
-                    avatar={<StatusIndicator status={model.enabled ? 'ENABLED' : 'DISABLED'} showLabel={false} />}
+                    avatar={<StatusIndicator status={model.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} showLabel={false} />}
                     title={
                       <a onClick={() => onViewModelDetail(model)}>{model.displayName || model.providerModelId || `Model ${model.id}`}</a>
                     }

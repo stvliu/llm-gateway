@@ -8,7 +8,7 @@ import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyUpdateR
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import lombok.RequiredArgsConstructor;
@@ -47,8 +47,7 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         key.setPriority(request.getPriority());
         key.setWeight(request.getWeight());
         key.setIsDefault(request.getIsDefault());
-        key.setExpiresAt(request.getExpiresAt());
-        key.setStatus(ProviderApiKeyStatus.ACTIVE);
+        key.setState(ProviderApiKeyState.ACTIVE);
 
         ProviderApiKey saved = providerApiKeyGateway.save(key);
         log.info("Created ProviderApiKey: id={}, providerId={}", saved.getId(), saved.getProviderId());
@@ -74,12 +73,12 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by(Sort.Direction.DESC, "id"));
 
         Page<ProviderApiKey> keyPage;
-        if (request.getStatus() != null && request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            keyPage = providerApiKeyGateway.findByProviderIdAndStatusAndKeyword(
-                request.getProviderId(), request.getStatus(), request.getKeyword(), pageable);
-        } else if (request.getStatus() != null) {
-            keyPage = providerApiKeyGateway.findByProviderIdAndStatus(
-                request.getProviderId(), request.getStatus(), pageable);
+        if (request.getState() != null && request.getKeyword() != null && !request.getKeyword().isBlank()) {
+            keyPage = providerApiKeyGateway.findByProviderIdAndStateAndKeyword(
+                request.getProviderId(), request.getState(), request.getKeyword(), pageable);
+        } else if (request.getState() != null) {
+            keyPage = providerApiKeyGateway.findByProviderIdAndState(
+                request.getProviderId(), request.getState(), pageable);
         } else if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             keyPage = providerApiKeyGateway.findByProviderIdAndKeyword(
                 request.getProviderId(), request.getKeyword(), pageable);
@@ -119,11 +118,8 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         } else if (request.getIsDefault() != null) {
             key.setIsDefault(false);
         }
-        if (request.getStatus() != null) {
-            key.setStatus(request.getStatus());
-        }
-        if (request.getExpiresAt() != null) {
-            key.setExpiresAt(request.getExpiresAt());
+        if (request.getState() != null) {
+            key.setState(request.getState());
         }
         if (request.getRpmLimit() != null) {
             key.setRpmLimit(request.getRpmLimit());
@@ -144,7 +140,7 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         ProviderApiKey key = providerApiKeyGateway.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProviderApiKey", id));
 
-        key.setStatus(ProviderApiKeyStatus.DELETED);
+        key.setState(ProviderApiKeyState.DISABLED);
         providerApiKeyGateway.save(key);
         log.info("Deleted ProviderApiKey: id={}", id);
     }
@@ -155,7 +151,7 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
         ProviderApiKey key = providerApiKeyGateway.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ProviderApiKey", id));
 
-        key.setStatus(enabled ? ProviderApiKeyStatus.ACTIVE : ProviderApiKeyStatus.DISABLED);
+        key.setState(enabled ? ProviderApiKeyState.ACTIVE : ProviderApiKeyState.DISABLED);
         ProviderApiKey saved = providerApiKeyGateway.save(key);
         log.info("Set ProviderApiKey enabled={}: id={}", enabled, id);
 

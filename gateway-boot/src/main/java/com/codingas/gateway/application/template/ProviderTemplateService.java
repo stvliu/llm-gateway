@@ -1,9 +1,13 @@
 package com.codingas.gateway.application.template;
 
 import com.codingas.gateway.application.template.dto.*;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.gateway.*;
 import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
@@ -176,7 +180,7 @@ public class ProviderTemplateService {
         // 1. 创建 Provider
         Provider provider = new Provider();
         provider.setName(template.getTemplateName());
-        provider.setType(com.codingas.gateway.common.enums.ProviderType.valueOf(template.getProviderType()));
+        provider.setType(ProviderType.valueOf(template.getProviderType()));
         Map<String, Object> providerConfig = template.getProviderConfig();
         if (providerConfig != null) {
             if (providerConfig.containsKey("base_url")) {
@@ -196,7 +200,7 @@ public class ProviderTemplateService {
             }
         }
         provider.setPriority(100);
-        provider.setEnabled(true);
+        provider.setState(ProviderState.ACTIVE);
         Provider savedProvider = providerGateway.save(provider);
 
         // 2. 创建 Model
@@ -230,7 +234,7 @@ public class ProviderTemplateService {
                     Map<String, Boolean> caps = (Map<String, Boolean>) modelConfig.get("capabilities");
                     model.setCapabilities(caps);
                 }
-                model.setEnabled(true);
+                model.setState(ModelState.ACTIVE);
                 Model savedModel = modelGateway.save(model);
                 modelIds.add(savedModel.getId());
                 modelNames.add(savedModel.getDisplayName());
@@ -243,7 +247,7 @@ public class ProviderTemplateService {
         apiKey.setKeyName(template.getTemplateName() + " API Key");
         apiKey.setApiKey(request.getApiKey());
         apiKey.setPriority(100);
-        apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
+        apiKey.setState(ProviderApiKeyState.ACTIVE);
         providerApiKeyGateway.save(apiKey);
 
         // 4. 增加模板使用次数
@@ -385,7 +389,7 @@ public class ProviderTemplateService {
             .tags(template.getTags())
             .description(template.getDescription())
             .iconUrl(template.getIconUrl())
-            .status(template.getStatus() != null ? template.getStatus().name() : null)
+            .state(template.getState() != null ? template.getState().name() : null)
             .createdAt(template.getCreatedAt())
             .updatedAt(template.getUpdatedAt())
             .modelCount(modelCount)

@@ -203,7 +203,7 @@ package com.codingas.gateway.domain.security.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.enums.UserRole;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;
@@ -438,7 +438,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 package com.codingas.gateway.domain.router.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -675,8 +675,8 @@ public class GatewayApiKey extends BaseEntity {
 package com.codingas.gateway.domain.security.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.domain.router.entity.Model;
 import com.codingas.gateway.domain.router.entity.Provider;
 import jakarta.persistence.*;
@@ -941,7 +941,7 @@ public class AlertRule extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "period_type")
-    private com.codingas.gateway.common.enums.PeriodType periodType;
+    private com.codingas.gateway.domain.usage.enums.PeriodType periodType;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "notification_channels", columnDefinition = "json")

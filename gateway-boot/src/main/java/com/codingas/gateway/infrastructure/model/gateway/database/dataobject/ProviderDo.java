@@ -1,11 +1,10 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.Instant;
 
 /**
  * 提供商 DO
@@ -51,6 +50,7 @@ public class ProviderDo extends BaseDo {
     @Column(name = "max_retries")
     private Integer maxRetries = 3;
 
-    @Column(name = "enabled", nullable = false)
-    private Boolean enabled = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    private ProviderState state = ProviderState.ACTIVE;
 }

@@ -2,8 +2,8 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.OpenAIChatRequest;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +17,6 @@ import org.springframework.http.ResponseEntity;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

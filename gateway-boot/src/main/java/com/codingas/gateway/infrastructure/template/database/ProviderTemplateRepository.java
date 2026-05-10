@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.template.database;
 
+import com.codingas.gateway.domain.template.entity.MarketStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -82,7 +83,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      */
     @Modifying
     @Query("UPDATE ProviderTemplateDo t SET t.marketStatus = :status WHERE t.id = :id")
-    void updateMarketStatus(@Param("id") Long id, @Param("status") ProviderTemplateDo.MarketStatus status);
+    void updateMarketStatus(@Param("id") Long id, @Param("status") MarketStatus status);
 
     /**
      * 增加使用次数
@@ -112,7 +113,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
         @Param("templateType") ProviderTemplateDo.TemplateType templateType,
         @Param("providerType") String providerType,
         @Param("keyword") String keyword,
-        @Param("marketStatus") ProviderTemplateDo.MarketStatus marketStatus,
+        @Param("marketStatus") MarketStatus marketStatus,
         Pageable pageable
     );
 }

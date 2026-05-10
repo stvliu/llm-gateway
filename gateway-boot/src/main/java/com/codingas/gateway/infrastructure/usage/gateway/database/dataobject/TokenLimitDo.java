@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.usage.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import jakarta.persistence.*;
 import lombok.*;
 

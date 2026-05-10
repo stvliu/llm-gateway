@@ -48,7 +48,7 @@ class OfficialTemplateSyncServiceTest {
         List<ProviderTemplate> templates = gateway.findOfficialTemplates();
         System.out.println("Found " + templates.size() + " official templates");
         for (ProviderTemplate t : templates) {
-            System.out.println("  - " + t.getTemplateCode() + ": " + t.getTemplateName() + " (status=" + t.getStatus() + ")");
+            System.out.println("  - " + t.getTemplateCode() + ": " + t.getTemplateName() + " (status=" + t.getState() + ")");
         }
     }
 }

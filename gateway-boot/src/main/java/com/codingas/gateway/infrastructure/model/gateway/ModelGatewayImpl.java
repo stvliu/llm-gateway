@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
@@ -86,7 +87,7 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setInputPrice(doEntity.getInputPrice());
         entity.setOutputPrice(doEntity.getOutputPrice());
         entity.setCapabilities(doEntity.getCapabilities());
-        entity.setEnabled(doEntity.getEnabled());
+        entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
         // Provider 关联 - 使用 ID 引用
@@ -114,7 +115,7 @@ public class ModelGatewayImpl implements ModelGateway {
         doEntity.setInputPrice(entity.getInputPrice());
         doEntity.setOutputPrice(entity.getOutputPrice());
         doEntity.setCapabilities(entity.getCapabilities());
-        doEntity.setEnabled(entity.getEnabled());
+        doEntity.setState(entity.getState());
         // Provider 关联 - 只需要设置 ID
         if (entity.getProviderId() != null) {
             ProviderDo providerDo = new ProviderDo();

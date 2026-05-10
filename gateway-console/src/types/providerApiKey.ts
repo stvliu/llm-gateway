@@ -1,4 +1,7 @@
-import type { Status } from './api';
+/** Provider API Key 状态枚举（简化设计，企业内部场景）
+ * 运行时健康状态由熔断器管理，不在此定义
+ */
+export type ProviderApiKeyState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 
 /** Provider API Key 信息 */
 export interface ProviderApiKey {
@@ -9,11 +12,10 @@ export interface ProviderApiKey {
   priority?: number;
   weight?: number;
   isDefault: boolean;
-  status: Status;
+  state: ProviderApiKeyState;
   rpmLimit?: number;
   tpmLimit?: number;
   lastUsedAt?: string;
-  expiresAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +25,9 @@ export interface CreateProviderApiKeyRequest {
   providerId: number;
   keyName: string;
   apiKey: string;
+  priority?: number;
+  weight?: number;
+  isDefault?: boolean;
 }
 
 /** 创建 Provider API Key 响应 */
@@ -31,6 +36,7 @@ export interface CreateProviderApiKeyResponse {
   providerId: number;
   keyName: string;
   apiKey: string;
+  state: ProviderApiKeyState;
 }
 
 /** 更新 Provider API Key 请求 */
@@ -40,8 +46,7 @@ export interface UpdateProviderApiKeyRequest {
   priority?: number;
   weight?: number;
   isDefault?: boolean;
-  status?: Status;
+  state?: ProviderApiKeyState;
   rpmLimit?: number;
   tpmLimit?: number;
-  expiresAt?: string;
 }

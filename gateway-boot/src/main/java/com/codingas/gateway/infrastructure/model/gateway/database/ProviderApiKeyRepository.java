@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.model.gateway.database;
 
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo;
-import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,7 +33,7 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
     /**
      * 根据 Provider ID 和状态查找 Key（分页）
      */
-    Page<ProviderApiKeyDo> findByProviderIdAndStatus(Long providerId, ProviderApiKeyStatus status, Pageable pageable);
+    Page<ProviderApiKeyDo> findByProviderIdAndState(Long providerId, ProviderApiKeyState state, Pageable pageable);
 
     /**
      * 根据 Provider ID 和关键字查找 Key（分页）
@@ -44,16 +44,8 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
     /**
      * 根据 Provider ID、状态和关键字查找 Key（分页）
      */
-    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId AND k.status = :status AND LOWER(k.keyName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
-    Page<ProviderApiKeyDo> findByProviderIdAndStatusAndKeyword(Long providerId, @Param("status") ProviderApiKeyStatus status, @Param("keyword") String keyword, Pageable pageable);
-
-    /**
-     * 根据 Provider ID 查找活跃 Key
-     */
-    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId " +
-           "AND k.status IN ('ACTIVE', 'RATE_LIMITED', 'OVERQUOTA', 'ERROR') " +
-           "AND (k.expiresAt IS NULL OR k.expiresAt > :now)")
-    List<ProviderApiKeyDo> findActiveKeysByProviderId(@Param("providerId") Long providerId, @Param("now") Instant now);
+    @Query("SELECT k FROM ProviderApiKeyDo k WHERE k.providerId = :providerId AND k.state = :state AND LOWER(k.keyName) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    Page<ProviderApiKeyDo> findByProviderIdAndStateAndKeyword(Long providerId, @Param("state") ProviderApiKeyState state, @Param("keyword") String keyword, Pageable pageable);
 
     /**
      * 查找 Provider 的默认 Key
@@ -69,9 +61,8 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
      * 更新 Key 状态
      */
     @Modifying
-    @Query("UPDATE ProviderApiKeyDo k SET k.status = :status, k.disabledReason = :reason WHERE k.id = :id")
-    void updateStatus(@Param("id") Long id, @Param("status") ProviderApiKeyStatus status,
-                      @Param("reason") ProviderApiKeyDo.ProviderApiKeyDisabledReason reason);
+    @Query("UPDATE ProviderApiKeyDo k SET k.state = :state WHERE k.id = :id")
+    void updateState(@Param("id") Long id, @Param("state") ProviderApiKeyState state);
 
     /**
      * 更新最后使用时间

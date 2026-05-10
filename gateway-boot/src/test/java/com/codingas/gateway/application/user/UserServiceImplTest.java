@@ -2,7 +2,7 @@ package com.codingas.gateway.application.user;
 
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.security.entity.User;
@@ -256,7 +256,7 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ENABLED);
+        user.setStatus(UserStatus.ACTIVE);
         user.setRole("USER");
         return user;
     }

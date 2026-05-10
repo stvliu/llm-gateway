@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.security;
+package com.codingas.gateway.domain.security.service;
 
 /**
  * 加密服务接口

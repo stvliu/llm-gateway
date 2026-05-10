@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.user.gateway;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.infrastructure.security.UserGatewayImpl;
 import com.codingas.gateway.infrastructure.security.database.UserRepository;
@@ -238,7 +238,7 @@ class UserGatewayImplTest {
         entity.setEmail("test@example.com");
         entity.setPasswordHash("hashed_password");
         entity.setPhone("13800138000");
-        entity.setStatus(UserStatus.ENABLED);
+        entity.setStatus(UserStatus.ACTIVE);
         entity.setEmailVerified(true);
         return entity;
     }
@@ -250,7 +250,7 @@ class UserGatewayImplTest {
         doEntity.setEmail("test@example.com");
         doEntity.setPasswordHash("hashed_password");
         doEntity.setPhone("13800138000");
-        doEntity.setStatus(UserStatus.ENABLED);
+        doEntity.setStatus(UserStatus.ACTIVE);
         doEntity.setEmailVerified(true);
         doEntity.setCreatedAt(Instant.now());
         doEntity.setUpdatedAt(Instant.now());

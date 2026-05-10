@@ -1,9 +1,9 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
 import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;

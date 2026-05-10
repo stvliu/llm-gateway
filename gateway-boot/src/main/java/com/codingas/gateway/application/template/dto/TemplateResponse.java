@@ -31,7 +31,7 @@ public class TemplateResponse {
     private List<String> tags;
     private String description;
     private String iconUrl;
-    private String status;
+    private String state;
     private Instant createdAt;
     private Instant updatedAt;
     private Integer modelCount;

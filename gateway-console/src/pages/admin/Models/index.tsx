@@ -84,11 +84,11 @@ export default function AdminModels() {
         ],
       },
       {
-        key: 'status',
+        key: 'state',
         label: t('search.filterByStatus'),
         options: [
-          { value: 'ENABLED', label: t('status.enabled') },
-          { value: 'DISABLED', label: t('status.disabled') },
+          { value: 'ACTIVE', label: t('state.active', { ns: 'common' }) },
+          { value: 'DISABLED', label: t('state.disabled', { ns: 'common' }) },
         ],
       },
       {
@@ -311,10 +311,10 @@ export default function AdminModels() {
             <Input />
           </Form.Item>
           {editingProvider && (
-            <Form.Item name="enabled" label={t('provider.enabled')}>
+            <Form.Item name="state" label={t('provider.state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled')}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}
@@ -368,10 +368,10 @@ export default function AdminModels() {
             <Input type="number" step="0.01" />
           </Form.Item>
           {editingModel && (
-            <Form.Item name="enabled" label={t('model.enabled')}>
+            <Form.Item name="state" label={t('model.state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled')}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

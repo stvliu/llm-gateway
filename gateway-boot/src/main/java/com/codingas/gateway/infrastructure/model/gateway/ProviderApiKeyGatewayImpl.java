@@ -2,8 +2,7 @@ package com.codingas.gateway.infrastructure.model.gateway;
 
 import com.codingas.gateway.application.provider.dto.ProviderKeyStats;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ProviderApiKeyDo;
@@ -51,9 +50,8 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
     }
 
     @Override
-    public Page<ProviderApiKey> findByProviderIdAndStatus(Long providerId, ProviderApiKeyStatus status, Pageable pageable) {
-        return repository.findByProviderIdAndStatus(providerId,
-            ProviderApiKeyDo.ProviderApiKeyStatus.valueOf(status.name()), pageable).map(this::toEntity);
+    public Page<ProviderApiKey> findByProviderIdAndState(Long providerId, ProviderApiKeyState state, Pageable pageable) {
+        return repository.findByProviderIdAndState(providerId, state, pageable).map(this::toEntity);
     }
 
     @Override
@@ -62,14 +60,14 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
     }
 
     @Override
-    public Page<ProviderApiKey> findByProviderIdAndStatusAndKeyword(Long providerId, ProviderApiKeyStatus status, String keyword, Pageable pageable) {
-        return repository.findByProviderIdAndStatusAndKeyword(providerId,
-            ProviderApiKeyDo.ProviderApiKeyStatus.valueOf(status.name()), keyword, pageable).map(this::toEntity);
+    public Page<ProviderApiKey> findByProviderIdAndStateAndKeyword(Long providerId, ProviderApiKeyState state, String keyword, Pageable pageable) {
+        return repository.findByProviderIdAndStateAndKeyword(providerId, state, keyword, pageable).map(this::toEntity);
     }
 
     @Override
     public List<ProviderApiKey> findActiveKeysByProviderId(Long providerId) {
-        return repository.findActiveKeysByProviderId(providerId, Instant.now()).stream()
+        return repository.findByProviderId(providerId).stream()
+                .filter(k -> k.getState() == ProviderApiKeyState.ACTIVE)
                 .map(this::toEntity)
                 .collect(Collectors.toList());
     }
@@ -100,10 +98,8 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
 
     @Override
     @Transactional
-    public void updateStatus(Long id, ProviderApiKeyStatus status, ProviderApiKeyDisabledReason reason) {
-        repository.updateStatus(id,
-            ProviderApiKeyDo.ProviderApiKeyStatus.valueOf(status.name()),
-            reason != null ? ProviderApiKeyDo.ProviderApiKeyDisabledReason.valueOf(reason.name()) : null);
+    public void updateState(Long id, ProviderApiKeyState state) {
+        repository.updateState(id, state);
     }
 
     @Override
@@ -130,7 +126,7 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
             List<ProviderApiKeyDo> keys = repository.findByProviderId(providerId);
             int totalCount = keys.size();
             int activeCount = (int) keys.stream()
-                .filter(k -> k.getStatus() == ProviderApiKeyDo.ProviderApiKeyStatus.ACTIVE)
+                .filter(k -> k.getState() == ProviderApiKeyState.ACTIVE)
                 .count();
             result.put(providerId, new ProviderKeyStats(providerId, totalCount, activeCount));
         }
@@ -151,16 +147,12 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
         entity.setWeight(doEntity.getWeight());
         entity.setIsDefault(doEntity.getIsDefault());
         entity.setLastUsedAt(doEntity.getLastUsedAt());
-        entity.setExpiresAt(doEntity.getExpiresAt());
         entity.setRpmLimit(doEntity.getRpmLimit());
         entity.setTpmLimit(doEntity.getTpmLimit());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(ProviderApiKeyStatus.valueOf(doEntity.getStatus().name()));
-        }
-        if (doEntity.getDisabledReason() != null) {
-            entity.setDisabledReason(ProviderApiKeyDisabledReason.valueOf(doEntity.getDisabledReason().name()));
+        if (doEntity.getState() != null) {
+            entity.setState(doEntity.getState());
         }
         return entity;
     }
@@ -183,14 +175,10 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
         doEntity.setWeight(entity.getWeight());
         doEntity.setIsDefault(entity.getIsDefault());
         doEntity.setLastUsedAt(entity.getLastUsedAt());
-        doEntity.setExpiresAt(entity.getExpiresAt());
         doEntity.setRpmLimit(entity.getRpmLimit());
         doEntity.setTpmLimit(entity.getTpmLimit());
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(ProviderApiKeyDo.ProviderApiKeyStatus.valueOf(entity.getStatus().name()));
-        }
-        if (entity.getDisabledReason() != null) {
-            doEntity.setDisabledReason(ProviderApiKeyDo.ProviderApiKeyDisabledReason.valueOf(entity.getDisabledReason().name()));
+        if (entity.getState() != null) {
+            doEntity.setState(entity.getState());
         }
         return doEntity;
     }

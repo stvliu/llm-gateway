@@ -1,8 +1,8 @@
 /** 用户角色 */
 export type UserRole = 'ADMIN' | 'USER';
 
-/** 用户状态 */
-export type UserStatus = 'ENABLED' | 'DISABLED' | 'LOCKED';
+/** 用户状态枚举（统一命名） */
+export type UserStatus = 'ACTIVE' | 'DISABLED' | 'LOCKED';
 
 /** 用户信息 */
 export interface User {

@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.user.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

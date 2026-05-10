@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -48,6 +49,7 @@ public class ModelDo extends BaseDo {
     @Column(name = "capabilities", columnDefinition = "json")
     private Map<String, Boolean> capabilities;
 
-    @Column(name = "enabled", nullable = false)
-    private Boolean enabled = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "state", nullable = false)
+    private ModelState state = ModelState.ACTIVE;
 }
