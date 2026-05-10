@@ -1,4 +1,4 @@
-import { Row, Col, Card, Statistic, Table, Tag } from 'antd';
+import { Row, Col, Card, Statistic, Table, Tag, Spin } from 'antd';
 import {
   AppstoreOutlined,
   TeamOutlined,
@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/themeStore';
 import { TrendChart, ModelUsageChart } from '@/components/charts';
+import { useStats } from '@/services/query';
 
 /**
  * 管理员仪表盘页面
@@ -18,20 +19,17 @@ export default function AdminDashboard() {
   const { t } = useTranslation('dashboard');
   const { getEffectiveTheme } = useThemeStore();
   const isDark = getEffectiveTheme() === 'dark';
+  const { data: statsData, isLoading: statsLoading } = useStats();
 
-  // 静态数据 - 后续接入真实 API
-  // 后端需要提供以下 RESTful API：
-  // - GET /api/v1/stats - 获取统计数据（模型数、用户数、请求数、Token用量）
+  // 统计数据来自后端 API
   const stats = {
-    modelCount: 12,
-    userCount: 45,
-    todayRequests: 1256,
-    tokenUsage: '5.6M',
+    modelCount: statsData?.modelCount ?? 0,
+    userCount: statsData?.userCount ?? 0,
+    todayRequests: statsData?.todayRequests ?? 0,
+    tokenUsage: statsData?.tokenUsage ?? '0',
   };
 
-  // 静态数据 - 后续接入真实 API
-  // 后端需要提供以下 RESTful API：
-  // - GET /api/v1/audit-logs - 获取审计日志/最近活动记录
+  // 静态数据 - 后续接入审计日志 API
   const recentActivities = [
     { key: '1', action: t('activity.actions.createUser'), user: 'admin', target: 'user_001', time: t('activity.time.minutesAgo', { count: 2 }), status: 'success' },
     { key: '2', action: t('activity.actions.addModel'), user: 'admin', target: 'gpt-4-turbo', time: t('activity.time.minutesAgo', { count: 15 }), status: 'success' },
@@ -101,10 +99,11 @@ export default function AdminDashboard() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 统计卡片 */}
-      <Row gutter={16}>
-        {statCards.map((card) => (
-          <Col span={6} key={card.key}>
-            <Card
+      <Spin spinning={statsLoading}>
+        <Row gutter={16}>
+          {statCards.map((card) => (
+            <Col span={6} key={card.key}>
+              <Card
               styles={{
                 body: {
                   padding: '20px 24px',
@@ -156,6 +155,7 @@ export default function AdminDashboard() {
           </Col>
         ))}
       </Row>
+      </Spin>
 
       {/* 趋势图表 */}
       <Row gutter={16} style={{ flex: 1 }}>
