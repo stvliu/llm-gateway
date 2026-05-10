@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.dto;
+package com.codingas.gateway.application.proxy.dto;
 
 import lombok.*;
 

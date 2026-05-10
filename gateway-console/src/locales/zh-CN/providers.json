@@ -3,10 +3,10 @@
   "add": "新增供应商",
   "name": "名称",
   "code": "编码",
-  "type": "类型",
   "baseUrl": "API 地址",
-  "status": "状态",
+  "state": "状态",
   "type": {
+    "label": "类型",
     "OPENAI": "OpenAI",
     "ANTHROPIC": "Anthropic",
     "GEMINI": "Google Gemini",

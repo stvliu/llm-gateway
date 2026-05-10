@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.template.gateway;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
+import com.codingas.gateway.domain.template.enums.TemplateState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -51,15 +52,12 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
             TemplateType templateType,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketState marketState,
             Pageable pageable) {
         ProviderTemplateDo.TemplateType doTemplateType = templateType != null
             ? ProviderTemplateDo.TemplateType.valueOf(templateType.name())
             : null;
-        ProviderTemplateDo.MarketStatus doMarketStatus = marketStatus != null
-            ? ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name())
-            : null;
-        return repository.findByConditions(doTemplateType, providerType, keyword, doMarketStatus, pageable)
+        return repository.findByConditions(doTemplateType, providerType, keyword, marketState, pageable)
             .map(this::toEntity);
     }
 
@@ -93,8 +91,8 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
     }
 
     @Override
-    public void updateMarketStatus(Long id, MarketStatus marketStatus) {
-        repository.updateMarketStatus(id, ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name()));
+    public void updateMarketStatus(Long id, MarketState marketState) {
+        repository.updateMarketStatus(id, marketState);
     }
 
     @Override
@@ -133,11 +131,11 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         if (doEntity.getTemplateType() != null) {
             entity.setTemplateType(TemplateType.valueOf(doEntity.getTemplateType().name()));
         }
-        if (doEntity.getMarketStatus() != null) {
-            entity.setMarketStatus(MarketStatus.valueOf(doEntity.getMarketStatus().name()));
+        if (doEntity.getMarketState() != null) {
+            entity.setMarketState(MarketState.valueOf(doEntity.getMarketState().name()));
         }
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(ProviderTemplate.TemplateStatus.valueOf(doEntity.getStatus().name()));
+        if (doEntity.getState() != null) {
+            entity.setState(doEntity.getState());
         }
         return entity;
     }
@@ -171,15 +169,15 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         if (entity.getTemplateType() != null) {
             doEntity.setTemplateType(ProviderTemplateDo.TemplateType.valueOf(entity.getTemplateType().name()));
         }
-        if (entity.getMarketStatus() != null) {
-            doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.valueOf(entity.getMarketStatus().name()));
+        if (entity.getMarketState() != null) {
+            doEntity.setMarketState(entity.getMarketState());
         } else {
-            doEntity.setMarketStatus(ProviderTemplateDo.MarketStatus.PRIVATE);
+            doEntity.setMarketState(MarketState.PRIVATE);
         }
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(ProviderTemplateDo.TemplateStatus.valueOf(entity.getStatus().name()));
+        if (entity.getState() != null) {
+            doEntity.setState(entity.getState());
         } else {
-            doEntity.setStatus(ProviderTemplateDo.TemplateStatus.ACTIVE);
+            doEntity.setState(TemplateState.ACTIVE);
         }
         return doEntity;
     }

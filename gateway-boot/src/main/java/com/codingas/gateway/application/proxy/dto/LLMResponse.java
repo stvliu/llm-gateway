@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.dto;
+package com.codingas.gateway.application.proxy.dto;
 
 import lombok.Builder;
 import lombok.Data;
@@ -16,9 +16,9 @@ import java.util.Map;
 public class LLMResponse {
 
     /**
-     * 提供商编码
+     * 提供商
      */
-    private String providerCode;
+    private String provider;
 
     /**
      * 模型名称
@@ -178,9 +178,9 @@ public class LLMResponse {
     /**
      * 创建错误响应
      */
-    public static LLMResponse error(String providerCode, String message) {
+    public static LLMResponse error(String provider, String message) {
         return LLMResponse.builder()
-                .providerCode(providerCode)
+                .provider(provider)
                 .error(Error.builder()
                         .message(message)
                         .type("api_error")

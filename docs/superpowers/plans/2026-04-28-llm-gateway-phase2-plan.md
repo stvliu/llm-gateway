@@ -273,7 +273,7 @@ public class UserUpdateRequest {
 // UserResponse.java
 package com.codingas.gateway.adapter.admin.dto.user;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import lombok.Data;
 import java.time.Instant;
 import java.util.List;
@@ -305,7 +305,7 @@ public class UserResponse {
 // UserStatusUpdateRequest.java
 package com.codingas.gateway.adapter.admin.dto.user;
 
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -336,7 +336,7 @@ public class UserRoleAssignRequest {
 package com.codingas.gateway.adapter.admin.dto.user;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -356,7 +356,7 @@ public class UserQueryRequest extends PageRequest {
 package com.codingas.gateway.domain.security.gateway;
 
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import java.util.List;
 import java.util.Optional;
 
@@ -699,7 +699,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 // ProviderCreateRequest.java
 package com.codingas.gateway.adapter.admin.dto.provider;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -751,7 +751,7 @@ public class ProviderUpdateRequest {
 package com.codingas.gateway.adapter.admin.dto.provider;
 
 import com.codingas.gateway.common.enums.ProviderStatus;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 import java.time.Instant;
 import java.util.List;
@@ -788,7 +788,7 @@ package com.codingas.gateway.adapter.admin.dto.provider;
 
 import com.codingas.gateway.adapter.admin.dto.model.ModelQueryRequest;
 import com.codingas.gateway.common.enums.ProviderStatus;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -838,7 +838,7 @@ public class ProviderTestResponse {
 package com.codingas.gateway.domain.router.gateway;
 
 import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import java.util.List;
 import java.util.Optional;
 
@@ -861,7 +861,7 @@ public interface ProviderGateway {
 package com.codingas.gateway.domain.router.repository;
 
 import com.codingas.gateway.domain.router.entity.Provider;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -1855,8 +1855,8 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 // TokenLimitCreateRequest.java
 package com.codingas.gateway.adapter.admin.dto.tokenlimit;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -1895,8 +1895,8 @@ public class TokenLimitCreateRequest {
 // TokenLimitUpdateRequest.java
 package com.codingas.gateway.adapter.admin.dto.tokenlimit;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.enums.TokenLimitStatus;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -1917,8 +1917,8 @@ public class TokenLimitUpdateRequest {
 // TokenLimitResponse.java
 package com.codingas.gateway.adapter.admin.dto.tokenlimit;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.enums.TokenLimitStatus;
 import lombok.Data;
 import java.math.BigDecimal;

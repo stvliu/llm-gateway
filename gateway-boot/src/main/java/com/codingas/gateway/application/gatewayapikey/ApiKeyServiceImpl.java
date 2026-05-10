@@ -6,8 +6,8 @@ import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -61,7 +61,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         apiKey.setName(request.getName());
         apiKey.setExpiresAt(request.getExpiresAt());
         apiKey.setIpWhitelist(request.getIpWhitelist());
-        apiKey.setStatus(ApiKeyStatus.ACTIVE);
+        apiKey.setState(GatewayApiKeyState.ACTIVE);
 
         GatewayApiKey savedApiKey = apiKeyGateway.save(apiKey);
         ApiKeyResponse response = toResponse(savedApiKey);
@@ -101,9 +101,9 @@ public class ApiKeyServiceImpl implements ApiKeyService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getState() != null) {
             apiKeys = apiKeys.stream()
-                .filter(k -> k.getStatus() == request.getStatus())
+                .filter(k -> k.getState() == request.getState())
                 .collect(Collectors.toList());
         }
 
@@ -143,8 +143,8 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         if (request.getIpWhitelist() != null) {
             apiKey.setIpWhitelist(request.getIpWhitelist());
         }
-        if (request.getEnabled() != null) {
-            apiKey.setStatus(request.getEnabled() ? ApiKeyStatus.ACTIVE : ApiKeyStatus.DISABLED);
+        if (request.getState() != null) {
+            apiKey.setState(request.getState());
         }
 
         return toResponse(apiKeyGateway.save(apiKey));
@@ -170,7 +170,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
     public ApiKeyResponse setEnabled(Long id, boolean enabled) {
         GatewayApiKey apiKey = apiKeyGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ApiKey", id));
-        apiKey.setStatus(enabled ? ApiKeyStatus.ACTIVE : ApiKeyStatus.DISABLED);
+        apiKey.setState(enabled ? GatewayApiKeyState.ACTIVE : GatewayApiKeyState.DISABLED);
         return toResponse(apiKeyGateway.save(apiKey));
     }
 
@@ -192,7 +192,7 @@ public class ApiKeyServiceImpl implements ApiKeyService {
         response.setUserId(apiKey.getUserId());
         response.setUsername(apiKey.getUsername());
         response.setName(apiKey.getName());
-        response.setStatus(apiKey.getStatus());
+        response.setState(apiKey.getState());
         response.setExpiresAt(apiKey.getExpiresAt());
         response.setLastUsedAt(apiKey.getLastUsedAt());
         response.setIpWhitelist(apiKey.getIpWhitelist());

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, DatePicker, message, Typography, Tooltip } from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -19,9 +19,8 @@ interface PoolApiKey {
   key: string;
   providerId: number;
   providerName: string;
-  status: 'NORMAL' | 'EXCEEDED' | 'EXPIRED' | 'DISABLED';
+  state: 'ACTIVE' | 'DISABLED' | 'DELETED';
   priority: number;
-  expiresAt: string | null;
   createdAt: string;
 }
 
@@ -33,9 +32,9 @@ interface PoolApiKey {
 // API: PUT /api/admin/api-key-pool/:id/toggle
 // API: PUT /api/admin/api-key-pool/reorder (拖拽排序)
 const mockData: PoolApiKey[] = [
-  { id: 1, name: 'key-1', key: 'sk-xxxx...xxxx', providerId: 1, providerName: 'OpenAI', status: 'NORMAL', priority: 1, expiresAt: null, createdAt: '2024-01-15' },
-  { id: 2, name: 'key-2', key: 'sk-yyyy...yyyy', providerId: 1, providerName: 'OpenAI', status: 'EXCEEDED', priority: 2, expiresAt: null, createdAt: '2024-01-20' },
-  { id: 3, name: 'key-3', key: 'sk-zzzz...zzzz', providerId: 2, providerName: 'Anthropic', status: 'NORMAL', priority: 1, expiresAt: '2024-12-31', createdAt: '2024-02-01' },
+  { id: 1, name: 'key-1', key: 'sk-xxxx...xxxx', providerId: 1, providerName: 'OpenAI', state: 'ACTIVE', priority: 1, createdAt: '2024-01-15' },
+  { id: 2, name: 'key-2', key: 'sk-yyyy...yyyy', providerId: 1, providerName: 'OpenAI', state: 'DISABLED', priority: 2, createdAt: '2024-01-20' },
+  { id: 3, name: 'key-3', key: 'sk-zzzz...zzzz', providerId: 2, providerName: 'Anthropic', state: 'ACTIVE', priority: 1, createdAt: '2024-02-01' },
 ];
 
 export default function AdminApiKeyPool() {
@@ -66,7 +65,7 @@ export default function AdminApiKeyPool() {
   };
 
   const handleToggle = (record: PoolApiKey) => {
-    const action = record.status === 'DISABLED' ? t('enable') : t('disable');
+    const action = record.state === 'DISABLED' ? t('enable') : t('disable');
     Modal.confirm({
       title: t('confirm.toggle', { action }),
       onOk: () => {
@@ -77,9 +76,8 @@ export default function AdminApiKeyPool() {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      await form.validateFields();
       // TODO: 调用 API 保存数据
-      console.log('Form values:', values);
       message.success(t('message.success', { ns: 'common' }));
       setModalOpen(false);
     } catch (error) {
@@ -87,11 +85,10 @@ export default function AdminApiKeyPool() {
     }
   };
 
-  const statusColorMap: Record<string, string> = {
-    NORMAL: 'green',
-    EXCEEDED: 'orange',
-    EXPIRED: 'red',
+  const stateColorMap: Record<string, string> = {
+    ACTIVE: 'green',
     DISABLED: 'default',
+    DELETED: 'red',
   };
 
   const columns: ColumnsType<PoolApiKey> = [
@@ -129,18 +126,12 @@ export default function AdminApiKeyPool() {
       ),
     },
     {
-      title: t('status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={statusColorMap[status]}>{t(`status.${status}`)}</Tag>
+      title: t('state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state) => (
+        <Tag color={stateColorMap[state]}>{t(`state.${state.toLowerCase()}`, { ns: 'common' })}</Tag>
       ),
-    },
-    {
-      title: t('expiresAt'),
-      dataIndex: 'expiresAt',
-      key: 'expiresAt',
-      render: (date: string | null) => date || t('neverExpire'),
     },
     {
       title: t('actions.edit', { ns: 'common' }),
@@ -148,12 +139,12 @@ export default function AdminApiKeyPool() {
       width: 140,
       render: (_, record) => (
         <Space>
-          <Tooltip title={record.status === 'DISABLED' ? t('enable') : t('disable')}>
+          <Tooltip title={record.state === 'DISABLED' ? t('enable') : t('disable')}>
             <Button
               type="text"
-              icon={record.status === 'DISABLED' ? <PlayCircleOutlined /> : <StopOutlined />}
+              icon={record.state === 'DISABLED' ? <PlayCircleOutlined /> : <StopOutlined />}
               onClick={() => handleToggle(record)}
-              disabled={record.status === 'EXPIRED'}
+              disabled={record.state === 'DELETED'}
             />
           </Tooltip>
           <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
@@ -217,9 +208,6 @@ export default function AdminApiKeyPool() {
           </Form.Item>
           <Form.Item name="key" label={t('key')} rules={[{ required: true }]}>
             <Input.TextArea rows={3} placeholder={t('keyPlaceholder')} />
-          </Form.Item>
-          <Form.Item name="expiresAt" label={t('expiresAt')}>
-            <DatePicker style={{ width: '100%' }} placeholder={t('neverExpire')} />
           </Form.Item>
           <Form.Item>
             <Space>

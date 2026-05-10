@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.gatewayapikey.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -16,5 +16,5 @@ public class ApiKeyQueryRequest extends PageRequest {
 
     private Long userId;
 
-    private ApiKeyStatus status;
+    private GatewayApiKeyState state;
 }

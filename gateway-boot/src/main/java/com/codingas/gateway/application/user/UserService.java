@@ -41,7 +41,7 @@ public interface UserService {
     /**
      * 更新用户状态
      */
-    UserResponse updateStatus(Long id, UserStatusUpdateRequest request);
+    UserResponse updateState(Long id, UserStateUpdateRequest request);
 
     /**
      * 分配用户角色

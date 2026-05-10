@@ -13,11 +13,6 @@ import java.util.Map;
  */
 @Data
 public class ModelCreateRequest {
-
-    @NotBlank(message = "Model code is required")
-    @Size(max = 128, message = "Model code must not exceed 128 characters")
-    private String modelCode;
-
     @NotNull(message = "Provider ID is required")
     private Long providerId;
 

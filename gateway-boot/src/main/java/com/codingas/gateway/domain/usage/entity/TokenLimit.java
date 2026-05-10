@@ -2,8 +2,8 @@ package com.codingas.gateway.domain.usage.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.security.entity.User;
@@ -46,7 +46,7 @@ public class TokenLimit extends BaseEntity {
 
     private Model switchModel;
 
-    private TokenLimitStatus status = TokenLimitStatus.ACTIVE;
+    private TokenLimitState state = TokenLimitState.ACTIVE;
 
     private Instant deletedAt;
 
@@ -57,7 +57,7 @@ public class TokenLimit extends BaseEntity {
         USER_CUSTOM
     }
 
-    public enum TokenLimitStatus {
+    public enum TokenLimitState {
         /** 正常 */
         ACTIVE,
         /** 暂停 */

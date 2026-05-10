@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -140,25 +140,25 @@ class UserControllerTest {
     }
 
     @Nested
-    @DisplayName("updateStatus 方法测试")
-    class UpdateStatusTests {
+    @DisplayName("updateState 方法测试")
+    class UpdateStateTests {
 
         @Test
         @DisplayName("更新用户状态成功")
-        void updateStatus_validRequest_returnsUpdated() {
+        void updateState_validRequest_returnsUpdated() {
             // given
-            UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-            request.setStatus(UserStatus.DISABLED);
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.DISABLED);
 
             UserResponse response = createTestResponse();
-            response.setStatus(UserStatus.DISABLED);
-            when(userService.updateStatus(eq(1L), any())).thenReturn(response);
+            response.setState(UserState.DISABLED);
+            when(userService.updateState(eq(1L), any())).thenReturn(response);
 
             // when
-            UserResponse result = controller.updateStatus(1L, request);
+            UserResponse result = controller.updateState(1L, request);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(UserStatus.DISABLED);
+            assertThat(result.getState()).isEqualTo(UserState.DISABLED);
         }
     }
 
@@ -191,7 +191,7 @@ class UserControllerTest {
         response.setId(1L);
         response.setUsername("testuser");
         response.setEmail("test@example.com");
-        response.setStatus(UserStatus.ACTIVE);
+        response.setState(UserState.ACTIVE);
         response.setEmailVerified(true);
         response.setRole("USER");
         response.setCreatedAt(Instant.now());

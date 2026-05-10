@@ -66,12 +66,12 @@ export function ModelList({ providerId }: ModelListProps) {
       render: (type: ModelType) => t(`type.${type}`),
     },
     {
-      title: t('model.status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      title: t('model.state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state: string) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -115,14 +115,14 @@ export function ModelList({ providerId }: ModelListProps) {
           <Form.Item name="name" label={t('model.name')} rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="code" label={t('model.code')} rules={[{ required: true }]}>
+          <Form.Item name="providerModelId" label={t('model.providerModelId')} rules={[{ required: true }]}>
             <Input disabled={!!editingModel} />
           </Form.Item>
           <Form.Item name="providerId" label={t('model.provider')} rules={[{ required: true }]}>
             <Select disabled={!!editingModel}>
-              {providers?.items?.map((p: { id: number; name: string }) => (
+              {providers?.items?.map((p) => (
                 <Select.Option key={p.id} value={p.id}>
-                  {p.name}
+                  {p.providerName}
                 </Select.Option>
               ))}
             </Select>
@@ -137,10 +137,10 @@ export function ModelList({ providerId }: ModelListProps) {
             </Select>
           </Form.Item>
           {editingModel && (
-            <Form.Item name="status" label={t('model.status')}>
+            <Form.Item name="state" label={t('model.state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

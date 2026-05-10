@@ -5,14 +5,13 @@ import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
-import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -85,7 +84,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         tokenLimit.setPeriodDayOfMonth(request.getPeriodDayOfMonth());
         tokenLimit.setExceededAction(request.getExceededAction());
         tokenLimit.setSwitchModel(switchModel);
-        tokenLimit.setStatus(TokenLimitStatus.ACTIVE);
+        tokenLimit.setState(TokenLimitState.ACTIVE);
 
         TokenLimit savedTokenLimit = tokenLimitGateway.save(tokenLimit);
         return toResponse(savedTokenLimit);
@@ -134,9 +133,9 @@ public class TokenLimitServiceImpl implements TokenLimitService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getState() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getStatus() == request.getStatus())
+                .filter(t -> t.getState() == request.getState())
                 .collect(Collectors.toList());
         }
 
@@ -188,7 +187,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             tokenLimit.setSwitchModel(switchModel);
         }
         if (request.getEnabled() != null) {
-            tokenLimit.setStatus(request.getEnabled() ? TokenLimitStatus.ACTIVE : TokenLimitStatus.SUSPENDED);
+            tokenLimit.setState(request.getEnabled() ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
         }
 
         return toResponse(tokenLimitGateway.save(tokenLimit));
@@ -228,7 +227,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         response.setUsername(tokenLimit.getUser().getUsername());
         if (tokenLimit.getProvider() != null) {
             response.setProviderId(tokenLimit.getProvider().getId());
-            response.setProviderName(tokenLimit.getProvider().getProviderName());
+            response.setProviderName(tokenLimit.getProvider().getName());
         }
         if (tokenLimit.getModel() != null) {
             response.setModelId(tokenLimit.getModel().getId());
@@ -248,8 +247,8 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             response.setSwitchModelId(tokenLimit.getSwitchModel().getId());
             response.setSwitchModelName(tokenLimit.getSwitchModel().getDisplayName());
         }
-        response.setStatus(tokenLimit.getStatus());
-        response.setEnabled(tokenLimit.getStatus() == TokenLimitStatus.ACTIVE);
+        response.setState(tokenLimit.getState());
+        response.setEnabled(tokenLimit.getState() == TokenLimitState.ACTIVE);
         response.setCreatedAt(tokenLimit.getCreatedAt());
         response.setUpdatedAt(tokenLimit.getUpdatedAt());
         return response;

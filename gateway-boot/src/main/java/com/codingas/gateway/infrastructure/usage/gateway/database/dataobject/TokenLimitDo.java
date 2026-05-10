@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.usage.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -61,8 +61,8 @@ public class TokenLimitDo extends BaseDo {
     private Long switchModelId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private TokenLimitStatus status = TokenLimitStatus.ACTIVE;
+    @Column(name = "state", nullable = false)
+    private TokenLimitStatus state = TokenLimitStatus.ACTIVE;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

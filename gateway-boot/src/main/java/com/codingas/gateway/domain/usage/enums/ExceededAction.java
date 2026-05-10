@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.enums;
+package com.codingas.gateway.domain.usage.enums;
 
 /**
  * 超限动作枚举

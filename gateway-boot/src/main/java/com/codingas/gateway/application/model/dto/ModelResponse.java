@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.model.dto;
 
-import com.codingas.gateway.domain.model.entity.Model.ModelStatus;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -14,18 +14,15 @@ import java.util.Map;
 public class ModelResponse {
 
     private Long id;
-    private String modelCode;
     private Long providerId;
     private String providerName;
-    private String providerCode;
     private String providerModelId;
     private String displayName;
     private Integer contextWindow;
     private BigDecimal inputPrice;
     private BigDecimal outputPrice;
     private Map<String, Boolean> capabilities;
-    private ModelStatus status;
-    private Boolean enabled;
+    private ModelState state;
     private Instant createdAt;
     private Instant updatedAt;
 }

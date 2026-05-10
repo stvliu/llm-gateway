@@ -1,6 +1,5 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.common.security.EncryptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

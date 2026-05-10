@@ -1,7 +1,5 @@
 package com.codingas.gateway.application.providerapikey.dto;
 
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;

@@ -5,9 +5,10 @@ import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey.ApiKeyStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -83,7 +84,7 @@ class ApiKeyServiceTest {
             assertThat(response.getId()).isEqualTo(100L);
             assertThat(response.getName()).isEqualTo("Test API Key");
             assertThat(response.getRawKey()).startsWith("sk-");
-            assertThat(response.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(response.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
 
             // 验证用户查找
             verify(userGateway).findById(1L);
@@ -97,7 +98,7 @@ class ApiKeyServiceTest {
             assertThat(savedKey.getName()).isEqualTo("Test API Key");
             assertThat(savedKey.getUserId()).isEqualTo(user.getId());
             assertThat(savedKey.getUsername()).isEqualTo(user.getUsername());
-            assertThat(savedKey.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(savedKey.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
         }
 
         @Test
@@ -139,7 +140,7 @@ class ApiKeyServiceTest {
             apiKey.setUserId(user.getId());
             apiKey.setUsername(user.getUsername());
             apiKey.setName("Test Key");
-            apiKey.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey.setState(GatewayApiKeyState.ACTIVE);
             apiKey.setCreatedAt(Instant.now());
             apiKey.setUpdatedAt(Instant.now());
 
@@ -154,7 +155,7 @@ class ApiKeyServiceTest {
             assertThat(response.getUserId()).isEqualTo(1L);
             assertThat(response.getUsername()).isEqualTo("testuser");
             assertThat(response.getName()).isEqualTo("Test Key");
-            assertThat(response.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(response.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
 
             verify(apiKeyGateway).findById(100L);
         }
@@ -193,7 +194,7 @@ class ApiKeyServiceTest {
             apiKey1.setUserId(user.getId());
             apiKey1.setUsername(user.getUsername());
             apiKey1.setName("Key 1");
-            apiKey1.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey1.setState(GatewayApiKeyState.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
             apiKey1.setUpdatedAt(Instant.now());
 
@@ -203,7 +204,7 @@ class ApiKeyServiceTest {
             apiKey2.setUserId(user.getId());
             apiKey2.setUsername(user.getUsername());
             apiKey2.setName("Key 2");
-            apiKey2.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey2.setState(GatewayApiKeyState.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
             apiKey2.setUpdatedAt(Instant.now());
 
@@ -236,7 +237,7 @@ class ApiKeyServiceTest {
             apiKey1.setUserId(user.getId());
             apiKey1.setUsername(user.getUsername());
             apiKey1.setName("Search Key");
-            apiKey1.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey1.setState(GatewayApiKeyState.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
             apiKey1.setUpdatedAt(Instant.now());
 
@@ -246,7 +247,7 @@ class ApiKeyServiceTest {
             apiKey2.setUserId(user.getId());
             apiKey2.setUsername(user.getUsername());
             apiKey2.setName("Other Key");
-            apiKey2.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey2.setState(GatewayApiKeyState.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
             apiKey2.setUpdatedAt(Instant.now());
 
@@ -283,7 +284,7 @@ class ApiKeyServiceTest {
             apiKey1.setUserId(user1.getId());
             apiKey1.setUsername(user1.getUsername());
             apiKey1.setName("User1 Key");
-            apiKey1.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey1.setState(GatewayApiKeyState.ACTIVE);
             apiKey1.setCreatedAt(Instant.now());
             apiKey1.setUpdatedAt(Instant.now());
 
@@ -293,7 +294,7 @@ class ApiKeyServiceTest {
             apiKey2.setUserId(user2.getId());
             apiKey2.setUsername(user2.getUsername());
             apiKey2.setName("User2 Key");
-            apiKey2.setStatus(ApiKeyStatus.ACTIVE);
+            apiKey2.setState(GatewayApiKeyState.ACTIVE);
             apiKey2.setCreatedAt(Instant.now());
             apiKey2.setUpdatedAt(Instant.now());
 
@@ -326,7 +327,7 @@ class ApiKeyServiceTest {
             activeKey.setUserId(user.getId());
             activeKey.setUsername(user.getUsername());
             activeKey.setName("Active Key");
-            activeKey.setStatus(ApiKeyStatus.ACTIVE);
+            activeKey.setState(GatewayApiKeyState.ACTIVE);
             activeKey.setCreatedAt(Instant.now());
             activeKey.setUpdatedAt(Instant.now());
 
@@ -336,12 +337,12 @@ class ApiKeyServiceTest {
             disabledKey.setUserId(user.getId());
             disabledKey.setUsername(user.getUsername());
             disabledKey.setName("Disabled Key");
-            disabledKey.setStatus(ApiKeyStatus.DISABLED);
+            disabledKey.setState(GatewayApiKeyState.DISABLED);
             disabledKey.setCreatedAt(Instant.now());
             disabledKey.setUpdatedAt(Instant.now());
 
             ApiKeyQueryRequest request = new ApiKeyQueryRequest();
-            request.setStatus(ApiKeyStatus.ACTIVE);
+            request.setState(GatewayApiKeyState.ACTIVE);
 
             when(apiKeyGateway.findAll()).thenReturn(List.of(activeKey, disabledKey));
 
@@ -350,7 +351,7 @@ class ApiKeyServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(response.getItems().get(0).getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
 
             verify(apiKeyGateway).findAll();
         }
@@ -393,13 +394,13 @@ class ApiKeyServiceTest {
             existingKey.setUserId(user.getId());
             existingKey.setUsername(user.getUsername());
             existingKey.setName("Old Name");
-            existingKey.setStatus(ApiKeyStatus.ACTIVE);
+            existingKey.setState(GatewayApiKeyState.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
             existingKey.setUpdatedAt(Instant.now());
 
             ApiKeyUpdateRequest request = new ApiKeyUpdateRequest();
             request.setName("New Name");
-            request.setEnabled(false);
+            request.setState(GatewayApiKeyState.ACTIVE);
 
             when(apiKeyGateway.findById(100L)).thenReturn(Optional.of(existingKey));
             when(apiKeyGateway.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -410,7 +411,7 @@ class ApiKeyServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getName()).isEqualTo("New Name");
-            assertThat(response.getStatus()).isEqualTo(ApiKeyStatus.DISABLED);
+            assertThat(response.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
 
             verify(apiKeyGateway).findById(100L);
             verify(apiKeyGateway).save(existingKey);
@@ -453,7 +454,7 @@ class ApiKeyServiceTest {
             existingKey.setKeyHash("hash");
             existingKey.setUserId(user.getId());
             existingKey.setUsername(user.getUsername());
-            existingKey.setStatus(ApiKeyStatus.ACTIVE);
+            existingKey.setState(GatewayApiKeyState.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
 
             when(apiKeyGateway.findById(100L)).thenReturn(Optional.of(existingKey));
@@ -503,7 +504,7 @@ class ApiKeyServiceTest {
             existingKey.setKeyHash("hash");
             existingKey.setUserId(user.getId());
             existingKey.setUsername(user.getUsername());
-            existingKey.setStatus(ApiKeyStatus.DISABLED);
+            existingKey.setState(GatewayApiKeyState.DISABLED);
             existingKey.setCreatedAt(Instant.now());
             existingKey.setUpdatedAt(Instant.now());
 
@@ -514,7 +515,7 @@ class ApiKeyServiceTest {
             ApiKeyResponse response = apiKeyService.setEnabled(100L, true);
 
             // then
-            assertThat(response.getStatus()).isEqualTo(ApiKeyStatus.ACTIVE);
+            assertThat(response.getState()).isEqualTo(GatewayApiKeyState.ACTIVE);
 
             verify(apiKeyGateway).findById(100L);
             verify(apiKeyGateway).save(existingKey);
@@ -533,7 +534,7 @@ class ApiKeyServiceTest {
             existingKey.setKeyHash("hash");
             existingKey.setUserId(user.getId());
             existingKey.setUsername(user.getUsername());
-            existingKey.setStatus(ApiKeyStatus.ACTIVE);
+            existingKey.setState(GatewayApiKeyState.ACTIVE);
             existingKey.setCreatedAt(Instant.now());
             existingKey.setUpdatedAt(Instant.now());
 
@@ -544,7 +545,7 @@ class ApiKeyServiceTest {
             ApiKeyResponse response = apiKeyService.setEnabled(100L, false);
 
             // then
-            assertThat(response.getStatus()).isEqualTo(ApiKeyStatus.DISABLED);
+            assertThat(response.getState()).isEqualTo(GatewayApiKeyState.DISABLED);
 
             verify(apiKeyGateway).findById(100L);
             verify(apiKeyGateway).save(existingKey);

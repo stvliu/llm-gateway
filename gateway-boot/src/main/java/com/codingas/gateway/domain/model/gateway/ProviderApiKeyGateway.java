@@ -1,8 +1,7 @@
 package com.codingas.gateway.domain.model.gateway;
 
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyDisabledReason;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -36,7 +35,7 @@ public interface ProviderApiKeyGateway {
     /**
      * 根据 Provider ID 和状态查找 API 密钥（分页）
      */
-    Page<ProviderApiKey> findByProviderIdAndStatus(Long providerId, ProviderApiKeyStatus status, Pageable pageable);
+    Page<ProviderApiKey> findByProviderIdAndState(Long providerId, ProviderApiKeyState state, Pageable pageable);
 
     /**
      * 根据 Provider ID 和关键字查找 API 密钥（分页）
@@ -46,12 +45,12 @@ public interface ProviderApiKeyGateway {
     /**
      * 根据 Provider ID、状态和关键字查找 API 密钥（分页）
      */
-    Page<ProviderApiKey> findByProviderIdAndStatusAndKeyword(Long providerId, ProviderApiKeyStatus status, String keyword, Pageable pageable);
+    Page<ProviderApiKey> findByProviderIdAndStateAndKeyword(Long providerId, ProviderApiKeyState state, String keyword, Pageable pageable);
 
     /**
      * 根据 Provider ID 查找活跃的 API 密钥
      *
-     * <p>活跃状态包括：ACTIVE、RATE_LIMITED、OVERQUOTA、ERROR</p>
+     * <p>活跃状态：ACTIVE</p>
      */
     List<ProviderApiKey> findActiveKeysByProviderId(Long providerId);
 
@@ -73,7 +72,7 @@ public interface ProviderApiKeyGateway {
     /**
      * 更新 API 密钥状态
      */
-    void updateStatus(Long id, ProviderApiKeyStatus status, ProviderApiKeyDisabledReason reason);
+    void updateState(Long id, ProviderApiKeyState state);
 
     /**
      * 更新最后使用时间
@@ -84,6 +83,14 @@ public interface ProviderApiKeyGateway {
      * 清除 Provider 下其他 Key 的默认标记
      */
     void clearDefaultFlagForOtherKeys(Long providerId, Long excludeId);
+
+    /**
+     * 批量获取 Provider 的 Key 统计信息
+     *
+     * @param providerIds Provider ID 列表
+     * @return Map&lt;providerId, KeyStats&gt;
+     */
+    java.util.Map<Long, com.codingas.gateway.application.provider.dto.ProviderKeyStats> getKeyStatsByProviderIds(java.util.List<Long> providerIds);
 
     /**
      * 获取最大版本号

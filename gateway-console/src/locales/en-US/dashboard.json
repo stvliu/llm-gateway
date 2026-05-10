@@ -24,7 +24,7 @@
     "user": "User",
     "target": "Target",
     "time": "Time",
-    "status": "Status",
+    "state": "Status",
     "actions": {
       "createUser": "Create User",
       "addModel": "Add Model",
@@ -37,7 +37,7 @@
       "hoursAgo": "{{count}} hours ago"
     }
   },
-  "status": {
+  "state": {
     "success": "Success",
     "warning": "Warning",
     "error": "Error"

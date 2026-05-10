@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
 import com.codingas.gateway.domain.proxy.gateway.LLMGatewayRegistry;
 import lombok.extern.slf4j.Slf4j;

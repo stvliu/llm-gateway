@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.template.dto;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import lombok.Builder;
 import lombok.Data;
@@ -25,13 +25,13 @@ public class TemplateResponse {
     private List<Map<String, Object>> modelsConfig;
     private Long authorId;
     private String authorName;
-    private MarketStatus marketStatus;
+    private MarketState marketState;
     private Instant publishAt;
     private Integer downloadCount;
     private List<String> tags;
     private String description;
     private String iconUrl;
-    private String status;
+    private String state;
     private Instant createdAt;
     private Instant updatedAt;
     private Integer modelCount;

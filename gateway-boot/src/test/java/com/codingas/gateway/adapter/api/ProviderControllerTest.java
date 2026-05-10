@@ -6,8 +6,8 @@ import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ class ProviderControllerTest {
         void create_validRequest_returnsCreated() {
             // given
             ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderCode("openai");
+            request.setProviderName("OpenAI");
 
             ProviderResponse response = createTestResponse();
             when(providerService.create(any())).thenReturn(response);
@@ -58,7 +58,7 @@ class ProviderControllerTest {
             ProviderResponse result = controller.create(request);
 
             // then
-            assertThat(result.getProviderCode()).isEqualTo("openai");
+            assertThat(result.getProviderName()).isEqualTo("OpenAI");
         }
     }
 
@@ -151,14 +151,14 @@ class ProviderControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ProviderResponse response = createTestResponse();
-            response.setStatus(Provider.ProviderStatus.ACTIVE);
+            response.setState(ProviderState.ACTIVE);
             when(providerService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ProviderResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
+            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
         }
 
         @Test
@@ -166,14 +166,14 @@ class ProviderControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ProviderResponse response = createTestResponse();
-            response.setStatus(Provider.ProviderStatus.SUSPENDED);
+            response.setState(ProviderState.ACTIVE);
             when(providerService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ProviderResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.SUSPENDED);
+            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
         }
     }
 
@@ -181,12 +181,11 @@ class ProviderControllerTest {
     private ProviderResponse createTestResponse() {
         ProviderResponse response = new ProviderResponse();
         response.setId(1L);
-        response.setProviderCode("openai");
         response.setProviderName("OpenAI");
         response.setProviderType(ProviderType.OPENAI);
         response.setBaseUrl("https://api.openai.com");
         response.setPriority(100);
-        response.setStatus(Provider.ProviderStatus.ACTIVE);
+        response.setState(ProviderState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

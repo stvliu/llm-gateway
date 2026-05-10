@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.security.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -33,8 +34,8 @@ public class GatewayApiKeyDo extends BaseDo {
     private String name;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private ApiKeyStatus status = ApiKeyStatus.ACTIVE;
+    @Column(name = "state", nullable = false)
+    private GatewayApiKeyState state = GatewayApiKeyState.ACTIVE;
 
     @Column(name = "expires_at")
     private Instant expiresAt;
@@ -48,11 +49,4 @@ public class GatewayApiKeyDo extends BaseDo {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
-
-    public enum ApiKeyStatus {
-        ACTIVE,
-        DISABLED,
-        EXPIRED,
-        DELETED
-    }
 }

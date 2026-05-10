@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.providerapikey.dto;
 
-import com.codingas.gateway.domain.model.entity.ProviderApiKey.ProviderApiKeyStatus;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -30,7 +30,7 @@ public class ProviderApiKeyUpdateRequest {
 
     private Boolean isDefault;
 
-    private ProviderApiKeyStatus status;
+    private ProviderApiKeyState state;
 
     private Instant expiresAt;
 

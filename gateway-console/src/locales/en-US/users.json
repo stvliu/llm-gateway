@@ -9,14 +9,14 @@
     "username": "Username",
     "email": "Email",
     "role": "Role",
-    "status": "Status",
+    "state": "Status",
     "createdAt": "Created At",
     "password": "Password"
   },
   "apiKey": {
     "name": "Name",
     "key": "Key Value",
-    "status": "Status",
+    "state": "Status",
     "createdAt": "Created At",
     "copySuccess": "API Key copied",
     "createSuccess": "Created successfully, please copy and save the key immediately"
@@ -24,5 +24,10 @@
   "role": {
     "ADMIN": "Admin",
     "USER": "User"
+  },
+  "state": {
+    "active": "Active",
+    "disabled": "Disabled",
+    "locked": "Locked"
   }
 }

@@ -138,14 +138,15 @@ export default function AdminTemplates() {
       key: 'templateCode',
     },
     {
-      title: t('providerType'),
+      title: '供应商类型',
       dataIndex: 'providerType',
       key: 'providerType',
+      render: (type: string) => t(`providerType.${type}`),
     },
     {
-      title: t('marketStatus'),
-      dataIndex: 'marketStatus',
-      key: 'marketStatus',
+      title: t('marketState.label'),
+      dataIndex: 'marketState',
+      key: 'marketState',
       render: (status: MarketStatus) => {
         const colorMap: Record<MarketStatus, string> = {
           PRIVATE: 'default',
@@ -153,7 +154,7 @@ export default function AdminTemplates() {
           PUBLISHED: 'green',
           REJECTED: 'red',
         };
-        return <Tag color={colorMap[status]}>{t(`marketStatus.${status}`)}</Tag>;
+        return <Tag color={colorMap[status]}>{t(`marketState.${status}`)}</Tag>;
       },
     },
     {
@@ -175,7 +176,7 @@ export default function AdminTemplates() {
           >
             {t('apply')}
           </Button>
-          {record.templateType === 'USER' && record.marketStatus === 'PRIVATE' && (
+          {record.templateType === 'USER' && record.marketState === 'PRIVATE' && (
             <Button
               type="link"
               size="small"

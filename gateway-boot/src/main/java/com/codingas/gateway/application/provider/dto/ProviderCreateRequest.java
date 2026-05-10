@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.provider.dto;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -11,10 +11,6 @@ import lombok.Data;
  */
 @Data
 public class ProviderCreateRequest {
-
-    @NotBlank(message = "Provider code is required")
-    @Size(max = 64, message = "Provider code must not exceed 64 characters")
-    private String providerCode;
 
     @NotBlank(message = "Provider name is required")
     @Size(max = 128, message = "Provider name must not exceed 128 characters")

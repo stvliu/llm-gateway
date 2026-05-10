@@ -4,7 +4,7 @@ import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import org.junit.jupiter.api.BeforeEach;
@@ -249,7 +249,7 @@ class UserServiceTest {
             when(userGateway.findAll()).thenReturn(List.of(testUser));
 
             UserQueryRequest request = new UserQueryRequest();
-            request.setStatus(UserStatus.ACTIVE);
+            request.setState(UserState.ACTIVE);
             request.setPage(1);
             request.setLimit(20);
 
@@ -258,7 +258,7 @@ class UserServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getStatus()).isEqualTo(UserStatus.ACTIVE);
+            assertThat(response.getItems().get(0).getState()).isEqualTo(UserState.ACTIVE);
         }
 
         @Test
@@ -410,28 +410,28 @@ class UserServiceTest {
             when(userGateway.findById(1L)).thenReturn(Optional.of(testUser));
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-            request.setStatus(UserStatus.DISABLED);
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.DISABLED);
 
             // when
-            UserResponse response = userService.updateStatus(1L, request);
+            UserResponse response = userService.updateState(1L, request);
 
             // then
-            assertThat(testUser.getStatus()).isEqualTo(UserStatus.DISABLED);
+            assertThat(testUser.getState()).isEqualTo(UserState.DISABLED);
             verify(userGateway).save(testUser);
         }
 
         @Test
         @DisplayName("更新不存在用户的状态抛出异常")
-        void updateStatus_nonExistingUser_throwsException() {
+        void updateState_nonExistingUser_throwsException() {
             // given
             when(userGateway.findById(99L)).thenReturn(Optional.empty());
 
-            UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-            request.setStatus(UserStatus.LOCKED);
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.LOCKED);
 
             // when & then
-            assertThatThrownBy(() -> userService.updateStatus(99L, request))
+            assertThatThrownBy(() -> userService.updateState(99L, request))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -485,7 +485,7 @@ class UserServiceTest {
         user.setEmail(email);
         user.setPasswordHash("hashedPassword");
         user.setPhone("13800138000");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setEmailVerified(false);
         user.setRole("USER");
         user.setCreatedAt(Instant.now());

@@ -1,11 +1,15 @@
 package com.codingas.gateway.application.template;
 
 import com.codingas.gateway.application.template.dto.*;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.gateway.*;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -66,7 +70,7 @@ public class ProviderTemplateService {
         template.setTags(request.getTags());
         template.setAuthorId(userId);
         template.setAuthorName(username);
-        template.setMarketStatus(MarketStatus.PRIVATE);
+        template.setMarketState(MarketState.PRIVATE);
         template.setDownloadCount(0);
 
         ProviderTemplate saved = gateway.save(template);
@@ -139,12 +143,12 @@ public class ProviderTemplateService {
             TemplateType type,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketState marketState,
             int page,
             int limit) {
 
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketStatus, pageable);
+        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketState, pageable);
         return result.map(this::toResponse);
     }
 
@@ -160,7 +164,7 @@ public class ProviderTemplateService {
             throw new IllegalStateException("官方模板无需发布");
         }
 
-        template.setMarketStatus(MarketStatus.PUBLISHED);
+        template.setMarketState(MarketState.PUBLISHED);
         template.setPublishAt(Instant.now());
         gateway.save(template);
     }
@@ -175,8 +179,8 @@ public class ProviderTemplateService {
 
         // 1. 创建 Provider
         Provider provider = new Provider();
-        provider.setProviderName(template.getTemplateName());
-        provider.setProviderType(com.codingas.gateway.common.enums.ProviderType.valueOf(template.getProviderType()));
+        provider.setName(template.getTemplateName());
+        provider.setType(ProviderType.valueOf(template.getProviderType()));
         Map<String, Object> providerConfig = template.getProviderConfig();
         if (providerConfig != null) {
             if (providerConfig.containsKey("base_url")) {
@@ -196,7 +200,7 @@ public class ProviderTemplateService {
             }
         }
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setState(ProviderState.ACTIVE);
         Provider savedProvider = providerGateway.save(provider);
 
         // 2. 创建 Model
@@ -230,7 +234,7 @@ public class ProviderTemplateService {
                     Map<String, Boolean> caps = (Map<String, Boolean>) modelConfig.get("capabilities");
                     model.setCapabilities(caps);
                 }
-                model.setStatus(Model.ModelStatus.ACTIVE);
+                model.setState(ModelState.ACTIVE);
                 Model savedModel = modelGateway.save(model);
                 modelIds.add(savedModel.getId());
                 modelNames.add(savedModel.getDisplayName());
@@ -243,7 +247,7 @@ public class ProviderTemplateService {
         apiKey.setKeyName(template.getTemplateName() + " API Key");
         apiKey.setApiKey(request.getApiKey());
         apiKey.setPriority(100);
-        apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
+        apiKey.setState(ProviderApiKeyState.ACTIVE);
         providerApiKeyGateway.save(apiKey);
 
         // 4. 增加模板使用次数
@@ -251,7 +255,7 @@ public class ProviderTemplateService {
 
         return ApplyTemplateResult.builder()
             .providerId(savedProvider.getId())
-            .providerName(savedProvider.getProviderName())
+            .providerName(savedProvider.getName())
             .modelIds(modelIds)
             .modelNames(modelNames)
             .createdAt(savedProvider.getCreatedAt())
@@ -379,13 +383,13 @@ public class ProviderTemplateService {
             .modelsConfig(template.getModelsConfig())
             .authorId(template.getAuthorId())
             .authorName(template.getAuthorName())
-            .marketStatus(template.getMarketStatus())
+            .marketState(template.getMarketState())
             .publishAt(template.getPublishAt())
             .downloadCount(template.getDownloadCount())
             .tags(template.getTags())
             .description(template.getDescription())
             .iconUrl(template.getIconUrl())
-            .status(template.getStatus() != null ? template.getStatus().name() : null)
+            .state(template.getState() != null ? template.getState().name() : null)
             .createdAt(template.getCreatedAt())
             .updatedAt(template.getUpdatedAt())
             .modelCount(modelCount)

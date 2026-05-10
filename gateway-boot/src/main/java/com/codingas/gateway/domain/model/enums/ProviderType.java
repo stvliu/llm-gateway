@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.enums;
+package com.codingas.gateway.domain.model.enums;
 
 /**
  * LLM 提供商类型枚举

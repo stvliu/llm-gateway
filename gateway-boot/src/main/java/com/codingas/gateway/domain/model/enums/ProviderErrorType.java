@@ -1,4 +1,4 @@
-package com.codingas.gateway.common.enums;
+package com.codingas.gateway.domain.model.enums;
 
 /**
  * 提供商错误类型枚举

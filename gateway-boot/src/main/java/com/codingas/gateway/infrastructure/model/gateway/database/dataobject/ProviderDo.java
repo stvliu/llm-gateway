@@ -1,11 +1,10 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.time.Instant;
 
 /**
  * 提供商 DO
@@ -21,11 +20,11 @@ import java.time.Instant;
 public class ProviderDo extends BaseDo {
 
     @Column(name = "provider_name", nullable = false, length = 128)
-    private String providerName;
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "provider_type", nullable = false)
-    private ProviderType providerType;
+    private ProviderType type;
 
     @Column(name = "base_url", length = 256)
     private String baseUrl;
@@ -52,15 +51,6 @@ public class ProviderDo extends BaseDo {
     private Integer maxRetries = 3;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private ProviderStatus status = ProviderStatus.ACTIVE;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    public enum ProviderStatus {
-        ACTIVE,
-        SUSPENDED,
-        DELETED
-    }
+    @Column(name = "state", nullable = false)
+    private ProviderState state = ProviderState.ACTIVE;
 }

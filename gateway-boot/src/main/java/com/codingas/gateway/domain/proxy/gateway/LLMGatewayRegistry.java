@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.proxy.gateway;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 
 import java.util.Optional;
 

@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.event.TokenUsedEvent;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.service.ModelDomainService;
@@ -71,13 +71,13 @@ class ProxyServiceTest {
         // 准备测试 Provider
         testProvider = new Provider();
         testProvider.setId(1L);
-        testProvider.setProviderType(ProviderType.OPENAI);
+        testProvider.setType(ProviderType.OPENAI);
 
         // 准备测试 Model
         testModel = new Model();
         testModel.setId(1L);
         testModel.setProviderId(testProvider.getId());
-        testModel.setProviderName(testProvider.getProviderName());
+        testModel.setProviderName(testProvider.getName());
 
         // 准备 ModelProviderInfo
         testModelInfo = new ModelDomainService.ModelProviderInfo(testModel, testProvider);

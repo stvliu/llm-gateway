@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.util;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +64,7 @@ public class ProtocolTranslator {
      */
     public LLMResponse fromAnthropicResponse(Map<String, Object> anthropicResponse) {
         return LLMResponse.builder()
-                .providerCode("anthropic")
+                .provider("anthropic")
                 .id((String) anthropicResponse.get("id"))
                 .model((String) anthropicResponse.get("model"))
                 .content(parseAnthropicContent(anthropicResponse))

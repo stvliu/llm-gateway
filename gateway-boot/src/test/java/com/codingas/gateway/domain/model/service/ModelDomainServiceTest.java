@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,7 +140,7 @@ class ModelDomainServiceTest {
             updateData.setInputPrice(BigDecimal.valueOf(0.05));
             updateData.setOutputPrice(BigDecimal.valueOf(0.10));
             updateData.setCapabilities(Map.of("chat", true, "vision", true));
-            updateData.setStatus(Model.ModelStatus.DEPRECATED);
+            updateData.setState(ModelState.ACTIVE);
 
             when(modelGateway.findById(1L)).thenReturn(Optional.of(existing));
             when(modelGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -150,7 +151,7 @@ class ModelDomainServiceTest {
             // then
             assertThat(result.getDisplayName()).isEqualTo("Updated Display Name");
             assertThat(result.getContextWindow()).isEqualTo(16384);
-            assertThat(result.getStatus()).isEqualTo(Model.ModelStatus.DEPRECATED);
+            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -172,17 +173,17 @@ class ModelDomainServiceTest {
 
         @Test
         @DisplayName("删除 Model 成功")
-        void delete_existingModel_marksAsDeleted() {
+        void delete_existingModel_deletesSuccessfully() {
             // given
             Model model = createTestModel();
             when(modelGateway.findById(1L)).thenReturn(Optional.of(model));
-            when(modelGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            doNothing().when(modelGateway).delete(model);
 
             // when
             service.delete(1L);
 
             // then
-            assertThat(model.getStatus()).isEqualTo(Model.ModelStatus.DELETED);
+            verify(modelGateway).delete(model);
         }
 
         @Test
@@ -208,7 +209,7 @@ class ModelDomainServiceTest {
         model.setInputPrice(BigDecimal.valueOf(0.03));
         model.setOutputPrice(BigDecimal.valueOf(0.06));
         model.setCapabilities(Map.of("chat", true, "streaming", true));
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setState(ModelState.ACTIVE);
 
         model.setProviderId(1L);
         model.setProviderName("OpenAI");

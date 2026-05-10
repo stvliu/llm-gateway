@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway.database;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.infrastructure.model.gateway.database.dataobject.ModelDo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,9 +16,19 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
     @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.providerModelId = :providerModelId")
     Optional<ModelDo> findByProviderModelId(@Param("providerModelId") String providerModelId);
 
-    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.status = :status")
-    List<ModelDo> findByStatus(@Param("status") ModelDo.ModelStatus status);
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.state = :state")
+    List<ModelDo> findByState(@Param("state") ModelState state);
+
+    default List<ModelDo> findActive() {
+        return findByState(ModelState.ACTIVE);
+    }
 
     @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.provider.id = :providerId")
     List<ModelDo> findByProviderId(@Param("providerId") Long providerId);
+
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider")
+    List<ModelDo> findAllWithProvider();
+
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.id = :id")
+    Optional<ModelDo> findByIdWithProvider(@Param("id") Long id);
 }

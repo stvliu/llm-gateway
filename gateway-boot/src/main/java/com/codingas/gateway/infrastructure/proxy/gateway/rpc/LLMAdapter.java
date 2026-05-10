@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
-import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
 
 /**

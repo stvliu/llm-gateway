@@ -2,11 +2,10 @@ package com.codingas.gateway.domain.model.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Instant;
 
 /**
  * 提供商实体
@@ -18,10 +17,9 @@ import java.time.Instant;
 @DomainEntity
 @Slf4j
 public class Provider extends BaseEntity {
+    private String name;
 
-    private String providerName;
-
-    private ProviderType providerType;
+    private ProviderType type;
 
     private String baseUrl;
 
@@ -41,23 +39,12 @@ public class Provider extends BaseEntity {
      */
     private Integer maxRetries = 3;
 
-    private ProviderStatus status = ProviderStatus.ACTIVE;
-
-    private Instant deletedAt;
-
-    public enum ProviderStatus {
-        /** 正常 */
-        ACTIVE,
-        /** 暂停 */
-        SUSPENDED,
-        /** 已删除 */
-        DELETED
-    }
+    private ProviderState state = ProviderState.ACTIVE;
 
     /**
      * 检查提供商是否可用
      */
     public boolean isAvailable() {
-        return ProviderStatus.ACTIVE.equals(status);
+        return ProviderState.ACTIVE.equals(state);
     }
 }

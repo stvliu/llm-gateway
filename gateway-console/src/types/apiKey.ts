@@ -1,4 +1,5 @@
-import type { Status } from './api';
+/** Gateway API Key 状态枚举（简化设计，企业内部场景） */
+export type GatewayApiKeyState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 
 /** API Key 信息 */
 export interface ApiKey {
@@ -6,8 +7,10 @@ export interface ApiKey {
   name: string;
   key: string; // 脱敏后的 Key
   userId: number;
-  userName: string;
-  status: Status;
+  username: string;
+  state: GatewayApiKeyState;
+  lastUsedAt?: string;
+  ipWhitelist?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -22,13 +25,16 @@ export interface CreateApiKeyRequest {
 export interface CreateApiKeyResponse {
   id: number;
   name: string;
-  key: string; // 完整 Key，仅创建时返回一次
+  rawKey: string; // 完整 Key，仅创建时返回一次
   userId: number;
+  username: string;
+  state: GatewayApiKeyState;
   createdAt: string;
 }
 
 /** 更新 API Key 请求 */
 export interface UpdateApiKeyRequest {
   name?: string;
-  status?: Status;
+  ipWhitelist?: string[];
+  state?: GatewayApiKeyState;
 }

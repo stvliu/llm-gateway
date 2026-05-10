@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.quota.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -20,5 +20,5 @@ public class TokenLimitQueryRequest extends PageRequest {
 
     private Long modelId;
 
-    private TokenLimitStatus status;
+    private TokenLimitState state;
 }

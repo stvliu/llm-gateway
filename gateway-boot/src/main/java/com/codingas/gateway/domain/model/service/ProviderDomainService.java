@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,11 @@ public class ProviderDomainService {
 
     @Transactional
     public Provider create(Provider provider) {
-        if (provider.getStatus() == null) {
-            provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        if (provider.getState() == null) {
+            provider.setState(ProviderState.ACTIVE);
         }
         Provider saved = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", saved.getProviderName(), saved.getId());
+        log.info("Created provider: {} (id={})", saved.getName(), saved.getId());
         publishReloadEvent();
         return saved;
     }
@@ -53,14 +54,14 @@ public class ProviderDomainService {
         }
 
         Provider existing = existingOpt.get();
-        existing.setProviderName(provider.getProviderName());
-        existing.setProviderType(provider.getProviderType());
+        existing.setName(provider.getName());
+        existing.setType(provider.getType());
         existing.setBaseUrl(provider.getBaseUrl());
         existing.setPriority(provider.getPriority());
-        existing.setStatus(provider.getStatus());
+        existing.setState(provider.getState());
 
         Provider updated = providerGateway.save(existing);
-        log.info("Updated provider: {} (id={})", updated.getProviderName(), updated.getId());
+        log.info("Updated provider: {} (id={})", updated.getName(), updated.getId());
         publishReloadEvent();
         return updated;
     }
@@ -73,8 +74,7 @@ public class ProviderDomainService {
         }
 
         Provider provider = providerOpt.get();
-        provider.setStatus(Provider.ProviderStatus.DELETED);
-        providerGateway.save(provider);
+        providerGateway.delete(provider);
         log.info("Deleted provider: {}", id);
         publishReloadEvent();
     }

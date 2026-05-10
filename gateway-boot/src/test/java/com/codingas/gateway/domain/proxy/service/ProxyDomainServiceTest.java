@@ -1,8 +1,8 @@
 package com.codingas.gateway.domain.proxy.service;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
 import com.codingas.gateway.domain.proxy.gateway.LLMGatewayRegistry;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;

@@ -199,8 +199,8 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 - [ ] **Step 1: 更新 gateway-adapter 中所有 import**
 
-将 `com.codingas.gateway.adapter.dto.LLMRequest` 替换为 `com.codingas.gateway.common.dto.LLMRequest`
-将 `com.codingas.gateway.adapter.dto.LLMResponse` 替换为 `com.codingas.gateway.common.dto.LLMResponse`
+将 `com.codingas.gateway.adapter.dto.LLMRequest` 替换为 `com.codingas.gateway.application.proxy.dto.LLMRequest`
+将 `com.codingas.gateway.adapter.dto.LLMResponse` 替换为 `com.codingas.gateway.application.proxy.dto.LLMResponse`
 
 - [ ] **Step 2: 更新 gateway-core 中 BaseEntity 的 import**
 

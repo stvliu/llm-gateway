@@ -39,6 +39,7 @@ class ApiKeyAuthInterceptorTest {
     void validApiKey_bearerToken_passes() throws Exception {
         // given
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
+        when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(authenticationService.authenticate("sk-test123"))
                 .thenReturn(new UserAuthResult(1L, "USER", 1L));
 
@@ -57,6 +58,7 @@ class ApiKeyAuthInterceptorTest {
         // given
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn("sk-test123");
+        when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(authenticationService.authenticate("sk-test123"))
                 .thenReturn(new UserAuthResult(1L, "USER", 1L));
 
@@ -75,7 +77,7 @@ class ApiKeyAuthInterceptorTest {
         // given
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn(null);
-        when(request.getRequestURI()).thenReturn("/api/test");
+        when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(response.getWriter()).thenReturn(new MockPrintWriter());
 
         // when
@@ -93,7 +95,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("X-API-Key")).thenReturn("sk-invalid");
         when(authenticationService.authenticate("sk-invalid")).thenReturn(null);
-        when(request.getRequestURI()).thenReturn("/api/test");
+        when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(response.getWriter()).thenReturn(new MockPrintWriter());
 
         // when

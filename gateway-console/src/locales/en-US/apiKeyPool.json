@@ -4,7 +4,7 @@
   "name": "Name",
   "key": "API Key",
   "provider": "Provider",
-  "status": "Status",
+  "state": "Status",
   "priority": "Priority",
   "expiresAt": "Expires At",
   "neverExpire": "Never Expire",
@@ -15,8 +15,8 @@
   "confirm.toggle": "Are you sure you want to {action} this API Key?",
   "namePlaceholder": "Default: key + number",
   "keyPlaceholder": "Enter API Key, can also include API URL and other configs",
-  "status.NORMAL": "Normal",
-  "status.EXCEEDED": "Exceeded",
-  "status.EXPIRED": "Expired",
-  "status.DISABLED": "Disabled"
+  "state.NORMAL": "Normal",
+  "state.EXCEEDED": "Exceeded",
+  "state.EXPIRED": "Expired",
+  "state.DISABLED": "Disabled"
 }

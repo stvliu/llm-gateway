@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,15 +50,6 @@ public class ModelDo extends BaseDo {
     private Map<String, Boolean> capabilities;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private ModelStatus status = ModelStatus.ACTIVE;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    public enum ModelStatus {
-        ACTIVE,
-        DEPRECATED,
-        DELETED
-    }
+    @Column(name = "state", nullable = false)
+    private ModelState state = ModelState.ACTIVE;
 }

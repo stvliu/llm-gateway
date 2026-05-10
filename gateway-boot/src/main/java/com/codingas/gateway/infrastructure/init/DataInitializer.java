@@ -1,7 +1,11 @@
 package com.codingas.gateway.infrastructure.init;
 
-import com.codingas.gateway.common.enums.ProviderType;
-import com.codingas.gateway.common.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -86,16 +90,16 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         Provider provider = new Provider();
-        provider.setProviderName("火山引擎");
-        provider.setProviderType(ProviderType.VOLCENGINE);
+        provider.setName("火山引擎");
+        provider.setType(ProviderType.VOLCENGINE);
         provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
         provider.setWebsiteUrl("https://www.volcengine.com");
         provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setState(ProviderState.ACTIVE);
 
         Provider savedProvider = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", provider.getProviderName(), savedProvider.getId());
+        log.info("Created provider: {} (id={})", provider.getName(), savedProvider.getId());
         return savedProvider;
     }
 
@@ -114,7 +118,7 @@ public class DataInitializer implements CommandLineRunner {
         apiKey.setKeyName("火山引擎主密钥");
         apiKey.setApiKey("1fb8bdcf-3383-426d-9f3d-4c2979895c58");
         apiKey.setPriority(100);
-        apiKey.setStatus(ProviderApiKey.ProviderApiKeyStatus.ACTIVE);
+        apiKey.setState(ProviderApiKeyState.ACTIVE);
 
         providerApiKeyGateway.save(apiKey);
         log.info("Created provider API key: {}", apiKey.getKeyName());
@@ -154,7 +158,7 @@ public class DataInitializer implements CommandLineRunner {
         createModel(provider, "doubao-seed-2-0-mini-260215", "豆包 Seed 2.0 Mini",
                 128000, new BigDecimal("0.0005"), new BigDecimal("0.001"));
 
-        log.info("Created {} models for provider: {}", modelGateway.count(), provider.getProviderName());
+        log.info("Created {} models for provider: {}", modelGateway.count(), provider.getName());
     }
 
     /**
@@ -164,7 +168,7 @@ public class DataInitializer implements CommandLineRunner {
                              int contextWindow, BigDecimal inputPrice, BigDecimal outputPrice) {
         Model model = new Model();
         model.setProviderId(provider.getId());
-        model.setProviderName(provider.getProviderName());
+        model.setProviderName(provider.getName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(contextWindow);
@@ -175,7 +179,7 @@ public class DataInitializer implements CommandLineRunner {
                 "streaming", true,
                 "function_calling", true
         ));
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setState(ModelState.ACTIVE);
 
         modelGateway.save(model);
         log.debug("Created model: {}", displayName);
@@ -196,7 +200,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("admin");
         user.setEmail("admin@example.com");
         user.setPasswordHash(passwordEncoder.encode("admin"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("ADMIN");
         user.setEmailVerified(true);
 
@@ -219,7 +223,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("test");
         user.setEmail("test@example.com");
         user.setPasswordHash(passwordEncoder.encode("test"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("USER");
         user.setEmailVerified(true);
 
@@ -246,7 +250,7 @@ public class DataInitializer implements CommandLineRunner {
         apiKey.setUserId(user.getId());
         apiKey.setUsername(user.getUsername());
         apiKey.setName("测试用 API Key");
-        apiKey.setStatus(GatewayApiKey.ApiKeyStatus.ACTIVE);
+        apiKey.setState(GatewayApiKeyState.ACTIVE);
         apiKey.setExpiresAt(Instant.now().plusSeconds(365 * 24 * 60 * 60)); // 1 年有效期
 
         apiKeyGateway.save(apiKey);

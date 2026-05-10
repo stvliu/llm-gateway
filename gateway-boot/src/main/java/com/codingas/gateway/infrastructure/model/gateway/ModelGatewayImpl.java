@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
@@ -15,8 +16,6 @@ import java.util.stream.Collectors;
 
 /**
  * 模型网关 JPA 实现
- *
- * <p>实现 ModelGateway 接口，负责 DO ↔ Entity 转换。</p>
  */
 @Slf4j
 @Component
@@ -34,7 +33,7 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public Optional<Model> findById(Long id) {
-        return modelRepository.findById(id).map(this::toEntity);
+        return modelRepository.findByIdWithProvider(id).map(this::toEntity);
     }
 
     @Override
@@ -44,14 +43,14 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findAll() {
-        return modelRepository.findAll().stream()
+        return modelRepository.findAllWithProvider().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
 
     @Override
     public List<Model> findAllActive() {
-        return modelRepository.findByStatus(ModelDo.ModelStatus.ACTIVE).stream()
+        return modelRepository.findActive().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
@@ -88,17 +87,13 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setInputPrice(doEntity.getInputPrice());
         entity.setOutputPrice(doEntity.getOutputPrice());
         entity.setCapabilities(doEntity.getCapabilities());
-        entity.setDeletedAt(doEntity.getDeletedAt());
+        entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
-        // 枚举转换
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(Model.ModelStatus.valueOf(doEntity.getStatus().name()));
-        }
         // Provider 关联 - 使用 ID 引用
         if (doEntity.getProvider() != null) {
             entity.setProviderId(doEntity.getProvider().getId());
-            entity.setProviderName(doEntity.getProvider().getProviderName());
+            entity.setProviderName(doEntity.getProvider().getName());
         }
         return entity;
     }
@@ -120,11 +115,7 @@ public class ModelGatewayImpl implements ModelGateway {
         doEntity.setInputPrice(entity.getInputPrice());
         doEntity.setOutputPrice(entity.getOutputPrice());
         doEntity.setCapabilities(entity.getCapabilities());
-        doEntity.setDeletedAt(entity.getDeletedAt());
-        // 枚举转换
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(ModelDo.ModelStatus.valueOf(entity.getStatus().name()));
-        }
+        doEntity.setState(entity.getState());
         // Provider 关联 - 只需要设置 ID
         if (entity.getProviderId() != null) {
             ProviderDo providerDo = new ProviderDo();

@@ -64,11 +64,11 @@ public class UserController {
     /**
      * 更新用户状态
      */
-    @PatchMapping("/{id}/status")
-    public UserResponse updateStatus(
+    @PatchMapping("/{id}/state")
+    public UserResponse updateState(
             @PathVariable Long id,
-            @Valid @RequestBody UserStatusUpdateRequest request) {
-        return userService.updateStatus(id, request);
+            @Valid @RequestBody UserStateUpdateRequest request) {
+        return userService.updateState(id, request);
     }
 
     /**

@@ -2,6 +2,7 @@ package com.codingas.gateway.domain.model.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
+import com.codingas.gateway.domain.model.enums.ModelState;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,23 +38,12 @@ public class Model extends BaseEntity {
 
     private Map<String, Boolean> capabilities;
 
-    private ModelStatus status = ModelStatus.ACTIVE;
-
-    private Instant deletedAt;
-
-    public enum ModelStatus {
-        /** 正常 */
-        ACTIVE,
-        /** 已废弃 */
-        DEPRECATED,
-        /** 已删除 */
-        DELETED
-    }
+    private ModelState state = ModelState.ACTIVE;
 
     /**
      * 检查模型是否可用
      */
     public boolean isAvailable() {
-        return ModelStatus.ACTIVE.equals(status);
+        return ModelState.ACTIVE.equals(state);
     }
 }

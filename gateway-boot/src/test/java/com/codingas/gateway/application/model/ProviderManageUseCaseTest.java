@@ -1,7 +1,8 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.provider.ProviderManageUseCase;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.service.ProviderDomainService;
 import org.junit.jupiter.api.DisplayName;
@@ -50,8 +51,8 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getProviderName()).isEqualTo("OpenAI");
-            assertThat(result.get(1).getProviderName()).isEqualTo("Anthropic");
+            assertThat(result.get(0).getName()).isEqualTo("OpenAI");
+            assertThat(result.get(1).getName()).isEqualTo("Anthropic");
             verify(providerService).findAll();
         }
     }
@@ -73,7 +74,7 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result).isPresent();
-            assertThat(result.get().getProviderName()).isEqualTo("OpenAI");
+            assertThat(result.get().getName()).isEqualTo("OpenAI");
             verify(providerService).findById(id);
         }
 
@@ -110,7 +111,7 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getProviderName()).isEqualTo("OpenAI");
+            assertThat(result.getName()).isEqualTo("OpenAI");
             verify(providerService).create(any(Provider.class));
         }
     }
@@ -133,7 +134,7 @@ class ProviderManageUseCaseTest {
 
             // then
             assertThat(result.getId()).isEqualTo(id);
-            assertThat(result.getProviderName()).isEqualTo("OpenAI Updated");
+            assertThat(result.getName()).isEqualTo("OpenAI Updated");
             verify(providerService).update(eq(id), any(Provider.class));
         }
     }
@@ -163,11 +164,11 @@ class ProviderManageUseCaseTest {
     private Provider createProvider(Long id, String providerName) {
         Provider provider = new Provider();
         provider.setId(id);
-        provider.setProviderName(providerName);
-        provider.setProviderType(ProviderType.OPENAI);
+        provider.setName(providerName);
+        provider.setType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.example.com");
         provider.setPriority(1);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setState(ProviderState.ACTIVE);
         return provider;
     }
 }

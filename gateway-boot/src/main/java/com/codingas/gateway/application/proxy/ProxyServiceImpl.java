@@ -1,8 +1,8 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.event.TokenUsedEvent;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.domain.model.service.ModelDomainService;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
@@ -55,7 +55,7 @@ public class ProxyServiceImpl implements ProxyService {
         ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProviderByProviderModelId(request.getModel());
 
         // 2. 路由选择：获取可用的 LLM Gateway（通过 Domain Service）
-        LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getProviderType());
+        LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getType());
 
         // 3. 代理转发（通过 Domain Service）
         LLMResponse response = proxyDomainService.forward(gateway, request);
@@ -87,7 +87,7 @@ public class ProxyServiceImpl implements ProxyService {
         ModelDomainService.ModelProviderInfo modelInfo = modelDomainService.getModelWithProviderByProviderModelId(request.getModel());
 
         // 2. 路由选择：获取可用的 LLM Gateway（通过 Domain Service）
-        LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getProviderType());
+        LLMGateway gateway = proxyDomainService.selectGateway(modelInfo.provider().getType());
 
         // 3. 创建回调
         StreamCallback callback = streamCallbackFactory.create(onChunk, onComplete, onError);

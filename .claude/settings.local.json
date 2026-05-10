@@ -81,7 +81,15 @@
       "Bash(pkill -f \"gateway-boot-1.0.0-SNAPSHOT.jar\")",
       "Bash(rm -rf gateway-boot/data/gateway*)",
       "Bash(rm -rf data/gateway*)",
-      "Bash(ls -la data/)"
+      "Bash(ls -la data/)",
+      "Bash(./node_modules/.bin/tsc *)",
+      "Bash(../mvnw compile *)",
+      "Bash(sed -i \"s/ApiKeyStatus/GatewayApiKeyState/g\" com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
+      "Bash(sed -i \"s/provider\\\\.setEnabled\\(/provider.setState\\(/g; s/model\\\\.setEnabled\\(/model.setState\\(/g\" com/codingas/gateway/infrastructure/config/ConfigCacheServiceTest.java)",
+      "Bash(sed -i \"s/entity\\\\.setEnabled\\(/entity.setState\\(/g; s/result\\\\.getEnabled\\(\\)/result.getState\\(\\)/g\" com/codingas/gateway/infrastructure/model/gateway/ModelGatewayImplTest.java)",
+      "Bash(sed -i \"s/updateData\\\\.setEnabled\\(/updateData.setState\\(/g; s/provider\\\\.getEnabled\\(\\)/provider.getState\\(\\)/g\" com/codingas/gateway/domain/model/service/ProviderDomainServiceTest.java)",
+      "Bash(sed -i 's/import com.codingas.gateway.domain.security.entity.GatewayApiKey;/import com.codingas.gateway.common.enums.GatewayApiKeyState;\\\\nimport com.codingas.gateway.domain.security.entity.GatewayApiKey;/' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
+      "Bash(sed -i 's/GatewayApiKey\\\\.GatewayApiKeyState\\\\./GatewayApiKeyState./g' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)"
     ]
   },
   "outputStyle": "default"

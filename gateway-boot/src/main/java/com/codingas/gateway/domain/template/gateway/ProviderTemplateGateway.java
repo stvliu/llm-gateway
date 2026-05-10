@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.template.gateway;
 
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -37,7 +37,7 @@ public interface ProviderTemplateGateway {
      * @param templateType 模板类型（可选）
      * @param providerType Provider 类型（可选）
      * @param keyword 关键词（可选）
-     * @param marketStatus 市场状态（可选）
+     * @param marketState 市场状态（可选）
      * @param pageable 分页参数
      * @return 分页结果
      */
@@ -45,7 +45,7 @@ public interface ProviderTemplateGateway {
         TemplateType templateType,
         String providerType,
         String keyword,
-        MarketStatus marketStatus,
+        MarketState marketState,
         Pageable pageable
     );
 
@@ -77,7 +77,7 @@ public interface ProviderTemplateGateway {
     /**
      * 更新市场状态
      */
-    void updateMarketStatus(Long id, MarketStatus marketStatus);
+    void updateMarketStatus(Long id, MarketState marketState);
 
     /**
      * 增加使用次数

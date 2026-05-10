@@ -4,9 +4,8 @@ import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
@@ -234,7 +233,7 @@ class TokenLimitServiceImplTest {
         tokenLimit.setUsedTokens(BigDecimal.ZERO);
         tokenLimit.setPeriodType(PeriodType.MONTHLY);
         tokenLimit.setExceededAction(ExceededAction.REJECT);
-        tokenLimit.setStatus(TokenLimit.TokenLimitStatus.ACTIVE);
+        tokenLimit.setState(TokenLimit.TokenLimitState.ACTIVE);
         return tokenLimit;
     }
 }

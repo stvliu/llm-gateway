@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.usage.gateway;
 
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.infrastructure.usage.gateway.database.TokenLimitRepository;
 import com.codingas.gateway.infrastructure.usage.gateway.database.dataobject.TokenLimitDo;
@@ -214,7 +214,7 @@ class TokenLimitGatewayImplTest {
         entity.setLimitType(TokenLimit.LimitType.USER_CUSTOM);
         entity.setPeriodType(PeriodType.MONTHLY);
         entity.setExceededAction(ExceededAction.REJECT);
-        entity.setStatus(TokenLimit.TokenLimitStatus.ACTIVE);
+        entity.setState(TokenLimit.TokenLimitState.ACTIVE);
         return entity;
     }
 
@@ -227,7 +227,7 @@ class TokenLimitGatewayImplTest {
         doEntity.setLimitType(TokenLimitDo.LimitType.USER_CUSTOM);
         doEntity.setPeriodType(PeriodType.MONTHLY);
         doEntity.setExceededAction(ExceededAction.REJECT);
-        doEntity.setStatus(TokenLimitDo.TokenLimitStatus.ACTIVE);
+        doEntity.setState(TokenLimitDo.TokenLimitStatus.ACTIVE);
         doEntity.setCreatedAt(Instant.now());
         doEntity.setUpdatedAt(Instant.now());
         return doEntity;

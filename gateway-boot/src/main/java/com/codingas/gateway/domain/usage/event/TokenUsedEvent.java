@@ -1,4 +1,6 @@
-package com.codingas.gateway.common.event;
+package com.codingas.gateway.domain.usage.event;
+
+import com.codingas.gateway.common.event.DomainEvent;
 
 import java.math.BigDecimal;
 import java.time.Instant;

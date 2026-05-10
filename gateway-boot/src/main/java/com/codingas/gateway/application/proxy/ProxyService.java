@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 
 import java.util.function.Consumer;

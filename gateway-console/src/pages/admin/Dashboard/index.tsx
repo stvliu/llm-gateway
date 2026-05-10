@@ -43,9 +43,9 @@ export default function AdminDashboard() {
     { title: t('activity.target'), dataIndex: 'target', key: 'target' },
     { title: t('activity.time'), dataIndex: 'time', key: 'time', width: 100 },
     {
-      title: t('activity.status'),
+      title: t('activity.state'),
       dataIndex: 'status',
-      key: 'status',
+      key: 'state',
       width: 80,
       render: (status: string) => {
         const colorMap: Record<string, string> = {
@@ -54,9 +54,9 @@ export default function AdminDashboard() {
           error: 'red',
         };
         const labelMap: Record<string, string> = {
-          success: t('status.success'),
-          warning: t('status.warning'),
-          error: t('status.error'),
+          success: t('state.success'),
+          warning: t('state.warning'),
+          error: t('state.error'),
         };
         return <Tag color={colorMap[status]}>{labelMap[status]}</Tag>;
       },

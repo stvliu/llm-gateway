@@ -46,7 +46,7 @@ export default function Login() {
         setToken(response.token);
       }
 
-      message.success(t('success', { ns: 'common' }));
+      message.success(t('message.success', { ns: 'common' }));
 
       // 根据角色重定向
       const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';

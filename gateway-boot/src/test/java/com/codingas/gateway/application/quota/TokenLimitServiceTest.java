@@ -2,8 +2,8 @@ package com.codingas.gateway.application.quota;
 
 import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
 import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
-import com.codingas.gateway.common.enums.ExceededAction;
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.ExceededAction;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.LimitType;
-import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -72,7 +72,7 @@ class TokenLimitServiceTest {
         // 初始化测试提供商
         testProvider = new Provider();
         testProvider.setId(1L);
-        testProvider.setProviderName("OpenAI");
+        testProvider.setName("OpenAI");
 
         // 初始化测试模型
         testModel = new Model();
@@ -90,7 +90,7 @@ class TokenLimitServiceTest {
         testTokenLimit.setUsedTokens(BigDecimal.ZERO);
         testTokenLimit.setPeriodType(PeriodType.MONTHLY);
         testTokenLimit.setExceededAction(ExceededAction.REJECT);
-        testTokenLimit.setStatus(TokenLimitStatus.ACTIVE);
+        testTokenLimit.setState(TokenLimitState.ACTIVE);
         testTokenLimit.setCreatedAt(Instant.now());
         testTokenLimit.setUpdatedAt(Instant.now());
 
@@ -126,12 +126,12 @@ class TokenLimitServiceTest {
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getProviderName());
+            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
             assertThat(response.getModelId()).isEqualTo(testModel.getId());
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(response.getRemainingTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
-            assertThat(response.getStatus()).isEqualTo(TokenLimitStatus.ACTIVE);
+            assertThat(response.getEnabled()).isTrue();
 
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
@@ -210,12 +210,12 @@ class TokenLimitServiceTest {
             assertThat(response.getUserId()).isEqualTo(testUser.getId());
             assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
             assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getProviderName());
+            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
             assertThat(response.getModelId()).isEqualTo(testModel.getId());
             assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
             assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(response.getUsedTokens()).isEqualByComparingTo(testTokenLimit.getUsedTokens());
-            assertThat(response.getStatus()).isEqualTo(TokenLimitStatus.ACTIVE);
+            assertThat(response.getEnabled()).isTrue();
 
             verify(tokenLimitGateway).findById(1L);
         }

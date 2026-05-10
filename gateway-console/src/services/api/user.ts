@@ -3,7 +3,7 @@ import type {
   User,
   CreateUserRequest,
   UpdateUserRequest,
-  UserStatusUpdateRequest,
+  UserStateUpdateRequest,
   UserRoleAssignRequest,
 } from '@/types/user';
 import type { PageResponse, PageParams } from '@/types/api';
@@ -30,8 +30,8 @@ export const userApi = {
     api.delete<void>(`/users/${id}`),
 
   /** 更新用户状态 */
-  updateStatus: (id: number, data: UserStatusUpdateRequest) =>
-    api.patch<User>(`/users/${id}/status`, data),
+  updateState: (id: number, data: UserStateUpdateRequest) =>
+    api.patch<User>(`/users/${id}/state`, data),
 
   /** 分配用户角色 */
   assignRoles: (id: number, data: UserRoleAssignRequest) =>

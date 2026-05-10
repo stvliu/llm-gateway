@@ -1,9 +1,9 @@
 package com.codingas.gateway.domain.model.service;
 
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -100,14 +100,14 @@ class ProviderDomainServiceTest {
         void create_validProvider_returnsCreated() {
             // given
             Provider provider = createTestProvider();
-            provider.setStatus(null); // 测试默认状态设置
+            provider.setState(ProviderState.ACTIVE); // 测试默认状态设置
             when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // when
             Provider result = service.create(provider);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.ACTIVE);
+            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
 
@@ -116,14 +116,14 @@ class ProviderDomainServiceTest {
         void create_withStatus_preservesStatus() {
             // given
             Provider provider = createTestProvider();
-            provider.setStatus(Provider.ProviderStatus.SUSPENDED);
+            provider.setState(ProviderState.ACTIVE);
             when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // when
             Provider result = service.create(provider);
 
             // then
-            assertThat(result.getStatus()).isEqualTo(Provider.ProviderStatus.SUSPENDED);
+            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
         }
     }
 
@@ -137,11 +137,11 @@ class ProviderDomainServiceTest {
             // given
             Provider existing = createTestProvider();
             Provider updateData = new Provider();
-            updateData.setProviderName("Updated Name");
-            updateData.setProviderType(ProviderType.ANTHROPIC);
+            updateData.setName("Updated Name");
+            updateData.setType(ProviderType.ANTHROPIC);
             updateData.setBaseUrl("https://new.url");
             updateData.setPriority(50);
-            updateData.setStatus(Provider.ProviderStatus.SUSPENDED);
+            updateData.setState(ProviderState.ACTIVE);
 
             when(providerGateway.findById(1L)).thenReturn(Optional.of(existing));
             when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -150,7 +150,7 @@ class ProviderDomainServiceTest {
             Provider result = service.update(1L, updateData);
 
             // then
-            assertThat(result.getProviderName()).isEqualTo("Updated Name");
+            assertThat(result.getName()).isEqualTo("Updated Name");
             assertThat(result.getPriority()).isEqualTo(50);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
@@ -174,17 +174,17 @@ class ProviderDomainServiceTest {
 
         @Test
         @DisplayName("删除 Provider 成功")
-        void delete_existingProvider_marksAsDeleted() {
+        void delete_existingProvider_deletesSuccessfully() {
             // given
             Provider provider = createTestProvider();
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
-            when(providerGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            doNothing().when(providerGateway).delete(provider);
 
             // when
             service.delete(1L);
 
             // then
-            assertThat(provider.getStatus()).isEqualTo(Provider.ProviderStatus.DELETED);
+            verify(providerGateway).delete(provider);
             verify(eventPublisher).publishEvent(any(ProviderConfigChangedEvent.class));
         }
 
@@ -205,11 +205,11 @@ class ProviderDomainServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setProviderType(ProviderType.OPENAI);
+        provider.setName("OpenAI");
+        provider.setType(ProviderType.OPENAI);
         provider.setBaseUrl("https://api.openai.com");
         provider.setPriority(100);
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setState(ProviderState.ACTIVE);
         return provider;
     }
 }

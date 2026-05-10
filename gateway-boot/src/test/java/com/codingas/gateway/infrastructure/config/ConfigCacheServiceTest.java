@@ -1,13 +1,14 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.common.security.EncryptionService;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.security.service.EncryptionService;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -222,8 +223,8 @@ class ConfigCacheServiceTest {
     private Provider createTestProvider() {
         Provider provider = new Provider();
         provider.setId(1L);
-        provider.setProviderName("OpenAI");
-        provider.setStatus(Provider.ProviderStatus.ACTIVE);
+        provider.setName("OpenAI");
+        provider.setState(ProviderState.ACTIVE);
         return provider;
     }
 
@@ -231,7 +232,7 @@ class ConfigCacheServiceTest {
         Model model = new Model();
         model.setId(1L);
         model.setDisplayName("GPT-4");
-        model.setStatus(Model.ModelStatus.ACTIVE);
+        model.setState(ModelState.ACTIVE);
         return model;
     }
 }

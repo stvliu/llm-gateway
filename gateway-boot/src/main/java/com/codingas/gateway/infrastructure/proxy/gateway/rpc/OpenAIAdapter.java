@@ -1,9 +1,9 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
-import com.codingas.gateway.common.ProviderCapabilities;
-import com.codingas.gateway.common.dto.LLMRequest;
-import com.codingas.gateway.common.dto.LLMResponse;
-import com.codingas.gateway.common.enums.ProviderType;
+import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
+import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -240,7 +240,7 @@ public class OpenAIAdapter implements LLMAdapter {
         try {
             Map<String, Object> response = objectMapper.readValue(responseBody, Map.class);
             return LLMResponse.builder()
-                    .providerCode(PROVIDER_CODE)
+                    .provider(PROVIDER_CODE)
                     .id((String) response.get("id"))
                     .model((String) response.get("model"))
                     .created(response.get("created") != null ? ((Number) response.get("created")).longValue() : null)

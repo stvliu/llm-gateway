@@ -1,14 +1,18 @@
 package com.codingas.gateway.application.provider;
 
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
+import com.codingas.gateway.application.provider.dto.ProviderKeyStats;
+import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
+import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.Provider.ProviderStatus;
+import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,12 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * 提供商应用服务实现
- *
- * <p>处理提供商管理的业务逻辑。</p>
  */
 @Slf4j
 @Service
@@ -30,6 +33,7 @@ import java.util.stream.Collectors;
 public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
+    private final ProviderApiKeyGateway providerApiKeyGateway;
 
     /**
      * 创建提供商
@@ -37,15 +41,14 @@ public class ProviderServiceImpl implements ProviderService {
     @Override
     @Transactional
     public ProviderResponse create(ProviderCreateRequest request) {
-        // 创建提供商
         Provider provider = new Provider();
-        provider.setProviderName(request.getProviderName());
-        provider.setProviderType(request.getProviderType());
+        provider.setName(request.getProviderName());
+        provider.setType(request.getProviderType());
         provider.setBaseUrl(request.getBaseUrl());
         provider.setWebsiteUrl(request.getWebsiteUrl());
         provider.setApiDocUrl(request.getApiDocUrl());
         provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        provider.setStatus(ProviderStatus.ACTIVE);
+        provider.setState(ProviderState.ACTIVE);
 
         Provider savedProvider = providerGateway.save(provider);
         return toResponse(savedProvider);
@@ -72,19 +75,19 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             providers = providers.stream()
-                .filter(p -> p.getProviderName().toLowerCase().contains(keyword))
+                .filter(p -> p.getName().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
         if (request.getProviderType() != null) {
             providers = providers.stream()
-                .filter(p -> p.getProviderType() == request.getProviderType())
+                .filter(p -> p.getType() == request.getProviderType())
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getState() != null) {
             providers = providers.stream()
-                .filter(p -> p.getStatus() == request.getStatus())
+                .filter(p -> p.getState().equals(request.getState()))
                 .collect(Collectors.toList());
         }
 
@@ -103,6 +106,13 @@ public class ProviderServiceImpl implements ProviderService {
             .map(this::toResponse)
             .collect(Collectors.toList());
 
+        // 批量填充 Key 统计信息
+        List<Long> providerIds = pagedProviders.stream()
+            .map(Provider::getId)
+            .collect(Collectors.toList());
+        Map<Long, ProviderKeyStats> keyStatsMap = providerApiKeyGateway.getKeyStatsByProviderIds(providerIds);
+        responses.forEach(r -> r.setKeyStats(keyStatsMap.get(r.getId())));
+
         return PageResponse.of(responses, request.getPage(), limit, total);
     }
 
@@ -116,10 +126,10 @@ public class ProviderServiceImpl implements ProviderService {
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
         if (request.getProviderName() != null) {
-            provider.setProviderName(request.getProviderName());
+            provider.setName(request.getProviderName());
         }
         if (request.getProviderType() != null) {
-            provider.setProviderType(request.getProviderType());
+            provider.setType(request.getProviderType());
         }
         if (request.getBaseUrl() != null) {
             provider.setBaseUrl(request.getBaseUrl());
@@ -133,24 +143,22 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getPriority() != null) {
             provider.setPriority(request.getPriority());
         }
-        if (request.getEnabled() != null) {
-            // 根据 enabled 状态设置 ProviderStatus
-            provider.setStatus(request.getEnabled() ? ProviderStatus.ACTIVE : ProviderStatus.SUSPENDED);
+        if (request.getState() != null) {
+            provider.setState(request.getState());
         }
 
         return toResponse(providerGateway.save(provider));
     }
 
     /**
-     * 删除提供商（软删除）
+     * 删除提供商
      */
     @Override
     @Transactional
     public void delete(Long id) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        provider.setDeletedAt(Instant.now());
-        providerGateway.save(provider);
+        providerGateway.delete(provider);
     }
 
     /**
@@ -161,8 +169,30 @@ public class ProviderServiceImpl implements ProviderService {
     public ProviderResponse setEnabled(Long id, boolean enabled) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        provider.setStatus(enabled ? ProviderStatus.ACTIVE : ProviderStatus.SUSPENDED);
+        provider.setState(enabled ? ProviderState.ACTIVE : ProviderState.DISABLED);
         return toResponse(providerGateway.save(provider));
+    }
+
+    /**
+     * 获取 Provider 的 Key 信息（默认 Key + 列表）
+     */
+    @Override
+    public ProviderKeysResponse getProviderKeys(Long providerId) {
+        // 验证 Provider 存在
+        providerGateway.findById(providerId)
+            .orElseThrow(() -> new ResourceNotFoundException("Provider", providerId));
+
+        // 获取所有 Key
+        List<ProviderApiKey> keys = providerApiKeyGateway.findByProviderId(providerId);
+        List<ProviderApiKeyResponse> keyResponses = keys.stream()
+            .map(ProviderApiKeyResponse::from)
+            .collect(Collectors.toList());
+
+        // 获取默认 Key
+        ProviderApiKey defaultKey = providerApiKeyGateway.findDefaultKeyByProviderId(providerId).orElse(null);
+        ProviderApiKeyResponse defaultKeyResponse = ProviderApiKeyResponse.from(defaultKey);
+
+        return new ProviderKeysResponse(defaultKeyResponse, keyResponses);
     }
 
     /**
@@ -171,14 +201,13 @@ public class ProviderServiceImpl implements ProviderService {
     private ProviderResponse toResponse(Provider provider) {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
-        response.setProviderName(provider.getProviderName());
-        response.setProviderType(provider.getProviderType());
+        response.setProviderName(provider.getName());
+        response.setProviderType(provider.getType() != null ? provider.getType() : null);
         response.setBaseUrl(provider.getBaseUrl());
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());
         response.setPriority(provider.getPriority());
-        response.setStatus(provider.getStatus());
-        response.setEnabled(provider.getStatus() == ProviderStatus.ACTIVE);
+        response.setState(provider.getState());
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;

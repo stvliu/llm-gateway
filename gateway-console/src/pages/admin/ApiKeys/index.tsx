@@ -12,7 +12,7 @@ interface UserApiKey {
   key: string;
   userId: number;
   username: string;
-  status: 'ENABLED' | 'DISABLED';
+  state: 'ACTIVE' | 'DISABLED' | 'DELETED';
   createdAt: string;
   lastUsedAt: string | null;
 }
@@ -23,9 +23,9 @@ interface UserApiKey {
 // API: PUT /api/admin/api-keys/:id
 // API: DELETE /api/admin/api-keys/:id
 const mockData: UserApiKey[] = [
-  { id: 1, name: '开发环境', key: 'gw-xxxx...xxxx', userId: 1, username: 'user_001', status: 'ENABLED', createdAt: '2024-01-15', lastUsedAt: '2024-03-20' },
-  { id: 2, name: '测试环境', key: 'gw-yyyy...yyyy', userId: 1, username: 'user_001', status: 'ENABLED', createdAt: '2024-01-20', lastUsedAt: '2024-03-19' },
-  { id: 3, name: '生产环境', key: 'gw-zzzz...zzzz', userId: 2, username: 'user_002', status: 'DISABLED', createdAt: '2024-02-01', lastUsedAt: null },
+  { id: 1, name: '开发环境', key: 'gw-xxxx...xxxx', userId: 1, username: 'user_001', state: 'ACTIVE', createdAt: '2024-01-15', lastUsedAt: '2024-03-20' },
+  { id: 2, name: '测试环境', key: 'gw-yyyy...yyyy', userId: 1, username: 'user_001', state: 'ACTIVE', createdAt: '2024-01-20', lastUsedAt: '2024-03-19' },
+  { id: 3, name: '生产环境', key: 'gw-zzzz...zzzz', userId: 2, username: 'user_002', state: 'DISABLED', createdAt: '2024-02-01', lastUsedAt: null },
 ];
 
 export default function AdminApiKeys() {
@@ -60,9 +60,8 @@ export default function AdminApiKeys() {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      await form.validateFields();
       // TODO: 调用 API 保存数据
-      console.log('Form values:', values);
       if (editingKey) {
         message.success(t('message.success', { ns: 'common' }));
       } else {
@@ -98,12 +97,12 @@ export default function AdminApiKeys() {
       key: 'username',
     },
     {
-      title: t('status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      title: t('state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },
@@ -177,10 +176,10 @@ export default function AdminApiKeys() {
             <Input />
           </Form.Item>
           {editingKey && (
-            <Form.Item name="status" label={t('status')}>
+            <Form.Item name="state" label={t('state')}>
               <Select>
-                <Select.Option value="ENABLED">{t('status.enabled', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled', { ns: 'common' })}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
               </Select>
             </Form.Item>
           )}

@@ -8,6 +8,7 @@ export const providerKeys = {
   list: (params?: Record<string, unknown>) => [...providerKeys.lists(), params] as const,
   details: () => [...providerKeys.all, 'detail'] as const,
   detail: (id: number) => [...providerKeys.details(), id] as const,
+  keys: (id: number) => [...providerKeys.all, 'keys', id] as const,
 };
 
 export function useProviders(params?: { page?: number; size?: number }) {
@@ -66,5 +67,13 @@ export function useSetEnabledProvider() {
       queryClient.invalidateQueries({ queryKey: providerKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: providerKeys.lists() });
     },
+  });
+}
+
+export function useProviderKeys(id: number) {
+  return useQuery({
+    queryKey: providerKeys.keys(id),
+    queryFn: () => providerApi.getKeys(id),
+    enabled: id > 0,
   });
 }

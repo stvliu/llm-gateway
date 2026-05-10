@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +15,7 @@ import java.time.Instant;
 @Entity
 @Table(name = "provider_api_keys", indexes = {
     @Index(name = "idx_provider_id", columnList = "provider_id"),
-    @Index(name = "idx_status", columnList = "status")
+    @Index(name = "idx_state", columnList = "state")
 })
 @Getter
 @Setter
@@ -41,47 +42,15 @@ public class ProviderApiKeyDo extends BaseDo {
     private Boolean isDefault = false;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 32)
-    private ProviderApiKeyStatus status = ProviderApiKeyStatus.ACTIVE;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "disabled_reason", length = 32)
-    private ProviderApiKeyDisabledReason disabledReason;
+    @Column(name = "state", nullable = false, length = 32)
+    private ProviderApiKeyState state = ProviderApiKeyState.ACTIVE;
 
     @Column(name = "last_used_at")
     private Instant lastUsedAt;
-
-    @Column(name = "expires_at")
-    private Instant expiresAt;
 
     @Column(name = "rpm_limit")
     private Integer rpmLimit;
 
     @Column(name = "tpm_limit")
     private Long tpmLimit;
-
-    /**
-     * API Key 状态枚举
-     */
-    public enum ProviderApiKeyStatus {
-        ACTIVE,
-        DISABLED,
-        EXPIRED,
-        RATE_LIMITED,
-        OVERQUOTA,
-        ERROR,
-        DELETED
-    }
-
-    /**
-     * API Key 禁用原因枚举
-     */
-    public enum ProviderApiKeyDisabledReason {
-        MANUAL,
-        RATE_LIMIT,
-        QUOTA_EXCEEDED,
-        AUTH_FAILED,
-        EXPIRED,
-        PROVIDER_ERROR
-    }
 }

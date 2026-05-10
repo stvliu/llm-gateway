@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.model.dto;
 
+import com.codingas.gateway.domain.model.enums.ModelState;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -23,5 +24,5 @@ public class ModelUpdateRequest {
 
     private Map<String, Boolean> capabilities;
 
-    private Boolean enabled;
+    private ModelState state;
 }

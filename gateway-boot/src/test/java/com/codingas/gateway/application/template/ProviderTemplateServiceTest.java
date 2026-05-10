@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -166,7 +166,7 @@ class ProviderTemplateServiceTest {
         ProviderTemplate template = createTestTemplate();
         template.setId(1L);
         template.setTemplateType(TemplateType.USER);
-        template.setMarketStatus(MarketStatus.PRIVATE);
+        template.setMarketState(MarketState.PRIVATE);
 
         when(providerTemplateGateway.findById(1L)).thenReturn(Optional.of(template));
         when(providerTemplateGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -224,8 +224,8 @@ class ProviderTemplateServiceTest {
         ArgumentCaptor<Provider> providerCaptor = ArgumentCaptor.forClass(Provider.class);
         verify(providerGateway).save(providerCaptor.capture());
         Provider savedProvider = providerCaptor.getValue();
-        assertThat(savedProvider.getProviderName()).isEqualTo("Test Provider");
-        assertThat(savedProvider.getProviderType().name()).isEqualTo("OTHER");
+        assertThat(savedProvider.getName()).isEqualTo("Test Provider");
+        assertThat(savedProvider.getType().name()).isEqualTo("OTHER");
 
         ArgumentCaptor<ProviderApiKey> apiKeyCaptor = ArgumentCaptor.forClass(ProviderApiKey.class);
         verify(providerApiKeyGateway).save(apiKeyCaptor.capture());

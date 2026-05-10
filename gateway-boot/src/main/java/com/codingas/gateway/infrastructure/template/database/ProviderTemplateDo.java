@@ -1,6 +1,8 @@
 package com.codingas.gateway.infrastructure.template.database;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.domain.template.enums.TemplateState;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -53,8 +55,8 @@ public class ProviderTemplateDo extends BaseDo {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "market_status", nullable = false, length = 32)
-    private MarketStatus marketStatus = MarketStatus.PRIVATE;
+    @Column(name = "market_state", nullable = false, length = 32)
+    private MarketState marketState = MarketState.PRIVATE;
 
     @Column(name = "publish_at")
     private Instant publishAt;
@@ -75,8 +77,8 @@ public class ProviderTemplateDo extends BaseDo {
 
     @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 32)
-    private TemplateStatus status = TemplateStatus.ACTIVE;
+    @Column(name = "state", nullable = false, length = 32)
+    private TemplateState state = TemplateState.ACTIVE;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
@@ -86,19 +88,5 @@ public class ProviderTemplateDo extends BaseDo {
      */
     public enum TemplateType {
         OFFICIAL, USER
-    }
-
-    /**
-     * 市场状态枚举
-     */
-    public enum MarketStatus {
-        PRIVATE, PENDING, PUBLISHED, REJECTED
-    }
-
-    /**
-     * 模板状态枚举
-     */
-    public enum TemplateStatus {
-        ACTIVE, DISABLED
     }
 }

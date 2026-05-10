@@ -2,7 +2,7 @@ package com.codingas.gateway.domain.alert.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.common.enums.PeriodType;
+import com.codingas.gateway.domain.usage.enums.PeriodType;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
