@@ -364,7 +364,23 @@ export default function AdminModels() {
 
       {/* Provider 表单弹窗 */}
       <Modal
-        title={editingProvider ? t('actions.edit', { ns: 'common' }) : t('addProvider')}
+        title={
+          editingProvider
+            ? t('actions.edit', { ns: 'common' })
+            : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 32 }}>
+                <span>{t('addProvider')}</span>
+                {providerModalStep === 'select-template' && (
+                  <a
+                    onClick={handleCustomProviderAdd}
+                    style={{ fontSize: 13, fontWeight: 'normal' }}
+                  >
+                    {t('provider.customAdd', { defaultValue: '自定义供应商' })}
+                  </a>
+                )}
+              </div>
+            )
+        }
         open={providerModalOpen}
         onCancel={() => setProviderModalOpen(false)}
         footer={null}
@@ -374,7 +390,6 @@ export default function AdminModels() {
         {!editingProvider && providerModalStep === 'select-template' && (
           <ProviderTemplateSelector
             onSelect={handleProviderTemplateSelect}
-            onCustomAdd={handleCustomProviderAdd}
           />
         )}
 
@@ -449,7 +464,16 @@ export default function AdminModels() {
 
       {/* Model 表单弹窗 */}
       <Modal
-        title={editingModel ? t('actions.edit', { ns: 'common' }) : t('addModel')}
+        title={
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 24 }}>
+            <span>{editingModel ? t('actions.edit', { ns: 'common' }) : t('addModel')}</span>
+            {!editingModel && currentProvider && !showCustomForm && (
+              <Button type="link" size="small" onClick={handleCustomAdd}>
+                {t('template.customAdd', { defaultValue: '自定义模型' })}
+              </Button>
+            )}
+          </div>
+        }
         open={modelModalOpen}
         onCancel={() => setModelModalOpen(false)}
         footer={null}
@@ -460,7 +484,6 @@ export default function AdminModels() {
           <ModelTemplateSelector
             providerType={currentProvider.providerType}
             onSelect={handleTemplateSelect}
-            onCustomAdd={handleCustomAdd}
           />
         )}
 

@@ -5,7 +5,6 @@ import {
   ApiOutlined,
   PictureOutlined,
   AudioOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
@@ -26,7 +25,6 @@ interface ModelTemplate {
 interface ModelTemplateSelectorProps {
   providerType: string;
   onSelect: (template: ModelTemplate) => void;
-  onCustomAdd: () => void;
 }
 
 /**
@@ -106,7 +104,6 @@ function isPopularModel(modelId: string): boolean {
 export function ModelTemplateSelector({
   providerType,
   onSelect,
-  onCustomAdd,
 }: ModelTemplateSelectorProps) {
   const { t } = useTranslation('models');
   const { token } = useToken();
@@ -290,25 +287,6 @@ export function ModelTemplateSelector({
             );
           })}
         </div>
-      </div>
-
-      {/* 自定义添加 */}
-      <div style={{ marginTop: 16 }}>
-        <Tag
-          style={{
-            cursor: 'pointer',
-            padding: '4px 12px',
-            margin: 0,
-            background: 'transparent',
-            border: `1px dashed ${token.colorBorder}`,
-          }}
-          onClick={onCustomAdd}
-        >
-          <Space>
-            <ThunderboltOutlined />
-            {t('template.customAdd', { defaultValue: '自定义模型' })}
-          </Space>
-        </Tag>
       </div>
     </div>
   );
