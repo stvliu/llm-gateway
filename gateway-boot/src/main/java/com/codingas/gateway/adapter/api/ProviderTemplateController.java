@@ -6,6 +6,7 @@ import com.codingas.gateway.application.template.dto.ApplyTemplateRequest;
 import com.codingas.gateway.application.template.dto.ApplyTemplateResult;
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
+import com.codingas.gateway.application.template.dto.TemplateStateUpdateRequest;
 import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
 import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
@@ -94,12 +95,14 @@ public class ProviderTemplateController {
     }
 
     /**
-     * 发布到公共市场
+     * 更新模板市场状态
      */
-    @PostMapping("/{id}/publish")
-    public ResponseEntity<Void> publishTemplate(@PathVariable Long id) {
-        service.publishTemplate(id);
-        return ResponseEntity.ok().build();
+    @PatchMapping("/{id}/market-state")
+    public ResponseEntity<TemplateResponse> updateMarketState(
+            @PathVariable Long id,
+            @Valid @RequestBody TemplateStateUpdateRequest request) {
+        TemplateResponse response = service.updateMarketState(id, request.marketState());
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -128,11 +131,16 @@ public class ProviderTemplateController {
 
     /**
      * 批量导出模板为 ZIP 文件
+     *
+     * <p>单次最多导出 50 个模板，避免 URL 长度超限。</p>
      */
-    @GetMapping("/export/batch")
+    @GetMapping("/export")
     public ResponseEntity<Void> exportTemplates(
             @RequestParam List<Long> ids,
             HttpServletResponse response) throws IOException {
+        if (ids.size() > 50) {
+            throw new IllegalArgumentException("单次最多导出 50 个模板，当前: " + ids.size());
+        }
         response.setContentType("application/zip");
         response.setHeader("Content-Disposition", "attachment; filename=templates.zip");
         service.exportTemplates(ids, response.getOutputStream());
