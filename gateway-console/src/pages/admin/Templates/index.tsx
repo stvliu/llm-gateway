@@ -163,7 +163,7 @@ export default function AdminTemplates() {
       key: 'downloadCount',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 200,
       render: (_, record) => (
@@ -222,7 +222,7 @@ export default function AdminTemplates() {
       key: 'downloadCount',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 150,
       render: (_, record) => (
@@ -294,7 +294,7 @@ export default function AdminTemplates() {
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingTemplate ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingTemplate ? t('actions.label', { ns: 'common' }) : t('add')}
         open={createModalOpen}
         onCancel={() => setCreateModalOpen(false)}
         footer={null}

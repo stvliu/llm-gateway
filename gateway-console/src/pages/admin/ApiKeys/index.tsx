@@ -131,7 +131,7 @@ export default function AdminApiKeys() {
       render: (date: string | undefined) => date || '-',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -171,7 +171,7 @@ export default function AdminApiKeys() {
       />
 
       <Modal
-        title={editingKey ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingKey ? t('actions.label', { ns: 'common' }) : t('add')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}

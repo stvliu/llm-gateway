@@ -17,6 +17,7 @@
     "copyright": "© 2024 LLM Gateway"
   },
   "actions": {
+    "label": "操作",
     "add": "新增",
     "edit": "编辑",
     "delete": "删除",

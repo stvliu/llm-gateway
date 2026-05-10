@@ -100,7 +100,7 @@ export default function AdminUsers() {
       key: 'createdAt',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 150,
       render: (_, record) => (
@@ -131,7 +131,7 @@ export default function AdminUsers() {
       />
 
       <Modal
-        title={editingUser ? t('actions.edit', { ns: 'common' }) : t('addUser')}
+        title={editingUser ? t('actions.label', { ns: 'common' }) : t('addUser')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
