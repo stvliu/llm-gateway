@@ -20,6 +20,8 @@ export default function AdminDashboard() {
   const isDark = getEffectiveTheme() === 'dark';
 
   // 静态数据 - 后续接入真实 API
+  // 后端需要提供以下 RESTful API：
+  // - GET /api/v1/stats - 获取统计数据（模型数、用户数、请求数、Token用量）
   const stats = {
     modelCount: 12,
     userCount: 45,
@@ -28,7 +30,8 @@ export default function AdminDashboard() {
   };
 
   // 静态数据 - 后续接入真实 API
-  // TODO: 接入后端 API，替换 mockData
+  // 后端需要提供以下 RESTful API：
+  // - GET /api/v1/audit-logs - 获取审计日志/最近活动记录
   const recentActivities = [
     { key: '1', action: t('activity.actions.createUser'), user: 'admin', target: 'user_001', time: t('activity.time.minutesAgo', { count: 2 }), status: 'success' },
     { key: '2', action: t('activity.actions.addModel'), user: 'admin', target: 'gpt-4-turbo', time: t('activity.time.minutesAgo', { count: 15 }), status: 'success' },

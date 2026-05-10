@@ -7,12 +7,6 @@ import type { Provider, CreateProviderRequest } from '@/types/provider';
 import type { ProviderType } from '@/types/api';
 import type { ColumnsType } from 'antd/es/table';
 
-// TODO: 接入后端 API (已部分实现，使用 useProviders hooks)
-// API: GET /api/admin/providers
-// API: POST /api/admin/providers
-// API: PUT /api/admin/providers/:id
-// API: DELETE /api/admin/providers/:id
-
 export default function AdminProviders() {
   const { t } = useTranslation('providers');
   const [modalOpen, setModalOpen] = useState(false);
