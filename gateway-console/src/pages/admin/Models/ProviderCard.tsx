@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Space, Tag, Badge, Dropdown } from 'antd';
+import { Card, Button, Space, Tag, Badge, Dropdown, theme } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -14,6 +14,8 @@ import { StatusIndicator } from '@/components/common';
 import { ModelTag } from './ModelTag';
 import type { Provider } from '@/types/provider';
 import type { Model } from '@/types/model';
+
+const { useToken } = theme;
 
 interface ProviderCardProps {
   provider: Provider;
@@ -47,6 +49,7 @@ export function ProviderCard({
   const { t } = useTranslation('models');
   const { getEffectiveTheme } = useThemeStore();
   const isDark = getEffectiveTheme() === 'dark';
+  const { token } = useToken();
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
   const activeModels = models.filter((m) => m.state === 'ACTIVE');
@@ -97,7 +100,7 @@ export function ProviderCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: isExpanded ? '1px solid #f0f0f0' : 'none',
+          borderBottom: isExpanded ? `1px solid ${token.colorBorderSecondary}` : 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -138,11 +141,11 @@ export function ProviderCard({
           alignItems: 'center',
           justifyContent: 'space-between',
           fontSize: 13,
-          color: '#666',
-          borderBottom: isExpanded ? '1px solid #f0f0f0' : 'none',
+          color: token.colorTextSecondary,
+          borderBottom: isExpanded ? `1px solid ${token.colorBorderSecondary}` : 'none',
         }}
       >
-        <Space split={<span style={{ color: '#d9d9d9' }}>|</span>} size={8}>
+        <Space split={<span style={{ color: token.colorBorder }}>|</span>} size={8}>
           <span>
             {t('provider.type')}: {t(`type.${provider.providerType}`, { ns: 'providers' })}
           </span>
@@ -171,7 +174,7 @@ export function ProviderCard({
         <div
           style={{
             padding: '16px 20px',
-            background: isDark ? '#1f1f1f' : '#fafafa',
+            background: isDark ? token.colorBgContainer : token.colorBgLayout,
           }}
         >
           {models.length === 0 ? (
@@ -179,7 +182,7 @@ export function ProviderCard({
               style={{
                 textAlign: 'center',
                 padding: 24,
-                color: '#999',
+                color: token.colorTextSecondary,
               }}
             >
               <p style={{ margin: '0 0 16px' }}>{t('empty.noModel')}</p>
