@@ -4,7 +4,7 @@
   "name": "Name",
   "code": "Code",
   "baseUrl": "API URL",
-  "status": "Status",
+  "state": "Status",
   "type": {
     "label": "Type",
     "OPENAI": "OpenAI",

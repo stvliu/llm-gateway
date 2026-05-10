@@ -87,7 +87,7 @@ public class UserGatewayImpl implements UserGateway {
         user.setPasswordHash(doEntity.getPasswordHash());
         user.setPhone(doEntity.getPhone());
         user.setAvatarUrl(doEntity.getAvatarUrl());
-        user.setStatus(doEntity.getStatus());
+        user.setState(doEntity.getState());
         user.setEmailVerified(doEntity.getEmailVerified());
         user.setOauthProviders(doEntity.getOauthProviders());
         user.setPiiSalt(doEntity.getPiiSalt());
@@ -118,7 +118,7 @@ public class UserGatewayImpl implements UserGateway {
         doEntity.setPasswordHash(user.getPasswordHash());
         doEntity.setPhone(user.getPhone());
         doEntity.setAvatarUrl(user.getAvatarUrl());
-        doEntity.setStatus(user.getStatus());
+        doEntity.setState(user.getState());
         doEntity.setEmailVerified(user.getEmailVerified());
         doEntity.setOauthProviders(user.getOauthProviders());
         doEntity.setPiiSalt(user.getPiiSalt());

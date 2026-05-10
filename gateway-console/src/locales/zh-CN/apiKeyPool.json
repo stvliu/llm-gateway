@@ -4,7 +4,7 @@
   "name": "名称",
   "key": "API Key",
   "provider": "供应商",
-  "status": "状态",
+  "state": "状态",
   "priority": "优先级",
   "expiresAt": "过期时间",
   "neverExpire": "永不过期",
@@ -15,8 +15,8 @@
   "confirm.toggle": "确定要{action}该 API Key 吗？",
   "namePlaceholder": "默认为 key + 序号",
   "keyPlaceholder": "输入 API Key，也可包含 API URL 等配置",
-  "status.NORMAL": "正常",
-  "status.EXCEEDED": "超额",
-  "status.EXPIRED": "已过期",
-  "status.DISABLED": "已停用"
+  "state.NORMAL": "正常",
+  "state.EXCEEDED": "超额",
+  "state.EXPIRED": "已过期",
+  "state.DISABLED": "已停用"
 }

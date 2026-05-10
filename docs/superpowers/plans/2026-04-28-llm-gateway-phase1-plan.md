@@ -203,7 +203,7 @@ package com.codingas.gateway.domain.security.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.enums.UserRole;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.Accessors;

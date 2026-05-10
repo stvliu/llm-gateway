@@ -273,7 +273,7 @@ public class UserUpdateRequest {
 // UserResponse.java
 package com.codingas.gateway.adapter.admin.dto.user;
 
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import lombok.Data;
 import java.time.Instant;
 import java.util.List;
@@ -305,7 +305,7 @@ public class UserResponse {
 // UserStatusUpdateRequest.java
 package com.codingas.gateway.adapter.admin.dto.user;
 
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -336,7 +336,7 @@ public class UserRoleAssignRequest {
 package com.codingas.gateway.adapter.admin.dto.user;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -356,7 +356,7 @@ public class UserQueryRequest extends PageRequest {
 package com.codingas.gateway.domain.security.gateway;
 
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import java.util.List;
 import java.util.Optional;
 

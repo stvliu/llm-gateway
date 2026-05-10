@@ -19,11 +19,11 @@ package com.codingas.gateway.domain.security.enums;
  *   <li>LOCKED：账户锁定，登录失败次数过多触发（可恢复）</li>
  * </ul>
  */
-public enum UserStatus {
+public enum UserState {
     /** 账户正常，可正常使用 */
     ACTIVE,
 
-    /** 账户禁用，无法登录（可恢复） */
+    /** 账户停用，无法登录（可恢复） */
     DISABLED,
 
     /** 账户锁定（登录失败次数过多触发，可恢复） */

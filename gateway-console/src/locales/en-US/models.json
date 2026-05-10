@@ -10,7 +10,7 @@
     "baseUrl": "API URL",
     "timeout": "Timeout",
     "maxRetries": "Max Retries",
-    "status": "Status",
+    "state": "Status",
     "enabled": "Status"
   },
   "model": {
@@ -18,7 +18,7 @@
     "providerModelId": "Provider Model ID",
     "type": "Model Type",
     "provider": "Provider",
-    "status": "Status",
+    "state": "Status",
     "enabled": "Status"
   },
   "type": {
@@ -42,7 +42,7 @@
     "IMAGE": "Image",
     "AUDIO": "Audio"
   },
-  "status": {
+  "state": {
     "active": "Active",
     "suspended": "Suspended",
     "deprecated": "Deprecated",

@@ -3,7 +3,7 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } 
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
-import type { User, CreateUserRequest, UserRole, UserStatus } from '@/types/user';
+import type { User, CreateUserRequest, UserRole, UserState } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminUsers() {
@@ -78,18 +78,18 @@ export default function AdminUsers() {
       render: (role: UserRole) => t(`role.${role}`),
     },
     {
-      title: t('user.status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status: UserStatus) => {
-        const colorMap: Record<UserStatus, string> = {
+      title: t('user.state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state: UserState) => {
+        const colorMap: Record<UserState, string> = {
           ACTIVE: 'green',
           DISABLED: 'red',
           LOCKED: 'orange',
         };
         return (
-          <Tag color={colorMap[status] || 'default'}>
-            {t(`status.${status.toLowerCase()}`)}
+          <Tag color={colorMap[state] || 'default'}>
+            {t(`state.${state.toLowerCase()}`)}
           </Tag>
         );
       },
@@ -155,11 +155,11 @@ export default function AdminUsers() {
             </Select>
           </Form.Item>
           {editingUser && (
-            <Form.Item name="status" label={t('user.status')}>
+            <Form.Item name="state" label={t('user.state')}>
               <Select>
-                <Select.Option value="ACTIVE">{t('status.active')}</Select.Option>
-                <Select.Option value="DISABLED">{t('status.disabled')}</Select.Option>
-                <Select.Option value="LOCKED">{t('status.locked')}</Select.Option>
+                <Select.Option value="ACTIVE">{t('state.active')}</Select.Option>
+                <Select.Option value="DISABLED">{t('state.disabled')}</Select.Option>
+                <Select.Option value="LOCKED">{t('state.locked')}</Select.Option>
               </Select>
             </Form.Item>
           )}

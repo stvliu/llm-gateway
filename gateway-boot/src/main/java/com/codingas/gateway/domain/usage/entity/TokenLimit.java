@@ -46,7 +46,7 @@ public class TokenLimit extends BaseEntity {
 
     private Model switchModel;
 
-    private TokenLimitStatus status = TokenLimitStatus.ACTIVE;
+    private TokenLimitState state = TokenLimitState.ACTIVE;
 
     private Instant deletedAt;
 
@@ -57,7 +57,7 @@ public class TokenLimit extends BaseEntity {
         USER_CUSTOM
     }
 
-    public enum TokenLimitStatus {
+    public enum TokenLimitState {
         /** 正常 */
         ACTIVE,
         /** 暂停 */

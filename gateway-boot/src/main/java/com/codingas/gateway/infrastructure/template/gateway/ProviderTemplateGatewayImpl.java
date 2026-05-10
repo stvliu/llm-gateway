@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.template.gateway;
 
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.enums.TemplateState;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -52,12 +52,12 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
             TemplateType templateType,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketState marketState,
             Pageable pageable) {
         ProviderTemplateDo.TemplateType doTemplateType = templateType != null
             ? ProviderTemplateDo.TemplateType.valueOf(templateType.name())
             : null;
-        return repository.findByConditions(doTemplateType, providerType, keyword, marketStatus, pageable)
+        return repository.findByConditions(doTemplateType, providerType, keyword, marketState, pageable)
             .map(this::toEntity);
     }
 
@@ -91,8 +91,8 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
     }
 
     @Override
-    public void updateMarketStatus(Long id, MarketStatus marketStatus) {
-        repository.updateMarketStatus(id, marketStatus);
+    public void updateMarketStatus(Long id, MarketState marketState) {
+        repository.updateMarketStatus(id, marketState);
     }
 
     @Override
@@ -131,8 +131,8 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         if (doEntity.getTemplateType() != null) {
             entity.setTemplateType(TemplateType.valueOf(doEntity.getTemplateType().name()));
         }
-        if (doEntity.getMarketStatus() != null) {
-            entity.setMarketStatus(MarketStatus.valueOf(doEntity.getMarketStatus().name()));
+        if (doEntity.getMarketState() != null) {
+            entity.setMarketState(MarketState.valueOf(doEntity.getMarketState().name()));
         }
         if (doEntity.getState() != null) {
             entity.setState(doEntity.getState());
@@ -169,10 +169,10 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
         if (entity.getTemplateType() != null) {
             doEntity.setTemplateType(ProviderTemplateDo.TemplateType.valueOf(entity.getTemplateType().name()));
         }
-        if (entity.getMarketStatus() != null) {
-            doEntity.setMarketStatus(entity.getMarketStatus());
+        if (entity.getMarketState() != null) {
+            doEntity.setMarketState(entity.getMarketState());
         } else {
-            doEntity.setMarketStatus(MarketStatus.PRIVATE);
+            doEntity.setMarketState(MarketState.PRIVATE);
         }
         if (entity.getState() != null) {
             doEntity.setState(entity.getState());

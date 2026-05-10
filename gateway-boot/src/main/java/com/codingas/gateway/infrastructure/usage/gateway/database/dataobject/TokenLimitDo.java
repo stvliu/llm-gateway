@@ -61,8 +61,8 @@ public class TokenLimitDo extends BaseDo {
     private Long switchModelId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private TokenLimitStatus status = TokenLimitStatus.ACTIVE;
+    @Column(name = "state", nullable = false)
+    private TokenLimitStatus state = TokenLimitStatus.ACTIVE;
 
     @Column(name = "deleted_at")
     private Instant deletedAt;

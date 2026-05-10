@@ -3,7 +3,7 @@ package com.codingas.gateway.domain.template.entity;
 /**
  * 模板市场状态枚举
  */
-public enum MarketStatus {
+public enum MarketState {
     /** 私有，仅创建者可见 */
     PRIVATE,
     /** 待审核 */

@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.template.database;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -35,7 +35,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      *
      * @return 官方模板列表
      */
-    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.templateType = 'OFFICIAL' AND t.deletedAt IS NULL AND t.status = 'ACTIVE'")
+    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.templateType = 'OFFICIAL' AND t.deletedAt IS NULL AND t.state = 'ACTIVE'")
     List<ProviderTemplateDo> findOfficialTemplates();
 
     /**
@@ -44,7 +44,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      * @param pageable 分页参数
      * @return 市场模板分页结果
      */
-    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.marketStatus = 'PUBLISHED' AND t.deletedAt IS NULL AND t.status = 'ACTIVE'")
+    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.marketState = 'PUBLISHED' AND t.deletedAt IS NULL AND t.state = 'ACTIVE'")
     Page<ProviderTemplateDo> findMarketTemplates(Pageable pageable);
 
     /**
@@ -82,8 +82,8 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      * @param status 市场状态
      */
     @Modifying
-    @Query("UPDATE ProviderTemplateDo t SET t.marketStatus = :status WHERE t.id = :id")
-    void updateMarketStatus(@Param("id") Long id, @Param("status") MarketStatus status);
+    @Query("UPDATE ProviderTemplateDo t SET t.marketState = :status WHERE t.id = :id")
+    void updateMarketStatus(@Param("id") Long id, @Param("status") MarketState status);
 
     /**
      * 增加使用次数
@@ -100,7 +100,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      * @param templateType 模板类型
      * @param providerType 提供商类型
      * @param keyword 关键词
-     * @param marketStatus 市场状态
+     * @param marketState 市场状态
      * @param pageable 分页参数
      * @return 符合条件的模板分页结果
      */
@@ -108,12 +108,12 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
            "AND (:templateType IS NULL OR t.templateType = :templateType) " +
            "AND (:providerType IS NULL OR t.providerType = :providerType) " +
            "AND (:keyword IS NULL OR LOWER(t.templateName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-           "AND (:marketStatus IS NULL OR t.marketStatus = :marketStatus)")
+           "AND (:marketState IS NULL OR t.marketState = :marketState)")
     Page<ProviderTemplateDo> findByConditions(
         @Param("templateType") ProviderTemplateDo.TemplateType templateType,
         @Param("providerType") String providerType,
         @Param("keyword") String keyword,
-        @Param("marketStatus") MarketStatus marketStatus,
+        @Param("marketState") MarketState marketState,
         Pageable pageable
     );
 }

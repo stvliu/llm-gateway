@@ -3,7 +3,7 @@ import { userApi } from '@/services/api/user';
 import type {
   CreateUserRequest,
   UpdateUserRequest,
-  UserStatusUpdateRequest,
+  UserStateUpdateRequest,
   UserRoleAssignRequest,
 } from '@/types/user';
 
@@ -68,11 +68,11 @@ export function useResetPassword() {
   });
 }
 
-export function useUpdateUserStatus() {
+export function useUpdateUserState() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UserStatusUpdateRequest }) =>
-      userApi.updateStatus(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UserStateUpdateRequest }) =>
+      userApi.updateState(id, data),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: userKeys.lists() });

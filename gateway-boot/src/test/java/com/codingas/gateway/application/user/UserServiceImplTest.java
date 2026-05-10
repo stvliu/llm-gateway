@@ -2,7 +2,7 @@ package com.codingas.gateway.application.user;
 
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.security.entity.User;
@@ -216,11 +216,11 @@ class UserServiceImplTest {
             when(userGateway.findById(1L)).thenReturn(Optional.of(user));
             when(userGateway.save(any())).thenReturn(user);
 
-            UserStatusUpdateRequest request = new UserStatusUpdateRequest();
-            request.setStatus(UserStatus.DISABLED);
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.DISABLED);
 
             // when
-            UserResponse result = service.updateStatus(1L, request);
+            UserResponse result = service.updateState(1L, request);
 
             // then
             assertThat(result).isNotNull();
@@ -256,7 +256,7 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setUsername("testuser");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("USER");
         return user;
     }

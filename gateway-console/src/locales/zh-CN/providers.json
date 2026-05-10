@@ -4,7 +4,7 @@
   "name": "名称",
   "code": "编码",
   "baseUrl": "API 地址",
-  "status": "状态",
+  "state": "状态",
   "type": {
     "label": "类型",
     "OPENAI": "OpenAI",

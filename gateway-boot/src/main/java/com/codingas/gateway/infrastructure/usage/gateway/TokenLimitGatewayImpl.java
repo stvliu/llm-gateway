@@ -95,8 +95,8 @@ public class TokenLimitGatewayImpl implements TokenLimitGateway {
         entity.setPeriodType(doEntity.getPeriodType());
         entity.setExceededAction(doEntity.getExceededAction());
         // 枚举转换 - Entity使用内部枚举，需要转换
-        if (doEntity.getStatus() != null) {
-            entity.setStatus(TokenLimit.TokenLimitStatus.valueOf(doEntity.getStatus().name()));
+        if (doEntity.getState() != null) {
+            entity.setState(TokenLimit.TokenLimitState.valueOf(doEntity.getState().name()));
         }
         // User/Provider/Model/SwitchModel 关联暂不处理，由调用方通过相应 Gateway 获取
         return entity;
@@ -125,8 +125,8 @@ public class TokenLimitGatewayImpl implements TokenLimitGateway {
         // 枚举转换 - DO使用公共枚举，直接赋值
         doEntity.setPeriodType(entity.getPeriodType());
         doEntity.setExceededAction(entity.getExceededAction());
-        if (entity.getStatus() != null) {
-            doEntity.setStatus(TokenLimitDo.TokenLimitStatus.valueOf(entity.getStatus().name()));
+        if (entity.getState() != null) {
+            doEntity.setState(TokenLimitDo.TokenLimitStatus.valueOf(entity.getState().name()));
         }
         return doEntity;
     }

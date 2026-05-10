@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
-import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -84,7 +84,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         tokenLimit.setPeriodDayOfMonth(request.getPeriodDayOfMonth());
         tokenLimit.setExceededAction(request.getExceededAction());
         tokenLimit.setSwitchModel(switchModel);
-        tokenLimit.setStatus(TokenLimitStatus.ACTIVE);
+        tokenLimit.setState(TokenLimitState.ACTIVE);
 
         TokenLimit savedTokenLimit = tokenLimitGateway.save(tokenLimit);
         return toResponse(savedTokenLimit);
@@ -133,9 +133,9 @@ public class TokenLimitServiceImpl implements TokenLimitService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getState() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getStatus() == request.getStatus())
+                .filter(t -> t.getState() == request.getState())
                 .collect(Collectors.toList());
         }
 
@@ -187,7 +187,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             tokenLimit.setSwitchModel(switchModel);
         }
         if (request.getEnabled() != null) {
-            tokenLimit.setStatus(request.getEnabled() ? TokenLimitStatus.ACTIVE : TokenLimitStatus.SUSPENDED);
+            tokenLimit.setState(request.getEnabled() ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
         }
 
         return toResponse(tokenLimitGateway.save(tokenLimit));
@@ -247,8 +247,8 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             response.setSwitchModelId(tokenLimit.getSwitchModel().getId());
             response.setSwitchModelName(tokenLimit.getSwitchModel().getDisplayName());
         }
-        response.setStatus(tokenLimit.getStatus());
-        response.setEnabled(tokenLimit.getStatus() == TokenLimitStatus.ACTIVE);
+        response.setState(tokenLimit.getState());
+        response.setEnabled(tokenLimit.getState() == TokenLimitState.ACTIVE);
         response.setCreatedAt(tokenLimit.getCreatedAt());
         response.setUpdatedAt(tokenLimit.getUpdatedAt());
         return response;

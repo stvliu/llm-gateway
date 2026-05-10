@@ -45,7 +45,7 @@ public class ProviderTemplate extends BaseEntity {
     private String authorName;
 
     /** 市场状态 */
-    private MarketStatus marketStatus = MarketStatus.PRIVATE;
+    private MarketState marketState = MarketState.PRIVATE;
 
     /** 发布时间 */
     private Instant publishAt;

@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.security.service;
 
 import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
@@ -85,7 +85,7 @@ public class AuthenticationDomainService {
         }
 
         if (!isUserActive(user)) {
-            log.debug("User is not active: status={}", user.getStatus());
+            log.debug("User is not active: state={}", user.getState());
             return null;
         }
 
@@ -117,7 +117,7 @@ public class AuthenticationDomainService {
     }
 
     private boolean isUserActive(User user) {
-        return user.getStatus() == UserStatus.ACTIVE;
+        return user.getState() == UserState.ACTIVE;
     }
 
     /**

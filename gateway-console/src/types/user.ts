@@ -2,7 +2,7 @@
 export type UserRole = 'ADMIN' | 'USER';
 
 /** 用户状态枚举（统一命名） */
-export type UserStatus = 'ACTIVE' | 'DISABLED' | 'LOCKED';
+export type UserState = 'ACTIVE' | 'DISABLED' | 'LOCKED';
 
 /** 用户信息 */
 export interface User {
@@ -10,7 +10,7 @@ export interface User {
   username: string;
   email: string;
   role: UserRole;
-  status: UserStatus;
+  state: UserState;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,7 +27,7 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
   email?: string;
   role?: UserRole;
-  status?: UserStatus;
+  state?: UserState;
 }
 
 /** 登录请求 */
@@ -55,8 +55,8 @@ export interface CurrentUser {
 }
 
 /** 用户状态更新请求 */
-export interface UserStatusUpdateRequest {
-  status: UserStatus;
+export interface UserStateUpdateRequest {
+  state: UserState;
 }
 
 /** 用户角色分配请求 */

@@ -44,7 +44,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
 
     @Override
     public List<Provider> findAllActive() {
-        return providerRepository.findByEnabledTrue().stream()
+        return providerRepository.findActive().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }

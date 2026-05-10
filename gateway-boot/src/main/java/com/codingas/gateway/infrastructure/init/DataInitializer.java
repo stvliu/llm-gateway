@@ -5,7 +5,7 @@ import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.enums.ProviderType;
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -200,7 +200,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("admin");
         user.setEmail("admin@example.com");
         user.setPasswordHash(passwordEncoder.encode("admin"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("ADMIN");
         user.setEmailVerified(true);
 
@@ -223,7 +223,7 @@ public class DataInitializer implements CommandLineRunner {
         user.setUsername("test");
         user.setEmail("test@example.com");
         user.setPasswordHash(passwordEncoder.encode("test"));
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("USER");
         user.setEmailVerified(true);
 

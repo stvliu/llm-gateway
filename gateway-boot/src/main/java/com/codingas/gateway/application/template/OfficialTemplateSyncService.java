@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.template;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -97,7 +97,7 @@ public class OfficialTemplateSyncService {
                         ProviderTemplate t = new ProviderTemplate();
                         t.setTemplateCode(templateCode);
                         t.setTemplateType(TemplateType.OFFICIAL);
-                        t.setMarketStatus(MarketStatus.PUBLISHED);
+                        t.setMarketState(MarketState.PUBLISHED);
                         t.setDownloadCount(0);
                         return t;
                     });

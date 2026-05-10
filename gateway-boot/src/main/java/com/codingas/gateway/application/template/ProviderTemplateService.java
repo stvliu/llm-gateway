@@ -9,7 +9,7 @@ import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.gateway.*;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -70,7 +70,7 @@ public class ProviderTemplateService {
         template.setTags(request.getTags());
         template.setAuthorId(userId);
         template.setAuthorName(username);
-        template.setMarketStatus(MarketStatus.PRIVATE);
+        template.setMarketState(MarketState.PRIVATE);
         template.setDownloadCount(0);
 
         ProviderTemplate saved = gateway.save(template);
@@ -143,12 +143,12 @@ public class ProviderTemplateService {
             TemplateType type,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketState marketState,
             int page,
             int limit) {
 
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketStatus, pageable);
+        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketState, pageable);
         return result.map(this::toResponse);
     }
 
@@ -164,7 +164,7 @@ public class ProviderTemplateService {
             throw new IllegalStateException("官方模板无需发布");
         }
 
-        template.setMarketStatus(MarketStatus.PUBLISHED);
+        template.setMarketState(MarketState.PUBLISHED);
         template.setPublishAt(Instant.now());
         gateway.save(template);
     }
@@ -383,7 +383,7 @@ public class ProviderTemplateService {
             .modelsConfig(template.getModelsConfig())
             .authorId(template.getAuthorId())
             .authorName(template.getAuthorName())
-            .marketStatus(template.getMarketStatus())
+            .marketState(template.getMarketState())
             .publishAt(template.getPublishAt())
             .downloadCount(template.getDownloadCount())
             .tags(template.getTags())

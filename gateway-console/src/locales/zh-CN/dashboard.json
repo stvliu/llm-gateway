@@ -24,7 +24,7 @@
     "user": "操作人",
     "target": "对象",
     "time": "时间",
-    "status": "状态",
+    "state": "状态",
     "actions": {
       "createUser": "创建用户",
       "addModel": "添加模型",
@@ -37,7 +37,7 @@
       "hoursAgo": "{{count}} 小时前"
     }
   },
-  "status": {
+  "state": {
     "success": "成功",
     "warning": "警告",
     "error": "错误"

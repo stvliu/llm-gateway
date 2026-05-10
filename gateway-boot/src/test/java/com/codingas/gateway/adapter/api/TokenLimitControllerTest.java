@@ -177,7 +177,7 @@ class TokenLimitControllerTest {
         response.setRemainingTokens(BigDecimal.valueOf(100000));
         response.setPeriodType(PeriodType.MONTHLY);
         response.setExceededAction(ExceededAction.REJECT);
-        response.setStatus(TokenLimit.TokenLimitStatus.ACTIVE);
+        response.setState(TokenLimit.TokenLimitState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

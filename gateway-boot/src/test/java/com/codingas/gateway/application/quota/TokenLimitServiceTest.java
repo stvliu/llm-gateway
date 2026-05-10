@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.LimitType;
-import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitStatus;
+import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -90,7 +90,7 @@ class TokenLimitServiceTest {
         testTokenLimit.setUsedTokens(BigDecimal.ZERO);
         testTokenLimit.setPeriodType(PeriodType.MONTHLY);
         testTokenLimit.setExceededAction(ExceededAction.REJECT);
-        testTokenLimit.setStatus(TokenLimitStatus.ACTIVE);
+        testTokenLimit.setState(TokenLimitState.ACTIVE);
         testTokenLimit.setCreatedAt(Instant.now());
         testTokenLimit.setUpdatedAt(Instant.now());
 

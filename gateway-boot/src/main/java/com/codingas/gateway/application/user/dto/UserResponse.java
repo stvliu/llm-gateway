@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.user.dto;
 
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import lombok.Data;
 import java.time.Instant;
 
@@ -14,7 +14,7 @@ public class UserResponse {
     private String email;
     private String phone;
     private String avatarUrl;
-    private UserStatus status;
+    private UserState state;
     private Boolean emailVerified;
     /**
      * 用户角色：ADMIN（管理员）/ USER（普通用户）

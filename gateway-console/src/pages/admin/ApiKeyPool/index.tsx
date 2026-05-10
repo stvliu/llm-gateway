@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, DatePicker, message, Typography, Tooltip } from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -76,9 +76,8 @@ export default function AdminApiKeyPool() {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      await form.validateFields();
       // TODO: 调用 API 保存数据
-      console.log('Form values:', values);
       message.success(t('message.success', { ns: 'common' }));
       setModalOpen(false);
     } catch (error) {

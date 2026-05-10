@@ -3,7 +3,7 @@
   "add": "新增 API Key",
   "name": "名称",
   "key": "Key 值",
-  "status": "状态",
+  "state": "状态",
   "createdAt": "创建时间",
   "lastUsedAt": "最后使用",
   "username": "用户",

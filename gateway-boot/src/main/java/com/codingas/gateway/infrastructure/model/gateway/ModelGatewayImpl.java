@@ -50,7 +50,7 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findAllActive() {
-        return modelRepository.findByEnabledTrue().stream()
+        return modelRepository.findActive().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }

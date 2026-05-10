@@ -10,7 +10,7 @@
     "baseUrl": "API 地址",
     "timeout": "超时时间",
     "maxRetries": "最大重试次数",
-    "status": "状态",
+    "state": "状态",
     "enabled": "状态"
   },
   "model": {
@@ -18,7 +18,7 @@
     "providerModelId": "供应商模型 ID",
     "type": "模型类型",
     "provider": "所属供应商",
-    "status": "状态",
+    "state": "状态",
     "enabled": "状态"
   },
   "type": {
@@ -42,7 +42,7 @@
     "IMAGE": "图像",
     "AUDIO": "音频"
   },
-  "status": {
+  "state": {
     "active": "正常",
     "suspended": "暂停",
     "deprecated": "已废弃",

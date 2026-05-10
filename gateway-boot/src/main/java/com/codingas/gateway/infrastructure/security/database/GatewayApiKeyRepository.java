@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.security.database;
 
+import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.infrastructure.security.database.dataobject.GatewayApiKeyDo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,6 +21,10 @@ public interface GatewayApiKeyRepository extends JpaRepository<GatewayApiKeyDo, 
 
     List<GatewayApiKeyDo> findByUserId(Long userId);
 
-    @Query("SELECT k FROM GatewayApiKeyDo k WHERE k.expiresAt BETWEEN :now AND :threshold AND k.status = 'ACTIVE'")
-    Page<GatewayApiKeyDo> findExpiringKeys(@Param("now") Instant now, @Param("threshold") Instant threshold, Pageable pageable);
+    @Query("SELECT k FROM GatewayApiKeyDo k WHERE k.expiresAt BETWEEN :now AND :threshold AND k.state = :state")
+    Page<GatewayApiKeyDo> findExpiringKeysByState(@Param("now") Instant now, @Param("threshold") Instant threshold, @Param("state") GatewayApiKeyState state, Pageable pageable);
+
+    default Page<GatewayApiKeyDo> findExpiringKeys(Instant now, Instant threshold, Pageable pageable) {
+        return findExpiringKeysByState(now, threshold, GatewayApiKeyState.ACTIVE, pageable);
+    }
 }

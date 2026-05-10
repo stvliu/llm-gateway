@@ -19,12 +19,12 @@ export default function UserModels() {
       render: (type: ModelType) => t(`type.${type}`),
     },
     {
-      title: t('model.status'),
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'ENABLED' ? 'green' : 'red'}>
-          {t(`status.${status.toLowerCase()}`, { ns: 'common' })}
+      title: t('model.state'),
+      dataIndex: 'state',
+      key: 'state',
+      render: (state) => (
+        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
     },

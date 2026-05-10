@@ -233,7 +233,7 @@ class TokenLimitServiceImplTest {
         tokenLimit.setUsedTokens(BigDecimal.ZERO);
         tokenLimit.setPeriodType(PeriodType.MONTHLY);
         tokenLimit.setExceededAction(ExceededAction.REJECT);
-        tokenLimit.setStatus(TokenLimit.TokenLimitStatus.ACTIVE);
+        tokenLimit.setState(TokenLimit.TokenLimitState.ACTIVE);
         return tokenLimit;
     }
 }

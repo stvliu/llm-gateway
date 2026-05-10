@@ -7,7 +7,7 @@ import com.codingas.gateway.application.template.dto.ApplyTemplateResult;
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
 import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -41,12 +41,12 @@ public class ProviderTemplateController {
             @RequestParam(required = false) TemplateType type,
             @RequestParam(required = false) String providerType,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) MarketStatus marketStatus,
+            @RequestParam(required = false) MarketState marketState,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
 
         limit = Math.min(limit, 100);
-        Page<TemplateResponse> result = service.listTemplates(type, providerType, keyword, marketStatus, page, limit);
+        Page<TemplateResponse> result = service.listTemplates(type, providerType, keyword, marketState, page, limit);
         return ResponseEntity.ok(result);
     }
 

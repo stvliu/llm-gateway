@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
@@ -147,7 +147,7 @@ class AuthenticationDomainServiceTest {
         void authenticate_inactiveUser_returnsNull() {
             // given
             User inactiveUser = createActiveUser();
-            inactiveUser.setStatus(UserStatus.DISABLED);
+            inactiveUser.setState(UserState.DISABLED);
             GatewayApiKey gatewayKey = createActiveApiKey(inactiveUser);
 
             when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
@@ -217,7 +217,7 @@ class AuthenticationDomainServiceTest {
         user.setId(1L);
         user.setUsername("Test User");
         user.setEmail("test@example.com");
-        user.setStatus(UserStatus.ACTIVE);
+        user.setState(UserState.ACTIVE);
         user.setRole("USER");
         return user;
     }

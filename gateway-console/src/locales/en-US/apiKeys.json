@@ -3,7 +3,7 @@
   "add": "Add API Key",
   "name": "Name",
   "key": "Key Value",
-  "status": "Status",
+  "state": "Status",
   "createdAt": "Created At",
   "lastUsedAt": "Last Used",
   "username": "User",

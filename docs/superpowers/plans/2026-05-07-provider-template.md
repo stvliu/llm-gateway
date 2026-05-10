@@ -155,7 +155,7 @@ public class ProviderTemplate extends BaseEntity {
     private String authorName;
 
     /** 市场状态 */
-    private MarketStatus marketStatus = MarketStatus.PRIVATE;
+    private MarketStatus marketState = MarketStatus.PRIVATE;
 
     /** 发布时间 */
     private Instant publishAt;
@@ -223,7 +223,7 @@ public class ProviderTemplate extends BaseEntity {
 package com.codingas.gateway.domain.template.gateway;
 
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -259,7 +259,7 @@ public interface ProviderTemplateGateway {
      * @param templateType 模板类型（可选）
      * @param providerType Provider 类型（可选）
      * @param keyword 关键词（可选）
-     * @param marketStatus 市场状态（可选）
+     * @param marketState 市场状态（可选）
      * @param pageable 分页参数
      * @return 分页结果
      */
@@ -267,7 +267,7 @@ public interface ProviderTemplateGateway {
         TemplateType templateType,
         String providerType,
         String keyword,
-        MarketStatus marketStatus,
+        MarketStatus marketState,
         Pageable pageable
     );
 
@@ -299,7 +299,7 @@ public interface ProviderTemplateGateway {
     /**
      * 更新市场状态
      */
-    void updateMarketStatus(Long id, MarketStatus marketStatus);
+    void updateMarketStatus(Long id, MarketStatus marketState);
 
     /**
      * 增加使用次数
@@ -380,7 +380,7 @@ public class ProviderTemplateDo extends BaseDo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "market_status", nullable = false, length = 32)
-    private MarketStatus marketStatus = MarketStatus.PRIVATE;
+    private MarketStatus marketState = MarketStatus.PRIVATE;
 
     @Column(name = "publish_at")
     private Instant publishAt;
@@ -463,7 +463,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
     /**
      * 分页查询公共市场模板
      */
-    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.marketStatus = 'PUBLISHED' AND t.deletedAt IS NULL AND t.status = 'ACTIVE'")
+    @Query("SELECT t FROM ProviderTemplateDo t WHERE t.marketState = 'PUBLISHED' AND t.deletedAt IS NULL AND t.status = 'ACTIVE'")
     Page<ProviderTemplateDo> findMarketTemplates(Pageable pageable);
 
     /**
@@ -489,7 +489,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
      * 更新市场状态
      */
     @Modifying
-    @Query("UPDATE ProviderTemplateDo t SET t.marketStatus = :status WHERE t.id = :id")
+    @Query("UPDATE ProviderTemplateDo t SET t.marketState = :status WHERE t.id = :id")
     void updateMarketStatus(@Param("id") Long id, @Param("status") ProviderTemplateDo.MarketStatus status);
 
     /**
@@ -506,12 +506,12 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
            "AND (:templateType IS NULL OR t.templateType = :templateType) " +
            "AND (:providerType IS NULL OR t.providerType = :providerType) " +
            "AND (:keyword IS NULL OR LOWER(t.templateName) LIKE LOWER(CONCAT('%', :keyword, '%'))) " +
-           "AND (:marketStatus IS NULL OR t.marketStatus = :marketStatus)")
+           "AND (:marketState IS NULL OR t.marketState = :marketState)")
     Page<ProviderTemplateDo> findByConditions(
         @Param("templateType") ProviderTemplateDo.TemplateType templateType,
         @Param("providerType") String providerType,
         @Param("keyword") String keyword,
-        @Param("marketStatus") ProviderTemplateDo.MarketStatus marketStatus,
+        @Param("marketState") ProviderTemplateDo.MarketStatus marketState,
         Pageable pageable
     );
 }
@@ -535,7 +535,7 @@ public interface ProviderTemplateRepository extends JpaRepository<ProviderTempla
 ```java
 package com.codingas.gateway.infrastructure.template.gateway;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -584,13 +584,13 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
             TemplateType templateType,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketStatus marketState,
             Pageable pageable) {
         ProviderTemplateDo.TemplateType doTemplateType = templateType != null
             ? ProviderTemplateDo.TemplateType.valueOf(templateType.name())
             : null;
-        ProviderTemplateDo.MarketStatus doMarketStatus = marketStatus != null
-            ? ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name())
+        ProviderTemplateDo.MarketStatus doMarketStatus = marketState != null
+            ? ProviderTemplateDo.MarketStatus.valueOf(marketState.name())
             : null;
         return repository.findByConditions(doTemplateType, providerType, keyword, doMarketStatus, pageable)
             .map(this::toEntity);
@@ -626,8 +626,8 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
     }
 
     @Override
-    public void updateMarketStatus(Long id, MarketStatus marketStatus) {
-        repository.updateMarketStatus(id, ProviderTemplateDo.MarketStatus.valueOf(marketStatus.name()));
+    public void updateMarketStatus(Long id, MarketStatus marketState) {
+        repository.updateMarketStatus(id, ProviderTemplateDo.MarketStatus.valueOf(marketState.name()));
     }
 
     @Override
@@ -733,7 +733,7 @@ public class ProviderTemplateGatewayImpl implements ProviderTemplateGateway {
 ```java
 package com.codingas.gateway.infrastructure.template.gateway;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.infrastructure.template.database.ProviderTemplateDo;
@@ -977,7 +977,7 @@ public class TemplateUpdateRequest {
 ```java
 package com.codingas.gateway.application.template.dto;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import lombok.Builder;
 import lombok.Data;
@@ -1002,7 +1002,7 @@ public class TemplateResponse {
     private List<Map<String, Object>> modelsConfig;
     private Long authorId;
     private String authorName;
-    private MarketStatus marketStatus;
+    private MarketStatus marketState;
     private Instant publishAt;
     private Integer downloadCount;
     private List<String> tags;
@@ -1027,7 +1027,7 @@ package com.codingas.gateway.application.template;
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
 import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -1149,12 +1149,12 @@ public class ProviderTemplateService {
             TemplateType type,
             String providerType,
             String keyword,
-            MarketStatus marketStatus,
+            MarketStatus marketState,
             int page,
             int limit) {
 
         Pageable pageable = PageRequest.of(page - 1, limit, Sort.by("createdAt").descending());
-        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketStatus, pageable);
+        Page<ProviderTemplate> result = gateway.findByConditions(type, providerType, keyword, marketState, pageable);
         return result.map(this::toResponse);
     }
 
@@ -1191,7 +1191,7 @@ public class ProviderTemplateService {
             .modelsConfig(template.getModelsConfig())
             .authorId(template.getAuthorId())
             .authorName(template.getAuthorName())
-            .marketStatus(template.getMarketStatus())
+            .marketState(template.getMarketStatus())
             .publishAt(template.getPublishAt())
             .downloadCount(template.getDownloadCount())
             .tags(template.getTags())
@@ -1227,7 +1227,7 @@ package com.codingas.gateway.application.template;
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
 import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -1419,7 +1419,7 @@ import com.codingas.gateway.application.template.ProviderTemplateService;
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
 import com.codingas.gateway.application.template.dto.TemplateUpdateRequest;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -1445,12 +1445,12 @@ public class ProviderTemplateController {
             @RequestParam(required = false) TemplateType type,
             @RequestParam(required = false) String providerType,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) MarketStatus marketStatus,
+            @RequestParam(required = false) MarketStatus marketState,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
 
         limit = Math.min(limit, 100);
-        Page<TemplateResponse> result = service.listTemplates(type, providerType, keyword, marketStatus, page, limit);
+        Page<TemplateResponse> result = service.listTemplates(type, providerType, keyword, marketState, page, limit);
         return ResponseEntity.ok(result);
     }
 
@@ -1701,7 +1701,7 @@ public class GitTemplateRepository {
 ```java
 package com.codingas.gateway.application.template;
 
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.ProviderTemplate;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import com.codingas.gateway.domain.template.gateway.ProviderTemplateGateway;
@@ -2066,7 +2066,7 @@ package com.codingas.gateway.application.template;
 
 import com.codingas.gateway.application.template.dto.TemplateCreateRequest;
 import com.codingas.gateway.application.template.dto.TemplateResponse;
-import com.codingas.gateway.domain.template.entity.MarketStatus;
+import com.codingas.gateway.domain.template.entity.MarketState;
 import com.codingas.gateway.domain.template.entity.TemplateType;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

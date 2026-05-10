@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.user.dto;
 
-import com.codingas.gateway.domain.security.enums.UserStatus;
+import com.codingas.gateway.domain.security.enums.UserState;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -8,7 +8,7 @@ import lombok.Data;
  * 更新用户状态请求
  */
 @Data
-public class UserStatusUpdateRequest {
+public class UserStateUpdateRequest {
     @NotNull(message = "状态不能为空")
-    private UserStatus status;
+    private UserState state;
 }

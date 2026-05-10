@@ -16,7 +16,7 @@ export interface ProviderTemplate {
   modelsConfig: ModelConfig[];
   authorId: number | null;
   authorName: string | null;
-  marketStatus: MarketStatus;
+  marketState: MarketStatus;
   publishAt: string | null;
   downloadCount: number;
   tags: string[];
@@ -77,7 +77,7 @@ export interface TemplateListParams {
   type?: TemplateType;
   providerType?: string;
   keyword?: string;
-  marketStatus?: MarketStatus;
+  marketState?: MarketStatus;
   page?: number;
   limit?: number;
 }

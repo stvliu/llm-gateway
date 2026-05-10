@@ -300,7 +300,7 @@ package com.codingas.gateway.infrastructure.adapter.openai;
 
 import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
-import com.codingas.gateway.common.ProviderCapabilities;
+import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
@@ -456,7 +456,7 @@ package com.codingas.gateway.infrastructure.adapter.anthropic;
 
 import com.codingas.gateway.infrastructure.adapter.LLMProviderAdapter;
 import com.codingas.gateway.infrastructure.adapter.StreamCallback;
-import com.codingas.gateway.common.ProviderCapabilities;
+import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;

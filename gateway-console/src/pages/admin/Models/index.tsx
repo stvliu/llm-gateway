@@ -21,8 +21,8 @@ import {
   useUpdateModel,
   useDeleteModel,
 } from '@/services/query';
-import type { Provider } from '@/types/provider';
-import type { Model } from '@/types/model';
+import type { Provider, CreateProviderRequest, UpdateProviderRequest } from '@/types/provider';
+import type { Model, CreateModelRequest, UpdateModelRequest } from '@/types/model';
 
 type ViewMode = 'card' | 'table';
 
@@ -131,14 +131,14 @@ export default function AdminModels() {
     });
   }, [t, deleteProviderMutation]);
 
-  const handleProviderSubmit = useCallback(async (values: any) => {
+  const handleProviderSubmit = useCallback(async (values: CreateProviderRequest | UpdateProviderRequest) => {
     if (editingProvider) {
       await updateProviderMutation.mutateAsync({
         id: editingProvider.id,
-        data: values,
+        data: values as UpdateProviderRequest,
       });
     } else {
-      await createProviderMutation.mutateAsync(values);
+      await createProviderMutation.mutateAsync(values as CreateProviderRequest);
     }
     message.success(t('message.success', { ns: 'common' }));
     setProviderModalOpen(false);
@@ -172,14 +172,14 @@ export default function AdminModels() {
     });
   }, [t, deleteModelMutation]);
 
-  const handleModelSubmit = useCallback(async (values: any) => {
+  const handleModelSubmit = useCallback(async (values: CreateModelRequest | UpdateModelRequest) => {
     if (editingModel) {
       await updateModelMutation.mutateAsync({
         id: editingModel.id,
-        data: values,
+        data: values as UpdateModelRequest,
       });
     } else {
-      await createModelMutation.mutateAsync(values);
+      await createModelMutation.mutateAsync(values as CreateModelRequest);
     }
     message.success(t('message.success', { ns: 'common' }));
     setModelModalOpen(false);

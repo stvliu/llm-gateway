@@ -60,9 +60,8 @@ export default function AdminApiKeys() {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields();
+      await form.validateFields();
       // TODO: 调用 API 保存数据
-      console.log('Form values:', values);
       if (editingKey) {
         message.success(t('message.success', { ns: 'common' }));
       } else {

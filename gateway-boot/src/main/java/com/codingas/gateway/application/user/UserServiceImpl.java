@@ -88,9 +88,9 @@ public class UserServiceImpl implements UserService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getStatus() != null) {
+        if (request.getState() != null) {
             users = users.stream()
-                .filter(u -> u.getStatus() == request.getStatus())
+                .filter(u -> u.getState() == request.getState())
                 .collect(Collectors.toList());
         }
 
@@ -154,10 +154,10 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserResponse updateStatus(Long id, UserStatusUpdateRequest request) {
+    public UserResponse updateState(Long id, UserStateUpdateRequest request) {
         User user = userGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
-        user.setStatus(request.getStatus());
+        user.setState(request.getState());
         return toResponse(userGateway.save(user));
     }
 
@@ -257,7 +257,7 @@ public class UserServiceImpl implements UserService {
         response.setEmail(user.getEmail());
         response.setPhone(user.getPhone());
         response.setAvatarUrl(user.getAvatarUrl());
-        response.setStatus(user.getStatus());
+        response.setState(user.getState());
         response.setEmailVerified(user.getEmailVerified());
         response.setRole(user.getRole());
         response.setLastLoginAt(user.getLastLoginAt());

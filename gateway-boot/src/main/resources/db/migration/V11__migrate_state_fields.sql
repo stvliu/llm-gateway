@@ -77,3 +77,25 @@ ALTER TABLE gateway_api_keys RENAME COLUMN status TO state;
 
 -- 重命名 status 列为 state
 ALTER TABLE provider_templates RENAME COLUMN status TO state;
+
+-- 重命名 market_status 列为 market_state
+ALTER TABLE provider_templates RENAME COLUMN market_status TO market_state;
+
+-- 删除旧索引
+DROP INDEX IF EXISTS idx_provider_templates_market;
+
+-- 创建新索引
+CREATE INDEX IF NOT EXISTS idx_provider_templates_market_state ON provider_templates(market_state);
+
+-- ============================================
+-- token_limits 表
+-- ============================================
+
+-- 重命名 status 列为 state
+ALTER TABLE token_limits RENAME COLUMN status TO state;
+
+-- 删除旧索引
+DROP INDEX IF EXISTS idx_token_limits_status;
+
+-- 创建新索引
+CREATE INDEX IF NOT EXISTS idx_token_limits_state ON token_limits(state);
