@@ -252,7 +252,7 @@ export function TableView({
       },
     },
     {
-      title: '🔑 Api Key',
+      title: '🔑 API Key',
       key: 'keyStats',
       width: 100,
       render: (_, record) => {

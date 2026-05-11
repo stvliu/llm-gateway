@@ -34,6 +34,25 @@ export interface Provider {
   keyStats?: ProviderKeyStats;
 }
 
+/** 嵌套的 API Key 请求（创建供应商时使用） */
+export interface NestedApiKeyRequest {
+  keyName: string;
+  apiKey: string;
+  priority?: number;
+  weight?: number;
+  isDefault?: boolean;
+}
+
+/** 嵌套的模型请求（创建供应商时使用） */
+export interface NestedModelRequest {
+  providerModelId: string;
+  displayName?: string;
+  contextWindow?: number;
+  inputPrice?: number;
+  outputPrice?: number;
+  capabilities?: Record<string, boolean>;
+}
+
 /** 创建供应商请求 */
 export interface CreateProviderRequest {
   providerName: string;
@@ -42,6 +61,10 @@ export interface CreateProviderRequest {
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
+  /** 嵌套的 API Key 列表（可选） */
+  apiKeys?: NestedApiKeyRequest[];
+  /** 嵌套的模型列表（可选） */
+  models?: NestedModelRequest[];
 }
 
 /** 更新供应商请求 */

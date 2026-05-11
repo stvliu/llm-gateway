@@ -69,11 +69,3 @@ export function useSetEnabledProvider() {
     },
   });
 }
-
-export function useProviderKeys(id: number) {
-  return useQuery({
-    queryKey: providerKeys.keys(id),
-    queryFn: () => providerApi.getKeys(id),
-    enabled: id > 0,
-  });
-}

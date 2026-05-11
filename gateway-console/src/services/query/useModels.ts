@@ -10,10 +10,11 @@ export const modelKeys = {
   detail: (id: number) => [...modelKeys.details(), id] as const,
 };
 
-export function useModels(params?: { page?: number; size?: number; providerId?: number }) {
+export function useModels(params?: { page?: number; size?: number; providerId?: number }, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: modelKeys.list(params),
     queryFn: () => modelApi.list(params),
+    enabled: options?.enabled ?? true,
   });
 }
 

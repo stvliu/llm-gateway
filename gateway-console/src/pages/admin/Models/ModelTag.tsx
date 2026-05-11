@@ -1,7 +1,5 @@
-import { Tag, Dropdown, Space, Tooltip } from 'antd';
+import { Tag, Space, Tooltip } from 'antd';
 import {
-  EditOutlined,
-  DeleteOutlined,
   MessageOutlined,
   FileTextOutlined,
   AudioOutlined,
@@ -13,9 +11,7 @@ import type { Model } from '@/types/model';
 
 interface ModelTagProps {
   model: Model;
-  onEdit: (model: Model) => void;
-  onDelete: (model: Model) => void;
-  onViewDetail: (model: Model) => void;
+  onClick?: (model: Model) => void;
 }
 
 /**
@@ -65,63 +61,37 @@ function getModelTypeColor(type: ModelType): string {
 /**
  * Model 标签组件
  * 显示模型名称、类型图标和状态
+ * 点击打开详情抽屉
  */
-export function ModelTag({ model, onEdit, onDelete, onViewDetail }: ModelTagProps) {
+export function ModelTag({ model, onClick }: ModelTagProps) {
   const { t } = useTranslation('models');
 
   const isDisabled = model.state !== 'ACTIVE';
   const modelType = inferModelType(model) as ModelType;
   const displayName = model.displayName || model.providerModelId || `Model ${model.id}`;
 
-  const dropdownItems = [
-    {
-      key: 'view',
-      label: t('actions.view', { ns: 'common' }),
-      icon: <EditOutlined />,
-      onClick: () => onViewDetail(model),
-    },
-    {
-      key: 'edit',
-      label: t('actions.edit', { ns: 'common' }),
-      icon: <EditOutlined />,
-      onClick: () => onEdit(model),
-    },
-    {
-      type: 'divider' as const,
-    },
-    {
-      key: 'delete',
-      label: t('actions.delete', { ns: 'common' }),
-      icon: <DeleteOutlined />,
-      danger: true,
-      onClick: () => onDelete(model),
-    },
-  ];
-
   return (
-    <Dropdown menu={{ items: dropdownItems }} trigger={['contextMenu']}>
-      <Tag
-        color={isDisabled ? undefined : getModelTypeColor(modelType)}
-        style={{
-          margin: '4px',
-          padding: '2px 8px',
-          borderRadius: 4,
-          cursor: 'pointer',
-          opacity: isDisabled ? 0.5 : 1,
-          transition: 'all 0.2s',
-        }}
-        onClick={() => onViewDetail(model)}
-      >
-        <Space size={4}>
-          <span style={{ fontSize: 12 }}>{getModelTypeIcon(modelType)}</span>
-          <span>{displayName}</span>
-          {isDisabled && (
-            <Tooltip title={t('state.disabled', { ns: 'common' })}>
-              <span style={{ fontSize: 10, color: '#999' }}>⏸</span>
-            </Tooltip>
-          )}
-        </Space>
-      </Tag>
-    </Dropdown>
+    <Tag
+      color={isDisabled ? undefined : getModelTypeColor(modelType)}
+      style={{
+        margin: '4px',
+        padding: '2px 8px',
+        borderRadius: 4,
+        cursor: 'pointer',
+        opacity: isDisabled ? 0.5 : 1,
+        transition: 'all 0.2s',
+      }}
+      onClick={() => onClick?.(model)}
+    >
+      <Space size={4}>
+        <span style={{ fontSize: 12 }}>{getModelTypeIcon(modelType)}</span>
+        <span>{displayName}</span>
+        {isDisabled && (
+          <Tooltip title={t('state.disabled', { ns: 'common' })}>
+            <span style={{ fontSize: 10, color: '#999' }}>⏸</span>
+          </Tooltip>
+        )}
+      </Space>
+    </Tag>
   );
 }

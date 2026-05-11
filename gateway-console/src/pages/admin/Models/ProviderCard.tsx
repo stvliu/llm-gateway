@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Space, Tag, Badge, Dropdown, theme } from 'antd';
+import { Card, Button, Space, Tag, Badge, Dropdown, theme, Popconfirm } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -195,21 +195,47 @@ export function ProviderCard({
               </Button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div>
               {models.map((model) => (
-                <ModelTag
+                <div
                   key={model.id}
-                  model={model}
-                  onEdit={onEditModel}
-                  onDelete={onDeleteModel}
-                  onViewDetail={onViewModelDetail}
-                />
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    marginBottom: 4,
+                    background: isDark ? token.colorBgElevated : '#fff',
+                    borderRadius: 6,
+                  }}
+                >
+                  <ModelTag model={model} onClick={onViewModelDetail} />
+                  <Space size={4}>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => onEditModel(model)}
+                    />
+                    <Popconfirm
+                      title={t('confirm.delete', { ns: 'common' })}
+                      onConfirm={() => onDeleteModel(model)}
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  </Space>
+                </div>
               ))}
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
                 size="small"
-                style={{ margin: '4px' }}
+                style={{ marginTop: 8, width: '100%' }}
                 onClick={() => onAddModel(provider)}
               >
                 {t('addModel')}

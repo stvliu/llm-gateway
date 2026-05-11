@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Tag, Space, Typography, Tooltip, theme } from 'antd';
+import { Tag, Space, Typography, Tooltip, theme, Button } from 'antd';
 import {
   MessageOutlined,
   ApiOutlined,
@@ -25,6 +25,7 @@ interface ModelTemplate {
 interface ModelTemplateSelectorProps {
   providerType: string;
   onSelect: (template: ModelTemplate) => void;
+  onCustomAdd?: () => void;
 }
 
 /**
@@ -104,6 +105,7 @@ function isPopularModel(modelId: string): boolean {
 export function ModelTemplateSelector({
   providerType,
   onSelect,
+  onCustomAdd,
 }: ModelTemplateSelectorProps) {
   const { t } = useTranslation('models');
   const { token } = useToken();
@@ -248,6 +250,17 @@ export function ModelTemplateSelector({
           }}
         />
       </div>
+
+      {/* 自定义添加按钮 */}
+      {onCustomAdd && (
+        <Button
+          type="link"
+          onClick={onCustomAdd}
+          style={{ marginLeft: 8, fontSize: 13 }}
+        >
+          {t('template.customAdd', { defaultValue: '自定义添加' })}
+        </Button>
+      )}
 
       {/* 模型选择下拉 */}
       <div>

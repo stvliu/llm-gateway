@@ -10,7 +10,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>cli</artifactId>
+    <artifactId>gateway-cli</artifactId>
     <packaging>jar</packaging>
 
     <name>Gateway CLI</name>

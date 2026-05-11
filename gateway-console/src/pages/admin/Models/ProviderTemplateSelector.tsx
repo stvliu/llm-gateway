@@ -1,9 +1,6 @@
 import { useMemo } from 'react';
-import { Card, Tag, Space, Typography } from 'antd';
-import {
-  GlobalOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons';
+import { Card, Tag, Typography } from 'antd';
+import { GlobalOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import type { ProviderTemplate } from '@/types/template';
@@ -12,7 +9,6 @@ const { Text, Paragraph } = Typography;
 
 interface ProviderTemplateSelectorProps {
   onSelect: (template: ProviderTemplate) => void;
-  onCustomAdd: () => void;
 }
 
 /**
@@ -44,7 +40,6 @@ function getProviderColor(providerType: string): string {
  */
 export function ProviderTemplateSelector({
   onSelect,
-  onCustomAdd,
 }: ProviderTemplateSelectorProps) {
   const { t } = useTranslation('models');
 
@@ -87,20 +82,12 @@ export function ProviderTemplateSelector({
 
   return (
     <div>
-      {/* 标题 */}
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary" style={{ fontSize: 13 }}>
-          {t('provider.selectTemplate', { defaultValue: '选择模板快速配置' })}
-        </Text>
-      </div>
-
       {/* 模板卡片网格 */}
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
           gap: 12,
-          marginBottom: 16,
         }}
       >
         {templates.map(template => (
@@ -174,42 +161,6 @@ export function ProviderTemplateSelector({
           </Card>
         ))}
       </div>
-
-      {/* 分隔线 */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 16,
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ flex: 1, height: 1, background: '#d9d9d9' }} />
-        <Text type="secondary" style={{ fontSize: 12 }}>
-          {t('provider.orCustom', { defaultValue: '或自定义配置' })}
-        </Text>
-        <div style={{ flex: 1, height: 1, background: '#d9d9d9' }} />
-      </div>
-
-      {/* 自定义添加按钮 */}
-      <Card
-        hoverable
-        size="small"
-        style={{
-          cursor: 'pointer',
-          border: '1px dashed #d9d9d9',
-          background: 'transparent',
-        }}
-        styles={{
-          body: { padding: 16, textAlign: 'center' },
-        }}
-        onClick={onCustomAdd}
-      >
-        <Space>
-          <ThunderboltOutlined style={{ fontSize: 16 }} />
-          <Text>{t('provider.customAdd', { defaultValue: '自定义供应商' })}</Text>
-        </Space>
-      </Card>
     </div>
   );
 }
