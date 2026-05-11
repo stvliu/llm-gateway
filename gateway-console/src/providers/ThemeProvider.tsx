@@ -1,7 +1,7 @@
 import { ConfigProvider, theme } from 'antd';
 import zhCN from 'antd/locale/zh_CN';
 import { useThemeStore } from '@/stores/themeStore';
-import { getThemeConfig, PRIMARY_COLOR } from '@/styles/theme';
+import { getThemeConfig } from '@/styles/theme';
 
 interface ThemeProviderProps {
   children: React.ReactNode;
@@ -9,7 +9,6 @@ interface ThemeProviderProps {
 
 /**
  * 主题提供者组件
- * 集成深色模式切换和 Ant Design 主题配置
  */
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const { getEffectiveTheme } = useThemeStore();
@@ -24,7 +23,6 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         ...themeConfig,
         algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
       }}
-      // Modal 和 Drawer 遮罩模糊效果（v6 新特性）
       modal={{
         styles: {
           mask: {
@@ -44,6 +42,3 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     </ConfigProvider>
   );
 }
-
-// 导出品牌色供其他组件使用
-export { PRIMARY_COLOR };

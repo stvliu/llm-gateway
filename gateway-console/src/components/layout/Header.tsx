@@ -1,4 +1,4 @@
-import { Space, Dropdown, Button, Select, Avatar, type MenuProps } from 'antd';
+import { Space, Dropdown, Button, Select, Avatar, theme, type MenuProps } from 'antd';
 import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -22,22 +22,24 @@ interface RightHeaderProps {
   onToggle: () => void;
 }
 
+/**
+ * 左侧头部组件（侧边栏内）
+ * 显示 Logo 和应用名称，颜色跟随全局主题
+ */
 export function LeftHeader({ collapsed }: LeftHeaderProps) {
   const { t } = useTranslation('common');
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
-
-  const headerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0 16px',
-    height: 48,
-    background: isDark ? '#141414' : '#fff',
-    borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
-  };
+  const { token } = theme.useToken();
 
   return (
-    <div style={headerStyle}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 16px',
+        height: 48,
+        background: 'transparent',
+      }}
+    >
       <img
         src={logoSvg}
         alt={t('app.title')}
@@ -49,13 +51,15 @@ export function LeftHeader({ collapsed }: LeftHeaderProps) {
         }}
       />
       {!collapsed && (
-        <span style={{
-          marginLeft: 12,
-          fontSize: 16,
-          fontWeight: 600,
-          color: isDark ? 'rgba(255, 255, 255, 0.85)' : '#1f1f1f',
-          whiteSpace: 'nowrap',
-        }}>
+        <span
+          style={{
+            marginLeft: 12,
+            fontSize: 16,
+            fontWeight: 600,
+            color: token.colorText,
+            whiteSpace: 'nowrap',
+          }}
+        >
           {t('app.title')}
         </span>
       )}
@@ -63,10 +67,15 @@ export function LeftHeader({ collapsed }: LeftHeaderProps) {
   );
 }
 
+/**
+ * 右侧头部组件
+ * 显示折叠按钮、主题切换、语言切换、用户菜单
+ */
 export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
   const { t, i18n } = useTranslation('common');
   const { user, logout } = useAuthStore();
   const { setMode, getEffectiveTheme } = useThemeStore();
+  const { token } = theme.useToken();
   const isDark = getEffectiveTheme() === 'dark';
 
   const headerStyle = {
@@ -74,8 +83,8 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
     alignItems: 'center',
     padding: '0 16px',
     height: 48,
-    background: isDark ? '#141414' : '#fff',
-    borderBottom: isDark ? '1px solid #303030' : '1px solid #f0f0f0',
+    background: token.colorBgContainer,
+    borderBottom: `1px solid ${token.colorBorderSecondary}`,
   };
 
   const themeItems: MenuProps['items'] = [
@@ -140,7 +149,7 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
         <Dropdown menu={{ items: userItems }} trigger={['click']}>
           <Space style={{ cursor: 'pointer' }}>
             <Avatar size="small" icon={<UserOutlined />} />
-            <span style={{ color: isDark ? 'rgba(255, 255, 255, 0.85)' : undefined }}>
+            <span style={{ color: token.colorText }}>
               {user?.username}
             </span>
           </Space>

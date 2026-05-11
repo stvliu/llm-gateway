@@ -1,48 +1,39 @@
 import { useState } from 'react';
-import { Layout, FloatButton } from 'antd';
+import { Layout, FloatButton, theme } from 'antd';
 import { CommentOutlined } from '@ant-design/icons';
 import { Outlet } from 'react-router-dom';
 import { LeftHeader, RightHeader } from './Header';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '@/components/chat';
 import { useChatStore } from '@/stores/chatStore';
-import { useThemeStore } from '@/stores/themeStore';
 
 const { Sider, Content } = Layout;
 
+/**
+ * 管理后台布局组件
+ * 侧边栏颜色跟随全局主题
+ */
 export default function AdminLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { isOpen, setOpen } = useChatStore();
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   return (
-    <Layout style={{ height: '100vh' }}>
-      <Layout>
-        <Sider
-          width={200}
-          collapsedWidth={64}
-          collapsed={collapsed}
-          style={{
-            background: isDark ? '#141414' : '#fff',
-            borderRight: isDark ? '1px solid #303030' : '1px solid #d9d9d9',
-          }}
-        >
-          <LeftHeader collapsed={collapsed} />
-          <Sidebar collapsed={collapsed} role="ADMIN" />
-        </Sider>
-        <Layout>
-          <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-          <Content
-            style={{
-              background: isDark ? '#000000' : '#f5f5f5',
-              padding: 16,
-              overflow: 'auto',
-            }}
-          >
-            <Outlet />
-          </Content>
-        </Layout>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider
+        width={200}
+        collapsedWidth={80}
+        collapsed={collapsed}
+        style={{ background: token.colorBgContainer }}
+      >
+        <LeftHeader collapsed={collapsed} />
+        <Sidebar collapsed={collapsed} role="ADMIN" />
+      </Sider>
+      <Layout style={{ background: token.colorBgLayout }}>
+        <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+        <Content style={{ padding: 16, overflow: 'auto', background: token.colorBgLayout }}>
+          <Outlet />
+        </Content>
       </Layout>
 
       {/* AI 聊天悬浮按钮 */}
