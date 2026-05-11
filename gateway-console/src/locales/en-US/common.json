@@ -17,6 +17,7 @@
     "copyright": "© 2024 LLM Gateway"
   },
   "actions": {
+    "label": "Actions",
     "add": "Add",
     "edit": "Edit",
     "delete": "Delete",

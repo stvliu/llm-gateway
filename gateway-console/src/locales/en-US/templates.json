@@ -8,11 +8,11 @@
   "import": "Import Template",
   "name": "Template Name",
   "code": "Template Code",
-  "providerType": "Provider Type",
+  "providerTypeLabel": "Provider Type",
   "description": "Description",
   "modelCount": "Model Count",
   "downloadCount": "Downloads",
-  "marketStatus": {
+  "marketState": {
     "label": "Market Status",
     "PRIVATE": "Private",
     "PENDING": "Pending Review",

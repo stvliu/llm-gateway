@@ -8,10 +8,16 @@
     "name": "供应商名称",
     "type": "供应商类型",
     "baseUrl": "API 地址",
+    "websiteUrl": "官网地址",
+    "apiDocUrl": "API 文档",
     "timeout": "超时时间",
     "maxRetries": "最大重试次数",
     "state": "状态",
-    "enabled": "状态"
+    "enabled": "状态",
+    "selectTemplate": "选择模板快速配置",
+    "orCustom": "或自定义配置",
+    "customAdd": "自定义供应商",
+    "models": "个模型"
   },
   "model": {
     "name": "模型名称",
@@ -19,7 +25,19 @@
     "type": "模型类型",
     "provider": "所属供应商",
     "state": "状态",
-    "enabled": "状态"
+    "enabled": "状态",
+    "capabilities": "能力",
+    "selectProvider": "请先选择供应商"
+  },
+  "template": {
+    "quickAdd": "快速添加",
+    "orSelect": "或选择其他模型",
+    "selectFromList": "从列表选择",
+    "customAdd": "自定义模型",
+    "perMillion": "百万 tokens"
+  },
+  "message": {
+    "modelAdded": "模型添加成功"
   },
   "type": {
     "OPENAI": "OpenAI",

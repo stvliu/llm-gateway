@@ -50,8 +50,8 @@ public class AuthController {
     /**
      * 修改密码
      */
-    @PostMapping("/change-password")
-    public void changePassword(@Valid @RequestBody ChangePasswordRequest request) {
+    @PatchMapping("/me/password")
+    public void updatePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
         userService.changePassword(userId, request);
     }

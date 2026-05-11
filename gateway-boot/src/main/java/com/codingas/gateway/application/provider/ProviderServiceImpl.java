@@ -1,5 +1,7 @@
 package com.codingas.gateway.application.provider;
 
+import com.codingas.gateway.application.provider.dto.ModelNestedRequest;
+import com.codingas.gateway.application.provider.dto.ProviderApiKeyNestedRequest;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
 import com.codingas.gateway.application.provider.dto.ProviderKeyStats;
 import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
@@ -8,10 +10,14 @@ import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
+import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +40,7 @@ public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
     private final ProviderApiKeyGateway providerApiKeyGateway;
+    private final ModelGateway modelGateway;
 
     /**
      * 创建提供商
@@ -51,6 +58,42 @@ public class ProviderServiceImpl implements ProviderService {
         provider.setState(ProviderState.ACTIVE);
 
         Provider savedProvider = providerGateway.save(provider);
+        Long providerId = savedProvider.getId();
+
+        // 创建嵌套的 API Keys
+        if (request.getApiKeys() != null && !request.getApiKeys().isEmpty()) {
+            for (ProviderApiKeyNestedRequest keyRequest : request.getApiKeys()) {
+                ProviderApiKey apiKey = new ProviderApiKey();
+                apiKey.setProviderId(providerId);
+                apiKey.setKeyName(keyRequest.getKeyName());
+                apiKey.setApiKey(keyRequest.getApiKey());
+                apiKey.setPriority(keyRequest.getPriority() != null ? keyRequest.getPriority() : 100);
+                apiKey.setWeight(keyRequest.getWeight() != null ? keyRequest.getWeight() : 100);
+                apiKey.setIsDefault(keyRequest.getIsDefault() != null ? keyRequest.getIsDefault() : false);
+                apiKey.setState(ProviderApiKeyState.ACTIVE);
+                providerApiKeyGateway.save(apiKey);
+            }
+            log.info("Created {} API keys for provider {}", request.getApiKeys().size(), providerId);
+        }
+
+        // 创建嵌套的模型
+        if (request.getModels() != null && !request.getModels().isEmpty()) {
+            for (ModelNestedRequest modelRequest : request.getModels()) {
+                Model model = new Model();
+                model.setProviderId(providerId);
+                model.setProviderName(savedProvider.getName());
+                model.setProviderModelId(modelRequest.getProviderModelId());
+                model.setDisplayName(modelRequest.getDisplayName());
+                model.setContextWindow(modelRequest.getContextWindow());
+                model.setInputPrice(modelRequest.getInputPrice());
+                model.setOutputPrice(modelRequest.getOutputPrice());
+                model.setCapabilities(modelRequest.getCapabilities());
+                model.setState(ModelState.ACTIVE);
+                modelGateway.save(model);
+            }
+            log.info("Created {} models for provider {}", request.getModels().size(), providerId);
+        }
+
         return toResponse(savedProvider);
     }
 
@@ -152,13 +195,31 @@ public class ProviderServiceImpl implements ProviderService {
 
     /**
      * 删除提供商
+     * 先删除关联的 API Keys 和 Models，再删除 Provider
      */
     @Override
     @Transactional
     public void delete(Long id) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
+
+        // 先删除关联的 API Keys
+        List<ProviderApiKey> keys = providerApiKeyGateway.findByProviderId(id);
+        for (ProviderApiKey key : keys) {
+            providerApiKeyGateway.delete(key);
+        }
+        log.info("Deleted {} API keys for provider {}", keys.size(), id);
+
+        // 再删除关联的 Models
+        List<Model> models = modelGateway.findByProviderId(id);
+        for (Model model : models) {
+            modelGateway.delete(model);
+        }
+        log.info("Deleted {} models for provider {}", models.size(), id);
+
+        // 最后删除 Provider
         providerGateway.delete(provider);
+        log.info("Deleted provider {}", id);
     }
 
     /**

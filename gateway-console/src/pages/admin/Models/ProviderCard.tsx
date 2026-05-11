@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Button, Space, Tag, Badge, Dropdown } from 'antd';
+import { Card, Button, Space, Tag, Badge, Dropdown, theme, Popconfirm } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -14,6 +14,8 @@ import { StatusIndicator } from '@/components/common';
 import { ModelTag } from './ModelTag';
 import type { Provider } from '@/types/provider';
 import type { Model } from '@/types/model';
+
+const { useToken } = theme;
 
 interface ProviderCardProps {
   provider: Provider;
@@ -47,6 +49,7 @@ export function ProviderCard({
   const { t } = useTranslation('models');
   const { getEffectiveTheme } = useThemeStore();
   const isDark = getEffectiveTheme() === 'dark';
+  const { token } = useToken();
   const [isExpanded, setIsExpanded] = useState(!collapsed);
 
   const activeModels = models.filter((m) => m.state === 'ACTIVE');
@@ -79,7 +82,7 @@ export function ProviderCard({
   return (
     <Card
       style={{
-        marginBottom: 16,
+        height: '100%',
         border: 'none',
         boxShadow: isDark
           ? '0 2px 8px rgba(0, 0, 0, 0.3)'
@@ -97,7 +100,7 @@ export function ProviderCard({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderBottom: isExpanded ? '1px solid #f0f0f0' : 'none',
+          borderBottom: isExpanded ? `1px solid ${token.colorBorderSecondary}` : 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -138,11 +141,11 @@ export function ProviderCard({
           alignItems: 'center',
           justifyContent: 'space-between',
           fontSize: 13,
-          color: '#666',
-          borderBottom: isExpanded ? '1px solid #f0f0f0' : 'none',
+          color: token.colorTextSecondary,
+          borderBottom: isExpanded ? `1px solid ${token.colorBorderSecondary}` : 'none',
         }}
       >
-        <Space split={<span style={{ color: '#d9d9d9' }}>|</span>} size={8}>
+        <Space split={<span style={{ color: token.colorBorder }}>|</span>} size={8}>
           <span>
             {t('provider.type')}: {t(`type.${provider.providerType}`, { ns: 'providers' })}
           </span>
@@ -171,7 +174,7 @@ export function ProviderCard({
         <div
           style={{
             padding: '16px 20px',
-            background: isDark ? '#1f1f1f' : '#fafafa',
+            background: isDark ? token.colorBgContainer : token.colorBgLayout,
           }}
         >
           {models.length === 0 ? (
@@ -179,7 +182,7 @@ export function ProviderCard({
               style={{
                 textAlign: 'center',
                 padding: 24,
-                color: '#999',
+                color: token.colorTextSecondary,
               }}
             >
               <p style={{ margin: '0 0 16px' }}>{t('empty.noModel')}</p>
@@ -192,21 +195,47 @@ export function ProviderCard({
               </Button>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div>
               {models.map((model) => (
-                <ModelTag
+                <div
                   key={model.id}
-                  model={model}
-                  onEdit={onEditModel}
-                  onDelete={onDeleteModel}
-                  onViewDetail={onViewModelDetail}
-                />
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '8px 12px',
+                    marginBottom: 4,
+                    background: isDark ? token.colorBgElevated : '#fff',
+                    borderRadius: 6,
+                  }}
+                >
+                  <ModelTag model={model} onClick={onViewModelDetail} />
+                  <Space size={4}>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => onEditModel(model)}
+                    />
+                    <Popconfirm
+                      title={t('confirm.delete', { ns: 'common' })}
+                      onConfirm={() => onDeleteModel(model)}
+                    >
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                      />
+                    </Popconfirm>
+                  </Space>
+                </div>
               ))}
               <Button
                 type="dashed"
                 icon={<PlusOutlined />}
                 size="small"
-                style={{ margin: '4px' }}
+                style={{ marginTop: 8, width: '100%' }}
                 onClick={() => onAddModel(provider)}
               >
                 {t('addModel')}

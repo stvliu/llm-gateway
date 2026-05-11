@@ -6,6 +6,7 @@ import type {
   ApplyTemplateRequest,
   ApplyTemplateResult,
   TemplateListParams,
+  MarketStatus,
   SpringPage,
 } from '@/types/template';
 import type { PageResponse, PageParams } from '@/types/api';
@@ -46,9 +47,9 @@ export const templateApi = {
   delete: (id: number) =>
     api.delete<void>(`/templates/${id}`),
 
-  /** 发布模板到公共市场 */
-  publish: (id: number) =>
-    api.post<void>(`/templates/${id}/publish`),
+  /** 更新模板市场状态 */
+  updateMarketState: (id: number, marketState: MarketStatus) =>
+    api.patch<ProviderTemplate>(`/templates/${id}/market-state`, { marketState }),
 
   /** 应用模板创建 Provider */
   apply: (id: number, data: ApplyTemplateRequest) =>
@@ -60,7 +61,7 @@ export const templateApi = {
 
   /** 批量导出模板 */
   exportBatch: (ids: number[]) =>
-    api.get<void>('/templates/export/batch', { params: { ids } }),
+    api.get<void>('/templates/export', { params: { ids: ids.join(',') } }),
 
   /** 导入模板 */
   import: (formData: FormData) =>

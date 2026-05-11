@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { providerApiKeyApi } from '@/services/api/providerApiKey';
+import { providerApiKeyApi, providerApi } from '@/services/api';
 import type { PageParams } from '@/types/api';
 import type {
   CreateProviderApiKeyRequest,
@@ -12,6 +12,7 @@ export const providerApiKeyKeys = {
   list: (params?: Record<string, unknown>) => [...providerApiKeyKeys.lists(), params] as const,
   details: () => [...providerApiKeyKeys.all, 'detail'] as const,
   detail: (id: number) => [...providerApiKeyKeys.details(), id] as const,
+  providerKeys: (providerId: number) => [...providerApiKeyKeys.all, 'provider', providerId] as const,
 };
 
 export function useProviderApiKeys(params?: PageParams & { providerId?: number }) {
@@ -26,6 +27,15 @@ export function useProviderApiKey(id: number) {
     queryKey: providerApiKeyKeys.detail(id),
     queryFn: () => providerApiKeyApi.get(id),
     enabled: id > 0,
+  });
+}
+
+/** 获取 Provider 的 Key 信息（默认 Key + 列表） */
+export function useProviderKeys(providerId: number, options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: providerApiKeyKeys.providerKeys(providerId),
+    queryFn: () => providerApi.getKeys(providerId),
+    enabled: (options?.enabled ?? true) && providerId > 0,
   });
 }
 

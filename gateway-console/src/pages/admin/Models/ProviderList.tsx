@@ -91,7 +91,7 @@ export function ProviderList({ onSelect }: ProviderListProps) {
       ),
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -124,7 +124,7 @@ export function ProviderList({ onSelect }: ProviderListProps) {
       />
 
       <Modal
-        title={editingProvider ? t('actions.edit', { ns: 'common' }) : t('addProvider')}
+        title={editingProvider ? t('actions.label', { ns: 'common' }) : t('addProvider')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}

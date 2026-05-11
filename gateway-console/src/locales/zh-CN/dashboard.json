@@ -51,6 +51,7 @@
     "placeholder": "图表区域 - 待接入 ECharts/Recharts"
   },
   "popularModels": {
-    "title": "热门模型"
+    "title": "热门模型",
+    "empty": "暂无模型"
   }
 }

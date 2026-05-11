@@ -1,4 +1,4 @@
-import { Row, Col, Card, Statistic, Typography, Space, Tag } from 'antd';
+import { Row, Col, Card, Statistic, Typography, Space, Tag, Spin } from 'antd';
 import {
   AppstoreOutlined,
   KeyOutlined,
@@ -7,25 +7,36 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useModels, useApiKeys } from '@/services/query';
 
 const { Paragraph } = Typography;
 
 export default function UserDashboard() {
   const { t } = useTranslation('dashboard');
 
-  // 静态数据 - 后续接入真实 API
+  // 获取模型列表（只取活跃模型）
+  const { data: modelsData, isLoading: modelsLoading } = useModels({ size: 100 });
+
+  // 获取当前用户的 API Key 列表
+  const { data: apiKeysData, isLoading: apiKeysLoading } = useApiKeys({ size: 100 });
+
+  // 统计数据
   const stats = {
-    availableModels: 8,
-    myApiKeys: 3,
-    monthlyUsage: '120K',
+    availableModels: modelsData?.pagination?.total ?? 0,
+    myApiKeys: apiKeysData?.pagination?.total ?? 0,
+    monthlyUsage: '0', // TODO: 需要用量统计 API
   };
 
-  const popularModels = [
-    { key: 'gpt-4', name: 'GPT-4', provider: 'OpenAI', tag: '推荐' },
-    { key: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI', tag: '快速' },
-    { key: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic', tag: '强大' },
-    { key: 'claude-3-sonnet', name: 'Claude 3 Sonnet', provider: 'Anthropic', tag: '均衡' },
-  ];
+  // 热门模型（取前4个活跃模型）
+  const popularModels = (modelsData?.items || [])
+    .filter(m => m.state === 'ACTIVE')
+    .slice(0, 4)
+    .map(m => ({
+      key: String(m.id),
+      name: m.displayName || m.providerModelId || 'Unknown',
+      provider: m.providerName || 'Unknown',
+      tag: 'LLM',
+    }));
 
   const statCardStyle = { height: '100%' };
   const statIconStyle = { fontSize: 24, opacity: 0.6 };
@@ -33,36 +44,38 @@ export default function UserDashboard() {
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* 统计卡片 */}
-      <Row gutter={16}>
-        <Col span={8}>
-          <Card style={statCardStyle}>
-            <Statistic
-              title={t('stats.availableModels')}
-              value={stats.availableModels}
-              prefix={<AppstoreOutlined style={statIconStyle} />}
-            />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card style={statCardStyle}>
-            <Statistic
-              title={t('stats.myApiKeys')}
-              value={stats.myApiKeys}
-              prefix={<KeyOutlined style={statIconStyle} />}
-            />
-          </Card>
-        </Col>
-        <Col span={8}>
-          <Card style={statCardStyle}>
-            <Statistic
-              title={t('stats.monthlyUsage')}
-              value={stats.monthlyUsage}
-              prefix={<DashboardOutlined style={statIconStyle} />}
-              suffix={t('stats.tokens')}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <Spin spinning={modelsLoading || apiKeysLoading}>
+        <Row gutter={16}>
+          <Col span={8}>
+            <Card style={statCardStyle}>
+              <Statistic
+                title={t('stats.availableModels')}
+                value={stats.availableModels}
+                prefix={<AppstoreOutlined style={statIconStyle} />}
+              />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card style={statCardStyle}>
+              <Statistic
+                title={t('stats.myApiKeys')}
+                value={stats.myApiKeys}
+                prefix={<KeyOutlined style={statIconStyle} />}
+              />
+            </Card>
+          </Col>
+          <Col span={8}>
+            <Card style={statCardStyle}>
+              <Statistic
+                title={t('stats.monthlyUsage')}
+                value={stats.monthlyUsage}
+                prefix={<DashboardOutlined style={statIconStyle} />}
+                suffix={t('stats.tokens')}
+              />
+            </Card>
+          </Col>
+        </Row>
+      </Spin>
 
       {/* 快速开始 */}
       <Card title={<span><ThunderboltOutlined style={{ marginRight: 8 }} />{t('quickStart.title')}</span>}>
@@ -105,26 +118,32 @@ export default function UserDashboard() {
         <Col span={12}>
           <Card title={t('popularModels.title')} style={{ height: '100%' }}>
             <Space direction="vertical" style={{ width: '100%' }} size="small">
-              {popularModels.map((model) => (
-                <div
-                  key={model.key}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 12px',
-                    background: '#fafafa',
-                    borderRadius: 6,
-                  }}
-                >
-                  <Space>
-                    <CodeOutlined />
-                    <span>{model.name}</span>
-                    <span style={{ color: '#999', fontSize: 12 }}>{model.provider}</span>
-                  </Space>
-                  <Tag color="blue">{model.tag}</Tag>
+              {popularModels.length > 0 ? (
+                popularModels.map((model) => (
+                  <div
+                    key={model.key}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '8px 12px',
+                      background: '#fafafa',
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Space>
+                      <CodeOutlined />
+                      <span>{model.name}</span>
+                      <span style={{ color: '#999', fontSize: 12 }}>{model.provider}</span>
+                    </Space>
+                    <Tag color="blue">{model.tag}</Tag>
+                  </div>
+                ))
+              ) : (
+                <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>
+                  {t('popularModels.empty')}
                 </div>
-              ))}
+              )}
             </Space>
           </Card>
         </Col>

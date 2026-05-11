@@ -76,7 +76,7 @@ export function ModelList({ providerId }: ModelListProps) {
       ),
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -106,7 +106,7 @@ export function ModelList({ providerId }: ModelListProps) {
       />
 
       <Modal
-        title={editingModel ? t('actions.edit', { ns: 'common' }) : t('addModel')}
+        title={editingModel ? t('actions.label', { ns: 'common' }) : t('addModel')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}

@@ -16,5 +16,5 @@ export const authApi = {
 
   /** 修改密码 */
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
-    api.post<void>('/auth/change-password', data),
+    api.patch<void>('/auth/me/password', data),
 };

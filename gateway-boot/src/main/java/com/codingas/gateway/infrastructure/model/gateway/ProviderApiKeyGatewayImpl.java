@@ -134,6 +134,22 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
         return result;
     }
 
+    @Override
+    @Transactional
+    public void delete(ProviderApiKey providerApiKey) {
+        if (providerApiKey != null && providerApiKey.getId() != null) {
+            repository.deleteById(providerApiKey.getId());
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteById(Long id) {
+        if (id != null) {
+            repository.deleteById(id);
+        }
+    }
+
     private ProviderApiKey toEntity(ProviderApiKeyDo doEntity) {
         if (doEntity == null) {
             return null;

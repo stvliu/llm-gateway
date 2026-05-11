@@ -79,7 +79,7 @@ export default function UserApiKeys() {
       ),
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -108,7 +108,7 @@ export default function UserApiKeys() {
       />
 
       <Modal
-        title={editingApiKey ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingApiKey ? t('actions.label', { ns: 'common' }) : t('add')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}

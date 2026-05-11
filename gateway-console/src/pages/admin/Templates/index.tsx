@@ -28,7 +28,7 @@ import {
   useCreateTemplate,
   useUpdateTemplate,
   useDeleteTemplate,
-  usePublishTemplate,
+  useUpdateTemplateMarketState,
   useApplyTemplate,
   useImportTemplates,
 } from '@/services/query';
@@ -60,7 +60,7 @@ export default function AdminTemplates() {
   const createMutation = useCreateTemplate();
   const updateMutation = useUpdateTemplate();
   const deleteMutation = useDeleteTemplate();
-  const publishMutation = usePublishTemplate();
+  const updateMarketStateMutation = useUpdateTemplateMarketState();
   const applyMutation = useApplyTemplate();
   const importMutation = useImportTemplates();
 
@@ -96,7 +96,7 @@ export default function AdminTemplates() {
     Modal.confirm({
       title: t('confirm.publish'),
       onOk: async () => {
-        await publishMutation.mutateAsync(id);
+        await updateMarketStateMutation.mutateAsync({ id, marketState: 'PUBLISHED' });
         message.success(t('message.publishSuccess'));
       },
     });
@@ -138,7 +138,7 @@ export default function AdminTemplates() {
       key: 'templateCode',
     },
     {
-      title: '供应商类型',
+      title: t('providerTypeLabel'),
       dataIndex: 'providerType',
       key: 'providerType',
       render: (type: string) => t(`providerType.${type}`),
@@ -163,7 +163,7 @@ export default function AdminTemplates() {
       key: 'downloadCount',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 200,
       render: (_, record) => (
@@ -181,7 +181,7 @@ export default function AdminTemplates() {
               type="link"
               size="small"
               onClick={() => handlePublish(record.id)}
-              loading={publishMutation.isPending}
+              loading={updateMarketStateMutation.isPending}
             >
               {t('publish')}
             </Button>
@@ -206,9 +206,10 @@ export default function AdminTemplates() {
       key: 'templateName',
     },
     {
-      title: t('providerType'),
+      title: t('providerTypeLabel'),
       dataIndex: 'providerType',
       key: 'providerType',
+      render: (type: string) => t(`providerType.${type}`),
     },
     {
       title: t('modelCount'),
@@ -221,7 +222,7 @@ export default function AdminTemplates() {
       key: 'downloadCount',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 150,
       render: (_, record) => (
@@ -293,7 +294,7 @@ export default function AdminTemplates() {
 
       {/* Create/Edit Modal */}
       <Modal
-        title={editingTemplate ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingTemplate ? t('actions.label', { ns: 'common' }) : t('add')}
         open={createModalOpen}
         onCancel={() => setCreateModalOpen(false)}
         footer={null}

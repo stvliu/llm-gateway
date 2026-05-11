@@ -10,38 +10,31 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
+import {
+  useProviderApiKeys,
+  useCreateProviderApiKey,
+  useUpdateProviderApiKey,
+  useDeleteProviderApiKey,
+  useSetEnabledProviderApiKey,
+} from '@/services/query/useProviderApiKeys';
+import { useProviders } from '@/services/query/useProviders';
+import type { ProviderApiKey, ProviderApiKeyState } from '@/types/providerApiKey';
 
 const { Paragraph } = Typography;
-
-interface PoolApiKey {
-  id: number;
-  name: string;
-  key: string;
-  providerId: number;
-  providerName: string;
-  state: 'ACTIVE' | 'DISABLED' | 'DELETED';
-  priority: number;
-  createdAt: string;
-}
-
-// TODO: 接入后端 API
-// API: GET /api/admin/api-key-pool
-// API: POST /api/admin/api-key-pool
-// API: PUT /api/admin/api-key-pool/:id
-// API: DELETE /api/admin/api-key-pool/:id
-// API: PUT /api/admin/api-key-pool/:id/toggle
-// API: PUT /api/admin/api-key-pool/reorder (拖拽排序)
-const mockData: PoolApiKey[] = [
-  { id: 1, name: 'key-1', key: 'sk-xxxx...xxxx', providerId: 1, providerName: 'OpenAI', state: 'ACTIVE', priority: 1, createdAt: '2024-01-15' },
-  { id: 2, name: 'key-2', key: 'sk-yyyy...yyyy', providerId: 1, providerName: 'OpenAI', state: 'DISABLED', priority: 2, createdAt: '2024-01-20' },
-  { id: 3, name: 'key-3', key: 'sk-zzzz...zzzz', providerId: 2, providerName: 'Anthropic', state: 'ACTIVE', priority: 1, createdAt: '2024-02-01' },
-];
 
 export default function AdminApiKeyPool() {
   const { t } = useTranslation('apiKeyPool');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingKey, setEditingKey] = useState<PoolApiKey | null>(null);
+  const [editingKey, setEditingKey] = useState<ProviderApiKey | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState<number | undefined>();
   const [form] = Form.useForm();
+
+  const { data, isLoading } = useProviderApiKeys({ providerId: selectedProviderId });
+  const { data: providers } = useProviders();
+  const createMutation = useCreateProviderApiKey();
+  const updateMutation = useUpdateProviderApiKey();
+  const deleteMutation = useDeleteProviderApiKey();
+  const toggleMutation = useSetEnabledProviderApiKey();
 
   const handleAdd = () => {
     setEditingKey(null);
@@ -49,26 +42,38 @@ export default function AdminApiKeyPool() {
     setModalOpen(true);
   };
 
-  const handleEdit = (record: PoolApiKey) => {
+  const handleEdit = (record: ProviderApiKey) => {
     setEditingKey(record);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      providerId: record.providerId,
+      keyName: record.keyName,
+      apiKey: '',
+      priority: record.priority,
+      weight: record.weight,
+      isDefault: record.isDefault,
+    });
     setModalOpen(true);
   };
 
-  const handleDelete = (_id: number) => {
+  const handleDelete = (id: number) => {
     Modal.confirm({
       title: t('confirm.delete', { ns: 'common' }),
-      onOk: () => {
+      onOk: async () => {
+        await deleteMutation.mutateAsync(id);
         message.success(t('message.success', { ns: 'common' }));
       },
     });
   };
 
-  const handleToggle = (record: PoolApiKey) => {
+  const handleToggle = (record: ProviderApiKey) => {
     const action = record.state === 'DISABLED' ? t('enable') : t('disable');
     Modal.confirm({
       title: t('confirm.toggle', { action }),
-      onOk: () => {
+      onOk: async () => {
+        await toggleMutation.mutateAsync({
+          id: record.id,
+          enabled: record.state === 'DISABLED',
+        });
         message.success(t('message.success', { ns: 'common' }));
       },
     });
@@ -76,23 +81,42 @@ export default function AdminApiKeyPool() {
 
   const handleSubmit = async () => {
     try {
-      await form.validateFields();
-      // TODO: 调用 API 保存数据
+      const values = await form.validateFields();
+      if (editingKey) {
+        await updateMutation.mutateAsync({
+          id: editingKey.id,
+          data: {
+            keyName: values.keyName,
+            apiKey: values.apiKey || undefined,
+            priority: values.priority,
+            weight: values.weight,
+            isDefault: values.isDefault,
+          },
+        });
+      } else {
+        await createMutation.mutateAsync({
+          providerId: values.providerId,
+          keyName: values.keyName,
+          apiKey: values.apiKey,
+          priority: values.priority,
+          weight: values.weight,
+          isDefault: values.isDefault,
+        });
+      }
       message.success(t('message.success', { ns: 'common' }));
       setModalOpen(false);
-    } catch (error) {
-      // 表单验证失败，不做处理
+    } catch {
+      // 表单验证失败或 API 错误，不做处理
     }
   };
 
-  const stateColorMap: Record<string, string> = {
+  const stateColorMap: Record<ProviderApiKeyState, string> = {
     ACTIVE: 'green',
     DISABLED: 'default',
     DELETED: 'red',
   };
 
-  const columns: ColumnsType<PoolApiKey> = [
-    // TODO: 实现拖拽排序功能，集成 react-beautiful-dnd 或 dnd-kit
+  const columns: ColumnsType<ProviderApiKey> = [
     {
       title: '',
       key: 'drag',
@@ -107,18 +131,22 @@ export default function AdminApiKeyPool() {
     },
     {
       title: t('name'),
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'keyName',
+      key: 'keyName',
     },
     {
       title: t('provider'),
-      dataIndex: 'providerName',
-      key: 'providerName',
+      dataIndex: 'providerId',
+      key: 'providerId',
+      render: (providerId: number) => {
+        const provider = providers?.items?.find((p) => p.id === providerId);
+        return provider?.providerName || '-';
+      },
     },
     {
       title: t('key'),
-      dataIndex: 'key',
-      key: 'key',
+      dataIndex: 'keyHint',
+      key: 'keyHint',
       render: (key: string) => (
         <Paragraph copyable={{ text: key }} style={{ margin: 0, fontFamily: 'monospace' }}>
           {key}
@@ -129,12 +157,12 @@ export default function AdminApiKeyPool() {
       title: t('state'),
       dataIndex: 'state',
       key: 'state',
-      render: (state) => (
+      render: (state: ProviderApiKeyState) => (
         <Tag color={stateColorMap[state]}>{t(`state.${state.toLowerCase()}`, { ns: 'common' })}</Tag>
       ),
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 140,
       render: (_, record) => (
@@ -163,11 +191,9 @@ export default function AdminApiKeyPool() {
               placeholder={t('selectProvider')}
               style={{ width: 200 }}
               allowClear
-              options={[
-                { value: 1, label: 'OpenAI' },
-                { value: 2, label: 'Anthropic' },
-                { value: 3, label: 'Google' },
-              ]}
+              value={selectedProviderId}
+              onChange={setSelectedProviderId}
+              options={providers?.items?.map((p) => ({ value: p.id, label: p.providerName }))}
             />
             <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
               {t('add')}
@@ -183,35 +209,44 @@ export default function AdminApiKeyPool() {
 
         <Table
           columns={columns}
-          dataSource={mockData}
+          dataSource={data?.items || []}
           rowKey="id"
+          loading={isLoading}
           pagination={false}
         />
       </Card>
 
       <Modal
-        title={editingKey ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingKey ? t('actions.label', { ns: 'common' }) : t('add')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
       >
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="providerId" label={t('provider')} rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value={1}>OpenAI</Select.Option>
-              <Select.Option value={2}>Anthropic</Select.Option>
-              <Select.Option value={3}>Google</Select.Option>
-            </Select>
+          <Form.Item name="providerId" label={t('provider')} rules={[{ required: !editingKey }]}>
+            <Select disabled={!!editingKey} options={providers?.items?.map((p) => ({ value: p.id, label: p.providerName }))} />
           </Form.Item>
-          <Form.Item name="name" label={t('name')} rules={[{ required: true }]}>
+          <Form.Item name="keyName" label={t('name')} rules={[{ required: true }]}>
             <Input placeholder={t('namePlaceholder')} />
           </Form.Item>
-          <Form.Item name="key" label={t('key')} rules={[{ required: true }]}>
+          <Form.Item name="apiKey" label={t('key')} rules={[{ required: !editingKey }]}>
             <Input.TextArea rows={3} placeholder={t('keyPlaceholder')} />
+          </Form.Item>
+          <Form.Item name="priority" label={t('priority')}>
+            <Input type="number" min={1} />
+          </Form.Item>
+          <Form.Item name="weight" label={t('weight')}>
+            <Input type="number" min={1} max={100} />
+          </Form.Item>
+          <Form.Item name="isDefault" label={t('isDefault')} valuePropName="checked">
+            <Select>
+              <Select.Option value={true}>{t('yes')}</Select.Option>
+              <Select.Option value={false}>{t('no')}</Select.Option>
+            </Select>
           </Form.Item>
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
                 {t('actions.save', { ns: 'common' })}
               </Button>
               <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>

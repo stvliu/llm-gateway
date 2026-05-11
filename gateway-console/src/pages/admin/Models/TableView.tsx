@@ -252,7 +252,7 @@ export function TableView({
       },
     },
     {
-      title: '🔑 Key',
+      title: '🔑 API Key',
       key: 'keyStats',
       width: 100,
       render: (_, record) => {
@@ -275,7 +275,7 @@ export function TableView({
       },
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 150,
       render: (_, record) => {
@@ -289,7 +289,7 @@ export function TableView({
             },
             {
               key: 'edit',
-              label: t('actions.edit', { ns: 'common' }),
+              label: t('actions.label', { ns: 'common' }),
               icon: <EditOutlined />,
               onClick: () => onEditProvider(record.provider),
             },

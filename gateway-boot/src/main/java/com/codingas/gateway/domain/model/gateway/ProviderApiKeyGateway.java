@@ -98,4 +98,14 @@ public interface ProviderApiKeyGateway {
     default long getMaxVersion() {
         return 0L;
     }
+
+    /**
+     * 删除 API 密钥
+     */
+    void delete(ProviderApiKey providerApiKey);
+
+    /**
+     * 根据 ID 删除 API 密钥
+     */
+    void deleteById(Long id);
 }

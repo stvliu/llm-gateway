@@ -153,6 +153,26 @@ public class ProviderTemplateService {
     }
 
     /**
+     * 更新模板市场状态
+     */
+    @Transactional
+    public TemplateResponse updateMarketState(Long id, MarketState marketState) {
+        ProviderTemplate template = gateway.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("模板不存在: " + id));
+
+        if (TemplateType.OFFICIAL.equals(template.getTemplateType())) {
+            throw new IllegalStateException("官方模板状态不允许修改");
+        }
+
+        template.setMarketState(marketState);
+        if (marketState == MarketState.PUBLISHED) {
+            template.setPublishAt(Instant.now());
+        }
+        ProviderTemplate saved = gateway.save(template);
+        return toResponse(saved);
+    }
+
+    /**
      * 发布模板到公共市场
      */
     @Transactional

@@ -7,12 +7,6 @@ import type { Provider, CreateProviderRequest } from '@/types/provider';
 import type { ProviderType } from '@/types/api';
 import type { ColumnsType } from 'antd/es/table';
 
-// TODO: 接入后端 API (已部分实现，使用 useProviders hooks)
-// API: GET /api/admin/providers
-// API: POST /api/admin/providers
-// API: PUT /api/admin/providers/:id
-// API: DELETE /api/admin/providers/:id
-
 export default function AdminProviders() {
   const { t } = useTranslation('providers');
   const [modalOpen, setModalOpen] = useState(false);
@@ -85,7 +79,7 @@ export default function AdminProviders() {
       ),
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -114,7 +108,7 @@ export default function AdminProviders() {
       />
 
       <Modal
-        title={editingProvider ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingProvider ? t('actions.label', { ns: 'common' }) : t('add')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}

@@ -3,37 +3,23 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typogra
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
+import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query/useApiKeys';
+import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
 
 const { Paragraph } = Typography;
-
-interface UserApiKey {
-  id: number;
-  name: string;
-  key: string;
-  userId: number;
-  username: string;
-  state: 'ACTIVE' | 'DISABLED' | 'DELETED';
-  createdAt: string;
-  lastUsedAt: string | null;
-}
-
-// TODO: 接入后端 API
-// API: GET /api/admin/api-keys
-// API: POST /api/admin/api-keys
-// API: PUT /api/admin/api-keys/:id
-// API: DELETE /api/admin/api-keys/:id
-const mockData: UserApiKey[] = [
-  { id: 1, name: '开发环境', key: 'gw-xxxx...xxxx', userId: 1, username: 'user_001', state: 'ACTIVE', createdAt: '2024-01-15', lastUsedAt: '2024-03-20' },
-  { id: 2, name: '测试环境', key: 'gw-yyyy...yyyy', userId: 1, username: 'user_001', state: 'ACTIVE', createdAt: '2024-01-20', lastUsedAt: '2024-03-19' },
-  { id: 3, name: '生产环境', key: 'gw-zzzz...zzzz', userId: 2, username: 'user_002', state: 'DISABLED', createdAt: '2024-02-01', lastUsedAt: null },
-];
 
 export default function AdminApiKeys() {
   const { t } = useTranslation('apiKeys');
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingKey, setEditingKey] = useState<UserApiKey | null>(null);
+  const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [form] = Form.useForm();
+
+  const { data, isLoading } = useApiKeys();
+  const createMutation = useCreateApiKey();
+  const updateMutation = useUpdateApiKey();
+  const deleteMutation = useDeleteApiKey();
 
   const handleAdd = () => {
     setEditingKey(null);
@@ -42,17 +28,22 @@ export default function AdminApiKeys() {
     setModalOpen(true);
   };
 
-  const handleEdit = (record: UserApiKey) => {
+  const handleEdit = (record: ApiKey) => {
     setEditingKey(record);
     setNewKey(null);
-    form.setFieldsValue(record);
+    form.setFieldsValue({
+      name: record.name,
+      userId: record.userId,
+      state: record.state,
+    });
     setModalOpen(true);
   };
 
-  const handleDelete = (_id: number) => {
+  const handleDelete = (id: number) => {
     Modal.confirm({
       title: t('confirm.delete', { ns: 'common' }),
-      onOk: () => {
+      onOk: async () => {
+        await deleteMutation.mutateAsync(id);
         message.success(t('message.success', { ns: 'common' }));
       },
     });
@@ -60,22 +51,44 @@ export default function AdminApiKeys() {
 
   const handleSubmit = async () => {
     try {
-      await form.validateFields();
-      // TODO: 调用 API 保存数据
+      const values = await form.validateFields();
       if (editingKey) {
+        await updateMutation.mutateAsync({
+          id: editingKey.id,
+          data: {
+            name: values.name,
+            state: values.state,
+          },
+        });
         message.success(t('message.success', { ns: 'common' }));
       } else {
-        // 模拟生成新 Key
-        setNewKey('gw-new-generated-key-xxxx');
+        const result = await createMutation.mutateAsync({
+          name: values.name,
+          userId: values.userId,
+        });
+        setNewKey(result.rawKey);
         message.success(t('createSuccess'));
       }
       setModalOpen(false);
-    } catch (error) {
-      // 表单验证失败，不做处理
+    } catch {
+      // 表单验证失败或 API 错误，不做处理
     }
   };
 
-  const columns: ColumnsType<UserApiKey> = [
+  const stateColorMap: Record<GatewayApiKeyState, string> = {
+    ACTIVE: 'green',
+    DISABLED: 'red',
+    DELETED: 'default',
+  };
+
+  const filteredData = data?.items?.filter(
+    (item) =>
+      !searchKeyword ||
+      item.name.toLowerCase().includes(searchKeyword.toLowerCase()) ||
+      item.username.toLowerCase().includes(searchKeyword.toLowerCase())
+  ) || [];
+
+  const columns: ColumnsType<ApiKey> = [
     {
       title: t('name'),
       dataIndex: 'name',
@@ -100,8 +113,8 @@ export default function AdminApiKeys() {
       title: t('state'),
       dataIndex: 'state',
       key: 'state',
-      render: (state) => (
-        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
+      render: (state: GatewayApiKeyState) => (
+        <Tag color={stateColorMap[state]}>
           {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
         </Tag>
       ),
@@ -115,10 +128,10 @@ export default function AdminApiKeys() {
       title: t('lastUsedAt'),
       dataIndex: 'lastUsedAt',
       key: 'lastUsedAt',
-      render: (date: string | null) => date || '-',
+      render: (date: string | undefined) => date || '-',
     },
     {
-      title: t('actions.edit', { ns: 'common' }),
+      title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 100,
       render: (_, record) => (
@@ -134,7 +147,13 @@ export default function AdminApiKeys() {
     <Card title={t('title')}>
       <Row gutter={16} style={{ marginBottom: 16 }}>
         <Col span={8}>
-          <Input placeholder={t('searchPlaceholder')} prefix={<SearchOutlined />} allowClear />
+          <Input
+            placeholder={t('searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            allowClear
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+          />
         </Col>
         <Col span={16} style={{ textAlign: 'right' }}>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -145,13 +164,14 @@ export default function AdminApiKeys() {
 
       <Table
         columns={columns}
-        dataSource={mockData}
+        dataSource={filteredData}
         rowKey="id"
-        pagination={{ pageSize: 10 }}
+        loading={isLoading}
+        pagination={{ pageSize: 10, showSizeChanger: true }}
       />
 
       <Modal
-        title={editingKey ? t('actions.edit', { ns: 'common' }) : t('add')}
+        title={editingKey ? t('actions.label', { ns: 'common' }) : t('add')}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         footer={null}
@@ -165,8 +185,8 @@ export default function AdminApiKeys() {
           </div>
         )}
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="userId" label={t('user')} rules={[{ required: true }]}>
-            <Select>
+          <Form.Item name="userId" label={t('user')} rules={[{ required: !editingKey }]}>
+            <Select disabled={!!editingKey}>
               <Select.Option value={1}>user_001</Select.Option>
               <Select.Option value={2}>user_002</Select.Option>
               <Select.Option value={3}>user_003</Select.Option>
@@ -185,7 +205,7 @@ export default function AdminApiKeys() {
           )}
           <Form.Item>
             <Space>
-              <Button type="primary" htmlType="submit">
+              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
                 {t('actions.save', { ns: 'common' })}
               </Button>
               <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>

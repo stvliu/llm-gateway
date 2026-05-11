@@ -5,6 +5,7 @@ import type {
   UpdateTemplateRequest,
   ApplyTemplateRequest,
   TemplateListParams,
+  MarketStatus,
 } from '@/types/template';
 
 export const templateKeys = {
@@ -62,11 +63,12 @@ export function useDeleteTemplate() {
   });
 }
 
-export function usePublishTemplate() {
+export function useUpdateTemplateMarketState() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => templateApi.publish(id),
-    onSuccess: (_, id) => {
+    mutationFn: ({ id, marketState }: { id: number; marketState: MarketStatus }) =>
+      templateApi.updateMarketState(id, marketState),
+    onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: templateKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: templateKeys.lists() });
     },

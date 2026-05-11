@@ -123,7 +123,13 @@ export function CardView({
   }
 
   return (
-    <div>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
+        gap: 16,
+      }}
+    >
       {filteredProviders.map((provider) => (
         <ProviderCard
           key={provider.id}

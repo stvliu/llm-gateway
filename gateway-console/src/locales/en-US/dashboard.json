@@ -51,6 +51,7 @@
     "placeholder": "Chart Area - ECharts/Recharts integration pending"
   },
   "popularModels": {
-    "title": "Popular Models"
+    "title": "Popular Models",
+    "empty": "No models available"
   }
 }

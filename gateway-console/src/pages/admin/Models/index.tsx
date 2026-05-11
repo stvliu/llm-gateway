@@ -1,34 +1,29 @@
-import { useState, useMemo, useCallback } from 'react';
-import { Card, Button, Space, Segmented, Modal, Form, Input, Select, message } from 'antd';
-import {
-  AppstoreOutlined,
-  UnorderedListOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { useState, useCallback, useMemo } from 'react';
+import { Card, Segmented, message } from 'antd';
+import { AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/themeStore';
 import { SearchFilterBar, type SearchFilters } from '@/components/common';
-import { CardView } from './CardView';
-import { TableView } from './TableView';
-import { ProviderDrawer } from './ProviderDrawer';
-import { ModelDrawer } from './ModelDrawer';
+import { ProviderSidebar } from './ProviderSidebar';
+import { ProviderDetail } from './ProviderDetail';
+import { ModelTable } from './ModelTable';
+import { ProviderModal } from './ProviderModal';
+import { ModelAddModal } from './ModelAddModal';
+import { ApiKeyModal } from './ApiKeyModal';
 import {
   useProviders,
-  useCreateProvider,
-  useUpdateProvider,
   useDeleteProvider,
-  useCreateModel,
-  useUpdateModel,
   useDeleteModel,
 } from '@/services/query';
-import type { Provider, CreateProviderRequest, UpdateProviderRequest } from '@/types/provider';
-import type { Model, CreateModelRequest, UpdateModelRequest } from '@/types/model';
+import type { Provider } from '@/types/provider';
+import type { Model } from '@/types/model';
 
 type ViewMode = 'card' | 'table';
 
 /**
  * 模型管理页面
- * 支持卡片/表格双视图切换、搜索筛选、详情抽屉
+ * 卡片视图：管理员视角，左侧供应商列表，右侧详情面板
+ * 表格视图：用户视角，一行一个模型
  */
 export default function AdminModels() {
   const { t } = useTranslation('models');
@@ -38,38 +33,32 @@ export default function AdminModels() {
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>('card');
 
-  // 搜索筛选
-  const [filters, setFilters] = useState<SearchFilters>({ keyword: '' });
+  // 搜索筛选（表格视图）
+  const [, setFilters] = useState<SearchFilters>({ keyword: '' });
 
-  // 抽屉状态
-  const [providerDrawerId, setProviderDrawerId] = useState<number | null>(null);
-  const [modelDrawerId, setModelDrawerId] = useState<number | null>(null);
+  // 卡片视图：选中的供应商
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
 
-  // Provider 表单弹窗
+  // 弹窗状态
   const [providerModalOpen, setProviderModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
-  const [providerForm] = Form.useForm();
 
-  // Model 表单弹窗
   const [modelModalOpen, setModelModalOpen] = useState(false);
-  const [editingModel, setEditingModel] = useState<Model | null>(null);
-  const [modelForm] = Form.useForm();
+  const [, setEditingModel] = useState<Model | null>(null);
+  const [addingModelProvider, setAddingModelProvider] = useState<Provider | null>(null);
 
-  // 当前选中的 Provider（用于添加 Model）
+  const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
+  const [editingApiKey, setEditingApiKey] = useState<{ id: number; keyName: string; priority: number; weight: number; isDefault: boolean } | null>(null);
 
   // Queries
   const { data: providersData } = useProviders({ size: 100 });
   const providers = providersData?.items || [];
 
   // Mutations
-  const createProviderMutation = useCreateProvider();
-  const updateProviderMutation = useUpdateProvider();
   const deleteProviderMutation = useDeleteProvider();
-  const createModelMutation = useCreateModel();
-  const updateModelMutation = useUpdateModel();
   const deleteModelMutation = useDeleteModel();
 
-  // 筛选选项
+  // 筛选选项（表格视图）
   const filterOptions = useMemo(
     () => [
       {
@@ -91,17 +80,6 @@ export default function AdminModels() {
           { value: 'DISABLED', label: t('state.disabled', { ns: 'common' }) },
         ],
       },
-      {
-        key: 'modelType',
-        label: t('search.filterByModelType'),
-        options: [
-          { value: 'CHAT', label: t('type.CHAT') },
-          { value: 'COMPLETION', label: t('type.COMPLETION') },
-          { value: 'EMBEDDING', label: t('type.EMBEDDING') },
-          { value: 'IMAGE', label: t('type.IMAGE') },
-          { value: 'AUDIO', label: t('type.AUDIO') },
-        ],
-      },
     ],
     [t]
   );
@@ -109,90 +87,75 @@ export default function AdminModels() {
   // Provider 操作
   const handleAddProvider = useCallback(() => {
     setEditingProvider(null);
-    providerForm.resetFields();
     setProviderModalOpen(true);
-  }, [providerForm]);
+  }, []);
 
   const handleEditProvider = useCallback((provider: Provider) => {
     setEditingProvider(provider);
-    providerForm.setFieldsValue(provider);
     setProviderModalOpen(true);
-  }, [providerForm]);
+  }, []);
 
-  const handleDeleteProvider = useCallback((provider: Provider) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      content: t('confirm.deleteProviderDesc', { name: provider.providerName }),
-      onOk: async () => {
-        await deleteProviderMutation.mutateAsync(provider.id);
-        message.success(t('message.success', { ns: 'common' }));
-        setProviderDrawerId(null);
-      },
-    });
+  const handleDeleteProvider = useCallback(async (provider: Provider) => {
+    try {
+      await deleteProviderMutation.mutateAsync(provider.id);
+      message.success(t('message.success', { ns: 'common' }));
+      setSelectedProvider(null);
+    } catch (error) {
+      console.error('Failed to delete provider:', error);
+      message.error(t('message.failed', { ns: 'common', defaultValue: '操作失败' }));
+    }
   }, [t, deleteProviderMutation]);
 
-  const handleProviderSubmit = useCallback(async (values: CreateProviderRequest | UpdateProviderRequest) => {
-    if (editingProvider) {
-      await updateProviderMutation.mutateAsync({
-        id: editingProvider.id,
-        data: values as UpdateProviderRequest,
-      });
-    } else {
-      await createProviderMutation.mutateAsync(values as CreateProviderRequest);
-    }
-    message.success(t('message.success', { ns: 'common' }));
+  const handleProviderSuccess = useCallback(() => {
     setProviderModalOpen(false);
-  }, [editingProvider, t, updateProviderMutation, createProviderMutation]);
+    setEditingProvider(null);
+    message.success(t('message.success', { ns: 'common' }));
+  }, [t]);
+
+  // API Key 操作
+  const handleAddApiKey = useCallback(() => {
+    if (!selectedProvider) return;
+    setEditingApiKey(null);
+    setApiKeyModalOpen(true);
+  }, [selectedProvider]);
+
+  const handleEditApiKey = useCallback((key: { id: number; keyName: string; priority: number; weight: number; isDefault: boolean }) => {
+    setEditingApiKey(key);
+    setApiKeyModalOpen(true);
+  }, []);
+
+  const handleApiKeySuccess = useCallback(() => {
+    setApiKeyModalOpen(false);
+    setEditingApiKey(null);
+    message.success(t('message.success', { ns: 'common' }));
+  }, [t]);
 
   // Model 操作
-  const handleAddModel = useCallback((provider?: Provider) => {
+  const handleAddModel = useCallback(() => {
+    if (!selectedProvider) return;
+    setAddingModelProvider(selectedProvider);
     setEditingModel(null);
-    modelForm.resetFields();
-    if (provider) {
-      modelForm.setFieldsValue({ providerId: provider.id });
-    }
     setModelModalOpen(true);
-  }, [modelForm]);
+  }, [selectedProvider]);
 
   const handleEditModel = useCallback((model: Model) => {
+    const provider = providers.find(p => p.id === model.providerId);
+    setAddingModelProvider(provider || null);
     setEditingModel(model);
-    modelForm.setFieldsValue(model);
     setModelModalOpen(true);
-  }, [modelForm]);
+  }, [providers]);
 
-  const handleDeleteModel = useCallback((model: Model) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      content: t('confirm.deleteModelDesc', { name: model.displayName || model.providerModelId || `Model ${model.id}` }),
-      onOk: async () => {
-        await deleteModelMutation.mutateAsync(model.id);
-        message.success(t('message.success', { ns: 'common' }));
-        setModelDrawerId(null);
-      },
-    });
+  const handleDeleteModel = useCallback(async (model: Model) => {
+    await deleteModelMutation.mutateAsync(model.id);
+    message.success(t('message.success', { ns: 'common' }));
   }, [t, deleteModelMutation]);
 
-  const handleModelSubmit = useCallback(async (values: CreateModelRequest | UpdateModelRequest) => {
-    if (editingModel) {
-      await updateModelMutation.mutateAsync({
-        id: editingModel.id,
-        data: values as UpdateModelRequest,
-      });
-    } else {
-      await createModelMutation.mutateAsync(values as CreateModelRequest);
-    }
-    message.success(t('message.success', { ns: 'common' }));
+  const handleModelSuccess = useCallback(() => {
     setModelModalOpen(false);
-  }, [editingModel, t, updateModelMutation, createModelMutation]);
-
-  // 查看详情
-  const handleViewProviderDetail = useCallback((provider: Provider) => {
-    setProviderDrawerId(provider.id);
-  }, []);
-
-  const handleViewModelDetail = useCallback((model: Model) => {
-    setModelDrawerId(model.id);
-  }, []);
+    setAddingModelProvider(null);
+    setEditingModel(null);
+    message.success(t('message.success', { ns: 'common' }));
+  }, [t]);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -206,191 +169,112 @@ export default function AdminModels() {
             : '0 2px 8px rgba(0, 0, 0, 0.06)',
         }}
       >
-        <div>
-          {/* 第一行：搜索筛选栏 */}
-          <SearchFilterBar
-            placeholder={t('search.placeholder')}
-            filters={filterOptions}
-            onSearch={setFilters}
-            onReset={() => setFilters({ keyword: '' })}
-          />
-
-          {/* 第二行：新增按钮（左）+ 视图切换（右） */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProvider}>
-              {t('addProvider')}
-            </Button>
-            <Segmented
-              value={viewMode}
-              onChange={(value) => setViewMode(value as ViewMode)}
-              options={[
-                {
-                  value: 'card',
-                  icon: <AppstoreOutlined />,
-                  label: t('viewMode.card'),
-                },
-                {
-                  value: 'table',
-                  icon: <UnorderedListOutlined />,
-                  label: t('viewMode.table'),
-                },
-              ]}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          {/* 左侧：搜索筛选（表格视图时显示） */}
+          {viewMode === 'table' && (
+            <SearchFilterBar
+              placeholder={t('search.placeholder')}
+              filters={filterOptions}
+              onSearch={setFilters}
+              onReset={() => setFilters({ keyword: '' })}
             />
-          </div>
+          )}
+
+          {/* 右侧：视图切换 */}
+          <Segmented
+            value={viewMode}
+            onChange={(value) => {
+              setViewMode(value as ViewMode);
+              if (value === 'card') {
+                setSelectedProvider(null);
+              }
+            }}
+            options={[
+              {
+                value: 'card',
+                icon: <AppstoreOutlined />,
+                label: t('viewMode.card', { defaultValue: '卡片' }),
+              },
+              {
+                value: 'table',
+                icon: <UnorderedListOutlined />,
+                label: t('viewMode.table', { defaultValue: '表格' }),
+              },
+            ]}
+          />
         </div>
       </Card>
 
       {/* 内容区域 */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
+      <div style={{ flex: 1, overflow: 'hidden' }}>
         {viewMode === 'card' ? (
-          <CardView
-            filters={filters}
-            onAddProvider={handleAddProvider}
-            onEditProvider={handleEditProvider}
-            onDeleteProvider={handleDeleteProvider}
-            onAddModel={handleAddModel}
-            onEditModel={handleEditModel}
-            onDeleteModel={handleDeleteModel}
-            onViewProviderDetail={handleViewProviderDetail}
-            onViewModelDetail={handleViewModelDetail}
-          />
+          /* 卡片视图：左侧供应商列表 + 右侧详情面板 */
+          <div style={{ display: 'flex', gap: 16, height: '100%' }}>
+            <div style={{ width: 280, height: '100%' }}>
+              <ProviderSidebar
+                selectedProviderId={selectedProvider?.id ?? null}
+                onSelect={setSelectedProvider}
+                onAdd={handleAddProvider}
+              />
+            </div>
+            <div style={{ flex: 1, height: '100%' }}>
+              <ProviderDetail
+                provider={selectedProvider}
+                onEditProvider={handleEditProvider}
+                onDeleteProvider={handleDeleteProvider}
+                onAddApiKey={handleAddApiKey}
+                onEditApiKey={handleEditApiKey}
+                onAddModel={handleAddModel}
+                onEditModel={handleEditModel}
+              />
+            </div>
+          </div>
         ) : (
-          <TableView
-            filters={filters}
-            onEditProvider={handleEditProvider}
-            onAddModel={handleAddModel}
-            onEditModel={handleEditModel}
-            onViewProviderDetail={handleViewProviderDetail}
-          />
+          /* 表格视图：模型列表 */
+          <div style={{ height: '100%', overflow: 'auto' }}>
+            <ModelTable
+              providers={providers}
+              onEditModel={handleEditModel}
+              onDeleteModel={handleDeleteModel}
+            />
+          </div>
         )}
       </div>
 
-      {/* Provider 详情抽屉 */}
-      <ProviderDrawer
-        providerId={providerDrawerId}
-        onClose={() => setProviderDrawerId(null)}
-        onEdit={handleEditProvider}
-        onDelete={handleDeleteProvider}
-        onAddModel={handleAddModel}
-        onEditModel={handleEditModel}
-        onViewModelDetail={handleViewModelDetail}
-      />
-
-      {/* Model 详情抽屉 */}
-      <ModelDrawer
-        modelId={modelDrawerId}
-        onClose={() => setModelDrawerId(null)}
-        onEdit={handleEditModel}
-      />
-
-      {/* Provider 表单弹窗 */}
-      <Modal
-        title={editingProvider ? t('actions.edit', { ns: 'common' }) : t('addProvider')}
+      {/* Provider 弹窗 */}
+      <ProviderModal
         open={providerModalOpen}
-        onCancel={() => setProviderModalOpen(false)}
-        footer={null}
-      >
-        <Form
-          form={providerForm}
-          layout="vertical"
-          onFinish={handleProviderSubmit}
-        >
-          <Form.Item name="providerName" label={t('provider.name')} rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="providerType" label={t('provider.type')} rules={[{ required: true }]}>
-            <Select disabled={!!editingProvider}>
-              <Select.Option value="OPENAI">OpenAI</Select.Option>
-              <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
-              <Select.Option value="GOOGLE">Google</Select.Option>
-              <Select.Option value="AZURE">Azure</Select.Option>
-              <Select.Option value="CUSTOM">{t('type.OTHER', { ns: 'providers' })}</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="baseUrl" label={t('provider.baseUrl')}>
-            <Input />
-          </Form.Item>
-          {editingProvider && (
-            <Form.Item name="state" label={t('provider.state')}>
-              <Select>
-                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
-              </Select>
-            </Form.Item>
-          )}
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={createProviderMutation.isPending || updateProviderMutation.isPending}
-              >
-                {t('actions.save', { ns: 'common' })}
-              </Button>
-              <Button onClick={() => setProviderModalOpen(false)}>
-                {t('actions.cancel', { ns: 'common' })}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        provider={editingProvider}
+        onClose={() => {
+          setProviderModalOpen(false);
+          setEditingProvider(null);
+        }}
+        onSuccess={handleProviderSuccess}
+      />
 
-      {/* Model 表单弹窗 */}
-      <Modal
-        title={editingModel ? t('actions.edit', { ns: 'common' }) : t('addModel')}
+      {/* Model 弹窗 */}
+      <ModelAddModal
         open={modelModalOpen}
-        onCancel={() => setModelModalOpen(false)}
-        footer={null}
-      >
-        <Form form={modelForm} layout="vertical" onFinish={handleModelSubmit}>
-          <Form.Item name="displayName" label={t('model.name')}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="providerModelId" label={t('model.providerModelId')} rules={[{ required: true }]}>
-            <Input disabled={!!editingModel} />
-          </Form.Item>
-          <Form.Item name="providerId" label={t('model.provider')} rules={[{ required: true }]}>
-            <Select disabled={!!editingModel}>
-              {providers.map((p) => (
-                <Select.Option key={p.id} value={p.id}>
-                  {p.providerName}
-                </Select.Option>
-              ))}
-            </Select>
-          </Form.Item>
-          <Form.Item name="contextWindow" label={t('detail.contextWindow')}>
-            <Input type="number" />
-          </Form.Item>
-          <Form.Item name="inputPrice" label={t('detail.inputPrice')}>
-            <Input type="number" step="0.01" />
-          </Form.Item>
-          <Form.Item name="outputPrice" label={t('detail.outputPrice')}>
-            <Input type="number" step="0.01" />
-          </Form.Item>
-          {editingModel && (
-            <Form.Item name="state" label={t('model.state')}>
-              <Select>
-                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
-              </Select>
-            </Form.Item>
-          )}
-          <Form.Item>
-            <Space>
-              <Button
-                type="primary"
-                htmlType="submit"
-                loading={createModelMutation.isPending || updateModelMutation.isPending}
-              >
-                {t('actions.save', { ns: 'common' })}
-              </Button>
-              <Button onClick={() => setModelModalOpen(false)}>
-                {t('actions.cancel', { ns: 'common' })}
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        provider={addingModelProvider}
+        onClose={() => {
+          setModelModalOpen(false);
+          setAddingModelProvider(null);
+          setEditingModel(null);
+        }}
+        onSuccess={handleModelSuccess}
+      />
+
+      {/* API Key 弹窗 */}
+      <ApiKeyModal
+        open={apiKeyModalOpen}
+        provider={selectedProvider}
+        editingKey={editingApiKey}
+        onClose={() => {
+          setApiKeyModalOpen(false);
+          setEditingApiKey(null);
+        }}
+        onSuccess={handleApiKeySuccess}
+      />
     </div>
   );
 }

@@ -89,7 +89,8 @@
       "Bash(sed -i \"s/entity\\\\.setEnabled\\(/entity.setState\\(/g; s/result\\\\.getEnabled\\(\\)/result.getState\\(\\)/g\" com/codingas/gateway/infrastructure/model/gateway/ModelGatewayImplTest.java)",
       "Bash(sed -i \"s/updateData\\\\.setEnabled\\(/updateData.setState\\(/g; s/provider\\\\.getEnabled\\(\\)/provider.getState\\(\\)/g\" com/codingas/gateway/domain/model/service/ProviderDomainServiceTest.java)",
       "Bash(sed -i 's/import com.codingas.gateway.domain.security.entity.GatewayApiKey;/import com.codingas.gateway.common.enums.GatewayApiKeyState;\\\\nimport com.codingas.gateway.domain.security.entity.GatewayApiKey;/' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
-      "Bash(sed -i 's/GatewayApiKey\\\\.GatewayApiKeyState\\\\./GatewayApiKeyState./g' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)"
+      "Bash(sed -i 's/GatewayApiKey\\\\.GatewayApiKeyState\\\\./GatewayApiKeyState./g' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
+      "Bash(xdg-open http://localhost:5173)"
     ]
   },
   "outputStyle": "default"
