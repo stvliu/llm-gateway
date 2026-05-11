@@ -1,19 +1,16 @@
-import { useState, useCallback, useMemo } from 'react';
-import { Card, Segmented, message } from 'antd';
+import { useState, useCallback } from 'react';
+import { Segmented, message, theme } from 'antd';
 import { AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '@/stores/themeStore';
-import { SearchFilterBar, type SearchFilters } from '@/components/common';
 import { ProviderSidebar } from './ProviderSidebar';
 import { ProviderDetail } from './ProviderDetail';
-import { ModelTable } from './ModelTable';
+import { ModelsTableView } from './ModelsTableView';
 import { ProviderModal } from './ProviderModal';
 import { ModelAddModal } from './ModelAddModal';
 import { ApiKeyModal } from './ApiKeyModal';
 import {
   useProviders,
   useDeleteProvider,
-  useDeleteModel,
 } from '@/services/query';
 import type { Provider } from '@/types/provider';
 import type { Model } from '@/types/model';
@@ -23,18 +20,14 @@ type ViewMode = 'card' | 'table';
 /**
  * 模型管理页面
  * 卡片视图：管理员视角，左侧供应商列表，右侧详情面板
- * 表格视图：用户视角，一行一个模型
+ * 表格视图：用户视角，使用新的 EntityTable + EntityDrawer 组件
  */
 export default function AdminModels() {
   const { t } = useTranslation('models');
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   // 视图模式
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
-
-  // 搜索筛选（表格视图）
-  const [, setFilters] = useState<SearchFilters>({ keyword: '' });
+  const [viewMode, setViewMode] = useState<ViewMode>('table');
 
   // 卡片视图：选中的供应商
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
@@ -56,33 +49,6 @@ export default function AdminModels() {
 
   // Mutations
   const deleteProviderMutation = useDeleteProvider();
-  const deleteModelMutation = useDeleteModel();
-
-  // 筛选选项（表格视图）
-  const filterOptions = useMemo(
-    () => [
-      {
-        key: 'providerType',
-        label: t('search.filterByType'),
-        options: [
-          { value: 'OPENAI', label: t('type.OPENAI', { ns: 'providers' }) },
-          { value: 'ANTHROPIC', label: t('type.ANTHROPIC', { ns: 'providers' }) },
-          { value: 'GOOGLE', label: t('type.GEMINI', { ns: 'providers' }) },
-          { value: 'AZURE', label: 'Azure' },
-          { value: 'CUSTOM', label: t('type.OTHER', { ns: 'providers' }) },
-        ],
-      },
-      {
-        key: 'state',
-        label: t('search.filterByStatus'),
-        options: [
-          { value: 'ACTIVE', label: t('state.active', { ns: 'common' }) },
-          { value: 'DISABLED', label: t('state.disabled', { ns: 'common' }) },
-        ],
-      },
-    ],
-    [t]
-  );
 
   // Provider 操作
   const handleAddProvider = useCallback(() => {
@@ -100,17 +66,15 @@ export default function AdminModels() {
       await deleteProviderMutation.mutateAsync(provider.id);
       message.success(t('message.success', { ns: 'common' }));
       setSelectedProvider(null);
-    } catch (error) {
-      console.error('Failed to delete provider:', error);
-      message.error(t('message.failed', { ns: 'common', defaultValue: '操作失败' }));
+    } catch {
+      message.error(t('message.error', { ns: 'common' }));
     }
-  }, [t, deleteProviderMutation]);
+  }, [deleteProviderMutation, t]);
 
   const handleProviderSuccess = useCallback(() => {
     setProviderModalOpen(false);
     setEditingProvider(null);
-    message.success(t('message.success', { ns: 'common' }));
-  }, [t]);
+  }, []);
 
   // API Key 操作
   const handleAddApiKey = useCallback(() => {
@@ -127,8 +91,7 @@ export default function AdminModels() {
   const handleApiKeySuccess = useCallback(() => {
     setApiKeyModalOpen(false);
     setEditingApiKey(null);
-    message.success(t('message.success', { ns: 'common' }));
-  }, [t]);
+  }, []);
 
   // Model 操作
   const handleAddModel = useCallback(() => {
@@ -145,71 +108,55 @@ export default function AdminModels() {
     setModelModalOpen(true);
   }, [providers]);
 
-  const handleDeleteModel = useCallback(async (model: Model) => {
-    await deleteModelMutation.mutateAsync(model.id);
-    message.success(t('message.success', { ns: 'common' }));
-  }, [t, deleteModelMutation]);
-
   const handleModelSuccess = useCallback(() => {
     setModelModalOpen(false);
     setAddingModelProvider(null);
     setEditingModel(null);
-    message.success(t('message.success', { ns: 'common' }));
-  }, [t]);
+  }, []);
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* 工具栏 */}
-      <Card
+      {/* 视图切换 */}
+      <div
         style={{
-          marginBottom: 16,
-          border: 'none',
-          boxShadow: isDark
-            ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-            : '0 2px 8px rgba(0, 0, 0, 0.06)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+          padding: 16,
+          background: token.colorBgContainer,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          {/* 左侧：搜索筛选（表格视图时显示） */}
-          {viewMode === 'table' && (
-            <SearchFilterBar
-              placeholder={t('search.placeholder')}
-              filters={filterOptions}
-              onSearch={setFilters}
-              onReset={() => setFilters({ keyword: '' })}
-            />
-          )}
-
-          {/* 右侧：视图切换 */}
-          <Segmented
-            value={viewMode}
-            onChange={(value) => {
-              setViewMode(value as ViewMode);
-              if (value === 'card') {
-                setSelectedProvider(null);
-              }
-            }}
-            options={[
-              {
-                value: 'card',
-                icon: <AppstoreOutlined />,
-                label: t('viewMode.card', { defaultValue: '卡片' }),
-              },
-              {
-                value: 'table',
-                icon: <UnorderedListOutlined />,
-                label: t('viewMode.table', { defaultValue: '表格' }),
-              },
-            ]}
-          />
-        </div>
-      </Card>
+        <Segmented
+          value={viewMode}
+          onChange={(value) => {
+            setViewMode(value as ViewMode);
+            if (value === 'card') {
+              setSelectedProvider(null);
+            }
+          }}
+          options={[
+            {
+              value: 'table',
+              icon: <UnorderedListOutlined />,
+              label: t('viewMode.table', { defaultValue: '表格' }),
+            },
+            {
+              value: 'card',
+              icon: <AppstoreOutlined />,
+              label: t('viewMode.card', { defaultValue: '卡片' }),
+            },
+          ]}
+        />
+      </div>
 
       {/* 内容区域 */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
-        {viewMode === 'card' ? (
+        {viewMode === 'table' ? (
+          /* 表格视图：使用新的 EntityTable + EntityDrawer 组件 */
+          <ModelsTableView />
+        ) : (
           /* 卡片视图：左侧供应商列表 + 右侧详情面板 */
-          <div style={{ display: 'flex', gap: 16, height: '100%' }}>
+          <div style={{ display: 'flex', gap: 16, height: '100%', padding: 16 }}>
             <div style={{ width: 280, height: '100%' }}>
               <ProviderSidebar
                 selectedProviderId={selectedProvider?.id ?? null}
@@ -228,15 +175,6 @@ export default function AdminModels() {
                 onEditModel={handleEditModel}
               />
             </div>
-          </div>
-        ) : (
-          /* 表格视图：模型列表 */
-          <div style={{ height: '100%', overflow: 'auto' }}>
-            <ModelTable
-              providers={providers}
-              onEditModel={handleEditModel}
-              onDeleteModel={handleDeleteModel}
-            />
           </div>
         )}
       </div>

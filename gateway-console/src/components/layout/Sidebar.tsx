@@ -20,6 +20,10 @@ interface SidebarProps {
   role: UserRole;
 }
 
+/**
+ * 侧边栏组件
+ * 颜色跟随全局主题
+ */
 export function Sidebar({ collapsed, role }: SidebarProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -119,7 +123,7 @@ export function Sidebar({ collapsed, role }: SidebarProps) {
       onOpenChange={(keys) => setOpenKeys(keys as string[])}
       items={items}
       onClick={({ key }) => {
-        if (!key.startsWith('/')) return; // 忽略父菜单点击
+        if (!key.startsWith('/')) return;
         navigate(key);
       }}
       inlineCollapsed={collapsed}
