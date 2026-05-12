@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, InputNumber, message } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, InputNumber, message, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '@/services/query';
@@ -12,6 +12,8 @@ interface ProviderListProps {
 
 export function ProviderList({ onSelect }: ProviderListProps) {
   const { t } = useTranslation('models');
+  const { t: tc } = useTranslation('common');
+  const { modal } = App.useApp();
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
@@ -40,11 +42,16 @@ export function ProviderList({ onSelect }: ProviderListProps) {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
         if (selectedId === id) {
           setSelectedId(null);
           onSelect(null);

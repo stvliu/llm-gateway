@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query';
@@ -10,6 +10,8 @@ const { Paragraph } = Typography;
 
 export default function UserApiKeys() {
   const { t } = useTranslation('apiKeys');
+  const { t: tc } = useTranslation('common');
+  const { modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApiKey, setEditingApiKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -35,11 +37,16 @@ export default function UserApiKeys() {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirmDelete'),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };

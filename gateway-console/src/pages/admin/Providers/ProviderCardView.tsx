@@ -1,8 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Row, Col, Empty, Spin, Modal, message } from 'antd';
+import { Row, Col, Empty, Spin, message, Segmented, Space, App } from 'antd';
+import { AppstoreOutlined, UnorderedListOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { PageHeader } from '@/components/ui';
+import { FilterPanel, FilterTags } from '@/components/common';
 import { ProviderCard } from './ProviderCard';
-import { ProviderManagementDrawer } from './ProviderManagementDrawer';
 import { ApiKeyModal } from './ApiKeyModal';
 import { ModelAddModal } from './ModelAddModal';
 import {
@@ -17,18 +19,19 @@ import type { Model } from '@/types/model';
 
 interface ProviderCardViewProps {
   onProviderSelect?: (provider: Provider) => void;
+  viewMode: 'card' | 'table';
+  onViewModeChange: (mode: 'card' | 'table') => void;
+  onAddProvider: () => void;
 }
 
 /**
  * 供应商卡片视图
  * 网格布局展示所有供应商卡片
  */
-export function ProviderCardView({ onProviderSelect }: ProviderCardViewProps) {
+export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange, onAddProvider }: ProviderCardViewProps) {
   const { t } = useTranslation('providers');
-
-  // 抽屉状态
-  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
-  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view');
+  const { t: tc } = useTranslation('common');
+  const { modal } = App.useApp();
 
   // API Key 弹窗状态
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
@@ -38,49 +41,176 @@ export function ProviderCardView({ onProviderSelect }: ProviderCardViewProps) {
   const [modelModalOpen, setModelModalOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<{ provider: Provider; model: Model | null } | null>(null);
 
+  // 过滤器状态
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+
   // 查询数据
-  const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
+  const { data: providersData, isLoading: providersLoading, refetch } = useProviders({ size: 100 });
   const providers = providersData?.items || [];
 
   // Mutations
   const deleteProviderMutation = useDeleteProvider();
 
+  // 页面操作按钮
+  const pageActions = useMemo(() => [
+    {
+      key: 'add',
+      label: tc('actions.add'),
+      type: 'primary' as const,
+      icon: <PlusOutlined />,
+      onClick: onAddProvider,
+    },
+    {
+      key: 'refresh',
+      label: tc('actions.refresh'),
+      icon: <ReloadOutlined />,
+      onClick: () => refetch(),
+      loading: providersLoading,
+    },
+  ], [tc, onAddProvider, refetch, providersLoading]);
+
+  // 视图切换组件
+  const viewModeSwitcher = useMemo(() => (
+    <Segmented
+      value={viewMode}
+      onChange={(value) => onViewModeChange(value as 'card' | 'table')}
+      options={[
+        {
+          value: 'card',
+          icon: <AppstoreOutlined />,
+          label: t('viewMode.card', { defaultValue: '卡片' }),
+        },
+        {
+          value: 'table',
+          icon: <UnorderedListOutlined />,
+          label: t('viewMode.table', { defaultValue: '表格' }),
+        },
+      ]}
+    />
+  ), [viewMode, onViewModeChange, t]);
+
+  // 过滤字段配置
+  const filterFields = useMemo(() => [
+    {
+      name: 'providerType',
+      label: t('type.label', { defaultValue: '类型' }),
+      options: [
+        { value: 'all', label: t('filter.all', { defaultValue: '全部' }) },
+        { value: 'OPENAI', label: 'OpenAI' },
+        { value: 'ANTHROPIC', label: 'Anthropic' },
+        { value: 'GOOGLE', label: 'Google' },
+        { value: 'AZURE', label: 'Azure' },
+        { value: 'DEEPSEEK', label: 'DeepSeek' },
+        { value: 'QWEN', label: 'Qwen' },
+        { value: 'ZHIPU', label: '智谱' },
+        { value: 'MOONSHOT', label: 'Moonshot' },
+        { value: 'BAICHUAN', label: '百川' },
+        { value: 'MINIMAX', label: 'MiniMax' },
+        { value: 'WENXIN', label: '文心' },
+        { value: 'VOLCENGINE', label: '火山引擎' },
+        { value: 'TENCENT', label: '腾讯' },
+        { value: 'XUNFEI', label: '讯飞' },
+        { value: 'CUSTOM', label: '其他' },
+      ],
+    },
+    {
+      name: 'state',
+      label: t('state', { defaultValue: '状态' }),
+      options: [
+        { value: 'all', label: t('filter.all', { defaultValue: '全部' }) },
+        { value: 'ACTIVE', label: tc('state.active') },
+        { value: 'DISABLED', label: tc('state.disabled') },
+      ],
+    },
+  ], [t, tc]);
+
+  // 过滤处理
+  const handleFilterChange = useCallback((values: Record<string, string>) => {
+    setFilterValues(values);
+  }, []);
+
+  const handleFilterReset = useCallback(() => {
+    setFilterValues({});
+  }, []);
+
+  // 过滤标签
+  const filterTags = useMemo(() => {
+    const tags: Array<{ key: string; label: string; value: string }> = [];
+    if (filterValues.providerType && filterValues.providerType !== 'all') {
+      const option = filterFields[0].options.find((o) => o.value === filterValues.providerType);
+      tags.push({
+        key: 'providerType',
+        label: filterFields[0].label,
+        value: option?.label || filterValues.providerType,
+      });
+    }
+    if (filterValues.state && filterValues.state !== 'all') {
+      const option = filterFields[1].options.find((o) => o.value === filterValues.state);
+      tags.push({
+        key: 'state',
+        label: filterFields[1].label,
+        value: option?.label || filterValues.state,
+      });
+    }
+    return tags;
+  }, [filterValues, filterFields]);
+
+  // 前端过滤
+  const filteredProviders = useMemo(() => {
+    const hasFilters = Object.values(filterValues).some((v) => v && v !== 'all');
+    if (!hasFilters) return providers;
+
+    return providers.filter((provider) => {
+      // 按类型过滤
+      if (filterValues.providerType && filterValues.providerType !== 'all') {
+        if (provider.providerType !== filterValues.providerType) {
+          return false;
+        }
+      }
+      // 按状态过滤
+      if (filterValues.state && filterValues.state !== 'all') {
+        if (provider.state !== filterValues.state) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [providers, filterValues]);
+
   // 按状态排序：活跃优先
   const sortedProviders = useMemo(() => {
-    return [...providers].sort((a, b) => {
+    return [...filteredProviders].sort((a, b) => {
       if (a.state === 'ACTIVE' && b.state !== 'ACTIVE') return -1;
       if (a.state !== 'ACTIVE' && b.state === 'ACTIVE') return 1;
       return a.providerName.localeCompare(b.providerName);
     });
-  }, [providers]);
+  }, [filteredProviders]);
 
   // 打开查看抽屉
   const handleViewDetail = useCallback((provider: Provider) => {
-    setSelectedProviderId(provider.id);
-    setDrawerMode('view');
     onProviderSelect?.(provider);
   }, [onProviderSelect]);
 
   // 打开编辑抽屉
   const handleEdit = useCallback((provider: Provider) => {
-    setSelectedProviderId(provider.id);
-    setDrawerMode('edit');
-  }, []);
+    onProviderSelect?.(provider);
+  }, [onProviderSelect]);
 
   // 删除供应商
   const handleDelete = useCallback((provider: Provider) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      content: t('confirm.deleteProviderDesc', { name: provider.providerName, defaultValue: `确定删除供应商 "${provider.providerName}" 吗？` }),
+    modal.confirm({
+      title: tc('confirm.deleteProviderTitle', { name: provider.providerName }),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: 'primary' },
+      centered: true,
       onOk: async () => {
         await deleteProviderMutation.mutateAsync(provider.id);
-        message.success(t('message.success', { ns: 'common' }));
-        if (selectedProviderId === provider.id) {
-          setSelectedProviderId(null);
-        }
+        message.success(tc('message.deleteSuccess'));
       },
     });
-  }, [deleteProviderMutation, selectedProviderId, t]);
+  }, [deleteProviderMutation, modal, tc]);
 
   // 添加 API Key
   const handleAddApiKey = useCallback((provider: Provider) => {
@@ -112,17 +242,6 @@ export function ProviderCardView({ onProviderSelect }: ProviderCardViewProps) {
     }
   }, [providers]);
 
-  // 关闭抽屉
-  const handleCloseDrawer = useCallback(() => {
-    setSelectedProviderId(null);
-  }, []);
-
-  // 供应商创建成功
-  const handleProviderCreated = useCallback((provider: Provider) => {
-    setSelectedProviderId(provider.id);
-    setDrawerMode('view');
-  }, []);
-
   // 加载中
   if (providersLoading) {
     return (
@@ -143,33 +262,54 @@ export function ProviderCardView({ onProviderSelect }: ProviderCardViewProps) {
   }
 
   return (
-    <div style={{ padding: 16, height: '100%', overflow: 'auto' }}>
-      <Row gutter={[16, 16]}>
-        {sortedProviders.map((provider) => (
-          <Col key={provider.id} xs={24} sm={12} md={8} lg={6} xl={6}>
-            <ProviderCardContent
-              provider={provider}
-              onViewDetail={handleViewDetail}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onAddApiKey={handleAddApiKey}
-              onAddModel={handleAddModel}
-              onEditApiKey={handleEditApiKey}
-              onEditModel={handleEditModel}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* 页面标题 */}
+      <PageHeader
+        title={t('title', { defaultValue: '供应商管理' })}
+        subtitle={t('subtitle', { defaultValue: '管理 AI 模型供应商及其 API Keys' })}
+        actions={pageActions}
+        extra={
+          <Space>
+            <FilterPanel
+              fields={filterFields}
+              values={filterValues}
+              onChange={handleFilterChange}
+              onReset={handleFilterReset}
+              title={t('filter.providerFilter', { defaultValue: '供应商筛选器' })}
             />
-          </Col>
-        ))}
-      </Row>
-
-      {/* 供应商管理抽屉 */}
-      <ProviderManagementDrawer
-        providerId={selectedProviderId}
-        providers={providers}
-        mode={drawerMode}
-        onClose={handleCloseDrawer}
-        onProviderChange={setSelectedProviderId}
-        onProviderCreated={handleProviderCreated}
+            {viewModeSwitcher}
+          </Space>
+        }
       />
+
+      {/* 过滤标签 */}
+      {filterTags.length > 0 && (
+        <FilterTags
+          filters={filterTags}
+          onRemove={(key) => setFilterValues((prev) => ({ ...prev, [key]: 'all' }))}
+          onClearAll={handleFilterReset}
+        />
+      )}
+
+      {/* 卡片内容 */}
+      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
+        <Row gutter={[16, 16]}>
+          {sortedProviders.map((provider) => (
+            <Col key={provider.id} xs={24} sm={12} md={8} lg={6} xl={6}>
+              <ProviderCardContent
+                provider={provider}
+                onViewDetail={handleViewDetail}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onAddApiKey={handleAddApiKey}
+                onAddModel={handleAddModel}
+                onEditApiKey={handleEditApiKey}
+                onEditModel={handleEditModel}
+              />
+            </Col>
+          ))}
+        </Row>
+      </div>
 
       {/* API Key 弹窗 */}
       {editingApiKey && (

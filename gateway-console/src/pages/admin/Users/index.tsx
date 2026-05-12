@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
@@ -8,6 +8,8 @@ import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminUsers() {
   const { t } = useTranslation('users');
+  const { t: tc } = useTranslation('common');
+  const { modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
@@ -31,21 +33,30 @@ export default function AdminUsers() {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
 
   const handleResetPassword = (id: number) => {
-    Modal.confirm({
-      title: t('actions.resetPassword', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.resetPassword'),
+      content: tc('confirm.resetPasswordWarning'),
+      okText: tc('actions.confirm'),
+      cancelText: tc('actions.cancel'),
+      centered: true,
       onOk: async () => {
         await resetPasswordMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
