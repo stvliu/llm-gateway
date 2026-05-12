@@ -13,3 +13,9 @@ export {
   setServiceUnavailable,
   useServiceUnavailable,
 } from './ServiceUnavailable';
+
+export { DeleteConfirmModal } from './Confirm';
+export type { DeleteConfirmModalProps } from './Confirm';
+
+export { FilterPanel, FilterTags } from './FilterPanel';
+export type { FilterField, FilterPanelProps, FilterTagsProps } from './FilterPanel';

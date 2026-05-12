@@ -13,6 +13,7 @@ import {
   Tabs,
   Descriptions,
   Upload,
+  App,
 } from 'antd';
 import {
   PlusOutlined,
@@ -43,7 +44,9 @@ import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminTemplates() {
   const { t } = useTranslation('templates');
+  const { t: tc } = useTranslation('common');
   const navigate = useNavigate();
+  const { modal } = App.useApp();
   const [activeTab, setActiveTab] = useState<TemplateType>('USER');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -83,21 +86,30 @@ export default function AdminTemplates() {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
 
   const handlePublish = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.publish'),
+    modal.confirm({
+      title: tc('confirm.publish'),
+      content: tc('confirm.publishWarning'),
+      okText: tc('actions.confirm'),
+      cancelText: tc('actions.cancel'),
+      centered: true,
       onOk: async () => {
         await updateMarketStateMutation.mutateAsync({ id, marketState: 'PUBLISHED' });
-        message.success(t('message.publishSuccess'));
+        message.success(tc('message.success'));
       },
     });
   };

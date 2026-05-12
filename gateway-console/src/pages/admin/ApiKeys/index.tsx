@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, Row, Col } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, Row, Col, theme, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { ColumnsType } from 'antd/es/table';
@@ -10,6 +10,9 @@ const { Paragraph } = Typography;
 
 export default function AdminApiKeys() {
   const { t } = useTranslation('apiKeys');
+  const { t: tc } = useTranslation('common');
+  const { token } = theme.useToken();
+  const { modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -40,11 +43,16 @@ export default function AdminApiKeys() {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
@@ -177,7 +185,7 @@ export default function AdminApiKeys() {
         footer={null}
       >
         {newKey && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#fff7e6', borderRadius: 4 }}>
+          <div style={{ marginBottom: 16, padding: 12, background: token.colorWarningBg, borderRadius: 4 }}>
             <p style={{ margin: 0, fontWeight: 600 }}>{t('keyCreated')}</p>
             <Paragraph copyable={{ text: newKey }} style={{ margin: '8px 0', fontFamily: 'monospace' }}>
               {newKey}

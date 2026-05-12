@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Space, Tag, Modal, message, Dropdown, Badge } from 'antd';
+import { Table, Button, Space, Tag, message, Dropdown, Badge, theme, App } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -92,6 +92,9 @@ export function TableView({
   onViewProviderDetail,
 }: TableViewProps) {
   const { t } = useTranslation('models');
+  const { t: tc } = useTranslation('common');
+  const { token } = theme.useToken();
+  const { modal } = App.useApp();
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
@@ -153,23 +156,32 @@ export function TableView({
   }, [providers, allModels, filters]);
 
   const handleDeleteProvider = (provider: Provider) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      content: t('confirm.deleteProviderDesc', { name: provider.providerName }),
+    modal.confirm({
+      title: tc('confirm.deleteProviderTitle', { name: provider.providerName }),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteProviderMutation.mutateAsync(provider.id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
 
   const handleDeleteModel = (model: Model) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      content: t('confirm.deleteModelDesc', { name: model.displayName || model.providerModelId || `Model ${model.id}` }),
+    const modelName = model.displayName || model.providerModelId || `Model ${model.id}`;
+    modal.confirm({
+      title: tc('confirm.deleteModelTitle', { name: modelName }),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteModelMutation.mutateAsync(model.id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
@@ -259,7 +271,7 @@ export function TableView({
         if (record.type === 'provider') {
           const stats = record.provider.keyStats;
           if (!stats) {
-            return <span style={{ color: '#999' }}>-</span>;
+            return <span style={{ color: token.colorTextDisabled }}>-</span>;
           }
           const { activeCount, totalCount } = stats;
           const allActive = activeCount === totalCount;

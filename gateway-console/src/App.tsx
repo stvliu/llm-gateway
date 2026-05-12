@@ -1,4 +1,5 @@
 import { RouterProvider } from 'react-router-dom';
+import { App as AntApp } from 'antd';
 import { router } from '@/router';
 import {
   useServiceUnavailable,
@@ -36,13 +37,14 @@ function ServiceUnavailableHandler() {
 /**
  * 应用根组件
  * 配置路由提供者和国际化
+ * 使用 Ant Design 的 App 组件包裹以支持 useApp Hook
  */
 function App() {
   return (
-    <>
+    <AntApp>
       <RouterProvider router={router} />
       <ServiceUnavailableHandler />
-    </>
+    </AntApp>
   );
 }
 

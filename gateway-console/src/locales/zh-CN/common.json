@@ -32,7 +32,8 @@
     "disable": "禁用",
     "resetPassword": "重置密码",
     "clearSelection": "清除选择",
-    "view": "查看"
+    "view": "查看",
+    "refresh": "刷新"
   },
   "state": {
     "creating": "创建中",
@@ -52,13 +53,29 @@
   },
   "confirm": {
     "delete": "确定要删除吗？",
+    "deleteProviderTitle": "确定要删除供应商\"{{name}}\"吗？",
+    "deleteModelTitle": "确定要删除模型\"{{name}}\"吗？",
+    "deleteWarning": "请注意：确认后，该操作将不可恢复。",
+    "toggleTitle": "确定要{{action}}该 API Key 吗？",
+    "publish": "确定要发布吗？",
+    "publishWarning": "发布后模板将对所有用户可见。",
+    "resetPassword": "确定要重置密码吗？",
+    "resetPasswordWarning": "重置后用户密码将变为默认值。",
     "enable": "确定要启用吗？",
-    "disable": "确定要禁用吗？"
+    "disable": "确定要禁用吗？",
+    "yes": "是",
+    "no": "否",
+    "unsavedTitle": "未保存的更改",
+    "unsavedMessage": "您有未保存的更改，确定要放弃吗？",
+    "continueEdit": "继续编辑",
+    "discard": "放弃更改"
   },
   "message": {
     "success": "操作成功",
     "error": "操作失败",
-    "copied": "已复制到剪贴板"
+    "copied": "已复制到剪贴板",
+    "deleteSuccess": "删除成功",
+    "deleteFailed": "删除失败"
   },
   "theme": {
     "system": "跟随系统",
@@ -74,5 +91,62 @@
   },
   "settings": {
     "title": "个人设置"
+  },
+  "drawer": {
+    "title": {
+      "details": "详情",
+      "edit": "编辑"
+    },
+    "navigation": {
+      "previous": "上一个",
+      "next": "下一个",
+      "position": "{{current}} / {{total}}"
+    },
+    "tabs": {
+      "details": "详情",
+      "attributes": "属性",
+      "alerts": "告警",
+      "events": "事件",
+      "relations": "关系",
+      "settings": "设置"
+    },
+    "error": {
+      "loadFailed": "加载详情失败",
+      "retry": "重新加载"
+    },
+    "info": {
+      "basicInfo": "基本信息",
+      "advancedSettings": "高级设置"
+    }
+  },
+  "table": {
+    "columnConfig": "列配置",
+    "selectAll": "全选",
+    "selected": "已选择 {{count}} 项",
+    "noData": "暂无数据"
+  },
+  "filter": {
+    "title": "高级筛选",
+    "addField": "添加条件",
+    "clearAll": "清除全部",
+    "currentFilter": "当前过滤",
+    "logicAnd": "且",
+    "logicOr": "或",
+    "logicLabel": "条件关系"
+  },
+  "operators": {
+    "eq": "等于",
+    "ne": "不等于",
+    "contains": "包含",
+    "notContains": "不包含",
+    "startsWith": "开头是",
+    "endsWith": "结尾是",
+    "gt": "大于",
+    "lt": "小于",
+    "gte": "大于等于",
+    "lte": "小于等于",
+    "before": "早于",
+    "after": "晚于",
+    "between": "在范围内"
   }
 }

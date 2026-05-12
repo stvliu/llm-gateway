@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useModels, useProviders, useCreateModel, useUpdateModel, useDeleteModel } from '@/services/query';
@@ -12,6 +12,8 @@ interface ModelListProps {
 
 export function ModelList({ providerId }: ModelListProps) {
   const { t } = useTranslation('models');
+  const { t: tc } = useTranslation('common');
+  const { modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [form] = Form.useForm();
@@ -38,11 +40,16 @@ export function ModelList({ providerId }: ModelListProps) {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };

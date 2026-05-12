@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip } from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip, theme, App } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -24,6 +24,9 @@ const { Paragraph } = Typography;
 
 export default function AdminApiKeyPool() {
   const { t } = useTranslation('apiKeyPool');
+  const { t: tc } = useTranslation('common');
+  const { token } = theme.useToken();
+  const { modal } = App.useApp();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ProviderApiKey | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<number | undefined>();
@@ -56,25 +59,33 @@ export default function AdminApiKeyPool() {
   };
 
   const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
+    modal.confirm({
+      title: tc('confirm.delete'),
+      content: tc('confirm.deleteWarning'),
+      okText: tc('actions.delete'),
+      cancelText: tc('actions.cancel'),
+      okButtonProps: { danger: true, type: "primary" },
+      centered: true,
       onOk: async () => {
         await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
 
   const handleToggle = (record: ProviderApiKey) => {
-    const action = record.state === 'DISABLED' ? t('enable') : t('disable');
-    Modal.confirm({
-      title: t('confirm.toggle', { action }),
+    const action = record.state === 'DISABLED' ? tc('actions.enable') : tc('actions.disable');
+    modal.confirm({
+      title: tc('confirm.toggleTitle', { action }),
+      okText: tc('actions.confirm'),
+      cancelText: tc('actions.cancel'),
+      centered: true,
       onOk: async () => {
         await toggleMutation.mutateAsync({
           id: record.id,
           enabled: record.state === 'DISABLED',
         });
-        message.success(t('message.success', { ns: 'common' }));
+        message.success(tc('message.success'));
       },
     });
   };
@@ -121,7 +132,7 @@ export default function AdminApiKeyPool() {
       title: '',
       key: 'drag',
       width: 40,
-      render: () => <HolderOutlined style={{ cursor: 'grab', color: '#999' }} />,
+      render: () => <HolderOutlined style={{ cursor: 'grab', color: token.colorTextDisabled }} />,
     },
     {
       title: t('priority'),
@@ -201,8 +212,8 @@ export default function AdminApiKeyPool() {
           </Space>
         </div>
 
-        <div style={{ marginBottom: 16, padding: 12, background: '#fafafa', borderRadius: 6 }}>
-          <p style={{ margin: 0, fontSize: 13, color: '#666' }}>
+        <div style={{ marginBottom: 16, padding: 12, background: token.colorBgLayout, borderRadius: 6 }}>
+          <p style={{ margin: 0, fontSize: 13, color: token.colorTextSecondary }}>
             {t('dragHint')}
           </p>
         </div>
