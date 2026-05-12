@@ -9,6 +9,9 @@ import type { Provider } from '@/types/provider';
 
 type ViewMode = 'card' | 'table';
 
+// 特殊值：表示新增模式
+const NEW_PROVIDER_ID = -1;
+
 /**
  * 一站式供应商管理页面
  * 卡片视图：网格展示供应商卡片，抽屉管理详情
@@ -21,7 +24,7 @@ export default function AdminProviders() {
   // 视图模式
   const [viewMode, setViewMode] = useState<ViewMode>('card');
 
-  // 抽屉状态
+  // 抽屉状态：null 表示关闭，-1 表示新增，其他表示查看/编辑
   const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
 
   // Queries
@@ -30,7 +33,7 @@ export default function AdminProviders() {
 
   // 添加供应商
   const handleAddProvider = useCallback(() => {
-    setSelectedProviderId(null);
+    setSelectedProviderId(NEW_PROVIDER_ID);
   }, []);
 
   // 查看供应商详情
@@ -46,8 +49,10 @@ export default function AdminProviders() {
   // 供应商创建成功
   const handleProviderCreated = useCallback((provider: Provider) => {
     setSelectedProviderId(provider.id);
-    // 保持抽屉打开，切换到查看模式
   }, []);
+
+  // 计算抽屉模式
+  const drawerMode = selectedProviderId === NEW_PROVIDER_ID ? 'create' : 'view';
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -100,6 +105,7 @@ export default function AdminProviders() {
       <ProviderManagementDrawer
         providerId={selectedProviderId}
         providers={providers}
+        mode={drawerMode}
         onClose={handleCloseDrawer}
         onProviderChange={setSelectedProviderId}
         onProviderCreated={handleProviderCreated}

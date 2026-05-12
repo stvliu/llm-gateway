@@ -24,9 +24,9 @@ import {
 import type { Provider, CreateProviderRequest } from '@/types/provider';
 
 interface ProviderManagementDrawerProps {
-  providerId: number | null; // null 表示新增模式
+  providerId: number | null; // null 表示关闭抽屉
   providers: Provider[];
-  mode?: 'view' | 'edit' | 'create';  // 初始模式
+  mode?: 'view' | 'edit' | 'create';  // 初始模式（仅在 providerId 有值时生效）
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
   onProviderCreated?: (provider: Provider) => void;
@@ -51,18 +51,19 @@ export function ProviderManagementDrawer({
 }: ProviderManagementDrawerProps) {
   const { t } = useTranslation('providers');
 
-  // 状态
-  const [mode, setMode] = useState<DrawerMode>(
-    providerId ? initialMode : 'create'
-  );
+  // 状态：当 providerId 变化时，根据是否有值决定模式
+  const [mode, setMode] = useState<DrawerMode>('view');
   const [activeTab, setActiveTab] = useState('basic');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // 查询数据
-  const { data: provider, isLoading } = useProvider(providerId || 0);
+  // 判断是否是新增模式（providerId === -1 表示新增）
+  const isNewProvider = providerId === -1;
+
+  // 查询数据（新增模式不查询，useProvider 内部已有 enabled: id > 0 的判断）
+  const { data: provider, isLoading } = useProvider(providerId && providerId > 0 ? providerId : 0);
 
   // Mutations
   const createMutation = useCreateProvider();
@@ -71,22 +72,22 @@ export function ProviderManagementDrawer({
 
   // 当 providerId 变化时重置状态
   useEffect(() => {
-    if (providerId) {
-      setMode('view');
-      setActiveTab('basic');
-      setHasUnsavedChanges(false);
-    } else {
-      setMode('create');
+    if (providerId !== null) {
+      if (isNewProvider) {
+        setMode('create');
+      } else {
+        setMode(initialMode);
+      }
       setActiveTab('basic');
       setHasUnsavedChanges(false);
     }
-  }, [providerId]);
+  }, [providerId, initialMode, isNewProvider]);
 
-  // 计算导航索引
+  // 计算导航索引（新增模式不显示导航）
   const currentIndex = useMemo(() => {
-    if (!providerId) return -1;
+    if (!providerId || isNewProvider) return -1;
     return providers.findIndex((p) => p.id === providerId);
-  }, [providers, providerId]);
+  }, [providers, providerId, isNewProvider]);
 
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < providers.length - 1 && currentIndex >= 0;
@@ -210,7 +211,7 @@ export function ProviderManagementDrawer({
   // 标题
   const title = mode === 'create'
     ? t('addProvider')
-    : provider?.providerName || t('detail.providerDetail');
+    : provider?.providerName || t('detail.providerDetail', { defaultValue: '供应商详情' });
 
   // 头部操作区
   const extra = (
@@ -267,8 +268,8 @@ export function ProviderManagementDrawer({
     </Space>
   );
 
-  // 底部导航（仅查看模式和编辑模式显示）
-  const showNavigation = mode !== 'create' && providers.length > 1;
+  // 底部导航（仅查看模式和编辑模式显示，新增模式不显示）
+  const showNavigation = mode !== 'create' && !isNewProvider && providers.length > 1;
   const footer = showNavigation ? (
     <div
       style={{
@@ -306,7 +307,7 @@ export function ProviderManagementDrawer({
     <>
       <Drawer
         title={title}
-        open={providerId !== null || mode === 'create'}
+        open={providerId !== null}
         onClose={handleClose}
         width={560}
         placement="right"
