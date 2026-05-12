@@ -1,161 +1,109 @@
-import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useState, useCallback } from 'react';
+import { Segmented, Button, theme } from 'antd';
+import { AppstoreOutlined, UnorderedListOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useProviders, useCreateProvider, useUpdateProvider, useDeleteProvider } from '@/services/query';
-import type { Provider, CreateProviderRequest } from '@/types/provider';
-import type { ProviderType } from '@/types/api';
-import type { ColumnsType } from 'antd/es/table';
+import { ProviderCardView } from './ProviderCardView';
+import { ProviderManagementDrawer } from './ProviderManagementDrawer';
+import { useProviders } from '@/services/query';
+import type { Provider } from '@/types/provider';
 
+type ViewMode = 'card' | 'table';
+
+/**
+ * 一站式供应商管理页面
+ * 卡片视图：网格展示供应商卡片，抽屉管理详情
+ * 表格视图：传统表格展示（保留原有功能）
+ */
 export default function AdminProviders() {
   const { t } = useTranslation('providers');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
-  const [form] = Form.useForm();
+  const { token } = theme.useToken();
 
-  const { data, isLoading } = useProviders({ size: 100 });
-  const createMutation = useCreateProvider();
-  const updateMutation = useUpdateProvider();
-  const deleteMutation = useDeleteProvider();
+  // 视图模式
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
 
-  const handleAdd = () => {
-    setEditingProvider(null);
-    form.resetFields();
-    setModalOpen(true);
-  };
+  // 抽屉状态
+  const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
 
-  const handleEdit = (record: Provider) => {
-    setEditingProvider(record);
-    form.setFieldsValue(record);
-    setModalOpen(true);
-  };
+  // Queries
+  const { data: providersData } = useProviders({ size: 100 });
+  const providers = providersData?.items || [];
 
-  const handleDelete = (id: number) => {
-    Modal.confirm({
-      title: t('confirm.delete', { ns: 'common' }),
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(t('message.success', { ns: 'common' }));
-      },
-    });
-  };
+  // 添加供应商
+  const handleAddProvider = useCallback(() => {
+    setSelectedProviderId(null);
+  }, []);
 
-  const handleSubmit = async (values: CreateProviderRequest) => {
-    if (editingProvider) {
-      await updateMutation.mutateAsync({ id: editingProvider.id, data: values });
-    } else {
-      await createMutation.mutateAsync(values);
-    }
-    message.success(t('message.success', { ns: 'common' }));
-    setModalOpen(false);
-  };
+  // 查看供应商详情
+  const handleViewProvider = useCallback((provider: Provider) => {
+    setSelectedProviderId(provider.id);
+  }, []);
 
-  const columns: ColumnsType<Provider> = [
-    {
-      title: t('name'),
-      dataIndex: 'providerName',
-      key: 'providerName',
-    },
-    {
-      title: t('type.label'),
-      dataIndex: 'providerType',
-      key: 'providerType',
-      render: (type: ProviderType) => t(`type.${type}`),
-    },
-    {
-      title: t('baseUrl'),
-      dataIndex: 'baseUrl',
-      key: 'baseUrl',
-      ellipsis: true,
-    },
-    {
-      title: t('state'),
-      dataIndex: 'state',
-      key: 'state',
-      render: (state: string) => (
-        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
-          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
-        </Tag>
-      ),
-    },
-    {
-      title: t('actions.label', { ns: 'common' }),
-      key: 'actions',
-      width: 100,
-      render: (_, record) => (
-        <Space>
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
-        </Space>
-      ),
-    },
-  ];
+  // 关闭抽屉
+  const handleCloseDrawer = useCallback(() => {
+    setSelectedProviderId(null);
+  }, []);
+
+  // 供应商创建成功
+  const handleProviderCreated = useCallback((provider: Provider) => {
+    setSelectedProviderId(provider.id);
+    // 保持抽屉打开，切换到查看模式
+  }, []);
 
   return (
-    <Card title={t('title')}>
-      <div style={{ marginBottom: 16 }}>
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          {t('add')}
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* 头部工具栏 */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: 16,
+          background: token.colorBgContainer,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
+        }}
+      >
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddProvider}>
+          {t('add', { defaultValue: '添加供应商' })}
         </Button>
+
+        <Segmented
+          value={viewMode}
+          onChange={(value) => setViewMode(value as ViewMode)}
+          options={[
+            {
+              value: 'card',
+              icon: <AppstoreOutlined />,
+              label: t('viewMode.card', { defaultValue: '卡片' }),
+            },
+            {
+              value: 'table',
+              icon: <UnorderedListOutlined />,
+              label: t('viewMode.table', { defaultValue: '表格' }),
+            },
+          ]}
+        />
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-      />
+      {/* 内容区域 */}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
+        {viewMode === 'card' ? (
+          <ProviderCardView onProviderSelect={handleViewProvider} />
+        ) : (
+          // 表格视图：保留原有功能，后续可扩展
+          <div style={{ padding: 16, textAlign: 'center', color: token.colorTextSecondary }}>
+            {t('comingSoon', { defaultValue: '表格视图开发中...' })}
+          </div>
+        )}
+      </div>
 
-      <Modal
-        title={editingProvider ? t('actions.label', { ns: 'common' }) : t('add')}
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        footer={null}
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="providerName" label={t('name')} rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item name="providerType" label={t('type')} rules={[{ required: true }]}>
-            <Select disabled={!!editingProvider}>
-              <Select.Option value="OPENAI">{t('type.OPENAI')}</Select.Option>
-              <Select.Option value="ANTHROPIC">{t('type.ANTHROPIC')}</Select.Option>
-              <Select.Option value="GEMINI">{t('type.GEMINI')}</Select.Option>
-              <Select.Option value="DEEPSEEK">{t('type.DEEPSEEK')}</Select.Option>
-              <Select.Option value="MOONSHOT">{t('type.MOONSHOT')}</Select.Option>
-              <Select.Option value="ZHIPU">{t('type.ZHIPU')}</Select.Option>
-              <Select.Option value="YI">{t('type.YI')}</Select.Option>
-              <Select.Option value="BAICHUAN">{t('type.BAICHUAN')}</Select.Option>
-              <Select.Option value="MINIMAX">{t('type.MINIMAX')}</Select.Option>
-              <Select.Option value="SILICONFLOW">{t('type.SILICONFLOW')}</Select.Option>
-              <Select.Option value="VOLCENGINE">{t('type.VOLCENGINE')}</Select.Option>
-              <Select.Option value="QWEN">{t('type.QWEN')}</Select.Option>
-              <Select.Option value="WENXIN">{t('type.WENXIN')}</Select.Option>
-              <Select.Option value="OTHER">{t('type.OTHER')}</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="baseUrl" label={t('baseUrl')} rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          {editingProvider && (
-            <Form.Item name="state" label={t('state')}>
-              <Select>
-                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
-              </Select>
-            </Form.Item>
-          )}
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {t('actions.save', { ns: 'common' })}
-              </Button>
-              <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Card>
+      {/* 供应商管理抽屉 */}
+      <ProviderManagementDrawer
+        providerId={selectedProviderId}
+        providers={providers}
+        onClose={handleCloseDrawer}
+        onProviderChange={setSelectedProviderId}
+        onProviderCreated={handleProviderCreated}
+      />
+    </div>
   );
 }
