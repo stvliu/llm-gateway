@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin, message } from 'antd';
+import { Typography, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import { providerApi } from '@/services/api/provider';
@@ -138,9 +138,6 @@ export function BasicInfoStep({
       } else {
         onModelsChange([]);
       }
-
-      // 显示提示
-      message.success(t('template.autoFilled', { defaultValue: '已从模板自动填充基本信息' }));
 
       setTimeout(() => setLoadingTemplate(false), 300);
     } else {
