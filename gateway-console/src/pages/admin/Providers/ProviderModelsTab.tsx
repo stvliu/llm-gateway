@@ -184,9 +184,11 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
           </span>
           <Tag color="blue">{models.length}</Tag>
         </div>
-        <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddModel}>
-          {t('actions.add', { ns: 'common' })}
-        </Button>
+        {mode === 'edit' && (
+          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddModel}>
+            {t('actions.add', { ns: 'common' })}
+          </Button>
+        )}
       </div>
 
       {/* 卡片列表 */}
@@ -194,9 +196,11 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
         <Empty
           description={t('provider.noModels', { defaultValue: '暂无模型' })}
         >
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModel}>
-            {t('actions.add', { ns: 'common' })}
-          </Button>
+          {mode === 'edit' && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModel}>
+              {t('actions.add', { ns: 'common' })}
+            </Button>
+          )}
         </Empty>
       ) : (
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -244,25 +248,27 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
                   </Space>
 
                   {/* 右侧操作 */}
-                  <Space>
-                    <Button
-                      type="text"
-                      size="small"
-                      icon={<EditOutlined />}
-                      onClick={() => handleEditModel(model)}
-                    />
-                    <Popconfirm
-                      title={t('confirm.delete', { ns: 'common' })}
-                      onConfirm={() => handleDeleteModel(model.id)}
-                    >
+                  {mode === 'edit' && (
+                    <Space>
                       <Button
                         type="text"
                         size="small"
-                        danger
-                        icon={<DeleteOutlined />}
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditModel(model)}
                       />
-                    </Popconfirm>
-                  </Space>
+                      <Popconfirm
+                        title={t('confirm.delete', { ns: 'common' })}
+                        onConfirm={() => handleDeleteModel(model.id)}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                        />
+                      </Popconfirm>
+                    </Space>
+                  )}
                 </div>
               </Card>
             );

@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Drawer, Button, Space, message, Popconfirm, Tabs, Card, Steps } from 'antd';
+import { Drawer, Button, Space, message, Popconfirm, Tabs, Steps } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
@@ -15,6 +15,8 @@ import { BasicInfoStep } from './BasicInfoStep';
 import { ApiKeySetupStep } from './ApiKeySetupStep';
 import { ModelSetupStep } from './ModelSetupStep';
 import { ProviderBasicInfoTab, type ProviderBasicInfoTabRef } from './ProviderBasicInfoTab';
+import { ProviderApiKeysTab } from './ProviderApiKeysTab';
+import { ProviderModelsTab } from './ProviderModelsTab';
 import { UnsavedConfirm } from '@/components/ui/Drawer/UnsavedConfirm';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import {
@@ -416,12 +418,6 @@ export function ProviderManagementDrawer({
       >
         {t('drawer.navigation.previous')}
       </Button>
-      <span>
-        {t('drawer.navigation.position', {
-          current: currentIndex + 1,
-          total: providers.length,
-        })}
-      </span>
       <Button
         type="text"
         icon={<RightOutlined />}
@@ -573,14 +569,16 @@ export function ProviderManagementDrawer({
               />
             )}
             {!isLoading && activeTab === 'apiKeys' && (
-              <Card>
-                {t('comingSoon')}
-              </Card>
+              <ProviderApiKeysTab
+                provider={provider || null}
+                mode={mode}
+              />
             )}
             {!isLoading && activeTab === 'models' && (
-              <Card>
-                {t('comingSoon')}
-              </Card>
+              <ProviderModelsTab
+                provider={provider || null}
+                mode={mode}
+              />
             )}
           </>
         )}
