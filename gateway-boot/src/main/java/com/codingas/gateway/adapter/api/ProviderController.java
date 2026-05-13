@@ -38,31 +38,9 @@ public class ProviderController {
         return Arrays.stream(ProviderType.values())
                 .map(type -> Map.of(
                         "value", type.name(),
-                        "label", getProviderTypeLabel(type)
+                        "label", type.getLabel()
                 ))
                 .toList();
-    }
-
-    /**
-     * 获取供应商类型的显示名称
-     */
-    private String getProviderTypeLabel(ProviderType type) {
-        return switch (type) {
-            case OPENAI -> "OpenAI";
-            case ANTHROPIC -> "Anthropic";
-            case GEMINI -> "Google Gemini";
-            case DEEPSEEK -> "DeepSeek";
-            case MOONSHOT -> "Moonshot";
-            case ZHIPU -> "智谱 GLM";
-            case BAICHUAN -> "百川智能";
-            case MINIMAX -> "MiniMax";
-            case VOLCENGINE -> "火山引擎";
-            case QWEN -> "通义千问";
-            case WENXIN -> "文心一言";
-            case TENCENT -> "腾讯混元";
-            case XUNFEI -> "讯飞星火";
-            case OTHER -> "其他";
-        };
     }
 
     /**
