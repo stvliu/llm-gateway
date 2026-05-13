@@ -141,9 +141,11 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
           </span>
           <Tag color="blue">{keys.length}</Tag>
         </div>
-        <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddKey}>
-          {t('actions.add', { ns: 'common' })}
-        </Button>
+        {mode === 'edit' && (
+          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddKey}>
+            {t('actions.add', { ns: 'common' })}
+          </Button>
+        )}
       </div>
 
       {/* 卡片列表 */}
@@ -151,9 +153,11 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
         <Empty
           description={t('provider.noApiKeys', { defaultValue: '暂无 API Key' })}
         >
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddKey}>
-            {t('actions.add', { ns: 'common' })}
-          </Button>
+          {mode === 'edit' && (
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddKey}>
+              {t('actions.add', { ns: 'common' })}
+            </Button>
+          )}
         </Empty>
       ) : (
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -192,23 +196,27 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
                   <span style={{ fontSize: 12, color: token.colorTextSecondary }}>
                     {t('provider.priority', { defaultValue: '优先级' })}: {key.priority || 100}
                   </span>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<EditOutlined />}
-                    onClick={() => handleEditKey(key)}
-                  />
-                  <Popconfirm
-                    title={t('confirm.delete', { ns: 'common' })}
-                    onConfirm={() => handleDeleteKey(key.id)}
-                  >
-                    <Button
-                      type="text"
-                      size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                    />
-                  </Popconfirm>
+                  {mode === 'edit' && (
+                    <>
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditKey(key)}
+                      />
+                      <Popconfirm
+                        title={t('confirm.delete', { ns: 'common' })}
+                        onConfirm={() => handleDeleteKey(key.id)}
+                      >
+                        <Button
+                          type="text"
+                          size="small"
+                          danger
+                          icon={<DeleteOutlined />}
+                        />
+                      </Popconfirm>
+                    </>
+                  )}
                 </Space>
               </div>
             </Card>

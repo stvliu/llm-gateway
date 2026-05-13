@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin, message } from 'antd';
+import { Typography, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import { providerApi } from '@/services/api/provider';
@@ -86,7 +86,19 @@ export function BasicInfoStep({
 
   // 根据供应商类型自动填充基本信息
   const autoFillFromTemplate = useCallback((providerType: ProviderType) => {
-    if (!templatesData?.items) return;
+    if (!templatesData?.items) {
+      // 模板数据未加载，只更新类型
+      onChange({
+        providerName: '',
+        providerType,
+        baseUrl: '',
+        websiteUrl: '',
+        apiDocUrl: '',
+        apiKeys: [],
+        models: [],
+      });
+      return;
+    }
 
     // 查找该供应商类型的官方模板
     const template = templatesData.items.find(
@@ -99,13 +111,13 @@ export function BasicInfoStep({
 
       const config = template.providerConfig as Record<string, unknown>;
 
-      // 只填充用户未手动编辑的字段
+      // 从模板填充基本信息
       const newInfo: CreateProviderRequest = {
-        providerName: basicInfo?.providerName || String(config.provider_name || template.templateName),
+        providerName: String(config.provider_name || template.templateName),
         providerType,
-        baseUrl: basicInfo?.baseUrl || String(config.base_url || ''),
-        websiteUrl: basicInfo?.websiteUrl || String(config.website_url || ''),
-        apiDocUrl: basicInfo?.apiDocUrl || String(config.api_doc_url || ''),
+        baseUrl: String(config.base_url || ''),
+        websiteUrl: String(config.website_url || ''),
+        apiDocUrl: String(config.api_doc_url || ''),
         apiKeys: [],
         models: [],
       };
@@ -127,36 +139,28 @@ export function BasicInfoStep({
         onModelsChange([]);
       }
 
-      // 显示提示
-      message.success(t('template.autoFilled', { defaultValue: '已从模板自动填充基本信息' }));
-
       setTimeout(() => setLoadingTemplate(false), 300);
     } else {
-      // 没有找到模板，清空自动填充的字段
+      // 没有找到模板，只更新类型
       onTemplateLoad(null);
       onModelsChange([]);
+      onChange({
+        providerName: '',
+        providerType,
+        baseUrl: '',
+        websiteUrl: '',
+        apiDocUrl: '',
+        apiKeys: [],
+        models: [],
+      });
     }
-  }, [templatesData, basicInfo, onChange, onTemplateLoad, onModelsChange, t]);
+  }, [templatesData, onChange, onTemplateLoad, onModelsChange, t]);
 
   // 处理供应商类型变更
   const handleProviderTypeChange = useCallback((newType: ProviderType) => {
-    // 重置用户编辑标记，允许自动填充
-    setUserEditedFields(new Set());
-
-    const newInfo: CreateProviderRequest = {
-      providerName: '',
-      providerType: newType,
-      baseUrl: '',
-      websiteUrl: '',
-      apiDocUrl: '',
-      apiKeys: [],
-      models: [],
-    };
-    onChange(newInfo);
-
     // 自动填充
     autoFillFromTemplate(newType);
-  }, [onChange, autoFillFromTemplate]);
+  }, [autoFillFromTemplate]);
 
   // 处理字段变更
   const handleFieldChange = useCallback((field: keyof CreateProviderRequest, value: string) => {
