@@ -32,4 +32,24 @@ export interface ApiResponse<T> {
 export type Status = 'ENABLED' | 'DISABLED';
 
 /** 供应商类型 */
-export type ProviderType = 'OPENAI' | 'ANTHROPIC' | 'AZURE' | 'GOOGLE' | 'CUSTOM';
+export type ProviderType =
+  | 'OPENAI'
+  | 'ANTHROPIC'
+  | 'GEMINI'
+  | 'DEEPSEEK'
+  | 'MOONSHOT'
+  | 'ZHIPU'
+  | 'BAICHUAN'
+  | 'MINIMAX'
+  | 'VOLCENGINE'
+  | 'QWEN'
+  | 'WENXIN'
+  | 'TENCENT'
+  | 'XUNFEI'
+  | 'OTHER';
+
+/** 供应商类型选项 */
+export interface ProviderTypeOption {
+  value: ProviderType;
+  label: string;
+}
