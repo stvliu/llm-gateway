@@ -5,6 +5,8 @@ import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
+import com.codingas.gateway.application.provider.dto.TestApiKeyRequestDTO;
+import com.codingas.gateway.application.provider.dto.TestApiKeyResultDTO;
 import com.codingas.gateway.common.dto.PageResponse;
 
 /**
@@ -48,4 +50,12 @@ public interface ProviderService {
      * 获取 Provider 的 Key 信息（默认 Key + 列表）
      */
     ProviderKeysResponse getProviderKeys(Long providerId);
+
+    /**
+     * 测试 API Key 连通性
+     *
+     * @param request 测试请求（包含 providerType、baseUrl、apiKey）
+     * @return 测试结果
+     */
+    TestApiKeyResultDTO testApiKey(TestApiKeyRequestDTO request);
 }
