@@ -1,5 +1,5 @@
 import { Line } from '@ant-design/charts';
-import { useThemeStore } from '@/stores/themeStore';
+import { theme } from 'antd';
 
 interface TrendChartProps {
   data?: Array<{ date: string; value: number; type: string }>;
@@ -9,8 +9,7 @@ interface TrendChartProps {
  * 趋势折线图组件
  */
 export function TrendChart({ data }: TrendChartProps) {
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   // 默认模拟数据
   const defaultData = [
@@ -37,7 +36,7 @@ export function TrendChart({ data }: TrendChartProps) {
     xField: 'date',
     yField: 'value',
     seriesField: 'type',
-    color: ['#1677ff', '#52c41a'],
+    color: [token.colorPrimary, token.colorSuccess],
     smooth: true,
     animation: {
       appear: {
@@ -52,8 +51,9 @@ export function TrendChart({ data }: TrendChartProps) {
     tooltip: {
       domStyles: {
         'g2-tooltip': {
-          background: isDark ? '#1f1f1f' : '#fff',
-          color: isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+          background: token.colorBgElevated,
+          color: token.colorText,
+          boxShadow: token.boxShadowSecondary,
         },
       },
     },
@@ -61,7 +61,7 @@ export function TrendChart({ data }: TrendChartProps) {
       position: 'top' as const,
       itemName: {
         style: {
-          fill: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+          fill: token.colorTextSecondary,
         },
       },
     },
@@ -69,25 +69,25 @@ export function TrendChart({ data }: TrendChartProps) {
       x: {
         label: {
           style: {
-            fill: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)',
+            fill: token.colorTextTertiary,
           },
         },
         line: {
           style: {
-            stroke: isDark ? '#303030' : '#e8e8e8',
+            stroke: token.colorBorder,
           },
         },
       },
       y: {
         label: {
           style: {
-            fill: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)',
+            fill: token.colorTextTertiary,
           },
         },
         grid: {
           line: {
             style: {
-              stroke: isDark ? '#303030' : '#f0f0f0',
+              stroke: token.colorBorderSecondary,
             },
           },
         },

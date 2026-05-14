@@ -1,20 +1,18 @@
 import { useState } from 'react';
-import { Layout, FloatButton } from 'antd';
+import { Layout, FloatButton, theme } from 'antd';
 import { CommentOutlined } from '@ant-design/icons';
 import { Outlet } from 'react-router-dom';
 import { LeftHeader, RightHeader } from './Header';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '@/components/chat';
 import { useChatStore } from '@/stores/chatStore';
-import { useThemeStore } from '@/stores/themeStore';
 
 const { Sider, Content } = Layout;
 
 export default function UserLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { isOpen, setOpen } = useChatStore();
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   return (
     <Layout style={{ height: '100vh' }}>
@@ -24,8 +22,8 @@ export default function UserLayout() {
           collapsedWidth={64}
           collapsed={collapsed}
           style={{
-            background: isDark ? '#141414' : '#fff',
-            borderRight: isDark ? '1px solid #303030' : '1px solid #d9d9d9',
+            background: token.colorBgContainer,
+            borderRight: `1px solid ${token.colorBorderSecondary}`,
           }}
         >
           <LeftHeader collapsed={collapsed} />
@@ -35,7 +33,7 @@ export default function UserLayout() {
           <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
           <Content
             style={{
-              background: isDark ? '#000000' : '#f5f5f5',
+              background: token.colorBgLayout,
               padding: 16,
               overflow: 'auto',
             }}

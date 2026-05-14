@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Table, Tag, Space, Button, Popconfirm, Tooltip } from 'antd';
+import { Table, Tag, Space, Button, Tooltip, theme } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useModels, useDeleteModel } from '@/services/query';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { Model } from '@/types/model';
 import type { Provider } from '@/types/provider';
 
@@ -74,6 +75,8 @@ function formatContextWindow(contextWindow?: number): string {
  */
 export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTableProps) {
   const { t } = useTranslation('models');
+  const { token } = theme.useToken();
+  const { confirm } = useConfirm();
   const { data: modelsData, isLoading } = useModels({ size: 100 });
   const deleteModelMutation = useDeleteModel();
 
@@ -86,9 +89,12 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
     return map;
   }, [providers]);
 
-  const handleDelete = async (model: Model) => {
-    await deleteModelMutation.mutateAsync(model.id);
-    onDeleteModel(model);
+  const handleDelete = (model: Model) => {
+    confirm({
+      type: 'danger',
+      entityName: model.displayName || model.providerModelId,
+      onConfirm: () => deleteModelMutation.mutateAsync(model.id).then(() => onDeleteModel(model)),
+    });
   };
 
   const columns = [
@@ -178,19 +184,15 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
               onClick={() => onEditModel(record)}
             />
           </Tooltip>
-          <Popconfirm
-            title={t('confirm.delete', { ns: 'common' })}
-            onConfirm={() => handleDelete(record)}
-          >
-            <Tooltip title={t('actions.delete', { ns: 'common' })}>
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-              />
-            </Tooltip>
-          </Popconfirm>
+          <Tooltip title={t('actions.delete', { ns: 'common' })}>
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={() => handleDelete(record)}
+            />
+          </Tooltip>
         </Space>
       ),
     },
@@ -207,7 +209,7 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
         showSizeChanger: true,
         showTotal: (total) => t('pagination.total', { ns: 'common', total, defaultValue: `共 ${total} 条` }),
       }}
-      style={{ background: '#fff', borderRadius: 8 }}
+      style={{ background: token.colorBgContainer, borderRadius: 8 }}
     />
   );
 }

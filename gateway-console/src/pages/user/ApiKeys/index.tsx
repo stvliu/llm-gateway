@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, App } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, theme } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query';
 import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
 import type { ColumnsType } from 'antd/es/table';
@@ -10,8 +11,8 @@ const { Paragraph } = Typography;
 
 export default function UserApiKeys() {
   const { t } = useTranslation('apiKeys');
-  const { t: tc } = useTranslation('common');
-  const { modal } = App.useApp();
+  const { token } = theme.useToken();
+  const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApiKey, setEditingApiKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -37,17 +38,9 @@ export default function UserApiKeys() {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 
@@ -121,7 +114,7 @@ export default function UserApiKeys() {
         footer={null}
       >
         {newKey && (
-          <div style={{ marginBottom: 16, padding: 12, background: '#fff7e6', borderRadius: 4 }}>
+          <div style={{ marginBottom: 16, padding: 12, background: token.colorWarningBg, borderRadius: 4 }}>
             <p style={{ margin: 0, fontWeight: 600 }}>API Key 已创建（仅显示一次）：</p>
             <Paragraph copyable={{ text: newKey }} style={{ margin: '8px 0', fontFamily: 'monospace' }}>
               {newKey}

@@ -21,6 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/stores/chatStore';
 import { chatService } from '@/services/chatService';
+import { theme } from 'antd';
 
 const { TextArea } = Input;
 const { Text } = Typography;
@@ -30,6 +31,7 @@ const { Text } = Typography;
  */
 export function ChatPanel() {
   const { t } = useTranslation('chat');
+  const { token } = theme.useToken();
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<TextAreaRef>(null);
@@ -195,7 +197,7 @@ export function ChatPanel() {
                   width: 28,
                   height: 28,
                   borderRadius: '50%',
-                  background: msg.role === 'user' ? '#1890ff' : '#87e8de',
+                  background: msg.role === 'user' ? token.colorPrimary : token.colorBgLayout,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -203,9 +205,9 @@ export function ChatPanel() {
                 }}
               >
                 {msg.role === 'user' ? (
-                  <UserOutlined style={{ color: '#fff', fontSize: 14 }} />
+                  <UserOutlined style={{ color: token.colorTextLightSolid, fontSize: 14 }} />
                 ) : (
-                  <RobotOutlined style={{ color: '#006d75', fontSize: 14 }} />
+                  <RobotOutlined style={{ color: token.colorPrimary, fontSize: 14 }} />
                 )}
               </div>
               <div
@@ -213,8 +215,8 @@ export function ChatPanel() {
                   maxWidth: '80%',
                   padding: '8px 12px',
                   borderRadius: 8,
-                  background: msg.role === 'user' ? '#1890ff' : '#f5f5f5',
-                  color: msg.role === 'user' ? '#fff' : '#1f1f1f',
+                  background: msg.role === 'user' ? token.colorPrimary : token.colorBgLayout,
+                  color: msg.role === 'user' ? token.colorTextLightSolid : token.colorText,
                   wordBreak: 'break-word',
                 }}
               >

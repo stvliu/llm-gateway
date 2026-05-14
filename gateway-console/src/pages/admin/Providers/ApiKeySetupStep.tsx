@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Card, Button, Space, Tag, Input, InputNumber, Switch, Form, Empty, Popconfirm, theme, message, Tooltip, Typography } from 'antd';
+import { Card, Button, Space, Tag, Input, InputNumber, Switch, Form, Empty, theme, message, Tooltip, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, StarFilled, ApiOutlined, CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '@/stores/themeStore';
+import { useConfirm } from '@/hooks/useConfirm';
 import { providerApi } from '@/services/api/provider';
 import type { NestedApiKeyRequest } from '@/types/provider';
 
@@ -25,8 +25,7 @@ type TestStatus = 'idle' | 'testing' | 'success' | 'failed';
 export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: ApiKeySetupStepProps) {
   const { t } = useTranslation('providers');
   const { token } = theme.useToken();
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { confirm } = useConfirm();
 
   // 编辑状态
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -208,7 +207,7 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
             key={index}
             size="small"
             style={{
-              background: isDark ? '#1f1f1f' : '#fafafa',
+              background: token.colorFillAlter,
               borderRadius: 8,
             }}
             styles={{ body: { padding: '12px 16px' } }}
@@ -329,17 +328,18 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
                     icon={<EditOutlined />}
                     onClick={() => handleEdit(index)}
                   />
-                  <Popconfirm
-                    title={t('confirm.delete', { ns: 'common' })}
-                    onConfirm={() => handleDelete(index)}
-                  >
-                    <Button
-                      type="text"
-                      size="small"
-                      danger
-                      icon={<DeleteOutlined />}
-                    />
-                  </Popconfirm>
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => {
+                      confirm({
+                        type: 'danger',
+                        onConfirm: () => handleDelete(index),
+                      });
+                    }}
+                  />
                 </Space>
               </div>
             )}

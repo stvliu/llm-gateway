@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { Card, Tag, Typography, theme } from 'antd';
-import { GlobalOutlined } from '@ant-design/icons';
+import { Card, Tag, Typography, Empty, Tooltip } from 'antd';
+import { GlobalOutlined, CheckOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import type { ProviderTemplate } from '@/types/template';
@@ -9,40 +9,18 @@ const { Text, Paragraph } = Typography;
 
 interface ProviderTemplateSelectorProps {
   onSelect: (template: ProviderTemplate) => void;
-}
-
-/**
- * 获取供应商类型颜色
- */
-function getProviderColor(providerType: string): string {
-  const colorMap: Record<string, string> = {
-    OPENAI: '#10a37f',
-    ANTHROPIC: '#d97706',
-    GOOGLE: '#4285f4',
-    AZURE: '#0078d4',
-    DEEPSEEK: '#0066ff',
-    QWEN: '#ff6a00',
-    ZHIPU: '#1a73e8',
-    MOONSHOT: '#6366f1',
-    BAICHUAN: '#2563eb',
-    MINIMAX: '#7c3aed',
-    WENXIN: '#dc2626',
-    VOLCENGINE: '#0891b2',
-    TENCENT: '#12b886',
-    XUNFEI: '#e11d48',
-  };
-  return colorMap[providerType] || '#6b7280';
+  selectedId?: number;
 }
 
 /**
  * 供应商模板选择器
- * 展示官方模板列表，支持选择模板自动填充供应商表单
+ * 展示官方模板列表，点击直接选择（无预览抽屉）
  */
 export function ProviderTemplateSelector({
   onSelect,
+  selectedId,
 }: ProviderTemplateSelectorProps) {
-  const { t } = useTranslation('models');
-  const { token } = theme.useToken();
+  const { t } = useTranslation('providers');
 
   const { data: templatesData, isLoading } = useTemplates({
     type: 'OFFICIAL',
@@ -73,25 +51,31 @@ export function ProviderTemplateSelector({
     });
   }, [templatesData]);
 
+  // 加载状态
   if (isLoading) {
     return null;
   }
 
+  // 空状态
   if (templates.length === 0) {
-    return null;
+    return (
+      <Empty description={t('template.noTemplate', { defaultValue: '暂无模板' })} />
+    );
   }
 
   return (
-    <div>
-      {/* 模板卡片网格 */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-          gap: 12,
-        }}
-      >
-        {templates.map(template => (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+        gap: 12,
+      }}
+    >
+      {templates.map(template => {
+        const isSelected = selectedId === template.id;
+        const modelCount = template.modelCount || template.modelsConfig?.length || 0;
+
+        return (
           <Card
             key={template.id}
             hoverable
@@ -105,63 +89,67 @@ export function ProviderTemplateSelector({
             }}
             onClick={() => onSelect(template)}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-              {/* 图标 */}
+            {/* 头部：图标和选中状态 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
                 style={{
-                  width: 36,
-                  height: 36,
+                  width: 32,
+                  height: 32,
                   borderRadius: 8,
-                  background: getProviderColor(template.providerType),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <GlobalOutlined style={{ color: token.colorWhite, fontSize: 18 }} />
+                <GlobalOutlined style={{ fontSize: 16 }} />
               </div>
 
-              {/* 信息 */}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <Text strong style={{ fontSize: 14, display: 'block' }}>
+                <Text strong style={{ fontSize: 13, display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {template.templateName}
                 </Text>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {template.modelCount || template.modelsConfig?.length || 0} {t('provider.models', { defaultValue: '个模型' })}
+                <Text type="secondary" style={{ fontSize: 11 }}>
+                  {modelCount} {t('template.modelCount', { defaultValue: '个模型' })}
                 </Text>
               </div>
+
+              {isSelected && (
+                <CheckOutlined style={{ fontSize: 16 }} />
+              )}
             </div>
 
             {/* 描述 */}
             {template.description && (
-              <Paragraph
-                type="secondary"
-                style={{
-                  fontSize: 12,
-                  marginBottom: 8,
-                  marginTop: 8,
-                  lineHeight: 1.4,
-                }}
-                ellipsis={{ rows: 2, tooltip: template.description }}
-              >
-                {template.description}
-              </Paragraph>
+              <Tooltip title={template.description}>
+                <Paragraph
+                  type="secondary"
+                  style={{
+                    fontSize: 11,
+                    marginBottom: 0,
+                    marginTop: 8,
+                    lineHeight: 1.4,
+                  }}
+                  ellipsis={{ rows: 2 }}
+                >
+                  {template.description}
+                </Paragraph>
+              </Tooltip>
             )}
 
             {/* 标签 */}
             {template.tags && template.tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                {template.tags.slice(0, 3).map(tag => (
-                  <Tag key={tag} style={{ fontSize: 11, margin: 0, padding: '0 4px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
+                {template.tags.slice(0, 2).map(tag => (
+                  <Tag key={tag} style={{ fontSize: 10, margin: 0, padding: '0 4px' }}>
                     {tag}
                   </Tag>
                 ))}
               </div>
             )}
           </Card>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }

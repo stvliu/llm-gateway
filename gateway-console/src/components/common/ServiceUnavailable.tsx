@@ -1,4 +1,4 @@
-import { Modal, Button, Typography, Space, Alert } from 'antd';
+import { Modal, Button, Typography, Space, Alert, theme } from 'antd';
 import { WarningOutlined, ReloadOutlined, BugOutlined } from '@ant-design/icons';
 import { useState, useEffect, useCallback } from 'react';
 
@@ -20,6 +20,7 @@ export function DevServiceUnavailableModal({
   endpoint,
   error,
 }: ServiceUnavailableModalProps) {
+  const { token } = theme.useToken();
   const handleRetry = useCallback(() => {
     window.location.reload();
   }, []);
@@ -56,7 +57,7 @@ export function DevServiceUnavailableModal({
           <Paragraph
             copyable
             style={{
-              background: '#f5f5f5',
+              background: token.colorFillAlter,
               padding: '8px 12px',
               borderRadius: 4,
               marginTop: 8,
@@ -82,7 +83,7 @@ export function DevServiceUnavailableModal({
               type="secondary"
               style={{
                 fontSize: 12,
-                background: '#fff2f0',
+                background: token.colorErrorBg,
                 padding: 8,
                 borderRadius: 4,
                 marginBottom: 0,
@@ -110,6 +111,7 @@ interface ProductionErrorPageProps {
  * 显示友好提示并自动重试
  */
 export function ProductionServiceUnavailablePage({ onRetry }: ProductionErrorPageProps) {
+  const { token } = theme.useToken();
   const [retryCount, setRetryCount] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
   const maxRetries = 3;
@@ -146,18 +148,18 @@ export function ProductionServiceUnavailablePage({ onRetry }: ProductionErrorPag
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
-        background: '#f0f2f5',
+        background: token.colorBgLayout,
         padding: 24,
       }}
     >
       <div
         style={{
-          background: '#fff',
+          background: token.colorBgContainer,
           borderRadius: 8,
           padding: 48,
           textAlign: 'center',
           maxWidth: 400,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+          boxShadow: token.boxShadow,
         }}
       >
         <div style={{ fontSize: 64, marginBottom: 24 }}>🔧</div>

@@ -1,4 +1,4 @@
-import { Drawer, Descriptions, Tag, Button, Space, Divider, Spin, Empty } from 'antd';
+import { Drawer, Descriptions, Tag, Button, Space, Divider, Spin, Empty, theme } from 'antd';
 import {
   EditOutlined,
   DeleteOutlined,
@@ -73,6 +73,7 @@ export function ModelDrawer({
   onEdit,
 }: ModelDrawerProps) {
   const { t } = useTranslation('models');
+  const { token } = theme.useToken();
 
   const { data: model, isLoading } = useModel(modelId || 0);
   const deleteMutation = useDeleteModel();
@@ -132,7 +133,7 @@ export function ModelDrawer({
               gap: 12,
               marginBottom: 24,
               padding: 16,
-              background: '#fafafa',
+              background: token.colorFillAlter,
               borderRadius: 8,
             }}
           >
@@ -185,7 +186,7 @@ export function ModelDrawer({
               <span style={{ fontWeight: 600 }}>-</span>
             </Descriptions.Item>
             <Descriptions.Item label={t('detail.successRate')}>
-              <span style={{ fontWeight: 600, color: '#52c41a' }}>-</span>
+              <span style={{ fontWeight: 600, color: token.colorSuccess }}>-</span>
             </Descriptions.Item>
             <Descriptions.Item label={t('detail.avgLatency')}>
               <span style={{ fontWeight: 600 }}>-</span>
