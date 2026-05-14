@@ -13,7 +13,8 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // WSL2 需要使用 Windows 主机 IP
+        target: 'http://172.26.208.1:8080',
         changeOrigin: true,
       },
     },

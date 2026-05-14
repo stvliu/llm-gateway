@@ -53,6 +53,7 @@
   },
   "confirm": {
     "delete": "确定要删除吗？",
+    "deleteEntityTitle": "确定要删除\"{{name}}\"吗？",
     "deleteProviderTitle": "确定要删除供应商\"{{name}}\"吗？",
     "deleteModelTitle": "确定要删除模型\"{{name}}\"吗？",
     "deleteWarning": "请注意：确认后，该操作将不可恢复。",

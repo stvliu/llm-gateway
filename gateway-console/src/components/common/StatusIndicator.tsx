@@ -1,4 +1,4 @@
-import { Tooltip } from 'antd';
+import { Tooltip, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 export type StatusType = 'ACTIVE' | 'DISABLED' | 'LOCKED';
@@ -11,9 +11,6 @@ interface StatusIndicatorProps {
 
 /**
  * 状态指示器组件
- * - 活跃：绿色脉动动画
- * - 禁用：灰色静止
- * - 锁定：红色静止
  */
 export function StatusIndicator({
   status,
@@ -21,30 +18,31 @@ export function StatusIndicator({
   size = 'default',
 }: StatusIndicatorProps) {
   const { t } = useTranslation('models');
+  const { token } = theme.useToken();
 
   const getStatusConfig = () => {
     switch (status) {
       case 'ACTIVE':
         return {
-          color: 'green',
+          color: token.colorSuccess,
           label: t('state.active', { ns: 'common' }),
           pulse: true,
         };
       case 'DISABLED':
         return {
-          color: 'default',
+          color: token.colorTextDisabled,
           label: t('state.disabled', { ns: 'common' }),
           pulse: false,
         };
       case 'LOCKED':
         return {
-          color: 'red',
+          color: token.colorError,
           label: t('state.locked', { ns: 'common' }),
           pulse: false,
         };
       default:
         return {
-          color: 'default',
+          color: token.colorTextDisabled,
           label: status,
           pulse: false,
         };
@@ -53,17 +51,6 @@ export function StatusIndicator({
 
   const config = getStatusConfig();
   const dotSize = size === 'small' ? 6 : 8;
-
-  const getColorCode = () => {
-    switch (config.color) {
-      case 'green':
-        return '#52c41a';
-      case 'red':
-        return '#ff4d4f';
-      default:
-        return '#d9d9d9';
-    }
-  };
 
   return (
     <Tooltip title={showLabel ? undefined : config.label}>
@@ -79,7 +66,7 @@ export function StatusIndicator({
             width: dotSize,
             height: dotSize,
             borderRadius: '50%',
-            backgroundColor: getColorCode(),
+            backgroundColor: config.color,
             animation: config.pulse ? 'pulse 2s infinite' : 'none',
           }}
         />

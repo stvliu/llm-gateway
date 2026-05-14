@@ -8,6 +8,7 @@ export interface ProviderApiKey {
   id: number;
   providerId: number;
   keyName: string;
+  apiKey?: string;
   keyHint: string;
   priority?: number;
   weight?: number;

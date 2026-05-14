@@ -44,7 +44,7 @@ export function useCreateProviderApiKey() {
   return useMutation({
     mutationFn: (data: CreateProviderApiKeyRequest) => providerApiKeyApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.all });
     },
   });
 }
@@ -54,9 +54,8 @@ export function useUpdateProviderApiKey() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateProviderApiKeyRequest }) =>
       providerApiKeyApi.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.lists() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.all });
     },
   });
 }
@@ -66,7 +65,7 @@ export function useDeleteProviderApiKey() {
   return useMutation({
     mutationFn: (id: number) => providerApiKeyApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.all });
     },
   });
 }
@@ -76,9 +75,8 @@ export function useSetEnabledProviderApiKey() {
   return useMutation({
     mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
       providerApiKeyApi.setEnabled(id, enabled),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.lists() });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: providerApiKeyKeys.all });
     },
   });
 }

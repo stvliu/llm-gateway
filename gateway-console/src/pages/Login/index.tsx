@@ -8,21 +8,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { isServiceUnavailableError } from '@/services/api/client';
 import styles from './style.module.css';
 
-type LoginForm = {
-  username: string;
-  password: string;
-  rememberMe: boolean;
-};
-
 export default function Login() {
-  const { t } = useTranslation('login');
+  const { t, i18n } = useTranslation('login');
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setUser, setToken } = useAuthStore();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+  const from = (location.state as { from?: string })?.from;
 
   const handleLanguageChange = (lng: string) => {
     localStorage.setItem('i18nextLng', lng);
@@ -40,7 +34,6 @@ export default function Login() {
         rememberMe: values.rememberMe,
       });
 
-      // 响应拦截器已解包，response 就是 { user, token }
       setUser(response.user);
       if (response.token) {
         setToken(response.token);
@@ -48,11 +41,8 @@ export default function Login() {
 
       message.success(t('message.success', { ns: 'common' }));
 
-      // 根据角色重定向
-      const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
-      navigate(from || redirectPath, { replace: true });
+      navigate(from || '/dashboard', { replace: true });
     } catch (err: unknown) {
-      // 区分服务不可用和认证失败
       if (isServiceUnavailableError(err)) {
         setError(t('error.serviceUnavailable'));
       } else {
@@ -129,7 +119,7 @@ export default function Login() {
         </div>
 
         <div className={styles.footer}>
-          © 2024 LLM Gateway · <a href="#">帮助文档</a>
+          © {new Date().getFullYear()} LLM Gateway · <a href="#">帮助文档</a>
         </div>
       </div>
 

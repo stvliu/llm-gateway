@@ -8,11 +8,14 @@ import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
+import com.codingas.gateway.application.provider.dto.TestApiKeyRequestDTO;
+import com.codingas.gateway.application.provider.dto.TestApiKeyResultDTO;
 import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
@@ -22,12 +25,20 @@ import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.MediaType;
+import okhttp3.Response;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -272,5 +283,170 @@ public class ProviderServiceImpl implements ProviderService {
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;
+    }
+
+    /**
+     * 测试 API Key 连通性
+     *
+     * <p>根据供应商类型，使用对应的协议验证 API Key 是否有效：</p>
+     * <ul>
+     *   <li>OpenAI 兼容供应商：调用 GET /v1/models 获取模型列表</li>
+     *   <li>Anthropic：发送最小化 messages 请求</li>
+     *   <li>其他供应商：尝试 GET /v1/models</li>
+     * </ul>
+     */
+    @Override
+    public TestApiKeyResultDTO testApiKey(TestApiKeyRequestDTO request) {
+        ProviderType providerType = request.getProviderType();
+        String apiKey = request.getApiKey();
+        String baseUrl = resolveBaseUrl(providerType, request.getBaseUrl());
+
+        log.info("Testing API key for provider: {}, baseUrl: {}", providerType, baseUrl);
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(15, TimeUnit.SECONDS)
+                .build();
+
+        try {
+            if (providerType == ProviderType.ANTHROPIC) {
+                return testAnthropicKey(client, baseUrl, apiKey);
+            }
+            // OpenAI 兼容供应商及其他供应商均尝试 /v1/models
+            return testOpenAICompatibleKey(client, baseUrl, apiKey);
+        } catch (Exception e) {
+            log.warn("API key test failed for provider {}: {}", providerType, e.getMessage());
+            return new TestApiKeyResultDTO(false, "连接失败: " + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 解析 Base URL，如果用户未提供则使用默认值
+     */
+    private String resolveBaseUrl(ProviderType providerType, String userBaseUrl) {
+        if (userBaseUrl != null && !userBaseUrl.isBlank()) {
+            return userBaseUrl.endsWith("/") ? userBaseUrl.substring(0, userBaseUrl.length() - 1) : userBaseUrl;
+        }
+        return getDefaultBaseUrl(providerType);
+    }
+
+    /**
+     * 获取供应商默认 Base URL
+     */
+    private String getDefaultBaseUrl(ProviderType providerType) {
+        return switch (providerType) {
+            case OPENAI -> "https://api.openai.com";
+            case ANTHROPIC -> "https://api.anthropic.com";
+            case DEEPSEEK -> "https://api.deepseek.com";
+            case MOONSHOT -> "https://api.moonshot.cn";
+            case ZHIPU -> "https://open.bigmodel.cn/api/paas";
+            case BAICHUAN -> "https://api.baichuan-ai.com";
+            case MINIMAX -> "https://api.minimax.chat";
+            case VOLCENGINE -> "https://ark.cn-beijing.volces.com/api/v3";
+            case QWEN -> "https://dashscope.aliyuncs.com/compatible-mode";
+            case GEMINI -> "https://generativelanguage.googleapis.com";
+            default -> "https://api.openai.com";
+        };
+    }
+
+    /**
+     * 测试 OpenAI 兼容供应商的 API Key
+     *
+     * <p>调用 GET /v1/models 验证连通性并获取模型列表。</p>
+     */
+    @SuppressWarnings("unchecked")
+    private TestApiKeyResultDTO testOpenAICompatibleKey(OkHttpClient client, String baseUrl, String apiKey) {
+        Request httpRequest = new Request.Builder()
+                .url(baseUrl + "/v1/models")
+                .header("Authorization", "Bearer " + apiKey)
+                .get()
+                .build();
+
+        try (Response response = client.newCall(httpRequest).execute()) {
+            if (!response.isSuccessful()) {
+                String errorMsg = "HTTP " + response.code();
+                if (response.body() != null) {
+                    String body = response.body().string();
+                    if (body.length() > 200) {
+                        body = body.substring(0, 200);
+                    }
+                    errorMsg += ": " + body;
+                }
+                log.warn("OpenAI compatible key test failed: {}", errorMsg);
+                return new TestApiKeyResultDTO(false, "验证失败: " + errorMsg, null);
+            }
+
+            // 尝试解析模型列表
+            List<String> models = new ArrayList<>();
+            if (response.body() != null) {
+                try {
+                    String body = response.body().string();
+                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                    Map<String, Object> result = mapper.readValue(body, Map.class);
+                    List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
+                    if (data != null) {
+                        for (Map<String, Object> model : data) {
+                            String id = (String) model.get("id");
+                            if (id != null) {
+                                models.add(id);
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.debug("Failed to parse models list, skipping", e);
+                }
+            }
+
+            String message = models.isEmpty()
+                    ? "API Key 验证成功"
+                    : "验证成功，发现 " + models.size() + " 个模型";
+            return new TestApiKeyResultDTO(true, message, models);
+        } catch (Exception e) {
+            log.warn("OpenAI compatible key test error: {}", e.getMessage());
+            return new TestApiKeyResultDTO(false, "连接失败: " + e.getMessage(), null);
+        }
+    }
+
+    /**
+     * 测试 Anthropic API Key
+     *
+     * <p>发送最小化 messages 请求验证连通性。</p>
+     */
+    private TestApiKeyResultDTO testAnthropicKey(OkHttpClient client, String baseUrl, String apiKey) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", "claude-haiku-3-5-20250514");
+        body.put("messages", List.of(Map.of("role", "user", "content", "ping")));
+        body.put("max_tokens", 1);
+
+        try {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            String jsonBody = mapper.writeValueAsString(body);
+
+            Request httpRequest = new Request.Builder()
+                    .url(baseUrl + "/v1/messages")
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .header("anthropic-version", "2023-06-01")
+                    .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = client.newCall(httpRequest).execute()) {
+                if (response.isSuccessful()) {
+                    return new TestApiKeyResultDTO(true, "API Key 验证成功", null);
+                }
+                String errorMsg = "HTTP " + response.code();
+                if (response.body() != null) {
+                    String resBody = response.body().string();
+                    if (resBody.length() > 200) {
+                        resBody = resBody.substring(0, 200);
+                    }
+                    errorMsg += ": " + resBody;
+                }
+                return new TestApiKeyResultDTO(false, "验证失败: " + errorMsg, null);
+            }
+        } catch (Exception e) {
+            log.warn("Anthropic key test error: {}", e.getMessage());
+            return new TestApiKeyResultDTO(false, "连接失败: " + e.getMessage(), null);
+        }
     }
 }

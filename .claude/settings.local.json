@@ -90,7 +90,14 @@
       "Bash(sed -i \"s/updateData\\\\.setEnabled\\(/updateData.setState\\(/g; s/provider\\\\.getEnabled\\(\\)/provider.getState\\(\\)/g\" com/codingas/gateway/domain/model/service/ProviderDomainServiceTest.java)",
       "Bash(sed -i 's/import com.codingas.gateway.domain.security.entity.GatewayApiKey;/import com.codingas.gateway.common.enums.GatewayApiKeyState;\\\\nimport com.codingas.gateway.domain.security.entity.GatewayApiKey;/' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
       "Bash(sed -i 's/GatewayApiKey\\\\.GatewayApiKeyState\\\\./GatewayApiKeyState./g' com/codingas/gateway/domain/security/service/AuthenticationDomainServiceTest.java)",
-      "Bash(xdg-open http://localhost:5173)"
+      "Bash(xdg-open http://localhost:5173)",
+      "mcp__plugin_ecc_playwright__browser_snapshot",
+      "mcp__plugin_ecc_playwright__browser_wait_for",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s http://localhost:5174)",
+      "Bash(node_modules/.bin/tsc --noEmit --pretty false)",
+      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc --noEmit --pretty false)",
+      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc -p /mnt/e/workspace/llm-gateway/gateway-console/tsconfig.json --noEmit --pretty false)"
     ]
   },
   "outputStyle": "default"

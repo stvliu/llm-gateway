@@ -53,6 +53,7 @@
   },
   "confirm": {
     "delete": "Are you sure you want to delete?",
+    "deleteEntityTitle": "Are you sure you want to delete \"{{name}}\"?",
     "deleteProviderTitle": "Are you sure you want to delete provider \"{{name}}\"?",
     "deleteModelTitle": "Are you sure you want to delete model \"{{name}}\"?",
     "deleteWarning": "Warning: This action cannot be undone.",

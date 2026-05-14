@@ -15,6 +15,7 @@ public class ProviderApiKeyResponse {
     private Long id;
     private Long providerId;
     private String keyName;
+    private String apiKey;
     private String keyHint;
     private Integer priority;
     private Integer weight;
@@ -37,6 +38,7 @@ public class ProviderApiKeyResponse {
         response.setId(key.getId());
         response.setProviderId(key.getProviderId());
         response.setKeyName(key.getKeyName());
+        response.setApiKey(key.getApiKey());
         response.setKeyHint(maskApiKey(key.getApiKey()));
         response.setPriority(key.getPriority());
         response.setWeight(key.getWeight());

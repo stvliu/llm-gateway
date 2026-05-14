@@ -1,132 +1,77 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
 import { Menu } from 'antd';
-import {
-  DashboardOutlined,
-  AppstoreOutlined,
-  TeamOutlined,
-  SettingOutlined,
-  KeyOutlined,
-  CloudServerOutlined,
-  ApiOutlined,
-  CloudDownloadOutlined,
-} from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuthStore } from '@/stores/authStore';
+import { menuConfig } from '@/constants/menuConfig';
+import type { MenuItemConfig } from '@/constants/menuConfig';
 import type { MenuProps } from 'antd';
-import type { UserRole } from '@/types/user';
+import type { Permission } from '@/constants/permissions';
 
 interface SidebarProps {
   collapsed: boolean;
-  role: UserRole;
 }
 
-/**
- * 侧边栏组件
- * 颜色跟随全局主题
- */
-export function Sidebar({ collapsed, role }: SidebarProps) {
-  const { t } = useTranslation();
+/** 递归过滤+翻译菜单项 */
+function buildMenuItems(
+  items: MenuItemConfig[],
+  hasPermission: (p: Permission) => boolean,
+  t: (key: string) => string
+): MenuProps['items'] {
+  return items
+    .map((item) => {
+      if (item.permission && !hasPermission(item.permission)) {
+        return null;
+      }
+      if (item.children) {
+        const filteredChildren = buildMenuItems(item.children, hasPermission, t);
+        if (!filteredChildren || filteredChildren.length === 0) return null;
+        return {
+          key: item.key,
+          icon: item.icon,
+          label: t(item.label),
+          children: filteredChildren,
+        };
+      }
+      return {
+        key: item.key,
+        icon: item.icon,
+        label: t(item.label),
+      };
+    })
+    .filter(Boolean) as NonNullable<MenuProps['items']>;
+}
+
+export function Sidebar({ collapsed }: SidebarProps) {
+  const { t } = useTranslation('common');
   const navigate = useNavigate();
   const location = useLocation();
+  const { hasPermission } = useAuthStore();
 
-  // 默认展开所有子菜单
-  const allOpenKeys = ['model-center', 'user-center'];
-  const [openKeys, setOpenKeys] = useState<string[]>(allOpenKeys);
+  const menuItems = useMemo(() => {
+    return buildMenuItems(menuConfig, hasPermission, t);
+  }, [t, hasPermission]);
 
-  const adminItems: MenuProps['items'] = [
-    {
-      key: '/admin/dashboard',
-      icon: <DashboardOutlined />,
-      label: t('menu.home', { ns: 'common' }),
-    },
-    {
-      key: 'model-center',
-      icon: <AppstoreOutlined />,
-      label: t('menu.modelCenter', { ns: 'common' }),
-      children: [
-        {
-          key: '/admin/models',
-          icon: <AppstoreOutlined />,
-          label: t('menu.models', { ns: 'common' }),
-        },
-        {
-          key: '/admin/providers',
-          icon: <CloudServerOutlined />,
-          label: t('menu.providers', { ns: 'common' }),
-        },
-        {
-          key: '/admin/templates',
-          icon: <CloudDownloadOutlined />,
-          label: t('menu.templates', { ns: 'common' }),
-        },
-        {
-          key: '/admin/api-key-pool',
-          icon: <ApiOutlined />,
-          label: t('menu.apiKeyPool', { ns: 'common' }),
-        },
-      ],
-    },
-    {
-      key: 'user-center',
-      icon: <TeamOutlined />,
-      label: t('menu.userCenter', { ns: 'common' }),
-      children: [
-        {
-          key: '/admin/users',
-          icon: <TeamOutlined />,
-          label: t('menu.users', { ns: 'common' }),
-        },
-        {
-          key: '/admin/api-keys',
-          icon: <KeyOutlined />,
-          label: t('menu.apiKeys', { ns: 'common' }),
-        },
-      ],
-    },
-    {
-      key: '/admin/settings',
-      icon: <SettingOutlined />,
-      label: t('menu.settings', { ns: 'common' }),
-    },
-  ];
+  const openKeys = useMemo(() => {
+    return menuConfig
+      .filter((item) => item.children)
+      .map((item) => item.key);
+  }, []);
 
-  const userItems: MenuProps['items'] = [
-    {
-      key: '/user/dashboard',
-      icon: <DashboardOutlined />,
-      label: t('menu.home', { ns: 'common' }),
-    },
-    {
-      key: '/user/models',
-      icon: <AppstoreOutlined />,
-      label: t('menu.models', { ns: 'common' }),
-    },
-    {
-      key: '/user/api-keys',
-      icon: <KeyOutlined />,
-      label: t('menu.myApiKeys', { ns: 'common' }),
-    },
-    {
-      key: '/user/settings',
-      icon: <SettingOutlined />,
-      label: t('menu.settings', { ns: 'common' }),
-    },
-  ];
+  const selectedKeys = [location.pathname];
 
-  const items = role === 'ADMIN' ? adminItems : userItems;
+  const handleMenuClick = ({ key }: { key: string }) => {
+    navigate(key);
+  };
 
   return (
     <Menu
       mode="inline"
-      selectedKeys={[location.pathname]}
-      openKeys={openKeys}
-      onOpenChange={(keys) => setOpenKeys(keys as string[])}
-      items={items}
-      onClick={({ key }) => {
-        if (!key.startsWith('/')) return;
-        navigate(key);
-      }}
       inlineCollapsed={collapsed}
+      defaultOpenKeys={openKeys}
+      selectedKeys={selectedKeys}
+      items={menuItems}
+      onClick={handleMenuClick}
       style={{ height: '100%', borderRight: 0 }}
     />
   );

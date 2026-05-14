@@ -1,10 +1,12 @@
-/** 用户角色 */
-export type UserRole = 'ADMIN' | 'USER';
+import type { Permission } from '@/constants/permissions';
 
-/** 用户状态枚举（统一命名） */
+/** 用户角色（兼容未来新角色） */
+export type UserRole = 'ADMIN' | 'USER' | string;
+
+/** 用户状态枚举 */
 export type UserState = 'ACTIVE' | 'DISABLED' | 'LOCKED';
 
-/** 用户信息 */
+/** 用户信息（完整，含审计字段） */
 export interface User {
   id: number;
   username: string;
@@ -39,19 +41,29 @@ export interface LoginRequest {
 
 /** 登录响应数据 */
 export interface LoginResponseData {
-  user: CurrentUser;
+  user: LoginUserResponse;
   token?: string;
 }
 
 /** 登录响应（包装在 ApiResponse 中） */
 export type LoginResponse = LoginResponseData;
 
-/** 当前用户信息 */
+/** 登录返回的用户信息（后端原始结构，不含 permissions） */
+export interface LoginUserResponse {
+  id: number;
+  username: string;
+  email: string;
+  role: UserRole;
+}
+
+/** 当前用户信息（前端使用，含推导的 permissions） */
 export interface CurrentUser {
   id: number;
   username: string;
   email: string;
   role: UserRole;
+  /** 前端根据 role 推导，非后端返回 */
+  permissions: Permission[];
 }
 
 /** 用户状态更新请求 */
@@ -61,5 +73,5 @@ export interface UserStateUpdateRequest {
 
 /** 用户角色分配请求 */
 export interface UserRoleAssignRequest {
-  roles: UserRole[];
+  roleCodes: UserRole[];
 }

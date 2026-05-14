@@ -137,11 +137,7 @@ public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
     @Override
     @Transactional
     public void delete(Long id) {
-        ProviderApiKey key = providerApiKeyGateway.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("ProviderApiKey", id));
-
-        key.setState(ProviderApiKeyState.DISABLED);
-        providerApiKeyGateway.save(key);
+        providerApiKeyGateway.deleteById(id);
         log.info("Deleted ProviderApiKey: id={}", id);
     }
 

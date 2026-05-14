@@ -1,3 +1,4 @@
+import { theme } from 'antd';
 import {
   CloudServerOutlined,
   AppstoreOutlined,
@@ -15,28 +16,28 @@ interface EmptyStateProps {
 
 /**
  * 空状态组件
- * 根据 type 显示对应的插图和引导文案
  */
 export function EmptyState({ type, action, description }: EmptyStateProps) {
   const { t } = useTranslation('models');
+  const { token } = theme.useToken();
 
   const getConfig = () => {
     switch (type) {
       case 'provider':
         return {
-          icon: <CloudServerOutlined style={{ fontSize: 48, color: '#1677ff' }} />,
+          icon: <CloudServerOutlined style={{ fontSize: 48, color: token.colorPrimary }} />,
           title: t('empty.noProvider'),
           description: description || t('empty.noProviderDesc'),
         };
       case 'model':
         return {
-          icon: <AppstoreOutlined style={{ fontSize: 48, color: '#1677ff' }} />,
+          icon: <AppstoreOutlined style={{ fontSize: 48, color: token.colorPrimary }} />,
           title: t('empty.noModel'),
           description: description || t('empty.noModelDesc'),
         };
       case 'search':
         return {
-          icon: <SearchOutlined style={{ fontSize: 48, color: '#999' }} />,
+          icon: <SearchOutlined style={{ fontSize: 48, color: token.colorTextDisabled }} />,
           title: t('empty.noSearchResult'),
           description: description || t('empty.noSearchResultDesc'),
         };
@@ -66,7 +67,7 @@ export function EmptyState({ type, action, description }: EmptyStateProps) {
       <h3 style={{ margin: '0 0 8px', fontSize: 16, fontWeight: 500 }}>
         {config.title}
       </h3>
-      <p style={{ margin: '0 0 24px', color: '#666', textAlign: 'center' }}>
+      <p style={{ margin: '0 0 24px', color: token.colorTextSecondary, textAlign: 'center' }}>
         {config.description}
       </p>
       {action && <div>{action}</div>}

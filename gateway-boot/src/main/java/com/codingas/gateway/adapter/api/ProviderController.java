@@ -5,6 +5,8 @@ import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
+import com.codingas.gateway.application.provider.dto.TestApiKeyRequestDTO;
+import com.codingas.gateway.application.provider.dto.TestApiKeyResultDTO;
 import com.codingas.gateway.application.provider.ProviderService;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.enums.ProviderType;
@@ -101,5 +103,16 @@ public class ProviderController {
     @GetMapping("/{id}/keys")
     public ProviderKeysResponse getProviderKeys(@PathVariable Long id) {
         return providerService.getProviderKeys(id);
+    }
+
+    /**
+     * 测试 API Key 连通性
+     *
+     * @param request 测试请求（包含 providerType、baseUrl、apiKey）
+     * @return 测试结果
+     */
+    @PostMapping("/test-api-key")
+    public TestApiKeyResultDTO testApiKey(@Valid @RequestBody TestApiKeyRequestDTO request) {
+        return providerService.testApiKey(request);
     }
 }
