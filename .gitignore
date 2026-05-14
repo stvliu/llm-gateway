@@ -72,3 +72,4 @@ data/
 /.mvn/
 /.claude/
 /.specify/
+/gateway-console/test-results/.last-run.json
