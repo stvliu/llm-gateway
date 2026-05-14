@@ -1,82 +1,68 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { Drawer, Button, Space, Tabs, message } from 'antd';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { Drawer, Button, Space, Tabs } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
-  EditOutlined,
-  DeleteOutlined,
   SettingOutlined,
   ApiOutlined,
   AppstoreOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CheckOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { ProviderBasicInfoTab } from './ProviderBasicInfoTab';
+import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
 import { ProviderApiKeysTab } from './ProviderApiKeysTab';
 import { ProviderModelsTab } from './ProviderModelsTab';
-import { UnsavedConfirm } from '@/components/ui/Drawer/UnsavedConfirm';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
-import {
-  useProvider,
-  useCreateProvider,
-  useUpdateProvider,
-  useDeleteProvider,
-} from '@/services/query';
-import type { Provider, CreateProviderRequest } from '@/types/provider';
+import { useProvider, useDeleteProvider } from '@/services/query';
+import type { Provider } from '@/types/provider';
 
 interface ProviderManagementDrawerProps {
-  providerId: number | null; // null 表示新增模式
+  providerId: number | null;
   providers: Provider[];
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
-  onProviderCreated?: (provider: Provider) => void;
   onProviderDeleted?: () => void;
 }
 
-type DrawerMode = 'view' | 'edit' | 'create';
-
 /**
- * 供应商一站式管理抽屉
- * 支持查看、编辑、新增三种模式
- * 包含三个标签页：基本信息、API Keys、模型
+ * 供应商详情抽屉（模型页面内嵌）
+ * 查看模式：标签页展示（基本信息只读 + API Keys 可操作 + Models 可操作）
+ * 编辑基本信息：隐藏其它标签页，只显示基本信息表单
+ * 操作按钮放在标题栏右侧
  */
 export function ProviderManagementDrawer({
   providerId,
   providers,
   onClose,
   onProviderChange,
-  onProviderCreated,
   onProviderDeleted,
 }: ProviderManagementDrawerProps) {
   const { t } = useTranslation('models');
   const { confirm } = useConfirm();
 
   // 状态
-  const [mode, setMode] = useState<DrawerMode>(providerId ? 'view' : 'create');
   const [activeTab, setActiveTab] = useState('basic');
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  // Ref
+  const basicInfoRef = useRef<ProviderBasicInfoTabHandle>(null);
 
   // 查询数据
   const { data: provider, isLoading } = useProvider(providerId || 0);
-
-  // Mutations
-  const createMutation = useCreateProvider();
-  const updateMutation = useUpdateProvider();
   const deleteMutation = useDeleteProvider();
 
   // 当 providerId 变化时重置状态
   useEffect(() => {
-    if (providerId) {
-      setMode('view');
+    if (providerId !== null) {
       setActiveTab('basic');
-      setHasUnsavedChanges(false);
-    } else {
-      setMode('create');
-      setActiveTab('basic');
-      setHasUnsavedChanges(false);
+      setEditing(false);
+      setDirty(false);
     }
   }, [providerId]);
 
@@ -89,102 +75,61 @@ export function ProviderManagementDrawer({
   const canGoPrevious = currentIndex > 0;
   const canGoNext = currentIndex < providers.length - 1 && currentIndex >= 0;
 
-  // 检查未保存更改并执行操作
-  const checkAndExecute = useCallback(
-    (action: () => void) => {
-      if (hasUnsavedChanges) {
-        setPendingAction(() => action);
-        setShowUnsavedConfirm(true);
-      } else {
-        action();
-      }
-    },
-    [hasUnsavedChanges]
-  );
-
-  // 处理关闭
-  const handleClose = useCallback(() => {
-    checkAndExecute(onClose);
-  }, [checkAndExecute, onClose]);
-
-  // 处理上一个
-  const handlePrevious = useCallback(() => {
-    if (canGoPrevious && providers[currentIndex - 1]) {
-      checkAndExecute(() => onProviderChange(providers[currentIndex - 1].id));
-    }
-  }, [canGoPrevious, currentIndex, providers, checkAndExecute, onProviderChange]);
-
-  // 处理下一个
-  const handleNext = useCallback(() => {
-    if (canGoNext && providers[currentIndex + 1]) {
-      checkAndExecute(() => onProviderChange(providers[currentIndex + 1].id));
-    }
-  }, [canGoNext, currentIndex, providers, checkAndExecute, onProviderChange]);
-
-  // 切换到编辑模式
+  // 进入编辑模式
   const handleEdit = useCallback(() => {
-    setMode('edit');
+    setEditing(true);
   }, []);
 
-  // 切换到查看模式
-  const handleCancelEdit = useCallback(() => {
-    if (hasUnsavedChanges) {
-      setPendingAction(() => setMode('view'));
-      setShowUnsavedConfirm(true);
-    } else {
-      setMode('view');
-    }
-  }, [hasUnsavedChanges]);
-
-  // 保存
-  const handleSave = useCallback(async (values: CreateProviderRequest) => {
+  // 应用更改
+  const handleApplyChanges = useCallback(async () => {
+    if (!basicInfoRef.current) return;
     setSaving(true);
-    try {
-      if (mode === 'create') {
-        const newProvider = await createMutation.mutateAsync(values);
-        message.success(t('message.success', { ns: 'common' }));
-        onProviderCreated?.(newProvider);
-        onClose();
-      } else if (providerId) {
-        await updateMutation.mutateAsync({
-          id: providerId,
-          data: values,
-        });
-        message.success(t('message.success', { ns: 'common' }));
-        setMode('view');
-        setHasUnsavedChanges(false);
-      }
-    } finally {
-      setSaving(false);
+    const success = await basicInfoRef.current.submit();
+    setSaving(false);
+    if (success) {
+      setEditing(false);
+      setDirty(false);
     }
-  }, [mode, providerId, createMutation, updateMutation, t, onProviderCreated, onClose]);
+  }, []);
 
-  // 删除
+  // 撤消更改
+  const handleRevertChanges = useCallback(() => {
+    basicInfoRef.current?.resetFields();
+    setEditing(false);
+    setDirty(false);
+  }, []);
+
+  // 删除供应商
   const handleDelete = useCallback(() => {
-    if (!providerId) return;
+    if (!provider) return;
     confirm({
       type: 'danger',
-      entityName: provider?.providerName,
-      onConfirm: () => deleteMutation.mutateAsync(providerId).then(() => {
+      entityName: provider.providerName,
+      onConfirm: () => deleteMutation.mutateAsync(provider.id).then(() => {
         onProviderDeleted?.();
         onClose();
       }),
     });
-  }, [confirm, providerId, provider, deleteMutation, onProviderDeleted, onClose]);
+  }, [confirm, provider, deleteMutation, onProviderDeleted, onClose]);
 
-  // 放弃更改
-  const handleDiscard = useCallback(() => {
-    setShowUnsavedConfirm(false);
-    pendingAction?.();
-    setPendingAction(null);
-    setHasUnsavedChanges(false);
-  }, [pendingAction]);
+  // 处理关闭
+  const handleClose = useCallback(() => {
+    onClose();
+  }, [onClose]);
 
-  // 继续编辑
-  const handleContinue = useCallback(() => {
-    setShowUnsavedConfirm(false);
-    setPendingAction(null);
-  }, []);
+  // 处理上一个
+  const handlePrevious = useCallback(() => {
+    if (canGoPrevious && providers[currentIndex - 1]) {
+      onProviderChange(providers[currentIndex - 1].id);
+    }
+  }, [canGoPrevious, currentIndex, providers, onProviderChange]);
+
+  // 处理下一个
+  const handleNext = useCallback(() => {
+    if (canGoNext && providers[currentIndex + 1]) {
+      onProviderChange(providers[currentIndex + 1].id);
+    }
+  }, [canGoNext, currentIndex, providers, onProviderChange]);
 
   // 标签页配置
   const tabs = [
@@ -206,62 +151,40 @@ export function ProviderManagementDrawer({
   ];
 
   // 标题
-  const title = mode === 'create'
-    ? t('addProvider')
-    : provider?.providerName || t('detail.providerDetail');
+  const title = provider?.providerName || t('detail.providerDetail', { defaultValue: '供应商详情' });
 
-  // 头部操作区
-  const extra = (
+  // 标题栏操作按钮
+  const extra = editing ? (
     <Space>
-      {mode === 'view' && providerId && (
-        <>
-          <Button icon={<EditOutlined />} onClick={handleEdit}>
-            {t('actions.edit', { ns: 'common' })}
-          </Button>
-          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
-              {t('actions.delete', { ns: 'common' })}
-            </Button>
-        </>
-      )}
-      {mode === 'edit' && (
-        <>
-          <Button onClick={handleCancelEdit}>
-            {t('actions.cancel', { ns: 'common' })}
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => {
-              // 触发表单提交（通过 ref 或其他方式）
-              // 这里简化处理，实际需要与 BasicInfoTab 集成
-            }}
-            loading={saving}
-          >
-            {t('actions.save', { ns: 'common' })}
-          </Button>
-        </>
-      )}
-      {mode === 'create' && (
-        <>
-          <Button onClick={handleClose}>
-            {t('actions.cancel', { ns: 'common' })}
-          </Button>
-          <Button
-            type="primary"
-            onClick={() => {
-              // 触发表单提交
-            }}
-            loading={saving}
-          >
-            {t('actions.save', { ns: 'common' })}
-          </Button>
-        </>
-      )}
+      <Button
+        type="primary"
+        icon={<CheckOutlined />}
+        onClick={handleApplyChanges}
+        loading={saving}
+        disabled={!dirty}
+      >
+        {t('actions.applyChanges', { defaultValue: '应用更改' })}
+      </Button>
+      <Button
+        icon={<CloseOutlined />}
+        onClick={handleRevertChanges}
+      >
+        {t('actions.revertChanges', { defaultValue: '撤消更改' })}
+      </Button>
+    </Space>
+  ) : (
+    <Space>
+      <Button icon={<EditOutlined />} onClick={handleEdit}>
+        {t('actions.edit', { ns: 'common' })}
+      </Button>
+      <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+        {t('actions.delete', { ns: 'common' })}
+      </Button>
     </Space>
   );
 
-  // 底部导航（仅查看模式和编辑模式显示）
-  const showNavigation = mode !== 'create' && providers.length > 1;
-  const footer = showNavigation ? (
+  // 底部导航
+  const footer = providers.length > 1 ? (
     <div
       style={{
         display: 'flex',
@@ -277,12 +200,6 @@ export function ProviderManagementDrawer({
       >
         {t('drawer.navigation.previous')}
       </Button>
-      <span>
-        {t('drawer.navigation.position', {
-          current: currentIndex + 1,
-          total: providers.length,
-        })}
-      </span>
       <Button
         type="text"
         icon={<RightOutlined />}
@@ -295,22 +212,22 @@ export function ProviderManagementDrawer({
   ) : undefined;
 
   return (
-    <>
-      <Drawer
-        title={title}
-        open={providerId !== null || mode === 'create'}
-        onClose={handleClose}
-        width={560}
-        placement="right"
-        maskClosable={mode === 'view'}
-        extra={extra}
-        styles={{
-          body: { padding: 16 },
-          footer: { padding: 16 },
-        }}
-        footer={footer}
-      >
-        {/* 标签页 */}
+    <Drawer
+      title={title}
+      extra={extra}
+      open={providerId !== null}
+      onClose={handleClose}
+      width={560}
+      placement="right"
+      maskClosable
+      styles={{
+        body: { padding: 16 },
+        footer: { padding: 16 },
+      }}
+      footer={footer}
+    >
+      {/* 标签页：编辑基本信息时隐藏 */}
+      {!editing && (
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
@@ -325,41 +242,34 @@ export function ProviderManagementDrawer({
           }))}
           style={{ marginBottom: 16 }}
         />
+      )}
 
-        {/* 加载状态 */}
-        {isLoading && mode !== 'create' && <DrawerSkeleton showTabs={false} />}
+      {isLoading && <DrawerSkeleton showTabs={false} />}
 
-        {/* 内容 */}
-        {!isLoading && activeTab === 'basic' && (
-          <ProviderBasicInfoTab
-            provider={provider || null}
-            mode={mode}
-            onValuesChange={setHasUnsavedChanges}
-            onSubmit={handleSave}
-          />
-        )}
-        {!isLoading && activeTab === 'apiKeys' && (
-          <ProviderApiKeysTab
-            provider={provider || null}
-            mode={mode}
-          />
-        )}
-        {!isLoading && activeTab === 'models' && (
-          <ProviderModelsTab
-            provider={provider || null}
-            mode={mode}
-          />
-        )}
-      </Drawer>
+      {/* 基本信息 */}
+      {!isLoading && (editing || activeTab === 'basic') && (
+        <ProviderBasicInfoTab
+          ref={basicInfoRef}
+          provider={provider || null}
+          editing={editing}
+          onDirtyChange={setDirty}
+        />
+      )}
 
-      {/* 未保存确认对话框 */}
-      <UnsavedConfirm
-        open={showUnsavedConfirm}
-        onContinue={handleContinue}
-        onDiscard={handleDiscard}
-        onCancel={() => setShowUnsavedConfirm(false)}
-      />
-    </>
+      {/* API Keys：编辑基本信息时隐藏 */}
+      {!isLoading && !editing && activeTab === 'apiKeys' && (
+        <ProviderApiKeysTab
+          provider={provider || null}
+        />
+      )}
+
+      {/* Models：编辑基本信息时隐藏 */}
+      {!isLoading && !editing && activeTab === 'models' && (
+        <ProviderModelsTab
+          provider={provider || null}
+        />
+      )}
+    </Drawer>
   );
 }
 

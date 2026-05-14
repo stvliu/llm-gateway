@@ -39,11 +39,6 @@ export default function AdminModels() {
     setSelectedProviderId(null);
   }, []);
 
-  // 供应商创建成功
-  const handleProviderCreated = useCallback((provider: Provider) => {
-    setSelectedProviderId(provider.id);
-  }, []);
-
   // 供应商删除成功
   const handleProviderDeleted = useCallback(() => {
     setSelectedProviderId(null);
@@ -117,7 +112,6 @@ export default function AdminModels() {
           providers={providers}
           onClose={handleCloseDrawer}
           onProviderChange={setSelectedProviderId}
-          onProviderCreated={handleProviderCreated}
           onProviderDeleted={handleProviderDeleted}
         />
       )}

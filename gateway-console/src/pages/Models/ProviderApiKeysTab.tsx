@@ -28,14 +28,13 @@ import type { ProviderApiKey } from '@/types/providerApiKey';
 
 interface ProviderApiKeysTabProps {
   provider: Provider | null;
-  mode: 'view' | 'edit' | 'create';
 }
 
 /**
  * API Keys 管理标签页
  * 卡片列表展示，支持增删改和设为默认
  */
-export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) {
+export function ProviderApiKeysTab({ provider }: ProviderApiKeysTabProps) {
   const { t } = useTranslation('models');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();
@@ -52,7 +51,7 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
   // 查询数据
   const { data: keysData, isLoading } = useProviderKeys(
     provider?.id || 0,
-    { enabled: !!provider && mode !== 'create' }
+    { enabled: !!provider }
   );
 
   // Mutations
@@ -100,17 +99,6 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
     setApiKeyModalOpen(false);
     setEditingKey(null);
   }, []);
-
-  // 新增模式：暂不支持
-  if (mode === 'create') {
-    return (
-      <Empty
-        description={t('provider.addKeysAfterCreate', {
-          defaultValue: '创建供应商后可添加 API Keys',
-        })}
-      />
-    );
-  }
 
   // 无供应商
   if (!provider) {
