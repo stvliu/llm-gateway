@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, App } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useModels, useProviders, useCreateModel, useUpdateModel, useDeleteModel } from '@/services/query';
 import type { Model, CreateModelRequest, ModelType } from '@/types/model';
 import type { ColumnsType } from 'antd/es/table';
@@ -12,8 +13,7 @@ interface ModelListProps {
 
 export function ModelList({ providerId }: ModelListProps) {
   const { t } = useTranslation('models');
-  const { t: tc } = useTranslation('common');
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [form] = Form.useForm();
@@ -40,17 +40,9 @@ export function ModelList({ providerId }: ModelListProps) {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 

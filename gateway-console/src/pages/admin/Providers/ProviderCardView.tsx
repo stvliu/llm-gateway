@@ -1,9 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Row, Col, Empty, Spin, message, Segmented, Space, App } from 'antd';
+import { Empty, Spin, Segmented, Space, Button } from 'antd';
 import { AppstoreOutlined, UnorderedListOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { PageHeader } from '@/components/ui';
 import { FilterPanel, FilterTags } from '@/components/common';
+import { useConfirm } from '@/hooks/useConfirm';
 import { ProviderCard } from './ProviderCard';
 import { ApiKeyModal } from './ApiKeyModal';
 import { ModelAddModal } from './ModelAddModal';
@@ -26,12 +27,12 @@ interface ProviderCardViewProps {
 
 /**
  * 供应商卡片视图
- * 网格布局展示所有供应商卡片
+ * 使用 CSS Grid 自适应布局，卡片宽度在 240px-320px 之间自动调整
  */
 export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange, onAddProvider }: ProviderCardViewProps) {
   const { t } = useTranslation('providers');
   const { t: tc } = useTranslation('common');
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
 
   // API Key 弹窗状态
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
@@ -51,7 +52,7 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
   // Mutations
   const deleteProviderMutation = useDeleteProvider();
 
-  // 页面操作按钮
+  // 页面操作按钮（不包含视图切换）
   const pageActions = useMemo(() => [
     {
       key: 'add',
@@ -59,6 +60,8 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
       type: 'primary' as const,
       icon: <PlusOutlined />,
       onClick: onAddProvider,
+      danger: false,
+      disabled: false,
     },
     {
       key: 'refresh',
@@ -66,6 +69,8 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
       icon: <ReloadOutlined />,
       onClick: () => refetch(),
       loading: providersLoading,
+      danger: false,
+      disabled: false,
     },
   ], [tc, onAddProvider, refetch, providersLoading]);
 
@@ -191,26 +196,14 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
     onProviderSelect?.(provider);
   }, [onProviderSelect]);
 
-  // 打开编辑抽屉
-  const handleEdit = useCallback((provider: Provider) => {
-    onProviderSelect?.(provider);
-  }, [onProviderSelect]);
-
   // 删除供应商
   const handleDelete = useCallback((provider: Provider) => {
-    modal.confirm({
-      title: tc('confirm.deleteProviderTitle', { name: provider.providerName }),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: 'primary' },
-      centered: true,
-      onOk: async () => {
-        await deleteProviderMutation.mutateAsync(provider.id);
-        message.success(tc('message.deleteSuccess'));
-      },
+    confirm({
+      type: 'danger',
+      entityName: provider.providerName,
+      onConfirm: () => deleteProviderMutation.mutateAsync(provider.id),
     });
-  }, [deleteProviderMutation, modal, tc]);
+  }, [confirm, deleteProviderMutation]);
 
   // 添加 API Key
   const handleAddApiKey = useCallback((provider: Provider) => {
@@ -262,23 +255,36 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
   }
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 页面标题 */}
       <PageHeader
         title={t('title', { defaultValue: '供应商管理' })}
-        subtitle={t('subtitle', { defaultValue: '管理 AI 模型供应商及其 API Keys' })}
-        actions={pageActions}
-        extra={
+        actions={
           <Space>
-            <FilterPanel
-              fields={filterFields}
-              values={filterValues}
-              onChange={handleFilterChange}
-              onReset={handleFilterReset}
-              title={t('filter.providerFilter', { defaultValue: '供应商筛选器' })}
-            />
             {viewModeSwitcher}
+            {pageActions.map((action) => (
+              <Button
+                key={action.key}
+                type={action.type || 'default'}
+                danger={action.danger}
+                icon={action.icon}
+                onClick={action.onClick}
+                loading={action.loading}
+                disabled={action.disabled}
+              >
+                {action.label}
+              </Button>
+            ))}
           </Space>
+        }
+        extra={
+          <FilterPanel
+            fields={filterFields}
+            values={filterValues}
+            onChange={handleFilterChange}
+            onReset={handleFilterReset}
+            title={t('filter.providerFilter', { defaultValue: '供应商筛选器' })}
+          />
         }
       />
 
@@ -291,24 +297,31 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
         />
       )}
 
-      {/* 卡片内容 */}
-      <div style={{ flex: 1, overflow: 'auto', padding: 16 }}>
-        <Row gutter={[16, 16]}>
-          {sortedProviders.map((provider) => (
-            <Col key={provider.id} xs={24} sm={12} md={8} lg={6} xl={6}>
-              <ProviderCardContent
-                provider={provider}
-                onViewDetail={handleViewDetail}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
-                onAddApiKey={handleAddApiKey}
-                onAddModel={handleAddModel}
-                onEditApiKey={handleEditApiKey}
-                onEditModel={handleEditModel}
-              />
-            </Col>
-          ))}
-        </Row>
+      {/* 卡片内容 - CSS Grid 自适应布局 */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          overflow: 'auto',
+          padding: '16px 0',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+          gap: 16,
+          alignContent: 'start',
+        }}
+      >
+        {sortedProviders.map((provider) => (
+          <ProviderCardContent
+            key={provider.id}
+            provider={provider}
+            onViewDetail={handleViewDetail}
+            onDelete={handleDelete}
+            onAddApiKey={handleAddApiKey}
+            onAddModel={handleAddModel}
+            onEditApiKey={handleEditApiKey}
+            onEditModel={handleEditModel}
+          />
+        ))}
       </div>
 
       {/* API Key 弹窗 */}
@@ -357,7 +370,6 @@ function ProviderCardContent({
 }: {
   provider: Provider;
   onViewDetail: (provider: Provider) => void;
-  onEdit: (provider: Provider) => void;
   onDelete: (provider: Provider) => void;
   onAddApiKey: (provider: Provider) => void;
   onAddModel: (provider: Provider) => void;

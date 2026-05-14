@@ -13,7 +13,6 @@ import {
   Tabs,
   Descriptions,
   Upload,
-  App,
 } from 'antd';
 import {
   PlusOutlined,
@@ -24,6 +23,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { useConfirm } from '@/hooks/useConfirm';
 import {
   useTemplates,
   useCreateTemplate,
@@ -44,9 +44,8 @@ import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminTemplates() {
   const { t } = useTranslation('templates');
-  const { t: tc } = useTranslation('common');
   const navigate = useNavigate();
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
   const [activeTab, setActiveTab] = useState<TemplateType>('USER');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -86,31 +85,18 @@ export default function AdminTemplates() {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 
   const handlePublish = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.publish'),
-      content: tc('confirm.publishWarning'),
-      okText: tc('actions.confirm'),
-      cancelText: tc('actions.cancel'),
-      centered: true,
-      onOk: async () => {
-        await updateMarketStateMutation.mutateAsync({ id, marketState: 'PUBLISHED' });
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'info',
+      title: 'confirm.publish',
+      content: 'confirm.publishWarning',
+      onConfirm: () => updateMarketStateMutation.mutateAsync({ id, marketState: 'PUBLISHED' }) as unknown as Promise<void>,
     });
   };
 

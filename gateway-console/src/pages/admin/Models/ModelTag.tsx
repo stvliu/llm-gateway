@@ -1,4 +1,4 @@
-import { Tag, Space, Tooltip } from 'antd';
+import { Tag, Space, Tooltip, theme } from 'antd';
 import {
   MessageOutlined,
   FileTextOutlined,
@@ -61,10 +61,10 @@ function getModelTypeColor(type: ModelType): string {
 /**
  * Model 标签组件
  * 显示模型名称、类型图标和状态
- * 点击打开详情抽屉
  */
 export function ModelTag({ model, onClick }: ModelTagProps) {
   const { t } = useTranslation('models');
+  const { token } = theme.useToken();
 
   const isDisabled = model.state !== 'ACTIVE';
   const modelType = inferModelType(model) as ModelType;
@@ -88,7 +88,7 @@ export function ModelTag({ model, onClick }: ModelTagProps) {
         <span>{displayName}</span>
         {isDisabled && (
           <Tooltip title={t('state.disabled', { ns: 'common' })}>
-            <span style={{ fontSize: 10, color: '#999' }}>⏸</span>
+            <span style={{ fontSize: 10, color: token.colorTextDisabled }}>⏸</span>
           </Tooltip>
         )}
       </Space>

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin } from 'antd';
+import { Typography, Spin, Input, Select, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import { providerApi } from '@/services/api/provider';
@@ -28,6 +28,7 @@ export function BasicInfoStep({
   onModelsChange,
 }: BasicInfoStepProps) {
   const { t } = useTranslation('providers');
+  const { token } = theme.useToken();
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [providerTypes, setProviderTypes] = useState<ProviderTypeOption[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
@@ -106,7 +107,6 @@ export function BasicInfoStep({
     );
 
     if (template) {
-      setLoadingTemplate(true);
       onTemplateLoad(template);
 
       const config = template.providerConfig as Record<string, unknown>;
@@ -139,7 +139,7 @@ export function BasicInfoStep({
         onModelsChange([]);
       }
 
-      setTimeout(() => setLoadingTemplate(false), 300);
+      setLoadingTemplate(false);
     } else {
       // 没有找到模板，只更新类型
       onTemplateLoad(null);
@@ -169,15 +169,6 @@ export function BasicInfoStep({
     }
   }, [onChange, basicInfo]);
 
-  // 输入框样式
-  const inputStyle = {
-    width: '100%',
-    padding: '8px 12px',
-    border: '1px solid #d9d9d9',
-    borderRadius: 6,
-    fontSize: 14,
-  };
-
   return (
     <div>
       {/* 加载提示 */}
@@ -198,18 +189,16 @@ export function BasicInfoStep({
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
             {t('provider.type')} <Text type="danger">*</Text>
           </Text>
-          <select
+          <Select
             value={basicInfo?.providerType || 'OPENAI'}
-            onChange={(e) => handleProviderTypeChange(e.target.value as ProviderType)}
-            style={inputStyle}
+            onChange={(value) => handleProviderTypeChange(value as ProviderType)}
+            style={{ width: '100%' }}
             disabled={loadingTemplate || loadingTypes}
-          >
-            {providerTypes.map(opt => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            options={providerTypes.map(opt => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+          />
           <Text type="secondary" style={{ fontSize: 11, marginTop: 4, display: 'block' }}>
             {t('template.typeHint', { defaultValue: '选择供应商类型后将自动填充基本信息' })}
           </Text>
@@ -220,12 +209,10 @@ export function BasicInfoStep({
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
             {t('provider.name')} <Text type="danger">*</Text>
           </Text>
-          <input
-            type="text"
+          <Input
             value={basicInfo?.providerName || ''}
             onChange={(e) => handleFieldChange('providerName', e.target.value)}
             placeholder={t('template.providerNamePlaceholder', { defaultValue: '例如：OpenAI 官方' })}
-            style={inputStyle}
           />
         </div>
 
@@ -234,12 +221,10 @@ export function BasicInfoStep({
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
             {t('provider.baseUrl')} <Text type="danger">*</Text>
           </Text>
-          <input
-            type="text"
+          <Input
             value={basicInfo?.baseUrl || ''}
             onChange={(e) => handleFieldChange('baseUrl', e.target.value)}
             placeholder="https://api.example.com"
-            style={inputStyle}
           />
         </div>
 
@@ -248,12 +233,10 @@ export function BasicInfoStep({
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
             {t('provider.websiteUrl', { defaultValue: '官网地址' })}
           </Text>
-          <input
-            type="text"
+          <Input
             value={basicInfo?.websiteUrl || ''}
             onChange={(e) => handleFieldChange('websiteUrl', e.target.value)}
             placeholder="https://example.com"
-            style={inputStyle}
           />
         </div>
 
@@ -262,12 +245,10 @@ export function BasicInfoStep({
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
             {t('provider.apiDocUrl', { defaultValue: 'API 文档' })}
           </Text>
-          <input
-            type="text"
+          <Input
             value={basicInfo?.apiDocUrl || ''}
             onChange={(e) => handleFieldChange('apiDocUrl', e.target.value)}
             placeholder="https://docs.example.com"
-            style={inputStyle}
           />
         </div>
       </div>

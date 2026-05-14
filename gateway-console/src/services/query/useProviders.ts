@@ -11,10 +11,12 @@ export const providerKeys = {
   keys: (id: number) => [...providerKeys.all, 'keys', id] as const,
 };
 
-export function useProviders(params?: { page?: number; size?: number }) {
+export function useProviders(params?: { page?: number; size?: number; limit?: number }) {
+  // 支持 size 或 limit 参数，统一转换为 limit
+  const limit = params?.limit ?? params?.size;
   return useQuery({
-    queryKey: providerKeys.list(params),
-    queryFn: () => providerApi.list(params),
+    queryKey: providerKeys.list({ ...params, limit }),
+    queryFn: () => providerApi.list({ ...params, limit }),
   });
 }
 

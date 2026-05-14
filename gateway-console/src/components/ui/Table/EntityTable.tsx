@@ -24,6 +24,9 @@ export interface PaginationConfig {
   pageSize: number;
   total: number;
   onChange: (page: number, pageSize: number) => void;
+  showSizeChanger?: boolean;
+  showQuickJumper?: boolean;
+  showTotal?: (total: number) => ReactNode;
 }
 
 export interface SelectionConfig<T> {
@@ -146,9 +149,9 @@ export function EntityTable<T extends object>({
             pageSize: (pagination as PaginationConfig).pageSize,
             total: (pagination as PaginationConfig).total,
             onChange: (pagination as PaginationConfig).onChange,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => t('pagination.total', { count: total }),
+            showSizeChanger: (pagination as PaginationConfig).showSizeChanger ?? true,
+            showQuickJumper: (pagination as PaginationConfig).showQuickJumper ?? true,
+            showTotal: (pagination as PaginationConfig).showTotal ?? ((total) => t('pagination.total', { count: total })),
           },
     rowSelection: selection
       ? {

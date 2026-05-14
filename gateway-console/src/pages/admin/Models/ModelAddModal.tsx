@@ -2,33 +2,56 @@ import { useState, useCallback, useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Row, Col, Checkbox, Space, Button, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { ModelTemplateSelector, type ModelTemplate } from './ModelTemplateSelector';
-import { useCreateModel } from '@/services/query';
+import { useCreateModel, useUpdateModel } from '@/services/query';
 import type { Provider } from '@/types/provider';
+import type { Model } from '@/types/model';
 
 interface ModelAddModalProps {
   open: boolean;
   provider: Provider | null;
+  editingModel?: Model | null;
   onClose: () => void;
   onSuccess: () => void;
 }
 
 /**
- * 模型快速添加弹窗
- * 用于从卡片快速添加模型，支持模板选择和自定义表单
+ * 模型快速添加/编辑弹窗
+ * 用于从卡片快速添加模型或编辑现有模型，支持模板选择和自定义表单
  */
-export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddModalProps) {
+export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess }: ModelAddModalProps) {
   const { t } = useTranslation('models');
   const createModelMutation = useCreateModel();
+  const updateModelMutation = useUpdateModel();
   const [form] = Form.useForm();
   const [showCustomForm, setShowCustomForm] = useState(false);
+
+  const isEditMode = !!editingModel?.id;
 
   // 重置状态
   useEffect(() => {
     if (open) {
-      setShowCustomForm(false);
-      form.resetFields();
+      if (isEditMode && editingModel) {
+        // 编辑模式：填充现有数据
+        setShowCustomForm(true);
+        form.setFieldsValue({
+          providerModelId: editingModel.providerModelId,
+          displayName: editingModel.displayName,
+          contextWindow: editingModel.contextWindow,
+          inputPrice: editingModel.inputPrice,
+          outputPrice: editingModel.outputPrice,
+          capabilities: editingModel.capabilities
+            ? Object.entries(editingModel.capabilities)
+                .filter(([, v]) => v)
+                .map(([k]) => k)
+            : [],
+        });
+      } else {
+        // 新增模式
+        setShowCustomForm(false);
+        form.resetFields();
+      }
     }
-  }, [open, form]);
+  }, [open, isEditMode, editingModel, form]);
 
   // 从模板快速添加
   const handleTemplateSelect = useCallback(async (template: ModelTemplate) => {
@@ -71,7 +94,7 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
     setShowCustomForm(true);
   }, []);
 
-  // 提交自定义表单
+  // 提交自定义表单（新增或编辑）
   const handleSubmit = useCallback(async (values: {
     providerModelId: string;
     displayName?: string;
@@ -80,7 +103,7 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
     outputPrice?: number;
     capabilities?: string[];
   }) => {
-    if (!provider) return;
+    if (!provider && !isEditMode) return;
 
     const capabilities: Record<string, boolean> = {};
     if (values.capabilities) {
@@ -90,22 +113,38 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
     }
 
     try {
-      await createModelMutation.mutateAsync({
-        providerId: provider.id,
-        providerModelId: values.providerModelId,
-        displayName: values.displayName,
-        contextWindow: values.contextWindow,
-        inputPrice: values.inputPrice,
-        outputPrice: values.outputPrice,
-        capabilities,
-      });
-      message.success(t('message.modelAdded', { defaultValue: '模型添加成功' }));
+      if (isEditMode && editingModel) {
+        // 编辑模式
+        await updateModelMutation.mutateAsync({
+          id: editingModel.id,
+          data: {
+            displayName: values.displayName,
+            contextWindow: values.contextWindow,
+            inputPrice: values.inputPrice,
+            outputPrice: values.outputPrice,
+            capabilities,
+          },
+        });
+        message.success(t('message.modelUpdated', { defaultValue: '模型更新成功' }));
+      } else if (provider) {
+        // 新增模式
+        await createModelMutation.mutateAsync({
+          providerId: provider.id,
+          providerModelId: values.providerModelId,
+          displayName: values.displayName,
+          contextWindow: values.contextWindow,
+          inputPrice: values.inputPrice,
+          outputPrice: values.outputPrice,
+          capabilities,
+        });
+        message.success(t('message.modelAdded', { defaultValue: '模型添加成功' }));
+      }
       onSuccess();
       onClose();
     } catch (error) {
-      console.error('Failed to add model:', error);
+      console.error('Failed to save model:', error);
     }
-  }, [provider, createModelMutation, t, onSuccess, onClose]);
+  }, [provider, isEditMode, editingModel, createModelMutation, updateModelMutation, t, onSuccess, onClose]);
 
   const handleClose = useCallback(() => {
     setShowCustomForm(false);
@@ -119,8 +158,8 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
     <Modal
       title={
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 24 }}>
-          <span>{t('addModel')}</span>
-          {!showCustomForm && (
+          <span>{isEditMode ? t('editModel', { defaultValue: '编辑模型' }) : t('addModel')}</span>
+          {!showCustomForm && !isEditMode && (
             <Button type="link" size="small" onClick={handleCustomAdd} style={{ fontSize: 13 }}>
               {t('template.customAdd', { defaultValue: '自定义模型' })}
             </Button>
@@ -132,23 +171,23 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
       footer={null}
       width={560}
     >
-      {/* 模板选择模式 */}
-      {!showCustomForm && (
+      {/* 模板选择模式（仅新增） */}
+      {!showCustomForm && !isEditMode && (
         <ModelTemplateSelector
           providerType={provider.providerType}
           onSelect={handleTemplateSelect}
         />
       )}
 
-      {/* 自定义表单模式 */}
-      {showCustomForm && (
+      {/* 自定义表单模式（新增或编辑） */}
+      {(showCustomForm || isEditMode) && (
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="providerModelId"
             label={t('model.providerModelId')}
             rules={[{ required: true }]}
           >
-            <Input placeholder="gpt-4o" />
+            <Input placeholder="gpt-4o" disabled={isEditMode} />
           </Form.Item>
 
           <Form.Item name="displayName" label={t('model.name')}>
@@ -211,7 +250,7 @@ export function ModelAddModal({ open, provider, onClose, onSuccess }: ModelAddMo
               <Button onClick={handleClose}>
                 {t('actions.cancel', { ns: 'common' })}
               </Button>
-              <Button type="primary" htmlType="submit" loading={createModelMutation.isPending}>
+              <Button type="primary" htmlType="submit" loading={createModelMutation.isPending || updateModelMutation.isPending}>
                 {t('actions.save', { ns: 'common' })}
               </Button>
             </Space>

@@ -12,29 +12,6 @@ interface ProviderTemplateSelectorProps {
 }
 
 /**
- * 获取供应商类型颜色
- */
-function getProviderColor(providerType: string): string {
-  const colorMap: Record<string, string> = {
-    OPENAI: '#10a37f',
-    ANTHROPIC: '#d97706',
-    GOOGLE: '#4285f4',
-    AZURE: '#0078d4',
-    DEEPSEEK: '#0066ff',
-    QWEN: '#ff6a00',
-    ZHIPU: '#1a73e8',
-    MOONSHOT: '#6366f1',
-    BAICHUAN: '#2563eb',
-    MINIMAX: '#7c3aed',
-    WENXIN: '#dc2626',
-    VOLCENGINE: '#0891b2',
-    TENCENT: '#12b886',
-    XUNFEI: '#e11d48',
-  };
-  return colorMap[providerType] || '#6b7280';
-}
-
-/**
  * 供应商模板选择器
  * 展示官方模板列表，支持选择模板自动填充供应商表单
  */
@@ -111,14 +88,13 @@ export function ProviderTemplateSelector({
                   width: 36,
                   height: 36,
                   borderRadius: 8,
-                  background: getProviderColor(template.providerType),
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   flexShrink: 0,
                 }}
               >
-                <GlobalOutlined style={{ color: '#fff', fontSize: 18 }} />
+                <GlobalOutlined style={{ fontSize: 18 }} />
               </div>
 
               {/* 信息 */}

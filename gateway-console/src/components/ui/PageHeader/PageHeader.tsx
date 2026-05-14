@@ -25,8 +25,8 @@ export interface PageHeaderProps {
   title: string;
   /** 面包屑 */
   breadcrumb?: { title: string; href?: string }[];
-  /** 操作按钮 */
-  actions?: PageHeaderAction[];
+  /** 操作按钮（支持数组或自定义 ReactNode） */
+  actions?: PageHeaderAction[] | ReactNode;
   /** 过滤条件标签 */
   filterTags?: FilterTag[];
   /** 清除全部过滤 */
@@ -35,13 +35,13 @@ export interface PageHeaderProps {
   subtitle?: string;
   /** 返回按钮 */
   onBack?: () => void;
-  /** 额外内容（如 Tab 切换） */
+  /** 额外内容（如筛选器） */
   extra?: ReactNode;
 }
 
 /**
  * 页面标题组件
- * 使用 Ant Design token 响应主题切换
+ * 单行紧凑式布局：标题左侧，操作按钮+extra 右侧
  */
 export function PageHeader({
   title,
@@ -65,61 +65,87 @@ export function PageHeader({
     >
       {/* 面包屑 */}
       {breadcrumb && (
-        <div style={{ padding: '16px 24px 0' }}>
+        <div style={{ padding: '12px 24px 0' }}>
           <Breadcrumb items={breadcrumb} />
         </div>
       )}
 
-      {/* 主标题栏 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {/* 返回按钮 */}
+      {/* 主标题栏 - 单行紧凑式 */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: breadcrumb ? '12px 24px' : '16px 24px',
+        gap: 24,
+        flexWrap: 'wrap',
+      }}>
+        {/* 左侧：标题 + extra（筛选器） */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flexWrap: 'wrap' }}>
           {onBack && (
             <Button
               type="text"
               icon={<CloseOutlined />}
               onClick={onBack}
-              style={{ color: token.colorTextSecondary }}
+              style={{ color: token.colorTextSecondary, flexShrink: 0 }}
             />
           )}
-
-          {/* 标题 */}
-          <div>
-            <h1 style={{ fontSize: 20, fontWeight: 600, color: token.colorText, margin: 0 }}>
-              {title}
-            </h1>
-            {subtitle && (
-              <p style={{ fontSize: 14, color: token.colorTextSecondary, marginTop: 4, marginBottom: 0 }}>
-                {subtitle}
-              </p>
-            )}
-          </div>
+          <h1 style={{
+            fontSize: 18,
+            fontWeight: 600,
+            color: token.colorText,
+            margin: 0,
+            whiteSpace: 'nowrap',
+          }}>
+            {title}
+          </h1>
+          {subtitle && (
+            <span style={{
+              fontSize: 13,
+              color: token.colorTextSecondary,
+              whiteSpace: 'nowrap',
+            }}>
+              {subtitle}
+            </span>
+          )}
+          {extra}
         </div>
 
-        {/* 操作按钮 */}
+        {/* 右侧：操作按钮 */}
         {actions && (
-          <Space size="small">
-            {actions.map((action) => (
-              <Button
-                key={action.key}
-                type={action.type || 'default'}
-                danger={action.danger}
-                icon={action.icon}
-                onClick={action.onClick}
-                loading={action.loading}
-                disabled={action.disabled}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </Space>
+          Array.isArray(actions) ? (
+            actions.length > 0 && (
+              <Space size="small">
+                {actions.map((action) => (
+                  <Button
+                    key={action.key}
+                    type={action.type || 'default'}
+                    danger={action.danger}
+                    icon={action.icon}
+                    onClick={action.onClick}
+                    loading={action.loading}
+                    disabled={action.disabled}
+                  >
+                    {action.label}
+                  </Button>
+                ))}
+              </Space>
+            )
+          ) : (
+            actions
+          )
         )}
       </div>
 
-      {/* 过滤条件标签 */}
+      {/* 过滤条件标签 - 单独一行 */}
       {filterTags && filterTags.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 24px 12px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: 14, color: token.colorTextSecondary }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 24px 12px',
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 13, color: token.colorTextSecondary }}>
             {t('filter.currentFilter')}:
           </span>
           {filterTags.map((tag) => (
@@ -147,9 +173,6 @@ export function PageHeader({
           )}
         </div>
       )}
-
-      {/* 额外内容 */}
-      {extra && <div style={{ padding: '0 24px 16px' }}>{extra}</div>}
     </div>
   );
 }

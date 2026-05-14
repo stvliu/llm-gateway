@@ -10,10 +10,12 @@ export const modelKeys = {
   detail: (id: number) => [...modelKeys.details(), id] as const,
 };
 
-export function useModels(params?: { page?: number; size?: number; providerId?: number }, options?: { enabled?: boolean }) {
+export function useModels(params?: { page?: number; size?: number; limit?: number; providerId?: number }, options?: { enabled?: boolean }) {
+  // 支持 size 或 limit 参数，统一转换为 limit
+  const limit = params?.limit ?? params?.size;
   return useQuery({
-    queryKey: modelKeys.list(params),
-    queryFn: () => modelApi.list(params),
+    queryKey: modelKeys.list({ ...params, limit }),
+    queryFn: () => modelApi.list({ ...params, limit }),
     enabled: options?.enabled ?? true,
   });
 }

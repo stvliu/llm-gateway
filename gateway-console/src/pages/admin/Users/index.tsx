@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card, App } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/hooks/useConfirm';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
 import type { User, CreateUserRequest, UserRole, UserState } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
 
 export default function AdminUsers() {
   const { t } = useTranslation('users');
-  const { t: tc } = useTranslation('common');
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
@@ -33,31 +33,18 @@ export default function AdminUsers() {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 
   const handleResetPassword = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.resetPassword'),
-      content: tc('confirm.resetPasswordWarning'),
-      okText: tc('actions.confirm'),
-      cancelText: tc('actions.cancel'),
-      centered: true,
-      onOk: async () => {
-        await resetPasswordMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'warning',
+      title: 'confirm.resetPassword',
+      content: 'confirm.resetPasswordWarning',
+      onConfirm: () => resetPasswordMutation.mutateAsync(id),
     });
   };
 

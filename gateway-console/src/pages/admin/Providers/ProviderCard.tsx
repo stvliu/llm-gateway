@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Card, Button, Space, Tag, Badge, Dropdown, theme } from 'antd';
+import { Card, Button, Space, Tag, Badge, Dropdown, theme, Tooltip } from 'antd';
 import {
-  EditOutlined,
-  DeleteOutlined,
   PlusOutlined,
   DownOutlined,
   RightOutlined,
-  InfoCircleOutlined,
+  EyeOutlined,
+  MoreOutlined,
   ApiOutlined,
   AppstoreOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/themeStore';
@@ -24,7 +24,6 @@ interface ProviderCardProps {
   apiKeys: ProviderApiKey[];
   models: Model[];
   onViewDetail: (provider: Provider) => void;
-  onEdit: (provider: Provider) => void;
   onDelete: (provider: Provider) => void;
   onAddApiKey: (provider: Provider) => void;
   onAddModel: (provider: Provider) => void;
@@ -41,7 +40,6 @@ export function ProviderCard({
   apiKeys,
   models,
   onViewDetail,
-  onEdit,
   onDelete,
   onAddApiKey,
   onAddModel,
@@ -61,14 +59,8 @@ export function ProviderCard({
     {
       key: 'view',
       label: t('detail.viewDetail', { defaultValue: '查看详情' }),
-      icon: <InfoCircleOutlined />,
+      icon: <EyeOutlined />,
       onClick: () => onViewDetail(provider),
-    },
-    {
-      key: 'edit',
-      label: t('actions.edit', { ns: 'common' }),
-      icon: <EditOutlined />,
-      onClick: () => onEdit(provider),
     },
     {
       type: 'divider' as const,
@@ -91,35 +83,47 @@ export function ProviderCard({
           ? '0 2px 8px rgba(0, 0, 0, 0.3)'
           : '0 2px 8px rgba(0, 0, 0, 0.06)',
         transition: 'all 0.3s',
+        cursor: 'pointer',
       }}
       styles={{
         body: { padding: 0, display: 'flex', flexDirection: 'column', height: '100%' },
       }}
+      onDoubleClick={() => onViewDetail(provider)}
     >
       {/* 头部：供应商信息 */}
       <div
         style={{
-          padding: '16px 20px',
+          padding: '16px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           borderBottom: isExpanded ? `1px solid ${token.colorBorderSecondary}` : 'none',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0, flex: 1 }}>
           <StatusIndicator status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} showLabel={false} />
-          <span
-            style={{ fontSize: 16, fontWeight: 600, cursor: 'pointer' }}
-            onClick={() => onViewDetail(provider)}
-          >
-            {provider.providerName}
-          </span>
-          <Tag color="blue">{t(`type.${provider.providerType}`, { defaultValue: provider.providerType })}</Tag>
+          <Tooltip title={provider.providerName.length > 20 ? provider.providerName : undefined}>
+            <span
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                flex: 1,
+                minWidth: 0,
+              }}
+              onClick={() => onViewDetail(provider)}
+            >
+              {provider.providerName}
+            </span>
+          </Tooltip>
         </div>
-        <Space>
+        <Space style={{ flexShrink: 0 }}>
           <Badge count={activeModels.length} showZero color="#52c41a" />
           <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
-            <Button type="text" icon={<EditOutlined />} />
+            <Button type="text" icon={<MoreOutlined />} />
           </Dropdown>
         </Space>
       </div>
@@ -127,7 +131,7 @@ export function ProviderCard({
       {/* 统计信息行 */}
       <div
         style={{
-          padding: '12px 20px',
+          padding: '12px 24px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -160,7 +164,7 @@ export function ProviderCard({
         <div
           style={{
             flex: 1,
-            padding: '16px 20px',
+            padding: '16px 24px',
             background: isDark ? token.colorBgContainer : token.colorBgLayout,
             overflow: 'auto',
           }}

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, Row, Col, theme, App } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, Row, Col, theme } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { ColumnsType } from 'antd/es/table';
 import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query/useApiKeys';
 import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
@@ -10,9 +11,8 @@ const { Paragraph } = Typography;
 
 export default function AdminApiKeys() {
   const { t } = useTranslation('apiKeys');
-  const { t: tc } = useTranslation('common');
   const { token } = theme.useToken();
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
@@ -43,17 +43,9 @@ export default function AdminApiKeys() {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 

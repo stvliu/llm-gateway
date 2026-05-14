@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { Drawer, Button, Space, message, Popconfirm, Tabs, Steps } from 'antd';
+import { Drawer, Button, Space, message, Tabs, Steps } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
@@ -19,6 +19,7 @@ import { ProviderApiKeysTab } from './ProviderApiKeysTab';
 import { ProviderModelsTab } from './ProviderModelsTab';
 import { UnsavedConfirm } from '@/components/ui/Drawer/UnsavedConfirm';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
+import { useConfirm } from '@/hooks/useConfirm';
 import {
   useProvider,
   useCreateProvider,
@@ -80,6 +81,7 @@ export function ProviderManagementDrawer({
   onProviderDeleted,
 }: ProviderManagementDrawerProps) {
   const { t } = useTranslation('providers');
+  const { confirm } = useConfirm();
 
   // 表单 ref
   const viewFormRef = useRef<ProviderBasicInfoTabRef>(null);
@@ -315,17 +317,17 @@ export function ProviderManagementDrawer({
   }, [providerId, providers, updateMutation, t]);
 
   // 删除
-  const handleDelete = useCallback(async () => {
+  const handleDelete = useCallback(() => {
     if (!providerId) return;
-    try {
-      await deleteMutation.mutateAsync(providerId);
-      message.success(t('message.success', { ns: 'common' }));
-      onProviderDeleted?.();
-      onClose();
-    } finally {
-      // 关闭确认框由 Popconfirm 处理
-    }
-  }, [providerId, deleteMutation, t, onProviderDeleted, onClose]);
+    confirm({
+      type: 'danger',
+      entityName: provider?.providerName,
+      onConfirm: () => deleteMutation.mutateAsync(providerId).then(() => {
+        onProviderDeleted?.();
+        onClose();
+      }),
+    });
+  }, [confirm, providerId, provider, deleteMutation, onProviderDeleted, onClose]);
 
   // 放弃更改
   const handleDiscard = useCallback(() => {
@@ -373,15 +375,9 @@ export function ProviderManagementDrawer({
           <Button icon={<EditOutlined />} onClick={handleEdit}>
             {t('actions.edit', { ns: 'common' })}
           </Button>
-          <Popconfirm
-            title={t('confirm.delete', { ns: 'common' })}
-            description={t('confirm.deleteProviderDesc', { name: provider?.providerName })}
-            onConfirm={handleDelete}
-          >
-            <Button danger icon={<DeleteOutlined />}>
+          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
               {t('actions.delete', { ns: 'common' })}
             </Button>
-          </Popconfirm>
         </>
       )}
       {mode === 'edit' && (

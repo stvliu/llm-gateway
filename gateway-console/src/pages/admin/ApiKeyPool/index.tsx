@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip, theme, App } from 'antd';
+import { Card, Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Tooltip, theme } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
@@ -9,6 +9,7 @@ import {
   HolderOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useConfirm } from '@/hooks/useConfirm';
 import type { ColumnsType } from 'antd/es/table';
 import {
   useProviderApiKeys,
@@ -26,7 +27,7 @@ export default function AdminApiKeyPool() {
   const { t } = useTranslation('apiKeyPool');
   const { t: tc } = useTranslation('common');
   const { token } = theme.useToken();
-  const { modal } = App.useApp();
+  const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ProviderApiKey | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<number | undefined>();
@@ -59,34 +60,23 @@ export default function AdminApiKeyPool() {
   };
 
   const handleDelete = (id: number) => {
-    modal.confirm({
-      title: tc('confirm.delete'),
-      content: tc('confirm.deleteWarning'),
-      okText: tc('actions.delete'),
-      cancelText: tc('actions.cancel'),
-      okButtonProps: { danger: true, type: "primary" },
-      centered: true,
-      onOk: async () => {
-        await deleteMutation.mutateAsync(id);
-        message.success(tc('message.success'));
-      },
+    confirm({
+      type: 'danger',
+      onConfirm: () => deleteMutation.mutateAsync(id),
     });
   };
 
   const handleToggle = (record: ProviderApiKey) => {
-    const action = record.state === 'DISABLED' ? tc('actions.enable') : tc('actions.disable');
-    modal.confirm({
-      title: tc('confirm.toggleTitle', { action }),
-      okText: tc('actions.confirm'),
-      cancelText: tc('actions.cancel'),
-      centered: true,
-      onOk: async () => {
-        await toggleMutation.mutateAsync({
-          id: record.id,
-          enabled: record.state === 'DISABLED',
-        });
-        message.success(tc('message.success'));
-      },
+    const isEnabling = record.state === 'DISABLED';
+    const action = isEnabling ? tc('actions.enable') : tc('actions.disable');
+    confirm({
+      type: isEnabling ? 'info' : 'warning',
+      title: 'confirm.toggleTitle',
+      titleParams: { action },
+      onConfirm: () => toggleMutation.mutateAsync({
+        id: record.id,
+        enabled: isEnabling,
+      }) as unknown as Promise<void>,
     });
   };
 

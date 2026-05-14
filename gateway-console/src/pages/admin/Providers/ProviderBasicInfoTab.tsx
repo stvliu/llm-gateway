@@ -1,21 +1,13 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
-  Descriptions,
   Form,
   Input,
   Select,
-  Tag,
-  Space,
   Button,
 } from 'antd';
-import {
-  GlobalOutlined,
-  LinkOutlined,
-  RocketOutlined,
-} from '@ant-design/icons';
+import { RocketOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderTemplateSelector } from './ProviderTemplateSelector';
-import { StatusIndicator } from '@/components/common';
 import type { Provider, CreateProviderRequest } from '@/types/provider';
 import type { ProviderTemplate } from '@/types/template';
 
@@ -35,9 +27,7 @@ type FormStep = 'select-template' | 'fill-form';
 
 /**
  * 供应商基本信息标签页
- * - 查看模式：Descriptions 展示
- * - 编辑模式：Form 表单
- * - 新增模式：模板选择 + Form 表单
+ * 统一使用 Form 展示，查看模式用 disabled，编辑/新增模式可交互
  */
 export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabRef, ProviderBasicInfoTabProps>(
   function ProviderBasicInfoTab({ provider, mode, onValuesChange, onSubmit }, ref) {
@@ -45,6 +35,7 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabRef, Provider
 
     const [form] = Form.useForm();
     const [step, setStep] = useState<FormStep>(mode === 'create' ? 'select-template' : 'fill-form');
+    const isViewMode = mode === 'view';
 
     // 暴露提交方法给父组件
     useImperativeHandle(ref, () => ({
@@ -53,207 +44,162 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabRef, Provider
           const values = await form.validateFields();
           await onSubmit?.(values);
         } catch {
-          // 验证失败或提交失败，不做处理（错误已在 onSubmit 中处理）
+          // 验证失败或提交失败，不做处理
         }
       },
     }), [form, onSubmit]);
 
-  // 初始化表单
-  useEffect(() => {
-    if (mode === 'edit' && provider) {
-      form.setFieldsValue(provider);
+    // 初始化表单值
+    useEffect(() => {
+      if (mode === 'edit' && provider) {
+        form.setFieldsValue(provider);
+        setStep('fill-form');
+      } else if (mode === 'create') {
+        form.resetFields();
+        setStep('select-template');
+      } else if (mode === 'view' && provider) {
+        form.setFieldsValue(provider);
+      }
+    }, [mode, provider, form]);
+
+    // 监听表单变化
+    useEffect(() => {
+      if (mode !== 'view' && onValuesChange) {
+        onValuesChange(false);
+      }
+    }, [mode, onValuesChange]);
+
+    // 选择模板
+    const handleTemplateSelect = useCallback((template: ProviderTemplate) => {
+      const config = template.providerConfig as Record<string, unknown>;
+      form.setFieldsValue({
+        providerName: config.provider_name || template.templateName,
+        providerType: template.providerType,
+        baseUrl: config.base_url || '',
+        websiteUrl: config.website_url || '',
+        apiDocUrl: config.api_doc_url || '',
+      });
       setStep('fill-form');
-    } else if (mode === 'create') {
+      onValuesChange?.(true);
+    }, [form, onValuesChange]);
+
+    // 自定义添加
+    const handleCustomAdd = useCallback(() => {
       form.resetFields();
-      setStep('select-template');
-    } else if (mode === 'view' && provider) {
-      form.setFieldsValue(provider);
-    }
-  }, [mode, provider, form]);
+      setStep('fill-form');
+      onValuesChange?.(true);
+    }, [form, onValuesChange]);
 
-  // 监听表单变化
-  useEffect(() => {
-    if (mode !== 'view' && onValuesChange) {
-      onValuesChange(false);
-    }
-  }, [mode, onValuesChange]);
+    // 提交表单
+    const handleSubmit = useCallback(async () => {
+      try {
+        const values = await form.validateFields();
+        await onSubmit?.(values);
+      } catch {
+        // 验证失败
+      }
+    }, [form, onSubmit]);
 
-  // 选择模板
-  const handleTemplateSelect = useCallback((template: ProviderTemplate) => {
-    const config = template.providerConfig as Record<string, unknown>;
-    form.setFieldsValue({
-      providerName: config.provider_name || template.templateName,
-      providerType: template.providerType,
-      baseUrl: config.base_url || '',
-      websiteUrl: config.website_url || '',
-      apiDocUrl: config.api_doc_url || '',
-    });
-    setStep('fill-form');
-    onValuesChange?.(true);
-  }, [form, onValuesChange]);
-
-  // 自定义添加
-  const handleCustomAdd = useCallback(() => {
-    form.resetFields();
-    setStep('fill-form');
-    onValuesChange?.(true);
-  }, [form, onValuesChange]);
-
-  // 提交表单
-  const handleSubmit = useCallback(async () => {
-    try {
-      const values = await form.validateFields();
-      await onSubmit?.(values);
-    } catch {
-      // 验证失败
-    }
-  }, [form, onSubmit]);
-
-  // 查看模式（字段顺序与向导式创建一致）
-  if (mode === 'view' && provider) {
-    return (
-      <Descriptions column={1} bordered size="small">
-        <Descriptions.Item label={t('provider.type')}>
-          <Tag color="blue">
-            {t(`type.${provider.providerType}`, { ns: 'providers', defaultValue: provider.providerType })}
-          </Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label={t('provider.name')}>
-          <Space>
-            <StatusIndicator
-              status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'}
-              showLabel={false}
-            />
-            <span style={{ fontWeight: 500 }}>{provider.providerName}</span>
-          </Space>
-        </Descriptions.Item>
-        <Descriptions.Item label={t('provider.baseUrl')}>
-          <code style={{ fontSize: 12 }}>{provider.baseUrl || '-'}</code>
-        </Descriptions.Item>
-        {provider.websiteUrl && (
-          <Descriptions.Item label={t('provider.websiteUrl', { defaultValue: '官网' })}>
-            <a href={provider.websiteUrl} target="_blank" rel="noopener noreferrer">
-              <Space>
-                <GlobalOutlined />
-                {provider.websiteUrl}
-              </Space>
-            </a>
-          </Descriptions.Item>
-        )}
-        {provider.apiDocUrl && (
-          <Descriptions.Item label={t('provider.apiDocUrl', { defaultValue: 'API 文档' })}>
-            <a href={provider.apiDocUrl} target="_blank" rel="noopener noreferrer">
-              <Space>
-                <LinkOutlined />
-                {provider.apiDocUrl}
-              </Space>
-            </a>
-          </Descriptions.Item>
-        )}
-        <Descriptions.Item label={t('provider.state')}>
-          <StatusIndicator
-            status={provider.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'}
-          />
-        </Descriptions.Item>
-        <Descriptions.Item label={t('detail.createdAt')}>
-          {new Date(provider.createdAt).toLocaleString()}
-        </Descriptions.Item>
-        <Descriptions.Item label={t('detail.updatedAt')}>
-          {new Date(provider.updatedAt).toLocaleString()}
-        </Descriptions.Item>
-      </Descriptions>
-    );
-  }
-
-  // 新增模式：模板选择
-  if (mode === 'create' && step === 'select-template') {
-    return (
-      <div>
-        <div style={{ marginBottom: 16, textAlign: 'right' }}>
-          <Button icon={<RocketOutlined />} onClick={handleCustomAdd}>
-            {t('provider.customAdd', { defaultValue: '自定义供应商' })}
-          </Button>
+    // 新增模式：模板选择
+    if (mode === 'create' && step === 'select-template') {
+      return (
+        <div>
+          <div style={{ marginBottom: 16, textAlign: 'right' }}>
+            <Button icon={<RocketOutlined />} onClick={handleCustomAdd}>
+              {t('provider.customAdd', { defaultValue: '自定义供应商' })}
+            </Button>
+          </div>
+          <ProviderTemplateSelector onSelect={handleTemplateSelect} />
         </div>
-        <ProviderTemplateSelector onSelect={handleTemplateSelect} />
-      </div>
-    );
-  }
+      );
+    }
 
-  // 编辑/新增模式：表单（字段顺序与向导式创建一致）
-  return (
-    <Form
-      form={form}
-      layout="vertical"
-      onValuesChange={() => onValuesChange?.(true)}
-      onFinish={handleSubmit}
-    >
-      <Form.Item
-        name="providerType"
-        label={t('provider.type')}
-        rules={[{ required: true }]}
+    // 查看/编辑/新增模式：统一 Form
+    return (
+      <Form
+        form={form}
+        layout="vertical"
+        disabled={isViewMode}
+        onValuesChange={() => onValuesChange?.(true)}
+        onFinish={handleSubmit}
       >
-        <Select disabled={mode === 'edit'}>
-          <Select.Option value="OPENAI">OpenAI</Select.Option>
-          <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
-          <Select.Option value="GOOGLE">Google</Select.Option>
-          <Select.Option value="AZURE">Azure</Select.Option>
-          <Select.Option value="DEEPSEEK">DeepSeek</Select.Option>
-          <Select.Option value="QWEN">Qwen</Select.Option>
-          <Select.Option value="ZHIPU">Zhipu</Select.Option>
-          <Select.Option value="MOONSHOT">Moonshot</Select.Option>
-          <Select.Option value="BAICHUAN">Baichuan</Select.Option>
-          <Select.Option value="MINIMAX">MiniMax</Select.Option>
-          <Select.Option value="WENXIN">Wenxin</Select.Option>
-          <Select.Option value="VOLCENGINE">Volcengine</Select.Option>
-          <Select.Option value="TENCENT">Tencent</Select.Option>
-          <Select.Option value="XUNFEI">Xunfei</Select.Option>
-          <Select.Option value="CUSTOM">
-            {t('type.OTHER', { ns: 'providers' })}
-          </Select.Option>
-        </Select>
-      </Form.Item>
-      <Form.Item
-        name="providerName"
-        label={t('provider.name')}
-        rules={[{ required: true }]}
-      >
-        <Input />
-      </Form.Item>
-      <Form.Item name="baseUrl" label={t('provider.baseUrl')}>
-        <Input placeholder="https://api.example.com" />
-      </Form.Item>
-      <Form.Item
-        name="websiteUrl"
-        label={t('provider.websiteUrl', { defaultValue: '官网地址' })}
-      >
-        <Input placeholder="https://example.com" />
-      </Form.Item>
-      <Form.Item
-        name="apiDocUrl"
-        label={t('provider.apiDocUrl', { defaultValue: 'API 文档' })}
-      >
-        <Input placeholder="https://docs.example.com" />
-      </Form.Item>
-      {mode === 'edit' && (
-        <Form.Item name="state" label={t('provider.state')}>
-          <Select>
-            <Select.Option value="ACTIVE">
-              {t('state.active', { ns: 'common' })}
-            </Select.Option>
-            <Select.Option value="DISABLED">
-              {t('state.disabled', { ns: 'common' })}
+        <Form.Item
+          name="providerType"
+          label={t('provider.type')}
+          rules={[{ required: true }]}
+        >
+          <Select disabled={mode !== 'create'}>
+            <Select.Option value="OPENAI">OpenAI</Select.Option>
+            <Select.Option value="ANTHROPIC">Anthropic</Select.Option>
+            <Select.Option value="GOOGLE">Google</Select.Option>
+            <Select.Option value="AZURE">Azure</Select.Option>
+            <Select.Option value="DEEPSEEK">DeepSeek</Select.Option>
+            <Select.Option value="QWEN">Qwen</Select.Option>
+            <Select.Option value="ZHIPU">Zhipu</Select.Option>
+            <Select.Option value="MOONSHOT">Moonshot</Select.Option>
+            <Select.Option value="BAICHUAN">Baichuan</Select.Option>
+            <Select.Option value="MINIMAX">MiniMax</Select.Option>
+            <Select.Option value="WENXIN">Wenxin</Select.Option>
+            <Select.Option value="VOLCENGINE">Volcengine</Select.Option>
+            <Select.Option value="TENCENT">Tencent</Select.Option>
+            <Select.Option value="XUNFEI">Xunfei</Select.Option>
+            <Select.Option value="CUSTOM">
+              {t('type.OTHER', { ns: 'providers' })}
             </Select.Option>
           </Select>
         </Form.Item>
-      )}
+        <Form.Item
+          name="providerName"
+          label={t('provider.name')}
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+        <Form.Item name="baseUrl" label={t('provider.baseUrl')}>
+          <Input placeholder="https://api.example.com" />
+        </Form.Item>
+        <Form.Item
+          name="websiteUrl"
+          label={t('provider.websiteUrl', { defaultValue: '官网地址' })}
+        >
+          <Input placeholder="https://example.com" />
+        </Form.Item>
+        <Form.Item
+          name="apiDocUrl"
+          label={t('provider.apiDocUrl', { defaultValue: 'API 文档' })}
+        >
+          <Input placeholder="https://docs.example.com" />
+        </Form.Item>
+        {mode !== 'create' && (
+          <Form.Item name="state" label={t('provider.state')}>
+            <Select>
+              <Select.Option value="ACTIVE">
+                {t('state.active', { ns: 'common' })}
+              </Select.Option>
+              <Select.Option value="DISABLED">
+                {t('state.disabled', { ns: 'common' })}
+              </Select.Option>
+            </Select>
+          </Form.Item>
+        )}
+        {mode === 'view' && provider && (
+          <>
+            <Form.Item label={t('detail.createdAt')}>
+              <Input disabled value={new Date(provider.createdAt).toLocaleString()} />
+            </Form.Item>
+            <Form.Item label={t('detail.updatedAt')}>
+              <Input disabled value={new Date(provider.updatedAt).toLocaleString()} />
+            </Form.Item>
+          </>
+        )}
 
-      {mode === 'create' && step === 'fill-form' && (
-        <Button onClick={() => setStep('select-template')} style={{ marginTop: 16 }}>
-          {t('actions.back', { ns: 'common', defaultValue: '返回' })}
-        </Button>
-      )}
-    </Form>
-  );
+        {mode === 'create' && step === 'fill-form' && (
+          <Button onClick={() => setStep('select-template')} style={{ marginTop: 16 }}>
+            {t('actions.back', { ns: 'common', defaultValue: '返回' })}
+          </Button>
+        )}
+      </Form>
+    );
   }
 );
 
