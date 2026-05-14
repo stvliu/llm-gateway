@@ -31,7 +31,6 @@ import type { Model } from '@/types/model';
 
 interface ProviderModelsTabProps {
   provider: Provider | null;
-  mode: 'view' | 'edit' | 'create';
 }
 
 /**
@@ -87,7 +86,7 @@ function formatContextWindow(contextWindow?: number): string {
  * 模型管理标签页
  * 卡片列表展示，支持增删改
  */
-export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
+export function ProviderModelsTab({ provider }: ProviderModelsTabProps) {
   const { t } = useTranslation('providers');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();
@@ -98,7 +97,7 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
   // 查询数据
   const { data: modelsData, isLoading } = useModels(
     { providerId: provider?.id, size: 100 },
-    { enabled: !!provider && mode !== 'create' }
+    { enabled: !!provider }
   );
 
   // Mutations
@@ -132,17 +131,6 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
     setModelModalOpen(false);
     setEditingModel(null);
   }, []);
-
-  // 新增模式：暂不支持
-  if (mode === 'create') {
-    return (
-      <Empty
-        description={t('provider.addModelsAfterCreate', {
-          defaultValue: '创建供应商后可添加模型',
-        })}
-      />
-    );
-  }
 
   // 无供应商
   if (!provider) {
@@ -180,11 +168,9 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
           </span>
           <Tag color="blue">{models.length}</Tag>
         </div>
-        {mode === 'edit' && (
-          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddModel}>
+        <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddModel}>
             {t('actions.add', { ns: 'common' })}
           </Button>
-        )}
       </div>
 
       {/* 卡片列表 */}
@@ -192,11 +178,9 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
         <Empty
           description={t('provider.noModels', { defaultValue: '暂无模型' })}
         >
-          {mode === 'edit' && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModel}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddModel}>
               {t('actions.add', { ns: 'common' })}
             </Button>
-          )}
         </Empty>
       ) : (
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -244,23 +228,21 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
                   </Space>
 
                   {/* 右侧操作 */}
-                  {mode === 'edit' && (
-                    <Space>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditModel(model)}
-                      />
-                      <Button
-                          type="text"
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleDeleteModel(model)}
-                        />
-                    </Space>
-                  )}
+                  <Space>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<EditOutlined />}
+                      onClick={() => handleEditModel(model)}
+                    />
+                    <Button
+                      type="text"
+                      size="small"
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => handleDeleteModel(model)}
+                    />
+                  </Space>
                 </div>
               </Card>
             );
