@@ -158,7 +158,7 @@ export function ModelTemplateSelector({
   // 加载状态
   if (isLoading) {
     return (
-      <div style={{ textAlign: 'center', padding: 24, color: '#999' }}>
+      <div style={{ textAlign: 'center', padding: 24, color: token.colorTextSecondary }}>
         {t('template.loading', { defaultValue: '加载模型模板...' })}
       </div>
     );
@@ -190,14 +190,14 @@ export function ModelTemplateSelector({
                 key={template.id}
                 title={
                   <Space direction="vertical" size={2}>
-                    <Text style={{ color: '#fff' }}>{template.id}</Text>
+                    <Text style={{ color: token.colorTextLightSolid }}>{template.id}</Text>
                     {template.contextWindow && (
-                      <Text style={{ color: '#fff', fontSize: 12 }}>
+                      <Text style={{ color: token.colorTextLightSolid, fontSize: 12 }}>
                         {t('detail.contextWindow')}: {formatContextWindow(template.contextWindow)}
                       </Text>
                     )}
                     {template.inputPrice !== undefined && (
-                      <Text style={{ color: '#fff', fontSize: 12 }}>
+                      <Text style={{ color: token.colorTextLightSolid, fontSize: 12 }}>
                         ${template.inputPrice}/${t('template.perMillion', { defaultValue: '百万 tokens' })}
                       </Text>
                     )}

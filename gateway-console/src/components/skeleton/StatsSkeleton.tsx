@@ -1,12 +1,10 @@
-import { Skeleton, Card, Row, Col } from 'antd';
-import { useThemeStore } from '@/stores/themeStore';
+import { Skeleton, Card, Row, Col, theme } from 'antd';
 
 /**
  * 统计卡片骨架屏
  */
 export function StatsSkeleton() {
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   return (
     <Row gutter={16}>
@@ -16,9 +14,7 @@ export function StatsSkeleton() {
             style={{
               height: '100%',
               border: 'none',
-              boxShadow: isDark
-                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                : '0 2px 8px rgba(0, 0, 0, 0.06)',
+              boxShadow: token.boxShadow,
             }}
             styles={{
               body: { padding: '20px 24px' },
@@ -36,17 +32,14 @@ export function StatsSkeleton() {
  * 图表骨架屏
  */
 export function ChartSkeleton() {
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   return (
     <Card
       style={{
         height: '100%',
         border: 'none',
-        boxShadow: isDark
-          ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-          : '0 2px 8px rgba(0, 0, 0, 0.06)',
+        boxShadow: token.boxShadow,
       }}
       styles={{
         body: { height: 'calc(100% - 57px)', padding: '16px 24px 24px' },
@@ -61,16 +54,13 @@ export function ChartSkeleton() {
  * 表格骨架屏
  */
 export function TableSkeleton({ rows = 5 }: { rows?: number }) {
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   return (
     <Card
       style={{
         border: 'none',
-        boxShadow: isDark
-          ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-          : '0 2px 8px rgba(0, 0, 0, 0.06)',
+        boxShadow: token.boxShadow,
       }}
     >
       <Skeleton active paragraph={{ rows }} />

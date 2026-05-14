@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Drawer, Button, Space, Tabs } from 'antd';
+import { Drawer, Button, Space, Tabs, theme } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
@@ -76,6 +76,7 @@ export function EntityDrawer<T>({
   skeletonConfig,
 }: EntityDrawerProps<T>) {
   const { t } = useTranslation();
+  const { token } = theme.useToken();
   const [activeTab, setActiveTab] = useState(defaultTab);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
@@ -241,7 +242,7 @@ export function EntityDrawer<T>({
             <h3 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>
               {t('drawer.error.loadFailed')}
             </h3>
-            <p style={{ color: '#999', margin: 0 }}>
+            <p style={{ color: token.colorTextSecondary, margin: 0 }}>
               {error.message}
             </p>
             {onRetry && (

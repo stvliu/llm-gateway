@@ -1,4 +1,4 @@
-import { Row, Col, Card, Statistic, Typography, Space, Tag, Spin } from 'antd';
+import { Row, Col, Card, Statistic, Typography, Space, Tag, Spin, theme } from 'antd';
 import {
   AppstoreOutlined,
   KeyOutlined,
@@ -13,6 +13,7 @@ const { Paragraph } = Typography;
 
 export default function UserDashboard() {
   const { t } = useTranslation('dashboard');
+  const { token } = theme.useToken();
 
   // 获取模型列表（只取活跃模型）
   const { data: modelsData, isLoading: modelsLoading } = useModels({ size: 100 });
@@ -82,7 +83,7 @@ export default function UserDashboard() {
         <Typography>
           <Paragraph>{t('quickStart.description')}</Paragraph>
           <pre style={{
-            background: '#f5f5f5',
+            background: token.colorFillAlter,
             padding: 16,
             borderRadius: 6,
             overflow: 'auto',
@@ -109,7 +110,7 @@ export default function UserDashboard() {
             style={{ height: '100%' }}
             styles={{ body: { display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1 } }}
           >
-            <div style={{ textAlign: 'center', color: '#999' }}>
+            <div style={{ textAlign: 'center', color: token.colorTextSecondary }}>
               <DashboardOutlined style={{ fontSize: 48, marginBottom: 16 }} />
               <div>{t('usageTrend.placeholder')}</div>
             </div>
@@ -127,20 +128,20 @@ export default function UserDashboard() {
                       justifyContent: 'space-between',
                       alignItems: 'center',
                       padding: '8px 12px',
-                      background: '#fafafa',
+                      background: token.colorBgLayout,
                       borderRadius: 6,
                     }}
                   >
                     <Space>
                       <CodeOutlined />
                       <span>{model.name}</span>
-                      <span style={{ color: '#999', fontSize: 12 }}>{model.provider}</span>
+                      <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>{model.provider}</span>
                     </Space>
                     <Tag color="blue">{model.tag}</Tag>
                   </div>
                 ))
               ) : (
-                <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>
+                <div style={{ textAlign: 'center', color: token.colorTextSecondary, padding: 20 }}>
                   {t('popularModels.empty')}
                 </div>
               )}

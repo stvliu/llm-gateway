@@ -1,5 +1,5 @@
 import { Pie } from '@ant-design/charts';
-import { useThemeStore } from '@/stores/themeStore';
+import { theme } from 'antd';
 
 interface ModelUsageChartProps {
   data?: Array<{ model: string; value: number }>;
@@ -9,8 +9,7 @@ interface ModelUsageChartProps {
  * 模型使用分布饼图组件
  */
 export function ModelUsageChart({ data }: ModelUsageChartProps) {
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   // 默认模拟数据
   const defaultData = [
@@ -29,7 +28,7 @@ export function ModelUsageChart({ data }: ModelUsageChartProps) {
     colorField: 'model',
     radius: 0.8,
     innerRadius: 0.6,
-    color: ['#1677ff', '#52c41a', '#722ed1', '#fa8c16', '#eb2f96'],
+    color: [token.colorPrimary, token.colorSuccess, token.colorInfo, token.colorWarning, token.colorError],
     animation: {
       appear: {
         animation: 'grow-in',
@@ -40,22 +39,23 @@ export function ModelUsageChart({ data }: ModelUsageChartProps) {
       text: 'model',
       position: 'outside' as const,
       style: {
-        fill: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+        fill: token.colorTextSecondary,
       },
     },
     legend: {
       position: 'bottom' as const,
       itemName: {
         style: {
-          fill: isDark ? 'rgba(255, 255, 255, 0.65)' : 'rgba(0, 0, 0, 0.65)',
+          fill: token.colorTextSecondary,
         },
       },
     },
     tooltip: {
       domStyles: {
         'g2-tooltip': {
-          background: isDark ? '#1f1f1f' : '#fff',
-          color: isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+          background: token.colorBgElevated,
+          color: token.colorText,
+          boxShadow: token.boxShadowSecondary,
         },
       },
     },
@@ -63,13 +63,13 @@ export function ModelUsageChart({ data }: ModelUsageChartProps) {
       title: {
         content: '总计',
         style: {
-          fill: isDark ? 'rgba(255, 255, 255, 0.45)' : 'rgba(0, 0, 0, 0.45)',
+          fill: token.colorTextTertiary,
           fontSize: 12,
         },
       },
       content: {
         style: {
-          fill: isDark ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)',
+          fill: token.colorText,
           fontSize: 18,
           fontWeight: 600,
         },

@@ -36,12 +36,18 @@ interface ProviderApiKeysTabProps {
  * 卡片列表展示，支持增删改和设为默认
  */
 export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) {
-  const { t } = useTranslation('providers');
+  const { t } = useTranslation('models');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();
 
   const [apiKeyModalOpen, setApiKeyModalOpen] = useState(false);
-  const [editingKey, setEditingKey] = useState<ProviderApiKey | null>(null);
+  const [editingKey, setEditingKey] = useState<{
+    id: number;
+    keyName: string;
+    priority: number;
+    weight: number;
+    isDefault: boolean;
+  } | null>(null);
 
   // 查询数据
   const { data: keysData, isLoading } = useProviderKeys(
@@ -71,7 +77,13 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
 
   // 编辑 API Key
   const handleEditKey = useCallback((key: ProviderApiKey) => {
-    setEditingKey(key);
+    setEditingKey({
+      id: key.id,
+      keyName: key.keyName,
+      priority: key.priority || 100,
+      weight: key.weight || 100,
+      isDefault: key.isDefault || false,
+    });
     setApiKeyModalOpen(true);
   }, []);
 
@@ -136,11 +148,9 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
           </span>
           <Tag color="blue">{keys.length}</Tag>
         </div>
-        {mode === 'edit' && (
-          <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddKey}>
-            {t('actions.add', { ns: 'common' })}
-          </Button>
-        )}
+        <Button type="primary" ghost icon={<PlusOutlined />} onClick={handleAddKey}>
+          {t('actions.add', { ns: 'common' })}
+        </Button>
       </div>
 
       {/* 卡片列表 */}
@@ -148,11 +158,9 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
         <Empty
           description={t('provider.noApiKeys', { defaultValue: '暂无 API Key' })}
         >
-          {mode === 'edit' && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAddKey}>
-              {t('actions.add', { ns: 'common' })}
-            </Button>
-          )}
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAddKey}>
+            {t('actions.add', { ns: 'common' })}
+          </Button>
         </Empty>
       ) : (
         <Space direction="vertical" style={{ width: '100%' }} size={12}>
@@ -191,23 +199,19 @@ export function ProviderApiKeysTab({ provider, mode }: ProviderApiKeysTabProps) 
                   <span style={{ fontSize: 12, color: token.colorTextSecondary }}>
                     {t('provider.priority', { defaultValue: '优先级' })}: {key.priority || 100}
                   </span>
-                  {mode === 'edit' && (
-                    <>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditKey(key)}
-                      />
-                      <Button
-                          type="text"
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleDeleteKey(key.id)}
-                        />
-                    </>
-                  )}
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEditKey(key)}
+                  />
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteKey(key.id)}
+                  />
                 </Space>
               </div>
             </Card>

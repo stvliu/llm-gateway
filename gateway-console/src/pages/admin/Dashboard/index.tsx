@@ -1,4 +1,4 @@
-import { Row, Col, Card, Statistic, Table, Tag, Spin } from 'antd';
+import { Row, Col, Card, Statistic, Table, Tag, Spin, theme } from 'antd';
 import {
   AppstoreOutlined,
   TeamOutlined,
@@ -7,18 +7,15 @@ import {
   WarningOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '@/stores/themeStore';
 import { TrendChart, ModelUsageChart } from '@/components/charts';
 import { useStats } from '@/services/query';
 
 /**
  * 管理员仪表盘页面
- * 采用官网设计风格：渐变背景、卡片阴影、hover 效果
  */
 export default function AdminDashboard() {
   const { t } = useTranslation('dashboard');
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
   const { data: statsData, isLoading: statsLoading } = useStats();
 
   // 统计数据来自后端 API
@@ -71,28 +68,28 @@ export default function AdminDashboard() {
       title: t('stats.modelCount'),
       value: stats.modelCount,
       icon: <AppstoreOutlined />,
-      gradient: 'linear-gradient(135deg, #1677ff 0%, #4096ff 100%)',
+      gradient: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)`,
     },
     {
       key: 'users',
       title: t('stats.userCount'),
       value: stats.userCount,
       icon: <TeamOutlined />,
-      gradient: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)',
+      gradient: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccessActive} 100%)`,
     },
     {
       key: 'requests',
       title: t('stats.todayRequests'),
       value: stats.todayRequests,
       icon: <ApiOutlined />,
-      gradient: 'linear-gradient(135deg, #722ed1 0%, #9254de 100%)',
+      gradient: `linear-gradient(135deg, ${token.colorInfo} 0%, ${token.colorInfoActive} 100%)`,
     },
     {
       key: 'tokens',
       title: t('stats.tokenUsage'),
       value: stats.tokenUsage,
       icon: <DashboardOutlined />,
-      gradient: 'linear-gradient(135deg, #fa8c16 0%, #ffc53d 100%)',
+      gradient: `linear-gradient(135deg, ${token.colorWarning} 0%, ${token.colorWarningActive} 100%)`,
     },
   ];
 
@@ -114,9 +111,7 @@ export default function AdminDashboard() {
               style={{
                 height: '100%',
                 border: 'none',
-                boxShadow: isDark
-                  ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                  : '0 2px 8px rgba(0, 0, 0, 0.06)',
+                boxShadow: token.boxShadow,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 cursor: 'pointer',
               }}
@@ -165,9 +160,7 @@ export default function AdminDashboard() {
             style={{
               height: '100%',
               border: 'none',
-              boxShadow: isDark
-                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                : '0 2px 8px rgba(0, 0, 0, 0.06)',
+              boxShadow: token.boxShadow,
             }}
             styles={{
               body: {
@@ -185,9 +178,7 @@ export default function AdminDashboard() {
             style={{
               height: '100%',
               border: 'none',
-              boxShadow: isDark
-                ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-                : '0 2px 8px rgba(0, 0, 0, 0.06)',
+              boxShadow: token.boxShadow,
             }}
             styles={{
               body: {
@@ -205,15 +196,13 @@ export default function AdminDashboard() {
       <Card
         title={
           <span>
-            <WarningOutlined style={{ marginRight: 8, color: '#faad14' }} />
+            <WarningOutlined style={{ marginRight: 8, color: token.colorWarning }} />
             {t('activity.title')}
           </span>
         }
         style={{
           border: 'none',
-          boxShadow: isDark
-            ? '0 2px 8px rgba(0, 0, 0, 0.3)'
-            : '0 2px 8px rgba(0, 0, 0, 0.06)',
+          boxShadow: token.boxShadow,
         }}
       >
         <Table

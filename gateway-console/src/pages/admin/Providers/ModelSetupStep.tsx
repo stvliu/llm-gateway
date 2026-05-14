@@ -1,9 +1,8 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Card, Button, Space, Tag, Checkbox, Empty, Spin, Input, Typography } from 'antd';
+import {Card, Button, Space, Tag, Checkbox, Empty, Spin, Input, Typography, theme} from 'antd';
 import { AppstoreOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
-import { useThemeStore } from '@/stores/themeStore';
 import type { NestedModelRequest } from '@/types/provider';
 import type { ModelConfig, ProviderTemplate } from '@/types/template';
 
@@ -80,8 +79,7 @@ export function ModelSetupStep({
   selectedTemplate,
 }: ModelSetupStepProps) {
   const { t } = useTranslation('providers');
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
+  const { token } = theme.useToken();
 
   const [searchText, setSearchText] = useState('');
 
@@ -294,7 +292,7 @@ export function ModelSetupStep({
       <Card
         size="small"
         style={{
-          background: isDark ? '#1f1f1f' : '#fafafa',
+          background: token.colorFillAlter,
           maxHeight: 300,
           overflow: 'auto',
         }}
@@ -314,7 +312,7 @@ export function ModelSetupStep({
                 padding: '8px 12px',
                 borderRadius: 6,
                 marginBottom: 4,
-                background: selected ? (isDark ? '#2a2a2a' : '#e6f7ff') : 'transparent',
+                background: selected ? (token.colorPrimaryBg) : 'transparent',
                 cursor: 'pointer',
               }}
               onClick={() => handleToggle(model)}

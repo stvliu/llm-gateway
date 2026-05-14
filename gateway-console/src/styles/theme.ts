@@ -1,6 +1,6 @@
 /**
  * Ant Design 主题配置
- * 完全使用官方默认主题
+ * 启用 CSS 变量模式，确保 CSS 文件也能引用主题 token
  */
 
 import type { ThemeConfig } from 'antd';
@@ -13,6 +13,7 @@ const { defaultAlgorithm, darkAlgorithm } = theme;
  */
 export const lightTheme: ThemeConfig = {
   algorithm: defaultAlgorithm,
+  cssVar: { prefix: 'ant' },
 };
 
 /**
@@ -20,6 +21,7 @@ export const lightTheme: ThemeConfig = {
  */
 export const darkTheme: ThemeConfig = {
   algorithm: darkAlgorithm,
+  cssVar: { prefix: 'ant' },
 };
 
 /**

@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
-import { Card, Button, Space, Tag, Empty, Spin } from 'antd';
+import { Card, Button, Space, Tag, Empty, Spin, theme } from 'antd';
 import { PlusOutlined, ApiOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useThemeStore } from '@/stores/themeStore';
 import { StatusIndicator } from '@/components/common';
-import { useProviders } from '@/services/query';
 import type { Provider } from '@/types/provider';
 
 interface ProviderSidebarProps {
+  providers: Provider[];
+  isLoading: boolean;
   selectedProviderId: number | null;
   onSelect: (provider: Provider) => void;
   onAdd: () => void;
@@ -15,15 +15,10 @@ interface ProviderSidebarProps {
 
 /**
  * 供应商侧边栏
- * 左侧供应商列表，点击选中后右侧显示详情
  */
-export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: ProviderSidebarProps) {
+export function ProviderSidebar({ providers, isLoading, selectedProviderId, onSelect, onAdd }: ProviderSidebarProps) {
+  const { token } = theme.useToken();
   const { t } = useTranslation('models');
-  const { getEffectiveTheme } = useThemeStore();
-  const isDark = getEffectiveTheme() === 'dark';
-
-  const { data: providersData, isLoading } = useProviders({ size: 100 });
-  const providers = providersData?.items || [];
 
   // 按状态排序：活跃优先
   const sortedProviders = useMemo(() => {
@@ -50,7 +45,7 @@ export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: Provide
       style={{
         height: '100%',
         border: 'none',
-        boxShadow: isDark ? '0 2px 8px rgba(0, 0, 0, 0.3)' : '0 2px 8px rgba(0, 0, 0, 0.06)',
+        boxShadow: token.boxShadow,
       }}
       styles={{ body: { padding: 0, height: '100%', display: 'flex', flexDirection: 'column' } }}
     >
@@ -58,7 +53,7 @@ export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: Provide
       <div
         style={{
           padding: '16px 20px',
-          borderBottom: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
+          borderBottom: `1px solid ${token.colorBorderSecondary}`,
           fontWeight: 600,
         }}
       >
@@ -84,12 +79,10 @@ export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: Provide
                   key={provider.id}
                   style={{
                     cursor: 'pointer',
-                    border: isSelected ? '2px solid #1890ff' : '1px solid transparent',
+                    border: isSelected ? `2px solid ${token.colorPrimary}` : '1px solid transparent',
                     boxShadow: isSelected
-                      ? '0 2px 8px rgba(24, 144, 255, 0.2)'
-                      : isDark
-                        ? '0 1px 4px rgba(0, 0, 0, 0.2)'
-                        : '0 1px 4px rgba(0, 0, 0, 0.04)',
+                      ? token.boxShadowSecondary
+                      : token.boxShadowTertiary,
                     transition: 'all 0.2s',
                   }}
                   styles={{ body: { padding: '12px 16px' } }}
@@ -107,8 +100,8 @@ export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: Provide
                     </div>
                     <Space direction="vertical" size={4} align="end">
                       <Space size={4}>
-                        <ApiOutlined style={{ fontSize: 12, color: '#999' }} />
-                        <span style={{ fontSize: 12, color: '#999' }}>{keyCount} Keys</span>
+                        <ApiOutlined style={{ fontSize: 12, color: token.colorTextSecondary }} />
+                        <span style={{ fontSize: 12, color: token.colorTextSecondary }}>{keyCount} Keys</span>
                       </Space>
                     </Space>
                   </div>
@@ -123,7 +116,7 @@ export function ProviderSidebar({ selectedProviderId, onSelect, onAdd }: Provide
       <div
         style={{
           padding: '16px 20px',
-          borderTop: `1px solid ${isDark ? '#303030' : '#f0f0f0'}`,
+          borderTop: `1px solid ${token.colorBorderSecondary}`,
         }}
       >
         <Button
