@@ -554,15 +554,17 @@ export function ProviderManagementDrawer({
             {/* 加载状态 */}
             {isLoading && <DrawerSkeleton showTabs={false} />}
 
-            {/* 内容 */}
-            {!isLoading && activeTab === 'basic' && (
-              <ProviderBasicInfoTab
-                ref={viewFormRef}
-                provider={provider || null}
-                mode={mode}
-                onValuesChange={setHasUnsavedChanges}
-                onSubmit={handleSave}
-              />
+            {/* 基本信息：始终渲染以确保保存按钮可用 */}
+            {!isLoading && (
+              <div style={{ display: activeTab === 'basic' ? undefined : 'none' }}>
+                <ProviderBasicInfoTab
+                  ref={viewFormRef}
+                  provider={provider || null}
+                  mode={mode}
+                  onValuesChange={setHasUnsavedChanges}
+                  onSubmit={handleSave}
+                />
+              </div>
             )}
             {!isLoading && activeTab === 'apiKeys' && (
               <ProviderApiKeysTab

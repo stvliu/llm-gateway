@@ -29,7 +29,7 @@ export function ApiKeyModal({ open, provider, editingKey, onClose, onSuccess }: 
       if (editingKey) {
         form.setFieldsValue({
           keyName: editingKey.keyName,
-          apiKey: '',
+          apiKey: editingKey.apiKey || '',
           priority: editingKey.priority ?? 100,
           weight: editingKey.weight ?? 100,
           isDefault: editingKey.isDefault ?? false,
@@ -56,6 +56,7 @@ export function ApiKeyModal({ open, provider, editingKey, onClose, onSuccess }: 
           id: editingKey.id,
           data: {
             keyName: values.keyName,
+            apiKey: values.apiKey,
             priority: values.priority,
             weight: values.weight,
             isDefault: values.isDefault,
@@ -97,15 +98,17 @@ export function ApiKeyModal({ open, provider, editingKey, onClose, onSuccess }: 
           <Input placeholder="Production Key" />
         </Form.Item>
 
-        {!editingKey && (
-          <Form.Item
-            name="apiKey"
-            label={t('provider.apiKey', { defaultValue: 'API Key' })}
-            rules={[{ required: true }]}
-          >
-            <Input.Password placeholder="sk-..." />
-          </Form.Item>
-        )}
+        <Form.Item
+          name="apiKey"
+          label={t('provider.apiKey', { defaultValue: 'API Key' })}
+          rules={[
+            { required: true, message: t('validation.apiKeyRequired', { defaultValue: '请输入 API Key' }) },
+            { min: 10, message: t('validation.apiKeyMinLength', { defaultValue: 'API Key 格式不正确' }) },
+            { max: 500, message: t('validation.apiKeyMaxLength', { defaultValue: 'API Key 长度不能超过 500 字符' }) },
+          ]}
+        >
+          <Input.Password placeholder="sk-..." />
+        </Form.Item>
 
         <Form.Item name="priority" label={t('provider.priority', { defaultValue: '优先级' })}>
           <InputNumber style={{ width: '100%' }} min={1} max={1000} />
