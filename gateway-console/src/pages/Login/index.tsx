@@ -8,14 +8,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { isServiceUnavailableError } from '@/services/api/client';
 import styles from './style.module.css';
 
-type LoginForm = {
-  username: string;
-  password: string;
-  rememberMe: boolean;
-};
-
 export default function Login() {
-  const { t } = useTranslation('login');
+  const { t, i18n } = useTranslation('login');
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -125,7 +119,7 @@ export default function Login() {
         </div>
 
         <div className={styles.footer}>
-          © 2024 LLM Gateway · <a href="#">帮助文档</a>
+          © {new Date().getFullYear()} LLM Gateway · <a href="#">帮助文档</a>
         </div>
       </div>
 

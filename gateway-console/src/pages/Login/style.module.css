@@ -143,12 +143,14 @@
 .loginPanel :global(.ant-input-affix-wrapper-input) {
   border-radius: 8px;
   background: #ffffff !important;
-  background-color: #ffffff !important;
   border: none;
   color: #000000;
 }
 
-/* 覆盖浏览器自动填充样式 */
+/*
+ * 覆盖 Chrome 自动填充样式
+ * 用 box-shadow 技巧阻止浏览器用黄色背景覆盖输入框
+ */
 .loginPanel :global(.ant-input:-webkit-autofill),
 .loginPanel :global(.ant-input:-webkit-autofill:hover),
 .loginPanel :global(.ant-input:-webkit-autofill:focus),
@@ -170,19 +172,16 @@
 .loginPanel :global(.ant-input-affix-wrapper-focused),
 .loginPanel :global(.ant-input-affix-wrapper:not(.ant-input-affix-wrapper-disabled):hover) {
   background: #ffffff !important;
-  background-color: #ffffff !important;
 }
 
 .loginPanel :global(.ant-input-affix-wrapper input.ant-input) {
   background: #ffffff !important;
-  background-color: #ffffff !important;
 }
 
 .loginPanel :global(.ant-input:hover),
 .loginPanel :global(.ant-input:focus),
 .loginPanel :global(.ant-input:focus-within) {
   background: #ffffff !important;
-  background-color: #ffffff !important;
 }
 
 .loginPanel :global(.ant-input::placeholder) {
@@ -207,6 +206,15 @@
   color: rgba(0, 0, 0, 0.45);
 }
 
+/* 密码框明文切换按钮（眼睛图标） - 强制深色，防止深色主题下变白不可见 */
+.loginPanel :global(.ant-input-password-icon) {
+  color: rgba(0, 0, 0, 0.65) !important;
+}
+
+.loginPanel :global(.ant-input-password-icon:hover) {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
 /* Checkbox 样式 - 纯白文字 */
 .loginPanel :global(.ant-checkbox-wrapper) {
   color: #ffffff;
@@ -228,20 +236,24 @@
   border-radius: 8px;
   font-weight: 600;
   background: #000000 !important;
-  background-color: #000000 !important;
   border: none !important;
   color: #ffffff !important;
-  transition: none;
+  transition: opacity 0.2s ease;
 }
 
 .loginPanel :global(.ant-btn-primary:hover),
-.loginPanel :global(.ant-btn-primary:focus),
-.loginPanel :global(.ant-btn-primary:active),
-.loginPanel :global(.ant-btn-primary:visited) {
+.loginPanel :global(.ant-btn-primary:focus) {
   background: #000000 !important;
-  background-color: #000000 !important;
   color: #ffffff !important;
   border: none !important;
+  opacity: 0.85;
+}
+
+.loginPanel :global(.ant-btn-primary:active) {
+  background: #000000 !important;
+  color: #ffffff !important;
+  border: none !important;
+  opacity: 0.7;
 }
 
 .loginPanel :global(.ant-btn-primary::before),
