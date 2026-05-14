@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import {Card, Button, Space, Tag, Checkbox, Empty, Spin, Input, Typography, theme} from 'antd';
-import { AppstoreOutlined, CheckOutlined, SearchOutlined } from '@ant-design/icons';
+import {Card, Button, Space, Tag, Checkbox, Empty, Spin, Input, Typography, theme, Modal, Form, InputNumber, Select, App} from 'antd';
+import { AppstoreOutlined, CheckOutlined, SearchOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import type { NestedModelRequest } from '@/types/provider';
@@ -80,8 +80,11 @@ export function ModelSetupStep({
 }: ModelSetupStepProps) {
   const { t } = useTranslation('providers');
   const { token } = theme.useToken();
+  const { message } = App.useApp();
 
   const [searchText, setSearchText] = useState('');
+  const [customModalOpen, setCustomModalOpen] = useState(false);
+  const [customForm] = Form.useForm();
 
   // 查询模板
   const { data: templatesData, isLoading } = useTemplates({
@@ -207,6 +210,42 @@ export function ModelSetupStep({
     })));
   }, [popularModels, onChange]);
 
+  // 自定义添加模型
+  const handleCustomAdd = useCallback(async () => {
+    try {
+      const values = await customForm.validateFields();
+      const modelId = values.providerModelId.trim();
+
+      // 检查是否已存在
+      if (selectedModels.some(m => m.providerModelId === modelId)) {
+        message.warning(t('validation.modelDuplicate', { defaultValue: '模型 ID 已存在' }));
+        return;
+      }
+
+      const capabilities: Record<string, boolean> = {};
+      (values.capabilities || []).forEach((cap: string) => {
+        capabilities[cap] = true;
+      });
+
+      onChange([
+        ...selectedModels,
+        {
+          providerModelId: modelId,
+          displayName: values.displayName?.trim() || modelId,
+          contextWindow: values.contextWindow || 4096,
+          inputPrice: values.inputPrice || 0,
+          outputPrice: values.outputPrice || 0,
+          capabilities,
+        },
+      ]);
+      customForm.resetFields();
+      setCustomModalOpen(false);
+      message.success(t('message.modelAdded', { defaultValue: '模型添加成功' }));
+    } catch {
+      // 表单验证失败
+    }
+  }, [selectedModels, customForm, onChange, t, message]);
+
   // 加载状态
   if (isLoading) {
     return (
@@ -219,9 +258,53 @@ export function ModelSetupStep({
   // 空状态
   if (availableModels.length === 0) {
     return (
-      <Empty
-        description={t('template.noModels', { defaultValue: '该供应商暂无预配置模型' })}
-      />
+      <>
+        <Empty
+          description={t('template.noModels', { defaultValue: '该供应商暂无预配置模型' })}
+        >
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCustomModalOpen(true)}>
+            {t('template.customAdd', { defaultValue: '自定义添加' })}
+          </Button>
+        </Empty>
+        <Modal
+          title={t('template.customAdd', { defaultValue: '自定义添加模型' })}
+          open={customModalOpen}
+          onOk={handleCustomAdd}
+          onCancel={() => { customForm.resetFields(); setCustomModalOpen(false); }}
+          okText={t('actions.add', { ns: 'common' })}
+          destroyOnClose
+          width={520}
+        >
+          <Form form={customForm} layout="vertical" initialValues={{ contextWindow: 4096, capabilities: ['chat'] }}>
+            <Form.Item name="providerModelId" label={t('model.providerModelId')} rules={[{ required: true, message: t('validation.modelIdRequired', { defaultValue: '请输入模型 ID' }) }]}>
+              <Input placeholder="gpt-4o" />
+            </Form.Item>
+            <Form.Item name="displayName" label={t('model.name')}>
+              <Input placeholder="GPT-4o" />
+            </Form.Item>
+            <Form.Item name="contextWindow" label={t('detail.contextWindow')}>
+              <InputNumber style={{ width: '100%' }} min={1} />
+            </Form.Item>
+            <Space style={{ width: '100%' }} size="large">
+              <Form.Item name="inputPrice" label={t('detail.inputPrice')} style={{ marginBottom: 0 }}>
+                <InputNumber style={{ width: 180 }} min={0} step={0.01} addonBefore="$" addonAfter="/M" />
+              </Form.Item>
+              <Form.Item name="outputPrice" label={t('detail.outputPrice')} style={{ marginBottom: 0 }}>
+                <InputNumber style={{ width: 180 }} min={0} step={0.01} addonBefore="$" addonAfter="/M" />
+              </Form.Item>
+            </Space>
+            <Form.Item name="capabilities" label={t('model.capabilities', { defaultValue: '能力' })} style={{ marginTop: 16 }}>
+              <Select mode="multiple" options={[
+                { value: 'chat', label: 'Chat' },
+                { value: 'vision', label: 'Vision' },
+                { value: 'embedding', label: 'Embedding' },
+                { value: 'image', label: 'Image' },
+                { value: 'audio', label: 'Audio' },
+              ]} />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </>
     );
   }
 
@@ -349,6 +432,46 @@ export function ModelSetupStep({
           </Tag>
         </div>
       )}
+
+      {/* 自定义添加模型弹窗 */}
+      <Modal
+        title={t('template.customAdd', { defaultValue: '自定义添加模型' })}
+        open={customModalOpen}
+        onOk={handleCustomAdd}
+        onCancel={() => { customForm.resetFields(); setCustomModalOpen(false); }}
+        okText={t('actions.add', { ns: 'common' })}
+        destroyOnClose
+        width={520}
+      >
+        <Form form={customForm} layout="vertical" initialValues={{ contextWindow: 4096, capabilities: ['chat'] }}>
+          <Form.Item name="providerModelId" label={t('model.providerModelId')} rules={[{ required: true, message: t('validation.modelIdRequired', { defaultValue: '请输入模型 ID' }) }]}>
+            <Input placeholder="gpt-4o" />
+          </Form.Item>
+          <Form.Item name="displayName" label={t('model.name')}>
+            <Input placeholder="GPT-4o" />
+          </Form.Item>
+          <Form.Item name="contextWindow" label={t('detail.contextWindow')}>
+            <InputNumber style={{ width: '100%' }} min={1} />
+          </Form.Item>
+          <Space style={{ width: '100%' }} size="large">
+            <Form.Item name="inputPrice" label={t('detail.inputPrice')} style={{ marginBottom: 0 }}>
+              <InputNumber style={{ width: 180 }} min={0} step={0.01} addonBefore="$" addonAfter="/M" />
+            </Form.Item>
+            <Form.Item name="outputPrice" label={t('detail.outputPrice')} style={{ marginBottom: 0 }}>
+              <InputNumber style={{ width: 180 }} min={0} step={0.01} addonBefore="$" addonAfter="/M" />
+            </Form.Item>
+          </Space>
+          <Form.Item name="capabilities" label={t('model.capabilities', { defaultValue: '能力' })} style={{ marginTop: 16 }}>
+            <Select mode="multiple" options={[
+              { value: 'chat', label: 'Chat' },
+              { value: 'vision', label: 'Vision' },
+              { value: 'embedding', label: 'Embedding' },
+              { value: 'image', label: 'Image' },
+              { value: 'audio', label: 'Audio' },
+            ]} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

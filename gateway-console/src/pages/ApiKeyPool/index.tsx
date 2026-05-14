@@ -10,6 +10,8 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import type { ColumnsType } from 'antd/es/table';
 import {
   useProviderApiKeys,
@@ -23,10 +25,12 @@ import type { ProviderApiKey, ProviderApiKeyState } from '@/types/providerApiKey
 
 const { Paragraph } = Typography;
 
-export default function AdminApiKeyPool() {
+export default function ApiKeyPool() {
   const { t } = useTranslation('apiKeyPool');
   const { t: tc } = useTranslation('common');
   const { token } = theme.useToken();
+  const { hasPermission } = useAuthStore();
+  const canWrite = hasPermission(P.PROVIDER_WRITE);
   const { confirm } = useConfirm();
   const [modalOpen, setModalOpen] = useState(false);
   const [editingKey, setEditingKey] = useState<ProviderApiKey | null>(null);
@@ -117,6 +121,26 @@ export default function AdminApiKeyPool() {
     DELETED: 'red',
   };
 
+  const actionColumn: ColumnsType<ProviderApiKey>[number] = {
+    title: t('actions.label', { ns: 'common' }),
+    key: 'actions',
+    width: 140,
+    render: (_, record) => (
+      <Space>
+        <Tooltip title={record.state === 'DISABLED' ? t('enable') : t('disable')}>
+          <Button
+            type="text"
+            icon={record.state === 'DISABLED' ? <PlayCircleOutlined /> : <StopOutlined />}
+            onClick={() => handleToggle(record)}
+            disabled={record.state === 'DELETED'}
+          />
+        </Tooltip>
+        <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+      </Space>
+    ),
+  };
+
   const columns: ColumnsType<ProviderApiKey> = [
     {
       title: '',
@@ -162,25 +186,7 @@ export default function AdminApiKeyPool() {
         <Tag color={stateColorMap[state]}>{t(`state.${state.toLowerCase()}`, { ns: 'common' })}</Tag>
       ),
     },
-    {
-      title: t('actions.label', { ns: 'common' }),
-      key: 'actions',
-      width: 140,
-      render: (_, record) => (
-        <Space>
-          <Tooltip title={record.state === 'DISABLED' ? t('enable') : t('disable')}>
-            <Button
-              type="text"
-              icon={record.state === 'DISABLED' ? <PlayCircleOutlined /> : <StopOutlined />}
-              onClick={() => handleToggle(record)}
-              disabled={record.state === 'DELETED'}
-            />
-          </Tooltip>
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
-        </Space>
-      ),
-    },
+    ...(canWrite ? [actionColumn] : []),
   ];
 
   return (
@@ -196,9 +202,11 @@ export default function AdminApiKeyPool() {
               onChange={setSelectedProviderId}
               options={providers?.items?.map((p) => ({ value: p.id, label: p.providerName }))}
             />
-            <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-              {t('add')}
-            </Button>
+            {canWrite && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+                {t('add')}
+              </Button>
+            )}
           </Space>
         </div>
 
@@ -217,44 +225,46 @@ export default function AdminApiKeyPool() {
         />
       </Card>
 
-      <Modal
-        title={editingKey ? t('actions.label', { ns: 'common' }) : t('add')}
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
-        footer={null}
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="providerId" label={t('provider')} rules={[{ required: !editingKey }]}>
-            <Select disabled={!!editingKey} options={providers?.items?.map((p) => ({ value: p.id, label: p.providerName }))} />
-          </Form.Item>
-          <Form.Item name="keyName" label={t('name')} rules={[{ required: true }]}>
-            <Input placeholder={t('namePlaceholder')} />
-          </Form.Item>
-          <Form.Item name="apiKey" label={t('key')} rules={[{ required: !editingKey }]}>
-            <Input.TextArea rows={3} placeholder={t('keyPlaceholder')} />
-          </Form.Item>
-          <Form.Item name="priority" label={t('priority')}>
-            <Input type="number" min={1} />
-          </Form.Item>
-          <Form.Item name="weight" label={t('weight')}>
-            <Input type="number" min={1} max={100} />
-          </Form.Item>
-          <Form.Item name="isDefault" label={t('isDefault')} valuePropName="checked">
-            <Select>
-              <Select.Option value={true}>{t('yes')}</Select.Option>
-              <Select.Option value={false}>{t('no')}</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {t('actions.save', { ns: 'common' })}
-              </Button>
-              <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+      {canWrite && (
+        <Modal
+          title={editingKey ? t('actions.label', { ns: 'common' }) : t('add')}
+          open={modalOpen}
+          onCancel={() => setModalOpen(false)}
+          footer={null}
+        >
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form.Item name="providerId" label={t('provider')} rules={[{ required: !editingKey }]}>
+              <Select disabled={!!editingKey} options={providers?.items?.map((p) => ({ value: p.id, label: p.providerName }))} />
+            </Form.Item>
+            <Form.Item name="keyName" label={t('name')} rules={[{ required: true }]}>
+              <Input placeholder={t('namePlaceholder')} />
+            </Form.Item>
+            <Form.Item name="apiKey" label={t('key')} rules={[{ required: !editingKey }]}>
+              <Input.TextArea rows={3} placeholder={t('keyPlaceholder')} />
+            </Form.Item>
+            <Form.Item name="priority" label={t('priority')}>
+              <Input type="number" min={1} />
+            </Form.Item>
+            <Form.Item name="weight" label={t('weight')}>
+              <Input type="number" min={1} max={100} />
+            </Form.Item>
+            <Form.Item name="isDefault" label={t('isDefault')} valuePropName="checked">
+              <Select>
+                <Select.Option value={true}>{t('yes')}</Select.Option>
+                <Select.Option value={false}>{t('no')}</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
+                  {t('actions.save', { ns: 'common' })}
+                </Button>
+                <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
+              </Space>
+            </Form.Item>
+          </Form>
+        </Modal>
+      )}
     </div>
   );
 }

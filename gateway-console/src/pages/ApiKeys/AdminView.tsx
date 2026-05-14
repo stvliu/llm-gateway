@@ -9,7 +9,7 @@ import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
 
 const { Paragraph } = Typography;
 
-export default function AdminApiKeys() {
+export default function AdminApiKeysView() {
   const { t } = useTranslation('apiKeys');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();

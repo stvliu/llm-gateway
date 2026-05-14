@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Typography, Spin, Input, Select, theme } from 'antd';
+import { Typography, Spin, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useTemplates } from '@/services/query';
 import { providerApi } from '@/services/api/provider';
@@ -28,7 +28,6 @@ export function BasicInfoStep({
   onModelsChange,
 }: BasicInfoStepProps) {
   const { t } = useTranslation('providers');
-  const { token } = theme.useToken();
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [providerTypes, setProviderTypes] = useState<ProviderTypeOption[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);

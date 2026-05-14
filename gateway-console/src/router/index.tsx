@@ -1,20 +1,16 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { AuthGuard, RoleGuard } from './guards';
+import { AuthGuard, PermissionGuard } from './guards';
 import Login from '@/pages/Login';
-import AdminLayout from '@/components/layout/AdminLayout';
-import UserLayout from '@/components/layout/UserLayout';
-import AdminDashboard from '@/pages/admin/Dashboard';
-import AdminProviders from '@/pages/admin/Providers';
-import AdminModels from '@/pages/admin/Models';
-import AdminApiKeyPool from '@/pages/admin/ApiKeyPool';
-import AdminUsers from '@/pages/admin/Users';
-import AdminApiKeys from '@/pages/admin/ApiKeys';
-import AdminSettings from '@/pages/admin/Settings';
-import AdminTemplates from '@/pages/admin/Templates';
-import UserDashboard from '@/pages/user/Dashboard';
-import UserModels from '@/pages/user/Models';
-import UserApiKeys from '@/pages/user/ApiKeys';
-import UserSettings from '@/pages/user/Settings';
+import AppLayout from '@/components/layout/AppLayout';
+import Dashboard from '@/pages/Dashboard';
+import Models from '@/pages/Models';
+import Providers from '@/pages/Providers';
+import Templates from '@/pages/Templates';
+import ApiKeyPool from '@/pages/ApiKeyPool';
+import Users from '@/pages/Users';
+import ApiKeys from '@/pages/ApiKeys';
+import Settings from '@/pages/Settings';
+import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
   // 公共路由
@@ -23,49 +19,52 @@ export const router = createBrowserRouter([
     element: <Login />,
   },
 
-  // 管理员路由
+  // 应用路由（统一入口）
   {
-    path: '/admin',
+    path: '/',
     element: (
       <AuthGuard>
-        <RoleGuard allowedRoles={['ADMIN']}>
-          <AdminLayout />
-        </RoleGuard>
+        <AppLayout />
       </AuthGuard>
     ),
     children: [
-      { index: true, element: <Navigate to="/admin/dashboard" replace /> },
-      { path: 'dashboard', element: <AdminDashboard /> },
-      { path: 'providers', element: <AdminProviders /> },
-      { path: 'models', element: <AdminModels /> },
-      { path: 'api-key-pool', element: <AdminApiKeyPool /> },
-      { path: 'users', element: <AdminUsers /> },
-      { path: 'api-keys', element: <AdminApiKeys /> },
-      { path: 'settings', element: <AdminSettings /> },
-      { path: 'templates', element: <AdminTemplates /> },
+      { index: true, element: <Navigate to="/dashboard" replace /> },
+      { path: 'dashboard', element: <Dashboard /> },
+      {
+        path: 'models',
+        element: <PermissionGuard permission={P.MODEL_READ}><Models /></PermissionGuard>,
+      },
+      {
+        path: 'providers',
+        element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
+      },
+      {
+        path: 'templates',
+        element: <PermissionGuard permission={P.TEMPLATE_READ}><Templates /></PermissionGuard>,
+      },
+      {
+        path: 'api-key-pool',
+        element: <PermissionGuard permission={P.APIKEY_POOL_READ}><ApiKeyPool /></PermissionGuard>,
+      },
+      {
+        path: 'users',
+        element: <PermissionGuard permission={P.USER_READ}><Users /></PermissionGuard>,
+      },
+      {
+        path: 'api-keys',
+        element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
+      },
+      {
+        path: 'settings',
+        element: <PermissionGuard permission={P.SETTINGS_READ}><Settings /></PermissionGuard>,
+      },
     ],
   },
 
-  // 普通用户路由
-  {
-    path: '/user',
-    element: (
-      <AuthGuard>
-        <UserLayout />
-      </AuthGuard>
-    ),
-    children: [
-      { index: true, element: <Navigate to="/user/dashboard" replace /> },
-      { path: 'dashboard', element: <UserDashboard /> },
-      { path: 'models', element: <UserModels /> },
-      { path: 'api-keys', element: <UserApiKeys /> },
-      { path: 'settings', element: <UserSettings /> },
-    ],
-  },
+  // 兼容旧路由重定向
+  { path: '/admin/*', element: <Navigate to="/" replace /> },
+  { path: '/user/*', element: <Navigate to="/" replace /> },
 
   // 默认重定向
-  { path: '/', element: <Navigate to="/login" replace /> },
-  { path: '*', element: <Navigate to="/login" replace /> },
+  { path: '*', element: <Navigate to="/dashboard" replace /> },
 ]);
-
-export default router;

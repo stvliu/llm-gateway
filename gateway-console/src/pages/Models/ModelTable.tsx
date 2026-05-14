@@ -11,6 +11,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useModels, useDeleteModel } from '@/services/query';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import type { Model } from '@/types/model';
 import type { Provider } from '@/types/provider';
 
@@ -77,8 +79,10 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
   const { t } = useTranslation('models');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();
+  const { hasPermission } = useAuthStore();
   const { data: modelsData, isLoading } = useModels({ size: 100 });
   const deleteModelMutation = useDeleteModel();
+  const canWrite = hasPermission(P.MODEL_WRITE);
 
   const models = modelsData?.items || [];
 
@@ -170,7 +174,7 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
         </Tag>
       ),
     },
-    {
+    ...(canWrite ? [{
       title: t('actions.title', { ns: 'common' }),
       key: 'actions',
       width: 120,
@@ -195,7 +199,7 @@ export function ModelTable({ providers, onEditModel, onDeleteModel }: ModelTable
           </Tooltip>
         </Space>
       ),
-    },
+    }] : []),
   ];
 
   return (

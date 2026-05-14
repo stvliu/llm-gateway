@@ -1,26 +1,35 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CurrentUser } from '@/types/user';
+import { getPermissionsByRole } from '@/constants/rolePermissions';
+import type { CurrentUser, LoginUserResponse } from '@/types/user';
+import type { Permission } from '@/constants/permissions';
 
 interface AuthState {
   user: CurrentUser | null;
   token: string | null;
   isAuthenticated: boolean;
-  setUser: (user: CurrentUser | null) => void;
+  setUser: (user: LoginUserResponse | null) => void;
   setToken: (token: string | null) => void;
   logout: () => void;
+  hasPermission: (permission: Permission) => boolean;
+  hasAnyPermission: (permissions: Permission[]) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       token: null,
       isAuthenticated: false,
-      setUser: (user) =>
+      setUser: (loginUser) =>
         set({
-          user,
-          isAuthenticated: !!user,
+          user: loginUser
+            ? {
+                ...loginUser,
+                permissions: getPermissionsByRole(loginUser.role),
+              }
+            : null,
+          isAuthenticated: !!loginUser,
         }),
       setToken: (token) => {
         if (token) {
@@ -38,6 +47,14 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: false,
         });
       },
+      hasPermission: (permission) => {
+        const { user } = get();
+        return user?.permissions?.includes(permission) ?? false;
+      },
+      hasAnyPermission: (permissions) => {
+        const { user } = get();
+        return permissions.some((p) => user?.permissions?.includes(p)) ?? false;
+      },
     }),
     {
       name: 'auth-storage',
@@ -47,9 +64,15 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        // 同步 token 到 localStorage 供 API client 使用
         if (state?.token) {
           localStorage.setItem('token', state.token);
+        }
+        // 旧数据可能没有 permissions 字段，从 role 补全
+        if (state?.user && !state.user.permissions) {
+          state.user = {
+            ...state.user,
+            permissions: getPermissionsByRole(state.user.role),
+          };
         }
       },
     }

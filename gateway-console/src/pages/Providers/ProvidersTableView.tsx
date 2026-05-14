@@ -14,6 +14,8 @@ import { PageHeader, EntityTable } from '@/components/ui';
 import type { ColumnConfig } from '@/components/ui';
 import { FilterPanel, FilterTags } from '@/components/common';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import { useProviders, useDeleteProvider } from '@/services/query';
 import type { Provider } from '@/types/provider';
 
@@ -81,6 +83,8 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
   const { t: tc } = useTranslation('common');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();
+  const { hasPermission } = useAuthStore();
+  const canWrite = hasPermission(P.PROVIDER_WRITE);
 
   // 分页状态
   const [page, setPage] = useState(1);
@@ -181,7 +185,7 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
         );
       },
     },
-    {
+    ...(canWrite ? [{
       key: 'actions',
       title: tc('actions.label'),
       width: 100,
@@ -215,11 +219,33 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
           </Space>
         );
       },
-    },
-  ], [t, tc, onProviderSelect]);
+    }] : [{
+      key: 'actions',
+      title: tc('actions.label'),
+      width: 80,
+      render: (_: unknown, record: unknown) => {
+        const provider = record as Provider;
+        return (
+          <Space className="table-action-cell">
+            <Tooltip title={tc('actions.view', { defaultValue: '查看' })}>
+              <Button
+                type="text"
+                size="small"
+                icon={<EyeOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onProviderSelect?.(provider);
+                }}
+              />
+            </Tooltip>
+          </Space>
+        );
+      },
+    }]),
+  ], [t, tc, onProviderSelect, canWrite]);
 
   // 行点击处理
-  const handleRowClick = useCallback((record: unknown, index: number) => {
+  const handleRowClick = useCallback((record: unknown) => {
     const provider = record as Provider;
     onProviderSelect?.(provider);
   }, [onProviderSelect]);

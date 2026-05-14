@@ -9,7 +9,7 @@ import type { ColumnsType } from 'antd/es/table';
 
 const { Paragraph } = Typography;
 
-export default function UserApiKeys() {
+export default function UserApiKeysView() {
   const { t } = useTranslation('apiKeys');
   const { token } = theme.useToken();
   const { confirm } = useConfirm();

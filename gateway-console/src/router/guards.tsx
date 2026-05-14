@@ -1,37 +1,30 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
-import type { UserRole } from '@/types/user';
+import type { Permission } from '@/constants/permissions';
 
-interface AuthGuardProps {
-  children: React.ReactNode;
-}
-
-/** 认证守卫：检查是否已登录 */
-export function AuthGuard({ children }: AuthGuardProps) {
+/** 认证守卫：未登录重定向到 /login */
+export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
   const location = useLocation();
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   }
-
   return <>{children}</>;
 }
 
-interface RoleGuardProps {
+/** 权限守卫：无权限重定向到 /dashboard */
+export function PermissionGuard({
+  permission,
+  children,
+}: {
+  permission: Permission;
   children: React.ReactNode;
-  allowedRoles: UserRole[];
-}
+}) {
+  const { hasPermission } = useAuthStore();
 
-/** 角色守卫：检查用户角色 */
-export function RoleGuard({ children, allowedRoles }: RoleGuardProps) {
-  const { user } = useAuthStore();
-  const location = useLocation();
-
-  if (user && !allowedRoles.includes(user.role)) {
-    // 非管理员重定向到用户页面
-    return <Navigate to="/user/models" state={{ from: location }} replace />;
+  if (!hasPermission(permission)) {
+    return <Navigate to="/dashboard" replace />;
   }
-
   return <>{children}</>;
 }

@@ -336,6 +336,7 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
                     onClick={() => {
                       confirm({
                         type: 'danger',
+                        entityName: key.keyName,
                         onConfirm: () => handleDelete(index),
                       });
                     }}

@@ -22,7 +22,7 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const { setUser, setToken } = useAuthStore();
 
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+  const from = (location.state as { from?: string })?.from;
 
   const handleLanguageChange = (lng: string) => {
     localStorage.setItem('i18nextLng', lng);
@@ -40,7 +40,6 @@ export default function Login() {
         rememberMe: values.rememberMe,
       });
 
-      // 响应拦截器已解包，response 就是 { user, token }
       setUser(response.user);
       if (response.token) {
         setToken(response.token);
@@ -48,11 +47,8 @@ export default function Login() {
 
       message.success(t('message.success', { ns: 'common' }));
 
-      // 根据角色重定向
-      const redirectPath = response.user.role === 'ADMIN' ? '/admin/models' : '/user/models';
-      navigate(from || redirectPath, { replace: true });
+      navigate(from || '/dashboard', { replace: true });
     } catch (err: unknown) {
-      // 区分服务不可用和认证失败
       if (isServiceUnavailableError(err)) {
         setError(t('error.serviceUnavailable'));
       } else {

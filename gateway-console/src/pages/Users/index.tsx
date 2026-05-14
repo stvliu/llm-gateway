@@ -3,13 +3,17 @@ import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } 
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
 import type { User, CreateUserRequest, UserRole, UserState } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
 
-export default function AdminUsers() {
+export default function Users() {
   const { t } = useTranslation('users');
   const { confirm } = useConfirm();
+  const { hasPermission } = useAuthStore();
+  const canWrite = hasPermission(P.USER_WRITE);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
@@ -97,27 +101,29 @@ export default function AdminUsers() {
       dataIndex: 'createdAt',
       key: 'createdAt',
     },
-    {
+    ...(canWrite ? [{
       title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 150,
-      render: (_, record) => (
+      render: (_: unknown, record: User) => (
         <Space>
           <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
           <Button type="text" icon={<KeyOutlined />} onClick={() => handleResetPassword(record.id)} />
           <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
         </Space>
       ),
-    },
+    }] : []),
   ];
 
   return (
     <Card title={t('title')}>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <Input.Search placeholder={t('searchPlaceholder')} style={{ width: 250 }} allowClear />
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          {t('addUser')}
-        </Button>
+        {canWrite && (
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            {t('addUser')}
+          </Button>
+        )}
       </div>
 
       <Table

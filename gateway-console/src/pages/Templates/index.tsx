@@ -24,6 +24,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import {
   useTemplates,
   useCreateTemplate,
@@ -42,10 +44,12 @@ import type {
 } from '@/types/template';
 import type { ColumnsType } from 'antd/es/table';
 
-export default function AdminTemplates() {
+export default function Templates() {
   const { t } = useTranslation('templates');
   const navigate = useNavigate();
   const { confirm } = useConfirm();
+  const { hasPermission } = useAuthStore();
+  const canWrite = hasPermission(P.PROVIDER_WRITE);
   const [activeTab, setActiveTab] = useState<TemplateType>('USER');
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -121,7 +125,7 @@ export default function AdminTemplates() {
     await applyMutation.mutateAsync({ id: selectedTemplate.id, data: values });
     message.success(t('message.applySuccess'));
     setApplyModalOpen(false);
-    navigate('/admin/providers');
+    navigate('/providers');
   };
 
   const columns: ColumnsType<ProviderTemplate> = [
@@ -160,11 +164,11 @@ export default function AdminTemplates() {
       dataIndex: 'downloadCount',
       key: 'downloadCount',
     },
-    {
+    ...(canWrite ? [{
       title: t('actions.label', { ns: 'common' }),
       key: 'actions',
       width: 200,
-      render: (_, record) => (
+      render: (_: unknown, record: ProviderTemplate) => (
         <Space>
           <Button
             type="primary"
@@ -194,7 +198,21 @@ export default function AdminTemplates() {
           />
         </Space>
       ),
-    },
+    }] : [{
+      title: t('actions.label', { ns: 'common' }),
+      key: 'actions',
+      width: 100,
+      render: (_: unknown, record: ProviderTemplate) => (
+        <Button
+          type="primary"
+          size="small"
+          icon={<RocketOutlined />}
+          onClick={() => handleApply(record)}
+        >
+          {t('apply')}
+        </Button>
+      ),
+    }]),
   ];
 
   const officialColumns: ColumnsType<ProviderTemplate> = [
@@ -257,28 +275,32 @@ export default function AdminTemplates() {
 
       <div style={{ marginBottom: 16 }}>
         <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            {t('add')}
-          </Button>
-          <Upload
-            accept=".zip"
-            showUploadList={false}
-            beforeUpload={(file) => {
-              const formData = new FormData();
-              formData.append('file', file);
-              importMutation.mutate(formData, {
-                onSuccess: () => {
-                  message.success(t('message.importSuccess'));
-                },
-                onError: () => {
-                  message.error(t('message.importFailed'));
-                },
-              });
-              return false;
-            }}
-          >
-            <Button icon={<UploadOutlined />}>{t('import')}</Button>
-          </Upload>
+          {canWrite && (
+            <>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+                {t('add')}
+              </Button>
+              <Upload
+                accept=".zip"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  importMutation.mutate(formData, {
+                    onSuccess: () => {
+                      message.success(t('message.importSuccess'));
+                    },
+                    onError: () => {
+                      message.error(t('message.importFailed'));
+                    },
+                  });
+                  return false;
+                }}
+              >
+                <Button icon={<UploadOutlined />}>{t('import')}</Button>
+              </Upload>
+            </>
+          )}
         </Space>
       </div>
 

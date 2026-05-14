@@ -9,41 +9,29 @@ import { useChatStore } from '@/stores/chatStore';
 
 const { Sider, Content } = Layout;
 
-export default function UserLayout() {
+export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const { isOpen, setOpen } = useChatStore();
   const { token } = theme.useToken();
 
   return (
-    <Layout style={{ height: '100vh' }}>
-      <Layout>
-        <Sider
-          width={200}
-          collapsedWidth={64}
-          collapsed={collapsed}
-          style={{
-            background: token.colorBgContainer,
-            borderRight: `1px solid ${token.colorBorderSecondary}`,
-          }}
-        >
-          <LeftHeader collapsed={collapsed} />
-          <Sidebar collapsed={collapsed} role="USER" />
-        </Sider>
-        <Layout>
-          <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-          <Content
-            style={{
-              background: token.colorBgLayout,
-              padding: 16,
-              overflow: 'auto',
-            }}
-          >
-            <Outlet />
-          </Content>
-        </Layout>
+    <Layout style={{ minHeight: '100vh' }}>
+      <Sider
+        width={200}
+        collapsedWidth={80}
+        collapsed={collapsed}
+        style={{ background: token.colorBgContainer }}
+      >
+        <LeftHeader collapsed={collapsed} />
+        <Sidebar collapsed={collapsed} />
+      </Sider>
+      <Layout style={{ background: token.colorBgLayout }}>
+        <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+        <Content style={{ padding: 16, overflow: 'auto', background: token.colorBgLayout }}>
+          <Outlet />
+        </Content>
       </Layout>
 
-      {/* AI 聊天悬浮按钮 */}
       <FloatButton
         icon={<CommentOutlined />}
         type="primary"
@@ -54,7 +42,6 @@ export default function UserLayout() {
         }}
       />
 
-      {/* AI 聊天面板 */}
       {isOpen && (
         <div
           style={{
@@ -69,7 +56,6 @@ export default function UserLayout() {
         </div>
       )}
 
-      {/* 动画样式 */}
       <style>{`
         @keyframes fadeInUp {
           from {

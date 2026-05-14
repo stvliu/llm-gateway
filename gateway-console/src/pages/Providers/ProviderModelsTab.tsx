@@ -119,10 +119,11 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
   }, []);
 
   // 删除模型
-  const handleDeleteModel = useCallback((modelId: number) => {
+  const handleDeleteModel = useCallback((model: Model) => {
     confirm({
       type: 'danger',
-      onConfirm: () => deleteModelMutation.mutateAsync(modelId),
+      entityName: model.displayName || model.providerModelId,
+      onConfirm: () => deleteModelMutation.mutateAsync(model.id),
     });
   }, [confirm, deleteModelMutation]);
 
@@ -256,7 +257,7 @@ export function ProviderModelsTab({ provider, mode }: ProviderModelsTabProps) {
                           size="small"
                           danger
                           icon={<DeleteOutlined />}
-                          onClick={() => handleDeleteModel(model.id)}
+                          onClick={() => handleDeleteModel(model)}
                         />
                     </Space>
                   )}

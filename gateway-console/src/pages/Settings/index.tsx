@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { authApi } from '@/services/api/auth';
 import { useState } from 'react';
 
-export default function UserSettings() {
+export default function Settings() {
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
