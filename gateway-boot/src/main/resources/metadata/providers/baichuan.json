@@ -1,0 +1,19 @@
+{
+  "provider_id": "baichuan",
+  "provider_name": "百川智能",
+  "provider_type": "BAICHUAN",
+  "provider_config": {
+    "provider_name": "百川智能",
+    "base_url": "https://api.baichuan-ai.com",
+    "website_url": "https://baichuan-ai.com",
+    "api_doc_url": "https://platform.baichuan-ai.com/docs",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "百川智能 API，王小川创立的国产大模型，擅长中文理解和生成",
+  "icon_url": "https://cdn.example.com/icons/baichuan.png",
+  "tags": [
+    "国内",
+    "中文优化"
+  ]
+}

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Row, Col, Checkbox, Space, Button, message } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { ModelTemplateSelector, type ModelTemplate } from './ModelTemplateSelector';
+import { ModelMetadataSelector, type ModelMetadataItem } from './ModelMetadataSelector';
 import { useCreateModel, useUpdateModel } from '@/services/query';
 import type { Provider } from '@/types/provider';
 import type { Model } from '@/types/model';
@@ -54,7 +54,7 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
   }, [open, isEditMode, editingModel, form]);
 
   // 从模板快速添加
-  const handleTemplateSelect = useCallback(async (template: ModelTemplate) => {
+  const handleMetadataSelect = useCallback(async (template: ModelMetadataItem) => {
     if (!provider) return;
 
     try {
@@ -173,9 +173,9 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
     >
       {/* 模板选择模式（仅新增） */}
       {!showCustomForm && !isEditMode && (
-        <ModelTemplateSelector
-          providerType={provider.providerType}
-          onSelect={handleTemplateSelect}
+        <ModelMetadataSelector
+          providerId={provider.providerType.toLowerCase()}
+          onSelect={handleMetadataSelect}
         />
       )}
 
@@ -200,7 +200,7 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
                 <InputNumber
                   style={{ width: '100%' }}
                   formatter={(v) => v ? `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : ''}
-                  parser={(v) => v!.replace(/,/g, '') as any}
+                  parser={(v) => v?.replace(/,/g, '') ?? ''}
                   addonAfter="tokens"
                 />
               </Form.Item>

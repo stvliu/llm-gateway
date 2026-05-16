@@ -1,0 +1,41 @@
+[
+  {
+    "provider_model_id": "abab6.5s-chat",
+    "display_name": "ABAB 6.5s",
+    "context_window": 245760,
+    "input_price": 0.001,
+    "output_price": 0.001,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "abab6.5-chat",
+    "display_name": "ABAB 6.5",
+    "context_window": 245760,
+    "input_price": 0.03,
+    "output_price": 0.03,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "abab5.5-chat",
+    "display_name": "ABAB 5.5",
+    "context_window": 65536,
+    "input_price": 0.015,
+    "output_price": 0.015,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  }
+]

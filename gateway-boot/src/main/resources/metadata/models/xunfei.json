@@ -1,0 +1,67 @@
+[
+  {
+    "provider_model_id": "spark-lite",
+    "display_name": "星火 Lite",
+    "context_window": 8192,
+    "input_price": 0.0,
+    "output_price": 0.0,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": false,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "spark-general",
+    "display_name": "星火 V3.5",
+    "context_window": 8192,
+    "input_price": 0.003,
+    "output_price": 0.006,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "spark-pro",
+    "display_name": "星火 Pro",
+    "context_window": 8192,
+    "input_price": 0.004,
+    "output_price": 0.008,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "spark-max",
+    "display_name": "星火 Max",
+    "context_window": 8192,
+    "input_price": 0.004,
+    "output_price": 0.008,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "spark-vision",
+    "display_name": "星火多模态",
+    "context_window": 8192,
+    "input_price": 0.006,
+    "output_price": 0.006,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": false,
+      "streaming": true
+    }
+  }
+]

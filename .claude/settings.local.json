@@ -97,7 +97,11 @@
       "Bash(curl -s http://localhost:5174)",
       "Bash(node_modules/.bin/tsc --noEmit --pretty false)",
       "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc --noEmit --pretty false)",
-      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc -p /mnt/e/workspace/llm-gateway/gateway-console/tsconfig.json --noEmit --pretty false)"
+      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc -p /mnt/e/workspace/llm-gateway/gateway-console/tsconfig.json --noEmit --pretty false)",
+      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc --noEmit)",
+      "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc -b --noEmit)",
+      "Skill(plan)",
+      "Skill(code-review)"
     ]
   },
   "outputStyle": "default"

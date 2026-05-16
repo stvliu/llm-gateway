@@ -11,8 +11,9 @@ import { BasicInfoStep } from './BasicInfoStep';
 import { ApiKeySetupStep } from './ApiKeySetupStep';
 import { ModelSetupStep } from './ModelSetupStep';
 import { useCreateProvider } from '@/services/query';
+import { useModelMetadataByProvider } from '@/services/query/useMetadata';
 import type { Provider, CreateProviderRequest, NestedApiKeyRequest, NestedModelRequest } from '@/types/provider';
-import type { ProviderTemplate } from '@/types/template';
+import type { ProviderMetadata, ModelMetadata } from '@/types/metadata';
 
 /**
  * 检查供应商名称是否重复
@@ -31,6 +32,20 @@ function isBaseUrlDuplicate(baseUrl: string, providers: Provider[], excludeId?: 
   return providers.some(p =>
     p.id !== excludeId && p.baseUrl?.toLowerCase().replace(/\/+$/, '') === normalizedUrl
   );
+}
+
+/**
+ * 将 ModelMetadata 转换为 NestedModelRequest
+ */
+function toNestedModelRequest(m: ModelMetadata): NestedModelRequest {
+  return {
+    providerModelId: m.providerModelId,
+    displayName: m.displayName,
+    contextWindow: m.contextWindow,
+    inputPrice: m.inputPrice,
+    outputPrice: m.outputPrice,
+    capabilities: m.capabilities,
+  };
 }
 
 interface ProviderCreateModalProps {
@@ -54,11 +69,15 @@ export function ProviderCreateModal({
 
   // 向导状态
   const [currentStep, setCurrentStep] = useState(0);
-  const [selectedTemplate, setSelectedTemplate] = useState<ProviderTemplate | null>(null);
+  const [selectedMetadata, setSelectedMetadata] = useState<ProviderMetadata | null>(null);
   const [basicInfo, setBasicInfo] = useState<CreateProviderRequest | null>(null);
   const [tempApiKeys, setTempApiKeys] = useState<NestedApiKeyRequest[]>([]);
-  const [tempModels, setTempModels] = useState<NestedModelRequest[]>([]);
+  const [selectedModelIds, setSelectedModelIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+
+  // 获取当前供应商的模型元数据
+  const providerId = selectedMetadata?.providerId || basicInfo?.providerType?.toLowerCase() || null;
+  const { data: modelMetadataList } = useModelMetadataByProvider(providerId);
 
   // Mutations
   const createMutation = useCreateProvider();
@@ -82,10 +101,10 @@ export function ProviderCreateModal({
   // 关闭时重置状态
   const handleClose = useCallback(() => {
     setCurrentStep(0);
-    setSelectedTemplate(null);
+    setSelectedMetadata(null);
     setBasicInfo(null);
     setTempApiKeys([]);
-    setTempModels([]);
+    setSelectedModelIds([]);
     onClose();
   }, [onClose]);
 
@@ -148,12 +167,17 @@ export function ProviderCreateModal({
       return;
     }
 
+    // 从 ModelMetadata 映射为 NestedModelRequest
+    const models: NestedModelRequest[] = (modelMetadataList ?? [])
+      .filter(m => selectedModelIds.includes(m.providerModelId))
+      .map(toNestedModelRequest);
+
     try {
       setSaving(true);
       const request: CreateProviderRequest = {
         ...basicInfo,
         apiKeys: validKeys,
-        models: tempModels,
+        models,
       };
 
       const newProvider = await createMutation.mutateAsync(request);
@@ -165,7 +189,7 @@ export function ProviderCreateModal({
     } finally {
       setSaving(false);
     }
-  }, [basicInfo, tempApiKeys, tempModels, providers, createMutation, t, onCreated, handleClose]);
+  }, [basicInfo, tempApiKeys, selectedModelIds, modelMetadataList, providers, createMutation, t, onCreated, handleClose]);
 
   // 渲染向导步骤内容
   const renderStepContent = () => {
@@ -175,8 +199,8 @@ export function ProviderCreateModal({
           <BasicInfoStep
             basicInfo={basicInfo}
             onChange={setBasicInfo}
-            onTemplateLoad={setSelectedTemplate}
-            onModelsChange={setTempModels}
+            onMetadataLoad={setSelectedMetadata}
+            onSelectedModelIdsChange={setSelectedModelIds}
           />
         );
       case 1:
@@ -191,10 +215,9 @@ export function ProviderCreateModal({
       case 2:
         return (
           <ModelSetupStep
-            providerType={basicInfo?.providerType || selectedTemplate?.providerType || 'OPENAI'}
-            selectedModels={tempModels}
-            onChange={setTempModels}
-            selectedTemplate={selectedTemplate}
+            providerId={providerId || ''}
+            selectedModels={selectedModelIds}
+            onSelectedModelsChange={setSelectedModelIds}
           />
         );
       default:

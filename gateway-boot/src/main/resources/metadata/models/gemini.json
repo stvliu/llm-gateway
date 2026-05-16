@@ -1,0 +1,67 @@
+[
+  {
+    "provider_model_id": "gemini-2.5-pro-preview-05-06",
+    "display_name": "Gemini 2.5 Pro",
+    "context_window": 1048576,
+    "input_price": 1.25,
+    "output_price": 5.0,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "gemini-2.5-flash-preview-05-20",
+    "display_name": "Gemini 2.5 Flash",
+    "context_window": 1048576,
+    "input_price": 0.15,
+    "output_price": 0.6,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "gemini-2.0-flash",
+    "display_name": "Gemini 2.0 Flash",
+    "context_window": 1048576,
+    "input_price": 0.1,
+    "output_price": 0.4,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "gemini-1.5-pro",
+    "display_name": "Gemini 1.5 Pro",
+    "context_window": 2097152,
+    "input_price": 1.25,
+    "output_price": 5.0,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "gemini-1.5-flash",
+    "display_name": "Gemini 1.5 Flash",
+    "context_window": 1048576,
+    "input_price": 0.075,
+    "output_price": 0.3,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    }
+  }
+]

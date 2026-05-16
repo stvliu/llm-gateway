@@ -244,16 +244,6 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
     );
   }
 
-  // 空状态
-  if (sortedProviders.length === 0) {
-    return (
-      <Empty
-        description={t('empty.noProvider', { defaultValue: '暂无供应商' })}
-        style={{ padding: 80 }}
-      />
-    );
-  }
-
   return (
     <div style={{ height: '100%', width: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 页面标题 */}
@@ -303,25 +293,33 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
           flex: 1,
           width: '100%',
           overflow: 'auto',
-          padding: '16px 0',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          gap: 16,
-          alignContent: 'start',
+          padding: sortedProviders.length > 0 ? '16px 0' : 0,
+          display: sortedProviders.length > 0 ? 'grid' : 'flex',
+          gridTemplateColumns: sortedProviders.length > 0 ? 'repeat(auto-fill, minmax(300px, 1fr))' : undefined,
+          gap: sortedProviders.length > 0 ? 16 : undefined,
+          alignContent: sortedProviders.length > 0 ? 'start' : undefined,
+          justifyContent: sortedProviders.length === 0 ? 'center' : undefined,
+          alignItems: sortedProviders.length === 0 ? 'center' : undefined,
         }}
       >
-        {sortedProviders.map((provider) => (
-          <ProviderCardContent
-            key={provider.id}
-            provider={provider}
-            onViewDetail={handleViewDetail}
-            onDelete={handleDelete}
-            onAddApiKey={handleAddApiKey}
-            onAddModel={handleAddModel}
-            onEditApiKey={handleEditApiKey}
-            onEditModel={handleEditModel}
+        {sortedProviders.length === 0 ? (
+          <Empty
+            description={t('empty.noProvider', { defaultValue: '暂无供应商' })}
           />
-        ))}
+        ) : (
+          sortedProviders.map((provider) => (
+            <ProviderCardContent
+              key={provider.id}
+              provider={provider}
+              onViewDetail={handleViewDetail}
+              onDelete={handleDelete}
+              onAddApiKey={handleAddApiKey}
+              onAddModel={handleAddModel}
+              onEditApiKey={handleEditApiKey}
+              onEditModel={handleEditModel}
+            />
+          ))
+        )}
       </div>
 
       {/* API Key 弹窗 */}

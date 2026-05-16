@@ -1,0 +1,75 @@
+{
+  "title": "元数据管理",
+  "tabs": {
+    "providers": "供应商元数据",
+    "models": "模型元数据"
+  },
+  "add": "新增元数据",
+  "sync": "同步元数据",
+  "name": "供应商名称",
+  "providerId": "供应商标识",
+  "providerTypeLabel": "供应商类型",
+  "description": "描述",
+  "modelCount": "模型数量",
+  "downloadCount": "下载次数",
+  "marketState": {
+    "label": "市场状态",
+    "PRIVATE": "私有",
+    "PENDING": "待审核",
+    "PUBLISHED": "已发布",
+    "REJECTED": "已拒绝"
+  },
+  "source": {
+    "label": "数据来源",
+    "BUILTIN": "内置",
+    "MODELS_DEV": "Models.dev",
+    "PROVIDER_API": "供应商 API",
+    "MANUAL": "手动",
+    "OVERRIDE": "覆盖"
+  },
+  "apply": "应用元数据",
+  "applyTitle": "应用元数据创建供应商",
+  "publish": "发布到市场",
+  "syncTitle": "同步元数据",
+  "syncAll": "全量同步",
+  "syncBuiltin": "同步内置数据",
+  "syncModelsDev": "同步 Models.dev",
+  "apiKey": "API Key",
+  "apiKeyPlaceholder": "请输入供应商 API Key",
+  "apiKeyRequired": "请输入 API Key",
+  "channelName": "供应商名称",
+  "channelNamePlaceholder": "可选，默认使用元数据名称",
+  "message": {
+    "publishSuccess": "发布成功",
+    "applySuccess": "应用成功，已创建供应商和模型",
+    "syncSuccess": "同步成功",
+    "syncFailed": "同步失败",
+    "importSuccess": "导入成功",
+    "importFailed": "导入失败"
+  },
+  "providerType": {
+    "OPENAI": "OpenAI",
+    "ANTHROPIC": "Anthropic",
+    "GEMINI": "Google Gemini",
+    "DEEPSEEK": "DeepSeek（深度求索）",
+    "MOONSHOT": "Moonshot（月之暗面）",
+    "ZHIPU": "智谱 GLM",
+    "YI": "零一万物",
+    "BAICHUAN": "百川智能",
+    "MINIMAX": "MiniMax",
+    "SILICONFLOW": "SiliconFlow（硅基流动）",
+    "VOLCENGINE": "火山引擎",
+    "QWEN": "通义千问",
+    "WENXIN": "文心一言",
+    "OTHER": "其他"
+  },
+  "model": {
+    "providerModelId": "模型标识",
+    "displayName": "显示名称",
+    "contextWindow": "上下文窗口",
+    "inputPrice": "输入价格",
+    "outputPrice": "输出价格",
+    "capabilities": "能力",
+    "source": "数据来源"
+  }
+}

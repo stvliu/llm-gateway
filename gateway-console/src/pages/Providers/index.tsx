@@ -49,7 +49,7 @@ export default function AdminProviders() {
   }, []);
 
   // 供应商创建成功：关闭 Modal，刷新列表
-  const handleProviderCreated = useCallback((_provider: Provider) => {
+  const handleProviderCreated = useCallback(() => {
     setCreateModalOpen(false);
   }, []);
 

@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Row, Col, Checkbox, Space, Button, message } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { ModelTemplateSelector, type ModelTemplate } from './ModelTemplateSelector';
+import { ModelMetadataSelector, type ModelMetadataItem } from '../Models/ModelMetadataSelector';
 import { useCreateModel, useUpdateModel } from '@/services/query';
 import type { Provider } from '@/types/provider';
 import type { Model } from '@/types/model';
@@ -53,35 +53,35 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
     }
   }, [open, isEditMode, editingModel, form]);
 
-  // 从模板快速添加
-  const handleTemplateSelect = useCallback(async (template: ModelTemplate) => {
+  // 从元数据快速添加
+  const handleMetadataSelect = useCallback(async (metadata: ModelMetadataItem) => {
     if (!provider) return;
 
     try {
       await createModelMutation.mutateAsync({
         providerId: provider.id,
-        providerModelId: template.id,
-        displayName: template.displayName,
-        contextWindow: template.contextWindow,
-        inputPrice: template.inputPrice,
-        outputPrice: template.outputPrice,
-        capabilities: template.capabilities,
+        providerModelId: metadata.id,
+        displayName: metadata.displayName,
+        contextWindow: metadata.contextWindow,
+        inputPrice: metadata.inputPrice,
+        outputPrice: metadata.outputPrice,
+        capabilities: metadata.capabilities,
       });
       message.success(t('message.modelAdded', { defaultValue: '模型添加成功' }));
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch {
       // 快速添加失败，回退到表单模式并预填充数据
-      console.error('Failed to add model from template:', error);
+      message.warning(t('message.metadataAddFallback', { defaultValue: '快速添加失败，请手动填写' }));
       setShowCustomForm(true);
       form.setFieldsValue({
-        providerModelId: template.id,
-        displayName: template.displayName,
-        contextWindow: template.contextWindow,
-        inputPrice: template.inputPrice,
-        outputPrice: template.outputPrice,
-        capabilities: template.capabilities
-          ? Object.entries(template.capabilities)
+        providerModelId: metadata.id,
+        displayName: metadata.displayName,
+        contextWindow: metadata.contextWindow,
+        inputPrice: metadata.inputPrice,
+        outputPrice: metadata.outputPrice,
+        capabilities: metadata.capabilities
+          ? Object.entries(metadata.capabilities)
               .filter(([, v]) => v)
               .map(([k]) => k)
           : [],
@@ -141,8 +141,8 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
       }
       onSuccess();
       onClose();
-    } catch (error) {
-      console.error('Failed to save model:', error);
+    } catch {
+      message.error(t('message.modelSaveFailed', { defaultValue: '模型保存失败' }));
     }
   }, [provider, isEditMode, editingModel, createModelMutation, updateModelMutation, t, onSuccess, onClose]);
 
@@ -161,7 +161,7 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
           <span>{isEditMode ? t('editModel', { defaultValue: '编辑模型' }) : t('addModel')}</span>
           {!showCustomForm && !isEditMode && (
             <Button type="link" size="small" onClick={handleCustomAdd} style={{ fontSize: 13 }}>
-              {t('template.customAdd', { defaultValue: '自定义模型' })}
+              {t('metadata.customAdd', { defaultValue: '自定义模型' })}
             </Button>
           )}
         </div>
@@ -171,11 +171,11 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
       footer={null}
       width={560}
     >
-      {/* 模板选择模式（仅新增） */}
+      {/* 元数据选择模式（仅新增） */}
       {!showCustomForm && !isEditMode && (
-        <ModelTemplateSelector
-          providerType={provider.providerType}
-          onSelect={handleTemplateSelect}
+        <ModelMetadataSelector
+          providerId={provider.providerType.toLowerCase()}
+          onSelect={handleMetadataSelect}
         />
       )}
 

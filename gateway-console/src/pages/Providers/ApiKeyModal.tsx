@@ -1,5 +1,5 @@
 import { useEffect, useCallback } from 'react';
-import { Modal, Form, Input, InputNumber, Switch, Space, Button } from 'antd';
+import { Modal, Form, Input, InputNumber, Switch, Space, Button, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useCreateProviderApiKey, useUpdateProviderApiKey } from '@/services/query';
 import type { Provider } from '@/types/provider';
@@ -73,8 +73,8 @@ export function ApiKeyModal({ open, provider, editingKey, onClose, onSuccess }: 
         });
       }
       onSuccess();
-    } catch (error) {
-      console.error('Failed to save API Key:', error);
+    } catch {
+      message.error(t('message.apiKeySaveFailed', { defaultValue: 'API Key 保存失败' }));
     }
   }, [provider, editingKey, createMutation, updateMutation, onSuccess]);
 

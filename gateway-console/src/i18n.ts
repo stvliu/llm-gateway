@@ -12,7 +12,7 @@ import zhCNDashboard from './locales/zh-CN/dashboard.json';
 import zhCNProviders from './locales/zh-CN/providers.json';
 import zhCNApiKeyPool from './locales/zh-CN/apiKeyPool.json';
 import zhCNChat from './locales/zh-CN/chat.json';
-import zhCNTemplates from './locales/zh-CN/templates.json';
+import zhCNMetadata from './locales/zh-CN/metadata.json';
 
 // 英文
 import enUSCommon from './locales/en-US/common.json';
@@ -24,7 +24,7 @@ import enUSDashboard from './locales/en-US/dashboard.json';
 import enUSProviders from './locales/en-US/providers.json';
 import enUSApiKeyPool from './locales/en-US/apiKeyPool.json';
 import enUSChat from './locales/en-US/chat.json';
-import enUSTemplates from './locales/en-US/templates.json';
+import enUSMetadata from './locales/en-US/metadata.json';
 
 i18n
   .use(LanguageDetector)
@@ -41,7 +41,7 @@ i18n
         providers: zhCNProviders,
         apiKeyPool: zhCNApiKeyPool,
         chat: zhCNChat,
-        templates: zhCNTemplates,
+        metadata: zhCNMetadata,
       },
       'en-US': {
         common: enUSCommon,
@@ -53,7 +53,7 @@ i18n
         providers: enUSProviders,
         apiKeyPool: enUSApiKeyPool,
         chat: enUSChat,
-        templates: enUSTemplates,
+        metadata: enUSMetadata,
       },
     },
     fallbackLng: 'zh-CN',

@@ -1,0 +1,41 @@
+[
+  {
+    "provider_model_id": "moonshot-v1-8k",
+    "display_name": "Kimi 8K",
+    "context_window": 8192,
+    "input_price": 0.012,
+    "output_price": 0.012,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "moonshot-v1-32k",
+    "display_name": "Kimi 32K",
+    "context_window": 32768,
+    "input_price": 0.024,
+    "output_price": 0.024,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "moonshot-v1-128k",
+    "display_name": "Kimi 128K",
+    "context_window": 131072,
+    "input_price": 0.06,
+    "output_price": 0.06,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  }
+]

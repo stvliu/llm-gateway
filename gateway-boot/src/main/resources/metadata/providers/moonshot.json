@@ -1,0 +1,20 @@
+{
+  "provider_id": "moonshot",
+  "provider_name": "Moonshot Kimi",
+  "provider_type": "MOONSHOT",
+  "provider_config": {
+    "provider_name": "Moonshot",
+    "base_url": "https://api.moonshot.cn",
+    "website_url": "https://moonshot.cn",
+    "api_doc_url": "https://platform.moonshot.cn/docs",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "Moonshot Kimi API，国产长上下文大模型，支持 128K 超长上下文",
+  "icon_url": "https://cdn.example.com/icons/moonshot.png",
+  "tags": [
+    "国内",
+    "长上下文",
+    "高性价比"
+  ]
+}

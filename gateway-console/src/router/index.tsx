@@ -5,11 +5,11 @@ import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Models from '@/pages/Models';
 import Providers from '@/pages/Providers';
-import Templates from '@/pages/Templates';
+import Metadata from '@/pages/Metadata';
 import ApiKeyPool from '@/pages/ApiKeyPool';
 import Users from '@/pages/Users';
 import ApiKeys from '@/pages/ApiKeys';
-import Settings from '@/pages/Settings';
+import ChangePassword from '@/pages/ChangePassword';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -39,8 +39,8 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
       },
       {
-        path: 'templates',
-        element: <PermissionGuard permission={P.TEMPLATE_READ}><Templates /></PermissionGuard>,
+        path: 'metadata',
+        element: <PermissionGuard permission={P.METADATA_READ}><Metadata /></PermissionGuard>,
       },
       {
         path: 'api-key-pool',
@@ -55,8 +55,8 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
       },
       {
-        path: 'settings',
-        element: <PermissionGuard permission={P.SETTINGS_READ}><Settings /></PermissionGuard>,
+        path: 'change-password',
+        element: <ChangePassword />,
       },
     ],
   },

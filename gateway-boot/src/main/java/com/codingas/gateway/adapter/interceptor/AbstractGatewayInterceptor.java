@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.interceptor;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codingas.gateway.common.util.JsonUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -12,8 +12,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
-
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Override
     public int order() {
@@ -42,7 +40,7 @@ public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(
+        response.getWriter().write(JsonUtils.toJson(
                 new ErrorResponse("ACCESS_DENIED", message)));
     }
 
@@ -53,7 +51,7 @@ public abstract class AbstractGatewayInterceptor implements GatewayInterceptor {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(OBJECT_MAPPER.writeValueAsString(
+        response.getWriter().write(JsonUtils.toJson(
                 new ErrorResponse("UNAUTHORIZED", message)));
     }
 

@@ -12,6 +12,7 @@ import com.codingas.gateway.application.provider.dto.TestApiKeyRequestDTO;
 import com.codingas.gateway.application.provider.dto.TestApiKeyResultDTO;
 import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.common.util.JsonUtils;
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
@@ -381,8 +382,7 @@ public class ProviderServiceImpl implements ProviderService {
             if (response.body() != null) {
                 try {
                     String body = response.body().string();
-                    com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                    Map<String, Object> result = mapper.readValue(body, Map.class);
+                    Map<String, Object> result = JsonUtils.toMap(body);
                     List<Map<String, Object>> data = (List<Map<String, Object>>) result.get("data");
                     if (data != null) {
                         for (Map<String, Object> model : data) {
@@ -419,8 +419,7 @@ public class ProviderServiceImpl implements ProviderService {
         body.put("max_tokens", 1);
 
         try {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            String jsonBody = mapper.writeValueAsString(body);
+            String jsonBody = JsonUtils.toJson(body);
 
             Request httpRequest = new Request.Builder()
                     .url(baseUrl + "/v1/messages")

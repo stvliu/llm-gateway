@@ -2,11 +2,12 @@ import {
   DashboardOutlined,
   AppstoreOutlined,
   CloudServerOutlined,
-  CloudDownloadOutlined,
+  DatabaseOutlined,
   ApiOutlined,
   TeamOutlined,
   KeyOutlined,
   SettingOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -44,12 +45,6 @@ export const menuConfig: MenuItemConfig[] = [
         permission: 'provider:read',
       },
       {
-        key: '/templates',
-        icon: <CloudDownloadOutlined />,
-        label: 'menu.templates',
-        permission: 'template:read',
-      },
-      {
         key: '/api-key-pool',
         icon: <ApiOutlined />,
         label: 'menu.apiKeyPool',
@@ -74,12 +69,24 @@ export const menuConfig: MenuItemConfig[] = [
         label: 'menu.apiKeys',
         permission: 'apikey:manage',
       },
+      {
+        key: '/change-password',
+        icon: <LockOutlined />,
+        label: 'menu.changePassword',
+      },
     ],
   },
   {
-    key: '/settings',
+    key: 'system-settings',
     icon: <SettingOutlined />,
-    label: 'menu.settings',
-    permission: 'settings:read',
+    label: 'menu.systemSettings',
+    children: [
+      {
+        key: '/metadata',
+        icon: <DatabaseOutlined />,
+        label: 'menu.metadata',
+        permission: 'metadata:read',
+      },
+    ],
   },
 ];

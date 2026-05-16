@@ -1,0 +1,20 @@
+{
+  "provider_id": "minimax",
+  "provider_name": "MiniMax",
+  "provider_type": "MINIMAX",
+  "provider_config": {
+    "provider_name": "MiniMax",
+    "base_url": "https://api.minimax.chat",
+    "website_url": "https://minimaxi.com",
+    "api_doc_url": "https://platform.minimaxi.com/document",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "MiniMax API，国产大模型，支持超长上下文和多模态",
+  "icon_url": "https://cdn.example.com/icons/minimax.png",
+  "tags": [
+    "国内",
+    "长上下文",
+    "多模态"
+  ]
+}
