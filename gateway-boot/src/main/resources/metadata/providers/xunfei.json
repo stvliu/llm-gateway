@@ -1,0 +1,21 @@
+{
+  "provider_id": "xunfei",
+  "provider_name": "讯飞星火",
+  "provider_type": "XUNFEI",
+  "provider_config": {
+    "provider_name": "讯飞星火",
+    "base_url": "https://spark-api-open.xf-yun.com",
+    "website_url": "https://xinghuo.xfyun.cn",
+    "api_doc_url": "https://www.xfyun.cn/doc/spark",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "讯飞星火认知大模型，科大讯飞自研大语言模型，支持多模态和插件",
+  "icon_url": "https://cdn.example.com/icons/xunfei.png",
+  "tags": [
+    "国内",
+    "讯飞",
+    "多模态",
+    "语音交互"
+  ]
+}

@@ -1,9 +1,7 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.MediaType;
@@ -21,10 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
  */
 @Slf4j
 @RestControllerAdvice
-@RequiredArgsConstructor
 public class ApiResponseWrapperAdvice implements ResponseBodyAdvice<Object> {
-
-    private final ObjectMapper objectMapper;
 
     /**
      * 判断是否需要包装响应
@@ -97,13 +92,8 @@ public class ApiResponseWrapperAdvice implements ResponseBodyAdvice<Object> {
 
         // String 类型需要特殊处理，因为 StringHttpMessageConverter 会直接写入
         if (body instanceof String) {
-            try {
-                response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-                return objectMapper.writeValueAsString(ApiResponse.success(body));
-            } catch (JsonProcessingException e) {
-                log.error("Failed to serialize string response", e);
-                throw new RuntimeException("Failed to serialize response", e);
-            }
+            response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
+            return JsonUtils.toJson(ApiResponse.success(body));
         }
 
         // 其他类型正常包装

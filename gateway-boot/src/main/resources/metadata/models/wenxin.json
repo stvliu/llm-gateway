@@ -1,0 +1,54 @@
+[
+  {
+    "provider_model_id": "ernie-4.0-8k",
+    "display_name": "ERNIE 4.0 8K",
+    "context_window": 8192,
+    "input_price": 0.03,
+    "output_price": 0.06,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "ernie-4.0-turbo-8k",
+    "display_name": "ERNIE 4.0 Turbo 8K",
+    "context_window": 8192,
+    "input_price": 0.012,
+    "output_price": 0.012,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "ernie-3.5-8k",
+    "display_name": "ERNIE 3.5 8K",
+    "context_window": 8192,
+    "input_price": 0.004,
+    "output_price": 0.008,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "ernie-speed-8k",
+    "display_name": "ERNIE Speed 8K",
+    "context_window": 8192,
+    "input_price": 0.001,
+    "output_price": 0.002,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": false,
+      "streaming": true
+    }
+  }
+]

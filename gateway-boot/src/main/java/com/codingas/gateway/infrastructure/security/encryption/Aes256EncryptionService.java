@@ -61,7 +61,12 @@ public class Aes256EncryptionService implements EncryptionService {
         // 优先级: 1. Spring 配置
         String keySource = encryptionKey;
 
-        if (keySource == null || keySource.isBlank()) {
+        // 处理 Spring 属性占位符未解析的情况
+        if (keySource != null && (keySource.startsWith("${") || keySource.isBlank())) {
+            keySource = null;
+        }
+
+        if (keySource == null) {
             // 检查是否为开发环境
             if (!isDevelopmentEnvironment()) {
                 // 生产环境必须配置加密密钥
@@ -82,12 +87,28 @@ public class Aes256EncryptionService implements EncryptionService {
                 throw new IllegalStateException("Failed to generate encryption key", e);
             }
         } else {
-            byte[] keyBytes = Base64.getDecoder().decode(keySource);
-            if (keyBytes.length != KEY_SIZE / 8) {
-                throw new IllegalStateException("Encryption key must be 256 bits (32 bytes) when decoded");
+            try {
+                byte[] keyBytes = Base64.getDecoder().decode(keySource);
+                if (keyBytes.length != KEY_SIZE / 8) {
+                    throw new IllegalStateException("Encryption key must be 256 bits (32 bytes) when decoded");
+                }
+                this.secretKey = new SecretKeySpec(keyBytes, "AES");
+                log.info("Aes256EncryptionService initialized with AES-256-GCM");
+            } catch (IllegalArgumentException e) {
+                // Base64 解码失败，检查是否为开发环境
+                if (!isDevelopmentEnvironment()) {
+                    throw new IllegalStateException("Invalid encryption key format: " + e.getMessage(), e);
+                }
+                log.warn("Invalid encryption key format, generating temporary key for development: {}", e.getMessage());
+                try {
+                    KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+                    keyGen.init(KEY_SIZE, secureRandom);
+                    this.secretKey = new SecretKeySpec(keyGen.generateKey().getEncoded(), "AES");
+                    log.warn("Using temporary encryption key - encrypted data will be lost after restart!");
+                } catch (Exception ex) {
+                    throw new IllegalStateException("Failed to generate encryption key", ex);
+                }
             }
-            this.secretKey = new SecretKeySpec(keyBytes, "AES");
-            log.info("Aes256EncryptionService initialized with AES-256-GCM");
         }
     }
 

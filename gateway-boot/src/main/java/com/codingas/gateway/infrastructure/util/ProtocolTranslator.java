@@ -2,8 +2,7 @@ package com.codingas.gateway.infrastructure.util;
 
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -17,10 +16,8 @@ import java.util.*;
 @Slf4j
 public class ProtocolTranslator {
 
-    private final ObjectMapper objectMapper;
-
     public ProtocolTranslator() {
-        this.objectMapper = new ObjectMapper();
+        // 无需初始化 ObjectMapper，使用 JsonUtils 统一处理
     }
 
     /**
@@ -354,23 +351,15 @@ public class ProtocolTranslator {
         if (json == null || json.isEmpty()) {
             return new HashMap<>();
         }
-        try {
-            return objectMapper.readValue(json, Map.class);
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to parse JSON string: {}", json);
-            return new HashMap<>();
-        }
+        Map<String, Object> result = JsonUtils.toMap(json);
+        return result != null ? result : new HashMap<>();
     }
 
     private String toJsonString(Object obj) {
         if (obj == null) {
             return "{}";
         }
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (JsonProcessingException e) {
-            log.warn("Failed to convert object to JSON: {}", obj);
-            return "{}";
-        }
+        String result = JsonUtils.toJson(obj);
+        return result != null ? result : "{}";
     }
 }

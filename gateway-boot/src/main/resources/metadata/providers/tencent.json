@@ -1,0 +1,21 @@
+{
+  "provider_id": "tencent",
+  "provider_name": "腾讯混元",
+  "provider_type": "TENCENT",
+  "provider_config": {
+    "provider_name": "腾讯混元",
+    "base_url": "https://hunyuan.tencentcloudapi.com",
+    "website_url": "https://cloud.tencent.com/product/hunyuan",
+    "api_doc_url": "https://cloud.tencent.com/document/product/1729",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "腾讯混元大模型，腾讯自研大语言模型，支持长上下文和多模态",
+  "icon_url": "https://cdn.example.com/icons/tencent.png",
+  "tags": [
+    "国内",
+    "腾讯",
+    "多模态",
+    "长上下文"
+  ]
+}

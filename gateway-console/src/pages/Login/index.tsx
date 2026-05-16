@@ -9,21 +9,22 @@ import { isServiceUnavailableError } from '@/services/api/client';
 import styles from './style.module.css';
 
 export default function Login() {
-  const { t, i18n } = useTranslation('login');
+  const { t } = useTranslation('login');
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { setUser, setToken } = useAuthStore();
 
-  const from = (location.state as { from?: string })?.from;
+  const from = (location.state as { from?: string })?.from
+    || new URLSearchParams(location.search).get('from');
 
   const handleLanguageChange = (lng: string) => {
     localStorage.setItem('i18nextLng', lng);
     window.location.reload();
   };
 
-  const handleSubmit = async (values: LoginForm) => {
+  const handleSubmit = async (values: { username: string; password: string; rememberMe: boolean }) => {
     setLoading(true);
     setError(null);
 
@@ -45,6 +46,9 @@ export default function Login() {
     } catch (err: unknown) {
       if (isServiceUnavailableError(err)) {
         setError(t('error.serviceUnavailable'));
+      } else if (err instanceof Error && err.message) {
+        // 优先使用后端返回的具体错误消息（如"用户已被禁用"）
+        setError(err.message);
       } else {
         setError(t('error.message'));
       }
@@ -67,7 +71,7 @@ export default function Login() {
             </div>
           )}
 
-          <Form<LoginForm>
+          <Form<{ username: string; password: string; rememberMe: boolean }>
             layout="vertical"
             onFinish={handleSubmit}
             initialValues={{ rememberMe: true }}

@@ -6,4 +6,4 @@ export { userApi } from './user';
 export { apiKeyApi } from './apiKey';
 export { providerApiKeyApi } from './providerApiKey';
 export { tokenLimitApi } from './tokenLimit';
-export { templateApi } from './template';
+export { providerMetadataApi, modelMetadataApi, metadataSyncApi } from './metadata';

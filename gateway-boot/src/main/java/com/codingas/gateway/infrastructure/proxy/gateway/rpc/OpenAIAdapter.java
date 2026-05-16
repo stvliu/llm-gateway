@@ -5,7 +5,7 @@ import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -32,14 +32,12 @@ public class OpenAIAdapter implements LLMAdapter {
     private final String baseUrl;
     private final String apiKey;
     private final int timeoutSeconds;
-    private final ObjectMapper objectMapper;
 
     public OpenAIAdapter(OkHttpClient httpClient, String baseUrl, String apiKey, int timeoutSeconds) {
         this.httpClient = httpClient;
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
-        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -59,7 +57,7 @@ public class OpenAIAdapter implements LLMAdapter {
         Map<String, Object> requestBody = buildRequestBody(request);
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            String jsonBody = JsonUtils.toJson(requestBody);
 
             Request.Builder requestBuilder = new Request.Builder()
                     .url(getChatCompletionsUrl())
@@ -97,7 +95,7 @@ public class OpenAIAdapter implements LLMAdapter {
         Map<String, Object> requestBody = buildRequestBody(request);
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            String jsonBody = JsonUtils.toJson(requestBody);
 
             Request.Builder requestBuilder = new Request.Builder()
                     .url(getChatCompletionsUrl())
@@ -238,7 +236,10 @@ public class OpenAIAdapter implements LLMAdapter {
     @SuppressWarnings("unchecked")
     private LLMResponse parseResponse(String responseBody) {
         try {
-            Map<String, Object> response = objectMapper.readValue(responseBody, Map.class);
+            Map<String, Object> response = JsonUtils.toMap(responseBody);
+            if (response == null) {
+                throw new RuntimeException("Empty response body");
+            }
             return LLMResponse.builder()
                     .provider(PROVIDER_CODE)
                     .id((String) response.get("id"))
@@ -246,12 +247,24 @@ public class OpenAIAdapter implements LLMAdapter {
                     .created(response.get("created") != null ? ((Number) response.get("created")).longValue() : null)
                     .content(parseContent(response))
                     .usage(parseUsage(response))
-                    .finishReason((String) ((List<Map<String, Object>>) response.get("choices")).get(0).get("finish_reason"))
+                    .finishReason(extractFinishReason(response))
                     .stream(false)
                     .build();
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse OpenAI response", e);
         }
+    }
+
+    /**
+     * 安全地提取 finish_reason
+     */
+    @SuppressWarnings("unchecked")
+    private String extractFinishReason(Map<String, Object> response) {
+        var choices = (List<Map<String, Object>>) response.get("choices");
+        if (choices == null || choices.isEmpty()) {
+            return null;
+        }
+        return (String) choices.get(0).get("finish_reason");
     }
 
     @SuppressWarnings("unchecked")

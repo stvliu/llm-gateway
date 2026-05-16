@@ -165,11 +165,16 @@ instance.interceptors.response.use(
       }
     }
 
-    // 处理 401 未授权
-    if ((error as AxiosError).response?.status === 401) {
+    // 处理 401 未授权（跳过登录请求，避免登录失败时误触发跳转）
+    const axiosError = error as AxiosError;
+    const isLoginRequest = axiosError.config?.url?.includes('/auth/login');
+    if (axiosError.response?.status === 401 && !isLoginRequest) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      window.location.href = '/login';
+      // 保留来源路径信息，登录成功后可跳回原页面
+      const from = window.location.pathname;
+      const target = from !== '/login' ? `/login?from=${encodeURIComponent(from)}` : '/login';
+      window.location.href = target;
     }
 
     return Promise.reject(error);

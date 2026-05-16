@@ -2,7 +2,7 @@ export * from './useProviders';
 export * from './useModels';
 export * from './useUsers';
 export * from './useApiKeys';
-export * from './useTemplates';
+export * from './useMetadata';
 export * from './useProviderApiKeys';
 export * from './useTokenLimits';
 export * from './useStats';

@@ -5,7 +5,7 @@ import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -28,7 +28,6 @@ public class AnthropicAdapter implements LLMAdapter {
     private static final String MESSAGES_URL = "/v1/messages";
 
     private final OkHttpClient httpClient;
-    private final ObjectMapper objectMapper;
     private final String baseUrl;
     private final String apiKey;
     private final String version;
@@ -40,7 +39,6 @@ public class AnthropicAdapter implements LLMAdapter {
         this.apiKey = apiKey;
         this.version = version != null ? version : "2023-06-01";
         this.timeoutSeconds = timeoutSeconds;
-        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -72,7 +70,7 @@ public class AnthropicAdapter implements LLMAdapter {
         Map<String, Object> requestBody = buildMessagesRequestBody(request);
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            String jsonBody = JsonUtils.toJson(requestBody);
 
             Request httpRequest = new Request.Builder()
                     .url(baseUrl + MESSAGES_URL)
@@ -106,7 +104,7 @@ public class AnthropicAdapter implements LLMAdapter {
         Map<String, Object> requestBody = buildMessagesRequestBody(request);
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(requestBody);
+            String jsonBody = JsonUtils.toJson(requestBody);
 
             Request httpRequest = new Request.Builder()
                     .url(baseUrl + MESSAGES_URL)
@@ -179,7 +177,7 @@ public class AnthropicAdapter implements LLMAdapter {
         body.put("max_tokens", 1);
 
         try {
-            String jsonBody = objectMapper.writeValueAsString(body);
+            String jsonBody = JsonUtils.toJson(body);
             Request request = new Request.Builder()
                     .url(baseUrl + MESSAGES_URL)
                     .header("Authorization", "Bearer " + apiKey)
@@ -245,7 +243,10 @@ public class AnthropicAdapter implements LLMAdapter {
     @SuppressWarnings("unchecked")
     private LLMResponse parseResponse(String responseBody) {
         try {
-            Map<String, Object> response = objectMapper.readValue(responseBody, Map.class);
+            Map<String, Object> response = JsonUtils.toMap(responseBody);
+            if (response == null) {
+                throw new RuntimeException("Empty response body");
+            }
             return LLMResponse.builder()
                     .provider(PROVIDER_CODE)
                     .id((String) response.get("id"))
@@ -261,7 +262,7 @@ public class AnthropicAdapter implements LLMAdapter {
     }
 
     @SuppressWarnings("unchecked")
-    private LLMResponse.Content parseContent(Map<String, Object> response) throws com.fasterxml.jackson.core.JsonProcessingException {
+    private LLMResponse.Content parseContent(Map<String, Object> response) {
         var content = (List<Map<String, Object>>) response.get("content");
         if (content == null || content.isEmpty()) {
             return null;
@@ -282,7 +283,7 @@ public class AnthropicAdapter implements LLMAdapter {
                     toolCalls = new java.util.ArrayList<>();
                 }
                 String toolName = (String) block.get("name");
-                String toolInputJson = objectMapper.writeValueAsString(block.get("input"));
+                String toolInputJson = JsonUtils.toJson(block.get("input"));
                 String toolId = (String) block.get("id");
 
                 toolCalls.add(LLMResponse.ToolCall.builder()

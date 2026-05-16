@@ -1,0 +1,67 @@
+[
+  {
+    "provider_model_id": "hunyuan-lite",
+    "display_name": "混元 Lite",
+    "context_window": 256000,
+    "input_price": 0.0,
+    "output_price": 0.0,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "hunyuan-standard",
+    "display_name": "混元 Standard",
+    "context_window": 32000,
+    "input_price": 0.004,
+    "output_price": 0.012,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "hunyuan-pro",
+    "display_name": "混元 Pro",
+    "context_window": 32000,
+    "input_price": 0.004,
+    "output_price": 0.012,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "hunyuan-turbo",
+    "display_name": "混元 Turbo",
+    "context_window": 32000,
+    "input_price": 0.015,
+    "output_price": 0.06,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "hunyuan-vision",
+    "display_name": "混元 Vision",
+    "context_window": 8192,
+    "input_price": 0.018,
+    "output_price": 0.018,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": false,
+      "streaming": true
+    }
+  }
+]

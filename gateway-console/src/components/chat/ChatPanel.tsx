@@ -93,7 +93,7 @@ export function ChatPanel() {
           },
         }
       );
-    } catch (error) {
+    } catch {
       updateLastMessage(t('error.unexpected'));
       setLoading(false);
     }

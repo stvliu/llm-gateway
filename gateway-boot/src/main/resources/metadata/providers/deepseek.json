@@ -1,0 +1,21 @@
+{
+  "provider_id": "deepseek",
+  "provider_name": "DeepSeek",
+  "provider_type": "DEEPSEEK",
+  "provider_config": {
+    "provider_name": "DeepSeek",
+    "base_url": "https://api.deepseek.com",
+    "website_url": "https://deepseek.com",
+    "api_doc_url": "https://platform.deepseek.com/docs",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "DeepSeek API，高性价比国产大模型，支持对话、代码生成和深度推理",
+  "icon_url": "https://cdn.example.com/icons/deepseek.png",
+  "tags": [
+    "国内",
+    "高性价比",
+    "代码",
+    "推理"
+  ]
+}

@@ -1,0 +1,80 @@
+[
+  {
+    "provider_model_id": "qwen-max",
+    "display_name": "Qwen Max",
+    "context_window": 32768,
+    "input_price": 0.02,
+    "output_price": 0.06,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "qwen-max-latest",
+    "display_name": "Qwen Max Latest",
+    "context_window": 131072,
+    "input_price": 0.02,
+    "output_price": 0.06,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "qwen-plus",
+    "display_name": "Qwen Plus",
+    "context_window": 131072,
+    "input_price": 0.0008,
+    "output_price": 0.002,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "qwen-turbo",
+    "display_name": "Qwen Turbo",
+    "context_window": 131072,
+    "input_price": 0.0003,
+    "output_price": 0.0006,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "qwen-vl-max",
+    "display_name": "Qwen VL Max",
+    "context_window": 32768,
+    "input_price": 0.02,
+    "output_price": 0.02,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": false,
+      "streaming": true
+    }
+  },
+  {
+    "provider_model_id": "qwen-vl-plus",
+    "display_name": "Qwen VL Plus",
+    "context_window": 32768,
+    "input_price": 0.0008,
+    "output_price": 0.0008,
+    "source": "BUILTIN",
+    "capabilities": {
+      "vision": true,
+      "function_calling": false,
+      "streaming": true
+    }
+  }
+]

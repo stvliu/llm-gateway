@@ -1,11 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Typography, Spin, Input, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useTemplates } from '@/services/query';
+import { useProviderMetadataList } from '@/services/query/useMetadata';
 import { providerApi } from '@/services/api/provider';
 import type { CreateProviderRequest, ProviderType } from '@/types/provider';
-import type { ProviderTemplate, ModelConfig } from '@/types/template';
-import type { NestedModelRequest } from '@/types/provider';
+import type { ProviderMetadata } from '@/types/metadata';
 import type { ProviderTypeOption } from '@/types/api';
 
 const { Text } = Typography;
@@ -13,30 +12,35 @@ const { Text } = Typography;
 interface BasicInfoStepProps {
   basicInfo: CreateProviderRequest | null;
   onChange: (info: CreateProviderRequest | null) => void;
-  onTemplateLoad: (template: ProviderTemplate | null) => void;
-  onModelsChange: (models: NestedModelRequest[]) => void;
+  onMetadataLoad: (metadata: ProviderMetadata | null) => void;
+  onSelectedModelIdsChange: (modelIds: string[]) => void;
 }
 
 /**
  * 基本信息步骤组件
- * 供应商类型下拉框在第一行，选择后自动从模板填充其他字段
+ * 供应商类型下拉框在第一行，选择后自动从元数据填充其他字段
+ * 所有字段均可手动编辑修改
  */
 export function BasicInfoStep({
   basicInfo,
   onChange,
-  onTemplateLoad,
-  onModelsChange,
+  onMetadataLoad,
+  onSelectedModelIdsChange,
 }: BasicInfoStepProps) {
   const { t } = useTranslation('providers');
-  const [loadingTemplate, setLoadingTemplate] = useState(false);
+  const [loadingMetadata, setLoadingMetadata] = useState(false);
   const [providerTypes, setProviderTypes] = useState<ProviderTypeOption[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
 
-  // 查询模板数据
-  const { data: templatesData } = useTemplates({
-    type: 'OFFICIAL',
-    limit: 100,
-  });
+  // 使用 ref 保持最新的 basicInfo 引用，避免 handleFieldChange 因 basicInfo 变化而重建
+  const basicInfoRef = useRef(basicInfo);
+  basicInfoRef.current = basicInfo;
+
+  // 追踪是否已完成初始元数据填充
+  const initialFillDoneRef = useRef(false);
+
+  // 查询供应商元数据列表
+  const { data: metadataList } = useProviderMetadataList();
 
   // 获取供应商类型列表
   useEffect(() => {
@@ -45,7 +49,6 @@ export function BasicInfoStep({
         const types = await providerApi.getProviderTypes();
         setProviderTypes(types);
       } catch {
-        // 如果 API 失败，使用默认列表
         setProviderTypes([
           { value: 'OPENAI', label: 'OpenAI' },
           { value: 'ANTHROPIC', label: 'Anthropic' },
@@ -82,12 +85,11 @@ export function BasicInfoStep({
         models: [],
       });
     }
-  }, [basicInfo, onChange]);
+  }, []); // 仅在挂载时初始化
 
-  // 根据供应商类型自动填充基本信息
-  const autoFillFromTemplate = useCallback((providerType: ProviderType) => {
-    if (!templatesData?.items) {
-      // 模板数据未加载，只更新类型
+  // 根据供应商类型自动填充基本信息（定义在 useEffect 之前，避免提升问题）
+  const autoFillFromMetadata = useCallback((providerType: ProviderType) => {
+    if (!metadataList) {
       onChange({
         providerName: '',
         providerType,
@@ -100,19 +102,30 @@ export function BasicInfoStep({
       return;
     }
 
-    // 查找该供应商类型的官方模板
-    const template = templatesData.items.find(
-      (t: ProviderTemplate) => t.providerType === providerType
+    // 查找该供应商类型的官方元数据
+    const metadata = metadataList.find(
+      (m: ProviderMetadata) => m.providerType === providerType
     );
 
-    if (template) {
-      onTemplateLoad(template);
+    if (metadata) {
+      onMetadataLoad(metadata);
 
-      const config = template.providerConfig as Record<string, unknown>;
+      // 解析 providerConfig（后端返回的是 JSON 字符串）
+      let config: Record<string, unknown> = {};
+      if (metadata.providerConfig) {
+        if (typeof metadata.providerConfig === 'string') {
+          try {
+            config = JSON.parse(metadata.providerConfig as string);
+          } catch (e) {
+            console.error('[BasicInfoStep] Failed to parse providerConfig:', e);
+          }
+        } else if (typeof metadata.providerConfig === 'object') {
+          config = metadata.providerConfig as Record<string, unknown>;
+        }
+      }
 
-      // 从模板填充基本信息
       const newInfo: CreateProviderRequest = {
-        providerName: String(config.provider_name || template.templateName),
+        providerName: String(config.provider_name || metadata.providerName),
         providerType,
         baseUrl: String(config.base_url || ''),
         websiteUrl: String(config.website_url || ''),
@@ -122,27 +135,11 @@ export function BasicInfoStep({
       };
 
       onChange(newInfo);
-
-      // 从模板提取模型配置
-      if (template.modelsConfig && template.modelsConfig.length > 0) {
-        const models: NestedModelRequest[] = template.modelsConfig.map((m: ModelConfig) => ({
-          providerModelId: m.provider_model_id,
-          displayName: m.display_name,
-          contextWindow: m.context_window,
-          inputPrice: m.input_price,
-          outputPrice: m.output_price,
-          capabilities: m.capabilities,
-        }));
-        onModelsChange(models);
-      } else {
-        onModelsChange([]);
-      }
-
-      setLoadingTemplate(false);
+      onSelectedModelIdsChange([]);
+      setLoadingMetadata(false);
     } else {
-      // 没有找到模板，只更新类型
-      onTemplateLoad(null);
-      onModelsChange([]);
+      onMetadataLoad(null);
+      onSelectedModelIdsChange([]);
       onChange({
         providerName: '',
         providerType,
@@ -153,31 +150,44 @@ export function BasicInfoStep({
         models: [],
       });
     }
-  }, [templatesData, onChange, onTemplateLoad, onModelsChange, t]);
+  }, [metadataList, onChange, onMetadataLoad, onSelectedModelIdsChange]);
+
+  // 当元数据列表加载完成后，自动填充当前选中的供应商类型（仅执行一次）
+  useEffect(() => {
+    if (
+      metadataList &&
+      metadataList.length > 0 &&
+      basicInfo?.providerType &&
+      !initialFillDoneRef.current
+    ) {
+      initialFillDoneRef.current = true;
+      autoFillFromMetadata(basicInfo.providerType as ProviderType);
+    }
+  }, [metadataList, basicInfo?.providerType, autoFillFromMetadata]);
 
   // 处理供应商类型变更
   const handleProviderTypeChange = useCallback((newType: ProviderType) => {
-    // 自动填充
-    autoFillFromTemplate(newType);
-  }, [autoFillFromTemplate]);
+    autoFillFromMetadata(newType);
+  }, [autoFillFromMetadata]);
 
-  // 处理字段变更
+  // 处理字段变更（使用 ref 保持回调稳定，避免 Input 因回调重建而失去焦点）
   const handleFieldChange = useCallback((field: keyof CreateProviderRequest, value: string) => {
-    if (basicInfo) {
-      onChange({ ...basicInfo, [field]: value });
+    const current = basicInfoRef.current;
+    if (current) {
+      onChange({ ...current, [field]: value });
     }
-  }, [onChange, basicInfo]);
+  }, [onChange]);
 
   return (
     <div>
       {/* 加载提示 */}
-      {(loadingTemplate || loadingTypes) && (
+      {(loadingMetadata || loadingTypes) && (
         <div style={{ textAlign: 'center', padding: 8, marginBottom: 16 }}>
           <Spin size="small" />
           <Text type="secondary" style={{ marginLeft: 8 }}>
             {loadingTypes
               ? t('template.loadingTypes', { defaultValue: '正在加载供应商类型...' })
-              : t('template.loading', { defaultValue: '正在加载模板数据...' })}
+              : t('template.loading', { defaultValue: '正在加载元数据...' })}
           </Text>
         </div>
       )}
@@ -192,7 +202,7 @@ export function BasicInfoStep({
             value={basicInfo?.providerType || 'OPENAI'}
             onChange={(value) => handleProviderTypeChange(value as ProviderType)}
             style={{ width: '100%' }}
-            disabled={loadingTemplate || loadingTypes}
+            disabled={loadingMetadata || loadingTypes}
             options={providerTypes.map(opt => ({
               value: opt.value,
               label: opt.label,

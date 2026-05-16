@@ -5,12 +5,14 @@
     "userCenter": "用户中心",
     "providers": "供应商",
     "models": "模型",
+    "metadata": "元数据",
     "templates": "供应商模板",
     "apiKeyPool": "APIKey 资源池",
     "users": "用户管理",
     "apiKeys": "API Key",
     "myApiKeys": "我的 API Key",
-    "settings": "系统设置"
+    "changePassword": "更改密码",
+    "systemSettings": "系统设置"
   },
   "app": {
     "title": "LLM Gateway",
@@ -18,7 +20,7 @@
   },
   "actions": {
     "label": "操作",
-    "add": "新增",
+    "add": "添加",
     "edit": "编辑",
     "delete": "删除",
     "save": "保存",
@@ -92,6 +94,13 @@
   },
   "settings": {
     "title": "个人设置"
+  },
+  "changePassword": {
+    "title": "更改密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认新密码",
+    "passwordMismatch": "两次输入的密码不一致"
   },
   "drawer": {
     "title": {

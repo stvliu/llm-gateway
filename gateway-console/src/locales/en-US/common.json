@@ -5,12 +5,14 @@
     "userCenter": "User Center",
     "providers": "Providers",
     "models": "Models",
+    "metadata": "Metadata",
     "templates": "Provider Templates",
     "apiKeyPool": "APIKey Pool",
     "users": "Users",
     "apiKeys": "API Keys",
     "myApiKeys": "My API Keys",
-    "settings": "Settings"
+    "changePassword": "Change Password",
+    "systemSettings": "System Settings"
   },
   "app": {
     "title": "LLM Gateway",
@@ -92,6 +94,13 @@
   },
   "settings": {
     "title": "Settings"
+  },
+  "changePassword": {
+    "title": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "passwordMismatch": "Passwords do not match"
   },
   "drawer": {
     "title": {
