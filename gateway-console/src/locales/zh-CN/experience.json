@@ -1,0 +1,40 @@
+{
+  "config": {
+    "title": "配置",
+    "providerType": "供应商类型",
+    "selectProvider": "选择供应商",
+    "apiKey": "API Key",
+    "selectApiKey": "选择 API Key",
+    "defaultKey": "默认",
+    "apiKeyPlaceholder": "输入 API Key",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "可选，使用默认值",
+    "model": "模型",
+    "selectModel": "选择模型",
+    "testConnection": "测试连接",
+    "testing": "测试中...",
+    "testSuccess": "连接成功",
+    "testFailed": "连接失败",
+    "testError": "测试出错",
+    "testRequired": "请先填写供应商类型和 API Key"
+  },
+  "chat": {
+    "title": "对话",
+    "clear": "清空",
+    "empty": "开始对话以体验模型效果"
+  },
+  "input": {
+    "placeholder": "输入消息...",
+    "send": "发送",
+    "stop": "停止",
+    "hint": "按 Enter 发送，Shift+Enter 换行"
+  },
+  "stats": {
+    "promptTokens": "输入 Token",
+    "completionTokens": "输出 Token",
+    "totalTokens": "总计"
+  },
+  "errors": {
+    "noProvider": "请选择供应商"
+  }
+}

@@ -4,11 +4,15 @@ import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyCreateRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyQueryRequest;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyResponse;
 import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUpdateRequest;
+import com.codingas.gateway.application.gatewayapikey.dto.ApiKeyUsageResponse;
 import com.codingas.gateway.application.gatewayapikey.ApiKeyService;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.Instant;
+import java.util.List;
 
 /**
  * API Key 管理控制器
@@ -31,6 +35,25 @@ public class ApiKeyController {
     }
 
     /**
+     * 查询 API Key 列表
+     */
+    @GetMapping
+    public PageResponse<ApiKeyResponse> query(@ModelAttribute ApiKeyQueryRequest request) {
+        return apiKeyService.query(request);
+    }
+
+    /**
+     * 批量获取 API Key 用量统计
+     */
+    @GetMapping(path = "/stats")
+    public List<ApiKeyUsageResponse> getUsageBatch(
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate,
+            @RequestParam(required = false) Long userId) {
+        return apiKeyService.getUsageBatch(startDate, endDate, userId);
+    }
+
+    /**
      * 获取 API Key 详情
      */
     @GetMapping("/{id}")
@@ -39,11 +62,14 @@ public class ApiKeyController {
     }
 
     /**
-     * 查询 API Key 列表
+     * 获取单个 API Key 用量统计
      */
-    @GetMapping
-    public PageResponse<ApiKeyResponse> query(@ModelAttribute ApiKeyQueryRequest request) {
-        return apiKeyService.query(request);
+    @GetMapping("/{id}/stats")
+    public ApiKeyUsageResponse getUsage(
+            @PathVariable Long id,
+            @RequestParam(required = false) Instant startDate,
+            @RequestParam(required = false) Instant endDate) {
+        return apiKeyService.getUsage(id, startDate, endDate);
     }
 
     /**

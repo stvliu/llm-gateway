@@ -7,6 +7,8 @@ import {
   Empty,
   Spin,
   theme,
+  Tooltip,
+  message,
 } from 'antd';
 import {
   PlusOutlined,
@@ -51,7 +53,7 @@ export function ProviderApiKeysTab({ provider }: ProviderApiKeysTabProps) {
   // Mutations
   const deleteKeyMutation = useDeleteProviderApiKey();
 
-  const keys = keysData?.keys || [];
+  const keys = useMemo(() => keysData?.keys || [], [keysData?.keys]);
 
   // 按默认和优先级排序
   const sortedKeys = useMemo(() => {
@@ -87,6 +89,13 @@ export function ProviderApiKeysTab({ provider }: ProviderApiKeysTabProps) {
     setApiKeyModalOpen(false);
     setEditingKey(null);
   }, []);
+
+  // 测试连通性提示（保存的 Key 无法直接测试）
+  const handleTestKey = useCallback(() => {
+    // 已保存的 Key 无法直接测试，因为后端不返回完整的 API Key
+    // 用户需要在编辑时测试或使用创建向导测试
+    message.info(t('test.testInEdit', { defaultValue: '请点击编辑按钮，输入 API Key 后测试连通性' }));
+  }, [t]);
 
   // 无供应商
   if (!provider) {
@@ -175,21 +184,29 @@ export function ProviderApiKeysTab({ provider }: ProviderApiKeysTabProps) {
                   <span style={{ fontSize: 12, color: token.colorTextSecondary }}>
                     {t('provider.priority', { defaultValue: '优先级' })}: {key.priority || 100}
                   </span>
-                  <>
-                      <Button
-                        type="text"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditKey(key)}
-                      />
-                      <Button
-                          type="text"
-                          size="small"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => handleDeleteKey(key.id)}
-                        />
-                    </>
+                  {/* 测试按钮 */}
+                  <Tooltip title={t('test.testInEditTooltip', { defaultValue: '测试连通性（需在编辑时进行）' })}>
+                    <Button
+                      type="text"
+                      size="small"
+                      icon={<ApiOutlined />}
+                      onClick={handleTestKey}
+                      disabled={key.state !== 'ACTIVE'}
+                    />
+                  </Tooltip>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<EditOutlined />}
+                    onClick={() => handleEditKey(key)}
+                  />
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleDeleteKey(key.id)}
+                  />
                 </Space>
               </div>
             </Card>

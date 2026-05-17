@@ -10,6 +10,7 @@ import ApiKeyPool from '@/pages/ApiKeyPool';
 import Users from '@/pages/Users';
 import ApiKeys from '@/pages/ApiKeys';
 import ChangePassword from '@/pages/ChangePassword';
+import Experience from '@/pages/Experience';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -53,6 +54,10 @@ export const router = createBrowserRouter([
       {
         path: 'api-keys',
         element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
+      },
+      {
+        path: 'experience',
+        element: <Experience />,
       },
       {
         path: 'change-password',

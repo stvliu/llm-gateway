@@ -8,6 +8,7 @@ import {
   KeyOutlined,
   SettingOutlined,
   LockOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -49,6 +50,11 @@ export const menuConfig: MenuItemConfig[] = [
         icon: <ApiOutlined />,
         label: 'menu.apiKeyPool',
         permission: 'apikey-pool:read',
+      },
+      {
+        key: '/experience',
+        icon: <ExperimentOutlined />,
+        label: 'menu.experience',
       },
     ],
   },

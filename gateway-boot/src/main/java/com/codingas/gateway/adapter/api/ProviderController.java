@@ -1,12 +1,12 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
+import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
 import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
-import com.codingas.gateway.application.provider.dto.TestApiKeyRequestDTO;
-import com.codingas.gateway.application.provider.dto.TestApiKeyResultDTO;
 import com.codingas.gateway.application.provider.ProviderService;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.enums.ProviderType;
@@ -106,13 +106,19 @@ public class ProviderController {
     }
 
     /**
-     * 测试 API Key 连通性
+     * 测试连通性
      *
-     * @param request 测试请求（包含 providerType、baseUrl、apiKey）
+     * <p>执行分层连通性测试：</p>
+     * <ul>
+     *   <li>Level 1：认证验证（获取模型列表或最小请求）</li>
+     *   <li>Level 2：模型可用性验证（发送最小 chat 请求）</li>
+     * </ul>
+     *
+     * @param request 测试请求
      * @return 测试结果
      */
-    @PostMapping("/test-api-key")
-    public TestApiKeyResultDTO testApiKey(@Valid @RequestBody TestApiKeyRequestDTO request) {
-        return providerService.testApiKey(request);
+    @PostMapping("/connectivity-test")
+    public ConnectivityTestResult testConnectivity(@Valid @RequestBody ConnectivityTestRequest request) {
+        return providerService.testConnectivity(request);
     }
 }

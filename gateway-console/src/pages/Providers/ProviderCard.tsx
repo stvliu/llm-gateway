@@ -9,6 +9,7 @@ import {
   ApiOutlined,
   AppstoreOutlined,
   DeleteOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/stores/themeStore';
@@ -29,6 +30,7 @@ interface ProviderCardProps {
   onAddModel: (provider: Provider) => void;
   onEditApiKey: (key: ProviderApiKey) => void;
   onEditModel: (model: Model) => void;
+  onExperience?: (provider: Provider) => void;
 }
 
 /**
@@ -45,6 +47,7 @@ export function ProviderCard({
   onAddModel,
   onEditApiKey,
   onEditModel,
+  onExperience,
 }: ProviderCardProps) {
   const { t } = useTranslation('providers');
   const { getEffectiveTheme } = useThemeStore();
@@ -61,6 +64,13 @@ export function ProviderCard({
       label: t('detail.viewDetail', { defaultValue: '查看详情' }),
       icon: <EyeOutlined />,
       onClick: () => onViewDetail(provider),
+    },
+    {
+      key: 'experience',
+      label: t('detail.experience', { defaultValue: '模型体验' }),
+      icon: <ExperimentOutlined />,
+      onClick: () => onExperience?.(provider),
+      disabled: activeKeys.length === 0,
     },
     {
       type: 'divider' as const,

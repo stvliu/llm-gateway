@@ -30,4 +30,14 @@ public class ModelCreateRequest {
     private BigDecimal outputPrice;
 
     private Map<String, Boolean> capabilities;
+
+    /**
+     * 渠道优先级（用于 FAILOVER 策略，值越小越优先，默认 100）
+     */
+    private Integer priority;
+
+    /**
+     * 渠道权重（用于 WEIGHTED 策略，加权随机选择，默认 100）
+     */
+    private Integer weight;
 }

@@ -3,6 +3,7 @@ import { ProviderCardView } from './ProviderCardView';
 import { ProvidersTableView } from './ProvidersTableView';
 import { ProviderManagementDrawer } from './ProviderManagementDrawer';
 import { ProviderCreateModal } from './ProviderCreateModal';
+import { ProviderExperienceModal } from './ProviderExperienceModal';
 import { useProviders } from '@/services/query';
 import type { Provider } from '@/types/provider';
 
@@ -24,6 +25,10 @@ export default function AdminProviders() {
   // 创建 Modal 状态
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
+  // 体验弹窗状态
+  const [experienceModalOpen, setExperienceModalOpen] = useState(false);
+  const [experienceProvider, setExperienceProvider] = useState<Provider | null>(null);
+
   // Queries
   const { data: providersData } = useProviders({ size: 100 });
   const providers = providersData?.items || [];
@@ -36,6 +41,12 @@ export default function AdminProviders() {
   // 查看供应商详情
   const handleViewProvider = useCallback((provider: Provider) => {
     setSelectedProviderId(provider.id);
+  }, []);
+
+  // 体验供应商模型
+  const handleExperienceProvider = useCallback((provider: Provider) => {
+    setExperienceProvider(provider);
+    setExperienceModalOpen(true);
   }, []);
 
   // 关闭抽屉
@@ -53,12 +64,19 @@ export default function AdminProviders() {
     setCreateModalOpen(false);
   }, []);
 
+  // 关闭体验弹窗
+  const handleCloseExperienceModal = useCallback(() => {
+    setExperienceModalOpen(false);
+    setExperienceProvider(null);
+  }, []);
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* 内容区域 */}
       {viewMode === 'card' ? (
         <ProviderCardView
           onProviderSelect={handleViewProvider}
+          onProviderExperience={handleExperienceProvider}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           onAddProvider={handleAddProvider}
@@ -86,6 +104,13 @@ export default function AdminProviders() {
         providers={providers}
         onClose={handleCloseCreateModal}
         onCreated={handleProviderCreated}
+      />
+
+      {/* 供应商模型体验弹窗 */}
+      <ProviderExperienceModal
+        open={experienceModalOpen}
+        provider={experienceProvider}
+        onClose={handleCloseExperienceModal}
       />
     </div>
   );

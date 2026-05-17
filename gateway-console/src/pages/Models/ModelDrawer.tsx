@@ -170,6 +170,18 @@ export function ModelDrawer({
             <Descriptions.Item label={t('model.state')}>
               <StatusIndicator status={model.state === 'ACTIVE' ? 'ACTIVE' : 'DISABLED'} />
             </Descriptions.Item>
+            <Descriptions.Item label={t('model.priority', { defaultValue: '优先级' })}>
+              {model.priority ?? 100}
+              <span style={{ color: token.colorTextSecondary, marginLeft: 8, fontSize: 12 }}>
+                (FAILOVER)
+              </span>
+            </Descriptions.Item>
+            <Descriptions.Item label={t('model.weight', { defaultValue: '权重' })}>
+              {model.weight ?? 100}
+              <span style={{ color: token.colorTextSecondary, marginLeft: 8, fontSize: 12 }}>
+                (WEIGHTED)
+              </span>
+            </Descriptions.Item>
             <Descriptions.Item label={t('detail.createdAt')}>
               {new Date(model.createdAt).toLocaleString()}
             </Descriptions.Item>

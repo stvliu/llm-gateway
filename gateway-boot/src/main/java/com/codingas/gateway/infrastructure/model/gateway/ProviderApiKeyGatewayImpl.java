@@ -66,8 +66,7 @@ public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {
 
     @Override
     public List<ProviderApiKey> findActiveKeysByProviderId(Long providerId) {
-        return repository.findByProviderId(providerId).stream()
-                .filter(k -> k.getState() == ProviderApiKeyState.ACTIVE)
+        return repository.findByProviderIdAndState(providerId, ProviderApiKeyState.ACTIVE).stream()
                 .map(this::toEntity)
                 .collect(Collectors.toList());
     }

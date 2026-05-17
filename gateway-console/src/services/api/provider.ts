@@ -2,18 +2,31 @@ import { api } from './client';
 import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderKeysResponse } from '@/types/provider';
 import type { PageResponse, PageParams, ProviderTypeOption } from '@/types/api';
 
-/** API Key 测试请求 */
-interface TestApiKeyRequest {
-  providerType: string;
-  baseUrl?: string;
-  apiKey: string;
+/** 连通性测试层级结果 */
+interface LevelResult {
+  success: boolean;
+  message?: string;
+  latencyMs?: number;
+  errorType?: string;
+  models?: string[];
 }
 
-/** API Key 测试结果 */
-interface TestApiKeyResult {
+/** 连通性测试结果 */
+export interface ConnectivityTestResult {
   success: boolean;
   message?: string;
   models?: string[];
+  level1?: LevelResult;
+  level2?: LevelResult;
+  totalLatencyMs?: number;
+}
+
+/** 连通性测试请求 */
+export interface ConnectivityTestRequest {
+  providerType: string;
+  baseUrl?: string;
+  apiKey: string;
+  model?: string;
 }
 
 export const providerApi = {
@@ -49,7 +62,7 @@ export const providerApi = {
   getKeys: (id: number) =>
     api.get<ProviderKeysResponse>(`/providers/${id}/keys`),
 
-  /** 测试 API Key 连通性 */
-  testApiKey: (data: TestApiKeyRequest) =>
-    api.post<TestApiKeyResult>('/providers/test-api-key', data),
+  /** 测试连通性 */
+  testConnectivity: (data: ConnectivityTestRequest) =>
+    api.post<ConnectivityTestResult>('/providers/connectivity-test', data),
 };

@@ -12,7 +12,8 @@
     "apiKeys": "API Key",
     "myApiKeys": "我的 API Key",
     "changePassword": "更改密码",
-    "systemSettings": "系统设置"
+    "systemSettings": "系统设置",
+    "experience": "模型体验"
   },
   "app": {
     "title": "LLM Gateway",
@@ -24,6 +25,7 @@
     "edit": "编辑",
     "delete": "删除",
     "save": "保存",
+    "create": "创建",
     "cancel": "取消",
     "search": "搜索",
     "reset": "重置",

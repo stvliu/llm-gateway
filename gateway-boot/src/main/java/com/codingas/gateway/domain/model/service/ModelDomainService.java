@@ -67,6 +67,30 @@ public class ModelDomainService {
     }
 
     /**
+     * 查找模型的所有活跃渠道
+     *
+     * <p>用于多供应商路由，返回所有 provider_model_id 匹配且状态为 ACTIVE 的模型。</p>
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 活跃渠道列表，按 priority 升序排序
+     */
+    @Transactional(readOnly = true)
+    public List<Model> findActiveChannels(String providerModelId) {
+        return modelGateway.findActiveByProviderModelId(providerModelId);
+    }
+
+    /**
+     * 查找模型的所有渠道（不限状态）
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 所有渠道列表，按 priority 升序排序
+     */
+    @Transactional(readOnly = true)
+    public List<Model> findAllChannels(String providerModelId) {
+        return modelGateway.findAllByProviderModelId(providerModelId);
+    }
+
+    /**
      * 根据提供商模型 ID 获取模型及其提供商信息
      *
      * <p>封装 Model 和 Provider 的关联查询，用于 API 请求处理。</p>

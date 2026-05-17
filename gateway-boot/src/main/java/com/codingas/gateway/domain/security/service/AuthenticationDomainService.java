@@ -7,15 +7,10 @@ import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
-import java.util.HexFormat;
 import java.util.Optional;
 
 /**
@@ -28,17 +23,18 @@ import java.util.Optional;
 public class AuthenticationDomainService {
 
     private static final String CACHE_NAME = "auth";
-    private static final String HASH_ALGORITHM = "SHA-256";
 
     private final ApiKeyGateway apiKeyGateway;
     private final UserGateway userGateway;
+    private final ApiKeyEncryptionDomainService encryptionService;
 
-    @Value("${gateway.security.api-key.salt:default-salt-change-in-production}")
-    private String hashSalt;
-
-    public AuthenticationDomainService(ApiKeyGateway apiKeyGateway, UserGateway userGateway) {
+    public AuthenticationDomainService(
+            ApiKeyGateway apiKeyGateway,
+            UserGateway userGateway,
+            ApiKeyEncryptionDomainService encryptionService) {
         this.apiKeyGateway = apiKeyGateway;
         this.userGateway = userGateway;
+        this.encryptionService = encryptionService;
     }
 
     /**
@@ -123,21 +119,12 @@ public class AuthenticationDomainService {
     /**
      * 使用 SHA-256 哈希 API Key
      *
-     * <p>配合配置的 salt，提供安全的 API Key 哈希存储。</p>
+     * <p>委托给 {@link ApiKeyEncryptionDomainService} 保持与创建时一致的哈希算法。</p>
      *
      * @param apiKey 原始 API Key
      * @return 哈希后的字符串（十六进制格式）
      */
     private String hashKey(String apiKey) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance(HASH_ALGORITHM);
-            // 组合 salt 和 apiKey
-            String saltedKey = hashSalt + apiKey;
-            byte[] hashBytes = digest.digest(saltedKey.getBytes(StandardCharsets.UTF_8));
-            return HexFormat.of().formatHex(hashBytes);
-        } catch (NoSuchAlgorithmException e) {
-            // SHA-256 是 Java 标准实现，不应发生
-            throw new IllegalStateException("SHA-256 algorithm not available", e);
-        }
+        return encryptionService.hashKey(apiKey);
     }
 }

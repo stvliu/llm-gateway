@@ -25,4 +25,14 @@ public class ModelUpdateRequest {
     private Map<String, Boolean> capabilities;
 
     private ModelState state;
+
+    /**
+     * 渠道优先级（用于 FAILOVER 策略，值越小越优先）
+     */
+    private Integer priority;
+
+    /**
+     * 渠道权重（用于 WEIGHTED 策略，加权随机选择）
+     */
+    private Integer weight;
 }

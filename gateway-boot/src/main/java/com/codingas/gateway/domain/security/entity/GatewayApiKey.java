@@ -22,6 +22,8 @@ public class GatewayApiKey extends BaseEntity {
 
     private String keyHash;
 
+    private String keyEncrypted;
+
     private Long userId;
 
     private String username;
@@ -35,8 +37,6 @@ public class GatewayApiKey extends BaseEntity {
     private Instant lastUsedAt;
 
     private List<String> ipWhitelist;
-
-    private Instant deletedAt;
 
     /**
      * 检查凭证是否有效

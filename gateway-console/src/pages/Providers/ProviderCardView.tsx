@@ -20,6 +20,7 @@ import type { Model } from '@/types/model';
 
 interface ProviderCardViewProps {
   onProviderSelect?: (provider: Provider) => void;
+  onProviderExperience?: (provider: Provider) => void;
   viewMode: 'card' | 'table';
   onViewModeChange: (mode: 'card' | 'table') => void;
   onAddProvider: () => void;
@@ -29,7 +30,7 @@ interface ProviderCardViewProps {
  * 供应商卡片视图
  * 使用 CSS Grid 自适应布局，卡片宽度在 240px-320px 之间自动调整
  */
-export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange, onAddProvider }: ProviderCardViewProps) {
+export function ProviderCardView({ onProviderSelect, onProviderExperience, viewMode, onViewModeChange, onAddProvider }: ProviderCardViewProps) {
   const { t } = useTranslation('providers');
   const { t: tc } = useTranslation('common');
   const { confirm } = useConfirm();
@@ -312,6 +313,7 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
               key={provider.id}
               provider={provider}
               onViewDetail={handleViewDetail}
+              onExperience={onProviderExperience}
               onDelete={handleDelete}
               onAddApiKey={handleAddApiKey}
               onAddModel={handleAddModel}
@@ -364,10 +366,12 @@ export function ProviderCardView({ onProviderSelect, viewMode, onViewModeChange,
  */
 function ProviderCardContent({
   provider,
+  onExperience,
   ...props
 }: {
   provider: Provider;
   onViewDetail: (provider: Provider) => void;
+  onExperience?: (provider: Provider) => void;
   onDelete: (provider: Provider) => void;
   onAddApiKey: (provider: Provider) => void;
   onAddModel: (provider: Provider) => void;
@@ -392,6 +396,7 @@ function ProviderCardContent({
       provider={provider}
       apiKeys={apiKeys}
       models={models}
+      onExperience={onExperience}
       {...props}
     />
   );

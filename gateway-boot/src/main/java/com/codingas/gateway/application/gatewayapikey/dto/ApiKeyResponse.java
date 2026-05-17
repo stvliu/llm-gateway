@@ -16,6 +16,7 @@ public class ApiKeyResponse {
     private Long userId;
     private String username;
     private String name;
+    private String key;  // 脱敏后的 Key 标识
     private GatewayApiKeyState state;
     private Instant expiresAt;
     private Instant lastUsedAt;

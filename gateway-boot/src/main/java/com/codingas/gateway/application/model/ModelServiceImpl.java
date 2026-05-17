@@ -51,6 +51,9 @@ public class ModelServiceImpl implements ModelService {
         model.setOutputPrice(request.getOutputPrice());
         model.setCapabilities(request.getCapabilities());
         model.setState(ModelState.ACTIVE);
+        // 路由字段
+        model.setPriority(request.getPriority() != null ? request.getPriority() : 100);
+        model.setWeight(request.getWeight() != null ? request.getWeight() : 100);
 
         Model savedModel = modelGateway.save(model);
         return toResponse(savedModel);
@@ -139,6 +142,12 @@ public class ModelServiceImpl implements ModelService {
         if (request.getState() != null) {
             model.setState(request.getState());
         }
+        if (request.getPriority() != null) {
+            model.setPriority(request.getPriority());
+        }
+        if (request.getWeight() != null) {
+            model.setWeight(request.getWeight());
+        }
 
         return toResponse(modelGateway.save(model));
     }
@@ -181,6 +190,9 @@ public class ModelServiceImpl implements ModelService {
         response.setOutputPrice(model.getOutputPrice());
         response.setCapabilities(model.getCapabilities());
         response.setState(model.getState());
+        // 路由字段
+        response.setPriority(model.getPriority());
+        response.setWeight(model.getWeight());
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
         return response;

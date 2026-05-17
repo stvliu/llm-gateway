@@ -13,6 +13,7 @@ import zhCNProviders from './locales/zh-CN/providers.json';
 import zhCNApiKeyPool from './locales/zh-CN/apiKeyPool.json';
 import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNMetadata from './locales/zh-CN/metadata.json';
+import zhCNExperience from './locales/zh-CN/experience.json';
 
 // 英文
 import enUSCommon from './locales/en-US/common.json';
@@ -25,6 +26,7 @@ import enUSProviders from './locales/en-US/providers.json';
 import enUSApiKeyPool from './locales/en-US/apiKeyPool.json';
 import enUSChat from './locales/en-US/chat.json';
 import enUSMetadata from './locales/en-US/metadata.json';
+import enUSExperience from './locales/en-US/experience.json';
 
 i18n
   .use(LanguageDetector)
@@ -42,6 +44,7 @@ i18n
         apiKeyPool: zhCNApiKeyPool,
         chat: zhCNChat,
         metadata: zhCNMetadata,
+        experience: zhCNExperience,
       },
       'en-US': {
         common: enUSCommon,
@@ -54,6 +57,7 @@ i18n
         apiKeyPool: enUSApiKeyPool,
         chat: enUSChat,
         metadata: enUSMetadata,
+        experience: enUSExperience,
       },
     },
     fallbackLng: 'zh-CN',

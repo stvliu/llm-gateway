@@ -77,4 +77,11 @@ public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo
     @Modifying
     @Query("UPDATE ProviderApiKeyDo k SET k.isDefault = false WHERE k.providerId = :providerId AND k.id != :excludeId")
     void clearDefaultFlagForOtherKeys(@Param("providerId") Long providerId, @Param("excludeId") Long excludeId);
+
+    /**
+     * 根据 Provider ID 查找所有活跃 Key（状态为 ACTIVE）
+     *
+     * <p>在数据库层面过滤，避免内存过滤。</p>
+     */
+    List<ProviderApiKeyDo> findByProviderIdAndState(Long providerId, ProviderApiKeyState state);
 }

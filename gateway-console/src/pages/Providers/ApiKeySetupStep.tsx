@@ -3,7 +3,7 @@ import { Card, Button, Space, Tag, Input, InputNumber, Switch, Form, Empty, them
 import { PlusOutlined, EditOutlined, DeleteOutlined, StarFilled, ApiOutlined, CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
-import { providerApi } from '@/services/api/provider';
+import { providerApi, type ConnectivityTestResult } from '@/services/api/provider';
 import type { NestedApiKeyRequest } from '@/types/provider';
 
 const { Text } = Typography;
@@ -33,7 +33,7 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
 
   // 测试状态
   const [testStatuses, setTestStatuses] = useState<Record<number, TestStatus>>({});
-  const [testMessages, setTestMessages] = useState<Record<number, string>>({});
+  const [testResults, setTestResults] = useState<Record<number, ConnectivityTestResult>>({});
 
   // 添加 API Key
   const handleAdd = useCallback(() => {
@@ -75,8 +75,12 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
       onChange(newKeys);
       setEditingIndex(null);
       // 重置测试状态
-      setTestStatuses((prev) => ({ ...prev, [editingIndex]: 'idle' }));
-      setTestMessages((prev) => ({ ...prev, [editingIndex]: '' }));
+      setTestStatuses((prev) => ({ ...prev, [editingIndex!]: 'idle' }));
+      setTestResults((prev) => {
+        const newResults = { ...prev };
+        delete newResults[editingIndex!];
+        return newResults;
+      });
     });
   }, [editingIndex, apiKeys, editForm, onChange]);
 
@@ -111,10 +115,10 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
     }
 
     setTestStatuses((prev) => ({ ...prev, [index]: 'testing' }));
-    setTestMessages((prev) => ({ ...prev, [index]: '' }));
+    setTestResults((prev) => ({ ...prev, [index]: null as unknown as ConnectivityTestResult }));
 
     try {
-      const result = await providerApi.testApiKey({
+      const result = await providerApi.testConnectivity({
         providerType,
         baseUrl,
         apiKey: key.apiKey,
@@ -122,27 +126,14 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
 
       if (result.success) {
         setTestStatuses((prev) => ({ ...prev, [index]: 'success' }));
-        setTestMessages((prev) => ({
-          ...prev,
-          [index]: result.models?.length
-            ? t('test.keyValidWithModels', { defaultValue: '验证成功，发现 {{count}} 个模型', count: result.models.length })
-            : t('test.keyValid', { defaultValue: 'API Key 验证成功' }),
-        }));
         message.success(t('test.keyValid', { defaultValue: 'API Key 验证成功' }));
       } else {
         setTestStatuses((prev) => ({ ...prev, [index]: 'failed' }));
-        setTestMessages((prev) => ({
-          ...prev,
-          [index]: result.message || t('test.keyInvalid', { defaultValue: 'API Key 验证失败' }),
-        }));
         message.error(result.message || t('test.keyInvalid', { defaultValue: 'API Key 验证失败' }));
       }
+      setTestResults((prev) => ({ ...prev, [index]: result }));
     } catch {
       setTestStatuses((prev) => ({ ...prev, [index]: 'failed' }));
-      setTestMessages((prev) => ({
-        ...prev,
-        [index]: t('test.connectionFailed', { defaultValue: '连接失败，请检查网络或 API 地址' }),
-      }));
       message.error(t('test.connectionFailed', { defaultValue: '连接失败，请检查网络或 API 地址' }));
     }
   }, [apiKeys, providerType, baseUrl, t]);
@@ -290,8 +281,8 @@ export function ApiKeySetupStep({ apiKeys, onChange, providerType, baseUrl }: Ap
                   )}
                   {/* 测试状态 */}
                   {getTestIcon(testStatuses[index])}
-                  {testMessages[index] && (
-                    <Tooltip title={testMessages[index]}>
+                  {testResults[index] && (
+                    <Tooltip title={testResults[index].message}>
                       <Text
                         type={testStatuses[index] === 'success' ? 'success' : 'danger'}
                         style={{ fontSize: 12, cursor: 'help' }}
