@@ -41,6 +41,16 @@ public class Model extends BaseEntity {
     private ModelState state = ModelState.ACTIVE;
 
     /**
+     * 渠道优先级（用于 FAILOVER 策略，值越小越优先）
+     */
+    private Integer priority = 100;
+
+    /**
+     * 渠道权重（用于 WEIGHTED 策略，加权随机选择）
+     */
+    private Integer weight = 100;
+
+    /**
      * 检查模型是否可用
      */
     public boolean isAvailable() {

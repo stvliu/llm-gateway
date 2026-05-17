@@ -37,6 +37,26 @@ public interface ModelGateway {
     Optional<Model> findByProviderModelId(String providerModelId);
 
     /**
+     * 查找同名模型的所有活跃渠道
+     *
+     * <p>用于多供应商路由，返回所有 provider_model_id 匹配且状态为 ACTIVE 的模型。</p>
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 活跃渠道列表，按 priority 升序排序
+     */
+    List<Model> findActiveByProviderModelId(String providerModelId);
+
+    /**
+     * 查找同名模型的所有记录
+     *
+     * <p>用于管理和展示，返回所有 provider_model_id 匹配的模型（不限状态）。</p>
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 所有渠道列表，按 priority 升序排序
+     */
+    List<Model> findAllByProviderModelId(String providerModelId);
+
+    /**
      * 查询所有模型
      *
      * @return 模型列表

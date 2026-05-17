@@ -10,11 +10,13 @@ import {
   DeleteOutlined,
   CheckOutlined,
   CloseOutlined,
+  ExperimentOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
 import { ProviderApiKeysTab } from './ProviderApiKeysTab';
 import { ProviderModelsTab } from './ProviderModelsTab';
+import { ProviderExperienceTab } from './ProviderExperienceTab';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useProvider, useDeleteProvider } from '@/services/query';
@@ -148,6 +150,11 @@ export function ProviderManagementDrawer({
       label: t('provider.models', { defaultValue: '模型' }),
       icon: <AppstoreOutlined />,
     },
+    {
+      key: 'experience',
+      label: t('provider.experience', { defaultValue: '体验' }),
+      icon: <ExperimentOutlined />,
+    },
   ];
 
   // 标题
@@ -230,7 +237,7 @@ export function ProviderManagementDrawer({
       {!editing && (
         <Tabs
           activeKey={activeTab}
-          onChange={setActiveTab}
+          onChange={(key) => setActiveTab(key as typeof activeTab)}
           items={tabs.map((tab) => ({
             key: tab.key,
             label: (
@@ -268,6 +275,13 @@ export function ProviderManagementDrawer({
       {/* Models：编辑基本信息时隐藏 */}
       {!isLoading && !editing && activeTab === 'models' && (
         <ProviderModelsTab
+          provider={provider || null}
+        />
+      )}
+
+      {/* Experience：编辑基本信息时隐藏 */}
+      {!isLoading && !editing && activeTab === 'experience' && (
+        <ProviderExperienceTab
           provider={provider || null}
         />
       )}

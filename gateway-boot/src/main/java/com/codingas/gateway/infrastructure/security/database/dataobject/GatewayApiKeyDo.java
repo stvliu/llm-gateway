@@ -26,6 +26,9 @@ public class GatewayApiKeyDo extends BaseDo {
     @Column(name = "key_hash", nullable = false, length = 256)
     private String keyHash;
 
+    @Column(name = "key_encrypted", columnDefinition = "TEXT")
+    private String keyEncrypted;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private UserDo user;
@@ -46,7 +49,4 @@ public class GatewayApiKeyDo extends BaseDo {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "ip_whitelist", columnDefinition = "json")
     private List<String> ipWhitelist;
-
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
 }

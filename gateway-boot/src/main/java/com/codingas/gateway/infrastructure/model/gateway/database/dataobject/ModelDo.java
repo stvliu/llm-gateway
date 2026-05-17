@@ -52,4 +52,16 @@ public class ModelDo extends BaseDo {
     @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false)
     private ModelState state = ModelState.ACTIVE;
+
+    /**
+     * 渠道优先级（用于 FAILOVER 策略，值越小越优先）
+     */
+    @Column(name = "priority", nullable = false)
+    private Integer priority = 100;
+
+    /**
+     * 渠道权重（用于 WEIGHTED 策略，加权随机选择）
+     */
+    @Column(name = "weight", nullable = false)
+    private Integer weight = 100;
 }

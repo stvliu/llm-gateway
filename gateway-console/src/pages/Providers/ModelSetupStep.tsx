@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Checkbox, Tag, Typography, Input } from 'antd';
+import { Table, Checkbox, Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useModelMetadataByProvider } from '@/services/query/useMetadata';
 import type { ModelMetadata } from '@/types/metadata';
@@ -102,33 +102,6 @@ export function ModelSetupStep({
       dataIndex: 'outputPrice',
       width: 90,
       render: (price: number) => <Text>{formatPrice(price)}</Text>,
-    },
-    {
-      title: t('template.capabilities', { defaultValue: '能力' }),
-      dataIndex: 'capabilities',
-      width: 160,
-      render: (caps: Record<string, boolean>) => {
-        if (!caps) return '-';
-        const tags: { label: string; color: string }[] = [];
-        if (caps.vision) tags.push({ label: 'Vision', color: 'blue' });
-        if (caps.function_calling) tags.push({ label: 'FC', color: 'green' });
-        if (caps.streaming) tags.push({ label: 'Stream', color: 'orange' });
-        return tags.map(tag => <Tag key={tag.label} color={tag.color} style={{ fontSize: 10, margin: 1 }}>{tag.label}</Tag>);
-      },
-    },
-    {
-      title: t('template.source', { defaultValue: '来源' }),
-      dataIndex: 'source',
-      width: 80,
-      render: (source: string) => {
-        const colorMap: Record<string, string> = {
-          BUILTIN: 'default',
-          MODELS_DEV: 'processing',
-          MANUAL: 'warning',
-          OVERRIDE: 'error',
-        };
-        return <Tag color={colorMap[source] || 'default'} style={{ fontSize: 10 }}>{source}</Tag>;
-      },
     },
   ];
 

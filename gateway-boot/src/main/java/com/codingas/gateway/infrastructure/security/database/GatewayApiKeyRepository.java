@@ -19,7 +19,11 @@ public interface GatewayApiKeyRepository extends JpaRepository<GatewayApiKeyDo, 
     @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user WHERE k.keyHash = :keyHash")
     Optional<GatewayApiKeyDo> findByKeyHash(@Param("keyHash") String keyHash);
 
-    List<GatewayApiKeyDo> findByUserId(Long userId);
+    @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user WHERE k.user.id = :userId")
+    List<GatewayApiKeyDo> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user")
+    List<GatewayApiKeyDo> findAllWithUser();
 
     @Query("SELECT k FROM GatewayApiKeyDo k WHERE k.expiresAt BETWEEN :now AND :threshold AND k.state = :state")
     Page<GatewayApiKeyDo> findExpiringKeysByState(@Param("now") Instant now, @Param("threshold") Instant threshold, @Param("state") GatewayApiKeyState state, Pageable pageable);

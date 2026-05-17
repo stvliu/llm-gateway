@@ -31,4 +31,24 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
 
     @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider WHERE m.id = :id")
     Optional<ModelDo> findByIdWithProvider(@Param("id") Long id);
+
+    /**
+     * 查找同名模型的所有记录（多渠道）
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 所有渠道列表，按 priority 升序排序
+     */
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider " +
+           "WHERE m.providerModelId = :providerModelId ORDER BY m.priority ASC")
+    List<ModelDo> findAllByProviderModelId(@Param("providerModelId") String providerModelId);
+
+    /**
+     * 查找同名模型的活跃记录
+     *
+     * @param providerModelId 提供商模型 ID
+     * @return 活跃渠道列表，按 priority 升序排序
+     */
+    @Query("SELECT m FROM ModelDo m LEFT JOIN FETCH m.provider " +
+           "WHERE m.providerModelId = :providerModelId AND m.state = 'ACTIVE' ORDER BY m.priority ASC")
+    List<ModelDo> findActiveByProviderModelId(@Param("providerModelId") String providerModelId);
 }

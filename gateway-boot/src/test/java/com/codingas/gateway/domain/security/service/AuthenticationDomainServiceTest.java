@@ -38,12 +38,22 @@ class AuthenticationDomainServiceTest {
     @Mock
     private UserGateway userGateway;
 
+    @Mock
+    private ApiKeyEncryptionDomainService encryptionService;
+
     private AuthenticationDomainService authService;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthenticationDomainService(apiKeyGateway, userGateway);
-        ReflectionTestUtils.setField(authService, "hashSalt", "test-salt");
+        authService = new AuthenticationDomainService(apiKeyGateway, userGateway, encryptionService);
+        // 模拟哈希行为
+        when(encryptionService.hashKey(anyString())).thenAnswer(invocation -> {
+            String key = invocation.getArgument(0);
+            // 简单模拟 SHA-256 哈希
+            return java.security.MessageDigest.getInstance("SHA-256")
+                    .digest(key.getBytes(java.nio.charset.StandardCharsets.UTF_8))
+                    .hashCode() + "";
+        });
     }
 
     @Nested
@@ -167,14 +177,18 @@ class AuthenticationDomainServiceTest {
             User user = createActiveUser();
             GatewayApiKey gatewayKey = createActiveApiKey(user);
 
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
+            when(encryptionService.hashKey(apiKey)).thenReturn("fixed-hash-value");
+            when(apiKeyGateway.findByKeyHash("fixed-hash-value")).thenReturn(gatewayKey);
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            doNothing().when(apiKeyGateway).updateLastUsed(anyLong(), any(Instant.class));
 
             // when
             authService.authenticate(apiKey);
             authService.authenticate(apiKey);
 
             // then - 两次调用应该使用相同的哈希值
-            verify(apiKeyGateway, times(2)).findByKeyHash(anyString());
+            verify(encryptionService, times(2)).hashKey(apiKey);
+            verify(apiKeyGateway, times(2)).findByKeyHash("fixed-hash-value");
         }
     }
 

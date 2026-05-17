@@ -9,6 +9,7 @@ export interface ApiKey {
   userId: number;
   username: string;
   state: GatewayApiKeyState;
+  expiresAt?: string;
   lastUsedAt?: string;
   ipWhitelist?: string[];
   createdAt: string;
@@ -19,6 +20,8 @@ export interface ApiKey {
 export interface CreateApiKeyRequest {
   name: string;
   userId: number;
+  expiresAt?: string;
+  ipWhitelist?: string[];
 }
 
 /** 创建 API Key 响应（包含完整 Key） */
@@ -29,12 +32,26 @@ export interface CreateApiKeyResponse {
   userId: number;
   username: string;
   state: GatewayApiKeyState;
+  expiresAt?: string;
   createdAt: string;
 }
 
 /** 更新 API Key 请求 */
 export interface UpdateApiKeyRequest {
   name?: string;
+  expiresAt?: string;
   ipWhitelist?: string[];
   state?: GatewayApiKeyState;
+}
+
+/** API Key 用量统计 */
+export interface ApiKeyUsage {
+  apiKeyId: number;
+  apiKeyName: string;
+  totalCalls: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+  startDate: string;
+  endDate: string;
 }

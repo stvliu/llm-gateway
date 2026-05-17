@@ -1,6 +1,8 @@
 package com.codingas.gateway.adapter.interceptor;
 
 import cn.dev33.satoken.stp.StpUtil;
+import jakarta.servlet.AsyncContext;
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>责任链第一个拦截器，验证 SaToken 登录状态。</p>
  * <p>用于前端管理界面的用户会话认证。</p>
+ * <p>对于 SSE 异步请求，在异步分发阶段跳过认证检查，因为认证信息已在初始请求时验证。</p>
  */
 @Slf4j
 @Component
@@ -61,6 +64,18 @@ public class TokenAuthInterceptor extends AbstractGatewayInterceptor {
             return true;
         }
 
+        // SSE 异步分发阶段，跳过认证检查
+        // 初始请求已验证，异步分发时 Sa-Token 上下文不可用
+        if (isAsyncDispatch(request)) {
+            log.debug("Async dispatch detected, skipping token auth: {}", requestURI);
+            // 从初始请求中恢复 userId（已在初始请求中设置）
+            Object userId = request.getAttribute("userId");
+            if (userId == null) {
+                log.warn("Async dispatch without userId attribute, request may not be properly authenticated");
+            }
+            return true;
+        }
+
         // 验证 SaToken 登录状态
         try {
             if (StpUtil.isLogin()) {
@@ -86,5 +101,27 @@ public class TokenAuthInterceptor extends AbstractGatewayInterceptor {
             }
             return false;
         }
+    }
+
+    /**
+     * 检测是否为异步分发请求
+     *
+     * <p>SSE 流式响应使用异步处理，Tomcat 会在异步分发时再次调用拦截器。</p>
+     * <p>此时 Sa-Token 的 ThreadLocal 上下文已不可用，需要跳过认证检查。</p>
+     *
+     * @param request HTTP 请求
+     * @return true 如果是异步分发
+     */
+    private boolean isAsyncDispatch(HttpServletRequest request) {
+        // 方式 1：检查 DispatcherType
+        if (request.getDispatcherType() == DispatcherType.ASYNC) {
+            return true;
+        }
+
+        // 方式 2：检查是否存在 AsyncContext（表示请求已进入异步模式）
+        // 注意：在 ASYNC 分发时，AsyncContext 可能已被重新创建
+        // 所以主要依赖 DispatcherType 检测
+
+        return false;
     }
 }

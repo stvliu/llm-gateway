@@ -11,8 +11,9 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    historyApiFallback: true,
     proxy: {
-      '/api': {
+      '/api/v1': {
         // WSL2 需要使用 Windows 主机 IP
         target: 'http://172.26.208.1:8080',
         changeOrigin: true,

@@ -55,7 +55,7 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
 
     @Override
     public List<GatewayApiKey> findAll() {
-        return gatewayApiKeyRepository.findAll().stream()
+        return gatewayApiKeyRepository.findAllWithUser().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
     }
@@ -94,11 +94,11 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
         GatewayApiKey entity = new GatewayApiKey();
         entity.setId(doEntity.getId());
         entity.setKeyHash(doEntity.getKeyHash());
+        entity.setKeyEncrypted(doEntity.getKeyEncrypted());
         entity.setName(doEntity.getName());
         entity.setExpiresAt(doEntity.getExpiresAt());
         entity.setLastUsedAt(doEntity.getLastUsedAt());
         entity.setIpWhitelist(doEntity.getIpWhitelist());
-        entity.setDeletedAt(doEntity.getDeletedAt());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
         // 枚举转换
@@ -125,11 +125,11 @@ public class ApiKeyGatewayImpl implements ApiKeyGateway {
             doEntity.setId(entity.getId());
         }
         doEntity.setKeyHash(entity.getKeyHash());
+        doEntity.setKeyEncrypted(entity.getKeyEncrypted());
         doEntity.setName(entity.getName());
         doEntity.setExpiresAt(entity.getExpiresAt());
         doEntity.setLastUsedAt(entity.getLastUsedAt());
         doEntity.setIpWhitelist(entity.getIpWhitelist());
-        doEntity.setDeletedAt(entity.getDeletedAt());
         // 枚举转换
         if (entity.getState() != null) {
             doEntity.setState(entity.getState());

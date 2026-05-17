@@ -101,7 +101,10 @@
       "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc --noEmit)",
       "Bash(/mnt/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc -b --noEmit)",
       "Skill(plan)",
-      "Skill(code-review)"
+      "Skill(code-review)",
+      "Skill(frontend-design)",
+      "Bash(claude plugins *)",
+      "Bash(ip route *)"
     ]
   },
   "outputStyle": "default"

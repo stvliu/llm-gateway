@@ -42,6 +42,20 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
+    public List<Model> findActiveByProviderModelId(String providerModelId) {
+        return modelRepository.findActiveByProviderModelId(providerModelId).stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<Model> findAllByProviderModelId(String providerModelId) {
+        return modelRepository.findAllByProviderModelId(providerModelId).stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public List<Model> findAll() {
         return modelRepository.findAllWithProvider().stream()
             .map(this::toEntity)
@@ -90,6 +104,9 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
+        // 路由字段
+        entity.setPriority(doEntity.getPriority());
+        entity.setWeight(doEntity.getWeight());
         // Provider 关联 - 使用 ID 引用
         if (doEntity.getProvider() != null) {
             entity.setProviderId(doEntity.getProvider().getId());
@@ -116,6 +133,9 @@ public class ModelGatewayImpl implements ModelGateway {
         doEntity.setOutputPrice(entity.getOutputPrice());
         doEntity.setCapabilities(entity.getCapabilities());
         doEntity.setState(entity.getState());
+        // 路由字段
+        doEntity.setPriority(entity.getPriority());
+        doEntity.setWeight(entity.getWeight());
         // Provider 关联 - 只需要设置 ID
         if (entity.getProviderId() != null) {
             ProviderDo providerDo = new ProviderDo();

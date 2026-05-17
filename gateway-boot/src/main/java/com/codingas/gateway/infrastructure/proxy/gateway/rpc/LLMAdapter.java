@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
+import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
@@ -52,6 +53,43 @@ public interface LLMAdapter extends LLMGateway {
      * @return true 如果连接正常
      */
     boolean checkConnection();
+
+    /**
+     * 测试连通性（支持分层结果）
+     *
+     * <p>执行分层连通性测试，返回详细的测试结果。</p>
+     *
+     * @param apiKey 待测试的 API Key
+     * @param baseUrl 可选的 Base URL（为空使用默认值）
+     * @param model 可选的测试模型（火山引擎等必填）
+     * @return 分层测试结果
+     */
+    ConnectivityTestResult testConnectivity(String apiKey, String baseUrl, String model);
+
+    /**
+     * 获取此供应商的默认测试模型
+     *
+     * @return 默认测试模型名称，如果必须用户提供则返回 null
+     */
+    String getDefaultTestModel();
+
+    /**
+     * 是否需要用户提供测试模型
+     *
+     * <p>火山引擎等供应商需要用户提供 endpoint_id，无法使用默认模型。</p>
+     *
+     * @return true 如果必须用户提供模型参数
+     */
+    default boolean requiresUserProvidedModel() {
+        return false;
+    }
+
+    /**
+     * 获取此供应商的默认 Base URL
+     *
+     * @return 默认 Base URL
+     */
+    String getDefaultBaseUrl();
 
     /**
      * 获取 Provider 能力描述

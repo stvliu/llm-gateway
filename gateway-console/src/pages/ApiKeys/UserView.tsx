@@ -1,148 +1,133 @@
-import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Typography, Card, theme } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useState, useMemo } from 'react';
+import { Card, Button, Empty } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
-import { useApiKeys, useCreateApiKey, useUpdateApiKey, useDeleteApiKey } from '@/services/query';
-import type { ApiKey, GatewayApiKeyState } from '@/types/apiKey';
-import type { ColumnsType } from 'antd/es/table';
+import {
+  useApiKeys,
+  useCreateApiKey,
+  useUpdateApiKey,
+  useDeleteApiKey,
+  useSetEnabledApiKey,
+  useApiKeyUsageBatch,
+} from '@/services/query';
+import { ApiKeyCard } from './ApiKeyCard';
+import { ApiKeyFormModal, type FormValues } from './ApiKeyFormModal';
+import type { ApiKey, ApiKeyUsage } from '@/types/apiKey';
 
-const { Paragraph } = Typography;
-
+/**
+ * 用户视角 API Key 管理页面
+ */
 export default function UserApiKeysView() {
   const { t } = useTranslation('apiKeys');
-  const { token } = theme.useToken();
   const { confirm } = useConfirm();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApiKey, setEditingApiKey] = useState<ApiKey | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
-  const [form] = Form.useForm();
 
-  const { data, isLoading } = useApiKeys({ size: 100 });
+  const { data } = useApiKeys({ size: 100 });
+  const { data: usageData } = useApiKeyUsageBatch();
+
   const createMutation = useCreateApiKey();
   const updateMutation = useUpdateApiKey();
   const deleteMutation = useDeleteApiKey();
+  const toggleEnabledMutation = useSetEnabledApiKey();
+
+  // 构建 usageMap
+  const usageMap = useMemo(() => {
+    const map = new Map<number, ApiKeyUsage>();
+    usageData?.forEach((usage) => {
+      map.set(usage.apiKeyId, usage);
+    });
+    return map;
+  }, [usageData]);
+
+  const apiKeys = data?.items || [];
 
   const handleAdd = () => {
     setEditingApiKey(null);
     setNewKey(null);
-    form.resetFields();
     setModalOpen(true);
   };
 
   const handleEdit = (record: ApiKey) => {
     setEditingApiKey(record);
     setNewKey(null);
-    form.setFieldsValue(record);
     setModalOpen(true);
   };
 
   const handleDelete = (id: number) => {
     confirm({
       type: 'danger',
-      onConfirm: () => deleteMutation.mutateAsync(id),
+      entityName: 'API Key',
+      onConfirm: async () => {
+        await deleteMutation.mutateAsync(id);
+      },
     });
   };
 
-  const handleSubmit = async (values: { name: string; state?: GatewayApiKeyState }) => {
+  const handleToggleEnabled = (id: number, enabled: boolean) => {
+    toggleEnabledMutation.mutate({ id, enabled });
+  };
+
+  const handleSubmit = async (values: FormValues) => {
     if (editingApiKey) {
       await updateMutation.mutateAsync({ id: editingApiKey.id, data: values });
-      message.success(t('message.success', { ns: 'common' }));
     } else {
-      const result = await createMutation.mutateAsync({ name: values.name, userId: 0 }); // userId will be set by backend
+      const result = await createMutation.mutateAsync({
+        name: values.name,
+        userId: 0, // 后端自动填充当前用户
+        expiresAt: values.expiresAt,
+      });
       setNewKey(result.rawKey);
-      message.success(t('createSuccess'));
     }
     setModalOpen(false);
   };
 
-  const columns: ColumnsType<ApiKey> = [
-    { title: t('name'), dataIndex: 'name', key: 'name' },
-    {
-      title: t('key'),
-      dataIndex: 'key',
-      key: 'key',
-      render: (key: string) => (
-        <Paragraph copyable={{ text: key, tooltips: ['复制', '已复制'] }} style={{ margin: 0 }}>
-          {key}
-        </Paragraph>
-      ),
-    },
-    {
-      title: t('state'),
-      dataIndex: 'state',
-      key: 'state',
-      render: (state: GatewayApiKeyState) => (
-        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
-          {t(`state.${state.toLowerCase()}`, { ns: 'common' })}
-        </Tag>
-      ),
-    },
-    {
-      title: t('actions.label', { ns: 'common' }),
-      key: 'actions',
-      width: 100,
-      render: (_, record) => (
-        <Space>
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
-        </Space>
-      ),
-    },
-  ];
-
   return (
-    <Card title={t('title')}>
-      <div style={{ marginBottom: 16 }}>
+    <Card title={t('title', { defaultValue: 'API Key 管理' })}>
+      {/* 操作栏 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
         <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
-          {t('add')}
+          {t('add', { defaultValue: '创建 API Key' })}
         </Button>
       </div>
 
-      <Table
-        columns={columns}
-        dataSource={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        pagination={{ pageSize: 10 }}
-      />
+      {/* 卡片网格 */}
+      {apiKeys.length === 0 ? (
+        <Empty description={t('empty.noApiKey', { defaultValue: '暂无 API Key' })} />
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+            gap: 16,
+          }}
+        >
+          {apiKeys.map((key) => (
+            <ApiKeyCard
+              key={key.id}
+              apiKey={key}
+              usage={usageMap.get(key.id)}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleEnabled={handleToggleEnabled}
+            />
+          ))}
+        </div>
+      )}
 
-      <Modal
-        title={editingApiKey ? t('actions.label', { ns: 'common' }) : t('add')}
+      {/* 表单弹窗 */}
+      <ApiKeyFormModal
         open={modalOpen}
+        editingApiKey={editingApiKey}
+        newKey={newKey}
+        isAdmin={false}
+        onSubmit={handleSubmit}
         onCancel={() => setModalOpen(false)}
-        footer={null}
-      >
-        {newKey && (
-          <div style={{ marginBottom: 16, padding: 12, background: token.colorWarningBg, borderRadius: 4 }}>
-            <p style={{ margin: 0, fontWeight: 600 }}>API Key 已创建（仅显示一次）：</p>
-            <Paragraph copyable={{ text: newKey }} style={{ margin: '8px 0', fontFamily: 'monospace' }}>
-              {newKey}
-            </Paragraph>
-          </div>
-        )}
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="name" label={t('name')} rules={[{ required: true }]}>
-            <Input />
-          </Form.Item>
-          {editingApiKey && (
-            <Form.Item name="state" label={t('state')}>
-              <Select>
-                <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-                <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
-              </Select>
-            </Form.Item>
-          )}
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={createMutation.isPending || updateMutation.isPending}>
-                {t('actions.save', { ns: 'common' })}
-              </Button>
-              <Button onClick={() => setModalOpen(false)}>{t('actions.cancel', { ns: 'common' })}</Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+        loading={createMutation.isPending || updateMutation.isPending}
+      />
     </Card>
   );
 }

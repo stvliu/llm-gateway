@@ -39,6 +39,8 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
           contextWindow: editingModel.contextWindow,
           inputPrice: editingModel.inputPrice,
           outputPrice: editingModel.outputPrice,
+          priority: editingModel.priority ?? 100,
+          weight: editingModel.weight ?? 100,
           capabilities: editingModel.capabilities
             ? Object.entries(editingModel.capabilities)
                 .filter(([, v]) => v)
@@ -101,6 +103,8 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
     contextWindow?: number;
     inputPrice?: number;
     outputPrice?: number;
+    priority?: number;
+    weight?: number;
     capabilities?: string[];
   }) => {
     if (!provider && !isEditMode) return;
@@ -122,6 +126,8 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
             contextWindow: values.contextWindow,
             inputPrice: values.inputPrice,
             outputPrice: values.outputPrice,
+            priority: values.priority,
+            weight: values.weight,
             capabilities,
           },
         });
@@ -135,6 +141,8 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
           contextWindow: values.contextWindow,
           inputPrice: values.inputPrice,
           outputPrice: values.outputPrice,
+          priority: values.priority,
+          weight: values.weight,
           capabilities,
         });
         message.success(t('message.modelAdded', { defaultValue: '模型添加成功' }));
@@ -240,6 +248,37 @@ export function ModelAddModal({ open, provider, editingModel, onClose, onSuccess
                   min={0}
                   addonBefore="$"
                   addonAfter="/M"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item
+                name="priority"
+                label={t('model.priority', { defaultValue: '优先级' })}
+                tooltip={t('model.priorityTooltip', { defaultValue: '用于 FAILOVER 策略，值越小越优先' })}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={1}
+                  max={1000}
+                  placeholder="100"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item
+                name="weight"
+                label={t('model.weight', { defaultValue: '权重' })}
+                tooltip={t('model.weightTooltip', { defaultValue: '用于 WEIGHTED 策略，加权随机选择' })}
+              >
+                <InputNumber
+                  style={{ width: '100%' }}
+                  min={1}
+                  max={1000}
+                  placeholder="100"
                 />
               </Form.Item>
             </Col>

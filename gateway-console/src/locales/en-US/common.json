@@ -12,7 +12,8 @@
     "apiKeys": "API Keys",
     "myApiKeys": "My API Keys",
     "changePassword": "Change Password",
-    "systemSettings": "System Settings"
+    "systemSettings": "System Settings",
+    "experience": "Model Experience"
   },
   "app": {
     "title": "LLM Gateway",
@@ -24,6 +25,7 @@
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
+    "create": "Create",
     "cancel": "Cancel",
     "search": "Search",
     "reset": "Reset",

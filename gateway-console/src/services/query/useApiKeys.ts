@@ -8,6 +8,8 @@ export const apiKeyKeys = {
   list: (params?: Record<string, unknown>) => [...apiKeyKeys.lists(), params] as const,
   details: () => [...apiKeyKeys.all, 'detail'] as const,
   detail: (id: number) => [...apiKeyKeys.details(), id] as const,
+  usage: (id: number) => [...apiKeyKeys.all, 'usage', id] as const,
+  usageBatch: (params?: Record<string, unknown>) => [...apiKeyKeys.all, 'usage-batch', params] as const,
 };
 
 export function useApiKeys(params?: { page?: number; size?: number; userId?: number }) {
@@ -65,6 +67,33 @@ export function useSetEnabledApiKey() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: apiKeyKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: apiKeyKeys.lists() });
+    },
+  });
+}
+
+export function useApiKeyUsage(id: number, params?: { startDate?: string; endDate?: string }) {
+  return useQuery({
+    queryKey: apiKeyKeys.usage(id),
+    queryFn: async () => {
+      try {
+        return await apiKeyApi.getUsage(id, params);
+      } catch {
+        return null;
+      }
+    },
+    enabled: id > 0,
+  });
+}
+
+export function useApiKeyUsageBatch(params?: { startDate?: string; endDate?: string; userId?: number }) {
+  return useQuery({
+    queryKey: apiKeyKeys.usageBatch(params),
+    queryFn: async () => {
+      try {
+        return await apiKeyApi.getUsageBatch(params);
+      } catch {
+        return [];
+      }
     },
   });
 }

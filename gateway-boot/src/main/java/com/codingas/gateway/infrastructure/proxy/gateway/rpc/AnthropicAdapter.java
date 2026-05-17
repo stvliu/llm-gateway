@@ -3,6 +3,9 @@ package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
+import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
+import com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult;
+import com.codingas.gateway.domain.model.enums.ProviderErrorType;
 import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.common.util.JsonUtils;
@@ -10,10 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Anthropic Claude 适配器
@@ -25,7 +25,20 @@ import java.util.Set;
 public class AnthropicAdapter implements LLMAdapter {
 
     public static final String PROVIDER_CODE = "anthropic";
-    private static final String MESSAGES_URL = "/v1/messages";
+
+    /**
+     * 默认测试模型
+     *
+     * <p>Anthropic 不提供模型列表 API，所以需要固定默认模型。</p>
+     * <p>使用 Haiku 作为默认测试模型，因为它是最便宜的。</p>
+     */
+    private static final String DEFAULT_TEST_MODEL = "claude-haiku-3-5-20250514";
+
+    /** 默认 Base URL */
+    private static final String DEFAULT_BASE_URL = "https://api.anthropic.com";
+
+    /** Messages API 路径 */
+    private static final String MESSAGES_PATH = "/v1/messages";
 
     private final OkHttpClient httpClient;
     private final String baseUrl;
@@ -73,7 +86,7 @@ public class AnthropicAdapter implements LLMAdapter {
             String jsonBody = JsonUtils.toJson(requestBody);
 
             Request httpRequest = new Request.Builder()
-                    .url(baseUrl + MESSAGES_URL)
+                    .url(baseUrl + MESSAGES_PATH)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .header("anthropic-version", version)
@@ -107,7 +120,7 @@ public class AnthropicAdapter implements LLMAdapter {
             String jsonBody = JsonUtils.toJson(requestBody);
 
             Request httpRequest = new Request.Builder()
-                    .url(baseUrl + MESSAGES_URL)
+                    .url(baseUrl + MESSAGES_PATH)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .header("anthropic-version", version)
@@ -170,16 +183,17 @@ public class AnthropicAdapter implements LLMAdapter {
         }
     }
 
+    @Override
     public boolean checkConnection() {
         Map<String, Object> body = new HashMap<>();
-        body.put("model", "claude-haiku-3-5-20250514");
+        body.put("model", DEFAULT_TEST_MODEL);
         body.put("messages", List.of(Map.of("role", "user", "content", "ping")));
         body.put("max_tokens", 1);
 
         try {
             String jsonBody = JsonUtils.toJson(body);
             Request request = new Request.Builder()
-                    .url(baseUrl + MESSAGES_URL)
+                    .url(baseUrl + MESSAGES_PATH)
                     .header("Authorization", "Bearer " + apiKey)
                     .header("Content-Type", "application/json")
                     .header("anthropic-version", version)
@@ -193,6 +207,142 @@ public class AnthropicAdapter implements LLMAdapter {
             log.warn("Anthropic connection check failed: {}", e.getMessage());
             return false;
         }
+    }
+
+    // ==================== 连通性测试 ====================
+
+    @Override
+    public ConnectivityTestResult testConnectivity(String testApiKey, String testBaseUrl, String testModel) {
+        long startTime = System.currentTimeMillis();
+        String effectiveBaseUrl = resolveBaseUrl(testBaseUrl);
+        String effectiveModel = testModel != null ? testModel : DEFAULT_TEST_MODEL;
+
+        log.info("Starting connectivity test for {}: baseUrl={}, model={}",
+            getProviderType(), effectiveBaseUrl, effectiveModel);
+
+        // Anthropic 用 POST /v1/messages 最小请求，同时验证认证和模型可用性
+        LevelResult level1 = testLevel1Messages(effectiveBaseUrl, testApiKey, effectiveModel);
+
+        long totalLatency = System.currentTimeMillis() - startTime;
+
+        log.info("Connectivity test completed for {}: success={}, latency={}ms",
+            getProviderType(), level1.success(), totalLatency);
+
+        return new ConnectivityTestResult(
+            level1.success(),
+            level1.message(),
+            Collections.emptyList(),
+            level1,
+            null, // Anthropic Level 1 已验证模型可用性，无需 Level 2
+            totalLatency
+        );
+    }
+
+    /**
+     * Level 1: POST /v1/messages 最小请求
+     */
+    private LevelResult testLevel1Messages(String baseUrl, String apiKey, String model) {
+        long startTime = System.currentTimeMillis();
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("model", model);
+        body.put("messages", List.of(Map.of("role", "user", "content", "ping")));
+        body.put("max_tokens", 1);
+
+        try {
+            String jsonBody = JsonUtils.toJson(body);
+
+            Request request = new Request.Builder()
+                .url(baseUrl + MESSAGES_PATH)
+                .header("Authorization", "Bearer " + apiKey)
+                .header("Content-Type", "application/json")
+                .header("anthropic-version", version)
+                .post(RequestBody.create(jsonBody, MediaType.parse("application/json")))
+                .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                long latency = System.currentTimeMillis() - startTime;
+
+                if (response.isSuccessful()) {
+                    return new LevelResult(true, "认证成功，模型可用", latency, null, null);
+                }
+
+                String errorMsg = buildErrorMessage(response);
+                log.warn("Anthropic Level 1 test failed: {}", errorMsg);
+                return new LevelResult(false, errorMsg, latency,
+                    classifyError(null, response.code()), null);
+            }
+        } catch (Exception e) {
+            long latency = System.currentTimeMillis() - startTime;
+            log.warn("Anthropic Level 1 test failed: {}", e.getMessage());
+            return new LevelResult(false, "连接失败: " + e.getMessage(), latency,
+                classifyError(e, null), null);
+        }
+    }
+
+    @Override
+    public String getDefaultTestModel() {
+        return DEFAULT_TEST_MODEL;
+    }
+
+    @Override
+    public String getDefaultBaseUrl() {
+        return DEFAULT_BASE_URL;
+    }
+
+    /**
+     * 解析 Base URL
+     */
+    private String resolveBaseUrl(String userBaseUrl) {
+        if (userBaseUrl != null && !userBaseUrl.isBlank()) {
+            return userBaseUrl.endsWith("/")
+                ? userBaseUrl.substring(0, userBaseUrl.length() - 1)
+                : userBaseUrl;
+        }
+        return DEFAULT_BASE_URL;
+    }
+
+    /**
+     * 构建错误消息
+     */
+    private String buildErrorMessage(Response response) throws IOException {
+        String errorMsg = "HTTP " + response.code();
+        if (response.body() != null) {
+            String body = response.body().string();
+            if (body.length() > 200) {
+                body = body.substring(0, 200);
+            }
+            errorMsg += ": " + body;
+        }
+        return errorMsg;
+    }
+
+    /**
+     * 错误分类
+     */
+    private String classifyError(Exception exception, Integer statusCode) {
+        if (statusCode != null) {
+            return switch (statusCode) {
+                case 401, 403 -> ProviderErrorType.AUTHENTICATION_ERROR.name();
+                case 429 -> ProviderErrorType.RATE_LIMIT_ERROR.name();
+                case 402 -> ProviderErrorType.QUOTA_EXCEEDED.name();
+                case 400 -> ProviderErrorType.INVALID_REQUEST.name();
+                case 500, 502, 503 -> ProviderErrorType.UPSTREAM_ERROR.name();
+                default -> ProviderErrorType.UNKNOWN_ERROR.name();
+            };
+        }
+
+        if (exception != null) {
+            if (exception instanceof java.net.SocketTimeoutException) {
+                return ProviderErrorType.TIMEOUT_ERROR.name();
+            }
+            if (exception instanceof java.net.ConnectException ||
+                exception instanceof java.net.UnknownHostException) {
+                return ProviderErrorType.NETWORK_ERROR.name();
+            }
+        }
+
+        return ProviderErrorType.UNKNOWN_ERROR.name();
     }
 
     @Override
