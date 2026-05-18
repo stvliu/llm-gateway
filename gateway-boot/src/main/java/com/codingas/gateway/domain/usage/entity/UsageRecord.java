@@ -27,6 +27,15 @@ public class UsageRecord extends BaseEntity {
 
     private Long modelId;
 
+    /** 新架构：用户 API Key ID */
+    private Long userApiKeyId;
+
+    /** 新架构：团队 ID */
+    private Long teamId;
+
+    /** 新架构：产品 ID */
+    private Long productId;
+
     private String requestId;
 
     private Integer inputTokens;

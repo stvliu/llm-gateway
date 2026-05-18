@@ -41,6 +41,18 @@ public class UsageLogDo extends BaseDo {
     @JoinColumn(name = "model_id", nullable = false)
     private ModelDo model;
 
+    /** 新架构：用户 API Key ID */
+    @Column(name = "user_api_key_id")
+    private Long userApiKeyId;
+
+    /** 新架构：团队 ID */
+    @Column(name = "team_id")
+    private Long teamId;
+
+    /** 新架构：产品 ID */
+    @Column(name = "product_id")
+    private Long productId;
+
     @Column(name = "request_id", length = 64)
     private String requestId;
 
