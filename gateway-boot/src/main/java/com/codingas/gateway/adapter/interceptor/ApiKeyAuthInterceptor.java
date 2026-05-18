@@ -27,6 +27,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
     public static final String API_KEY_HEADER = "X-API-Key";
     public static final String AUTHORIZATION_HEADER = "Authorization";
     public static final String USER_ID_ATTR = "userId";
+    public static final String AUTH_RESULT_ATTR = "authResult";
 
     /** API Key 认证的路径前缀 */
     private static final String API_KEY_PATH_PREFIX = "/v1/";
@@ -76,12 +77,13 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
             return false;
         }
 
-        // 存储用户信息到请求属性
+        // 存储用户信息和认证结果到请求属性
         request.setAttribute(USER_ID_ATTR, userInfo.userId());
         request.setAttribute("apiKeyId", userInfo.apiKeyId());
+        request.setAttribute(AUTH_RESULT_ATTR, userInfo);
 
-        log.debug("API Key authenticated: userId={}, apiKeyId={}",
-                userInfo.userId(), userInfo.apiKeyId());
+        log.debug("API Key authenticated: userId={}, apiKeyId={}, newArch={}",
+                userInfo.userId(), userInfo.apiKeyId(), userInfo.newArchitecture());
         return true;
     }
 

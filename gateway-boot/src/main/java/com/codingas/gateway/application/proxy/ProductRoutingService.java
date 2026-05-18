@@ -1,5 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.domain.model.entity.Provider;
+import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
 import com.codingas.gateway.domain.product.enums.ProductType;
@@ -34,6 +36,7 @@ public class ProductRoutingService {
 
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
+    private final ProviderGateway providerGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
@@ -78,13 +81,19 @@ public class ProductRoutingService {
         // 4. 解密 API Key
         String decryptedApiKey = encryptionService.decrypt(apiKey.getApiKeyEncrypted());
 
-        // 5. 选择端点
+        // 5. 获取 Provider 信息（用于 providerType）
+        Provider provider = providerGateway.findById(product.getProviderId())
+            .orElseThrow(() -> new IllegalStateException(
+                "Provider not found: id=" + product.getProviderId()));
+
+        // 6. 选择端点
         String endpoint = resolveEndpoint(product, protocol);
 
-        // 6. 构建路由上下文
+        // 7. 构建路由上下文
         return RoutingContext.builder()
             .providerId(product.getProviderId())
             .providerName(product.getProviderName())
+            .providerType(provider.getType())
             .productId(product.getId())
             .productType(product.getProductType())
             .userApiKeyId(userApiKey.getId())

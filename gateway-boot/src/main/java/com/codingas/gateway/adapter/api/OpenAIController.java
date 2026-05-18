@@ -6,6 +6,7 @@ import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -40,6 +41,7 @@ public class OpenAIController {
             @RequestBody OpenAIChatRequest request,
             @RequestAttribute("userId") Long userId,
             @RequestAttribute("apiKeyId") Long apiKeyId,
+            @RequestAttribute(value = "authResult", required = false) UserAuthResult authResult,
             HttpServletResponse response) throws IOException {
 
         log.info("OpenAI chat request: model={}, userId={}, stream={}",
@@ -48,10 +50,10 @@ public class OpenAIController {
         validateRequest(request);
 
         if (Boolean.TRUE.equals(request.getStream())) {
-            chatCompletionsStream(request, userId, apiKeyId, response);
-            return null; // 响应已在方法内处理
+            chatCompletionsStream(request, authResult, response);
+            return null;
         } else {
-            return chatCompletionsNonStream(request, userId, apiKeyId);
+            return chatCompletionsNonStream(request, authResult);
         }
     }
 
@@ -59,11 +61,16 @@ public class OpenAIController {
      * 非流式响应
      */
     private ResponseEntity<?> chatCompletionsNonStream(
-            OpenAIChatRequest request, Long userId, Long apiKeyId) {
+            OpenAIChatRequest request, UserAuthResult authResult) {
 
         LLMRequest llmRequest = toLLMRequest(request);
 
-        LLMResponse llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse;
+        if (authResult != null) {
+            llmResponse = proxyService.proxy(llmRequest, authResult, RouteGroup.RoutingStrategy.WEIGHTED);
+        } else {
+            llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        }
 
         // 错误响应直接返回 400
         if (llmResponse.getError() != null) {
@@ -79,7 +86,8 @@ public class OpenAIController {
      * <p>使用同步方式写入 SSE 流，避免异步回调时连接已关闭的问题。</p>
      */
     private void chatCompletionsStream(
-            OpenAIChatRequest request, Long userId, Long apiKeyId, HttpServletResponse response) throws IOException {
+            OpenAIChatRequest request, UserAuthResult authResult,
+            HttpServletResponse response) throws IOException {
 
         LLMRequest llmRequest = toLLMRequest(request);
         llmRequest.setStream(true);
@@ -92,34 +100,56 @@ public class OpenAIController {
 
         PrintWriter writer = response.getWriter();
 
-        // 使用 CountDownLatch 等待流式响应完成
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
-            try {
-                writer.write("data: " + data + "\n\n");
-                writer.flush();
-            } catch (Exception e) {
-                log.error("Error writing stream data: {}", e.getMessage());
-                errorRef.set(e);
+        if (authResult != null) {
+            proxyService.proxyStream(llmRequest, authResult, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+                try {
+                    writer.write("data: " + data + "\n\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    log.error("Error writing stream data: {}", e.getMessage());
+                    errorRef.set(e);
+                    latch.countDown();
+                }
+            }, () -> {
+                try {
+                    writer.write("data: [DONE]\n\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    log.error("Error writing stream done: {}", e.getMessage());
+                }
                 latch.countDown();
-            }
-        }, () -> {
-            // 流完成回调
-            try {
-                writer.write("data: [DONE]\n\n");
-                writer.flush();
-            } catch (Exception e) {
-                log.error("Error writing stream done: {}", e.getMessage());
-            }
-            latch.countDown();
-        }, error -> {
-            // 错误回调
-            log.error("Stream error: {}", error.getMessage());
-            errorRef.set(error);
-            latch.countDown();
-        });
+            }, error -> {
+                log.error("Stream error: {}", error.getMessage());
+                errorRef.set(error);
+                latch.countDown();
+            });
+        } else {
+            proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
+                try {
+                    writer.write("data: " + data + "\n\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    log.error("Error writing stream data: {}", e.getMessage());
+                    errorRef.set(e);
+                    latch.countDown();
+                }
+            }, () -> {
+                try {
+                    writer.write("data: [DONE]\n\n");
+                    writer.flush();
+                } catch (Exception e) {
+                    log.error("Error writing stream done: {}", e.getMessage());
+                }
+                latch.countDown();
+            }, error -> {
+                log.error("Stream error: {}", error.getMessage());
+                errorRef.set(error);
+                latch.countDown();
+            });
+        }
 
         try {
             // 等待流式响应完成（最多等待 120 秒）
