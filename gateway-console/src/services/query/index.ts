@@ -6,3 +6,5 @@ export * from './useMetadata';
 export * from './useProviderApiKeys';
 export * from './useTokenLimits';
 export * from './useStats';
+export * from './useProducts';
+export * from './useTeams';

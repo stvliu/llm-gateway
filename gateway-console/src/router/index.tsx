@@ -3,14 +3,13 @@ import { AuthGuard, PermissionGuard } from './guards';
 import Login from '@/pages/Login';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
-import Models from '@/pages/Models';
 import Providers from '@/pages/Providers';
 import Metadata from '@/pages/Metadata';
 import ApiKeyPool from '@/pages/ApiKeyPool';
 import Users from '@/pages/Users';
 import ApiKeys from '@/pages/ApiKeys';
 import ChangePassword from '@/pages/ChangePassword';
-import Experience from '@/pages/Experience';
+import TeamsPage from '@/pages/Teams';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -32,10 +31,6 @@ export const router = createBrowserRouter([
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
       {
-        path: 'models',
-        element: <PermissionGuard permission={P.MODEL_READ}><Models /></PermissionGuard>,
-      },
-      {
         path: 'providers',
         element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
       },
@@ -52,12 +47,12 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.USER_READ}><Users /></PermissionGuard>,
       },
       {
-        path: 'api-keys',
-        element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
+        path: 'teams',
+        element: <PermissionGuard permission={P.USER_READ}><TeamsPage /></PermissionGuard>,
       },
       {
-        path: 'experience',
-        element: <Experience />,
+        path: 'api-keys',
+        element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
       },
       {
         path: 'change-password',
@@ -69,6 +64,8 @@ export const router = createBrowserRouter([
   // 兼容旧路由重定向
   { path: '/admin/*', element: <Navigate to="/" replace /> },
   { path: '/user/*', element: <Navigate to="/" replace /> },
+  { path: '/models', element: <Navigate to="/providers" replace /> },
+  { path: '/experience', element: <Navigate to="/dashboard" replace /> },
 
   // 默认重定向
   { path: '*', element: <Navigate to="/dashboard" replace /> },

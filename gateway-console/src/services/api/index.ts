@@ -7,3 +7,5 @@ export { apiKeyApi } from './apiKey';
 export { providerApiKeyApi } from './providerApiKey';
 export { tokenLimitApi } from './tokenLimit';
 export { providerMetadataApi, modelMetadataApi, metadataSyncApi } from './metadata';
+export { productApi, productApiKeyApi } from './product';
+export { teamApi } from './team';

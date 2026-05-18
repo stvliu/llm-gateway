@@ -14,6 +14,8 @@ import zhCNApiKeyPool from './locales/zh-CN/apiKeyPool.json';
 import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNMetadata from './locales/zh-CN/metadata.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
+import zhCNProducts from './locales/zh-CN/products.json';
+import zhCNTeams from './locales/zh-CN/teams.json';
 
 // 英文
 import enUSCommon from './locales/en-US/common.json';
@@ -27,6 +29,8 @@ import enUSApiKeyPool from './locales/en-US/apiKeyPool.json';
 import enUSChat from './locales/en-US/chat.json';
 import enUSMetadata from './locales/en-US/metadata.json';
 import enUSExperience from './locales/en-US/experience.json';
+import enUSProducts from './locales/en-US/products.json';
+import enUSTeams from './locales/en-US/teams.json';
 
 i18n
   .use(LanguageDetector)
@@ -45,6 +49,8 @@ i18n
         chat: zhCNChat,
         metadata: zhCNMetadata,
         experience: zhCNExperience,
+        products: zhCNProducts,
+        teams: zhCNTeams,
       },
       'en-US': {
         common: enUSCommon,
@@ -58,6 +64,8 @@ i18n
         chat: enUSChat,
         metadata: enUSMetadata,
         experience: enUSExperience,
+        products: enUSProducts,
+        teams: enUSTeams,
       },
     },
     fallbackLng: 'zh-CN',

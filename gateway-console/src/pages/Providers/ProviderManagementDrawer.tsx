@@ -11,12 +11,14 @@ import {
   CheckOutlined,
   CloseOutlined,
   ExperimentOutlined,
+  ShoppingOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
 import { ProviderApiKeysTab } from './ProviderApiKeysTab';
 import { ProviderModelsTab } from './ProviderModelsTab';
 import { ProviderExperienceTab } from './ProviderExperienceTab';
+import ProviderProductsTab from './ProviderProductsTab';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useProvider, useDeleteProvider } from '@/services/query';
@@ -155,6 +157,11 @@ export function ProviderManagementDrawer({
       label: t('provider.experience', { defaultValue: '体验' }),
       icon: <ExperimentOutlined />,
     },
+    {
+      key: 'products',
+      label: t('product.title', { ns: 'products' }),
+      icon: <ShoppingOutlined />,
+    },
   ];
 
   // 标题
@@ -284,6 +291,11 @@ export function ProviderManagementDrawer({
         <ProviderExperienceTab
           provider={provider || null}
         />
+      )}
+
+      {/* 产品：编辑基本信息时隐藏 */}
+      {!isLoading && !editing && activeTab === 'products' && providerId && (
+        <ProviderProductsTab providerId={providerId} />
       )}
     </Drawer>
   );
