@@ -14,6 +14,10 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyUsageQueryRequest {
 
     /** 开始时间 */

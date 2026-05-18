@@ -15,6 +15,10 @@ import java.util.List;
  *
  * <p>JPA 实体，对应数据库 gateway_api_keys 表。</p>
  */
+/**
+ * @deprecated 旧架构 DO，由 UserApiKeyDo 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 @Entity
 @Table(name = "gateway_api_keys")
 @Getter

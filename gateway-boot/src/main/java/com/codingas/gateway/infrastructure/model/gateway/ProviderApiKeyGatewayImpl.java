@@ -25,6 +25,10 @@ import java.util.stream.Collectors;
  * 提供商 API 密钥网关实现
  */
 @Slf4j
+/**
+ * @deprecated 旧架构实现，由 ProductApiKeyGatewayImpl 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 @Component
 @RequiredArgsConstructor
 public class ProviderApiKeyGatewayImpl implements ProviderApiKeyGateway {

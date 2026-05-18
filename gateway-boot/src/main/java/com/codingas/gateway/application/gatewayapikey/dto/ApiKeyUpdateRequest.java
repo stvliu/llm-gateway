@@ -11,6 +11,10 @@ import java.util.List;
  * 更新 API Key 请求
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyUpdateRequest {
 
     @Size(max = 64, message = "Name must not exceed 64 characters")

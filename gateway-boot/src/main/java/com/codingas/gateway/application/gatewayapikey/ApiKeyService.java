@@ -15,6 +15,10 @@ import java.util.List;
  *
  * <p>处理 API Key 管理的业务逻辑。</p>
  */
+/**
+ * @deprecated 旧架构 API Key 管理服务，新架构使用 UserApiKeyService
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface ApiKeyService {
 
     /**

@@ -10,6 +10,10 @@ import java.util.List;
  * API Key 响应
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyResponse {
 
     private Long id;

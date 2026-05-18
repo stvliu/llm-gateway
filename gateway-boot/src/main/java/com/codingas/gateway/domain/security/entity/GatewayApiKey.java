@@ -12,8 +12,11 @@ import java.util.List;
 /**
  * 网关访问凭证实体
  *
- * <p>用户调用 LLM-Gateway 网关的凭据，格式为 sk-xxxxxxxx。</p>
+ * <p>旧架构实体，由 UserApiKey + ProductApiKey 替代。</p>
+ *
+ * @deprecated 使用 {@link com.codingas.gateway.domain.team.entity.UserApiKey} 替代
  */
+@Deprecated(since = "2.0", forRemoval = true)
 @Data
 @EqualsAndHashCode(callSuper = true)
 @DomainEntity

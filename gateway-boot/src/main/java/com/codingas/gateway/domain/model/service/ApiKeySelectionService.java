@@ -25,6 +25,10 @@ import java.util.concurrent.ThreadLocalRandom;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构 API Key 选择服务，由 ProductRoutingService 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeySelectionService {
 
     private final ProviderApiKeyGateway providerApiKeyGateway;

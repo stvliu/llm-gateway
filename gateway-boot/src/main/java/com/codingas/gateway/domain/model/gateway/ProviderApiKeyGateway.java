@@ -15,6 +15,10 @@ import java.util.Optional;
  * <p>定义在 domain 层，由 infrastructure 层实现。</p>
  * <p>Domain 不直接依赖持久化，通过此接口操作提供商 API 密钥。</p>
  */
+/**
+ * @deprecated 旧架构 Gateway，由 ProductApiKeyGateway 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface ProviderApiKeyGateway {
 
     /**

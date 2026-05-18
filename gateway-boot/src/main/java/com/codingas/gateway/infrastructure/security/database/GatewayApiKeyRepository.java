@@ -14,6 +14,10 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
+/**
+ * @deprecated 旧架构 Repository，由 UserApiKeyRepository 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface GatewayApiKeyRepository extends JpaRepository<GatewayApiKeyDo, Long> {
 
     @Query("SELECT k FROM GatewayApiKeyDo k LEFT JOIN FETCH k.user WHERE k.keyHash = :keyHash")

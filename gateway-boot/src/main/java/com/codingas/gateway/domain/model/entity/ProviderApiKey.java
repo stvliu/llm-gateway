@@ -25,6 +25,10 @@ import java.time.Instant;
 @EqualsAndHashCode(callSuper = true)
 @DomainEntity
 @Slf4j
+/**
+ * @deprecated 旧架构供应商 API Key 实体，由 ProductApiKey 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKey extends BaseEntity {
 
     /**

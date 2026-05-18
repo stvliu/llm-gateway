@@ -12,6 +12,10 @@ import java.time.Instant;
  *
  * <p>JPA 实体，对应数据库 provider_api_keys 表。</p>
  */
+/**
+ * @deprecated 旧架构 DO，由 ProductApiKeyDo 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 @Entity
 @Table(name = "provider_api_keys", indexes = {
     @Index(name = "idx_provider_id", columnList = "provider_id"),

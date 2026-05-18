@@ -29,6 +29,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构供应商 API Key 管理服务实现
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyServiceImpl implements ProviderApiKeyService {
 
     private final ProviderApiKeyGateway providerApiKeyGateway;

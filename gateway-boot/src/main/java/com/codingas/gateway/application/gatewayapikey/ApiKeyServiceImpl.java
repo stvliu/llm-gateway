@@ -36,6 +36,10 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构 API Key 管理服务实现
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyServiceImpl implements ApiKeyService {
 
     private final ApiKeyGateway apiKeyGateway;

@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/provider-api-keys")
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构供应商 API Key 管理控制器
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyController {
 
     private final ProviderApiKeyService providerApiKeyService;

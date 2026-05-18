@@ -14,6 +14,10 @@ import java.util.List;
  *
  * <p>提供用户权限和角色数据给 Sa-Token 框架。</p>
  */
+/**
+ * @deprecated 旧架构权限接口，新架构由 TeamRole 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 @Component
 @RequiredArgsConstructor
 public class ApiKeyStpInterface implements StpInterface {

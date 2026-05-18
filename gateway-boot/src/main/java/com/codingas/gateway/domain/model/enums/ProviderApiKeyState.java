@@ -23,6 +23,10 @@ package com.codingas.gateway.domain.model.enums;
  * <p>速率限制、配额超限、降级等运行时状态由 {@link ProviderApiKeyHealth} 管理，
  * 不持久化到数据库，由熔断器组件自动管理。</p>
  */
+/**
+ * @deprecated 旧架构枚举，由 ProductApiKeyState 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public enum ProviderApiKeyState {
     /** 正常使用，可接受请求 */
     ACTIVE,

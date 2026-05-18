@@ -17,6 +17,10 @@ package com.codingas.gateway.domain.model.enums;
  * <h3>状态转换</h3>
  * <p>所有状态均可自动恢复到 HEALTHY，由熔断器根据配置的恢复策略管理。</p>
  */
+/**
+ * @deprecated 旧架构枚举，由 ProductApiKey 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public enum ProviderApiKeyHealth {
     /** 健康，正常使用 */
     HEALTHY,

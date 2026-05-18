@@ -3,22 +3,11 @@ package com.codingas.gateway.domain.security.enums;
 /**
  * Gateway API Key 状态枚举
  *
- * <p>企业内部 LLM Gateway 的用户调用凭证生命周期状态，采用简化设计。</p>
+ * <p>旧架构枚举，新架构使用 UserApiKeyState。</p>
  *
- * <h3>状态转换图</h3>
- * <pre>
- * ACTIVE ⇄ DISABLED
- *    ↓
- * DELETED（终态）
- * </pre>
- *
- * <h3>状态说明</h3>
- * <ul>
- *   <li>ACTIVE：正常使用，可接受请求</li>
- *   <li>DISABLED：管理员禁用，不接受请求（可恢复）</li>
- *   <li>DELETED：已删除（终态）</li>
- * </ul>
+ * @deprecated 使用 {@link com.codingas.gateway.domain.team.enums.UserApiKeyState} 替代
  */
+@Deprecated(since = "2.0", forRemoval = true)
 public enum GatewayApiKeyState {
     /** 正常使用，可接受请求 */
     ACTIVE,

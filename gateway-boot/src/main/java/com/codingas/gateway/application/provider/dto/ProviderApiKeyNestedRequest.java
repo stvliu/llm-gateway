@@ -10,6 +10,10 @@ import lombok.Data;
  * 创建供应商时嵌套的 API Key 请求
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyNestedRequest {
 
     @NotBlank(message = "Key name is required")

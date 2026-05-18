@@ -22,6 +22,10 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/api-keys")
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构 API Key 管理控制器
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyController {
 
     private final ApiKeyService apiKeyService;

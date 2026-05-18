@@ -10,6 +10,10 @@ import com.codingas.gateway.common.dto.PageResponse;
 /**
  * Provider API Key 应用服务接口
  */
+/**
+ * @deprecated 旧架构供应商 API Key 管理服务
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface ProviderApiKeyService {
 
     ProviderApiKeyCreateResponse create(ProviderApiKeyCreateRequest request);

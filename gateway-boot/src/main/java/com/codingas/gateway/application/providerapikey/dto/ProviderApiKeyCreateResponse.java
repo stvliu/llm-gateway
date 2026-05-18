@@ -10,6 +10,10 @@ import java.time.Instant;
  * Provider API Key 创建响应（一次性返回明文 API Key）
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyCreateResponse {
 
     private Long id;

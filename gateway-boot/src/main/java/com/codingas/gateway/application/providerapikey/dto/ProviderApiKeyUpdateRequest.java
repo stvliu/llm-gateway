@@ -12,6 +12,10 @@ import java.time.Instant;
  * 更新 Provider API Key 请求
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyUpdateRequest {
 
     @Size(max = 128, message = "Key name must not exceed 128 characters")

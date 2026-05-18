@@ -10,6 +10,10 @@ import java.time.Instant;
  * Provider API Key 响应（查询时使用，apiKey 已被 mask）
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ProviderApiKeyResponse {
 
     private Long id;

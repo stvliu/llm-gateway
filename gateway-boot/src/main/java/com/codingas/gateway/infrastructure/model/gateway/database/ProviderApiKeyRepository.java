@@ -18,6 +18,10 @@ import java.util.Optional;
  * 提供商 API 密钥仓储接口
  */
 @Repository
+/**
+ * @deprecated 旧架构 Repository，由 ProductApiKeyRepository 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public interface ProviderApiKeyRepository extends JpaRepository<ProviderApiKeyDo, Long> {
 
     /**

@@ -24,6 +24,10 @@ import java.time.temporal.ChronoUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+/**
+ * @deprecated 旧架构过期通知，新架构由 UserApiKeyExpirationNotifier 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class GatewayApiKeyExpirationNotifier {
 
     private static final int ADVANCE_DAYS = 7;

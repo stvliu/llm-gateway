@@ -12,6 +12,10 @@ import java.util.List;
  * 创建 API Key 请求
  */
 @Data
+/**
+ * @deprecated 旧架构 DTO
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 public class ApiKeyCreateRequest {
 
     @NotNull(message = "User ID is required")

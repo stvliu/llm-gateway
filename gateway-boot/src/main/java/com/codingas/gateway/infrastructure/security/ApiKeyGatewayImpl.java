@@ -23,6 +23,10 @@ import java.util.stream.Collectors;
  * <p>实现 ApiKeyGateway 接口，负责 DO ↔ Entity 转换。</p>
  */
 @Slf4j
+/**
+ * @deprecated 旧架构实现，由 UserApiKeyGatewayImpl 替代
+ */
+@Deprecated(since = "2.0", forRemoval = true)
 @Component
 @RequiredArgsConstructor
 public class ApiKeyGatewayImpl implements ApiKeyGateway {
