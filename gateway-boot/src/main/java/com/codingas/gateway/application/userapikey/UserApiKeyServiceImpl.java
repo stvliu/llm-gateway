@@ -66,6 +66,15 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
                 .toList();
     }
 
+    /**
+     * 根据用户 ID 查询所有 API Key
+     */
+    public List<UserApiKeyResponse> findByUserId(Long userId) {
+        return userApiKeyGateway.findByUserId(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Override
     public UserApiKeyResponse getById(Long id) {
         UserApiKey apiKey = userApiKeyGateway.findById(id)
