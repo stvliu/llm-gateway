@@ -74,7 +74,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey userApiKey = new UserApiKey();
             userApiKey.setId(101L);
-            userApiKey.setOwnerUserId(1L);
+            userApiKey.setUserId(1L);
             userApiKey.setProductId(200L);
             userApiKey.setTeamId(300L);
             userApiKey.setState(UserApiKeyState.ACTIVE);
@@ -120,7 +120,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey userApiKey = new UserApiKey();
             userApiKey.setId(101L);
-            userApiKey.setOwnerUserId(1L);
+            userApiKey.setUserId(1L);
             userApiKey.setProductId(200L);
             userApiKey.setTeamId(300L);
             userApiKey.setState(UserApiKeyState.ACTIVE);
@@ -151,7 +151,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey userApiKey = new UserApiKey();
             userApiKey.setId(101L);
-            userApiKey.setOwnerUserId(1L);
+            userApiKey.setUserId(1L);
             userApiKey.setProductId(200L);
             userApiKey.setTeamId(300L);
             userApiKey.setState(UserApiKeyState.ACTIVE);
@@ -186,7 +186,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey userApiKey = new UserApiKey();
             userApiKey.setId(101L);
-            userApiKey.setOwnerUserId(1L);
+            userApiKey.setUserId(1L);
             userApiKey.setProductId(200L);
             userApiKey.setTeamId(300L);
             userApiKey.setState(UserApiKeyState.ACTIVE);
@@ -222,7 +222,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey userApiKey = new UserApiKey();
             userApiKey.setId(101L);
-            userApiKey.setOwnerUserId(1L);
+            userApiKey.setUserId(1L);
             userApiKey.setProductId(200L);
             userApiKey.setTeamId(300L);
             userApiKey.setState(UserApiKeyState.ACTIVE);
@@ -313,7 +313,7 @@ class AuthenticationDomainServiceTest {
 
             UserApiKey inactiveKey = new UserApiKey();
             inactiveKey.setId(101L);
-            inactiveKey.setOwnerUserId(1L);
+            inactiveKey.setUserId(1L);
             inactiveKey.setState(UserApiKeyState.INACTIVE);
 
             GatewayApiKey legacyKey = new GatewayApiKey();

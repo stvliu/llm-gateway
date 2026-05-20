@@ -64,6 +64,7 @@ export default function UserApiKeyManageModal({ team, open, onClose }: Props) {
       const values = await form.validateFields();
       const req: CreateUserApiKeyRequest = {
         teamId: team.id,
+        userId: values.userId,
         productId: values.productId,
         name: values.name,
         models: values.models,
@@ -131,6 +132,11 @@ export default function UserApiKeyManageModal({ team, open, onClose }: Props) {
       dataIndex: 'keyPrefix',
       key: 'keyPrefix',
       render: (prefix: string) => <Text code>{prefix}...</Text>,
+    },
+    {
+      title: t('apiKey.userId', { defaultValue: '用户 ID' }),
+      dataIndex: 'userId',
+      key: 'userId',
     },
     {
       title: t('apiKey.models', { defaultValue: '可用模型' }),

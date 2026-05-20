@@ -10,6 +10,7 @@ import java.util.List;
  *
  * @param id 主键
  * @param teamId 团队 ID
+ * @param userId 用户 ID
  * @param productId 产品 ID
  * @param keyPrefix Key 前缀
  * @param keyPlain 明文 API Key（仅单个查询时返回，列表查询不返回）
@@ -23,6 +24,7 @@ import java.util.List;
 public record UserApiKeyDetailResponse(
         Long id,
         Long teamId,
+        Long userId,
         Long productId,
         String keyPrefix,
         String keyPlain,

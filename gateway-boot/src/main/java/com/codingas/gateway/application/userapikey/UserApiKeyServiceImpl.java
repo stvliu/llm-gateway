@@ -125,6 +125,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         return new UserApiKeyResponse(
                 apiKey.getId(),
                 apiKey.getTeamId(),
+                apiKey.getUserId(),
                 apiKey.getProductId(),
                 apiKey.getKeyPrefix(),
                 apiKey.getName(),
@@ -140,6 +141,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         return new UserApiKeyDetailResponse(
                 apiKey.getId(),
                 apiKey.getTeamId(),
+                apiKey.getUserId(),
                 apiKey.getProductId(),
                 apiKey.getKeyPrefix(),
                 apiKey.getKeyPlain(),

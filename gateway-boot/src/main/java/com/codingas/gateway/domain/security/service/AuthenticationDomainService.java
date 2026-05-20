@@ -105,7 +105,7 @@ public class AuthenticationDomainService {
         }
 
         // 查找用户
-        Long userId = userApiKey.getOwnerUserId();
+        Long userId = userApiKey.getUserId();
         if (userId == null) {
             log.debug("Owner user ID not found for UserApiKey");
             return null;

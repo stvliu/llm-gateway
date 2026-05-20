@@ -23,8 +23,8 @@ public class UserApiKeyDo {
     @Column(name = "team_id", nullable = false)
     private Long teamId;
 
-    @Column(name = "owner_user_id")
-    private Long ownerUserId;
+    @Column(name = "user_id")
+    private Long userId;
 
     @Column(name = "product_id", nullable = false)
     private Long productId;

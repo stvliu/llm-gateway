@@ -69,16 +69,13 @@ public class ProviderGatewayImpl implements ProviderGateway {
         Provider entity = new Provider();
         entity.setId(doEntity.getId());
         entity.setName(doEntity.getName());
-        entity.setBaseUrl(doEntity.getBaseUrl());
+        entity.setType(doEntity.getType());
         entity.setWebsiteUrl(doEntity.getWebsiteUrl());
         entity.setApiDocUrl(doEntity.getApiDocUrl());
         entity.setPriority(doEntity.getPriority());
         entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
-        if (doEntity.getType() != null) {
-            entity.setType(doEntity.getType());
-        }
         return entity;
     }
 
@@ -94,14 +91,11 @@ public class ProviderGatewayImpl implements ProviderGateway {
             doEntity.setId(entity.getId());
         }
         doEntity.setName(entity.getName());
-        doEntity.setBaseUrl(entity.getBaseUrl());
+        doEntity.setType(entity.getType());
         doEntity.setWebsiteUrl(entity.getWebsiteUrl());
         doEntity.setApiDocUrl(entity.getApiDocUrl());
         doEntity.setPriority(entity.getPriority());
         doEntity.setState(entity.getState());
-        if (entity.getType() != null) {
-            doEntity.setType(entity.getType());
-        }
         return doEntity;
     }
 }

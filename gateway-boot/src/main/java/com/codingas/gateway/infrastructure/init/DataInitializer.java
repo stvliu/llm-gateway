@@ -335,7 +335,7 @@ public class DataInitializer implements CommandLineRunner {
 
         UserApiKey apiKey = new UserApiKey();
         apiKey.setTeamId(team.getId());
-        apiKey.setOwnerUserId(user.getId());
+        apiKey.setUserId(user.getId());
         apiKey.setProductId(product.getId());
         apiKey.setKeyPlain(keyPlain);
         apiKey.setName(name);

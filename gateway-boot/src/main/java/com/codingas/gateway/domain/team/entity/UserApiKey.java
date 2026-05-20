@@ -26,7 +26,7 @@ public class UserApiKey extends BaseEntity {
     private Long teamId;
 
     /** 创建者用户 ID */
-    private Long ownerUserId;
+    private Long userId;
 
     /** 绑定的产品 ID */
     private Long productId;
