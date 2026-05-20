@@ -19,5 +19,7 @@ public interface UserApiKeyRepository extends JpaRepository<UserApiKeyDo, Long> 
 
     List<UserApiKeyDo> findByProductId(Long productId);
 
+    List<UserApiKeyDo> findByUserId(Long userId);
+
     long countByTeamId(Long teamId);
 }

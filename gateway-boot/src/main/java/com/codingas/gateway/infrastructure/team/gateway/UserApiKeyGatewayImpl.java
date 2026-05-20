@@ -72,6 +72,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     }
 
     @Override
+    public List<UserApiKey> findByUserId(Long userId) {
+        return userApiKeyRepository.findByUserId(userId).stream()
+            .map(this::toEntity)
+            .toList();
+    }
+
+    @Override
     public void deleteById(Long id) {
         userApiKeyRepository.deleteById(id);
     }

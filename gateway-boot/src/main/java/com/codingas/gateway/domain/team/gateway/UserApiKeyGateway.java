@@ -20,6 +20,11 @@ public interface UserApiKeyGateway {
 
     List<UserApiKey> findByProductId(Long productId);
 
+    /**
+     * 根据用户 ID 查询所有 API Key
+     */
+    List<UserApiKey> findByUserId(Long userId);
+
     void deleteById(Long id);
 
     long countByTeamId(Long teamId);
