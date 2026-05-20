@@ -6,8 +6,10 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.team.entity.Team;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
 import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +33,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserApiKeyGateway userApiKeyGateway;
+    private final TeamGateway teamGateway;
 
     @Override
     @Transactional
@@ -122,9 +125,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     }
 
     private UserApiKeyResponse toResponse(UserApiKey apiKey) {
+        String teamName = teamGateway.findById(apiKey.getTeamId())
+                .map(Team::getName)
+                .orElse(null);
         return new UserApiKeyResponse(
                 apiKey.getId(),
                 apiKey.getTeamId(),
+                teamName,
                 apiKey.getUserId(),
                 apiKey.getProductId(),
                 apiKey.getKeyPrefix(),
@@ -138,9 +145,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     }
 
     private UserApiKeyDetailResponse toDetailResponse(UserApiKey apiKey) {
+        String teamName = teamGateway.findById(apiKey.getTeamId())
+                .map(Team::getName)
+                .orElse(null);
         return new UserApiKeyDetailResponse(
                 apiKey.getId(),
                 apiKey.getTeamId(),
+                teamName,
                 apiKey.getUserId(),
                 apiKey.getProductId(),
                 apiKey.getKeyPrefix(),

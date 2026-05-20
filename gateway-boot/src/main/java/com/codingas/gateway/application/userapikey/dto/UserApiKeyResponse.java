@@ -10,6 +10,7 @@ import java.util.List;
  *
  * @param id 主键
  * @param teamId 团队 ID
+ * @param teamName 团队名称（冗余字段，便于前端分组展示）
  * @param userId 用户 ID
  * @param productId 产品 ID
  * @param keyPrefix Key 前缀
@@ -23,6 +24,7 @@ import java.util.List;
 public record UserApiKeyResponse(
         Long id,
         Long teamId,
+        String teamName,
         Long userId,
         Long productId,
         String keyPrefix,
