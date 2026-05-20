@@ -8,7 +8,6 @@ import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +36,6 @@ public class ProductRoutingService {
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
     private final ProviderGateway providerGateway;
-    private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
      * 基于新架构解析路由
@@ -78,8 +76,12 @@ public class ProductRoutingService {
                 "No available ProductApiKey for product: " + product.getName());
         }
 
-        // 4. 解密 API Key
-        String decryptedApiKey = encryptionService.decrypt(apiKey.getApiKeyEncrypted());
+        // 4. 获取明文 API Key（由 GatewayImpl 解密填充）
+        String plainApiKey = apiKey.getApiKeyPlain();
+        if (plainApiKey == null || plainApiKey.isBlank()) {
+            throw new IllegalStateException(
+                "ProductApiKey has no plain key available: id=" + apiKey.getId());
+        }
 
         // 5. 获取 Provider 信息（用于 providerType）
         Provider provider = providerGateway.findById(product.getProviderId())
@@ -100,7 +102,7 @@ public class ProductRoutingService {
             .teamId(userApiKey.getTeamId())
             .model(model)
             .protocol(protocol)
-            .providerApiKey(decryptedApiKey)
+            .providerApiKey(plainApiKey)
             .providerApiKeyId(apiKey.getId())
             .endpoint(endpoint)
             .build();

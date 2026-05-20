@@ -54,7 +54,7 @@ export default function TeamFormModal({ visible, team, onClose }: TeamFormModalP
       onOk={handleSubmit}
       onCancel={onClose}
       confirmLoading={loading}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical">
         <Form.Item name="name" label={t('team.name')} rules={[{ required: true, message: t('team.nameRequired') }]}>

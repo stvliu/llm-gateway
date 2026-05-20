@@ -1,7 +1,6 @@
 import {
   DashboardOutlined,
   CloudServerOutlined,
-  KeyOutlined,
   TeamOutlined,
   SettingOutlined,
   DatabaseOutlined,
@@ -36,30 +35,6 @@ export const menuConfig: MenuItemConfig[] = [
         label: 'menu.providers',
         permission: 'provider:read',
       },
-      {
-        key: '/api-key-pool',
-        icon: <KeyOutlined />,
-        label: 'menu.providerKeys',
-        permission: 'apikey-pool:read',
-      },
-    ],
-  },
-  {
-    key: 'key-management',
-    icon: <KeyOutlined />,
-    label: 'menu.keyManagement',
-    children: [
-      {
-        key: '/api-keys',
-        icon: <KeyOutlined />,
-        label: 'menu.myApiKeys',
-        permission: 'apikey:manage',
-      },
-      {
-        key: '/change-password',
-        icon: <LockOutlined />,
-        label: 'menu.changePassword',
-      },
     ],
   },
   {
@@ -91,6 +66,11 @@ export const menuConfig: MenuItemConfig[] = [
         icon: <DatabaseOutlined />,
         label: 'menu.metadata',
         permission: 'metadata:read',
+      },
+      {
+        key: '/change-password',
+        icon: <LockOutlined />,
+        label: 'menu.changePassword',
       },
     ],
   },

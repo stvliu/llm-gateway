@@ -1,9 +1,11 @@
-import { Form, Input, Button, Card, message } from 'antd';
+import { Form, Input, Button, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/services/api/auth';
 import { useState } from 'react';
+import { useMessage } from '@/hooks/useMessage';
 
 export default function ChangePassword() {
+  const message = useMessage();
   const { t } = useTranslation('common');
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();

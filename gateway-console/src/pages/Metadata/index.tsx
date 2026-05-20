@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Tabs, Card, Button, Space, message, Modal, Input, Form, Tag, Typography, theme, Select, Spin } from 'antd';
+import { Tabs, Card, Button, Space, Modal, Input, Form, Tag, Typography, theme, Select, Spin, App } from 'antd';
 import { SyncOutlined, CloudDownloadOutlined, RightOutlined, SearchOutlined, FilterOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviderMetadata, useModelMetadata, useApplyMetadata, useSyncMetadata } from '@/services/query/useMetadata';
@@ -84,6 +84,7 @@ function ProviderMetadataTab({
   onViewModelsByProvider: (providerId: string) => void;
 }) {
   const { t } = useTranslation('metadata');
+  const { message } = App.useApp();
   const { token } = theme.useToken();
   const [page] = useState(0);
   const [applyModalOpen, setApplyModalOpen] = useState(false);

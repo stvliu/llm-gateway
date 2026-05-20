@@ -1,21 +1,28 @@
 package com.codingas.gateway.infrastructure.init;
 
-import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.domain.model.enums.ProviderType;
-import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey;
+import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.enums.ProductState;
+import com.codingas.gateway.domain.product.enums.ProductType;
+import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.team.entity.Team;
+import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.team.enums.TeamState;
+import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.team.gateway.TeamGateway;
+import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -24,7 +31,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
-import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,12 +40,11 @@ import java.util.Map;
  * <p>在应用启动时初始化测试数据（仅 local/dev 环境）。</p>
  * <p>初始化内容：</p>
  * <ul>
- *   <li>Provider（火山引擎）</li>
- *   <li>Provider API Key</li>
- *   <li>模型数据（豆包系列）</li>
- *   <li>管理员用户：admin/admin (ADMIN 角色)</li>
- *   <li>测试用户：test/test (USER 角色)</li>
- *   <li>网关 API Key</li>
+ *   <li>Provider（火山引擎）+ Provider API Key + 模型</li>
+ *   <li>产品（按量计费）</li>
+ *   <li>4 个团队：默认、产品、开发、龙虾</li>
+ *   <li>1 个管理员 + 6 个测试用户</li>
+ *   <li>10 个 UserApiKey，分布在不同团队下</li>
  * </ul>
  */
 @Slf4j
@@ -48,14 +54,13 @@ import java.util.Map;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserGateway userGateway;
-    private final ApiKeyGateway apiKeyGateway;
     private final PasswordEncoder passwordEncoder;
     private final ProviderGateway providerGateway;
     private final ProviderApiKeyGateway providerApiKeyGateway;
     private final ModelGateway modelGateway;
-
-    /** 测试用的 Gateway API Key */
-    private static final String TEST_API_KEY = "sk-test-volcengine-key-001";
+    private final ProductGateway productGateway;
+    private final TeamGateway teamGateway;
+    private final UserApiKeyGateway userApiKeyGateway;
 
     @Override
     public void run(String... args) {
@@ -69,9 +74,50 @@ public class DataInitializer implements CommandLineRunner {
                 initModels(provider);
             }
 
-            // 初始化用户数据
+            // 初始化产品
+            Product product = initProduct(provider);
+
+            // 初始化团队（4 个）
+            Team defaultTeam = initTeam("默认团队", "开发环境默认团队");
+            Team productTeam = initTeam("产品团队", "产品部门团队");
+            Team devTeam = initTeam("开发团队", "研发部门团队");
+            Team lobsterTeam = initTeam("龙虾团队", "龙虾部门团队");
+
+            // 初始化用户（1 管理员 + 6 测试用户）
             initAdminUser();
-            initTestUser();
+            User testUser1 = initUser("test1", "test1@example.com", "test1");
+            User testUser2 = initUser("test2", "test2@example.com", "test2");
+            User testUser3 = initUser("test3", "test3@example.com", "test3");
+            User testUser4 = initUser("test4", "test4@example.com", "test4");
+            User testUser5 = initUser("test5", "test5@example.com", "test5");
+            User testUser6 = initUser("test6", "test6@example.com", "test6");
+
+            // 初始化 10 个 UserApiKey，分布在不同团队
+            if (product != null) {
+                // test1: 默认团队 2 个 Key
+                initUserApiKey(testUser1, defaultTeam, product, "sk-test1-default-001", "test1 默认团队 Key 1");
+                initUserApiKey(testUser1, defaultTeam, product, "sk-test1-default-002", "test1 默认团队 Key 2");
+
+                // test1: 开发团队 1 个 Key（同一用户跨团队）
+                initUserApiKey(testUser1, devTeam, product, "sk-test1-dev-001", "test1 开发团队 Key");
+
+                // test2: 产品团队 2 个 Key
+                initUserApiKey(testUser2, productTeam, product, "sk-test2-product-001", "test2 产品团队 Key 1");
+                initUserApiKey(testUser2, productTeam, product, "sk-test2-product-002", "test2 产品团队 Key 2");
+
+                // test3: 龙虾团队 2 个 Key
+                initUserApiKey(testUser3, lobsterTeam, product, "sk-test3-lobster-001", "test3 龙虾团队 Key 1");
+                initUserApiKey(testUser3, lobsterTeam, product, "sk-test3-lobster-002", "test3 龙虾团队 Key 2");
+
+                // test4: 默认团队 1 个 Key
+                initUserApiKey(testUser4, defaultTeam, product, "sk-test4-default-001", "test4 默认团队 Key");
+
+                // test5: 开发团队 1 个 Key
+                initUserApiKey(testUser5, devTeam, product, "sk-test5-dev-001", "test5 开发团队 Key");
+
+                // test6: 龙虾团队 1 个 Key（跨团队共享龙虾团队）
+                initUserApiKey(testUser6, lobsterTeam, product, "sk-test6-lobster-001", "test6 龙虾团队 Key");
+            }
 
             log.info("Data initialization completed successfully");
         } catch (Exception e) {
@@ -83,7 +129,6 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化 Provider（火山引擎）
      */
     private Provider initProvider() {
-        // 检查是否已存在 Provider
         if (providerGateway.count() > 0) {
             log.info("Provider already exists, skipping");
             return providerGateway.findAll().get(0);
@@ -98,16 +143,15 @@ public class DataInitializer implements CommandLineRunner {
         provider.setPriority(100);
         provider.setState(ProviderState.ACTIVE);
 
-        Provider savedProvider = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", provider.getName(), savedProvider.getId());
-        return savedProvider;
+        Provider saved = providerGateway.save(provider);
+        log.info("Created provider: {} (id={})", provider.getName(), saved.getId());
+        return saved;
     }
 
     /**
      * 初始化 Provider API Key
      */
     private void initProviderApiKey(Provider provider) {
-        // 检查是否已存在
         if (!providerApiKeyGateway.findByProviderId(provider.getId()).isEmpty()) {
             log.info("Provider API key already exists, skipping");
             return;
@@ -128,35 +172,19 @@ public class DataInitializer implements CommandLineRunner {
      * 初始化模型数据
      */
     private void initModels(Provider provider) {
-        // 检查是否已存在模型
         if (modelGateway.count() > 0) {
             log.info("Models already exist, skipping");
             return;
         }
 
-        // 豆包 Pro 32K
-        createModel(provider, "doubao-pro-32k", "豆包 Pro 32K",
+        createModel(provider, "doubao-seed-2-0-lite-260428", "Doubao-Seed-2.0-lite",
                 32768, new BigDecimal("0.0008"), new BigDecimal("0.002"));
 
-        // 豆包 Pro 128K
-        createModel(provider, "doubao-pro-128k", "豆包 Pro 128K",
+        createModel(provider, "doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini",
                 131072, new BigDecimal("0.005"), new BigDecimal("0.009"));
 
-        // 豆包 Lite 32K
-        createModel(provider, "doubao-lite-32k", "豆包 Lite 32K",
+        createModel(provider, "deepseek-v3-2-251201", "DeepSeek-V3.2",
                 32768, new BigDecimal("0.0003"), new BigDecimal("0.0006"));
-
-        // 豆包 Seed 2.0 Pro
-        createModel(provider, "doubao-seed-2-0-pro-260215", "豆包 Seed 2.0 Pro",
-                128000, new BigDecimal("0.001"), new BigDecimal("0.002"));
-
-        // 豆包 Seed 2.0 Code Preview
-        createModel(provider, "doubao-seed-2-0-code-preview-260215", "豆包 Seed 2.0 Code Preview",
-                128000, new BigDecimal("0.001"), new BigDecimal("0.002"));
-
-        // 豆包 Seed 2.0 Mini
-        createModel(provider, "doubao-seed-2-0-mini-260215", "豆包 Seed 2.0 Mini",
-                128000, new BigDecimal("0.0005"), new BigDecimal("0.001"));
 
         log.info("Created {} models for provider: {}", modelGateway.count(), provider.getName());
     }
@@ -186,16 +214,68 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * 初始化管理员用户
+     * 初始化产品（按量计费）
      */
-    private void initAdminUser() {
-        // 检查是否已存在
-        if (userGateway.existsByUsername("admin")) {
-            log.info("Admin user already exists, skipping");
-            return;
+    private Product initProduct(Provider provider) {
+        if (provider == null) {
+            log.warn("Provider not initialized, skipping product initialization");
+            return null;
         }
 
-        // 创建管理员用户
+        if (productGateway.existsByProviderIdAndName(provider.getId(), "豆包按量计费")) {
+            log.info("Product already exists, skipping");
+            return productGateway.findByProviderIdAndType(provider.getId(), ProductType.PAY_AS_YOU_GO)
+                    .stream().findFirst().orElse(null);
+        }
+
+        Product product = new Product();
+        product.setProviderId(provider.getId());
+        product.setProviderName(provider.getName());
+        product.setName("豆包按量计费");
+        product.setProductType(ProductType.PAY_AS_YOU_GO);
+        product.setModels(List.of(
+                "doubao-seed-2-0-lite-260428", "doubao-seed-2-0-mini-260428", "deepseek-v3-2-251201"
+        ));
+        product.setEndpoints(Map.of(
+                "openai", "https://ark.cn-beijing.volces.com/api/v3"
+        ));
+        product.setState(ProductState.ACTIVE);
+
+        Product saved = productGateway.save(product);
+        log.info("Created product: {} (id={})", product.getName(), saved.getId());
+        return saved;
+    }
+
+    /**
+     * 初始化团队
+     */
+    private Team initTeam(String name, String description) {
+        if (teamGateway.existsByName(name)) {
+            log.info("Team '{}' already exists, skipping", name);
+            return teamGateway.findAllActive().stream()
+                    .filter(t -> name.equals(t.getName()))
+                    .findFirst().orElse(null);
+        }
+
+        Team team = new Team();
+        team.setName(name);
+        team.setDescription(description);
+        team.setState(TeamState.ACTIVE);
+
+        Team saved = teamGateway.save(team);
+        log.info("Created team: {} (id={})", team.getName(), saved.getId());
+        return saved;
+    }
+
+    /**
+     * 初始化管理员用户
+     */
+    private User initAdminUser() {
+        if (userGateway.existsByUsername("admin")) {
+            log.info("Admin user already exists, skipping");
+            return null;
+        }
+
         User user = new User();
         user.setUsername("admin");
         user.setEmail("admin@example.com");
@@ -204,56 +284,65 @@ public class DataInitializer implements CommandLineRunner {
         user.setRole("ADMIN");
         user.setEmailVerified(true);
 
-        User savedUser = userGateway.save(user);
-        log.info("Created admin user: {} (id={})", user.getUsername(), savedUser.getId());
+        User saved = userGateway.save(user);
+        log.info("Created admin user: {} (id={})", user.getUsername(), saved.getId());
+        return saved;
     }
 
     /**
      * 初始化测试用户
      */
-    private void initTestUser() {
-        // 检查是否已存在
-        if (userGateway.existsByUsername("test")) {
-            log.info("Test user already exists, skipping user initialization");
-            return;
+    private User initUser(String username, String email, String password) {
+        if (userGateway.existsByUsername(username)) {
+            log.info("User '{}' already exists, skipping", username);
+            return null;
         }
 
-        // 创建测试用户
         User user = new User();
-        user.setUsername("test");
-        user.setEmail("test@example.com");
-        user.setPasswordHash(passwordEncoder.encode("test"));
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
         user.setState(UserState.ACTIVE);
         user.setRole("USER");
         user.setEmailVerified(true);
 
-        User savedUser = userGateway.save(user);
-        log.info("Created test user: {} (id={})", user.getUsername(), savedUser.getId());
-
-        // 创建 Gateway API Key
-        initGatewayApiKey(savedUser);
+        User saved = userGateway.save(user);
+        log.info("Created user: {} (id={})", user.getUsername(), saved.getId());
+        return saved;
     }
 
     /**
-     * 初始化网关 API Key
+     * 初始化用户 API Key（新架构）
+     *
+     * <p>创建 UserApiKey，keyPlain 由基础设施层自动加密和哈希。</p>
+     * <p>同一用户可以在不同团队下拥有多个 Key，实现跨团队访问产品。</p>
      */
-    private void initGatewayApiKey(User user) {
-        // 检查是否已存在
-        if (apiKeyGateway.count() > 0) {
-            log.info("Test API key already exists, skipping");
+    private void initUserApiKey(User user, Team team, Product product, String keyPlain, String name) {
+        if (user == null || team == null || product == null) {
+            log.warn("Missing dependencies, skipping UserApiKey creation: {}", name);
             return;
         }
 
-        GatewayApiKey apiKey = new GatewayApiKey();
-        // 使用与 AuthenticationDomainService 相同的 hash 方法
-        apiKey.setKeyHash(String.valueOf(TEST_API_KEY.hashCode()));
-        apiKey.setUserId(user.getId());
-        apiKey.setUsername(user.getUsername());
-        apiKey.setName("测试用 API Key");
-        apiKey.setState(GatewayApiKeyState.ACTIVE);
-        apiKey.setExpiresAt(Instant.now().plusSeconds(365 * 24 * 60 * 60)); // 1 年有效期
+        // 检查同团队下是否已有同名 Key
+        if (userApiKeyGateway.countByTeamId(team.getId()) > 0) {
+            List<UserApiKey> existing = userApiKeyGateway.findByTeamId(team.getId());
+            boolean exists = existing.stream().anyMatch(k -> name.equals(k.getName()));
+            if (exists) {
+                log.info("UserApiKey '{}' already exists in team '{}', skipping", name, team.getName());
+                return;
+            }
+        }
 
-        apiKeyGateway.save(apiKey);
-        log.info("Created test API key: {}", TEST_API_KEY);
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setTeamId(team.getId());
+        apiKey.setOwnerUserId(user.getId());
+        apiKey.setProductId(product.getId());
+        apiKey.setKeyPlain(keyPlain);
+        apiKey.setName(name);
+        apiKey.setState(UserApiKeyState.ACTIVE);
+
+        UserApiKey saved = userApiKeyGateway.save(apiKey);
+        log.info("Created UserApiKey: {} (id={}, prefix={}, team={}, user={})",
+                name, saved.getId(), saved.getKeyPrefix(), team.getName(), user.getUsername());
     }
 }

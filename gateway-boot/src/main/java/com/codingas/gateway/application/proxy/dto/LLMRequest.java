@@ -22,6 +22,13 @@ public class LLMRequest {
     private String model;
 
     /**
+     * 协议类型 (openai, anthropic)
+     *
+     * <p>用于路由层选择正确的端点和适配器。</p>
+     */
+    private String protocol;
+
+    /**
      * 消息列表
      */
     private List<Message> messages;

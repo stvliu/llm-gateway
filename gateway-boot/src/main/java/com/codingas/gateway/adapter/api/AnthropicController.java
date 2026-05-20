@@ -172,6 +172,7 @@ public class AnthropicController {
 
         return LLMRequest.builder()
                 .model(request.getModel())
+                .protocol("anthropic")
                 .messages(messages)
                 .systemPrompt(request.getSystem())
                 .temperature(request.getTemperature())

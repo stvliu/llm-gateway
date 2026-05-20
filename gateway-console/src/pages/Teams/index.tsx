@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Table, Button, Tag, Space, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useTeams, useDeleteTeam } from '@/services/query/useTeams';
 import TeamFormModal from './TeamFormModal';
 import MemberManageModal from './MemberManageModal';
+import UserApiKeyManageModal from './UserApiKeyManageModal';
 import type { Team } from '@/types/team';
 
 const ROLE_COLOR: Record<string, string> = {
@@ -17,7 +18,7 @@ const ROLE_COLOR: Record<string, string> = {
 
 export default function TeamsPage() {
   const { t } = useTranslation('teams');
-  const { message, modal } = App.useApp();
+  const { modal } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.USER_WRITE);
 
@@ -27,6 +28,7 @@ export default function TeamsPage() {
   const [formVisible, setFormVisible] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | undefined>();
   const [memberTeam, setMemberTeam] = useState<Team | undefined>();
+  const [apiKeyTeam, setApiKeyTeam] = useState<Team | undefined>();
 
   const handleAdd = () => {
     setEditingTeam(undefined);
@@ -43,10 +45,7 @@ export default function TeamsPage() {
       title: t('team.deleteTeam'),
       content: t('team.deleteConfirm', { name: team.name }),
       okType: 'danger',
-      onOk: () =>
-        deleteMutation.mutateAsync(team.id).then(() => {
-          message.success(t('team.deleteTeam'));
-        }),
+      onOk: () => deleteMutation.mutateAsync(team.id),
     });
   };
 
@@ -90,10 +89,13 @@ export default function TeamsPage() {
       },
     },
     {
-      title: '操作',
+      title: t('team.actions', { defaultValue: '操作' }),
       key: 'actions',
       render: (_: unknown, record: Team) => (
         <Space>
+          <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => setApiKeyTeam(record)}>
+            {t('apiKey.manageTitle', { defaultValue: '密钥管理' })}
+          </Button>
           <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => setMemberTeam(record)}>
             {t('team.manageMembers')}
           </Button>
@@ -137,6 +139,14 @@ export default function TeamsPage() {
         team={memberTeam}
         onClose={() => setMemberTeam(undefined)}
       />
+
+      {apiKeyTeam && (
+        <UserApiKeyManageModal
+          team={apiKeyTeam}
+          open={true}
+          onClose={() => setApiKeyTeam(undefined)}
+        />
+      )}
     </>
   );
 }

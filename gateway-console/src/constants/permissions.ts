@@ -8,10 +8,8 @@ export const P = {
   PROVIDER_WRITE: 'provider:write',
   METADATA_READ: 'metadata:read',
   METADATA_WRITE: 'metadata:write',
-  APIKEY_POOL_READ: 'apikey-pool:read',
   USER_READ: 'user:read',
   USER_WRITE: 'user:write',
-  APIKEY_MANAGE: 'apikey:manage',
   SETTINGS_READ: 'settings:read',
   SETTINGS_WRITE: 'settings:write',
 } as const;

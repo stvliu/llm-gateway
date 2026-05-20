@@ -1,33 +1,6 @@
 import { api } from './client';
-import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderKeysResponse } from '@/types/provider';
+import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderKeyStats } from '@/types/provider';
 import type { PageResponse, PageParams, ProviderTypeOption } from '@/types/api';
-
-/** 连通性测试层级结果 */
-interface LevelResult {
-  success: boolean;
-  message?: string;
-  latencyMs?: number;
-  errorType?: string;
-  models?: string[];
-}
-
-/** 连通性测试结果 */
-export interface ConnectivityTestResult {
-  success: boolean;
-  message?: string;
-  models?: string[];
-  level1?: LevelResult;
-  level2?: LevelResult;
-  totalLatencyMs?: number;
-}
-
-/** 连通性测试请求 */
-export interface ConnectivityTestRequest {
-  providerType: string;
-  baseUrl?: string;
-  apiKey: string;
-  model?: string;
-}
 
 export const providerApi = {
   /** 获取支持的供应商类型列表 */
@@ -60,9 +33,5 @@ export const providerApi = {
 
   /** 获取 Provider 的 Key 信息 */
   getKeys: (id: number) =>
-    api.get<ProviderKeysResponse>(`/providers/${id}/keys`),
-
-  /** 测试连通性 */
-  testConnectivity: (data: ConnectivityTestRequest) =>
-    api.post<ConnectivityTestResult>('/providers/connectivity-test', data),
+    api.get<ProviderKeyStats[]>(`/providers/${id}/keys`),
 };

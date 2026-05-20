@@ -81,8 +81,6 @@ export function BasicInfoStep({
         baseUrl: '',
         websiteUrl: '',
         apiDocUrl: '',
-        apiKeys: [],
-        models: [],
       });
     }
   }, []); // 仅在挂载时初始化
@@ -96,8 +94,6 @@ export function BasicInfoStep({
         baseUrl: '',
         websiteUrl: '',
         apiDocUrl: '',
-        apiKeys: [],
-        models: [],
       });
       return;
     }
@@ -130,8 +126,6 @@ export function BasicInfoStep({
         baseUrl: String(config.base_url || ''),
         websiteUrl: String(config.website_url || ''),
         apiDocUrl: String(config.api_doc_url || ''),
-        apiKeys: [],
-        models: [],
       };
 
       onChange(newInfo);
@@ -146,8 +140,6 @@ export function BasicInfoStep({
         baseUrl: '',
         websiteUrl: '',
         apiDocUrl: '',
-        apiKeys: [],
-        models: [],
       });
     }
   }, [metadataList, onChange, onMetadataLoad, onSelectedModelIdsChange]);

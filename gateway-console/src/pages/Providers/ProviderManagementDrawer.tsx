@@ -4,20 +4,14 @@ import {
   LeftOutlined,
   RightOutlined,
   SettingOutlined,
-  ApiOutlined,
-  AppstoreOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
   CloseOutlined,
-  ExperimentOutlined,
   ShoppingOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
-import { ProviderApiKeysTab } from './ProviderApiKeysTab';
-import { ProviderModelsTab } from './ProviderModelsTab';
-import { ProviderExperienceTab } from './ProviderExperienceTab';
 import ProviderProductsTab from './ProviderProductsTab';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -34,7 +28,7 @@ interface ProviderManagementDrawerProps {
 
 /**
  * 供应商详情抽屉
- * 查看模式：标签页展示（基本信息只读 + API Keys 可操作 + Models 可操作）
+ * 查看模式：标签页展示（基本信息 + 产品）
  * 编辑基本信息：隐藏其它标签页，只显示基本信息表单
  * 操作按钮放在标题栏右侧
  */
@@ -142,22 +136,7 @@ export function ProviderManagementDrawer({
       label: t('detail.basicInfo', { defaultValue: '基本信息' }),
       icon: <SettingOutlined />,
     },
-    {
-      key: 'apiKeys',
-      label: t('provider.apiKeys', { defaultValue: 'API Keys' }),
-      icon: <ApiOutlined />,
-    },
-    {
-      key: 'models',
-      label: t('provider.models', { defaultValue: '模型' }),
-      icon: <AppstoreOutlined />,
-    },
-    {
-      key: 'experience',
-      label: t('provider.experience', { defaultValue: '体验' }),
-      icon: <ExperimentOutlined />,
-    },
-    {
+        {
       key: 'products',
       label: t('product.title', { ns: 'products' }),
       icon: <ShoppingOutlined />,
@@ -231,9 +210,9 @@ export function ProviderManagementDrawer({
       extra={extra}
       open={providerId !== null}
       onClose={handleClose}
-      width={560}
+      size={560}
       placement="right"
-      maskClosable
+      mask={{ closable: true }}
       styles={{
         body: { padding: 16 },
         footer: { padding: 16 },
@@ -272,27 +251,7 @@ export function ProviderManagementDrawer({
         />
       )}
 
-      {/* API Keys：编辑基本信息时隐藏 */}
-      {!isLoading && !editing && activeTab === 'apiKeys' && (
-        <ProviderApiKeysTab
-          provider={provider || null}
-        />
-      )}
-
-      {/* Models：编辑基本信息时隐藏 */}
-      {!isLoading && !editing && activeTab === 'models' && (
-        <ProviderModelsTab
-          provider={provider || null}
-        />
-      )}
-
-      {/* Experience：编辑基本信息时隐藏 */}
-      {!isLoading && !editing && activeTab === 'experience' && (
-        <ProviderExperienceTab
-          provider={provider || null}
-        />
-      )}
-
+      
       {/* 产品：编辑基本信息时隐藏 */}
       {!isLoading && !editing && activeTab === 'products' && providerId && (
         <ProviderProductsTab providerId={providerId} />

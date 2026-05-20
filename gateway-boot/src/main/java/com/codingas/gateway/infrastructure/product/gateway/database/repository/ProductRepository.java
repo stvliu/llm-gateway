@@ -21,7 +21,7 @@ public interface ProductRepository extends JpaRepository<ProductDo, Long> {
     @Query("SELECT p FROM ProductDo p WHERE p.state = 'active'")
     List<ProductDo> findAllActive();
 
-    @Query("SELECT p FROM ProductDo p WHERE :modelName MEMBER OF p.models AND p.state = 'active'")
+    @Query(value = "SELECT p.* FROM products p WHERE p.models LIKE CONCAT('%', :modelName, '%') AND p.state = 'active'", nativeQuery = true)
     List<ProductDo> findByModel(@Param("modelName") String modelName);
 
     boolean existsByProviderIdAndName(Long providerId, String name);

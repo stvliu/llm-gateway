@@ -41,7 +41,7 @@ public class ProxyServiceImpl implements ProxyService {
      */
     @Override
     public LLMResponse proxy(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy) {
-        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), strategy);
+        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), request.getProtocol(), strategy);
         return doProxy(request, ctx);
     }
 
@@ -59,7 +59,7 @@ public class ProxyServiceImpl implements ProxyService {
      */
     @Override
     public void proxyStream(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk) {
-        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), strategy);
+        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), request.getProtocol(), strategy);
         doProxyStream(request, ctx, onChunk, () -> {}, e -> log.error("Stream error: {}", e.getMessage()));
     }
 
@@ -88,7 +88,7 @@ public class ProxyServiceImpl implements ProxyService {
     @Override
     public void proxyStream(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy,
                             Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError) {
-        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), strategy);
+        RoutingContext ctx = channelRoutingService.resolve(authResult, request.getModel(), request.getProtocol(), strategy);
         doProxyStream(request, ctx, onChunk, onComplete, onError);
     }
 

@@ -180,6 +180,7 @@ public class OpenAIController {
 
         return LLMRequest.builder()
                 .model(request.getModel())
+                .protocol("openai")
                 .messages(messages)
                 .temperature(request.getTemperature())
                 .maxTokens(request.getMaxTokens())

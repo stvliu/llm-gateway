@@ -5,9 +5,7 @@ import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Providers from '@/pages/Providers';
 import Metadata from '@/pages/Metadata';
-import ApiKeyPool from '@/pages/ApiKeyPool';
 import Users from '@/pages/Users';
-import ApiKeys from '@/pages/ApiKeys';
 import ChangePassword from '@/pages/ChangePassword';
 import TeamsPage from '@/pages/Teams';
 import { P } from '@/constants/permissions';
@@ -39,20 +37,12 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.METADATA_READ}><Metadata /></PermissionGuard>,
       },
       {
-        path: 'api-key-pool',
-        element: <PermissionGuard permission={P.APIKEY_POOL_READ}><ApiKeyPool /></PermissionGuard>,
-      },
-      {
         path: 'users',
         element: <PermissionGuard permission={P.USER_READ}><Users /></PermissionGuard>,
       },
       {
         path: 'teams',
         element: <PermissionGuard permission={P.USER_READ}><TeamsPage /></PermissionGuard>,
-      },
-      {
-        path: 'api-keys',
-        element: <PermissionGuard permission={P.APIKEY_MANAGE}><ApiKeys /></PermissionGuard>,
       },
       {
         path: 'change-password',
@@ -66,6 +56,8 @@ export const router = createBrowserRouter([
   { path: '/user/*', element: <Navigate to="/" replace /> },
   { path: '/models', element: <Navigate to="/providers" replace /> },
   { path: '/experience', element: <Navigate to="/dashboard" replace /> },
+  { path: '/api-key-pool', element: <Navigate to="/providers" replace /> },
+  { path: '/api-keys', element: <Navigate to="/teams" replace /> },
 
   // 默认重定向
   { path: '*', element: <Navigate to="/dashboard" replace /> },

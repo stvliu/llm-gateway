@@ -43,7 +43,7 @@ export interface EntityDrawerProps<T> {
   /** 是否有未保存更改 */
   hasUnsavedChanges?: boolean;
   /** 抽屉宽度 */
-  width?: number;
+  size?: number;
   /** 骨架屏配置 */
   skeletonConfig?: {
     showTabs?: boolean;
@@ -72,7 +72,7 @@ export function EntityDrawer<T>({
   title,
   children,
   hasUnsavedChanges = false,
-  width = 480,
+  size = 480,
   skeletonConfig,
 }: EntityDrawerProps<T>) {
   const { t } = useTranslation();
@@ -198,9 +198,9 @@ export function EntityDrawer<T>({
         title={title || t('drawer.title.details')}
         open={open}
         onClose={handleClose}
-        width={width}
+        size={size}
         placement="right"
-        maskClosable={true}
+        mask={{ closable: true }}
         extra={extra}
         styles={{
           body: { padding: 16 },

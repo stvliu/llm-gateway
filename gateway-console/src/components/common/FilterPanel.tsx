@@ -122,6 +122,10 @@ export function FilterPanel({
 
   return (
     <div style={{ position: 'relative' }}>
+      {/* 始终渲染 Form 以避免 useForm 未连接 Warning */}
+      <div style={{ display: open ? 'block' : 'none', position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 1000 }}>
+        {dropdownContent}
+      </div>
       <Button
         icon={<FilterOutlined />}
         onClick={() => setOpen(!open)}
@@ -137,19 +141,6 @@ export function FilterPanel({
           </Tag>
         )}
       </Button>
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            marginTop: 4,
-            zIndex: 1000,
-          }}
-        >
-          {dropdownContent}
-        </div>
-      )}
       {/* 遮罩层 */}
       {open && (
         <div

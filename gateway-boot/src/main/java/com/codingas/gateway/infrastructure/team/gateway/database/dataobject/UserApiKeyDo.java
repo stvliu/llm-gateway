@@ -32,6 +32,9 @@ public class UserApiKeyDo {
     @Column(name = "key_hash", nullable = false, length = 128)
     private String keyHash;
 
+    @Column(name = "key_encrypted", columnDefinition = "TEXT")
+    private String keyEncrypted;
+
     @Column(name = "key_prefix", nullable = false, length = 16)
     private String keyPrefix;
 

@@ -17,6 +17,10 @@ import java.util.Optional;
 @Repository
 public interface ProductApiKeyRepository extends JpaRepository<ProductApiKeyDo, Long> {
 
+    List<ProductApiKeyDo> findByProductId(Long productId);
+
+    List<ProductApiKeyDo> findByProductIdAndState(Long productId, String state);
+
     @Query("SELECT k FROM ProductApiKeyDo k WHERE k.productId = :productId AND k.state = 'active' ORDER BY k.priority ASC")
     List<ProductApiKeyDo> findActiveByProductId(@Param("productId") Long productId);
 

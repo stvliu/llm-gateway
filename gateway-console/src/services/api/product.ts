@@ -34,17 +34,17 @@ export const productApi = {
 export const productApiKeyApi = {
   /** 获取产品下的 API Key 列表 */
   list: (productId: number) =>
-    api.get<ProductApiKey[]>(`/product-api-keys`, { params: { productId } }),
+    api.get<ProductApiKey[]>(`/products/${productId}/api-keys`),
 
   /** 创建 API Key */
-  create: (data: CreateProductApiKeyRequest) =>
-    api.post<CreateProductApiKeyResponse>('/product-api-keys', data),
+  create: (productId: number, data: CreateProductApiKeyRequest) =>
+    api.post<CreateProductApiKeyResponse>(`/products/${productId}/api-keys`, data),
 
   /** 更新 API Key */
-  update: (id: number, data: UpdateProductApiKeyRequest) =>
-    api.put<ProductApiKey>(`/product-api-keys/${id}`, data),
+  update: (productId: number, id: number, data: UpdateProductApiKeyRequest) =>
+    api.put<ProductApiKey>(`/products/${productId}/api-keys/${id}`, data),
 
   /** 删除 API Key */
-  delete: (id: number) =>
-    api.delete<void>(`/product-api-keys/${id}`),
+  delete: (productId: number, id: number) =>
+    api.delete<void>(`/products/${productId}/api-keys/${id}`),
 };

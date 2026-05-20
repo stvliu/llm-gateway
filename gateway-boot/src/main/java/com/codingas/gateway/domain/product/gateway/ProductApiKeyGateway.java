@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.product.gateway;
 
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,10 @@ public interface ProductApiKeyGateway {
     Optional<ProductApiKey> findById(Long id);
 
     List<ProductApiKey> findActiveByProductId(Long productId);
+
+    List<ProductApiKey> findByProductId(Long productId);
+
+    List<ProductApiKey> findByProductIdAndState(Long productId, ProductApiKeyState state);
 
     Optional<ProductApiKey> findDefaultByProductId(Long productId);
 

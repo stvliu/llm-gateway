@@ -41,7 +41,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new UserAuthResult(1L, "USER", 1L));
+                .thenReturn(UserAuthResult.legacy(1L, "USER", 1L));
 
         // when
         boolean result = interceptor.preHandle(request, response);
@@ -60,7 +60,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("X-API-Key")).thenReturn("sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(authenticationService.authenticate("sk-test123"))
-                .thenReturn(new UserAuthResult(1L, "USER", 1L));
+                .thenReturn(UserAuthResult.legacy(1L, "USER", 1L));
 
         // when
         boolean result = interceptor.preHandle(request, response);

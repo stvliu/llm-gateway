@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { Form, Input, Button, Checkbox, Select, message } from 'antd';
+import { Form, Input, Button, Checkbox, Select } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { authApi } from '@/services/api/auth';
 import { useAuthStore } from '@/stores/authStore';
 import { isServiceUnavailableError } from '@/services/api/client';
+import { useMessage } from '@/hooks/useMessage';
 import styles from './style.module.css';
 
 export default function Login() {
+  const message = useMessage();
   const { t } = useTranslation('login');
   const navigate = useNavigate();
   const location = useLocation();

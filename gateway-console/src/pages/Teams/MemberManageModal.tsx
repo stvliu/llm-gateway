@@ -117,7 +117,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
       onCancel={onClose}
       footer={null}
       width={600}
-      destroyOnClose
+      destroyOnHidden
     >
       <div style={{ marginBottom: 16 }}>
         {adding ? (

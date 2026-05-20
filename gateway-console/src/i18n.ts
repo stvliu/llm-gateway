@@ -7,10 +7,8 @@ import zhCNCommon from './locales/zh-CN/common.json';
 import zhCNLogin from './locales/zh-CN/login.json';
 import zhCNModels from './locales/zh-CN/models.json';
 import zhCNUsers from './locales/zh-CN/users.json';
-import zhCNApiKeys from './locales/zh-CN/apiKeys.json';
 import zhCNDashboard from './locales/zh-CN/dashboard.json';
 import zhCNProviders from './locales/zh-CN/providers.json';
-import zhCNApiKeyPool from './locales/zh-CN/apiKeyPool.json';
 import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNMetadata from './locales/zh-CN/metadata.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
@@ -22,10 +20,8 @@ import enUSCommon from './locales/en-US/common.json';
 import enUSLogin from './locales/en-US/login.json';
 import enUSModels from './locales/en-US/models.json';
 import enUSUsers from './locales/en-US/users.json';
-import enUSApiKeys from './locales/en-US/apiKeys.json';
 import enUSDashboard from './locales/en-US/dashboard.json';
 import enUSProviders from './locales/en-US/providers.json';
-import enUSApiKeyPool from './locales/en-US/apiKeyPool.json';
 import enUSChat from './locales/en-US/chat.json';
 import enUSMetadata from './locales/en-US/metadata.json';
 import enUSExperience from './locales/en-US/experience.json';
@@ -42,10 +38,8 @@ i18n
         login: zhCNLogin,
         models: zhCNModels,
         users: zhCNUsers,
-        apiKeys: zhCNApiKeys,
         dashboard: zhCNDashboard,
         providers: zhCNProviders,
-        apiKeyPool: zhCNApiKeyPool,
         chat: zhCNChat,
         metadata: zhCNMetadata,
         experience: zhCNExperience,
@@ -57,10 +51,8 @@ i18n
         login: enUSLogin,
         models: enUSModels,
         users: enUSUsers,
-        apiKeys: enUSApiKeys,
         dashboard: enUSDashboard,
         providers: enUSProviders,
-        apiKeyPool: enUSApiKeyPool,
         chat: enUSChat,
         metadata: enUSMetadata,
         experience: enUSExperience,

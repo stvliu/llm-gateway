@@ -6,13 +6,14 @@ export type ProductType = 'pay_as_you_go' | 'subscription_coding' | 'subscriptio
 /** 产品状态 */
 export type ProductState = 'active' | 'inactive' | 'deleted';
 
-/** 产品 API Key 状态 */
-export type ProductApiKeyState = 'active' | 'inactive' | 'deleted';
+/** 产品 API Key 状态（后端 ProductApiKeyState 枚举，Jackson 序列化为枚举名称大写） */
+export type ProductApiKeyState = 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 /** 产品 */
 export interface Product {
   id: number;
   providerId: number;
+  providerName: string;
   name: string;
   productType: ProductType;
   models: string[];
@@ -27,21 +28,20 @@ export interface Product {
 export interface ProductApiKey {
   id: number;
   productId: number;
-  apiKeyMasked: string;
-  baseUrl: string;
-  priority: number;
-  weight: number;
-  state: ProductApiKeyState;
+  apiKeyPrefix: string;
+  name: string;
   description: string;
+  weight: number;
+  priority: number;
+  state: ProductApiKeyState;
   createdAt: string;
   updatedAt: string;
 }
 
-/** 产品 API Key 创建请求 */
+/** 产品 API Key 创建请求（后端要求 body 中也包含 productId） */
 export interface CreateProductApiKeyRequest {
   productId: number;
   apiKey: string;
-  baseUrl?: string;
   priority?: number;
   weight?: number;
   description?: string;
@@ -56,7 +56,6 @@ export interface CreateProductApiKeyResponse {
 
 /** 产品 API Key 更新请求 */
 export interface UpdateProductApiKeyRequest {
-  baseUrl?: string;
   priority?: number;
   weight?: number;
   state?: ProductApiKeyState;

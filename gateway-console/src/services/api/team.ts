@@ -5,6 +5,11 @@ import type {
   UpdateTeamRequest,
   AddTeamMemberRequest,
   UpdateMemberRoleRequest,
+  UserApiKey,
+  UserApiKeyDetail,
+  CreateUserApiKeyRequest,
+  CreateUserApiKeyResponse,
+  UpdateUserApiKeyRequest,
 } from '@/types/team';
 
 export const teamApi = {
@@ -35,4 +40,26 @@ export const teamApi = {
   /** 修改成员角色 */
   updateMemberRole: (teamId: number, userId: number, data: UpdateMemberRoleRequest) =>
     api.put<void>(`/teams/${teamId}/members/${userId}/role`, data),
+
+  // ---- UserApiKey（团队子资源） ----
+
+  /** 获取团队下的 API Key 列表 */
+  listApiKeys: (teamId: number) =>
+    api.get<UserApiKey[]>(`/teams/${teamId}/api-keys`),
+
+  /** 获取单个 API Key 详情 */
+  getApiKeyDetail: (teamId: number, id: number) =>
+    api.get<UserApiKeyDetail>(`/teams/${teamId}/api-keys/${id}`),
+
+  /** 创建用户 API Key */
+  createApiKey: (teamId: number, data: CreateUserApiKeyRequest) =>
+    api.post<CreateUserApiKeyResponse>(`/teams/${teamId}/api-keys`, data),
+
+  /** 更新用户 API Key */
+  updateApiKey: (teamId: number, id: number, data: UpdateUserApiKeyRequest) =>
+    api.put<UserApiKey>(`/teams/${teamId}/api-keys/${id}`, data),
+
+  /** 删除用户 API Key */
+  deleteApiKey: (teamId: number, id: number) =>
+    api.delete<void>(`/teams/${teamId}/api-keys/${id}`),
 };

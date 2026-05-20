@@ -57,6 +57,9 @@ class ProxyServiceTest {
     @Mock
     private LLMGateway gateway;
 
+    @Mock
+    private ChannelRoutingService channelRoutingService;
+
     @InjectMocks
     private ProxyServiceImpl proxyService;
 

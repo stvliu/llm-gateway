@@ -6,9 +6,13 @@ import com.codingas.gateway.domain.security.entity.GatewayApiKey;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.team.entity.Team;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
 import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -31,16 +35,22 @@ public class AuthenticationDomainService {
     private final ApiKeyGateway apiKeyGateway;
     private final UserGateway userGateway;
     private final UserApiKeyGateway userApiKeyGateway;
+    private final TeamGateway teamGateway;
+    private final ProductGateway productGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     public AuthenticationDomainService(
             ApiKeyGateway apiKeyGateway,
             UserGateway userGateway,
             UserApiKeyGateway userApiKeyGateway,
+            TeamGateway teamGateway,
+            ProductGateway productGateway,
             ApiKeyEncryptionDomainService encryptionService) {
         this.apiKeyGateway = apiKeyGateway;
         this.userGateway = userGateway;
         this.userApiKeyGateway = userApiKeyGateway;
+        this.teamGateway = teamGateway;
+        this.productGateway = productGateway;
         this.encryptionService = encryptionService;
     }
 
@@ -107,9 +117,23 @@ public class AuthenticationDomainService {
             return null;
         }
 
+        // 验证 Team 状态
+        Team team = teamGateway.findById(userApiKey.getTeamId()).orElse(null);
+        if (team == null || !team.isAvailable()) {
+            log.debug("Team not found or not available: teamId={}", userApiKey.getTeamId());
+            return null;
+        }
+
+        // 验证 Product 状态
+        Product product = productGateway.findById(userApiKey.getProductId()).orElse(null);
+        if (product == null || !product.isAvailable()) {
+            log.debug("Product not found or not available: productId={}", userApiKey.getProductId());
+            return null;
+        }
+
         return UserAuthResult.newArch(
             user.getId(),
-            null,
+            user.getRole(),
             userApiKey.getId(),
             userApiKey.getProductId(),
             userApiKey.getId(),
@@ -151,7 +175,7 @@ public class AuthenticationDomainService {
 
         apiKeyGateway.updateLastUsed(gatewayKey.getId(), Instant.now());
 
-        return UserAuthResult.legacy(user.getId(), null, gatewayKey.getId());
+        return UserAuthResult.legacy(user.getId(), user.getRole(), gatewayKey.getId());
     }
 
     /**

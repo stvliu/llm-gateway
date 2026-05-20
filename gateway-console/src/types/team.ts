@@ -49,3 +49,59 @@ export interface UpdateMemberRoleRequest {
 
 /** 团队分页结果 */
 export type TeamPageResult = PageResponse<Team>;
+
+/** 用户 API Key 状态 */
+export type UserApiKeyState = 'ACTIVE' | 'INACTIVE' | 'DELETED';
+
+/** 用户 API Key */
+export interface UserApiKey {
+  id: number;
+  teamId: number;
+  productId: number;
+  keyPrefix: string;
+  name: string;
+  models: string[];
+  quotaLimit: number | null;
+  state: UserApiKeyState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 用户 API Key 详情（含明文） */
+export interface UserApiKeyDetail {
+  id: number;
+  teamId: number;
+  productId: number;
+  keyPrefix: string;
+  keyPlain: string;
+  name: string;
+  models: string[];
+  quotaLimit: number | null;
+  state: UserApiKeyState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 创建用户 API Key 请求 */
+export interface CreateUserApiKeyRequest {
+  teamId: number;
+  productId: number;
+  name: string;
+  models?: string[];
+  quotaLimit?: number;
+}
+
+/** 创建用户 API Key 响应 */
+export interface CreateUserApiKeyResponse {
+  id: number;
+  keyPrefix: string;
+  apiKeyPlain: string;
+}
+
+/** 更新用户 API Key 请求 */
+export interface UpdateUserApiKeyRequest {
+  name?: string;
+  models?: string[];
+  quotaLimit?: number;
+  state?: UserApiKeyState;
+}

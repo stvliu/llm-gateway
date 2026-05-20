@@ -44,13 +44,14 @@ public class ChannelRoutingService {
      *
      * @param authResult 认证结果
      * @param modelName 模型名
+     * @param protocol 协议类型 (openai, anthropic)
      * @param strategy 路由策略
      * @return 路由上下文
      */
     public RoutingContext resolve(UserAuthResult authResult, String modelName,
-                                   RouteGroup.RoutingStrategy strategy) {
+                                   String protocol, RouteGroup.RoutingStrategy strategy) {
         if (authResult.newArchitecture()) {
-            return resolveNewArchitecture(authResult, modelName);
+            return resolveNewArchitecture(authResult, modelName, protocol);
         } else {
             return resolveLegacy(modelName, strategy);
         }
@@ -68,15 +69,15 @@ public class ChannelRoutingService {
     /**
      * 新架构路由
      */
-    private RoutingContext resolveNewArchitecture(UserAuthResult authResult, String modelName) {
+    private RoutingContext resolveNewArchitecture(UserAuthResult authResult, String modelName, String protocol) {
         UserApiKey userApiKey = userApiKeyGateway.findById(authResult.userApiKeyId())
             .orElseThrow(() -> new NoSuchElementException(
                 "UserApiKey not found: id=" + authResult.userApiKeyId()));
 
-        // 从请求路径推断协议
-        String protocol = "openai"; // 默认 OpenAI 协议
+        // 使用传入的协议参数，默认为 openai
+        String effectiveProtocol = (protocol != null && !protocol.isBlank()) ? protocol : "openai";
 
-        return productRoutingService.resolve(userApiKey, modelName, protocol);
+        return productRoutingService.resolve(userApiKey, modelName, effectiveProtocol);
     }
 
     /**

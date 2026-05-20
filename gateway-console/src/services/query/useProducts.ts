@@ -78,7 +78,8 @@ export function useProductApiKeys(productId: number) {
 export function useCreateProductApiKey() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: CreateProductApiKeyRequest) => productApiKeyApi.create(data),
+    mutationFn: ({ productId, data }: { productId: number; data: CreateProductApiKeyRequest }) =>
+      productApiKeyApi.create(productId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
     },
@@ -89,8 +90,8 @@ export function useCreateProductApiKey() {
 export function useUpdateProductApiKey() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateProductApiKeyRequest; productId: number }) =>
-      productApiKeyApi.update(id, data),
+    mutationFn: ({ productId, id, data }: { productId: number; id: number; data: UpdateProductApiKeyRequest }) =>
+      productApiKeyApi.update(productId, id, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
     },
@@ -101,8 +102,8 @@ export function useUpdateProductApiKey() {
 export function useDeleteProductApiKey() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id }: { id: number; productId: number }) =>
-      productApiKeyApi.delete(id),
+    mutationFn: ({ productId, id }: { productId: number; id: number }) =>
+      productApiKeyApi.delete(productId, id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
     },

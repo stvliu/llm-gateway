@@ -33,11 +33,11 @@ public class ProductDo {
     private String productType;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "models", columnDefinition = "jsonb")
+    @Column(name = "models", columnDefinition = "text")
     private List<String> models;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "endpoints", columnDefinition = "jsonb")
+    @Column(name = "endpoints", columnDefinition = "text")
     private Map<String, String> endpoints;
 
     @Column(name = "quota_limit")

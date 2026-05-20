@@ -38,9 +38,7 @@ class AuthServiceTest {
             // given
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
-            UserAuthResult expectedResult = new UserAuthResult(
-                1L, "USER", 100L
-            );
+            UserAuthResult expectedResult = UserAuthResult.legacy(1L, "USER", 100L);
             when(authenticationService.authenticate(apiKey)).thenReturn(expectedResult);
 
             // when

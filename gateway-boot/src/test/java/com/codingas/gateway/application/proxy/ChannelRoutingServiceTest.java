@@ -10,12 +10,13 @@ import com.codingas.gateway.domain.model.service.ApiKeySelectionService;
 import com.codingas.gateway.domain.model.service.ModelDomainService;
 import com.codingas.gateway.domain.proxy.entity.RouteGroup;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -44,7 +45,12 @@ class ChannelRoutingServiceTest {
     @Mock
     private ApiKeySelectionService apiKeySelectionService;
 
-    @InjectMocks
+    @Mock
+    private ProductRoutingService productRoutingService;
+
+    @Mock
+    private UserApiKeyGateway userApiKeyGateway;
+
     private ChannelRoutingService channelRoutingService;
 
     private Model createModel(Long id, Long providerId, Integer priority, Integer weight, BigDecimal inputPrice) {
@@ -80,9 +86,16 @@ class ChannelRoutingServiceTest {
         return apiKey;
     }
 
+    @BeforeEach
+    void setUp() {
+        channelRoutingService = new ChannelRoutingService(
+            modelDomainService, providerGateway, apiKeySelectionService,
+            productRoutingService, userApiKeyGateway);
+    }
+
     @Nested
-    @DisplayName("resolve 方法测试")
-    class ResolveTests {
+    @DisplayName("旧架构 resolve 方法测试")
+    class LegacyResolveTests {
 
         @Test
         @DisplayName("modelName 为 null 时抛出 IllegalArgumentException")
@@ -117,8 +130,8 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.FAILOVER);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(1L);
-            assertThat(ctx.model().getPriority()).isEqualTo(10);
+            assertThat(ctx.getModel()).isEqualTo("gpt-4o");
+            assertThat(ctx.getProviderId()).isEqualTo(100L);
             verify(apiKeySelectionService).selectApiKey(100L);
         }
 
@@ -138,7 +151,7 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.FAILOVER);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(1L);
+            assertThat(ctx.getModel()).isEqualTo("gpt-4o");
         }
 
         @Test
@@ -158,7 +171,7 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.FAILOVER);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(1L);
+            assertThat(ctx.getModel()).isEqualTo("gpt-4o");
             verify(modelDomainService).getModelWithProviderByProviderModelId("gpt-4o");
         }
 
@@ -217,8 +230,7 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.COST_OPTIMIZED);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(2L);
-            assertThat(ctx.model().getInputPrice()).isEqualByComparingTo("3.00");
+            assertThat(ctx.getProviderId()).isEqualTo(200L);
         }
 
         @Test
@@ -238,7 +250,7 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.COST_OPTIMIZED);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(1L);
+            assertThat(ctx.getProviderId()).isEqualTo(100L);
         }
 
         @Test
@@ -258,7 +270,7 @@ class ChannelRoutingServiceTest {
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.COST_OPTIMIZED);
 
             // Assert
-            assertThat(ctx.model().getId()).isEqualTo(2L);
+            assertThat(ctx.getProviderId()).isEqualTo(200L);
         }
     }
 
@@ -279,11 +291,79 @@ class ChannelRoutingServiceTest {
             when(providerGateway.findById(anyLong())).thenReturn(Optional.of(provider));
             when(apiKeySelectionService.selectApiKey(anyLong())).thenReturn(apiKey);
 
-            // Act - 多次调用验证随机性
+            // Act
             RoutingContext ctx = channelRoutingService.resolve("gpt-4o", RouteGroup.RoutingStrategy.RANDOM);
 
             // Assert
-            assertThat(ctx.model().getId()).isIn(1L, 2L);
+            assertThat(ctx.getProviderId()).isIn(100L, 200L);
+        }
+    }
+
+    @Nested
+    @DisplayName("双路路由测试")
+    class DualPathTests {
+
+        @Test
+        @DisplayName("新架构认证结果走 ProductRoutingService")
+        void resolve_newArchitecture_usesProductRouting() {
+            // Arrange
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "USER", 101L, 200L, 101L, 300L);
+            RoutingContext expected = RoutingContext.builder()
+                .productId(200L)
+                .model("gpt-4o")
+                .build();
+
+            when(productRoutingService.resolve(any(), anyString(), anyString())).thenReturn(expected);
+            when(userApiKeyGateway.findById(101L)).thenReturn(Optional.of(new com.codingas.gateway.domain.team.entity.UserApiKey()));
+
+            // Act
+            RoutingContext ctx = channelRoutingService.resolve(authResult, "gpt-4o", "openai", RouteGroup.RoutingStrategy.WEIGHTED);
+
+            // Assert
+            assertThat(ctx.getProductId()).isEqualTo(200L);
+            verify(productRoutingService).resolve(any(), eq("gpt-4o"), eq("openai"));
+        }
+
+        @Test
+        @DisplayName("新架构认证结果使用 anthropic 协议")
+        void resolve_newArchitecture_anthropicProtocol_usesAnthropicProtocol() {
+            // Arrange
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "USER", 101L, 200L, 101L, 300L);
+            RoutingContext expected = RoutingContext.builder()
+                .productId(200L)
+                .model("claude-3-opus")
+                .build();
+
+            when(productRoutingService.resolve(any(), anyString(), anyString())).thenReturn(expected);
+            when(userApiKeyGateway.findById(101L)).thenReturn(Optional.of(new com.codingas.gateway.domain.team.entity.UserApiKey()));
+
+            // Act
+            RoutingContext ctx = channelRoutingService.resolve(authResult, "claude-3-opus", "anthropic", RouteGroup.RoutingStrategy.WEIGHTED);
+
+            // Assert
+            assertThat(ctx.getProductId()).isEqualTo(200L);
+            verify(productRoutingService).resolve(any(), eq("claude-3-opus"), eq("anthropic"));
+        }
+
+        @Test
+        @DisplayName("旧架构认证结果走 legacy 路由")
+        void resolve_legacyArchitecture_usesLegacyRouting() {
+            // Arrange
+            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            Model model = createModel(1L, 100L, 10, 100, null);
+            Provider provider = createProvider(100L, "OpenAI");
+            ProviderApiKey apiKey = createApiKey(1L, 100L);
+
+            when(modelDomainService.findActiveChannels("gpt-4o")).thenReturn(List.of(model));
+            when(providerGateway.findById(100L)).thenReturn(Optional.of(provider));
+            when(apiKeySelectionService.selectApiKey(100L)).thenReturn(apiKey);
+
+            // Act
+            RoutingContext ctx = channelRoutingService.resolve(authResult, "gpt-4o", "openai", RouteGroup.RoutingStrategy.FAILOVER);
+
+            // Assert
+            assertThat(ctx.getProviderId()).isEqualTo(100L);
+            verifyNoInteractions(productRoutingService);
         }
     }
 }

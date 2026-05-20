@@ -14,6 +14,7 @@ import java.util.List;
  *
  * <p>用户侧访问密钥，用于访问 llm-gateway。</p>
  * <p>绑定特定产品，实现细粒度权限控制。</p>
+ * <p>keyPlain 为明文，仅在创建时设置；keyHash/keyEncrypted 由基础设施层处理，领域层不感知加解密。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -30,8 +31,8 @@ public class UserApiKey extends BaseEntity {
     /** 绑定的产品 ID */
     private Long productId;
 
-    /** Key 哈希值，用于认证 */
-    private String keyHash;
+    /** Key 明文（仅创建时设置，查询时由基础设施层解密填充） */
+    private String keyPlain;
 
     /** Key 前缀，用于识别 */
     private String keyPrefix;

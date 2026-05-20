@@ -5,16 +5,21 @@ import type {
   UpdateTeamRequest,
   AddTeamMemberRequest,
   UpdateMemberRoleRequest,
+  CreateUserApiKeyRequest,
+  UpdateUserApiKeyRequest,
 } from '@/types/team';
 
+/** 团队 Query Keys */
 export const teamKeys = {
   all: ['teams'] as const,
   lists: () => [...teamKeys.all, 'list'] as const,
+  list: (filters?: Record<string, unknown>) => [...teamKeys.lists(), filters] as const,
   details: () => [...teamKeys.all, 'detail'] as const,
   detail: (id: number) => [...teamKeys.details(), id] as const,
+  apiKeys: (teamId: number) => [...teamKeys.detail(teamId), 'api-keys'] as const,
 };
 
-/** 获取团队列表 */
+/** 团队列表 */
 export function useTeams() {
   return useQuery({
     queryKey: teamKeys.lists(),
@@ -24,74 +29,120 @@ export function useTeams() {
 
 /** 创建团队 */
 export function useCreateTeam() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateTeamRequest) => teamApi.create(data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
     },
   });
 }
 
 /** 更新团队 */
 export function useUpdateTeam() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateTeamRequest }) =>
       teamApi.update(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
     },
   });
 }
 
 /** 删除团队 */
 export function useDeleteTeam() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => teamApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
     },
   });
 }
 
 /** 添加成员 */
 export function useAddTeamMember() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, data }: { teamId: number; data: AddTeamMemberRequest }) =>
       teamApi.addMember(teamId, data),
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
     },
   });
 }
 
 /** 移除成员 */
 export function useRemoveTeamMember() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, userId }: { teamId: number; userId: number }) =>
       teamApi.removeMember(teamId, userId),
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
     },
   });
 }
 
 /** 修改成员角色 */
 export function useUpdateMemberRole() {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, userId, data }: { teamId: number; userId: number; data: UpdateMemberRoleRequest }) =>
       teamApi.updateMemberRole(teamId, userId, data),
-    onSuccess: (_, { teamId }) => {
-      queryClient.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
-      queryClient.invalidateQueries({ queryKey: teamKeys.lists() });
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.detail(teamId) });
+      qc.invalidateQueries({ queryKey: teamKeys.lists() });
+    },
+  });
+}
+
+// ---- UserApiKey Hooks ----
+
+/** 团队下的 API Key 列表 */
+export function useTeamApiKeys(teamId: number) {
+  return useQuery({
+    queryKey: teamKeys.apiKeys(teamId),
+    queryFn: () => teamApi.listApiKeys(teamId),
+    enabled: teamId > 0,
+  });
+}
+
+/** 创建用户 API Key */
+export function useCreateUserApiKey() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ teamId, data }: { teamId: number; data: CreateUserApiKeyRequest }) =>
+      teamApi.createApiKey(teamId, data),
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.apiKeys(teamId) });
+    },
+  });
+}
+
+/** 更新用户 API Key */
+export function useUpdateUserApiKey() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ teamId, id, data }: { teamId: number; id: number; data: UpdateUserApiKeyRequest }) =>
+      teamApi.updateApiKey(teamId, id, data),
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.apiKeys(teamId) });
+    },
+  });
+}
+
+/** 删除用户 API Key */
+export function useDeleteUserApiKey() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ teamId, id }: { teamId: number; id: number }) =>
+      teamApi.deleteApiKey(teamId, id),
+    onSuccess: (_data, { teamId }) => {
+      qc.invalidateQueries({ queryKey: teamKeys.apiKeys(teamId) });
     },
   });
 }

@@ -11,8 +11,9 @@ import {
   useCreateProductApiKey,
   useDeleteProductApiKey,
 } from '@/services/query/useProducts';
-import type { Product, CreateProductApiKeyRequest } from '@/types/product';
+import type { Product, ProductApiKey } from '@/types/product';
 import ProductFormModal from './ProductFormModal';
+import ProductApiKeyEditModal from './ProductApiKeyEditModal';
 
 interface ProviderProductsTabProps {
   providerId: number;
@@ -26,8 +27,8 @@ const PRODUCT_TYPE_COLOR: Record<string, string> = {
 
 const TYPE_LABEL_KEY: Record<string, string> = {
   pay_as_you_go: 'typePayAsYouGo',
-  subscription_coding: 'TypeSubscriptionCoding',
-  subscription_token: 'TypeSubscriptionToken',
+  subscription_coding: 'typeSubscriptionCoding',
+  subscription_token: 'typeSubscriptionToken',
 };
 
 function ProductApiKeySection({ productId }: { productId: number }) {
@@ -37,24 +38,28 @@ function ProductApiKeySection({ productId }: { productId: number }) {
   const createKeyMutation = useCreateProductApiKey();
   const deleteKeyMutation = useDeleteProductApiKey();
   const [adding, setAdding] = useState(false);
-  const [newKeyData, setNewKeyData] = useState<Partial<CreateProductApiKeyRequest>>({});
+  const [newKeyData, setNewKeyData] = useState<{ apiKey?: string; priority?: number; weight?: number; description?: string }>({});
   const [createdKey, setCreatedKey] = useState<string | null>(null);
+  const [editingKey, setEditingKey] = useState<ProductApiKey | undefined>();
 
   const handleCreateKey = async () => {
-    if (!newKeyData.apiKey) {
+    const { apiKey } = newKeyData;
+    if (!apiKey) {
       message.warning(t('product.apiKeyRequired'));
       return;
     }
     try {
       const result = await createKeyMutation.mutateAsync({
         productId,
-        apiKey: newKeyData.apiKey,
-        baseUrl: newKeyData.baseUrl,
-        priority: newKeyData.priority,
-        weight: newKeyData.weight,
-        description: newKeyData.description,
+        data: {
+          productId,
+          apiKey,
+          priority: newKeyData.priority,
+          weight: newKeyData.weight,
+          description: newKeyData.description,
+        },
       });
-      message.success(t('product.addApiKey'));
+      message.success(t('product.apiKeyCreated'));
       setCreatedKey(result.apiKeyPlain);
       setAdding(false);
       setNewKeyData({});
@@ -72,7 +77,7 @@ function ProductApiKeySection({ productId }: { productId: number }) {
       title: t('product.deleteApiKey'),
       content: t('product.deleteApiKeyConfirm', { name: keyName }),
       okType: 'danger',
-      onOk: () => deleteKeyMutation.mutateAsync({ id: keyId, productId }),
+      onOk: () => deleteKeyMutation.mutateAsync({ productId, id: keyId }),
     });
   };
 
@@ -89,9 +94,9 @@ function ProductApiKeySection({ productId }: { productId: number }) {
 
       {adding && (
         <Card size="small" style={{ marginBottom: 8 }}>
-          <Space direction="vertical" style={{ width: '100%' }}>
+          <Space orientation="vertical" style={{ width: '100%' }}>
             <div>
-              <span style={{ width: 80, display: 'inline-block' }}>API Key:</span>
+              <span style={{ width: 80, display: 'inline-block' }}>{t('product.apiKeyLabel')}:</span>
               <input
                 style={{ width: 300, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
                 placeholder="sk-..."
@@ -100,23 +105,23 @@ function ProductApiKeySection({ productId }: { productId: number }) {
               />
             </div>
             <div>
-              <span style={{ width: 80, display: 'inline-block' }}>Base URL:</span>
+              <span style={{ width: 80, display: 'inline-block' }}>{t('product.description')}:</span>
               <input
                 style={{ width: 300, padding: '4px 8px', border: '1px solid #d9d9d9', borderRadius: 4 }}
-                placeholder="https://api.example.com"
-                value={newKeyData.baseUrl || ''}
-                onChange={(e) => setNewKeyData({ ...newKeyData, baseUrl: e.target.value })}
+                placeholder={t('product.description')}
+                value={newKeyData.description || ''}
+                onChange={(e) => setNewKeyData({ ...newKeyData, description: e.target.value })}
               />
             </div>
             <div>
-              <span style={{ width: 80, display: 'inline-block' }}>{t('product.quotaLimit')}:</span>
+              <span style={{ width: 80, display: 'inline-block' }}>{t('product.priorityLabel')}:</span>
               <InputNumber size="small" min={0} max={100} value={newKeyData.priority} onChange={(v) => setNewKeyData({ ...newKeyData, priority: v ?? undefined })} />
-              <span style={{ marginLeft: 8 }}>权重:</span>
+              <span style={{ marginLeft: 8 }}>{t('product.weightLabel')}:</span>
               <InputNumber size="small" min={0} value={newKeyData.weight} onChange={(v) => setNewKeyData({ ...newKeyData, weight: v ?? undefined })} />
             </div>
             <Space>
-              <Button size="small" type="primary" onClick={handleCreateKey} loading={createKeyMutation.isPending}>确定</Button>
-              <Button size="small" onClick={() => { setAdding(false); setNewKeyData({}); }}>取消</Button>
+              <Button size="small" type="primary" onClick={handleCreateKey} loading={createKeyMutation.isPending}>{t('common:confirm')}</Button>
+              <Button size="small" onClick={() => { setAdding(false); setNewKeyData({}); }}>{t('common:cancel')}</Button>
             </Space>
           </Space>
         </Card>
@@ -127,31 +132,41 @@ function ProductApiKeySection({ productId }: { productId: number }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Space>
               <KeyOutlined />
-              <Typography.Text code>{key.apiKeyMasked}</Typography.Text>
-              {key.baseUrl && <Tag>{key.baseUrl}</Tag>}
-              <Tag>优先级: {key.priority}</Tag>
-              <Tag>权重: {key.weight}</Tag>
-              {key.state === 'active' ? <Tag color="green">{t('product.stateActive')}</Tag> : <Tag>{t('product.stateInactive')}</Tag>}
+              {key.name && <span style={{ fontWeight: 500 }}>{key.name}</span>}
+              <Typography.Text code>{key.apiKeyPrefix}</Typography.Text>
+              <Tag>{t('product.priorityLabel')}: {key.priority}</Tag>
+              <Tag>{t('product.weightLabel')}: {key.weight}</Tag>
+              {key.state === 'ACTIVE' ? <Tag color="green">{t('product.stateActive')}</Tag> : key.state === 'DELETED' ? <Tag color="red">{t('product.stateDeleted')}</Tag> : <Tag>{t('product.stateInactive')}</Tag>}
             </Space>
-            <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteKey(key.id, key.apiKeyMasked)} />
+            <Space>
+              <Button type="text" size="small" icon={<EditOutlined />} onClick={() => setEditingKey(key)} />
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDeleteKey(key.id, key.name || key.apiKeyPrefix)} />
+            </Space>
           </div>
           {key.description && <div style={{ color: '#888', fontSize: 12, marginTop: 4 }}>{key.description}</div>}
         </Card>
       ))}
 
       <Modal
-        title="API Key 创建成功"
+        title={t('product.apiKeyCreated')}
         open={!!createdKey}
         onOk={() => setCreatedKey(null)}
         onCancel={() => setCreatedKey(null)}
       >
         <Typography.Paragraph>
-          请妥善保存以下 API Key，关闭后将无法再次查看：
+          {t('product.apiKeyCreatedHint')}
         </Typography.Paragraph>
         <Typography.Paragraph copyable={{ text: createdKey ?? '' }} code>
           {createdKey}
         </Typography.Paragraph>
       </Modal>
+
+      <ProductApiKeyEditModal
+        open={!!editingKey}
+        productId={productId}
+        apiKey={editingKey}
+        onClose={() => setEditingKey(undefined)}
+      />
     </div>
   );
 }
@@ -216,7 +231,7 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
                 <Tag color={PRODUCT_TYPE_COLOR[product.productType]}>
                   {t(`product.${TYPE_LABEL_KEY[product.productType]}`)}
                 </Tag>
-                <Tag>{product.models?.length ?? 0} 模型</Tag>
+                <Tag>{t('product.modelCount', { count: product.models?.length ?? 0 })}</Tag>
               </Space>
             ),
             extra: canWrite ? (

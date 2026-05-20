@@ -14,8 +14,8 @@ interface ProductFormModalProps {
 
 const PRODUCT_TYPES = [
   { value: 'pay_as_you_go', labelKey: 'typePayAsYouGo' },
-  { value: 'subscription_coding', labelKey: 'TypeSubscriptionCoding' },
-  { value: 'subscription_token', labelKey: 'TypeSubscriptionToken' },
+  { value: 'subscription_coding', labelKey: 'typeSubscriptionCoding' },
+  { value: 'subscription_token', labelKey: 'typeSubscriptionToken' },
 ];
 
 export default function ProductFormModal({ visible, providerId, product, onClose }: ProductFormModalProps) {
@@ -85,7 +85,7 @@ export default function ProductFormModal({ visible, providerId, product, onClose
       onOk={handleSubmit}
       onCancel={onClose}
       confirmLoading={loading}
-      destroyOnClose
+      destroyOnHidden
       width={600}
     >
       <Form form={form} layout="vertical">
@@ -103,7 +103,7 @@ export default function ProductFormModal({ visible, providerId, product, onClose
           </Select>
         </Form.Item>
 
-        <Form.Item name="models" label={t('product.models')} extra="多个模型用逗号分隔">
+        <Form.Item name="models" label={t('product.models')} extra={t('product.modelsSeparatorHint')}>
           <Input placeholder="gpt-4o, gpt-4o-mini" />
         </Form.Item>
 
@@ -125,7 +125,7 @@ export default function ProductFormModal({ visible, providerId, product, onClose
                   </Space>
                 ))}
                 <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  添加端点
+                  {t('product.addEndpoint')}
                 </Button>
               </>
             )}
