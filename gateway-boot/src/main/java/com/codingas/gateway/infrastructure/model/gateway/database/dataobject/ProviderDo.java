@@ -21,9 +21,6 @@ public class ProviderDo extends BaseDo {
     @Column(name = "provider_name", nullable = false, length = 128)
     private String name;
 
-    @Column(name = "provider_type", nullable = false)
-    private String type;
-
     @Column(name = "website_url", length = 512)
     private String websiteUrl;
 

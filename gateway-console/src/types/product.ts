@@ -1,44 +1,58 @@
-import type { PageResponse } from './api';
+/** 协议类型（与后端 ProtocolGateway.getProtocolName() 对应） */
+export type EndpointProtocol = 'openai' | 'anthropic';
 
-/** 产品类型 */
-export type ProductType = 'pay_as_you_go' | 'subscription_coding' | 'subscription_token';
+/** 协议信息（从 /api/protocols 获取） */
+export interface ProtocolInfo {
+  name: string;
+  label: string;
+}
 
 /** 产品状态 */
-export type ProductState = 'active' | 'inactive' | 'deleted';
+export type ProductState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 
-/** 产品 API Key 状态（后端 ProductApiKeyState 枚举，Jackson 序列化为枚举名称大写） */
-export type ProductApiKeyState = 'ACTIVE' | 'INACTIVE' | 'DELETED';
-
-/** 产品 */
+/** 产品信息（与后端 ProductResponse 一致） */
 export interface Product {
   id: number;
   providerId: number;
+  productName: string;
   providerName: string;
-  name: string;
-  productType: ProductType;
-  models: string[];
   endpoints: Record<string, string>;
-  quotaLimit: number | null;
   state: ProductState;
   createdAt: string;
   updatedAt: string;
 }
 
-/** 产品 API Key（后端 ProductApiKeyResponse） */
+/** 创建产品请求 */
+export interface CreateProductRequest {
+  providerId: number;
+  productName: string;
+  endpoints: Record<string, string>;
+}
+
+/** 更新产品请求 */
+export interface UpdateProductRequest {
+  productName?: string;
+  endpoints?: Record<string, string>;
+}
+
+/** 产品 API Key 状态 */
+export type ProductApiKeyState = 'ACTIVE' | 'INACTIVE' | 'DELETED';
+
+/** 产品 API Key */
 export interface ProductApiKey {
   id: number;
   productId: number;
-  apiKeyPrefix: string;
   name: string;
-  description: string;
-  weight: number;
+  apiKeyPrefix: string;
   priority: number;
+  weight: number;
+  description?: string;
   state: ProductApiKeyState;
   createdAt: string;
   updatedAt: string;
 }
 
-/** 产品 API Key 创建请求（后端要求 body 中也包含 productId） */
+/** 创建产品 API Key 请求 */
 export interface CreateProductApiKeyRequest {
   productId: number;
   apiKey: string;
@@ -47,40 +61,17 @@ export interface CreateProductApiKeyRequest {
   description?: string;
 }
 
-/** 产品 API Key 创建响应 */
+/** 创建产品 API Key 响应 */
 export interface CreateProductApiKeyResponse {
   id: number;
-  apiKeyMasked: string;
+  apiKeyPrefix: string;
   apiKeyPlain: string;
 }
 
-/** 产品 API Key 更新请求 */
+/** 更新产品 API Key 请求 */
 export interface UpdateProductApiKeyRequest {
   priority?: number;
   weight?: number;
-  state?: ProductApiKeyState;
   description?: string;
+  state?: ProductApiKeyState;
 }
-
-/** 创建产品请求 */
-export interface CreateProductRequest {
-  providerId: number;
-  name: string;
-  productType: ProductType;
-  models: string[];
-  endpoints: Record<string, string>;
-  quotaLimit?: number;
-}
-
-/** 更新产品请求 */
-export interface UpdateProductRequest {
-  name?: string;
-  productType?: ProductType;
-  models?: string[];
-  endpoints?: Record<string, string>;
-  quotaLimit?: number;
-  state?: ProductState;
-}
-
-/** 产品分页结果 */
-export type ProductPageResult = PageResponse<Product>;

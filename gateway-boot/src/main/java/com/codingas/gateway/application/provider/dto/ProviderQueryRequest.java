@@ -1,8 +1,6 @@
 package com.codingas.gateway.application.provider.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -15,7 +13,5 @@ public class ProviderQueryRequest extends PageRequest {
 
     private String keyword;
 
-    private ProviderType providerType;
-
-    private ProviderState state;
+    private String state;
 }

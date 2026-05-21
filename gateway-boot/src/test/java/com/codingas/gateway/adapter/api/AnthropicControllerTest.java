@@ -14,9 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -56,11 +54,10 @@ class AnthropicControllerTest {
     class MessagesTests {
 
         @Test
-        @DisplayName("非流式请求 — 有 authResult 时走新架构代理")
-        void messages_nonStream_withAuthResult() throws IOException {
-            // Arrange
+        @DisplayName("非流式请求 — 有 authResult 时走代理")
+        void messages_nonStream_withAuthResult() throws Exception {
             AnthropicMessagesRequest request = createRequest("claude-3-5-sonnet-20241022", 1024, false);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
             LLMResponse response = LLMResponse.builder()
                 .id("msg-123")
@@ -75,18 +72,15 @@ class AnthropicControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.messages(request, 1L, 10L, authResult, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
             verify(proxyService).proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class));
         }
 
         @Test
         @DisplayName("非流式请求 — 无 authResult 时走旧架构代理")
-        void messages_nonStream_withoutAuthResult() throws IOException {
-            // Arrange
+        void messages_nonStream_withoutAuthResult() throws Exception {
             AnthropicMessagesRequest request = createRequest("claude-3-5-sonnet-20241022", 1024, false);
 
             LLMResponse response = LLMResponse.builder()
@@ -98,20 +92,17 @@ class AnthropicControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.messages(request, 1L, 10L, null, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
             verify(proxyService).proxy(any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class));
         }
 
         @Test
         @DisplayName("非流式请求 — 代理返回错误时返回 400")
-        void messages_nonStream_errorResponse() throws IOException {
-            // Arrange
+        void messages_nonStream_errorResponse() throws Exception {
             AnthropicMessagesRequest request = createRequest("claude-3-5-sonnet-20241022", 1024, false);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
             LLMResponse response = LLMResponse.builder()
                 .error(LLMResponse.Error.builder()
@@ -124,28 +115,23 @@ class AnthropicControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.messages(request, 1L, 10L, authResult, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @DisplayName("流式请求 — 有 authResult 时走新架构流式代理")
-        void messages_stream_withAuthResult() throws IOException {
-            // Arrange
+        @DisplayName("流式请求 — 有 authResult 时走流式代理")
+        void messages_stream_withAuthResult() throws Exception {
             AnthropicMessagesRequest request = createRequest("claude-3-5-sonnet-20241022", 1024, true);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
             doNothing().when(proxyService).proxyStream(
                 any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
 
-            // Act
             controller.messages(request, 1L, 10L, authResult, mock(jakarta.servlet.http.HttpServletResponse.class));
 
-            // Assert
             verify(proxyService).proxyStream(
                 any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
@@ -153,18 +139,15 @@ class AnthropicControllerTest {
 
         @Test
         @DisplayName("流式请求 — 无 authResult 时走旧架构流式代理")
-        void messages_stream_withoutAuthResult() throws IOException {
-            // Arrange
+        void messages_stream_withoutAuthResult() throws Exception {
             AnthropicMessagesRequest request = createRequest("claude-3-5-sonnet-20241022", 1024, true);
 
             doNothing().when(proxyService).proxyStream(
                 any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
 
-            // Act
             controller.messages(request, 1L, 10L, null, mock(jakarta.servlet.http.HttpServletResponse.class));
 
-            // Assert
             verify(proxyService).proxyStream(
                 any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());

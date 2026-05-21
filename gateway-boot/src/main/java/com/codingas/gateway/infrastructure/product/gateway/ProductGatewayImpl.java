@@ -78,6 +78,13 @@ public class ProductGatewayImpl implements ProductGateway {
         return productRepository.existsByProviderIdAndName(providerId, name);
     }
 
+    @Override
+    public List<Product> findByIds(List<Long> ids) {
+        return productRepository.findAllById(ids).stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
     private Product toEntity(ProductDo dataObject) {
         Product entity = new Product();
         entity.setId(dataObject.getId());

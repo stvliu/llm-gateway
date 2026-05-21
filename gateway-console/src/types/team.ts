@@ -1,26 +1,21 @@
-import type { PageResponse } from './api';
-
-/** 团队角色 */
+/** 团队角色（小写字符串，与后端 TeamRole.getCode() 一致） */
 export type TeamRole = 'owner' | 'admin' | 'member';
 
-/** 团队状态 */
-export type TeamState = 'active' | 'inactive' | 'deleted';
-
-/** 团队成员 */
-export interface TeamMember {
-  userId: number;
-  role: TeamRole;
-}
-
-/** 团队 */
+/** 团队信息（与后端 TeamResponse 一致） */
 export interface Team {
   id: number;
   name: string;
   description: string;
-  state: TeamState;
+  state: string;
   members: TeamMember[];
   createdAt: string;
   updatedAt: string;
+}
+
+/** 团队成员信息（与后端 TeamResponse.MemberResponse 一致） */
+export interface TeamMember {
+  userId: number;
+  role: string;
 }
 
 /** 创建团队请求 */
@@ -33,10 +28,9 @@ export interface CreateTeamRequest {
 export interface UpdateTeamRequest {
   name?: string;
   description?: string;
-  state?: TeamState;
 }
 
-/** 添加成员请求 */
+/** 添加团队成员请求 */
 export interface AddTeamMemberRequest {
   userId: number;
   role: TeamRole;
@@ -47,61 +41,55 @@ export interface UpdateMemberRoleRequest {
   role: TeamRole;
 }
 
-/** 团队分页结果 */
-export type TeamPageResult = PageResponse<Team>;
-
-/** 用户 API Key 状态 */
-export type UserApiKeyState = 'ACTIVE' | 'INACTIVE' | 'DELETED';
-
 /** 用户 API Key */
 export interface UserApiKey {
   id: number;
   teamId: number;
-  productId: number;
+  userId: number;
+  productIds: number[];
   keyPrefix: string;
   name: string;
   models: string[];
   quotaLimit: number | null;
-  state: UserApiKeyState;
+  state: 'ACTIVE' | 'DISABLED';
   createdAt: string;
   updatedAt: string;
 }
 
-/** 用户 API Key 详情（含明文） */
-export interface UserApiKeyDetail {
-  id: number;
-  teamId: number;
-  productId: number;
-  keyPrefix: string;
+/** 用户 API Key 详情（含明文 Key） */
+export interface UserApiKeyDetail extends UserApiKey {
   keyPlain: string;
+  products: ProductBrief[];
+}
+
+/** 产品简要信息 */
+export interface ProductBrief {
+  id: number;
   name: string;
-  models: string[];
-  quotaLimit: number | null;
-  state: UserApiKeyState;
-  createdAt: string;
-  updatedAt: string;
 }
 
 /** 创建用户 API Key 请求 */
 export interface CreateUserApiKeyRequest {
   teamId: number;
-  productId: number;
+  userId: number;
+  productIds: number[];
   name: string;
   models?: string[];
-  quotaLimit?: number;
+  quotaLimit?: number | null;
+}
+
+/** 更新用户 API Key 请求 */
+export interface UpdateUserApiKeyRequest {
+  name?: string;
+  productIds?: number[];
+  models?: string[];
+  quotaLimit?: number | null;
+  state?: 'ACTIVE' | 'DISABLED';
 }
 
 /** 创建用户 API Key 响应 */
 export interface CreateUserApiKeyResponse {
   id: number;
   keyPrefix: string;
-  apiKeyPlain: string;
-}
-
-/** 更新用户 API Key 请求 */
-export interface UpdateUserApiKeyRequest {
-  name?: string;
-  models?: string[];
-  quotaLimit?: number;
-  state?: UserApiKeyState;
+  keyPlain: string;
 }

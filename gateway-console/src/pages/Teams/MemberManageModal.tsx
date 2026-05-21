@@ -4,7 +4,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAddTeamMember, useRemoveTeamMember, useUpdateMemberRole } from '@/services/query/useTeams';
 import { useUsers } from '@/services/query/useUsers';
-import type { Team, TeamRole } from '@/types/team';
+import type { Team, TeamMember, TeamRole } from '@/types/team';
 
 const ROLE_COLOR: Record<string, string> = {
   owner: 'gold',
@@ -66,7 +66,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
     }
   };
 
-  const memberIds = new Set(team?.members?.map((m) => m.userId) ?? []);
+  const memberIds = new Set(team?.members?.map((m: TeamMember) => m.userId) ?? []);
   const availableUsers = usersData?.items?.filter((u) => !memberIds.has(u.id)) ?? [];
 
   const columns = [
@@ -81,7 +81,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
       dataIndex: 'role',
       key: 'role',
       width: 140,
-      render: (role: TeamRole, record: { userId: number }) =>
+      render: (role: string, record: { userId: number }) =>
         role === 'owner' ? (
           <Tag color={ROLE_COLOR[role]}>{t('team.roleOwner')}</Tag>
         ) : (
@@ -89,7 +89,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
             value={role}
             size="small"
             style={{ width: 100 }}
-            onChange={(val: TeamRole) => handleRoleChange(record.userId, val)}
+            onChange={(val: string) => handleRoleChange(record.userId, val as TeamRole)}
             options={[
               { value: 'admin', label: t('team.roleAdmin') },
               { value: 'member', label: t('team.roleMember') },

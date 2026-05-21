@@ -62,4 +62,14 @@ export const teamApi = {
   /** 删除用户 API Key */
   deleteApiKey: (teamId: number, id: number) =>
     api.delete<void>(`/teams/${teamId}/api-keys/${id}`),
+
+  // ---- UserApiKey（用户维度） ----
+
+  /** 获取当前用户的 API Key 列表 */
+  listMyApiKeys: () =>
+    api.get<UserApiKey[]>('/me/api-keys'),
+
+  /** 获取指定用户的 API Key 列表 */
+  listUserApiKeys: (userId: number) =>
+    api.get<UserApiKey[]>(`/users/${userId}/api-keys`),
 };

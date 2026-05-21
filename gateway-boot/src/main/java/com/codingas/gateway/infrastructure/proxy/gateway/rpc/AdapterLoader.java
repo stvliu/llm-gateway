@@ -26,7 +26,7 @@ public class AdapterLoader {
         for (LLMAdapter adapter : loader) {
             log.info("Discovered LLM adapter: {} (type={})",
                     adapter.getProviderCode(),
-                    adapter.getProviderType());
+                    adapter.getProviderName());
             adapters.add(adapter);
         }
 

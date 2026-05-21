@@ -1,64 +1,82 @@
 package com.codingas.gateway.domain.team.entity;
 
-import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
- * 用户 API Key 实体
- *
- * <p>用户侧访问密钥，用于访问 llm-gateway。</p>
- * <p>绑定特定产品，实现细粒度权限控制。</p>
- * <p>keyPlain 为明文，仅在创建时设置；keyHash/keyEncrypted 由基础设施层处理，领域层不感知加解密。</p>
+ * 用户 API Key 领域实体
+ * <p>
+ * 一个 Key 可关联多个产品，路由时按 model name 匹配对应的 Product。
+ * keyHash 用于认证验证，keyPlain 用于创建时传入和详情展示（由基础设施层加解密）。
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-@DomainEntity
-@Slf4j
-public class UserApiKey extends BaseEntity {
+public class UserApiKey {
 
-    /** 所属团队 ID */
+    private Long id;
     private Long teamId;
-
-    /** 创建者用户 ID */
     private Long userId;
-
-    /** 绑定的产品 ID */
-    private Long productId;
-
-    /** Key 明文（仅创建时设置，查询时由基础设施层解密填充） */
-    private String keyPlain;
-
-    /** Key 前缀，用于识别 */
+    private List<Long> productIds;
+    private String keyHash;
     private String keyPrefix;
-
-    /** 密钥名称 */
+    private String keyPlain;
     private String name;
-
-    /** 可访问的模型列表（子集），为空表示可访问产品全部模型 */
     private List<String> models;
-
-    /** Key 级别的额度限制 */
     private Long quotaLimit;
+    private UserApiKeyState state;
+    private Instant createdAt;
+    private Instant updatedAt;
 
-    /** 密钥状态 */
-    private UserApiKeyState state = UserApiKeyState.ACTIVE;
-
-    /**
-     * 检查密钥是否可用
-     */
-    public boolean isAvailable() {
-        return state.isAvailable();
+    public UserApiKey() {
     }
 
-    /**
-     * 检查是否有权访问指定模型
-     */
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public Long getTeamId() { return teamId; }
+    public void setTeamId(Long teamId) { this.teamId = teamId; }
+
+    public Long getUserId() { return userId; }
+    public void setUserId(Long userId) { this.userId = userId; }
+
+    public List<Long> getProductIds() { return productIds; }
+    public void setProductIds(List<Long> productIds) { this.productIds = productIds; }
+
+    /** Key 哈希（SHA-256），用于认证验证，由基础设施层在 save 时计算 */
+    public String getKeyHash() { return keyHash; }
+    public void setKeyHash(String keyHash) { this.keyHash = keyHash; }
+
+    public String getKeyPrefix() { return keyPrefix; }
+    public void setKeyPrefix(String keyPrefix) { this.keyPrefix = keyPrefix; }
+
+    /** Key 明文，创建时设置，查询时由基础设施层解密填充 */
+    public String getKeyPlain() { return keyPlain; }
+    public void setKeyPlain(String keyPlain) { this.keyPlain = keyPlain; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public List<String> getModels() { return models; }
+    public void setModels(List<String> models) { this.models = models; }
+
+    public Long getQuotaLimit() { return quotaLimit; }
+    public void setQuotaLimit(Long quotaLimit) { this.quotaLimit = quotaLimit; }
+
+    public UserApiKeyState getState() { return state; }
+    public void setState(UserApiKeyState state) { this.state = state; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    /** 检查密钥是否可用 */
+    public boolean isAvailable() {
+        return state != null && state.isAvailable();
+    }
+
+    /** 检查是否有权访问指定模型（models 为空表示全部允许） */
     public boolean canAccessModel(String modelName) {
         if (models == null || models.isEmpty()) {
             return true;

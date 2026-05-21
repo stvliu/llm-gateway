@@ -31,7 +31,6 @@ public interface ProviderMetadataGateway {
      * 分页条件查询
      */
     Page<ProviderMetadata> findByConditions(
-        String providerType,
         String keyword,
         Pageable pageable
     );

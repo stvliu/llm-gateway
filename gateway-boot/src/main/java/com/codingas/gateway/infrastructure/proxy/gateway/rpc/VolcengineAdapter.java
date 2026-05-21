@@ -4,7 +4,7 @@ import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult;
 import com.codingas.gateway.common.util.JsonUtils;
 import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
-import com.codingas.gateway.domain.model.enums.ProviderType;
+
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -64,14 +64,13 @@ public class VolcengineAdapter extends OpenAIAdapter {
     }
 
     @Override
-    public ProviderType getProviderType() {
-        return ProviderType.VOLCENGINE;
+    public String getProviderName() {
+        return "volcengine";
     }
 
     @Override
     public ProviderCapabilities getCapabilities() {
         return new ProviderCapabilities(
-                ProviderType.VOLCENGINE,
                 true,   // supportsChatCompletion
                 false,  // supportsMessages (Anthropic 格式)
                 true,   // supportsEmbeddings
@@ -102,7 +101,7 @@ public class VolcengineAdapter extends OpenAIAdapter {
         long startTime = System.currentTimeMillis();
         String effectiveBaseUrl = resolveBaseUrl(testBaseUrl);
 
-        log.info("Starting connectivity test for {}: baseUrl={}", getProviderType(), effectiveBaseUrl);
+        log.info("Starting connectivity test for {}: baseUrl={}", getProviderName(), effectiveBaseUrl);
 
         // 火山引擎必须提供 endpoint_id
         if (testModel == null || testModel.isBlank()) {
@@ -124,7 +123,7 @@ public class VolcengineAdapter extends OpenAIAdapter {
         long totalLatency = System.currentTimeMillis() - startTime;
 
         log.info("Connectivity test completed for {}: success={}, latency={}ms",
-            getProviderType(), level1.success(), totalLatency);
+            getProviderName(), level1.success(), totalLatency);
 
         return new ConnectivityTestResult(
             level1.success(),

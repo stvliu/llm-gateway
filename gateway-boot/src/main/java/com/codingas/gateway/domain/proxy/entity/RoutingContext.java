@@ -1,6 +1,5 @@
 package com.codingas.gateway.domain.proxy.entity;
 
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.product.enums.ProductType;
 
 /**
@@ -17,7 +16,6 @@ public class RoutingContext {
     // ===== 旧架构字段（降级兼容） =====
     private Long providerId;
     private String providerName;
-    private ProviderType providerType;
 
     // ===== 新架构字段 =====
     private Long productId;
@@ -43,7 +41,6 @@ public class RoutingContext {
 
         public Builder providerId(Long providerId) { context.providerId = providerId; return this; }
         public Builder providerName(String providerName) { context.providerName = providerName; return this; }
-        public Builder providerType(ProviderType providerType) { context.providerType = providerType; return this; }
         public Builder productId(Long productId) { context.productId = productId; return this; }
         public Builder productType(ProductType productType) { context.productType = productType; return this; }
         public Builder userApiKeyId(Long userApiKeyId) { context.userApiKeyId = userApiKeyId; return this; }
@@ -74,7 +71,6 @@ public class RoutingContext {
 
     public Long getProviderId() { return providerId; }
     public String getProviderName() { return providerName; }
-    public ProviderType getProviderType() { return providerType; }
     public Long getProductId() { return productId; }
     public ProductType getProductType() { return productType; }
     public Long getUserApiKeyId() { return userApiKeyId; }

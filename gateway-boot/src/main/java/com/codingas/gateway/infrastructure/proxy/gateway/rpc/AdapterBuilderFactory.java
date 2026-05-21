@@ -1,80 +1,61 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
-import com.codingas.gateway.domain.model.enums.ProviderType;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 
 /**
- * Adapter 构建器工厂
+ * 适配器构建工厂
  *
- * <p>用于创建临时 Adapter 实例，支持测试未保存的 API Key。</p>
+ * <p>旧架构兼容组件，新架构下由 ProtocolGateway 体系替代。</p>
+ * <p>优先从 ProtocolGateway 查找，降级到 AdapterRegistry。</p>
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class AdapterBuilderFactory {
 
-    /** 默认超时时间（秒） */
-    private static final int DEFAULT_TIMEOUT = 30;
+    private final AdapterRegistry adapterRegistry;
+    private final ProtocolGatewayRegistry protocolGatewayRegistry;
 
-    /** 共享的 HTTP 客户端 */
-    private final OkHttpClient sharedHttpClient;
-
-    public AdapterBuilderFactory() {
-        this.sharedHttpClient = new OkHttpClient.Builder()
-            .connectTimeout(10, TimeUnit.SECONDS)
-            .readTimeout(DEFAULT_TIMEOUT, TimeUnit.SECONDS)
-            .build();
+    /**
+     * 根据供应商名称获取适配器
+     *
+     * @param providerName 供应商名称
+     * @return 适配器实例
+     */
+    public Optional<LLMAdapter> getAdapter(String providerName) {
+        return adapterRegistry.getAdapterByName(providerName);
     }
 
     /**
-     * 创建临时 Adapter 实例
+     * 创建临时适配器（旧架构兼容）
      *
-     * @param providerType 供应商类型
-     * @param baseUrl Base URL（可选，使用默认值）
+     * @param protocolName 协议名称
+     * @param baseUrl Base URL
      * @param apiKey API Key
-     * @return Adapter 实例
+     * @return 适配器实例
      */
-    public LLMAdapter createAdapter(ProviderType providerType, String baseUrl, String apiKey) {
-        return createAdapter(providerType, baseUrl, apiKey, DEFAULT_TIMEOUT);
-    }
+    public LLMAdapter createAdapter(String protocolName, String baseUrl, String apiKey) {
+        // 优先从 ProtocolGateway 查找
+        Optional<ProtocolGateway> protocolOpt = protocolGatewayRegistry.getGateway(protocolName);
+        if (protocolOpt.isPresent()) {
+            ProtocolGateway protocol = protocolOpt.get();
+            log.debug("Creating adapter via ProtocolGateway for: {}", protocolName);
+            return new ProtocolGatewayAdapter(protocol, baseUrl, apiKey);
+        }
 
-    /**
-     * 创建临时 Adapter 实例
-     *
-     * @param providerType 供应商类型
-     * @param baseUrl Base URL（可选，使用默认值）
-     * @param apiKey API Key
-     * @param timeoutSeconds 超时时间（秒）
-     * @return Adapter 实例
-     */
-    public LLMAdapter createAdapter(ProviderType providerType, String baseUrl, String apiKey, int timeoutSeconds) {
-        log.debug("Creating temporary adapter for provider: {}", providerType);
+        // 降级到 AdapterRegistry
+        Optional<LLMAdapter> adapterOpt = adapterRegistry.getAdapterByName(protocolName);
+        if (adapterOpt.isPresent()) {
+            log.debug("Using registered adapter for: {}", protocolName);
+            return adapterOpt.get();
+        }
 
-        return switch (providerType) {
-            case OPENAI -> new OpenAIAdapter(sharedHttpClient, baseUrl, apiKey, timeoutSeconds);
-            case ANTHROPIC -> new AnthropicAdapter(sharedHttpClient, baseUrl, apiKey, null, timeoutSeconds);
-            case VOLCENGINE -> new VolcengineAdapter(sharedHttpClient, baseUrl, apiKey, timeoutSeconds);
-            case DEEPSEEK -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://api.deepseek.com", apiKey, timeoutSeconds);
-            case MOONSHOT -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://api.moonshot.cn", apiKey, timeoutSeconds);
-            case ZHIPU -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://open.bigmodel.cn/api/paas", apiKey, timeoutSeconds);
-            case BAICHUAN -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://api.baichuan-ai.com", apiKey, timeoutSeconds);
-            case MINIMAX -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://api.minimax.chat", apiKey, timeoutSeconds);
-            case QWEN -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://dashscope.aliyuncs.com/compatible-mode", apiKey, timeoutSeconds);
-            case GEMINI -> new OpenAIAdapter(sharedHttpClient,
-                baseUrl != null ? baseUrl : "https://generativelanguage.googleapis.com", apiKey, timeoutSeconds);
-            default -> {
-                log.warn("Unknown provider type: {}, using OpenAI compatible adapter", providerType);
-                yield new OpenAIAdapter(sharedHttpClient, baseUrl, apiKey, timeoutSeconds);
-            }
-        };
+        throw new IllegalArgumentException("不支持的协议类型: " + protocolName);
     }
 }

@@ -3,7 +3,7 @@ package com.codingas.gateway.infrastructure.init;
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
+
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.entity.ProviderApiKey;
@@ -136,8 +136,6 @@ public class DataInitializer implements CommandLineRunner {
 
         Provider provider = new Provider();
         provider.setName("火山引擎");
-        provider.setType(ProviderType.VOLCENGINE);
-        provider.setBaseUrl("https://ark.cn-beijing.volces.com/api/v3");
         provider.setWebsiteUrl("https://www.volcengine.com");
         provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
         provider.setPriority(100);
@@ -336,7 +334,7 @@ public class DataInitializer implements CommandLineRunner {
         UserApiKey apiKey = new UserApiKey();
         apiKey.setTeamId(team.getId());
         apiKey.setUserId(user.getId());
-        apiKey.setProductId(product.getId());
+        apiKey.setProductIds(List.of(product.getId()));
         apiKey.setKeyPlain(keyPlain);
         apiKey.setName(name);
         apiKey.setState(UserApiKeyState.ACTIVE);

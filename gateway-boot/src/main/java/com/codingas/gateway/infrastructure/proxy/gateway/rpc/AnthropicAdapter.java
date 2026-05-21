@@ -6,7 +6,6 @@ import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult;
 import com.codingas.gateway.domain.model.enums.ProviderErrorType;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -60,8 +59,8 @@ public class AnthropicAdapter implements LLMAdapter {
     }
 
     @Override
-    public ProviderType getProviderType() {
-        return ProviderType.ANTHROPIC;
+    public String getProviderName() {
+        return "anthropic";
     }
 
     @Override
@@ -218,7 +217,7 @@ public class AnthropicAdapter implements LLMAdapter {
         String effectiveModel = testModel != null ? testModel : DEFAULT_TEST_MODEL;
 
         log.info("Starting connectivity test for {}: baseUrl={}, model={}",
-            getProviderType(), effectiveBaseUrl, effectiveModel);
+            getProviderName(), effectiveBaseUrl, effectiveModel);
 
         // Anthropic 用 POST /v1/messages 最小请求，同时验证认证和模型可用性
         LevelResult level1 = testLevel1Messages(effectiveBaseUrl, testApiKey, effectiveModel);
@@ -226,7 +225,7 @@ public class AnthropicAdapter implements LLMAdapter {
         long totalLatency = System.currentTimeMillis() - startTime;
 
         log.info("Connectivity test completed for {}: success={}, latency={}ms",
-            getProviderType(), level1.success(), totalLatency);
+            getProviderName(), level1.success(), totalLatency);
 
         return new ConnectivityTestResult(
             level1.success(),
@@ -348,7 +347,6 @@ public class AnthropicAdapter implements LLMAdapter {
     @Override
     public ProviderCapabilities getCapabilities() {
         return new ProviderCapabilities(
-                ProviderType.ANTHROPIC,
                 false,  // supportsChatCompletion (OpenAI 格式)
                 true,   // supportsMessages (Anthropic 格式)
                 false,  // supportsEmbeddings (Anthropic 不支持)

@@ -65,9 +65,9 @@ class IPBlockCheckInterceptorTest {
     }
 
     @Test
-    @DisplayName("order返回1，最先执行")
-    void order_returns1() {
-        assertThat(interceptor.order()).isEqualTo(1);
+    @DisplayName("order返回0，最先执行")
+    void order_returns0() {
+        assertThat(interceptor.order()).isEqualTo(0);
     }
 
     private static class MockPrintWriter extends java.io.PrintWriter {

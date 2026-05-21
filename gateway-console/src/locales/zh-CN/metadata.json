@@ -8,7 +8,6 @@
   "sync": "同步元数据",
   "name": "供应商名称",
   "providerId": "供应商标识",
-  "providerTypeLabel": "供应商类型",
   "description": "描述",
   "modelCount": "模型数量",
   "downloadCount": "下载次数",
@@ -46,22 +45,6 @@
     "syncFailed": "同步失败",
     "importSuccess": "导入成功",
     "importFailed": "导入失败"
-  },
-  "providerType": {
-    "OPENAI": "OpenAI",
-    "ANTHROPIC": "Anthropic",
-    "GEMINI": "Google Gemini",
-    "DEEPSEEK": "DeepSeek（深度求索）",
-    "MOONSHOT": "Moonshot（月之暗面）",
-    "ZHIPU": "智谱 GLM",
-    "YI": "零一万物",
-    "BAICHUAN": "百川智能",
-    "MINIMAX": "MiniMax",
-    "SILICONFLOW": "SiliconFlow（硅基流动）",
-    "VOLCENGINE": "火山引擎",
-    "QWEN": "通义千问",
-    "WENXIN": "文心一言",
-    "OTHER": "其他"
   },
   "model": {
     "providerModelId": "模型标识",

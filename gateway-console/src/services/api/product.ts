@@ -10,6 +10,10 @@ import type {
 } from '@/types/product';
 
 export const productApi = {
+  /** 获取所有产品列表 */
+  listAll: () =>
+    api.get<Product[]>('/products'),
+
   /** 获取供应商下的产品列表 */
   list: (providerId: number) =>
     api.get<Product[]>('/products', { params: { providerId } }),

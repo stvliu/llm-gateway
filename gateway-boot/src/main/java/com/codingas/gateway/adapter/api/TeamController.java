@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.team.TeamService;
 import com.codingas.gateway.application.team.dto.TeamRequest;
 import com.codingas.gateway.application.team.dto.TeamResponse;
@@ -10,6 +11,7 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.domain.team.enums.TeamRole;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -113,9 +115,12 @@ public class TeamController {
     @PostMapping("/{teamId}/api-keys")
     public ResponseEntity<UserApiKeyCreateResponse> createApiKey(
             @PathVariable Long teamId,
-            @Valid @RequestBody UserApiKeyCreateRequest request) {
+            @Valid @RequestBody UserApiKeyCreateRequest request,
+            HttpServletRequest httpRequest) {
+        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+        boolean isAdmin = StpUtil.hasRole("ADMIN");
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
-                teamId, request.productId(), request.name(),
+                teamId, request.userId(), request.productIds(), request.name(),
                 request.models(), request.quotaLimit()
         );
         UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);

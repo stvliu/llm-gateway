@@ -1,6 +1,5 @@
 package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +18,6 @@ class VolcengineAdapterTest {
     @BeforeEach
     void setUp() {
         httpClient = new OkHttpClient.Builder().build();
-        // 使用测试 API Key
         adapter = new VolcengineAdapter(
             httpClient,
             "https://ark.cn-beijing.volces.com/api/v3",
@@ -35,9 +33,9 @@ class VolcengineAdapterTest {
     }
 
     @Test
-    @DisplayName("getProviderType() 返回 VOLCENGINE")
-    void getProviderType_returnsVolcengine() {
-        assertThat(adapter.getProviderType()).isEqualTo(ProviderType.VOLCENGINE);
+    @DisplayName("getProviderName() 返回 'volcengine'")
+    void getProviderName_returnsVolcengine() {
+        assertThat(adapter.getProviderName()).isEqualTo("volcengine");
     }
 
     @Test
@@ -45,11 +43,10 @@ class VolcengineAdapterTest {
     void getCapabilities_returnsCorrectCapabilities() {
         var capabilities = adapter.getCapabilities();
 
-        assertThat(capabilities.providerType()).isEqualTo(ProviderType.VOLCENGINE);
-        assertThat(capabilities.supportsChatCompletion()).isTrue();
-        assertThat(capabilities.supportsStreaming()).isTrue();
-        assertThat(capabilities.supportsFunctionCalling()).isTrue();
-        assertThat(capabilities.supportedModels()).contains("doubao-pro-32k");
+        assertThat(capabilities.isSupportsChatCompletion()).isTrue();
+        assertThat(capabilities.isSupportsStreaming()).isTrue();
+        assertThat(capabilities.isSupportsFunctionCalling()).isTrue();
+        assertThat(capabilities.getSupportedModels()).contains("doubao-pro-32k");
     }
 
     @Test
@@ -78,8 +75,8 @@ class VolcengineAdapterTest {
     }
 
     @Test
-    @DisplayName("checkConnection() 返回 isAvailable() 因为火山引擎不支持 models 端点")
-    void checkConnection_returnsIsAvailable() {
-        assertThat(adapter.checkConnection()).isTrue();
+    @DisplayName("checkConnection() 返回 false 因为火山引擎需要 endpoint_id")
+    void checkConnection_returnsFalse() {
+        assertThat(adapter.checkConnection()).isFalse();
     }
 }

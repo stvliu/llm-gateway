@@ -55,8 +55,6 @@ public class ProviderDomainService {
 
         Provider existing = existingOpt.get();
         existing.setName(provider.getName());
-        existing.setType(provider.getType());
-        existing.setBaseUrl(provider.getBaseUrl());
         existing.setPriority(provider.getPriority());
         existing.setState(provider.getState());
 

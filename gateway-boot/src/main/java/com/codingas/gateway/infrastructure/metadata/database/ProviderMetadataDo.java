@@ -21,9 +21,6 @@ public class ProviderMetadataDo {
     @Column(name = "provider_name", nullable = false, length = 128)
     private String providerName;
 
-    @Column(name = "provider_type", nullable = false, length = 32)
-    private String providerType;
-
     @Column(name = "provider_config", nullable = false, columnDefinition = "json")
     private String providerConfig;
 
@@ -64,9 +61,6 @@ public class ProviderMetadataDo {
 
     public String getProviderName() { return providerName; }
     public void setProviderName(String providerName) { this.providerName = providerName; }
-
-    public String getProviderType() { return providerType; }
-    public void setProviderType(String providerType) { this.providerType = providerType; }
 
     public String getProviderConfig() { return providerConfig; }
     public void setProviderConfig(String providerConfig) { this.providerConfig = providerConfig; }

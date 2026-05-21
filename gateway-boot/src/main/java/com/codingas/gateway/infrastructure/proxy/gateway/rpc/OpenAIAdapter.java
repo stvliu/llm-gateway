@@ -6,7 +6,6 @@ import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult;
 import com.codingas.gateway.domain.model.enums.ProviderErrorType;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -61,8 +60,8 @@ public class OpenAIAdapter implements LLMAdapter {
     }
 
     @Override
-    public ProviderType getProviderType() {
-        return ProviderType.OPENAI;
+    public String getProviderName() {
+        return "openai";
     }
 
     @Override
@@ -226,7 +225,7 @@ public class OpenAIAdapter implements LLMAdapter {
         long startTime = System.currentTimeMillis();
         String effectiveBaseUrl = resolveBaseUrl(testBaseUrl);
 
-        log.info("Starting connectivity test for {}: baseUrl={}", getProviderType(), effectiveBaseUrl);
+        log.info("Starting connectivity test for {}: baseUrl={}", getProviderName(), effectiveBaseUrl);
 
         // Level 1: GET /v1/models
         List<String> discoveredModels = new ArrayList<>();
@@ -243,7 +242,7 @@ public class OpenAIAdapter implements LLMAdapter {
         boolean success = level1.success() && (level2 == null || level2.success());
 
         log.info("Connectivity test completed for {}: success={}, latency={}ms",
-            getProviderType(), success, totalLatency);
+            getProviderName(), success, totalLatency);
 
         return new ConnectivityTestResult(
             success,
@@ -273,7 +272,7 @@ public class OpenAIAdapter implements LLMAdapter {
 
                 if (!response.isSuccessful()) {
                     String errorMsg = buildErrorMessage(response);
-                    log.warn("Level 1 models API failed for {}: {}", getProviderType(), errorMsg);
+                    log.warn("Level 1 models API failed for {}: {}", getProviderName(), errorMsg);
                     return new LevelResult(false, errorMsg, latency,
                         classifyError(null, response.code()), null);
                 }
@@ -285,7 +284,7 @@ public class OpenAIAdapter implements LLMAdapter {
             }
         } catch (Exception e) {
             long latency = System.currentTimeMillis() - startTime;
-            log.warn("Level 1 models API failed for {}: {}", getProviderType(), e.getMessage());
+            log.warn("Level 1 models API failed for {}: {}", getProviderName(), e.getMessage());
             return new LevelResult(false, "连接失败: " + e.getMessage(), latency,
                 classifyError(e, null), null);
         }
@@ -320,13 +319,13 @@ public class OpenAIAdapter implements LLMAdapter {
                 }
 
                 String errorMsg = buildErrorMessage(response);
-                log.warn("Level 2 chat completion failed for {}: {}", getProviderType(), errorMsg);
+                log.warn("Level 2 chat completion failed for {}: {}", getProviderName(), errorMsg);
                 return new LevelResult(false, errorMsg, latency,
                     classifyError(null, response.code()), null);
             }
         } catch (Exception e) {
             long latency = System.currentTimeMillis() - startTime;
-            log.warn("Level 2 chat completion failed for {}: {}", getProviderType(), e.getMessage());
+            log.warn("Level 2 chat completion failed for {}: {}", getProviderName(), e.getMessage());
             return new LevelResult(false, "模型验证失败: " + e.getMessage(), latency,
                 classifyError(e, null), null);
         }
@@ -537,7 +536,6 @@ public class OpenAIAdapter implements LLMAdapter {
     @Override
     public ProviderCapabilities getCapabilities() {
         return new ProviderCapabilities(
-                ProviderType.OPENAI,
                 true,   // supportsChatCompletion
                 false,  // supportsMessages (Anthropic 格式)
                 true,   // supportsEmbeddings

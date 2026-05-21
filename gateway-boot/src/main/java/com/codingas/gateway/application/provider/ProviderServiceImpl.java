@@ -53,8 +53,6 @@ public class ProviderServiceImpl implements ProviderService {
     public ProviderResponse create(ProviderCreateRequest request) {
         Provider provider = new Provider();
         provider.setName(request.getProviderName());
-        provider.setType(request.getProviderType());
-        provider.setBaseUrl(request.getBaseUrl());
         provider.setWebsiteUrl(request.getWebsiteUrl());
         provider.setApiDocUrl(request.getApiDocUrl());
         provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);
@@ -125,15 +123,10 @@ public class ProviderServiceImpl implements ProviderService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getProviderType() != null) {
+        if (request.getState() != null && !request.getState().isBlank()) {
+            ProviderState state = ProviderState.valueOf(request.getState());
             providers = providers.stream()
-                .filter(p -> p.getType() == request.getProviderType())
-                .collect(Collectors.toList());
-        }
-
-        if (request.getState() != null) {
-            providers = providers.stream()
-                .filter(p -> p.getState().equals(request.getState()))
+                .filter(p -> p.getState().equals(state))
                 .collect(Collectors.toList());
         }
 
@@ -174,12 +167,6 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getProviderName() != null) {
             provider.setName(request.getProviderName());
         }
-        if (request.getProviderType() != null) {
-            provider.setType(request.getProviderType());
-        }
-        if (request.getBaseUrl() != null) {
-            provider.setBaseUrl(request.getBaseUrl());
-        }
         if (request.getWebsiteUrl() != null) {
             provider.setWebsiteUrl(request.getWebsiteUrl());
         }
@@ -189,16 +176,12 @@ public class ProviderServiceImpl implements ProviderService {
         if (request.getPriority() != null) {
             provider.setPriority(request.getPriority());
         }
-        if (request.getState() != null) {
-            provider.setState(request.getState());
-        }
 
         return toResponse(providerGateway.save(provider));
     }
 
     /**
      * 删除提供商
-     * 先删除关联的 API Keys 和 Models，再删除 Provider
      */
     @Override
     @Transactional
@@ -238,21 +221,18 @@ public class ProviderServiceImpl implements ProviderService {
     }
 
     /**
-     * 获取 Provider 的 Key 信息（默认 Key + 列表）
+     * 获取 Provider 的 Key 信息
      */
     @Override
     public ProviderKeysResponse getProviderKeys(Long providerId) {
-        // 验证 Provider 存在
         providerGateway.findById(providerId)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", providerId));
 
-        // 获取所有 Key
         List<ProviderApiKey> keys = providerApiKeyGateway.findByProviderId(providerId);
         List<ProviderApiKeyResponse> keyResponses = keys.stream()
             .map(ProviderApiKeyResponse::from)
             .collect(Collectors.toList());
 
-        // 获取默认 Key
         ProviderApiKey defaultKey = providerApiKeyGateway.findDefaultKeyByProviderId(providerId).orElse(null);
         ProviderApiKeyResponse defaultKeyResponse = ProviderApiKeyResponse.from(defaultKey);
 
@@ -266,12 +246,10 @@ public class ProviderServiceImpl implements ProviderService {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
         response.setProviderName(provider.getName());
-        response.setProviderType(provider.getType() != null ? provider.getType() : null);
-        response.setBaseUrl(provider.getBaseUrl());
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());
         response.setPriority(provider.getPriority());
-        response.setState(provider.getState());
+        response.setState(provider.getState() != null ? provider.getState().name() : null);
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;
@@ -279,8 +257,6 @@ public class ProviderServiceImpl implements ProviderService {
 
     /**
      * 测试连通性
-     *
-     * <p>委托给 ConnectivityTester 执行分层测试。</p>
      */
     @Override
     public ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {

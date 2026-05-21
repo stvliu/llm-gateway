@@ -33,10 +33,9 @@ public class ProviderMetadataService {
      * 分页查询供应商元数据
      */
     public Page<ProviderMetadataResponse> listProviderMetadata(
-            String providerType,
             String keyword, Pageable pageable) {
         Page<ProviderMetadata> page = providerMetadataGateway.findByConditions(
-            providerType, keyword, pageable);
+            keyword, pageable);
         return page.map(this::toResponse);
     }
 
@@ -70,7 +69,6 @@ public class ProviderMetadataService {
         ProviderMetadata metadata = new ProviderMetadata(
             request.getProviderId(),
             request.getProviderName(),
-            request.getProviderType(),
             request.getProviderConfig()
         );
         metadata.setDescription(request.getDescription());
@@ -143,7 +141,6 @@ public class ProviderMetadataService {
             .id(metadata.getId())
             .providerId(metadata.getProviderId())
             .providerName(metadata.getProviderName())
-            .providerType(metadata.getProviderType())
             .providerConfig(metadata.getProviderConfig())
             .iconUrl(metadata.getIconUrl())
             .description(metadata.getDescription())

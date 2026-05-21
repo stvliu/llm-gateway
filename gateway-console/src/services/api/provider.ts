@@ -1,12 +1,8 @@
 import { api } from './client';
 import type { Provider, CreateProviderRequest, UpdateProviderRequest, ProviderKeyStats } from '@/types/provider';
-import type { PageResponse, PageParams, ProviderTypeOption } from '@/types/api';
+import type { PageResponse, PageParams } from '@/types/api';
 
 export const providerApi = {
-  /** 获取支持的供应商类型列表 */
-  getProviderTypes: () =>
-    api.get<ProviderTypeOption[]>('/providers/types'),
-
   /** 获取渠道列表 */
   list: (params?: PageParams) =>
     api.get<PageResponse<Provider>>('/providers', { params }),

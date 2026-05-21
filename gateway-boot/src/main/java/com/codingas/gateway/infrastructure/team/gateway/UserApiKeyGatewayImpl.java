@@ -10,13 +10,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * 用户 API Key Gateway 实现
+ * 用户 API Key 领域网关实现
  *
  * <p>加解密在基础设施层处理：save() 时加密明文 Key，toEntity() 时解密返回明文。</p>
  */
@@ -25,67 +26,65 @@ import java.util.Optional;
 @Slf4j
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
-    private final UserApiKeyRepository userApiKeyRepository;
+    private final UserApiKeyRepository repository;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     @Override
-    public UserApiKey save(UserApiKey apiKey) {
-        UserApiKeyDo dataObject = toDataObject(apiKey);
-        if (apiKey.getId() == null) {
-            dataObject.setCreatedAt(LocalDateTime.now());
+    public Optional<UserApiKey> findById(Long id) {
+        return repository.findById(id).map(this::toEntity);
+    }
+
+    @Override
+    public List<UserApiKey> findByTeamId(Long teamId) {
+        return repository.findByTeamId(teamId).stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
+    @Override
+    public List<UserApiKey> findByUserId(Long userId) {
+        return repository.findByUserId(userId).stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
+    @Override
+    public Optional<UserApiKey> findByKeyPrefix(String keyPrefix) {
+        return repository.findByKeyPrefix(keyPrefix).map(this::toEntity);
+    }
+
+    @Override
+    public UserApiKey save(UserApiKey userApiKey) {
+        UserApiKeyDo dataObject = toDataObject(userApiKey);
+        if (userApiKey.getId() == null) {
+            dataObject.setCreatedAt(Instant.now());
 
             // 创建时：从明文计算哈希和密文
-            String plainKey = apiKey.getKeyPlain();
+            String plainKey = userApiKey.getKeyPlain();
             if (plainKey != null && !plainKey.isBlank()) {
                 dataObject.setKeyHash(encryptionService.hashKey(plainKey));
                 dataObject.setKeyEncrypted(encryptionService.encrypt(plainKey));
                 dataObject.setKeyPrefix(plainKey.substring(0, Math.min(8, plainKey.length())));
             }
         }
-        dataObject.setUpdatedAt(LocalDateTime.now());
-        UserApiKeyDo saved = userApiKeyRepository.save(dataObject);
+        dataObject.setUpdatedAt(Instant.now());
+        UserApiKeyDo saved = repository.save(dataObject);
         return toEntity(saved);
     }
 
     @Override
-    public Optional<UserApiKey> findById(Long id) {
-        return userApiKeyRepository.findById(id).map(this::toEntity);
-    }
-
-    @Override
-    public Optional<UserApiKey> findByKeyHash(String keyHash) {
-        return userApiKeyRepository.findByKeyHash(keyHash).map(this::toEntity);
-    }
-
-    @Override
-    public List<UserApiKey> findByTeamId(Long teamId) {
-        return userApiKeyRepository.findByTeamId(teamId).stream()
-            .map(this::toEntity)
-            .toList();
-    }
-
-    @Override
-    public List<UserApiKey> findByProductId(Long productId) {
-        return userApiKeyRepository.findByProductId(productId).stream()
-            .map(this::toEntity)
-            .toList();
-    }
-
-    @Override
-    public List<UserApiKey> findByUserId(Long userId) {
-        return userApiKeyRepository.findByUserId(userId).stream()
-            .map(this::toEntity)
-            .toList();
-    }
-
-    @Override
     public void deleteById(Long id) {
-        userApiKeyRepository.deleteById(id);
+        repository.deleteById(id);
     }
 
     @Override
     public long countByTeamId(Long teamId) {
-        return userApiKeyRepository.countByTeamId(teamId);
+        return repository.countByTeamId(teamId);
+    }
+
+    @Override
+    public List<Long> findIdsByProductId(Long productId) {
+        return repository.findIdsByProductId(productId);
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
@@ -93,12 +92,15 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setId(dataObject.getId());
         entity.setTeamId(dataObject.getTeamId());
         entity.setUserId(dataObject.getUserId());
-        entity.setProductId(dataObject.getProductId());
+        entity.setProductIds(new ArrayList<>(dataObject.getProductIds()));
+        entity.setKeyHash(dataObject.getKeyHash());
         entity.setKeyPrefix(dataObject.getKeyPrefix());
         entity.setName(dataObject.getName());
-        entity.setModels(dataObject.getModels());
+        entity.setModels(parseModels(dataObject.getModels()));
         entity.setQuotaLimit(dataObject.getQuotaLimit());
-        entity.setState(UserApiKeyState.fromCode(dataObject.getState()));
+        entity.setState(dataObject.getState());
+        entity.setCreatedAt(dataObject.getCreatedAt());
+        entity.setUpdatedAt(dataObject.getUpdatedAt());
 
         // 解密返回明文 Key
         if (dataObject.getKeyEncrypted() != null && !dataObject.getKeyEncrypted().isBlank()) {
@@ -110,12 +112,6 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
             }
         }
 
-        if (dataObject.getCreatedAt() != null) {
-            entity.setCreatedAt(dataObject.getCreatedAt().toInstant(ZoneOffset.UTC));
-        }
-        if (dataObject.getUpdatedAt() != null) {
-            entity.setUpdatedAt(dataObject.getUpdatedAt().toInstant(ZoneOffset.UTC));
-        }
         return entity;
     }
 
@@ -124,21 +120,39 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setId(entity.getId());
         dataObject.setTeamId(entity.getTeamId());
         dataObject.setUserId(entity.getUserId());
-        dataObject.setProductId(entity.getProductId());
+        dataObject.setProductIds(entity.getProductIds() != null
+                ? new HashSet<>(entity.getProductIds())
+                : new HashSet<>());
         dataObject.setKeyPrefix(entity.getKeyPrefix());
         dataObject.setName(entity.getName());
-        dataObject.setModels(entity.getModels());
+        dataObject.setModels(formatModels(entity.getModels()));
         dataObject.setQuotaLimit(entity.getQuotaLimit());
-        dataObject.setState(entity.getState().getCode());
+        dataObject.setState(entity.getState() != null ? entity.getState() : UserApiKeyState.ACTIVE);
+        dataObject.setCreatedAt(entity.getCreatedAt());
+        dataObject.setUpdatedAt(entity.getUpdatedAt());
 
         // 更新时：保留已有的 hash 和 encrypted
         if (entity.getId() != null) {
-            userApiKeyRepository.findById(entity.getId()).ifPresent(existing -> {
+            repository.findById(entity.getId()).ifPresent(existing -> {
                 dataObject.setKeyHash(existing.getKeyHash());
                 dataObject.setKeyEncrypted(existing.getKeyEncrypted());
             });
         }
 
         return dataObject;
+    }
+
+    private List<String> parseModels(String modelsStr) {
+        if (modelsStr == null || modelsStr.isBlank()) {
+            return null;
+        }
+        return List.of(modelsStr.split(","));
+    }
+
+    private String formatModels(List<String> models) {
+        if (models == null || models.isEmpty()) {
+            return null;
+        }
+        return String.join(",", models);
     }
 }

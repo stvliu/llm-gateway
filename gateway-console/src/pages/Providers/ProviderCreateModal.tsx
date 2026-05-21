@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
-import { Modal, Form, Input, Select, App } from 'antd';
+import { Modal, Form, Input, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useCreateProvider } from '@/services/query';
-import type { Provider, CreateProviderRequest, ProviderType } from '@/types/provider';
+import type { Provider, CreateProviderRequest } from '@/types/provider';
 
 interface Props {
   open: boolean;
@@ -27,24 +27,15 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
     try {
       const values = await form.validateFields();
       const name = values.providerName as string;
-      const baseUrl = values.baseUrl as string;
 
       if (providers.some(p => p.providerName.toLowerCase() === name.toLowerCase())) {
         message.warning(t('validation.nameDuplicate', { defaultValue: '供应商名称已存在' }));
         return;
       }
 
-      const normalizedUrl = baseUrl.toLowerCase().replace(/\/+$/, '');
-      if (providers.some(p => p.baseUrl?.toLowerCase().replace(/\/+$/, '') === normalizedUrl)) {
-        message.warning(t('validation.baseUrlDuplicate', { defaultValue: 'API 地址已存在' }));
-        return;
-      }
-
       setSaving(true);
       const request: CreateProviderRequest = {
         providerName: name,
-        providerType: values.providerType as ProviderType,
-        baseUrl,
         websiteUrl: values.websiteUrl,
         apiDocUrl: values.apiDocUrl,
         priority: values.priority,
@@ -78,25 +69,6 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
           rules={[{ required: true, message: t('validation.nameRequired', { defaultValue: '请输入供应商名称' }) }]}
         >
           <Input />
-        </Form.Item>
-        <Form.Item
-          name="providerType"
-          label={t('form.providerType', { defaultValue: '供应商类型' })}
-          rules={[{ required: true }]}
-        >
-          <Select
-            options={[
-              { label: 'OpenAI Compatible', value: 'OPENAI' },
-              { label: 'Anthropic', value: 'ANTHROPIC' },
-            ]}
-          />
-        </Form.Item>
-        <Form.Item
-          name="baseUrl"
-          label={t('form.baseUrl', { defaultValue: 'API Base URL' })}
-          rules={[{ required: true, message: t('validation.baseUrlRequired', { defaultValue: '请输入 API 地址' }) }]}
-        >
-          <Input placeholder="https://api.openai.com" />
         </Form.Item>
         <Form.Item name="websiteUrl" label={t('form.websiteUrl', { defaultValue: '官网地址' })}>
           <Input />

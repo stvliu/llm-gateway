@@ -1,24 +1,21 @@
 package com.codingas.gateway.domain.proxy.gateway;
 
-import com.codingas.gateway.domain.model.enums.ProviderType;
-
 import java.util.Optional;
 
 /**
  * LLM 网关注册表接口
  *
- * <p>技术防腐层，隔离适配器注册与查找逻辑。</p>
- * <p>Domain 层定义的接口，用于获取指定类型的 LLM 网关适配器。</p>
+ * <p>按供应商名称查找 LLM 网关适配器。</p>
  */
 public interface LLMGatewayRegistry {
 
     /**
-     * 根据提供商类型获取网关
+     * 根据供应商名称获取网关
      *
-     * @param providerType 提供商类型
+     * @param providerName 供应商名称
      * @return 网关，如果不存在则返回空
      */
-    Optional<LLMGateway> getGateway(ProviderType providerType);
+    Optional<LLMGateway> getGateway(String providerName);
 
     /**
      * 获取所有已注册的网关

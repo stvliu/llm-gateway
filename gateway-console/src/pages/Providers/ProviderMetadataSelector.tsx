@@ -24,19 +24,10 @@ export function ProviderMetadataSelector({
 
   const { data: metadataList, isLoading } = useProviderMetadataList();
 
-  // 按 providerType 去重并排序
+  // 按名称排序
   const metadata = useMemo(() => {
     if (!metadataList) return [];
-
-    const popularTypes = ['OPENAI', 'ANTHROPIC', 'DEEPSEEK', 'QWEN', 'GEMINI'];
-    return [...metadataList].sort((a, b) => {
-      const aIndex = popularTypes.indexOf(a.providerType);
-      const bIndex = popularTypes.indexOf(b.providerType);
-      if (aIndex === -1 && bIndex === -1) return a.providerName.localeCompare(b.providerName);
-      if (aIndex === -1) return 1;
-      if (bIndex === -1) return -1;
-      return aIndex - bIndex;
-    });
+    return [...metadataList].sort((a, b) => a.providerName.localeCompare(b.providerName));
   }, [metadataList]);
 
   if (isLoading) return null;

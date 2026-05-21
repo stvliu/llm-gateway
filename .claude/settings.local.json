@@ -119,7 +119,11 @@
       "Skill(superpowers:brainstorm)",
       "Bash(mkdir -p /mnt/e/workspace/llm-gateway/gateway-boot/src/main/java/com/codingas/gateway/infrastructure/actuator)",
       "Bash(mkdir -p /mnt/e/workspace/llm-gateway/gateway-boot/src/test/java/com/codingas/gateway/infrastructure/actuator)",
-      "Skill(superpowers:write-plan)"
+      "Skill(superpowers:write-plan)",
+      "Bash(tee /tmp/build-output.txt)",
+      "Bash(claude plugin *)",
+      "PowerShell(claude plugins *)",
+      "PowerShell(Get-Command *)"
     ]
   },
   "outputStyle": "default"

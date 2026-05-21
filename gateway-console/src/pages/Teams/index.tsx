@@ -8,7 +8,7 @@ import { useTeams, useDeleteTeam } from '@/services/query/useTeams';
 import TeamFormModal from './TeamFormModal';
 import MemberManageModal from './MemberManageModal';
 import UserApiKeyManageModal from './UserApiKeyManageModal';
-import type { Team } from '@/types/team';
+import type { Team, TeamMember } from '@/types/team';
 
 const ROLE_COLOR: Record<string, string> = {
   owner: 'gold',
@@ -80,8 +80,8 @@ export default function TeamsPage() {
       title: t('team.role'),
       key: 'roles',
       render: (_: unknown, record: Team) => {
-        const roles = [...new Set(record.members?.map((m) => m.role) || [])];
-        return roles.map((role) => (
+        const roles = [...new Set(record.members?.map((m: TeamMember) => m.role) || [])];
+        return roles.map((role: string) => (
           <Tag key={role} color={ROLE_COLOR[role]}>
             {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
           </Tag>

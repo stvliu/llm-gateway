@@ -26,4 +26,7 @@ public interface ProductGateway {
     void deleteById(Long id);
 
     boolean existsByProviderIdAndName(Long providerId, String name);
+
+    /** 批量查找产品 */
+    List<Product> findByIds(List<Long> ids);
 }

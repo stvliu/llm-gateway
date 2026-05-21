@@ -9,7 +9,6 @@ export interface ProviderMetadata {
   id: number;
   providerId: string;
   providerName: string;
-  providerType: string;
   providerConfig: Record<string, unknown>;
   iconUrl: string;
   description: string;
@@ -51,7 +50,6 @@ export interface ModelMetadata {
 export interface CreateProviderMetadataRequest {
   providerId: string;
   providerName: string;
-  providerType: string;
   providerConfig?: Record<string, unknown>;
   description?: string;
   iconUrl?: string;
@@ -81,7 +79,6 @@ export interface ApplyMetadataResult {
 }
 
 export interface ProviderMetadataListParams {
-  providerType?: string;
   keyword?: string;
   page?: number;
   size?: number;

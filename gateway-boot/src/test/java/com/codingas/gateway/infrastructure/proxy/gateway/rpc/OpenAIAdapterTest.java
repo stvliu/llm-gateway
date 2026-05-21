@@ -2,7 +2,6 @@ package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 
 import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import okhttp3.OkHttpClient;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,9 +46,9 @@ class OpenAIAdapterTest {
         }
 
         @Test
-        @DisplayName("getProviderType 返回 OPENAI")
-        void getProviderType_returnsOpenai() {
-            assertThat(adapter.getProviderType()).isEqualTo(ProviderType.OPENAI);
+        @DisplayName("getProviderName 返回 openai")
+        void getProviderName_returnsOpenai() {
+            assertThat(adapter.getProviderName()).isEqualTo("openai");
         }
 
         @Test
@@ -104,7 +103,6 @@ class OpenAIAdapterTest {
         @Test
         @DisplayName("连接检查失败返回 false")
         void checkConnection_connectionFailed_returnsFalse() {
-            // 无效的 URL 会连接失败
             OpenAIAdapter invalidAdapter = new OpenAIAdapter(
                 httpClient, "https://invalid-url-that-does-not-exist.com", "test-key", 5
             );
@@ -122,9 +120,8 @@ class OpenAIAdapterTest {
             ProviderCapabilities capabilities = adapter.getCapabilities();
 
             assertThat(capabilities).isNotNull();
-            assertThat(capabilities.supportsStreaming()).isTrue();
-            assertThat(capabilities.supportsFunctionCalling()).isTrue();
-            assertThat(capabilities.providerType()).isEqualTo(ProviderType.OPENAI);
+            assertThat(capabilities.isSupportsStreaming()).isTrue();
+            assertThat(capabilities.isSupportsFunctionCalling()).isTrue();
         }
 
         @Test
@@ -132,7 +129,7 @@ class OpenAIAdapterTest {
         void getCapabilities_supportsModels() {
             ProviderCapabilities capabilities = adapter.getCapabilities();
 
-            assertThat(capabilities.supportedModels()).contains("gpt-4o", "gpt-4o-mini", "gpt-4-turbo");
+            assertThat(capabilities.getSupportedModels()).contains("gpt-4o", "gpt-4o-mini", "gpt-4-turbo");
         }
     }
 
@@ -272,7 +269,6 @@ class OpenAIAdapterTest {
         @Test
         @DisplayName("返回正确的 API URL")
         void getChatCompletionsUrl_returnsCorrectUrl() {
-            // 通过反射或子类测试
             TestableOpenAIAdapter testableAdapter = new TestableOpenAIAdapter(
                 httpClient, "https://api.openai.com", "test-key", 30
             );

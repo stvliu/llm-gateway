@@ -236,7 +236,6 @@ public class MetadataSyncService {
         ProviderMetadata metadata = new ProviderMetadata(
             providerId,
             (String) data.getOrDefault("provider_name", providerId),
-            (String) data.getOrDefault("provider_type", ""),
             data.get("provider_config")
         );
         metadata.setDescription((String) data.get("description"));

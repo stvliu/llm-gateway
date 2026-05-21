@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.proxy.service;
 
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.LLMGateway;
 import com.codingas.gateway.domain.proxy.gateway.LLMGatewayRegistry;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
@@ -51,44 +50,23 @@ class ProxyDomainServiceTest {
         @Test
         @DisplayName("成功选择 Gateway")
         void selectGateway_success() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
+            when(gatewayRegistry.getGateway("OPENAI"))
                     .thenReturn(Optional.of(gateway));
-            when(gateway.isAvailable()).thenReturn(true);
 
-            // When
-            LLMGateway result = service.selectGateway(ProviderType.OPENAI);
+            LLMGateway result = service.selectGateway("OPENAI");
 
-            // Then
             assertThat(result).isEqualTo(gateway);
         }
 
         @Test
         @DisplayName("Gateway 不存在抛出异常")
         void selectGateway_notFound_throwsException() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
+            when(gatewayRegistry.getGateway("OPENAI"))
                     .thenReturn(Optional.empty());
 
-            // When & Then
-            assertThatThrownBy(() -> service.selectGateway(ProviderType.OPENAI))
+            assertThatThrownBy(() -> service.selectGateway("OPENAI"))
                     .isInstanceOf(NoSuchElementException.class)
                     .hasMessageContaining("No gateway available");
-        }
-
-        @Test
-        @DisplayName("Gateway 不可用抛出异常")
-        void selectGateway_notAvailable_throwsException() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
-                    .thenReturn(Optional.of(gateway));
-            when(gateway.isAvailable()).thenReturn(false);
-            when(gateway.getProviderCode()).thenReturn("openai");
-
-            // When & Then
-            assertThatThrownBy(() -> service.selectGateway(ProviderType.OPENAI))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Gateway not available");
         }
     }
 
@@ -99,33 +77,15 @@ class ProxyDomainServiceTest {
         @Test
         @DisplayName("成功转发请求")
         void forward_success() {
-            // Given
             LLMRequest request = createTestRequest();
             LLMResponse response = createTestResponse();
 
-            when(gateway.isAvailable()).thenReturn(true);
-            when(gateway.chat(any())).thenReturn(response);
+            when(gateway.chat(any(), anyString(), anyString(), anyInt())).thenReturn(response);
 
-            // When
-            LLMResponse result = service.forward(gateway, request);
+            LLMResponse result = service.forward(gateway, request, "https://api.openai.com", "sk-key", 60);
 
-            // Then
             assertThat(result).isEqualTo(response);
-            verify(gateway).chat(request);
-        }
-
-        @Test
-        @DisplayName("Gateway 不可用抛出异常")
-        void forward_gatewayNotAvailable_throwsException() {
-            // Given
-            LLMRequest request = createTestRequest();
-            when(gateway.isAvailable()).thenReturn(false);
-            when(gateway.getProviderCode()).thenReturn("openai");
-
-            // When & Then
-            assertThatThrownBy(() -> service.forward(gateway, request))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Gateway not available");
+            verify(gateway).chat(request, "https://api.openai.com", "sk-key", 60);
         }
     }
 
@@ -136,30 +96,12 @@ class ProxyDomainServiceTest {
         @Test
         @DisplayName("成功转发流式请求")
         void forwardStream_success() {
-            // Given
             LLMRequest request = createTestRequest();
-            when(gateway.isAvailable()).thenReturn(true);
-            doNothing().when(gateway).chatStream(any(), any());
+            doNothing().when(gateway).chatStream(any(), anyString(), anyString(), anyInt(), any());
 
-            // When
-            service.forwardStream(gateway, request, callback);
+            service.forwardStream(gateway, request, "https://api.openai.com", "sk-key", 60, callback);
 
-            // Then
-            verify(gateway).chatStream(request, callback);
-        }
-
-        @Test
-        @DisplayName("Gateway 不可用抛出异常")
-        void forwardStream_gatewayNotAvailable_throwsException() {
-            // Given
-            LLMRequest request = createTestRequest();
-            when(gateway.isAvailable()).thenReturn(false);
-            when(gateway.getProviderCode()).thenReturn("anthropic");
-
-            // When & Then
-            assertThatThrownBy(() -> service.forwardStream(gateway, request, callback))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Gateway not available");
+            verify(gateway).chatStream(request, "https://api.openai.com", "sk-key", 60, callback);
         }
     }
 
@@ -168,51 +110,28 @@ class ProxyDomainServiceTest {
     class IsGatewayAvailableTests {
 
         @Test
-        @DisplayName("Gateway 存在且可用返回 true")
+        @DisplayName("Gateway 存在返回 true")
         void isGatewayAvailable_available_returnsTrue() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
+            when(gatewayRegistry.getGateway("OPENAI"))
                     .thenReturn(Optional.of(gateway));
-            when(gateway.isAvailable()).thenReturn(true);
 
-            // When
-            boolean result = service.isGatewayAvailable(ProviderType.OPENAI);
+            boolean result = service.isGatewayAvailable("OPENAI");
 
-            // Then
             assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("Gateway 存在但不可用返回 false")
-        void isGatewayAvailable_notAvailable_returnsFalse() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
-                    .thenReturn(Optional.of(gateway));
-            when(gateway.isAvailable()).thenReturn(false);
-
-            // When
-            boolean result = service.isGatewayAvailable(ProviderType.OPENAI);
-
-            // Then
-            assertThat(result).isFalse();
         }
 
         @Test
         @DisplayName("Gateway 不存在返回 false")
         void isGatewayAvailable_notFound_returnsFalse() {
-            // Given
-            when(gatewayRegistry.getGateway(ProviderType.OPENAI))
+            when(gatewayRegistry.getGateway("OPENAI"))
                     .thenReturn(Optional.empty());
 
-            // When
-            boolean result = service.isGatewayAvailable(ProviderType.OPENAI);
+            boolean result = service.isGatewayAvailable("OPENAI");
 
-            // Then
             assertThat(result).isFalse();
         }
     }
 
-    // Helper methods
     private LLMRequest createTestRequest() {
         return LLMRequest.builder()
                 .model("gpt-4")

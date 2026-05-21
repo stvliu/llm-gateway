@@ -28,7 +28,7 @@ public class ApiKeyAuthAdapter {
             return null;
         }
         try {
-            var userInfo = authenticationService.authenticate(apiKey);
+            var userInfo = authenticationService.authenticateUser(apiKey);
             if (userInfo != null) {
                 return userInfo.userId();
             }

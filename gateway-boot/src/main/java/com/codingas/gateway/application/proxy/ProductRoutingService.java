@@ -4,147 +4,156 @@ import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 产品路由服务（新架构）
- *
- * <p>基于 UserApiKey → Product → ProductApiKey 的路由链路。</p>
- * <p>职责：</p>
- * <ol>
- *   <li>查 Product（通过 UserApiKey.productId）</li>
- *   <li>校验模型权限（Product.containsModel + UserApiKey.canAccessModel）</li>
- *   <li>选 ProductApiKey（weight/priority 策略）</li>
- *   <li>构建 RoutingContext</li>
- * </ol>
+ * <p>
+ * 一个 UserApiKey 可关联多个产品。路由时按 model name 在关联产品中匹配。
+ * 路由结果包含协议名称，由 ProxyServiceImpl 通过 ProtocolGatewayRegistry 查找协议网关。
  */
-@Slf4j
 @Service
-@RequiredArgsConstructor
 public class ProductRoutingService {
 
+    private static final Logger log = LoggerFactory.getLogger(ProductRoutingService.class);
+
+    private final UserApiKeyGateway userApiKeyGateway;
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
     private final ProviderGateway providerGateway;
 
+    public ProductRoutingService(UserApiKeyGateway userApiKeyGateway,
+                                 ProductGateway productGateway,
+                                 ProductApiKeyGateway productApiKeyGateway,
+                                 ProviderGateway providerGateway) {
+        this.userApiKeyGateway = userApiKeyGateway;
+        this.productGateway = productGateway;
+        this.productApiKeyGateway = productApiKeyGateway;
+        this.providerGateway = providerGateway;
+    }
+
     /**
      * 基于新架构解析路由
      *
-     * @param userApiKey 用户密钥
-     * @param model 请求的模型名
-     * @param protocol 请求协议（openai/anthropic/native）
+     * @param userApiKeyId 用户密钥 ID
+     * @param model        请求的模型名
+     * @param protocol     请求协议（可为空，自动推断）
      * @return 路由上下文
      */
-    public RoutingContext resolve(UserApiKey userApiKey, String model, String protocol) {
-        log.debug("Product routing: productId={}, model={}, protocol={}",
-            userApiKey.getProductId(), model, protocol);
+    public RoutingContext resolve(Long userApiKeyId, String model, String protocol) {
+        // 1. 查找 UserApiKey
+        UserApiKey userApiKey = userApiKeyGateway.findById(userApiKeyId)
+                .orElseThrow(() -> new IllegalStateException(
+                        "UserApiKey not found: id=" + userApiKeyId));
 
-        // 1. 查找产品
-        Product product = productGateway.findById(userApiKey.getProductId())
-            .orElseThrow(() -> new IllegalStateException(
-                "Product not found: id=" + userApiKey.getProductId()));
-
-        if (!product.isAvailable()) {
-            throw new IllegalStateException("Product is not available: " + product.getName());
-        }
-
-        // 2. 校验模型权限
-        if (!product.containsModel(model)) {
-            throw new IllegalStateException(
-                "Model " + model + " not available in product " + product.getName());
-        }
-
+        // 2. 校验 Key 级别模型权限
         if (!userApiKey.canAccessModel(model)) {
             throw new IllegalStateException(
-                "UserApiKey does not have permission to access model: " + model);
+                    "UserApiKey does not have permission to access model: " + model);
         }
 
-        // 3. 选择 ProductApiKey
+        // 3. 在关联产品中匹配 model
+        Product product = matchProduct(userApiKey.getProductIds(), model);
+
+        // 4. 选择 ProductApiKey
         ProductApiKey apiKey = selectProductApiKey(product.getId());
         if (apiKey == null) {
             throw new IllegalStateException(
-                "No available ProductApiKey for product: " + product.getName());
+                    "No available ProductApiKey for product: " + product.getName());
         }
 
-        // 4. 获取明文 API Key（由 GatewayImpl 解密填充）
         String plainApiKey = apiKey.getApiKeyPlain();
         if (plainApiKey == null || plainApiKey.isBlank()) {
             throw new IllegalStateException(
-                "ProductApiKey has no plain key available: id=" + apiKey.getId());
+                    "ProductApiKey has no plain key available: id=" + apiKey.getId());
         }
 
-        // 5. 获取 Provider 信息（用于 providerType）
+        // 5. 获取 Provider 信息
         Provider provider = providerGateway.findById(product.getProviderId())
-            .orElseThrow(() -> new IllegalStateException(
-                "Provider not found: id=" + product.getProviderId()));
+                .orElseThrow(() -> new IllegalStateException(
+                        "Provider not found: id=" + product.getProviderId()));
 
-        // 6. 选择端点
-        String endpoint = resolveEndpoint(product, protocol);
+        // 6. 解析协议名称和端点
+        ResolvedEndpoint resolved = resolveEndpoint(product, protocol);
 
         // 7. 构建路由上下文
         return RoutingContext.builder()
-            .providerId(product.getProviderId())
-            .providerName(product.getProviderName())
-            .providerType(provider.getType())
-            .productId(product.getId())
-            .productType(product.getProductType())
-            .userApiKeyId(userApiKey.getId())
-            .teamId(userApiKey.getTeamId())
-            .model(model)
-            .protocol(protocol)
-            .providerApiKey(plainApiKey)
-            .providerApiKeyId(apiKey.getId())
-            .endpoint(endpoint)
-            .build();
+                .providerId(product.getProviderId())
+                .providerName(product.getProviderName())
+                .productId(product.getId())
+                .productType(product.getProductType())
+                .userApiKeyId(userApiKey.getId())
+                .teamId(userApiKey.getTeamId())
+                .model(model)
+                .protocol(resolved.protocolName)
+                .providerApiKey(plainApiKey)
+                .providerApiKeyId(apiKey.getId())
+                .endpoint(resolved.endpointUrl)
+                .build();
+    }
+
+    /**
+     * 在关联产品中匹配包含指定 model 的产品
+     */
+    private Product matchProduct(List<Long> productIds, String modelName) {
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalStateException("UserApiKey has no associated products");
+        }
+
+        List<Product> products = productGateway.findByIds(productIds);
+        for (Product product : products) {
+            if (!product.isAvailable()) {
+                continue;
+            }
+            if (product.containsModel(modelName)) {
+                return product;
+            }
+        }
+
+        throw new IllegalStateException(
+                "Model " + modelName + " not available in any associated product");
     }
 
     /**
      * 选择 ProductApiKey（优先级 + 权重策略）
      */
     private ProductApiKey selectProductApiKey(Long productId) {
-        // 1. 优先选择默认（最高优先级）Key
         var defaultKeyOpt = productApiKeyGateway.findDefaultByProductId(productId);
         if (defaultKeyOpt.isPresent()) {
             ProductApiKey defaultKey = defaultKeyOpt.get();
             if (defaultKey.isAvailable()) {
-                log.debug("Selected default ProductApiKey for product {}", productId);
                 return defaultKey;
             }
-            log.warn("Default ProductApiKey for product {} is not available, falling back", productId);
+            log.warn("Default ProductApiKey not available for product {}, falling back", productId);
         }
 
-        // 2. 获取所有活跃 Key
         List<ProductApiKey> activeKeys = productApiKeyGateway.findActiveByProductId(productId);
         if (activeKeys.isEmpty()) {
             return null;
         }
 
-        // 3. 单个 Key 直接返回
         if (activeKeys.size() == 1) {
             return activeKeys.get(0);
         }
 
-        // 4. 按权重随机选择
         return selectByWeight(activeKeys);
     }
 
-    /**
-     * 按权重随机选择
-     */
     private ProductApiKey selectByWeight(List<ProductApiKey> keys) {
         int totalWeight = keys.stream()
-            .mapToInt(k -> k.getWeight() != null ? k.getWeight() : 1)
-            .sum();
+                .mapToInt(k -> k.getWeight() != null ? k.getWeight() : 1)
+                .sum();
 
         if (totalWeight <= 0) {
             return keys.get(ThreadLocalRandom.current().nextInt(keys.size()));
@@ -165,16 +174,32 @@ public class ProductRoutingService {
     }
 
     /**
-     * 解析端点 URL
+     * 解析协议名称和端点 URL
+     *
+     * <p>如果请求指定了协议，使用请求协议从产品端点获取 URL；</p>
+     * <p>如果未指定协议，从产品端点推断默认协议（优先 openai）。</p>
      */
-    private String resolveEndpoint(Product product, String protocol) {
-        if (protocol != null && !protocol.isBlank()) {
-            String endpoint = product.getEndpoint(protocol);
-            if (endpoint != null) {
-                return endpoint;
-            }
-            log.warn("Protocol {} not supported by product {}, using default", protocol, product.getName());
+    private ResolvedEndpoint resolveEndpoint(Product product, String requestedProtocol) {
+        Map<String, String> endpoints = product.getEndpoints();
+        if (endpoints == null || endpoints.isEmpty()) {
+            throw new IllegalStateException("Product has no endpoints configured: " + product.getName());
         }
-        return product.getDefaultEndpoint();
+
+        if (requestedProtocol != null && !requestedProtocol.isBlank()) {
+            String endpointUrl = endpoints.get(requestedProtocol);
+            if (endpointUrl != null) {
+                return new ResolvedEndpoint(requestedProtocol, endpointUrl);
+            }
+            log.warn("Protocol {} not supported by product {}, using default", requestedProtocol, product.getName());
+        }
+
+        // 推断默认协议：优先 openai，其次第一个
+        String defaultProtocol = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
+        return new ResolvedEndpoint(defaultProtocol, endpoints.get(defaultProtocol));
     }
+
+    /**
+     * 解析后的端点信息
+     */
+    private record ResolvedEndpoint(String protocolName, String endpointUrl) {}
 }

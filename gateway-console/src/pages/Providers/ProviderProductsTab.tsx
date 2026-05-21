@@ -12,24 +12,12 @@ import {
   useDeleteProductApiKey,
 } from '@/services/query/useProducts';
 import type { Product, ProductApiKey } from '@/types/product';
-import ProductFormModal from './ProductFormModal';
+import { ProductFormModal } from './ProductFormModal';
 import ProductApiKeyEditModal from './ProductApiKeyEditModal';
 
 interface ProviderProductsTabProps {
   providerId: number;
 }
-
-const PRODUCT_TYPE_COLOR: Record<string, string> = {
-  pay_as_you_go: 'blue',
-  subscription_coding: 'green',
-  subscription_token: 'orange',
-};
-
-const TYPE_LABEL_KEY: Record<string, string> = {
-  pay_as_you_go: 'typePayAsYouGo',
-  subscription_coding: 'typeSubscriptionCoding',
-  subscription_token: 'typeSubscriptionToken',
-};
 
 function ProductApiKeySection({ productId }: { productId: number }) {
   const { t } = useTranslation('products');
@@ -94,7 +82,7 @@ function ProductApiKeySection({ productId }: { productId: number }) {
 
       {adding && (
         <Card size="small" style={{ marginBottom: 8 }}>
-          <Space orientation="vertical" style={{ width: '100%' }}>
+          <Space direction="vertical" style={{ width: '100%' }}>
             <div>
               <span style={{ width: 80, display: 'inline-block' }}>{t('product.apiKeyLabel')}:</span>
               <input
@@ -200,7 +188,7 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
     }
     modal.confirm({
       title: t('product.deleteProduct'),
-      content: t('product.deleteConfirm', { name: product.name }),
+      content: t('product.deleteConfirm', { name: product.productName }),
       okType: 'danger',
       onOk: () => deleteMutation.mutateAsync({ id: product.id, providerId }),
     });
@@ -227,11 +215,10 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
             key: String(product.id),
             label: (
               <Space>
-                {product.name}
-                <Tag color={PRODUCT_TYPE_COLOR[product.productType]}>
-                  {t(`product.${TYPE_LABEL_KEY[product.productType]}`)}
+                {product.productName}
+                <Tag color={product.state === 'ACTIVE' ? 'green' : 'default'}>
+                  {product.state}
                 </Tag>
-                <Tag>{t('product.modelCount', { count: product.models?.length ?? 0 })}</Tag>
               </Space>
             ),
             extra: canWrite ? (
@@ -242,14 +229,12 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
             ) : undefined,
             children: (
               <div>
-                <p>{t('product.models')}: {product.models?.join(', ') || '-'}</p>
                 <p>
                   {t('product.endpoints')}:{' '}
                   {Object.entries(product.endpoints || {})
                     .map(([k, v]) => `${k}: ${v}`)
                     .join(', ') || '-'}
                 </p>
-                {product.quotaLimit != null && <p>{t('product.quotaLimit')}: {product.quotaLimit}</p>}
                 <ProductApiKeySection productId={product.id} />
               </div>
             ),
@@ -258,10 +243,12 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
       )}
 
       <ProductFormModal
-        visible={formVisible}
+        open={formVisible}
         providerId={providerId}
-        product={editingProduct}
+        providerName={editingProduct?.providerName ?? ''}
+        editingProduct={editingProduct ?? null}
         onClose={() => setFormVisible(false)}
+        onSaved={() => setFormVisible(false)}
       />
     </>
   );

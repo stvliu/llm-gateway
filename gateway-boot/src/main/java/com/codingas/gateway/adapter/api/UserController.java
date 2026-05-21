@@ -2,10 +2,14 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.application.user.UserService;
+import com.codingas.gateway.application.userapikey.UserApiKeyService;
+import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 用户管理控制器
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final UserApiKeyService userApiKeyService;
 
     /**
      * 创建用户
@@ -79,5 +84,15 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
         return userService.assignRoles(id, request);
+    }
+
+    // ==================== UserApiKey 子资源 ====================
+
+    /**
+     * 查询指定用户的所有 API Key
+     */
+    @GetMapping("/{userId}/api-keys")
+    public List<UserApiKeyResponse> listUserApiKeys(@PathVariable Long userId) {
+        return userApiKeyService.findByUserId(userId);
     }
 }

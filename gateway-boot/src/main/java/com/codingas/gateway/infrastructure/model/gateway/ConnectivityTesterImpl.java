@@ -2,7 +2,7 @@ package com.codingas.gateway.infrastructure.model.gateway;
 
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
-import com.codingas.gateway.domain.model.enums.ProviderType;
+
 import com.codingas.gateway.domain.model.gateway.ConnectivityTester;
 import com.codingas.gateway.infrastructure.proxy.gateway.rpc.AdapterBuilderFactory;
 import com.codingas.gateway.infrastructure.proxy.gateway.rpc.LLMAdapter;
@@ -25,14 +25,14 @@ public class ConnectivityTesterImpl implements ConnectivityTester {
 
     @Override
     public ConnectivityTestResult test(ConnectivityTestRequest request) {
-        ProviderType providerType = request.providerType();
+        String protocolName = request.protocolName();
         String apiKey = request.apiKey();
 
-        log.info("Starting connectivity test for provider: {}", providerType);
+        log.info("Starting connectivity test for protocol: {}", protocolName);
 
         // 创建临时 Adapter（使用请求中的 baseUrl 或默认值）
         LLMAdapter adapter = adapterBuilderFactory.createAdapter(
-            providerType,
+            protocolName,
             request.baseUrl(),
             apiKey
         );
@@ -44,8 +44,8 @@ public class ConnectivityTesterImpl implements ConnectivityTester {
             request.model()
         );
 
-        log.info("Connectivity test completed for provider {}: success={}, latency={}ms",
-            providerType, result.success(), result.totalLatencyMs());
+        log.info("Connectivity test completed for protocol {}: success={}, latency={}ms",
+            protocolName, result.success(), result.totalLatencyMs());
 
         return result;
     }

@@ -6,8 +6,7 @@ import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -27,8 +26,6 @@ import static org.mockito.Mockito.when;
 
 /**
  * ProviderController 单元测试
- *
- * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProviderController 测试")
@@ -37,8 +34,15 @@ class ProviderControllerTest {
     @Mock
     private ProviderService providerService;
 
-    @InjectMocks
+    @Mock
+    private com.codingas.gateway.domain.model.gateway.ProviderGateway providerGateway;
+
     private ProviderController controller;
+
+    @BeforeEach
+    void setUp() {
+        controller = new ProviderController(providerService, providerGateway);
+    }
 
     @Nested
     @DisplayName("create 方法测试")
@@ -47,18 +51,15 @@ class ProviderControllerTest {
         @Test
         @DisplayName("创建提供商成功")
         void create_validRequest_returnsCreated() {
-            // given
             ProviderCreateRequest request = new ProviderCreateRequest();
             request.setProviderName("OpenAI");
 
             ProviderResponse response = createTestResponse();
             when(providerService.create(any())).thenReturn(response);
 
-            // when
-            ProviderResponse result = controller.create(request);
+            var result = controller.create(request);
 
-            // then
-            assertThat(result.getProviderName()).isEqualTo("OpenAI");
+            assertThat(result.getBody().getProviderName()).isEqualTo("OpenAI");
         }
     }
 
@@ -69,15 +70,12 @@ class ProviderControllerTest {
         @Test
         @DisplayName("获取提供商详情成功")
         void getById_existingId_returnsProvider() {
-            // given
             ProviderResponse response = createTestResponse();
             when(providerService.getById(1L)).thenReturn(response);
 
-            // when
-            ProviderResponse result = controller.getById(1L);
+            var result = controller.getById(1L);
 
-            // then
-            assertThat(result.getId()).isEqualTo(1L);
+            assertThat(result.getBody().getId()).isEqualTo(1L);
         }
     }
 
@@ -88,18 +86,15 @@ class ProviderControllerTest {
         @Test
         @DisplayName("查询提供商列表")
         void query_validRequest_returnsPage() {
-            // given
             ProviderResponse response = createTestResponse();
             PageResponse<ProviderResponse> pageResponse = PageResponse.of(
                 List.of(response), 1, 10, 1L
             );
             when(providerService.query(any(ProviderQueryRequest.class))).thenReturn(pageResponse);
 
-            // when
-            PageResponse<ProviderResponse> result = controller.query(new ProviderQueryRequest());
+            var result = controller.query(new ProviderQueryRequest());
 
-            // then
-            assertThat(result.getItems()).hasSize(1);
+            assertThat(result.getBody().getItems()).hasSize(1);
         }
     }
 
@@ -110,18 +105,15 @@ class ProviderControllerTest {
         @Test
         @DisplayName("更新提供商成功")
         void update_validRequest_returnsUpdated() {
-            // given
             ProviderUpdateRequest request = new ProviderUpdateRequest();
             request.setProviderName("Updated Name");
 
             ProviderResponse response = createTestResponse();
             when(providerService.update(eq(1L), any())).thenReturn(response);
 
-            // when
-            ProviderResponse result = controller.update(1L, request);
+            var result = controller.update(1L, request);
 
-            // then
-            assertThat(result).isNotNull();
+            assertThat(result.getBody()).isNotNull();
         }
     }
 
@@ -132,13 +124,9 @@ class ProviderControllerTest {
         @Test
         @DisplayName("删除提供商成功")
         void delete_existingId_returnsSuccess() {
-            // given
             doNothing().when(providerService).delete(1L);
 
-            // when
             controller.delete(1L);
-
-            // then - void 方法，无返回值验证
         }
     }
 
@@ -149,43 +137,34 @@ class ProviderControllerTest {
         @Test
         @DisplayName("启用提供商")
         void setEnabled_enable_returnsUpdated() {
-            // given
             ProviderResponse response = createTestResponse();
-            response.setState(ProviderState.ACTIVE);
+            response.setState("ACTIVE");
             when(providerService.setEnabled(1L, true)).thenReturn(response);
 
-            // when
-            ProviderResponse result = controller.setEnabled(1L, true);
+            var result = controller.setEnabled(1L, true);
 
-            // then
-            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
+            assertThat(result.getBody().getState()).isEqualTo("ACTIVE");
         }
 
         @Test
         @DisplayName("禁用提供商")
         void setEnabled_disable_returnsUpdated() {
-            // given
             ProviderResponse response = createTestResponse();
-            response.setState(ProviderState.ACTIVE);
+            response.setState("DISABLED");
             when(providerService.setEnabled(1L, false)).thenReturn(response);
 
-            // when
-            ProviderResponse result = controller.setEnabled(1L, false);
+            var result = controller.setEnabled(1L, false);
 
-            // then
-            assertThat(result.getState()).isEqualTo(ProviderState.ACTIVE);
+            assertThat(result.getBody().getState()).isEqualTo("DISABLED");
         }
     }
 
-    // Helper methods
     private ProviderResponse createTestResponse() {
         ProviderResponse response = new ProviderResponse();
         response.setId(1L);
         response.setProviderName("OpenAI");
-        response.setProviderType(ProviderType.OPENAI);
-        response.setBaseUrl("https://api.openai.com");
         response.setPriority(100);
-        response.setState(ProviderState.ACTIVE);
+        response.setState("ACTIVE");
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

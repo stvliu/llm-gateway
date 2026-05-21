@@ -9,17 +9,7 @@ export const providerKeys = {
   details: () => [...providerKeys.all, 'detail'] as const,
   detail: (id: number) => [...providerKeys.details(), id] as const,
   keys: (id: number) => [...providerKeys.all, 'keys', id] as const,
-  types: () => [...providerKeys.all, 'types'] as const,
 };
-
-/** 获取供应商类型列表 */
-export function useProviderTypes() {
-  return useQuery({
-    queryKey: providerKeys.types(),
-    queryFn: () => providerApi.getProviderTypes(),
-    staleTime: Infinity, // 枚举数据不会变化，永久缓存
-  });
-}
 
 export function useProviders(params?: { page?: number; size?: number; limit?: number }) {
   // 支持 size 或 limit 参数，统一转换为 limit

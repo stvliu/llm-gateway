@@ -1,7 +1,5 @@
 package com.codingas.gateway.application.provider.dto;
 
-import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 
 import java.time.Instant;
@@ -14,12 +12,10 @@ public class ProviderResponse {
 
     private Long id;
     private String providerName;
-    private ProviderType providerType;
-    private String baseUrl;
     private String websiteUrl;
     private String apiDocUrl;
     private Integer priority;
-    private ProviderState state;
+    private String state;
     private Instant createdAt;
     private Instant updatedAt;
 

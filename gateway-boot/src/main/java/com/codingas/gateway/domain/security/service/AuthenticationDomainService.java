@@ -1,213 +1,78 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
-import com.codingas.gateway.domain.security.enums.UserState;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
-import com.codingas.gateway.domain.team.entity.Team;
+import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Optional;
 
 /**
- * 认证服务
+ * 认证领域服务
  *
- * <p>处理 API Key 的认证和用户信息加载。</p>
- * <p>支持双路认证：优先新架构（UserApiKey），降级到旧架构（GatewayApiKey）。</p>
+ * <p>认证流程：通过 keyPrefix 查找 Key，再用 hashKey 验证完整密钥。</p>
+ * <p>不再解密密钥做明文比较，避免密钥在认证流程中暴露。</p>
  */
-@Slf4j
 @Service
 public class AuthenticationDomainService {
 
-    private static final String CACHE_NAME = "auth";
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationDomainService.class);
 
-    private final ApiKeyGateway apiKeyGateway;
-    private final UserGateway userGateway;
     private final UserApiKeyGateway userApiKeyGateway;
-    private final TeamGateway teamGateway;
-    private final ProductGateway productGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
-    public AuthenticationDomainService(
-            ApiKeyGateway apiKeyGateway,
-            UserGateway userGateway,
-            UserApiKeyGateway userApiKeyGateway,
-            TeamGateway teamGateway,
-            ProductGateway productGateway,
-            ApiKeyEncryptionDomainService encryptionService) {
-        this.apiKeyGateway = apiKeyGateway;
-        this.userGateway = userGateway;
+    public AuthenticationDomainService(UserApiKeyGateway userApiKeyGateway,
+                                       ApiKeyEncryptionDomainService encryptionService) {
         this.userApiKeyGateway = userApiKeyGateway;
-        this.teamGateway = teamGateway;
-        this.productGateway = productGateway;
         this.encryptionService = encryptionService;
     }
 
     /**
-     * 认证 API Key（双路认证）
+     * 认证用户 API Key
      *
-     * <p>优先使用新架构（UserApiKey），未找到时降级到旧架构（GatewayApiKey）。</p>
-     *
-     * @param apiKey API Key
-     * @return 认证结果，不存在或无效返回 null
+     * @param apiKey 明文 API Key
+     * @return 认证结果
+     * @throws AuthenticationFailedException 认证失败
      */
-    @Cacheable(value = CACHE_NAME, key = "'auth:' + #apiKey", unless = "#result == null")
-    public UserAuthResult authenticate(String apiKey) {
+    public UserAuthResult authenticateUser(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.debug("Empty API Key provided");
-            return null;
+            throw new AuthenticationFailedException("API Key 不能为空");
         }
 
-        String keyHash = hashKey(apiKey);
+        String prefix = extractKeyPrefix(apiKey);
+        Optional<UserApiKey> userApiKeyOpt = userApiKeyGateway.findByKeyPrefix(prefix);
 
-        // 1. 优先尝试新架构：UserApiKey
-        UserAuthResult newResult = authenticateNewArchitecture(keyHash);
-        if (newResult != null) {
-            log.debug("Authenticated via new architecture: userApiKeyId={}", newResult.userApiKeyId());
-            return newResult;
-        }
-
-        // 2. 降级到旧架构：GatewayApiKey
-        UserAuthResult legacyResult = authenticateLegacy(keyHash);
-        if (legacyResult != null) {
-            log.debug("Authenticated via legacy architecture: apiKeyId={}", legacyResult.apiKeyId());
-            return legacyResult;
-        }
-
-        log.debug("API Key not found in either architecture");
-        return null;
-    }
-
-    /**
-     * 新架构认证：通过 UserApiKey
-     */
-    private UserAuthResult authenticateNewArchitecture(String keyHash) {
-        Optional<UserApiKey> userApiKeyOpt = userApiKeyGateway.findByKeyHash(keyHash);
         if (userApiKeyOpt.isEmpty()) {
-            return null;
+            log.warn("API Key 未找到: prefix={}", prefix);
+            throw new AuthenticationFailedException("无效的 API Key");
         }
 
         UserApiKey userApiKey = userApiKeyOpt.get();
-        if (!isUserApiKeyActive(userApiKey)) {
-            log.debug("UserApiKey is not active: state={}", userApiKey.getState());
-            return null;
+
+        // 通过 hash 验证完整密钥（不再解密做明文比较）
+        String inputHash = encryptionService.hashKey(apiKey);
+        if (!inputHash.equals(userApiKey.getKeyHash())) {
+            log.warn("API Key 不匹配: prefix={}", prefix);
+            throw new AuthenticationFailedException("无效的 API Key");
         }
 
-        // 查找用户
-        Long userId = userApiKey.getUserId();
-        if (userId == null) {
-            log.debug("Owner user ID not found for UserApiKey");
-            return null;
-        }
-
-        User user = userGateway.findById(userId).orElse(null);
-        if (user == null || !isUserActive(user)) {
-            log.debug("User not found or not active for UserApiKey");
-            return null;
-        }
-
-        // 验证 Team 状态
-        Team team = teamGateway.findById(userApiKey.getTeamId()).orElse(null);
-        if (team == null || !team.isAvailable()) {
-            log.debug("Team not found or not available: teamId={}", userApiKey.getTeamId());
-            return null;
-        }
-
-        // 验证 Product 状态
-        Product product = productGateway.findById(userApiKey.getProductId()).orElse(null);
-        if (product == null || !product.isAvailable()) {
-            log.debug("Product not found or not available: productId={}", userApiKey.getProductId());
-            return null;
+        if (!userApiKey.isAvailable()) {
+            log.warn("API Key 不可用: id={}, state={}", userApiKey.getId(), userApiKey.getState());
+            throw new AuthenticationFailedException("API Key 已禁用");
         }
 
         return UserAuthResult.newArch(
-            user.getId(),
-            user.getRole(),
-            userApiKey.getId(),
-            userApiKey.getProductId(),
-            userApiKey.getId(),
-            userApiKey.getTeamId()
+                userApiKey.getUserId(),
+                "user",
+                userApiKey.getId(),
+                userApiKey.getTeamId()
         );
     }
 
-    /**
-     * 旧架构认证：通过 GatewayApiKey
-     */
-    private UserAuthResult authenticateLegacy(String keyHash) {
-        GatewayApiKey gatewayKey = apiKeyGateway.findByKeyHash(keyHash);
-
-        if (gatewayKey == null) {
-            return null;
-        }
-
-        if (!isKeyActive(gatewayKey)) {
-            log.debug("GatewayApiKey is not active: state={}", gatewayKey.getState());
-            return null;
-        }
-
-        if (isKeyExpired(gatewayKey)) {
-            log.debug("GatewayApiKey is expired");
-            return null;
-        }
-
-        Long userId = gatewayKey.getUserId();
-        if (userId == null) {
-            log.debug("User ID not found for GatewayApiKey");
-            return null;
-        }
-
-        User user = userGateway.findById(userId).orElse(null);
-        if (user == null || !isUserActive(user)) {
-            log.debug("User not found or not active for GatewayApiKey");
-            return null;
-        }
-
-        apiKeyGateway.updateLastUsed(gatewayKey.getId(), Instant.now());
-
-        return UserAuthResult.legacy(user.getId(), user.getRole(), gatewayKey.getId());
-    }
-
-    /**
-     * 获取用户
-     */
-    public Optional<User> getUserById(Long userId) {
-        return userGateway.findById(userId);
-    }
-
-    private boolean isKeyActive(GatewayApiKey key) {
-        return key.getState() == GatewayApiKeyState.ACTIVE;
-    }
-
-    private boolean isKeyExpired(GatewayApiKey key) {
-        if (key.getExpiresAt() == null) {
-            return false;
-        }
-        return Instant.now().isAfter(key.getExpiresAt());
-    }
-
-    private boolean isUserApiKeyActive(UserApiKey key) {
-        return key.getState() == UserApiKeyState.ACTIVE;
-    }
-
-    private boolean isUserActive(User user) {
-        return user.getState() == UserState.ACTIVE;
-    }
-
-    /**
-     * 使用 SHA-256 哈希 API Key
-     */
-    private String hashKey(String apiKey) {
-        return encryptionService.hashKey(apiKey);
+    /** 提取 Key 前缀（前 8 位） */
+    private String extractKeyPrefix(String apiKey) {
+        return apiKey.length() >= 8 ? apiKey.substring(0, 8) : apiKey;
     }
 }

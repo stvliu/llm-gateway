@@ -14,10 +14,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -53,11 +53,10 @@ class OpenAIControllerTest {
     class ChatCompletionsTests {
 
         @Test
-        @DisplayName("非流式请求 — 有 authResult 时走新架构代理")
-        void chatCompletions_nonStream_withAuthResult() throws IOException {
-            // Arrange
+        @DisplayName("非流式请求 — 有 authResult 时走代理")
+        void chatCompletions_nonStream_withAuthResult() throws Exception {
             OpenAIChatRequest request = createRequest("gpt-4o", false);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
             LLMResponse response = LLMResponse.builder()
                 .id("chatcmpl-123")
@@ -72,18 +71,15 @@ class OpenAIControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.chatCompletions(request, 1L, 10L, authResult, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
             verify(proxyService).proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class));
         }
 
         @Test
         @DisplayName("非流式请求 — 无 authResult 时走旧架构代理")
-        void chatCompletions_nonStream_withoutAuthResult() throws IOException {
-            // Arrange
+        void chatCompletions_nonStream_withoutAuthResult() throws Exception {
             OpenAIChatRequest request = createRequest("gpt-4o", false);
 
             LLMResponse response = LLMResponse.builder()
@@ -95,20 +91,17 @@ class OpenAIControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.chatCompletions(request, 1L, 10L, null, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
             verify(proxyService).proxy(any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class));
         }
 
         @Test
         @DisplayName("非流式请求 — 代理返回错误时返回 400")
-        void chatCompletions_nonStream_errorResponse() throws IOException {
-            // Arrange
+        void chatCompletions_nonStream_errorResponse() throws Exception {
             OpenAIChatRequest request = createRequest("gpt-4o", false);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
             LLMResponse response = LLMResponse.builder()
                 .error(LLMResponse.Error.builder()
@@ -121,29 +114,23 @@ class OpenAIControllerTest {
             when(proxyService.proxy(any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class)))
                 .thenReturn(response);
 
-            // Act
             ResponseEntity<?> result = controller.chatCompletions(request, 1L, 10L, authResult, null);
 
-            // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @DisplayName("流式请求 — 有 authResult 时走新架构流式代理")
-        void chatCompletions_stream_withAuthResult() throws IOException {
-            // Arrange
+        @DisplayName("流式请求 — 有 authResult 时走流式代理")
+        void chatCompletions_stream_withAuthResult() throws Exception {
             OpenAIChatRequest request = createRequest("gpt-4o", true);
-            UserAuthResult authResult = UserAuthResult.legacy(1L, "USER", 10L);
+            UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 10L, 1L);
 
-            // Mock stream - just verify the method is called
             doNothing().when(proxyService).proxyStream(
                 any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
 
-            // Act
             controller.chatCompletions(request, 1L, 10L, authResult, mock(jakarta.servlet.http.HttpServletResponse.class));
 
-            // Assert
             verify(proxyService).proxyStream(
                 any(LLMRequest.class), eq(authResult), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
@@ -151,18 +138,15 @@ class OpenAIControllerTest {
 
         @Test
         @DisplayName("流式请求 — 无 authResult 时走旧架构流式代理")
-        void chatCompletions_stream_withoutAuthResult() throws IOException {
-            // Arrange
+        void chatCompletions_stream_withoutAuthResult() throws Exception {
             OpenAIChatRequest request = createRequest("gpt-4o", true);
 
             doNothing().when(proxyService).proxyStream(
                 any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
 
-            // Act
             controller.chatCompletions(request, 1L, 10L, null, mock(jakarta.servlet.http.HttpServletResponse.class));
 
-            // Assert
             verify(proxyService).proxyStream(
                 any(LLMRequest.class), any(RouteGroup.RoutingStrategy.class),
                 any(), any(), any());
@@ -178,9 +162,9 @@ class OpenAIControllerTest {
         void chatCompletions_nullModel_throwsException() {
             OpenAIChatRequest request = createRequest(null, false);
 
-            assertThat(org.assertj.core.api.Assertions.assertThatThrownBy(
-                () -> controller.chatCompletions(request, 1L, 10L, null, null))
-                .isInstanceOf(IllegalArgumentException.class));
+            assertThatThrownBy(() -> controller.chatCompletions(request, 1L, 10L, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("model is required");
         }
 
         @Test
@@ -188,9 +172,9 @@ class OpenAIControllerTest {
         void chatCompletions_blankModel_throwsException() {
             OpenAIChatRequest request = createRequest("  ", false);
 
-            assertThat(org.assertj.core.api.Assertions.assertThatThrownBy(
-                () -> controller.chatCompletions(request, 1L, 10L, null, null))
-                .isInstanceOf(IllegalArgumentException.class));
+            assertThatThrownBy(() -> controller.chatCompletions(request, 1L, 10L, null, null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("model is required");
         }
     }
 }

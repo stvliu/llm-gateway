@@ -3,7 +3,6 @@ package com.codingas.gateway.infrastructure.proxy.gateway.rpc;
 import com.codingas.gateway.domain.model.entity.ProviderCapabilities;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -64,9 +63,9 @@ class AnthropicAdapterTest {
         }
 
         @Test
-        @DisplayName("getProviderType 返回正确值")
-        void getProviderType_returnsAnthropic() {
-            assertThat(adapter.getProviderType()).isEqualTo(ProviderType.ANTHROPIC);
+        @DisplayName("getProviderName 返回正确值")
+        void getProviderName_returnsAnthropic() {
+            assertThat(adapter.getProviderName()).isEqualTo("anthropic");
         }
 
         @Test
@@ -80,13 +79,12 @@ class AnthropicAdapterTest {
         void getCapabilities_returnsCorrectConfig() {
             ProviderCapabilities capabilities = adapter.getCapabilities();
 
-            assertThat(capabilities.providerType()).isEqualTo(ProviderType.ANTHROPIC);
-            assertThat(capabilities.supportsChatCompletion()).isFalse();
-            assertThat(capabilities.supportsMessages()).isTrue();
-            assertThat(capabilities.supportsEmbeddings()).isFalse();
-            assertThat(capabilities.supportsStreaming()).isTrue();
-            assertThat(capabilities.supportsFunctionCalling()).isTrue();
-            assertThat(capabilities.supportedModels()).contains("claude-sonnet-4-6");
+            assertThat(capabilities.isSupportsChatCompletion()).isFalse();
+            assertThat(capabilities.isSupportsMessages()).isTrue();
+            assertThat(capabilities.isSupportsEmbeddings()).isFalse();
+            assertThat(capabilities.isSupportsStreaming()).isTrue();
+            assertThat(capabilities.isSupportsFunctionCalling()).isTrue();
+            assertThat(capabilities.getSupportedModels()).contains("claude-sonnet-4-6");
         }
     }
 
@@ -181,7 +179,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("messages 方法构建正确请求")
         void messages_buildsCorrectRequest() throws Exception {
-            // Given
             LLMRequest request = LLMRequest.builder()
                     .model("claude-sonnet-4-6")
                     .messages(List.of(
@@ -195,7 +192,6 @@ class AnthropicAdapterTest {
                     .systemPrompt("You are a helpful assistant")
                     .build();
 
-            // Mock HTTP 响应
             String mockResponse = """
                 {
                     "id": "msg-123",
@@ -208,10 +204,8 @@ class AnthropicAdapterTest {
 
             mockSuccessfulResponse(mockResponse);
 
-            // When
             LLMResponse response = adapter.messages(request);
 
-            // Then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo("msg-123");
             assertThat(response.getModel()).isEqualTo("claude-sonnet-4-6");
@@ -222,7 +216,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("messages 使用默认 maxTokens")
         void messages_withNullMaxTokens_usesDefault() throws Exception {
-            // Given
             LLMRequest request = LLMRequest.builder()
                     .model("claude-sonnet-4-6")
                     .messages(List.of(
@@ -244,10 +237,8 @@ class AnthropicAdapterTest {
 
             mockSuccessfulResponse(mockResponse);
 
-            // When
             LLMResponse response = adapter.messages(request);
 
-            // Then
             assertThat(response).isNotNull();
         }
 
@@ -270,7 +261,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("解析包含工具调用的响应")
         void parseResponse_withToolCalls() throws Exception {
-            // Given
             String mockResponse = """
                 {
                     "id": "msg-123",
@@ -287,10 +277,8 @@ class AnthropicAdapterTest {
             mockSuccessfulResponse(mockResponse);
             LLMRequest request = createBasicRequest();
 
-            // When
             LLMResponse response = adapter.messages(request);
 
-            // Then
             assertThat(response.getContent()).isNotNull();
             assertThat(response.getContent().getText()).isEqualTo("Let me check that.");
             assertThat(response.getContent().getToolCalls()).isNotNull();
@@ -302,7 +290,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("解析包含 usage 的响应")
         void parseResponse_withUsage() throws Exception {
-            // Given
             String mockResponse = """
                 {
                     "id": "msg-123",
@@ -315,10 +302,8 @@ class AnthropicAdapterTest {
             mockSuccessfulResponse(mockResponse);
             LLMRequest request = createBasicRequest();
 
-            // When
             LLMResponse response = adapter.messages(request);
 
-            // Then
             assertThat(response.getUsage()).isNotNull();
             assertThat(response.getUsage().getPromptTokens()).isEqualTo(100);
             assertThat(response.getUsage().getCompletionTokens()).isEqualTo(200);
@@ -327,7 +312,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("解析空 content 响应")
         void parseResponse_emptyContent() throws Exception {
-            // Given
             String mockResponse = """
                 {
                     "id": "msg-123",
@@ -340,10 +324,8 @@ class AnthropicAdapterTest {
             mockSuccessfulResponse(mockResponse);
             LLMRequest request = createBasicRequest();
 
-            // When
             LLMResponse response = adapter.messages(request);
 
-            // Then
             assertThat(response.getContent()).isNull();
         }
 
@@ -379,7 +361,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("HTTP 错误响应抛出异常")
         void messages_httpError_throwsException() throws Exception {
-            // Given
             Response mockResponse = mock(Response.class);
             when(httpClient.newCall(any(Request.class))).thenReturn(call);
             when(call.execute()).thenReturn(mockResponse);
@@ -397,7 +378,6 @@ class AnthropicAdapterTest {
                     .maxTokens(100)
                     .build();
 
-            // When & Then
             assertThatThrownBy(() -> adapter.messages(request))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Anthropic messages request failed");
@@ -406,7 +386,6 @@ class AnthropicAdapterTest {
         @Test
         @DisplayName("IO 异常抛出 RuntimeException")
         void messages_ioException_throwsRuntimeException() throws Exception {
-            // Given
             when(httpClient.newCall(any(Request.class))).thenReturn(call);
             when(call.execute()).thenThrow(new IOException("Connection refused"));
 
@@ -421,7 +400,6 @@ class AnthropicAdapterTest {
                     .maxTokens(100)
                     .build();
 
-            // When & Then
             assertThatThrownBy(() -> adapter.messages(request))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("Anthropic messages request failed");

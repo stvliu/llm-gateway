@@ -3,9 +3,7 @@ import { Tabs, Card, Button, Space, Modal, Input, Form, Tag, Typography, theme, 
 import { SyncOutlined, CloudDownloadOutlined, RightOutlined, SearchOutlined, FilterOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviderMetadata, useModelMetadata, useApplyMetadata, useSyncMetadata } from '@/services/query/useMetadata';
-import { useProviderTypes } from '@/services/query/useProviders';
 import type { ProviderMetadata, ModelMetadata, MetadataSource } from '@/types/metadata';
-import type { ProviderTypeOption } from '@/types/api';
 
 const { Text } = Typography;
 
@@ -93,15 +91,12 @@ function ProviderMetadataTab({
   // 搜索和筛选状态
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [providerType, setProviderType] = useState<string | undefined>();
 
   const { data, isLoading } = useProviderMetadata({
     page,
     size: 20,
     keyword: searchKeyword || undefined,
-    providerType,
   });
-  const { data: providerTypes = [] } = useProviderTypes();
   const applyMutation = useApplyMetadata();
   const syncMutation = useSyncMetadata();
 
@@ -133,11 +128,10 @@ function ProviderMetadataTab({
   const handleClearFilters = () => {
     setKeyword('');
     setSearchKeyword('');
-    setProviderType(undefined);
   };
 
   // 是否有活跃的筛选条件
-  const hasActiveFilters = searchKeyword || providerType;
+  const hasActiveFilters = !!searchKeyword;
 
   const providerList = data?.content ?? [];
 
@@ -154,17 +148,6 @@ function ProviderMetadataTab({
             onSearch={(value) => setSearchKeyword(value)}
             style={{ width: 240 }}
             prefix={<SearchOutlined />}
-          />
-          <Select
-            placeholder={t('filterByType', { defaultValue: '供应商类型' })}
-            allowClear
-            value={providerType}
-            onChange={setProviderType}
-            style={{ width: 160 }}
-            options={providerTypes.map((pt: ProviderTypeOption) => ({
-              value: pt.value,
-              label: pt.label,
-            }))}
           />
           {hasActiveFilters && (
             <Button icon={<CloseOutlined />} onClick={handleClearFilters}>
@@ -196,11 +179,6 @@ function ProviderMetadataTab({
                 {t('keyword', { defaultValue: '关键词' })}: {searchKeyword}
               </Tag>
             )}
-            {providerType && (
-              <Tag closable onClose={() => setProviderType(undefined)}>
-                {t('providerType', { defaultValue: '类型' })}: {providerTypes.find((pt: ProviderTypeOption) => pt.value === providerType)?.label || providerType}
-              </Tag>
-            )}
           </Space>
         </div>
       )}
@@ -229,10 +207,7 @@ function ProviderMetadataTab({
             >
               <Card.Meta
                 title={
-                  <Space>
-                    <span>{pm.providerName}</span>
-                    <Tag>{pm.providerType}</Tag>
-                  </Space>
+                  <span>{pm.providerName}</span>
                 }
                 description={
                   <div>
@@ -466,8 +441,7 @@ function ApplyMetadataModal({
     >
       {metadata && (
         <div style={{ marginBottom: 16 }}>
-          <Tag>{metadata.providerType}</Tag>
-          <span style={{ marginLeft: 8 }}>{metadata.providerName}</span>
+          <span>{metadata.providerName}</span>
           {metadata.modelCount !== undefined && (
             <Text type="secondary" style={{ marginLeft: 8 }}>
               ({metadata.modelCount} 个模型)

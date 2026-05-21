@@ -1,141 +1,185 @@
-import { useEffect } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Button, Space, App } from 'antd';
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { useState, useEffect, useCallback } from 'react';
+import { Modal, Form, Input, Select, Button, Space, App } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useCreateProduct, useUpdateProduct } from '@/services/query/useProducts';
-import type { Product } from '@/types/product';
+import { useCreateProduct, useUpdateProduct } from '@/services/query';
+import { protocolApi } from '@/services/api/protocolApi';
+import type { Product, ProtocolInfo } from '@/types/product';
 
-interface ProductFormModalProps {
-  visible: boolean;
+interface Props {
+  open: boolean;
   providerId: number;
-  product?: Product;
+  providerName: string;
+  editingProduct?: Product | null;
   onClose: () => void;
+  onSaved: () => void;
 }
 
-const PRODUCT_TYPES = [
-  { value: 'pay_as_you_go', labelKey: 'typePayAsYouGo' },
-  { value: 'subscription_coding', labelKey: 'typeSubscriptionCoding' },
-  { value: 'subscription_token', labelKey: 'typeSubscriptionToken' },
-];
-
-export default function ProductFormModal({ visible, providerId, product, onClose }: ProductFormModalProps) {
-  const { t } = useTranslation('products');
-  const { message } = App.useApp();
+export function ProductFormModal({ open, providerId, providerName, editingProduct, onClose, onSaved }: Props) {
+  const { t } = useTranslation('providers');
   const [form] = Form.useForm();
-  const isEdit = !!product;
-
+  const { message } = App.useApp();
   const createMutation = useCreateProduct();
   const updateMutation = useUpdateProduct();
-  const loading = createMutation.isPending || updateMutation.isPending;
+  const [saving, setSaving] = useState(false);
+  const [protocols, setProtocols] = useState<ProtocolInfo[]>([]);
+  const [endpoints, setEndpoints] = useState<Array<{ protocol: string; url: string }>>([]);
 
+  // 加载协议列表
   useEffect(() => {
-    if (visible) {
-      if (product) {
-        form.setFieldsValue({
-          name: product.name,
-          productType: product.productType,
-          models: product.models?.join(', '),
-          quotaLimit: product.quotaLimit,
-          endpoints: Object.entries(product.endpoints || {}).map(([key, url]) => ({ key, url })),
-        });
-      } else {
-        form.resetFields();
-        form.setFieldsValue({ endpoints: [{ key: '', url: '' }] });
-      }
+    if (open) {
+      protocolApi.list().then(setProtocols).catch(() => {
+        // 降级：使用默认协议列表
+        setProtocols([
+          { name: 'openai', label: 'OpenAI Chat Completions' },
+          { name: 'anthropic', label: 'Anthropic Messages' },
+        ]);
+      });
     }
-  }, [visible, product, form]);
+  }, [open]);
 
-  const handleSubmit = async () => {
-    const values = await form.validateFields();
-    const endpoints: Record<string, string> = {};
-    (values.endpoints || []).forEach((e: { key: string; url: string }) => {
-      if (e.key && e.url) endpoints[e.key] = e.url;
-    });
-    const models = values.models
-      ? values.models.split(',').map((m: string) => m.trim()).filter(Boolean)
-      : [];
+  // 初始化 endpoints
+  useEffect(() => {
+    if (open && editingProduct?.endpoints) {
+      const entries = Object.entries(editingProduct.endpoints).map(([protocol, url]) => ({
+        protocol,
+        url,
+      }));
+      setEndpoints(entries.length > 0 ? entries : [{ protocol: '', url: '' }]);
+    } else if (open) {
+      setEndpoints([{ protocol: '', url: '' }]);
+    }
+  }, [open, editingProduct]);
 
-    const payload = {
-      providerId,
-      name: values.name,
-      productType: values.productType,
-      models,
-      endpoints,
-      quotaLimit: values.quotaLimit,
-    };
+  const handleClose = useCallback(() => {
+    form.resetFields();
+    setEndpoints([{ protocol: '', url: '' }]);
+    onClose();
+  }, [form, onClose]);
 
+  const addEndpoint = useCallback(() => {
+    setEndpoints(prev => [...prev, { protocol: '', url: '' }]);
+  }, []);
+
+  const removeEndpoint = useCallback((index: number) => {
+    setEndpoints(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const updateEndpoint = useCallback((index: number, field: 'protocol' | 'url', value: string) => {
+    setEndpoints(prev => prev.map((ep, i) => i === index ? { ...ep, [field]: value } : ep));
+  }, []);
+
+  const handleSave = useCallback(async () => {
     try {
-      if (isEdit) {
-        await updateMutation.mutateAsync({ id: product!.id, data: payload });
-        message.success(t('product.editProduct'));
-      } else {
-        await createMutation.mutateAsync(payload);
-        message.success(t('product.addProduct'));
+      const values = await form.validateFields();
+
+      // 验证至少有一个端点
+      const validEndpoints = endpoints.filter(ep => ep.protocol && ep.url);
+      if (validEndpoints.length === 0) {
+        message.warning(t('validation.endpointRequired', { defaultValue: '请至少配置一个端点' }));
+        return;
       }
-      onClose();
+
+      // 检查协议重复
+      const protocols = validEndpoints.map(ep => ep.protocol);
+      if (new Set(protocols).size !== protocols.length) {
+        message.warning(t('validation.duplicateProtocol', { defaultValue: '不能配置重复的协议' }));
+        return;
+      }
+
+      setSaving(true);
+
+      const endpointsMap = Object.fromEntries(
+        validEndpoints.map(ep => [ep.protocol, ep.url])
+      );
+
+      if (editingProduct) {
+        await updateMutation.mutateAsync({
+          id: editingProduct.id,
+          data: {
+            productName: values.productName,
+            endpoints: endpointsMap,
+          },
+        });
+        message.success(t('message.updateSuccess', { defaultValue: '产品更新成功' }));
+      } else {
+        await createMutation.mutateAsync({
+          providerId,
+          productName: values.productName,
+          endpoints: endpointsMap,
+        });
+        message.success(t('message.createSuccess', { defaultValue: '产品创建成功' }));
+      }
+
+      onSaved();
+      handleClose();
     } catch {
-      message.error(isEdit ? t('product.editProduct') : t('product.addProduct'));
+      // 表单验证失败
+    } finally {
+      setSaving(false);
     }
-  };
+  }, [form, endpoints, editingProduct, providerId, createMutation, updateMutation, message, t, onSaved, handleClose]);
 
   return (
     <Modal
-      title={isEdit ? t('product.editProduct') : t('product.addProduct')}
-      open={visible}
-      onOk={handleSubmit}
-      onCancel={onClose}
-      confirmLoading={loading}
-      destroyOnHidden
-      width={600}
+      title={editingProduct
+        ? t('editProduct', { defaultValue: '编辑产品' })
+        : t('addProduct', { defaultValue: '新增产品' })}
+      open={open}
+      onOk={handleSave}
+      onCancel={handleClose}
+      confirmLoading={saving}
+      width={640}
+      destroyOnClose
     >
-      <Form form={form} layout="vertical">
-        <Form.Item name="name" label={t('product.name')} rules={[{ required: true, message: t('product.nameRequired') }]}>
+      <Form form={form} layout="vertical" initialValues={{
+        productName: editingProduct?.productName,
+      }}>
+        <Form.Item label={t('form.providerName', { defaultValue: '供应商' })}>
+          <Input value={providerName} disabled />
+        </Form.Item>
+        <Form.Item
+          name="productName"
+          label={t('form.productName', { defaultValue: '产品名称' })}
+          rules={[{ required: true, message: t('validation.productNameRequired', { defaultValue: '请输入产品名称' }) }]}
+        >
           <Input />
         </Form.Item>
-
-        <Form.Item name="productType" label={t('product.type')} rules={[{ required: true, message: t('product.typeRequired') }]}>
-          <Select>
-            {PRODUCT_TYPES.map((pt) => (
-              <Select.Option key={pt.value} value={pt.value}>
-                {t(`product.${pt.labelKey}`)}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item name="models" label={t('product.models')} extra={t('product.modelsSeparatorHint')}>
-          <Input placeholder="gpt-4o, gpt-4o-mini" />
-        </Form.Item>
-
-        <Form.Item label={t('product.endpoints')} required>
-          <Form.List name="endpoints">
-            {(fields, { add, remove }) => (
-              <>
-                {fields.map(({ key, name, ...rest }) => (
-                  <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
-                    <Form.Item {...rest} name={[name, 'key']} rules={[{ required: true }]}>
-                      <Input placeholder="Key" style={{ width: 120 }} />
-                    </Form.Item>
-                    <Form.Item {...rest} name={[name, 'url']} rules={[{ required: true }]}>
-                      <Input placeholder="https://api.example.com" style={{ width: 300 }} />
-                    </Form.Item>
-                    {fields.length > 1 && (
-                      <MinusCircleOutlined onClick={() => remove(name)} />
-                    )}
-                  </Space>
-                ))}
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
-                  {t('product.addEndpoint')}
-                </Button>
-              </>
-            )}
-          </Form.List>
-        </Form.Item>
-
-        <Form.Item name="quotaLimit" label={t('product.quotaLimit')}>
-          <InputNumber style={{ width: '100%' }} min={0} />
-        </Form.Item>
       </Form>
+
+      {/* 端点配置 */}
+      <div style={{ marginBottom: 16 }}>
+        <div style={{ marginBottom: 8, fontWeight: 500 }}>
+          {t('form.endpoints', { defaultValue: '端点配置' })}
+        </div>
+        {endpoints.map((ep, index) => (
+          <Space key={index} style={{ display: 'flex', marginBottom: 8 }} align="start">
+            <Select
+              value={ep.protocol || undefined}
+              onChange={(value) => updateEndpoint(index, 'protocol', value)}
+              placeholder={t('form.selectProtocol', { defaultValue: '选择协议' })}
+              style={{ width: 180 }}
+              options={protocols.map(p => ({ label: p.label, value: p.name }))}
+            />
+            <Input
+              value={ep.url}
+              onChange={(e) => updateEndpoint(index, 'url', e.target.value)}
+              placeholder="https://api.example.com"
+              style={{ width: 320 }}
+            />
+            {endpoints.length > 1 && (
+              <Button
+                icon={<DeleteOutlined />}
+                danger
+                onClick={() => removeEndpoint(index)}
+              />
+            )}
+          </Space>
+        ))}
+        <Button type="dashed" onClick={addEndpoint} icon={<PlusOutlined />} style={{ width: '100%' }}>
+          {t('form.addEndpoint', { defaultValue: '添加端点' })}
+        </Button>
+      </div>
     </Modal>
   );
 }

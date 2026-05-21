@@ -17,6 +17,8 @@ export const teamKeys = {
   details: () => [...teamKeys.all, 'detail'] as const,
   detail: (id: number) => [...teamKeys.details(), id] as const,
   apiKeys: (teamId: number) => [...teamKeys.detail(teamId), 'api-keys'] as const,
+  myApiKeys: ['me', 'api-keys'] as const,
+  userApiKeys: (userId: number) => ['users', userId, 'api-keys'] as const,
 };
 
 /** 团队列表 */

@@ -8,7 +8,6 @@
   "sync": "Sync Metadata",
   "name": "Provider Name",
   "providerId": "Provider ID",
-  "providerTypeLabel": "Provider Type",
   "description": "Description",
   "modelCount": "Model Count",
   "downloadCount": "Downloads",
@@ -46,22 +45,6 @@
     "syncFailed": "Sync failed",
     "importSuccess": "Imported successfully",
     "importFailed": "Import failed"
-  },
-  "providerType": {
-    "OPENAI": "OpenAI",
-    "ANTHROPIC": "Anthropic",
-    "GEMINI": "Google Gemini",
-    "DEEPSEEK": "DeepSeek",
-    "MOONSHOT": "Moonshot",
-    "ZHIPU": "Zhipu GLM",
-    "YI": "Yi (01.AI)",
-    "BAICHUAN": "Baichuan",
-    "MINIMAX": "MiniMax",
-    "SILICONFLOW": "SiliconFlow",
-    "VOLCENGINE": "Volcengine",
-    "QWEN": "Qwen",
-    "WENXIN": "Wenxin",
-    "OTHER": "Other"
   },
   "model": {
     "providerModelId": "Model ID",

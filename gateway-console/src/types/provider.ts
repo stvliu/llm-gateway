@@ -1,5 +1,5 @@
-/** 供应商类型 */
-export type ProviderType = 'OPENAI' | 'ANTHROPIC';
+/** 提供商状态枚举（简化设计，企业内部场景） */
+export type ProviderState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 
 /** Provider Key 统计信息 */
 export interface ProviderKeyStats {
@@ -8,15 +8,10 @@ export interface ProviderKeyStats {
   activeCount: number;
 }
 
-/** 提供商状态枚举（简化设计，企业内部场景） */
-export type ProviderState = 'ACTIVE' | 'DISABLED' | 'DELETED';
-
 /** 供应商信息（与后端 ProviderResponse 一致） */
 export interface Provider {
   id: number;
   providerName: string;
-  providerType: ProviderType;
-  baseUrl: string;
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
@@ -29,8 +24,6 @@ export interface Provider {
 /** 创建供应商请求 */
 export interface CreateProviderRequest {
   providerName: string;
-  providerType: ProviderType;
-  baseUrl: string;
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
@@ -39,7 +32,6 @@ export interface CreateProviderRequest {
 /** 更新供应商请求 */
 export interface UpdateProviderRequest {
   providerName?: string;
-  baseUrl?: string;
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
