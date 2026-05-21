@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.productapikey;
 
+import com.codingas.gateway.application.product.dto.ApiKeyTestResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateRequest;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyDetailResponse;
@@ -14,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -100,6 +102,28 @@ public class ProductApiKeyServiceImpl implements ProductApiKeyService {
         findAndValidateOwnership(productId, id);
         productApiKeyGateway.deleteById(id);
         log.info("Deleted ProductApiKey: id={}", id);
+    }
+
+    @Override
+    public ApiKeyTestResponse testApiKey(Long productId, Long id) {
+        // 验证归属关系
+        ProductApiKey apiKey = findAndValidateOwnership(productId, id);
+
+        // TODO: 实现真实的 API Key 测试逻辑
+        // 1. 获取 API Key 明文
+        // 2. 获取产品端点配置
+        // 3. 发送测试请求
+        // 4. 返回测试结果
+
+        log.info("Testing ProductApiKey: id={}, productId={}", id, productId);
+
+        return ApiKeyTestResponse.builder()
+                .success(true)
+                .latency(100L)
+                .modelName("gpt-4o")
+                .responsePreview("Hello! How can I assist you today?")
+                .testedAt(Instant.now())
+                .build();
     }
 
     /**

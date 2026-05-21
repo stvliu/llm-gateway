@@ -20,6 +20,7 @@ export default function Providers() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<Provider | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [defaultTab, setDefaultTab] = useState<'basic' | 'products'>('basic');
 
   const filtered = providers.filter((p) =>
     !search || p.providerName.toLowerCase().includes(search.toLowerCase())
@@ -27,6 +28,16 @@ export default function Providers() {
 
   const handleCreated = useCallback(() => {
     setCreateOpen(false);
+  }, []);
+
+  const handleViewProducts = useCallback((provider: Provider) => {
+    setSelected(provider);
+    setDefaultTab('products');
+  }, []);
+
+  const handleSelect = useCallback((provider: Provider) => {
+    setSelected(provider);
+    setDefaultTab('basic');
   }, []);
 
   return (
@@ -47,7 +58,8 @@ export default function Providers() {
 
       <ProviderCardView
         providers={filtered}
-        onSelect={setSelected}
+        onSelect={handleSelect}
+        onViewProducts={handleViewProducts}
       />
 
       <ProviderManagementDrawer
@@ -58,6 +70,7 @@ export default function Providers() {
           const p = providers.find((pr) => pr.id === id);
           if (p) setSelected(p);
         }}
+        defaultTab={defaultTab}
       />
 
       <ProviderCreateModal

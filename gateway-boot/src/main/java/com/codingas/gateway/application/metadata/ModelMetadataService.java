@@ -1,6 +1,8 @@
 package com.codingas.gateway.application.metadata;
 
+import com.codingas.gateway.application.metadata.dto.ModelMetadataCreateRequest;
 import com.codingas.gateway.application.metadata.dto.ModelMetadataResponse;
+import com.codingas.gateway.application.metadata.dto.ModelMetadataUpdateRequest;
 import com.codingas.gateway.domain.metadata.entity.MetadataSource;
 import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
@@ -57,12 +59,19 @@ public class ModelMetadataService {
      * 创建模型元数据
      */
     @Transactional
-    public ModelMetadataResponse createModelMetadata(ModelMetadata metadata) {
+    public ModelMetadataResponse createModelMetadata(ModelMetadataCreateRequest request) {
         if (modelMetadataGateway.existsByProviderIdAndModelId(
-                metadata.getProviderId(), metadata.getProviderModelId())) {
+                request.providerId(), request.providerModelId())) {
             throw new IllegalArgumentException(
-                "模型元数据已存在: " + metadata.getProviderId() + "/" + metadata.getProviderModelId());
+                "模型元数据已存在: " + request.providerId() + "/" + request.providerModelId());
         }
+        ModelMetadata metadata = new ModelMetadata(
+                request.providerId(),
+                request.providerModelId(),
+                request.displayName(),
+                MetadataSource.MANUAL
+        );
+        applyCreateRequest(metadata, request);
         ModelMetadata saved = modelMetadataGateway.save(metadata);
         log.info("Created model metadata: {}/{}", saved.getProviderId(), saved.getProviderModelId());
         return toResponse(saved);
@@ -72,21 +81,54 @@ public class ModelMetadataService {
      * 更新模型元数据
      */
     @Transactional
-    public ModelMetadataResponse updateModelMetadata(Long id, ModelMetadata update) {
+    public ModelMetadataResponse updateModelMetadata(Long id, ModelMetadataUpdateRequest request) {
         ModelMetadata existing = modelMetadataGateway.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("模型元数据不存在: id=" + id));
 
-        // 仅更新非空字段
-        if (update.getDisplayName() != null) existing.setDisplayName(update.getDisplayName());
-        if (update.getContextWindow() != null) existing.setContextWindow(update.getContextWindow());
-        if (update.getInputPrice() != null) existing.setInputPrice(update.getInputPrice());
-        if (update.getOutputPrice() != null) existing.setOutputPrice(update.getOutputPrice());
-        if (update.getCapabilities() != null) existing.setCapabilities(update.getCapabilities());
-        if (update.getModalities() != null) existing.setModalities(update.getModalities());
+        applyUpdateRequest(existing, request);
 
         ModelMetadata saved = modelMetadataGateway.save(existing);
         log.info("Updated model metadata: {}/{}", saved.getProviderId(), saved.getProviderModelId());
         return toResponse(saved);
+    }
+
+    private void applyCreateRequest(ModelMetadata metadata, ModelMetadataCreateRequest request) {
+        if (request.modelFamily() != null) metadata.setModelFamily(request.modelFamily());
+        if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
+        if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
+        if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
+        if (request.inputPrice() != null) metadata.setInputPrice(request.inputPrice());
+        if (request.outputPrice() != null) metadata.setOutputPrice(request.outputPrice());
+        if (request.reasoningPrice() != null) metadata.setReasoningPrice(request.reasoningPrice());
+        if (request.cacheReadPrice() != null) metadata.setCacheReadPrice(request.cacheReadPrice());
+        if (request.cacheWritePrice() != null) metadata.setCacheWritePrice(request.cacheWritePrice());
+        if (request.inputAudioPrice() != null) metadata.setInputAudioPrice(request.inputAudioPrice());
+        if (request.outputAudioPrice() != null) metadata.setOutputAudioPrice(request.outputAudioPrice());
+        if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
+        if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
+        if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
+        if (request.modalities() != null) metadata.setModalities(request.modalities());
+        if (request.capabilities() != null) metadata.setCapabilities(request.capabilities());
+    }
+
+    private void applyUpdateRequest(ModelMetadata metadata, ModelMetadataUpdateRequest request) {
+        if (request.displayName() != null) metadata.setDisplayName(request.displayName());
+        if (request.modelFamily() != null) metadata.setModelFamily(request.modelFamily());
+        if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
+        if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
+        if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
+        if (request.inputPrice() != null) metadata.setInputPrice(request.inputPrice());
+        if (request.outputPrice() != null) metadata.setOutputPrice(request.outputPrice());
+        if (request.reasoningPrice() != null) metadata.setReasoningPrice(request.reasoningPrice());
+        if (request.cacheReadPrice() != null) metadata.setCacheReadPrice(request.cacheReadPrice());
+        if (request.cacheWritePrice() != null) metadata.setCacheWritePrice(request.cacheWritePrice());
+        if (request.inputAudioPrice() != null) metadata.setInputAudioPrice(request.inputAudioPrice());
+        if (request.outputAudioPrice() != null) metadata.setOutputAudioPrice(request.outputAudioPrice());
+        if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
+        if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
+        if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
+        if (request.modalities() != null) metadata.setModalities(request.modalities());
+        if (request.capabilities() != null) metadata.setCapabilities(request.capabilities());
     }
 
     /**

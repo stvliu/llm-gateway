@@ -9,10 +9,12 @@ import com.codingas.gateway.domain.product.enums.ProductState;
 import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.product.service.ProductDomainService;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
 import com.codingas.gateway.domain.team.enums.UserApiKeyState;
 import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.team.service.UserApiKeyDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -48,11 +50,17 @@ class ProductRoutingServiceTest {
     @Mock
     private ProviderGateway providerGateway;
 
+    private UserApiKeyDomainService userApiKeyDomainService;
+    private ProductDomainService productDomainService;
     private ProductRoutingService service;
 
     @BeforeEach
     void setUp() {
-        service = new ProductRoutingService(userApiKeyGateway, productGateway, productApiKeyGateway, providerGateway);
+        userApiKeyDomainService = new UserApiKeyDomainService();
+        productDomainService = new ProductDomainService();
+        service = new ProductRoutingService(
+                userApiKeyGateway, productGateway, productApiKeyGateway, providerGateway,
+                userApiKeyDomainService, productDomainService);
     }
 
     private Product createProduct(Long id, Long providerId, String name, ProductState state, List<String> models) {

@@ -28,4 +28,11 @@ public interface ProductApiKeyGateway {
     void deleteById(Long id);
 
     long countActiveByProductId(Long productId);
+
+    /**
+     * 获取最大版本号
+     */
+    default long getMaxVersion() {
+        return 0L;
+    }
 }

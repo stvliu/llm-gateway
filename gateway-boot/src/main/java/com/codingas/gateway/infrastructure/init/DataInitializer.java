@@ -1,18 +1,17 @@
 package com.codingas.gateway.infrastructure.init;
 
 import com.codingas.gateway.domain.model.enums.ModelState;
-import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.entity.ProductApiKey;
 import com.codingas.gateway.domain.product.enums.ProductState;
 import com.codingas.gateway.domain.product.enums.ProductType;
+import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.entity.User;
@@ -40,12 +39,14 @@ import java.util.Map;
  * <p>在应用启动时初始化测试数据（仅 local/dev 环境）。</p>
  * <p>初始化内容：</p>
  * <ul>
- *   <li>Provider（火山引擎）+ Provider API Key + 模型</li>
- *   <li>产品（按量计费）</li>
+ *   <li>Provider（火山引擎）+ 模型</li>
+ *   <li>产品（按量计费）+ ProductApiKey</li>
  *   <li>4 个团队：默认、产品、开发、龙虾</li>
  *   <li>1 个管理员 + 6 个测试用户</li>
  *   <li>10 个 UserApiKey，分布在不同团队下</li>
  * </ul>
+ *
+ * <p>注意：ProviderApiKey 已废弃，API Key 管理迁移到 ProductApiKey。</p>
  */
 @Slf4j
 @Component
@@ -56,9 +57,9 @@ public class DataInitializer implements CommandLineRunner {
     private final UserGateway userGateway;
     private final PasswordEncoder passwordEncoder;
     private final ProviderGateway providerGateway;
-    private final ProviderApiKeyGateway providerApiKeyGateway;
     private final ModelGateway modelGateway;
     private final ProductGateway productGateway;
+    private final ProductApiKeyGateway productApiKeyGateway;
     private final TeamGateway teamGateway;
     private final UserApiKeyGateway userApiKeyGateway;
 
@@ -70,12 +71,16 @@ public class DataInitializer implements CommandLineRunner {
             // 初始化 Provider 和 Model 数据
             Provider provider = initProvider();
             if (provider != null) {
-                initProviderApiKey(provider);
                 initModels(provider);
             }
 
             // 初始化产品
             Product product = initProduct(provider);
+
+            // 初始化产品 API Key
+            if (product != null) {
+                initProductApiKey(product);
+            }
 
             // 初始化团队（4 个）
             Team defaultTeam = initTeam("默认团队", "开发环境默认团队");
@@ -144,26 +149,6 @@ public class DataInitializer implements CommandLineRunner {
         Provider saved = providerGateway.save(provider);
         log.info("Created provider: {} (id={})", provider.getName(), saved.getId());
         return saved;
-    }
-
-    /**
-     * 初始化 Provider API Key
-     */
-    private void initProviderApiKey(Provider provider) {
-        if (!providerApiKeyGateway.findByProviderId(provider.getId()).isEmpty()) {
-            log.info("Provider API key already exists, skipping");
-            return;
-        }
-
-        ProviderApiKey apiKey = new ProviderApiKey();
-        apiKey.setProviderId(provider.getId());
-        apiKey.setKeyName("火山引擎主密钥");
-        apiKey.setApiKey("1fb8bdcf-3383-426d-9f3d-4c2979895c58");
-        apiKey.setPriority(100);
-        apiKey.setState(ProviderApiKeyState.ACTIVE);
-
-        providerApiKeyGateway.save(apiKey);
-        log.info("Created provider API key: {}", apiKey.getKeyName());
     }
 
     /**
@@ -242,6 +227,30 @@ public class DataInitializer implements CommandLineRunner {
         Product saved = productGateway.save(product);
         log.info("Created product: {} (id={})", product.getName(), saved.getId());
         return saved;
+    }
+
+    /**
+     * 初始化产品 API Key（新架构）
+     */
+    private void initProductApiKey(Product product) {
+        if (product == null) {
+            log.warn("Product not initialized, skipping ProductApiKey initialization");
+            return;
+        }
+
+        if (productApiKeyGateway.countActiveByProductId(product.getId()) > 0) {
+            log.info("ProductApiKey already exists, skipping");
+            return;
+        }
+
+        ProductApiKey apiKey = new ProductApiKey();
+        apiKey.setProductId(product.getId());
+        apiKey.setName("火山引擎主密钥");
+        apiKey.setApiKeyPlain("1fb8bdcf-3383-426d-9f3d-4c2979895c58");
+        apiKey.setPriority(1);
+
+        ProductApiKey saved = productApiKeyGateway.save(apiKey);
+        log.info("Created ProductApiKey: {} (id={})", apiKey.getName(), saved.getId());
     }
 
     /**

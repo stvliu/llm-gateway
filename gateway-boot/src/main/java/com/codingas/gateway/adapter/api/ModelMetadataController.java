@@ -1,9 +1,11 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.metadata.ModelMetadataService;
+import com.codingas.gateway.application.metadata.dto.ModelMetadataCreateRequest;
 import com.codingas.gateway.application.metadata.dto.ModelMetadataResponse;
+import com.codingas.gateway.application.metadata.dto.ModelMetadataUpdateRequest;
 import com.codingas.gateway.domain.metadata.entity.MetadataSource;
-import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -63,8 +65,8 @@ public class ModelMetadataController {
      */
     @PostMapping
     public ResponseEntity<ModelMetadataResponse> create(
-            @RequestBody ModelMetadata metadata) {
-        return ResponseEntity.ok(modelMetadataService.createModelMetadata(metadata));
+            @Valid @RequestBody ModelMetadataCreateRequest request) {
+        return ResponseEntity.ok(modelMetadataService.createModelMetadata(request));
     }
 
     /**
@@ -73,8 +75,8 @@ public class ModelMetadataController {
     @PutMapping("/{id}")
     public ResponseEntity<ModelMetadataResponse> update(
             @PathVariable Long id,
-            @RequestBody ModelMetadata update) {
-        return ResponseEntity.ok(modelMetadataService.updateModelMetadata(id, update));
+            @Valid @RequestBody ModelMetadataUpdateRequest request) {
+        return ResponseEntity.ok(modelMetadataService.updateModelMetadata(id, request));
     }
 
     /**

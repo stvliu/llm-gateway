@@ -91,6 +91,16 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     }
 
     @Override
+    public UserApiKeyDetailResponse getDetailByIdAndTeamId(Long id, Long teamId) {
+        UserApiKey apiKey = userApiKeyGateway.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("UserApiKey not found: id=" + id));
+        if (!apiKey.getTeamId().equals(teamId)) {
+            throw new IllegalArgumentException("UserApiKey does not belong to team: apiKeyId=" + id + ", teamId=" + teamId);
+        }
+        return toDetailResponse(apiKey);
+    }
+
+    @Override
     @Transactional
     public UserApiKeyResponse update(Long id, UserApiKeyUpdateRequest request) {
         UserApiKey apiKey = userApiKeyGateway.findById(id)

@@ -3,25 +3,18 @@ package com.codingas.gateway.application.provider;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ModelNestedRequest;
-import com.codingas.gateway.application.provider.dto.ProviderApiKeyNestedRequest;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
-import com.codingas.gateway.application.provider.dto.ProviderKeyStats;
-import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
-import com.codingas.gateway.application.providerapikey.dto.ProviderApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.enums.ModelState;
-import com.codingas.gateway.domain.model.enums.ProviderApiKeyState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ConnectivityTester;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,11 +22,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
  * 提供商应用服务实现
+ *
+ * <p>已移除 ProviderApiKey 相关逻辑，API Key 管理迁移到 ProductApiKey。</p>
  */
 @Slf4j
 @Service
@@ -41,12 +35,13 @@ import java.util.stream.Collectors;
 public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
-    private final ProviderApiKeyGateway providerApiKeyGateway;
     private final ModelGateway modelGateway;
     private final ConnectivityTester connectivityTester;
 
     /**
      * 创建提供商
+     *
+     * <p>注意：API Key 管理已迁移到 ProductApiKey，创建 Provider 时不再创建 API Key。</p>
      */
     @Override
     @Transactional
@@ -60,22 +55,6 @@ public class ProviderServiceImpl implements ProviderService {
 
         Provider savedProvider = providerGateway.save(provider);
         Long providerId = savedProvider.getId();
-
-        // 创建嵌套的 API Keys
-        if (request.getApiKeys() != null && !request.getApiKeys().isEmpty()) {
-            for (ProviderApiKeyNestedRequest keyRequest : request.getApiKeys()) {
-                ProviderApiKey apiKey = new ProviderApiKey();
-                apiKey.setProviderId(providerId);
-                apiKey.setKeyName(keyRequest.getKeyName());
-                apiKey.setApiKey(keyRequest.getApiKey());
-                apiKey.setPriority(keyRequest.getPriority() != null ? keyRequest.getPriority() : 100);
-                apiKey.setWeight(keyRequest.getWeight() != null ? keyRequest.getWeight() : 100);
-                apiKey.setIsDefault(keyRequest.getIsDefault() != null ? keyRequest.getIsDefault() : false);
-                apiKey.setState(ProviderApiKeyState.ACTIVE);
-                providerApiKeyGateway.save(apiKey);
-            }
-            log.info("Created {} API keys for provider {}", request.getApiKeys().size(), providerId);
-        }
 
         // 创建嵌套的模型
         if (request.getModels() != null && !request.getModels().isEmpty()) {
@@ -145,13 +124,6 @@ public class ProviderServiceImpl implements ProviderService {
             .map(this::toResponse)
             .collect(Collectors.toList());
 
-        // 批量填充 Key 统计信息
-        List<Long> providerIds = pagedProviders.stream()
-            .map(Provider::getId)
-            .collect(Collectors.toList());
-        Map<Long, ProviderKeyStats> keyStatsMap = providerApiKeyGateway.getKeyStatsByProviderIds(providerIds);
-        responses.forEach(r -> r.setKeyStats(keyStatsMap.get(r.getId())));
-
         return PageResponse.of(responses, request.getPage(), limit, total);
     }
 
@@ -182,6 +154,8 @@ public class ProviderServiceImpl implements ProviderService {
 
     /**
      * 删除提供商
+     *
+     * <p>注意：API Key 管理已迁移到 ProductApiKey，删除 Provider 时不再删除 API Key。</p>
      */
     @Override
     @Transactional
@@ -189,14 +163,7 @@ public class ProviderServiceImpl implements ProviderService {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
-        // 先删除关联的 API Keys
-        List<ProviderApiKey> keys = providerApiKeyGateway.findByProviderId(id);
-        for (ProviderApiKey key : keys) {
-            providerApiKeyGateway.delete(key);
-        }
-        log.info("Deleted {} API keys for provider {}", keys.size(), id);
-
-        // 再删除关联的 Models
+        // 删除关联的 Models
         List<Model> models = modelGateway.findByProviderId(id);
         for (Model model : models) {
             modelGateway.delete(model);
@@ -221,22 +188,22 @@ public class ProviderServiceImpl implements ProviderService {
     }
 
     /**
-     * 获取 Provider 的 Key 信息
+     * 获取所有供应商名称列表
      */
     @Override
-    public ProviderKeysResponse getProviderKeys(Long providerId) {
-        providerGateway.findById(providerId)
-            .orElseThrow(() -> new ResourceNotFoundException("Provider", providerId));
-
-        List<ProviderApiKey> keys = providerApiKeyGateway.findByProviderId(providerId);
-        List<ProviderApiKeyResponse> keyResponses = keys.stream()
-            .map(ProviderApiKeyResponse::from)
+    public List<String> getProviderNames() {
+        return providerGateway.findAll().stream()
+            .map(Provider::getName)
+            .distinct()
             .collect(Collectors.toList());
+    }
 
-        ProviderApiKey defaultKey = providerApiKeyGateway.findDefaultKeyByProviderId(providerId).orElse(null);
-        ProviderApiKeyResponse defaultKeyResponse = ProviderApiKeyResponse.from(defaultKey);
-
-        return new ProviderKeysResponse(defaultKeyResponse, keyResponses);
+    /**
+     * 测试连通性
+     */
+    @Override
+    public ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
+        return connectivityTester.test(request);
     }
 
     /**
@@ -253,13 +220,5 @@ public class ProviderServiceImpl implements ProviderService {
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;
-    }
-
-    /**
-     * 测试连通性
-     */
-    @Override
-    public ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
-        return connectivityTester.test(request);
     }
 }

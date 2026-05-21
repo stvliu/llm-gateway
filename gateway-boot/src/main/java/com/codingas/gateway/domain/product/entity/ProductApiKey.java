@@ -5,6 +5,7 @@ import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -17,6 +18,7 @@ import java.time.Instant;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(exclude = "apiKeyPlain")
 @DomainEntity
 @Slf4j
 public class ProductApiKey extends BaseEntity {

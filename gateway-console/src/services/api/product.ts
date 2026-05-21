@@ -9,6 +9,19 @@ import type {
   UpdateProductApiKeyRequest,
 } from '@/types/product';
 
+/** API Key 测试响应 */
+export interface ApiKeyTestResponse {
+  success: boolean;
+  latency: number | null;
+  modelName: string | null;
+  responsePreview: string | null;
+  testedAt: string;
+  error: {
+    code: string;
+    message: string;
+  } | null;
+}
+
 export const productApi = {
   /** 获取所有产品列表 */
   listAll: () =>
@@ -51,4 +64,8 @@ export const productApiKeyApi = {
   /** 删除 API Key */
   delete: (productId: number, id: number) =>
     api.delete<void>(`/products/${productId}/api-keys/${id}`),
+
+  /** 测试 API Key */
+  test: (productId: number, id: number) =>
+    api.post<ApiKeyTestResponse>(`/products/${productId}/api-keys/${id}/test`),
 };

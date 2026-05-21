@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.application.product.dto.ApiKeyTestResponse;
 import com.codingas.gateway.application.productapikey.ProductApiKeyService;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateRequest;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateResponse;
@@ -69,5 +70,15 @@ public class ProductApiKeyController {
             @PathVariable Long productId,
             @PathVariable Long id) {
         productApiKeyService.delete(productId, id);
+    }
+
+    /**
+     * 测试 API Key 是否有效
+     */
+    @PostMapping("/{id}/test")
+    public ApiKeyTestResponse testApiKey(
+            @PathVariable Long productId,
+            @PathVariable Long id) {
+        return productApiKeyService.testApiKey(productId, id);
     }
 }

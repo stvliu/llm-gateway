@@ -109,3 +109,11 @@ export function useDeleteProductApiKey() {
     },
   });
 }
+
+/** 测试 API Key */
+export function useTestProductApiKey() {
+  return useMutation({
+    mutationFn: ({ productId, id }: { productId: number; id: number }) =>
+      productApiKeyApi.test(productId, id),
+  });
+}

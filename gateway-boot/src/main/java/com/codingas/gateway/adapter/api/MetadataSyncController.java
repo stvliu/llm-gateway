@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import com.codingas.gateway.application.metadata.MetadataSyncService;
 import com.codingas.gateway.application.metadata.dto.MetadataSyncResult;
 import lombok.RequiredArgsConstructor;
@@ -9,13 +10,13 @@ import org.springframework.web.bind.annotation.*;
 /**
  * 元数据同步 API
  * <p>
- * 管理级操作，需要登录认证。
- * TODO: 角色权限系统完善后，应限制为 ADMIN 角色（@SaCheckRole("ADMIN")）
+ * 管理级操作，仅限管理员访问。
  * </p>
  */
 @RestController
 @RequestMapping("/api/v1/metadata-sync")
 @RequiredArgsConstructor
+@SaCheckRole("ADMIN")
 public class MetadataSyncController {
 
     private final MetadataSyncService syncService;

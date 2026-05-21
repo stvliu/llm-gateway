@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.productapikey;
 
+import com.codingas.gateway.application.product.dto.ApiKeyTestResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateRequest;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyDetailResponse;
@@ -43,4 +44,9 @@ public interface ProductApiKeyService {
      * 删除产品 API Key（校验产品归属）
      */
     void delete(Long productId, Long id);
+
+    /**
+     * 测试 API Key 是否有效
+     */
+    ApiKeyTestResponse testApiKey(Long productId, Long id);
 }

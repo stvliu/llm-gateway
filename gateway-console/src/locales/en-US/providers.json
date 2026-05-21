@@ -93,5 +93,18 @@
   "template.selectNone": "Clear",
   "template.searchModel": "Search models",
   "template.selectedModels": "{{count}} models selected",
-  "template.apiKeyRequired": "Please configure at least one valid API Key"
+  "template.apiKeyRequired": "Please configure at least one valid API Key",
+  "card.products": "Products",
+  "card.noProducts": "No products",
+  "product.endpoints": "Endpoints",
+  "product.keys": "Keys",
+  "product.associatedModels": "Associated Models",
+  "product.lastCall": "Last Call",
+  "product.successRate": "Success Rate",
+  "product.testKey": "Test",
+  "product.testSuccess": "Test Passed",
+  "product.testFailed": "Test Failed",
+  "product.latency": "Latency",
+  "product.keyCreated": "API Key Created",
+  "product.keyCreatedHint": "Please save this key immediately. You won't be able to see it again after closing."
 }

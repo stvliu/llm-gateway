@@ -9,6 +9,8 @@ import java.util.List;
 
 /**
  * 创建提供商请求
+ *
+ * <p>注意：API Key 管理已迁移到 ProductApiKey，创建 Provider 时不再创建 API Key。</p>
  */
 @Data
 public class ProviderCreateRequest {
@@ -24,12 +26,6 @@ public class ProviderCreateRequest {
     private String apiDocUrl;
 
     private Integer priority = 100;
-
-    /**
-     * 嵌套的 API Key 列表（可选）
-     */
-    @Valid
-    private List<ProviderApiKeyNestedRequest> apiKeys;
 
     /**
      * 嵌套的模型列表（可选）

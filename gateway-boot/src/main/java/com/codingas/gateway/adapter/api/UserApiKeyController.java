@@ -21,9 +21,12 @@ import java.util.List;
 
 /**
  * 用户 API Key 管理接口
+ *
+ * <p><b>注意：</b>此 Controller 提供独立的 UserApiKey CRUD 操作。
+ * 团队维度的 API Key 管理请使用 {@link TeamController} 的子资源路径。</p>
  */
 @RestController
-@RequestMapping("/api/user-api-keys")
+@RequestMapping("/api/v1/user-api-keys")
 public class UserApiKeyController {
 
     private final UserApiKeyService userApiKeyService;

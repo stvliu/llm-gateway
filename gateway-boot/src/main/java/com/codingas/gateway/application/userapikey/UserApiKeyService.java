@@ -24,6 +24,16 @@ public interface UserApiKeyService {
 
     UserApiKeyDetailResponse getDetailById(Long id);
 
+    /**
+     * 获取 API Key 详情并校验团队归属
+     *
+     * @param id     API Key ID
+     * @param teamId 期望的团队 ID，用于权限校验
+     * @return API Key 详情（含明文）
+     * @throws IllegalArgumentException 如果 API Key 不存在或不属于该团队
+     */
+    UserApiKeyDetailResponse getDetailByIdAndTeamId(Long id, Long teamId);
+
     UserApiKeyResponse update(Long id, UserApiKeyUpdateRequest request);
 
     void delete(Long id);

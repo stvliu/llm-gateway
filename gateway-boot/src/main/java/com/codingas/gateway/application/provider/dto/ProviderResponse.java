@@ -6,6 +6,8 @@ import java.time.Instant;
 
 /**
  * 提供商响应
+ *
+ * <p>注意：Key 统计信息已移除，API Key 管理迁移到 ProductApiKey。</p>
  */
 @Data
 public class ProviderResponse {
@@ -18,9 +20,4 @@ public class ProviderResponse {
     private String state;
     private Instant createdAt;
     private Instant updatedAt;
-
-    /**
-     * Key 统计信息（列表页填充）
-     */
-    private ProviderKeyStats keyStats;
 }

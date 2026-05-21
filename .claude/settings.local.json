@@ -123,7 +123,9 @@
       "Bash(tee /tmp/build-output.txt)",
       "Bash(claude plugin *)",
       "PowerShell(claude plugins *)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(ssh-keyscan -t rsa gitee.com)",
+      "Bash(printenv GITEE_ACCESS_TOKEN)"
     ]
   },
   "outputStyle": "default"

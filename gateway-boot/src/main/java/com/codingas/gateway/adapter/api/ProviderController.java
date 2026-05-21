@@ -4,12 +4,10 @@ import com.codingas.gateway.application.provider.ProviderService;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
-import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,14 +17,15 @@ import java.util.List;
 
 /**
  * 提供商管理 API
+ *
+ * <p>注意：API Key 管理已迁移到 ProductApiKey，通过 ProductController 管理。</p>
  */
 @RestController
-@RequestMapping("/api/providers")
+@RequestMapping("/api/v1/providers")
 @RequiredArgsConstructor
 public class ProviderController {
 
     private final ProviderService providerService;
-    private final ProviderGateway providerGateway;
 
     /**
      * 创建提供商
@@ -86,19 +85,7 @@ public class ProviderController {
      */
     @GetMapping("/names")
     public ResponseEntity<List<String>> getProviderNames() {
-        List<String> names = providerGateway.findAll().stream()
-            .map(p -> p.getName())
-            .distinct()
-            .toList();
-        return ResponseEntity.ok(names);
-    }
-
-    /**
-     * 获取 Provider 的 Key 信息
-     */
-    @GetMapping("/{providerId}/keys")
-    public ResponseEntity<ProviderKeysResponse> getProviderKeys(@PathVariable Long providerId) {
-        return ResponseEntity.ok(providerService.getProviderKeys(providerId));
+        return ResponseEntity.ok(providerService.getProviderNames());
     }
 
     /**

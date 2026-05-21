@@ -24,6 +24,7 @@ interface ProviderManagementDrawerProps {
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
   onProviderDeleted?: () => void;
+  defaultTab?: 'basic' | 'products';
 }
 
 /**
@@ -38,12 +39,13 @@ export function ProviderManagementDrawer({
   onClose,
   onProviderChange,
   onProviderDeleted,
+  defaultTab = 'basic',
 }: ProviderManagementDrawerProps) {
   const { t } = useTranslation('providers');
   const { confirm } = useConfirm();
 
   // 状态
-  const [activeTab, setActiveTab] = useState('basic');
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
@@ -58,11 +60,11 @@ export function ProviderManagementDrawer({
   // 当 providerId 变化时重置状态
   useEffect(() => {
     if (providerId !== null) {
-      setActiveTab('basic');
+      setActiveTab(defaultTab);
       setEditing(false);
       setDirty(false);
     }
-  }, [providerId]);
+  }, [providerId, defaultTab]);
 
   // 计算导航索引
   const currentIndex = useMemo(() => {

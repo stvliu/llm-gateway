@@ -10,6 +10,7 @@ import java.util.List;
  * <p>
  * 一个 Key 可关联多个产品，路由时按 model name 匹配对应的 Product。
  * keyHash 用于认证验证，keyPlain 用于创建时传入和详情展示（由基础设施层加解密）。
+ * </p>
  */
 public class UserApiKey {
 
@@ -71,16 +72,24 @@ public class UserApiKey {
     public Instant getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 
-    /** 检查密钥是否可用 */
+    /** 检查密钥是否可用（简单状态判断，允许保留在实体中） */
     public boolean isAvailable() {
         return state != null && state.isAvailable();
     }
 
-    /** 检查是否有权访问指定模型（models 为空表示全部允许） */
-    public boolean canAccessModel(String modelName) {
-        if (models == null || models.isEmpty()) {
-            return true;
-        }
-        return models.contains(modelName);
+    /**
+     * 重写 toString 排除敏感字段
+     */
+    @Override
+    public String toString() {
+        return "UserApiKey{" +
+                "id=" + id +
+                ", teamId=" + teamId +
+                ", userId=" + userId +
+                ", productIds=" + productIds +
+                ", keyPrefix='" + keyPrefix + '\'' +
+                ", name='" + name + '\'' +
+                ", state=" + state +
+                '}';
     }
 }

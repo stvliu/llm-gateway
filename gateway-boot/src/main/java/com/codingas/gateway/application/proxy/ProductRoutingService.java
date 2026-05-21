@@ -1,14 +1,17 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.product.service.ProductDomainService;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.team.entity.UserApiKey;
 import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.team.service.UserApiKeyDomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -32,15 +35,21 @@ public class ProductRoutingService {
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
     private final ProviderGateway providerGateway;
+    private final UserApiKeyDomainService userApiKeyDomainService;
+    private final ProductDomainService productDomainService;
 
     public ProductRoutingService(UserApiKeyGateway userApiKeyGateway,
                                  ProductGateway productGateway,
                                  ProductApiKeyGateway productApiKeyGateway,
-                                 ProviderGateway providerGateway) {
+                                 ProviderGateway providerGateway,
+                                 UserApiKeyDomainService userApiKeyDomainService,
+                                 ProductDomainService productDomainService) {
         this.userApiKeyGateway = userApiKeyGateway;
         this.productGateway = productGateway;
         this.productApiKeyGateway = productApiKeyGateway;
         this.providerGateway = providerGateway;
+        this.userApiKeyDomainService = userApiKeyDomainService;
+        this.productDomainService = productDomainService;
     }
 
     /**
@@ -54,13 +63,11 @@ public class ProductRoutingService {
     public RoutingContext resolve(Long userApiKeyId, String model, String protocol) {
         // 1. 查找 UserApiKey
         UserApiKey userApiKey = userApiKeyGateway.findById(userApiKeyId)
-                .orElseThrow(() -> new IllegalStateException(
-                        "UserApiKey not found: id=" + userApiKeyId));
+                .orElseThrow(() -> new ResourceNotFoundException("UserApiKey", userApiKeyId));
 
         // 2. 校验 Key 级别模型权限
-        if (!userApiKey.canAccessModel(model)) {
-            throw new IllegalStateException(
-                    "UserApiKey does not have permission to access model: " + model);
+        if (!userApiKeyDomainService.canAccessModel(userApiKey, model)) {
+            throw new ResourceNotFoundException("Model", model);
         }
 
         // 3. 在关联产品中匹配 model
@@ -69,20 +76,17 @@ public class ProductRoutingService {
         // 4. 选择 ProductApiKey
         ProductApiKey apiKey = selectProductApiKey(product.getId());
         if (apiKey == null) {
-            throw new IllegalStateException(
-                    "No available ProductApiKey for product: " + product.getName());
+            throw new ResourceNotFoundException("ProductApiKey", product.getId());
         }
 
         String plainApiKey = apiKey.getApiKeyPlain();
         if (plainApiKey == null || plainApiKey.isBlank()) {
-            throw new IllegalStateException(
-                    "ProductApiKey has no plain key available: id=" + apiKey.getId());
+            throw new ResourceNotFoundException("ProductApiKey", apiKey.getId());
         }
 
         // 5. 获取 Provider 信息
         Provider provider = providerGateway.findById(product.getProviderId())
-                .orElseThrow(() -> new IllegalStateException(
-                        "Provider not found: id=" + product.getProviderId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Provider", product.getProviderId()));
 
         // 6. 解析协议名称和端点
         ResolvedEndpoint resolved = resolveEndpoint(product, protocol);
@@ -108,7 +112,7 @@ public class ProductRoutingService {
      */
     private Product matchProduct(List<Long> productIds, String modelName) {
         if (productIds == null || productIds.isEmpty()) {
-            throw new IllegalStateException("UserApiKey has no associated products");
+            throw new ResourceNotFoundException("Product", "no products associated");
         }
 
         List<Product> products = productGateway.findByIds(productIds);
@@ -116,13 +120,12 @@ public class ProductRoutingService {
             if (!product.isAvailable()) {
                 continue;
             }
-            if (product.containsModel(modelName)) {
+            if (productDomainService.containsModel(product, modelName)) {
                 return product;
             }
         }
 
-        throw new IllegalStateException(
-                "Model " + modelName + " not available in any associated product");
+        throw new ResourceNotFoundException("Model", modelName);
     }
 
     /**
@@ -182,7 +185,7 @@ public class ProductRoutingService {
     private ResolvedEndpoint resolveEndpoint(Product product, String requestedProtocol) {
         Map<String, String> endpoints = product.getEndpoints();
         if (endpoints == null || endpoints.isEmpty()) {
-            throw new IllegalStateException("Product has no endpoints configured: " + product.getName());
+            throw new ResourceNotFoundException("Endpoint", product.getName());
         }
 
         if (requestedProtocol != null && !requestedProtocol.isBlank()) {

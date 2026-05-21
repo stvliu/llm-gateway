@@ -11,7 +11,6 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.domain.team.enums.TeamRole;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -101,26 +100,36 @@ public class TeamController {
 
     /**
      * 查询单个 API Key（含明文，用于页面复制）
+     * <p>
+     * 会校验 API Key 是否属于指定团队，防止越权访问
      */
     @GetMapping("/{teamId}/api-keys/{id}")
     public UserApiKeyDetailResponse getApiKey(
             @PathVariable Long teamId,
             @PathVariable Long id) {
-        return userApiKeyService.getDetailById(id);
+        return userApiKeyService.getDetailByIdAndTeamId(id, teamId);
     }
 
     /**
      * 创建用户 API Key
+     *
+     * <p>管理员可以为团队下任意用户创建 Key，普通成员只能为自己创建。</p>
      */
     @PostMapping("/{teamId}/api-keys")
     public ResponseEntity<UserApiKeyCreateResponse> createApiKey(
             @PathVariable Long teamId,
-            @Valid @RequestBody UserApiKeyCreateRequest request,
-            HttpServletRequest httpRequest) {
-        Long currentUserId = (Long) httpRequest.getAttribute("userId");
+            @Valid @RequestBody UserApiKeyCreateRequest request) {
+        Long currentUserId = StpUtil.getLoginIdAsLong();
         boolean isAdmin = StpUtil.hasRole("ADMIN");
+
+        // 如果不是管理员且请求的 userId 不是当前用户，则拒绝
+        Long targetUserId = request.userId() != null ? request.userId() : currentUserId;
+        if (!isAdmin && !targetUserId.equals(currentUserId)) {
+            throw new IllegalArgumentException("无权为其他用户创建 API Key");
+        }
+
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
-                teamId, request.userId(), request.productIds(), request.name(),
+                teamId, targetUserId, request.productIds(), request.name(),
                 request.models(), request.quotaLimit()
         );
         UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);

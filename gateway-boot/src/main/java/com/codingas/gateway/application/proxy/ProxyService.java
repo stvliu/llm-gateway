@@ -2,7 +2,7 @@ package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 
 import java.util.function.Consumer;
@@ -23,32 +23,32 @@ public interface ProxyService {
      * @param strategy 路由策略
      * @return LLM 响应
      */
-    LLMResponse proxy(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy);
+    LLMResponse proxy(LLMRequest request, UserAuthResult authResult, RoutingStrategy strategy);
 
     /**
      * 代理转发非流式请求（旧接口，降级兼容）
      */
-    LLMResponse proxy(LLMRequest request, RouteGroup.RoutingStrategy strategy);
+    LLMResponse proxy(LLMRequest request, RoutingStrategy strategy);
 
     /**
      * 代理转发流式请求（带认证结果）
      */
-    void proxyStream(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk);
+    void proxyStream(LLMRequest request, UserAuthResult authResult, RoutingStrategy strategy, Consumer<String> onChunk);
 
     /**
      * 代理转发流式请求（旧接口）
      */
-    void proxyStream(LLMRequest request, RouteGroup.RoutingStrategy strategy, Consumer<String> onChunk);
+    void proxyStream(LLMRequest request, RoutingStrategy strategy, Consumer<String> onChunk);
 
     /**
      * 代理转发流式请求（带完成和错误回调，旧接口）
      */
-    void proxyStream(LLMRequest request, RouteGroup.RoutingStrategy strategy,
+    void proxyStream(LLMRequest request, RoutingStrategy strategy,
                      Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError);
 
     /**
      * 代理转发流式请求（带完成和错误回调，带认证结果）
      */
-    void proxyStream(LLMRequest request, UserAuthResult authResult, RouteGroup.RoutingStrategy strategy,
+    void proxyStream(LLMRequest request, UserAuthResult authResult, RoutingStrategy strategy,
                      Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError);
 }

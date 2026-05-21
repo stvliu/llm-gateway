@@ -5,12 +5,11 @@ import com.codingas.gateway.application.proxy.dto.AnthropicMessagesResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,13 +36,10 @@ public class AnthropicController {
     @PostMapping("/messages")
     public ResponseEntity<?> messages(
             @RequestBody AnthropicMessagesRequest request,
-            @RequestAttribute("userId") Long userId,
-            @RequestAttribute("apiKeyId") Long apiKeyId,
             @RequestAttribute(value = "authResult", required = false) UserAuthResult authResult,
             HttpServletResponse response) throws IOException {
 
-        log.info("Anthropic messages request: model={}, userId={}, stream={}",
-                request.getModel(), userId, request.getStream());
+        log.info("Anthropic messages request: model={}, stream={}", request.getModel(), request.getStream());
 
         validateRequest(request);
 
@@ -60,14 +56,12 @@ public class AnthropicController {
     private ResponseEntity<?> messagesNonStream(
             AnthropicMessagesRequest request, UserAuthResult authResult) {
 
-        LLMRequest llmRequest = toLLMRequest(request);
-
-        LLMResponse llmResponse;
-        if (authResult != null) {
-            llmResponse = proxyService.proxy(llmRequest, authResult, RouteGroup.RoutingStrategy.WEIGHTED);
-        } else {
-            llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        if (authResult == null) {
+            throw new IllegalStateException("认证信息缺失，请检查 API Key");
         }
+
+        LLMRequest llmRequest = toLLMRequest(request);
+        LLMResponse llmResponse = proxyService.proxy(llmRequest, authResult, RoutingStrategy.WEIGHTED);
 
         if (llmResponse.getError() != null) {
             return ResponseEntity.badRequest().body(
@@ -89,67 +83,14 @@ public class AnthropicController {
             AnthropicMessagesRequest request, UserAuthResult authResult,
             HttpServletResponse response) throws IOException {
 
+        if (authResult == null) {
+            throw new IllegalStateException("认证信息缺失，请检查 API Key");
+        }
+
         LLMRequest llmRequest = toLLMRequest(request);
         llmRequest.setStream(true);
 
-        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-
-        java.io.PrintWriter writer = response.getWriter();
-        java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-
-        if (authResult != null) {
-            proxyService.proxyStream(llmRequest, authResult, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
-                try {
-                    writer.write("data: " + data + "\n\n");
-                    writer.flush();
-                } catch (Exception e) {
-                    log.warn("Error sending SSE data: {}", e.getMessage());
-                    latch.countDown();
-                }
-            }, () -> {
-                try {
-                    writer.write("data: [DONE]\n\n");
-                    writer.flush();
-                } catch (Exception e) {
-                    log.warn("Error writing stream done: {}", e.getMessage());
-                }
-                latch.countDown();
-            }, error -> {
-                log.error("Stream error: {}", error.getMessage());
-                latch.countDown();
-            });
-        } else {
-            proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
-                try {
-                    writer.write("data: " + data + "\n\n");
-                    writer.flush();
-                } catch (Exception e) {
-                    log.warn("Error sending SSE data: {}", e.getMessage());
-                    latch.countDown();
-                }
-            }, () -> {
-                try {
-                    writer.write("data: [DONE]\n\n");
-                    writer.flush();
-                } catch (Exception e) {
-                    log.warn("Error writing stream done: {}", e.getMessage());
-                }
-                latch.countDown();
-            }, error -> {
-                log.error("Stream error: {}", error.getMessage());
-                latch.countDown();
-            });
-        }
-
-        try {
-            latch.await(120, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Stream interrupted");
-        }
-
+        SseStreamHelper.executeStream(proxyService, llmRequest, authResult, response);
         return null;
     }
 

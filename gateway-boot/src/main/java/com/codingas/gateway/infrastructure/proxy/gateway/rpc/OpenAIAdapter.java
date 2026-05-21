@@ -6,6 +6,7 @@ import com.codingas.gateway.application.proxy.dto.LLMResponse;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult;
 import com.codingas.gateway.domain.model.enums.ProviderErrorType;
+import com.codingas.gateway.domain.proxy.exception.ProviderException;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.common.util.JsonUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -87,7 +88,7 @@ public class OpenAIAdapter implements LLMAdapter {
 
             try (Response response = httpClient.newCall(httpRequest).execute()) {
                 if (!response.isSuccessful()) {
-                    throw new RuntimeException("OpenAI chat request failed: " + response);
+                    throw new ProviderException("PROVIDER_REQUEST_FAILED", "OpenAI chat request failed: " + response);
                 }
 
                 String responseBody = response.body().string();
@@ -97,7 +98,7 @@ public class OpenAIAdapter implements LLMAdapter {
             }
         } catch (IOException e) {
             log.error("OpenAI chat error: model={}, error={}", request.getModel(), e.getMessage(), e);
-            throw new RuntimeException("OpenAI chat request failed", e);
+            throw new ProviderException("PROVIDER_REQUEST_FAILED", "OpenAI chat request failed", e);
         }
     }
 
@@ -135,7 +136,7 @@ public class OpenAIAdapter implements LLMAdapter {
                 public void onResponse(Call call, Response response) throws IOException {
                     try (ResponseBody body = response.body()) {
                         if (body == null) {
-                            callback.onError(new RuntimeException("Empty response body"));
+                            callback.onError(new ProviderException("PROVIDER_EMPTY_RESPONSE", "Empty response body"));
                             return;
                         }
 
@@ -578,7 +579,7 @@ public class OpenAIAdapter implements LLMAdapter {
         try {
             Map<String, Object> response = JsonUtils.toMap(responseBody);
             if (response == null) {
-                throw new RuntimeException("Empty response body");
+                throw new ProviderException("PROVIDER_EMPTY_RESPONSE", "Empty response body");
             }
             return LLMResponse.builder()
                     .provider(PROVIDER_CODE)
@@ -590,8 +591,10 @@ public class OpenAIAdapter implements LLMAdapter {
                     .finishReason(extractFinishReason(response))
                     .stream(false)
                     .build();
+        } catch (ProviderException e) {
+            throw e;
         } catch (Exception e) {
-            throw new RuntimeException("Failed to parse OpenAI response", e);
+            throw new ProviderException("PROVIDER_RESPONSE_PARSE_ERROR", "Failed to parse OpenAI response", e);
         }
     }
 

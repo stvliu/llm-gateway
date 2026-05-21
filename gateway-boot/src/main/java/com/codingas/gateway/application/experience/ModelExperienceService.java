@@ -6,10 +6,11 @@ import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
@@ -33,9 +34,11 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>提供流式聊天体验功能，支持两种模式：</p>
  * <ol>
- *   <li>使用已保存配置：传入 providerId，可选 apiKeyId</li>
+ *   <li>使用已保存配置：传入 productId，可选 apiKeyId</li>
  *   <li>临时配置：传入 protocolName(协议名称), apiKey, baseUrl(可选)</li>
  * </ol>
+ *
+ * <p>注意：已迁移到新架构，使用 ProductApiKey 替代 ProviderApiKey。</p>
  */
 @Slf4j
 @Service
@@ -43,18 +46,21 @@ public class ModelExperienceService {
 
     private final ProtocolGatewayRegistry protocolGatewayRegistry;
     private final ProviderGateway providerGateway;
-    private final ProviderApiKeyGateway providerApiKeyGateway;
+    private final ProductGateway productGateway;
+    private final ProductApiKeyGateway productApiKeyGateway;
     private final ModelGateway modelGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ModelExperienceService(ProtocolGatewayRegistry protocolGatewayRegistry,
                                   ProviderGateway providerGateway,
-                                  ProviderApiKeyGateway providerApiKeyGateway,
+                                  ProductGateway productGateway,
+                                  ProductApiKeyGateway productApiKeyGateway,
                                   ModelGateway modelGateway) {
         this.protocolGatewayRegistry = protocolGatewayRegistry;
         this.providerGateway = providerGateway;
-        this.providerApiKeyGateway = providerApiKeyGateway;
+        this.productGateway = productGateway;
+        this.productApiKeyGateway = productApiKeyGateway;
         this.modelGateway = modelGateway;
     }
 
@@ -102,7 +108,7 @@ public class ModelExperienceService {
             try {
                 emitter.send(SseEmitter.event()
                     .name("ERROR")
-                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 providerId，临时配置时需提供 protocolName 和 apiKey")));
+                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 productId，临时配置时需提供 protocolName 和 apiKey")));
                 emitter.complete();
             } catch (IOException e) {
                 emitter.completeWithError(e);
@@ -243,37 +249,41 @@ public class ModelExperienceService {
      *
      * <p>支持两种模式：</p>
      * <ol>
-     *   <li>使用已保存配置：从数据库读取 Provider 和 API Key</li>
+     *   <li>使用已保存配置：从数据库读取 Product 和 ProductApiKey</li>
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
     private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
         if (request.useSavedConfig()) {
-            // 从数据库读取配置
-            Provider provider = providerGateway.findById(request.getProviderId())
-                .orElseThrow(() -> new IllegalArgumentException("供应商不存在: " + request.getProviderId()));
+            // 从数据库读取配置（新架构：使用 productId）
+            var product = productGateway.findById(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("产品不存在: " + request.getProductId()));
 
-            ProviderApiKey apiKey;
+            ProductApiKey apiKey;
             if (request.getApiKeyId() != null) {
-                apiKey = providerApiKeyGateway.findById(request.getApiKeyId())
+                apiKey = productApiKeyGateway.findById(request.getApiKeyId())
                     .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + request.getApiKeyId()));
-                if (!apiKey.getProviderId().equals(request.getProviderId())) {
-                    throw new IllegalArgumentException("API Key 不属于该供应商");
+                if (!apiKey.getProductId().equals(request.getProductId())) {
+                    throw new IllegalArgumentException("API Key 不属于该产品");
                 }
             } else {
-                apiKey = providerApiKeyGateway.findDefaultKeyByProviderId(request.getProviderId())
-                    .orElseThrow(() -> new IllegalArgumentException("供应商没有默认 API Key，请指定要使用的 Key"));
+                apiKey = productApiKeyGateway.findDefaultByProductId(request.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("产品没有默认 API Key，请指定要使用的 Key"));
             }
 
             if (!apiKey.isAvailable()) {
-                throw new IllegalArgumentException("API Key 不可用: " + apiKey.getState());
+                throw new IllegalArgumentException("API Key 不可用");
             }
 
-            // 使用已保存配置：protocolName + providerId + apiKeyId
+            // 从产品端点获取 baseUrl
+            Map<String, String> endpoints = product.getEndpoints();
+            String baseUrl = endpoints != null ? endpoints.get(request.getProtocolName()) : null;
+
+            // 使用已保存配置
             return new ResolvedConfig(
                 request.getProtocolName(),
-                null,
-                apiKey.getApiKey()
+                baseUrl,
+                apiKey.getApiKeyPlain()
             );
         } else {
             // 使用临时配置：baseUrl 可选，由协议网关提供默认值

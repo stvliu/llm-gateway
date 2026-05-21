@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.config;
 
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
  *
  * <p>定时检查数据库配置版本，作为事件机制的兜底。</p>
  * <p>轮询间隔：30 秒</p>
+ *
+ * <p>注意：已迁移到新架构，使用 ProductApiKeyGateway 替代 ProviderApiKeyGateway。</p>
  */
 @Component
 @Slf4j
@@ -23,7 +25,7 @@ public class ConfigVersionChecker {
 
     private final ProviderGateway providerGateway;
     private final ModelGateway modelGateway;
-    private final ProviderApiKeyGateway apiKeyGateway;
+    private final ProductApiKeyGateway productApiKeyGateway;
     private final ConfigCacheService cacheService;
 
     // 记录上次检查的版本
@@ -39,7 +41,7 @@ public class ConfigVersionChecker {
     public void initVersions() {
         lastProviderVersion = providerGateway.getMaxVersion();
         lastModelVersion = modelGateway.getMaxVersion();
-        lastApiKeyVersion = apiKeyGateway.getMaxVersion();
+        lastApiKeyVersion = productApiKeyGateway.getMaxVersion();
         log.info("Version checker initialized: provider={}, model={}, apiKey={}",
             lastProviderVersion, lastModelVersion, lastApiKeyVersion);
     }
@@ -68,7 +70,7 @@ public class ConfigVersionChecker {
         }
 
         // 检查 API Key 版本
-        long currentApiKeyVersion = apiKeyGateway.getMaxVersion();
+        long currentApiKeyVersion = productApiKeyGateway.getMaxVersion();
         if (currentApiKeyVersion > lastApiKeyVersion) {
             log.info("API Key version changed: {} -> {}", lastApiKeyVersion, currentApiKeyVersion);
             cacheService.refreshApiKeys();

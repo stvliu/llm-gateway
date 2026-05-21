@@ -16,7 +16,7 @@ import java.util.Map;
  * <p>提供已注册协议的名称和显示标签，供前端动态获取可选协议列表。</p>
  */
 @RestController
-@RequestMapping("/api/protocols")
+@RequestMapping("/api/v1/protocols")
 @RequiredArgsConstructor
 public class ProtocolController {
 

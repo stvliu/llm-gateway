@@ -3,11 +3,12 @@ package com.codingas.gateway.application.provider;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
 import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
-import com.codingas.gateway.application.provider.dto.ProviderKeysResponse;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
+
+import java.util.List;
 
 /**
  * 提供商应用服务接口
@@ -47,9 +48,9 @@ public interface ProviderService {
     ProviderResponse setEnabled(Long id, boolean enabled);
 
     /**
-     * 获取 Provider 的 Key 信息（默认 Key + 列表）
+     * 获取所有供应商名称列表
      */
-    ProviderKeysResponse getProviderKeys(Long providerId);
+    List<String> getProviderNames();
 
     /**
      * 测试连通性

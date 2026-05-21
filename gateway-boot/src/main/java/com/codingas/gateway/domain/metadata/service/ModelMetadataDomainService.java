@@ -41,7 +41,7 @@ public class ModelMetadataDomainService {
     public void markSynced(ModelMetadata metadata) {
         metadata.setSource(MetadataSource.MODELS_DEV);
         metadata.setSourceSyncedAt(Instant.now());
-        metadata.setUpdatedAt(Instant.now());
+        // updatedAt 由 JPA 审计自动设置
     }
 
     /**
@@ -49,7 +49,7 @@ public class ModelMetadataDomainService {
      */
     public void markDeprecated(ModelMetadata metadata) {
         metadata.setState(MetadataState.DEPRECATED);
-        metadata.setUpdatedAt(Instant.now());
+        // updatedAt 由 JPA 审计自动设置
     }
 
     /**
@@ -68,7 +68,7 @@ public class ModelMetadataDomainService {
         applyMetaFields(metadata, data);
 
         metadata.setSourceSyncedAt(Instant.now());
-        metadata.setCreatedAt(Instant.now());
+        // createdAt 由 JPA 审计自动设置
 
         // 能力
         metadata.setCapabilities(buildCapabilities(data));
@@ -90,7 +90,7 @@ public class ModelMetadataDomainService {
 
         metadata.setSource(MetadataSource.MODELS_DEV);
         metadata.setSourceSyncedAt(Instant.now());
-        metadata.setUpdatedAt(Instant.now());
+        // updatedAt 由 JPA 审计自动设置
     }
 
     // ==================== 私有辅助方法 ====================

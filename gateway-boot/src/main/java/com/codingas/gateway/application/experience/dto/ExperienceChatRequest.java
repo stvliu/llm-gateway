@@ -8,6 +8,8 @@ import java.util.Map;
 
 /**
  * 体验聊天请求
+ *
+ * <p>已迁移到新架构，使用 productId 替代 providerId。</p>
  */
 @Data
 public class ExperienceChatRequest {
@@ -15,7 +17,7 @@ public class ExperienceChatRequest {
     @NotBlank(message = "Model is required")
     private String model;
 
-/** 协议名称（如 openai、anthropic），必填 */
+    /** 协议名称（如 openai、anthropic），必填 */
     @NotBlank(message = "Protocol name is required")
     private String protocolName;
 
@@ -27,10 +29,10 @@ public class ExperienceChatRequest {
 
     private Boolean stream;
 
-    /** 供应商 ID（使用已保存配置时必填） */
-    private Long providerId;
+    /** 产品 ID（使用已保存配置时必填） */
+    private Long productId;
 
-    /** API Key ID（使用已保存配置时必填） */
+    /** API Key ID（使用已保存配置时可选，默认使用产品的默认 Key） */
     private Long apiKeyId;
 
     /** 直接传入的 API Key（不使用已保存配置时） */
@@ -39,11 +41,11 @@ public class ExperienceChatRequest {
     /** 直接传入的 Base URL（不使用已保存配置时，可选，默认使用协议默认 URL） */
     private String baseUrl;
 
-    /** 是否使用已保存的供应商配置 */
+    /** 是否使用已保存的产品配置 */
     private Boolean useSavedConfig;
 
     /**
-     * 判断是否使用已保存的供应商配置
+     * 判断是否使用已保存的产品配置
      *
      * @return true 如果使用已保存配置
      */
@@ -64,7 +66,7 @@ public class ExperienceChatRequest {
             return false;
         }
         if (useSavedConfig()) {
-            return providerId != null && apiKeyId != null;
+            return productId != null;
         } else {
             return apiKey != null && !apiKey.isBlank();
         }

@@ -93,5 +93,18 @@
   "template.selectNone": "清空",
   "template.searchModel": "搜索模型",
   "template.selectedModels": "已选择 {{count}} 个模型",
-  "template.apiKeyRequired": "请至少配置一个有效的 API Key"
+  "template.apiKeyRequired": "请至少配置一个有效的 API Key",
+  "card.products": "产品",
+  "card.noProducts": "暂无产品",
+  "product.endpoints": "端点",
+  "product.keys": "Keys",
+  "product.associatedModels": "关联模型",
+  "product.lastCall": "最近调用",
+  "product.successRate": "成功率",
+  "product.testKey": "测试",
+  "product.testSuccess": "测试成功",
+  "product.testFailed": "测试失败",
+  "product.latency": "延迟",
+  "product.keyCreated": "密钥创建成功",
+  "product.keyCreatedHint": "请立即保存此密钥，关闭后将无法再次查看"
 }

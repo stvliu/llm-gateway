@@ -16,6 +16,7 @@ import java.util.Map;
  *
  * <p>表示供应商提供的计费产品，包含一组模型和访问端点。</p>
  * <p>一个供应商可以有多个产品（如按量计费、Coding Plan、Token Plan）。</p>
+ * <p>业务逻辑（模型匹配、端点选择）由 {@link com.codingas.gateway.domain.product.service.ProductDomainService} 处理。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -48,39 +49,9 @@ public class Product extends BaseEntity {
     private ProductState state = ProductState.ACTIVE;
 
     /**
-     * 检查产品是否可用
+     * 检查产品是否可用（简单状态判断，允许保留在实体中）
      */
     public boolean isAvailable() {
         return ProductState.ACTIVE.equals(state);
-    }
-
-    /**
-     * 检查产品是否包含指定模型
-     */
-    public boolean containsModel(String modelName) {
-        return models != null && models.contains(modelName);
-    }
-
-    /**
-     * 获取指定协议的端点
-     */
-    public String getEndpoint(String protocol) {
-        if (endpoints == null) {
-            return null;
-        }
-        return endpoints.get(protocol);
-    }
-
-    /**
-     * 获取默认端点（优先 openai，其次任意一个）
-     */
-    public String getDefaultEndpoint() {
-        if (endpoints == null || endpoints.isEmpty()) {
-            return null;
-        }
-        if (endpoints.containsKey("openai")) {
-            return endpoints.get("openai");
-        }
-        return endpoints.values().iterator().next();
     }
 }
