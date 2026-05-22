@@ -1,39 +1,111 @@
-import { Card, Tag, Typography, Space, Tooltip, Spin } from 'antd';
-import { GlobalOutlined, LinkOutlined, AppstoreOutlined } from '@ant-design/icons';
+import { Card, Tag, Typography, Space, Tooltip, Spin, Dropdown } from 'antd';
+import { GlobalOutlined, LinkOutlined, AppstoreOutlined, MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import type { MenuProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useProducts } from '@/services/query/useProducts';
+import { ProviderIcon } from '@/components/ui';
 import type { Provider } from '@/types/provider';
 
 const { Text, Paragraph } = Typography;
 
 interface Props {
   provider: Provider;
-  onClick: () => void;
+  onView: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
   onViewProducts?: () => void;
 }
 
-export default function ProviderCard({ provider, onClick, onViewProducts }: Props) {
+export default function ProviderCard({ provider, onView, onEdit, onDelete, onViewProducts }: Props) {
   const { t } = useTranslation('providers');
-  const { data: products, isLoading } = useProducts(provider.id);
 
-  const activeProducts = products?.filter(p => p.state === 'ACTIVE') || [];
+  // ensure provider.id is valid
+  const providerId = provider?.id ?? 0;
+  const { data: products, isLoading } = useProducts(providerId);
+
+  // filter active products (backend uses lowercase "active")
+  const activeProducts = products?.filter(p => p.state?.toUpperCase() === 'ACTIVE') || [];
   const displayProducts = activeProducts.slice(0, 3);
   const remainingCount = activeProducts.length - displayProducts.length;
+
+  // dropdown menu items
+  const menuItems: MenuProps['items'] = [
+    {
+      key: 'view',
+      label: t('actions.view', { defaultValue: 'View' }),
+      icon: <EyeOutlined />,
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        onView();
+      },
+    },
+    {
+      key: 'edit',
+      label: t('actions.edit', { defaultValue: 'Edit' }),
+      icon: <EditOutlined />,
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        onEdit();
+      },
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'delete',
+      label: t('actions.delete', { defaultValue: 'Delete' }),
+      icon: <DeleteOutlined />,
+      danger: true,
+      onClick: (e) => {
+        e.domEvent.stopPropagation();
+        onDelete();
+      },
+    },
+  ];
+
+  // state indicator config: use colored Tag for better visibility
+  const stateConfig: Record<string, { color: string; label: string }> = {
+    ACTIVE: { color: 'success', label: t('state.active', { defaultValue: 'Active' }) },
+    INACTIVE: { color: 'warning', label: t('state.inactive', { defaultValue: 'Inactive' }) },
+  };
+  const currentState = stateConfig[provider.state?.toUpperCase() as keyof typeof stateConfig] || { color: 'default', label: provider.state || 'Unknown' };
 
   return (
     <Card
       hoverable
-      onClick={onClick}
+      onClick={onView}
       style={{ height: '100%' }}
+      title={
+        <Space>
+          <ProviderIcon providerId={provider.providerId || provider.providerName} size="small" iconSize={24} />
+          <Text strong>{provider.providerName}</Text>
+          <Tag color={currentState.color}>{currentState.label}</Tag>
+        </Space>
+      }
+      extra={
+        <Dropdown
+          menu={{ items: menuItems }}
+          trigger={['click']}
+          placement="bottomRight"
+        >
+          <Tag
+            onClick={(e) => e.stopPropagation()}
+            style={{ cursor: 'pointer', marginRight: 0 }}
+          >
+            <MoreOutlined />
+          </Tag>
+        </Dropdown>
+      }
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
-        {/* 基本信息 */}
-        <Space>
-          <Text strong>{provider.providerName}</Text>
-          <Tag color={provider.state === 'ACTIVE' ? 'green' : 'default'}>
-            {provider.state}
-          </Tag>
-        </Space>
+
+        {provider.description && (
+          <Tooltip title={provider.description}>
+            <Text type="secondary" ellipsis style={{ maxWidth: 200 }}>
+              {provider.description}
+            </Text>
+          </Tooltip>
+        )}
 
         {provider.websiteUrl && (
           <Tooltip title={provider.websiteUrl}>
@@ -49,19 +121,19 @@ export default function ProviderCard({ provider, onClick, onViewProducts }: Prop
           </Paragraph>
         )}
 
-        {/* 产品展示区域 */}
+        {/* Products section */}
         <div style={{ marginTop: 8 }}>
           <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
             <AppstoreOutlined />
             <Text type="secondary">
-              {t('card.products', { defaultValue: '产品' })} ({activeProducts.length})
+              {t('card.products', { defaultValue: 'Products' })} ({activeProducts.length})
             </Text>
           </div>
           {isLoading ? (
             <Spin size="small" />
           ) : activeProducts.length === 0 ? (
             <Text type="secondary" style={{ fontSize: 12 }}>
-              {t('card.noProducts', { defaultValue: '暂无产品' })}
+              {t('card.noProducts', { defaultValue: 'No products' })}
             </Text>
           ) : (
             <Space wrap size={[4, 4]}>

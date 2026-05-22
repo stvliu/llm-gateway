@@ -10,7 +10,7 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader, EntityTable } from '@/components/ui';
+import { PageHeader, EntityTable, ProviderIcon } from '@/components/ui';
 import type { ColumnConfig } from '@/components/ui';
 import { FilterPanel, FilterTags } from '@/components/common';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -80,9 +80,22 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
       title: t('name', { defaultValue: '供应商名称' }),
       dataIndex: 'providerName',
       sortable: true,
-      render: (value: unknown) => (
-        <span style={{ fontWeight: 500 }}>{value as string}</span>
-      ),
+      render: (value: unknown, record: unknown) => {
+        const provider = record as Provider;
+        return (
+          <Space>
+            <ProviderIcon providerId={provider.providerId || provider.providerName} size={20} iconSize={16} />
+            <span style={{ fontWeight: 500 }}>{value as string}</span>
+          </Space>
+        );
+      },
+    },
+    {
+      key: 'providerId',
+      title: t('provider.providerId', { defaultValue: '品牌标识' }),
+      dataIndex: 'providerId',
+      width: 100,
+      render: (value: unknown) => value ? <Tag>{value as string}</Tag> : '-',
     },
     {
       key: 'websiteUrl',
