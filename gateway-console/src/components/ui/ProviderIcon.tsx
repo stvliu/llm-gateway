@@ -15,8 +15,8 @@ import {
 } from '@lobehub/icons';
 import type { FC } from 'react';
 
-/** providerId 到 LobeHub 图标组件的映射 */
-const PROVIDER_ICON_MAP: Record<string, FC<{ size?: number }>> = {
+/** providerId 到 LobeHub 图标组件的映射（Mono 变体） */
+const PROVIDER_ICON_MAP: Record<string, FC<{ size?: number | string }>> = {
   openai: OpenAI,
   anthropic: Anthropic,
   gemini: Gemini,
@@ -34,33 +34,47 @@ const PROVIDER_ICON_MAP: Record<string, FC<{ size?: number }>> = {
 export interface ProviderIconProps extends Omit<AvatarProps, 'src'> {
   /** 后端 providerId，用于匹配图标 */
   providerId: string;
-  /** 图标尺寸（默认 32） */
+  /** 图标尺寸（默认 24） */
   iconSize?: number;
 }
 
 /**
- * 根据 providerId 渲染对应的 LobeHub 品牌图标。
+ * 根据 providerId 渲染对应的 LobeHub 品牌图标（Mono 变体）。
  * 未匹配时显示 providerId 首字母的默认 Avatar。
  */
 export const ProviderIcon: FC<ProviderIconProps> = ({
   providerId,
-  iconSize = 32,
+  iconSize = 24,
+  size = iconSize,
+  style,
   ...avatarProps
 }) => {
-  const IconComponent = PROVIDER_ICON_MAP[providerId];
+  const IconComponent = PROVIDER_ICON_MAP[providerId?.toLowerCase()];
 
   if (IconComponent) {
+    // 直接渲染 SVG 图标，不使用 Avatar 包装
     return (
-      <Avatar
-        {...avatarProps}
-        src={<IconComponent size={iconSize} />}
-      />
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          backgroundColor: '#f5f5f5',
+          overflow: 'hidden',
+          ...style,
+        }}
+      >
+        <IconComponent size={iconSize} />
+      </span>
     );
   }
 
   // 降级：首字母 Avatar
   return (
-    <Avatar {...avatarProps}>
+    <Avatar size={size} style={style} {...avatarProps}>
       {providerId?.charAt(0)?.toUpperCase() || '?'}
     </Avatar>
   );
