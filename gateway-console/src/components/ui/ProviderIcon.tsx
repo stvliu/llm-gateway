@@ -3,16 +3,15 @@ import {
   OpenAI,
   Anthropic,
   Google,
-  Gemini,
   DeepSeek,
-  Zhipu,
+  ChatGLM,
   Qwen,
-  Tencent,
-  Volcengine,
-  Moonshot,
+  Hunyuan,
+  Doubao,
+  Kimi,
   Minimax,
-  IFlyTekCloud,
-  Baidu,
+  Spark,
+  Wenxin,
 } from '@lobehub/icons';
 import type { FC } from 'react';
 
@@ -20,26 +19,28 @@ import type { FC } from 'react';
 type IconVariant = 'color' | 'mono';
 
 type IconEntry = {
-  /** Mono 变体（始终可用，是 default export） */
   Mono: FC<{ size?: number | string }>;
-  /** Color 变体（部分品牌有，品牌色 SVG；部分品牌用 BrandColor 代替） */
   Color?: FC<{ size?: number | string }>;
 };
 
-/** providerId 到 LobeHub 图标组件的映射 */
+/**
+ * providerId 到 LobeHub 图标组件的映射。
+ * 优先使用产品品牌图标（ChatGLM、Kimi、Doubao 等）而非公司图标，
+ * 因为产品品牌辨识度更高。
+ */
 const PROVIDER_ICON_ENTRIES: Record<string, IconEntry> = {
   openai:     { Mono: OpenAI },
   anthropic:  { Mono: Anthropic },
-  gemini:     { Mono: Gemini,     Color: Google.BrandColor },
+  gemini:     { Mono: Google,     Color: Google.BrandColor },
   deepseek:   { Mono: DeepSeek,   Color: DeepSeek.Color },
-  zhipu:      { Mono: Zhipu,      Color: Zhipu.Color },
+  zhipu:      { Mono: ChatGLM,    Color: ChatGLM.Color },
   qwen:       { Mono: Qwen,       Color: Qwen.Color },
-  tencent:    { Mono: Tencent,    Color: Tencent.Color },
-  volcengine: { Mono: Volcengine, Color: Volcengine.Color },
-  moonshot:   { Mono: Moonshot },
+  tencent:    { Mono: Hunyuan,    Color: Hunyuan.Color },
+  volcengine: { Mono: Doubao,     Color: Doubao.Color },
+  moonshot:   { Mono: Kimi,       Color: Kimi.Color },
   minimax:    { Mono: Minimax,    Color: Minimax.Color },
-  xunfei:     { Mono: IFlyTekCloud, Color: IFlyTekCloud.Color },
-  wenxin:     { Mono: Baidu,      Color: Baidu.Color },
+  xunfei:     { Mono: Spark,      Color: Spark.Color },
+  wenxin:     { Mono: Wenxin,     Color: Wenxin.Color },
 };
 
 export interface ProviderIconProps {
@@ -56,7 +57,7 @@ export interface ProviderIconProps {
 /**
  * 根据 providerId 渲染对应的 LobeHub 品牌图标。
  * 有 Color 变体用 Color（品牌色），无 Color 用 Mono（单色）。
- * 找不到图标时显示首字母降级 Avatar。
+ * 找不到图标时显示首字母降级。
  * 自动适配亮色/暗色主题。
  */
 export const ProviderIcon: FC<ProviderIconProps> = ({
@@ -71,8 +72,6 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
   const IconComponent = entry?.Color ?? entry?.Mono;
 
   if (IconComponent) {
-    // Color 变体自带品牌色，不需要背景衬托
-    // Mono 变体用 fill="currentColor"，需要背景圆 + 文字色确保可读
     const isMono = variant === 'mono';
     return (
       <span
@@ -95,7 +94,6 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
     );
   }
 
-  // 降级：首字母圆形容器
   const letter = providerId && providerId.length > 0
     ? providerId.charAt(0).toUpperCase()
     : '?';
