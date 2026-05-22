@@ -173,13 +173,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
   const renderApplyMetadata = () => (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        {selectedMetadata?.iconUrl ? (
-          <Avatar src={selectedMetadata.iconUrl} />
-        ) : (
-          <Avatar style={{ backgroundColor: '#87e8de' }}>
-            {selectedMetadata?.providerName.charAt(0)}
-          </Avatar>
-        )}
+        <ProviderIcon providerId={selectedMetadata?.providerId || ''} iconSize={32} />
         <div>
           <Text strong>{selectedMetadata?.providerName}</Text>
           <br />
