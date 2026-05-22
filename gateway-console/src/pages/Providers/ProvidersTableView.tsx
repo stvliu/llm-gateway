@@ -84,7 +84,7 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
         const provider = record as Provider;
         return (
           <Space>
-            <ProviderIcon providerId={provider.providerId || provider.providerName} size={20} iconSize={16} />
+            <ProviderIcon providerId={provider.providerId || provider.providerName} size={20} />
             <span style={{ fontWeight: 500 }}>{value as string}</span>
           </Space>
         );

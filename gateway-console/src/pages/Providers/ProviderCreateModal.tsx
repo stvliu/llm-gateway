@@ -136,7 +136,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
             >
               <Card.Meta
                 avatar={
-                  <ProviderIcon providerId={metadata.providerId} size="small" iconSize={24} />
+                  <ProviderIcon providerId={metadata.providerId} size={24} />
                 }
                 title={metadata.providerName}
                 description={
@@ -173,7 +173,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
   const renderApplyMetadata = () => (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <ProviderIcon providerId={selectedMetadata?.providerId || ''} iconSize={32} />
+        <ProviderIcon providerId={selectedMetadata?.providerId || ''} size={32} />
         <div>
           <Text strong>{selectedMetadata?.providerName}</Text>
           <br />

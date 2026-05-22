@@ -77,7 +77,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
       style={{ height: '100%' }}
       title={
         <Space>
-          <ProviderIcon providerId={provider.providerId || provider.providerName} size="small" iconSize={24} />
+          <ProviderIcon providerId={provider.providerId || provider.providerName} size={24} />
           <Text strong>{provider.providerName}</Text>
           <Tag color={currentState.color}>{currentState.label}</Tag>
         </Space>

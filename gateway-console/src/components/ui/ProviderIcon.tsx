@@ -1,4 +1,4 @@
-import { Avatar, type AvatarProps } from 'antd';
+import { Avatar, theme } from 'antd';
 import {
   OpenAI,
   Anthropic,
@@ -31,28 +31,32 @@ const PROVIDER_ICON_MAP: Record<string, FC<{ size?: number | string }>> = {
   wenxin: Baidu,
 };
 
-export interface ProviderIconProps extends Omit<AvatarProps, 'src'> {
+export interface ProviderIconProps {
   /** 后端 providerId，用于匹配图标 */
   providerId: string;
-  /** 图标尺寸（默认 24） */
+  /** 容器尺寸（默认 24） */
+  size?: number;
+  /** 图标尺寸（默认与 size 一致） */
   iconSize?: number;
+  /** 自定义样式 */
+  style?: React.CSSProperties;
 }
 
 /**
  * 根据 providerId 渲染对应的 LobeHub 品牌图标（Mono 变体）。
- * 未匹配时显示 providerId 首字母的默认 Avatar。
+ * 自动适配亮色/暗色主题。未匹配时显示首字母 Avatar。
  */
 export const ProviderIcon: FC<ProviderIconProps> = ({
   providerId,
-  iconSize = 24,
-  size = iconSize,
+  iconSize,
+  size = 24,
   style,
-  ...avatarProps
 }) => {
+  const { token } = theme.useToken();
+  const resolvedIconSize = iconSize ?? size;
   const IconComponent = PROVIDER_ICON_MAP[providerId?.toLowerCase()];
 
   if (IconComponent) {
-    // 直接渲染 SVG 图标，不使用 Avatar 包装
     return (
       <span
         style={{
@@ -62,19 +66,19 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
           width: size,
           height: size,
           borderRadius: '50%',
-          backgroundColor: '#f5f5f5',
+          backgroundColor: token.colorFillQuaternary,
+          color: token.colorText,
           overflow: 'hidden',
           ...style,
         }}
       >
-        <IconComponent size={iconSize} />
+        <IconComponent size={resolvedIconSize} />
       </span>
     );
   }
 
-  // 降级：首字母 Avatar
   return (
-    <Avatar size={size} style={style} {...avatarProps}>
+    <Avatar size={size} style={{ backgroundColor: token.colorFillQuaternary, color: token.colorText, ...style }}>
       {providerId?.charAt(0)?.toUpperCase() || '?'}
     </Avatar>
   );
