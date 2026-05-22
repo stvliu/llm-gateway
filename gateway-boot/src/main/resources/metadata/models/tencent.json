@@ -1,67 +1,127 @@
 [
   {
-    "provider_model_id": "hunyuan-lite",
-    "display_name": "混元 Lite",
-    "context_window": 256000,
-    "input_price": 0.0,
-    "output_price": 0.0,
-    "source": "BUILTIN",
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-t1",
+    "display_name": "混元 T1",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 2.00,
+    "output_price": 8.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true,
+      "reasoning": true
+    },
+    "knowledge_cutoff": "2025-04-15",
+    "description": "推理增强模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-turbos",
+    "display_name": "混元 TurboS",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 0.80,
+    "output_price": 2.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-04-15"
   },
   {
-    "provider_model_id": "hunyuan-standard",
-    "display_name": "混元 Standard",
-    "context_window": 32000,
-    "input_price": 0.004,
-    "output_price": 0.012,
-    "source": "BUILTIN",
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-a13b",
+    "display_name": "混元 A13B",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 0.50,
+    "output_price": 1.50,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-03-15"
   },
   {
-    "provider_model_id": "hunyuan-pro",
-    "display_name": "混元 Pro",
-    "context_window": 32000,
-    "input_price": 0.004,
-    "output_price": 0.012,
-    "source": "BUILTIN",
-    "capabilities": {
-      "vision": false,
-      "function_calling": true,
-      "streaming": true
-    }
-  },
-  {
-    "provider_model_id": "hunyuan-turbo",
-    "display_name": "混元 Turbo",
-    "context_window": 32000,
-    "input_price": 0.015,
-    "output_price": 0.06,
-    "source": "BUILTIN",
-    "capabilities": {
-      "vision": false,
-      "function_calling": true,
-      "streaming": true
-    }
-  },
-  {
-    "provider_model_id": "hunyuan-vision",
-    "display_name": "混元 Vision",
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-vision-1.5",
+    "display_name": "混元 Vision 1.5",
     "context_window": 8192,
-    "input_price": 0.018,
-    "output_price": 0.018,
-    "source": "BUILTIN",
+    "max_output_tokens": 4096,
+    "input_price": 1.80,
+    "output_price": 1.80,
     "capabilities": {
       "vision": true,
       "function_calling": false,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-03-15",
+    "description": "视觉理解模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-t1-vision",
+    "display_name": "混元 T1 Vision",
+    "context_window": 8192,
+    "max_output_tokens": 4096,
+    "input_price": 2.50,
+    "output_price": 10.00,
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true,
+      "reasoning": true
+    },
+    "knowledge_cutoff": "2025-03-15"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-lite",
+    "display_name": "混元 Lite",
+    "context_window": 256000,
+    "max_output_tokens": 8192,
+    "input_price": 0.00,
+    "output_price": 0.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31",
+    "description": "部分免费"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-standard",
+    "display_name": "混元 Standard",
+    "context_window": 32000,
+    "max_output_tokens": 4096,
+    "input_price": 0.004,
+    "output_price": 0.012,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-pro",
+    "display_name": "混元 Pro",
+    "context_window": 32000,
+    "max_output_tokens": 4096,
+    "input_price": 0.004,
+    "output_price": 0.012,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31"
   }
 ]

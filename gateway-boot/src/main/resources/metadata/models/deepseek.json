@@ -1,41 +1,96 @@
 [
   {
-    "provider_model_id": "deepseek-chat",
-    "display_name": "DeepSeek Chat",
-    "context_window": 64000,
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v4-pro",
+    "display_name": "DeepSeek V4 Pro",
+    "context_window": 1048576,
+    "max_output_tokens": 384000,
+    "input_price": 3.00,
+    "output_price": 6.00,
+    "cache_read_price": 0.025,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true,
+      "reasoning": true
+    },
+    "knowledge_cutoff": "2025-04-15"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v4-flash",
+    "display_name": "DeepSeek V4 Flash",
+    "context_window": 1048576,
+    "max_output_tokens": 384000,
     "input_price": 0.14,
     "output_price": 0.28,
-    "source": "BUILTIN",
+    "cache_read_price": 0.0028,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-04-15"
   },
   {
-    "provider_model_id": "deepseek-coder",
-    "display_name": "DeepSeek Coder",
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v3.2",
+    "display_name": "DeepSeek V3.2",
     "context_window": 64000,
-    "input_price": 0.14,
-    "output_price": 0.28,
-    "source": "BUILTIN",
+    "max_output_tokens": 8192,
+    "input_price": 0.27,
+    "output_price": 1.10,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-03-15"
   },
   {
-    "provider_model_id": "deepseek-reasoner",
-    "display_name": "DeepSeek Reasoner (R1)",
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-r1",
+    "display_name": "DeepSeek R1",
     "context_window": 64000,
+    "max_output_tokens": 8192,
     "input_price": 0.55,
     "output_price": 2.19,
-    "source": "BUILTIN",
     "capabilities": {
       "vision": false,
       "function_calling": false,
+      "streaming": true,
+      "reasoning": true
+    },
+    "knowledge_cutoff": "2025-03-15"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-chat",
+    "display_name": "DeepSeek Chat",
+    "context_window": 64000,
+    "max_output_tokens": 8192,
+    "input_price": 0.14,
+    "output_price": 0.28,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-coder",
+    "display_name": "DeepSeek Coder",
+    "context_window": 64000,
+    "max_output_tokens": 8192,
+    "input_price": 0.14,
+    "output_price": 0.28,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31"
   }
 ]

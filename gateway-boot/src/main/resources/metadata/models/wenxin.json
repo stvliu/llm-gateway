@@ -1,54 +1,111 @@
 [
   {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-5.1",
+    "display_name": "ERNIE 5.1",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 5.00,
+    "output_price": 15.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-04-15"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-5.0",
+    "display_name": "ERNIE 5.0",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 4.00,
+    "output_price": 12.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-03-15"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-x1.1",
+    "display_name": "ERNIE X1.1",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 2.00,
+    "output_price": 6.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true,
+      "reasoning": true
+    },
+    "knowledge_cutoff": "2025-03-15",
+    "description": "推理增强模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-4.5-turbo",
+    "display_name": "ERNIE 4.5 Turbo",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 1.00,
+    "output_price": 3.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-02-15"
+  },
+  {
+    "product_name": "按量付费",
     "provider_model_id": "ernie-4.0-8k",
     "display_name": "ERNIE 4.0 8K",
     "context_window": 8192,
+    "max_output_tokens": 4096,
     "input_price": 0.03,
     "output_price": 0.06,
-    "source": "BUILTIN",
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31"
   },
   {
-    "provider_model_id": "ernie-4.0-turbo-8k",
-    "display_name": "ERNIE 4.0 Turbo 8K",
-    "context_window": 8192,
-    "input_price": 0.012,
-    "output_price": 0.012,
-    "source": "BUILTIN",
-    "capabilities": {
-      "vision": false,
-      "function_calling": true,
-      "streaming": true
-    }
-  },
-  {
-    "provider_model_id": "ernie-3.5-8k",
-    "display_name": "ERNIE 3.5 8K",
-    "context_window": 8192,
-    "input_price": 0.004,
-    "output_price": 0.008,
-    "source": "BUILTIN",
-    "capabilities": {
-      "vision": false,
-      "function_calling": true,
-      "streaming": true
-    }
-  },
-  {
+    "product_name": "按量付费",
     "provider_model_id": "ernie-speed-8k",
     "display_name": "ERNIE Speed 8K",
     "context_window": 8192,
-    "input_price": 0.001,
-    "output_price": 0.002,
-    "source": "BUILTIN",
+    "max_output_tokens": 4096,
+    "input_price": 0.00,
+    "output_price": 0.00,
     "capabilities": {
       "vision": false,
       "function_calling": false,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31",
+    "description": "永久免费（5QPS限流）"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-lite-8k",
+    "display_name": "ERNIE Lite 8K",
+    "context_window": 8192,
+    "max_output_tokens": 4096,
+    "input_price": 0.00,
+    "output_price": 0.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": false,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31",
+    "description": "永久免费（5QPS限流）"
   }
 ]
