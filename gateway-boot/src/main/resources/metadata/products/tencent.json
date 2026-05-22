@@ -7,15 +7,6 @@
       "NATIVE": "https://hunyuan.tencentcloudapi.com"
     },
     "is_default": true,
-    "description": "腾讯混元标准按量计费，Hy2-Lite常态化免费调用"
-  },
-  {
-    "provider_id": "tencent",
-    "product_name": "Hy Token Plan",
-    "product_type": "SUBSCRIPTION",
-    "endpoints": {
-      "NATIVE": "https://hunyuan.tencentcloudapi.com"
-    },
-    "description": "Agent导向订阅套餐，个人版Lite体验包3500万Tokens限时特惠"
+    "description": "腾讯混元标准按量计费。混元Lite常态化免费调用"
   }
 ]

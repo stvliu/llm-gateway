@@ -7,7 +7,7 @@
       "OPENAI": "https://api.openai.com/v1"
     },
     "is_default": true,
-    "description": "标准即时计费，支持Prompt Caching 90%折扣"
+    "description": "标准即时计费，支持Prompt Caching（90%折扣）"
   },
   {
     "provider_id": "openai",

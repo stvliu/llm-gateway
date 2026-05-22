@@ -8,15 +8,6 @@
       "OPENAI": "https://generativelanguage.googleapis.com/v1beta/openai/"
     },
     "is_default": true,
-    "description": "标准按量计费，支持Gemini原生协议和OpenAI兼容协议"
-  },
-  {
-    "provider_id": "gemini",
-    "product_name": "免费额度",
-    "product_type": "FREE_TIER",
-    "endpoints": {
-      "GEMINI": "https://generativelanguage.googleapis.com/v1beta"
-    },
-    "description": "Gemini 2.5 Flash日限1440次，Flash-Lite日限1000次"
+    "description": "标准按量计费，支持Gemini原生协议和OpenAI兼容协议。2.5 Flash/Flash-Lite有每日免费额度"
   }
 ]

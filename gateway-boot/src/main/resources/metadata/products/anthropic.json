@@ -7,7 +7,7 @@
       "ANTHROPIC": "https://api.anthropic.com/v1"
     },
     "is_default": true,
-    "description": "标准即时计费，全系1M上下文无溢价，Prompt Caching 90%折扣"
+    "description": "标准即时计费，全系1M上下文无溢价，支持Prompt Caching（90%折扣）"
   },
   {
     "provider_id": "anthropic",
