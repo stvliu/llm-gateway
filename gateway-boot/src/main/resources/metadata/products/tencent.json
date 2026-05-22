@@ -1,0 +1,12 @@
+[
+  {
+    "provider_id": "tencent",
+    "product_name": "按量付费",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "NATIVE": "https://hunyuan.tencentcloudapi.com"
+    },
+    "is_default": true,
+    "description": "标准按量计费"
+  }
+]

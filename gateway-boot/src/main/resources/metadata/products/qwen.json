@@ -1,0 +1,30 @@
+[
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-北京",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "is_default": true,
+    "description": "北京区域"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-弗吉尼亚",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "美国弗吉尼亚区域"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-新加坡",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "新加坡区域"
+  }
+]

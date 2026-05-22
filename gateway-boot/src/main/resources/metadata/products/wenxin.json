@@ -1,0 +1,12 @@
+[
+  {
+    "provider_id": "wenxin",
+    "product_name": "按量付费",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://qianfan.baidubce.com/v2"
+    },
+    "is_default": true,
+    "description": "标准按量计费"
+  }
+]

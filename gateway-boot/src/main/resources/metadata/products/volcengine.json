@@ -1,0 +1,22 @@
+[
+  {
+    "provider_id": "volcengine",
+    "product_name": "在线推理",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://ark.cn-beijing.volces.com/api/v3"
+    },
+    "is_default": true,
+    "description": "标准在线推理"
+  },
+  {
+    "provider_id": "volcengine",
+    "product_name": "Coding Plan",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://ark.cn-beijing.volces.com/api/coding/v3",
+      "ANTHROPIC": "https://ark.cn-beijing.volces.com/api/coding"
+    },
+    "description": "AI编码专用，支持双协议"
+  }
+]

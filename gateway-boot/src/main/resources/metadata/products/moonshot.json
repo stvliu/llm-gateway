@@ -1,0 +1,12 @@
+[
+  {
+    "provider_id": "moonshot",
+    "product_name": "按量付费",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://api.moonshot.cn/v1"
+    },
+    "is_default": true,
+    "description": "标准按量计费"
+  }
+]
