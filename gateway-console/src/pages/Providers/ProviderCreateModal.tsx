@@ -173,7 +173,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
   const renderApplyMetadata = () => (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
-        <ProviderIcon providerId={selectedMetadata?.providerId || ''} size={32} />
+        <ProviderIcon providerId={selectedMetadata?.providerId} size={32} />
         <div>
           <Text strong>{selectedMetadata?.providerName}</Text>
           <br />
