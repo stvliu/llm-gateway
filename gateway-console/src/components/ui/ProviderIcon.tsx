@@ -2,6 +2,7 @@ import { theme } from 'antd';
 import {
   OpenAI,
   Anthropic,
+  Google,
   Gemini,
   DeepSeek,
   Zhipu,
@@ -21,7 +22,7 @@ type IconVariant = 'color' | 'mono';
 type IconEntry = {
   /** Mono 变体（始终可用，是 default export） */
   Mono: FC<{ size?: number | string }>;
-  /** Color 变体（部分品牌有，品牌色 SVG） */
+  /** Color 变体（部分品牌有，品牌色 SVG；部分品牌用 BrandColor 代替） */
   Color?: FC<{ size?: number | string }>;
 };
 
@@ -29,7 +30,7 @@ type IconEntry = {
 const PROVIDER_ICON_ENTRIES: Record<string, IconEntry> = {
   openai:     { Mono: OpenAI },
   anthropic:  { Mono: Anthropic },
-  gemini:     { Mono: Gemini,     Color: Gemini.Color },
+  gemini:     { Mono: Gemini,     Color: Google.BrandColor },
   deepseek:   { Mono: DeepSeek,   Color: DeepSeek.Color },
   zhipu:      { Mono: Zhipu,      Color: Zhipu.Color },
   qwen:       { Mono: Qwen,       Color: Qwen.Color },
