@@ -3,11 +3,15 @@ package com.codingas.gateway.application.metadata;
 import com.codingas.gateway.application.metadata.dto.MetadataSyncResult;
 import com.codingas.gateway.domain.metadata.entity.MetadataSource;
 import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
+import com.codingas.gateway.domain.metadata.entity.ProductMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProviderMetadata;
+import com.codingas.gateway.domain.metadata.enums.ProductType;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ModelsDevDataGateway;
+import com.codingas.gateway.domain.metadata.gateway.ProductMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProviderMetadataGateway;
 import com.codingas.gateway.domain.metadata.service.ModelMetadataDomainService;
+import com.codingas.gateway.domain.metadata.service.ProductMetadataDomainService;
 import com.codingas.gateway.infrastructure.metadata.config.MetadataSyncConfig;
 import com.codingas.gateway.infrastructure.metadata.repository.BuiltinMetadataLoader;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +41,9 @@ public class MetadataSyncService {
     private final ModelsDevDataGateway modelsDevDataGateway;
     private final ProviderMetadataGateway providerMetadataGateway;
     private final ModelMetadataGateway modelMetadataGateway;
+    private final ProductMetadataGateway productMetadataGateway;
     private final ModelMetadataDomainService modelMetadataDomainService;
+    private final ProductMetadataDomainService productMetadataDomainService;
     private final MetadataSyncConfig config;
 
     /**
@@ -48,16 +54,18 @@ public class MetadataSyncService {
         log.info("Starting builtin metadata sync...");
 
         var providerResult = syncBuiltinProviders();
+        var productResult = syncBuiltinProducts();
         var modelResult = syncBuiltinModels();
 
-        log.info("Builtin metadata sync completed: {} providers ({} added, {} updated), {} models ({} added, {} updated)",
+        log.info("Builtin metadata sync completed: {} providers ({} added, {} updated), {} products ({} added, {} updated), {} models ({} added, {} updated)",
             providerResult.total, providerResult.added, providerResult.updated,
+            productResult.total, productResult.added, productResult.updated,
             modelResult.total, modelResult.added, modelResult.updated);
 
         return MetadataSyncResult.builder()
-            .syncedCount(providerResult.total + modelResult.total)
-            .addedCount(providerResult.added + modelResult.added)
-            .updatedCount(providerResult.updated + modelResult.updated)
+            .syncedCount(providerResult.total + productResult.total + modelResult.total)
+            .addedCount(providerResult.added + productResult.added + modelResult.added)
+            .updatedCount(providerResult.updated + productResult.updated + modelResult.updated)
             .syncedAt(Instant.now())
             .build();
     }
@@ -119,6 +127,36 @@ public class MetadataSyncService {
         }
 
         return new SyncCounts(models.size(), added, updated);
+    }
+
+    /**
+     * 同步内置产品元数据
+     */
+    private SyncCounts syncBuiltinProducts() {
+        List<Map<String, Object>> products = builtinMetadataLoader.loadProductMetadata();
+        int added = 0, updated = 0;
+
+        for (Map<String, Object> data : products) {
+            String providerId = (String) data.get("provider_id");
+            String productName = (String) data.get("product_name");
+            try {
+                ProductMetadata existing = productMetadataGateway
+                    .findByProviderIdAndProductName(providerId, productName).orElse(null);
+
+                if (existing == null) {
+                    productMetadataGateway.save(createProductMetadata(data));
+                    added++;
+                } else {
+                    updateProductMetadata(existing, data);
+                    productMetadataGateway.save(existing);
+                    updated++;
+                }
+            } catch (Exception e) {
+                log.error("Failed to sync builtin product metadata: {}/{}", providerId, productName, e);
+            }
+        }
+
+        return new SyncCounts(products.size(), added, updated);
     }
 
     /**
@@ -252,6 +290,32 @@ public class MetadataSyncService {
         existing.setDescription((String) data.getOrDefault("description", existing.getDescription()));
         existing.setIconUrl((String) data.getOrDefault("icon_url", existing.getIconUrl()));
         existing.setTags(data.get("tags"));
+        existing.setUpdatedAt(Instant.now());
+    }
+
+    @SuppressWarnings("unchecked")
+    private ProductMetadata createProductMetadata(Map<String, Object> data) {
+        String providerId = (String) data.get("provider_id");
+        String productName = (String) data.get("product_name");
+        String productTypeStr = (String) data.get("product_type");
+        ProductType productType = productTypeStr != null ? ProductType.fromCode(productTypeStr) : ProductType.STANDARD;
+
+        ProductMetadata metadata = new ProductMetadata(providerId, productName, productType);
+        metadata.setEndpoints((Map<String, String>) data.get("endpoints"));
+        metadata.setDescription((String) data.get("description"));
+        metadata.setIsDefault((Boolean) data.getOrDefault("is_default", false));
+        metadata.setCreatedAt(Instant.now());
+        metadata.setUpdatedAt(Instant.now());
+        return metadata;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void updateProductMetadata(ProductMetadata existing, Map<String, Object> data) {
+        if (data.get("endpoints") != null) {
+            existing.setEndpoints((Map<String, String>) data.get("endpoints"));
+        }
+        existing.setDescription((String) data.getOrDefault("description", existing.getDescription()));
+        existing.setIsDefault((Boolean) data.getOrDefault("is_default", existing.getIsDefault()));
         existing.setUpdatedAt(Instant.now());
     }
 
