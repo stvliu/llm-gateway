@@ -15,20 +15,23 @@ import {
 } from '@lobehub/icons';
 import type { FC } from 'react';
 
-/** providerId 到 LobeHub 图标组件的映射（Mono 变体） */
-const PROVIDER_ICON_MAP: Record<string, FC<{ size?: number | string }>> = {
-  openai: OpenAI,
-  anthropic: Anthropic,
-  gemini: Gemini,
-  deepseek: DeepSeek,
-  zhipu: Zhipu,
-  qwen: Qwen,
-  tencent: Tencent,
-  volcengine: Volcengine,
-  moonshot: Moonshot,
-  minimax: Minimax,
-  xunfei: IFlyTekCloud,
-  wenxin: Baidu,
+/** 图标组件类型（接受 size 参数） */
+type IconComponent = FC<{ size?: number | string }>;
+
+/** providerId 到 LobeHub 图标组件的映射，优先使用 Color 变体（品牌色），无 Color 则用 Mono */
+const PROVIDER_ICON_MAP: Record<string, IconComponent> = {
+  openai: OpenAI as IconComponent,
+  anthropic: Anthropic as IconComponent,
+  gemini: Gemini.Color as IconComponent,
+  deepseek: DeepSeek.Color as IconComponent,
+  zhipu: Zhipu.Color as IconComponent,
+  qwen: Qwen.Color as IconComponent,
+  tencent: Tencent.Color as IconComponent,
+  volcengine: Volcengine.Color as IconComponent,
+  moonshot: Moonshot as IconComponent,
+  minimax: Minimax.Color as IconComponent,
+  xunfei: IFlyTekCloud.Color as IconComponent,
+  wenxin: Baidu.Color as IconComponent,
 };
 
 export interface ProviderIconProps {
@@ -43,7 +46,8 @@ export interface ProviderIconProps {
 }
 
 /**
- * 根据 providerId 渲染对应的 LobeHub 品牌图标（Mono 变体）。
+ * 根据 providerId 渲染对应的 LobeHub 品牌图标。
+ * 优先使用 Color 变体（品牌色），无 Color 则用 Mono。
  * 自动适配亮色/暗色主题。未匹配时显示首字母 Avatar。
  */
 export const ProviderIcon: FC<ProviderIconProps> = ({
@@ -67,7 +71,6 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
           height: size,
           borderRadius: '50%',
           backgroundColor: token.colorFillQuaternary,
-          color: token.colorText,
           overflow: 'hidden',
           ...style,
         }}
