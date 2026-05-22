@@ -1,0 +1,65 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "step-3a",
+    "display_name": "Step 3A",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "input_price": 2.00,
+    "output_price": 8.00,
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-04-15",
+    "description": "原生多模态大模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "step-2-mini",
+    "display_name": "Step 2 Mini",
+    "context_window": 65536,
+    "max_output_tokens": 4096,
+    "input_price": 0.30,
+    "output_price": 1.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-03-15",
+    "description": "轻量级代码/推理模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "step-audio",
+    "display_name": "Step Audio",
+    "context_window": 8192,
+    "max_output_tokens": 4096,
+    "input_price": 0.50,
+    "output_price": 2.00,
+    "capabilities": {
+      "vision": false,
+      "function_calling": false,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-03-15",
+    "description": "端到端语音模型"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "step-1v-8k",
+    "display_name": "Step 1V 8K",
+    "context_window": 8192,
+    "max_output_tokens": 4096,
+    "input_price": 0.80,
+    "output_price": 3.20,
+    "capabilities": {
+      "vision": true,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31"
+  }
+]

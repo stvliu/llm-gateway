@@ -1,0 +1,21 @@
+{
+  "provider_id": "stepfun",
+  "provider_name": "阶跃星辰 StepFun",
+  "provider_type": "STEPFUN",
+  "provider_config": {
+    "provider_name": "阶跃星辰",
+    "base_url": "https://api.stepfun.com/v1",
+    "website_url": "https://platform.stepfun.com",
+    "api_doc_url": "https://platform.stepfun.com/docs/api-reference/introduction",
+    "timeout": 60000,
+    "max_retries": 3
+  },
+  "description": "阶跃星辰 StepFun API，原生多模态大模型，支持文本、视觉、音频",
+  "icon_url": "https://cdn.example.com/icons/stepfun.png",
+  "tags": [
+    "国内",
+    "多模态",
+    "音频",
+    "新锐"
+  ]
+}

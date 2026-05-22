@@ -1,0 +1,31 @@
+[
+  {
+    "provider_id": "stepfun",
+    "product_name": "按量付费",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://api.stepfun.com/v1"
+    },
+    "is_default": true,
+    "description": "阶跃星辰标准按量计费，文本、视觉、音频模型统一按Token或调用次数计费"
+  },
+  {
+    "provider_id": "stepfun",
+    "product_name": "尊享版订阅",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://api.stepfun.com/v1"
+    },
+    "description": "月订阅制，解锁更高并发、更长上下文及优先排队权限"
+  },
+  {
+    "provider_id": "stepfun",
+    "product_name": "Step Plan",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://api.stepfun.com/step_plan/v1",
+      "ANTHROPIC": "https://api.stepfun.com/step_plan"
+    },
+    "description": "Step Plan订阅用户专属端点，支持双协议"
+  }
+]

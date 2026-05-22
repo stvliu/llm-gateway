@@ -17,7 +17,7 @@
       "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4",
       "ANTHROPIC": "https://open.bigmodel.cn/api/anthropic"
     },
-    "description": "月订阅制，¥49/月，约1.8万次请求"
+    "description": "月订阅制，¥49/月，限制每周请求次数，适合开发者"
   },
   {
     "provider_id": "zhipu",
@@ -27,7 +27,7 @@
       "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4",
       "ANTHROPIC": "https://open.bigmodel.cn/api/anthropic"
     },
-    "description": "月订阅制，¥149/月，约9万次请求"
+    "description": "月订阅制，¥149/月，更高并发权限"
   },
   {
     "provider_id": "zhipu",
