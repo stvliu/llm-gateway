@@ -7,6 +7,15 @@
       "OPENAI": "https://api.openai.com/v1"
     },
     "is_default": true,
-    "description": "标准按量计费"
+    "description": "标准即时计费，支持Prompt Caching 90%折扣"
+  },
+  {
+    "provider_id": "openai",
+    "product_name": "Batch API",
+    "product_type": "BATCH",
+    "endpoints": {
+      "OPENAI": "https://api.openai.com/v1"
+    },
+    "description": "批量异步处理，50%折扣，24小时内返回结果"
   }
 ]

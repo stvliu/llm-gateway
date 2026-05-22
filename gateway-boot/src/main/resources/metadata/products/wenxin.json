@@ -7,6 +7,26 @@
       "OPENAI": "https://qianfan.baidubce.com/v2"
     },
     "is_default": true,
-    "description": "标准按量计费"
+    "description": "千帆平台标准按量计费，ERNIE-Speed/Lite永久免费"
+  },
+  {
+    "provider_id": "wenxin",
+    "product_name": "Coding Plan Lite",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://qianfan.baidubce.com/v2/coding",
+      "ANTHROPIC": "https://qianfan.baidubce.com/anthropic/coding"
+    },
+    "description": "月订阅制，¥40/月，AI编码专用，支持双协议"
+  },
+  {
+    "provider_id": "wenxin",
+    "product_name": "Coding Plan Pro",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://qianfan.baidubce.com/v2/coding",
+      "ANTHROPIC": "https://qianfan.baidubce.com/anthropic/coding"
+    },
+    "description": "月订阅制，¥200/月，AI编码专用，支持双协议"
   }
 ]

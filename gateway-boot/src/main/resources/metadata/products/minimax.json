@@ -1,13 +1,22 @@
 [
   {
     "provider_id": "minimax",
-    "product_name": "按量付费",
+    "product_name": "按量付费-国内版",
     "product_type": "STANDARD",
     "endpoints": {
       "OPENAI": "https://api.minimaxi.com/v1",
       "ANTHROPIC": "https://api.minimaxi.com/anthropic"
     },
     "is_default": true,
-    "description": "标准按量计费，支持双协议"
+    "description": "国内版，支持双协议。注意域名: minimaxi.com（多一个i）"
+  },
+  {
+    "provider_id": "minimax",
+    "product_name": "按量付费-国际版",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://api.minimax.io/v1"
+    },
+    "description": "国际版端点"
   }
 ]

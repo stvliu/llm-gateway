@@ -7,33 +7,36 @@
       "OPENAI": "https://open.bigmodel.cn/api/paas/v4/"
     },
     "is_default": true,
-    "description": "标准按量计费"
+    "description": "标准按量计费，GLM-4.7-Flash永久免费商用"
   },
   {
     "provider_id": "zhipu",
     "product_name": "Coding Plan Lite",
     "product_type": "SUBSCRIPTION",
     "endpoints": {
-      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4"
+      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "ANTHROPIC": "https://open.bigmodel.cn/api/anthropic"
     },
-    "description": "月订阅制，¥49/月"
+    "description": "月订阅制，¥49/月，约1.8万次请求"
   },
   {
     "provider_id": "zhipu",
     "product_name": "Coding Plan Pro",
     "product_type": "SUBSCRIPTION",
     "endpoints": {
-      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4"
+      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "ANTHROPIC": "https://open.bigmodel.cn/api/anthropic"
     },
-    "description": "月订阅制，¥149/月"
+    "description": "月订阅制，¥149/月，约9万次请求"
   },
   {
     "provider_id": "zhipu",
     "product_name": "Coding Plan Max",
     "product_type": "SUBSCRIPTION",
     "endpoints": {
-      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4"
+      "OPENAI": "https://open.bigmodel.cn/api/coding/paas/v4",
+      "ANTHROPIC": "https://open.bigmodel.cn/api/anthropic"
     },
-    "description": "月订阅制，¥469/月"
+    "description": "月订阅制，¥469/月，高并发专属调度"
   }
 ]

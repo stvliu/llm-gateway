@@ -7,6 +7,6 @@
       "OPENAI": "https://api.baichuan-ai.com/v1"
     },
     "is_default": true,
-    "description": "标准按量计费"
+    "description": "百川智能标准按量计费"
   }
 ]

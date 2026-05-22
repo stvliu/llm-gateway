@@ -7,7 +7,7 @@
       "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
     },
     "is_default": true,
-    "description": "北京区域"
+    "description": "北京区域，OpenAI兼容接口"
   },
   {
     "provider_id": "qwen",
@@ -16,7 +16,7 @@
     "endpoints": {
       "OPENAI": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"
     },
-    "description": "美国弗吉尼亚区域"
+    "description": "美国弗吉尼亚区域，适合海外业务"
   },
   {
     "provider_id": "qwen",
@@ -25,6 +25,24 @@
     "endpoints": {
       "OPENAI": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
     },
-    "description": "新加坡区域"
+    "description": "新加坡区域，国际业务"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "Coding Lite",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "月订阅制，¥7.9/月，约1.8万次请求"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "Coding Pro",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "月订阅制，¥39.9/月，约9万次请求"
   }
 ]

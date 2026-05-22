@@ -8,6 +8,16 @@
       "ANTHROPIC": "https://api.deepseek.com/anthropic"
     },
     "is_default": true,
-    "description": "标准按量计费，支持双协议"
+    "description": "标准按量计费，支持双协议。缓存命中输入价格低至¥0.025/百万Token"
+  },
+  {
+    "provider_id": "deepseek",
+    "product_name": "缓存折扣",
+    "product_type": "CACHE",
+    "endpoints": {
+      "OPENAI": "https://api.deepseek.com",
+      "ANTHROPIC": "https://api.deepseek.com/anthropic"
+    },
+    "description": "上下文缓存命中折扣，输入价格仅为标准价的2.5%"
   }
 ]
