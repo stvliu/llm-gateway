@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map;
 
 /**
  * 协议列表 REST API
@@ -21,13 +22,18 @@ public class ProtocolController {
 
     private final ProtocolGatewayFactory protocolGatewayFactory;
 
+    private static final Map<String, String> PROTOCOL_LABELS = Map.of(
+            "openai", "OpenAI Chat Completions",
+            "anthropic", "Anthropic Messages"
+    );
+
     /**
      * 获取所有已注册协议
      */
     @GetMapping
     public List<Map<String, String>> listProtocols() {
         return protocolGatewayFactory.getSupportedProtocols().stream()
-            .map(protocol -> Map.of("name", protocol, "label", protocol.equals("openai") ? "OpenAI Chat Completions" : "Anthropic Messages"))
+            .map(protocol -> Map.of("name", protocol, "label", PROTOCOL_LABELS.getOrDefault(protocol, protocol)))
             .toList();
     }
 }

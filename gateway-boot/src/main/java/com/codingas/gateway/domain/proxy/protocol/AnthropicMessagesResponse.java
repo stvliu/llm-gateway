@@ -2,8 +2,10 @@ package com.codingas.gateway.domain.proxy.protocol;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
@@ -11,6 +13,8 @@ import java.util.List;
  * Anthropic Messages 响应格式
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AnthropicMessagesResponse implements ProtocolResponse {
@@ -36,6 +40,8 @@ public class AnthropicMessagesResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ContentBlock {
         private String type;
@@ -46,6 +52,8 @@ public class AnthropicMessagesResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ToolUse {
         private String name;
@@ -54,6 +62,8 @@ public class AnthropicMessagesResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Usage {
         @JsonProperty("input_tokens")
@@ -64,6 +74,8 @@ public class AnthropicMessagesResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Error {
         private String type;

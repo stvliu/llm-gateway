@@ -37,6 +37,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Choice {
         private Integer index;
@@ -50,6 +52,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Message {
         private String role;
@@ -60,6 +64,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class ToolCall {
         private String id;
@@ -68,6 +74,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class FunctionCall {
         private String name;
@@ -75,6 +83,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Usage {
         @JsonProperty("prompt_tokens")
@@ -88,6 +98,8 @@ public class OpenAIChatResponse implements ProtocolResponse {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @Builder
     public static class Error {
         private String type;

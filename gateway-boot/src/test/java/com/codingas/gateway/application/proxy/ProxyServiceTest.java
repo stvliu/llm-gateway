@@ -1,8 +1,6 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.proxy.protocol.OpenAIChatRequest;
-import com.codingas.gateway.domain.proxy.protocol.OpenAIChatResponse;
-import com.codingas.gateway.domain.proxy.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.proxy.protocol.*;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
@@ -43,20 +41,26 @@ class ProxyServiceTest {
     @Mock
     private ProtocolGateway protocolGateway;
 
+    @Mock
+    private ProtocolConverter protocolConverter;
+
     private ProxyServiceImpl proxyService;
 
-    private OpenAIChatRequest testRequest;
-    private ProtocolResponse testProtocolResponse;
+    private OpenAIChatRequest testOpenAIRequest;
+    private AnthropicMessagesRequest testAnthropicRequest;
+    private OpenAIChatResponse testOpenAIResponse;
+    private AnthropicMessagesResponse testAnthropicResponse;
     private UserAuthResult testAuthResult;
-    private RoutingContext testContext;
+    private RoutingContext testOpenAIContext;
+    private RoutingContext testAnthropicContext;
 
     @BeforeEach
     void setUp() {
-        proxyService = new ProxyServiceImpl(channelRoutingService, protocolGatewayFactory);
+        proxyService = new ProxyServiceImpl(channelRoutingService, protocolGatewayFactory, protocolConverter);
 
         testAuthResult = mock(UserAuthResult.class);
 
-        testContext = RoutingContext.builder()
+        testOpenAIContext = RoutingContext.builder()
                 .providerId(1L)
                 .providerName("openai")
                 .productId(10L)
@@ -66,14 +70,35 @@ class ProxyServiceTest {
                 .endpoint("https://api.openai.com")
                 .build();
 
-        testRequest = OpenAIChatRequest.builder()
-                .model("gpt-4")
-                .messages(List.of())
+        testAnthropicContext = RoutingContext.builder()
+                .providerId(2L)
+                .providerName("anthropic")
+                .productId(10L)
+                .model("claude-3-5-sonnet-20241022")
+                .protocol("anthropic")
+                .providerApiKey("sk-ant-key")
+                .endpoint("https://api.anthropic.com")
                 .build();
 
-        testProtocolResponse = OpenAIChatResponse.builder()
+        testOpenAIRequest = OpenAIChatRequest.builder()
+                .model("gpt-4")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                .build();
+
+        testAnthropicRequest = AnthropicMessagesRequest.builder()
+                .model("claude-3-5-sonnet-20241022")
+                .messages(List.of(AnthropicMessagesRequest.Message.builder().role("user").content("hello").build()))
+                .maxTokens(1024)
+                .build();
+
+        testOpenAIResponse = OpenAIChatResponse.builder()
                 .id("chatcmpl-123")
                 .model("gpt-4")
+                .build();
+
+        testAnthropicResponse = AnthropicMessagesResponse.builder()
+                .id("msg-123")
+                .model("claude-3-5-sonnet-20241022")
                 .build();
     }
 
@@ -82,26 +107,43 @@ class ProxyServiceTest {
     class ProxyTests {
 
         @Test
-        @DisplayName("成功代理非流式请求")
-        void proxy_success() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testContext);
+        @DisplayName("同协议代理：OpenAI→OpenAI")
+        void proxy_sameProtocol_openai() {
+            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
-            when(protocolGateway.chat(any())).thenReturn(testProtocolResponse);
+            when(protocolGateway.chat(any())).thenReturn(testOpenAIResponse);
 
-            var response = proxyService.proxy(testRequest, testAuthResult, RoutingStrategy.WEIGHTED);
+            var response = proxyService.proxy(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED);
 
-            assertThat(response).isNotNull();
-            verify(protocolGatewayFactory).create("openai", "https://api.openai.com", "sk-test-key", 60);
+            assertThat(response).isInstanceOf(OpenAIChatResponse.class);
+            verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
+            verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesRequest.class));
+        }
+
+        @Test
+        @DisplayName("跨协议代理：OpenAI→Anthropic")
+        void proxy_crossProtocol_openaiToAnthropic() {
+            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testAnthropicContext);
+            when(protocolGatewayFactory.create(eq("anthropic"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
+            when(protocolGateway.chat(any())).thenReturn(testAnthropicResponse);
+            when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(testAnthropicRequest);
+            when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(testOpenAIResponse);
+
+            var response = proxyService.proxy(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED);
+
+            assertThat(response).isInstanceOf(OpenAIChatResponse.class);
+            verify(protocolConverter).toAnthropic(any(OpenAIChatRequest.class));
+            verify(protocolConverter).toOpenAI(any(AnthropicMessagesResponse.class));
         }
 
         @Test
         @DisplayName("不支持的协议时抛出异常")
         void proxy_unsupportedProtocol_throwsException() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testContext);
+            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 
-            assertThatThrownBy(() -> proxyService.proxy(testRequest, testAuthResult, RoutingStrategy.WEIGHTED))
+            assertThatThrownBy(() -> proxyService.proxy(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -111,13 +153,13 @@ class ProxyServiceTest {
     class ProxyStreamTests {
 
         @Test
-        @DisplayName("成功代理流式请求（带回调）")
-        void proxyStream_success() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testContext);
+        @DisplayName("同协议流式代理：OpenAI→OpenAI")
+        void proxyStream_sameProtocol() {
+            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
 
             AtomicReference<String> received = new AtomicReference<>();
-            proxyService.proxyStream(testRequest, testAuthResult, RoutingStrategy.WEIGHTED,
+            proxyService.proxyStream(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED,
                     received::set, () -> {}, error -> {});
 
             verify(protocolGateway).chatStream(any(), any());
@@ -126,11 +168,11 @@ class ProxyServiceTest {
         @Test
         @DisplayName("不支持的协议时抛出异常")
         void proxyStream_unsupportedProtocol_throwsException() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testContext);
+            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 
-            assertThatThrownBy(() -> proxyService.proxyStream(testRequest, testAuthResult, RoutingStrategy.WEIGHTED,
+            assertThatThrownBy(() -> proxyService.proxyStream(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED,
                     data -> {}, () -> {}, error -> {}))
                     .isInstanceOf(IllegalArgumentException.class);
         }

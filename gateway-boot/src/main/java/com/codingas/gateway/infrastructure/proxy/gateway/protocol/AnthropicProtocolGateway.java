@@ -31,7 +31,10 @@ public class AnthropicProtocolGateway implements ProtocolGateway {
 
     public AnthropicProtocolGateway(OkHttpClient httpClient, String baseUrl, String apiKey,
                                      int timeoutSeconds, ObjectMapper objectMapper) {
-        this.httpClient = httpClient;
+        this.httpClient = httpClient.newBuilder()
+                .callTimeout(Duration.ofSeconds(timeoutSeconds))
+                .readTimeout(Duration.ofSeconds(timeoutSeconds))
+                .build();
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
