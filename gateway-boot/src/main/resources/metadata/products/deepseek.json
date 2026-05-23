@@ -8,6 +8,9 @@
       "ANTHROPIC": "https://api.deepseek.com/anthropic"
     },
     "is_default": true,
-    "description": "标准按量计费，支持双协议。支持上下文缓存，命中后输入价格低至¥0.025/百万Token"
+    "description": "标准按量计费，支持双协议。支持上下文缓存，命中后输入价格低至¥0.025/百万Token",
+    "input_price": 3.0,
+    "output_price": 6.0,
+    "cache_read_price": 0.025
   }
 ]

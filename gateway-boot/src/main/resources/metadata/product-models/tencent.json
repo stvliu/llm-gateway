@@ -1,0 +1,34 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-t1"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-turbos"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-a13b"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-vision-1.5"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-t1-vision"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-lite"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-standard"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "hunyuan-pro"
+  }
+]

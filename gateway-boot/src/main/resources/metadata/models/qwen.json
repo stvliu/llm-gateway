@@ -1,12 +1,9 @@
 [
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3-max",
     "display_name": "Qwen3 Max",
     "context_window": 262000,
     "max_output_tokens": 8192,
-    "input_price": 2.50,
-    "output_price": 10.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -15,13 +12,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3.5-plus",
     "display_name": "Qwen3.5 Plus",
     "context_window": 1048576,
     "max_output_tokens": 8192,
-    "input_price": 0.80,
-    "output_price": 4.80,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -30,13 +24,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3-turbo",
     "display_name": "Qwen3 Turbo",
     "context_window": 131072,
     "max_output_tokens": 8192,
-    "input_price": 0.30,
-    "output_price": 0.60,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -45,13 +36,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3-vl",
     "display_name": "Qwen3 VL",
     "context_window": 131000,
     "max_output_tokens": 8192,
-    "input_price": 0.52,
-    "output_price": 2.08,
     "capabilities": {
       "vision": true,
       "function_calling": false,
@@ -60,13 +48,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3-coder",
     "display_name": "Qwen3 Coder",
     "context_window": 131072,
     "max_output_tokens": 8192,
-    "input_price": 0.30,
-    "output_price": 0.60,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -76,13 +61,10 @@
     "description": "代码专用模型"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen3-long",
     "display_name": "Qwen3 Long",
     "context_window": 1048576,
     "max_output_tokens": 8192,
-    "input_price": 0.50,
-    "output_price": 2.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -92,13 +74,10 @@
     "description": "长文本专用"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen-max",
     "display_name": "Qwen Max",
     "context_window": 32768,
     "max_output_tokens": 8192,
-    "input_price": 0.02,
-    "output_price": 0.06,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -107,13 +86,10 @@
     "knowledge_cutoff": "2024-12-31"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen-plus",
     "display_name": "Qwen Plus",
     "context_window": 131072,
     "max_output_tokens": 8192,
-    "input_price": 0.0008,
-    "output_price": 0.002,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -122,13 +98,10 @@
     "knowledge_cutoff": "2024-12-31"
   },
   {
-    "product_name": "按量付费-北京",
     "provider_model_id": "qwen-turbo",
     "display_name": "Qwen Turbo",
     "context_window": 131072,
     "max_output_tokens": 8192,
-    "input_price": 0.0003,
-    "output_price": 0.0006,
     "capabilities": {
       "vision": false,
       "function_calling": true,

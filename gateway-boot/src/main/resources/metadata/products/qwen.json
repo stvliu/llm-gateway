@@ -7,7 +7,9 @@
       "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
     },
     "is_default": true,
-    "description": "北京区域，OpenAI兼容接口，支持上下文缓存"
+    "description": "北京区域，OpenAI兼容接口，支持上下文缓存",
+    "input_price": 2.5,
+    "output_price": 10.0
   },
   {
     "provider_id": "qwen",

@@ -1,13 +1,9 @@
 [
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-5.5",
     "display_name": "GPT-5.5",
     "context_window": 270000,
     "max_output_tokens": 16384,
-    "input_price": 5.00,
-    "output_price": 30.00,
-    "cache_read_price": 0.50,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -18,14 +14,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-5.4",
     "display_name": "GPT-5.4",
     "context_window": 270000,
     "max_output_tokens": 16384,
-    "input_price": 2.50,
-    "output_price": 15.00,
-    "cache_read_price": 0.25,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -36,14 +28,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-5.4-mini",
     "display_name": "GPT-5.4 Mini",
     "context_window": 270000,
     "max_output_tokens": 16384,
-    "input_price": 0.75,
-    "output_price": 4.50,
-    "cache_read_price": 0.075,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -54,14 +42,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-5.4-nano",
     "display_name": "GPT-5.4 Nano",
     "context_window": 270000,
     "max_output_tokens": 16384,
-    "input_price": 0.20,
-    "output_price": 1.25,
-    "cache_read_price": 0.02,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -71,14 +55,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "o3",
     "display_name": "O3",
     "context_window": 200000,
     "max_output_tokens": 100000,
-    "input_price": 2.00,
-    "output_price": 8.00,
-    "cache_read_price": 0.20,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -88,14 +68,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "o3-pro",
     "display_name": "O3 Pro",
     "context_window": 200000,
     "max_output_tokens": 100000,
-    "input_price": 20.00,
-    "output_price": 80.00,
-    "cache_read_price": 2.00,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -105,13 +81,10 @@
     "knowledge_cutoff": "2025-04-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-4o",
     "display_name": "GPT-4o",
     "context_window": 128000,
     "max_output_tokens": 16384,
-    "input_price": 2.50,
-    "output_price": 10.00,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -121,13 +94,10 @@
     "knowledge_cutoff": "2024-10-31"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "gpt-4o-mini",
     "display_name": "GPT-4o Mini",
     "context_window": 128000,
     "max_output_tokens": 16384,
-    "input_price": 0.15,
-    "output_price": 0.60,
     "capabilities": {
       "vision": true,
       "function_calling": true,

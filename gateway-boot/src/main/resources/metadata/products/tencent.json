@@ -7,6 +7,8 @@
       "NATIVE": "https://hunyuan.tencentcloudapi.com"
     },
     "is_default": true,
-    "description": "腾讯混元标准按量计费。混元Lite常态化免费调用"
+    "description": "腾讯混元标准按量计费。混元Lite常态化免费调用",
+    "input_price": 2.0,
+    "output_price": 8.0
   }
 ]

@@ -1,13 +1,9 @@
 [
   {
-    "product_name": "按量付费",
     "provider_model_id": "kimi-k2.6",
     "display_name": "Kimi K2.6",
     "context_window": 262000,
     "max_output_tokens": 8192,
-    "input_price": 0.95,
-    "output_price": 4.00,
-    "cache_read_price": 0.16,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -17,14 +13,10 @@
     "description": "最新旗舰模型"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "kimi-k2.5",
     "display_name": "Kimi K2.5",
     "context_window": 262000,
     "max_output_tokens": 8192,
-    "input_price": 0.60,
-    "output_price": 3.00,
-    "cache_read_price": 0.10,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -34,13 +26,10 @@
     "description": "多模态+推理"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "moonshot-v1-vision",
     "display_name": "Moonshot V1 Vision",
     "context_window": 131072,
     "max_output_tokens": 8192,
-    "input_price": 0.50,
-    "output_price": 2.00,
     "capabilities": {
       "vision": true,
       "function_calling": true,
@@ -49,13 +38,10 @@
     "knowledge_cutoff": "2025-03-15"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "moonshot-v1-8k",
     "display_name": "Moonshot V1 8K",
     "context_window": 8192,
     "max_output_tokens": 4096,
-    "input_price": 0.20,
-    "output_price": 2.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -65,13 +51,10 @@
     "description": "基础版"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "moonshot-v1-32k",
     "display_name": "Moonshot V1 32K",
     "context_window": 32768,
     "max_output_tokens": 4096,
-    "input_price": 1.00,
-    "output_price": 3.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,
@@ -81,13 +64,10 @@
     "description": "标准版"
   },
   {
-    "product_name": "按量付费",
     "provider_model_id": "moonshot-v1-128k",
     "display_name": "Moonshot V1 128K",
     "context_window": 131072,
     "max_output_tokens": 4096,
-    "input_price": 2.00,
-    "output_price": 5.00,
     "capabilities": {
       "vision": false,
       "function_calling": true,

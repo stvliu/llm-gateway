@@ -1,0 +1,34 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-5.5"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-5.4"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-5.4-mini"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-5.4-nano"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "o3"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "o3-pro"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-4o"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "gpt-4o-mini"
+  }
+]

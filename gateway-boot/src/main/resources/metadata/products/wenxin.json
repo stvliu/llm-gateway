@@ -7,7 +7,9 @@
       "OPENAI": "https://qianfan.baidubce.com/v2"
     },
     "is_default": true,
-    "description": "千帆平台标准按量计费，ERNIE-Speed/Lite永久免费"
+    "description": "千帆平台标准按量计费，ERNIE-Speed/Lite永久免费",
+    "input_price": 5.0,
+    "output_price": 15.0
   },
   {
     "provider_id": "wenxin",

@@ -1,0 +1,26 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v4-pro"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v4-flash"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-v3.2"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-r1"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-chat"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "deepseek-coder"
+  }
+]
