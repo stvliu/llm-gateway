@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.proxy.dto.OpenAIChatRequest;
-import com.codingas.gateway.application.proxy.dto.OpenAIChatResponse;
+import com.codingas.gateway.domain.proxy.protocol.OpenAIChatRequest;
+import com.codingas.gateway.domain.proxy.protocol.OpenAIChatResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;

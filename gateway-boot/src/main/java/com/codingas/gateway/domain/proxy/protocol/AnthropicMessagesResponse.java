@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.proxy.dto;
+package com.codingas.gateway.domain.proxy.protocol;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AnthropicMessagesResponse {
+public class AnthropicMessagesResponse implements ProtocolResponse {
 
     private String id;
     private String model;
@@ -29,6 +29,11 @@ public class AnthropicMessagesResponse {
 
     private Usage usage;
     private Error error;
+
+    @Override
+    public String getFinishReason() {
+        return stopReason;
+    }
 
     @Data
     @Builder

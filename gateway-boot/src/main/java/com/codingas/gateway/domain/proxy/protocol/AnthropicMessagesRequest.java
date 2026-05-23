@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.proxy.dto;
+package com.codingas.gateway.domain.proxy.protocol;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -14,7 +14,7 @@ import java.util.Map;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class AnthropicMessagesRequest {
+public class AnthropicMessagesRequest implements ProtocolRequest {
 
     private String model;
     private List<Message> messages;
@@ -34,6 +34,21 @@ public class AnthropicMessagesRequest {
     private Map<String, Object> toolChoice;
 
     private Boolean stream;
+
+    @Override
+    public String getProtocol() {
+        return "anthropic";
+    }
+
+    @Override
+    public boolean isStream() {
+        return stream != null && stream;
+    }
+
+    @Override
+    public void setStream(boolean stream) {
+        this.stream = stream;
+    }
 
     @Data
     @Builder

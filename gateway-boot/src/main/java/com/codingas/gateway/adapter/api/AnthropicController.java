@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.proxy.dto.AnthropicMessagesRequest;
-import com.codingas.gateway.application.proxy.dto.AnthropicMessagesResponse;
+import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;

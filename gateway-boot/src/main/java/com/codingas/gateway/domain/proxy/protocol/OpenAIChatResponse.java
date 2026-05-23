@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.proxy.dto;
+package com.codingas.gateway.domain.proxy.protocol;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,7 +13,7 @@ import java.util.List;
 @Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OpenAIChatResponse {
+public class OpenAIChatResponse implements ProtocolResponse {
 
     private String id;
     private String model;
@@ -25,6 +25,12 @@ public class OpenAIChatResponse {
     private List<Choice> choices;
     private Usage usage;
     private Error error;
+
+    @Override
+    public String getFinishReason() {
+        if (choices == null || choices.isEmpty()) return null;
+        return choices.get(0).getFinishReason();
+    }
 
     @Data
     @Builder

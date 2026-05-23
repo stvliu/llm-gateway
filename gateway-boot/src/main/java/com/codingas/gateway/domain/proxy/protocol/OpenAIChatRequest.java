@@ -1,4 +1,4 @@
-package com.codingas.gateway.application.proxy.dto;
+package com.codingas.gateway.domain.proxy.protocol;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -17,7 +17,7 @@ import java.util.Map;
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OpenAIChatRequest {
+public class OpenAIChatRequest implements ProtocolRequest {
 
     private String model;
     private List<Message> messages;
@@ -45,6 +45,21 @@ public class OpenAIChatRequest {
     private String toolChoice;
 
     private Boolean stream;
+
+    @Override
+    public String getProtocol() {
+        return "openai";
+    }
+
+    @Override
+    public boolean isStream() {
+        return stream != null && stream;
+    }
+
+    @Override
+    public void setStream(boolean stream) {
+        this.stream = stream;
+    }
 
     @Data
     @NoArgsConstructor
