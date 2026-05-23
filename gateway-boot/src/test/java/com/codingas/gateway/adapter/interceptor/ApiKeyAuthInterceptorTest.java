@@ -12,6 +12,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -40,13 +43,13 @@ class ApiKeyAuthInterceptorTest {
     void validApiKey_bearerToken_passes() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        Identity authResult = Identity.of(1L, "user", 1L);
-        when(authenticationService.authenticateUser("sk-test123")).thenReturn(authResult);
+        Identity identity = Identity.of(1L, "user", 1L);
+        when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
 
-        boolean result = interceptor.preHandle(request, response, new Object());
+        boolean result = interceptor.preHandle(request, response);
 
         assertThat(result).isTrue();
-        verify(request).setAttribute("authResult", authResult);
+        verify(request).setAttribute("identity", identity);
     }
 
     @Test
@@ -55,13 +58,13 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("x-api-key")).thenReturn("sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        Identity authResult = Identity.of(1L, "user", 1L);
-        when(authenticationService.authenticateUser("sk-test123")).thenReturn(authResult);
+        Identity identity = Identity.of(1L, "user", 1L);
+        when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
 
-        boolean result = interceptor.preHandle(request, response, new Object());
+        boolean result = interceptor.preHandle(request, response);
 
         assertThat(result).isTrue();
-        verify(request).setAttribute("authResult", authResult);
+        verify(request).setAttribute("identity", identity);
     }
 
     @Test
@@ -70,8 +73,10 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("x-api-key")).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
+        StringWriter sw = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(sw));
 
-        boolean result = interceptor.preHandle(request, response, new Object());
+        boolean result = interceptor.preHandle(request, response);
 
         assertThat(result).isFalse();
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -85,8 +90,10 @@ class ApiKeyAuthInterceptorTest {
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         when(authenticationService.authenticateUser("sk-invalid"))
                 .thenThrow(new AuthenticationFailedException("无效的 API Key"));
+        StringWriter sw = new StringWriter();
+        when(response.getWriter()).thenReturn(new PrintWriter(sw));
 
-        boolean result = interceptor.preHandle(request, response, new Object());
+        boolean result = interceptor.preHandle(request, response);
 
         assertThat(result).isFalse();
         verify(response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -97,7 +104,7 @@ class ApiKeyAuthInterceptorTest {
     void nonProxyPath_passes() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/providers");
 
-        boolean result = interceptor.preHandle(request, response, new Object());
+        boolean result = interceptor.preHandle(request, response);
 
         assertThat(result).isTrue();
     }
