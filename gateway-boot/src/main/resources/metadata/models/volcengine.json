@@ -1,54 +1,74 @@
 [
   {
-    "provider_model_id": "doubao-pro-32k",
-    "display_name": "Doubao Pro 32K",
-    "context_window": 32768,
-    "input_price": 0.0008,
-    "output_price": 0.002,
-    "source": "BUILTIN",
+    "provider_model_id": "doubao-seed-2.0-pro",
+    "display_name": "Doubao Seed 2.0 Pro",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2025-04-15"
+  },
+  {
+    "provider_model_id": "doubao-seed-2.0-lite",
+    "display_name": "Doubao Seed 2.0 Lite",
+    "context_window": 131072,
+    "max_output_tokens": 8192,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2025-04-15"
   },
   {
     "provider_model_id": "doubao-pro-128k",
     "display_name": "Doubao Pro 128K",
     "context_window": 131072,
-    "input_price": 0.0005,
-    "output_price": 0.001,
-    "source": "BUILTIN",
+    "max_output_tokens": 8192,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31"
+  },
+  {
+    "provider_model_id": "doubao-pro-32k",
+    "display_name": "Doubao Pro 32K",
+    "context_window": 32768,
+    "max_output_tokens": 4096,
+    "capabilities": {
+      "vision": false,
+      "function_calling": true,
+      "streaming": true
+    },
+    "knowledge_cutoff": "2024-12-31"
   },
   {
     "provider_model_id": "doubao-lite-32k",
     "display_name": "Doubao Lite 32K",
     "context_window": 32768,
-    "input_price": 0.0003,
-    "output_price": 0.0006,
-    "source": "BUILTIN",
+    "max_output_tokens": 4096,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31"
   },
   {
     "provider_model_id": "doubao-1.5-pro-32k",
     "display_name": "Doubao 1.5 Pro 32K",
     "context_window": 32768,
-    "input_price": 0.0008,
-    "output_price": 0.002,
-    "source": "BUILTIN",
+    "max_output_tokens": 4096,
     "capabilities": {
       "vision": false,
       "function_calling": true,
       "streaming": true
-    }
+    },
+    "knowledge_cutoff": "2024-12-31"
   }
 ]

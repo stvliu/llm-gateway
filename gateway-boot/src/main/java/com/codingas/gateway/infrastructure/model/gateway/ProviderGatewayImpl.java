@@ -59,6 +59,16 @@ public class ProviderGatewayImpl implements ProviderGateway {
         providerRepository.delete(toDo(provider));
     }
 
+    @Override
+    public Optional<Provider> findByName(String name) {
+        return providerRepository.findByName(name).map(this::toEntity);
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return providerRepository.existsByName(name);
+    }
+
     /**
      * DO 转 Entity
      */
@@ -69,16 +79,12 @@ public class ProviderGatewayImpl implements ProviderGateway {
         Provider entity = new Provider();
         entity.setId(doEntity.getId());
         entity.setName(doEntity.getName());
-        entity.setBaseUrl(doEntity.getBaseUrl());
         entity.setWebsiteUrl(doEntity.getWebsiteUrl());
         entity.setApiDocUrl(doEntity.getApiDocUrl());
         entity.setPriority(doEntity.getPriority());
         entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
         entity.setUpdatedAt(doEntity.getUpdatedAt());
-        if (doEntity.getType() != null) {
-            entity.setType(doEntity.getType());
-        }
         return entity;
     }
 
@@ -94,14 +100,10 @@ public class ProviderGatewayImpl implements ProviderGateway {
             doEntity.setId(entity.getId());
         }
         doEntity.setName(entity.getName());
-        doEntity.setBaseUrl(entity.getBaseUrl());
         doEntity.setWebsiteUrl(entity.getWebsiteUrl());
         doEntity.setApiDocUrl(entity.getApiDocUrl());
         doEntity.setPriority(entity.getPriority());
         doEntity.setState(entity.getState());
-        if (entity.getType() != null) {
-            doEntity.setType(entity.getType());
-        }
         return doEntity;
     }
 }

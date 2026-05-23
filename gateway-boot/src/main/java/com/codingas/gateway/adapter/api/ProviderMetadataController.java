@@ -30,11 +30,9 @@ public class ProviderMetadataController {
      */
     @GetMapping
     public ResponseEntity<Page<ProviderMetadataResponse>> list(
-            @RequestParam(required = false) String providerType,
             @RequestParam(required = false) String keyword,
             @PageableDefault(size = 20) Pageable pageable) {
         Page<ProviderMetadataResponse> page = providerMetadataService.listProviderMetadata(
-            providerType,
             keyword,
             pageable
         );

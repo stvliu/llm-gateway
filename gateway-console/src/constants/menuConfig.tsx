@@ -1,14 +1,10 @@
 import {
   DashboardOutlined,
-  AppstoreOutlined,
   CloudServerOutlined,
-  DatabaseOutlined,
-  ApiOutlined,
   TeamOutlined,
-  KeyOutlined,
   SettingOutlined,
+  DatabaseOutlined,
   LockOutlined,
-  ExperimentOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -29,39 +25,22 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'menu.home',
   },
   {
-    key: 'model-center',
-    icon: <AppstoreOutlined />,
-    label: 'menu.modelCenter',
+    key: 'provider-management',
+    icon: <CloudServerOutlined />,
+    label: 'menu.providerManagement',
     children: [
-      {
-        key: '/models',
-        icon: <AppstoreOutlined />,
-        label: 'menu.models',
-        permission: 'model:read',
-      },
       {
         key: '/providers',
         icon: <CloudServerOutlined />,
         label: 'menu.providers',
         permission: 'provider:read',
       },
-      {
-        key: '/api-key-pool',
-        icon: <ApiOutlined />,
-        label: 'menu.apiKeyPool',
-        permission: 'apikey-pool:read',
-      },
-      {
-        key: '/experience',
-        icon: <ExperimentOutlined />,
-        label: 'menu.experience',
-      },
     ],
   },
   {
-    key: 'user-center',
+    key: 'user-management',
     icon: <TeamOutlined />,
-    label: 'menu.userCenter',
+    label: 'menu.userManagement',
     children: [
       {
         key: '/users',
@@ -70,15 +49,10 @@ export const menuConfig: MenuItemConfig[] = [
         permission: 'user:read',
       },
       {
-        key: '/api-keys',
-        icon: <KeyOutlined />,
-        label: 'menu.apiKeys',
-        permission: 'apikey:manage',
-      },
-      {
-        key: '/change-password',
-        icon: <LockOutlined />,
-        label: 'menu.changePassword',
+        key: '/teams',
+        icon: <TeamOutlined />,
+        label: 'menu.teams',
+        permission: 'user:read',
       },
     ],
   },
@@ -92,6 +66,11 @@ export const menuConfig: MenuItemConfig[] = [
         icon: <DatabaseOutlined />,
         label: 'menu.metadata',
         permission: 'metadata:read',
+      },
+      {
+        key: '/change-password',
+        icon: <LockOutlined />,
+        label: 'menu.changePassword',
       },
     ],
   },

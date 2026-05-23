@@ -66,4 +66,20 @@ public interface ProviderGateway {
     default long getMaxVersion() {
         return 0L;
     }
+
+    /**
+     * 根据名称查找提供商
+     *
+     * @param name 提供商名称
+     * @return 提供商信息，不存在返回空
+     */
+    Optional<Provider> findByName(String name);
+
+    /**
+     * 检查名称是否已存在
+     *
+     * @param name 提供商名称
+     * @return 是否存在
+     */
+    boolean existsByName(String name);
 }

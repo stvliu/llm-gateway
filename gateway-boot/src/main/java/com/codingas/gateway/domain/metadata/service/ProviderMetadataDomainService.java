@@ -3,8 +3,6 @@ package com.codingas.gateway.domain.metadata.service;
 import com.codingas.gateway.domain.metadata.entity.ProviderMetadata;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-
 /**
  * 供应商元数据领域服务
  * <p>
@@ -19,6 +17,6 @@ public class ProviderMetadataDomainService {
      */
     public void markDeleted(ProviderMetadata metadata, Long operatorId) {
         metadata.setUpdatedBy(operatorId);
-        metadata.setUpdatedAt(Instant.now());
+        // updatedAt 由 JPA 审计自动设置
     }
 }

@@ -1,0 +1,34 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-x2-flash"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-x2"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-x1.5"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-ultra"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-max"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-pro"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-pro-128k"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "spark-lite"
+  }
+]

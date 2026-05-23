@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.metadata.entity;
 
 import com.codingas.gateway.domain.metadata.enums.MetadataState;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -11,9 +10,8 @@ import java.util.Map;
 /**
  * 模型元数据实体
  * <p>
- * 独立于 ProviderMetadata 存储，通过 provider_id 关联。
- * 支持多种数据来源（内置、Models.dev、供应商 API、手动录入）。
- * 业务逻辑由 ModelMetadataDomainService 处理，实体仅含 Getter/Setter。
+ * 纯属性实体，不持有定价和产品关联信息。
+ * 定价由产品（ProductMetadata）负责，关联由 ProductModelMetadata 承载。
  * </p>
  */
 public class ModelMetadata {
@@ -26,13 +24,6 @@ public class ModelMetadata {
     private Integer contextWindow;
     private Integer maxInputTokens;
     private Integer maxOutputTokens;
-    private BigDecimal inputPrice;
-    private BigDecimal outputPrice;
-    private BigDecimal reasoningPrice;
-    private BigDecimal cacheReadPrice;
-    private BigDecimal cacheWritePrice;
-    private BigDecimal inputAudioPrice;
-    private BigDecimal outputAudioPrice;
     private String knowledgeCutoff;
     private LocalDate releaseDate;
     private Boolean openWeights;
@@ -82,27 +73,6 @@ public class ModelMetadata {
 
     public Integer getMaxOutputTokens() { return maxOutputTokens; }
     public void setMaxOutputTokens(Integer maxOutputTokens) { this.maxOutputTokens = maxOutputTokens; }
-
-    public BigDecimal getInputPrice() { return inputPrice; }
-    public void setInputPrice(BigDecimal inputPrice) { this.inputPrice = inputPrice; }
-
-    public BigDecimal getOutputPrice() { return outputPrice; }
-    public void setOutputPrice(BigDecimal outputPrice) { this.outputPrice = outputPrice; }
-
-    public BigDecimal getReasoningPrice() { return reasoningPrice; }
-    public void setReasoningPrice(BigDecimal reasoningPrice) { this.reasoningPrice = reasoningPrice; }
-
-    public BigDecimal getCacheReadPrice() { return cacheReadPrice; }
-    public void setCacheReadPrice(BigDecimal cacheReadPrice) { this.cacheReadPrice = cacheReadPrice; }
-
-    public BigDecimal getCacheWritePrice() { return cacheWritePrice; }
-    public void setCacheWritePrice(BigDecimal cacheWritePrice) { this.cacheWritePrice = cacheWritePrice; }
-
-    public BigDecimal getInputAudioPrice() { return inputAudioPrice; }
-    public void setInputAudioPrice(BigDecimal inputAudioPrice) { this.inputAudioPrice = inputAudioPrice; }
-
-    public BigDecimal getOutputAudioPrice() { return outputAudioPrice; }
-    public void setOutputAudioPrice(BigDecimal outputAudioPrice) { this.outputAudioPrice = outputAudioPrice; }
 
     public String getKnowledgeCutoff() { return knowledgeCutoff; }
     public void setKnowledgeCutoff(String knowledgeCutoff) { this.knowledgeCutoff = knowledgeCutoff; }

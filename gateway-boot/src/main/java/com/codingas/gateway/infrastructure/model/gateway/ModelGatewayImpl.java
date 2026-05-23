@@ -77,6 +77,13 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
+    public List<Model> findByIds(List<Long> ids) {
+        return modelRepository.findAllById(ids).stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public long count() {
         return modelRepository.count();
     }
@@ -98,8 +105,6 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setProviderModelId(doEntity.getProviderModelId());
         entity.setDisplayName(doEntity.getDisplayName());
         entity.setContextWindow(doEntity.getContextWindow());
-        entity.setInputPrice(doEntity.getInputPrice());
-        entity.setOutputPrice(doEntity.getOutputPrice());
         entity.setCapabilities(doEntity.getCapabilities());
         entity.setState(doEntity.getState());
         entity.setCreatedAt(doEntity.getCreatedAt());
@@ -129,8 +134,6 @@ public class ModelGatewayImpl implements ModelGateway {
         doEntity.setProviderModelId(entity.getProviderModelId());
         doEntity.setDisplayName(entity.getDisplayName());
         doEntity.setContextWindow(entity.getContextWindow());
-        doEntity.setInputPrice(entity.getInputPrice());
-        doEntity.setOutputPrice(entity.getOutputPrice());
         doEntity.setCapabilities(entity.getCapabilities());
         doEntity.setState(entity.getState());
         // 路由字段

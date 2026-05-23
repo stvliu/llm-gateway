@@ -6,17 +6,17 @@ import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.entity.ProviderApiKey;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderApiKeyGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.AdapterBuilderFactory;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.LLMAdapter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -24,6 +24,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -33,21 +34,35 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>提供流式聊天体验功能，支持两种模式：</p>
  * <ol>
- *   <li>使用已保存配置：传入 providerId，可选 apiKeyId</li>
- *   <li>临时配置：传入 providerType, apiKey, baseUrl</li>
+ *   <li>使用已保存配置：传入 productId，可选 apiKeyId</li>
+ *   <li>临时配置：传入 protocolName(协议名称), apiKey, baseUrl(可选)</li>
  * </ol>
+ *
+ * <p>注意：已迁移到新架构，使用 ProductApiKey 替代 ProviderApiKey。</p>
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class ModelExperienceService {
 
-    private final AdapterBuilderFactory adapterBuilderFactory;
+    private final ProtocolGatewayRegistry protocolGatewayRegistry;
     private final ProviderGateway providerGateway;
-    private final ProviderApiKeyGateway providerApiKeyGateway;
+    private final ProductGateway productGateway;
+    private final ProductApiKeyGateway productApiKeyGateway;
     private final ModelGateway modelGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public ModelExperienceService(ProtocolGatewayRegistry protocolGatewayRegistry,
+                                  ProviderGateway providerGateway,
+                                  ProductGateway productGateway,
+                                  ProductApiKeyGateway productApiKeyGateway,
+                                  ModelGateway modelGateway) {
+        this.protocolGatewayRegistry = protocolGatewayRegistry;
+        this.providerGateway = providerGateway;
+        this.productGateway = productGateway;
+        this.productApiKeyGateway = productApiKeyGateway;
+        this.modelGateway = modelGateway;
+    }
 
     @PreDestroy
     public void shutdown() {
@@ -93,7 +108,7 @@ public class ModelExperienceService {
             try {
                 emitter.send(SseEmitter.event()
                     .name("ERROR")
-                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 providerId，临时配置时需提供 providerType 和 apiKey")));
+                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 productId，临时配置时需提供 protocolName 和 apiKey")));
                 emitter.complete();
             } catch (IOException e) {
                 emitter.completeWithError(e);
@@ -141,30 +156,30 @@ public class ModelExperienceService {
     private void doChatStream(ExperienceChatRequest request, SseEmitter emitter) throws IOException {
         // 解析配置
         ResolvedConfig config = resolveConfig(request);
-        log.info("Experience chat: providerType={}, model={}", config.providerType, request.model());
+        log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
 
-        // 创建临时 Adapter
-        LLMAdapter adapter = adapterBuilderFactory.createAdapter(
-            config.providerType,
-            config.baseUrl,
-            config.apiKey
-        );
+        // 查找协议网关
+        ProtocolGateway protocolGateway = protocolGatewayRegistry.getGateway(config.protocolName)
+            .orElseThrow(() -> new IllegalArgumentException("不支持的协议类型: " + config.protocolName));
+
+        // 解析 baseUrl：优先使用请求传入，否则使用协议默认
+        String baseUrl = config.baseUrl != null ? config.baseUrl : protocolGateway.getDefaultBaseUrl();
 
         // 转换消息格式
         List<LLMRequest.Message> messages = new ArrayList<>();
-        for (ExperienceChatRequest.ChatMessage msg : request.messages()) {
+        for (Map<String, String> msg : request.getMessages()) {
             messages.add(LLMRequest.Message.builder()
-                .role(msg.role())
-                .content(msg.content())
+                .role(msg.get("role"))
+                .content(msg.get("content"))
                 .build());
         }
 
         // 构建 LLM 请求
         LLMRequest llmRequest = LLMRequest.builder()
-            .model(request.model())
+            .model(request.getModel())
             .messages(messages)
-            .maxTokens(request.getEffectiveMaxTokens())
-            .temperature(request.getEffectiveTemperature())
+            .maxTokens(request.getMaxTokens())
+            .temperature(request.getTemperature())
             .stream(true)
             .build();
 
@@ -182,7 +197,6 @@ public class ModelExperienceService {
                     String content = extractContent(chunk);
                     if (content != null && !content.isEmpty()) {
                         contentBuilder.append(content);
-                        // 使用 SseEmitter.event() 构建标准的 SSE 事件格式
                         emitter.send(SseEmitter.event()
                             .name("CONTENT")
                             .data(new ExperienceChatEvent.ContentData(content)));
@@ -196,15 +210,12 @@ public class ModelExperienceService {
             @Override
             public void onComplete() {
                 try {
-                    // 估算输入 Token
                     promptTokens[0] = estimatePromptTokens(messages);
 
-                    // 发送使用量统计
                     emitter.send(SseEmitter.event()
                         .name("USAGE")
                         .data(new ExperienceChatEvent.UsageData(promptTokens[0], completionTokens[0])));
 
-                    // 发送完成事件
                     emitter.send(SseEmitter.event().name("DONE"));
                     emitter.complete();
 
@@ -229,8 +240,8 @@ public class ModelExperienceService {
             }
         };
 
-        // 调用 Adapter 流式聊天
-        adapter.chatStream(llmRequest, callback);
+        // 通过协议网关调用流式聊天
+        protocolGateway.chatStream(llmRequest, baseUrl, config.apiKey, 60, callback);
     }
 
     /**
@@ -238,45 +249,48 @@ public class ModelExperienceService {
      *
      * <p>支持两种模式：</p>
      * <ol>
-     *   <li>使用已保存配置：从数据库读取 Provider 和 API Key</li>
+     *   <li>使用已保存配置：从数据库读取 Product 和 ProductApiKey</li>
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
     private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
         if (request.useSavedConfig()) {
-            // 从数据库读取配置
-            Provider provider = providerGateway.findById(request.providerId())
-                .orElseThrow(() -> new IllegalArgumentException("供应商不存在: " + request.providerId()));
+            // 从数据库读取配置（新架构：使用 productId）
+            var product = productGateway.findById(request.getProductId())
+                .orElseThrow(() -> new IllegalArgumentException("产品不存在: " + request.getProductId()));
 
-            ProviderApiKey apiKey;
-            if (request.apiKeyId() != null) {
-                // 使用指定的 API Key
-                apiKey = providerApiKeyGateway.findById(request.apiKeyId())
-                    .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + request.apiKeyId()));
-                if (!apiKey.getProviderId().equals(request.providerId())) {
-                    throw new IllegalArgumentException("API Key 不属于该供应商");
+            ProductApiKey apiKey;
+            if (request.getApiKeyId() != null) {
+                apiKey = productApiKeyGateway.findById(request.getApiKeyId())
+                    .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + request.getApiKeyId()));
+                if (!apiKey.getProductId().equals(request.getProductId())) {
+                    throw new IllegalArgumentException("API Key 不属于该产品");
                 }
             } else {
-                // 使用默认 API Key
-                apiKey = providerApiKeyGateway.findDefaultKeyByProviderId(request.providerId())
-                    .orElseThrow(() -> new IllegalArgumentException("供应商没有默认 API Key，请指定要使用的 Key"));
+                apiKey = productApiKeyGateway.findDefaultByProductId(request.getProductId())
+                    .orElseThrow(() -> new IllegalArgumentException("产品没有默认 API Key，请指定要使用的 Key"));
             }
 
             if (!apiKey.isAvailable()) {
-                throw new IllegalArgumentException("API Key 不可用: " + apiKey.getState());
+                throw new IllegalArgumentException("API Key 不可用");
             }
 
+            // 从产品端点获取 baseUrl
+            Map<String, String> endpoints = product.getEndpoints();
+            String baseUrl = endpoints != null ? endpoints.get(request.getProtocolName()) : null;
+
+            // 使用已保存配置
             return new ResolvedConfig(
-                provider.getType(),
-                provider.getBaseUrl(),
-                apiKey.getApiKey()
+                request.getProtocolName(),
+                baseUrl,
+                apiKey.getApiKeyPlain()
             );
         } else {
-            // 使用临时配置
+            // 使用临时配置：baseUrl 可选，由协议网关提供默认值
             return new ResolvedConfig(
-                request.providerType(),
-                request.baseUrl(),
-                request.apiKey()
+                request.getProtocolName(),
+                request.getBaseUrl(),
+                request.getApiKey()
             );
         }
     }
@@ -285,7 +299,7 @@ public class ModelExperienceService {
      * 解析后的配置
      */
     private record ResolvedConfig(
-        com.codingas.gateway.domain.model.enums.ProviderType providerType,
+        String protocolName,
         String baseUrl,
         String apiKey
     ) {}
@@ -306,7 +320,6 @@ public class ModelExperienceService {
             if (choices.isArray() && choices.size() > 0) {
                 JsonNode delta = choices.get(0).path("delta");
 
-                // 优先提取 content 字段
                 if (delta.has("content") && !delta.get("content").isNull()) {
                     String content = delta.get("content").asText();
                     if (!content.isEmpty()) {
@@ -314,7 +327,6 @@ public class ModelExperienceService {
                     }
                 }
 
-                // 如果 content 为空，检查 reasoning_content（火山引擎推理内容）
                 if (delta.has("reasoning_content") && !delta.get("reasoning_content").isNull()) {
                     String reasoningContent = delta.get("reasoning_content").asText();
                     if (!reasoningContent.isEmpty()) {

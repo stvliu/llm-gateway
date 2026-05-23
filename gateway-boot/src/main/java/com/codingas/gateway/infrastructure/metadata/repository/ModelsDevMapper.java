@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +32,6 @@ public class ModelsDevMapper {
             node.path("name").asText(modelId), MetadataSource.MODELS_DEV);
         modelMetadataDomainService.markSynced(metadata);
 
-        populatePricing(metadata, node.path("pricing"));
         populateLimits(metadata, node);
         populateMetadata(metadata, node);
         populateCapabilities(metadata, node);
@@ -49,26 +47,8 @@ public class ModelsDevMapper {
         existing.setDisplayName(node.path("name").asText(existing.getDisplayName()));
         modelMetadataDomainService.markSynced(existing);
 
-        populatePricing(existing, node.path("pricing"));
         populateLimits(existing, node);
         existing.setKnowledgeCutoff(node.path("knowledge_cutoff").asText(null));
-    }
-
-    /**
-     * 填充定价信息
-     */
-    private void populatePricing(ModelMetadata metadata, JsonNode pricing) {
-        if (pricing.isMissingNode() || pricing.isNull()) {
-            return;
-        }
-        
-        metadata.setInputPrice(parseDecimal(pricing, "prompt"));
-        metadata.setOutputPrice(parseDecimal(pricing, "completion"));
-        metadata.setReasoningPrice(parseDecimal(pricing, "reasoning"));
-        metadata.setCacheReadPrice(parseDecimal(pricing, "cache_read"));
-        metadata.setCacheWritePrice(parseDecimal(pricing, "cache_write"));
-        metadata.setInputAudioPrice(parseDecimal(pricing, "input_audio"));
-        metadata.setOutputAudioPrice(parseDecimal(pricing, "output_audio"));
     }
 
     /**
@@ -110,21 +90,6 @@ public class ModelsDevMapper {
         }
         modalities.add("text");
         metadata.setModalities(modalities);
-    }
-
-    /**
-     * 解析 BigDecimal 字段
-     */
-    private BigDecimal parseDecimal(JsonNode parent, String field) {
-        JsonNode node = parent.path(field);
-        if (node.isMissingNode() || node.isNull()) {
-            return null;
-        }
-        try {
-            return BigDecimal.valueOf(node.asDouble());
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     /**

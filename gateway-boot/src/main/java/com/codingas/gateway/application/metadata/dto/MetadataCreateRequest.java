@@ -18,9 +18,6 @@ public class MetadataCreateRequest {
     @NotBlank(message = "供应商名称不能为空")
     private String providerName;
 
-    @NotBlank(message = "供应商类型不能为空")
-    private String providerType;
-
     private Map<String, Object> providerConfig;
 
     private String description;

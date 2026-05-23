@@ -30,7 +30,7 @@ spring:
   # ==============================================
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update  # 开发环境使用 update，自动同步 schema
     show-sql: false
     open-in-view: false
     properties:
@@ -174,7 +174,12 @@ management:
       base-path: /actuator
   endpoint:
     health:
-      show-details: when_authorized
+      show-details: always
+      group:
+        liveness:
+          include: ping
+        readiness:
+          include: db, providerRegistry
   metrics:
     tags:
       application: ${spring.application.name}
@@ -186,8 +191,15 @@ management:
 # 网关配置
 # ==============================================
 gateway:
-  llm:
-    timeout-seconds: 30
+  actuator:
+    health:
+      public-access: true
+  health:
+    provider:
+      stale-threshold: 300s
+      failure-threshold: 3
+      success-threshold: 2
+      probe-timeout: 10s
 
 # ==============================================
 # 日志配置（由 logback-spring.xml 管理）

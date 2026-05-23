@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.config;
 
 import com.codingas.gateway.adapter.interceptor.SecurityInterceptorChain;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
@@ -19,20 +20,26 @@ import java.io.IOException;
  */
 @Configuration
 @RequiredArgsConstructor
+@EnableConfigurationProperties(ActuatorHealthProperties.class)
 public class WebConfig implements WebMvcConfigurer {
 
     private final SecurityInterceptorChain securityInterceptorChain;
+    private final ActuatorHealthProperties actuatorHealthProperties;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new org.springframework.web.servlet.HandlerInterceptor() {
+        var registration = registry.addInterceptor(new org.springframework.web.servlet.HandlerInterceptor() {
             @Override
             public boolean preHandle(jakarta.servlet.http.HttpServletRequest request,
                                      jakarta.servlet.http.HttpServletResponse response,
                                      Object handler) throws Exception {
                 return securityInterceptorChain.execute(request, response);
             }
-        }).addPathPatterns("/api/**", "/v1/**");
+        }).addPathPatterns("/api/**", "/v1/**", "/actuator/health/**");
+
+        if (actuatorHealthProperties.isPublicAccess()) {
+            registration.excludePathPatterns("/actuator/health/**");
+        }
     }
 
     /**

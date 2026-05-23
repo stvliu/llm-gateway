@@ -78,6 +78,8 @@ public interface ModelGateway {
      */
     List<Model> findByProviderId(Long providerId);
 
+    List<Model> findByIds(List<Long> ids);
+
     /**
      * 统计模型总数
      *

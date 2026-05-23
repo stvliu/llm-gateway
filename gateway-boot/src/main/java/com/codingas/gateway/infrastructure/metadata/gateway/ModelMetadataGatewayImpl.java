@@ -111,13 +111,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
         entity.setContextWindow(doEntity.getContextWindow());
         entity.setMaxInputTokens(doEntity.getMaxInputTokens());
         entity.setMaxOutputTokens(doEntity.getMaxOutputTokens());
-        entity.setInputPrice(doEntity.getInputPrice());
-        entity.setOutputPrice(doEntity.getOutputPrice());
-        entity.setReasoningPrice(doEntity.getReasoningPrice());
-        entity.setCacheReadPrice(doEntity.getCacheReadPrice());
-        entity.setCacheWritePrice(doEntity.getCacheWritePrice());
-        entity.setInputAudioPrice(doEntity.getInputAudioPrice());
-        entity.setOutputAudioPrice(doEntity.getOutputAudioPrice());
         entity.setKnowledgeCutoff(doEntity.getKnowledgeCutoff());
         entity.setReleaseDate(doEntity.getReleaseDate());
         entity.setOpenWeights(doEntity.getOpenWeights());
@@ -143,13 +136,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
         doEntity.setContextWindow(entity.getContextWindow());
         doEntity.setMaxInputTokens(entity.getMaxInputTokens());
         doEntity.setMaxOutputTokens(entity.getMaxOutputTokens());
-        doEntity.setInputPrice(entity.getInputPrice());
-        doEntity.setOutputPrice(entity.getOutputPrice());
-        doEntity.setReasoningPrice(entity.getReasoningPrice());
-        doEntity.setCacheReadPrice(entity.getCacheReadPrice());
-        doEntity.setCacheWritePrice(entity.getCacheWritePrice());
-        doEntity.setInputAudioPrice(entity.getInputAudioPrice());
-        doEntity.setOutputAudioPrice(entity.getOutputAudioPrice());
         doEntity.setKnowledgeCutoff(entity.getKnowledgeCutoff());
         doEntity.setReleaseDate(entity.getReleaseDate());
         doEntity.setOpenWeights(entity.getOpenWeights());

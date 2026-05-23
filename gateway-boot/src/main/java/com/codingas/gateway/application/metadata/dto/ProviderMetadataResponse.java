@@ -15,7 +15,6 @@ public class ProviderMetadataResponse {
     private Long id;
     private String providerId;
     private String providerName;
-    private String providerType;
     private Object providerConfig;
     private String iconUrl;
     private String description;

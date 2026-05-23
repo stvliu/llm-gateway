@@ -1,0 +1,50 @@
+[
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-北京",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "is_default": true,
+    "description": "北京区域，OpenAI兼容接口，支持上下文缓存",
+    "input_price": 2.5,
+    "output_price": 10.0
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-弗吉尼亚",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "美国弗吉尼亚区域，适合海外业务"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "按量付费-新加坡",
+    "product_type": "STANDARD",
+    "endpoints": {
+      "OPENAI": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "新加坡区域，国际业务"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "Coding Plan Lite",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "月订阅制，¥200/月，限制每5小时及每月请求频次"
+  },
+  {
+    "provider_id": "qwen",
+    "product_name": "Coding Plan Pro",
+    "product_type": "SUBSCRIPTION",
+    "endpoints": {
+      "OPENAI": "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    },
+    "description": "月订阅制，$50/月，更高请求频次"
+  }
+]

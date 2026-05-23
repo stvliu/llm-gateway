@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, message, Card } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Card } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
+import { useMessage } from '@/hooks/useMessage';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
@@ -12,6 +13,7 @@ import type { ColumnsType } from 'antd/es/table';
 export default function Users() {
   const { t } = useTranslation('users');
   const { confirm } = useConfirm();
+  const message = useMessage();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.USER_WRITE);
   const [modalOpen, setModalOpen] = useState(false);

@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.model.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import jakarta.persistence.*;
 import lombok.*;
@@ -21,13 +20,6 @@ public class ProviderDo extends BaseDo {
 
     @Column(name = "provider_name", nullable = false, length = 128)
     private String name;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "provider_type", nullable = false)
-    private ProviderType type;
-
-    @Column(name = "base_url", length = 256)
-    private String baseUrl;
 
     @Column(name = "website_url", length = 512)
     private String websiteUrl;

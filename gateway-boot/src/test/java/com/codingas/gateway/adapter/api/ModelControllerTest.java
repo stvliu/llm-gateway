@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
@@ -186,8 +185,6 @@ class ModelControllerTest {
         response.setProviderName("OpenAI");
         response.setDisplayName("GPT-4");
         response.setContextWindow(8192);
-        response.setInputPrice(BigDecimal.valueOf(0.03));
-        response.setOutputPrice(BigDecimal.valueOf(0.06));
         response.setState(ModelState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());

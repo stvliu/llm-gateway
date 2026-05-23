@@ -151,3 +151,9 @@ GatewayException (根异常)
 
 ## Recent Changes
 - 001-provider-adapter: Added Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化)
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->
+On every task, check for relevant Superpowers skills and use them.

@@ -14,7 +14,6 @@ public class ProviderMetadata {
     private Long id;
     private String providerId;
     private String providerName;
-    private String providerType;
     private Object providerConfig;
     private String iconUrl;
     private String description;
@@ -28,11 +27,10 @@ public class ProviderMetadata {
 
     public ProviderMetadata() {}
 
-    public ProviderMetadata(String providerId, String providerName, String providerType,
+    public ProviderMetadata(String providerId, String providerName,
                             Object providerConfig) {
         this.providerId = providerId;
         this.providerName = providerName;
-        this.providerType = providerType;
         this.providerConfig = providerConfig;
         this.state = MetadataState.ACTIVE;
     }
@@ -47,9 +45,6 @@ public class ProviderMetadata {
 
     public String getProviderName() { return providerName; }
     public void setProviderName(String providerName) { this.providerName = providerName; }
-
-    public String getProviderType() { return providerType; }
-    public void setProviderType(String providerType) { this.providerType = providerType; }
 
     public Object getProviderConfig() { return providerConfig; }
     public void setProviderConfig(Object providerConfig) { this.providerConfig = providerConfig; }

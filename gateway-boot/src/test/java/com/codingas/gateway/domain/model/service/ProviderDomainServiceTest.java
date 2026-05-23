@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.model.service;
 
 import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import org.junit.jupiter.api.DisplayName;
@@ -138,8 +137,6 @@ class ProviderDomainServiceTest {
             Provider existing = createTestProvider();
             Provider updateData = new Provider();
             updateData.setName("Updated Name");
-            updateData.setType(ProviderType.ANTHROPIC);
-            updateData.setBaseUrl("https://new.url");
             updateData.setPriority(50);
             updateData.setState(ProviderState.ACTIVE);
 
@@ -206,8 +203,6 @@ class ProviderDomainServiceTest {
         Provider provider = new Provider();
         provider.setId(1L);
         provider.setName("OpenAI");
-        provider.setType(ProviderType.OPENAI);
-        provider.setBaseUrl("https://api.openai.com");
         provider.setPriority(100);
         provider.setState(ProviderState.ACTIVE);
         return provider;

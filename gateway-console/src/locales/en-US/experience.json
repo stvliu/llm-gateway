@@ -1,38 +1,24 @@
 {
   "config": {
-    "title": "Configuration",
-    "providerType": "Provider Type",
-    "selectProvider": "Select provider",
     "apiKey": "API Key",
     "selectApiKey": "Select API Key",
-    "defaultKey": "default",
-    "apiKeyPlaceholder": "Enter API Key",
-    "baseUrl": "Base URL",
-    "baseUrlPlaceholder": "Optional, use default",
+    "defaultKey": "Default",
     "model": "Model",
-    "selectModel": "Select model",
-    "testConnection": "Test Connection",
-    "testing": "Testing...",
-    "testSuccess": "Connection successful",
-    "testFailed": "Connection failed",
-    "testError": "Test error",
-    "testRequired": "Please fill in provider type and API Key first"
+    "selectModel": "Select Model"
   },
   "chat": {
-    "title": "Chat",
-    "clear": "Clear",
-    "empty": "Start a conversation to experience the model"
+    "empty": "Start a conversation",
+    "clear": "Clear"
   },
   "input": {
-    "placeholder": "Enter message...",
+    "placeholder": "Type a message...",
     "send": "Send",
     "stop": "Stop",
-    "hint": "Press Enter to send, Shift+Enter for new line"
+    "hint": "Press Enter to send, Shift + Enter for new line"
   },
   "stats": {
     "promptTokens": "Input Tokens",
-    "completionTokens": "Output Tokens",
-    "totalTokens": "Total"
+    "completionTokens": "Output Tokens"
   },
   "errors": {
     "noProvider": "Please select a provider"

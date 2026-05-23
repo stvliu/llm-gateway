@@ -47,15 +47,11 @@ public class ProviderMetadataGatewayImpl implements ProviderMetadataGateway {
 
     @Override
     public Page<ProviderMetadata> findByConditions(
-            String providerType,
             String keyword, Pageable pageable) {
         Specification<ProviderMetadataDo> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             // 排除逻辑删除
             predicates.add(cb.isNull(root.get("deletedAt")));
-            if (providerType != null && !providerType.isBlank()) {
-                predicates.add(cb.equal(root.get("providerType"), providerType));
-            }
             if (keyword != null && !keyword.isBlank()) {
                 predicates.add(cb.or(
                     cb.like(root.get("providerName"), "%" + keyword + "%"),
@@ -91,7 +87,6 @@ public class ProviderMetadataGatewayImpl implements ProviderMetadataGateway {
         entity.setId(doEntity.getId());
         entity.setProviderId(doEntity.getProviderId());
         entity.setProviderName(doEntity.getProviderName());
-        entity.setProviderType(doEntity.getProviderType());
         entity.setProviderConfig(parseJson(doEntity.getProviderConfig()));
         entity.setIconUrl(doEntity.getIconUrl());
         entity.setDescription(doEntity.getDescription());
@@ -110,7 +105,6 @@ public class ProviderMetadataGatewayImpl implements ProviderMetadataGateway {
         doEntity.setId(entity.getId());
         doEntity.setProviderId(entity.getProviderId());
         doEntity.setProviderName(entity.getProviderName());
-        doEntity.setProviderType(entity.getProviderType());
         doEntity.setProviderConfig(toJson(entity.getProviderConfig()));
         doEntity.setIconUrl(entity.getIconUrl());
         doEntity.setDescription(entity.getDescription());

@@ -1,13 +1,21 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Tabs, Card, Button, Space, message, Modal, Input, Form, Tag, Typography, theme, Select, Spin } from 'antd';
-import { SyncOutlined, CloudDownloadOutlined, RightOutlined, SearchOutlined, FilterOutlined, CloseOutlined } from '@ant-design/icons';
+import { useState } from 'react';
+import { Card, Button, Space, Modal, Input, Form, Tag, Typography, theme, Spin, App, Table, Breadcrumb } from 'antd';
+import { SyncOutlined, CloudDownloadOutlined, SearchOutlined, CloseOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useProviderMetadata, useModelMetadata, useApplyMetadata, useSyncMetadata } from '@/services/query/useMetadata';
-import { useProviderTypes } from '@/services/query/useProviders';
-import type { ProviderMetadata, ModelMetadata, MetadataSource } from '@/types/metadata';
-import type { ProviderTypeOption } from '@/types/api';
+import { useProviderMetadata, useProductMetadataByProvider, useModelMetadataByProduct, useApplyMetadata, useSyncMetadata } from '@/services/query/useMetadata';
+import type { ProviderMetadata, ProductMetadata } from '@/types/metadata';
 
 const { Text } = Typography;
+
+/** 产品类型选项 */
+const PRODUCT_TYPE_OPTIONS = [
+  { value: 'STANDARD', label: '按量付费', color: 'green' },
+  { value: 'BATCH', label: '批量处理', color: 'orange' },
+  { value: 'CACHE', label: '缓存折扣', color: 'cyan' },
+  { value: 'SUBSCRIPTION', label: '订阅制', color: 'purple' },
+  { value: 'PROMOTION', label: '限时优惠', color: 'red' },
+  { value: 'FREE_TIER', label: '免费额度', color: 'default' },
+];
 
 /** 数据来源选项 */
 const SOURCE_OPTIONS = [
@@ -17,90 +25,119 @@ const SOURCE_OPTIONS = [
 ];
 
 /**
- * 元数据管理页面
- * 管理供应商元数据和模型元数据，支持同步和发布
+ * 元数据管理页面 - 三级联动导航
+ * 供应商元数据 → 产品元数据 → 模型元数据
  */
 export default function MetadataPage() {
-  const { t } = useTranslation('metadata');
-  const [activeTab, setActiveTab] = useState('providers');
-  const [filterProviderId, setFilterProviderId] = useState<string | undefined>();
-
-  // 切换到模型 Tab 并按供应商筛选
-  const handleViewModelsByProvider = (providerId: string) => {
-    setFilterProviderId(providerId);
-    setActiveTab('models');
-  };
+  // 导航状态：三级联动
+  const [providerId, setProviderId] = useState<string | undefined>();
+  const [productId, setProductId] = useState<number | null>(null);
+  const [providerName, setProviderName] = useState<string>('');
+  const [productName, setProductName] = useState<string>('');
 
   return (
     <div style={{ padding: 24 }}>
       <Card>
-        <Tabs
-          activeKey={activeTab}
-          onChange={(key) => {
-            setActiveTab(key);
-            if (key === 'providers') {
-              setFilterProviderId(undefined);
-            }
-          }}
-          items={[
-            {
-              key: 'providers',
-              label: t('tabs.providers'),
-              children: (
-                <ProviderMetadataTab onViewModelsByProvider={handleViewModelsByProvider} />
-              ),
-            },
-            {
-              key: 'models',
-              label: (
-                <Space>
-                  {t('tabs.models')}
-                  {filterProviderId && (
-                    <Tag
-                      closable
-                      onClose={() => setFilterProviderId(undefined)}
-                      style={{ marginLeft: 4 }}
-                    >
-                      {filterProviderId}
-                    </Tag>
-                  )}
-                </Space>
-              ),
-              children: (
-                <ModelMetadataTab initialProviderId={filterProviderId} />
-              ),
-            },
-          ]}
-        />
+        {/* 面包屑导航 */}
+        <div style={{ marginBottom: 16 }}>
+          <Breadcrumb
+            items={[
+              {
+                title: (
+                  <Button
+                    type={providerId ? 'link' : 'text'}
+                    style={{ padding: 0, fontWeight: providerId ? undefined : 600 }}
+                    onClick={() => {
+                      setProviderId(undefined);
+                      setProductId(null);
+                    }}
+                  >
+                    供应商元数据
+                  </Button>
+                ),
+              },
+              ...(providerId
+                ? [
+                    {
+                      title: (
+                        <Button
+                          type={productId ? 'link' : 'text'}
+                          style={{ padding: 0, fontWeight: productId ? undefined : 600 }}
+                          onClick={() => setProductId(null)}
+                        >
+                          产品元数据
+                          {providerName && <Text type="secondary" style={{ marginLeft: 4, fontSize: 12 }}>({providerName})</Text>}
+                        </Button>
+                      ),
+                    },
+                  ]
+                : []),
+              ...(productId
+                ? [
+                    {
+                      title: (
+                        <Text strong>
+                          模型元数据
+                          {productName && <Text type="secondary" style={{ marginLeft: 4, fontSize: 12 }}>({productName})</Text>}
+                        </Text>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        </div>
+
+        {/* 三级视图切换 */}
+        {!providerId && (
+          <ProviderMetadataView
+            onSelectProvider={(id, name) => {
+              setProviderId(id);
+              setProviderName(name);
+              setProductId(null);
+            }}
+          />
+        )}
+        {providerId && !productId && (
+          <ProductMetadataView
+            providerId={providerId}
+            onSelectProduct={(id, name) => {
+              setProductId(id);
+              setProductName(name);
+            }}
+          />
+        )}
+        {providerId && productId && (
+          <ModelMetadataView productId={productId} />
+        )}
       </Card>
     </div>
   );
 }
 
-/** 供应商元数据 Tab */
-function ProviderMetadataTab({
-  onViewModelsByProvider,
+// ============================================================
+// 第一级：供应商元数据
+// ============================================================
+
+function ProviderMetadataView({
+  onSelectProvider,
 }: {
-  onViewModelsByProvider: (providerId: string) => void;
+  onSelectProvider: (providerId: string, providerName: string) => void;
 }) {
   const { t } = useTranslation('metadata');
+  const { message } = App.useApp();
   const { token } = theme.useToken();
   const [page] = useState(0);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
   const [selectedMetadata, setSelectedMetadata] = useState<ProviderMetadata | null>(null);
-
-  // 搜索和筛选状态
   const [keyword, setKeyword] = useState('');
   const [searchKeyword, setSearchKeyword] = useState('');
-  const [providerType, setProviderType] = useState<string | undefined>();
 
   const { data, isLoading } = useProviderMetadata({
     page,
     size: 20,
     keyword: searchKeyword || undefined,
-    providerType,
   });
-  const { data: providerTypes = [] } = useProviderTypes();
   const applyMutation = useApplyMetadata();
   const syncMutation = useSyncMetadata();
 
@@ -128,21 +165,12 @@ function ProviderMetadataTab({
     }
   };
 
-  // 清除所有筛选
-  const handleClearFilters = () => {
-    setKeyword('');
-    setSearchKeyword('');
-    setProviderType(undefined);
-  };
-
-  // 是否有活跃的筛选条件
-  const hasActiveFilters = searchKeyword || providerType;
-
+  const hasActiveFilters = !!searchKeyword;
   const providerList = data?.content ?? [];
 
   return (
     <div>
-      {/* 搜索和筛选栏 */}
+      {/* 搜索和同步栏 */}
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
         <Space wrap>
           <Input.Search
@@ -154,19 +182,8 @@ function ProviderMetadataTab({
             style={{ width: 240 }}
             prefix={<SearchOutlined />}
           />
-          <Select
-            placeholder={t('filterByType', { defaultValue: '供应商类型' })}
-            allowClear
-            value={providerType}
-            onChange={setProviderType}
-            style={{ width: 160 }}
-            options={providerTypes.map((pt: ProviderTypeOption) => ({
-              value: pt.value,
-              label: pt.label,
-            }))}
-          />
           {hasActiveFilters && (
-            <Button icon={<CloseOutlined />} onClick={handleClearFilters}>
+            <Button icon={<CloseOutlined />} onClick={() => { setKeyword(''); setSearchKeyword(''); }}>
               {t('clearFilters', { defaultValue: '清除筛选' })}
             </Button>
           )}
@@ -184,26 +201,6 @@ function ProviderMetadataTab({
         </Space>
       </div>
 
-      {/* 当前筛选条件显示 */}
-      {hasActiveFilters && (
-        <div style={{ marginBottom: 12 }}>
-          <Space size={4}>
-            <FilterOutlined style={{ color: token.colorTextSecondary }} />
-            <Text type="secondary">{t('currentFilters', { defaultValue: '当前筛选' })}:</Text>
-            {searchKeyword && (
-              <Tag closable onClose={() => { setKeyword(''); setSearchKeyword(''); }}>
-                {t('keyword', { defaultValue: '关键词' })}: {searchKeyword}
-              </Tag>
-            )}
-            {providerType && (
-              <Tag closable onClose={() => setProviderType(undefined)}>
-                {t('providerType', { defaultValue: '类型' })}: {providerTypes.find((pt: ProviderTypeOption) => pt.value === providerType)?.label || providerType}
-              </Tag>
-            )}
-          </Space>
-        </div>
-      )}
-
       {/* 供应商卡片网格 */}
       <Spin spinning={isLoading}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 16, minHeight: 200 }}>
@@ -217,27 +214,30 @@ function ProviderMetadataTab({
                   key="apply"
                   type="link"
                   icon={<CloudDownloadOutlined />}
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedMetadata(pm);
                     setApplyModalOpen(true);
                   }}
                 >
                   {t('apply')}
                 </Button>,
+                <Button
+                  key="view"
+                  type="link"
+                  icon={<ArrowRightOutlined />}
+                  onClick={() => onSelectProvider(pm.providerId, pm.providerName)}
+                >
+                  产品
+                </Button>,
               ]}
             >
               <Card.Meta
-                title={
-                  <Space>
-                    <span>{pm.providerName}</span>
-                    <Tag>{pm.providerType}</Tag>
-                  </Space>
-                }
+                title={<span>{pm.providerName}</span>}
                 description={
                   <div>
                     <Text type="secondary" style={{ fontSize: 12 }}>{pm.providerId}</Text>
                     {pm.description && <div style={{ marginTop: 4 }}>{pm.description}</div>}
-                    {/* 模型概览 */}
                     <div
                       style={{
                         marginTop: 12,
@@ -257,15 +257,6 @@ function ProviderMetadataTab({
                           {pm.modelCount ?? 0}
                         </Tag>
                       </Space>
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<RightOutlined />}
-                        onClick={() => onViewModelsByProvider(pm.providerId)}
-                        disabled={!pm.modelCount}
-                      >
-                        {t('viewAll', { defaultValue: '查看' })}
-                      </Button>
                     </div>
                   </div>
                 }
@@ -295,150 +286,189 @@ function ProviderMetadataTab({
   );
 }
 
-/** 模型元数据 Tab */
-function ModelMetadataTab({ initialProviderId }: { initialProviderId?: string }) {
+// ============================================================
+// 第二级：产品元数据（按供应商过滤）
+// ============================================================
+
+function ProductMetadataView({
+  providerId,
+  onSelectProduct,
+}: {
+  providerId: string;
+  onSelectProduct: (productId: number, productName: string) => void;
+}) {
   const { t } = useTranslation('metadata');
-  const { token } = theme.useToken();
-  const [page] = useState(0);
+  const { data, isLoading } = useProductMetadataByProvider(providerId);
 
-  // 搜索和筛选状态
-  const [keyword, setKeyword] = useState('');
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [providerIdFilter, setProviderIdFilter] = useState<string | undefined>(initialProviderId);
-  const [sourceFilter, setSourceFilter] = useState<MetadataSource | undefined>();
-
-  // 当 initialProviderId 变化时更新筛选
-  useEffect(() => {
-    if (initialProviderId) {
-      setProviderIdFilter(initialProviderId);
-    }
-  }, [initialProviderId]);
-
-  const { data, isLoading } = useModelMetadata({
-    page,
-    size: 20,
-    keyword: searchKeyword || undefined,
-    providerId: providerIdFilter,
-    source: sourceFilter,
-  });
-
-  // 获取供应商列表用于筛选下拉框
-  const { data: providerData } = useProviderMetadata({ page: 0, size: 100 });
-  const providerOptions = useMemo(() => {
-    const providers = providerData?.content ?? [];
-    return providers.map((p: ProviderMetadata) => ({
-      value: p.providerId,
-      label: `${p.providerName} (${p.providerId})`,
-    }));
-  }, [providerData]);
-
-  // 清除所有筛选
-  const handleClearFilters = () => {
-    setKeyword('');
-    setSearchKeyword('');
-    setProviderIdFilter(undefined);
-    setSourceFilter(undefined);
-  };
-
-  // 是否有活跃的筛选条件
-  const hasActiveFilters = searchKeyword || providerIdFilter || sourceFilter;
-
-  const modelList = data?.content ?? [];
+  const products = data ?? [];
 
   return (
     <div>
-      {/* 搜索和筛选栏 */}
-      <div style={{ marginBottom: 16 }}>
-        <Space wrap>
-          <Input.Search
-            placeholder={t('searchModelPlaceholder', { defaultValue: '搜索模型名称' })}
-            allowClear
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            onSearch={(value) => setSearchKeyword(value)}
-            style={{ width: 240 }}
-            prefix={<SearchOutlined />}
-          />
-          <Select
-            placeholder={t('filterByProvider', { defaultValue: '供应商' })}
-            allowClear
-            showSearch
-            value={providerIdFilter}
-            onChange={setProviderIdFilter}
-            style={{ width: 200 }}
-            options={providerOptions}
-            filterOption={(input, option) =>
-              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-            }
-          />
-          <Select
-            placeholder={t('filterBySource', { defaultValue: '来源' })}
-            allowClear
-            value={sourceFilter}
-            onChange={setSourceFilter}
-            style={{ width: 160 }}
-            options={SOURCE_OPTIONS}
-          />
-          {hasActiveFilters && (
-            <Button icon={<CloseOutlined />} onClick={handleClearFilters}>
-              {t('clearFilters', { defaultValue: '清除筛选' })}
-            </Button>
-          )}
-        </Space>
-      </div>
-
-      {/* 当前筛选条件显示 */}
-      {hasActiveFilters && (
-        <div style={{ marginBottom: 12 }}>
-          <Space size={4}>
-            <FilterOutlined style={{ color: token.colorTextSecondary }} />
-            <Text type="secondary">{t('currentFilters', { defaultValue: '当前筛选' })}:</Text>
-            {searchKeyword && (
-              <Tag closable onClose={() => { setKeyword(''); setSearchKeyword(''); }}>
-                {t('keyword', { defaultValue: '关键词' })}: {searchKeyword}
-              </Tag>
-            )}
-            {providerIdFilter && (
-              <Tag closable onClose={() => setProviderIdFilter(undefined)}>
-                {t('provider', { defaultValue: '供应商' })}: {providerIdFilter}
-              </Tag>
-            )}
-            {sourceFilter && (
-              <Tag closable onClose={() => setSourceFilter(undefined)}>
-                {t('source', { defaultValue: '来源' })}: {SOURCE_OPTIONS.find(s => s.value === sourceFilter)?.label}
-              </Tag>
-            )}
-          </Space>
-        </div>
-      )}
-
-      {/* 模型标签列表 */}
       <Spin spinning={isLoading}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, minHeight: 200 }}>
-          {modelList.map((mm: ModelMetadata) => (
-            <Tag key={mm.id} style={{ padding: '4px 12px', margin: 0 }}>
-              <Space size={4}>
-                <span>{mm.displayName}</span>
-                <span style={{ fontSize: 11, color: token.colorTextSecondary }}>{mm.providerModelId}</span>
-                <Tag color={mm.source === 'BUILTIN' ? 'blue' : mm.source === 'MODELS_DEV' ? 'green' : 'default'} style={{ fontSize: 10 }}>
-                  {mm.source}
-                </Tag>
-              </Space>
-            </Tag>
-          ))}
-        </div>
+        {products.length === 0 && !isLoading ? (
+          <div style={{ textAlign: 'center', padding: 48 }}>
+            <Text type="secondary">该供应商暂无产品</Text>
+          </div>
+        ) : (
+          <Table
+            dataSource={products}
+            rowKey="id"
+            size="small"
+            pagination={false}
+            onRow={(record) => ({
+              onClick: () => onSelectProduct(record.id, record.productName),
+              style: { cursor: 'pointer' },
+            })}
+            columns={[
+              {
+                title: t('product.name', { defaultValue: '产品名称' }),
+                dataIndex: 'productName',
+                key: 'productName',
+                render: (name: string, record: ProductMetadata) => (
+                  <Space>
+                    <span style={{ fontWeight: 500 }}>{name}</span>
+                    {record.isDefault && <Tag color="blue">默认</Tag>}
+                  </Space>
+                ),
+              },
+              {
+                title: t('product.type', { defaultValue: '类型' }),
+                dataIndex: 'productType',
+                key: 'productType',
+                width: 120,
+                render: (type: string) => {
+                  const info = PRODUCT_TYPE_OPTIONS.find(o => o.value === type);
+                  return <Tag color={info?.color ?? 'default'}>{info?.label ?? type}</Tag>;
+                },
+              },
+              {
+                title: t('product.endpoints', { defaultValue: '端点' }),
+                dataIndex: 'endpoints',
+                key: 'endpoints',
+                render: (endpoints: Record<string, string>) => (
+                  <Space direction="vertical" size={2}>
+                    {Object.entries(endpoints ?? {}).map(([protocol, url]) => (
+                      <Space key={protocol} size={4}>
+                        <Tag style={{ fontSize: 10 }}>{protocol}</Tag>
+                        <Text code style={{ fontSize: 11 }}>{url}</Text>
+                      </Space>
+                    ))}
+                  </Space>
+                ),
+              },
+              {
+                title: t('product.description', { defaultValue: '描述' }),
+                dataIndex: 'description',
+                key: 'description',
+                ellipsis: true,
+              },
+              {
+                title: '',
+                key: 'action',
+                width: 60,
+                render: () => <ArrowRightOutlined style={{ color: 'var(--ant-color-text-secondary)' }} />,
+              },
+            ]}
+          />
+        )}
       </Spin>
-
-      {modelList.length === 0 && !isLoading && (
-        <div style={{ textAlign: 'center', padding: 48 }}>
-          <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
-        </div>
-      )}
     </div>
   );
 }
 
-/** 应用元数据弹窗 */
+// ============================================================
+// 第三级：模型元数据（按产品过滤）
+// ============================================================
+
+function ModelMetadataView({ productId }: { productId: number }) {
+  const { t } = useTranslation('metadata');
+  const { token } = theme.useToken();
+  const { data, isLoading } = useModelMetadataByProduct(productId);
+
+  const models = data ?? [];
+
+  return (
+    <div>
+      <Spin spinning={isLoading}>
+        {models.length === 0 && !isLoading ? (
+          <div style={{ textAlign: 'center', padding: 48 }}>
+            <Text type="secondary">该产品暂无模型</Text>
+          </div>
+        ) : (
+          <Table
+            dataSource={models}
+            rowKey="id"
+            size="small"
+            pagination={false}
+            columns={[
+              {
+                title: t('model.displayName', { defaultValue: '显示名称' }),
+                dataIndex: 'displayName',
+                key: 'displayName',
+                render: (name: string) => <Text strong>{name}</Text>,
+              },
+              {
+                title: t('model.providerModelId', { defaultValue: '模型标识' }),
+                dataIndex: 'providerModelId',
+                key: 'providerModelId',
+                render: (id: string) => <Text code style={{ fontSize: 11 }}>{id}</Text>,
+              },
+              {
+                title: t('model.contextWindow', { defaultValue: '上下文窗口' }),
+                dataIndex: 'contextWindow',
+                key: 'contextWindow',
+                width: 120,
+                render: (v: number | undefined) => v ? `${(v / 1024).toFixed(0)}K` : '-',
+              },
+              {
+                title: t('model.inputPrice', { defaultValue: '输入价格' }),
+                dataIndex: 'inputPrice',
+                key: 'inputPrice',
+                width: 100,
+                render: (v: number | undefined) => v != null ? `$${v}` : '-',
+              },
+              {
+                title: t('model.outputPrice', { defaultValue: '输出价格' }),
+                dataIndex: 'outputPrice',
+                key: 'outputPrice',
+        width: 100,
+                render: (v: number | undefined) => v != null ? `$${v}` : '-',
+              },
+              {
+                title: t('model.capabilities', { defaultValue: '能力' }),
+                dataIndex: 'capabilities',
+                key: 'capabilities',
+                render: (caps: Record<string, boolean>) => (
+                  <Space size={4} wrap>
+                    {Object.entries(caps ?? {})
+                      .filter(([, v]) => v)
+                      .map(([k]) => <Tag key={k} style={{ fontSize: 10 }}>{k}</Tag>)}
+                  </Space>
+                ),
+              },
+              {
+                title: t('model.source', { defaultValue: '来源' }),
+                dataIndex: 'source',
+                key: 'source',
+                width: 90,
+                render: (source: string) => (
+                  <Tag color={source === 'BUILTIN' ? 'blue' : source === 'MODELS_DEV' ? 'green' : 'default'} style={{ fontSize: 10 }}>
+                    {SOURCE_OPTIONS.find(s => s.value === source)?.label ?? source}
+                  </Tag>
+                ),
+              },
+            ]}
+          />
+        )}
+      </Spin>
+    </div>
+  );
+}
+
+// ============================================================
+// 应用元数据弹窗
+// ============================================================
+
 function ApplyMetadataModal({
   open,
   metadata,
@@ -465,8 +495,7 @@ function ApplyMetadataModal({
     >
       {metadata && (
         <div style={{ marginBottom: 16 }}>
-          <Tag>{metadata.providerType}</Tag>
-          <span style={{ marginLeft: 8 }}>{metadata.providerName}</span>
+          <span>{metadata.providerName}</span>
           {metadata.modelCount !== undefined && (
             <Text type="secondary" style={{ marginLeft: 8 }}>
               ({metadata.modelCount} 个模型)

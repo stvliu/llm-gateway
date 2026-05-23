@@ -4,7 +4,6 @@ import com.codingas.gateway.domain.model.enums.ModelState;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -17,10 +16,6 @@ public class ModelUpdateRequest {
     private String displayName;
 
     private Integer contextWindow;
-
-    private BigDecimal inputPrice;
-
-    private BigDecimal outputPrice;
 
     private Map<String, Boolean> capabilities;
 

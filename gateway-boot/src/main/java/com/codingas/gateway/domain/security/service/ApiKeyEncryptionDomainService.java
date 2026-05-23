@@ -56,8 +56,8 @@ public class ApiKeyEncryptionDomainService {
         if (apiKey == null || apiKey.isBlank()) {
             return false;
         }
-        // GatewayApiKey: sk- 前缀 + 32位加密随机字符串 = 44字符
-        // ProviderApiKey: sk- 或 sk-ant- 前缀
+        // UserApiKey/ProductApiKey: sk- 前缀 + 32位加密随机字符串 = 44字符
+        // 或 sk-ant- 前缀（Anthropic 格式）
         if (apiKey.startsWith("sk-")) {
             return apiKey.length() >= 10;
         }

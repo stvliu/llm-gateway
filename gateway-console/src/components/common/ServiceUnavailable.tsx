@@ -34,7 +34,7 @@ export function DevServiceUnavailableModal({
       centered
       maskClosable={false}
     >
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <Alert
           message="后端服务未启动"
           description="无法连接到后端服务，请检查服务状态"

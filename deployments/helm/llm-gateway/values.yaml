@@ -55,7 +55,7 @@ resources:
 # 探针配置
 livenessProbe:
   enabled: true
-  path: /api/v1/health
+  path: /actuator/health/liveness
   initialDelaySeconds: 60
   periodSeconds: 10
   timeoutSeconds: 5
@@ -63,7 +63,7 @@ livenessProbe:
 
 readinessProbe:
   enabled: true
-  path: /api/v1/health
+  path: /actuator/health/readiness
   initialDelaySeconds: 30
   periodSeconds: 5
   timeoutSeconds: 3

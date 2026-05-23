@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   ProviderMetadata,
+  ProductMetadata,
   ModelMetadata,
   CreateProviderMetadataRequest,
   UpdateProviderMetadataRequest,
@@ -13,6 +14,7 @@ import type {
 } from '@/types/metadata';
 
 const BASE_URL = '/provider-metadata';
+const PRODUCT_BASE_URL = '/product-metadata';
 const MODEL_BASE_URL = '/model-metadata';
 const SYNC_BASE_URL = '/metadata-sync';
 
@@ -43,6 +45,21 @@ export const providerMetadataApi = {
     api.post<ApplyMetadataResult>(`${BASE_URL}/${id}/apply`, data),
 };
 
+/** 产品元数据 API */
+export const productMetadataApi = {
+  list: (params?: { providerId?: string; productType?: string; page?: number; size?: number }) =>
+    api.get<SpringPage<ProductMetadata>>(PRODUCT_BASE_URL, { params }),
+
+  get: (id: number) =>
+    api.get<ProductMetadata>(`${PRODUCT_BASE_URL}/${id}`),
+
+  listByProviderId: (providerId: string) =>
+    api.get<ProductMetadata[]>(`${PRODUCT_BASE_URL}/providers/${providerId}`),
+
+  delete: (id: number) =>
+    api.delete(`${PRODUCT_BASE_URL}/${id}`),
+};
+
 /** 模型元数据 API */
 export const modelMetadataApi = {
   list: (params: ModelMetadataListParams) =>
@@ -53,6 +70,7 @@ export const modelMetadataApi = {
 
   listByProviderId: (providerId: string) =>
     api.get<ModelMetadata[]>(`${MODEL_BASE_URL}/providers/${providerId}`),
+
 
   create: (data: Partial<ModelMetadata>) =>
     api.post<ModelMetadata>(MODEL_BASE_URL, data),

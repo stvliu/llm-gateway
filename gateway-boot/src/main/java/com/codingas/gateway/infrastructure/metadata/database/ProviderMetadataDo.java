@@ -1,5 +1,6 @@
 package com.codingas.gateway.infrastructure.metadata.database;
 
+import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -9,20 +10,13 @@ import java.time.Instant;
  */
 @Entity
 @Table(name = "provider_metadata")
-public class ProviderMetadataDo {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class ProviderMetadataDo extends BaseDo {
 
     @Column(name = "provider_id", nullable = false, unique = true, length = 64)
     private String providerId;
 
     @Column(name = "provider_name", nullable = false, length = 128)
     private String providerName;
-
-    @Column(name = "provider_type", nullable = false, length = 32)
-    private String providerType;
 
     @Column(name = "provider_config", nullable = false, columnDefinition = "json")
     private String providerConfig;
@@ -42,31 +36,13 @@ public class ProviderMetadataDo {
     @Column(name = "deleted_at")
     private Instant deletedAt;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "created_by", updatable = false)
-    private Long createdBy;
-
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
-    @Column(name = "updated_by")
-    private Long updatedBy;
-
     // ==================== Getter / Setter ====================
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
     public String getProviderId() { return providerId; }
     public void setProviderId(String providerId) { this.providerId = providerId; }
 
     public String getProviderName() { return providerName; }
     public void setProviderName(String providerName) { this.providerName = providerName; }
-
-    public String getProviderType() { return providerType; }
-    public void setProviderType(String providerType) { this.providerType = providerType; }
 
     public String getProviderConfig() { return providerConfig; }
     public void setProviderConfig(String providerConfig) { this.providerConfig = providerConfig; }
@@ -85,16 +61,4 @@ public class ProviderMetadataDo {
 
     public Instant getDeletedAt() { return deletedAt; }
     public void setDeletedAt(Instant deletedAt) { this.deletedAt = deletedAt; }
-
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
-
-    public Long getCreatedBy() { return createdBy; }
-    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
-
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-
-    public Long getUpdatedBy() { return updatedBy; }
-    public void setUpdatedBy(Long updatedBy) { this.updatedBy = updatedBy; }
 }

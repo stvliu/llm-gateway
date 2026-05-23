@@ -21,7 +21,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +72,6 @@ class ModelServiceTest {
             request.setProviderModelId("gpt-4o-2024-08-06");
             request.setDisplayName("GPT-4o");
             request.setContextWindow(128000);
-            request.setInputPrice(new BigDecimal("0.000005"));
-            request.setOutputPrice(new BigDecimal("0.000015"));
 
             when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> {
@@ -93,9 +90,6 @@ class ModelServiceTest {
             assertThat(response.getProviderModelId()).isEqualTo("gpt-4o-2024-08-06");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4o");
             assertThat(response.getContextWindow()).isEqualTo(128000);
-            assertThat(response.getInputPrice()).isEqualTo(new BigDecimal("0.000005"));
-            assertThat(response.getOutputPrice()).isEqualTo(new BigDecimal("0.000015"));
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
             assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(providerGateway).findById(1L);
@@ -143,7 +137,6 @@ class ModelServiceTest {
             assertThat(response.getProviderId()).isEqualTo(1L);
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
             assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(modelGateway).findById(1L);
@@ -459,7 +452,6 @@ class ModelServiceTest {
             // then
             assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
             assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
             verify(modelGateway).save(testModel);
         }
 
@@ -511,8 +503,6 @@ class ModelServiceTest {
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
-        model.setInputPrice(new BigDecimal("0.00003"));
-        model.setOutputPrice(new BigDecimal("0.00006"));
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
         model.setState(status ? ModelState.ACTIVE : ModelState.DISABLED);
         model.setCreatedAt(Instant.now());

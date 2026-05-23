@@ -9,7 +9,6 @@ export interface ProviderMetadata {
   id: number;
   providerId: string;
   providerName: string;
-  providerType: string;
   providerConfig: Record<string, unknown>;
   iconUrl: string;
   description: string;
@@ -18,6 +17,27 @@ export interface ProviderMetadata {
   createdAt: string;
   updatedAt: string;
   modelCount: number;
+}
+
+export interface ProductMetadata {
+  id: number;
+  providerId: string;
+  productName: string;
+  productType: string;
+  description: string;
+  endpoints: Record<string, string>;
+  isDefault: boolean;
+  inputPrice?: number;
+  outputPrice?: number;
+  reasoningPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
+  inputAudioPrice?: number;
+  outputAudioPrice?: number;
+  state: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ModelMetadata {
@@ -29,13 +49,6 @@ export interface ModelMetadata {
   contextWindow?: number;
   maxInputTokens?: number;
   maxOutputTokens?: number;
-  inputPrice?: number;
-  outputPrice?: number;
-  reasoningPrice?: number;
-  cacheReadPrice?: number;
-  cacheWritePrice?: number;
-  inputAudioPrice?: number;
-  outputAudioPrice?: number;
   knowledgeCutoff?: string;
   releaseDate?: string;
   openWeights?: boolean;
@@ -51,7 +64,6 @@ export interface ModelMetadata {
 export interface CreateProviderMetadataRequest {
   providerId: string;
   providerName: string;
-  providerType: string;
   providerConfig?: Record<string, unknown>;
   description?: string;
   iconUrl?: string;
@@ -81,7 +93,6 @@ export interface ApplyMetadataResult {
 }
 
 export interface ProviderMetadataListParams {
-  providerType?: string;
   keyword?: string;
   page?: number;
   size?: number;

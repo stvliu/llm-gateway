@@ -7,8 +7,6 @@ import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -38,12 +36,6 @@ public class ModelDo extends BaseDo {
 
     @Column(name = "context_window")
     private Integer contextWindow;
-
-    @Column(name = "input_price", precision = 10, scale = 6)
-    private BigDecimal inputPrice;
-
-    @Column(name = "output_price", precision = 10, scale = 6)
-    private BigDecimal outputPrice;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "capabilities", columnDefinition = "json")

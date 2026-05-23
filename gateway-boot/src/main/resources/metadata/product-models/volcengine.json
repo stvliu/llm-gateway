@@ -1,0 +1,26 @@
+[
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-seed-2.0-pro"
+  },
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-seed-2.0-lite"
+  },
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-pro-128k"
+  },
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-pro-32k"
+  },
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-lite-32k"
+  },
+  {
+    "product_name": "在线推理",
+    "provider_model_id": "doubao-1.5-pro-32k"
+  }
+]

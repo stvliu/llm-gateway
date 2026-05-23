@@ -1,11 +1,9 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.enums.UserState;
-import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -13,238 +11,111 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
- * AuthenticationDomainService 完整单元测试
+ * AuthenticationDomainService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthenticationDomainService 测试")
 class AuthenticationDomainServiceTest {
 
     @Mock
-    private ApiKeyGateway apiKeyGateway;
-
-    @Mock
-    private UserGateway userGateway;
+    private UserApiKeyGateway userApiKeyGateway;
 
     @Mock
     private ApiKeyEncryptionDomainService encryptionService;
 
-    private AuthenticationDomainService authService;
+    private AuthenticationDomainService service;
 
     @BeforeEach
     void setUp() {
-        authService = new AuthenticationDomainService(apiKeyGateway, userGateway, encryptionService);
-        // 模拟哈希行为
-        when(encryptionService.hashKey(anyString())).thenAnswer(invocation -> {
-            String key = invocation.getArgument(0);
-            // 简单模拟 SHA-256 哈希
-            return java.security.MessageDigest.getInstance("SHA-256")
-                    .digest(key.getBytes(java.nio.charset.StandardCharsets.UTF_8))
-                    .hashCode() + "";
-        });
+        service = new AuthenticationDomainService(userApiKeyGateway, encryptionService);
     }
 
     @Nested
-    @DisplayName("authenticate 方法测试")
-    class AuthenticateTests {
+    @DisplayName("authenticateUser 方法测试")
+    class AuthenticateUserTests {
 
         @Test
-        @DisplayName("有效 API Key 认证成功")
-        void authenticate_validKey_returnsAuthResult() {
-            // given
-            String apiKey = "sk-test-valid-key-12345";
-            User user = createActiveUser();
-            GatewayApiKey gatewayKey = createActiveApiKey(user);
+        @DisplayName("认证成功 — UserApiKey 活跃")
+        void authenticateUser_success() {
+            String apiKey = "sk-test1234567890abcdef";
 
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
-            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
-            doNothing().when(apiKeyGateway).updateLastUsed(anyLong(), any(Instant.class));
+            UserApiKey userApiKey = new UserApiKey();
+            userApiKey.setId(101L);
+            userApiKey.setUserId(1L);
+            userApiKey.setTeamId(300L);
+            userApiKey.setKeyPlain(apiKey);
+            userApiKey.setKeyPrefix("sk-test1");
+            userApiKey.setKeyHash("hashed-test-key");
+            userApiKey.setState(UserApiKeyState.ACTIVE);
 
-            // when
-            UserAuthResult result = authService.authenticate(apiKey);
+            when(userApiKeyGateway.findByKeyPrefix("sk-test1")).thenReturn(Optional.of(userApiKey));
+            when(encryptionService.hashKey(apiKey)).thenReturn("hashed-test-key");
 
-            // then
+            UserAuthResult result = service.authenticateUser(apiKey);
+
             assertThat(result).isNotNull();
             assertThat(result.userId()).isEqualTo(1L);
-            assertThat(result.apiKeyId()).isEqualTo(100L);
-            verify(apiKeyGateway).updateLastUsed(eq(100L), any(Instant.class));
+            assertThat(result.role()).isEqualTo("user");
+            assertThat(result.userApiKeyId()).isEqualTo(101L);
+            assertThat(result.teamId()).isEqualTo(300L);
         }
 
         @Test
-        @DisplayName("空 API Key 返回 null")
-        void authenticate_emptyKey_returnsNull() {
-            assertThat(authService.authenticate(null)).isNull();
-            assertThat(authService.authenticate("")).isNull();
-            assertThat(authService.authenticate("   ")).isNull();
+        @DisplayName("认证失败 — UserApiKey 不存在")
+        void authenticateUser_keyNotFound_throwsException() {
+            String apiKey = "sk-unknown12345678";
+
+            when(userApiKeyGateway.findByKeyPrefix("sk-unkno")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.authenticateUser(apiKey))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("无效的 API Key");
         }
 
         @Test
-        @DisplayName("API Key 不存在返回 null")
-        void authenticate_keyNotFound_returnsNull() {
-            // given
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(null);
+        @DisplayName("认证失败 — UserApiKey 已禁用")
+        void authenticateUser_keyDisabled_throwsException() {
+            String apiKey = "sk-disabled1234567";
 
-            // when
-            UserAuthResult result = authService.authenticate("sk-unknown");
+            UserApiKey userApiKey = new UserApiKey();
+            userApiKey.setId(101L);
+            userApiKey.setUserId(1L);
+            userApiKey.setTeamId(300L);
+            userApiKey.setKeyPlain(apiKey);
+            userApiKey.setKeyPrefix("sk-disab");
+            userApiKey.setKeyHash("hashed-disabled-key");
+            userApiKey.setState(UserApiKeyState.INACTIVE);
 
-            // then
-            assertThat(result).isNull();
+            when(userApiKeyGateway.findByKeyPrefix("sk-disab")).thenReturn(Optional.of(userApiKey));
+            when(encryptionService.hashKey(apiKey)).thenReturn("hashed-disabled-key");
+
+            assertThatThrownBy(() -> service.authenticateUser(apiKey))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("API Key 已禁用");
         }
 
         @Test
-        @DisplayName("API Key 状态非 ACTIVE 返回 null")
-        void authenticate_inactiveKey_returnsNull() {
-            // given
-            User user = createActiveUser();
-            GatewayApiKey inactiveKey = createActiveApiKey(user);
-            inactiveKey.setState(GatewayApiKeyState.DISABLED);
-
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(inactiveKey);
-
-            // when
-            UserAuthResult result = authService.authenticate("sk-test");
-
-            // then
-            assertThat(result).isNull();
+        @DisplayName("空 API Key 抛出异常")
+        void authenticateUser_blankKey_throwsException() {
+            assertThatThrownBy(() -> service.authenticateUser(""))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("API Key 不能为空");
         }
 
         @Test
-        @DisplayName("API Key 已过期返回 null")
-        void authenticate_expiredKey_returnsNull() {
-            // given
-            User user = createActiveUser();
-            GatewayApiKey expiredKey = createActiveApiKey(user);
-            expiredKey.setExpiresAt(Instant.now().minus(1, ChronoUnit.HOURS));
-
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(expiredKey);
-
-            // when
-            UserAuthResult result = authService.authenticate("sk-test");
-
-            // then
-            assertThat(result).isNull();
+        @DisplayName("null API Key 抛出异常")
+        void authenticateUser_nullKey_throwsException() {
+            assertThatThrownBy(() -> service.authenticateUser(null))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("API Key 不能为空");
         }
-
-        @Test
-        @DisplayName("API Key 关联用户为空返回 null")
-        void authenticate_noUser_returnsNull() {
-            // given
-            GatewayApiKey keyWithoutUser = createActiveApiKey(null);
-
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(keyWithoutUser);
-
-            // when
-            UserAuthResult result = authService.authenticate("sk-test");
-
-            // then
-            assertThat(result).isNull();
-        }
-
-        @Test
-        @DisplayName("用户状态非 ACTIVE 返回 null")
-        void authenticate_inactiveUser_returnsNull() {
-            // given
-            User inactiveUser = createActiveUser();
-            inactiveUser.setState(UserState.DISABLED);
-            GatewayApiKey gatewayKey = createActiveApiKey(inactiveUser);
-
-            when(apiKeyGateway.findByKeyHash(anyString())).thenReturn(gatewayKey);
-
-            // when
-            UserAuthResult result = authService.authenticate("sk-test");
-
-            // then
-            assertThat(result).isNull();
-        }
-
-        @Test
-        @DisplayName("相同的 API Key 产生相同的哈希")
-        void authenticate_sameKey_producesSameHash() {
-            // given
-            String apiKey = "sk-same-key-test";
-            User user = createActiveUser();
-            GatewayApiKey gatewayKey = createActiveApiKey(user);
-
-            when(encryptionService.hashKey(apiKey)).thenReturn("fixed-hash-value");
-            when(apiKeyGateway.findByKeyHash("fixed-hash-value")).thenReturn(gatewayKey);
-            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
-            doNothing().when(apiKeyGateway).updateLastUsed(anyLong(), any(Instant.class));
-
-            // when
-            authService.authenticate(apiKey);
-            authService.authenticate(apiKey);
-
-            // then - 两次调用应该使用相同的哈希值
-            verify(encryptionService, times(2)).hashKey(apiKey);
-            verify(apiKeyGateway, times(2)).findByKeyHash("fixed-hash-value");
-        }
-    }
-
-    @Nested
-    @DisplayName("getUserById 方法测试")
-    class GetUserByIdTests {
-
-        @Test
-        @DisplayName("用户存在时返回用户")
-        void getUserById_existingUser_returnsUser() {
-            // given
-            User user = createActiveUser();
-            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
-
-            // when
-            Optional<User> result = authService.getUserById(1L);
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getId()).isEqualTo(1L);
-        }
-
-        @Test
-        @DisplayName("用户不存在时返回空")
-        void getUserById_nonExistingUser_returnsEmpty() {
-            // given
-            when(userGateway.findById(999L)).thenReturn(Optional.empty());
-
-            // when
-            Optional<User> result = authService.getUserById(999L);
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
-
-    // Helper methods
-    private User createActiveUser() {
-        User user = new User();
-        user.setId(1L);
-        user.setUsername("Test User");
-        user.setEmail("test@example.com");
-        user.setState(UserState.ACTIVE);
-        user.setRole("USER");
-        return user;
-    }
-
-    private GatewayApiKey createActiveApiKey(User user) {
-        GatewayApiKey key = new GatewayApiKey();
-        key.setId(100L);
-        key.setState(GatewayApiKeyState.ACTIVE);
-        key.setExpiresAt(Instant.now().plus(30, ChronoUnit.DAYS));
-        if (user != null) {
-            key.setUserId(user.getId());
-            key.setUsername(user.getUsername());
-        }
-        return key;
     }
 }

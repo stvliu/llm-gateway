@@ -1,0 +1,30 @@
+[
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-5.1"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-5.0"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-x1.1"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-4.5-turbo"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-4.0-8k"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-speed-8k"
+  },
+  {
+    "product_name": "按量付费",
+    "provider_model_id": "ernie-lite-8k"
+  }
+]

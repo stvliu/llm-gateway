@@ -1,130 +1,78 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.enums.GatewayApiKeyState;
-import com.codingas.gateway.domain.security.enums.UserState;
-import com.codingas.gateway.domain.security.entity.GatewayApiKey;
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.ApiKeyGateway;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.Cacheable;
+import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.Optional;
 
 /**
- * 认证服务
+ * 认证领域服务
  *
- * <p>处理 API Key 的认证和用户信息加载。</p>
+ * <p>认证流程：通过 keyPrefix 查找 Key，再用 hashKey 验证完整密钥。</p>
+ * <p>不再解密密钥做明文比较，避免密钥在认证流程中暴露。</p>
  */
-@Slf4j
 @Service
 public class AuthenticationDomainService {
 
-    private static final String CACHE_NAME = "auth";
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationDomainService.class);
 
-    private final ApiKeyGateway apiKeyGateway;
-    private final UserGateway userGateway;
+    private final UserApiKeyGateway userApiKeyGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
-    public AuthenticationDomainService(
-            ApiKeyGateway apiKeyGateway,
-            UserGateway userGateway,
-            ApiKeyEncryptionDomainService encryptionService) {
-        this.apiKeyGateway = apiKeyGateway;
-        this.userGateway = userGateway;
+    public AuthenticationDomainService(UserApiKeyGateway userApiKeyGateway,
+                                       ApiKeyEncryptionDomainService encryptionService) {
+        this.userApiKeyGateway = userApiKeyGateway;
         this.encryptionService = encryptionService;
     }
 
     /**
-     * 认证 API Key
+     * 认证用户 API Key
      *
-     * @param apiKey API Key
-     * @return 认证结果，不存在或无效返回 null
+     * @param apiKey 明文 API Key
+     * @return 认证结果
+     * @throws AuthenticationFailedException 认证失败
      */
-    @Cacheable(value = CACHE_NAME, key = "'auth:' + #apiKey", unless = "#result == null")
-    public UserAuthResult authenticate(String apiKey) {
+    public UserAuthResult authenticateUser(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
-            log.debug("Empty API Key provided");
-            return null;
+            throw new AuthenticationFailedException("API Key 不能为空");
         }
 
-        String keyHash = hashKey(apiKey);
-        GatewayApiKey gatewayKey = apiKeyGateway.findByKeyHash(keyHash);
+        String prefix = extractKeyPrefix(apiKey);
+        Optional<UserApiKey> userApiKeyOpt = userApiKeyGateway.findByKeyPrefix(prefix);
 
-        if (gatewayKey == null) {
-            log.debug("API Key not found in database");
-            return null;
+        if (userApiKeyOpt.isEmpty()) {
+            log.warn("API Key 未找到: prefix={}", prefix);
+            throw new AuthenticationFailedException("无效的 API Key");
         }
 
-        if (!isKeyActive(gatewayKey)) {
-            log.debug("API Key is not active: state={}", gatewayKey.getState());
-            return null;
+        UserApiKey userApiKey = userApiKeyOpt.get();
+
+        // 通过 hash 验证完整密钥（不再解密做明文比较）
+        String inputHash = encryptionService.hashKey(apiKey);
+        if (!inputHash.equals(userApiKey.getKeyHash())) {
+            log.warn("API Key 不匹配: prefix={}", prefix);
+            throw new AuthenticationFailedException("无效的 API Key");
         }
 
-        if (isKeyExpired(gatewayKey)) {
-            log.debug("API Key is expired");
-            return null;
+        if (!userApiKey.isAvailable()) {
+            log.warn("API Key 不可用: id={}, state={}", userApiKey.getId(), userApiKey.getState());
+            throw new AuthenticationFailedException("API Key 已禁用");
         }
 
-        Long userId = gatewayKey.getUserId();
-        if (userId == null) {
-            log.debug("User ID not found for API Key");
-            return null;
-        }
-
-        User user = userGateway.findById(userId).orElse(null);
-        if (user == null) {
-            log.debug("User not found for API Key");
-            return null;
-        }
-
-        if (!isUserActive(user)) {
-            log.debug("User is not active: state={}", user.getState());
-            return null;
-        }
-
-        apiKeyGateway.updateLastUsed(gatewayKey.getId(), Instant.now());
-
-        return new UserAuthResult(
-            user.getId(),
-            null,  // role from UserRole entity, not directly on User
-            gatewayKey.getId()
+        return UserAuthResult.newArch(
+                userApiKey.getUserId(),
+                "user",
+                userApiKey.getId(),
+                userApiKey.getTeamId()
         );
     }
 
-    /**
-     * 获取用户
-     */
-    public Optional<User> getUserById(Long userId) {
-        return userGateway.findById(userId);
-    }
-
-    private boolean isKeyActive(GatewayApiKey key) {
-        return key.getState() == GatewayApiKeyState.ACTIVE;
-    }
-
-    private boolean isKeyExpired(GatewayApiKey key) {
-        if (key.getExpiresAt() == null) {
-            return false;
-        }
-        return Instant.now().isAfter(key.getExpiresAt());
-    }
-
-    private boolean isUserActive(User user) {
-        return user.getState() == UserState.ACTIVE;
-    }
-
-    /**
-     * 使用 SHA-256 哈希 API Key
-     *
-     * <p>委托给 {@link ApiKeyEncryptionDomainService} 保持与创建时一致的哈希算法。</p>
-     *
-     * @param apiKey 原始 API Key
-     * @return 哈希后的字符串（十六进制格式）
-     */
-    private String hashKey(String apiKey) {
-        return encryptionService.hashKey(apiKey);
+    /** 提取 Key 前缀（前 8 位） */
+    private String extractKeyPrefix(String apiKey) {
+        return apiKey.length() >= 8 ? apiKey.substring(0, 8) : apiKey;
     }
 }

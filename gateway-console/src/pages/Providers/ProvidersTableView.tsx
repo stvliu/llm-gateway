@@ -10,7 +10,7 @@ import {
   UnorderedListOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader, EntityTable } from '@/components/ui';
+import { PageHeader, EntityTable, ProviderIcon } from '@/components/ui';
 import type { ColumnConfig } from '@/components/ui';
 import { FilterPanel, FilterTags } from '@/components/common';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -18,54 +18,6 @@ import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useProviders, useDeleteProvider } from '@/services/query';
 import type { Provider } from '@/types/provider';
-
-/**
- * 获取供应商类型显示名称
- */
-function getProviderTypeName(type: string): string {
-  const typeNames: Record<string, string> = {
-    OPENAI: 'OpenAI',
-    ANTHROPIC: 'Anthropic',
-    GOOGLE: 'Google',
-    AZURE: 'Azure',
-    DEEPSEEK: 'DeepSeek',
-    QWEN: 'Qwen',
-    ZHIPU: '智谱',
-    MOONSHOT: 'Moonshot',
-    BAICHUAN: '百川',
-    MINIMAX: 'MiniMax',
-    WENXIN: '文心',
-    VOLCENGINE: '火山引擎',
-    TENCENT: '腾讯',
-    XUNFEI: '讯飞',
-    CUSTOM: '其他',
-  };
-  return typeNames[type] || type;
-}
-
-/**
- * 获取供应商类型颜色
- */
-function getProviderTypeColor(type: string): string {
-  const colorMap: Record<string, string> = {
-    OPENAI: 'green',
-    ANTHROPIC: 'orange',
-    GOOGLE: 'blue',
-    AZURE: 'cyan',
-    DEEPSEEK: 'purple',
-    QWEN: 'magenta',
-    ZHIPU: 'geekblue',
-    MOONSHOT: 'volcano',
-    BAICHUAN: 'gold',
-    MINIMAX: 'lime',
-    WENXIN: 'red',
-    VOLCENGINE: 'orange',
-    TENCENT: 'green',
-    XUNFEI: 'blue',
-    CUSTOM: 'default',
-  };
-  return colorMap[type] || 'default';
-}
 
 interface ProvidersTableViewProps {
   viewMode?: 'card' | 'table';
@@ -112,11 +64,6 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
           return false;
         }
       }
-      if (filterValues.providerType && filterValues.providerType !== 'all') {
-        if (provider.providerType !== filterValues.providerType) {
-          return false;
-        }
-      }
       if (filterValues.state && filterValues.state !== 'all') {
         if (provider.state !== filterValues.state) {
           return false;
@@ -133,24 +80,27 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
       title: t('name', { defaultValue: '供应商名称' }),
       dataIndex: 'providerName',
       sortable: true,
-      render: (value: unknown) => (
-        <span style={{ fontWeight: 500 }}>{value as string}</span>
-      ),
+      render: (value: unknown, record: unknown) => {
+        const provider = record as Provider;
+        return (
+          <Space>
+            <ProviderIcon providerId={provider.providerId} size={20} />
+            <span style={{ fontWeight: 500 }}>{value as string}</span>
+          </Space>
+        );
+      },
     },
     {
-      key: 'providerType',
-      title: t('type.label', { defaultValue: '类型' }),
-      dataIndex: 'providerType',
-      render: (value: unknown) => (
-        <Tag color={getProviderTypeColor(value as string)}>
-          {getProviderTypeName(value as string)}
-        </Tag>
-      ),
+      key: 'providerId',
+      title: t('provider.providerId', { defaultValue: '品牌标识' }),
+      dataIndex: 'providerId',
+      width: 100,
+      render: (value: unknown) => value ? <Tag>{value as string}</Tag> : '-',
     },
     {
-      key: 'baseUrl',
-      title: t('baseUrl', { defaultValue: 'API 地址' }),
-      dataIndex: 'baseUrl',
+      key: 'websiteUrl',
+      title: t('provider.websiteUrl', { defaultValue: '官网地址' }),
+      dataIndex: 'websiteUrl',
       render: (value: unknown) => {
         const url = value as string;
         if (!url) return '-';
@@ -271,28 +221,6 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
   // 过滤字段配置
   const filterFields = useMemo(() => [
     {
-      name: 'providerType',
-      label: t('type.label', { defaultValue: '类型' }),
-      options: [
-        { value: 'all', label: t('filter.all', { defaultValue: '全部' }) },
-        { value: 'OPENAI', label: 'OpenAI' },
-        { value: 'ANTHROPIC', label: 'Anthropic' },
-        { value: 'GOOGLE', label: 'Google' },
-        { value: 'AZURE', label: 'Azure' },
-        { value: 'DEEPSEEK', label: 'DeepSeek' },
-        { value: 'QWEN', label: 'Qwen' },
-        { value: 'ZHIPU', label: '智谱' },
-        { value: 'MOONSHOT', label: 'Moonshot' },
-        { value: 'BAICHUAN', label: '百川' },
-        { value: 'MINIMAX', label: 'MiniMax' },
-        { value: 'WENXIN', label: '文心' },
-        { value: 'VOLCENGINE', label: '火山引擎' },
-        { value: 'TENCENT', label: '腾讯' },
-        { value: 'XUNFEI', label: '讯飞' },
-        { value: 'CUSTOM', label: '其他' },
-      ],
-    },
-    {
       name: 'state',
       label: t('state', { defaultValue: '状态' }),
       options: [
@@ -306,19 +234,11 @@ export function ProvidersTableView({ viewMode = 'table', onViewModeChange, onAdd
   // 过滤标签
   const filterTags = useMemo(() => {
     const tags: Array<{ key: string; label: string; value: string }> = [];
-    if (filterValues.providerType && filterValues.providerType !== 'all') {
-      const option = filterFields[0].options.find((o) => o.value === filterValues.providerType);
-      tags.push({
-        key: 'providerType',
-        label: filterFields[0].label,
-        value: option?.label || filterValues.providerType,
-      });
-    }
     if (filterValues.state && filterValues.state !== 'all') {
-      const option = filterFields[1].options.find((o) => o.value === filterValues.state);
+      const option = filterFields[0].options.find((o) => o.value === filterValues.state);
       tags.push({
         key: 'state',
-        label: filterFields[1].label,
+        label: filterFields[0].label,
         value: option?.label || filterValues.state,
       });
     }

@@ -1,30 +1,25 @@
 package com.codingas.gateway.application.provider.dto;
 
-import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.enums.ProviderType;
 import lombok.Data;
 
 import java.time.Instant;
 
 /**
  * 提供商响应
+ *
+ * <p>注意：Key 统计信息已移除，API Key 管理迁移到 ProductApiKey。</p>
  */
 @Data
 public class ProviderResponse {
 
     private Long id;
+    /** 品牌标识（如 openai、anthropic），用于前端图标渲染 */
+    private String providerId;
     private String providerName;
-    private ProviderType providerType;
-    private String baseUrl;
     private String websiteUrl;
     private String apiDocUrl;
     private Integer priority;
-    private ProviderState state;
+    private String state;
     private Instant createdAt;
     private Instant updatedAt;
-
-    /**
-     * Key 统计信息（列表页填充）
-     */
-    private ProviderKeyStats keyStats;
 }

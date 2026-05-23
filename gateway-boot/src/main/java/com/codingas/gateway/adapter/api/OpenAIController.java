@@ -5,19 +5,16 @@ import com.codingas.gateway.application.proxy.dto.OpenAIChatResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.application.proxy.dto.LLMRequest;
 import com.codingas.gateway.application.proxy.dto.LLMResponse;
-import com.codingas.gateway.domain.proxy.entity.RouteGroup;
+import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
+import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * OpenAI 兼容 API 控制器
@@ -38,20 +35,18 @@ public class OpenAIController {
     @PostMapping("/chat/completions")
     public ResponseEntity<?> chatCompletions(
             @RequestBody OpenAIChatRequest request,
-            @RequestAttribute("userId") Long userId,
-            @RequestAttribute("apiKeyId") Long apiKeyId,
+            @RequestAttribute(value = "authResult", required = false) UserAuthResult authResult,
             HttpServletResponse response) throws IOException {
 
-        log.info("OpenAI chat request: model={}, userId={}, stream={}",
-                request.getModel(), userId, request.getStream());
+        log.info("OpenAI chat request: model={}, stream={}", request.getModel(), request.getStream());
 
         validateRequest(request);
 
         if (Boolean.TRUE.equals(request.getStream())) {
-            chatCompletionsStream(request, userId, apiKeyId, response);
-            return null; // 响应已在方法内处理
+            chatCompletionsStream(request, authResult, response);
+            return null;
         } else {
-            return chatCompletionsNonStream(request, userId, apiKeyId);
+            return chatCompletionsNonStream(request, authResult);
         }
     }
 
@@ -59,11 +54,14 @@ public class OpenAIController {
      * 非流式响应
      */
     private ResponseEntity<?> chatCompletionsNonStream(
-            OpenAIChatRequest request, Long userId, Long apiKeyId) {
+            OpenAIChatRequest request, UserAuthResult authResult) {
+
+        if (authResult == null) {
+            throw new IllegalStateException("认证信息缺失，请检查 API Key");
+        }
 
         LLMRequest llmRequest = toLLMRequest(request);
-
-        LLMResponse llmResponse = proxyService.proxy(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED);
+        LLMResponse llmResponse = proxyService.proxy(llmRequest, authResult, RoutingStrategy.WEIGHTED);
 
         // 错误响应直接返回 400
         if (llmResponse.getError() != null) {
@@ -75,63 +73,19 @@ public class OpenAIController {
 
     /**
      * 流式响应
-     *
-     * <p>使用同步方式写入 SSE 流，避免异步回调时连接已关闭的问题。</p>
      */
     private void chatCompletionsStream(
-            OpenAIChatRequest request, Long userId, Long apiKeyId, HttpServletResponse response) throws IOException {
+            OpenAIChatRequest request, UserAuthResult authResult,
+            HttpServletResponse response) throws IOException {
+
+        if (authResult == null) {
+            throw new IllegalStateException("认证信息缺失，请检查 API Key");
+        }
 
         LLMRequest llmRequest = toLLMRequest(request);
         llmRequest.setStream(true);
 
-        response.setContentType(MediaType.TEXT_EVENT_STREAM_VALUE);
-        response.setCharacterEncoding("UTF-8");
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setHeader("Cache-Control", "no-cache");
-        response.setHeader("X-Accel-Buffering", "no");
-
-        PrintWriter writer = response.getWriter();
-
-        // 使用 CountDownLatch 等待流式响应完成
-        CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<Throwable> errorRef = new AtomicReference<>();
-
-        proxyService.proxyStream(llmRequest, RouteGroup.RoutingStrategy.WEIGHTED, data -> {
-            try {
-                writer.write("data: " + data + "\n\n");
-                writer.flush();
-            } catch (Exception e) {
-                log.error("Error writing stream data: {}", e.getMessage());
-                errorRef.set(e);
-                latch.countDown();
-            }
-        }, () -> {
-            // 流完成回调
-            try {
-                writer.write("data: [DONE]\n\n");
-                writer.flush();
-            } catch (Exception e) {
-                log.error("Error writing stream done: {}", e.getMessage());
-            }
-            latch.countDown();
-        }, error -> {
-            // 错误回调
-            log.error("Stream error: {}", error.getMessage());
-            errorRef.set(error);
-            latch.countDown();
-        });
-
-        try {
-            // 等待流式响应完成（最多等待 120 秒）
-            latch.await(120, java.util.concurrent.TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            log.error("Stream interrupted");
-        }
-
-        if (errorRef.get() != null) {
-            log.error("Stream failed: {}", errorRef.get().getMessage());
-        }
+        SseStreamHelper.executeStream(proxyService, llmRequest, authResult, response);
     }
 
     private void validateRequest(OpenAIChatRequest request) {
@@ -150,6 +104,7 @@ public class OpenAIController {
 
         return LLMRequest.builder()
                 .model(request.getModel())
+                .protocol("openai")
                 .messages(messages)
                 .temperature(request.getTemperature())
                 .maxTokens(request.getMaxTokens())
