@@ -1,7 +1,7 @@
 import apiClient from './client';
 import type { ProtocolInfo } from '../../types/product';
 
-const BASE_URL = '/api/protocols';
+const BASE_URL = '/protocols';
 
 export const protocolApi = {
   /** 获取所有可用协议 */

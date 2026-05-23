@@ -59,6 +59,16 @@ public class ProviderGatewayImpl implements ProviderGateway {
         providerRepository.delete(toDo(provider));
     }
 
+    @Override
+    public Optional<Provider> findByName(String name) {
+        return providerRepository.findByName(name).map(this::toEntity);
+    }
+
+    @Override
+    public boolean existsByName(String name) {
+        return providerRepository.existsByName(name);
+    }
+
     /**
      * DO 转 Entity
      */

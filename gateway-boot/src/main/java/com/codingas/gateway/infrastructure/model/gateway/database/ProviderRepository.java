@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
@@ -14,4 +15,8 @@ public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
     default List<ProviderDo> findActive() {
         return findByState(ProviderState.ACTIVE);
     }
+
+    Optional<ProviderDo> findByName(String name);
+
+    boolean existsByName(String name);
 }

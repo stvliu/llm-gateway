@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { providerMetadataApi, modelMetadataApi, metadataSyncApi } from '@/services/api/metadata';
+import { providerMetadataApi, productMetadataApi, modelMetadataApi, metadataSyncApi } from '@/services/api/metadata';
 import type {
   ProviderMetadataListParams,
   ModelMetadataListParams,
@@ -9,6 +9,7 @@ import type {
 } from '@/types/metadata';
 
 const PROVIDER_KEY = 'provider-metadata';
+const PRODUCT_KEY = 'product-metadata';
 const MODEL_KEY = 'model-metadata';
 
 /** 供应商元数据查询 */
@@ -79,7 +80,25 @@ export function useApplyMetadata() {
       providerMetadataApi.apply(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROVIDER_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
     },
+  });
+}
+
+/** 产品元数据查询 */
+export function useProductMetadata(params?: { providerId?: string; productType?: string; page?: number; size?: number }) {
+  return useQuery({
+    queryKey: [PRODUCT_KEY, 'list', params],
+    queryFn: () => productMetadataApi.list(params),
+  });
+}
+
+/** 某供应商的产品元数据 */
+export function useProductMetadataByProvider(providerId: string | null) {
+  return useQuery({
+    queryKey: [PRODUCT_KEY, 'provider', providerId],
+    queryFn: () => productMetadataApi.listByProviderId(providerId!),
+    enabled: providerId !== null,
   });
 }
 
@@ -100,6 +119,15 @@ export function useModelMetadataByProvider(providerId: string | null) {
   });
 }
 
+/** 某产品的模型元数据 */
+export function useModelMetadataByProduct(productId: number | null) {
+  return useQuery({
+    queryKey: [MODEL_KEY, 'product', productId],
+    queryFn: () => modelMetadataApi.listByProductId(productId!),
+    enabled: productId !== null,
+  });
+}
+
 /** 同步元数据 */
 export function useSyncMetadata() {
   const queryClient = useQueryClient();
@@ -113,6 +141,7 @@ export function useSyncMetadata() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROVIDER_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PRODUCT_KEY] });
       queryClient.invalidateQueries({ queryKey: [MODEL_KEY] });
     },
   });

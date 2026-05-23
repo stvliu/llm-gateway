@@ -6,7 +6,7 @@ import type {
 } from '../../types/provider';
 import type { PageResponse } from '../../types/api';
 
-const BASE_URL = '/api/providers';
+const BASE_URL = '/providers';
 
 export const providerApi = {
   /** 获取供应商列表 */

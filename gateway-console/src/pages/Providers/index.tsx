@@ -4,7 +4,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
-import { useProviders } from '@/services/query';
+import { useConfirm } from '@/hooks/useConfirm';
+import { useProviders, useDeleteProvider } from '@/services/query';
 import type { Provider } from '@/types/provider';
 import ProviderCardView from './ProviderCardView';
 import { ProviderManagementDrawer } from './ProviderManagementDrawer';
@@ -14,6 +15,8 @@ export default function Providers() {
   const { t } = useTranslation('providers');
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.PROVIDER_WRITE);
+  const { confirm } = useConfirm();
+  const deleteMutation = useDeleteProvider();
 
   const { data: providersData } = useProviders();
   const providers = providersData?.items ?? [];
@@ -21,6 +24,7 @@ export default function Providers() {
   const [selected, setSelected] = useState<Provider | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState<'basic' | 'products'>('basic');
+  const [startEditing, setStartEditing] = useState(false);
 
   const filtered = providers.filter((p) =>
     !search || p.providerName.toLowerCase().includes(search.toLowerCase())
@@ -33,12 +37,28 @@ export default function Providers() {
   const handleViewProducts = useCallback((provider: Provider) => {
     setSelected(provider);
     setDefaultTab('products');
+    setStartEditing(false);
   }, []);
 
   const handleSelect = useCallback((provider: Provider) => {
     setSelected(provider);
     setDefaultTab('basic');
+    setStartEditing(false);
   }, []);
+
+  const handleEdit = useCallback((provider: Provider) => {
+    setSelected(provider);
+    setDefaultTab('basic');
+    setStartEditing(true);
+  }, []);
+
+  const handleDelete = useCallback((provider: Provider) => {
+    confirm({
+      type: 'danger',
+      entityName: provider.providerName,
+      onConfirm: () => deleteMutation.mutateAsync(provider.id),
+    });
+  }, [confirm, deleteMutation]);
 
   return (
     <>
@@ -59,6 +79,8 @@ export default function Providers() {
       <ProviderCardView
         providers={filtered}
         onSelect={handleSelect}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         onViewProducts={handleViewProducts}
       />
 
@@ -71,6 +93,7 @@ export default function Providers() {
           if (p) setSelected(p);
         }}
         defaultTab={defaultTab}
+        startEditing={startEditing}
       />
 
       <ProviderCreateModal

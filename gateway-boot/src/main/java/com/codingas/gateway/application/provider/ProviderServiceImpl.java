@@ -11,6 +11,10 @@ import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ConnectivityTester;
@@ -36,6 +40,8 @@ public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
     private final ModelGateway modelGateway;
+    private final ProductGateway productGateway;
+    private final ProductApiKeyGateway productApiKeyGateway;
     private final ConnectivityTester connectivityTester;
 
     /**
@@ -155,13 +161,24 @@ public class ProviderServiceImpl implements ProviderService {
     /**
      * 删除提供商
      *
-     * <p>注意：API Key 管理已迁移到 ProductApiKey，删除 Provider 时不再删除 API Key。</p>
+     * <p>同时删除关联的 Product、ProductApiKey 和 Model。</p>
      */
     @Override
     @Transactional
     public void delete(Long id) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
+
+        // 删除关联的 ProductApiKey
+        List<Product> products = productGateway.findByProviderId(id);
+        for (Product product : products) {
+            List<ProductApiKey> apiKeys = productApiKeyGateway.findByProductId(product.getId());
+            for (ProductApiKey apiKey : apiKeys) {
+                productApiKeyGateway.deleteById(apiKey.getId());
+            }
+            productGateway.deleteById(product.getId());
+        }
+        log.info("Deleted {} products and their apiKeys for provider {}", products.size(), id);
 
         // 删除关联的 Models
         List<Model> models = modelGateway.findByProviderId(id);
@@ -212,6 +229,7 @@ public class ProviderServiceImpl implements ProviderService {
     private ProviderResponse toResponse(Provider provider) {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
+        response.setProviderId(provider.getName());
         response.setProviderName(provider.getName());
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());
