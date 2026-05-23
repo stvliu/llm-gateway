@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.alert.gateway;
 
-import com.codingas.gateway.domain.security.entity.SensitiveDataRule;
-import com.codingas.gateway.domain.security.gateway.SensitiveDataRuleGateway;
+import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
+import com.codingas.gateway.domain.dataprotection.gateway.SensitiveDataRuleGateway;
 import com.codingas.gateway.infrastructure.alert.gateway.database.SensitiveDataRuleRepository;
 import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.SensitiveDataRuleDo;
 import lombok.RequiredArgsConstructor;

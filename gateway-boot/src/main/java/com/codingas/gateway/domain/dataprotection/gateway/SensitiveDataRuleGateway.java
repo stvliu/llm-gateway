@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.security.gateway;
+package com.codingas.gateway.domain.dataprotection.gateway;
 
-import com.codingas.gateway.domain.security.entity.SensitiveDataRule;
+import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
 
 import java.util.List;
 import java.util.Optional;

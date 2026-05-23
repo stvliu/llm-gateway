@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.entity;
+package com.codingas.gateway.domain.dataprotection.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 

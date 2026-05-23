@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.entity.SensitiveDataRule;
-import com.codingas.gateway.domain.security.gateway.SensitiveDataRuleGateway;
+import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
+import com.codingas.gateway.domain.dataprotection.gateway.SensitiveDataRuleGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
