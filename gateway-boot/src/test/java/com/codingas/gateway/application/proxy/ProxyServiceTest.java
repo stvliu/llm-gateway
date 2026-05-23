@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.domain.proxy.protocol.OpenAIChatRequest;
 import com.codingas.gateway.domain.proxy.protocol.OpenAIChatResponse;
 import com.codingas.gateway.domain.proxy.protocol.ProtocolResponse;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -45,7 +45,7 @@ class ProxyServiceTest {
 
     private ProxyServiceImpl proxyService;
 
-    private LLMRequest testRequest;
+    private OpenAIChatRequest testRequest;
     private ProtocolResponse testProtocolResponse;
     private UserAuthResult testAuthResult;
     private RoutingContext testContext;
@@ -66,9 +66,9 @@ class ProxyServiceTest {
                 .endpoint("https://api.openai.com")
                 .build();
 
-        testRequest = LLMRequest.builder()
+        testRequest = OpenAIChatRequest.builder()
                 .model("gpt-4")
-                .messages(java.util.List.of())
+                .messages(List.of())
                 .build();
 
         testProtocolResponse = OpenAIChatResponse.builder()

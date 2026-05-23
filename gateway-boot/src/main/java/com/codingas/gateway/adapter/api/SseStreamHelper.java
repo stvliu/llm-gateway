@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.proxy.ProxyService;
-import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.security.service.UserAuthResult;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,12 +28,12 @@ public final class SseStreamHelper {
     /**
      * 执行流式代理请求并写入 SSE 响应
      *
-     * @param proxyService 代理服务
-     * @param llmRequest   LLM 请求
-     * @param authResult   认证结果（新架构）
-     * @param response     HTTP 响应
+     * @param proxyService     代理服务
+     * @param protocolRequest  协议请求
+     * @param authResult       认证结果
+     * @param response         HTTP 响应
      */
-    public static void executeStream(ProxyService proxyService, LLMRequest llmRequest,
+    public static void executeStream(ProxyService proxyService, ProtocolRequest protocolRequest,
                                      UserAuthResult authResult, HttpServletResponse response) throws IOException {
         setupSseResponse(response);
 
@@ -41,7 +41,7 @@ public final class SseStreamHelper {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        proxyService.proxyStream(llmRequest, authResult, RoutingStrategy.WEIGHTED, data -> {
+        proxyService.proxyStream(protocolRequest, authResult, RoutingStrategy.WEIGHTED, data -> {
             writeChunk(writer, data, errorRef, latch);
         }, () -> {
             writeDone(writer, latch);

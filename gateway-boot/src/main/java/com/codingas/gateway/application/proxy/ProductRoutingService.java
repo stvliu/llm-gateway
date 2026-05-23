@@ -24,7 +24,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * 产品路由服务（新架构）
  * <p>
  * 一个 UserApiKey 可关联多个产品。路由时按 model name 在关联产品中匹配。
- * 路由结果包含协议名称，由 ProxyServiceImpl 通过 ProtocolGatewayRegistry 查找协议网关。
+ * 路由结果包含协议名称，由 ProxyServiceImpl 通过 ProtocolGatewayFactory 创建协议网关。
  */
 @Service
 public class ProductRoutingService {
