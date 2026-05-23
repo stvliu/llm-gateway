@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.gateway;
+package com.codingas.gateway.domain.threat.gateway;
 
 /**
  * IP 黑名单网关接口

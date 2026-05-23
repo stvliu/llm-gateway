@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.threat.service;
 
-import com.codingas.gateway.domain.security.gateway.IpBlockGateway;
+import com.codingas.gateway.domain.threat.gateway.IpBlockGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

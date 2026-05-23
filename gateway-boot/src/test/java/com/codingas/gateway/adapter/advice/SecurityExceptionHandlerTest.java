@@ -1,11 +1,11 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.codingas.gateway.common.exception.GatewayException;
+import com.codingas.gateway.domain.threat.exception.ThreatException;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.exception.ForbiddenException;
-import com.codingas.gateway.domain.security.exception.IpBlockedException;
-import com.codingas.gateway.domain.security.exception.RateLimitExceededException;
+import com.codingas.gateway.domain.threat.exception.IpBlockedException;
+import com.codingas.gateway.domain.threat.exception.RateLimitExceededException;
 import com.codingas.gateway.domain.iam.exception.IamException;
 import com.codingas.gateway.domain.iam.exception.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
@@ -207,8 +207,8 @@ class SecurityExceptionHandlerTest {
             assertThat(unauthorized).isInstanceOf(IamException.class);
             assertThat(forbidden).isInstanceOf(IamException.class);
             assertThat(authFailed).isInstanceOf(IamException.class);
-            assertThat(rateLimit).isInstanceOf(GatewayException.class);
-            assertThat(ipBlocked).isInstanceOf(GatewayException.class);
+            assertThat(rateLimit).isInstanceOf(ThreatException.class);
+            assertThat(ipBlocked).isInstanceOf(ThreatException.class);
         }
     }
 }

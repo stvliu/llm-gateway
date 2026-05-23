@@ -1,13 +1,13 @@
-package com.codingas.gateway.domain.security.exception;
+package com.codingas.gateway.domain.threat.exception;
 
-import com.codingas.gateway.common.exception.GatewayException;
+import com.codingas.gateway.domain.threat.exception.ThreatException;
 
 /**
  * IP 封禁异常
  *
  * <p>表示请求来源 IP 被封禁。</p>
  */
-public class IpBlockedException extends GatewayException {
+public class IpBlockedException extends ThreatException {
 
     private static final String CODE = "IP_BLOCKED";
 

@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.alert.gateway;
 
-import com.codingas.gateway.domain.security.entity.IpBlocklist;
-import com.codingas.gateway.domain.security.gateway.IpBlockGateway;
+import com.codingas.gateway.domain.threat.entity.IpBlocklist;
+import com.codingas.gateway.domain.threat.gateway.IpBlockGateway;
 import com.codingas.gateway.infrastructure.alert.gateway.database.IpBlocklistRepository;
 import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.IpBlocklistDo;
 import lombok.RequiredArgsConstructor;

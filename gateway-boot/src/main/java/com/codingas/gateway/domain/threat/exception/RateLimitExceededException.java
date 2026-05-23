@@ -1,13 +1,13 @@
-package com.codingas.gateway.domain.security.exception;
+package com.codingas.gateway.domain.threat.exception;
 
-import com.codingas.gateway.common.exception.GatewayException;
+import com.codingas.gateway.domain.threat.exception.ThreatException;
 
 /**
  * 限流超限异常
  *
  * <p>表示请求超过了允许的速率限制。</p>
  */
-public class RateLimitExceededException extends GatewayException {
+public class RateLimitExceededException extends ThreatException {
 
     private static final String CODE = "RATE_LIMIT_EXCEEDED";
 

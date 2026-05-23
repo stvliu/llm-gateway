@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.gateway.TokenBucketRateLimiter;
-import com.codingas.gateway.domain.security.service.TokenBucketStatus;
+import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
+import com.codingas.gateway.domain.threat.service.TokenBucketStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

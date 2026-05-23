@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.security.gateway;
+package com.codingas.gateway.domain.threat.gateway;
 
-import com.codingas.gateway.domain.security.service.TokenBucketStatus;
+import com.codingas.gateway.domain.threat.service.TokenBucketStatus;
 
 /**
  * 令牌桶限流器接口

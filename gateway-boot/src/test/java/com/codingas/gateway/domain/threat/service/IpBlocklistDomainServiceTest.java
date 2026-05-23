@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.threat.service;
 
-import com.codingas.gateway.domain.security.gateway.IpBlockGateway;
+import com.codingas.gateway.domain.threat.gateway.IpBlockGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -1,8 +1,6 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.threat.service;
 
-import com.codingas.gateway.domain.usage.entity.TokenLimit;
-import com.codingas.gateway.domain.security.gateway.TokenBucketRateLimiter;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
 import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +16,6 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class RateLimitDomainService {
 
-    private final TokenLimitGateway tokenLimitGateway;
     private final TokenBucketRateLimiter rateLimiter;
     private final GatewayProperties properties;
 
@@ -38,13 +35,6 @@ public class RateLimitDomainService {
         int refillRate = properties.getRateLimit().getRefillRate();
 
         return rateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
-    }
-
-    /**
-     * 获取用户的 Token 限额列表
-     */
-    public java.util.List<TokenLimit> getTokenLimits(Long userId) {
-        return tokenLimitGateway.findByUserId(userId);
     }
 
     /**

@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.threat.service;
 
 /**
  * 令牌桶状态

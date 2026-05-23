@@ -1,7 +1,6 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.threat.service;
 
-import com.codingas.gateway.domain.security.gateway.TokenBucketRateLimiter;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
 import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,9 +23,6 @@ import static org.mockito.Mockito.when;
 class RateLimitDomainServiceTest {
 
     @Mock
-    private TokenLimitGateway tokenLimitGateway;
-
-    @Mock
     private TokenBucketRateLimiter rateLimiter;
 
     private GatewayProperties properties;
@@ -44,7 +40,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("isAllowed 应使用配置的 bucketSize 和 refillRate")
     void isAllowed_usesConfiguredValues() {
-        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
 
         boolean result = service.isAllowed(1L);
@@ -55,7 +51,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("isAllowed apiKeyId 为 null 应返回 true")
     void isAllowed_nullApiKey_returnsTrue() {
-        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
 
         boolean result = service.isAllowed(null);
 
@@ -65,7 +61,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 超过阈值应返回 true")
     void shouldFailClose_exceedsThreshold_returnsTrue() {
-        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
 
         boolean result = service.shouldFailClose(1001);
 
@@ -75,7 +71,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 未超过阈值应返回 false")
     void shouldFailClose_belowThreshold_returnsFalse() {
-        RateLimitDomainService service = new RateLimitDomainService(tokenLimitGateway, rateLimiter, properties);
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
 
         boolean result = service.shouldFailClose(999);
 
