@@ -130,7 +130,7 @@ export function ProductFormModal({ open, providerId, providerName, editingProduc
       onCancel={handleClose}
       confirmLoading={saving}
       width={640}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical" initialValues={{
         productName: editingProduct?.productName,

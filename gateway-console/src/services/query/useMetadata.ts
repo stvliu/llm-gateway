@@ -119,6 +119,15 @@ export function useModelMetadataByProvider(providerId: string | null) {
   });
 }
 
+/** 某产品的模型元数据 */
+export function useModelMetadataByProduct(productId: number | null) {
+  return useQuery({
+    queryKey: [MODEL_KEY, 'product', productId],
+    queryFn: () => modelMetadataApi.listByProductId(productId!),
+    enabled: productId !== null,
+  });
+}
+
 /** 同步元数据 */
 export function useSyncMetadata() {
   const queryClient = useQueryClient();

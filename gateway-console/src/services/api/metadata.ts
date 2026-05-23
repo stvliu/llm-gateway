@@ -71,6 +71,9 @@ export const modelMetadataApi = {
   listByProviderId: (providerId: string) =>
     api.get<ModelMetadata[]>(`${MODEL_BASE_URL}/providers/${providerId}`),
 
+  listByProductId: (productId: number) =>
+    api.get<ModelMetadata[]>(`${MODEL_BASE_URL}/products/${productId}`),
+
 
   create: (data: Partial<ModelMetadata>) =>
     api.post<ModelMetadata>(MODEL_BASE_URL, data),

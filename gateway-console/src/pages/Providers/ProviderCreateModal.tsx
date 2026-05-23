@@ -140,7 +140,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
                 }
                 title={metadata.providerName}
                 description={
-                  <Space direction="vertical" size={4}>
+                  <Space orientation="vertical" size={4}>
                     <Text type="secondary" style={{ fontSize: 12 }}>{metadata.providerId}</Text>
                     {metadata.modelCount !== undefined && (
                       <Tag color="blue" style={{ fontSize: 11 }}>
@@ -296,7 +296,7 @@ export function ProviderCreateModal({ open, providers, onClose, onCreated }: Pro
       onCancel={handleClose}
       footer={getFooter()}
       width={currentStep === 'select-metadata' ? 720 : 560}
-      destroyOnClose
+      destroyOnHidden
     >
       {renderContent()}
     </Modal>

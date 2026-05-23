@@ -75,7 +75,7 @@ export default function AdminView() {
                   title={<span style={{ fontSize: 14, fontWeight: 500 }}>{card.title}</span>}
                   value={card.value}
                   prefix={<span style={{ opacity: 0.8, marginRight: 8 }}>{card.icon}</span>}
-                  valueStyle={{ fontWeight: 600 }}
+                  styles={{ content: { fontWeight: 600 } }}
                 />
               </Card>
             </Col>

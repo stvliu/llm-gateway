@@ -346,7 +346,7 @@ function ProductMetadataView({
                 dataIndex: 'endpoints',
                 key: 'endpoints',
                 render: (endpoints: Record<string, string>) => (
-                  <Space direction="vertical" size={2}>
+                  <Space orientation="vertical" size={2}>
                     {Object.entries(endpoints ?? {}).map(([protocol, url]) => (
                       <Space key={protocol} size={4}>
                         <Tag style={{ fontSize: 10 }}>{protocol}</Tag>

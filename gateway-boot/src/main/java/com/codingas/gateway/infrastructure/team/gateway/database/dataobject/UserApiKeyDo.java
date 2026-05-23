@@ -34,7 +34,7 @@ public class UserApiKeyDo {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @ElementCollection
+    @ElementCollection(fetch = jakarta.persistence.FetchType.EAGER)
     @CollectionTable(
             name = "user_api_key_products",
             joinColumns = @JoinColumn(name = "user_api_key_id")

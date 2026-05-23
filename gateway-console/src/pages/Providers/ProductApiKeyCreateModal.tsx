@@ -62,7 +62,7 @@ export default function ProductApiKeyCreateModal({ open, productId, onClose, onS
       onOk={handleOk}
       onCancel={onClose}
       confirmLoading={createMutation.isPending}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical">
         <Form.Item
