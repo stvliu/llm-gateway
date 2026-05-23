@@ -37,22 +37,22 @@ public class OpenAIController {
     @PostMapping("/chat/completions")
     public ResponseEntity<?> chatCompletions(
             @RequestBody OpenAIChatRequest request,
-            @RequestAttribute(value = "authResult", required = false) Identity authResult,
+            @RequestAttribute(value = "identity", required = false) Identity identity,
             HttpServletResponse response) throws IOException {
 
         log.info("OpenAI chat request: model={}, stream={}", request.getModel(), request.getStream());
 
         validator.validate(request);
 
-        if (authResult == null) {
+        if (identity == null) {
             throw new IllegalStateException("认证信息缺失，请检查 API Key");
         }
 
         if (request.isStream()) {
-            SseStreamHelper.executeStream(proxyService, request, authResult, response);
+            SseStreamHelper.executeStream(proxyService, request, identity, response);
             return null;
         } else {
-            ProtocolResponse protocolResponse = proxyService.proxy(request, authResult, RoutingStrategy.WEIGHTED);
+            ProtocolResponse protocolResponse = proxyService.proxy(request, identity, RoutingStrategy.WEIGHTED);
 
             if (protocolResponse instanceof OpenAIChatResponse openaiResponse) {
                 return ResponseEntity.ok(openaiResponse);

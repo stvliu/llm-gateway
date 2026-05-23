@@ -1,5 +1,4 @@
-package com.codingas.gateway.domain.security.service;
-import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
+package com.codingas.gateway.domain.iam.service;
 
 import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
 import org.junit.jupiter.api.DisplayName;
@@ -34,13 +33,10 @@ class ApiKeyEncryptionDomainServiceTest {
         @Test
         @DisplayName("加密成功")
         void encrypt_validInput_returnsEncrypted() {
-            // given
             when(encryptionService.encrypt("secret-key")).thenReturn("encrypted-value");
 
-            // when
             String result = service.encrypt("secret-key");
 
-            // then
             assertThat(result).isEqualTo("encrypted-value");
             verify(encryptionService).encrypt("secret-key");
         }
@@ -69,13 +65,10 @@ class ApiKeyEncryptionDomainServiceTest {
         @Test
         @DisplayName("解密成功")
         void decrypt_validInput_returnsDecrypted() {
-            // given
             when(encryptionService.decrypt("encrypted-value")).thenReturn("secret-key");
 
-            // when
             String result = service.decrypt("encrypted-value");
 
-            // then
             assertThat(result).isEqualTo("secret-key");
             verify(encryptionService).decrypt("encrypted-value");
         }
@@ -145,33 +138,27 @@ class ApiKeyEncryptionDomainServiceTest {
         @Test
         @DisplayName("生成哈希成功")
         void hashKey_validInput_returnsHash() {
-            // when
             String result = service.hashKey("sk-test-key");
 
-            // then
             assertThat(result).isNotNull();
-            assertThat(result).hasSize(64); // SHA-256 produces 64 hex characters
+            assertThat(result).hasSize(64);
         }
 
         @Test
         @DisplayName("相同输入生成相同哈希")
         void hashKey_sameInput_sameHash() {
-            // when
             String hash1 = service.hashKey("sk-test-key");
             String hash2 = service.hashKey("sk-test-key");
 
-            // then
             assertThat(hash1).isEqualTo(hash2);
         }
 
         @Test
         @DisplayName("不同输入生成不同哈希")
         void hashKey_differentInput_differentHash() {
-            // when
             String hash1 = service.hashKey("sk-key-1");
             String hash2 = service.hashKey("sk-key-2");
 
-            // then
             assertThat(hash1).isNotEqualTo(hash2);
         }
 

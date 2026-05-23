@@ -58,15 +58,4 @@ class AuthServiceTest {
         }
     }
 
-    @Nested
-    @DisplayName("checkPermission(Long userId, String resource, String action) 测试")
-    class CheckPermissionTests {
-
-        @Test
-        @DisplayName("当前简化实现始终返回 false")
-        void checkPermission_alwaysReturnsFalse() {
-            boolean result = authService.checkPermission(1L, "any:resource", "any:action");
-            assertThat(result).isFalse();
-        }
-    }
 }

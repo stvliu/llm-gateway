@@ -30,18 +30,18 @@ public final class SseStreamHelper {
      *
      * @param proxyService     代理服务
      * @param protocolRequest  协议请求
-     * @param authResult       认证结果
+     * @param identity          认证结果
      * @param response         HTTP 响应
      */
     public static void executeStream(ProxyService proxyService, ProtocolRequest protocolRequest,
-                                     Identity authResult, HttpServletResponse response) throws IOException {
+                                     Identity identity, HttpServletResponse response) throws IOException {
         setupSseResponse(response);
 
         PrintWriter writer = response.getWriter();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        proxyService.proxyStream(protocolRequest, authResult, RoutingStrategy.WEIGHTED, data -> {
+        proxyService.proxyStream(protocolRequest, identity, RoutingStrategy.WEIGHTED, data -> {
             writeChunk(writer, data, errorRef, latch);
         }, () -> {
             writeDone(writer, latch);

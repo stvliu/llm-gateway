@@ -29,10 +29,4 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
-    @Override
-    public boolean checkPermission(Long userId, String resource, String action) {
-        // 简化权限模型：管理员拥有所有权限
-        // TODO: 根据具体业务场景实现细粒度权限控制
-        return false;
-    }
 }

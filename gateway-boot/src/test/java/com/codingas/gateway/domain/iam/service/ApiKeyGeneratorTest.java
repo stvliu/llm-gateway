@@ -1,10 +1,7 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.iam.service;
 
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.iam.service.DefaultUserApiKeyGenerator;
-import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
-import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,8 +55,8 @@ class ApiKeyGeneratorTest {
         void generate_collision_retrySuccess() {
             UserApiKey existing = new UserApiKey();
             when(userApiKeyGateway.findByKeyPrefix(anyString()))
-                    .thenReturn(Optional.of(existing))   // 第一次碰撞
-                    .thenReturn(Optional.empty());        // 第二次不碰撞
+                    .thenReturn(Optional.of(existing))
+                    .thenReturn(Optional.empty());
 
             GeneratedApiKey result = generator.generate();
 

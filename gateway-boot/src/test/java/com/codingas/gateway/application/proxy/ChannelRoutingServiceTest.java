@@ -38,7 +38,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("新架构认证结果走 ProductRoutingService")
         void resolve_newArchitecture_usesProductRouting() {
-            Identity authResult = Identity.of(1L, "USER", 101L);
+            Identity identity = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("gpt-4o")
@@ -46,7 +46,7 @@ class ChannelRoutingServiceTest {
 
             when(productRoutingService.resolve(eq(101L), eq("gpt-4o"), eq("openai"))).thenReturn(expected);
 
-            RoutingContext ctx = channelRoutingService.resolve(authResult, "gpt-4o", "openai");
+            RoutingContext ctx = channelRoutingService.resolve(identity, "gpt-4o", "openai");
 
             assertThat(ctx.getProductId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "gpt-4o", "openai");
@@ -55,7 +55,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("新架构认证结果使用 anthropic 协议")
         void resolve_newArchitecture_anthropicProtocol_usesAnthropicProtocol() {
-            Identity authResult = Identity.of(1L, "USER", 101L);
+            Identity identity = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("claude-3-opus")
@@ -63,7 +63,7 @@ class ChannelRoutingServiceTest {
 
             when(productRoutingService.resolve(eq(101L), eq("claude-3-opus"), eq("anthropic"))).thenReturn(expected);
 
-            RoutingContext ctx = channelRoutingService.resolve(authResult, "claude-3-opus", "anthropic");
+            RoutingContext ctx = channelRoutingService.resolve(identity, "claude-3-opus", "anthropic");
 
             assertThat(ctx.getProductId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "claude-3-opus", "anthropic");
@@ -72,7 +72,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("协议为 null 时传递给 ProductRoutingService")
         void resolve_nullProtocol_passesToProductRouting() {
-            Identity authResult = Identity.of(1L, "USER", 101L);
+            Identity identity = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("gpt-4o")
@@ -80,7 +80,7 @@ class ChannelRoutingServiceTest {
 
             when(productRoutingService.resolve(eq(101L), eq("gpt-4o"), eq((String) null))).thenReturn(expected);
 
-            RoutingContext ctx = channelRoutingService.resolve(authResult, "gpt-4o", null);
+            RoutingContext ctx = channelRoutingService.resolve(identity, "gpt-4o", null);
 
             assertThat(ctx.getProductId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "gpt-4o", null);

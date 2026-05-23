@@ -25,15 +25,15 @@ public class ChannelRoutingService {
     /**
      * 解析路由上下文
      *
-     * @param authResult 认证结果
+     * @param identity 认证结果
      * @param model      请求的模型名
      * @param protocol   请求协议
      * @return 路由上下文
      */
-    public RoutingContext resolve(Identity authResult, String model, String protocol) {
+    public RoutingContext resolve(Identity identity, String model, String protocol) {
         log.debug("Routing: credentialId={}, model={}, protocol={}",
-                authResult.credentialId(), model, protocol);
+                identity.credentialId(), model, protocol);
 
-        return productRoutingService.resolve(authResult.credentialId(), model, protocol);
+        return productRoutingService.resolve(identity.credentialId(), model, protocol);
     }
 }

@@ -1,12 +1,9 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.iam.service;
 
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
-import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.iam.service.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

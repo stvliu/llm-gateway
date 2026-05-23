@@ -37,9 +37,9 @@ public class ProxyServiceImpl implements ProxyService {
     }
 
     @Override
-    public ProtocolResponse proxy(ProtocolRequest request, Identity authResult, RoutingStrategy strategy) {
+    public ProtocolResponse proxy(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
         RoutingContext context = channelRoutingService.resolve(
-                authResult, request.getModel(), request.getProtocol());
+                identity, request.getModel(), request.getProtocol());
 
         log.info("Proxy request routed: model={}, productId={}, protocol={}, endpoint={}",
                 request.getModel(), context.getProductId(), context.getProtocol(), context.getEndpoint());
@@ -56,10 +56,10 @@ public class ProxyServiceImpl implements ProxyService {
     }
 
     @Override
-    public void proxyStream(ProtocolRequest request, Identity authResult, RoutingStrategy strategy,
+    public void proxyStream(ProtocolRequest request, Identity identity, RoutingStrategy strategy,
                             Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError) {
         RoutingContext context = channelRoutingService.resolve(
-                authResult, request.getModel(), request.getProtocol());
+                identity, request.getModel(), request.getProtocol());
 
         log.info("Stream request routed: model={}, productId={}, protocol={}, endpoint={}",
                 request.getModel(), context.getProductId(), context.getProtocol(), context.getEndpoint());
