@@ -49,11 +49,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     }
 
     @Override
-    public List<ModelMetadata> findByProductId(Long productId) {
-        return repository.findByProductId(productId).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public Optional<ModelMetadata> findByProviderIdAndModelId(String providerId, String providerModelId) {
         return repository.findByProviderIdAndProviderModelId(providerId, providerModelId).map(this::toEntity);
     }
@@ -109,7 +104,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     private ModelMetadata toEntity(ModelMetadataDo doEntity) {
         ModelMetadata entity = new ModelMetadata();
         entity.setId(doEntity.getId());
-        entity.setProductId(doEntity.getProductId());
         entity.setProviderId(doEntity.getProviderId());
         entity.setProviderModelId(doEntity.getProviderModelId());
         entity.setDisplayName(doEntity.getDisplayName());
@@ -117,13 +111,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
         entity.setContextWindow(doEntity.getContextWindow());
         entity.setMaxInputTokens(doEntity.getMaxInputTokens());
         entity.setMaxOutputTokens(doEntity.getMaxOutputTokens());
-        entity.setInputPrice(doEntity.getInputPrice());
-        entity.setOutputPrice(doEntity.getOutputPrice());
-        entity.setReasoningPrice(doEntity.getReasoningPrice());
-        entity.setCacheReadPrice(doEntity.getCacheReadPrice());
-        entity.setCacheWritePrice(doEntity.getCacheWritePrice());
-        entity.setInputAudioPrice(doEntity.getInputAudioPrice());
-        entity.setOutputAudioPrice(doEntity.getOutputAudioPrice());
         entity.setKnowledgeCutoff(doEntity.getKnowledgeCutoff());
         entity.setReleaseDate(doEntity.getReleaseDate());
         entity.setOpenWeights(doEntity.getOpenWeights());
@@ -142,7 +129,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     private ModelMetadataDo toDo(ModelMetadata entity) {
         ModelMetadataDo doEntity = new ModelMetadataDo();
         doEntity.setId(entity.getId());
-        doEntity.setProductId(entity.getProductId());
         doEntity.setProviderId(entity.getProviderId());
         doEntity.setProviderModelId(entity.getProviderModelId());
         doEntity.setDisplayName(entity.getDisplayName());
@@ -150,13 +136,6 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
         doEntity.setContextWindow(entity.getContextWindow());
         doEntity.setMaxInputTokens(entity.getMaxInputTokens());
         doEntity.setMaxOutputTokens(entity.getMaxOutputTokens());
-        doEntity.setInputPrice(entity.getInputPrice());
-        doEntity.setOutputPrice(entity.getOutputPrice());
-        doEntity.setReasoningPrice(entity.getReasoningPrice());
-        doEntity.setCacheReadPrice(entity.getCacheReadPrice());
-        doEntity.setCacheWritePrice(entity.getCacheWritePrice());
-        doEntity.setInputAudioPrice(entity.getInputAudioPrice());
-        doEntity.setOutputAudioPrice(entity.getOutputAudioPrice());
         doEntity.setKnowledgeCutoff(entity.getKnowledgeCutoff());
         doEntity.setReleaseDate(entity.getReleaseDate());
         doEntity.setOpenWeights(entity.getOpenWeights());

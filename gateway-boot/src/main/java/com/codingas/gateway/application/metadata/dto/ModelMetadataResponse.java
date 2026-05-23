@@ -3,7 +3,6 @@ package com.codingas.gateway.application.metadata.dto;
 import lombok.Builder;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -24,13 +23,6 @@ public class ModelMetadataResponse {
     private Integer contextWindow;
     private Integer maxInputTokens;
     private Integer maxOutputTokens;
-    private BigDecimal inputPrice;
-    private BigDecimal outputPrice;
-    private BigDecimal reasoningPrice;
-    private BigDecimal cacheReadPrice;
-    private BigDecimal cacheWritePrice;
-    private BigDecimal inputAudioPrice;
-    private BigDecimal outputAudioPrice;
     private String knowledgeCutoff;
     private LocalDate releaseDate;
     private Boolean openWeights;

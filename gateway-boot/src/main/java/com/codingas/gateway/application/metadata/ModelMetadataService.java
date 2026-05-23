@@ -13,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -51,15 +50,6 @@ public class ModelMetadataService {
      */
     public List<ModelMetadataResponse> listByProviderId(String providerId) {
         return modelMetadataGateway.findByProviderId(providerId).stream()
-            .map(this::toResponse)
-            .toList();
-    }
-
-    /**
-     * 查询某产品的所有模型
-     */
-    public List<ModelMetadataResponse> listByProductId(Long productId) {
-        return modelMetadataGateway.findByProductId(productId).stream()
             .map(this::toResponse)
             .toList();
     }
@@ -106,13 +96,6 @@ public class ModelMetadataService {
         if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
         if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
         if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
-        if (request.inputPrice() != null) metadata.setInputPrice(request.inputPrice());
-        if (request.outputPrice() != null) metadata.setOutputPrice(request.outputPrice());
-        if (request.reasoningPrice() != null) metadata.setReasoningPrice(request.reasoningPrice());
-        if (request.cacheReadPrice() != null) metadata.setCacheReadPrice(request.cacheReadPrice());
-        if (request.cacheWritePrice() != null) metadata.setCacheWritePrice(request.cacheWritePrice());
-        if (request.inputAudioPrice() != null) metadata.setInputAudioPrice(request.inputAudioPrice());
-        if (request.outputAudioPrice() != null) metadata.setOutputAudioPrice(request.outputAudioPrice());
         if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
         if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
         if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
@@ -126,13 +109,6 @@ public class ModelMetadataService {
         if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
         if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
         if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
-        if (request.inputPrice() != null) metadata.setInputPrice(request.inputPrice());
-        if (request.outputPrice() != null) metadata.setOutputPrice(request.outputPrice());
-        if (request.reasoningPrice() != null) metadata.setReasoningPrice(request.reasoningPrice());
-        if (request.cacheReadPrice() != null) metadata.setCacheReadPrice(request.cacheReadPrice());
-        if (request.cacheWritePrice() != null) metadata.setCacheWritePrice(request.cacheWritePrice());
-        if (request.inputAudioPrice() != null) metadata.setInputAudioPrice(request.inputAudioPrice());
-        if (request.outputAudioPrice() != null) metadata.setOutputAudioPrice(request.outputAudioPrice());
         if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
         if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
         if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
@@ -159,13 +135,6 @@ public class ModelMetadataService {
             .contextWindow(metadata.getContextWindow())
             .maxInputTokens(metadata.getMaxInputTokens())
             .maxOutputTokens(metadata.getMaxOutputTokens())
-            .inputPrice(metadata.getInputPrice())
-            .outputPrice(metadata.getOutputPrice())
-            .reasoningPrice(metadata.getReasoningPrice())
-            .cacheReadPrice(metadata.getCacheReadPrice())
-            .cacheWritePrice(metadata.getCacheWritePrice())
-            .inputAudioPrice(metadata.getInputAudioPrice())
-            .outputAudioPrice(metadata.getOutputAudioPrice())
             .knowledgeCutoff(metadata.getKnowledgeCutoff())
             .releaseDate(metadata.getReleaseDate())
             .openWeights(metadata.getOpenWeights())

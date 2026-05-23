@@ -29,11 +29,6 @@ public interface ModelMetadataGateway {
     List<ModelMetadata> findByProviderId(String providerId);
 
     /**
-     * 查询某产品的所有模型
-     */
-    List<ModelMetadata> findByProductId(Long productId);
-
-    /**
      * 精确查找：(provider_id, provider_model_id)
      */
     Optional<ModelMetadata> findByProviderIdAndModelId(String providerId, String providerModelId);
