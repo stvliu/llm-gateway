@@ -27,6 +27,13 @@ export interface ProductMetadata {
   description: string;
   endpoints: Record<string, string>;
   isDefault: boolean;
+  inputPrice?: number;
+  outputPrice?: number;
+  reasoningPrice?: number;
+  cacheReadPrice?: number;
+  cacheWritePrice?: number;
+  inputAudioPrice?: number;
+  outputAudioPrice?: number;
   state: string;
   source: string;
   createdAt: string;
@@ -35,7 +42,6 @@ export interface ProductMetadata {
 
 export interface ModelMetadata {
   id: number;
-  productId?: number;
   providerId: string;
   providerModelId: string;
   displayName: string;
@@ -43,13 +49,6 @@ export interface ModelMetadata {
   contextWindow?: number;
   maxInputTokens?: number;
   maxOutputTokens?: number;
-  inputPrice?: number;
-  outputPrice?: number;
-  reasoningPrice?: number;
-  cacheReadPrice?: number;
-  cacheWritePrice?: number;
-  inputAudioPrice?: number;
-  outputAudioPrice?: number;
   knowledgeCutoff?: string;
   releaseDate?: string;
   openWeights?: boolean;
