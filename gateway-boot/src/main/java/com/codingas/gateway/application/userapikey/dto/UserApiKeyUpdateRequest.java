@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.userapikey.dto;
 
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 
 import java.util.List;
 

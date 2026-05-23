@@ -10,8 +10,6 @@ import java.util.List;
  * 创建用户 API Key 请求
  */
 public record UserApiKeyCreateRequest(
-        @NotNull(message = "团队 ID 不能为空")
-        Long teamId,
         @NotNull(message = "用户 ID 不能为空")
         Long userId,
         @NotEmpty(message = "至少需要关联一个产品")

@@ -1,11 +1,11 @@
-package com.codingas.gateway.domain.security.exception;
+package com.codingas.gateway.domain.iam.exception;
 
 /**
  * 未认证异常
  *
  * <p>表示请求缺少有效的认证信息。</p>
  */
-public class UnauthorizedException extends SecurityException {
+public class UnauthorizedException extends IamException {
 
     private static final String CODE = "UNAUTHORIZED";
 

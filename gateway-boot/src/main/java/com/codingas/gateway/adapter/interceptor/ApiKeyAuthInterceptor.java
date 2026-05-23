@@ -1,8 +1,8 @@
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.iam.service.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -41,7 +41,7 @@ public class ApiKeyAuthInterceptor implements HandlerInterceptor {
         }
 
         try {
-            UserAuthResult authResult = authenticationDomainService.authenticateUser(apiKey);
+            Identity authResult = authenticationDomainService.authenticateUser(apiKey);
             request.setAttribute("authResult", authResult);
             return true;
         } catch (AuthenticationFailedException e) {

@@ -1,12 +1,13 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.security.exception.ForbiddenException;
+import com.codingas.gateway.common.exception.GatewayException;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.security.exception.IpBlockedException;
 import com.codingas.gateway.domain.security.exception.RateLimitExceededException;
-import com.codingas.gateway.domain.security.exception.SecurityException;
-import com.codingas.gateway.domain.security.exception.UnauthorizedException;
+import com.codingas.gateway.domain.iam.exception.IamException;
+import com.codingas.gateway.domain.iam.exception.UnauthorizedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -114,10 +115,10 @@ class SecurityExceptionHandlerTest {
         }
 
         @Test
-        @DisplayName("处理通用 SecurityException")
+        @DisplayName("处理通用 IamException")
         void handleSecurityException() {
             // Given
-            SecurityException ex = new SecurityException("CUSTOM_SECURITY", "Custom security error");
+            IamException ex = new IamException("CUSTOM_IAM", "Custom IAM error");
 
             // When
             ResponseEntity<ApiResponse<Void>> response = handler.handleSecurityException(ex);
@@ -126,8 +127,8 @@ class SecurityExceptionHandlerTest {
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             assertThat(response.getBody()).isNotNull();
             assertThat(response.getBody().isSuccess()).isFalse();
-            assertThat(response.getBody().getError().getCode()).isEqualTo("CUSTOM_SECURITY");
-            assertThat(response.getBody().getError().getMessage()).isEqualTo("Custom security error");
+            assertThat(response.getBody().getError().getCode()).isEqualTo("CUSTOM_IAM");
+            assertThat(response.getBody().getError().getMessage()).isEqualTo("Custom IAM error");
         }
     }
 
@@ -193,8 +194,8 @@ class SecurityExceptionHandlerTest {
         }
 
         @Test
-        @DisplayName("异常类继承 SecurityException")
-        void exceptionClasses_extendSecurityException() {
+        @DisplayName("异常类继承 IamException / GatewayException")
+        void exceptionClasses_extendIamException() {
             // Given & When
             UnauthorizedException unauthorized = new UnauthorizedException();
             ForbiddenException forbidden = new ForbiddenException();
@@ -203,11 +204,11 @@ class SecurityExceptionHandlerTest {
             IpBlockedException ipBlocked = new IpBlockedException();
 
             // Then
-            assertThat(unauthorized).isInstanceOf(SecurityException.class);
-            assertThat(forbidden).isInstanceOf(SecurityException.class);
-            assertThat(authFailed).isInstanceOf(SecurityException.class);
-            assertThat(rateLimit).isInstanceOf(SecurityException.class);
-            assertThat(ipBlocked).isInstanceOf(SecurityException.class);
+            assertThat(unauthorized).isInstanceOf(IamException.class);
+            assertThat(forbidden).isInstanceOf(IamException.class);
+            assertThat(authFailed).isInstanceOf(IamException.class);
+            assertThat(rateLimit).isInstanceOf(GatewayException.class);
+            assertThat(ipBlocked).isInstanceOf(GatewayException.class);
         }
     }
 }

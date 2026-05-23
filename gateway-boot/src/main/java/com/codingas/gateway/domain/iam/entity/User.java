@@ -1,8 +1,8 @@
-package com.codingas.gateway.domain.security.entity;
+package com.codingas.gateway.domain.iam.entity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
-import com.codingas.gateway.domain.security.enums.UserState;
+import com.codingas.gateway.domain.iam.enums.UserState;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,13 +53,6 @@ public class User extends BaseEntity {
      */
     public boolean isActive() {
         return UserState.ACTIVE.equals(state);
-    }
-
-    /**
-     * 检查邮箱是否已验证
-     */
-    public boolean isEmailVerified() {
-        return Boolean.TRUE.equals(emailVerified);
     }
 
     /**

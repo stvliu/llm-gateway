@@ -8,7 +8,7 @@ import com.codingas.gateway.domain.product.enums.ProductType;
  * <p>支持新旧两种架构：</p>
  * <ul>
  *   <li>旧架构：providerId + providerApiKey + endpoint</li>
- *   <li>新架构：productId + productType + userApiKeyId + teamId</li>
+ *   <li>新架构：productId + productType + userApiKeyId</li>
  * </ul>
  */
 public class RoutingContext {
@@ -21,7 +21,6 @@ public class RoutingContext {
     private Long productId;
     private ProductType productType;
     private Long userApiKeyId;
-    private Long teamId;
 
     // ===== 共用字段 =====
     private String model;
@@ -44,7 +43,6 @@ public class RoutingContext {
         public Builder productId(Long productId) { context.productId = productId; return this; }
         public Builder productType(ProductType productType) { context.productType = productType; return this; }
         public Builder userApiKeyId(Long userApiKeyId) { context.userApiKeyId = userApiKeyId; return this; }
-        public Builder teamId(Long teamId) { context.teamId = teamId; return this; }
         public Builder model(String model) { context.model = model; return this; }
         public Builder protocol(String protocol) { context.protocol = protocol; return this; }
         public Builder providerApiKey(String providerApiKey) { context.providerApiKey = providerApiKey; return this; }
@@ -74,7 +72,6 @@ public class RoutingContext {
     public Long getProductId() { return productId; }
     public ProductType getProductType() { return productType; }
     public Long getUserApiKeyId() { return userApiKeyId; }
-    public Long getTeamId() { return teamId; }
     public String getModel() { return model; }
     public String getProtocol() { return protocol; }
     public String getProviderApiKey() { return providerApiKey; }

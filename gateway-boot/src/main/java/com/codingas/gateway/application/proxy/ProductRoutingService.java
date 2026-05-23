@@ -9,9 +9,9 @@ import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.product.service.ProductDomainService;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.team.service.UserApiKeyDomainService;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.service.UserApiKeyDomainService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -98,7 +98,6 @@ public class ProductRoutingService {
                 .productId(product.getId())
                 .productType(product.getProductType())
                 .userApiKeyId(userApiKey.getId())
-                .teamId(userApiKey.getTeamId())
                 .model(model)
                 .protocol(resolved.protocolName)
                 .providerApiKey(plainApiKey)

@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.security.gateway;
+package com.codingas.gateway.domain.iam.gateway;
 
-import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.domain.iam.entity.User;
 import java.util.List;
 import java.util.Optional;
 

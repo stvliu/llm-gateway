@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,10 +30,10 @@ public class ChannelRoutingService {
      * @param protocol   请求协议
      * @return 路由上下文
      */
-    public RoutingContext resolve(UserAuthResult authResult, String model, String protocol) {
-        log.debug("Routing: userApiKeyId={}, model={}, protocol={}",
-                authResult.userApiKeyId(), model, protocol);
+    public RoutingContext resolve(Identity authResult, String model, String protocol) {
+        log.debug("Routing: credentialId={}, model={}, protocol={}",
+                authResult.credentialId(), model, protocol);
 
-        return productRoutingService.resolve(authResult.userApiKeyId(), model, protocol);
+        return productRoutingService.resolve(authResult.credentialId(), model, protocol);
     }
 }

@@ -1,9 +1,12 @@
 package com.codingas.gateway.domain.security.service;
 
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,7 +19,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 /**
  * AuthenticationDomainService 单元测试
@@ -43,79 +46,71 @@ class AuthenticationDomainServiceTest {
     class AuthenticateUserTests {
 
         @Test
-        @DisplayName("认证成功 — UserApiKey 活跃")
-        void authenticateUser_success() {
-            String apiKey = "sk-test1234567890abcdef";
+        @DisplayName("认证成功")
+        void authenticate_success() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
 
-            UserApiKey userApiKey = new UserApiKey();
-            userApiKey.setId(101L);
-            userApiKey.setUserId(1L);
-            userApiKey.setTeamId(300L);
-            userApiKey.setKeyPlain(apiKey);
-            userApiKey.setKeyPrefix("sk-test1");
-            userApiKey.setKeyHash("hashed-test-key");
-            userApiKey.setState(UserApiKeyState.ACTIVE);
+            Identity result = service.authenticateUser("sk-abc1xxxxx");
 
-            when(userApiKeyGateway.findByKeyPrefix("sk-test1")).thenReturn(Optional.of(userApiKey));
-            when(encryptionService.hashKey(apiKey)).thenReturn("hashed-test-key");
-
-            UserAuthResult result = service.authenticateUser(apiKey);
-
-            assertThat(result).isNotNull();
-            assertThat(result.userId()).isEqualTo(1L);
+            assertThat(result.userId()).isEqualTo(50L);
+            assertThat(result.credentialId()).isEqualTo(100L);
             assertThat(result.role()).isEqualTo("user");
-            assertThat(result.userApiKeyId()).isEqualTo(101L);
-            assertThat(result.teamId()).isEqualTo(300L);
         }
 
         @Test
-        @DisplayName("认证失败 — UserApiKey 不存在")
-        void authenticateUser_keyNotFound_throwsException() {
-            String apiKey = "sk-unknown12345678";
+        @DisplayName("API Key 为空 — 抛异常")
+        void authenticate_emptyKey() {
+            assertThatThrownBy(() -> service.authenticateUser(""))
+                    .isInstanceOf(AuthenticationFailedException.class);
+            assertThatThrownBy(() -> service.authenticateUser(null))
+                    .isInstanceOf(AuthenticationFailedException.class);
+        }
 
+        @Test
+        @DisplayName("Key prefix 未找到 — 抛异常")
+        void authenticate_prefixNotFound() {
             when(userApiKeyGateway.findByKeyPrefix("sk-unkno")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.authenticateUser(apiKey))
+            assertThatThrownBy(() -> service.authenticateUser("sk-unknown-key"))
                     .isInstanceOf(AuthenticationFailedException.class)
                     .hasMessageContaining("无效的 API Key");
         }
 
         @Test
-        @DisplayName("认证失败 — UserApiKey 已禁用")
-        void authenticateUser_keyDisabled_throwsException() {
-            String apiKey = "sk-disabled1234567";
+        @DisplayName("Key hash 不匹配 — 抛异常")
+        void authenticate_hashMismatch() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("wrong-hash");
 
-            UserApiKey userApiKey = new UserApiKey();
-            userApiKey.setId(101L);
-            userApiKey.setUserId(1L);
-            userApiKey.setTeamId(300L);
-            userApiKey.setKeyPlain(apiKey);
-            userApiKey.setKeyPrefix("sk-disab");
-            userApiKey.setKeyHash("hashed-disabled-key");
-            userApiKey.setState(UserApiKeyState.INACTIVE);
-
-            when(userApiKeyGateway.findByKeyPrefix("sk-disab")).thenReturn(Optional.of(userApiKey));
-            when(encryptionService.hashKey(apiKey)).thenReturn("hashed-disabled-key");
-
-            assertThatThrownBy(() -> service.authenticateUser(apiKey))
+            assertThatThrownBy(() -> service.authenticateUser("sk-abc1xxxxx"))
                     .isInstanceOf(AuthenticationFailedException.class)
-                    .hasMessageContaining("API Key 已禁用");
+                    .hasMessageContaining("无效的 API Key");
         }
 
         @Test
-        @DisplayName("空 API Key 抛出异常")
-        void authenticateUser_blankKey_throwsException() {
-            assertThatThrownBy(() -> service.authenticateUser(""))
-                    .isInstanceOf(AuthenticationFailedException.class)
-                    .hasMessageContaining("API Key 不能为空");
-        }
+        @DisplayName("Key 已禁用 — 抛异常")
+        void authenticate_keyDisabled() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setState(UserApiKeyState.INACTIVE);
+            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
 
-        @Test
-        @DisplayName("null API Key 抛出异常")
-        void authenticateUser_nullKey_throwsException() {
-            assertThatThrownBy(() -> service.authenticateUser(null))
+            assertThatThrownBy(() -> service.authenticateUser("sk-abc1xxxxx"))
                     .isInstanceOf(AuthenticationFailedException.class)
-                    .hasMessageContaining("API Key 不能为空");
+                    .hasMessageContaining("已禁用");
         }
+    }
+
+    private UserApiKey createSampleApiKey() {
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setId(100L);
+        apiKey.setUserId(50L);
+        apiKey.setKeyHash("hash123");
+        apiKey.setKeyPrefix("sk-abc1x");
+        apiKey.setState(UserApiKeyState.ACTIVE);
+        return apiKey;
     }
 }

@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.init;
+package com.codingas.gateway.application.init;
 
 import com.codingas.gateway.domain.model.enums.ModelState;
 import com.codingas.gateway.domain.model.enums.ProviderState;
@@ -15,17 +15,18 @@ import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
-import com.codingas.gateway.domain.security.enums.UserState;
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.iam.enums.UserState;
+import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import com.codingas.gateway.domain.team.entity.Team;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.team.enums.TeamState;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.team.gateway.TeamGateway;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -107,29 +108,23 @@ public class DataInitializer implements CommandLineRunner {
 
             // 初始化 10 个 UserApiKey，分布在不同团队
             if (product != null) {
-                // test1: 默认团队 2 个 Key
-                initUserApiKey(testUser1, defaultTeam, product, "sk-test1-default-001", "test1 默认团队 Key 1");
-                initUserApiKey(testUser1, defaultTeam, product, "sk-test1-default-002", "test1 默认团队 Key 2");
+                // test1: 3 个 Key
+                initUserApiKey(testUser1, product, "sk-test1-default-001", "test1 Key 1");
+                initUserApiKey(testUser1, product, "sk-test1-default-002", "test1 Key 2");
+                initUserApiKey(testUser1, product, "sk-test1-dev-001", "test1 Key 3");
 
-                // test1: 开发团队 1 个 Key（同一用户跨团队）
-                initUserApiKey(testUser1, devTeam, product, "sk-test1-dev-001", "test1 开发团队 Key");
+                // test2: 2 个 Key
+                initUserApiKey(testUser2, product, "sk-test2-product-001", "test2 Key 1");
+                initUserApiKey(testUser2, product, "sk-test2-product-002", "test2 Key 2");
 
-                // test2: 产品团队 2 个 Key
-                initUserApiKey(testUser2, productTeam, product, "sk-test2-product-001", "test2 产品团队 Key 1");
-                initUserApiKey(testUser2, productTeam, product, "sk-test2-product-002", "test2 产品团队 Key 2");
+                // test3: 2 个 Key
+                initUserApiKey(testUser3, product, "sk-test3-lobster-001", "test3 Key 1");
+                initUserApiKey(testUser3, product, "sk-test3-lobster-002", "test3 Key 2");
 
-                // test3: 龙虾团队 2 个 Key
-                initUserApiKey(testUser3, lobsterTeam, product, "sk-test3-lobster-001", "test3 龙虾团队 Key 1");
-                initUserApiKey(testUser3, lobsterTeam, product, "sk-test3-lobster-002", "test3 龙虾团队 Key 2");
-
-                // test4: 默认团队 1 个 Key
-                initUserApiKey(testUser4, defaultTeam, product, "sk-test4-default-001", "test4 默认团队 Key");
-
-                // test5: 开发团队 1 个 Key
-                initUserApiKey(testUser5, devTeam, product, "sk-test5-dev-001", "test5 开发团队 Key");
-
-                // test6: 龙虾团队 1 个 Key（跨团队共享龙虾团队）
-                initUserApiKey(testUser6, lobsterTeam, product, "sk-test6-lobster-001", "test6 龙虾团队 Key");
+                // test4-6: 各 1 个 Key
+                initUserApiKey(testUser4, product, "sk-test4-default-001", "test4 Key");
+                initUserApiKey(testUser5, product, "sk-test5-dev-001", "test5 Key");
+                initUserApiKey(testUser6, product, "sk-test6-lobster-001", "test6 Key");
             }
 
             log.info("Data initialization completed successfully");
@@ -208,6 +203,14 @@ public class DataInitializer implements CommandLineRunner {
                     .stream().findFirst().orElse(null);
         }
 
+        Product product = createProduct(provider);
+
+        Product saved = productGateway.save(product);
+        log.info("Created product: {} (id={})", product.getName(), saved.getId());
+        return saved;
+    }
+
+    private static @NonNull Product createProduct(Provider provider) {
         Product product = new Product();
         product.setProviderId(provider.getId());
         product.setProviderName(provider.getName());
@@ -219,10 +222,7 @@ public class DataInitializer implements CommandLineRunner {
         product.setInputPrice(new BigDecimal("0.0008"));
         product.setOutputPrice(new BigDecimal("0.002"));
         product.setState(ProductState.ACTIVE);
-
-        Product saved = productGateway.save(product);
-        log.info("Created product: {} (id={})", product.getName(), saved.getId());
-        return saved;
+        return product;
     }
 
     /**
@@ -340,24 +340,21 @@ public class DataInitializer implements CommandLineRunner {
      * <p>创建 UserApiKey，keyPlain 由基础设施层自动加密和哈希。</p>
      * <p>同一用户可以在不同团队下拥有多个 Key，实现跨团队访问产品。</p>
      */
-    private void initUserApiKey(User user, Team team, Product product, String keyPlain, String name) {
-        if (user == null || team == null || product == null) {
+    private void initUserApiKey(User user, Product product, String keyPlain, String name) {
+        if (user == null || product == null) {
             log.warn("Missing dependencies, skipping UserApiKey creation: {}", name);
             return;
         }
 
-        // 检查同团队下是否已有同名 Key
-        if (userApiKeyGateway.countByTeamId(team.getId()) > 0) {
-            List<UserApiKey> existing = userApiKeyGateway.findByTeamId(team.getId());
-            boolean exists = existing.stream().anyMatch(k -> name.equals(k.getName()));
-            if (exists) {
-                log.info("UserApiKey '{}' already exists in team '{}', skipping", name, team.getName());
-                return;
-            }
+        // 检查用户是否已有同名 Key
+        List<UserApiKey> existing = userApiKeyGateway.findByUserId(user.getId());
+        boolean exists = existing.stream().anyMatch(k -> name.equals(k.getName()));
+        if (exists) {
+            log.info("UserApiKey '{}' already exists for user '{}', skipping", name, user.getUsername());
+            return;
         }
 
         UserApiKey apiKey = new UserApiKey();
-        apiKey.setTeamId(team.getId());
         apiKey.setUserId(user.getId());
         apiKey.setProductIds(List.of(product.getId()));
         apiKey.setKeyPlain(keyPlain);
@@ -365,7 +362,7 @@ public class DataInitializer implements CommandLineRunner {
         apiKey.setState(UserApiKeyState.ACTIVE);
 
         UserApiKey saved = userApiKeyGateway.save(apiKey);
-        log.info("Created UserApiKey: {} (id={}, prefix={}, team={}, user={})",
-                name, saved.getId(), saved.getKeyPrefix(), team.getName(), user.getUsername());
+        log.info("Created UserApiKey: {} (id={}, prefix={}, user={})",
+                name, saved.getId(), saved.getKeyPrefix(), user.getUsername());
     }
 }

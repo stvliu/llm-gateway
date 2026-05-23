@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,7 +34,7 @@ public final class SseStreamHelper {
      * @param response         HTTP 响应
      */
     public static void executeStream(ProxyService proxyService, ProtocolRequest protocolRequest,
-                                     UserAuthResult authResult, HttpServletResponse response) throws IOException {
+                                     Identity authResult, HttpServletResponse response) throws IOException {
         setupSseResponse(response);
 
         PrintWriter writer = response.getWriter();

@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.security.database.dataobject;
 
-import com.codingas.gateway.domain.security.enums.UserState;
+import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.*;
 import lombok.*;

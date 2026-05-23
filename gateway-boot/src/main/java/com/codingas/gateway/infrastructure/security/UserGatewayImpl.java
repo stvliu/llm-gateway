@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.security;
 
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
 import com.codingas.gateway.infrastructure.security.database.UserRepository;
 import lombok.RequiredArgsConstructor;

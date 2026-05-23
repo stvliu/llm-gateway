@@ -1,8 +1,11 @@
-package com.codingas.gateway.domain.team.enums;
+package com.codingas.gateway.domain.iam.enums;
+
+import lombok.Getter;
 
 /**
  * 用户 API Key 状态枚举
  */
+@Getter
 public enum UserApiKeyState {
 
     ACTIVE("active"),
@@ -13,10 +16,6 @@ public enum UserApiKeyState {
 
     UserApiKeyState(String code) {
         this.code = code;
-    }
-
-    public String getCode() {
-        return code;
     }
 
     public boolean isAvailable() {

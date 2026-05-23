@@ -28,7 +28,7 @@ import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

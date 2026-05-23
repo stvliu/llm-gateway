@@ -3,7 +3,7 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
 import com.codingas.gateway.domain.proxy.protocol.ProtocolResponse;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 
 import java.util.function.Consumer;
 
@@ -22,11 +22,11 @@ public interface ProxyService {
      * @param strategy 路由策略
      * @return 协议响应
      */
-    ProtocolResponse proxy(ProtocolRequest request, UserAuthResult authResult, RoutingStrategy strategy);
+    ProtocolResponse proxy(ProtocolRequest request, Identity authResult, RoutingStrategy strategy);
 
     /**
      * 代理转发流式请求
      */
-    void proxyStream(ProtocolRequest request, UserAuthResult authResult, RoutingStrategy strategy,
+    void proxyStream(ProtocolRequest request, Identity authResult, RoutingStrategy strategy,
                      Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError);
 }

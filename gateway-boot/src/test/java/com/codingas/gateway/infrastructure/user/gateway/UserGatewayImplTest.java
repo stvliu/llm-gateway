@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.user.gateway;
 
-import com.codingas.gateway.domain.security.enums.UserState;
-import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.domain.iam.enums.UserState;
+import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.infrastructure.security.UserGatewayImpl;
 import com.codingas.gateway.infrastructure.security.database.UserRepository;
 import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;

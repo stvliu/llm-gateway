@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.product.gateway;
 
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
 import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;

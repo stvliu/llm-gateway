@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,7 +38,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("新架构认证结果走 ProductRoutingService")
         void resolve_newArchitecture_usesProductRouting() {
-            UserAuthResult authResult = UserAuthResult.newArch(1L, "USER", 101L, 200L);
+            Identity authResult = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("gpt-4o")
@@ -55,7 +55,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("新架构认证结果使用 anthropic 协议")
         void resolve_newArchitecture_anthropicProtocol_usesAnthropicProtocol() {
-            UserAuthResult authResult = UserAuthResult.newArch(1L, "USER", 101L, 200L);
+            Identity authResult = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("claude-3-opus")
@@ -72,7 +72,7 @@ class ChannelRoutingServiceTest {
         @Test
         @DisplayName("协议为 null 时传递给 ProductRoutingService")
         void resolve_nullProtocol_passesToProductRouting() {
-            UserAuthResult authResult = UserAuthResult.newArch(1L, "USER", 101L, 200L);
+            Identity authResult = Identity.of(1L, "USER", 101L);
             RoutingContext expected = RoutingContext.builder()
                 .productId(200L)
                 .model("gpt-4o")

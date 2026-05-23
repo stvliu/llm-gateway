@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.team.gateway;
+package com.codingas.gateway.domain.iam.gateway;
 
-import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,9 +13,6 @@ public interface UserApiKeyGateway {
     /** 按 ID 查找 */
     Optional<UserApiKey> findById(Long id);
 
-    /** 按团队 ID 查找 */
-    List<UserApiKey> findByTeamId(Long teamId);
-
     /** 按用户 ID 查找 */
     List<UserApiKey> findByUserId(Long userId);
 
@@ -26,10 +23,7 @@ public interface UserApiKeyGateway {
     UserApiKey save(UserApiKey userApiKey);
 
     /** 删除 */
-    void deleteById(Long id);
-
-    /** 按团队 ID 统计 */
-    long countByTeamId(Long teamId);
+    void delete(UserApiKey userApiKey);
 
     /** 查询关联某产品的 Key ID 列表 */
     List<Long> findIdsByProductId(Long productId);

@@ -1,11 +1,11 @@
-package com.codingas.gateway.domain.security.exception;
+package com.codingas.gateway.domain.iam.exception;
 
 /**
  * 认证失败异常
  *
  * <p>表示认证过程中验证失败（如 API Key 无效）。</p>
  */
-public class AuthenticationFailedException extends SecurityException {
+public class AuthenticationFailedException extends IamException {
 
     private static final String CODE = "AUTHENTICATION_FAILED";
 

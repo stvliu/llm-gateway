@@ -5,7 +5,7 @@ import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,7 +50,7 @@ class ProxyServiceTest {
     private AnthropicMessagesRequest testAnthropicRequest;
     private OpenAIChatResponse testOpenAIResponse;
     private AnthropicMessagesResponse testAnthropicResponse;
-    private UserAuthResult testAuthResult;
+    private Identity testAuthResult;
     private RoutingContext testOpenAIContext;
     private RoutingContext testAnthropicContext;
 
@@ -58,7 +58,7 @@ class ProxyServiceTest {
     void setUp() {
         proxyService = new ProxyServiceImpl(channelRoutingService, protocolGatewayFactory, protocolConverter);
 
-        testAuthResult = mock(UserAuthResult.class);
+        testAuthResult = mock(Identity.class);
 
         testOpenAIContext = RoutingContext.builder()
                 .providerId(1L)

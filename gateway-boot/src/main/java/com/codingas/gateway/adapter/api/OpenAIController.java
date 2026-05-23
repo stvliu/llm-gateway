@@ -7,7 +7,7 @@ import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.proxy.exception.ProtocolValidationException;
 import com.codingas.gateway.domain.proxy.protocol.OpenAIProtocolValidator;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class OpenAIController {
     @PostMapping("/chat/completions")
     public ResponseEntity<?> chatCompletions(
             @RequestBody OpenAIChatRequest request,
-            @RequestAttribute(value = "authResult", required = false) UserAuthResult authResult,
+            @RequestAttribute(value = "authResult", required = false) Identity authResult,
             HttpServletResponse response) throws IOException {
 
         log.info("OpenAI chat request: model={}, stream={}", request.getModel(), request.getStream());

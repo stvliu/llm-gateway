@@ -1,12 +1,12 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.security.exception.ForbiddenException;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.security.exception.IpBlockedException;
 import com.codingas.gateway.domain.security.exception.RateLimitExceededException;
-import com.codingas.gateway.domain.security.exception.SecurityException;
-import com.codingas.gateway.domain.security.exception.UnauthorizedException;
+import com.codingas.gateway.domain.iam.exception.IamException;
+import com.codingas.gateway.domain.iam.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -83,8 +83,8 @@ public class SecurityExceptionHandler {
     /**
      * 处理通用安全异常（兜底）
      */
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ApiResponse<Void>> handleSecurityException(SecurityException e) {
+    @ExceptionHandler(IamException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSecurityException(IamException e) {
         log.warn("Security error: {}", e.getMessage());
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)

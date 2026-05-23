@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.security.service.EncryptionService;
+import com.codingas.gateway.infrastructure.security.encryption.EncryptionService;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;

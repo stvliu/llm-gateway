@@ -1,8 +1,8 @@
-package com.codingas.gateway.domain.security.service;
+package com.codingas.gateway.domain.iam.service;
 
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,7 +12,7 @@ import java.util.Optional;
 /**
  * 认证领域服务
  *
- * <p>认证流程：通过 keyPrefix 查找 Key，再用 hashKey 验证完整密钥。</p>
+ * <p>认证流程：通过 keyPrefix 查找 Key，再用 hash 验证完整密钥。</p>
  * <p>不再解密密钥做明文比较，避免密钥在认证流程中暴露。</p>
  */
 @Service
@@ -36,7 +36,7 @@ public class AuthenticationDomainService {
      * @return 认证结果
      * @throws AuthenticationFailedException 认证失败
      */
-    public UserAuthResult authenticateUser(String apiKey) {
+    public Identity authenticateUser(String apiKey) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new AuthenticationFailedException("API Key 不能为空");
         }
@@ -63,11 +63,10 @@ public class AuthenticationDomainService {
             throw new AuthenticationFailedException("API Key 已禁用");
         }
 
-        return UserAuthResult.newArch(
+        return Identity.of(
                 userApiKey.getUserId(),
                 "user",
-                userApiKey.getId(),
-                userApiKey.getTeamId()
+                userApiKey.getId()
         );
     }
 

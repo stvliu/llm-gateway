@@ -1,18 +1,19 @@
 package com.codingas.gateway.infrastructure.team.gateway;
 
-import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserApiKeyDo;
+import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserApiKeyProductDo;
+import com.codingas.gateway.infrastructure.team.gateway.database.repository.UserApiKeyProductRepository;
 import com.codingas.gateway.infrastructure.team.gateway.database.repository.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,18 +28,12 @@ import java.util.Optional;
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
     private final UserApiKeyRepository repository;
+    private final UserApiKeyProductRepository productRepository;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     @Override
     public Optional<UserApiKey> findById(Long id) {
         return repository.findById(id).map(this::toEntity);
-    }
-
-    @Override
-    public List<UserApiKey> findByTeamId(Long teamId) {
-        return repository.findByTeamId(teamId).stream()
-                .map(this::toEntity)
-                .toList();
     }
 
     @Override
@@ -54,6 +49,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     }
 
     @Override
+    @Transactional
     public UserApiKey save(UserApiKey userApiKey) {
         UserApiKeyDo dataObject = toDataObject(userApiKey);
         if (userApiKey.getId() == null) {
@@ -64,35 +60,47 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
             if (plainKey != null && !plainKey.isBlank()) {
                 dataObject.setKeyHash(encryptionService.hashKey(plainKey));
                 dataObject.setKeyEncrypted(encryptionService.encrypt(plainKey));
-                dataObject.setKeyPrefix(plainKey.substring(0, Math.min(8, plainKey.length())));
             }
+        } else {
+            // 更新时：保留已有的 hash 和 encrypted
+            repository.findById(userApiKey.getId()).ifPresent(existing -> {
+                dataObject.setKeyHash(existing.getKeyHash());
+                dataObject.setKeyEncrypted(existing.getKeyEncrypted());
+            });
         }
         dataObject.setUpdatedAt(Instant.now());
         UserApiKeyDo saved = repository.save(dataObject);
+
+        // 保存产品关联
+        if (userApiKey.getProductIds() != null) {
+            productRepository.deleteByUserApiKeyId(saved.getId());
+            for (Long productId : userApiKey.getProductIds()) {
+                UserApiKeyProductDo rel = new UserApiKeyProductDo();
+                rel.setUserApiKeyId(saved.getId());
+                rel.setProductId(productId);
+                productRepository.save(rel);
+            }
+        }
+
         return toEntity(saved);
     }
 
     @Override
-    public void deleteById(Long id) {
-        repository.deleteById(id);
-    }
-
-    @Override
-    public long countByTeamId(Long teamId) {
-        return repository.countByTeamId(teamId);
+    @Transactional
+    public void delete(UserApiKey userApiKey) {
+        productRepository.deleteByUserApiKeyId(userApiKey.getId());
+        repository.deleteById(userApiKey.getId());
     }
 
     @Override
     public List<Long> findIdsByProductId(Long productId) {
-        return repository.findIdsByProductId(productId);
+        return productRepository.findUserApiKeyIdByProductId(productId);
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
         UserApiKey entity = new UserApiKey();
         entity.setId(dataObject.getId());
-        entity.setTeamId(dataObject.getTeamId());
         entity.setUserId(dataObject.getUserId());
-        entity.setProductIds(new ArrayList<>(dataObject.getProductIds()));
         entity.setKeyHash(dataObject.getKeyHash());
         entity.setKeyPrefix(dataObject.getKeyPrefix());
         entity.setName(dataObject.getName());
@@ -101,6 +109,10 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setState(dataObject.getState());
         entity.setCreatedAt(dataObject.getCreatedAt());
         entity.setUpdatedAt(dataObject.getUpdatedAt());
+
+        // 加载产品关联
+        List<Long> productIds = productRepository.findProductIdByUserApiKeyId(dataObject.getId());
+        entity.setProductIds(productIds);
 
         // 解密返回明文 Key
         if (dataObject.getKeyEncrypted() != null && !dataObject.getKeyEncrypted().isBlank()) {
@@ -118,11 +130,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     private UserApiKeyDo toDataObject(UserApiKey entity) {
         UserApiKeyDo dataObject = new UserApiKeyDo();
         dataObject.setId(entity.getId());
-        dataObject.setTeamId(entity.getTeamId());
         dataObject.setUserId(entity.getUserId());
-        dataObject.setProductIds(entity.getProductIds() != null
-                ? new HashSet<>(entity.getProductIds())
-                : new HashSet<>());
         dataObject.setKeyPrefix(entity.getKeyPrefix());
         dataObject.setName(entity.getName());
         dataObject.setModels(formatModels(entity.getModels()));
@@ -130,15 +138,6 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setState(entity.getState() != null ? entity.getState() : UserApiKeyState.ACTIVE);
         dataObject.setCreatedAt(entity.getCreatedAt());
         dataObject.setUpdatedAt(entity.getUpdatedAt());
-
-        // 更新时：保留已有的 hash 和 encrypted
-        if (entity.getId() != null) {
-            repository.findById(entity.getId()).ifPresent(existing -> {
-                dataObject.setKeyHash(existing.getKeyHash());
-                dataObject.setKeyEncrypted(existing.getKeyEncrypted());
-            });
-        }
-
         return dataObject;
     }
 

@@ -1,8 +1,8 @@
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.security.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.iam.service.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,7 +40,7 @@ class ApiKeyAuthInterceptorTest {
     void validApiKey_bearerToken_passes() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 1L, 1L);
+        Identity authResult = Identity.of(1L, "user", 1L);
         when(authenticationService.authenticateUser("sk-test123")).thenReturn(authResult);
 
         boolean result = interceptor.preHandle(request, response, new Object());
@@ -55,7 +55,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("x-api-key")).thenReturn("sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        UserAuthResult authResult = UserAuthResult.newArch(1L, "user", 1L, 1L);
+        Identity authResult = Identity.of(1L, "user", 1L);
         when(authenticationService.authenticateUser("sk-test123")).thenReturn(authResult);
 
         boolean result = interceptor.preHandle(request, response, new Object());

@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.enums;
+package com.codingas.gateway.domain.iam.enums;
 
 /**
  * 用户状态枚举

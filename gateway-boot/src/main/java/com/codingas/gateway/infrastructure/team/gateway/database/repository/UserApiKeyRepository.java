@@ -13,13 +13,9 @@ import java.util.Optional;
  */
 public interface UserApiKeyRepository extends JpaRepository<UserApiKeyDo, Long> {
 
-    List<UserApiKeyDo> findByTeamId(Long teamId);
-
     List<UserApiKeyDo> findByUserId(Long userId);
 
     Optional<UserApiKeyDo> findByKeyPrefix(String keyPrefix);
-
-    long countByTeamId(Long teamId);
 
     /** 查询关联某产品的 Key ID 列表 */
     @Query("SELECT DISTINCT u.id FROM UserApiKeyDo u JOIN u.productIds p WHERE p = :productId")

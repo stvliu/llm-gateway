@@ -11,10 +11,10 @@ import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.product.service.ProductDomainService;
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.team.service.UserApiKeyDomainService;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.service.UserApiKeyDomainService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -78,11 +78,10 @@ class ProductRoutingServiceTest {
         return product;
     }
 
-    private UserApiKey createUserApiKey(Long id, List<Long> productIds, Long teamId, List<String> models) {
+    private UserApiKey createUserApiKey(Long id, List<Long> productIds, List<String> models) {
         UserApiKey userApiKey = new UserApiKey();
         userApiKey.setId(id);
         userApiKey.setProductIds(productIds);
-        userApiKey.setTeamId(teamId);
         userApiKey.setState(UserApiKeyState.ACTIVE);
         userApiKey.setModels(models);
         return userApiKey;
@@ -114,7 +113,7 @@ class ProductRoutingServiceTest {
         @DisplayName("成功解析路由 — 使用默认 ProductApiKey")
         void resolve_success_withDefaultApiKey() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
 
@@ -138,7 +137,7 @@ class ProductRoutingServiceTest {
         @DisplayName("成功解析路由 — 使用 anthropic 协议")
         void resolve_success_withAnthropicProtocol() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("claude-3-opus"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("claude-3-opus"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "Anthropic");
 
@@ -169,7 +168,7 @@ class ProductRoutingServiceTest {
         @DisplayName("失败 — 无可用的 ProductApiKey")
         void resolve_noAvailableApiKey_throwsException() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
@@ -186,7 +185,7 @@ class ProductRoutingServiceTest {
         @DisplayName("失败 — Provider 不存在")
         void resolve_providerNotFound_throwsException() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
@@ -209,7 +208,7 @@ class ProductRoutingServiceTest {
         @DisplayName("默认 Key 可用时优先使用")
         void selectDefaultKey_whenAvailable() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
 
@@ -229,7 +228,7 @@ class ProductRoutingServiceTest {
         @DisplayName("默认 Key 不可用时降级到活跃 Key 列表")
         void fallbackToActiveKeys_whenDefaultNotAvailable() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.INACTIVE);
             ProductApiKey activeKey = createProductApiKey(2L, 100L, 2, 50, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
@@ -255,7 +254,7 @@ class ProductRoutingServiceTest {
         @DisplayName("使用请求协议对应的端点")
         void useProtocolEndpoint() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("claude-3-opus"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("claude-3-opus"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "Anthropic");
 
@@ -275,7 +274,7 @@ class ProductRoutingServiceTest {
         void useDefaultEndpoint_whenProtocolNotSupported() {
             Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             product.setEndpoints(java.util.Map.of("openai", "https://api.openai.com"));
-            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
+            UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
 

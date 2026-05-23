@@ -6,7 +6,7 @@ import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.domain.proxy.protocol.*;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -37,7 +37,7 @@ public class ProxyServiceImpl implements ProxyService {
     }
 
     @Override
-    public ProtocolResponse proxy(ProtocolRequest request, UserAuthResult authResult, RoutingStrategy strategy) {
+    public ProtocolResponse proxy(ProtocolRequest request, Identity authResult, RoutingStrategy strategy) {
         RoutingContext context = channelRoutingService.resolve(
                 authResult, request.getModel(), request.getProtocol());
 
@@ -56,7 +56,7 @@ public class ProxyServiceImpl implements ProxyService {
     }
 
     @Override
-    public void proxyStream(ProtocolRequest request, UserAuthResult authResult, RoutingStrategy strategy,
+    public void proxyStream(ProtocolRequest request, Identity authResult, RoutingStrategy strategy,
                             Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError) {
         RoutingContext context = channelRoutingService.resolve(
                 authResult, request.getModel(), request.getProtocol());

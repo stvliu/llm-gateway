@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.security.encryption;
 
-import com.codingas.gateway.domain.security.exception.SecurityException;
-import com.codingas.gateway.domain.security.service.EncryptionService;
+import com.codingas.gateway.domain.iam.exception.IamException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -71,7 +70,7 @@ public class Aes256EncryptionService implements EncryptionService {
             // 检查是否为开发环境
             if (!isDevelopmentEnvironment()) {
                 // 生产环境必须配置加密密钥
-                throw new SecurityException(
+                throw new IamException(
                     "ENCRYPTION_KEY_MISSING",
                     "Encryption key must be configured in production environment. " +
                     "Set 'gateway.security.encryption-key' property or 'ENCRYPTION_KEY' environment variable."
@@ -86,20 +85,20 @@ public class Aes256EncryptionService implements EncryptionService {
                 this.secretKey = new SecretKeySpec(keyGen.generateKey().getEncoded(), "AES");
                 log.warn("Using temporary encryption key - encrypted data will be lost after restart!");
             } catch (Exception e) {
-                throw new SecurityException("ENCRYPTION_KEY_GENERATION_FAILED", "Failed to generate encryption key", e);
+                throw new IamException("ENCRYPTION_KEY_GENERATION_FAILED", "Failed to generate encryption key", e);
             }
         } else {
             try {
                 byte[] keyBytes = Base64.getDecoder().decode(keySource);
                 if (keyBytes.length != KEY_SIZE / 8) {
-                    throw new SecurityException("ENCRYPTION_KEY_INVALID", "Encryption key must be 256 bits (32 bytes) when decoded");
+                    throw new IamException("ENCRYPTION_KEY_INVALID", "Encryption key must be 256 bits (32 bytes) when decoded");
                 }
                 this.secretKey = new SecretKeySpec(keyBytes, "AES");
                 log.info("Aes256EncryptionService initialized with AES-256-GCM");
             } catch (IllegalArgumentException e) {
                 // Base64 解码失败，检查是否为开发环境
                 if (!isDevelopmentEnvironment()) {
-                    throw new SecurityException("ENCRYPTION_KEY_INVALID_FORMAT", "Invalid encryption key format: " + e.getMessage(), e);
+                    throw new IamException("ENCRYPTION_KEY_INVALID_FORMAT", "Invalid encryption key format: " + e.getMessage(), e);
                 }
                 log.warn("Invalid encryption key format, generating temporary key for development: {}", e.getMessage());
                 try {
@@ -108,7 +107,7 @@ public class Aes256EncryptionService implements EncryptionService {
                     this.secretKey = new SecretKeySpec(keyGen.generateKey().getEncoded(), "AES");
                     log.warn("Using temporary encryption key - encrypted data will be lost after restart!");
                 } catch (Exception ex) {
-                    throw new SecurityException("ENCRYPTION_KEY_GENERATION_FAILED", "Failed to generate encryption key", ex);
+                    throw new IamException("ENCRYPTION_KEY_GENERATION_FAILED", "Failed to generate encryption key", ex);
                 }
             }
         }
@@ -150,7 +149,7 @@ public class Aes256EncryptionService implements EncryptionService {
 
             return Base64.getEncoder().encodeToString(byteBuffer.array());
         } catch (Exception e) {
-            throw new SecurityException("ENCRYPTION_FAILED", "Encryption failed", e);
+            throw new IamException("ENCRYPTION_FAILED", "Encryption failed", e);
         }
     }
 
@@ -177,7 +176,7 @@ public class Aes256EncryptionService implements EncryptionService {
             byte[] decrypted = cipher.doFinal(encrypted);
             return new String(decrypted);
         } catch (Exception e) {
-            throw new SecurityException("DECRYPTION_FAILED", "Decryption failed", e);
+            throw new IamException("DECRYPTION_FAILED", "Decryption failed", e);
         }
     }
 }

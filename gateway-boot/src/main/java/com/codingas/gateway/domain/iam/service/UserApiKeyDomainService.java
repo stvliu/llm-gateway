@@ -1,6 +1,6 @@
-package com.codingas.gateway.domain.team.service;
+package com.codingas.gateway.domain.iam.service;
 
-import com.codingas.gateway.domain.team.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import org.springframework.stereotype.Service;
 
 /**

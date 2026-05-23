@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.domain.security.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
+import com.codingas.gateway.domain.iam.service.Identity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,10 +34,10 @@ class AuthServiceTest {
         void authenticate_validApiKey_returnsAuthResult() {
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
-            UserAuthResult expectedResult = UserAuthResult.newArch(1L, "user", 100L, 1L);
+            Identity expectedResult = Identity.of(1L, "user", 100L);
             when(authenticationService.authenticateUser(apiKey)).thenReturn(expectedResult);
 
-            UserAuthResult result = authService.authenticate(apiKey, clientIp);
+            Identity result = authService.authenticate(apiKey, clientIp);
 
             assertThat(result).isEqualTo(expectedResult);
             assertThat(result.userId()).isEqualTo(1L);
@@ -50,9 +50,9 @@ class AuthServiceTest {
             String apiKey = "invalid-key";
             String clientIp = "192.168.1.100";
             when(authenticationService.authenticateUser(apiKey)).thenThrow(
-                    new com.codingas.gateway.domain.security.exception.AuthenticationFailedException("无效的 API Key"));
+                    new com.codingas.gateway.domain.iam.exception.AuthenticationFailedException("无效的 API Key"));
 
-            UserAuthResult result = authService.authenticate(apiKey, clientIp);
+            Identity result = authService.authenticate(apiKey, clientIp);
 
             assertThat(result).isNull();
         }
