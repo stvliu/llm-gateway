@@ -3,8 +3,6 @@ package com.codingas.gateway.adapter.advice;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.exception.ForbiddenException;
-import com.codingas.gateway.domain.threat.exception.IpBlockedException;
-import com.codingas.gateway.domain.threat.exception.RateLimitExceededException;
 import com.codingas.gateway.domain.iam.exception.IamException;
 import com.codingas.gateway.domain.iam.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
@@ -15,15 +13,14 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 /**
- * 安全异常处理器
+ * IAM 子域异常处理器
  *
- * <p>处理所有安全相关的异常，统一返回 ApiResponse 格式。</p>
- * <p>使用 @Order(1) 确保优先于 GlobalExceptionHandler 处理安全异常。</p>
+ * <p>处理身份与访问控制相关的异常。</p>
  */
 @Slf4j
 @RestControllerAdvice
 @Order(1)
-public class SecurityExceptionHandler {
+public class IamExceptionHandler {
 
     /**
      * 处理未认证异常
@@ -59,33 +56,11 @@ public class SecurityExceptionHandler {
     }
 
     /**
-     * 处理限流超限异常
-     */
-    @ExceptionHandler(RateLimitExceededException.class)
-    public ResponseEntity<ApiResponse<Void>> handleRateLimitExceeded(RateLimitExceededException e) {
-        log.warn("Rate limit exceeded: {}", e.getMessage());
-        return ResponseEntity
-            .status(HttpStatus.TOO_MANY_REQUESTS)
-            .body(ApiResponse.error(e.getCode(), "Rate limit exceeded. Please try again later."));
-    }
-
-    /**
-     * 处理 IP 封禁异常
-     */
-    @ExceptionHandler(IpBlockedException.class)
-    public ResponseEntity<ApiResponse<Void>> handleIpBlocked(IpBlockedException e) {
-        log.warn("IP blocked: {}", e.getMessage());
-        return ResponseEntity
-            .status(HttpStatus.FORBIDDEN)
-            .body(ApiResponse.error(e.getCode(), "Your IP has been temporarily blocked."));
-    }
-
-    /**
-     * 处理通用安全异常（兜底）
+     * 处理 IAM 兜底异常
      */
     @ExceptionHandler(IamException.class)
-    public ResponseEntity<ApiResponse<Void>> handleSecurityException(IamException e) {
-        log.warn("Security error: {}", e.getMessage());
+    public ResponseEntity<ApiResponse<Void>> handleIamException(IamException e) {
+        log.warn("IAM error: {}", e.getMessage());
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
             .body(ApiResponse.error(e.getCode(), e.getMessage()));
