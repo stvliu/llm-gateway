@@ -230,7 +230,7 @@ OpenAIController
   ├─ @RequestBody OpenAIChatRequest
   ├─ OpenAIProtocolValidator.validate(request)     ← 入站校验
   ├─ ProxyApplicationService.proxy(request, authResult)
-  │   ├─ 认证 → 鍒權 → 限流
+  │   ├─ 认证 → 鉴权 → 限流
   │   ├─ 路由决策 → RoutingContext(protocol=anthropic, baseUrl, apiKey, timeout)
   │   ├─ ProtocolConverter.toAnthropic(request)
   │   ├─ ProtocolGatewayFactory.create("anthropic", baseUrl, apiKey, timeout)
