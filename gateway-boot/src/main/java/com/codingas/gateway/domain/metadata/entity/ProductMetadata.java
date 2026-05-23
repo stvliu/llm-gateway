@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.metadata.entity;
 import com.codingas.gateway.domain.metadata.enums.MetadataState;
 import com.codingas.gateway.domain.metadata.enums.ProductType;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Map;
 
@@ -22,6 +23,13 @@ public class ProductMetadata {
     private String description;
     private Map<String, String> endpoints;  // protocol -> base_url
     private Boolean isDefault;
+    private BigDecimal inputPrice;
+    private BigDecimal outputPrice;
+    private BigDecimal reasoningPrice;
+    private BigDecimal cacheReadPrice;
+    private BigDecimal cacheWritePrice;
+    private BigDecimal inputAudioPrice;
+    private BigDecimal outputAudioPrice;
     private MetadataState state;
     private MetadataSource source;
     private Instant createdAt;
@@ -62,6 +70,27 @@ public class ProductMetadata {
 
     public Boolean getIsDefault() { return isDefault; }
     public void setIsDefault(Boolean isDefault) { this.isDefault = isDefault; }
+
+    public BigDecimal getInputPrice() { return inputPrice; }
+    public void setInputPrice(BigDecimal inputPrice) { this.inputPrice = inputPrice; }
+
+    public BigDecimal getOutputPrice() { return outputPrice; }
+    public void setOutputPrice(BigDecimal outputPrice) { this.outputPrice = outputPrice; }
+
+    public BigDecimal getReasoningPrice() { return reasoningPrice; }
+    public void setReasoningPrice(BigDecimal reasoningPrice) { this.reasoningPrice = reasoningPrice; }
+
+    public BigDecimal getCacheReadPrice() { return cacheReadPrice; }
+    public void setCacheReadPrice(BigDecimal cacheReadPrice) { this.cacheReadPrice = cacheReadPrice; }
+
+    public BigDecimal getCacheWritePrice() { return cacheWritePrice; }
+    public void setCacheWritePrice(BigDecimal cacheWritePrice) { this.cacheWritePrice = cacheWritePrice; }
+
+    public BigDecimal getInputAudioPrice() { return inputAudioPrice; }
+    public void setInputAudioPrice(BigDecimal inputAudioPrice) { this.inputAudioPrice = inputAudioPrice; }
+
+    public BigDecimal getOutputAudioPrice() { return outputAudioPrice; }
+    public void setOutputAudioPrice(BigDecimal outputAudioPrice) { this.outputAudioPrice = outputAudioPrice; }
 
     public MetadataState getState() { return state; }
     public void setState(MetadataState state) { this.state = state; }

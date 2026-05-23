@@ -90,6 +90,13 @@ public class ProductMetadataGatewayImpl implements ProductMetadataGateway {
         entity.setDescription(doEntity.getDescription());
         entity.setEndpoints(parseEndpoints(doEntity.getEndpoints()));
         entity.setIsDefault(doEntity.getIsDefault());
+        entity.setInputPrice(doEntity.getInputPrice());
+        entity.setOutputPrice(doEntity.getOutputPrice());
+        entity.setReasoningPrice(doEntity.getReasoningPrice());
+        entity.setCacheReadPrice(doEntity.getCacheReadPrice());
+        entity.setCacheWritePrice(doEntity.getCacheWritePrice());
+        entity.setInputAudioPrice(doEntity.getInputAudioPrice());
+        entity.setOutputAudioPrice(doEntity.getOutputAudioPrice());
         entity.setState(parseMetadataState(doEntity.getState()));
         entity.setSource(parseMetadataSource(doEntity.getSource()));
         entity.setCreatedAt(doEntity.getCreatedAt());
@@ -108,6 +115,13 @@ public class ProductMetadataGatewayImpl implements ProductMetadataGateway {
         doEntity.setDescription(entity.getDescription());
         doEntity.setEndpoints(toJson(entity.getEndpoints()));
         doEntity.setIsDefault(entity.getIsDefault() != null ? entity.getIsDefault() : false);
+        doEntity.setInputPrice(entity.getInputPrice());
+        doEntity.setOutputPrice(entity.getOutputPrice());
+        doEntity.setReasoningPrice(entity.getReasoningPrice());
+        doEntity.setCacheReadPrice(entity.getCacheReadPrice());
+        doEntity.setCacheWritePrice(entity.getCacheWritePrice());
+        doEntity.setInputAudioPrice(entity.getInputAudioPrice());
+        doEntity.setOutputAudioPrice(entity.getOutputAudioPrice());
         doEntity.setState(entity.getState() != null ? entity.getState().name() : MetadataState.ACTIVE.name());
         doEntity.setSource(entity.getSource() != null ? entity.getSource().name() : MetadataSource.BUILTIN.name());
         doEntity.setCreatedAt(entity.getCreatedAt());
