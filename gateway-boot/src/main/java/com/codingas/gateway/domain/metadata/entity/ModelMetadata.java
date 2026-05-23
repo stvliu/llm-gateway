@@ -19,6 +19,7 @@ import java.util.Map;
 public class ModelMetadata {
 
     private Long id;
+    private Long productId;
     private String providerId;
     private String providerModelId;
     private String displayName;
@@ -61,6 +62,9 @@ public class ModelMetadata {
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
 
     public String getProviderId() { return providerId; }
     public void setProviderId(String providerId) { this.providerId = providerId; }

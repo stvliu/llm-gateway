@@ -49,6 +49,11 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     }
 
     @Override
+    public List<ModelMetadata> findByProductId(Long productId) {
+        return repository.findByProductId(productId).stream().map(this::toEntity).toList();
+    }
+
+    @Override
     public Optional<ModelMetadata> findByProviderIdAndModelId(String providerId, String providerModelId) {
         return repository.findByProviderIdAndProviderModelId(providerId, providerModelId).map(this::toEntity);
     }
@@ -104,6 +109,7 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     private ModelMetadata toEntity(ModelMetadataDo doEntity) {
         ModelMetadata entity = new ModelMetadata();
         entity.setId(doEntity.getId());
+        entity.setProductId(doEntity.getProductId());
         entity.setProviderId(doEntity.getProviderId());
         entity.setProviderModelId(doEntity.getProviderModelId());
         entity.setDisplayName(doEntity.getDisplayName());
@@ -136,6 +142,7 @@ public class ModelMetadataGatewayImpl implements ModelMetadataGateway {
     private ModelMetadataDo toDo(ModelMetadata entity) {
         ModelMetadataDo doEntity = new ModelMetadataDo();
         doEntity.setId(entity.getId());
+        doEntity.setProductId(entity.getProductId());
         doEntity.setProviderId(entity.getProviderId());
         doEntity.setProviderModelId(entity.getProviderModelId());
         doEntity.setDisplayName(entity.getDisplayName());

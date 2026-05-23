@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.product.service;
 
 import com.codingas.gateway.domain.product.entity.Product;
+import org.springframework.stereotype.Service;
 
 /**
  * 产品领域服务
@@ -8,6 +9,7 @@ import com.codingas.gateway.domain.product.entity.Product;
  * 承载产品的业务逻辑，保持实体纯洁性（实体只含 Getter/Setter）。
  * </p>
  */
+@Service
 public class ProductDomainService {
 
     /**

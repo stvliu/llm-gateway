@@ -86,8 +86,8 @@ class TeamControllerUserApiKeyTest {
     @DisplayName("创建密钥")
     void createApiKey_success() {
         try (MockedStatic<StpUtil> stpUtilMock = org.mockito.Mockito.mockStatic(StpUtil.class)) {
+            stpUtilMock.when(StpUtil::getLoginIdAsLong).thenReturn(USER_ID);
             stpUtilMock.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
-            when(httpRequest.getAttribute("userId")).thenReturn(USER_ID);
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
                     TEAM_ID, USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
             );
@@ -97,7 +97,7 @@ class TeamControllerUserApiKeyTest {
             when(userApiKeyService.create(any(UserApiKeyCreateRequest.class)))
                     .thenReturn(createResponse);
 
-            var result = controller.createApiKey(TEAM_ID, request, httpRequest);
+            var result = controller.createApiKey(TEAM_ID, request);
 
             assertThat(result.getStatusCode().value()).isEqualTo(201);
             assertThat(result.getBody()).isNotNull();

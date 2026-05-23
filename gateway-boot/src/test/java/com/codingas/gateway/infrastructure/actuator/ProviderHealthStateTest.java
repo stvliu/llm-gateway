@@ -18,7 +18,7 @@ class ProviderHealthStateTest {
         assertThat(state.status()).isEqualTo(Status.UNKNOWN);
         assertThat(state.consecutiveFailures()).isZero();
         assertThat(state.consecutiveSuccesses()).isZero();
-        assertThat(state.lastError()).isNull();
+        assertThat(state.lastErrorMessage()).isNull();
     }
 
     @Test
@@ -30,19 +30,19 @@ class ProviderHealthStateTest {
         assertThat(state.status()).isEqualTo(Status.UP);
         assertThat(state.consecutiveFailures()).isZero();
         assertThat(state.consecutiveSuccesses()).isEqualTo(1);
-        assertThat(state.lastError()).isNull();
+        assertThat(state.lastErrorMessage()).isNull();
         assertThat(state.lastRequestTime()).isNotNull();
     }
 
     @Test
-    @DisplayName("withFailure 累加连续失败但不改变状态")
+    @DisplayName("withFailure 设置 DOWN 状态并累加连续失败")
     void withFailure_recordsError() {
         var initial = ProviderHealthState.initial("openai");
         var state = initial.withFailure("connection refused");
 
-        assertThat(state.status()).isEqualTo(Status.UNKNOWN);
+        assertThat(state.status()).isEqualTo(Status.DOWN);
         assertThat(state.consecutiveFailures()).isEqualTo(1);
-        assertThat(state.lastError()).isEqualTo("connection refused");
+        assertThat(state.lastErrorMessage()).isEqualTo("connection refused");
         assertThat(state.lastRequestTime()).isNotNull();
     }
 
@@ -54,7 +54,7 @@ class ProviderHealthStateTest {
                 .withFailure("err2");
 
         assertThat(state.consecutiveFailures()).isEqualTo(2);
-        assertThat(state.lastError()).isEqualTo("err2");
+        assertThat(state.lastErrorMessage()).isEqualTo("err2");
     }
 
     @Test
@@ -83,12 +83,18 @@ class ProviderHealthStateTest {
     }
 
     @Test
-    @DisplayName("withProbe 更新检测时间")
-    void withProbe_updatesCheckTime() {
-        var initial = ProviderHealthState.initial("openai");
-        var state = initial.withProbe(Status.UP);
+    @DisplayName("isStale 无请求时间时返回 true")
+    void isStale_noRequestTime_returnsTrue() {
+        var state = ProviderHealthState.initial("openai");
 
-        assertThat(state.lastCheckTime()).isNotNull();
-        assertThat(state.status()).isEqualTo(Status.UP);
+        assertThat(state.isStale(java.time.Duration.ofSeconds(300))).isTrue();
+    }
+
+    @Test
+    @DisplayName("isStale 未过期时返回 false")
+    void isStale_notExpired_returnsFalse() {
+        var state = ProviderHealthState.initial("openai").withSuccess();
+
+        assertThat(state.isStale(java.time.Duration.ofSeconds(300))).isFalse();
     }
 }

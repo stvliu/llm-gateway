@@ -35,7 +35,7 @@ public class ProviderRegistryHealthIndicator extends AbstractHealthIndicator {
                     "status", state.status().getCode(),
                     "consecutiveFailures", state.consecutiveFailures(),
                     "consecutiveSuccesses", state.consecutiveSuccesses(),
-                    "lastError", state.lastError() != null ? state.lastError() : ""
+                    "lastError", state.lastErrorMessage() != null ? state.lastErrorMessage() : ""
             ));
             if (state.status() == Status.UP) {
                 anyUp = true;

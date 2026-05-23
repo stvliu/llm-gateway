@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.AdapterRegistry;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.LLMAdapter;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -13,51 +12,51 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Provider 健康状态追踪器
  *
- * <p>混合探测策略：启动时主动探测，运行中被动推断，超时后重新探测。</p>
+ * <p>被动推断策略：基于实际请求结果判断 Provider 健康状态。</p>
+ * <p>连续失败 ≥ failureThreshold → DOWN；DOWN 状态下连续成功 ≥ successThreshold → UP。</p>
  */
 @Slf4j
 @Component
 @EnableConfigurationProperties(ProviderHealthProperties.class)
 public class ProviderHealthTracker {
 
-    private final AdapterRegistry adapterRegistry;
+    private final ProtocolGatewayRegistry protocolGatewayRegistry;
     private final ProviderHealthProperties properties;
     private final ConcurrentHashMap<String, ProviderHealthState> states = new ConcurrentHashMap<>();
 
-    public ProviderHealthTracker(AdapterRegistry adapterRegistry, ProviderHealthProperties properties) {
-        this.adapterRegistry = adapterRegistry;
+    public ProviderHealthTracker(ProtocolGatewayRegistry protocolGatewayRegistry, ProviderHealthProperties properties) {
+        this.protocolGatewayRegistry = protocolGatewayRegistry;
         this.properties = properties;
     }
 
     /**
      * 获取指定 Provider 的健康状态
      *
-     * <p>如果状态过期，触发重新探测（同步，保证返回最新状态）。</p>
+     * <p>如果状态过期，标记为需要重新评估（由下次实际请求结果驱动）。</p>
      */
     public ProviderHealthState getStatus(String providerCode) {
         ProviderHealthState state = states.computeIfAbsent(providerCode, ProviderHealthState::initial);
 
         if (state.isStale(properties.getStaleThreshold())) {
-            triggerProbe(providerCode);
-            return states.getOrDefault(providerCode, ProviderHealthState.initial(providerCode));
+            log.debug("Provider {} 状态过期，等待下次请求结果重新评估", providerCode);
         }
 
         return state;
     }
 
     /**
-     * 获取指定 Provider 的缓存状态（不触发探测）
+     * 获取指定 Provider 的缓存状态（不触发重新评估）
      */
     public ProviderHealthState getCachedStatus(String providerCode) {
         return states.getOrDefault(providerCode, ProviderHealthState.initial(providerCode));
     }
 
     /**
-     * 获取所有 Provider 的缓存状态（不触发探测）
+     * 获取所有 Provider 的缓存状态（不触发重新评估）
      */
     public List<ProviderHealthState> getAllStatuses() {
-        return adapterRegistry.getAllAdapters().stream()
-                .map(adapter -> getCachedStatus(adapter.getProviderCode()))
+        return protocolGatewayRegistry.getAllGateways().stream()
+                .map(gateway -> getCachedStatus(gateway.getProtocolName()))
                 .toList();
     }
 
@@ -78,19 +77,21 @@ public class ProviderHealthTracker {
             if (success) {
                 ProviderHealthState updated = current.withSuccess();
                 if (current.status() == Status.DOWN) {
+                    // DOWN 状态下连续成功未达阈值，保持 DOWN
                     return updated.consecutiveSuccesses() >= properties.getSuccessThreshold()
                             ? updated
-                            : new ProviderHealthState(code, Status.DOWN, updated.lastCheckTime(),
-                            updated.lastRequestTime(), 0, updated.consecutiveSuccesses(), null);
+                            : new ProviderHealthState(code, Status.DOWN, updated.lastRequestTime(),
+                            0, updated.consecutiveSuccesses(), null);
                 }
                 return updated;
             } else {
                 ProviderHealthState updated = current.withFailure(error);
                 if (updated.consecutiveFailures() >= properties.getFailureThreshold()) {
-                    return new ProviderHealthState(code, Status.DOWN, updated.lastCheckTime(),
-                            updated.lastRequestTime(), updated.consecutiveFailures(), 0, error);
+                    return updated; // withFailure 已经设置状态为 DOWN
                 }
-                return updated;
+                // 未达阈值，保持当前状态但记录失败
+                return new ProviderHealthState(code, current.status(), updated.lastRequestTime(),
+                        updated.consecutiveFailures(), 0, error);
             }
         });
     }
@@ -101,24 +102,5 @@ public class ProviderHealthTracker {
     public boolean hasHealthyProvider() {
         return getAllStatuses().stream()
                 .anyMatch(state -> state.status() == Status.UP);
-    }
-
-    /**
-     * 触发主动探测
-     */
-    private void triggerProbe(String providerCode) {
-        adapterRegistry.getAdapter(providerCode).ifPresent(adapter -> {
-            try {
-                boolean healthy = adapter.checkConnection();
-                Status probeStatus = healthy ? Status.UP : Status.DOWN;
-                states.compute(providerCode, (code, existing) ->
-                        existing != null ? existing.withProbe(probeStatus) : ProviderHealthState.initial(code).withProbe(probeStatus));
-                log.debug("Provider {} probe result: {}", providerCode, probeStatus);
-            } catch (Exception e) {
-                log.warn("Provider {} probe failed: {}", providerCode, e.getMessage());
-                states.compute(providerCode, (code, existing) ->
-                        existing != null ? existing.withProbe(Status.DOWN) : ProviderHealthState.initial(code).withProbe(Status.DOWN));
-            }
-        });
     }
 }

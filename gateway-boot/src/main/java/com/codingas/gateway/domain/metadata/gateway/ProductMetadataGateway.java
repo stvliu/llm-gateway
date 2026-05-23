@@ -21,6 +21,11 @@ public interface ProductMetadataGateway {
     Optional<ProductMetadata> findById(Long id);
 
     /**
+     * 查询所有产品
+     */
+    List<ProductMetadata> findAll();
+
+    /**
      * 查询某供应商的所有产品
      */
     List<ProductMetadata> findByProviderId(String providerId);

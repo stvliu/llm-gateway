@@ -33,8 +33,8 @@ class ProviderRegistryHealthIndicatorTest {
     @DisplayName("所有 Provider UP 时健康状态为 UP")
     void allProvidersUp_returnsUp() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
-                new ProviderHealthState("openai", Status.UP, null, null, 0, 1, null),
-                new ProviderHealthState("anthropic", Status.UP, null, null, 0, 2, null)
+                new ProviderHealthState("openai", Status.UP, null, 0, 1, null),
+                new ProviderHealthState("anthropic", Status.UP, null, 0, 2, null)
         ));
 
         Health health = indicator.health();
@@ -48,8 +48,8 @@ class ProviderRegistryHealthIndicatorTest {
     @DisplayName("部分 Provider DOWN 时健康状态为 UP（降级但不宕机）")
     void partialDown_returnsUp() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
-                new ProviderHealthState("openai", Status.UP, null, null, 0, 1, null),
-                new ProviderHealthState("anthropic", Status.DOWN, null, null, 3, 0, "timeout")
+                new ProviderHealthState("openai", Status.UP, null, 0, 1, null),
+                new ProviderHealthState("anthropic", Status.DOWN, null, 3, 0, "timeout")
         ));
 
         Health health = indicator.health();
@@ -64,8 +64,8 @@ class ProviderRegistryHealthIndicatorTest {
     @DisplayName("所有 Provider DOWN 时健康状态为 DOWN")
     void allDown_returnsDown() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
-                new ProviderHealthState("openai", Status.DOWN, null, null, 3, 0, "timeout"),
-                new ProviderHealthState("anthropic", Status.DOWN, null, null, 5, 0, "refused")
+                new ProviderHealthState("openai", Status.DOWN, null, 3, 0, "timeout"),
+                new ProviderHealthState("anthropic", Status.DOWN, null, 5, 0, "refused")
         ));
 
         Health health = indicator.health();
@@ -87,7 +87,7 @@ class ProviderRegistryHealthIndicatorTest {
     @DisplayName("Provider UNKNOWN 状态视为非健康")
     void unknownProviders_treatedAsDown() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
-                new ProviderHealthState("openai", Status.UNKNOWN, null, null, 0, 0, null)
+                ProviderHealthState.initial("openai")
         ));
 
         Health health = indicator.health();

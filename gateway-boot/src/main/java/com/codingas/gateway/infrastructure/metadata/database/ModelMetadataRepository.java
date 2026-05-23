@@ -17,6 +17,8 @@ public interface ModelMetadataRepository extends
 
     List<ModelMetadataDo> findByProviderId(String providerId);
 
+    List<ModelMetadataDo> findByProductId(Long productId);
+
     Optional<ModelMetadataDo> findByProviderIdAndProviderModelId(String providerId, String providerModelId);
 
     boolean existsByProviderIdAndProviderModelId(String providerId, String providerModelId);

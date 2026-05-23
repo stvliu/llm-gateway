@@ -14,6 +14,9 @@ import java.time.LocalDate;
 @Table(name = "model_metadata")
 public class ModelMetadataDo extends BaseDo {
 
+    @Column(name = "product_id")
+    private Long productId;
+
     @Column(name = "provider_id", nullable = false, length = 64)
     private String providerId;
 
@@ -81,6 +84,9 @@ public class ModelMetadataDo extends BaseDo {
     private String state;
 
     // ==================== Getter / Setter ====================
+
+    public Long getProductId() { return productId; }
+    public void setProductId(Long productId) { this.productId = productId; }
 
     public String getProviderId() { return providerId; }
     public void setProviderId(String providerId) { this.providerId = providerId; }

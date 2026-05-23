@@ -191,8 +191,6 @@ management:
 # 网关配置
 # ==============================================
 gateway:
-  llm:
-    timeout-seconds: 30
   actuator:
     health:
       public-access: true

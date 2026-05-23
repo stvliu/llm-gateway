@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.team.service;
 
 import com.codingas.gateway.domain.team.entity.UserApiKey;
+import org.springframework.stereotype.Service;
 
 /**
  * 用户 API Key 领域服务
@@ -8,6 +9,7 @@ import com.codingas.gateway.domain.team.entity.UserApiKey;
  * 承载用户 API Key 的业务逻辑，保持实体纯洁性（实体只含 Getter/Setter）。
  * </p>
  */
+@Service
 public class UserApiKeyDomainService {
 
     /**

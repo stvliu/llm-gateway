@@ -2,6 +2,7 @@
   "title": "Metadata Management",
   "tabs": {
     "providers": "Provider Metadata",
+    "products": "Product Metadata",
     "models": "Model Metadata"
   },
   "add": "Add Metadata",

@@ -328,6 +328,7 @@ public class MetadataSyncService {
             MetadataSource.BUILTIN
         );
         applyModelFields(metadata, data);
+        resolveProductId(metadata, data);
         metadata.setCreatedAt(Instant.now());
         metadata.setUpdatedAt(Instant.now());
         return metadata;
@@ -349,6 +350,18 @@ public class MetadataSyncService {
         }
         if (data.get("capabilities") != null) {
             metadata.setCapabilities((Map<String, Boolean>) data.get("capabilities"));
+        }
+        resolveProductId(metadata, data);
+    }
+
+    /**
+     * 根据模型数据中的 product_name 解析并设置 productId
+     */
+    private void resolveProductId(ModelMetadata metadata, Map<String, Object> data) {
+        String productName = (String) data.get("product_name");
+        if (productName != null && metadata.getProductId() == null) {
+            productMetadataGateway.findByProviderIdAndProductName(metadata.getProviderId(), productName)
+                .ifPresent(product -> metadata.setProductId(product.getId()));
         }
     }
 

@@ -56,6 +56,15 @@ public class ModelMetadataService {
     }
 
     /**
+     * 查询某产品的所有模型
+     */
+    public List<ModelMetadataResponse> listByProductId(Long productId) {
+        return modelMetadataGateway.findByProductId(productId).stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    /**
      * 创建模型元数据
      */
     @Transactional

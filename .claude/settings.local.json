@@ -125,7 +125,9 @@
       "PowerShell(claude plugins *)",
       "PowerShell(Get-Command *)",
       "Bash(ssh-keyscan -t rsa gitee.com)",
-      "Bash(printenv GITEE_ACCESS_TOKEN)"
+      "Bash(printenv GITEE_ACCESS_TOKEN)",
+      "Bash(tasklist *)",
+      "Bash(taskkill *)"
     ]
   },
   "outputStyle": "default"

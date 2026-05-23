@@ -61,6 +61,15 @@ public class ModelMetadataController {
     }
 
     /**
+     * 查询某产品的所有模型
+     */
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<List<ModelMetadataResponse>> listByProductId(
+            @PathVariable Long productId) {
+        return ResponseEntity.ok(modelMetadataService.listByProductId(productId));
+    }
+
+    /**
      * 创建模型元数据
      */
     @PostMapping

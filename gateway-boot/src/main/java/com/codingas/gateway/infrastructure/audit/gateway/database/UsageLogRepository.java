@@ -26,16 +26,16 @@ public interface UsageLogRepository extends JpaRepository<UsageLogDo, Long> {
      * @return 聚合结果数组 [apiKeyId, totalCalls, totalInputTokens, totalOutputTokens, totalTokens]
      */
     @Query("""
-        SELECT ul.gatewayApiKey.id AS apiKeyId,
+        SELECT ul.userApiKeyId AS apiKeyId,
                COUNT(ul) AS totalCalls,
                COALESCE(SUM(ul.inputTokens), 0) AS totalInputTokens,
                COALESCE(SUM(ul.outputTokens), 0) AS totalOutputTokens,
                COALESCE(SUM(ul.totalTokens), 0) AS totalTokens
         FROM UsageLogDo ul
-        WHERE ul.gatewayApiKey.id IN :apiKeyIds
+        WHERE ul.userApiKeyId IN :apiKeyIds
           AND ul.createdAt >= :startDate
           AND ul.createdAt < :endDate
-        GROUP BY ul.gatewayApiKey.id
+        GROUP BY ul.userApiKeyId
     """)
     List<Object[]> aggregateByApiKeyIds(
         @Param("apiKeyIds") List<Long> apiKeyIds,
@@ -57,7 +57,7 @@ public interface UsageLogRepository extends JpaRepository<UsageLogDo, Long> {
                COALESCE(SUM(ul.outputTokens), 0) AS totalOutputTokens,
                COALESCE(SUM(ul.totalTokens), 0) AS totalTokens
         FROM UsageLogDo ul
-        WHERE ul.gatewayApiKey.id = :apiKeyId
+        WHERE ul.userApiKeyId = :apiKeyId
           AND ul.createdAt >= :startDate
           AND ul.createdAt < :endDate
     """)

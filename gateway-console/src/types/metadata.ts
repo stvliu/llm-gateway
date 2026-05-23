@@ -19,8 +19,23 @@ export interface ProviderMetadata {
   modelCount: number;
 }
 
+export interface ProductMetadata {
+  id: number;
+  providerId: string;
+  productName: string;
+  productType: string;
+  description: string;
+  endpoints: Record<string, string>;
+  isDefault: boolean;
+  state: string;
+  source: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ModelMetadata {
   id: number;
+  productId?: number;
   providerId: string;
   providerModelId: string;
   displayName: string;

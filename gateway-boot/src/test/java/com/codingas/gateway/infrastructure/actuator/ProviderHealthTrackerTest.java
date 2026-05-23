@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.LLMAdapter;
-import com.codingas.gateway.infrastructure.proxy.gateway.rpc.AdapterRegistry;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,13 +22,13 @@ import static org.mockito.Mockito.*;
 class ProviderHealthTrackerTest {
 
     @Mock
-    private AdapterRegistry adapterRegistry;
+    private ProtocolGatewayRegistry protocolGatewayRegistry;
 
     @Mock
-    private LLMAdapter openaiAdapter;
+    private ProtocolGateway openaiGateway;
 
     @Mock
-    private LLMAdapter anthropicAdapter;
+    private ProtocolGateway anthropicGateway;
 
     private ProviderHealthProperties properties;
     private ProviderHealthTracker tracker;
@@ -41,16 +41,14 @@ class ProviderHealthTrackerTest {
         properties.setStaleThreshold(Duration.ofSeconds(300));
         properties.setProbeTimeout(Duration.ofSeconds(10));
 
-        lenient().when(openaiAdapter.getProviderCode()).thenReturn("openai");
-        lenient().when(openaiAdapter.checkConnection()).thenReturn(true);
-        lenient().when(anthropicAdapter.getProviderCode()).thenReturn("anthropic");
-        lenient().when(anthropicAdapter.checkConnection()).thenReturn(true);
+        lenient().when(openaiGateway.getProtocolName()).thenReturn("openai");
+        lenient().when(anthropicGateway.getProtocolName()).thenReturn("anthropic");
 
-        lenient().when(adapterRegistry.getAllAdapters()).thenReturn(List.of(openaiAdapter, anthropicAdapter));
-        lenient().when(adapterRegistry.getAdapter("openai")).thenReturn(Optional.of(openaiAdapter));
-        lenient().when(adapterRegistry.getAdapter("anthropic")).thenReturn(Optional.of(anthropicAdapter));
+        lenient().when(protocolGatewayRegistry.getAllGateways()).thenReturn(List.of(openaiGateway, anthropicGateway));
+        lenient().when(protocolGatewayRegistry.getGateway("openai")).thenReturn(Optional.of(openaiGateway));
+        lenient().when(protocolGatewayRegistry.getGateway("anthropic")).thenReturn(Optional.of(anthropicGateway));
 
-        tracker = new ProviderHealthTracker(adapterRegistry, properties);
+        tracker = new ProviderHealthTracker(protocolGatewayRegistry, properties);
     }
 
     @Test
@@ -61,11 +59,10 @@ class ProviderHealthTrackerTest {
     }
 
     @Test
-    @DisplayName("getStatus 触发探测后返回 UP")
-    void getStatus_triggersProbe_returnsUp() {
+    @DisplayName("getStatus 返回当前状态（被动推断模式）")
+    void getStatus_returnsCurrentState() {
         var status = tracker.getStatus("openai");
-        assertThat(status.status()).isEqualTo(Status.UP);
-        verify(openaiAdapter).checkConnection();
+        assertThat(status.status()).isEqualTo(Status.UNKNOWN);
     }
 
     @Test
