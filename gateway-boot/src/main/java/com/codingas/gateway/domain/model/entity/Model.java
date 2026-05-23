@@ -6,8 +6,6 @@ import com.codingas.gateway.domain.model.enums.ModelState;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
-import java.math.BigDecimal;
-import java.time.Instant;
 import java.util.Map;
 
 /**
@@ -15,6 +13,7 @@ import java.util.Map;
  *
  * <p>表示具体的 AI 模型，是调用的最小单位。</p>
  * <p>关联 Provider 通过 providerId 引用，不持有 Provider 对象。</p>
+ * <p>定价由产品（Product）负责，模型仅持有属性信息。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -31,10 +30,6 @@ public class Model extends BaseEntity {
     private String displayName;
 
     private Integer contextWindow;
-
-    private BigDecimal inputPrice;
-
-    private BigDecimal outputPrice;
 
     private Map<String, Boolean> capabilities;
 

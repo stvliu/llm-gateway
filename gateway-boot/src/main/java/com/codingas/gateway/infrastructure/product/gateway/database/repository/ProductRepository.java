@@ -3,7 +3,6 @@ package com.codingas.gateway.infrastructure.product.gateway.database.repository;
 import com.codingas.gateway.infrastructure.product.gateway.database.dataobject.ProductDo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -20,9 +19,6 @@ public interface ProductRepository extends JpaRepository<ProductDo, Long> {
 
     @Query("SELECT p FROM ProductDo p WHERE p.state = 'active'")
     List<ProductDo> findAllActive();
-
-    @Query(value = "SELECT p.* FROM products p WHERE p.models LIKE CONCAT('%', :modelName, '%') AND p.state = 'active'", nativeQuery = true)
-    List<ProductDo> findByModel(@Param("modelName") String modelName);
 
     boolean existsByProviderIdAndName(Long providerId, String name);
 }

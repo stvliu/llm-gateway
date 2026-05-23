@@ -5,8 +5,8 @@ import lombok.Data;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,12 +33,29 @@ public class ProductDo {
     private String productType;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "models", columnDefinition = "text")
-    private List<String> models;
-
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "endpoints", columnDefinition = "text")
     private Map<String, String> endpoints;
+
+    @Column(name = "input_price", precision = 12, scale = 6)
+    private BigDecimal inputPrice;
+
+    @Column(name = "output_price", precision = 12, scale = 6)
+    private BigDecimal outputPrice;
+
+    @Column(name = "reasoning_price", precision = 12, scale = 6)
+    private BigDecimal reasoningPrice;
+
+    @Column(name = "cache_read_price", precision = 12, scale = 6)
+    private BigDecimal cacheReadPrice;
+
+    @Column(name = "cache_write_price", precision = 12, scale = 6)
+    private BigDecimal cacheWritePrice;
+
+    @Column(name = "input_audio_price", precision = 12, scale = 6)
+    private BigDecimal inputAudioPrice;
+
+    @Column(name = "output_audio_price", precision = 12, scale = 6)
+    private BigDecimal outputAudioPrice;
 
     @Column(name = "quota_limit")
     private Long quotaLimit;
