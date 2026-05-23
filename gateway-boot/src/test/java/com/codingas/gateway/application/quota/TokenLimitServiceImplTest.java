@@ -11,7 +11,7 @@ import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.iam.entity.User;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.quota.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

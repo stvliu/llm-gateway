@@ -1,7 +1,5 @@
 package com.codingas.gateway.domain.threat.exception;
 
-import com.codingas.gateway.domain.threat.exception.ThreatException;
-
 /**
  * 限流超限异常
  *

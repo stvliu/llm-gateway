@@ -13,7 +13,7 @@ import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
 import com.codingas.gateway.domain.iam.entity.User;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.quota.gateway.TokenLimitGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

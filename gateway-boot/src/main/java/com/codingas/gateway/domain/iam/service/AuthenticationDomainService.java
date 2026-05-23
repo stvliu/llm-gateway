@@ -3,6 +3,7 @@ package com.codingas.gateway.domain.iam.service;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

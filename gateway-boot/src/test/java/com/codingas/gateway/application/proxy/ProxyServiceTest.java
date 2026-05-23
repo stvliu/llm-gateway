@@ -5,7 +5,7 @@ import com.codingas.gateway.domain.proxy.entity.RoutingContext;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

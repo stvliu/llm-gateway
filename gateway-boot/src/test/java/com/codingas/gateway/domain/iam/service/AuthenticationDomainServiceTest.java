@@ -4,6 +4,7 @@ import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

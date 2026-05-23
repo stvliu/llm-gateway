@@ -655,7 +655,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 package com.codingas.gateway.adapter.interceptor;
 
 import com.codingas.gateway.application.auth.AuthService;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -743,7 +743,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 ```java
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.domain.threat.service.RateLimitDomainService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -1003,7 +1003,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```java
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 
 /**
  * 认证应用服务接口
@@ -1021,7 +1021,7 @@ public interface AuthService {
 package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

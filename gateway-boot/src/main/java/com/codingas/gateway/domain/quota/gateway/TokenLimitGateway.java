@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.security.gateway;
+package com.codingas.gateway.domain.quota.gateway;
 
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 

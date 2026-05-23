@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 /**
  * GlobalExceptionHandler 单元测试
  *
- * <p>注意：SecurityException 由 SecurityExceptionHandler 处理，不在本测试范围内。</p>
+ * <p>注意：IamException/ThreatException 由各自的 ExceptionHandler 处理，不在本测试范围内。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GlobalExceptionHandler 单元测试")

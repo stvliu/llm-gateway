@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.iam.service;
+package com.codingas.gateway.domain.iam.valueobject;
 
 /**
  * 认证后的身份上下文

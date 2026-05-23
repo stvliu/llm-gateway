@@ -1,7 +1,5 @@
 package com.codingas.gateway.domain.threat.exception;
 
-import com.codingas.gateway.domain.threat.exception.ThreatException;
-
 /**
  * IP 封禁异常
  *

@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
 import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 

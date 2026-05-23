@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -11,7 +11,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 

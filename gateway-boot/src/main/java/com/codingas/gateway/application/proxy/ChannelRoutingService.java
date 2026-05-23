@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

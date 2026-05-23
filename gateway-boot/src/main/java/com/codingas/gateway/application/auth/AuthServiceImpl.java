@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.auth;
 
 import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

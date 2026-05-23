@@ -6,7 +6,7 @@ import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.codingas.gateway.domain.proxy.protocol.*;
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

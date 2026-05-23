@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.domain.iam.service.Identity;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 
 /**
  * 认证应用服务接口
