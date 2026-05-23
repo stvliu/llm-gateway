@@ -13,6 +13,7 @@ import okhttp3.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * Anthropic Messages 协议网关实现
@@ -20,6 +21,7 @@ import java.nio.charset.StandardCharsets;
 public class AnthropicProtocolGateway implements ProtocolGateway {
 
     private static final String MESSAGES_PATH = "/v1/messages";
+    private static final String CONNECTIVITY_TEST_MODEL = "claude-3-5-haiku-20241022";
 
     private final OkHttpClient httpClient;
     private final String baseUrl;
@@ -105,7 +107,7 @@ public class AnthropicProtocolGateway implements ProtocolGateway {
     public ConnectivityTestResultVO testConnectivity() {
         try {
             AnthropicMessagesRequest testRequest = AnthropicMessagesRequest.builder()
-                    .model("claude-3-5-haiku-20241022")
+                    .model(CONNECTIVITY_TEST_MODEL)
                     .messages(java.util.List.of(
                             AnthropicMessagesRequest.Message.builder().role("user").content("hi").build()))
                     .maxTokens(1)

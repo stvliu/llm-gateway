@@ -1,15 +1,17 @@
 package com.codingas.gateway.domain.proxy.protocol;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ProtocolConverterTest {
 
-    private final ProtocolConverter converter = new ProtocolConverter();
+    private final ProtocolConverter converter = new ProtocolConverter(new ObjectMapper());
 
     @Nested
     class RequestConversion {
@@ -67,6 +69,23 @@ class ProtocolConverterTest {
         }
 
         @Test
+        void shouldConvertOpenAIToAnthropic_toolsPassedThrough() {
+            var tools = List.of(Map.<String, Object>of("type", "function", "name", "get_weather"));
+            var openai = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("weather").build()))
+                    .tools(tools)
+                    .toolChoice("auto")
+                    .build();
+
+            var anthropic = converter.toAnthropic(openai);
+
+            assertThat(anthropic.getTools()).isEqualTo(tools);
+            assertThat(anthropic.getToolChoice()).isNotNull();
+            assertThat(anthropic.getToolChoice().get("type")).isEqualTo("auto");
+        }
+
+        @Test
         void shouldConvertAnthropicToOpenAI_basicRequest() {
             var anthropic = AnthropicMessagesRequest.builder()
                     .model("claude-3-5-sonnet-20241022")
@@ -103,6 +122,23 @@ class ProtocolConverterTest {
             assertThat(openai.getMessages().get(0).getRole()).isEqualTo("system");
             assertThat(openai.getMessages().get(0).getContent()).isEqualTo("You are helpful");
             assertThat(openai.getMessages().get(1).getRole()).isEqualTo("user");
+        }
+
+        @Test
+        void shouldConvertAnthropicToOpenAI_toolsAndToolChoicePassedThrough() {
+            var tools = List.of(Map.<String, Object>of("type", "function", "name", "get_weather"));
+            var anthropic = AnthropicMessagesRequest.builder()
+                    .model("claude-3-5-sonnet-20241022")
+                    .messages(List.of(AnthropicMessagesRequest.Message.builder().role("user").content("weather").build()))
+                    .maxTokens(1024)
+                    .tools(tools)
+                    .toolChoice(Map.of("type", "auto"))
+                    .build();
+
+            var openai = converter.toOpenAI(anthropic);
+
+            assertThat(openai.getTools()).isEqualTo(tools);
+            assertThat(openai.getToolChoice()).isEqualTo("auto");
         }
     }
 
@@ -180,25 +216,27 @@ class ProtocolConverterTest {
     class StreamConversion {
 
         @Test
-        void shouldConvertOpenAIChunkToAnthropic_contentDelta() {
+        void shouldConvertOpenAIChunkToAnthropic_withEventType() {
             String openaiChunk = "{\"id\":\"chatcmpl-1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hi\"},\"finish_reason\":null}]}";
 
-            String anthropicChunk = converter.convertStreamChunk(openaiChunk, "openai", "anthropic");
+            StreamChunkResult result = converter.convertStreamChunk(openaiChunk, "openai", "anthropic");
 
-            assertThat(anthropicChunk).isNotNull();
-            assertThat(anthropicChunk).contains("content_block_delta");
-            assertThat(anthropicChunk).contains("Hi");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isEqualTo("content_block_delta");
+            assertThat(result.data()).contains("content_block_delta");
+            assertThat(result.data()).contains("Hi");
         }
 
         @Test
-        void shouldConvertAnthropicChunkToOpenAI_contentDelta() {
+        void shouldConvertAnthropicChunkToOpenAI_noEventType() {
             String anthropicChunk = "{\"type\":\"content_block_delta\",\"index\":0,\"delta\":{\"type\":\"text_delta\",\"text\":\"Hi\"}}";
 
-            String openaiChunk = converter.convertStreamChunk(anthropicChunk, "anthropic", "openai");
+            StreamChunkResult result = converter.convertStreamChunk(anthropicChunk, "anthropic", "openai");
 
-            assertThat(openaiChunk).isNotNull();
-            assertThat(openaiChunk).contains("choices");
-            assertThat(openaiChunk).contains("Hi");
+            assertThat(result).isNotNull();
+            assertThat(result.eventType()).isNull();
+            assertThat(result.data()).contains("choices");
+            assertThat(result.data()).contains("Hi");
         }
 
         @Test
@@ -209,29 +247,32 @@ class ProtocolConverterTest {
 
         @Test
         void shouldConvertStreamDone() {
-            String result = converter.convertStreamDone("openai", "anthropic");
-            assertThat(result).contains("message_delta");
+            StreamChunkResult result = converter.convertStreamDone("openai", "anthropic");
+            assertThat(result.eventType()).isEqualTo("message_delta");
+            assertThat(result.data()).contains("message_delta");
 
-            String result2 = converter.convertStreamDone("anthropic", "openai");
-            assertThat(result2).isEqualTo("[DONE]");
+            StreamChunkResult result2 = converter.convertStreamDone("anthropic", "openai");
+            assertThat(result2.eventType()).isNull();
+            assertThat(result2.data()).isEqualTo("[DONE]");
         }
 
         @Test
         void shouldPassThroughSameProtocolChunk() {
             String chunk = "{\"id\":\"chatcmpl-1\",\"choices\":[{\"delta\":{\"content\":\"Hi\"}}]}";
-            String result = converter.convertStreamChunk(chunk, "openai", "openai");
-            assertThat(result).isEqualTo(chunk);
+            StreamChunkResult result = converter.convertStreamChunk(chunk, "openai", "openai");
+            assertThat(result.eventType()).isNull();
+            assertThat(result.data()).isEqualTo(chunk);
         }
 
         @Test
         void shouldConvertAnthropicMessageDeltaToOpenAI() {
             String anthropicChunk = "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}";
 
-            String openaiChunk = converter.convertStreamChunk(anthropicChunk, "anthropic", "openai");
+            StreamChunkResult result = converter.convertStreamChunk(anthropicChunk, "anthropic", "openai");
 
-            assertThat(openaiChunk).isNotNull();
-            assertThat(openaiChunk).contains("finish_reason");
-            assertThat(openaiChunk).contains("stop");
+            assertThat(result).isNotNull();
+            assertThat(result.data()).contains("finish_reason");
+            assertThat(result.data()).contains("stop");
         }
     }
 }

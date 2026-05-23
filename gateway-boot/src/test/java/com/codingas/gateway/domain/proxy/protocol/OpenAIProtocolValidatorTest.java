@@ -66,4 +66,40 @@ class OpenAIProtocolValidatorTest {
                     assertThat(pve.getField()).isEqualTo("messages[0].role");
                 });
     }
+
+    @Test
+    void shouldRejectToolRoleWithoutToolCallId() {
+        var request = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(
+                        OpenAIChatRequest.Message.builder().role("user").content("hello").build(),
+                        OpenAIChatRequest.Message.builder().role("assistant").content(null)
+                                .toolCalls(List.of(OpenAIChatRequest.ToolCall.builder()
+                                        .id("call_1").type("function")
+                                        .function(OpenAIChatRequest.FunctionCall.builder()
+                                                .name("get_weather").arguments("{}").build())
+                                        .build()))
+                                .build(),
+                        OpenAIChatRequest.Message.builder().role("tool").content("result")
+                                .toolCallId(null).build()))
+                .build();
+        assertThatThrownBy(() -> validator.validate(request))
+                .isInstanceOf(ProtocolValidationException.class)
+                .satisfies(ex -> {
+                    var pve = (ProtocolValidationException) ex;
+                    assertThat(pve.getField()).isEqualTo("messages[2].tool_call_id");
+                });
+    }
+
+    @Test
+    void shouldPassToolRoleWithToolCallId() {
+        var request = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(
+                        OpenAIChatRequest.Message.builder().role("user").content("hello").build(),
+                        OpenAIChatRequest.Message.builder().role("tool").content("result")
+                                .toolCallId("call_1").build()))
+                .build();
+        assertThatNoException().isThrownBy(() -> validator.validate(request));
+    }
 }

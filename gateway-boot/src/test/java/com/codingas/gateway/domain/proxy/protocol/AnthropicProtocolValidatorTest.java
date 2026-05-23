@@ -74,4 +74,44 @@ class AnthropicProtocolValidatorTest {
                 .isInstanceOf(ProtocolValidationException.class)
                 .satisfies(ex -> assertThat(((ProtocolValidationException) ex).getField()).isEqualTo("messages"));
     }
+
+    @Test
+    void shouldRejectSystemRoleInMessages() {
+        var request = AnthropicMessagesRequest.builder()
+                .model("claude-3-5-sonnet-20241022")
+                .messages(List.of(
+                        AnthropicMessagesRequest.Message.builder().role("system").content("system prompt").build(),
+                        AnthropicMessagesRequest.Message.builder().role("user").content("hello").build()))
+                .maxTokens(1024)
+                .build();
+        assertThatThrownBy(() -> validator.validate(request))
+                .isInstanceOf(ProtocolValidationException.class)
+                .satisfies(ex -> assertThat(((ProtocolValidationException) ex).getField()).isEqualTo("messages[0].role"));
+    }
+
+    @Test
+    void shouldRejectFirstMessageNotUser() {
+        var request = AnthropicMessagesRequest.builder()
+                .model("claude-3-5-sonnet-20241022")
+                .messages(List.of(
+                        AnthropicMessagesRequest.Message.builder().role("assistant").content("prev").build(),
+                        AnthropicMessagesRequest.Message.builder().role("user").content("hello").build()))
+                .maxTokens(1024)
+                .build();
+        assertThatThrownBy(() -> validator.validate(request))
+                .isInstanceOf(ProtocolValidationException.class)
+                .satisfies(ex -> assertThat(((ProtocolValidationException) ex).getField()).isEqualTo("messages[0].role"));
+    }
+
+    @Test
+    void shouldPassWithTopLevelSystemField() {
+        var request = AnthropicMessagesRequest.builder()
+                .model("claude-3-5-sonnet-20241022")
+                .system("You are helpful")
+                .messages(List.of(AnthropicMessagesRequest.Message.builder()
+                        .role("user").content("hello").build()))
+                .maxTokens(1024)
+                .build();
+        assertThatNoException().isThrownBy(() -> validator.validate(request));
+    }
 }

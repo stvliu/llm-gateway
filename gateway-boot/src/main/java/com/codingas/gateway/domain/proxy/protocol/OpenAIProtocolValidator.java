@@ -34,6 +34,10 @@ public class OpenAIProtocolValidator implements ProtocolValidator<OpenAIChatRequ
                 throw new ProtocolValidationException("openai",
                         "messages[" + i + "].role", "不合法: " + msg.getRole());
             }
+            if ("tool".equals(msg.getRole()) && (msg.getToolCallId() == null || msg.getToolCallId().isBlank())) {
+                throw new ProtocolValidationException("openai",
+                        "messages[" + i + "].tool_call_id", "tool 角色消息必须提供 tool_call_id");
+            }
         }
     }
 }

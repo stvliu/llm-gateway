@@ -52,18 +52,20 @@ public class ModelExperienceService {
     private final ProductApiKeyGateway productApiKeyGateway;
     private final ModelGateway modelGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     public ModelExperienceService(ProtocolGatewayFactory protocolGatewayFactory,
                                   ProviderGateway providerGateway,
                                   ProductGateway productGateway,
                                   ProductApiKeyGateway productApiKeyGateway,
-                                  ModelGateway modelGateway) {
+                                  ModelGateway modelGateway,
+                                  ObjectMapper objectMapper) {
         this.protocolGatewayFactory = protocolGatewayFactory;
         this.providerGateway = providerGateway;
         this.productGateway = productGateway;
         this.productApiKeyGateway = productApiKeyGateway;
         this.modelGateway = modelGateway;
+        this.objectMapper = objectMapper;
     }
 
     @PreDestroy

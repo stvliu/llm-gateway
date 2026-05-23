@@ -13,6 +13,7 @@ import okhttp3.*;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 /**
  * OpenAI Chat Completions 协议网关实现
@@ -30,7 +31,10 @@ public class OpenAIProtocolGateway implements ProtocolGateway {
 
     public OpenAIProtocolGateway(OkHttpClient httpClient, String baseUrl, String apiKey,
                                   int timeoutSeconds, ObjectMapper objectMapper) {
-        this.httpClient = httpClient;
+        this.httpClient = httpClient.newBuilder()
+                .callTimeout(Duration.ofSeconds(timeoutSeconds))
+                .readTimeout(Duration.ofSeconds(timeoutSeconds))
+                .build();
         this.baseUrl = baseUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;

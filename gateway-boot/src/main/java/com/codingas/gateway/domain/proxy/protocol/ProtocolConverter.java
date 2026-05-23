@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 跨协议转换器，处理 OpenAI ↔ Anthropic 的请求/响应/流式 chunk 转换
@@ -16,7 +17,11 @@ import java.util.List;
 public class ProtocolConverter {
 
     private static final int DEFAULT_MAX_TOKENS = 1024;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+
+    public ProtocolConverter(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     // ==================== 请求转换 ====================
 
@@ -46,6 +51,8 @@ public class ProtocolConverter {
                 .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : DEFAULT_MAX_TOKENS)
                 .temperature(request.getTemperature())
                 .stopSequences(request.getStop())
+                .tools(request.getTools())
+                .toolChoice(request.getToolChoice() != null ? Map.of("type", request.getToolChoice()) : null)
                 .stream(request.isStream() ? true : null)
                 .system(system)
                 .build();
@@ -82,6 +89,8 @@ public class ProtocolConverter {
                 .maxTokens(request.getMaxTokens())
                 .temperature(request.getTemperature())
                 .stop(request.getStopSequences())
+                .tools(request.getTools())
+                .toolChoice(convertAnthropicToolChoice(request.getToolChoice()))
                 .stream(request.isStream() ? true : null)
                 .build();
     }
@@ -179,17 +188,17 @@ public class ProtocolConverter {
     /**
      * 流式 chunk 转换
      *
-     * @param rawChunk 原始 SSE data 行的 JSON 字符串
+     * @param rawChunk     原始 SSE data 行的 JSON 字符串
      * @param fromProtocol 源协议
      * @param toProtocol   目标协议
-     * @return 转换后的 JSON 字符串，null 表示无效/空 chunk
+     * @return 转换结果，null 表示无效/空 chunk
      */
-    public String convertStreamChunk(String rawChunk, String fromProtocol, String toProtocol) {
+    public StreamChunkResult convertStreamChunk(String rawChunk, String fromProtocol, String toProtocol) {
         if (rawChunk == null || rawChunk.isBlank()) {
             return null;
         }
         if (fromProtocol.equals(toProtocol)) {
-            return rawChunk;
+            return StreamChunkResult.dataOnly(rawChunk);
         }
 
         try {
@@ -199,7 +208,7 @@ public class ProtocolConverter {
             } else if (fromProtocol.equals("anthropic") && toProtocol.equals("openai")) {
                 return convertAnthropicChunkToOpenAI(node);
             }
-            return rawChunk;
+            return StreamChunkResult.dataOnly(rawChunk);
         } catch (JsonProcessingException e) {
             return null;
         }
@@ -208,20 +217,19 @@ public class ProtocolConverter {
     /**
      * 流式结束标记转换
      */
-    public String convertStreamDone(String fromProtocol, String toProtocol) {
+    public StreamChunkResult convertStreamDone(String fromProtocol, String toProtocol) {
         if (fromProtocol.equals("openai") && toProtocol.equals("anthropic")) {
-            // OpenAI [DONE] → Anthropic 最后一个 message_delta 事件
-            return "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}";
+            return StreamChunkResult.of("message_delta",
+                    "{\"type\":\"message_delta\",\"delta\":{\"stop_reason\":\"end_turn\"}}");
         } else if (fromProtocol.equals("anthropic") && toProtocol.equals("openai")) {
-            // Anthropic → OpenAI [DONE]
-            return "[DONE]";
+            return StreamChunkResult.dataOnly("[DONE]");
         }
         return null;
     }
 
     // ==================== 私有方法 ====================
 
-    private String convertOpenAIChunkToAnthropic(JsonNode node) {
+    private StreamChunkResult convertOpenAIChunkToAnthropic(JsonNode node) {
         JsonNode choices = node.path("choices");
         if (choices.isEmpty()) return null;
 
@@ -237,10 +245,10 @@ public class ProtocolConverter {
         deltaNode.set("text", content);
         result.set("delta", deltaNode);
 
-        return result.toString();
+        return StreamChunkResult.of("content_block_delta", result.toString());
     }
 
-    private String convertAnthropicChunkToOpenAI(JsonNode node) {
+    private StreamChunkResult convertAnthropicChunkToOpenAI(JsonNode node) {
         String type = node.path("type").asText("");
 
         if ("content_block_delta".equals(type)) {
@@ -259,7 +267,7 @@ public class ProtocolConverter {
             choiceNode.putNull("finish_reason");
             result.putArray("choices").add(choiceNode);
 
-            return result.toString();
+            return StreamChunkResult.dataOnly(result.toString());
         }
 
         if ("message_delta".equals(type)) {
@@ -275,7 +283,7 @@ public class ProtocolConverter {
             choiceNode.put("finish_reason", finishReason);
             result.putArray("choices").add(choiceNode);
 
-            return result.toString();
+            return StreamChunkResult.dataOnly(result.toString());
         }
 
         return null;
@@ -305,5 +313,14 @@ public class ProtocolConverter {
             case "tool_use" -> "tool_calls";
             default -> stopReason;
         };
+    }
+
+    /**
+     * Anthropic tool_choice (Map) → OpenAI tool_choice (String)
+     */
+    private String convertAnthropicToolChoice(Map<String, Object> toolChoice) {
+        if (toolChoice == null) return null;
+        Object type = toolChoice.get("type");
+        return type != null ? type.toString() : null;
     }
 }
