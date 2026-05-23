@@ -1,9 +1,9 @@
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.threat.gateway;
 
 import com.codingas.gateway.domain.threat.entity.IpBlocklist;
 import com.codingas.gateway.domain.threat.gateway.IpBlockGateway;
-import com.codingas.gateway.infrastructure.alert.gateway.database.IpBlocklistRepository;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.IpBlocklistDo;
+import com.codingas.gateway.infrastructure.threat.gateway.database.repository.IpBlocklistRepository;
+import com.codingas.gateway.infrastructure.threat.gateway.database.dataobject.IpBlocklistDo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

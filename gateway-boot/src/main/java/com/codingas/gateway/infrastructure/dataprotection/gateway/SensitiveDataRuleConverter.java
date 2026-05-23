@@ -1,7 +1,7 @@
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.dataprotection.gateway;
 
 import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.SensitiveDataRuleDo;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.dataobject.SensitiveDataRuleDo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

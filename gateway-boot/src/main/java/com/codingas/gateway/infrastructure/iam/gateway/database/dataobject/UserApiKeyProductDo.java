@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.team.gateway.database.dataobject;
+package com.codingas.gateway.infrastructure.iam.gateway.database.dataobject;
 
 import jakarta.persistence.*;
 

@@ -1,9 +1,9 @@
-package com.codingas.gateway.infrastructure.security;
+package com.codingas.gateway.infrastructure.iam.gateway;
 
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
-import com.codingas.gateway.infrastructure.security.database.UserRepository;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

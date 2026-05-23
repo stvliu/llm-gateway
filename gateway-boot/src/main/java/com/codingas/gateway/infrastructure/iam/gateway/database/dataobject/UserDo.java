@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security.database.dataobject;
+package com.codingas.gateway.infrastructure.iam.gateway.database.dataobject;
 
 import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.infrastructure.common.BaseDo;

@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security.encryption;
+package com.codingas.gateway.infrastructure.iam.gateway.encryption;
 
 import com.codingas.gateway.domain.iam.exception.IamException;
 import jakarta.annotation.PostConstruct;

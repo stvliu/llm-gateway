@@ -1,6 +1,6 @@
-package com.codingas.gateway.infrastructure.team.gateway.database.repository;
+package com.codingas.gateway.infrastructure.iam.gateway.database.repository;
 
-import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserApiKeyDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

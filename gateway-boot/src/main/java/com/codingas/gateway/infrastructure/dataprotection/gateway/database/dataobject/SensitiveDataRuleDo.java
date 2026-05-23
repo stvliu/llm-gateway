@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.alert.gateway.database.dataobject;
+package com.codingas.gateway.infrastructure.dataprotection.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.*;

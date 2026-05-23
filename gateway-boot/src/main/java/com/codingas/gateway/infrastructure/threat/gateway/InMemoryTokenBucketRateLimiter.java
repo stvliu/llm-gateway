@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security;
+package com.codingas.gateway.infrastructure.threat.gateway;
 
 import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
 import com.codingas.gateway.domain.threat.service.TokenBucketStatus;

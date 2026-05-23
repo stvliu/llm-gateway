@@ -1,7 +1,7 @@
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.threat.gateway;
 
 import com.codingas.gateway.domain.threat.entity.IpBlocklist;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.IpBlocklistDo;
+import com.codingas.gateway.infrastructure.threat.gateway.database.dataobject.IpBlocklistDo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

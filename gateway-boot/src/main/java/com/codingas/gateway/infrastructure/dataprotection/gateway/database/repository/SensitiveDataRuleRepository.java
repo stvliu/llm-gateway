@@ -1,6 +1,6 @@
-package com.codingas.gateway.infrastructure.alert.gateway.database;
+package com.codingas.gateway.infrastructure.dataprotection.gateway.database.repository;
 
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.SensitiveDataRuleDo;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.dataobject.SensitiveDataRuleDo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

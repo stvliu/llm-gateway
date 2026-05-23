@@ -3,7 +3,7 @@ package com.codingas.gateway.application.stats;
 import com.codingas.gateway.application.stats.dto.StatsResponse;
 import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
 import com.codingas.gateway.infrastructure.model.gateway.database.ProviderRepository;
-import com.codingas.gateway.infrastructure.security.database.UserRepository;
+import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

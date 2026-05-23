@@ -1,6 +1,6 @@
-package com.codingas.gateway.infrastructure.security.database;
+package com.codingas.gateway.infrastructure.iam.gateway.database.repository;
 
-import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserDo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security.encryption;
+package com.codingas.gateway.infrastructure.iam.gateway.encryption;
 
 /**
  * 加密服务接口

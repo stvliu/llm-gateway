@@ -1,4 +1,4 @@
-package com.codingas.gateway.infrastructure.security;
+package com.codingas.gateway.infrastructure.dataprotection;
 
 import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
 import com.codingas.gateway.domain.dataprotection.gateway.SensitiveDataRuleGateway;

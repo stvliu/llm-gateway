@@ -1,13 +1,13 @@
-package com.codingas.gateway.infrastructure.team.gateway;
+package com.codingas.gateway.infrastructure.iam.gateway;
 
 import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
-import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserApiKeyDo;
-import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserApiKeyProductDo;
-import com.codingas.gateway.infrastructure.team.gateway.database.repository.UserApiKeyProductRepository;
-import com.codingas.gateway.infrastructure.team.gateway.database.repository.UserApiKeyRepository;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyProductDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyProductRepository;
+import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

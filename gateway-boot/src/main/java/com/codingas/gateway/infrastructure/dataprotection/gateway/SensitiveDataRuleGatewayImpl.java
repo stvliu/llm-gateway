@@ -1,9 +1,9 @@
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.dataprotection.gateway;
 
 import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
 import com.codingas.gateway.domain.dataprotection.gateway.SensitiveDataRuleGateway;
-import com.codingas.gateway.infrastructure.alert.gateway.database.SensitiveDataRuleRepository;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.SensitiveDataRuleDo;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.repository.SensitiveDataRuleRepository;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.dataobject.SensitiveDataRuleDo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;

@@ -1,6 +1,6 @@
-package com.codingas.gateway.infrastructure.alert.gateway.database;
+package com.codingas.gateway.infrastructure.threat.gateway.database.repository;
 
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.IpBlocklistDo;
+import com.codingas.gateway.infrastructure.threat.gateway.database.dataobject.IpBlocklistDo;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
