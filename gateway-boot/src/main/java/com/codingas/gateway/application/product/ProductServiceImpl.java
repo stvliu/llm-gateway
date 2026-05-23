@@ -36,8 +36,14 @@ public class ProductServiceImpl implements ProductService {
         product.setProviderId(request.getProviderId());
         product.setName(request.getName());
         product.setProductType(ProductType.fromCode(request.getProductType()));
-        product.setModels(request.getModels());
         product.setEndpoints(request.getEndpoints());
+        product.setInputPrice(request.getInputPrice());
+        product.setOutputPrice(request.getOutputPrice());
+        product.setReasoningPrice(request.getReasoningPrice());
+        product.setCacheReadPrice(request.getCacheReadPrice());
+        product.setCacheWritePrice(request.getCacheWritePrice());
+        product.setInputAudioPrice(request.getInputAudioPrice());
+        product.setOutputAudioPrice(request.getOutputAudioPrice());
         product.setQuotaLimit(request.getQuotaLimit());
 
         providerGateway.findById(request.getProviderId())
@@ -64,8 +70,14 @@ public class ProductServiceImpl implements ProductService {
         product.setProviderId(request.getProviderId());
         product.setName(request.getName());
         product.setProductType(ProductType.fromCode(request.getProductType()));
-        product.setModels(request.getModels());
         product.setEndpoints(request.getEndpoints());
+        product.setInputPrice(request.getInputPrice());
+        product.setOutputPrice(request.getOutputPrice());
+        product.setReasoningPrice(request.getReasoningPrice());
+        product.setCacheReadPrice(request.getCacheReadPrice());
+        product.setCacheWritePrice(request.getCacheWritePrice());
+        product.setInputAudioPrice(request.getInputAudioPrice());
+        product.setOutputAudioPrice(request.getOutputAudioPrice());
         product.setQuotaLimit(request.getQuotaLimit());
 
         Product saved = productGateway.save(product);
@@ -109,8 +121,14 @@ public class ProductServiceImpl implements ProductService {
         response.setProviderName(product.getProviderName());
         response.setName(product.getName());
         response.setProductType(product.getProductType().getCode());
-        response.setModels(product.getModels());
         response.setEndpoints(product.getEndpoints());
+        response.setInputPrice(product.getInputPrice());
+        response.setOutputPrice(product.getOutputPrice());
+        response.setReasoningPrice(product.getReasoningPrice());
+        response.setCacheReadPrice(product.getCacheReadPrice());
+        response.setCacheWritePrice(product.getCacheWritePrice());
+        response.setInputAudioPrice(product.getInputAudioPrice());
+        response.setOutputAudioPrice(product.getOutputAudioPrice());
         response.setQuotaLimit(product.getQuotaLimit());
         response.setState(product.getState().getCode());
         return response;

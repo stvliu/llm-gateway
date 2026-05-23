@@ -47,8 +47,6 @@ public class ModelServiceImpl implements ModelService {
         model.setProviderModelId(request.getProviderModelId());
         model.setDisplayName(request.getDisplayName());
         model.setContextWindow(request.getContextWindow());
-        model.setInputPrice(request.getInputPrice());
-        model.setOutputPrice(request.getOutputPrice());
         model.setCapabilities(request.getCapabilities());
         model.setState(ModelState.ACTIVE);
         // 路由字段
@@ -130,12 +128,6 @@ public class ModelServiceImpl implements ModelService {
         if (request.getContextWindow() != null) {
             model.setContextWindow(request.getContextWindow());
         }
-        if (request.getInputPrice() != null) {
-            model.setInputPrice(request.getInputPrice());
-        }
-        if (request.getOutputPrice() != null) {
-            model.setOutputPrice(request.getOutputPrice());
-        }
         if (request.getCapabilities() != null) {
             model.setCapabilities(request.getCapabilities());
         }
@@ -186,8 +178,6 @@ public class ModelServiceImpl implements ModelService {
         response.setProviderModelId(model.getProviderModelId());
         response.setDisplayName(model.getDisplayName());
         response.setContextWindow(model.getContextWindow());
-        response.setInputPrice(model.getInputPrice());
-        response.setOutputPrice(model.getOutputPrice());
         response.setCapabilities(model.getCapabilities());
         response.setState(model.getState());
         // 路由字段

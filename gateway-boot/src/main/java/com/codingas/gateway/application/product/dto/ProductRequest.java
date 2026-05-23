@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-import java.util.List;
+import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -22,9 +22,21 @@ public class ProductRequest {
     @NotBlank(message = "产品类型不能为空")
     private String productType;
 
-    private List<String> models;
-
     private Map<String, String> endpoints;
+
+    private BigDecimal inputPrice;
+
+    private BigDecimal outputPrice;
+
+    private BigDecimal reasoningPrice;
+
+    private BigDecimal cacheReadPrice;
+
+    private BigDecimal cacheWritePrice;
+
+    private BigDecimal inputAudioPrice;
+
+    private BigDecimal outputAudioPrice;
 
     private Long quotaLimit;
 }

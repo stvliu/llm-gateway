@@ -2,8 +2,8 @@ package com.codingas.gateway.application.product.dto;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -22,9 +22,21 @@ public class ProductResponse {
 
     private String productType;
 
-    private List<String> models;
-
     private Map<String, String> endpoints;
+
+    private BigDecimal inputPrice;
+
+    private BigDecimal outputPrice;
+
+    private BigDecimal reasoningPrice;
+
+    private BigDecimal cacheReadPrice;
+
+    private BigDecimal cacheWritePrice;
+
+    private BigDecimal inputAudioPrice;
+
+    private BigDecimal outputAudioPrice;
 
     private Long quotaLimit;
 
