@@ -29,6 +29,7 @@ public class BuiltinMetadataLoader {
     private static final String PROVIDERS_LOCATION = "classpath*:metadata/providers/*.json";
     private static final String PRODUCTS_LOCATION = "classpath*:metadata/products/*.json";
     private static final String MODELS_LOCATION = "classpath*:metadata/models/*.json";
+    private static final String PRODUCT_MODELS_LOCATION = "classpath*:metadata/product-models/*.json";
 
     private final ResourceLoader resourceLoader;
 
@@ -93,12 +94,10 @@ public class BuiltinMetadataLoader {
 
             for (Resource resource : resources) {
                 try {
-                    // 模型元数据 JSON 是数组格式
                     List<Map<String, Object>> models = JsonUtils.fromJson(
                         resource.getInputStream(),
                         new TypeReference<List<Map<String, Object>>>() {}
                     );
-                    // 从文件名推断 provider_id
                     String filename = resource.getFilename();
                     String providerId = filename != null ? filename.replace(".json", "") : null;
                     if (providerId != null) {
@@ -115,6 +114,43 @@ public class BuiltinMetadataLoader {
             log.warn("Failed to resolve model metadata resources from classpath", e);
         }
         return allModels;
+    }
+
+    /**
+     * 加载所有内置产品-模型关联元数据
+     */
+    @SuppressWarnings("unchecked")
+    public List<Map<String, Object>> loadProductModelMetadata() {
+        List<Map<String, Object>> allAssociations = new ArrayList<>();
+        try {
+            PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver(resourceLoader);
+            Resource[] resources = resolver.getResources(PRODUCT_MODELS_LOCATION);
+            log.info("Found {} builtin product-model metadata files", resources.length);
+
+            for (Resource resource : resources) {
+                try {
+                    List<Map<String, Object>> associations = JsonUtils.fromJson(
+                        resource.getInputStream(),
+                        new TypeReference<List<Map<String, Object>>>() {}
+                    );
+                    String filename = resource.getFilename();
+                    String providerId = filename != null ? filename.replace(".json", "") : null;
+                    if (providerId != null) {
+                        for (Map<String, Object> assoc : associations) {
+                            if (!assoc.containsKey("provider_id")) {
+                                assoc.put("provider_id", providerId);
+                            }
+                        }
+                    }
+                    allAssociations.addAll(associations);
+                } catch (Exception e) {
+                    log.error("Failed to load product-model metadata from: {}", resource.getFilename(), e);
+                }
+            }
+        } catch (IOException e) {
+            log.warn("Failed to resolve product-model metadata resources from classpath", e);
+        }
+        return allAssociations;
     }
 
     /**
