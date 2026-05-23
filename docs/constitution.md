@@ -5,7 +5,7 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.3.0 |
+| 版本 | 2.4.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
 | 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
@@ -173,11 +173,22 @@ gateway-boot/                          # Maven 单一模块
     │   │   ├── gateway/
     │   │   ├── enums/
     │   │   └── exception/
-    │   ├── security/                  # 安全控制领域
+    │   ├── iam/                        # 身份与访问控制领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
+    │   │   ├── valueobject/
     │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── threat/                      # 威胁防护领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
+    │   │   └── exception/
+    │   ├── dataprotection/              # 数据保护领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
     │   │   └── exception/
     │   ├── quota/                     # 限额配额领域
     │   │   ├── entity/
@@ -201,7 +212,9 @@ gateway-boot/                          # Maven 单一模块
     │   ├── config/
     │   ├── gateway/                  # Gateway 实现
     │   │   ├── provider/             # Provider/Model 持久化
-    │   │   ├── security/            # User/ApiKey 持久化
+    │   │   ├── iam/                 # IAM 持久化（User/ApiKey）
+    │   │   ├── threat/              # 威胁防护实现（限流/IP封禁）
+    │   │   ├── dataprotection/      # 数据保护实现（脱敏）
     │   │   ├── quota/               # 限流实现
     │   │   ├── audit/               # 审计持久化
     │   │   ├── alert/               # 告警持久化
@@ -484,9 +497,14 @@ GatewayException (根异常)
 │   ├── ProviderUnavailableException
 │   ├── TokenQuotaExceededException
 │   └── ProviderResponseException
-└── SecurityException (安全级异常)
-    ├── AuthenticationException
-    └── AuthorizationException
+└── IamException (身份与访问控制异常)
+    ├── UnauthorizedException
+    ├── ForbiddenException
+    └── AuthenticationFailedException
+└── ThreatException (威胁防护异常)
+    ├── RateLimitExceededException
+    └── IpBlockedException
+└── DataProtectionException (数据保护异常)
 ```
 
 **处理原则**:
@@ -596,7 +614,7 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.3.1 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-06
+**版本**: 2.4.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-24
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
@@ -606,3 +624,4 @@ GatewayException (根异常)
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
 | v2.3.0 | 2026-05-02 | **领域命名调整**：provider 域更名为 model（模型广场）；与信息架构 v3.5、应用架构 v3.0、数据架构 v1.4 保持一致 |
 | v2.3.1 | 2026-05-06 | **Entity 与 DO 关联模式**：新增 Entity 层统一使用 ID 引用原则；明确 DO 层关联策略（主从关系可用 JPA 关联，中间表使用 ID 引用） |
+| v2.4.0 | 2026-05-24 | **安全子域拆分**：security 域拆分为 iam（身份与访问控制）、threat（威胁防护）、dataprotection（数据保护）三子域；异常分层更新 |
