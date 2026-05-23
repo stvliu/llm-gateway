@@ -127,7 +127,14 @@
       "Bash(ssh-keyscan -t rsa gitee.com)",
       "Bash(printenv GITEE_ACCESS_TOKEN)",
       "Bash(tasklist *)",
-      "Bash(taskkill *)"
+      "Bash(taskkill *)",
+      "Bash(ssh-add -l)",
+      "Bash(ssh *)",
+      "Bash(icacls *)",
+      "Bash(ssh-keygen *)",
+      "Bash(xxd \"E:/workspace/llm-gateway/gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/database/ModelMetadataDo.java\")",
+      "Bash(where python *)",
+      "Bash(where gh.exe)"
     ]
   },
   "outputStyle": "default"

@@ -3,7 +3,9 @@ package com.codingas.gateway.application.experience;
 import com.codingas.gateway.application.experience.dto.ExperienceChatEvent;
 import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
 import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
-import com.codingas.gateway.application.proxy.dto.LLMRequest;
+import com.codingas.gateway.domain.proxy.protocol.OpenAIChatRequest;
+import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
@@ -12,7 +14,7 @@ import com.codingas.gateway.domain.product.entity.ProductApiKey;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
 import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
+import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
 import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ModelExperienceService {
 
-    private final ProtocolGatewayRegistry protocolGatewayRegistry;
+    private final ProtocolGatewayFactory protocolGatewayFactory;
     private final ProviderGateway providerGateway;
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
@@ -52,12 +54,12 @@ public class ModelExperienceService {
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public ModelExperienceService(ProtocolGatewayRegistry protocolGatewayRegistry,
+    public ModelExperienceService(ProtocolGatewayFactory protocolGatewayFactory,
                                   ProviderGateway providerGateway,
                                   ProductGateway productGateway,
                                   ProductApiKeyGateway productApiKeyGateway,
                                   ModelGateway modelGateway) {
-        this.protocolGatewayRegistry = protocolGatewayRegistry;
+        this.protocolGatewayFactory = protocolGatewayFactory;
         this.providerGateway = providerGateway;
         this.productGateway = productGateway;
         this.productApiKeyGateway = productApiKeyGateway;
@@ -154,49 +156,22 @@ public class ModelExperienceService {
      * 执行流式聊天
      */
     private void doChatStream(ExperienceChatRequest request, SseEmitter emitter) throws IOException {
-        // 解析配置
         ResolvedConfig config = resolveConfig(request);
         log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
 
-        // 查找协议网关
-        ProtocolGateway protocolGateway = protocolGatewayRegistry.getGateway(config.protocolName)
-            .orElseThrow(() -> new IllegalArgumentException("不支持的协议类型: " + config.protocolName));
+        String baseUrl = config.baseUrl != null ? config.baseUrl : "";
+        ProtocolGateway protocolGateway = protocolGatewayFactory.create(config.protocolName, baseUrl, config.apiKey, 60);
 
-        // 解析 baseUrl：优先使用请求传入，否则使用协议默认
-        String baseUrl = config.baseUrl != null ? config.baseUrl : protocolGateway.getDefaultBaseUrl();
+        ProtocolRequest protocolRequest = buildProtocolRequest(config.protocolName, request);
 
-        // 转换消息格式
-        List<LLMRequest.Message> messages = new ArrayList<>();
-        for (Map<String, String> msg : request.getMessages()) {
-            messages.add(LLMRequest.Message.builder()
-                .role(msg.get("role"))
-                .content(msg.get("content"))
-                .build());
-        }
-
-        // 构建 LLM 请求
-        LLMRequest llmRequest = LLMRequest.builder()
-            .model(request.getModel())
-            .messages(messages)
-            .maxTokens(request.getMaxTokens())
-            .temperature(request.getTemperature())
-            .stream(true)
-            .build();
-
-        // Token 统计
-        final int[] promptTokens = {0};
         final int[] completionTokens = {0};
 
-        // 创建流式回调
         StreamCallback callback = new StreamCallback() {
-            private final StringBuilder contentBuilder = new StringBuilder();
-
             @Override
             public void onChunk(String chunk) {
                 try {
                     String content = extractContent(chunk);
                     if (content != null && !content.isEmpty()) {
-                        contentBuilder.append(content);
                         emitter.send(SseEmitter.event()
                             .name("CONTENT")
                             .data(new ExperienceChatEvent.ContentData(content)));
@@ -210,17 +185,11 @@ public class ModelExperienceService {
             @Override
             public void onComplete() {
                 try {
-                    promptTokens[0] = estimatePromptTokens(messages);
-
                     emitter.send(SseEmitter.event()
                         .name("USAGE")
-                        .data(new ExperienceChatEvent.UsageData(promptTokens[0], completionTokens[0])));
-
+                        .data(new ExperienceChatEvent.UsageData(0, completionTokens[0])));
                     emitter.send(SseEmitter.event().name("DONE"));
                     emitter.complete();
-
-                    log.info("Experience chat completed: promptTokens={}, completionTokens={}",
-                        promptTokens[0], completionTokens[0]);
                 } catch (Exception e) {
                     log.error("Error completing stream: {}", e.getMessage());
                 }
@@ -234,14 +203,51 @@ public class ModelExperienceService {
                         .data(new ExperienceChatEvent.ErrorData(t.getMessage())));
                     emitter.complete();
                 } catch (IOException ex) {
-                    log.warn("Failed to send error event: {}", ex.getMessage());
                     emitter.completeWithError(t);
                 }
             }
         };
 
-        // 通过协议网关调用流式聊天
-        protocolGateway.chatStream(llmRequest, baseUrl, config.apiKey, 60, callback);
+        protocolGateway.chatStream(protocolRequest, callback);
+    }
+
+    /**
+     * 根据协议类型构建协议请求 DTO
+     */
+    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatRequest request) {
+        List<Map<String, String>> rawMessages = request.getMessages();
+
+        if ("anthropic".equals(protocolName)) {
+            List<AnthropicMessagesRequest.Message> messages = rawMessages.stream()
+                .map(msg -> AnthropicMessagesRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return AnthropicMessagesRequest.builder()
+                .model(request.getModel())
+                .messages(messages)
+                .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 1024)
+                .temperature(request.getTemperature())
+                .stream(true)
+                .build();
+        } else {
+            List<OpenAIChatRequest.Message> messages = rawMessages.stream()
+                .map(msg -> OpenAIChatRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return OpenAIChatRequest.builder()
+                .model(request.getModel())
+                .messages(messages)
+                .maxTokens(request.getMaxTokens())
+                .temperature(request.getTemperature())
+                .stream(true)
+                .build();
+        }
     }
 
     /**
@@ -351,10 +357,10 @@ public class ModelExperienceService {
     /**
      * 估算输入 Token 数量
      */
-    private int estimatePromptTokens(List<LLMRequest.Message> messages) {
+    private int estimatePromptTokens(List<Map<String, String>> messages) {
         int total = 0;
-        for (LLMRequest.Message msg : messages) {
-            String content = msg.getContent();
+        for (Map<String, String> msg : messages) {
+            String content = msg.get("content");
             if (content != null) {
                 total += estimateTokens(content);
             }
