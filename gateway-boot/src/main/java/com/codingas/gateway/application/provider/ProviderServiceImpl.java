@@ -71,8 +71,6 @@ public class ProviderServiceImpl implements ProviderService {
                 model.setProviderModelId(modelRequest.getProviderModelId());
                 model.setDisplayName(modelRequest.getDisplayName());
                 model.setContextWindow(modelRequest.getContextWindow());
-                model.setInputPrice(modelRequest.getInputPrice());
-                model.setOutputPrice(modelRequest.getOutputPrice());
                 model.setCapabilities(modelRequest.getCapabilities());
                 model.setState(ModelState.ACTIVE);
                 modelGateway.save(model);

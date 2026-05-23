@@ -7,6 +7,7 @@ import com.codingas.gateway.application.metadata.dto.MetadataUpdateRequest;
 import com.codingas.gateway.application.metadata.dto.ProviderMetadataResponse;
 import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProductMetadata;
+import com.codingas.gateway.domain.metadata.entity.ProductModelMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProviderMetadata;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProductMetadataGateway;
@@ -233,43 +234,49 @@ public class ProviderMetadataService {
         }
         log.info("Created {} models for provider: providerId={}", createdModelIds.size(), savedProvider.getId());
 
-        // 7. 创建 ProductModel 关联
+        // 7. 创建 ProductModel 关联（批量方式）
         // 构建 元数据模型ID → 业务模型ID 映射
         Map<Long, Long> metadataModelIdToModelId = new HashMap<>();
-        List<ModelMetadata> modelMetadatas = modelMetadataGateway.findByProviderId(metadata.getProviderId());
+        List<ModelMetadata> allModelMetas = modelMetadataGateway.findByProviderId(metadata.getProviderId());
         List<Model> savedModels = modelGateway.findByProviderId(savedProvider.getId());
-        for (ModelMetadata mm : modelMetadatas) {
+        for (ModelMetadata mm : allModelMetas) {
             savedModels.stream()
                 .filter(m -> m.getProviderModelId().equals(mm.getProviderModelId()))
                 .findFirst()
                 .ifPresent(m -> metadataModelIdToModelId.put(mm.getId(), m.getId()));
         }
 
-        // 构建 元数据产品名称 → 业务产品ID 映射
-        Map<String, Long> productNameToProductId = new HashMap<>();
+        // 构建 元数据产品ID → 业务产品ID 映射（批量加载）
+        Map<Long, Long> metadataProductIdToProductId = new HashMap<>();
+        List<ProductMetadata> allProductMetas = productMetadataGateway.findByProviderId(metadata.getProviderId());
         List<Product> savedProducts = productGateway.findByProviderId(savedProvider.getId());
-        for (Product p : savedProducts) {
-            productNameToProductId.put(p.getName(), p.getId());
+        for (ProductMetadata pm : allProductMetas) {
+            savedProducts.stream()
+                .filter(p -> p.getName().equals(pm.getProductName()))
+                .findFirst()
+                .ifPresent(p -> metadataProductIdToProductId.put(pm.getId(), p.getId()));
         }
 
-        // 根据元数据关联创建业务关联
-        for (ModelMetadata mm : modelMetadatas) {
+        // 批量创建 ProductModel 关联
+        List<ProductModel> toCreate = new ArrayList<>();
+        for (ModelMetadata mm : allModelMetas) {
             List<ProductModelMetadata> associations = productModelMetadataGateway.findByModelId(mm.getId());
             for (ProductModelMetadata assoc : associations) {
                 Long businessModelId = metadataModelIdToModelId.get(mm.getId());
-                // 查找元数据产品对应的业务产品
-                productMetadataGateway.findById(assoc.getProductId()).ifPresent(pm -> {
-                    Long businessProductId = productNameToProductId.get(pm.getProductName());
-                    if (businessProductId != null && businessModelId != null) {
-                        if (!productModelGateway.existsByProductIdAndModelId(businessProductId, businessModelId)) {
-                            ProductModel productModel = new ProductModel();
-                            productModel.setProductId(businessProductId);
-                            productModel.setModelId(businessModelId);
-                            productModelGateway.save(productModel);
-                        }
+                Long businessProductId = metadataProductIdToProductId.get(assoc.getProductId());
+                if (businessProductId != null && businessModelId != null) {
+                    if (!productModelGateway.existsByProductIdAndModelId(businessProductId, businessModelId)) {
+                        ProductModel productModel = new ProductModel();
+                        productModel.setProductId(businessProductId);
+                        productModel.setModelId(businessModelId);
+                        toCreate.add(productModel);
                     }
-                });
+                }
             }
+        }
+        if (!toCreate.isEmpty()) {
+            productModelGateway.saveAll(toCreate);
+            log.info("Created {} ProductModel associations for provider: providerId={}", toCreate.size(), savedProvider.getId());
         }
 
         return ApplyMetadataResult.builder()

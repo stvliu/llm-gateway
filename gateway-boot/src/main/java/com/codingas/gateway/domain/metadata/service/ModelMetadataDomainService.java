@@ -6,7 +6,6 @@ import com.codingas.gateway.domain.metadata.enums.MetadataState;
 import com.codingas.gateway.domain.metadata.gateway.ModelsDevDataGateway;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,7 +62,6 @@ public class ModelMetadataDomainService {
             MetadataSource.MODELS_DEV
         );
 
-        applyPricingFields(metadata, data);
         applyContextFields(metadata, data);
         applyMetaFields(metadata, data);
 
@@ -84,7 +82,6 @@ public class ModelMetadataDomainService {
      */
     public void applyExternalData(ModelMetadata metadata, ModelsDevDataGateway.ModelData data) {
         applyIfNotNull(data.displayName(), metadata::setDisplayName);
-        applyPricingFields(metadata, data);
         applyContextFields(metadata, data);
         applyMetaFields(metadata, data);
 
@@ -94,19 +91,6 @@ public class ModelMetadataDomainService {
     }
 
     // ==================== 私有辅助方法 ====================
-
-    /**
-     * 应用定价字段
-     */
-    private void applyPricingFields(ModelMetadata metadata, ModelsDevDataGateway.ModelData data) {
-        applyIfNotNull(data.inputPrice(), metadata::setInputPrice);
-        applyIfNotNull(data.outputPrice(), metadata::setOutputPrice);
-        applyIfNotNull(data.reasoningPrice(), metadata::setReasoningPrice);
-        applyIfNotNull(data.cacheReadPrice(), metadata::setCacheReadPrice);
-        applyIfNotNull(data.cacheWritePrice(), metadata::setCacheWritePrice);
-        applyIfNotNull(data.inputAudioPrice(), metadata::setInputAudioPrice);
-        applyIfNotNull(data.outputAudioPrice(), metadata::setOutputAudioPrice);
-    }
 
     /**
      * 应用上下文字段

@@ -19,8 +19,6 @@ public interface ProductGateway {
 
     List<Product> findByProviderIdAndType(Long providerId, ProductType type);
 
-    List<Product> findByModel(String modelName);
-
     List<Product> findAllActive();
 
     void deleteById(Long id);

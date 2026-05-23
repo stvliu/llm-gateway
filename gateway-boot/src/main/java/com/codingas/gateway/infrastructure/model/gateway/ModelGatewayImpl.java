@@ -77,6 +77,13 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
+    public List<Model> findByIds(List<Long> ids) {
+        return modelRepository.findAllById(ids).stream()
+            .map(this::toEntity)
+            .collect(Collectors.toList());
+    }
+
+    @Override
     public long count() {
         return modelRepository.count();
     }

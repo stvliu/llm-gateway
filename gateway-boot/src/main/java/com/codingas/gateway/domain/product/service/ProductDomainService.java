@@ -1,15 +1,21 @@
 package com.codingas.gateway.domain.product.service;
 
+import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.entity.ProductModel;
 import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 /**
  * 产品领域服务
  * <p>
- * 承载产品的业务逻辑，保持实体纯洁性（实体只含 Getter/Setter）。
+ * 封装产品的业务规则，保持实体仅含 Getter/Setter。
  * </p>
  */
 @Service
@@ -20,56 +26,53 @@ public class ProductDomainService {
     private final ModelGateway modelGateway;
 
     /**
-     * 检查产品是否包含指定模型
-     *
-     * @param product         产品实体
-     * @param providerModelId 供应商模型ID（如 "gpt-4"）
-     * @return 是否包含
-     */
-    public boolean containsModel(Product product, String providerModelId) {
-        if (product == null || providerModelId == null) {
-            return false;
-        }
-        var associations = productModelGateway.findByProductId(product.getId());
-        for (var pm : associations) {
-            var model = modelGateway.findById(pm.getModelId());
-            if (model.isPresent() && providerModelId.equals(model.get().getProviderModelId())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * 获取指定协议的端点
-     *
-     * @param product  产品实体
-     * @param protocol 协议名称（如 "openai", "anthropic"）
-     * @return 端点 URL，不存在返回 null
-     */
-    public String getEndpoint(Product product, String protocol) {
-        if (product == null || product.getEndpoints() == null) {
-            return null;
-        }
-        return product.getEndpoints().get(protocol);
-    }
-
-    /**
-     * 获取默认端点
+     * 判断产品是否包含指定模型
      * <p>
-     * 优先返回 openai 协议端点，其次返回任意一个可用端点。
+     * 通过 ProductModel 关联表查询，避免在 Product 实体中存储模型列表。
+     * 使用批量查询避免 N+1 问题。
      * </p>
      *
-     * @param product 产品实体
-     * @return 默认端点 URL，不存在返回 null
+     * @param product        产品实体
+     * @param providerModelId 模型的 providerModelId
+     * @return 是否包含该模型
      */
-    public String getDefaultEndpoint(Product product) {
-        if (product == null || product.getEndpoints() == null || product.getEndpoints().isEmpty()) {
-            return null;
+    public boolean containsModel(Product product, String providerModelId) {
+        List<ProductModel> associations = productModelGateway.findByProductId(product.getId());
+        if (associations.isEmpty()) {
+            return false;
         }
-        if (product.getEndpoints().containsKey("openai")) {
-            return product.getEndpoints().get("openai");
+
+        List<Long> modelIds = associations.stream()
+            .map(ProductModel::getModelId)
+            .collect(Collectors.toList());
+
+        List<Model> models = modelGateway.findByIds(modelIds);
+        return models.stream()
+            .anyMatch(m -> providerModelId.equals(m.getProviderModelId()));
+    }
+
+    /**
+     * 获取产品包含的所有模型
+     */
+    public List<Model> getModels(Product product) {
+        List<ProductModel> associations = productModelGateway.findByProductId(product.getId());
+        if (associations.isEmpty()) {
+            return List.of();
         }
-        return product.getEndpoints().values().iterator().next();
+
+        List<Long> modelIds = associations.stream()
+            .map(ProductModel::getModelId)
+            .collect(Collectors.toList());
+
+        return modelGateway.findByIds(modelIds);
+    }
+
+    /**
+     * 获取产品的模型 providerModelId 集合
+     */
+    public Set<String> getModelIds(Product product) {
+        return getModels(product).stream()
+            .map(Model::getProviderModelId)
+            .collect(Collectors.toSet());
     }
 }

@@ -16,13 +16,16 @@
 
 -- 1. 创建 product_model_metadata 纯关系表
 CREATE TABLE product_model_metadata (
-    id          BIGSERIAL PRIMARY KEY,
-    product_id  BIGINT NOT NULL REFERENCES product_metadata(id) ON DELETE CASCADE,
-    model_id    BIGINT NOT NULL REFERENCES model_metadata(id) ON DELETE CASCADE,
-    created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by  BIGINT,
-    updated_at  TIMESTAMP WITH TIME ZONE,
-    updated_by  BIGINT,
+    id              BIGSERIAL PRIMARY KEY,
+    product_id      BIGINT NOT NULL REFERENCES product_metadata(id) ON DELETE CASCADE,
+    model_id        BIGINT NOT NULL REFERENCES model_metadata(id) ON DELETE CASCADE,
+    source          VARCHAR(32) NOT NULL DEFAULT 'BUILTIN',
+    source_synced_at TIMESTAMP WITH TIME ZONE,
+    state           VARCHAR(32) NOT NULL DEFAULT 'ACTIVE',
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_by      BIGINT,
+    updated_at      TIMESTAMP WITH TIME ZONE,
+    updated_by      BIGINT,
     CONSTRAINT uk_pmm_product_model UNIQUE (product_id, model_id)
 );
 
@@ -93,17 +96,29 @@ CREATE TABLE product_models (
 CREATE INDEX idx_pm_product_id ON product_models(product_id);
 CREATE INDEX idx_pm_model_id ON product_models(model_id);
 
--- 7. products 新增定价列
+-- 7. products 新增定价列（与 ProductDo 7 个定价字段对齐）
 ALTER TABLE products ADD COLUMN input_price DECIMAL(12,6);
 ALTER TABLE products ADD COLUMN output_price DECIMAL(12,6);
+ALTER TABLE products ADD COLUMN reasoning_price DECIMAL(12,6);
+ALTER TABLE products ADD COLUMN cache_read_price DECIMAL(12,6);
+ALTER TABLE products ADD COLUMN cache_write_price DECIMAL(12,6);
+ALTER TABLE products ADD COLUMN input_audio_price DECIMAL(12,6);
+ALTER TABLE products ADD COLUMN output_audio_price DECIMAL(12,6);
 
 -- 8. 从 models 迁移定价到 products
 -- 策略：每个 provider_id 对应的产品取第一个有定价模型的价格
 UPDATE products p
 SET input_price = sub.input_price,
-    output_price = sub.output_price
+    output_price = sub.output_price,
+    reasoning_price = sub.reasoning_price,
+    cache_read_price = sub.cache_read_price,
+    cache_write_price = sub.cache_write_price,
+    input_audio_price = sub.input_audio_price,
+    output_audio_price = sub.output_audio_price
 FROM (
     SELECT m.provider_id, m.input_price, m.output_price,
+           m.reasoning_price, m.cache_read_price, m.cache_write_price,
+           m.input_audio_price, m.output_audio_price,
            ROW_NUMBER() OVER (PARTITION BY m.provider_id ORDER BY m.id) AS rn
     FROM models m
     WHERE m.input_price IS NOT NULL

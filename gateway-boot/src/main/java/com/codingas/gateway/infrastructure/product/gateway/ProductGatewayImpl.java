@@ -55,13 +55,6 @@ public class ProductGatewayImpl implements ProductGateway {
     }
 
     @Override
-    public List<Product> findByModel(String modelName) {
-        return productRepository.findByModel(modelName).stream()
-            .map(this::toEntity)
-            .toList();
-    }
-
-    @Override
     public List<Product> findAllActive() {
         return productRepository.findAllActive().stream()
             .map(this::toEntity)

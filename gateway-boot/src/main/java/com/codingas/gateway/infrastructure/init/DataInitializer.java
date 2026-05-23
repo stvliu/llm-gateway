@@ -9,10 +9,12 @@ import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.entity.ProductModel;
 import com.codingas.gateway.domain.product.enums.ProductState;
 import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
 import com.codingas.gateway.domain.security.enums.UserState;
 import com.codingas.gateway.domain.security.entity.User;
 import com.codingas.gateway.domain.security.gateway.UserGateway;
@@ -59,6 +61,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProviderGateway providerGateway;
     private final ModelGateway modelGateway;
     private final ProductGateway productGateway;
+    private final ProductModelGateway productModelGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
     private final TeamGateway teamGateway;
     private final UserApiKeyGateway userApiKeyGateway;
@@ -76,6 +79,11 @@ public class DataInitializer implements CommandLineRunner {
 
             // 初始化产品
             Product product = initProduct(provider);
+
+            // 初始化产品-模型关联
+            if (provider != null && product != null) {
+                initProductModels(provider, product);
+            }
 
             // 初始化产品 API Key
             if (product != null) {
@@ -160,31 +168,20 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        createModel(provider, "doubao-seed-2-0-lite-260428", "Doubao-Seed-2.0-lite",
-                32768, new BigDecimal("0.0008"), new BigDecimal("0.002"));
-
-        createModel(provider, "doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini",
-                131072, new BigDecimal("0.005"), new BigDecimal("0.009"));
-
-        createModel(provider, "deepseek-v3-2-251201", "DeepSeek-V3.2",
-                32768, new BigDecimal("0.0003"), new BigDecimal("0.0006"));
+        createModel(provider, "doubao-seed-2-0-lite-260428", "Doubao-Seed-2.0-lite", 32768);
+        createModel(provider, "doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini", 131072);
+        createModel(provider, "deepseek-v3-2-251201", "DeepSeek-V3.2", 32768);
 
         log.info("Created {} models for provider: {}", modelGateway.count(), provider.getName());
     }
 
-    /**
-     * 创建模型
-     */
-    private void createModel(Provider provider, String providerModelId, String displayName,
-                             int contextWindow, BigDecimal inputPrice, BigDecimal outputPrice) {
+    private void createModel(Provider provider, String providerModelId, String displayName, int contextWindow) {
         Model model = new Model();
         model.setProviderId(provider.getId());
         model.setProviderName(provider.getName());
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(contextWindow);
-        model.setInputPrice(inputPrice);
-        model.setOutputPrice(outputPrice);
         model.setCapabilities(Map.of(
                 "chat", true,
                 "streaming", true,
@@ -216,17 +213,36 @@ public class DataInitializer implements CommandLineRunner {
         product.setProviderName(provider.getName());
         product.setName("豆包按量计费");
         product.setProductType(ProductType.PAY_AS_YOU_GO);
-        product.setModels(List.of(
-                "doubao-seed-2-0-lite-260428", "doubao-seed-2-0-mini-260428", "deepseek-v3-2-251201"
-        ));
         product.setEndpoints(Map.of(
                 "openai", "https://ark.cn-beijing.volces.com/api/v3"
         ));
+        product.setInputPrice(new BigDecimal("0.0008"));
+        product.setOutputPrice(new BigDecimal("0.002"));
         product.setState(ProductState.ACTIVE);
 
         Product saved = productGateway.save(product);
         log.info("Created product: {} (id={})", product.getName(), saved.getId());
         return saved;
+    }
+
+    /**
+     * 初始化产品-模型关联
+     */
+    private void initProductModels(Provider provider, Product product) {
+        List<Model> models = modelGateway.findByProviderId(provider.getId());
+        int count = 0;
+        for (Model model : models) {
+            if (!productModelGateway.existsByProductIdAndModelId(product.getId(), model.getId())) {
+                ProductModel pm = new ProductModel();
+                pm.setProductId(product.getId());
+                pm.setModelId(model.getId());
+                productModelGateway.save(pm);
+                count++;
+            }
+        }
+        if (count > 0) {
+            log.info("Created {} ProductModel associations for product: {}", count, product.getName());
+        }
     }
 
     /**

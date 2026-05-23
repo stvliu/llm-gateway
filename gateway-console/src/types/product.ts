@@ -14,9 +14,18 @@ export type ProductState = 'ACTIVE' | 'DISABLED' | 'DELETED';
 export interface Product {
   id: number;
   providerId: number;
-  productName: string;
   providerName: string;
+  name: string;
+  productType: string;
   endpoints: Record<string, string>;
+  inputPrice: number | null;
+  outputPrice: number | null;
+  reasoningPrice: number | null;
+  cacheReadPrice: number | null;
+  cacheWritePrice: number | null;
+  inputAudioPrice: number | null;
+  outputAudioPrice: number | null;
+  quotaLimit: number | null;
   state: ProductState;
   createdAt: string;
   updatedAt: string;
@@ -25,13 +34,16 @@ export interface Product {
 /** 创建产品请求 */
 export interface CreateProductRequest {
   providerId: number;
-  productName: string;
-  endpoints: Record<string, string>;
+  name: string;
+  productType?: string;
+  endpoints?: Record<string, string>;
+  inputPrice?: number | null;
+  outputPrice?: number | null;
 }
 
 /** 更新产品请求 */
 export interface UpdateProductRequest {
-  productName?: string;
+  name?: string;
   endpoints?: Record<string, string>;
 }
 

@@ -28,7 +28,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -50,27 +52,27 @@ class ProductRoutingServiceTest {
     @Mock
     private ProviderGateway providerGateway;
 
-    private UserApiKeyDomainService userApiKeyDomainService;
+    @Mock
     private ProductDomainService productDomainService;
+
+    private UserApiKeyDomainService userApiKeyDomainService;
     private ProductRoutingService service;
 
     @BeforeEach
     void setUp() {
         userApiKeyDomainService = new UserApiKeyDomainService();
-        productDomainService = new ProductDomainService();
         service = new ProductRoutingService(
                 userApiKeyGateway, productGateway, productApiKeyGateway, providerGateway,
                 userApiKeyDomainService, productDomainService);
     }
 
-    private Product createProduct(Long id, Long providerId, String name, ProductState state, List<String> models) {
+    private Product createProduct(Long id, Long providerId, String name, ProductState state) {
         Product product = new Product();
         product.setId(id);
         product.setProviderId(providerId);
         product.setProviderName("TestProvider");
         product.setName(name);
         product.setState(state);
-        product.setModels(models);
         product.setProductType(ProductType.PAY_AS_YOU_GO);
         product.setEndpoints(java.util.Map.of("openai", "https://api.openai.com", "anthropic", "https://api.anthropic.com"));
         return product;
@@ -111,13 +113,14 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("成功解析路由 — 使用默认 ProductApiKey")
         void resolve_success_withDefaultApiKey() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o", "gpt-4"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
 
@@ -134,13 +137,14 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("成功解析路由 — 使用 anthropic 协议")
         void resolve_success_withAnthropicProtocol() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("claude-3-opus"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("claude-3-opus"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "Anthropic");
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "claude-3-opus")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
 
@@ -157,41 +161,43 @@ class ProductRoutingServiceTest {
             when(userApiKeyGateway.findById(999L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.resolve(999L, "gpt-4o", "openai"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("UserApiKey not found");
+                .isInstanceOf(com.codingas.gateway.common.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("UserApiKey");
         }
 
         @Test
         @DisplayName("失败 — 无可用的 ProductApiKey")
         void resolve_noAvailableApiKey_throwsException() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.empty());
             when(productApiKeyGateway.findActiveByProductId(100L)).thenReturn(List.of());
 
             assertThatThrownBy(() -> service.resolve(1L, "gpt-4o", "openai"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No available ProductApiKey");
+                .isInstanceOf(com.codingas.gateway.common.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("ProductApiKey");
         }
 
         @Test
         @DisplayName("失败 — Provider 不存在")
         void resolve_providerNotFound_throwsException() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.resolve(1L, "gpt-4o", "openai"))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Provider not found");
+                .isInstanceOf(com.codingas.gateway.common.exception.ResourceNotFoundException.class)
+                .hasMessageContaining("Provider");
         }
     }
 
@@ -202,13 +208,14 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("默认 Key 可用时优先使用")
         void selectDefaultKey_whenAvailable() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "OpenAI");
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
 
@@ -221,7 +228,7 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("默认 Key 不可用时降级到活跃 Key 列表")
         void fallbackToActiveKeys_whenDefaultNotAvailable() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.INACTIVE);
             ProductApiKey activeKey = createProductApiKey(2L, 100L, 2, 50, ProductApiKeyState.ACTIVE);
@@ -229,6 +236,7 @@ class ProductRoutingServiceTest {
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(productApiKeyGateway.findActiveByProductId(100L)).thenReturn(List.of(activeKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
@@ -246,13 +254,14 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("使用请求协议对应的端点")
         void useProtocolEndpoint() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("claude-3-opus"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("claude-3-opus"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
             Provider provider = createProvider(1L, "Anthropic");
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "claude-3-opus")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
 
@@ -264,7 +273,7 @@ class ProductRoutingServiceTest {
         @Test
         @DisplayName("协议不支持时使用默认端点")
         void useDefaultEndpoint_whenProtocolNotSupported() {
-            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE, List.of("gpt-4o"));
+            Product product = createProduct(100L, 1L, "Test Product", ProductState.ACTIVE);
             product.setEndpoints(java.util.Map.of("openai", "https://api.openai.com"));
             UserApiKey userApiKey = createUserApiKey(1L, List.of(100L), 10L, List.of("gpt-4o"));
             ProductApiKey defaultKey = createProductApiKey(1L, 100L, 1, 100, ProductApiKeyState.ACTIVE);
@@ -272,6 +281,7 @@ class ProductRoutingServiceTest {
 
             when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(userApiKey));
             when(productGateway.findByIds(List.of(100L))).thenReturn(List.of(product));
+            when(productDomainService.containsModel(product, "gpt-4o")).thenReturn(true);
             when(productApiKeyGateway.findDefaultByProductId(100L)).thenReturn(Optional.of(defaultKey));
             when(providerGateway.findById(1L)).thenReturn(Optional.of(provider));
 

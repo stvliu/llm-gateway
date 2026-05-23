@@ -74,7 +74,7 @@ class TeamControllerUserApiKeyTest {
                 List.of("gpt-4o"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
         );
-        when(userApiKeyService.getDetailById(API_KEY_ID)).thenReturn(detailResponse);
+        when(userApiKeyService.getDetailByIdAndTeamId(API_KEY_ID, TEAM_ID)).thenReturn(detailResponse);
 
         UserApiKeyDetailResponse result = controller.getApiKey(TEAM_ID, API_KEY_ID);
 
