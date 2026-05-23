@@ -1,6 +1,9 @@
 package com.codingas.gateway.domain.product.service;
 
+import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.product.entity.Product;
+import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
@@ -10,20 +13,31 @@ import org.springframework.stereotype.Service;
  * </p>
  */
 @Service
+@RequiredArgsConstructor
 public class ProductDomainService {
+
+    private final ProductModelGateway productModelGateway;
+    private final ModelGateway modelGateway;
 
     /**
      * 检查产品是否包含指定模型
      *
-     * @param product   产品实体
-     * @param modelName 模型名称
+     * @param product         产品实体
+     * @param providerModelId 供应商模型ID（如 "gpt-4"）
      * @return 是否包含
      */
-    public boolean containsModel(Product product, String modelName) {
-        if (product == null || product.getModels() == null) {
+    public boolean containsModel(Product product, String providerModelId) {
+        if (product == null || providerModelId == null) {
             return false;
         }
-        return product.getModels().contains(modelName);
+        var associations = productModelGateway.findByProductId(product.getId());
+        for (var pm : associations) {
+            var model = modelGateway.findById(pm.getModelId());
+            if (model.isPresent() && providerModelId.equals(model.get().getProviderModelId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
