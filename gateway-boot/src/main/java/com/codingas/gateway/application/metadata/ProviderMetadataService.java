@@ -11,6 +11,7 @@ import com.codingas.gateway.domain.metadata.entity.ProviderMetadata;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProductMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProviderMetadataGateway;
+import com.codingas.gateway.domain.metadata.gateway.ProductModelMetadataGateway;
 import com.codingas.gateway.domain.model.entity.Model;
 import com.codingas.gateway.domain.model.entity.Provider;
 import com.codingas.gateway.domain.model.enums.ModelState;
@@ -19,11 +20,13 @@ import com.codingas.gateway.domain.model.gateway.ModelGateway;
 import com.codingas.gateway.domain.model.gateway.ProviderGateway;
 import com.codingas.gateway.domain.product.entity.Product;
 import com.codingas.gateway.domain.product.entity.ProductApiKey;
+import com.codingas.gateway.domain.product.entity.ProductModel;
 import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
 import com.codingas.gateway.domain.product.enums.ProductState;
 import com.codingas.gateway.domain.product.enums.ProductType;
 import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
 import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
 import com.codingas.gateway.domain.security.service.ApiKeyEncryptionDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +37,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 供应商元数据服务
@@ -47,10 +52,12 @@ public class ProviderMetadataService {
     private final ProviderMetadataGateway providerMetadataGateway;
     private final ProductMetadataGateway productMetadataGateway;
     private final ModelMetadataGateway modelMetadataGateway;
+    private final ProductModelMetadataGateway productModelMetadataGateway;
     private final ProviderGateway providerGateway;
     private final ProductGateway productGateway;
     private final ProductApiKeyGateway productApiKeyGateway;
     private final ModelGateway modelGateway;
+    private final ProductModelGateway productModelGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
@@ -166,6 +173,13 @@ public class ProviderMetadataService {
             product.setName(pm.getProductName());
             product.setProductType(mapProductType(pm.getProductType()));
             product.setEndpoints(pm.getEndpoints());
+            product.setInputPrice(pm.getInputPrice());
+            product.setOutputPrice(pm.getOutputPrice());
+            product.setReasoningPrice(pm.getReasoningPrice());
+            product.setCacheReadPrice(pm.getCacheReadPrice());
+            product.setCacheWritePrice(pm.getCacheWritePrice());
+            product.setInputAudioPrice(pm.getInputAudioPrice());
+            product.setOutputAudioPrice(pm.getOutputAudioPrice());
             product.setState(ProductState.ACTIVE);
             Product savedProduct = productGateway.save(product);
             log.info("Created product from metadata: id={}, name={}", savedProduct.getId(), savedProduct.getName());
@@ -211,8 +225,6 @@ public class ProviderMetadataService {
             model.setProviderModelId(mm.getProviderModelId());
             model.setDisplayName(mm.getDisplayName());
             model.setContextWindow(mm.getContextWindow());
-            model.setInputPrice(mm.getInputPrice());
-            model.setOutputPrice(mm.getOutputPrice());
             model.setCapabilities(mm.getCapabilities());
             model.setState(ModelState.ACTIVE);
             Model savedModel = modelGateway.save(model);
@@ -220,6 +232,45 @@ public class ProviderMetadataService {
             createdModelNames.add(savedModel.getDisplayName());
         }
         log.info("Created {} models for provider: providerId={}", createdModelIds.size(), savedProvider.getId());
+
+        // 7. 创建 ProductModel 关联
+        // 构建 元数据模型ID → 业务模型ID 映射
+        Map<Long, Long> metadataModelIdToModelId = new HashMap<>();
+        List<ModelMetadata> modelMetadatas = modelMetadataGateway.findByProviderId(metadata.getProviderId());
+        List<Model> savedModels = modelGateway.findByProviderId(savedProvider.getId());
+        for (ModelMetadata mm : modelMetadatas) {
+            savedModels.stream()
+                .filter(m -> m.getProviderModelId().equals(mm.getProviderModelId()))
+                .findFirst()
+                .ifPresent(m -> metadataModelIdToModelId.put(mm.getId(), m.getId()));
+        }
+
+        // 构建 元数据产品名称 → 业务产品ID 映射
+        Map<String, Long> productNameToProductId = new HashMap<>();
+        List<Product> savedProducts = productGateway.findByProviderId(savedProvider.getId());
+        for (Product p : savedProducts) {
+            productNameToProductId.put(p.getName(), p.getId());
+        }
+
+        // 根据元数据关联创建业务关联
+        for (ModelMetadata mm : modelMetadatas) {
+            List<ProductModelMetadata> associations = productModelMetadataGateway.findByModelId(mm.getId());
+            for (ProductModelMetadata assoc : associations) {
+                Long businessModelId = metadataModelIdToModelId.get(mm.getId());
+                // 查找元数据产品对应的业务产品
+                productMetadataGateway.findById(assoc.getProductId()).ifPresent(pm -> {
+                    Long businessProductId = productNameToProductId.get(pm.getProductName());
+                    if (businessProductId != null && businessModelId != null) {
+                        if (!productModelGateway.existsByProductIdAndModelId(businessProductId, businessModelId)) {
+                            ProductModel productModel = new ProductModel();
+                            productModel.setProductId(businessProductId);
+                            productModel.setModelId(businessModelId);
+                            productModelGateway.save(productModel);
+                        }
+                    }
+                });
+            }
+        }
 
         return ApplyMetadataResult.builder()
             .providerId(savedProvider.getId())
