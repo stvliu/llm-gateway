@@ -114,7 +114,7 @@ public class ChannelModel extends BaseEntity {
     private BigDecimal cacheWritePrice;
     private BigDecimal inputAudioPrice;
     private BigDecimal outputAudioPrice;
-    private Long quotaLimit;                // 订阅模式下的额度限制
+    private Long quotaLimit;                // 订阅模式下的 Token 额度限制
     private ChannelModelState state;
 }
 ```
@@ -241,6 +241,10 @@ domain/supply/
 ```
 infrastructure/supply/
 ├── gateway/
+│   ├── protocol/
+│   │   ├── OpenAIProtocolGateway.java
+│   │   ├── AnthropicProtocolGateway.java
+│   │   └── ProtocolGatewayFactoryImpl.java
 │   ├── ProviderGatewayImpl.java
 │   ├── ChannelGatewayImpl.java
 │   ├── ChannelCredentialGatewayImpl.java
@@ -251,10 +255,6 @@ infrastructure/supply/
 │   ├── ChannelCatalogGatewayImpl.java
 │   ├── ChannelModelCatalogGatewayImpl.java
 │   └── ModelsDevDataGatewayImpl.java
-├── protocol/
-│   ├── OpenAIProtocolGateway.java
-│   ├── AnthropicProtocolGateway.java
-│   └── ProtocolGatewayFactoryImpl.java
 └── database/
     ├── ModelSpecDo.java
     ├── ChannelDo.java
