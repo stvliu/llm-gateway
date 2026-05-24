@@ -13,7 +13,6 @@ import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
-import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.entity.Provider;
@@ -25,7 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 渠道元数据服务
@@ -124,13 +122,7 @@ public class ProductMetadataService {
         channel.setProviderId(provider.getId());
         channel.setName(metadata.getProductName());
         channel.setBillingMode(mapBillingMode(metadata.getProductType()));
-
-        Map<String, String> endpoints = metadata.getEndpoints();
-        if (endpoints != null && !endpoints.isEmpty()) {
-            String protocolName = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
-            channel.setEndpointUrl(endpoints.get(protocolName));
-            channel.setProtocol(Protocol.valueOf(protocolName.toUpperCase()));
-        }
+        // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，需要在保存 Channel 后创建 ChannelEndpoint
 
         channel.setState(ChannelState.ACTIVE);
         Channel savedChannel = channelGateway.save(channel);

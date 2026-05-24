@@ -3,9 +3,7 @@ package com.codingas.gateway.infrastructure.supply.gateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,35 +41,13 @@ public class ChannelGatewayImpl implements ChannelGateway {
     }
 
     @Override
-    public List<Channel> findByProtocol(Protocol protocol) {
-        return channelRepository.findByProtocol(protocol.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<Channel> findAllActive() {
-        return channelRepository.findByState(ChannelState.ACTIVE.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<Channel> findActiveByProviderIdAndProtocol(Long providerId, Protocol protocol) {
-        return channelRepository.findByProviderIdAndProtocolAndState(providerId, protocol.name(), ChannelState.ACTIVE.name())
-                .stream().map(this::toEntity).toList();
+        return channelRepository.findByState(ChannelState.ACTIVE).stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<Channel> findAll() {
         return channelRepository.findAll().stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public Optional<RoutingContext> findRoutingContext(Long channelId) {
-        return channelRepository.findById(channelId).map(doObj -> new RoutingContext(
-                doObj.getId(),
-                doObj.getEndpointUrl(),
-                Protocol.valueOf(doObj.getProtocol()),
-                null,
-                null
-        ));
     }
 
     @Override
@@ -91,7 +67,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
 
     @Override
     public List<Channel> findByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
-        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode.name())
+        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode)
                 .stream().map(this::toEntity).toList();
     }
 
@@ -100,14 +76,12 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setId(doObj.getId());
         entity.setProviderId(doObj.getProviderId());
         entity.setName(doObj.getName());
-        entity.setEndpointUrl(doObj.getEndpointUrl());
-        entity.setProtocol(Protocol.valueOf(doObj.getProtocol()));
-        entity.setBillingMode(doObj.getBillingMode() != null ? BillingMode.valueOf(doObj.getBillingMode()) : null);
+        entity.setBillingMode(doObj.getBillingMode());
         entity.setPriority(doObj.getPriority());
         entity.setWeight(doObj.getWeight());
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
-        entity.setState(ChannelState.valueOf(doObj.getState()));
+        entity.setState(doObj.getState());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -120,14 +94,12 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setId(entity.getId());
         doObj.setProviderId(entity.getProviderId());
         doObj.setName(entity.getName());
-        doObj.setEndpointUrl(entity.getEndpointUrl());
-        doObj.setProtocol(entity.getProtocol() != null ? entity.getProtocol().name() : null);
-        doObj.setBillingMode(entity.getBillingMode() != null ? entity.getBillingMode().name() : null);
+        doObj.setBillingMode(entity.getBillingMode());
         doObj.setPriority(entity.getPriority());
         doObj.setWeight(entity.getWeight());
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : ChannelState.ACTIVE.name());
+        doObj.setState(entity.getState() != null ? entity.getState() : ChannelState.ACTIVE);
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

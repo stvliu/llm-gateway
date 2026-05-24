@@ -173,13 +173,7 @@ public class ProviderMetadataService {
             channel.setProviderId(savedProvider.getId());
             channel.setName(pm.getProductName());
             channel.setBillingMode(mapBillingMode(pm.getProductType()));
-            // 从元数据端点推断 endpointUrl 和 protocol
-            Map<String, String> endpoints = pm.getEndpoints();
-            if (endpoints != null && !endpoints.isEmpty()) {
-                String protocolName = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
-                channel.setEndpointUrl(endpoints.get(protocolName));
-                channel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.valueOf(protocolName.toUpperCase()));
-            }
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，需要在保存 Channel 后创建 ChannelEndpoint
             channel.setState(ChannelState.ACTIVE);
             Channel savedChannel = channelGateway.save(channel);
             log.info("Created channel from metadata: id={}, name={}", savedChannel.getId(), savedChannel.getName());

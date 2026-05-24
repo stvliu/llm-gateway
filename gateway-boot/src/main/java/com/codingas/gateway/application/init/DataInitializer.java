@@ -79,8 +79,6 @@ public class DataInitializer implements CommandLineRunner {
         Channel openaiChannel = new Channel();
         openaiChannel.setProviderId(openai.getId());
         openaiChannel.setName("OpenAI Standard");
-        openaiChannel.setEndpointUrl("https://api.openai.com");
-        openaiChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.OPENAI);
         openaiChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         openaiChannel.setState(ChannelState.ACTIVE);
         openaiChannel = channelGateway.save(openaiChannel);
@@ -88,8 +86,6 @@ public class DataInitializer implements CommandLineRunner {
         Channel anthropicChannel = new Channel();
         anthropicChannel.setProviderId(anthropic.getId());
         anthropicChannel.setName("Anthropic Standard");
-        anthropicChannel.setEndpointUrl("https://api.anthropic.com");
-        anthropicChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.ANTHROPIC);
         anthropicChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         anthropicChannel.setState(ChannelState.ACTIVE);
         anthropicChannel = channelGateway.save(anthropicChannel);
@@ -97,8 +93,6 @@ public class DataInitializer implements CommandLineRunner {
         Channel deepseekChannel = new Channel();
         deepseekChannel.setProviderId(deepseek.getId());
         deepseekChannel.setName("DeepSeek Standard");
-        deepseekChannel.setEndpointUrl("https://api.deepseek.com");
-        deepseekChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.OPENAI);
         deepseekChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         deepseekChannel.setState(ChannelState.ACTIVE);
         deepseekChannel = channelGateway.save(deepseekChannel);

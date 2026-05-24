@@ -22,10 +22,12 @@ public class ConnectivityTesterImpl implements ConnectivityTester {
 
     @Override
     public ConnectivityTestResultVO test(Channel channel) {
+        // TODO: Channel 已不再持有 endpointUrl/protocol，需要通过 ChannelEndpoint 获取
+        // 将在后续 Task 中通过 ChannelEndpointGateway 重构此方法
         try {
             var gateway = protocolGatewayFactory.create(
-                    channel.getProtocol().getCode(),
-                    channel.getEndpointUrl(),
+                    "openai",
+                    "",
                     null,
                     channel.getTimeout() != null ? channel.getTimeout() : 30
             );

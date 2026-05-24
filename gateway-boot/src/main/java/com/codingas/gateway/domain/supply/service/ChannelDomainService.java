@@ -4,13 +4,11 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.exception.ChannelException;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 /**
  * 渠道领域服务
@@ -71,13 +69,6 @@ public class ChannelDomainService {
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
         channel.setState(ChannelState.DELETED);
         channelGateway.save(channel);
-    }
-
-    /**
-     * 查找路由上下文
-     */
-    public Optional<RoutingContext> findRoutingContext(Long channelId) {
-        return channelGateway.findRoutingContext(channelId);
     }
 
     /**

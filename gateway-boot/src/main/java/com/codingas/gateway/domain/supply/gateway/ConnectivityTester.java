@@ -27,8 +27,7 @@ public interface ConnectivityTester {
     default ConnectivityTestResultVO test(String endpointUrl, String apiKey, String protocol) {
         // 默认实现：构建临时 Channel 委托给 Channel 版本
         Channel tempChannel = new Channel();
-        tempChannel.setEndpointUrl(endpointUrl);
-        tempChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.fromCode(protocol));
+        tempChannel.setTimeout(30);
         return test(tempChannel);
     }
 }

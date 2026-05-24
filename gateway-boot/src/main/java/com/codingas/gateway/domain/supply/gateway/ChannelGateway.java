@@ -3,8 +3,6 @@ package com.codingas.gateway.domain.supply.gateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 
 import java.util.List;
 import java.util.Optional;
@@ -32,29 +30,14 @@ public interface ChannelGateway {
     List<Channel> findByProviderId(Long providerId);
 
     /**
-     * 根据协议类型查找渠道
-     */
-    List<Channel> findByProtocol(Protocol protocol);
-
-    /**
      * 查找活跃渠道
      */
     List<Channel> findAllActive();
 
     /**
-     * 查找指定供应商和协议的活跃渠道
-     */
-    List<Channel> findActiveByProviderIdAndProtocol(Long providerId, Protocol protocol);
-
-    /**
      * 查询所有渠道
      */
     List<Channel> findAll();
-
-    /**
-     * 根据渠道 ID 查找路由上下文
-     */
-    Optional<RoutingContext> findRoutingContext(Long channelId);
 
     /**
      * 删除渠道

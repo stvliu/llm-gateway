@@ -283,12 +283,12 @@ public class ModelExperienceService {
                 throw new IllegalArgumentException("凭证不可用");
             }
 
-            // Channel 已包含 endpointUrl 和 protocol
-            String protocolName = request.getProtocolName() != null ? request.getProtocolName() : channel.getProtocol().name().toLowerCase();
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointGateway 获取
+            String protocolName = request.getProtocolName() != null ? request.getProtocolName() : "openai";
 
             return new ResolvedConfig(
                 protocolName,
-                channel.getEndpointUrl(),
+                null,
                 credential.getApiKeyPlain()
             );
         } else {

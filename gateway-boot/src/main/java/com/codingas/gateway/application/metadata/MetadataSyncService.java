@@ -16,7 +16,6 @@ import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.enums.ModelSpecState;
-import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -29,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 元数据同步服务
@@ -138,16 +136,11 @@ public class MetadataSyncService {
         List<ProductMetadata> productMetas = productMetadataGateway.findAll();
         int count = 0;
         for (ProductMetadata meta : productMetas) {
-            // 从元数据端点推断 Channel 信息
-            Map<String, String> endpoints = meta.getEndpoints();
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，需要在保存 Channel 后创建 ChannelEndpoint
             Channel channel = new Channel();
             channel.setProviderId(1L); // 默认 provider
             channel.setName(meta.getProviderId() + "-" + meta.getProductName());
-            if (endpoints != null && !endpoints.isEmpty()) {
-                String protocolKey = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
-                channel.setEndpointUrl(endpoints.get(protocolKey));
-                channel.setProtocol(Protocol.fromCode(protocolKey));
-            }
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，需要在保存 Channel 后创建 ChannelEndpoint
             channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
             channel.setState(ChannelState.ACTIVE);
             channelGateway.save(channel);
