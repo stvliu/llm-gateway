@@ -2,14 +2,18 @@ package com.codingas.gateway.application.init;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelSpec;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
@@ -34,6 +38,7 @@ public class DataInitializer implements CommandLineRunner {
     private final ProviderGateway providerGateway;
     private final ModelSpecGateway modelSpecGateway;
     private final ChannelGateway channelGateway;
+    private final ChannelEndpointGateway channelEndpointGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final UserApiKeyGateway userApiKeyGateway;
 
@@ -97,12 +102,17 @@ public class DataInitializer implements CommandLineRunner {
         deepseekChannel.setState(ChannelState.ACTIVE);
         deepseekChannel = channelGateway.save(deepseekChannel);
 
-        // ===== 4. 创建 ChannelCredential =====
+        // ===== 4. 创建 ChannelEndpoint =====
+        createEndpoint(openaiChannel.getId(), Protocol.OPENAI, "https://api.openai.com");
+        createEndpoint(anthropicChannel.getId(), Protocol.ANTHROPIC, "https://api.anthropic.com");
+        createEndpoint(deepseekChannel.getId(), Protocol.OPENAI, "https://api.deepseek.com");
+
+        // ===== 5. 创建 ChannelCredential =====
         createChannelCredential(openaiChannel.getId(), "sk-openai-dev-key-001");
         createChannelCredential(anthropicChannel.getId(), "sk-ant-anthropic-dev-key-001");
         createChannelCredential(deepseekChannel.getId(), "sk-deepseek-dev-key-001");
 
-        // ===== 5. 创建 UserApiKey =====
+        // ===== 6. 创建 UserApiKey =====
         UserApiKey userApiKey = new UserApiKey();
         userApiKey.setName("开发测试密钥");
         userApiKey.setUserId(1L);
@@ -134,5 +144,14 @@ public class DataInitializer implements CommandLineRunner {
         credential.setName("default");
         credential.setState(CredentialState.ACTIVE);
         channelCredentialGateway.save(credential);
+    }
+
+    private void createEndpoint(Long channelId, Protocol protocol, String url) {
+        ChannelEndpoint endpoint = new ChannelEndpoint();
+        endpoint.setChannelId(channelId);
+        endpoint.setProtocol(protocol);
+        endpoint.setEndpointUrl(url);
+        endpoint.setState(ChannelEndpointState.ACTIVE);
+        channelEndpointGateway.save(endpoint);
     }
 }
