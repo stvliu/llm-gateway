@@ -3,6 +3,7 @@ package com.codingas.gateway.application.channel.dto;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
  * 渠道响应
@@ -32,6 +33,8 @@ public class ChannelResponse {
     private Integer maxRetries;
 
     private String state;
+
+    private List<ChannelEndpointResponse> endpoints;
 
     private Instant createdAt;
 

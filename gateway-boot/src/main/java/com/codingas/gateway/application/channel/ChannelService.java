@@ -1,0 +1,35 @@
+package com.codingas.gateway.application.channel;
+
+import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
+import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
+import com.codingas.gateway.application.channel.dto.ChannelRequest;
+import com.codingas.gateway.application.channel.dto.ChannelResponse;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
+
+import java.util.List;
+
+/**
+ * 渠道应用服务接口
+ */
+public interface ChannelService {
+
+    ChannelResponse create(ChannelRequest request);
+
+    ChannelResponse update(Long id, ChannelRequest request);
+
+    ChannelResponse getById(Long id);
+
+    List<ChannelResponse> getByProviderId(Long providerId);
+
+    List<ChannelResponse> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
+
+    void delete(Long id);
+
+    ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request);
+
+    void removeEndpoint(Long channelId, Long endpointId);
+
+    ChannelEndpointResponse enableEndpoint(Long channelId, Long endpointId);
+
+    ChannelEndpointResponse disableEndpoint(Long channelId, Long endpointId);
+}
