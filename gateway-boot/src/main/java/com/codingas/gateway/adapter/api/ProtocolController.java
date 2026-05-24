@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

@@ -1,368 +1,144 @@
 package com.codingas.gateway.application.init;
 
-import com.codingas.gateway.domain.model.enums.ModelState;
-import com.codingas.gateway.domain.model.enums.ProviderState;
-
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.entity.ProductModel;
-import com.codingas.gateway.domain.product.enums.ProductState;
-import com.codingas.gateway.domain.product.enums.ProductType;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
-import com.codingas.gateway.domain.iam.enums.UserState;
-import com.codingas.gateway.domain.iam.entity.User;
-import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.domain.team.entity.Team;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.TeamState;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 开发环境数据初始化器
- *
- * <p>在应用启动时初始化测试数据（仅 local/dev 环境）。</p>
- * <p>初始化内容：</p>
- * <ul>
- *   <li>Provider（火山引擎）+ 模型</li>
- *   <li>产品（按量计费）+ ProductApiKey</li>
- *   <li>4 个团队：默认、产品、开发、龙虾</li>
- *   <li>1 个管理员 + 6 个测试用户</li>
- *   <li>10 个 UserApiKey，分布在不同团队下</li>
- * </ul>
- *
- * <p>注意：ProviderApiKey 已废弃，API Key 管理迁移到 ProductApiKey。</p>
  */
 @Slf4j
 @Component
-@Profile({"local", "dev"})
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
-    private final UserGateway userGateway;
-    private final PasswordEncoder passwordEncoder;
     private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ProductGateway productGateway;
-    private final ProductModelGateway productModelGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
-    private final TeamGateway teamGateway;
+    private final ModelSpecGateway modelSpecGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final UserApiKeyGateway userApiKeyGateway;
 
     @Override
+    @Transactional
     public void run(String... args) {
-        log.info("Starting data initialization for local/dev environment...");
-
-        try {
-            // 初始化 Provider 和 Model 数据
-            Provider provider = initProvider();
-            if (provider != null) {
-                initModels(provider);
-            }
-
-            // 初始化产品
-            Product product = initProduct(provider);
-
-            // 初始化产品-模型关联
-            if (provider != null && product != null) {
-                initProductModels(provider, product);
-            }
-
-            // 初始化产品 API Key
-            if (product != null) {
-                initProductApiKey(product);
-            }
-
-            // 初始化团队（4 个）
-            Team defaultTeam = initTeam("默认团队", "开发环境默认团队");
-            Team productTeam = initTeam("产品团队", "产品部门团队");
-            Team devTeam = initTeam("开发团队", "研发部门团队");
-            Team lobsterTeam = initTeam("龙虾团队", "龙虾部门团队");
-
-            // 初始化用户（1 管理员 + 6 测试用户）
-            initAdminUser();
-            User testUser1 = initUser("test1", "test1@example.com", "test1");
-            User testUser2 = initUser("test2", "test2@example.com", "test2");
-            User testUser3 = initUser("test3", "test3@example.com", "test3");
-            User testUser4 = initUser("test4", "test4@example.com", "test4");
-            User testUser5 = initUser("test5", "test5@example.com", "test5");
-            User testUser6 = initUser("test6", "test6@example.com", "test6");
-
-            // 初始化 10 个 UserApiKey，分布在不同团队
-            if (product != null) {
-                // test1: 3 个 Key
-                initUserApiKey(testUser1, product, "sk-test1-default-001", "test1 Key 1");
-                initUserApiKey(testUser1, product, "sk-test1-default-002", "test1 Key 2");
-                initUserApiKey(testUser1, product, "sk-test1-dev-001", "test1 Key 3");
-
-                // test2: 2 个 Key
-                initUserApiKey(testUser2, product, "sk-test2-product-001", "test2 Key 1");
-                initUserApiKey(testUser2, product, "sk-test2-product-002", "test2 Key 2");
-
-                // test3: 2 个 Key
-                initUserApiKey(testUser3, product, "sk-test3-lobster-001", "test3 Key 1");
-                initUserApiKey(testUser3, product, "sk-test3-lobster-002", "test3 Key 2");
-
-                // test4-6: 各 1 个 Key
-                initUserApiKey(testUser4, product, "sk-test4-default-001", "test4 Key");
-                initUserApiKey(testUser5, product, "sk-test5-dev-001", "test5 Key");
-                initUserApiKey(testUser6, product, "sk-test6-lobster-001", "test6 Key");
-            }
-
-            log.info("Data initialization completed successfully");
-        } catch (Exception e) {
-            log.error("Data initialization failed", e);
-        }
-    }
-
-    /**
-     * 初始化 Provider（火山引擎）
-     */
-    private Provider initProvider() {
         if (providerGateway.count() > 0) {
-            log.info("Provider already exists, skipping");
-            return providerGateway.findAll().get(0);
-        }
-
-        Provider provider = new Provider();
-        provider.setName("火山引擎");
-        provider.setWebsiteUrl("https://www.volcengine.com");
-        provider.setApiDocUrl("https://www.volcengine.com/docs/82379/1298454");
-        provider.setPriority(100);
-        provider.setState(ProviderState.ACTIVE);
-
-        Provider saved = providerGateway.save(provider);
-        log.info("Created provider: {} (id={})", provider.getName(), saved.getId());
-        return saved;
-    }
-
-    /**
-     * 初始化模型数据
-     */
-    private void initModels(Provider provider) {
-        if (modelGateway.count() > 0) {
-            log.info("Models already exist, skipping");
+            log.info("Data already initialized, skipping...");
             return;
         }
 
-        createModel(provider, "doubao-seed-2-0-lite-260428", "Doubao-Seed-2.0-lite", 32768);
-        createModel(provider, "doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini", 131072);
-        createModel(provider, "deepseek-v3-2-251201", "DeepSeek-V3.2", 32768);
+        log.info("Initializing development data...");
 
-        log.info("Created {} models for provider: {}", modelGateway.count(), provider.getName());
+        // ===== 1. 创建 Provider =====
+        Provider openai = new Provider();
+        openai.setName("OpenAI");
+        openai.setBaseUrl("https://api.openai.com");
+        openai.setState(ProviderState.ACTIVE);
+        openai = providerGateway.save(openai);
+
+        Provider anthropic = new Provider();
+        anthropic.setName("Anthropic");
+        anthropic.setBaseUrl("https://api.anthropic.com");
+        anthropic.setState(ProviderState.ACTIVE);
+        anthropic = providerGateway.save(anthropic);
+
+        Provider deepseek = new Provider();
+        deepseek.setName("DeepSeek");
+        deepseek.setBaseUrl("https://api.deepseek.com");
+        deepseek.setState(ProviderState.ACTIVE);
+        deepseek = providerGateway.save(deepseek);
+
+        // ===== 2. 创建 ModelSpec =====
+        createModelSpec(openai.getId(), "gpt-4o", "GPT-4o", 128000);
+        createModelSpec(openai.getId(), "gpt-4o-mini", "GPT-4o Mini", 128000);
+        createModelSpec(openai.getId(), "gpt-3.5-turbo", "GPT-3.5 Turbo", 16385);
+        createModelSpec(anthropic.getId(), "claude-sonnet-4-20250514", "Claude Sonnet 4", 200000);
+        createModelSpec(anthropic.getId(), "claude-3-5-haiku-20241022", "Claude 3.5 Haiku", 200000);
+        createModelSpec(deepseek.getId(), "deepseek-chat", "DeepSeek Chat", 64000);
+        createModelSpec(deepseek.getId(), "deepseek-reasoner", "DeepSeek Reasoner", 64000);
+
+        // ===== 3. 创建 Channel =====
+        Channel openaiChannel = new Channel();
+        openaiChannel.setProviderId(openai.getId());
+        openaiChannel.setName("OpenAI Standard");
+        openaiChannel.setEndpointUrl("https://api.openai.com");
+        openaiChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.OPENAI);
+        openaiChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+        openaiChannel.setState(ChannelState.ACTIVE);
+        openaiChannel = channelGateway.save(openaiChannel);
+
+        Channel anthropicChannel = new Channel();
+        anthropicChannel.setProviderId(anthropic.getId());
+        anthropicChannel.setName("Anthropic Standard");
+        anthropicChannel.setEndpointUrl("https://api.anthropic.com");
+        anthropicChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.ANTHROPIC);
+        anthropicChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+        anthropicChannel.setState(ChannelState.ACTIVE);
+        anthropicChannel = channelGateway.save(anthropicChannel);
+
+        Channel deepseekChannel = new Channel();
+        deepseekChannel.setProviderId(deepseek.getId());
+        deepseekChannel.setName("DeepSeek Standard");
+        deepseekChannel.setEndpointUrl("https://api.deepseek.com");
+        deepseekChannel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.OPENAI);
+        deepseekChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+        deepseekChannel.setState(ChannelState.ACTIVE);
+        deepseekChannel = channelGateway.save(deepseekChannel);
+
+        // ===== 4. 创建 ChannelCredential =====
+        createChannelCredential(openaiChannel.getId(), "sk-openai-dev-key-001");
+        createChannelCredential(anthropicChannel.getId(), "sk-ant-anthropic-dev-key-001");
+        createChannelCredential(deepseekChannel.getId(), "sk-deepseek-dev-key-001");
+
+        // ===== 5. 创建 UserApiKey =====
+        UserApiKey userApiKey = new UserApiKey();
+        userApiKey.setName("开发测试密钥");
+        userApiKey.setUserId(1L);
+        userApiKey.setChannelIds(List.of(openaiChannel.getId(), anthropicChannel.getId(), deepseekChannel.getId()));
+        userApiKey.setModels(null); // null = 允许所有模型
+        userApiKeyGateway.save(userApiKey);
+
+        log.info("Development data initialized successfully!");
+        log.info("  Providers: 3 (OpenAI, Anthropic, DeepSeek)");
+        log.info("  Models: 7");
+        log.info("  Channels: 3");
+        log.info("  UserApiKeys: 1");
     }
 
-    private void createModel(Provider provider, String providerModelId, String displayName, int contextWindow) {
-        Model model = new Model();
-        model.setProviderId(provider.getId());
-        model.setProviderName(provider.getName());
-        model.setProviderModelId(providerModelId);
-        model.setDisplayName(displayName);
-        model.setContextWindow(contextWindow);
-        model.setCapabilities(Map.of(
-                "chat", true,
-                "streaming", true,
-                "function_calling", true
-        ));
-        model.setState(ModelState.ACTIVE);
-
-        modelGateway.save(model);
-        log.debug("Created model: {}", displayName);
+    private void createModelSpec(Long providerId, String providerModelId, String displayName, int contextWindow) {
+        ModelSpec modelSpec = new ModelSpec();
+        modelSpec.setProviderModelId(providerModelId);
+        modelSpec.setDisplayName(displayName);
+        modelSpec.setContextWindow(contextWindow);
+        modelSpec.setState(ModelSpecState.ACTIVE);
+        modelSpecGateway.save(modelSpec);
     }
 
-    /**
-     * 初始化产品（按量计费）
-     */
-    private Product initProduct(Provider provider) {
-        if (provider == null) {
-            log.warn("Provider not initialized, skipping product initialization");
-            return null;
-        }
-
-        if (productGateway.existsByProviderIdAndName(provider.getId(), "豆包按量计费")) {
-            log.info("Product already exists, skipping");
-            return productGateway.findByProviderIdAndType(provider.getId(), ProductType.PAY_AS_YOU_GO)
-                    .stream().findFirst().orElse(null);
-        }
-
-        Product product = createProduct(provider);
-
-        Product saved = productGateway.save(product);
-        log.info("Created product: {} (id={})", product.getName(), saved.getId());
-        return saved;
-    }
-
-    private static @NonNull Product createProduct(Provider provider) {
-        Product product = new Product();
-        product.setProviderId(provider.getId());
-        product.setProviderName(provider.getName());
-        product.setName("豆包按量计费");
-        product.setProductType(ProductType.PAY_AS_YOU_GO);
-        product.setEndpoints(Map.of(
-                "openai", "https://ark.cn-beijing.volces.com/api/v3"
-        ));
-        product.setInputPrice(new BigDecimal("0.0008"));
-        product.setOutputPrice(new BigDecimal("0.002"));
-        product.setState(ProductState.ACTIVE);
-        return product;
-    }
-
-    /**
-     * 初始化产品-模型关联
-     */
-    private void initProductModels(Provider provider, Product product) {
-        List<Model> models = modelGateway.findByProviderId(provider.getId());
-        int count = 0;
-        for (Model model : models) {
-            if (!productModelGateway.existsByProductIdAndModelId(product.getId(), model.getId())) {
-                ProductModel pm = new ProductModel();
-                pm.setProductId(product.getId());
-                pm.setModelId(model.getId());
-                productModelGateway.save(pm);
-                count++;
-            }
-        }
-        if (count > 0) {
-            log.info("Created {} ProductModel associations for product: {}", count, product.getName());
-        }
-    }
-
-    /**
-     * 初始化产品 API Key（新架构）
-     */
-    private void initProductApiKey(Product product) {
-        if (product == null) {
-            log.warn("Product not initialized, skipping ProductApiKey initialization");
-            return;
-        }
-
-        if (productApiKeyGateway.countActiveByProductId(product.getId()) > 0) {
-            log.info("ProductApiKey already exists, skipping");
-            return;
-        }
-
-        ProductApiKey apiKey = new ProductApiKey();
-        apiKey.setProductId(product.getId());
-        apiKey.setName("火山引擎主密钥");
-        apiKey.setApiKeyPlain("1fb8bdcf-3383-426d-9f3d-4c2979895c58");
-        apiKey.setPriority(1);
-
-        ProductApiKey saved = productApiKeyGateway.save(apiKey);
-        log.info("Created ProductApiKey: {} (id={})", apiKey.getName(), saved.getId());
-    }
-
-    /**
-     * 初始化团队
-     */
-    private Team initTeam(String name, String description) {
-        if (teamGateway.existsByName(name)) {
-            log.info("Team '{}' already exists, skipping", name);
-            return teamGateway.findAllActive().stream()
-                    .filter(t -> name.equals(t.getName()))
-                    .findFirst().orElse(null);
-        }
-
-        Team team = new Team();
-        team.setName(name);
-        team.setDescription(description);
-        team.setState(TeamState.ACTIVE);
-
-        Team saved = teamGateway.save(team);
-        log.info("Created team: {} (id={})", team.getName(), saved.getId());
-        return saved;
-    }
-
-    /**
-     * 初始化管理员用户
-     */
-    private User initAdminUser() {
-        if (userGateway.existsByUsername("admin")) {
-            log.info("Admin user already exists, skipping");
-            return null;
-        }
-
-        User user = new User();
-        user.setUsername("admin");
-        user.setEmail("admin@example.com");
-        user.setPasswordHash(passwordEncoder.encode("admin"));
-        user.setState(UserState.ACTIVE);
-        user.setRole("ADMIN");
-        user.setEmailVerified(true);
-
-        User saved = userGateway.save(user);
-        log.info("Created admin user: {} (id={})", user.getUsername(), saved.getId());
-        return saved;
-    }
-
-    /**
-     * 初始化测试用户
-     */
-    private User initUser(String username, String email, String password) {
-        if (userGateway.existsByUsername(username)) {
-            log.info("User '{}' already exists, skipping", username);
-            return null;
-        }
-
-        User user = new User();
-        user.setUsername(username);
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(password));
-        user.setState(UserState.ACTIVE);
-        user.setRole("USER");
-        user.setEmailVerified(true);
-
-        User saved = userGateway.save(user);
-        log.info("Created user: {} (id={})", user.getUsername(), saved.getId());
-        return saved;
-    }
-
-    /**
-     * 初始化用户 API Key（新架构）
-     *
-     * <p>创建 UserApiKey，keyPlain 由基础设施层自动加密和哈希。</p>
-     * <p>同一用户可以在不同团队下拥有多个 Key，实现跨团队访问产品。</p>
-     */
-    private void initUserApiKey(User user, Product product, String keyPlain, String name) {
-        if (user == null || product == null) {
-            log.warn("Missing dependencies, skipping UserApiKey creation: {}", name);
-            return;
-        }
-
-        // 检查用户是否已有同名 Key
-        List<UserApiKey> existing = userApiKeyGateway.findByUserId(user.getId());
-        boolean exists = existing.stream().anyMatch(k -> name.equals(k.getName()));
-        if (exists) {
-            log.info("UserApiKey '{}' already exists for user '{}', skipping", name, user.getUsername());
-            return;
-        }
-
-        UserApiKey apiKey = new UserApiKey();
-        apiKey.setUserId(user.getId());
-        apiKey.setProductIds(List.of(product.getId()));
-        apiKey.setKeyPlain(keyPlain);
-        apiKey.setName(name);
-        apiKey.setState(UserApiKeyState.ACTIVE);
-
-        UserApiKey saved = userApiKeyGateway.save(apiKey);
-        log.info("Created UserApiKey: {} (id={}, prefix={}, user={})",
-                name, saved.getId(), saved.getKeyPrefix(), user.getUsername());
+    private void createChannelCredential(Long channelId, String plainApiKey) {
+        ChannelCredential credential = new ChannelCredential();
+        credential.setChannelId(channelId);
+        credential.setApiKeyPlain(plainApiKey);
+        credential.setApiKeyPrefix(plainApiKey.substring(0, Math.min(8, plainApiKey.length())));
+        credential.setName("default");
+        credential.setState(CredentialState.ACTIVE);
+        channelCredentialGateway.save(credential);
     }
 }

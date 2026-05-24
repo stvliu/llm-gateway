@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.productapikey.dto;
 
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 /**
  * 产品 API Key 更新请求
@@ -13,7 +13,7 @@ import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
 public record ProductApiKeyUpdateRequest(
         Integer priority,
         Integer weight,
-        ProductApiKeyState state,
+        CredentialState state,
         String description
 ) {
 }

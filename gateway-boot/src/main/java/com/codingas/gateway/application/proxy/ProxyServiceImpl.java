@@ -1,11 +1,11 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
-import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
-import com.codingas.gateway.domain.proxy.protocol.*;
+import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.StreamCallback;
+import com.codingas.gateway.domain.supply.protocol.*;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,18 +41,19 @@ public class ProxyServiceImpl implements ProxyService {
         RoutingContext context = channelRoutingService.resolve(
                 identity, request.getModel(), request.getProtocol());
 
-        log.info("Proxy request routed: model={}, productId={}, protocol={}, endpoint={}",
-                request.getModel(), context.getProductId(), context.getProtocol(), context.getEndpoint());
+        log.info("Proxy request routed: model={}, channelId={}, protocol={}, endpoint={}",
+                request.getModel(), context.channelId(), context.protocol(), context.endpoint());
 
+        String protocolName = context.protocol() != null ? context.protocol().name().toLowerCase() : "openai";
         ProtocolGateway gateway = protocolGatewayFactory.create(
-                context.getProtocol(), context.getEndpoint(), context.getProviderApiKey(), 60);
+                protocolName, context.endpoint(), context.providerApiKey(), 60);
 
         // 跨协议请求转换
-        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, context.getProtocol());
+        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);
         ProtocolResponse response = gateway.chat(gatewayRequest);
 
         // 跨协议响应转换
-        return convertResponseIfNeeded(response, context.getProtocol(), request.getProtocol());
+        return convertResponseIfNeeded(response, protocolName, request.getProtocol());
     }
 
     @Override
@@ -61,22 +62,23 @@ public class ProxyServiceImpl implements ProxyService {
         RoutingContext context = channelRoutingService.resolve(
                 identity, request.getModel(), request.getProtocol());
 
-        log.info("Stream request routed: model={}, productId={}, protocol={}, endpoint={}",
-                request.getModel(), context.getProductId(), context.getProtocol(), context.getEndpoint());
+        log.info("Stream request routed: model={}, channelId={}, protocol={}, endpoint={}",
+                request.getModel(), context.channelId(), context.protocol(), context.endpoint());
 
+        String protocolName = context.protocol() != null ? context.protocol().name().toLowerCase() : "openai";
         ProtocolGateway gateway = protocolGatewayFactory.create(
-                context.getProtocol(), context.getEndpoint(), context.getProviderApiKey(), 60);
+                protocolName, context.endpoint(), context.providerApiKey(), 60);
 
         // 跨协议请求转换
-        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, context.getProtocol());
-        boolean needsConversion = !request.getProtocol().equals(context.getProtocol());
+        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);
+        boolean needsConversion = !request.getProtocol().equals(protocolName);
 
         gateway.chatStream(gatewayRequest, new StreamCallback() {
             @Override
             public void onChunk(String data) {
                 if (needsConversion) {
                     StreamChunkResult result = protocolConverter.convertStreamChunk(
-                            data, context.getProtocol(), request.getProtocol());
+                            data, protocolName, request.getProtocol());
                     if (result != null) {
                         // 跨协议场景：组装完整 SSE 行（含 event 类型）
                         if (result.eventType() != null) {
@@ -94,7 +96,7 @@ public class ProxyServiceImpl implements ProxyService {
             public void onComplete() {
                 if (needsConversion) {
                     StreamChunkResult doneResult = protocolConverter.convertStreamDone(
-                            context.getProtocol(), request.getProtocol());
+                            protocolName, request.getProtocol());
                     if (doneResult != null) {
                         if (doneResult.eventType() != null) {
                             onChunk.accept("event: " + doneResult.eventType() + "\ndata: " + doneResult.data() + "\n\n");

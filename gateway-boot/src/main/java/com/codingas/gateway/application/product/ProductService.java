@@ -2,7 +2,7 @@ package com.codingas.gateway.application.product;
 
 import com.codingas.gateway.application.product.dto.ProductRequest;
 import com.codingas.gateway.application.product.dto.ProductResponse;
-import com.codingas.gateway.domain.product.enums.ProductType;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public interface ProductService {
 
     List<ProductResponse> getByProviderId(Long providerId);
 
-    List<ProductResponse> getByProviderIdAndType(Long providerId, ProductType type);
+    List<ProductResponse> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
 
     void delete(Long id);
 }

@@ -1,12 +1,12 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesResponse;
-import com.codingas.gateway.domain.proxy.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.supply.protocol.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.supply.protocol.AnthropicMessagesResponse;
+import com.codingas.gateway.domain.supply.protocol.ProtocolResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
-import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.proxy.exception.ProtocolValidationException;
-import com.codingas.gateway.domain.proxy.protocol.AnthropicProtocolValidator;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.exception.ProtocolValidationException;
+import com.codingas.gateway.domain.supply.protocol.AnthropicProtocolValidator;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

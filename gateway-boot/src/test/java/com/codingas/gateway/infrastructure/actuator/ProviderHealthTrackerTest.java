@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

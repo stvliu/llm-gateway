@@ -20,7 +20,7 @@ public class UserApiKey {
 
     private Long id;
     private Long userId;
-    private List<Long> productIds;
+    private List<Long> channelIds;
     /**
      * -- GETTER --
      * Key 哈希（SHA-256），用于认证验证，由基础设施层在 save 时计算
@@ -55,7 +55,7 @@ public class UserApiKey {
         return "UserApiKey{" +
                 "id=" + id +
                 ", userId=" + userId +
-                ", productIds=" + productIds +
+                ", channelIds=" + channelIds +
                 ", keyPrefix='" + keyPrefix + '\'' +
                 ", name='" + name + '\'' +
                 ", state=" + state +

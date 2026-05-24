@@ -4,12 +4,8 @@ import com.codingas.gateway.application.metadata.ModelMetadataService;
 import com.codingas.gateway.application.metadata.dto.ModelMetadataCreateRequest;
 import com.codingas.gateway.application.metadata.dto.ModelMetadataResponse;
 import com.codingas.gateway.application.metadata.dto.ModelMetadataUpdateRequest;
-import com.codingas.gateway.domain.metadata.entity.MetadataSource;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,18 +25,13 @@ public class ModelMetadataController {
      * 分页查询模型元数据
      */
     @GetMapping
-    public ResponseEntity<Page<ModelMetadataResponse>> list(
+    public ResponseEntity<List<ModelMetadataResponse>> list(
             @RequestParam(required = false) String providerId,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String source,
-            @PageableDefault(size = 20) Pageable pageable) {
-        Page<ModelMetadataResponse> page = modelMetadataService.listModelMetadata(
-            providerId,
-            keyword,
-            source != null ? MetadataSource.valueOf(source) : null,
-            pageable
+            @RequestParam(required = false) String keyword) {
+        List<ModelMetadataResponse> list = modelMetadataService.listModelMetadata(
+            keyword, providerId
         );
-        return ResponseEntity.ok(page);
+        return ResponseEntity.ok(list);
     }
 
     /**

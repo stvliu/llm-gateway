@@ -6,13 +6,15 @@ import com.codingas.gateway.application.metadata.dto.ModelMetadataUpdateRequest;
 import com.codingas.gateway.domain.metadata.entity.MetadataSource;
 import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -24,16 +26,20 @@ import java.util.List;
 public class ModelMetadataService {
 
     private final ModelMetadataGateway modelMetadataGateway;
+    private final ModelSpecGateway modelSpecGateway;
 
     /**
      * 分页查询模型元数据
      */
-    public Page<ModelMetadataResponse> listModelMetadata(
-            String providerId, String keyword,
-            MetadataSource source, Pageable pageable) {
-        Page<ModelMetadata> page = modelMetadataGateway.findByConditions(
-            providerId, keyword, source, pageable);
-        return page.map(this::toResponse);
+    public List<ModelMetadataResponse> listModelMetadata(String keyword, String providerId) {
+        List<ModelMetadata> metadatas;
+        if (providerId != null && !providerId.isBlank()) {
+            metadatas = modelMetadataGateway.findByProviderId(providerId);
+        } else {
+            // 无过滤条件时使用 findByConditions 传入 null 参数
+            metadatas = modelMetadataGateway.findByConditions(null, null, null, org.springframework.data.domain.Pageable.unpaged()).getContent();
+        }
+        return metadatas.stream().map(this::toResponse).toList();
     }
 
     /**
@@ -46,7 +52,7 @@ public class ModelMetadataService {
     }
 
     /**
-     * 查询某供应商的所有模型
+     * 根据供应商标识查询模型元数据
      */
     public List<ModelMetadataResponse> listByProviderId(String providerId) {
         return modelMetadataGateway.findByProviderId(providerId).stream()
@@ -59,20 +65,19 @@ public class ModelMetadataService {
      */
     @Transactional
     public ModelMetadataResponse createModelMetadata(ModelMetadataCreateRequest request) {
-        if (modelMetadataGateway.existsByProviderIdAndModelId(
-                request.providerId(), request.providerModelId())) {
-            throw new IllegalArgumentException(
-                "模型元数据已存在: " + request.providerId() + "/" + request.providerModelId());
-        }
         ModelMetadata metadata = new ModelMetadata(
-                request.providerId(),
-                request.providerModelId(),
-                request.displayName(),
-                MetadataSource.MANUAL
+            request.providerId(),
+            request.providerModelId(),
+            request.displayName(),
+            MetadataSource.MANUAL
         );
-        applyCreateRequest(metadata, request);
+        metadata.setContextWindow(request.contextWindow());
+        metadata.setCapabilities(request.capabilities());
+        metadata.setCreatedAt(Instant.now());
+        metadata.setUpdatedAt(Instant.now());
+
         ModelMetadata saved = modelMetadataGateway.save(metadata);
-        log.info("Created model metadata: {}/{}", saved.getProviderId(), saved.getProviderModelId());
+        log.info("Created model metadata: providerId={}, modelId={}", saved.getProviderId(), saved.getProviderModelId());
         return toResponse(saved);
     }
 
@@ -81,39 +86,17 @@ public class ModelMetadataService {
      */
     @Transactional
     public ModelMetadataResponse updateModelMetadata(Long id, ModelMetadataUpdateRequest request) {
-        ModelMetadata existing = modelMetadataGateway.findById(id)
+        ModelMetadata metadata = modelMetadataGateway.findById(id)
             .orElseThrow(() -> new IllegalArgumentException("模型元数据不存在: id=" + id));
 
-        applyUpdateRequest(existing, request);
-
-        ModelMetadata saved = modelMetadataGateway.save(existing);
-        log.info("Updated model metadata: {}/{}", saved.getProviderId(), saved.getProviderModelId());
-        return toResponse(saved);
-    }
-
-    private void applyCreateRequest(ModelMetadata metadata, ModelMetadataCreateRequest request) {
-        if (request.modelFamily() != null) metadata.setModelFamily(request.modelFamily());
-        if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
-        if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
-        if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
-        if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
-        if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
-        if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
-        if (request.modalities() != null) metadata.setModalities(request.modalities());
-        if (request.capabilities() != null) metadata.setCapabilities(request.capabilities());
-    }
-
-    private void applyUpdateRequest(ModelMetadata metadata, ModelMetadataUpdateRequest request) {
         if (request.displayName() != null) metadata.setDisplayName(request.displayName());
-        if (request.modelFamily() != null) metadata.setModelFamily(request.modelFamily());
         if (request.contextWindow() != null) metadata.setContextWindow(request.contextWindow());
-        if (request.maxInputTokens() != null) metadata.setMaxInputTokens(request.maxInputTokens());
-        if (request.maxOutputTokens() != null) metadata.setMaxOutputTokens(request.maxOutputTokens());
-        if (request.knowledgeCutoff() != null) metadata.setKnowledgeCutoff(request.knowledgeCutoff());
-        if (request.releaseDate() != null) metadata.setReleaseDate(request.releaseDate());
-        if (request.openWeights() != null) metadata.setOpenWeights(request.openWeights());
-        if (request.modalities() != null) metadata.setModalities(request.modalities());
         if (request.capabilities() != null) metadata.setCapabilities(request.capabilities());
+        metadata.setUpdatedAt(Instant.now());
+
+        ModelMetadata saved = modelMetadataGateway.save(metadata);
+        log.info("Updated model metadata: id={}", saved.getId());
+        return toResponse(saved);
     }
 
     /**
@@ -125,24 +108,34 @@ public class ModelMetadataService {
         log.info("Deleted model metadata: id={}", id);
     }
 
+    /**
+     * 应用模型元数据：创建 ModelSpec
+     */
+    @Transactional
+    public ModelSpec applyMetadata(Long id) {
+        ModelMetadata metadata = modelMetadataGateway.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("模型元数据不存在: id=" + id));
+
+        ModelSpec modelSpec = new ModelSpec();
+        modelSpec.setProviderModelId(metadata.getProviderModelId());
+        modelSpec.setDisplayName(metadata.getDisplayName());
+        modelSpec.setContextWindow(metadata.getContextWindow());
+        modelSpec.setCapabilities(metadata.getCapabilities());
+        modelSpec.setState(ModelSpecState.ACTIVE);
+
+        ModelSpec saved = modelSpecGateway.save(modelSpec);
+        log.info("Applied model metadata: modelSpecId={}, providerModelId={}", saved.getId(), saved.getProviderModelId());
+        return saved;
+    }
+
     private ModelMetadataResponse toResponse(ModelMetadata metadata) {
         return ModelMetadataResponse.builder()
             .id(metadata.getId())
             .providerId(metadata.getProviderId())
             .providerModelId(metadata.getProviderModelId())
             .displayName(metadata.getDisplayName())
-            .modelFamily(metadata.getModelFamily())
             .contextWindow(metadata.getContextWindow())
-            .maxInputTokens(metadata.getMaxInputTokens())
-            .maxOutputTokens(metadata.getMaxOutputTokens())
-            .knowledgeCutoff(metadata.getKnowledgeCutoff())
-            .releaseDate(metadata.getReleaseDate())
-            .openWeights(metadata.getOpenWeights())
-            .modalities(metadata.getModalities())
             .capabilities(metadata.getCapabilities())
-            .source(metadata.getSource() != null ? metadata.getSource().name() : null)
-            .sourceSyncedAt(metadata.getSourceSyncedAt())
-            .state(metadata.getState() != null ? metadata.getState().name() : null)
             .createdAt(metadata.getCreatedAt())
             .updatedAt(metadata.getUpdatedAt())
             .build();

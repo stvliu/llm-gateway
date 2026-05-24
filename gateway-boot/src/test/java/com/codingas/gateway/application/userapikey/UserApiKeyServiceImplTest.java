@@ -1,8 +1,8 @@
 package com.codingas.gateway.application.userapikey;
 
 import com.codingas.gateway.application.userapikey.dto.*;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
@@ -36,7 +36,7 @@ class UserApiKeyServiceImplTest {
     private UserApiKeyGateway userApiKeyGateway;
 
     @Mock
-    private ProductGateway productGateway;
+    private ChannelGateway channelGateway;
 
     @Mock
     private UserApiKeyGenerator userApiKeyGenerator;
@@ -227,7 +227,7 @@ class UserApiKeyServiceImplTest {
         UserApiKey apiKey = new UserApiKey();
         apiKey.setId(API_KEY_ID);
         apiKey.setUserId(USER_ID);
-        apiKey.setProductIds(List.of(PRODUCT_ID));
+        apiKey.setChannelIds(List.of(PRODUCT_ID));
         apiKey.setKeyPlain("sk-abc1xxxxx");
         apiKey.setKeyPrefix("sk-abc1");
         apiKey.setName("test-key");
@@ -237,11 +237,11 @@ class UserApiKeyServiceImplTest {
         return apiKey;
     }
 
-    /** Mock ProductGateway.findByIds 用于 toProductBriefs 转换 */
+    /** Mock ChannelGateway.findByIds 用于 toProductBriefs 转换 */
     private void mockProductBriefs() {
-        Product product = new Product();
+        Channel product = new Channel();
         product.setId(PRODUCT_ID);
         product.setName("Test Product");
-        when(productGateway.findByIds(List.of(PRODUCT_ID))).thenReturn(List.of(product));
+        when(channelGateway.findByIds(List.of(PRODUCT_ID))).thenReturn(List.of(product));
     }
 }

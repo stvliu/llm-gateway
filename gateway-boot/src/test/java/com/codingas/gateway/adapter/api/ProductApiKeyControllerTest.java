@@ -6,7 +6,7 @@ import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateRes
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyDetailResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyUpdateRequest;
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -36,7 +36,7 @@ class ProductApiKeyControllerTest {
 
     private static final Long PRODUCT_ID = 100L;
 
-    private ProductApiKeyResponse createResponse(Long id, ProductApiKeyState state) {
+    private ProductApiKeyResponse createResponse(Long id, CredentialState state) {
         return new ProductApiKeyResponse(
                 id, PRODUCT_ID, "sk-test-", "test-key", "test key",
                 1, 1, state, Instant.now(), Instant.now()
@@ -46,7 +46,7 @@ class ProductApiKeyControllerTest {
     @Test
     void list_success() {
         when(productApiKeyService.listByProductId(PRODUCT_ID))
-                .thenReturn(List.of(createResponse(1L, ProductApiKeyState.ACTIVE)));
+                .thenReturn(List.of(createResponse(1L, CredentialState.ACTIVE)));
 
         List<ProductApiKeyResponse> result = controller.list(PRODUCT_ID);
 
@@ -58,7 +58,7 @@ class ProductApiKeyControllerTest {
         ProductApiKeyDetailResponse detailResponse = new ProductApiKeyDetailResponse(
                 1L, PRODUCT_ID, "sk-test-", "sk-test-api-key-12345",
                 "test-key", "test key",
-                1, 1, ProductApiKeyState.ACTIVE, Instant.now(), Instant.now()
+                1, 1, CredentialState.ACTIVE, Instant.now(), Instant.now()
         );
         when(productApiKeyService.getDetailById(PRODUCT_ID, 1L)).thenReturn(detailResponse);
 
@@ -90,7 +90,7 @@ class ProductApiKeyControllerTest {
                 10, 5, null, null
         );
         when(productApiKeyService.update(eq(PRODUCT_ID), eq(1L), any(ProductApiKeyUpdateRequest.class)))
-                .thenReturn(createResponse(1L, ProductApiKeyState.ACTIVE));
+                .thenReturn(createResponse(1L, CredentialState.ACTIVE));
 
         ProductApiKeyResponse result = controller.update(PRODUCT_ID, 1L, request);
 

@@ -35,8 +35,8 @@ public class ExperienceController {
      */
     @PostMapping(value = "/chat", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter chatStream(@Valid @RequestBody ExperienceChatRequest request) {
-        log.info("Experience chat request: productId={}, model={}",
-            request.getProductId(), request.getModel());
+        log.info("Experience chat request: channelId={}, model={}",
+            request.getChannelId(), request.getModel());
         return modelExperienceService.chatStream(request);
     }
 

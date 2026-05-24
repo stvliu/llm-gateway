@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.product.ProductService;
 import com.codingas.gateway.application.product.dto.ProductRequest;
 import com.codingas.gateway.application.product.dto.ProductResponse;
-import com.codingas.gateway.domain.product.enums.ProductType;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -48,8 +48,8 @@ public class ProductController {
             @RequestParam(required = false) String productType) {
         List<ProductResponse> responses;
         if (productType != null) {
-            responses = productService.getByProviderIdAndType(
-                providerId, ProductType.fromCode(productType));
+            responses = productService.getByProviderIdAndBillingMode(
+                providerId, BillingMode.fromCode(productType));
         } else {
             responses = productService.getByProviderId(providerId);
         }

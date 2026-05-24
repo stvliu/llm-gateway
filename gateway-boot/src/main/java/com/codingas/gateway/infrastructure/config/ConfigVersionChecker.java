@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * <p>定时检查数据库配置版本，作为事件机制的兜底。</p>
  * <p>轮询间隔：30 秒</p>
  *
- * <p>注意：已迁移到新架构，使用 ProductApiKeyGateway 替代 ProviderApiKeyGateway。</p>
+ * <p>注意：已迁移到新架构，使用 ChannelCredentialGateway 替代 ProductApiKeyGateway。</p>
  */
 @Component
 @Slf4j
@@ -24,14 +24,14 @@ public class ConfigVersionChecker {
     private static final long CHECK_INTERVAL_SECONDS = 30;
 
     private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
+    private final ModelSpecGateway modelSpecGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final ConfigCacheService cacheService;
 
     // 记录上次检查的版本
     private volatile long lastProviderVersion = 0;
     private volatile long lastModelVersion = 0;
-    private volatile long lastApiKeyVersion = 0;
+    private volatile long lastCredentialVersion = 0;
 
     /**
      * 初始化版本号
@@ -40,10 +40,10 @@ public class ConfigVersionChecker {
      */
     public void initVersions() {
         lastProviderVersion = providerGateway.getMaxVersion();
-        lastModelVersion = modelGateway.getMaxVersion();
-        lastApiKeyVersion = productApiKeyGateway.getMaxVersion();
-        log.info("Version checker initialized: provider={}, model={}, apiKey={}",
-            lastProviderVersion, lastModelVersion, lastApiKeyVersion);
+        lastModelVersion = modelSpecGateway.getMaxVersion();
+        lastCredentialVersion = channelCredentialGateway.getMaxVersion();
+        log.info("Version checker initialized: provider={}, model={}, credential={}",
+            lastProviderVersion, lastModelVersion, lastCredentialVersion);
     }
 
     /**
@@ -62,19 +62,19 @@ public class ConfigVersionChecker {
         }
 
         // 检查 Model 版本
-        long currentModelVersion = modelGateway.getMaxVersion();
+        long currentModelVersion = modelSpecGateway.getMaxVersion();
         if (currentModelVersion > lastModelVersion) {
             log.info("Model version changed: {} -> {}", lastModelVersion, currentModelVersion);
             cacheService.refreshModels();
             lastModelVersion = currentModelVersion;
         }
 
-        // 检查 API Key 版本
-        long currentApiKeyVersion = productApiKeyGateway.getMaxVersion();
-        if (currentApiKeyVersion > lastApiKeyVersion) {
-            log.info("API Key version changed: {} -> {}", lastApiKeyVersion, currentApiKeyVersion);
+        // 检查 Credential 版本
+        long currentCredentialVersion = channelCredentialGateway.getMaxVersion();
+        if (currentCredentialVersion > lastCredentialVersion) {
+            log.info("Credential version changed: {} -> {}", lastCredentialVersion, currentCredentialVersion);
             cacheService.refreshApiKeys();
-            lastApiKeyVersion = currentApiKeyVersion;
+            lastCredentialVersion = currentCredentialVersion;
         }
     }
 }

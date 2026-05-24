@@ -12,7 +12,7 @@ public record UserApiKeyDetailResponse(
         Long id,
         Long userId,
         List<Long> productIds,
-        List<ProductBrief> products,
+        List<ChannelBrief> channels,
         String keyPrefix,
         String keyPlain,
         String name,

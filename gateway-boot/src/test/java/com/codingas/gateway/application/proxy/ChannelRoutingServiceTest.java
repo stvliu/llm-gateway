@@ -1,6 +1,8 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.proxy.entity.RoutingContext;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,16 +40,14 @@ class ChannelRoutingServiceTest {
         @DisplayName("新架构认证结果走 ProductRoutingService")
         void resolve_newArchitecture_usesProductRouting() {
             Identity identity = Identity.of(1L, "USER", 101L);
-            RoutingContext expected = RoutingContext.builder()
-                .productId(200L)
-                .model("gpt-4o")
-                .build();
+            RoutingContext expected = new RoutingContext(
+                200L, "https://api.openai.com", Protocol.OPENAI, "sk-test-key", RoutingStrategy.WEIGHTED);
 
             when(productRoutingService.resolve(eq(101L), eq("gpt-4o"), eq("openai"))).thenReturn(expected);
 
             RoutingContext ctx = channelRoutingService.resolve(identity, "gpt-4o", "openai");
 
-            assertThat(ctx.getProductId()).isEqualTo(200L);
+            assertThat(ctx.channelId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "gpt-4o", "openai");
         }
 
@@ -55,16 +55,14 @@ class ChannelRoutingServiceTest {
         @DisplayName("新架构认证结果使用 anthropic 协议")
         void resolve_newArchitecture_anthropicProtocol_usesAnthropicProtocol() {
             Identity identity = Identity.of(1L, "USER", 101L);
-            RoutingContext expected = RoutingContext.builder()
-                .productId(200L)
-                .model("claude-3-opus")
-                .build();
+            RoutingContext expected = new RoutingContext(
+                200L, "https://api.anthropic.com", Protocol.ANTHROPIC, "sk-ant-key", RoutingStrategy.WEIGHTED);
 
             when(productRoutingService.resolve(eq(101L), eq("claude-3-opus"), eq("anthropic"))).thenReturn(expected);
 
             RoutingContext ctx = channelRoutingService.resolve(identity, "claude-3-opus", "anthropic");
 
-            assertThat(ctx.getProductId()).isEqualTo(200L);
+            assertThat(ctx.channelId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "claude-3-opus", "anthropic");
         }
 
@@ -72,16 +70,14 @@ class ChannelRoutingServiceTest {
         @DisplayName("协议为 null 时传递给 ProductRoutingService")
         void resolve_nullProtocol_passesToProductRouting() {
             Identity identity = Identity.of(1L, "USER", 101L);
-            RoutingContext expected = RoutingContext.builder()
-                .productId(200L)
-                .model("gpt-4o")
-                .build();
+            RoutingContext expected = new RoutingContext(
+                200L, "https://api.openai.com", Protocol.OPENAI, "sk-test-key", null);
 
             when(productRoutingService.resolve(eq(101L), eq("gpt-4o"), eq((String) null))).thenReturn(expected);
 
             RoutingContext ctx = channelRoutingService.resolve(identity, "gpt-4o", null);
 
-            assertThat(ctx.getProductId()).isEqualTo(200L);
+            assertThat(ctx.channelId()).isEqualTo(200L);
             verify(productRoutingService).resolve(101L, "gpt-4o", null);
         }
     }

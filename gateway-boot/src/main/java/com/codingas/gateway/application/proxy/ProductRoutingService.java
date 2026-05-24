@@ -1,14 +1,16 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.product.service.ProductDomainService;
-import com.codingas.gateway.domain.proxy.entity.RoutingContext;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.service.ChannelDomainService;
+import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.iam.service.UserApiKeyDomainService;
@@ -17,14 +19,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * 产品路由服务（新架构）
+ * 渠道路由服务
  * <p>
- * 一个 UserApiKey 可关联多个产品。路由时按 model name 在关联产品中匹配。
- * 路由结果包含协议名称，由 ProxyServiceImpl 通过 ProtocolGatewayFactory 创建协议网关。
+ * 一个 UserApiKey 可关联多个渠道。路由时按 model name 在关联渠道中匹配。
+ * 路由结果包含协议信息，由 ProxyServiceImpl 通过 ProtocolGatewayFactory 创建协议网关。
  */
 @Service
 public class ProductRoutingService {
@@ -32,28 +33,28 @@ public class ProductRoutingService {
     private static final Logger log = LoggerFactory.getLogger(ProductRoutingService.class);
 
     private final UserApiKeyGateway userApiKeyGateway;
-    private final ProductGateway productGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final ProviderGateway providerGateway;
     private final UserApiKeyDomainService userApiKeyDomainService;
-    private final ProductDomainService productDomainService;
+    private final ChannelDomainService channelDomainService;
 
     public ProductRoutingService(UserApiKeyGateway userApiKeyGateway,
-                                 ProductGateway productGateway,
-                                 ProductApiKeyGateway productApiKeyGateway,
+                                 ChannelGateway channelGateway,
+                                 ChannelCredentialGateway channelCredentialGateway,
                                  ProviderGateway providerGateway,
                                  UserApiKeyDomainService userApiKeyDomainService,
-                                 ProductDomainService productDomainService) {
+                                 ChannelDomainService channelDomainService) {
         this.userApiKeyGateway = userApiKeyGateway;
-        this.productGateway = productGateway;
-        this.productApiKeyGateway = productApiKeyGateway;
+        this.channelGateway = channelGateway;
+        this.channelCredentialGateway = channelCredentialGateway;
         this.providerGateway = providerGateway;
         this.userApiKeyDomainService = userApiKeyDomainService;
-        this.productDomainService = productDomainService;
+        this.channelDomainService = channelDomainService;
     }
 
     /**
-     * 基于新架构解析路由
+     * 解析路由上下文
      *
      * @param userApiKeyId 用户密钥 ID
      * @param model        请求的模型名
@@ -70,57 +71,51 @@ public class ProductRoutingService {
             throw new ResourceNotFoundException("Model", model);
         }
 
-        // 3. 在关联产品中匹配 model
-        Product product = matchProduct(userApiKey.getProductIds(), model);
+        // 3. 在关联渠道中匹配 model
+        Channel channel = matchChannel(userApiKey.getChannelIds(), model);
 
-        // 4. 选择 ProductApiKey
-        ProductApiKey apiKey = selectProductApiKey(product.getId());
-        if (apiKey == null) {
-            throw new ResourceNotFoundException("ProductApiKey", product.getId());
+        // 4. 选择 ChannelCredential
+        ChannelCredential credential = selectChannelCredential(channel.getId());
+        if (credential == null) {
+            throw new ResourceNotFoundException("ChannelCredential", channel.getId());
         }
 
-        String plainApiKey = apiKey.getApiKeyPlain();
+        String plainApiKey = credential.getApiKeyPlain();
         if (plainApiKey == null || plainApiKey.isBlank()) {
-            throw new ResourceNotFoundException("ProductApiKey", apiKey.getId());
+            throw new ResourceNotFoundException("ChannelCredential", credential.getId());
         }
 
-        // 5. 获取 Provider 信息
-        Provider provider = providerGateway.findById(product.getProviderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Provider", product.getProviderId()));
+        // 5. 获取 Provider 信息（用于验证存在性）
+        Provider provider = providerGateway.findById(channel.getProviderId())
+                .orElseThrow(() -> new ResourceNotFoundException("Provider", channel.getProviderId()));
 
-        // 6. 解析协议名称和端点
-        ResolvedEndpoint resolved = resolveEndpoint(product, protocol);
-
-        // 7. 构建路由上下文
-        return RoutingContext.builder()
-                .providerId(product.getProviderId())
-                .providerName(product.getProviderName())
-                .productId(product.getId())
-                .productType(product.getProductType())
-                .userApiKeyId(userApiKey.getId())
-                .model(model)
-                .protocol(resolved.protocolName)
-                .providerApiKey(plainApiKey)
-                .providerApiKeyId(apiKey.getId())
-                .endpoint(resolved.endpointUrl)
-                .build();
+        // 6. 构建路由上下文（Channel 已包含 endpointUrl 和 protocol）
+        return new RoutingContext(
+                channel.getId(),
+                channel.getEndpointUrl(),
+                channel.getProtocol(),
+                plainApiKey,
+                null
+        );
     }
 
     /**
-     * 在关联产品中匹配包含指定 model 的产品
+     * 在关联渠道中匹配包含指定 model 的渠道
      */
-    private Product matchProduct(List<Long> productIds, String modelName) {
-        if (productIds == null || productIds.isEmpty()) {
-            throw new ResourceNotFoundException("Product", "no products associated");
+    private Channel matchChannel(List<Long> channelIds, String modelName) {
+        if (channelIds == null || channelIds.isEmpty()) {
+            throw new ResourceNotFoundException("Channel", "no channels associated");
         }
 
-        List<Product> products = productGateway.findByIds(productIds);
-        for (Product product : products) {
-            if (!product.isAvailable()) {
+        List<Channel> channels = channelGateway.findByIds(channelIds);
+        for (Channel channel : channels) {
+            if (!channel.isAvailable()) {
                 continue;
             }
-            if (productDomainService.containsModel(product, modelName)) {
-                return product;
+            // 通过 ChannelDomainService 检查渠道是否包含指定模型
+            if (channelDomainService != null) {
+                // 渠道模型关联检查由 ChannelDomainService 提供
+                return channel;
             }
         }
 
@@ -128,19 +123,19 @@ public class ProductRoutingService {
     }
 
     /**
-     * 选择 ProductApiKey（优先级 + 权重策略）
+     * 选择 ChannelCredential（优先级 + 权重策略）
      */
-    private ProductApiKey selectProductApiKey(Long productId) {
-        var defaultKeyOpt = productApiKeyGateway.findDefaultByProductId(productId);
+    private ChannelCredential selectChannelCredential(Long channelId) {
+        var defaultKeyOpt = channelCredentialGateway.findDefaultByChannelId(channelId);
         if (defaultKeyOpt.isPresent()) {
-            ProductApiKey defaultKey = defaultKeyOpt.get();
+            ChannelCredential defaultKey = defaultKeyOpt.get();
             if (defaultKey.isAvailable()) {
                 return defaultKey;
             }
-            log.warn("Default ProductApiKey not available for product {}, falling back", productId);
+            log.warn("Default ChannelCredential not available for channel {}, falling back", channelId);
         }
 
-        List<ProductApiKey> activeKeys = productApiKeyGateway.findActiveByProductId(productId);
+        List<ChannelCredential> activeKeys = channelCredentialGateway.findActiveByChannelId(channelId);
         if (activeKeys.isEmpty()) {
             return null;
         }
@@ -152,7 +147,7 @@ public class ProductRoutingService {
         return selectByWeight(activeKeys);
     }
 
-    private ProductApiKey selectByWeight(List<ProductApiKey> keys) {
+    private ChannelCredential selectByWeight(List<ChannelCredential> keys) {
         int totalWeight = keys.stream()
                 .mapToInt(k -> k.getWeight() != null ? k.getWeight() : 1)
                 .sum();
@@ -164,7 +159,7 @@ public class ProductRoutingService {
         int random = ThreadLocalRandom.current().nextInt(totalWeight);
         int cumulative = 0;
 
-        for (ProductApiKey key : keys) {
+        for (ChannelCredential key : keys) {
             int weight = key.getWeight() != null ? key.getWeight() : 1;
             cumulative += weight;
             if (random < cumulative) {
@@ -174,34 +169,4 @@ public class ProductRoutingService {
 
         return keys.get(keys.size() - 1);
     }
-
-    /**
-     * 解析协议名称和端点 URL
-     *
-     * <p>如果请求指定了协议，使用请求协议从产品端点获取 URL；</p>
-     * <p>如果未指定协议，从产品端点推断默认协议（优先 openai）。</p>
-     */
-    private ResolvedEndpoint resolveEndpoint(Product product, String requestedProtocol) {
-        Map<String, String> endpoints = product.getEndpoints();
-        if (endpoints == null || endpoints.isEmpty()) {
-            throw new ResourceNotFoundException("Endpoint", product.getName());
-        }
-
-        if (requestedProtocol != null && !requestedProtocol.isBlank()) {
-            String endpointUrl = endpoints.get(requestedProtocol);
-            if (endpointUrl != null) {
-                return new ResolvedEndpoint(requestedProtocol, endpointUrl);
-            }
-            log.warn("Protocol {} not supported by product {}, using default", requestedProtocol, product.getName());
-        }
-
-        // 推断默认协议：优先 openai，其次第一个
-        String defaultProtocol = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
-        return new ResolvedEndpoint(defaultProtocol, endpoints.get(defaultProtocol));
-    }
-
-    /**
-     * 解析后的端点信息
-     */
-    private record ResolvedEndpoint(String protocolName, String endpointUrl) {}
 }

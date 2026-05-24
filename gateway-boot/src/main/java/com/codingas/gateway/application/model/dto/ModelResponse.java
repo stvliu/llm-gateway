@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.model.dto;
 
-import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
 import lombok.Data;
 
 import java.time.Instant;
@@ -19,7 +19,7 @@ public class ModelResponse {
     private String displayName;
     private Integer contextWindow;
     private Map<String, Boolean> capabilities;
-    private ModelState state;
+    private ModelSpecState state;
 
     /**
      * 渠道优先级（用于 FAILOVER 策略，值越小越优先）

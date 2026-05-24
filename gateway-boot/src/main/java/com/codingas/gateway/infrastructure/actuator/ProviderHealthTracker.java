@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

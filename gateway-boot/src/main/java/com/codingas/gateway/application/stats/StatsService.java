@@ -1,8 +1,8 @@
 package com.codingas.gateway.application.stats;
 
 import com.codingas.gateway.application.stats.dto.StatsResponse;
-import com.codingas.gateway.infrastructure.model.gateway.database.ModelRepository;
-import com.codingas.gateway.infrastructure.model.gateway.database.ProviderRepository;
+import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ModelSpecRepository;
+import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ProviderRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StatsService {
 
     private final ProviderRepository providerRepository;
-    private final ModelRepository modelRepository;
+    private final ModelSpecRepository modelSpecRepository;
     private final UserRepository userRepository;
 
     /**
@@ -25,7 +25,7 @@ public class StatsService {
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
         long providerCount = providerRepository.count();
-        long modelCount = modelRepository.count();
+        long modelCount = modelSpecRepository.count();
         long userCount = userRepository.count();
 
         // TODO: 接入真实的请求统计和 Token 用量数据

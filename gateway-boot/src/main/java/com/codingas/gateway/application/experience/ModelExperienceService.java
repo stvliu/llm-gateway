@@ -3,19 +3,21 @@ package com.codingas.gateway.application.experience;
 import com.codingas.gateway.application.experience.dto.ExperienceChatEvent;
 import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
 import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
-import com.codingas.gateway.domain.proxy.protocol.OpenAIChatRequest;
-import com.codingas.gateway.domain.proxy.protocol.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.proxy.protocol.ProtocolRequest;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
-import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.StreamCallback;
+import com.codingas.gateway.domain.supply.protocol.OpenAIChatRequest;
+import com.codingas.gateway.domain.supply.protocol.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.supply.protocol.ProtocolRequest;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -36,11 +38,9 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>提供流式聊天体验功能，支持两种模式：</p>
  * <ol>
- *   <li>使用已保存配置：传入 productId，可选 apiKeyId</li>
+ *   <li>使用已保存配置：传入 channelId，可选 credentialId</li>
  *   <li>临时配置：传入 protocolName(协议名称), apiKey, baseUrl(可选)</li>
  * </ol>
- *
- * <p>注意：已迁移到新架构，使用 ProductApiKey 替代 ProviderApiKey。</p>
  */
 @Slf4j
 @Service
@@ -48,23 +48,23 @@ public class ModelExperienceService {
 
     private final ProtocolGatewayFactory protocolGatewayFactory;
     private final ProviderGateway providerGateway;
-    private final ProductGateway productGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
-    private final ModelGateway modelGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ModelSpecGateway modelSpecGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper;
 
     public ModelExperienceService(ProtocolGatewayFactory protocolGatewayFactory,
                                   ProviderGateway providerGateway,
-                                  ProductGateway productGateway,
-                                  ProductApiKeyGateway productApiKeyGateway,
-                                  ModelGateway modelGateway,
+                                  ChannelGateway channelGateway,
+                                  ChannelCredentialGateway channelCredentialGateway,
+                                  ModelSpecGateway modelSpecGateway,
                                   ObjectMapper objectMapper) {
         this.protocolGatewayFactory = protocolGatewayFactory;
         this.providerGateway = providerGateway;
-        this.productGateway = productGateway;
-        this.productApiKeyGateway = productApiKeyGateway;
-        this.modelGateway = modelGateway;
+        this.channelGateway = channelGateway;
+        this.channelCredentialGateway = channelCredentialGateway;
+        this.modelSpecGateway = modelSpecGateway;
         this.objectMapper = objectMapper;
     }
 
@@ -89,8 +89,8 @@ public class ModelExperienceService {
      * @return 模型列表
      */
     public List<ExperienceModelResponse> getModelsByProviderId(Long providerId) {
-        return modelGateway.findByProviderId(providerId).stream()
-            .filter(Model::isAvailable)
+        return modelSpecGateway.findByProviderId(providerId).stream()
+            .filter(ModelSpec::isAvailable)
             .map(model -> new ExperienceModelResponse(
                 model.getId(),
                 model.getProviderModelId(),
@@ -112,7 +112,7 @@ public class ModelExperienceService {
             try {
                 emitter.send(SseEmitter.event()
                     .name("ERROR")
-                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 productId，临时配置时需提供 protocolName 和 apiKey")));
+                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 channelId，临时配置时需提供 protocolName 和 apiKey")));
                 emitter.complete();
             } catch (IOException e) {
                 emitter.completeWithError(e);
@@ -257,41 +257,39 @@ public class ModelExperienceService {
      *
      * <p>支持两种模式：</p>
      * <ol>
-     *   <li>使用已保存配置：从数据库读取 Product 和 ProductApiKey</li>
+     *   <li>使用已保存配置：从数据库读取 Channel 和 ChannelCredential</li>
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
     private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
         if (request.useSavedConfig()) {
-            // 从数据库读取配置（新架构：使用 productId）
-            var product = productGateway.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("产品不存在: " + request.getProductId()));
+            // 从数据库读取配置
+            var channel = channelGateway.findById(request.getChannelId())
+                .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.getChannelId()));
 
-            ProductApiKey apiKey;
-            if (request.getApiKeyId() != null) {
-                apiKey = productApiKeyGateway.findById(request.getApiKeyId())
-                    .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + request.getApiKeyId()));
-                if (!apiKey.getProductId().equals(request.getProductId())) {
-                    throw new IllegalArgumentException("API Key 不属于该产品");
+            ChannelCredential credential;
+            if (request.getCredentialId() != null) {
+                credential = channelCredentialGateway.findById(request.getCredentialId())
+                    .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.getCredentialId()));
+                if (!credential.getChannelId().equals(request.getChannelId())) {
+                    throw new IllegalArgumentException("凭证不属于该渠道");
                 }
             } else {
-                apiKey = productApiKeyGateway.findDefaultByProductId(request.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("产品没有默认 API Key，请指定要使用的 Key"));
+                credential = channelCredentialGateway.findDefaultByChannelId(request.getChannelId())
+                    .orElseThrow(() -> new IllegalArgumentException("渠道没有默认凭证，请指定要使用的凭证"));
             }
 
-            if (!apiKey.isAvailable()) {
-                throw new IllegalArgumentException("API Key 不可用");
+            if (!credential.isAvailable()) {
+                throw new IllegalArgumentException("凭证不可用");
             }
 
-            // 从产品端点获取 baseUrl
-            Map<String, String> endpoints = product.getEndpoints();
-            String baseUrl = endpoints != null ? endpoints.get(request.getProtocolName()) : null;
+            // Channel 已包含 endpointUrl 和 protocol
+            String protocolName = request.getProtocolName() != null ? request.getProtocolName() : channel.getProtocol().name().toLowerCase();
 
-            // 使用已保存配置
             return new ResolvedConfig(
-                request.getProtocolName(),
-                baseUrl,
-                apiKey.getApiKeyPlain()
+                protocolName,
+                channel.getEndpointUrl(),
+                credential.getApiKeyPlain()
             );
         } else {
             // 使用临时配置：baseUrl 可选，由协议网关提供默认值
@@ -314,12 +312,6 @@ public class ModelExperienceService {
 
     /**
      * 从 SSE 数据中提取内容
-     *
-     * <p>支持多种格式：</p>
-     * <ul>
-     *   <li>OpenAI 标准格式：delta.content</li>
-     *   <li>火山引擎推理格式：delta.reasoning_content（当 content 为空时使用）</li>
-     * </ul>
      */
     private String extractContent(String chunk) {
         try {
@@ -338,7 +330,7 @@ public class ModelExperienceService {
                 if (delta.has("reasoning_content") && !delta.get("reasoning_content").isNull()) {
                     String reasoningContent = delta.get("reasoning_content").asText();
                     if (!reasoningContent.isEmpty()) {
-                        return reasoningContent;
+return reasoningContent;
                     }
                 }
             }
@@ -349,24 +341,10 @@ public class ModelExperienceService {
     }
 
     /**
-     * 估算 Token 数量（简单估算：字符数 / 4）
+     * 估算 Token 数量
      */
     private int estimateTokens(String text) {
         if (text == null || text.isEmpty()) return 0;
         return Math.max(1, text.length() / 4);
-    }
-
-    /**
-     * 估算输入 Token 数量
-     */
-    private int estimatePromptTokens(List<Map<String, String>> messages) {
-        int total = 0;
-        for (Map<String, String> msg : messages) {
-            String content = msg.get("content");
-            if (content != null) {
-                total += estimateTokens(content);
-            }
-        }
-        return Math.max(1, total);
     }
 }

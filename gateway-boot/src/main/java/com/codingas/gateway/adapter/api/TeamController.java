@@ -130,7 +130,7 @@ public class TeamController {
         }
 
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
-                targetUserId, request.productIds(), request.name(),
+                targetUserId, request.channelIds(), request.name(),
                 request.models(), request.quotaLimit()
         );
         UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);

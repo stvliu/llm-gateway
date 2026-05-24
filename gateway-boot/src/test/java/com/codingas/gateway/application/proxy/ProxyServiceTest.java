@@ -1,10 +1,11 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.proxy.protocol.*;
-import com.codingas.gateway.domain.proxy.entity.RoutingContext;
-import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.protocol.*;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
+import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -60,25 +61,11 @@ class ProxyServiceTest {
 
         testAuthResult = mock(Identity.class);
 
-        testOpenAIContext = RoutingContext.builder()
-                .providerId(1L)
-                .providerName("openai")
-                .productId(10L)
-                .model("gpt-4")
-                .protocol("openai")
-                .providerApiKey("sk-test-key")
-                .endpoint("https://api.openai.com")
-                .build();
+        testOpenAIContext = new RoutingContext(
+                10L, "https://api.openai.com", Protocol.OPENAI, "sk-test-key", null);
 
-        testAnthropicContext = RoutingContext.builder()
-                .providerId(2L)
-                .providerName("anthropic")
-                .productId(10L)
-                .model("claude-3-5-sonnet-20241022")
-                .protocol("anthropic")
-                .providerApiKey("sk-ant-key")
-                .endpoint("https://api.anthropic.com")
-                .build();
+        testAnthropicContext = new RoutingContext(
+                10L, "https://api.anthropic.com", Protocol.ANTHROPIC, "sk-ant-key", null);
 
         testOpenAIRequest = OpenAIChatRequest.builder()
                 .model("gpt-4")

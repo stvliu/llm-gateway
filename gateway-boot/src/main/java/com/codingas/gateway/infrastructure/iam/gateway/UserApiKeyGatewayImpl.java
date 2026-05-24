@@ -71,13 +71,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setUpdatedAt(Instant.now());
         UserApiKeyDo saved = repository.save(dataObject);
 
-        // 保存产品关联
-        if (userApiKey.getProductIds() != null) {
+        // 保存渠道关联
+        if (userApiKey.getChannelIds() != null) {
             productRepository.deleteByUserApiKeyId(saved.getId());
-            for (Long productId : userApiKey.getProductIds()) {
+            for (Long channelId : userApiKey.getChannelIds()) {
                 UserApiKeyProductDo rel = new UserApiKeyProductDo();
                 rel.setUserApiKeyId(saved.getId());
-                rel.setProductId(productId);
+                rel.setProductId(channelId);
                 productRepository.save(rel);
             }
         }
@@ -110,9 +110,9 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setCreatedAt(dataObject.getCreatedAt());
         entity.setUpdatedAt(dataObject.getUpdatedAt());
 
-        // 加载产品关联
-        List<Long> productIds = productRepository.findProductIdByUserApiKeyId(dataObject.getId());
-        entity.setProductIds(productIds);
+        // 加载渠道关联
+        List<Long> channelIds = productRepository.findProductIdByUserApiKeyId(dataObject.getId());
+        entity.setChannelIds(channelIds);
 
         // 解密返回明文 Key
         if (dataObject.getKeyEncrypted() != null && !dataObject.getKeyEncrypted().isBlank()) {

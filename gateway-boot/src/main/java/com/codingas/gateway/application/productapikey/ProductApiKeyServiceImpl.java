@@ -7,9 +7,9 @@ import com.codingas.gateway.application.productapikey.dto.ProductApiKeyDetailRes
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 产品 API Key 应用服务实现
+ * 渠道凭证应用服务实现
  *
  * <p>加解密由基础设施层（GatewayImpl）处理，Application 层只传递明文 Key。</p>
  */
@@ -28,94 +28,90 @@ import java.util.List;
 @Slf4j
 public class ProductApiKeyServiceImpl implements ProductApiKeyService {
 
-    private final ProductApiKeyGateway productApiKeyGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
 
     @Override
     @Transactional
-    public ProductApiKeyCreateResponse create(Long productId, ProductApiKeyCreateRequest request) {
+    public ProductApiKeyCreateResponse create(Long channelId, ProductApiKeyCreateRequest request) {
         String plainKey = request.apiKey();
         String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
 
-        ProductApiKey apiKey = new ProductApiKey();
-        apiKey.setProductId(productId);
-        apiKey.setApiKeyPlain(plainKey);
-        apiKey.setApiKeyPrefix(keyPrefix);
-        apiKey.setName(request.description());
-        apiKey.setDescription(request.description());
-        apiKey.setWeight(request.weight());
-        apiKey.setPriority(request.priority());
-        apiKey.setState(ProductApiKeyState.ACTIVE);
+        ChannelCredential credential = new ChannelCredential();
+        credential.setChannelId(channelId);
+        credential.setApiKeyPlain(plainKey);
+        credential.setApiKeyPrefix(keyPrefix);
+        credential.setName(request.description());
+        credential.setWeight(request.weight());
+        credential.setPriority(request.priority());
+        credential.setState(CredentialState.ACTIVE);
 
         // GatewayImpl 内部处理加密和哈希
-        ProductApiKey saved = productApiKeyGateway.save(apiKey);
-        log.info("Created ProductApiKey: id={}, productId={}", saved.getId(), saved.getProductId());
+        ChannelCredential saved = channelCredentialGateway.save(credential);
+        log.info("Created ChannelCredential: id={}, channelId={}", saved.getId(), saved.getChannelId());
 
         return new ProductApiKeyCreateResponse(saved.getId(), keyPrefix, plainKey);
     }
 
     @Override
-    public List<ProductApiKeyResponse> listByProductId(Long productId) {
-        return productApiKeyGateway.findByProductId(productId).stream()
+    public List<ProductApiKeyResponse> listByProductId(Long channelId) {
+        return channelCredentialGateway.findByChannelId(channelId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Override
-    public ProductApiKeyResponse getById(Long productId, Long id) {
-        ProductApiKey apiKey = findAndValidateOwnership(productId, id);
-        return toResponse(apiKey);
+    public ProductApiKeyResponse getById(Long channelId, Long id) {
+        ChannelCredential credential = findAndValidateOwnership(channelId, id);
+        return toResponse(credential);
     }
 
     @Override
-    public ProductApiKeyDetailResponse getDetailById(Long productId, Long id) {
-        ProductApiKey apiKey = findAndValidateOwnership(productId, id);
-        return toDetailResponse(apiKey);
+    public ProductApiKeyDetailResponse getDetailById(Long channelId, Long id) {
+        ChannelCredential credential = findAndValidateOwnership(channelId, id);
+        return toDetailResponse(credential);
     }
 
     @Override
     @Transactional
-    public ProductApiKeyResponse update(Long productId, Long id, ProductApiKeyUpdateRequest request) {
-        ProductApiKey apiKey = findAndValidateOwnership(productId, id);
+    public ProductApiKeyResponse update(Long channelId, Long id, ProductApiKeyUpdateRequest request) {
+        ChannelCredential credential = findAndValidateOwnership(channelId, id);
 
-        if (request.description() != null) {
-            apiKey.setDescription(request.description());
-        }
         if (request.weight() != null) {
-            apiKey.setWeight(request.weight());
+            credential.setWeight(request.weight());
         }
         if (request.priority() != null) {
-            apiKey.setPriority(request.priority());
+            credential.setPriority(request.priority());
         }
         if (request.state() != null) {
-            apiKey.setState(request.state());
+            credential.setState(request.state());
         }
 
-        ProductApiKey saved = productApiKeyGateway.save(apiKey);
-        log.info("Updated ProductApiKey: id={}", saved.getId());
+        ChannelCredential saved = channelCredentialGateway.save(credential);
+        log.info("Updated ChannelCredential: id={}", saved.getId());
 
         return toResponse(saved);
     }
 
     @Override
     @Transactional
-    public void delete(Long productId, Long id) {
-        findAndValidateOwnership(productId, id);
-        productApiKeyGateway.deleteById(id);
-        log.info("Deleted ProductApiKey: id={}", id);
+    public void delete(Long channelId, Long id) {
+        findAndValidateOwnership(channelId, id);
+        channelCredentialGateway.deleteById(id);
+        log.info("Deleted ChannelCredential: id={}", id);
     }
 
     @Override
-    public ApiKeyTestResponse testApiKey(Long productId, Long id) {
+    public ApiKeyTestResponse testApiKey(Long channelId, Long id) {
         // 验证归属关系
-        ProductApiKey apiKey = findAndValidateOwnership(productId, id);
+        ChannelCredential credential = findAndValidateOwnership(channelId, id);
 
         // TODO: 实现真实的 API Key 测试逻辑
         // 1. 获取 API Key 明文
-        // 2. 获取产品端点配置
+        // 2. 获取渠道端点配置
         // 3. 发送测试请求
         // 4. 返回测试结果
 
-        log.info("Testing ProductApiKey: id={}, productId={}", id, productId);
+        log.info("Testing ChannelCredential: id={}, channelId={}", id, channelId);
 
         return ApiKeyTestResponse.builder()
                 .success(true)
@@ -129,43 +125,43 @@ public class ProductApiKeyServiceImpl implements ProductApiKeyService {
     /**
      * 验证归属关系并返回实体
      */
-    private ProductApiKey findAndValidateOwnership(Long productId, Long id) {
-        ProductApiKey apiKey = productApiKeyGateway.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("ProductApiKey", id));
-        if (!apiKey.getProductId().equals(productId)) {
-            throw new ResourceNotFoundException("ProductApiKey", id);
+    private ChannelCredential findAndValidateOwnership(Long channelId, Long id) {
+        ChannelCredential credential = channelCredentialGateway.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ChannelCredential", id));
+        if (!credential.getChannelId().equals(channelId)) {
+            throw new ResourceNotFoundException("ChannelCredential", id);
         }
-        return apiKey;
+        return credential;
     }
 
-    private ProductApiKeyResponse toResponse(ProductApiKey apiKey) {
+    private ProductApiKeyResponse toResponse(ChannelCredential credential) {
         return new ProductApiKeyResponse(
-                apiKey.getId(),
-                apiKey.getProductId(),
-                apiKey.getApiKeyPrefix(),
-                apiKey.getName(),
-                apiKey.getDescription(),
-                apiKey.getWeight(),
-                apiKey.getPriority(),
-                apiKey.getState(),
-                apiKey.getCreatedAt(),
-                apiKey.getUpdatedAt()
+                credential.getId(),
+                credential.getChannelId(),
+                credential.getApiKeyPrefix(),
+                credential.getName(),
+                null, // description not in ChannelCredential
+                credential.getWeight(),
+                credential.getPriority(),
+                credential.getState(),
+                credential.getCreatedAt(),
+                credential.getUpdatedAt()
         );
     }
 
-    private ProductApiKeyDetailResponse toDetailResponse(ProductApiKey apiKey) {
+    private ProductApiKeyDetailResponse toDetailResponse(ChannelCredential credential) {
         return new ProductApiKeyDetailResponse(
-                apiKey.getId(),
-                apiKey.getProductId(),
-                apiKey.getApiKeyPrefix(),
-                apiKey.getApiKeyPlain(),
-                apiKey.getName(),
-                apiKey.getDescription(),
-                apiKey.getWeight(),
-                apiKey.getPriority(),
-                apiKey.getState(),
-                apiKey.getCreatedAt(),
-                apiKey.getUpdatedAt()
+                credential.getId(),
+                credential.getChannelId(),
+                credential.getApiKeyPrefix(),
+                credential.getApiKeyPlain(),
+                credential.getName(),
+                null, // description not in ChannelCredential
+                credential.getWeight(),
+                credential.getPriority(),
+                credential.getState(),
+                credential.getCreatedAt(),
+                credential.getUpdatedAt()
         );
     }
 }

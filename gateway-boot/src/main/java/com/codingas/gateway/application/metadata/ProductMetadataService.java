@@ -1,21 +1,34 @@
 package com.codingas.gateway.application.metadata;
 
+import com.codingas.gateway.application.metadata.dto.ApplyMetadataRequest;
+import com.codingas.gateway.application.metadata.dto.ApplyMetadataResult;
+import com.codingas.gateway.application.metadata.dto.MetadataCreateRequest;
+import com.codingas.gateway.application.metadata.dto.MetadataUpdateRequest;
 import com.codingas.gateway.application.metadata.dto.ProductMetadataResponse;
 import com.codingas.gateway.domain.metadata.entity.ProductMetadata;
 import com.codingas.gateway.domain.metadata.enums.ProductType;
 import com.codingas.gateway.domain.metadata.gateway.ProductMetadataGateway;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 产品元数据服务
+ * 渠道元数据服务
  */
 @Slf4j
 @Service
@@ -23,64 +36,131 @@ import java.util.List;
 public class ProductMetadataService {
 
     private final ProductMetadataGateway productMetadataGateway;
+    private final ProviderGateway providerGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
 
     /**
-     * 分页查询产品元数据
+     * 查询渠道元数据列表
      */
-    public Page<ProductMetadataResponse> listProductMetadata(
-            String providerId, ProductType productType, Pageable pageable) {
-        List<ProductMetadata> allProducts;
-
-        if (providerId != null) {
-            allProducts = productMetadataGateway.findByProviderId(providerId);
+    public List<ProductMetadataResponse> listProductMetadata(String providerId) {
+        List<ProductMetadata> metadatas;
+        if (providerId != null && !providerId.isBlank()) {
+            metadatas = productMetadataGateway.findByProviderId(providerId);
         } else {
-            allProducts = productMetadataGateway.findAll();
+            metadatas = productMetadataGateway.findAll();
         }
-
-        // 按产品类型筛选
-        if (productType != null) {
-            allProducts = allProducts.stream()
-                    .filter(p -> p.getProductType() == productType)
-                    .toList();
-        }
-
-        // 手动分页（注意边界检查）
-        int start = (int) pageable.getOffset();
-        if (start >= allProducts.size()) {
-            // 超出范围时返回空页
-            return new PageImpl<>(List.of(), pageable, allProducts.size());
-        }
-        int end = Math.min(start + pageable.getPageSize(), allProducts.size());
-        List<ProductMetadata> pageContent = allProducts.subList(start, end);
-
-        return new PageImpl<>(pageContent.stream().map(this::toResponse).toList(), pageable, allProducts.size());
+        return metadatas.stream().map(this::toResponse).toList();
     }
 
     /**
-     * 获取产品元数据详情
+     * 获取渠道元数据详情
      */
     public ProductMetadataResponse getProductMetadata(Long id) {
         ProductMetadata metadata = productMetadataGateway.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("产品元数据不存在: id=" + id));
+            .orElseThrow(() -> new IllegalArgumentException("渠道元数据不存在: id=" + id));
         return toResponse(metadata);
     }
 
     /**
-     * 查询某供应商的所有产品
+     * 创建渠道元数据
      */
-    public List<ProductMetadataResponse> listByProviderId(String providerId) {
-        return productMetadataGateway.findByProviderId(providerId).stream()
-            .map(this::toResponse)
-            .toList();
+    @Transactional
+    public ProductMetadataResponse createMetadata(MetadataCreateRequest request) {
+        ProductMetadata metadata = new ProductMetadata(
+            request.getProviderId(),
+            request.getProviderName(),
+            ProductType.STANDARD
+        );
+        metadata.setCreatedAt(Instant.now());
+        metadata.setUpdatedAt(Instant.now());
+
+        ProductMetadata saved = productMetadataGateway.save(metadata);
+        log.info("Created product metadata: providerId={}, name={}", saved.getProviderId(), saved.getProductName());
+        return toResponse(saved);
     }
 
     /**
-     * 删除产品元数据
+     * 更新渠道元数据
      */
     @Transactional
-    public void deleteProductMetadata(Long id) {
+    public ProductMetadataResponse updateMetadata(Long id, MetadataUpdateRequest request) {
+        ProductMetadata metadata = productMetadataGateway.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("渠道元数据不存在: id=" + id));
+
+        if (request.getProviderName() != null) metadata.setProductName(request.getProviderName());
+        metadata.setUpdatedAt(Instant.now());
+
+        ProductMetadata saved = productMetadataGateway.save(metadata);
+        log.info("Updated product metadata: id={}", saved.getId());
+        return toResponse(saved);
+    }
+
+    /**
+     * 删除渠道元数据
+     */
+    @Transactional
+    public void deleteMetadata(Long id) {
         productMetadataGateway.deleteById(id);
         log.info("Deleted product metadata: id={}", id);
+    }
+
+    /**
+     * 应用渠道元数据：创建 Channel + ChannelCredential
+     */
+    @Transactional
+    public ApplyMetadataResult applyMetadata(Long id, ApplyMetadataRequest request) {
+        ProductMetadata metadata = productMetadataGateway.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("渠道元数据不存在: id=" + id));
+
+        // 查找对应的 Provider
+        Provider provider = providerGateway.findAll().stream()
+            .filter(p -> p.getName().equals(metadata.getProviderId()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException("未找到供应商: " + metadata.getProviderId()));
+
+        // 创建 Channel
+        Channel channel = new Channel();
+        channel.setProviderId(provider.getId());
+        channel.setName(metadata.getProductName());
+        channel.setBillingMode(mapBillingMode(metadata.getProductType()));
+
+        Map<String, String> endpoints = metadata.getEndpoints();
+        if (endpoints != null && !endpoints.isEmpty()) {
+            String protocolName = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
+            channel.setEndpointUrl(endpoints.get(protocolName));
+            channel.setProtocol(Protocol.valueOf(protocolName.toUpperCase()));
+        }
+
+        channel.setState(ChannelState.ACTIVE);
+        Channel savedChannel = channelGateway.save(channel);
+
+        // 创建 ChannelCredential
+        if (request.getApiKey() != null && !request.getApiKey().isBlank()) {
+            ChannelCredential credential = new ChannelCredential();
+            credential.setChannelId(savedChannel.getId());
+            credential.setApiKeyPlain(request.getApiKey());
+            credential.setApiKeyPrefix(request.getApiKey().substring(0, Math.min(8, request.getApiKey().length())));
+            credential.setName(request.getChannelName() != null ? request.getChannelName() : "default");
+            credential.setState(CredentialState.ACTIVE);
+            channelCredentialGateway.save(credential);
+        }
+
+        log.info("Applied product metadata: channel={}, provider={}", savedChannel.getName(), provider.getName());
+
+        return ApplyMetadataResult.builder()
+            .providerId(provider.getId())
+            .providerName(provider.getName())
+            .createdAt(Instant.now())
+            .build();
+    }
+
+    private BillingMode mapBillingMode(ProductType metadataType) {
+        if (metadataType == null) return BillingMode.PAY_AS_YOU_GO;
+        return switch (metadataType) {
+            case STANDARD, BATCH, CACHE, FREE_TIER -> BillingMode.PAY_AS_YOU_GO;
+            case SUBSCRIPTION, PROMOTION -> BillingMode.SUBSCRIPTION_CODING;
+        };
     }
 
     private ProductMetadataResponse toResponse(ProductMetadata metadata) {
@@ -89,18 +169,8 @@ public class ProductMetadataService {
             .providerId(metadata.getProviderId())
             .productName(metadata.getProductName())
             .productType(metadata.getProductType() != null ? metadata.getProductType().name() : null)
-            .description(metadata.getDescription())
             .endpoints(metadata.getEndpoints())
             .isDefault(metadata.getIsDefault())
-            .inputPrice(metadata.getInputPrice())
-            .outputPrice(metadata.getOutputPrice())
-            .reasoningPrice(metadata.getReasoningPrice())
-            .cacheReadPrice(metadata.getCacheReadPrice())
-            .cacheWritePrice(metadata.getCacheWritePrice())
-            .inputAudioPrice(metadata.getInputAudioPrice())
-            .outputAudioPrice(metadata.getOutputAudioPrice())
-            .state(metadata.getState() != null ? metadata.getState().name() : null)
-            .source(metadata.getSource() != null ? metadata.getSource().name() : null)
             .createdAt(metadata.getCreatedAt())
             .updatedAt(metadata.getUpdatedAt())
             .build();

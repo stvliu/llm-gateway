@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.advice;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.proxy.exception.ProviderException;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

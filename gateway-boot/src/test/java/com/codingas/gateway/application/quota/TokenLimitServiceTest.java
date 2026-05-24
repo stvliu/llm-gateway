@@ -5,10 +5,10 @@ import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.domain.usage.enums.ExceededAction;
 import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.LimitType;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
@@ -51,14 +51,14 @@ class TokenLimitServiceTest {
     private ProviderGateway providerGateway;
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelSpecGateway modelSpecGateway;
 
     @InjectMocks
     private TokenLimitServiceImpl tokenLimitService;
 
     private User testUser;
     private Provider testProvider;
-    private Model testModel;
+    private ModelSpec testModel;
     private TokenLimit testTokenLimit;
     private TokenLimitCreateRequest createRequest;
 
@@ -75,7 +75,7 @@ class TokenLimitServiceTest {
         testProvider.setName("OpenAI");
 
         // 初始化测试模型
-        testModel = new Model();
+        testModel = new ModelSpec();
         testModel.setId(1L);
         testModel.setDisplayName("GPT-4");
 
@@ -115,7 +115,7 @@ class TokenLimitServiceTest {
             // given
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
             when(providerGateway.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
-            when(modelGateway.findById(createRequest.getModelId())).thenReturn(Optional.of(testModel));
+            when(modelSpecGateway.findById(createRequest.getModelId())).thenReturn(Optional.of(testModel));
             when(tokenLimitGateway.save(any(TokenLimit.class))).thenReturn(testTokenLimit);
 
             // when
@@ -135,7 +135,7 @@ class TokenLimitServiceTest {
 
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
-            verify(modelGateway).findById(createRequest.getModelId());
+            verify(modelSpecGateway).findById(createRequest.getModelId());
             verify(tokenLimitGateway).save(any(TokenLimit.class));
         }
 
@@ -177,7 +177,7 @@ class TokenLimitServiceTest {
             // given
             when(userGateway.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
             when(providerGateway.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
-            when(modelGateway.findById(createRequest.getModelId())).thenReturn(Optional.empty());
+            when(modelSpecGateway.findById(createRequest.getModelId())).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> tokenLimitService.create(createRequest))
@@ -187,7 +187,7 @@ class TokenLimitServiceTest {
 
             verify(userGateway).findById(createRequest.getUserId());
             verify(providerGateway).findById(createRequest.getProviderId());
-            verify(modelGateway).findById(createRequest.getModelId());
+            verify(modelSpecGateway).findById(createRequest.getModelId());
         }
     }
 

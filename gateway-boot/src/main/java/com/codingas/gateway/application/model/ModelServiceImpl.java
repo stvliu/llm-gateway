@@ -5,11 +5,11 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.model.enums.ModelState;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ModelServiceImpl implements ModelService {
 
-    private final ModelGateway modelGateway;
+    private final ModelSpecGateway modelSpecGateway;
     private final ProviderGateway providerGateway;
 
     /**
@@ -41,19 +41,19 @@ public class ModelServiceImpl implements ModelService {
             throw new ResourceNotFoundException("Provider", request.getProviderId());
         }
 
-        // 创建模型
-        Model model = new Model();
-        model.setProviderId(request.getProviderId());
-        model.setProviderModelId(request.getProviderModelId());
-        model.setDisplayName(request.getDisplayName());
-        model.setContextWindow(request.getContextWindow());
-        model.setCapabilities(request.getCapabilities());
-        model.setState(ModelState.ACTIVE);
+        // 创建模型规格
+        ModelSpec modelSpec = new ModelSpec();
+        modelSpec.setProviderId(request.getProviderId());
+        modelSpec.setProviderModelId(request.getProviderModelId());
+        modelSpec.setDisplayName(request.getDisplayName());
+        modelSpec.setContextWindow(request.getContextWindow());
+        modelSpec.setCapabilities(request.getCapabilities());
+        modelSpec.setState(ModelSpecState.ACTIVE);
         // 路由字段
-        model.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        model.setWeight(request.getWeight() != null ? request.getWeight() : 100);
+        modelSpec.setPriority(request.getPriority() != null ? request.getPriority() : 100);
+        modelSpec.setWeight(request.getWeight() != null ? request.getWeight() : 100);
 
-        Model savedModel = modelGateway.save(model);
+        ModelSpec savedModel = modelSpecGateway.save(modelSpec);
         return toResponse(savedModel);
     }
 
@@ -62,9 +62,9 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     public ModelResponse getById(Long id) {
-        Model model = modelGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        return toResponse(model);
+        ModelSpec modelSpec = modelSpecGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
+        return toResponse(modelSpec);
     }
 
     /**
@@ -72,7 +72,7 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     public PageResponse<ModelResponse> query(ModelQueryRequest request) {
-        List<Model> models = modelGateway.findAll();
+        List<ModelSpec> models = modelSpecGateway.findAll();
 
         // 过滤
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
@@ -85,7 +85,7 @@ public class ModelServiceImpl implements ModelService {
 
         if (request.getProviderId() != null) {
             models = models.stream()
-                .filter(m -> m.getProviderId().equals(request.getProviderId()))
+                .filter(m -> request.getProviderId().equals(m.getProviderId()))
                 .collect(Collectors.toList());
         }
 
@@ -101,7 +101,7 @@ public class ModelServiceImpl implements ModelService {
         // 分页
         int offset = request.getOffset();
         int limit = request.getLimit();
-        List<Model> pagedModels = models.stream()
+        List<ModelSpec> pagedModels = models.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
@@ -119,29 +119,29 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse update(Long id, ModelUpdateRequest request) {
-        Model model = modelGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
+        ModelSpec modelSpec = modelSpecGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
 
         if (request.getDisplayName() != null) {
-            model.setDisplayName(request.getDisplayName());
+            modelSpec.setDisplayName(request.getDisplayName());
         }
         if (request.getContextWindow() != null) {
-            model.setContextWindow(request.getContextWindow());
+            modelSpec.setContextWindow(request.getContextWindow());
         }
         if (request.getCapabilities() != null) {
-            model.setCapabilities(request.getCapabilities());
+            modelSpec.setCapabilities(request.getCapabilities());
         }
         if (request.getState() != null) {
-            model.setState(request.getState());
+            modelSpec.setState(request.getState());
         }
         if (request.getPriority() != null) {
-            model.setPriority(request.getPriority());
+            modelSpec.setPriority(request.getPriority());
         }
         if (request.getWeight() != null) {
-            model.setWeight(request.getWeight());
+            modelSpec.setWeight(request.getWeight());
         }
 
-        return toResponse(modelGateway.save(model));
+        return toResponse(modelSpecGateway.save(modelSpec));
     }
 
     /**
@@ -150,9 +150,9 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public void delete(Long id) {
-        Model model = modelGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        modelGateway.delete(model);
+        ModelSpec modelSpec = modelSpecGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
+        modelSpecGateway.delete(modelSpec);
     }
 
     /**
@@ -161,30 +161,34 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse setEnabled(Long id, boolean enabled) {
-        Model model = modelGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        model.setState(enabled ? ModelState.ACTIVE : ModelState.DISABLED);
-        return toResponse(modelGateway.save(model));
+        ModelSpec modelSpec = modelSpecGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
+        modelSpec.setState(enabled ? ModelSpecState.ACTIVE : ModelSpecState.DISABLED);
+        return toResponse(modelSpecGateway.save(modelSpec));
     }
 
     /**
      * 转换为响应 DTO
      */
-    private ModelResponse toResponse(Model model) {
+    private ModelResponse toResponse(ModelSpec modelSpec) {
         ModelResponse response = new ModelResponse();
-        response.setId(model.getId());
-        response.setProviderId(model.getProviderId());
-        response.setProviderName(model.getProviderName());
-        response.setProviderModelId(model.getProviderModelId());
-        response.setDisplayName(model.getDisplayName());
-        response.setContextWindow(model.getContextWindow());
-        response.setCapabilities(model.getCapabilities());
-        response.setState(model.getState());
+        response.setId(modelSpec.getId());
+        response.setProviderId(modelSpec.getProviderId());
+        response.setProviderModelId(modelSpec.getProviderModelId());
+        response.setDisplayName(modelSpec.getDisplayName());
+        response.setContextWindow(modelSpec.getContextWindow());
+        response.setCapabilities(modelSpec.getCapabilities());
+        response.setState(modelSpec.getState());
         // 路由字段
-        response.setPriority(model.getPriority());
-        response.setWeight(model.getWeight());
-        response.setCreatedAt(model.getCreatedAt());
-        response.setUpdatedAt(model.getUpdatedAt());
+        response.setPriority(modelSpec.getPriority());
+        response.setWeight(modelSpec.getWeight());
+        response.setCreatedAt(modelSpec.getCreatedAt());
+        response.setUpdatedAt(modelSpec.getUpdatedAt());
+        // 补充供应商名称
+        if (modelSpec.getProviderId() != null) {
+            providerGateway.findById(modelSpec.getProviderId())
+                .ifPresent(p -> response.setProviderName(p.getName()));
+        }
         return response;
     }
 }

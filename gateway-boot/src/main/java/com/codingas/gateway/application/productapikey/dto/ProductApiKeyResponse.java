@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.productapikey.dto;
 
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 import java.time.Instant;
 
@@ -20,13 +20,13 @@ import java.time.Instant;
  */
 public record ProductApiKeyResponse(
         Long id,
-        Long productId,
+        Long channelId,
         String apiKeyPrefix,
         String name,
         String description,
         Integer weight,
         Integer priority,
-        ProductApiKeyState state,
+        CredentialState state,
         Instant createdAt,
         Instant updatedAt
 ) {

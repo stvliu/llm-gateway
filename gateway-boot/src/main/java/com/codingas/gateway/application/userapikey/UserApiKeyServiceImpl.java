@@ -1,12 +1,12 @@
 package com.codingas.gateway.application.userapikey;
 
-import com.codingas.gateway.application.userapikey.dto.ProductBrief;
-import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateRequest;
+import com.codingas.gateway.application.userapikey.dto.ChannelBrief;import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateRequest;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
 import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
@@ -28,14 +28,14 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     private static final Logger log = LoggerFactory.getLogger(UserApiKeyServiceImpl.class);
 
     private final UserApiKeyGateway userApiKeyGateway;
-    private final ProductGateway productGateway;
+    private final ChannelGateway channelGateway;
     private final UserApiKeyGenerator userApiKeyGenerator;
 
     public UserApiKeyServiceImpl(UserApiKeyGateway userApiKeyGateway,
-                                 ProductGateway productGateway,
+                                 ChannelGateway channelGateway,
                                  UserApiKeyGenerator userApiKeyGenerator) {
         this.userApiKeyGateway = userApiKeyGateway;
-        this.productGateway = productGateway;
+        this.channelGateway = channelGateway;
         this.userApiKeyGenerator = userApiKeyGenerator;
     }
 
@@ -46,7 +46,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
 
         UserApiKey apiKey = new UserApiKey();
         apiKey.setUserId(request.userId());
-        apiKey.setProductIds(request.productIds());
+        apiKey.setChannelIds(request.channelIds());
         apiKey.setKeyPrefix(generated.keyPrefix());
         apiKey.setKeyPlain(generated.plainKey());
         apiKey.setName(request.name());
@@ -55,8 +55,8 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         apiKey.setState(UserApiKeyState.ACTIVE);
 
         UserApiKey saved = userApiKeyGateway.save(apiKey);
-        log.info("Created UserApiKey: id={}, userId={}, productIds={}",
-                saved.getId(), saved.getUserId(), saved.getProductIds());
+        log.info("Created UserApiKey: id={}, userId={}, channelIds={}",
+                saved.getId(), saved.getUserId(), saved.getChannelIds());
 
         return new UserApiKeyCreateResponse(saved.getId(), generated.keyPrefix(), generated.plainKey());
     }
@@ -91,8 +91,8 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         if (request.name() != null) {
             apiKey.setName(request.name());
         }
-        if (request.productIds() != null) {
-            apiKey.setProductIds(request.productIds());
+        if (request.channelIds() != null) {
+            apiKey.setChannelIds(request.channelIds());
         }
         if (request.models() != null) {
             apiKey.setModels(request.models());
@@ -122,8 +122,8 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         return new UserApiKeyResponse(
                 apiKey.getId(),
                 apiKey.getUserId(),
-                apiKey.getProductIds(),
-                toProductBriefs(apiKey.getProductIds()),
+                apiKey.getChannelIds(),
+                toChannelBriefs(apiKey.getChannelIds()),
                 apiKey.getKeyPrefix(),
                 apiKey.getName(),
                 apiKey.getModels(),
@@ -138,8 +138,8 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         return new UserApiKeyDetailResponse(
                 apiKey.getId(),
                 apiKey.getUserId(),
-                apiKey.getProductIds(),
-                toProductBriefs(apiKey.getProductIds()),
+                apiKey.getChannelIds(),
+                toChannelBriefs(apiKey.getChannelIds()),
                 apiKey.getKeyPrefix(),
                 apiKey.getKeyPlain(),
                 apiKey.getName(),
@@ -151,13 +151,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         );
     }
 
-    /** 将 productIds 转为 ProductBrief 列表（批量查询避免 N+1） */
-    private List<ProductBrief> toProductBriefs(List<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
+    /** 将 channelIds 转为 ChannelBrief 列表（批量查询避免 N+1） */
+    private List<ChannelBrief> toChannelBriefs(List<Long> channelIds) {
+        if (channelIds == null || channelIds.isEmpty()) {
             return List.of();
         }
-        return productGateway.findByIds(productIds).stream()
-                .map(p -> new ProductBrief(p.getId(), p.getName()))
+        return channelGateway.findByIds(channelIds).stream()
+                .map(c -> new ChannelBrief(c.getId(), c.getName()))
                 .toList();
     }
 }

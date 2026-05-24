@@ -6,7 +6,7 @@ import com.codingas.gateway.application.productapikey.dto.ProductApiKeyCreateRes
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyDetailResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyResponse;
 import com.codingas.gateway.application.productapikey.dto.ProductApiKeyUpdateRequest;
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 import java.util.List;
 

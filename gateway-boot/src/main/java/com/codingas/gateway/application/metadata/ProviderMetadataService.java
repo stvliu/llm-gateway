@@ -5,29 +5,30 @@ import com.codingas.gateway.application.metadata.dto.ApplyMetadataResult;
 import com.codingas.gateway.application.metadata.dto.MetadataCreateRequest;
 import com.codingas.gateway.application.metadata.dto.MetadataUpdateRequest;
 import com.codingas.gateway.application.metadata.dto.ProviderMetadataResponse;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
 import com.codingas.gateway.domain.metadata.entity.ModelMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProductMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProductModelMetadata;
 import com.codingas.gateway.domain.metadata.entity.ProviderMetadata;
+import com.codingas.gateway.domain.metadata.enums.ProductType;
 import com.codingas.gateway.domain.metadata.gateway.ModelMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProductMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProviderMetadataGateway;
 import com.codingas.gateway.domain.metadata.gateway.ProductModelMetadataGateway;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.enums.ModelState;
-import com.codingas.gateway.domain.model.enums.ProviderState;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.entity.ProductModel;
-import com.codingas.gateway.domain.product.enums.ProductApiKeyState;
-import com.codingas.gateway.domain.product.enums.ProductState;
-import com.codingas.gateway.domain.product.enums.ProductType;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.product.gateway.ProductModelGateway;
 import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +56,10 @@ public class ProviderMetadataService {
     private final ModelMetadataGateway modelMetadataGateway;
     private final ProductModelMetadataGateway productModelMetadataGateway;
     private final ProviderGateway providerGateway;
-    private final ProductGateway productGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
-    private final ModelGateway modelGateway;
-    private final ProductModelGateway productModelGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ModelSpecGateway modelSpecGateway;
+    private final ChannelModelGateway channelModelGateway;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     /**
@@ -144,7 +145,7 @@ public class ProviderMetadataService {
     }
 
     /**
-     * 应用元数据：一键创建 Provider + Product + ProductApiKey + Model
+     * 应用元数据：一键创建 Provider + Channel + ChannelCredential + ModelSpec
      */
     @Transactional
     public ApplyMetadataResult applyMetadata(Long id, ApplyMetadataRequest request) {
@@ -153,7 +154,7 @@ public class ProviderMetadataService {
             .orElseThrow(() -> new IllegalArgumentException("供应商元数据不存在: id=" + id));
 
         // 2. 检查同名 Provider 是否已存在
-        if (providerGateway.existsByName(metadata.getProviderName())) {
+        if (providerGateway.findByName(metadata.getProviderName()).isPresent()) {
             throw new IllegalStateException("供应商已存在: " + metadata.getProviderName());
         }
 
@@ -164,81 +165,76 @@ public class ProviderMetadataService {
         Provider savedProvider = providerGateway.save(provider);
         log.info("Created provider from metadata: id={}, name={}", savedProvider.getId(), savedProvider.getName());
 
-        // 4. 查询关联的产品元数据，创建 Product
+        // 4. 查询关联的产品元数据，创建 Channel
         List<ProductMetadata> productMetadatas = productMetadataGateway.findByProviderId(metadata.getProviderId());
-        Long defaultProductId = null;
+        Long defaultChannelId = null;
         for (ProductMetadata pm : productMetadatas) {
-            Product product = new Product();
-            product.setProviderId(savedProvider.getId());
-            product.setProviderName(savedProvider.getName());
-            product.setName(pm.getProductName());
-            product.setProductType(mapProductType(pm.getProductType()));
-            product.setEndpoints(pm.getEndpoints());
-            product.setInputPrice(pm.getInputPrice());
-            product.setOutputPrice(pm.getOutputPrice());
-            product.setReasoningPrice(pm.getReasoningPrice());
-            product.setCacheReadPrice(pm.getCacheReadPrice());
-            product.setCacheWritePrice(pm.getCacheWritePrice());
-            product.setInputAudioPrice(pm.getInputAudioPrice());
-            product.setOutputAudioPrice(pm.getOutputAudioPrice());
-            product.setState(ProductState.ACTIVE);
-            Product savedProduct = productGateway.save(product);
-            log.info("Created product from metadata: id={}, name={}", savedProduct.getId(), savedProduct.getName());
+            Channel channel = new Channel();
+            channel.setProviderId(savedProvider.getId());
+            channel.setName(pm.getProductName());
+            channel.setBillingMode(mapBillingMode(pm.getProductType()));
+            // 从元数据端点推断 endpointUrl 和 protocol
+            Map<String, String> endpoints = pm.getEndpoints();
+            if (endpoints != null && !endpoints.isEmpty()) {
+                String protocolName = endpoints.containsKey("openai") ? "openai" : endpoints.keySet().iterator().next();
+                channel.setEndpointUrl(endpoints.get(protocolName));
+                channel.setProtocol(com.codingas.gateway.domain.supply.enums.Protocol.valueOf(protocolName.toUpperCase()));
+            }
+            channel.setState(ChannelState.ACTIVE);
+            Channel savedChannel = channelGateway.save(channel);
+            log.info("Created channel from metadata: id={}, name={}", savedChannel.getId(), savedChannel.getName());
 
-            // 记录默认产品 ID（优先选 isDefault=true 的，否则选第一个）
-            if (defaultProductId == null || Boolean.TRUE.equals(pm.getIsDefault())) {
-                defaultProductId = savedProduct.getId();
+            // 记录默认渠道 ID（优先选 isDefault=true 的，否则选第一个）
+            if (defaultChannelId == null || Boolean.TRUE.equals(pm.getIsDefault())) {
+                defaultChannelId = savedChannel.getId();
             }
         }
 
-        // 5. 创建 ProductApiKey（加密存储 API Key）
-        Long targetProductId = defaultProductId;
-        if (targetProductId == null) {
-            // 没有产品元数据，创建一个默认产品
-            Product defaultProduct = new Product();
-            defaultProduct.setProviderId(savedProvider.getId());
-            defaultProduct.setProviderName(savedProvider.getName());
-            defaultProduct.setName(metadata.getProviderName() + " Default");
-            defaultProduct.setProductType(ProductType.PAY_AS_YOU_GO);
-            defaultProduct.setState(ProductState.ACTIVE);
-            targetProductId = productGateway.save(defaultProduct).getId();
+        // 5. 创建 ChannelCredential（加密存储 API Key）
+        Long targetChannelId = defaultChannelId;
+        if (targetChannelId == null) {
+            // 没有产品元数据，创建一个默认渠道
+            Channel defaultChannel = new Channel();
+            defaultChannel.setProviderId(savedProvider.getId());
+            defaultChannel.setName(metadata.getProviderName() + " Default");
+            defaultChannel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+            defaultChannel.setState(ChannelState.ACTIVE);
+            targetChannelId = channelGateway.save(defaultChannel).getId();
         }
 
-        if (targetProductId != null && request.getApiKey() != null && !request.getApiKey().isBlank()) {
-            ProductApiKey apiKey = new ProductApiKey();
-            apiKey.setProductId(targetProductId);
-            apiKey.setApiKeyPlain(request.getApiKey());
-            apiKey.setApiKeyPrefix(request.getApiKey().substring(0, Math.min(8, request.getApiKey().length())));
-            apiKey.setName(request.getChannelName() != null ? request.getChannelName() : "default");
-            apiKey.setState(ProductApiKeyState.ACTIVE);
-            productApiKeyGateway.save(apiKey);
-            log.info("Created ProductApiKey for product: productId={}", targetProductId);
+        if (targetChannelId != null && request.getApiKey() != null && !request.getApiKey().isBlank()) {
+            ChannelCredential credential = new ChannelCredential();
+            credential.setChannelId(targetChannelId);
+            credential.setApiKeyPlain(request.getApiKey());
+            credential.setApiKeyPrefix(request.getApiKey().substring(0, Math.min(8, request.getApiKey().length())));
+            credential.setName(request.getChannelName() != null ? request.getChannelName() : "default");
+            credential.setState(CredentialState.ACTIVE);
+            channelCredentialGateway.save(credential);
+            log.info("Created ChannelCredential for channel: channelId={}", targetChannelId);
         }
 
-        // 6. 创建 Model
+        // 6. 创建 ModelSpec
         List<ModelMetadata> modelMetadatas = modelMetadataGateway.findByProviderId(metadata.getProviderId());
         List<Long> createdModelIds = new ArrayList<>();
         List<String> createdModelNames = new ArrayList<>();
         for (ModelMetadata mm : modelMetadatas) {
-            Model model = new Model();
-            model.setProviderId(savedProvider.getId());
-            model.setProviderName(savedProvider.getName());
-            model.setProviderModelId(mm.getProviderModelId());
-            model.setDisplayName(mm.getDisplayName());
-            model.setContextWindow(mm.getContextWindow());
-            model.setCapabilities(mm.getCapabilities());
-            model.setState(ModelState.ACTIVE);
-            Model savedModel = modelGateway.save(model);
+            ModelSpec modelSpec = new ModelSpec();
+            modelSpec.setProviderModelId(mm.getProviderModelId());
+            modelSpec.setDisplayName(mm.getDisplayName());
+            modelSpec.setContextWindow(mm.getContextWindow());
+            modelSpec.setCapabilities(mm.getCapabilities());
+            modelSpec.setState(ModelSpecState.ACTIVE);
+            ModelSpec savedModel = modelSpecGateway.save(modelSpec);
             createdModelIds.add(savedModel.getId());
             createdModelNames.add(savedModel.getDisplayName());
         }
         log.info("Created {} models for provider: providerId={}", createdModelIds.size(), savedProvider.getId());
 
-        // 7. 创建 ProductModel 关联（批量方式）
-        // 构建 元数据模型ID → 业务模型ID 映射
+        // 7. 创建 ChannelModel 关联（批量方式）
+        // 构建 元数据模型ID -> 业务模型ID 映射
         Map<Long, Long> metadataModelIdToModelId = new HashMap<>();
         List<ModelMetadata> allModelMetas = modelMetadataGateway.findByProviderId(metadata.getProviderId());
-        List<Model> savedModels = modelGateway.findByProviderId(savedProvider.getId());
+        List<ModelSpec> savedModels = modelSpecGateway.findAll();
         for (ModelMetadata mm : allModelMetas) {
             savedModels.stream()
                 .filter(m -> m.getProviderModelId().equals(mm.getProviderModelId()))
@@ -246,37 +242,37 @@ public class ProviderMetadataService {
                 .ifPresent(m -> metadataModelIdToModelId.put(mm.getId(), m.getId()));
         }
 
-        // 构建 元数据产品ID → 业务产品ID 映射（批量加载）
-        Map<Long, Long> metadataProductIdToProductId = new HashMap<>();
+        // 构建 元数据产品ID -> 业务渠道ID 映射（批量加载）
+        Map<Long, Long> metadataProductIdToChannelId = new HashMap<>();
         List<ProductMetadata> allProductMetas = productMetadataGateway.findByProviderId(metadata.getProviderId());
-        List<Product> savedProducts = productGateway.findByProviderId(savedProvider.getId());
+        List<Channel> savedChannels = channelGateway.findByProviderId(savedProvider.getId());
         for (ProductMetadata pm : allProductMetas) {
-            savedProducts.stream()
-                .filter(p -> p.getName().equals(pm.getProductName()))
+            savedChannels.stream()
+                .filter(c -> c.getName().equals(pm.getProductName()))
                 .findFirst()
-                .ifPresent(p -> metadataProductIdToProductId.put(pm.getId(), p.getId()));
+                .ifPresent(c -> metadataProductIdToChannelId.put(pm.getId(), c.getId()));
         }
 
-        // 批量创建 ProductModel 关联
-        List<ProductModel> toCreate = new ArrayList<>();
+        // 批量创建 ChannelModel 关联
+        List<com.codingas.gateway.domain.supply.entity.ChannelModel> toCreate = new ArrayList<>();
         for (ModelMetadata mm : allModelMetas) {
             List<ProductModelMetadata> associations = productModelMetadataGateway.findByModelId(mm.getId());
             for (ProductModelMetadata assoc : associations) {
                 Long businessModelId = metadataModelIdToModelId.get(mm.getId());
-                Long businessProductId = metadataProductIdToProductId.get(assoc.getProductId());
-                if (businessProductId != null && businessModelId != null) {
-                    if (!productModelGateway.existsByProductIdAndModelId(businessProductId, businessModelId)) {
-                        ProductModel productModel = new ProductModel();
-                        productModel.setProductId(businessProductId);
-                        productModel.setModelId(businessModelId);
-                        toCreate.add(productModel);
+                Long businessChannelId = metadataProductIdToChannelId.get(assoc.getProductId());
+                if (businessChannelId != null && businessModelId != null) {
+                    if (!channelModelGateway.existsByChannelIdAndModelId(businessChannelId, businessModelId)) {
+                        com.codingas.gateway.domain.supply.entity.ChannelModel channelModel = new com.codingas.gateway.domain.supply.entity.ChannelModel();
+                        channelModel.setChannelId(businessChannelId);
+                        channelModel.setModelSpecId(businessModelId);
+                        toCreate.add(channelModel);
                     }
                 }
             }
         }
         if (!toCreate.isEmpty()) {
-            productModelGateway.saveAll(toCreate);
-            log.info("Created {} ProductModel associations for provider: providerId={}", toCreate.size(), savedProvider.getId());
+            channelModelGateway.saveAll(toCreate);
+            log.info("Created {} ChannelModel associations for provider: providerId={}", toCreate.size(), savedProvider.getId());
         }
 
         return ApplyMetadataResult.builder()
@@ -289,14 +285,22 @@ public class ProviderMetadataService {
     }
 
     /**
-     * 将元数据 ProductType 映射为业务 ProductType
+     * 将元数据 ProductType 映射为业务 BillingMode
      */
-    private ProductType mapProductType(com.codingas.gateway.domain.metadata.enums.ProductType metadataType) {
-        if (metadataType == null) return ProductType.PAY_AS_YOU_GO;
+    private BillingMode mapBillingMode(com.codingas.gateway.domain.metadata.enums.ProductType metadataType) {
+        if (metadataType == null) return BillingMode.PAY_AS_YOU_GO;
         return switch (metadataType) {
-            case STANDARD, BATCH, CACHE, FREE_TIER -> ProductType.PAY_AS_YOU_GO;
-            case SUBSCRIPTION, PROMOTION -> ProductType.SUBSCRIPTION_CODING;
+            case STANDARD, BATCH, CACHE, FREE_TIER -> BillingMode.PAY_AS_YOU_GO;
+            case SUBSCRIPTION, PROMOTION -> BillingMode.SUBSCRIPTION_CODING;
         };
+    }
+
+    /**
+     * 将元数据 ProductType 映射为业务 BillingMode（旧方法保留兼容）
+     */
+    @SuppressWarnings("unused")
+    private BillingMode mapProductType(com.codingas.gateway.domain.metadata.enums.ProductType metadataType) {
+        return mapBillingMode(metadataType);
     }
 
     private ProviderMetadataResponse toResponse(ProviderMetadata metadata) {
