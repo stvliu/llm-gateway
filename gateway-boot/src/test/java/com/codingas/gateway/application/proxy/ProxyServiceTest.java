@@ -34,7 +34,7 @@ import static org.mockito.Mockito.*;
 class ProxyServiceTest {
 
     @Mock
-    private ChannelRoutingService channelRoutingService;
+    private SupplyRoutingService supplyRoutingService;
 
     @Mock
     private ProtocolGatewayFactory protocolGatewayFactory;
@@ -57,15 +57,15 @@ class ProxyServiceTest {
 
     @BeforeEach
     void setUp() {
-        proxyService = new ProxyServiceImpl(channelRoutingService, protocolGatewayFactory, protocolConverter);
+        proxyService = new ProxyServiceImpl(supplyRoutingService, protocolGatewayFactory, protocolConverter);
 
         testAuthResult = mock(Identity.class);
 
         testOpenAIContext = new RoutingContext(
-                10L, "https://api.openai.com", Protocol.OPENAI, "sk-test-key", null);
+                10L, 20L, "https://api.openai.com", Protocol.OPENAI, "sk-test-key", 60, false);
 
         testAnthropicContext = new RoutingContext(
-                10L, "https://api.anthropic.com", Protocol.ANTHROPIC, "sk-ant-key", null);
+                10L, 21L, "https://api.anthropic.com", Protocol.ANTHROPIC, "sk-ant-key", 60, false);
 
         testOpenAIRequest = OpenAIChatRequest.builder()
                 .model("gpt-4")
@@ -96,7 +96,7 @@ class ProxyServiceTest {
         @Test
         @DisplayName("同协议代理：OpenAI→OpenAI")
         void proxy_sameProtocol_openai() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
+            when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
             when(protocolGateway.chat(any())).thenReturn(testOpenAIResponse);
 
@@ -110,7 +110,7 @@ class ProxyServiceTest {
         @Test
         @DisplayName("跨协议代理：OpenAI→Anthropic")
         void proxy_crossProtocol_openaiToAnthropic() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testAnthropicContext);
+            when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testAnthropicContext);
             when(protocolGatewayFactory.create(eq("anthropic"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
             when(protocolGateway.chat(any())).thenReturn(testAnthropicResponse);
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(testAnthropicRequest);
@@ -126,7 +126,7 @@ class ProxyServiceTest {
         @Test
         @DisplayName("不支持的协议时抛出异常")
         void proxy_unsupportedProtocol_throwsException() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
+            when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 
@@ -142,7 +142,7 @@ class ProxyServiceTest {
         @Test
         @DisplayName("同协议流式代理：OpenAI→OpenAI")
         void proxyStream_sameProtocol() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
+            when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
 
             AtomicReference<String> received = new AtomicReference<>();
@@ -155,7 +155,7 @@ class ProxyServiceTest {
         @Test
         @DisplayName("不支持的协议时抛出异常")
         void proxyStream_unsupportedProtocol_throwsException() {
-            when(channelRoutingService.resolve(any(), anyString(), any())).thenReturn(testOpenAIContext);
+            when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
             when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 

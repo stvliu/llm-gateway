@@ -3,9 +3,9 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
@@ -86,19 +86,24 @@ public class SupplyRoutingService {
             throw new ResourceNotFoundException("ChannelCredential", credential.getId());
         }
 
-        // 5. 获取 Provider 信息
+        // 5. 解析协议端点
+        Protocol inboundProtocol = Protocol.fromCode(protocol);
+        ChannelEndpoint endpoint = channelDomainService.resolveEndpoint(channel, inboundProtocol);
+        boolean needsAdaptation = endpoint.getProtocol() != inboundProtocol;
+
+        // 6. 获取 Provider 信息
         Provider provider = providerGateway.findById(channel.getProviderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Provider", channel.getProviderId()));
 
-        // 6. 构建路由上下文
-        // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 resolveEndpoint 获取
+        // 7. 构建路由上下文
         return new RoutingContext(
                 channel.getId(),
-                null,
-                null,
+                endpoint.getId(),
+                endpoint.getEndpointUrl(),
+                endpoint.getProtocol(),
                 plainApiKey,
-                null,
-                channel.getTimeout()
+                channel.getTimeout(),
+                needsAdaptation
         );
     }
 
