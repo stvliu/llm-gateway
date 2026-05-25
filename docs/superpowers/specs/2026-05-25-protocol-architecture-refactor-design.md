@@ -298,17 +298,48 @@ SecurityFilter Chain (adapter/filter)
   ▼
 ChatDispatchService (application/proxy)
   │
-  ├── 1. InboundValidator (adapter/protocol)
-  ├── 2. RoutingResolver (application/routing)
-  │       ModelMatcher → ChannelSelector(strategy) → CredentialResolver → EndpointResolver
-  ├── 3. OutboundTuner (application/proxy)
-  │       用路由结果调谐出站请求
-  ├── 4. ProtocolConverter (domain/protocol) [仅跨协议时]
-  ├── 5. UpstreamClient (infrastructure/upstream)
-  │       纯 HTTP 调用 + SSE 解析，被 RetryPolicy + CircuitBreaker 包装
-  ├── 6. ProtocolConverter (domain/protocol) [仅跨协议时]
-  └── 7. 后置处理
-          Token 计量 / 审计日志 / 事件发布
+  │  ┌─ 前置阶段 ────────────────────────────────────────┐
+  │  │  1. 校验：InboundValidator.validate(request)      │
+  │  │     位置：adapter/protocol/                       │
+  │  │  2. 路由：RoutingResolver.resolve(identity, model)│
+  │  │     位置：application/routing/                    │
+  │  │     ModelMatcher → ChannelSelector(strategy)      │
+  │  │       → CredentialResolver → EndpointResolver    │
+  │  │  3. 记录审计起点：auditGateway.logRequest(...)    │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
+  │  │  4. 请求转换：protocolConverter.convertRequest() │
+  │  │     位置：domain/protocol/conversion/             │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 调谐阶段 ────────────────────────────────────────┐
+  │  │  5. 调谐：outboundTuner.tune(request, ctx)        │
+  │  │     位置：application/proxy/                      │
+  │  │     职责：模型名替换、默认值填充、字段覆盖、      │
+  │  │           敏感字段剥离                              │
+  │  │     调谐必须按目标协议要求执行，而非入站协议       │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 调用阶段 ────────────────────────────────────────┐
+  │  │  6. 上游调用：upstreamClient.chat(request)        │
+  │  │     位置：infrastructure/upstream/                 │
+  │  │     韧性包装：RetryPolicy + CircuitBreaker        │
+  │  │     纯 HTTP 调用 + SSE 解析，不含业务逻辑         │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
+  │  │  7. 响应转换：protocolConverter.convertResponse()│
+  │  │     位置：domain/protocol/conversion/             │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 后置阶段 ────────────────────────────────────────┐
+  │  │  8. Token 计量：publish TokenUsedEvent            │
+  │  │     位置：application/proxy/                      │
+  │  │  9. 记录审计终点：auditGateway.logResponse(...)   │
+  │  │     包含：duration、success/failure、Token 用量    │
+  │  └──────────────────────────────────────────────────┘
+  │
   ▼
 响应返回
 ```
