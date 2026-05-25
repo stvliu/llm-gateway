@@ -11,7 +11,7 @@ import java.time.Instant;
 /**
  * 调用日志实体
  *
- * <p>记录每次 API 调用的详细技术信息。</p>
+ * <p>记录每次模型调用的全链路信息：渠道、端点、凭证、协议、耗时、成功/失败。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -21,27 +21,25 @@ public class CallLog extends BaseEntity {
 
     private String traceId;
 
-    private Long gatewayApiKeyId;
-
     private Long userId;
 
-    private String requestMethod;
+    private String model;
 
-    private String requestPath;
+    private Long channelId;
 
-    private String requestModel;
+    private Long channelEndpointId;
+
+    private String inboundProtocol;
+
+    private String upstreamProtocol;
+
+    private Long durationMs;
+
+    private Boolean success;
 
     private Integer inputTokens;
 
     private Integer outputTokens;
-
-    private Integer latencyMs;
-
-    private Integer responseStatus;
-
-    private Long providerId;
-
-    private String modelName;
 
     private String errorMessage;
 

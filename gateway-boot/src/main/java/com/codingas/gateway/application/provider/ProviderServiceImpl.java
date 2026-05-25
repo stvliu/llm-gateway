@@ -1,25 +1,27 @@
 package com.codingas.gateway.application.provider;
 
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
-import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ModelNestedRequest;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.model.enums.ModelState;
-import com.codingas.gateway.domain.model.enums.ProviderState;
+import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ConnectivityTester;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,9 +41,10 @@ import java.util.stream.Collectors;
 public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ProductGateway productGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
+    private final ModelSpecGateway modelSpecGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelModelGateway channelModelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final ConnectivityTester connectivityTester;
 
     /**
@@ -65,15 +68,13 @@ public class ProviderServiceImpl implements ProviderService {
         // 创建嵌套的模型
         if (request.getModels() != null && !request.getModels().isEmpty()) {
             for (ModelNestedRequest modelRequest : request.getModels()) {
-                Model model = new Model();
-                model.setProviderId(providerId);
-                model.setProviderName(savedProvider.getName());
+                ModelSpec model = new ModelSpec();
                 model.setProviderModelId(modelRequest.getProviderModelId());
                 model.setDisplayName(modelRequest.getDisplayName());
                 model.setContextWindow(modelRequest.getContextWindow());
                 model.setCapabilities(modelRequest.getCapabilities());
-                model.setState(ModelState.ACTIVE);
-                modelGateway.save(model);
+                model.setState(ModelSpecState.ACTIVE);
+                modelSpecGateway.save(model);
             }
             log.info("Created {} models for provider {}", request.getModels().size(), providerId);
         }
@@ -167,23 +168,26 @@ public class ProviderServiceImpl implements ProviderService {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
-        // 删除关联的 ProductApiKey
-        List<Product> products = productGateway.findByProviderId(id);
-        for (Product product : products) {
-            List<ProductApiKey> apiKeys = productApiKeyGateway.findByProductId(product.getId());
-            for (ProductApiKey apiKey : apiKeys) {
-                productApiKeyGateway.deleteById(apiKey.getId());
+        // 删除关联的渠道凭证
+        List<Channel> channels = channelGateway.findByProviderId(id);
+        for (Channel channel : channels) {
+            List<ChannelCredential> credentials = channelCredentialGateway.findByChannelId(channel.getId());
+            for (ChannelCredential credential : credentials) {
+                channelCredentialGateway.deleteById(credential.getId());
             }
-            productGateway.deleteById(product.getId());
+            channelGateway.deleteById(channel.getId());
         }
-        log.info("Deleted {} products and their apiKeys for provider {}", products.size(), id);
+        log.info("Deleted {} channels and their credentials for provider {}", channels.size(), id);
 
-        // 删除关联的 Models
-        List<Model> models = modelGateway.findByProviderId(id);
-        for (Model model : models) {
-            modelGateway.delete(model);
+        // 删除关联的渠道下的 ChannelModel → ModelSpec
+        for (Channel channel : channels) {
+            List<ChannelModel> channelModels = channelModelGateway.findActiveByChannelId(channel.getId());
+            for (ChannelModel cm : channelModels) {
+                modelSpecGateway.findById(cm.getModelSpecId()).ifPresent(modelSpecGateway::delete);
+                channelModelGateway.deleteById(cm.getId());
+            }
         }
-        log.info("Deleted {} models for provider {}", models.size(), id);
+        log.info("Deleted channel models and specs for provider {}", id);
 
         // 最后删除 Provider
         providerGateway.delete(provider);
@@ -217,8 +221,28 @@ public class ProviderServiceImpl implements ProviderService {
      * 测试连通性
      */
     @Override
-    public ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
-        return connectivityTester.test(request);
+    public com.codingas.gateway.application.provider.dto.ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
+        ConnectivityTestResult vo = connectivityTester.test(
+                request.baseUrl(),
+                request.apiKey(),
+                request.protocolName()
+        );
+
+        // 将 VO 转为应用层 DTO
+        return new com.codingas.gateway.application.provider.dto.ConnectivityTestResult(
+                vo.success(),
+                vo.errorMessage() != null ? vo.errorMessage() : "连通性测试成功",
+                null,
+                new com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult(
+                        vo.success(),
+                        vo.errorMessage() != null ? vo.errorMessage() : "认证成功",
+                        vo.latencyMs(),
+                        null,
+                        null
+                ),
+                null,
+                vo.latencyMs()
+        );
     }
 
     /**

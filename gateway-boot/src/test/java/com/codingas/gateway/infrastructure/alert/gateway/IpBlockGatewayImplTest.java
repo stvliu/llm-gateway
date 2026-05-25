@@ -1,8 +1,10 @@
 package com.codingas.gateway.infrastructure.alert.gateway;
 
-import com.codingas.gateway.domain.security.entity.IpBlocklist;
-import com.codingas.gateway.infrastructure.alert.gateway.database.IpBlocklistRepository;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.IpBlocklistDo;
+import com.codingas.gateway.domain.threat.entity.IpBlocklist;
+import com.codingas.gateway.infrastructure.threat.gateway.IpBlockGatewayImpl;
+import com.codingas.gateway.infrastructure.threat.gateway.IpBlocklistConverter;
+import com.codingas.gateway.infrastructure.threat.gateway.database.repository.IpBlocklistRepository;
+import com.codingas.gateway.infrastructure.threat.gateway.database.dataobject.IpBlocklistDo;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

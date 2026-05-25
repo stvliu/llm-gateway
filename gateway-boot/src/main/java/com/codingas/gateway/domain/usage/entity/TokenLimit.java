@@ -4,9 +4,9 @@ import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.domain.usage.enums.ExceededAction;
 import com.codingas.gateway.domain.usage.enums.PeriodType;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.security.entity.User;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.iam.entity.User;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,7 +28,7 @@ public class TokenLimit extends BaseEntity {
 
     private Provider provider;
 
-    private Model model;
+    private ModelSpec model;
 
     private LimitType limitType = LimitType.USER_CUSTOM;
 
@@ -44,7 +44,7 @@ public class TokenLimit extends BaseEntity {
 
     private ExceededAction exceededAction = ExceededAction.REJECT;
 
-    private Model switchModel;
+    private ModelSpec switchModel;
 
     private TokenLimitState state = TokenLimitState.ACTIVE;
 

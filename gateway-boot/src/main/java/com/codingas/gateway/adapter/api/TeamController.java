@@ -10,7 +10,9 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
+import com.codingas.gateway.domain.team.entity.UserTeam;
 import com.codingas.gateway.domain.team.enums.TeamRole;
+import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -29,6 +31,7 @@ public class TeamController {
 
     private final TeamService teamService;
     private final UserApiKeyService userApiKeyService;
+    private final UserTeamGateway userTeamGateway;
 
     @PostMapping
     public ResponseEntity<TeamResponse> create(@Valid @RequestBody TeamRequest request) {
@@ -91,29 +94,28 @@ public class TeamController {
     // ==================== UserApiKey 子资源 ====================
 
     /**
-     * 查询团队下的所有 API Key
+     * 查询团队下所有用户的 API Key（通过团队成员关系查找）
      */
     @GetMapping("/{teamId}/api-keys")
     public List<UserApiKeyResponse> listApiKeys(@PathVariable Long teamId) {
-        return userApiKeyService.listByTeamId(teamId);
+        // 查找团队中所有用户，再查找他们的 Key
+        List<UserTeam> members = userTeamGateway.findByTeamId(teamId);
+        List<Long> userIds = members.stream().map(UserTeam::getUserId).toList();
+        return userIds.stream()
+                .flatMap(userId -> userApiKeyService.findByUserId(userId).stream())
+                .toList();
     }
 
     /**
-     * 查询单个 API Key（含明文，用于页面复制）
-     * <p>
-     * 会校验 API Key 是否属于指定团队，防止越权访问
+     * 查询单个 API Key（含明文）
      */
     @GetMapping("/{teamId}/api-keys/{id}")
-    public UserApiKeyDetailResponse getApiKey(
-            @PathVariable Long teamId,
-            @PathVariable Long id) {
-        return userApiKeyService.getDetailByIdAndTeamId(id, teamId);
+    public UserApiKeyDetailResponse getApiKey(@PathVariable Long id) {
+        return userApiKeyService.getDetailById(id);
     }
 
     /**
      * 创建用户 API Key
-     *
-     * <p>管理员可以为团队下任意用户创建 Key，普通成员只能为自己创建。</p>
      */
     @PostMapping("/{teamId}/api-keys")
     public ResponseEntity<UserApiKeyCreateResponse> createApiKey(
@@ -122,14 +124,13 @@ public class TeamController {
         Long currentUserId = StpUtil.getLoginIdAsLong();
         boolean isAdmin = StpUtil.hasRole("ADMIN");
 
-        // 如果不是管理员且请求的 userId 不是当前用户，则拒绝
         Long targetUserId = request.userId() != null ? request.userId() : currentUserId;
         if (!isAdmin && !targetUserId.equals(currentUserId)) {
             throw new IllegalArgumentException("无权为其他用户创建 API Key");
         }
 
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
-                teamId, targetUserId, request.productIds(), request.name(),
+                targetUserId, request.channelIds(), request.name(),
                 request.models(), request.quotaLimit()
         );
         UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);
@@ -141,7 +142,6 @@ public class TeamController {
      */
     @PutMapping("/{teamId}/api-keys/{id}")
     public UserApiKeyResponse updateApiKey(
-            @PathVariable Long teamId,
             @PathVariable Long id,
             @Valid @RequestBody UserApiKeyUpdateRequest request) {
         return userApiKeyService.update(id, request);
@@ -151,9 +151,7 @@ public class TeamController {
      * 删除用户 API Key
      */
     @DeleteMapping("/{teamId}/api-keys/{id}")
-    public ResponseEntity<Void> deleteApiKey(
-            @PathVariable Long teamId,
-            @PathVariable Long id) {
+    public ResponseEntity<Void> deleteApiKey(@PathVariable Long id) {
         userApiKeyService.delete(id);
         return ResponseEntity.noContent().build();
     }

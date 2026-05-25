@@ -1,83 +1,52 @@
 import { useState } from 'react';
 import { Table, Checkbox, Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useModelMetadataByProvider } from '@/services/query/useMetadata';
-import type { ModelMetadata } from '@/types/metadata';
+import { useModelSpecCatalogs } from '@/services/query/useCatalog';
+import type { ModelSpecCatalog } from '@/types/catalog';
 
 const { Text } = Typography;
 
 interface ModelSetupStepProps {
-  providerId: string;
+  providerCode: string;
   selectedModels: string[];
   onSelectedModelsChange: (models: string[]) => void;
 }
 
+/** 格式化上下文窗口大小 */
+function formatContext(tokens: number | undefined): string {
+  if (!tokens) return '-';
+  if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`;
+  if (tokens >= 1_000) return `${(tokens / 1_000).toFixed(0)}K`;
+  return `${tokens}`;
+}
+
 /**
  * 模型配置步骤
- * 从 ModelMetadata 获取某供应商的模型列表，用户勾选需要的模型
+ * 从 ModelSpecCatalog 获取某供应商的模型规格列表，用户勾选需要的模型
  */
 export function ModelSetupStep({
-  providerId,
+  providerCode,
   selectedModels,
   onSelectedModelsChange,
 }: ModelSetupStepProps) {
   const { t } = useTranslation('providers');
   const [searchText, setSearchText] = useState('');
 
-  const { data: models, isLoading } = useModelMetadataByProvider(providerId);
+  const { data: models, isLoading } = useModelSpecCatalogs({ keyword: providerCode });
 
-  const filteredModels = (models ?? []).filter((m: ModelMetadata) =>
-    !searchText ||
-    m.displayName?.toLowerCase().includes(searchText.toLowerCase()) ||
-    m.providerModelId?.toLowerCase().includes(searchText.toLowerCase())
+  const filteredModels = (models ?? []).filter((m: ModelSpecCatalog) =>
+    m.providerCode === providerCode &&
+    (!searchText ||
+    m.modelName?.toLowerCase().includes(searchText.toLowerCase()) ||
+    m.providerModelId?.toLowerCase().includes(searchText.toLowerCase()))
   );
-
-  const handleSelectAll = (checked: boolean) => {
-    onSelectedModelsChange(checked ? filteredModels.map((m: ModelMetadata) => m.providerModelId) : []);
-  };
-
-  const handleSelectOne = (modelId: string, checked: boolean) => {
-    if (checked) {
-      onSelectedModelsChange([...selectedModels, modelId]);
-    } else {
-      onSelectedModelsChange(selectedModels.filter(id => id !== modelId));
-    }
-  };
-
-  const formatPrice = (price?: number) => {
-    if (price == null) return '-';
-    return `$${price}`;
-  };
-
-  const formatContext = (ctx?: number) => {
-    if (ctx == null) return '-';
-    if (ctx >= 1_000_000) return `${(ctx / 1_000_000).toFixed(1)}M`;
-    if (ctx >= 1_000) return `${(ctx / 1_000).toFixed(0)}K`;
-    return `${ctx}`;
-  };
 
   const columns = [
     {
-      title: (
-        <Checkbox
-          checked={filteredModels.length > 0 && selectedModels.length === filteredModels.length}
-          indeterminate={selectedModels.length > 0 && selectedModels.length < filteredModels.length}
-          onChange={e => handleSelectAll(e.target.checked)}
-        />
-      ),
-      dataIndex: 'providerModelId',
-      width: 48,
-      render: (modelId: string) => (
-        <Checkbox
-          checked={selectedModels.includes(modelId)}
-          onChange={e => handleSelectOne(modelId, e.target.checked)}
-        />
-      ),
-    },
-    {
       title: t('template.modelName', { defaultValue: '模型名称' }),
-      dataIndex: 'displayName',
-      render: (name: string, record: ModelMetadata) => (
+      dataIndex: 'modelName',
+      key: 'modelName',
+      render: (name: string, record: ModelSpecCatalog) => (
         <div>
           <Text strong>{name}</Text>
           <br />
@@ -87,33 +56,39 @@ export function ModelSetupStep({
     },
     {
       title: t('template.contextWindow', { defaultValue: '上下文窗口' }),
-      dataIndex: 'contextWindow',
+      dataIndex: 'maxContextTokens',
+      key: 'maxContextTokens',
       width: 100,
       render: (ctx: number) => <Text>{formatContext(ctx)}</Text>,
-    },
-    {
-      title: t('template.inputPrice', { defaultValue: '输入价格' }),
-      dataIndex: 'inputPrice',
-      width: 90,
-      render: (price: number) => <Text>{formatPrice(price)}</Text>,
-    },
-    {
-      title: t('template.outputPrice', { defaultValue: '输出价格' }),
-      dataIndex: 'outputPrice',
-      width: 90,
-      render: (price: number) => <Text>{formatPrice(price)}</Text>,
     },
   ];
 
   return (
     <div>
       <Input.Search
-        placeholder={t('template.searchModel', { defaultValue: '搜索模型...' })}
-        value={searchText}
-        onChange={e => setSearchText(e.target.value)}
-        style={{ marginBottom: 12 }}
+        placeholder={t('template.searchModel', { defaultValue: '搜索模型' })}
         allowClear
+        onChange={(e) => setSearchText(e.target.value)}
+        style={{ marginBottom: 12 }}
       />
+
+      <div style={{ marginBottom: 8 }}>
+        <Checkbox
+          checked={filteredModels.length > 0 && selectedModels.length === filteredModels.length}
+          indeterminate={selectedModels.length > 0 && selectedModels.length < filteredModels.length}
+          onChange={(e) => {
+            if (e.target.checked) {
+              onSelectedModelsChange(filteredModels.map((m: ModelSpecCatalog) => m.providerModelId));
+            } else {
+              onSelectedModelsChange([]);
+            }
+          }}
+        >
+          <Text type="secondary">
+            {t('template.selectAll', { defaultValue: '全选' })} ({selectedModels.length}/{filteredModels.length})
+          </Text>
+        </Checkbox>
+      </div>
 
       <Table
         dataSource={filteredModels}
@@ -122,14 +97,14 @@ export function ModelSetupStep({
         size="small"
         loading={isLoading}
         pagination={false}
-        scroll={{ y: 400 }}
+        scroll={{ y: 300 }}
+        rowSelection={{
+          selectedRowKeys: selectedModels,
+          onChange: (keys) => onSelectedModelsChange(keys as string[]),
+        }}
       />
-
-      <div style={{ marginTop: 8 }}>
-        <Text type="secondary">
-          {t('template.selectedCount', { defaultValue: '已选择' })} {selectedModels.length} / {filteredModels.length} {t('template.models', { defaultValue: '个模型' })}
-        </Text>
-      </div>
     </div>
   );
 }
+
+export type { ModelSetupStepProps };

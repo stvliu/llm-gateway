@@ -67,7 +67,7 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
   className,
 }) => {
   const { token } = theme.useToken();
-  const entry = PROVIDER_ICON_ENTRIES[providerId?.toLowerCase()];
+  const entry = providerId ? PROVIDER_ICON_ENTRIES[providerId.toLowerCase()] : undefined;
   const variant: IconVariant = entry?.Color ? 'color' : 'mono';
   const IconComponent = entry?.Color ?? entry?.Mono;
 

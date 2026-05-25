@@ -1,8 +1,10 @@
 package com.codingas.gateway.infrastructure.alert.gateway;
 
-import com.codingas.gateway.domain.security.entity.SensitiveDataRule;
-import com.codingas.gateway.infrastructure.alert.gateway.database.SensitiveDataRuleRepository;
-import com.codingas.gateway.infrastructure.alert.gateway.database.dataobject.SensitiveDataRuleDo;
+import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.SensitiveDataRuleGatewayImpl;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.SensitiveDataRuleConverter;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.repository.SensitiveDataRuleRepository;
+import com.codingas.gateway.infrastructure.dataprotection.gateway.database.dataobject.SensitiveDataRuleDo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

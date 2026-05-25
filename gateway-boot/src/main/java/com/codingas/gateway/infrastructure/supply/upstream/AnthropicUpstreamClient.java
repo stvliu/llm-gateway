@@ -1,0 +1,157 @@
+package com.codingas.gateway.infrastructure.supply.upstream;
+
+import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.*;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * Anthropic 上游调用实现
+ */
+public class AnthropicUpstreamClient implements UpstreamClient {
+
+    private static final String MESSAGES_PATH = "/v1/messages";
+    private static final String ANTHROPIC_VERSION = "2023-06-01";
+
+    private final OkHttpClient httpClient;
+    private final String endpointUrl;
+    private final String apiKey;
+    private final int timeoutSeconds;
+    private final ObjectMapper objectMapper;
+
+    public AnthropicUpstreamClient(OkHttpClient httpClient, String endpointUrl, String apiKey,
+                                   int timeoutSeconds, ObjectMapper objectMapper) {
+        this.httpClient = httpClient;
+        this.endpointUrl = endpointUrl;
+        this.apiKey = apiKey;
+        this.timeoutSeconds = timeoutSeconds;
+        this.objectMapper = objectMapper;
+    }
+
+    @Override
+    public ProtocolResponse chat(ProtocolRequest request) {
+        try {
+            String json = objectMapper.writeValueAsString(request);
+
+            OkHttpClient timedClient = httpClient.newBuilder()
+                    .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .build();
+
+            Request httpRequest = new Request.Builder()
+                    .url(endpointUrl + MESSAGES_PATH)
+                    .addHeader("x-api-key", apiKey)
+                    .addHeader("anthropic-version", ANTHROPIC_VERSION)
+                    .addHeader("Content-Type", "application/json")
+                    .post(RequestBody.create(json, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = timedClient.newCall(httpRequest).execute()) {
+                String responseBody = response.body() != null ? response.body().string() : "";
+                if (!response.isSuccessful()) {
+                    throw new RuntimeException("Anthropic API 调用失败: " + response.code() + " - " + responseBody);
+                }
+                return objectMapper.readValue(responseBody, AnthropicMessagesResponse.class);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Anthropic API 调用异常", e);
+        }
+    }
+
+    @Override
+    public void chatStream(ProtocolRequest request, StreamCallback callback) {
+        try {
+            request.setStream(true);
+            String json = objectMapper.writeValueAsString(request);
+
+            OkHttpClient timedClient = httpClient.newBuilder()
+                    .readTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .build();
+
+            Request httpRequest = new Request.Builder()
+                    .url(endpointUrl + MESSAGES_PATH)
+                    .addHeader("x-api-key", apiKey)
+                    .addHeader("anthropic-version", ANTHROPIC_VERSION)
+                    .addHeader("Content-Type", "application/json")
+                    .post(RequestBody.create(json, MediaType.parse("application/json")))
+                    .build();
+
+            timedClient.newCall(httpRequest).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    callback.onError(e);
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) {
+                    try (ResponseBody body = response.body()) {
+                        if (!response.isSuccessful() || body == null) {
+                            String errorBody = body != null ? body.string() : "no body";
+                            callback.onError(new RuntimeException("Anthropic Stream 失败: " + response.code() + " - " + errorBody));
+                            return;
+                        }
+                        BufferedReader reader = new BufferedReader(
+                                new InputStreamReader(body.byteStream(), StandardCharsets.UTF_8));
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (line.startsWith("data: ")) {
+                                String data = line.substring(6).trim();
+                                if ("[DONE]".equals(data)) {
+                                    callback.onComplete();
+                                    return;
+                                }
+                                if (!data.isEmpty()) {
+                                    callback.onChunk(data);
+                                }
+                            }
+                        }
+                        callback.onComplete();
+                    } catch (Exception e) {
+                        callback.onError(e);
+                    }
+                }
+            });
+        } catch (IOException e) {
+            callback.onError(e);
+        }
+    }
+
+    @Override
+    public ConnectivityTestResult testConnectivity() {
+        // Anthropic 没有 /models 端点，使用简单请求测试连通性
+        try {
+            OkHttpClient timedClient = httpClient.newBuilder()
+                    .readTimeout(10, TimeUnit.SECONDS)
+                    .build();
+
+            // 发送一个最小请求来验证连通性
+            String testJson = "{\"model\":\"claude-3-5-haiku-20241022\",\"max_tokens\":1,\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}";
+            Request httpRequest = new Request.Builder()
+                    .url(endpointUrl + MESSAGES_PATH)
+                    .addHeader("x-api-key", apiKey)
+                    .addHeader("anthropic-version", ANTHROPIC_VERSION)
+                    .addHeader("Content-Type", "application/json")
+                    .post(RequestBody.create(testJson, MediaType.parse("application/json")))
+                    .build();
+
+            try (Response response = timedClient.newCall(httpRequest).execute()) {
+                // 只要能连通就算成功（即使是 400 等错误，也说明网络可达且 API Key 被识别）
+                if (response.code() < 500) {
+                    return new ConnectivityTestResult(true, null, null, 0);
+                } else {
+                    String errorBody = response.body() != null ? response.body().string() : "";
+                    return new ConnectivityTestResult(false, null,
+                            "HTTP " + response.code() + ": " + errorBody, 0);
+                }
+            }
+        } catch (Exception e) {
+            return new ConnectivityTestResult(false, null, e.getMessage(), 0);
+        }
+    }
+}

@@ -3,17 +3,23 @@ package com.codingas.gateway.application.experience;
 import com.codingas.gateway.application.experience.dto.ExperienceChatEvent;
 import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
 import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
-import com.codingas.gateway.application.proxy.dto.LLMRequest;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
-import com.codingas.gateway.domain.proxy.gateway.StreamCallback;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
+import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -34,34 +40,37 @@ import java.util.concurrent.TimeUnit;
  *
  * <p>提供流式聊天体验功能，支持两种模式：</p>
  * <ol>
- *   <li>使用已保存配置：传入 productId，可选 apiKeyId</li>
+ *   <li>使用已保存配置：传入 channelId，可选 credentialId</li>
  *   <li>临时配置：传入 protocolName(协议名称), apiKey, baseUrl(可选)</li>
  * </ol>
- *
- * <p>注意：已迁移到新架构，使用 ProductApiKey 替代 ProviderApiKey。</p>
  */
 @Slf4j
 @Service
 public class ModelExperienceService {
 
-    private final ProtocolGatewayRegistry protocolGatewayRegistry;
+    private final UpstreamClientRegistry upstreamClientRegistry;
     private final ProviderGateway providerGateway;
-    private final ProductGateway productGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
-    private final ModelGateway modelGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelModelGateway channelModelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ModelSpecGateway modelSpecGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public ModelExperienceService(ProtocolGatewayRegistry protocolGatewayRegistry,
+    public ModelExperienceService(UpstreamClientRegistry upstreamClientRegistry,
                                   ProviderGateway providerGateway,
-                                  ProductGateway productGateway,
-                                  ProductApiKeyGateway productApiKeyGateway,
-                                  ModelGateway modelGateway) {
-        this.protocolGatewayRegistry = protocolGatewayRegistry;
+                                  ChannelGateway channelGateway,
+                                  ChannelModelGateway channelModelGateway,
+                                  ChannelCredentialGateway channelCredentialGateway,
+                                  ModelSpecGateway modelSpecGateway,
+                                  ObjectMapper objectMapper) {
+        this.upstreamClientRegistry = upstreamClientRegistry;
         this.providerGateway = providerGateway;
-        this.productGateway = productGateway;
-        this.productApiKeyGateway = productApiKeyGateway;
-        this.modelGateway = modelGateway;
+        this.channelGateway = channelGateway;
+        this.channelModelGateway = channelModelGateway;
+        this.channelCredentialGateway = channelCredentialGateway;
+        this.modelSpecGateway = modelSpecGateway;
+        this.objectMapper = objectMapper;
     }
 
     @PreDestroy
@@ -81,12 +90,25 @@ public class ModelExperienceService {
     /**
      * 获取供应商的模型列表
      *
+     * <p>通过 Channel → ChannelModel → ModelSpec 关联路径查询。</p>
+     *
      * @param providerId 供应商 ID
      * @return 模型列表
      */
     public List<ExperienceModelResponse> getModelsByProviderId(Long providerId) {
-        return modelGateway.findByProviderId(providerId).stream()
-            .filter(Model::isAvailable)
+        List<Long> channelIds = channelGateway.findByProviderId(providerId)
+                .stream().map(Channel::getId).toList();
+        if (channelIds.isEmpty()) return List.of();
+
+        List<Long> modelSpecIds = channelIds.stream()
+                .flatMap(chId -> channelModelGateway.findActiveByChannelId(chId).stream())
+                .map(ChannelModel::getModelSpecId)
+                .distinct()
+                .toList();
+        if (modelSpecIds.isEmpty()) return List.of();
+
+        return modelSpecGateway.findByIds(modelSpecIds).stream()
+            .filter(ModelSpec::isAvailable)
             .map(model -> new ExperienceModelResponse(
                 model.getId(),
                 model.getProviderModelId(),
@@ -108,7 +130,7 @@ public class ModelExperienceService {
             try {
                 emitter.send(SseEmitter.event()
                     .name("ERROR")
-                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 productId，临时配置时需提供 protocolName 和 apiKey")));
+                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 channelId，临时配置时需提供 protocolName 和 apiKey")));
                 emitter.complete();
             } catch (IOException e) {
                 emitter.completeWithError(e);
@@ -154,49 +176,22 @@ public class ModelExperienceService {
      * 执行流式聊天
      */
     private void doChatStream(ExperienceChatRequest request, SseEmitter emitter) throws IOException {
-        // 解析配置
         ResolvedConfig config = resolveConfig(request);
         log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
 
-        // 查找协议网关
-        ProtocolGateway protocolGateway = protocolGatewayRegistry.getGateway(config.protocolName)
-            .orElseThrow(() -> new IllegalArgumentException("不支持的协议类型: " + config.protocolName));
+        String baseUrl = config.baseUrl != null ? config.baseUrl : "";
+        UpstreamClient client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
 
-        // 解析 baseUrl：优先使用请求传入，否则使用协议默认
-        String baseUrl = config.baseUrl != null ? config.baseUrl : protocolGateway.getDefaultBaseUrl();
+        ProtocolRequest protocolRequest = buildProtocolRequest(config.protocolName, request);
 
-        // 转换消息格式
-        List<LLMRequest.Message> messages = new ArrayList<>();
-        for (Map<String, String> msg : request.getMessages()) {
-            messages.add(LLMRequest.Message.builder()
-                .role(msg.get("role"))
-                .content(msg.get("content"))
-                .build());
-        }
-
-        // 构建 LLM 请求
-        LLMRequest llmRequest = LLMRequest.builder()
-            .model(request.getModel())
-            .messages(messages)
-            .maxTokens(request.getMaxTokens())
-            .temperature(request.getTemperature())
-            .stream(true)
-            .build();
-
-        // Token 统计
-        final int[] promptTokens = {0};
         final int[] completionTokens = {0};
 
-        // 创建流式回调
         StreamCallback callback = new StreamCallback() {
-            private final StringBuilder contentBuilder = new StringBuilder();
-
             @Override
             public void onChunk(String chunk) {
                 try {
                     String content = extractContent(chunk);
                     if (content != null && !content.isEmpty()) {
-                        contentBuilder.append(content);
                         emitter.send(SseEmitter.event()
                             .name("CONTENT")
                             .data(new ExperienceChatEvent.ContentData(content)));
@@ -210,17 +205,11 @@ public class ModelExperienceService {
             @Override
             public void onComplete() {
                 try {
-                    promptTokens[0] = estimatePromptTokens(messages);
-
                     emitter.send(SseEmitter.event()
                         .name("USAGE")
-                        .data(new ExperienceChatEvent.UsageData(promptTokens[0], completionTokens[0])));
-
+                        .data(new ExperienceChatEvent.UsageData(0, completionTokens[0])));
                     emitter.send(SseEmitter.event().name("DONE"));
                     emitter.complete();
-
-                    log.info("Experience chat completed: promptTokens={}, completionTokens={}",
-                        promptTokens[0], completionTokens[0]);
                 } catch (Exception e) {
                     log.error("Error completing stream: {}", e.getMessage());
                 }
@@ -234,14 +223,51 @@ public class ModelExperienceService {
                         .data(new ExperienceChatEvent.ErrorData(t.getMessage())));
                     emitter.complete();
                 } catch (IOException ex) {
-                    log.warn("Failed to send error event: {}", ex.getMessage());
                     emitter.completeWithError(t);
                 }
             }
         };
 
-        // 通过协议网关调用流式聊天
-        protocolGateway.chatStream(llmRequest, baseUrl, config.apiKey, 60, callback);
+        client.chatStream(protocolRequest, callback);
+    }
+
+    /**
+     * 根据协议类型构建协议请求 DTO
+     */
+    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatRequest request) {
+        List<Map<String, String>> rawMessages = request.getMessages();
+
+        if ("anthropic".equals(protocolName)) {
+            List<AnthropicMessagesRequest.Message> messages = rawMessages.stream()
+                .map(msg -> AnthropicMessagesRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return AnthropicMessagesRequest.builder()
+                .model(request.getModel())
+                .messages(messages)
+                .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 1024)
+                .temperature(request.getTemperature())
+                .stream(true)
+                .build();
+        } else {
+            List<OpenAIChatRequest.Message> messages = rawMessages.stream()
+                .map(msg -> OpenAIChatRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return OpenAIChatRequest.builder()
+                .model(request.getModel())
+                .messages(messages)
+                .maxTokens(request.getMaxTokens())
+                .temperature(request.getTemperature())
+                .stream(true)
+                .build();
+        }
     }
 
     /**
@@ -249,41 +275,39 @@ public class ModelExperienceService {
      *
      * <p>支持两种模式：</p>
      * <ol>
-     *   <li>使用已保存配置：从数据库读取 Product 和 ProductApiKey</li>
+     *   <li>使用已保存配置：从数据库读取 Channel 和 ChannelCredential</li>
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
     private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
         if (request.useSavedConfig()) {
-            // 从数据库读取配置（新架构：使用 productId）
-            var product = productGateway.findById(request.getProductId())
-                .orElseThrow(() -> new IllegalArgumentException("产品不存在: " + request.getProductId()));
+            // 从数据库读取配置
+            var channel = channelGateway.findById(request.getChannelId())
+                .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.getChannelId()));
 
-            ProductApiKey apiKey;
-            if (request.getApiKeyId() != null) {
-                apiKey = productApiKeyGateway.findById(request.getApiKeyId())
-                    .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + request.getApiKeyId()));
-                if (!apiKey.getProductId().equals(request.getProductId())) {
-                    throw new IllegalArgumentException("API Key 不属于该产品");
+            ChannelCredential credential;
+            if (request.getCredentialId() != null) {
+                credential = channelCredentialGateway.findById(request.getCredentialId())
+                    .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.getCredentialId()));
+                if (!credential.getChannelId().equals(request.getChannelId())) {
+                    throw new IllegalArgumentException("凭证不属于该渠道");
                 }
             } else {
-                apiKey = productApiKeyGateway.findDefaultByProductId(request.getProductId())
-                    .orElseThrow(() -> new IllegalArgumentException("产品没有默认 API Key，请指定要使用的 Key"));
+                credential = channelCredentialGateway.findDefaultByChannelId(request.getChannelId())
+                    .orElseThrow(() -> new IllegalArgumentException("渠道没有默认凭证，请指定要使用的凭证"));
             }
 
-            if (!apiKey.isAvailable()) {
-                throw new IllegalArgumentException("API Key 不可用");
+            if (!credential.isAvailable()) {
+                throw new IllegalArgumentException("凭证不可用");
             }
 
-            // 从产品端点获取 baseUrl
-            Map<String, String> endpoints = product.getEndpoints();
-            String baseUrl = endpoints != null ? endpoints.get(request.getProtocolName()) : null;
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointGateway 获取
+            String protocolName = request.getProtocolName() != null ? request.getProtocolName() : "openai";
 
-            // 使用已保存配置
             return new ResolvedConfig(
-                request.getProtocolName(),
-                baseUrl,
-                apiKey.getApiKeyPlain()
+                protocolName,
+                null,
+                credential.getApiKeyPlain()
             );
         } else {
             // 使用临时配置：baseUrl 可选，由协议网关提供默认值
@@ -306,12 +330,6 @@ public class ModelExperienceService {
 
     /**
      * 从 SSE 数据中提取内容
-     *
-     * <p>支持多种格式：</p>
-     * <ul>
-     *   <li>OpenAI 标准格式：delta.content</li>
-     *   <li>火山引擎推理格式：delta.reasoning_content（当 content 为空时使用）</li>
-     * </ul>
      */
     private String extractContent(String chunk) {
         try {
@@ -330,7 +348,7 @@ public class ModelExperienceService {
                 if (delta.has("reasoning_content") && !delta.get("reasoning_content").isNull()) {
                     String reasoningContent = delta.get("reasoning_content").asText();
                     if (!reasoningContent.isEmpty()) {
-                        return reasoningContent;
+return reasoningContent;
                     }
                 }
             }
@@ -341,24 +359,10 @@ public class ModelExperienceService {
     }
 
     /**
-     * 估算 Token 数量（简单估算：字符数 / 4）
+     * 估算 Token 数量
      */
     private int estimateTokens(String text) {
         if (text == null || text.isEmpty()) return 0;
         return Math.max(1, text.length() / 4);
-    }
-
-    /**
-     * 估算输入 Token 数量
-     */
-    private int estimatePromptTokens(List<LLMRequest.Message> messages) {
-        int total = 0;
-        for (LLMRequest.Message msg : messages) {
-            String content = msg.getContent();
-            if (content != null) {
-                total += estimateTokens(content);
-            }
-        }
-        return Math.max(1, total);
     }
 }

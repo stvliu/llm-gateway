@@ -5,7 +5,7 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.3.0 |
+| 版本 | 2.6.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
 | 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
@@ -148,36 +148,46 @@ Token 必须是所有成本追踪的核心单位。
 gateway-boot/                          # Maven 单一模块
 └── src/main/java/com/codingas/gateway/
     ├── adapter/                       # 适配器层（按用例分包）
-    │   ├── auth/controller/ & dto/
-    │   ├── chat/controller/ & dto/
-    │   ├── model/controller/ & dto/
-    │   └── admin/controller/ & dto/
+    │   ├── api/                       # REST Controller + SSE 流处理
+    │   ├── protocol/                  # 协议入站/出站适配
+    │   │   ├── openai/                #   OpenAI 协议校验器 + 出站调谐器
+    │   │   └── anthropic/             #   Anthropic 协议校验器 + 出站调谐器
+    │   ├── filter/                    # 安全拦截链
+    │   └── interceptor/               # 通用拦截器
     ├── application/                   # 应用层（按用例分包）
+    │   ├── proxy/                     # 模型调用编排（ChatDispatchService, OutboundTuner）
+    │   ├── routing/                   # 路由解析（RoutingResolver, ModelMatcher, ChannelSelector）
     │   ├── auth/
     │   ├── chat/
     │   └── model/
     ├── domain/                        # 领域层
     │   ├── gateway/                   # 跨领域 Gateway 接口
-    │   ├── router/                    # 路由领域（核心域）
+    │   ├── supply/                    # 供给领域（核心域）
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
     │   │   ├── enums/
     │   │   └── exception/
-    │   ├── proxy/                     # 代理领域（核心域）
-    │   │   ├── service/
-    │   │   └── gateway/
-    │   ├── model/                     # 模型广场领域
+    │   ├── protocol/                  # 协议领域（核心域）
+    │   │   ├── contract/             # 协议数据契约（DTO + 接口）
+    │   │   ├── conversion/           # 跨协议转换（核心业务逻辑）
+    │   │   └── validation/           # 校验接口
+    │   ├── iam/                        # 身份与访问控制领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
+    │   │   ├── valueobject/
     │   │   ├── enums/
     │   │   └── exception/
-    │   ├── security/                  # 安全控制领域
+    │   ├── threat/                      # 威胁防护领域
     │   │   ├── entity/
     │   │   ├── service/
     │   │   ├── gateway/
-    │   │   ├── enums/
+    │   │   └── exception/
+    │   ├── dataprotection/              # 数据保护领域
+    │   │   ├── entity/
+    │   │   ├── service/
+    │   │   ├── gateway/
     │   │   └── exception/
     │   ├── quota/                     # 限额配额领域
     │   │   ├── entity/
@@ -201,7 +211,9 @@ gateway-boot/                          # Maven 单一模块
     │   ├── config/
     │   ├── gateway/                  # Gateway 实现
     │   │   ├── provider/             # Provider/Model 持久化
-    │   │   ├── security/            # User/ApiKey 持久化
+    │   │   ├── iam/                 # IAM 持久化（User/ApiKey）
+    │   │   ├── threat/              # 威胁防护实现（限流/IP封禁）
+    │   │   ├── dataprotection/      # 数据保护实现（脱敏）
     │   │   ├── quota/               # 限流实现
     │   │   ├── audit/               # 审计持久化
     │   │   ├── alert/               # 告警持久化
@@ -311,7 +323,96 @@ application/auth/TokenLimitService                       # 应用限额服务
 - ❌ `security` Domain 直接调用 `router` Domain 的服务
 - ✅ `application/` 编排两者的调用
 
-### 2.3 领域模型纯洁性
+### 2.6 大模型调用链路
+
+**定义**:
+```
+所有 LLM 模型调用请求必须经过完整的七阶段处理链路。
+每个阶段的职责、归属层和依赖方向不可变更。
+```
+
+**完整调用链路**:
+
+```
+请求入口 (adapter/api)
+  │
+  ▼
+安全拦截链 (adapter/filter)
+  │  Auth → RateLimit → IpBlock → DataMasking → ModelAccess
+  ▼
+ChatDispatchService (application/proxy)     ← 统一编排入口
+  │
+  │  ┌─ 前置阶段 ────────────────────────────────────────┐
+  │  │  1. 校验：InboundValidator.validate(request)      │
+  │  │     位置：adapter/protocol/                       │
+  │  │  2. 路由：RoutingResolver.resolve(identity, model)│
+  │  │     位置：application/routing/                    │
+  │  │     ModelMatcher → ChannelSelector(strategy)      │
+  │  │       → CredentialResolver → EndpointResolver    │
+  │  │  3. 记录审计起点：auditGateway.logRequest(...)    │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
+  │  │  4. 请求转换：protocolConverter.convertRequest() │
+  │  │     位置：domain/protocol/conversion/             │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 调谐阶段 ────────────────────────────────────────┐
+  │  │  5. 调谐：outboundTuner.tune(request, ctx)        │
+  │  │     位置：application/proxy/                      │
+  │  │     职责：模型名替换、默认值填充、字段覆盖、      │
+  │  │           敏感字段剥离                              │
+  │  │     调谐必须按目标协议要求执行，而非入站协议       │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 调用阶段 ────────────────────────────────────────┐
+  │  │  6. 上游调用：upstreamClient.chat(request)        │
+  │  │     位置：infrastructure/upstream/                 │
+  │  │     韧性包装：RetryPolicy + CircuitBreaker        │
+  │  │     纯 HTTP 调用 + SSE 解析，不含业务逻辑         │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
+  │  │  7. 响应转换：protocolConverter.convertResponse()│
+  │  │     位置：domain/protocol/conversion/             │
+  │  └──────────────────────────────────────────────────┘
+  │
+  │  ┌─ 后置阶段 ────────────────────────────────────────┐
+  │  │  8. Token 计量：publish TokenUsedEvent            │
+  │  │     位置：application/proxy/                      │
+  │  │  9. 记录审计终点：auditGateway.logResponse(...)   │
+  │  │     包含：duration、success/failure、Token 用量    │
+  │  └──────────────────────────────────────────────────┘
+  │
+  ▼
+响应返回
+```
+
+**链路铁律**:
+
+| 规则 | 说明 |
+|------|------|
+| 转换先于调谐 | 跨协议时必须先转换为目标协议格式，再按目标协议要求调谐 |
+| 调谐依赖路由 | OutboundTuner 必须在 RoutingResolver 之后执行，因为调谐参数来自路由结果 |
+| 调用不含业务 | UpstreamClient 只做 HTTP 调用 + SSE 解析，不含模型名替换、默认值填充等业务逻辑 |
+| 韧性包装调用 | RetryPolicy 和 CircuitBreaker 包装在 UpstreamClient 外层，与路由选择联动 |
+| 审计前后各记 | 审计日志在调用前记录起点（入站信息），调用后记录终点（响应+耗时） |
+| 计量基于响应 | Token 计量从 ProtocolResponse 提取，在响应返回前发布事件 |
+
+**各阶段归属层**:
+
+| 阶段 | 归属层 | 关键类 |
+|------|--------|--------|
+| 校验 | adapter | `OpenAIProtocolValidator`, `AnthropicProtocolValidator` |
+| 路由 | application | `RoutingResolver`, `ModelMatcher`, `ChannelSelector`, `CredentialResolver`, `EndpointResolver` |
+| 转换 | domain | `ProtocolConverter` |
+| 调谐 | application | `OutboundTuner`, `OpenAIOutboundTuner`, `AnthropicOutboundTuner` |
+| 调用 | infrastructure | `UpstreamClient`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient`, `UpstreamClientRegistry` |
+| 韧性 | infrastructure | `RetryPolicy`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerManager` |
+| 计量 | application | `ChatDispatchService` → 发布 `TokenUsedEvent` |
+| 审计 | domain + application | `AuditGateway.logRequest()`, `AuditGateway.logResponse()` |
+
+### 2.7 领域模型纯洁性
 
 **定义**:
 ```
@@ -416,7 +517,7 @@ public class Model extends BaseEntity {
 | 中间表/关联表 | ID 引用 | 避免 JPA 关联带来的复杂性 |
 | 弱引用关系 | ID 引用 | 手动 JOIN 查询 |
 
-### 2.4 配置外部化
+### 2.8 配置外部化
 
 **定义**:
 ```
@@ -438,7 +539,7 @@ gateway:
     max-retries: 3                    # 最大重试次数
     timeout-seconds: 30               # API 超时时间
 ```
-### 2.5 全实体可审计（不可妥协）
+### 2.9 全实体可审计（不可妥协）
 
 **定义**:
 ```
@@ -484,9 +585,14 @@ GatewayException (根异常)
 │   ├── ProviderUnavailableException
 │   ├── TokenQuotaExceededException
 │   └── ProviderResponseException
-└── SecurityException (安全级异常)
-    ├── AuthenticationException
-    └── AuthorizationException
+└── IamException (身份与访问控制异常)
+    ├── UnauthorizedException
+    ├── ForbiddenException
+    └── AuthenticationFailedException
+└── ThreatException (威胁防护异常)
+    ├── RateLimitExceededException
+    └── IpBlockedException
+└── DataProtectionException (数据保护异常)
 ```
 
 **处理原则**:
@@ -596,7 +702,7 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.3.1 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-06
+**版本**: 2.6.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-25
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
@@ -606,3 +712,6 @@ GatewayException (根异常)
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
 | v2.3.0 | 2026-05-02 | **领域命名调整**：provider 域更名为 model（模型广场）；与信息架构 v3.5、应用架构 v3.0、数据架构 v1.4 保持一致 |
 | v2.3.1 | 2026-05-06 | **Entity 与 DO 关联模式**：新增 Entity 层统一使用 ID 引用原则；明确 DO 层关联策略（主从关系可用 JPA 关联，中间表使用 ID 引用） |
+| v2.4.0 | 2026-05-24 | **安全子域拆分**：security 域拆分为 iam（身份与访问控制）、threat（威胁防护）、dataprotection（数据保护）三子域；异常分层更新 |
+| v2.5.0 | 2026-05-24 | **供给域重构**：将 model、product、proxy、metadata 四个子域合并为统一的 supply（供给域）；实体重命名 Product→Channel、ProductApiKey→ChannelCredential、ProductModel→ChannelModel、Model→ModelSpec；元数据目录迁移为 supply/catalog；协议层迁移为 supply/protocol |
+| v2.6.0 | 2026-05-25 | **协议体系重构+调用链路**：新增 protocol 域（contract/conversion/validation）；协议 DTO 从 supply/protocol 迁至 domain/protocol/contract；校验实现迁至 adapter/protocol；ProtocolGateway→UpstreamClient、ProtocolGatewayFactory→UpstreamClientRegistry；新增 OutboundTuner（出站调谐器）；路由拆为 application/routing/（RoutingResolver/ModelMatcher/ChannelSelector）；新增 §2.6 大模型调用链路（七阶段：校验→路由→转换→调谐→调用→转换→后置） |

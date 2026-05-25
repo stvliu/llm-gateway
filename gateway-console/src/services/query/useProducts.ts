@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productApi, productApiKeyApi } from '@/services/api/product';
+import { productApi, channelCredentialApi } from '@/services/api/product';
 import type { CreateProductRequest, UpdateProductRequest, CreateProductApiKeyRequest, UpdateProductApiKeyRequest } from '@/types/product';
 
 export const productKeys = {
@@ -65,55 +65,55 @@ export function useDeleteProduct() {
   });
 }
 
-/** 获取产品下的 API Key 列表 */
-export function useProductApiKeys(productId: number) {
+/** 获取渠道下的凭证列表 */
+export function useChannelCredentials(channelId: number) {
   return useQuery({
-    queryKey: productKeys.keys(productId),
-    queryFn: () => productApiKeyApi.list(productId),
-    enabled: !!productId,
+    queryKey: productKeys.keys(channelId),
+    queryFn: () => channelCredentialApi.list(channelId),
+    enabled: !!channelId,
   });
 }
 
-/** 创建产品 API Key */
-export function useCreateProductApiKey() {
+/** 创建渠道凭证 */
+export function useCreateChannelCredential() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, data }: { productId: number; data: CreateProductApiKeyRequest }) =>
-      productApiKeyApi.create(productId, data),
+    mutationFn: ({ channelId, data }: { channelId: number; data: CreateProductApiKeyRequest }) =>
+      channelCredentialApi.create(channelId, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.channelId) });
     },
   });
 }
 
-/** 更新产品 API Key */
-export function useUpdateProductApiKey() {
+/** 更新渠道凭证 */
+export function useUpdateChannelCredential() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, id, data }: { productId: number; id: number; data: UpdateProductApiKeyRequest }) =>
-      productApiKeyApi.update(productId, id, data),
+    mutationFn: ({ channelId, id, data }: { channelId: number; id: number; data: UpdateProductApiKeyRequest }) =>
+      channelCredentialApi.update(channelId, id, data),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.channelId) });
     },
   });
 }
 
-/** 删除产品 API Key */
-export function useDeleteProductApiKey() {
+/** 删除渠道凭证 */
+export function useDeleteChannelCredential() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ productId, id }: { productId: number; id: number }) =>
-      productApiKeyApi.delete(productId, id),
+    mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
+      channelCredentialApi.delete(channelId, id),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.productId) });
+      queryClient.invalidateQueries({ queryKey: productKeys.keys(variables.channelId) });
     },
   });
 }
 
-/** 测试 API Key */
-export function useTestProductApiKey() {
+/** 测试渠道凭证 */
+export function useTestChannelCredential() {
   return useMutation({
-    mutationFn: ({ productId, id }: { productId: number; id: number }) =>
-      productApiKeyApi.test(productId, id),
+    mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
+      channelCredentialApi.test(channelId, id),
   });
 }

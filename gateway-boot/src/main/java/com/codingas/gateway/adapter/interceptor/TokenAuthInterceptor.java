@@ -38,7 +38,7 @@ public class TokenAuthInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public int order() {
-        return 1; // 最先执行
+        return 2; // 在限流之后执行
     }
 
     @Override

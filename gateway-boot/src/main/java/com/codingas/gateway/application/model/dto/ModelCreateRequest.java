@@ -13,6 +13,7 @@ import java.util.Map;
 @Data
 public class ModelCreateRequest {
     @NotNull(message = "Provider ID is required")
+    // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联，此字段保留用于前端兼容
     private Long providerId;
 
     @NotBlank(message = "Provider model ID is required")

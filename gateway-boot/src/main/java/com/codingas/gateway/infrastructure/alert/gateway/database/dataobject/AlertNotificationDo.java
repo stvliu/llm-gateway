@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.alert.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.infrastructure.security.database.dataobject.UserDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserDo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

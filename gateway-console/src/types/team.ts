@@ -70,9 +70,10 @@ export interface ProductBrief {
 
 /** 创建用户 API Key 请求 */
 export interface CreateUserApiKeyRequest {
-  teamId: number;
+  teamId?: number;
   userId: number;
-  productIds: number[];
+  channelIds?: number[];
+  productIds?: number[];
   name: string;
   models?: string[];
   quotaLimit?: number | null;

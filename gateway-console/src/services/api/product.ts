@@ -48,24 +48,25 @@ export const productApi = {
     api.delete<void>(`/products/${id}`),
 };
 
-export const productApiKeyApi = {
-  /** 获取产品下的 API Key 列表 */
-  list: (productId: number) =>
-    api.get<ProductApiKey[]>(`/products/${productId}/api-keys`),
+/** 渠道凭证 API */
+export const channelCredentialApi = {
+  /** 获取渠道下的凭证列表 */
+  list: (channelId: number) =>
+    api.get<ProductApiKey[]>(`/channels/${channelId}/credentials`),
 
-  /** 创建 API Key */
-  create: (productId: number, data: CreateProductApiKeyRequest) =>
-    api.post<CreateProductApiKeyResponse>(`/products/${productId}/api-keys`, data),
+  /** 创建凭证 */
+  create: (channelId: number, data: CreateProductApiKeyRequest) =>
+    api.post<CreateProductApiKeyResponse>(`/channels/${channelId}/credentials`, data),
 
-  /** 更新 API Key */
-  update: (productId: number, id: number, data: UpdateProductApiKeyRequest) =>
-    api.put<ProductApiKey>(`/products/${productId}/api-keys/${id}`, data),
+  /** 更新凭证 */
+  update: (channelId: number, id: number, data: UpdateProductApiKeyRequest) =>
+    api.put<ProductApiKey>(`/channels/${channelId}/credentials/${id}`, data),
 
-  /** 删除 API Key */
-  delete: (productId: number, id: number) =>
-    api.delete<void>(`/products/${productId}/api-keys/${id}`),
+  /** 删除凭证 */
+  delete: (channelId: number, id: number) =>
+    api.delete<void>(`/channels/${channelId}/credentials/${id}`),
 
-  /** 测试 API Key */
-  test: (productId: number, id: number) =>
-    api.post<ApiKeyTestResponse>(`/products/${productId}/api-keys/${id}/test`),
+  /** 测试凭证 */
+  test: (channelId: number, id: number) =>
+    api.post<ApiKeyTestResponse>(`/channels/${channelId}/credentials/${id}/test`),
 };

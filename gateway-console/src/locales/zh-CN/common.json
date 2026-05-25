@@ -4,7 +4,7 @@
     "providerManagement": "供应商管理",
     "providers": "供应商",
     "models": "模型",
-    "metadata": "元数据",
+    "catalog": "目录管理",
     "templates": "供应商模板",
     "providerKeys": "供应商密钥",
     "keyManagement": "密钥管理",

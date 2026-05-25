@@ -42,7 +42,7 @@ export default function ProviderProductsTab({ providerId }: ProviderProductsTabP
     }
     modal.confirm({
       title: t('product.deleteProduct'),
-      content: t('product.deleteConfirm', { name: product.productName }),
+      content: t('product.deleteConfirm', { name: product.name }),
       okType: 'danger',
       onOk: () => deleteMutation.mutateAsync({ id: product.id, providerId }),
     });

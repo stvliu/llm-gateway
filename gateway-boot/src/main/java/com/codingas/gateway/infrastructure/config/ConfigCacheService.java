@@ -1,12 +1,15 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.security.service.EncryptionService;
-import com.codingas.gateway.domain.model.entity.Model;
-import com.codingas.gateway.domain.model.entity.Provider;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
-import com.codingas.gateway.domain.product.entity.ProductApiKey;
-import com.codingas.gateway.domain.product.gateway.ProductApiKeyGateway;
+import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,18 +23,20 @@ import java.util.Optional;
  * 配置缓存服务
  *
  * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。</p>
- * <p>负责 Provider、Model、ProductApiKey 的缓存管理。</p>
+ * <p>负责 Provider、ModelSpec、ChannelCredential 的缓存管理。</p>
  *
- * <p>注意：已迁移到新架构，使用 ProductApiKey 替代 ProviderApiKey。</p>
+ * <p>注意：已迁移到新架构，使用 ChannelCredential 替代 ProductApiKey。</p>
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class ConfigCacheService {
 
+    private final ModelSpecGateway modelSpecGateway;
     private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ProductApiKeyGateway productApiKeyGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelModelGateway channelModelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final EncryptionService encryptionService;
 
     // ========== Provider 操作 ==========
@@ -54,37 +59,53 @@ public class ConfigCacheService {
     // ========== Model 操作 ==========
 
     @Cacheable(value = CacheNames.MODELS, key = "#id")
-    public Optional<Model> getModelById(Long id) {
-        return modelGateway.findById(id);
+    public Optional<ModelSpec> getModelById(Long id) {
+        return modelSpecGateway.findById(id);
     }
 
     @Cacheable(value = CacheNames.MODELS, key = "'all'")
-    public List<Model> getAllModels() {
-        return modelGateway.findAll();
+    public List<ModelSpec> getAllModels() {
+        return modelSpecGateway.findAll();
     }
 
     @Cacheable(value = CacheNames.MODELS, key = "'active'")
-    public List<Model> getActiveModels() {
-        return modelGateway.findAllActive();
+    public List<ModelSpec> getActiveModels() {
+        return modelSpecGateway.findAllActive();
     }
-
-    @Cacheable(value = CacheNames.MODELS, key = "'provider:' + #providerId")
-    public List<Model> getModelsByProviderId(Long providerId) {
-        return modelGateway.findByProviderId(providerId);
-    }
-
-    // ========== Product API Key 操作（敏感数据，仅本地缓存）==========
 
     /**
-     * 获取产品的默认 API Key（解密后）
+     * 获取供应商下的模型规格列表
+     *
+     * <p>通过 Channel → ChannelModel → ModelSpec 关联路径查询。</p>
+     */
+    @Cacheable(value = CacheNames.MODELS, key = "'provider:' + #providerId")
+    public List<ModelSpec> getModelsByProviderId(Long providerId) {
+        List<Long> channelIds = channelGateway.findByProviderId(providerId)
+                .stream().map(ch -> ch.getId()).toList();
+        if (channelIds.isEmpty()) return List.of();
+
+        List<Long> modelSpecIds = channelIds.stream()
+                .flatMap(chId -> channelModelGateway.findActiveByChannelId(chId).stream())
+                .map(ChannelModel::getModelSpecId)
+                .distinct()
+                .toList();
+        if (modelSpecIds.isEmpty()) return List.of();
+
+        return modelSpecGateway.findByIds(modelSpecIds);
+    }
+
+    // ========== ChannelCredential 操作（敏感数据，仅本地缓存）==========
+
+    /**
+     * 获取渠道的默认凭证（解密后）
      *
      * <p>敏感数据，使用本地专用缓存。</p>
      */
     @Cacheable(value = CacheNames.API_KEYS_LOCAL,
-               key = "#productId",
+               key = "#channelId",
                cacheManager = "localCacheManager")
-    public Optional<ProductApiKey> getApiKeyByProductId(Long productId) {
-        return productApiKeyGateway.findDefaultByProductId(productId);
+    public Optional<ChannelCredential> getCredentialByChannelId(Long channelId) {
+        return channelCredentialGateway.findDefaultByChannelId(channelId);
     }
 
     // ========== 缓存刷新 ==========

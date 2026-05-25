@@ -7,12 +7,12 @@ import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.domain.usage.enums.ExceededAction;
 import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.model.gateway.ModelGateway;
-import com.codingas.gateway.domain.model.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
-import com.codingas.gateway.domain.security.entity.User;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
-import com.codingas.gateway.domain.security.gateway.UserGateway;
+import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.domain.quota.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ class TokenLimitServiceImplTest {
     private ProviderGateway providerGateway;
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelSpecGateway modelSpecGateway;
 
     @InjectMocks
     private TokenLimitServiceImpl service;

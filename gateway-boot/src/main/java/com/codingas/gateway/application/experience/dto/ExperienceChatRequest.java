@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * 体验聊天请求
  *
- * <p>已迁移到新架构，使用 productId 替代 providerId。</p>
+ * <p>支持两种模式：使用已保存的渠道配置或临时配置。</p>
  */
 @Data
 public class ExperienceChatRequest {
@@ -29,11 +29,11 @@ public class ExperienceChatRequest {
 
     private Boolean stream;
 
-    /** 产品 ID（使用已保存配置时必填） */
-    private Long productId;
+    /** 渠道 ID（使用已保存配置时必填） */
+    private Long channelId;
 
-    /** API Key ID（使用已保存配置时可选，默认使用产品的默认 Key） */
-    private Long apiKeyId;
+    /** 凭证 ID（使用已保存配置时可选，默认使用渠道的默认 Key） */
+    private Long credentialId;
 
     /** 直接传入的 API Key（不使用已保存配置时） */
     private String apiKey;
@@ -41,13 +41,11 @@ public class ExperienceChatRequest {
     /** 直接传入的 Base URL（不使用已保存配置时，可选，默认使用协议默认 URL） */
     private String baseUrl;
 
-    /** 是否使用已保存的产品配置 */
+    /** 是否使用已保存的渠道配置 */
     private Boolean useSavedConfig;
 
     /**
-     * 判断是否使用已保存的产品配置
-     *
-     * @return true 如果使用已保存配置
+     * 判断是否使用已保存的渠道配置
      */
     public boolean useSavedConfig() {
         return useSavedConfig != null && useSavedConfig;
@@ -55,8 +53,6 @@ public class ExperienceChatRequest {
 
     /**
      * 验证请求是否有效
-     *
-     * @return true 如果请求参数完整
      */
     public boolean isValid() {
         if (model == null || model.isBlank()) {
@@ -66,7 +62,7 @@ public class ExperienceChatRequest {
             return false;
         }
         if (useSavedConfig()) {
-            return productId != null;
+            return channelId != null;
         } else {
             return apiKey != null && !apiKey.isBlank();
         }

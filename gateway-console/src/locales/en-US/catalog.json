@@ -1,0 +1,81 @@
+{
+  "title": "Catalog Management",
+  "tabs": {
+    "providers": "Provider Catalog",
+    "plans": "Plan Catalog",
+    "modelSpecs": "Model Spec Catalog"
+  },
+  "provider": {
+    "code": "Provider Code",
+    "name": "Provider Name",
+    "providerType": "Provider Type",
+    "materialized": "Materialized",
+    "notMaterialized": "Not Materialized"
+  },
+  "providerType": {
+    "INTERNATIONAL": "International",
+    "DOMESTIC": "Domestic"
+  },
+  "plan": {
+    "planCode": "Plan Code",
+    "providerCode": "Provider Code",
+    "planName": "Plan Name",
+    "billingMode": "Billing Mode",
+    "endpoints": "Endpoints",
+    "pricing": "Pricing",
+    "materialized": "Materialized",
+    "notMaterialized": "Not Materialized",
+    "detail": "Plan Detail"
+  },
+  "billingMode": {
+    "PAY_AS_YOU_GO": "Pay As You Go",
+    "SUBSCRIPTION": "Subscription",
+    "PACKAGE": "Package"
+  },
+  "modelSpec": {
+    "providerModelId": "Model ID",
+    "modelName": "Model Name",
+    "providerCode": "Provider Code",
+    "capabilities": "Capabilities",
+    "contextWindow": "Context Window",
+    "maxOutputTokens": "Max Output Tokens",
+    "materialized": "Materialized",
+    "notMaterialized": "Not Materialized"
+  },
+  "source": {
+    "label": "Source",
+    "BUILTIN": "Built-in",
+    "MODELS_DEV": "Models.dev",
+    "PROVIDER_API": "Provider API",
+    "MANUAL": "Manual",
+    "OVERRIDE": "Override"
+  },
+  "materialize": {
+    "provider": "Materialize Provider",
+    "plan": "Materialize Plan",
+    "modelSpec": "Materialize Model Spec",
+    "confirmTitle": "Confirm Materialization",
+    "confirmContent": "Are you sure you want to materialize \"{{name}}\" into an operational entity?",
+    "status": {
+      "CREATED": "Created",
+      "SKIPPED": "Skipped"
+    }
+  },
+  "sync": {
+    "title": "Sync Catalog",
+    "builtin": "Sync Built-in",
+    "modelsDev": "Sync Models.dev"
+  },
+  "message": {
+    "materializeSuccess": "Materialized successfully",
+    "materializeFailed": "Materialization failed",
+    "syncSuccess": "Synced successfully",
+    "syncFailed": "Sync failed"
+  },
+  "filter": {
+    "keyword": "Keyword search",
+    "providerType": "Provider Type",
+    "capability": "Capability",
+    "all": "All"
+  }
+}

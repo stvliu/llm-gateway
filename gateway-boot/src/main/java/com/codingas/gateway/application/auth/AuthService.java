@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.auth;
 
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 
 /**
  * 认证应用服务接口
@@ -16,15 +16,5 @@ public interface AuthService {
      * @param clientIp 客户端 IP
      * @return 认证结果
      */
-    UserAuthResult authenticate(String apiKey, String clientIp);
-
-    /**
-     * 检查用户权限
-     *
-     * @param userId 用户 ID
-     * @param resource 资源
-     * @param action 操作
-     * @return 是否有权
-     */
-    boolean checkPermission(Long userId, String resource, String action);
+    Identity authenticate(String apiKey, String clientIp);
 }

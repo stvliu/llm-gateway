@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.domain.proxy.gateway.ProtocolGatewayRegistry;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -20,12 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @EnableConfigurationProperties(ProviderHealthProperties.class)
 public class ProviderHealthTracker {
 
-    private final ProtocolGatewayRegistry protocolGatewayRegistry;
+    private final UpstreamClientRegistry upstreamClientRegistry;
     private final ProviderHealthProperties properties;
     private final ConcurrentHashMap<String, ProviderHealthState> states = new ConcurrentHashMap<>();
 
-    public ProviderHealthTracker(ProtocolGatewayRegistry protocolGatewayRegistry, ProviderHealthProperties properties) {
-        this.protocolGatewayRegistry = protocolGatewayRegistry;
+    public ProviderHealthTracker(UpstreamClientRegistry upstreamClientRegistry, ProviderHealthProperties properties) {
+        this.upstreamClientRegistry = upstreamClientRegistry;
         this.properties = properties;
     }
 
@@ -55,8 +55,8 @@ public class ProviderHealthTracker {
      * 获取所有 Provider 的缓存状态（不触发重新评估）
      */
     public List<ProviderHealthState> getAllStatuses() {
-        return protocolGatewayRegistry.getAllGateways().stream()
-                .map(gateway -> getCachedStatus(gateway.getProtocolName()))
+        return upstreamClientRegistry.getSupportedProtocols().stream()
+                .map(protocol -> getCachedStatus(protocol))
                 .toList();
     }
 

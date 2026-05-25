@@ -1,9 +1,10 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.proxy.ProxyService;
-import com.codingas.gateway.application.proxy.dto.LLMRequest;
-import com.codingas.gateway.domain.proxy.entity.RoutingStrategy;
-import com.codingas.gateway.domain.security.service.UserAuthResult;
+import com.codingas.gateway.application.proxy.ChatDispatchService;
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,29 +27,38 @@ public final class SseStreamHelper {
     private SseStreamHelper() {}
 
     /**
-     * 执行流式代理请求并写入 SSE 响应
+     * 执行流式调度请求并写入 SSE 响应
      *
-     * @param proxyService 代理服务
-     * @param llmRequest   LLM 请求
-     * @param authResult   认证结果（新架构）
-     * @param response     HTTP 响应
+     * @param dispatchService  调度服务
+     * @param protocolRequest  协议请求
+     * @param identity          认证结果
+     * @param response         HTTP 响应
      */
-    public static void executeStream(ProxyService proxyService, LLMRequest llmRequest,
-                                     UserAuthResult authResult, HttpServletResponse response) throws IOException {
+    public static void executeStream(ChatDispatchService dispatchService, ProtocolRequest protocolRequest,
+                                     Identity identity, HttpServletResponse response) throws IOException {
         setupSseResponse(response);
 
         PrintWriter writer = response.getWriter();
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<Throwable> errorRef = new AtomicReference<>();
 
-        proxyService.proxyStream(llmRequest, authResult, RoutingStrategy.WEIGHTED, data -> {
-            writeChunk(writer, data, errorRef, latch);
-        }, () -> {
-            writeDone(writer, latch);
-        }, error -> {
-            log.error("Stream error: {}", error.getMessage());
-            errorRef.set(error);
-            latch.countDown();
+        dispatchService.dispatchStream(protocolRequest, identity, RoutingStrategy.WEIGHTED, new StreamCallback() {
+            @Override
+            public void onChunk(String data) {
+                writeChunk(writer, data, errorRef, latch);
+            }
+
+            @Override
+            public void onComplete() {
+                writeDone(writer, latch);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                log.error("Stream error: {}", t.getMessage());
+                errorRef.set(t);
+                latch.countDown();
+            }
         });
 
         awaitCompletion(latch, errorRef);

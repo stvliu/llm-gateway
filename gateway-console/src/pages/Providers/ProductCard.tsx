@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, Button, Tag, Space, Spin, Typography, Collapse } from 'antd';
 import { EditOutlined, DeleteOutlined, PlusOutlined, ApiOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useProductApiKeys } from '@/services/query/useProducts';
+import { useChannelCredentials } from '@/services/query/useProducts';
 import type { Product, ProductApiKey } from '@/types/product';
 import ProductApiKeyCreateModal from './ProductApiKeyCreateModal';
 import ProductApiKeyEditModal from './ProductApiKeyEditModal';
@@ -18,7 +18,7 @@ interface Props {
 
 export default function ProductCard({ product, onEdit, onDelete }: Props) {
   const { t } = useTranslation('products');
-  const { data: apiKeys, isLoading } = useProductApiKeys(product.id);
+  const { data: apiKeys, isLoading } = useChannelCredentials(product.id);
 
   const activeKeys = apiKeys?.filter(k => k.state === 'ACTIVE') || [];
   const endpointCount = Object.keys(product.endpoints || {}).length;
@@ -30,7 +30,7 @@ export default function ProductCard({ product, onEdit, onDelete }: Props) {
     <Card
       title={
         <Space>
-          <Text strong>{product.productName}</Text>
+          <Text strong>{product.name}</Text>
           <Tag color={product.state === 'ACTIVE' ? 'green' : 'default'}>
             {product.state}
           </Tag>

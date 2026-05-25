@@ -8,8 +8,9 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import jakarta.servlet.http.HttpServletRequest;
+import com.codingas.gateway.domain.team.entity.UserTeam;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
+import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,7 +41,7 @@ class TeamControllerUserApiKeyTest {
     private UserApiKeyService userApiKeyService;
 
     @Mock
-    private HttpServletRequest httpRequest;
+    private UserTeamGateway userTeamGateway;
 
     private TeamController controller;
 
@@ -51,32 +52,36 @@ class TeamControllerUserApiKeyTest {
 
     @BeforeEach
     void setUp() {
-        controller = new TeamController(teamService, userApiKeyService);
+        controller = new TeamController(teamService, userApiKeyService, userTeamGateway);
     }
 
     @Test
-    @DisplayName("查询团队密钥列表")
+    @DisplayName("查询团队密钥列表 — 通过团队成员查找")
     void listApiKeys_success() {
-        when(userApiKeyService.listByTeamId(TEAM_ID))
-                .thenReturn(List.of());
+        UserTeam member = new UserTeam();
+        member.setUserId(USER_ID);
+        when(userTeamGateway.findByTeamId(TEAM_ID)).thenReturn(List.of(member));
+        when(userApiKeyService.findByUserId(USER_ID)).thenReturn(List.of());
 
         List<UserApiKeyResponse> result = controller.listApiKeys(TEAM_ID);
 
         assertThat(result).isEmpty();
+        verify(userTeamGateway).findByTeamId(TEAM_ID);
+        verify(userApiKeyService).findByUserId(USER_ID);
     }
 
     @Test
     @DisplayName("查询密钥详情")
     void getApiKey_success() {
         UserApiKeyDetailResponse detailResponse = new UserApiKeyDetailResponse(
-                API_KEY_ID, TEAM_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
+                API_KEY_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
                 "sk-abc1", "sk-abc1xxxxx", "test-key",
                 List.of("gpt-4o"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
         );
-        when(userApiKeyService.getDetailByIdAndTeamId(API_KEY_ID, TEAM_ID)).thenReturn(detailResponse);
+        when(userApiKeyService.getDetailById(API_KEY_ID)).thenReturn(detailResponse);
 
-        UserApiKeyDetailResponse result = controller.getApiKey(TEAM_ID, API_KEY_ID);
+        UserApiKeyDetailResponse result = controller.getApiKey(API_KEY_ID);
 
         assertThat(result.id()).isEqualTo(API_KEY_ID);
         assertThat(result.keyPlain()).isEqualTo("sk-abc1xxxxx");
@@ -89,7 +94,7 @@ class TeamControllerUserApiKeyTest {
             stpUtilMock.when(StpUtil::getLoginIdAsLong).thenReturn(USER_ID);
             stpUtilMock.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    TEAM_ID, USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
             );
             UserApiKeyCreateResponse createResponse = new UserApiKeyCreateResponse(
                     API_KEY_ID, "sk-abc1", "sk-abc1xxxxx"
@@ -113,7 +118,7 @@ class TeamControllerUserApiKeyTest {
                 "updated-name", List.of(PRODUCT_ID), List.of("claude-3-5-sonnet"), null, null
         );
         UserApiKeyResponse updateResponse = new UserApiKeyResponse(
-                API_KEY_ID, TEAM_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
+                API_KEY_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
                 "sk-abc1", "updated-name",
                 List.of("claude-3-5-sonnet"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
@@ -121,7 +126,7 @@ class TeamControllerUserApiKeyTest {
         when(userApiKeyService.update(any(), any(UserApiKeyUpdateRequest.class)))
                 .thenReturn(updateResponse);
 
-        UserApiKeyResponse result = controller.updateApiKey(TEAM_ID, API_KEY_ID, request);
+        UserApiKeyResponse result = controller.updateApiKey(API_KEY_ID, request);
 
         assertThat(result).isNotNull();
     }
@@ -129,7 +134,7 @@ class TeamControllerUserApiKeyTest {
     @Test
     @DisplayName("删除密钥")
     void deleteApiKey_success() {
-        var result = controller.deleteApiKey(TEAM_ID, API_KEY_ID);
+        var result = controller.deleteApiKey(API_KEY_ID);
 
         assertThat(result.getStatusCode().value()).isEqualTo(204);
         verify(userApiKeyService).delete(API_KEY_ID);

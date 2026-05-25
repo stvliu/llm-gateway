@@ -1,23 +1,22 @@
 package com.codingas.gateway.application.userapikey;
 
-import com.codingas.gateway.application.userapikey.dto.ProductBrief;
-import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateRequest;
+import com.codingas.gateway.application.userapikey.dto.ChannelBrief;import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateRequest;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
-import com.codingas.gateway.domain.product.entity.Product;
-import com.codingas.gateway.domain.product.gateway.ProductGateway;
-import com.codingas.gateway.domain.team.entity.UserApiKey;
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
-import com.codingas.gateway.domain.team.gateway.UserApiKeyGateway;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
+import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -27,46 +26,39 @@ import java.util.List;
 public class UserApiKeyServiceImpl implements UserApiKeyService {
 
     private static final Logger log = LoggerFactory.getLogger(UserApiKeyServiceImpl.class);
-    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UserApiKeyGateway userApiKeyGateway;
-    private final ProductGateway productGateway;
+    private final ChannelGateway channelGateway;
+    private final UserApiKeyGenerator userApiKeyGenerator;
 
     public UserApiKeyServiceImpl(UserApiKeyGateway userApiKeyGateway,
-                                ProductGateway productGateway) {
+                                 ChannelGateway channelGateway,
+                                 UserApiKeyGenerator userApiKeyGenerator) {
         this.userApiKeyGateway = userApiKeyGateway;
-        this.productGateway = productGateway;
+        this.channelGateway = channelGateway;
+        this.userApiKeyGenerator = userApiKeyGenerator;
     }
 
     @Override
     @Transactional
     public UserApiKeyCreateResponse create(UserApiKeyCreateRequest request) {
-        String plainKey = generateRawKey();
-        String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
+        GeneratedApiKey generated = userApiKeyGenerator.generate();
 
         UserApiKey apiKey = new UserApiKey();
-        apiKey.setTeamId(request.teamId());
         apiKey.setUserId(request.userId());
-        apiKey.setProductIds(request.productIds());
-        apiKey.setKeyPrefix(keyPrefix);
-        apiKey.setKeyPlain(plainKey);
+        apiKey.setChannelIds(request.channelIds());
+        apiKey.setKeyPrefix(generated.keyPrefix());
+        apiKey.setKeyPlain(generated.plainKey());
         apiKey.setName(request.name());
         apiKey.setModels(request.models());
         apiKey.setQuotaLimit(request.quotaLimit());
         apiKey.setState(UserApiKeyState.ACTIVE);
 
         UserApiKey saved = userApiKeyGateway.save(apiKey);
-        log.info("Created UserApiKey: id={}, teamId={}, userId={}, productIds={}",
-                saved.getId(), saved.getTeamId(), saved.getUserId(), saved.getProductIds());
+        log.info("Created UserApiKey: id={}, userId={}, channelIds={}",
+                saved.getId(), saved.getUserId(), saved.getChannelIds());
 
-        return new UserApiKeyCreateResponse(saved.getId(), keyPrefix, plainKey);
-    }
-
-    @Override
-    public List<UserApiKeyResponse> listByTeamId(Long teamId) {
-        return userApiKeyGateway.findByTeamId(teamId).stream()
-                .map(this::toResponse)
-                .toList();
+        return new UserApiKeyCreateResponse(saved.getId(), generated.keyPrefix(), generated.plainKey());
     }
 
     @Override
@@ -79,24 +71,14 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     @Override
     public UserApiKeyResponse getById(Long id) {
         UserApiKey apiKey = userApiKeyGateway.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("UserApiKey not found: id=" + id));
+                .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
         return toResponse(apiKey);
     }
 
     @Override
     public UserApiKeyDetailResponse getDetailById(Long id) {
         UserApiKey apiKey = userApiKeyGateway.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("UserApiKey not found: id=" + id));
-        return toDetailResponse(apiKey);
-    }
-
-    @Override
-    public UserApiKeyDetailResponse getDetailByIdAndTeamId(Long id, Long teamId) {
-        UserApiKey apiKey = userApiKeyGateway.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("UserApiKey not found: id=" + id));
-        if (!apiKey.getTeamId().equals(teamId)) {
-            throw new IllegalArgumentException("UserApiKey does not belong to team: apiKeyId=" + id + ", teamId=" + teamId);
-        }
+                .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
         return toDetailResponse(apiKey);
     }
 
@@ -104,13 +86,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     @Transactional
     public UserApiKeyResponse update(Long id, UserApiKeyUpdateRequest request) {
         UserApiKey apiKey = userApiKeyGateway.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("UserApiKey not found: id=" + id));
+                .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
 
         if (request.name() != null) {
             apiKey.setName(request.name());
         }
-        if (request.productIds() != null) {
-            apiKey.setProductIds(request.productIds());
+        if (request.channelIds() != null) {
+            apiKey.setChannelIds(request.channelIds());
         }
         if (request.models() != null) {
             apiKey.setModels(request.models());
@@ -130,23 +112,18 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     @Override
     @Transactional
     public void delete(Long id) {
-        userApiKeyGateway.deleteById(id);
+        UserApiKey apiKey = userApiKeyGateway.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
+        userApiKeyGateway.delete(apiKey);
         log.info("Deleted UserApiKey: id={}", id);
-    }
-
-    private String generateRawKey() {
-        byte[] bytes = new byte[32];
-        SECURE_RANDOM.nextBytes(bytes);
-        return "sk-" + Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     private UserApiKeyResponse toResponse(UserApiKey apiKey) {
         return new UserApiKeyResponse(
                 apiKey.getId(),
-                apiKey.getTeamId(),
                 apiKey.getUserId(),
-                apiKey.getProductIds(),
-                toProductBriefs(apiKey.getProductIds()),
+                apiKey.getChannelIds(),
+                toChannelBriefs(apiKey.getChannelIds()),
                 apiKey.getKeyPrefix(),
                 apiKey.getName(),
                 apiKey.getModels(),
@@ -160,10 +137,9 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     private UserApiKeyDetailResponse toDetailResponse(UserApiKey apiKey) {
         return new UserApiKeyDetailResponse(
                 apiKey.getId(),
-                apiKey.getTeamId(),
                 apiKey.getUserId(),
-                apiKey.getProductIds(),
-                toProductBriefs(apiKey.getProductIds()),
+                apiKey.getChannelIds(),
+                toChannelBriefs(apiKey.getChannelIds()),
                 apiKey.getKeyPrefix(),
                 apiKey.getKeyPlain(),
                 apiKey.getName(),
@@ -175,13 +151,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         );
     }
 
-    /** 将 productIds 转为 ProductBrief 列表（批量查询避免 N+1） */
-    private List<ProductBrief> toProductBriefs(List<Long> productIds) {
-        if (productIds == null || productIds.isEmpty()) {
+    /** 将 channelIds 转为 ChannelBrief 列表（批量查询避免 N+1） */
+    private List<ChannelBrief> toChannelBriefs(List<Long> channelIds) {
+        if (channelIds == null || channelIds.isEmpty()) {
             return List.of();
         }
-        return productGateway.findByIds(productIds).stream()
-                .map(p -> new ProductBrief(p.getId(), p.getName()))
+        return channelGateway.findByIds(channelIds).stream()
+                .map(c -> new ChannelBrief(c.getId(), c.getName()))
                 .toList();
     }
 }

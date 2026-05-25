@@ -1,6 +1,7 @@
 package com.codingas.gateway.domain.audit.gateway;
 
 import com.codingas.gateway.domain.audit.entity.AuditLog;
+import com.codingas.gateway.domain.audit.entity.CallLog;
 
 import java.util.List;
 
@@ -26,4 +27,12 @@ public interface AuditGateway {
      * @return 审计日志列表
      */
     List<AuditLog> findByUserId(Long userId);
+
+    /**
+     * 保存调用日志
+     *
+     * @param callLog 调用日志实体
+     * @return 保存后的实体
+     */
+    CallLog saveCallLog(CallLog callLog);
 }

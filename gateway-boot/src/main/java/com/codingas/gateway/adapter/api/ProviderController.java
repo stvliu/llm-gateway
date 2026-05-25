@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 提供商管理 API
  *
- * <p>注意：API Key 管理已迁移到 ProductApiKey，通过 ProductController 管理。</p>
+ * <p>注意：API Key 管理已迁移到 ChannelCredential，通过 ChannelCredentialController 管理。</p>
  */
 @RestController
 @RequestMapping("/api/v1/providers")

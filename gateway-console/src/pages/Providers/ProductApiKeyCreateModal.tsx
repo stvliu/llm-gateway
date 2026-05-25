@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Typography, Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useCreateProductApiKey } from '@/services/query/useProducts';
+import { useCreateChannelCredential } from '@/services/query/useProducts';
 import type { CreateProductApiKeyRequest } from '@/types/product';
 
 const { Paragraph } = Typography;
@@ -16,7 +16,7 @@ interface Props {
 export default function ProductApiKeyCreateModal({ open, productId, onClose, onSuccess }: Props) {
   const { t } = useTranslation('products');
   const [form] = Form.useForm<CreateProductApiKeyRequest>();
-  const createMutation = useCreateProductApiKey();
+  const createMutation = useCreateChannelCredential();
   const [createdKey, setCreatedKey] = useState<string | null>(null);
 
   useEffect(() => {
@@ -28,7 +28,7 @@ export default function ProductApiKeyCreateModal({ open, productId, onClose, onS
 
   const handleOk = async () => {
     const values = await form.validateFields();
-    const result = await createMutation.mutateAsync({ productId, data: values });
+    const result = await createMutation.mutateAsync({ channelId: productId, data: values });
     setCreatedKey(result.apiKeyPlain);
   };
 
@@ -62,7 +62,7 @@ export default function ProductApiKeyCreateModal({ open, productId, onClose, onS
       onOk={handleOk}
       onCancel={onClose}
       confirmLoading={createMutation.isPending}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form form={form} layout="vertical">
         <Form.Item

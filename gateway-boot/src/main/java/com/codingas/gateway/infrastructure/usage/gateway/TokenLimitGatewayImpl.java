@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.usage.gateway;
 
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
-import com.codingas.gateway.domain.security.gateway.TokenLimitGateway;
+import com.codingas.gateway.domain.quota.gateway.TokenLimitGateway;
 import com.codingas.gateway.infrastructure.usage.gateway.database.dataobject.TokenLimitDo;
 import com.codingas.gateway.infrastructure.usage.gateway.database.TokenLimitRepository;
 import lombok.RequiredArgsConstructor;

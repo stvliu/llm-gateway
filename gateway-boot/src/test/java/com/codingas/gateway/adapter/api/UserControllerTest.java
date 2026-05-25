@@ -3,7 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.security.enums.UserState;
+import com.codingas.gateway.domain.iam.enums.UserState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

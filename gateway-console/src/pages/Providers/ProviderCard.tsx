@@ -97,7 +97,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
         </Dropdown>
       }
     >
-      <Space direction="vertical" style={{ width: '100%' }} size="middle">
+      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
 
         {provider.description && (
           <Tooltip title={provider.description}>
@@ -147,7 +147,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
                     onViewProducts?.();
                   }}
                 >
-                  {product.productName}
+                  {product.name}
                 </Tag>
               ))}
               {remainingCount > 0 && (

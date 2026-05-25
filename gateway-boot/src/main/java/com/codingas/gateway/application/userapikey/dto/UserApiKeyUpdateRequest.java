@@ -1,6 +1,6 @@
 package com.codingas.gateway.application.userapikey.dto;
 
-import com.codingas.gateway.domain.team.enums.UserApiKeyState;
+import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 
 import java.util.List;
 
@@ -9,7 +9,7 @@ import java.util.List;
  */
 public record UserApiKeyUpdateRequest(
         String name,
-        List<Long> productIds,
+        List<Long> channelIds,
         List<String> models,
         Long quotaLimit,
         UserApiKeyState state

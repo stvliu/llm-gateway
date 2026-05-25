@@ -63,11 +63,12 @@ FROM (
 WHERE pm.id = mm.product_id AND mm.rn = 1;
 
 -- 4. 从 model_metadata.product_id 迁移关系到 product_model_metadata
-INSERT INTO product_model_metadata (product_id, model_id, created_at, updated_at)
+-- 使用 MERGE INTO 兼容 H2 和 PostgreSQL
+MERGE INTO product_model_metadata (product_id, model_id, created_at, updated_at)
+KEY (product_id, model_id)
 SELECT m.product_id, m.id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM model_metadata m
-WHERE m.product_id IS NOT NULL
-ON CONFLICT (product_id, model_id) DO NOTHING;
+WHERE m.product_id IS NOT NULL;
 
 -- 5. model_metadata 删除定价列和 product_id 列
 ALTER TABLE model_metadata DROP COLUMN IF EXISTS product_id;
@@ -106,19 +107,12 @@ ALTER TABLE products ADD COLUMN input_audio_price DECIMAL(12,6);
 ALTER TABLE products ADD COLUMN output_audio_price DECIMAL(12,6);
 
 -- 8. 从 models 迁移定价到 products
--- 策略：每个 provider_id 对应的产品取第一个有定价模型的价格
+-- models 表只有 input_price 和 output_price，其他定价列通过元数据同步填充
 UPDATE products p
 SET input_price = sub.input_price,
-    output_price = sub.output_price,
-    reasoning_price = sub.reasoning_price,
-    cache_read_price = sub.cache_read_price,
-    cache_write_price = sub.cache_write_price,
-    input_audio_price = sub.input_audio_price,
-    output_audio_price = sub.output_audio_price
+    output_price = sub.output_price
 FROM (
     SELECT m.provider_id, m.input_price, m.output_price,
-           m.reasoning_price, m.cache_read_price, m.cache_write_price,
-           m.input_audio_price, m.output_audio_price,
            ROW_NUMBER() OVER (PARTITION BY m.provider_id ORDER BY m.id) AS rn
     FROM models m
     WHERE m.input_price IS NOT NULL
