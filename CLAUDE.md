@@ -40,10 +40,22 @@ gateway/                              # 项目根目录（父 POM）
 │   └── src/main/java/com/codingas/gateway/
 │       ├── adapter/                  # 适配器层（按用例分包）
 │       │   ├── api/                  # 所有 API Controller
-│       │   └── interceptor/          # 拦截器
+│       │   ├── interceptor/          # 拦截器
+│       │   └── protocol/            # 协议适配层
+│       │       ├── openai/          # OpenAI 协议校验器/调谐器
+│       │       └── anthropic/       # Anthropic 协议校验器/调谐器
 │       ├── application/              # 应用层（按用例分包）
+│       │   └── proxy/               # 代理调度
+│       │       ├── routing/          # 路由解析（RoutingResolver/ModelMatcher/ChannelSelector/CredentialResolver/EndpointResolver）
+│       │       └── ChatDispatchService  # 七阶段调度
 │       ├── domain/                   # 领域层
 │       │   ├── gateway/              # 跨领域 Gateway 接口
+│       │   ├── protocol/             # 协议领域
+│       │   │   ├── contract/         # 协议数据契约（DTO）
+│       │   │   ├── conversion/       # 跨协议转换规则
+│       │   │   ├── tuning/           # 出站调谐接口
+│       │   │   └── validation/       # 入站校验接口
+│       │   ├── supply/               # 供给域
 │       │   ├── proxy/                # 模型代理领域
 │       │   ├── model/                # 模型广场领域
 │       │   ├── security/             # 访问控制领域
@@ -53,6 +65,7 @@ gateway/                              # 项目根目录（父 POM）
 │       ├── infrastructure/           # 基础设施层
 │       │   ├── config/
 │       │   ├── gateway/              # Gateway 实现
+│       │   ├── resilience/           # 韧性组件（Retry/CircuitBreaker/ResilientUpstreamClient）
 │       │   ├── security/
 │       │   └── util/
 │       └── common/                   # 公共组件
