@@ -11,7 +11,10 @@ import java.util.function.Consumer;
  * 代理服务接口
  *
  * <p>Application 层统一入口，编排代理请求处理流程。</p>
+ *
+ * @deprecated 由 {@link ChatDispatchService} 替代
  */
+@Deprecated(since = "2026-05-25", forRemoval = true)
 public interface ProxyService {
 
     /**

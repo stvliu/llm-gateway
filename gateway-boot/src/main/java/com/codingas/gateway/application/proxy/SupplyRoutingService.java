@@ -25,7 +25,10 @@ import java.util.concurrent.ThreadLocalRandom;
  * 供给路由服务
  *
  * <p>基于 Identity → UserApiKey → 关联渠道匹配 → Credential 选择的完整路由链路。</p>
+ *
+ * @deprecated 由 {@link com.codingas.gateway.application.proxy.routing.RoutingResolver} 替代
  */
+@Deprecated(since = "2026-05-25", forRemoval = true)
 @Service
 public class SupplyRoutingService {
 

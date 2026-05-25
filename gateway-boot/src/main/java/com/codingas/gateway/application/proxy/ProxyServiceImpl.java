@@ -19,7 +19,10 @@ import java.util.function.Consumer;
  *
  * <p>通过 UpstreamClientRegistry 获取绑定 Provider 配置的 UpstreamClient 实例分发请求，
  * 跨协议场景通过 ProtocolConverter 做请求/响应转换。</p>
+ *
+ * @deprecated 由 {@link ChatDispatchServiceImpl} 替代
  */
+@Deprecated(since = "2026-05-25", forRemoval = true)
 @Service
 public class ProxyServiceImpl implements ProxyService {
 
