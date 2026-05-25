@@ -9,6 +9,9 @@ import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.infrastructure.resilience.CircuitBreaker;
+import com.codingas.gateway.infrastructure.resilience.RetryExecutor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -45,6 +48,11 @@ class ChatDispatchServiceTest {
     @Mock
     private ProtocolConverter protocolConverter;
 
+    @Mock
+    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+
+    private RetryExecutor retryExecutor;
+
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -52,7 +60,15 @@ class ChatDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry, protocolConverter);
+        com.codingas.gateway.infrastructure.resilience.GatewayRetryProperties retryProps =
+                new com.codingas.gateway.infrastructure.resilience.GatewayRetryProperties();
+        retryProps.setMaxAttempts(1);
+        retryProps.setBackoffInitial(1);
+        retryProps.setBackoffMultiplier(1.0);
+        retryExecutor = new RetryExecutor(retryProps);
+
+        dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry,
+                protocolConverter, circuitBreakerManager, retryExecutor);
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
@@ -75,6 +91,7 @@ class ChatDispatchServiceTest {
             OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(circuitBreakerManager.getBreaker(20L)).thenReturn(new CircuitBreaker(0.5, 10, 30000, 3));
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient client = mock(UpstreamClient.class);
@@ -114,6 +131,7 @@ class ChatDispatchServiceTest {
             OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(anthropicContext);
+            when(circuitBreakerManager.getBreaker(21L)).thenReturn(new CircuitBreaker(0.5, 10, 30000, 3));
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
 

@@ -9,6 +9,10 @@ import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.infrastructure.resilience.CircuitBreaker;
+import com.codingas.gateway.infrastructure.resilience.ResilientUpstreamClient;
+import com.codingas.gateway.infrastructure.resilience.RetryExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,15 +31,21 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final OutboundTuner outboundTuner;
     private final UpstreamClientRegistry clientRegistry;
     private final ProtocolConverter protocolConverter;
+    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private final RetryExecutor retryExecutor;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
                                    UpstreamClientRegistry clientRegistry,
-                                   ProtocolConverter protocolConverter) {
+                                   ProtocolConverter protocolConverter,
+                                   ChannelEndpointCircuitBreakerManager circuitBreakerManager,
+                                   RetryExecutor retryExecutor) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.clientRegistry = clientRegistry;
         this.protocolConverter = protocolConverter;
+        this.circuitBreakerManager = circuitBreakerManager;
+        this.retryExecutor = retryExecutor;
     }
 
     @Override
@@ -57,12 +67,13 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         // 阶段 4：出站调谐
         outboundReq = outboundTuner.tune(outboundReq, ctx);
 
-        // 阶段 5：上游调用
-        UpstreamClient client = clientRegistry.getClient(
+        // 阶段 5：上游调用（带韧性保护）
+        UpstreamClient rawClient = clientRegistry.getClient(
                 ctx.upstreamProtocol().name().toLowerCase(),
                 ctx.endpointUrl(),
                 ctx.providerApiKey(),
                 ctx.timeout() != null ? ctx.timeout() : 60);
+        UpstreamClient client = wrapWithResilience(rawClient, ctx);
         ProtocolResponse response = client.chat(outboundReq);
 
         // 阶段 6：响应转换（仅跨协议时执行）
@@ -89,11 +100,12 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         }
         outboundReq = outboundTuner.tune(outboundReq, ctx);
 
-        UpstreamClient client = clientRegistry.getClient(
+        UpstreamClient rawClient = clientRegistry.getClient(
                 ctx.upstreamProtocol().name().toLowerCase(),
                 ctx.endpointUrl(),
                 ctx.providerApiKey(),
                 ctx.timeout() != null ? ctx.timeout() : 60);
+        UpstreamClient client = wrapWithResilience(rawClient, ctx);
 
         if (ctx.needsProtocolAdaptation()) {
             String fromProtocol = ctx.upstreamProtocol().name().toLowerCase();
@@ -159,5 +171,13 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         }
         log.warn("无法转换响应: {} → {}, 返回原始响应", ctx.upstreamProtocol(), inboundProtocol);
         return response;
+    }
+
+    /**
+     * 为原始 UpstreamClient 包装熔断器 + 重试
+     */
+    private UpstreamClient wrapWithResilience(UpstreamClient rawClient, RoutingContext ctx) {
+        CircuitBreaker breaker = circuitBreakerManager.getBreaker(ctx.channelEndpointId());
+        return new ResilientUpstreamClient(rawClient, breaker, retryExecutor);
     }
 }
