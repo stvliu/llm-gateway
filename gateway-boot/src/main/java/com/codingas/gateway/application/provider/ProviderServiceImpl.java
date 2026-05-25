@@ -12,8 +12,10 @@ import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
 import com.codingas.gateway.domain.supply.entity.ModelSpec;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
@@ -41,6 +43,7 @@ public class ProviderServiceImpl implements ProviderService {
     private final ProviderGateway providerGateway;
     private final ModelSpecGateway modelSpecGateway;
     private final ChannelGateway channelGateway;
+    private final ChannelModelGateway channelModelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final ConnectivityTester connectivityTester;
 
@@ -176,12 +179,15 @@ public class ProviderServiceImpl implements ProviderService {
         }
         log.info("Deleted {} channels and their credentials for provider {}", channels.size(), id);
 
-        // 删除关联的 ModelSpec
-        List<ModelSpec> models = modelSpecGateway.findByProviderId(id);
-        for (ModelSpec model : models) {
-            modelSpecGateway.delete(model);
+        // 删除关联的渠道下的 ChannelModel → ModelSpec
+        for (Channel channel : channels) {
+            List<ChannelModel> channelModels = channelModelGateway.findActiveByChannelId(channel.getId());
+            for (ChannelModel cm : channelModels) {
+                modelSpecGateway.findById(cm.getModelSpecId()).ifPresent(modelSpecGateway::delete);
+                channelModelGateway.deleteById(cm.getId());
+            }
         }
-        log.info("Deleted {} models for provider {}", models.size(), id);
+        log.info("Deleted channel models and specs for provider {}", id);
 
         // 最后删除 Provider
         providerGateway.delete(provider);

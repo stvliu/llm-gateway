@@ -19,9 +19,6 @@ import java.util.Map;
 @Table(name = "model_specs")
 public class ModelSpecDo extends BaseDo {
 
-    @Column(name = "provider_id", nullable = false)
-    private Long providerId;
-
     @Column(name = "provider_model_id", nullable = false, length = 128)
     private String providerModelId;
 

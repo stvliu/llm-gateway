@@ -37,9 +37,6 @@ public class ProviderCatalog extends BaseEntity {
     /** 官网 URL */
     private String websiteUrl;
 
-    /** 厂商默认 API 地址 */
-    private String baseUrl;
-
     /** 描述 */
     private String description;
 

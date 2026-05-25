@@ -1,8 +1,11 @@
 package com.codingas.gateway.infrastructure.config;
 
 import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.entity.ModelSpec;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
@@ -31,6 +34,8 @@ public class ConfigCacheService {
 
     private final ModelSpecGateway modelSpecGateway;
     private final ProviderGateway providerGateway;
+    private final ChannelGateway channelGateway;
+    private final ChannelModelGateway channelModelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final EncryptionService encryptionService;
 
@@ -68,9 +73,25 @@ public class ConfigCacheService {
         return modelSpecGateway.findAllActive();
     }
 
+    /**
+     * 获取供应商下的模型规格列表
+     *
+     * <p>通过 Channel → ChannelModel → ModelSpec 关联路径查询。</p>
+     */
     @Cacheable(value = CacheNames.MODELS, key = "'provider:' + #providerId")
     public List<ModelSpec> getModelsByProviderId(Long providerId) {
-        return modelSpecGateway.findByProviderId(providerId);
+        List<Long> channelIds = channelGateway.findByProviderId(providerId)
+                .stream().map(ch -> ch.getId()).toList();
+        if (channelIds.isEmpty()) return List.of();
+
+        List<Long> modelSpecIds = channelIds.stream()
+                .flatMap(chId -> channelModelGateway.findActiveByChannelId(chId).stream())
+                .map(ChannelModel::getModelSpecId)
+                .distinct()
+                .toList();
+        if (modelSpecIds.isEmpty()) return List.of();
+
+        return modelSpecGateway.findByIds(modelSpecIds);
     }
 
     // ========== ChannelCredential 操作（敏感数据，仅本地缓存）==========

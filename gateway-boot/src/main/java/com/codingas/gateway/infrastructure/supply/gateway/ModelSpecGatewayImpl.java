@@ -55,13 +55,6 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
     }
 
     @Override
-    public List<ModelSpec> findByProviderId(Long providerId) {
-        return modelSpecRepository.findByProviderId(providerId).stream()
-            .map(this::toEntity)
-            .toList();
-    }
-
-    @Override
     public List<ModelSpec> findByIds(List<Long> ids) {
         return modelSpecRepository.findByIdIn(ids).stream().map(this::toEntity).toList();
     }
@@ -79,7 +72,6 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
     private ModelSpec toEntity(ModelSpecDo doObj) {
         ModelSpec entity = new ModelSpec();
         entity.setId(doObj.getId());
-        // TODO: providerId 已从 ModelSpec 移除，此处不再映射
         entity.setProviderModelId(doObj.getProviderModelId());
         entity.setDisplayName(doObj.getDisplayName());
         entity.setModelFamily(doObj.getModelFamily());

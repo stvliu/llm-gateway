@@ -222,7 +222,6 @@ public class CatalogDomainService {
         dst.setProviderType(src.getProviderType());
         dst.setLogoUrl(src.getLogoUrl());
         dst.setWebsiteUrl(src.getWebsiteUrl());
-        dst.setBaseUrl(src.getBaseUrl());
         dst.setDescription(src.getDescription());
         dst.setSource(src.getSource());
         dst.setSyncedAt(src.getSyncedAt());

@@ -108,7 +108,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setProviderType(ProviderType.valueOf(data.providerType()));
             catalog.setLogoUrl(data.logoUrl());
             catalog.setWebsiteUrl(data.websiteUrl());
-            catalog.setBaseUrl(data.baseUrl());
             catalog.setDescription(data.description());
             catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
@@ -222,7 +221,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
 
     record ProviderCatalogData(
         String providerCode, String providerName, String providerType,
-        String logoUrl, String websiteUrl, String baseUrl, String description
+        String logoUrl, String websiteUrl, String description
     ) {}
 
     record ModelSpecCatalogData(

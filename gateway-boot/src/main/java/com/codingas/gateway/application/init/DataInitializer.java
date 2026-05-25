@@ -55,13 +55,11 @@ public class DataInitializer implements CommandLineRunner {
         // ===== 1. 创建 Provider =====
         Provider openai = new Provider();
         openai.setName("OpenAI");
-        // TODO: baseUrl 已下沉到 ChannelEndpoint，初始化数据时应通过 ChannelEndpoint 设置
         openai.setState(ProviderState.ACTIVE);
         openai = providerGateway.save(openai);
 
         Provider anthropic = new Provider();
         anthropic.setName("Anthropic");
-        // TODO: baseUrl 已下沉到 ChannelEndpoint，初始化数据时应通过 ChannelEndpoint 设置
         anthropic.setState(ProviderState.ACTIVE);
         anthropic = providerGateway.save(anthropic);
 

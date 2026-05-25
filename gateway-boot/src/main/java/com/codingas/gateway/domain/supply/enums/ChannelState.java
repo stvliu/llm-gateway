@@ -1,5 +1,7 @@
 package com.codingas.gateway.domain.supply.enums;
 
+import lombok.Getter;
+
 /**
  * 渠道状态枚举
  *
@@ -10,6 +12,7 @@ package com.codingas.gateway.domain.supply.enums;
  * DELETED（终态）
  * </pre>
  */
+@Getter
 public enum ChannelState {
     /** 活跃状态，可正常使用 */
     ACTIVE("active"),
@@ -24,10 +27,6 @@ public enum ChannelState {
 
     ChannelState(String code) {
         this.code = code;
-    }
-
-    public String getCode() {
-        return code;
     }
 
     public static ChannelState fromCode(String code) {

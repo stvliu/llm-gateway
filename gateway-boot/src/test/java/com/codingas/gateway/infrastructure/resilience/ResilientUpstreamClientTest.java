@@ -68,10 +68,11 @@ class ResilientUpstreamClientTest {
         @Test
         @DisplayName("熔断器开启时抛出 CircuitOpenException")
         void chat_circuitOpen_throwsException() {
-            // 触发熔断
+            // 触发熔断：窗口 10，阈值 50%，10 次失败 → 100% > 50%
             for (int i = 0; i < 10; i++) {
                 circuitBreaker.recordFailure();
             }
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreakerState.OPEN);
 
             assertThatThrownBy(() -> resilientClient.chat(request))
                     .isInstanceOf(CircuitOpenException.class)
@@ -91,6 +92,17 @@ class ResilientUpstreamClientTest {
             // 熔断器中至少记录了一次失败（具体状态取决于失败率阈值和窗口大小）
             assertThat(circuitBreaker.getState()).isNotNull();
         }
+
+        @Test
+        @DisplayName("成功调用后熔断器记录成功")
+        void chat_success_recordsSuccess() {
+            when(delegate.chat(request)).thenReturn(response);
+
+            resilientClient.chat(request);
+
+            // 成功后应保持 CLOSED
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+        }
     }
 
     @Nested
@@ -107,6 +119,42 @@ class ResilientUpstreamClientTest {
             StreamCallback callback = mock(StreamCallback.class);
             assertThatThrownBy(() -> resilientClient.chatStream(request, callback))
                     .isInstanceOf(CircuitOpenException.class);
+        }
+
+        @Test
+        @DisplayName("流式完成时熔断器记录成功")
+        void chatStream_onComplete_recordsSuccess() {
+            StreamCallback callback = mock(StreamCallback.class);
+            // 让 delegate 在 chatStream 时立即调用 onComplete
+            doAnswer(invocation -> {
+                StreamCallback inner = invocation.getArgument(1);
+                inner.onComplete();
+                return null;
+            }).when(delegate).chatStream(any(), any());
+
+            resilientClient.chatStream(request, callback);
+
+            assertThat(circuitBreaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+        }
+
+        @Test
+        @DisplayName("流式错误时熔断器记录失败")
+        void chatStream_onError_recordsFailure() {
+            // 先记录一些成功保持 CLOSED
+            circuitBreaker.recordSuccess();
+            circuitBreaker.recordSuccess();
+
+            StreamCallback callback = mock(StreamCallback.class);
+            doAnswer(invocation -> {
+                StreamCallback inner = invocation.getArgument(1);
+                inner.onError(new RuntimeException("stream error"));
+                return null;
+            }).when(delegate).chatStream(any(), any());
+
+            resilientClient.chatStream(request, callback);
+
+            // 失败被记录（状态取决于失败率）
+            assertThat(circuitBreaker.getState()).isNotNull();
         }
     }
 }

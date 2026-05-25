@@ -1,7 +1,9 @@
 package com.codingas.gateway.infrastructure.audit.gateway;
 
 import com.codingas.gateway.domain.audit.entity.AuditLog;
+import com.codingas.gateway.domain.audit.entity.CallLog;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
+import com.codingas.gateway.domain.audit.gateway.CallLogGateway;
 import com.codingas.gateway.infrastructure.audit.gateway.database.AuditLogRepository;
 import com.codingas.gateway.infrastructure.audit.gateway.database.dataobject.AuditLogDo;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,7 @@ import java.util.List;
 public class AuditGatewayImpl implements AuditGateway {
 
     private final AuditLogRepository repository;
+    private final CallLogGateway callLogGateway;
 
     @Override
     public AuditLog save(AuditLog auditLog) {
@@ -34,6 +37,11 @@ public class AuditGatewayImpl implements AuditGateway {
         return repository.findByUserId(userId).stream()
                 .map(this::toEntity)
                 .toList();
+    }
+
+    @Override
+    public CallLog saveCallLog(CallLog callLog) {
+        return callLogGateway.save(callLog);
     }
 
     private AuditLog toEntity(AuditLogDo doEntity) {

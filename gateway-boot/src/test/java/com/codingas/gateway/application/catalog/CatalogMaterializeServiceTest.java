@@ -164,7 +164,6 @@ class CatalogMaterializeServiceTest {
         catalog.setProviderCode("openai");
         catalog.setProviderName("OpenAI");
         catalog.setProviderType(ProviderType.INTERNATIONAL);
-        catalog.setBaseUrl("https://api.openai.com/v1");
         catalog.setWebsiteUrl("https://openai.com");
         catalog.setDescription("OpenAI 官方 API");
         catalog.setSource(CatalogSource.BUILTIN);

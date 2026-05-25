@@ -5,13 +5,13 @@ import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
-import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
-import com.codingas.gateway.infrastructure.resilience.CircuitBreaker;
-import com.codingas.gateway.infrastructure.resilience.RetryExecutor;
+import com.codingas.gateway.common.event.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -49,9 +50,13 @@ class ChatDispatchServiceTest {
     private ProtocolConverter protocolConverter;
 
     @Mock
-    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private ResilientClientFactory resilientClientFactory;
 
-    private RetryExecutor retryExecutor;
+    @Mock
+    private AuditGateway auditGateway;
+
+    @Mock
+    private DomainEventPublisher eventPublisher;
 
     private ChatDispatchServiceImpl dispatchService;
 
@@ -60,19 +65,14 @@ class ChatDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        com.codingas.gateway.infrastructure.resilience.GatewayRetryProperties retryProps =
-                new com.codingas.gateway.infrastructure.resilience.GatewayRetryProperties();
-        retryProps.setMaxAttempts(1);
-        retryProps.setBackoffInitial(1);
-        retryProps.setBackoffMultiplier(1.0);
-        retryExecutor = new RetryExecutor(retryProps);
-
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry,
-                protocolConverter, circuitBreakerManager, retryExecutor);
+                protocolConverter, resilientClientFactory, auditGateway, eventPublisher);
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false);
+
+        lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
     }
 
     @Nested
@@ -91,12 +91,14 @@ class ChatDispatchServiceTest {
             OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
-            when(circuitBreakerManager.getBreaker(20L)).thenReturn(new CircuitBreaker(0.5, 10, 30000, 3));
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
-            UpstreamClient client = mock(UpstreamClient.class);
-            when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-test", 60)).thenReturn(client);
-            when(client.chat(any(ProtocolRequest.class))).thenReturn(response);
+            UpstreamClient rawClient = mock(UpstreamClient.class);
+            when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-test", 60)).thenReturn(rawClient);
+
+            UpstreamClient resilientClient = mock(UpstreamClient.class);
+            when(resilientClientFactory.wrap(rawClient, 20L)).thenReturn(resilientClient);
+            when(resilientClient.chat(any(ProtocolRequest.class))).thenReturn(response);
 
             // when
             ProtocolResponse result = dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
@@ -131,13 +133,15 @@ class ChatDispatchServiceTest {
             OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(anthropicContext);
-            when(circuitBreakerManager.getBreaker(21L)).thenReturn(new CircuitBreaker(0.5, 10, 30000, 3));
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
 
-            UpstreamClient client = mock(UpstreamClient.class);
-            when(clientRegistry.getClient("anthropic", "https://api.anthropic.com", "sk-ant-key", 60)).thenReturn(client);
-            when(client.chat(any(ProtocolRequest.class))).thenReturn(upstreamResponse);
+            UpstreamClient rawClient = mock(UpstreamClient.class);
+            when(clientRegistry.getClient("anthropic", "https://api.anthropic.com", "sk-ant-key", 60)).thenReturn(rawClient);
+
+            UpstreamClient resilientClient = mock(UpstreamClient.class);
+            when(resilientClientFactory.wrap(rawClient, 21L)).thenReturn(resilientClient);
+            when(resilientClient.chat(any(ProtocolRequest.class))).thenReturn(upstreamResponse);
             when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(finalResponse);
 
             // when
@@ -159,6 +163,67 @@ class ChatDispatchServiceTest {
             assertThatThrownBy(() -> dispatchService.dispatch(unsupportedRequest, testIdentity, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("不支持的请求类型");
+        }
+    }
+
+    @Nested
+    @DisplayName("dispatchStream 流式调度")
+    class DispatchStreamTests {
+
+        @Test
+        @DisplayName("同协议流式调度：直接委托给上游客户端")
+        void dispatchStream_sameProtocol_delegatesToUpstream() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
+
+            UpstreamClient rawClient = mock(UpstreamClient.class);
+            when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-test", 60)).thenReturn(rawClient);
+
+            UpstreamClient resilientClient = mock(UpstreamClient.class);
+            when(resilientClientFactory.wrap(rawClient, 20L)).thenReturn(resilientClient);
+
+            StreamCallback callback = mock(StreamCallback.class);
+
+            // when
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, callback);
+
+            // then
+            verify(resilientClient).chatStream(any(ProtocolRequest.class), any(StreamCallback.class));
+            verify(protocolConverter, never()).convertStreamChunk(anyString(), anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("熔断器开启时流式请求抛出 CircuitOpenException")
+        void dispatchStream_circuitOpen_throwsException() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
+
+            UpstreamClient rawClient = mock(UpstreamClient.class);
+            when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-test", 60)).thenReturn(rawClient);
+
+            // 韧性客户端抛出 CircuitOpenException
+            UpstreamClient resilientClient = mock(UpstreamClient.class);
+            when(resilientClientFactory.wrap(rawClient, 20L)).thenReturn(resilientClient);
+            doThrow(new com.codingas.gateway.infrastructure.resilience.CircuitOpenException("熔断器开启"))
+                    .when(resilientClient).chatStream(any(ProtocolRequest.class), any(StreamCallback.class));
+
+            StreamCallback callback = mock(StreamCallback.class);
+
+            // when & then
+            assertThatThrownBy(() -> dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, callback))
+                    .isInstanceOf(com.codingas.gateway.infrastructure.resilience.CircuitOpenException.class);
         }
     }
 }

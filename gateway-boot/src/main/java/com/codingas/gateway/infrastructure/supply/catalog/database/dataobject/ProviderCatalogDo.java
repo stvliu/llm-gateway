@@ -35,9 +35,6 @@ public class ProviderCatalogDo extends BaseDo {
     @Column(name = "website_url", length = 512)
     private String websiteUrl;
 
-    @Column(name = "base_url", length = 512)
-    private String baseUrl;
-
     @Column(name = "description", length = 1024)
     private String description;
 

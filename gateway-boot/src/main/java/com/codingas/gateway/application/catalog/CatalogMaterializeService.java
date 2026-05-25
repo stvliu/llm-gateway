@@ -86,7 +86,6 @@ public class CatalogMaterializeService {
         provider.setName(catalog.getProviderName());
         provider.setLogoUrl(catalog.getLogoUrl());
         provider.setWebsiteUrl(catalog.getWebsiteUrl());
-        // TODO: baseUrl 已下沉到 ChannelEndpoint，物化时应从 catalog endpoints 数据创建 ChannelEndpoint
         provider.setDescription(catalog.getDescription());
         provider.setPriority(100);
         provider.setState(ProviderState.ACTIVE);

@@ -77,7 +77,6 @@ public class ProviderCatalogGatewayImpl implements ProviderCatalogGateway {
         entity.setProviderType(ProviderType.valueOf(doObj.getProviderType()));
         entity.setLogoUrl(doObj.getLogoUrl());
         entity.setWebsiteUrl(doObj.getWebsiteUrl());
-        entity.setBaseUrl(doObj.getBaseUrl());
         entity.setDescription(doObj.getDescription());
         entity.setSource(CatalogSource.valueOf(doObj.getSource()));
         entity.setSyncedAt(doObj.getSyncedAt());
@@ -97,7 +96,6 @@ public class ProviderCatalogGatewayImpl implements ProviderCatalogGateway {
         doObj.setProviderType(entity.getProviderType() != null ? entity.getProviderType().name() : ProviderType.INTERNATIONAL.name());
         doObj.setLogoUrl(entity.getLogoUrl());
         doObj.setWebsiteUrl(entity.getWebsiteUrl());
-        doObj.setBaseUrl(entity.getBaseUrl());
         doObj.setDescription(entity.getDescription());
         doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
         doObj.setSyncedAt(entity.getSyncedAt());

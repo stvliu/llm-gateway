@@ -437,7 +437,6 @@ class CatalogDomainServiceTest {
         catalog.setProviderCode(providerCode);
         catalog.setProviderName(providerCode + "-name");
         catalog.setProviderType(ProviderType.INTERNATIONAL);
-        catalog.setBaseUrl("https://api." + providerCode + ".com");
         catalog.setSource(source);
         catalog.setState(CatalogState.ACTIVE);
         catalog.setSyncedAt(Instant.now());

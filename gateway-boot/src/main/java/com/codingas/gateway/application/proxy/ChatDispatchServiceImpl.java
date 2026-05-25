@@ -1,18 +1,19 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
+import com.codingas.gateway.domain.audit.entity.CallLog;
+import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
-import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
-import com.codingas.gateway.infrastructure.resilience.CircuitBreaker;
-import com.codingas.gateway.infrastructure.resilience.ResilientUpstreamClient;
-import com.codingas.gateway.infrastructure.resilience.RetryExecutor;
+import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
+import com.codingas.gateway.common.event.DomainEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -31,58 +32,71 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final OutboundTuner outboundTuner;
     private final UpstreamClientRegistry clientRegistry;
     private final ProtocolConverter protocolConverter;
-    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
-    private final RetryExecutor retryExecutor;
+    private final ResilientClientFactory resilientClientFactory;
+    private final AuditGateway auditGateway;
+    private final DomainEventPublisher eventPublisher;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
                                    UpstreamClientRegistry clientRegistry,
                                    ProtocolConverter protocolConverter,
-                                   ChannelEndpointCircuitBreakerManager circuitBreakerManager,
-                                   RetryExecutor retryExecutor) {
+                                   ResilientClientFactory resilientClientFactory,
+                                   AuditGateway auditGateway,
+                                   DomainEventPublisher eventPublisher) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.clientRegistry = clientRegistry;
         this.protocolConverter = protocolConverter;
-        this.circuitBreakerManager = circuitBreakerManager;
-        this.retryExecutor = retryExecutor;
+        this.resilientClientFactory = resilientClientFactory;
+        this.auditGateway = auditGateway;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
     public ProtocolResponse dispatch(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
-        // 阶段 2：路由
         Protocol inboundProtocol = getInboundProtocol(request);
         RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol);
 
         log.info("Dispatch request: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl());
 
-        ProtocolRequest outboundReq = request;
+        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol);
+        long startTime = System.currentTimeMillis();
 
-        // 阶段 3：请求转换（仅跨协议时执行）
-        if (ctx.needsProtocolAdaptation()) {
-            outboundReq = convertRequest(request, ctx);
+        try {
+            ProtocolRequest outboundReq = request;
+
+            // 阶段 3：请求转换（仅跨协议时执行）
+            if (ctx.needsProtocolAdaptation()) {
+                outboundReq = convertRequest(request, ctx);
+            }
+
+            // 阶段 4：出站调谐
+            outboundReq = outboundTuner.tune(outboundReq, ctx);
+
+            // 阶段 5：上游调用（带韧性保护）
+            UpstreamClient client = getResilientClient(ctx);
+            ProtocolResponse response = client.chat(outboundReq);
+
+            // 阶段 6：响应转换（仅跨协议时执行）
+            if (ctx.needsProtocolAdaptation()) {
+                response = convertResponse(response, ctx, inboundProtocol);
+            }
+
+            // 阶段 7：后置处理 — 审计终点 + Token 计量
+            callLog.setDurationMs(System.currentTimeMillis() - startTime);
+            callLog.setSuccess(true);
+            publishTokenUsedEvent(response, identity, ctx);
+            auditGateway.saveCallLog(callLog);
+
+            return response;
+        } catch (Exception e) {
+            callLog.setDurationMs(System.currentTimeMillis() - startTime);
+            callLog.setSuccess(false);
+            callLog.setErrorMessage(e.getMessage());
+            auditGateway.saveCallLog(callLog);
+            throw e;
         }
-
-        // 阶段 4：出站调谐
-        outboundReq = outboundTuner.tune(outboundReq, ctx);
-
-        // 阶段 5：上游调用（带韧性保护）
-        UpstreamClient rawClient = clientRegistry.getClient(
-                ctx.upstreamProtocol().name().toLowerCase(),
-                ctx.endpointUrl(),
-                ctx.providerApiKey(),
-                ctx.timeout() != null ? ctx.timeout() : 60);
-        UpstreamClient client = wrapWithResilience(rawClient, ctx);
-        ProtocolResponse response = client.chat(outboundReq);
-
-        // 阶段 6：响应转换（仅跨协议时执行）
-        if (ctx.needsProtocolAdaptation()) {
-            response = convertResponse(response, ctx, inboundProtocol);
-        }
-
-        // 阶段 7：后置处理（审计、计量 — 阶段 3 实现）
-        return response;
     }
 
     @Override
@@ -94,55 +108,133 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         log.info("Stream dispatch: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl());
 
+        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol);
+        long startTime = System.currentTimeMillis();
+
         ProtocolRequest outboundReq = request;
         if (ctx.needsProtocolAdaptation()) {
             outboundReq = convertRequest(request, ctx);
         }
         outboundReq = outboundTuner.tune(outboundReq, ctx);
 
+        UpstreamClient client = getResilientClient(ctx);
+
+        StreamCallback auditingCallback = new StreamCallback() {
+            @Override
+            public void onChunk(String data) {
+                callback.onChunk(data);
+            }
+
+            @Override
+            public void onComplete() {
+                callLog.setDurationMs(System.currentTimeMillis() - startTime);
+                callLog.setSuccess(true);
+                auditGateway.saveCallLog(callLog);
+                callback.onComplete();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                callLog.setDurationMs(System.currentTimeMillis() - startTime);
+                callLog.setSuccess(false);
+                callLog.setErrorMessage(t.getMessage());
+                auditGateway.saveCallLog(callLog);
+                callback.onError(t);
+            }
+        };
+
+        if (ctx.needsProtocolAdaptation()) {
+            dispatchStreamCrossProtocol(client, outboundReq, ctx, inboundProtocol, auditingCallback);
+        } else {
+            client.chatStream(outboundReq, auditingCallback);
+        }
+    }
+
+    /**
+     * 获取带韧性保护的上游客户端
+     */
+    private UpstreamClient getResilientClient(RoutingContext ctx) {
         UpstreamClient rawClient = clientRegistry.getClient(
                 ctx.upstreamProtocol().name().toLowerCase(),
                 ctx.endpointUrl(),
                 ctx.providerApiKey(),
                 ctx.timeout() != null ? ctx.timeout() : 60);
-        UpstreamClient client = wrapWithResilience(rawClient, ctx);
+        return resilientClientFactory.wrap(rawClient, ctx.channelEndpointId());
+    }
 
-        if (ctx.needsProtocolAdaptation()) {
-            String fromProtocol = ctx.upstreamProtocol().name().toLowerCase();
-            String toProtocol = inboundProtocol.name().toLowerCase();
-            client.chatStream(outboundReq, new StreamCallback() {
-                @Override
-                public void onChunk(String data) {
-                    StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
-                    if (result != null) {
-                        if (result.eventType() != null) {
-                            callback.onChunk("event: " + result.eventType() + "\ndata: " + result.data() + "\n\n");
-                        } else {
-                            callback.onChunk("data: " + result.data() + "\n\n");
-                        }
-                    }
-                }
+    /**
+     * 跨协议流式调度：转换 chunk + done 事件
+     */
+    private void dispatchStreamCrossProtocol(UpstreamClient client, ProtocolRequest outboundReq,
+                                              RoutingContext ctx, Protocol inboundProtocol,
+                                              StreamCallback callback) {
+        String fromProtocol = ctx.upstreamProtocol().name().toLowerCase();
+        String toProtocol = inboundProtocol.name().toLowerCase();
 
-                @Override
-                public void onComplete() {
-                    StreamChunkResult doneResult = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
-                    if (doneResult != null) {
-                        if (doneResult.eventType() != null) {
-                            callback.onChunk("event: " + doneResult.eventType() + "\ndata: " + doneResult.data() + "\n\n");
-                        } else {
-                            callback.onChunk("data: " + doneResult.data() + "\n\n");
-                        }
-                    }
-                    callback.onComplete();
+        client.chatStream(outboundReq, new StreamCallback() {
+            @Override
+            public void onChunk(String data) {
+                StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
+                if (result != null) {
+                    callback.onChunk(formatSseEvent(result));
                 }
+            }
 
-                @Override
-                public void onError(Throwable t) {
-                    callback.onError(t);
+            @Override
+            public void onComplete() {
+                StreamChunkResult doneResult = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
+                if (doneResult != null) {
+                    callback.onChunk(formatSseEvent(doneResult));
                 }
-            });
-        } else {
-            client.chatStream(outboundReq, callback);
+                callback.onComplete();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                callback.onError(t);
+            }
+        });
+    }
+
+    /**
+     * 创建调用日志记录
+     */
+    private CallLog createCallLog(Identity identity, ProtocolRequest request, RoutingContext ctx, Protocol inboundProtocol) {
+        CallLog callLog = new CallLog();
+        callLog.setUserId(identity.userId());
+        callLog.setModel(request.getModel());
+        callLog.setChannelId(ctx.channelId());
+        callLog.setChannelEndpointId(ctx.channelEndpointId());
+        callLog.setInboundProtocol(inboundProtocol.name());
+        callLog.setUpstreamProtocol(ctx.upstreamProtocol().name());
+        callLog.setCalledAt(java.time.Instant.now());
+        return callLog;
+    }
+
+    /**
+     * 发布 Token 使用事件
+     */
+    private void publishTokenUsedEvent(ProtocolResponse response, Identity identity, RoutingContext ctx) {
+        if (response instanceof OpenAIChatResponse openai && openai.getUsage() != null) {
+            int inputTokens = openai.getUsage().getPromptTokens() != null ? openai.getUsage().getPromptTokens() : 0;
+            int outputTokens = openai.getUsage().getCompletionTokens() != null ? openai.getUsage().getCompletionTokens() : 0;
+            eventPublisher.publish(TokenUsedEvent.builder()
+                    .userId(identity.userId())
+                    .apiKeyId(identity.credentialId())
+                    .model(openai.getModel())
+                    .promptTokens(inputTokens)
+                    .completionTokens(outputTokens)
+                    .build());
+        } else if (response instanceof AnthropicMessagesResponse anthropic && anthropic.getUsage() != null) {
+            int inputTokens = anthropic.getUsage().getInputTokens() != null ? anthropic.getUsage().getInputTokens() : 0;
+            int outputTokens = anthropic.getUsage().getOutputTokens() != null ? anthropic.getUsage().getOutputTokens() : 0;
+            eventPublisher.publish(TokenUsedEvent.builder()
+                    .userId(identity.userId())
+                    .apiKeyId(identity.credentialId())
+                    .model(anthropic.getModel())
+                    .promptTokens(inputTokens)
+                    .completionTokens(outputTokens)
+                    .build());
         }
     }
 
@@ -169,15 +261,17 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         if (response instanceof OpenAIChatResponse openai && ctx.upstreamProtocol() == Protocol.OPENAI) {
             return protocolConverter.toAnthropic(openai);
         }
-        log.warn("无法转换响应: {} → {}, 返回原始响应", ctx.upstreamProtocol(), inboundProtocol);
+        log.warn("无法转换响应: {} → {},返回原始响应", ctx.upstreamProtocol(), inboundProtocol);
         return response;
     }
 
     /**
-     * 为原始 UpstreamClient 包装熔断器 + 重试
+     * 格式化 SSE 事件
      */
-    private UpstreamClient wrapWithResilience(UpstreamClient rawClient, RoutingContext ctx) {
-        CircuitBreaker breaker = circuitBreakerManager.getBreaker(ctx.channelEndpointId());
-        return new ResilientUpstreamClient(rawClient, breaker, retryExecutor);
+    private String formatSseEvent(StreamChunkResult result) {
+        if (result.eventType() != null) {
+            return "event: " + result.eventType() + "\ndata: " + result.data() + "\n\n";
+        }
+        return "data: " + result.data() + "\n\n";
     }
 }

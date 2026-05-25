@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 通道选择器 — 根据 modelSpecId 查找可用通道，按路由策略选择
@@ -33,12 +35,19 @@ public class ChannelSelector {
     public ChannelModel select(Long modelSpecId) {
         List<ChannelModel> channelModels = channelModelGateway.findActiveByModelSpecId(modelSpecId);
 
-        // 过滤出通道本身也是活跃的
+        if (channelModels.isEmpty()) {
+            throw new ResourceNotFoundException("ChannelModel", modelSpecId);
+        }
+
+        // 批量查询所有关联的 Channel，避免 N+1 问题
+        List<Long> channelIds = channelModels.stream().map(ChannelModel::getChannelId).toList();
+        List<Channel> activeChannels = channelGateway.findByIds(channelIds).stream()
+                .filter(ch -> ch.getState() == ChannelState.ACTIVE)
+                .toList();
+        Set<Long> activeChannelIds = activeChannels.stream().map(Channel::getId).collect(Collectors.toSet());
+
         List<ChannelModel> activeModels = channelModels.stream()
-                .filter(cm -> {
-                    Channel ch = channelGateway.findById(cm.getChannelId()).orElse(null);
-                    return ch != null && ch.getState() == ChannelState.ACTIVE;
-                })
+                .filter(cm -> activeChannelIds.contains(cm.getChannelId()))
                 .toList();
 
         if (activeModels.isEmpty()) {
