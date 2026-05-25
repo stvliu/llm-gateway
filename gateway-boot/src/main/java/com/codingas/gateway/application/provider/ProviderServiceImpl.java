@@ -1,7 +1,6 @@
 package com.codingas.gateway.application.provider;
 
 import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
-import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
 import com.codingas.gateway.application.provider.dto.ModelNestedRequest;
 import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
 import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
@@ -20,7 +19,7 @@ import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
 import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -216,19 +215,19 @@ public class ProviderServiceImpl implements ProviderService {
      * 测试连通性
      */
     @Override
-    public ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
-        ConnectivityTestResultVO vo = connectivityTester.test(
+    public com.codingas.gateway.application.provider.dto.ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
+        ConnectivityTestResult vo = connectivityTester.test(
                 request.baseUrl(),
                 request.apiKey(),
                 request.protocolName()
         );
 
         // 将 VO 转为应用层 DTO
-        return new ConnectivityTestResult(
+        return new com.codingas.gateway.application.provider.dto.ConnectivityTestResult(
                 vo.success(),
                 vo.errorMessage() != null ? vo.errorMessage() : "连通性测试成功",
                 null,
-                new ConnectivityTestResult.LevelResult(
+                new com.codingas.gateway.application.provider.dto.ConnectivityTestResult.LevelResult(
                         vo.success(),
                         vo.errorMessage() != null ? vo.errorMessage() : "认证成功",
                         vo.latencyMs(),

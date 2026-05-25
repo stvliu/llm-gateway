@@ -750,7 +750,7 @@ public interface ModelSpecGateway {
 ```java
 package com.codingas.gateway.domain.supply.gateway;
 
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 
 /**
  * 连通性测试接口
@@ -906,7 +906,7 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.exception.ChannelException;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
 import org.springframework.stereotype.Service;
 

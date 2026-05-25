@@ -1,7 +1,7 @@
 package com.codingas.gateway.domain.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 
 /**
  * 连通性测试网关接口
@@ -14,7 +14,7 @@ public interface ConnectivityTester {
      * @param channel 渠道实体
      * @return 测试结果
      */
-    ConnectivityTestResultVO test(Channel channel);
+    ConnectivityTestResult test(Channel channel);
 
     /**
      * 测试指定端点的连通性（用于 Provider 级别测试）
@@ -24,7 +24,7 @@ public interface ConnectivityTester {
      * @param protocol    协议名称（openai / anthropic）
      * @return 测试结果
      */
-    default ConnectivityTestResultVO test(String endpointUrl, String apiKey, String protocol) {
+    default ConnectivityTestResult test(String endpointUrl, String apiKey, String protocol) {
         // 默认实现：构建临时 Channel 委托给 Channel 版本
         Channel tempChannel = new Channel();
         tempChannel.setTimeout(30);

@@ -2,7 +2,7 @@ package com.codingas.gateway.infrastructure.supply.upstream;
 
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
@@ -123,7 +123,7 @@ public class AnthropicUpstreamClient implements UpstreamClient {
     }
 
     @Override
-    public ConnectivityTestResultVO testConnectivity() {
+    public ConnectivityTestResult testConnectivity() {
         // Anthropic 没有 /models 端点，使用简单请求测试连通性
         try {
             OkHttpClient timedClient = httpClient.newBuilder()
@@ -143,15 +143,15 @@ public class AnthropicUpstreamClient implements UpstreamClient {
             try (Response response = timedClient.newCall(httpRequest).execute()) {
                 // 只要能连通就算成功（即使是 400 等错误，也说明网络可达且 API Key 被识别）
                 if (response.code() < 500) {
-                    return new ConnectivityTestResultVO(true, null, null, 0);
+                    return new ConnectivityTestResult(true, null, null, 0);
                 } else {
                     String errorBody = response.body() != null ? response.body().string() : "";
-                    return new ConnectivityTestResultVO(false, null,
+                    return new ConnectivityTestResult(false, null,
                             "HTTP " + response.code() + ": " + errorBody, 0);
                 }
             }
         } catch (Exception e) {
-            return new ConnectivityTestResultVO(false, null, e.getMessage(), 0);
+            return new ConnectivityTestResult(false, null, e.getMessage(), 0);
         }
     }
 }

@@ -4,9 +4,8 @@ import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import lombok.extern.java.Log;
-import org.slf4j.LoggerFactory;
 
 /**
  * 韧性 UpstreamClient 包装器
@@ -75,7 +74,7 @@ public class ResilientUpstreamClient implements UpstreamClient {
     }
 
     @Override
-    public ConnectivityTestResultVO testConnectivity() {
+    public ConnectivityTestResult testConnectivity() {
         return delegate.testConnectivity();
     }
 }

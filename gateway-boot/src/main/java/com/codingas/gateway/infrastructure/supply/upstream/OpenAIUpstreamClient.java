@@ -2,7 +2,7 @@ package com.codingas.gateway.infrastructure.supply.upstream;
 
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
@@ -121,7 +121,7 @@ public class OpenAIUpstreamClient implements UpstreamClient {
     }
 
     @Override
-    public ConnectivityTestResultVO testConnectivity() {
+    public ConnectivityTestResult testConnectivity() {
         try {
             OkHttpClient timedClient = httpClient.newBuilder()
                     .readTimeout(10, TimeUnit.SECONDS)
@@ -135,15 +135,15 @@ public class OpenAIUpstreamClient implements UpstreamClient {
 
             try (Response response = timedClient.newCall(httpRequest).execute()) {
                 if (response.isSuccessful()) {
-                    return new ConnectivityTestResultVO(true, null, null, 0);
+                    return new ConnectivityTestResult(true, null, null, 0);
                 } else {
                     String errorBody = response.body() != null ? response.body().string() : "";
-                    return new ConnectivityTestResultVO(false, null,
+                    return new ConnectivityTestResult(false, null,
                             "HTTP " + response.code() + ": " + errorBody, 0);
                 }
             }
         } catch (Exception e) {
-            return new ConnectivityTestResultVO(false, null, e.getMessage(), 0);
+            return new ConnectivityTestResult(false, null, e.getMessage(), 0);
         }
     }
 }

@@ -3,7 +3,7 @@ package com.codingas.gateway.domain.supply.gateway;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
+import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 
 /**
  * 上游调用接口，负责调用上游 LLM API
@@ -25,5 +25,5 @@ public interface UpstreamClient {
     /**
      * 连通性测试（测试已绑定 Provider 的连通性）
      */
-    ConnectivityTestResultVO testConnectivity();
+    ConnectivityTestResult testConnectivity();
 }
