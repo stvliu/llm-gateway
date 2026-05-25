@@ -31,9 +31,6 @@ public class Provider extends BaseEntity {
 
     private String description;
 
-    /** 基础 URL（如 https://api.openai.com） */
-    private String baseUrl;
-
     /** API 文档 URL */
     private String apiDocUrl;
 
