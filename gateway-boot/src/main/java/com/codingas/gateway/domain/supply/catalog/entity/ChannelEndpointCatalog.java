@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.supply.entity;
+package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
@@ -15,11 +15,10 @@ import lombok.EqualsAndHashCode;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
-public class ChannelEndpoint extends BaseEntity {
+public class ChannelEndpointCatalog extends BaseEntity {
 
-    /** 所属渠道 ID */
-    private Long channelId;
+    /** 所属渠道名 */
+    private String channelName;
 
     /** 协议类型 */
     private Protocol protocol;
@@ -29,25 +28,4 @@ public class ChannelEndpoint extends BaseEntity {
 
     /** 端点状态 */
     private ChannelEndpointState state = ChannelEndpointState.ACTIVE;
-
-    /**
-     * 判断端点是否可用
-     */
-    public boolean isAvailable() {
-        return ChannelEndpointState.ACTIVE.equals(state);
-    }
-
-    /**
-     * 禁用端点
-     */
-    public void disable() {
-        this.state = ChannelEndpointState.DISABLED;
-    }
-
-    /**
-     * 启用端点
-     */
-    public void enable() {
-        this.state = ChannelEndpointState.ACTIVE;
-    }
 }

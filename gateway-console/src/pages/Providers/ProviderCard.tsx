@@ -147,7 +147,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
                     onViewProducts?.();
                   }}
                 >
-                  {product.productName}
+                  {product.name}
                 </Tag>
               ))}
               {remainingCount > 0 && (

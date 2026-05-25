@@ -1,45 +1,33 @@
--- 供给域重构：表重命名 + 字段重命名
--- 兼容 PostgreSQL 和 H2 数据库
+-- ==========================================
+-- V35: 供给域重构 — 表/列重命名
+-- ==========================================
 
--- ============================================================
--- 1. 重命名表
--- ============================================================
-
+-- 1. products → channels
 ALTER TABLE products RENAME TO channels;
+
+-- 2. product_api_keys → channel_credentials
 ALTER TABLE product_api_keys RENAME TO channel_credentials;
-ALTER TABLE product_model_associations RENAME TO channel_models;
+
+-- 3. product_models → channel_models
+ALTER TABLE product_models RENAME TO channel_models;
+
+-- 4. models → model_specs
 ALTER TABLE models RENAME TO model_specs;
 
--- ============================================================
--- 2. 重命名 channels 表字段
--- ============================================================
+-- 5. 渠道表列重命名
+ALTER TABLE channels RENAME COLUMN type TO billing_mode;
+ALTER TABLE channels RENAME COLUMN enabled TO state;
+ALTER TABLE channels RENAME COLUMN api_key TO credential_preview;
 
-ALTER TABLE channels RENAME COLUMN product_type TO billing_mode;
-ALTER TABLE channels RENAME COLUMN product_state TO state;
-
--- ============================================================
--- 3. 重命名 channel_credentials 表字段
--- ============================================================
-
+-- 6. 渠道凭证表列重命名
 ALTER TABLE channel_credentials RENAME COLUMN product_id TO channel_id;
-ALTER TABLE channel_credentials RENAME COLUMN api_key_state TO state;
+ALTER TABLE channel_credentials RENAME COLUMN api_key TO encrypted_api_key;
+ALTER TABLE channel_credentials RENAME COLUMN is_default TO is_default;
+ALTER TABLE channel_credentials RENAME COLUMN enabled TO state;
 
--- ============================================================
--- 4. 重命名 channel_models 表字段
--- ============================================================
-
+-- 7. 渠道模型表列重命名
 ALTER TABLE channel_models RENAME COLUMN product_id TO channel_id;
 ALTER TABLE channel_models RENAME COLUMN model_id TO model_spec_id;
-ALTER TABLE channel_models RENAME COLUMN association_state TO state;
 
--- ============================================================
--- 5. 重命名 model_specs 表字段
--- ============================================================
-
-ALTER TABLE model_specs RENAME COLUMN model_state TO state;
-
--- ============================================================
--- 6. 更新枚举值
--- ============================================================
-
-UPDATE channels SET billing_mode = 'SUBSCRIPTION_CODING' WHERE billing_mode IN ('PROMOTION', 'SUBSCRIPTION');
+-- 8. 用户 API Key 关联列重命名
+ALTER TABLE user_api_keys RENAME COLUMN product_ids TO channel_ids;

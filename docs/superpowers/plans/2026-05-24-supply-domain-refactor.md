@@ -1139,7 +1139,7 @@ package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.MetadataSource;
+import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -1166,7 +1166,7 @@ package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.MetadataSource;
+import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -1199,7 +1199,7 @@ package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.MetadataSource;
+import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -1223,7 +1223,7 @@ package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.MetadataSource;
+import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

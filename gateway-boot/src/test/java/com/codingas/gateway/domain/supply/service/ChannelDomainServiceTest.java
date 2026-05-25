@@ -100,7 +100,8 @@ class ChannelDomainServiceTest {
 
             assertThatThrownBy(() -> service.resolveEndpoint(channel, Protocol.OPENAI))
                     .isInstanceOf(com.codingas.gateway.domain.supply.exception.ChannelException.class)
-                    .hasMessageContaining("CHANNEL_NO_ENDPOINT");
+                    .satisfies(ex -> assertThat(((com.codingas.gateway.domain.supply.exception.ChannelException) ex).getCode()).isEqualTo("CHANNEL_NO_ENDPOINT"))
+                    .hasMessageContaining("渠道无可用端点");
         }
     }
 }

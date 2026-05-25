@@ -10,11 +10,10 @@ import zhCNUsers from './locales/zh-CN/users.json';
 import zhCNDashboard from './locales/zh-CN/dashboard.json';
 import zhCNProviders from './locales/zh-CN/providers.json';
 import zhCNChat from './locales/zh-CN/chat.json';
-import zhCNMetadata from './locales/zh-CN/metadata.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
 import zhCNProducts from './locales/zh-CN/products.json';
 import zhCNTeams from './locales/zh-CN/teams.json';
-
+import zhCNCatalog from './locales/zh-CN/catalog.json';
 // 英文
 import enUSCommon from './locales/en-US/common.json';
 import enUSLogin from './locales/en-US/login.json';
@@ -23,10 +22,10 @@ import enUSUsers from './locales/en-US/users.json';
 import enUSDashboard from './locales/en-US/dashboard.json';
 import enUSProviders from './locales/en-US/providers.json';
 import enUSChat from './locales/en-US/chat.json';
-import enUSMetadata from './locales/en-US/metadata.json';
 import enUSExperience from './locales/en-US/experience.json';
 import enUSProducts from './locales/en-US/products.json';
 import enUSTeams from './locales/en-US/teams.json';
+import enUSCatalog from './locales/en-US/catalog.json';
 
 i18n
   .use(LanguageDetector)
@@ -41,10 +40,10 @@ i18n
         dashboard: zhCNDashboard,
         providers: zhCNProviders,
         chat: zhCNChat,
-        metadata: zhCNMetadata,
         experience: zhCNExperience,
         products: zhCNProducts,
         teams: zhCNTeams,
+        catalog: zhCNCatalog,
       },
       'en-US': {
         common: enUSCommon,
@@ -54,10 +53,10 @@ i18n
         dashboard: enUSDashboard,
         providers: enUSProviders,
         chat: enUSChat,
-        metadata: enUSMetadata,
         experience: enUSExperience,
         products: enUSProducts,
         teams: enUSTeams,
+        catalog: enUSCatalog,
       },
     },
     fallbackLng: 'zh-CN',

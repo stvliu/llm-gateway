@@ -40,13 +40,3 @@ sa-token:
 gateway:
   security:
     encryption-key: ${GATEWAY_ENCRYPTION_KEY:}
-
-metadata:
-  builtin:
-    sync-on-startup: true
-  models-dev:
-    enabled: true
-    sync-on-startup: true   # 启动时不自动同步，仅手动/定时触发
-    api-url: https://models.dev/api.json
-    sync-interval: 86400000  # 每24小时自动同步一次（毫秒）
-    initial-delay: 300000    # 启动后5分钟首次同步（毫秒）

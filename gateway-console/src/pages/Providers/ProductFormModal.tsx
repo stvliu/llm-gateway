@@ -97,7 +97,7 @@ export function ProductFormModal({ open, providerId, providerName, editingProduc
         await updateMutation.mutateAsync({
           id: editingProduct.id,
           data: {
-            productName: values.productName,
+            name: values.productName,
             endpoints: endpointsMap,
           },
         });
@@ -105,7 +105,7 @@ export function ProductFormModal({ open, providerId, providerName, editingProduc
       } else {
         await createMutation.mutateAsync({
           providerId,
-          productName: values.productName,
+          name: values.productName,
           endpoints: endpointsMap,
         });
         message.success(t('message.createSuccess', { defaultValue: '产品创建成功' }));
@@ -133,7 +133,7 @@ export function ProductFormModal({ open, providerId, providerName, editingProduc
       destroyOnHidden
     >
       <Form form={form} layout="vertical" initialValues={{
-        productName: editingProduct?.productName,
+        productName: editingProduct?.name,
       }}>
         <Form.Item label={t('form.providerName', { defaultValue: '供应商' })}>
           <Input value={providerName} disabled />

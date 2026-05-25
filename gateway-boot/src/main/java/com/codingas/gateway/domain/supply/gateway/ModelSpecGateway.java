@@ -44,7 +44,10 @@ public interface ModelSpecGateway {
 
     /**
      * 根据供应商 ID 查找模型规格
+     *
+     * @deprecated providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联查询
      */
+    @Deprecated
     List<ModelSpec> findByProviderId(Long providerId);
 
     /**

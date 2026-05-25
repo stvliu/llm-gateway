@@ -94,7 +94,7 @@ export default function UserApiKeyManageModal({
   }
 
   const productOptions = products.map((p) => ({
-    label: p.productName,
+    label: p.name,
     value: p.id,
   }))
 

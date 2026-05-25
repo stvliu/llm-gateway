@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.valueobject;
 
 import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 
 /**
  * 路由上下文值对象
@@ -10,8 +9,10 @@ import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
  */
 public record RoutingContext(
         Long channelId,
-        String endpoint,
-        Protocol protocol,
+        Long channelEndpointId,
+        String endpointUrl,
+        Protocol upstreamProtocol,
         String providerApiKey,
-        RoutingStrategy strategy
+        Integer timeout,
+        boolean needsProtocolAdaptation
 ) {}

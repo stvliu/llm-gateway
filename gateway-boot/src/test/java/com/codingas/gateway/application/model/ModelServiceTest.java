@@ -86,13 +86,12 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(2L);
-            assertThat(response.getProviderId()).isEqualTo(1L);
+            assertThat(response.getProviderId()).isNull();
             assertThat(response.getProviderModelId()).isEqualTo("gpt-4o-2024-08-06");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4o");
             assertThat(response.getContextWindow()).isEqualTo(128000);
             assertThat(response.getState()).isEqualTo(ModelSpecState.ACTIVE);
 
-            verify(providerGateway, atLeast(1)).findById(1L);
             verify(modelSpecGateway).save(any(ModelSpec.class));
         }
 
@@ -127,7 +126,6 @@ class ModelServiceTest {
         void getById_existingModel_returnsModelResponse() {
             // given
             when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
 
             // when
             ModelResponse response = modelService.getById(1L);
@@ -135,8 +133,8 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getProviderId()).isEqualTo(1L);
-            assertThat(response.getProviderName()).isEqualTo("OpenAI");
+            assertThat(response.getProviderId()).isNull();
+            assertThat(response.getProviderName()).isNull();
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
             assertThat(response.getState()).isEqualTo(ModelSpecState.ACTIVE);
 
@@ -246,9 +244,9 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("按提供商 ID 过滤")
-        void query_withProviderId_filtersModels() {
-            // given
+        @DisplayName("按提供商 ID 过滤（暂不按 providerId 过滤，返回全部）")
+        void query_withProviderId_returnsAllModels() {
+            // given：providerId 过滤已移除，返回所有模型
             Provider provider2 = createTestProvider(2L, "Anthropic");
             ModelSpec model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
 
@@ -262,9 +260,8 @@ class ModelServiceTest {
             // when
             PageResponse<ModelResponse> response = modelService.query(request);
 
-            // then
-            assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderId()).isEqualTo(1L);
+            // then：providerId 过滤暂不生效，返回所有模型
+            assertThat(response.getItems()).hasSize(2);
         }
 
         @Test
@@ -499,7 +496,6 @@ class ModelServiceTest {
     private ModelSpec createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean status) {
         ModelSpec model = new ModelSpec();
         model.setId(id);
-        model.setProviderId(provider != null ? provider.getId() : null);
         model.setProviderModelId(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);

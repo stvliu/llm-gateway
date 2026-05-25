@@ -1,30 +1,30 @@
 package com.codingas.gateway.domain.supply.catalog.enums;
 
+import lombok.Getter;
+
 /**
- * 元数据来源
+ * 目录数据来源
  *
- * <p>控制同步时的覆盖策略：</p>
- * <ul>
- *   <li>BUILTIN / MODELS_DEV：可被 Models.dev 同步覆盖</li>
- *   <li>MANUAL：手动录入，同步时跳过</li>
- *   <li>OVERRIDE：用户覆盖，同步时跳过</li>
- *   <li>PROVIDER_API：供应商 API 获取，同步时跳过</li>
- * </ul>
+ * 优先级（低→高）：BUILTIN < MODELS_DEV < PROVIDER_API < MANUAL < OVERRIDE
+ * 低优先级不可覆盖高优先级，同优先级可互相覆盖。
  */
-public enum MetadataSource {
+@Getter
+public enum CatalogSource {
 
-    /** 内置元数据（从 classpath JSON 加载） */
-    BUILTIN,
+    BUILTIN(0),
+    MODELS_DEV(10),
+    PROVIDER_API(20),
+    MANUAL(30),
+    OVERRIDE(40);
 
-    /** Models.dev 社区数据源同步 */
-    MODELS_DEV,
+    private final int priority;
 
-    /** 供应商 API 实时获取 */
-    PROVIDER_API,
+    CatalogSource(int priority) {
+        this.priority = priority;
+    }
 
-    /** 手动录入 */
-    MANUAL,
-
-    /** 用户覆盖（基于同步数据修改） */
-    OVERRIDE
+    /** 当前 source 是否可以覆盖目标 source */
+    public boolean canOverride(CatalogSource target) {
+        return this.priority >= target.priority;
+    }
 }

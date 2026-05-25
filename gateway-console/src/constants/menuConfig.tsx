@@ -62,10 +62,10 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'menu.systemSettings',
     children: [
       {
-        key: '/metadata',
+        key: '/catalog',
         icon: <DatabaseOutlined />,
-        label: 'menu.metadata',
-        permission: 'metadata:read',
+        label: 'menu.catalog',
+        permission: 'catalog:read',
       },
       {
         key: '/change-password',

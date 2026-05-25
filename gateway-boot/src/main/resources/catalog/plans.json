@@ -1,0 +1,534 @@
+[
+  {
+    "planCode": "openai_standard",
+    "providerCode": "openai",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.openai.com/v1"}],
+    "pricing": [
+      {"providerModelId": "gpt-4.1", "inputPrice": 2.0, "outputPrice": 8.0, "cacheReadPrice": 0.2},
+      {"providerModelId": "gpt-4.1-mini", "inputPrice": 0.4, "outputPrice": 1.6, "cacheReadPrice": 0.04},
+      {"providerModelId": "gpt-4.1-nano", "inputPrice": 0.1, "outputPrice": 0.4, "cacheReadPrice": 0.01},
+      {"providerModelId": "gpt-4o", "inputPrice": 2.5, "outputPrice": 10.0, "cacheReadPrice": 1.25},
+      {"providerModelId": "gpt-4o-mini", "inputPrice": 0.15, "outputPrice": 0.6, "cacheReadPrice": 0.075},
+      {"providerModelId": "o3", "inputPrice": 2.0, "outputPrice": 8.0, "cacheReadPrice": 0.2},
+      {"providerModelId": "o3-mini", "inputPrice": 0.55, "outputPrice": 2.2, "cacheReadPrice": 0.055},
+      {"providerModelId": "o4-mini", "inputPrice": 1.1, "outputPrice": 4.4, "cacheReadPrice": 0.11}
+    ],
+    "description": "标准即时计费，支持Prompt Caching（50%折扣）",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "openai_batch",
+    "providerCode": "openai",
+    "planName": "Batch API",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.openai.com/v1"}],
+    "pricing": [
+      {"providerModelId": "gpt-4.1", "inputPrice": 1.0, "outputPrice": 4.0},
+      {"providerModelId": "gpt-4.1-mini", "inputPrice": 0.2, "outputPrice": 0.8},
+      {"providerModelId": "gpt-4o", "inputPrice": 1.25, "outputPrice": 5.0},
+      {"providerModelId": "o3", "inputPrice": 1.0, "outputPrice": 4.0}
+    ],
+    "description": "批量异步处理，50%折扣，24小时内返回结果",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "anthropic_standard",
+    "providerCode": "anthropic",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "ANTHROPIC", "url": "https://api.anthropic.com/v1"}],
+    "pricing": [
+      {"providerModelId": "claude-opus-4", "inputPrice": 15.0, "outputPrice": 75.0, "cacheReadPrice": 1.5},
+      {"providerModelId": "claude-sonnet-4", "inputPrice": 3.0, "outputPrice": 15.0, "cacheReadPrice": 0.3},
+      {"providerModelId": "claude-3.5-sonnet", "inputPrice": 3.0, "outputPrice": 15.0, "cacheReadPrice": 0.3},
+      {"providerModelId": "claude-3.5-haiku", "inputPrice": 1.0, "outputPrice": 5.0, "cacheReadPrice": 0.1}
+    ],
+    "description": "标准即时计费，支持Prompt Caching（90%折扣）和Batch（50%折扣）",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "anthropic_batch",
+    "providerCode": "anthropic",
+    "planName": "Batch Processing",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "ANTHROPIC", "url": "https://api.anthropic.com/v1"}],
+    "pricing": [
+      {"providerModelId": "claude-opus-4", "inputPrice": 7.5, "outputPrice": 37.5},
+      {"providerModelId": "claude-sonnet-4", "inputPrice": 1.5, "outputPrice": 7.5},
+      {"providerModelId": "claude-3.5-haiku", "inputPrice": 0.5, "outputPrice": 2.5}
+    ],
+    "description": "批量异步处理，50%折扣",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "google_standard",
+    "providerCode": "google",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [
+      {"protocol": "GEMINI", "url": "https://generativelanguage.googleapis.com/v1beta"},
+      {"protocol": "OPENAI", "url": "https://generativelanguage.googleapis.com/v1beta/openai/"}
+    ],
+    "pricing": [
+      {"providerModelId": "gemini-2.5-pro", "inputPrice": 1.25, "outputPrice": 10.0, "cacheReadPrice": 0.0625},
+      {"providerModelId": "gemini-2.5-flash", "inputPrice": 0.15, "outputPrice": 0.6, "cacheReadPrice": 0.0075},
+      {"providerModelId": "gemini-2.0-flash", "inputPrice": 0.1, "outputPrice": 0.4, "cacheReadPrice": 0.005}
+    ],
+    "description": "标准按量计费，支持Gemini原生协议和OpenAI兼容协议。2.5 Flash有每日免费额度",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "deepseek_standard",
+    "providerCode": "deepseek",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://api.deepseek.com"},
+      {"protocol": "ANTHROPIC", "url": "https://api.deepseek.com/anthropic"}
+    ],
+    "pricing": [
+      {"providerModelId": "deepseek-chat", "inputPrice": 0.27, "outputPrice": 1.1, "cacheReadPrice": 0.027},
+      {"providerModelId": "deepseek-reasoner", "inputPrice": 0.55, "outputPrice": 2.19, "cacheReadPrice": 0.055}
+    ],
+    "description": "标准按量计费，支持双协议。支持上下文缓存，命中后输入价格低至$0.027/百万Token",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "deepseek_anthropic_compat",
+    "providerCode": "deepseek",
+    "planName": "Anthropic兼容按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "ANTHROPIC", "url": "https://api.deepseek.com/anthropic"}],
+    "pricing": [
+      {"providerModelId": "deepseek-chat", "inputPrice": 0.27, "outputPrice": 1.1, "cacheReadPrice": 0.027},
+      {"providerModelId": "deepseek-reasoner", "inputPrice": 0.55, "outputPrice": 2.19, "cacheReadPrice": 0.055}
+    ],
+    "description": "Anthropic兼容端点按量计费，支持Claude SDK直接接入",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "qwen_payg_beijing",
+    "providerCode": "qwen",
+    "planName": "按量付费-北京",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1"}],
+    "pricing": [
+      {"providerModelId": "qwen-max", "inputPrice": 0.32, "outputPrice": 1.28},
+      {"providerModelId": "qwen-plus", "inputPrice": 0.128, "outputPrice": 0.512},
+      {"providerModelId": "qwen-turbo", "inputPrice": 0.03, "outputPrice": 0.12},
+      {"providerModelId": "qwen-long", "inputPrice": 0.005, "outputPrice": 0.02}
+    ],
+    "description": "北京区域，OpenAI兼容接口，支持上下文缓存",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "qwen_payg_virginia",
+    "providerCode": "qwen",
+    "planName": "按量付费-弗吉尼亚",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://dashscope-us.aliyuncs.com/compatible-mode/v1"}],
+    "pricing": [],
+    "description": "美国弗吉尼亚区域，适合海外业务",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "qwen_payg_singapore",
+    "providerCode": "qwen",
+    "planName": "按量付费-新加坡",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"}],
+    "pricing": [],
+    "description": "新加坡区域，国际业务",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "qwen_coding_lite",
+    "providerCode": "qwen",
+    "planName": "Coding Plan Lite",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1"}],
+    "pricing": [],
+    "description": "月订阅制，¥200/月，限制每5小时及每月请求频次",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "qwen_coding_pro",
+    "providerCode": "qwen",
+    "planName": "Coding Plan Pro",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1"}],
+    "pricing": [],
+    "description": "月订阅制，$50/月，更高请求频次",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "zhipu_standard",
+    "providerCode": "zhipu",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/paas/v4/"}],
+    "pricing": [
+      {"providerModelId": "glm-4-plus", "inputPrice": 8.0, "outputPrice": 28.0},
+      {"providerModelId": "glm-4-air", "inputPrice": 1.0, "outputPrice": 4.0},
+      {"providerModelId": "glm-4-airx", "inputPrice": 1.0, "outputPrice": 4.0},
+      {"providerModelId": "glm-4-flash", "inputPrice": 0.0, "outputPrice": 0.0},
+      {"providerModelId": "glm-4-flashx", "inputPrice": 0.0, "outputPrice": 0.0},
+      {"providerModelId": "glm-4-long", "inputPrice": 0.5, "outputPrice": 2.0},
+      {"providerModelId": "glm-4v", "inputPrice": 16.0, "outputPrice": 56.0},
+      {"providerModelId": "glm-4v-plus", "inputPrice": 8.0, "outputPrice": 28.0}
+    ],
+    "description": "标准按量计费，GLM-4-Flash/FlashX永久免费商用",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "zhipu_coding_lite",
+    "providerCode": "zhipu",
+    "planName": "GLM Coding Plan Lite",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/coding/paas/v4/"},
+      {"protocol": "ANTHROPIC", "url": "https://open.bigmodel.cn/api/anthropic"}
+    ],
+    "pricing": [],
+    "description": "月订阅制，¥49/月，限制每周请求次数，适合开发者",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "zhipu_coding_pro",
+    "providerCode": "zhipu",
+    "planName": "GLM Coding Plan Pro",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/coding/paas/v4/"},
+      {"protocol": "ANTHROPIC", "url": "https://open.bigmodel.cn/api/anthropic"}
+    ],
+    "pricing": [],
+    "description": "月订阅制，¥149/月，更高并发权限",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "zhipu_coding_max",
+    "providerCode": "zhipu",
+    "planName": "GLM Coding Plan Max",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/coding/paas/v4/"},
+      {"protocol": "ANTHROPIC", "url": "https://open.bigmodel.cn/api/anthropic"}
+    ],
+    "pricing": [],
+    "description": "月订阅制，¥469/月，高并发专属调度",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "moonshot_standard",
+    "providerCode": "moonshot",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.moonshot.cn/v1"}],
+    "pricing": [
+      {"providerModelId": "moonshot-v1-8k", "inputPrice": 0.95, "outputPrice": 4.0, "cacheReadPrice": 0.16},
+      {"providerModelId": "moonshot-v1-32k", "inputPrice": 0.95, "outputPrice": 4.0, "cacheReadPrice": 0.16},
+      {"providerModelId": "moonshot-v1-128k", "inputPrice": 0.95, "outputPrice": 4.0, "cacheReadPrice": 0.16}
+    ],
+    "description": "标准按量计费，支持上下文缓存（80-85%折扣）",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "volcengine_payg",
+    "providerCode": "volcengine",
+    "planName": "在线推理",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://ark.cn-beijing.volces.com/api/v3"}],
+    "pricing": [
+      {"providerModelId": "doubao-1.5-pro", "inputPrice": 0.8, "outputPrice": 2.0},
+      {"providerModelId": "doubao-1.5-lite", "inputPrice": 0.15, "outputPrice": 0.6},
+      {"providerModelId": "doubao-pro-32k", "inputPrice": 0.8, "outputPrice": 2.0},
+      {"providerModelId": "doubao-pro-128k", "inputPrice": 0.8, "outputPrice": 2.0},
+      {"providerModelId": "doubao-lite-32k", "inputPrice": 0.15, "outputPrice": 0.6},
+      {"providerModelId": "doubao-lite-128k", "inputPrice": 0.15, "outputPrice": 0.6}
+    ],
+    "description": "标准在线推理，需Endpoint ID作为模型名",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "volcengine_coding_plan",
+    "providerCode": "volcengine",
+    "planName": "豆包Coding Plan",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://ark.cn-beijing.volces.com/api/coding/v3"},
+      {"protocol": "ANTHROPIC", "url": "https://ark.cn-beijing.volces.com/api/coding"}
+    ],
+    "pricing": [],
+    "description": "AI编码专用，支持双协议，Coding Plan额度仅支持AI编程工具",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "wenxin_standard",
+    "providerCode": "wenxin",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://qianfan.baidubce.com/v2"}],
+    "pricing": [
+      {"providerModelId": "ernie-4.0-8k", "inputPrice": 8.0, "outputPrice": 24.0},
+      {"providerModelId": "ernie-3.5-8k", "inputPrice": 1.2, "outputPrice": 4.8},
+      {"providerModelId": "ernie-speed-8k", "inputPrice": 0.0, "outputPrice": 0.0},
+      {"providerModelId": "ernie-speed-128k", "inputPrice": 0.0, "outputPrice": 0.0},
+      {"providerModelId": "ernie-lite-8k", "inputPrice": 0.0, "outputPrice": 0.0}
+    ],
+    "description": "千帆平台标准按量计费，ERNIE-Speed/Lite永久免费",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "wenxin_coding_lite",
+    "providerCode": "wenxin",
+    "planName": "千帆Coding Plan Lite",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://qianfan.baidubce.com/v2/coding"},
+      {"protocol": "ANTHROPIC", "url": "https://qianfan.baidubce.com/anthropic/coding"}
+    ],
+    "pricing": [],
+    "description": "月订阅制，¥40/月，AI编码专用，支持双协议",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "wenxin_coding_pro",
+    "providerCode": "wenxin",
+    "planName": "千帆Coding Plan Pro",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://qianfan.baidubce.com/v2/coding"},
+      {"protocol": "ANTHROPIC", "url": "https://qianfan.baidubce.com/anthropic/coding"}
+    ],
+    "pricing": [],
+    "description": "月订阅制，¥200/月，AI编码专用，支持双协议",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "tencent_standard",
+    "providerCode": "tencent",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://hunyuan.tencentcloudapi.com"}],
+    "pricing": [
+      {"providerModelId": "hunyuan-lite", "inputPrice": 0.0, "outputPrice": 0.0},
+      {"providerModelId": "hunyuan-standard", "inputPrice": 0.8, "outputPrice": 2.0},
+      {"providerModelId": "hunyuan-pro", "inputPrice": 2.0, "outputPrice": 8.0},
+      {"providerModelId": "hunyuan-turbo", "inputPrice": 0.8, "outputPrice": 2.0}
+    ],
+    "description": "腾讯混元标准按量计费。混元Lite常态化免费调用",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "xunfei_standard",
+    "providerCode": "xunfei",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://spark-api.xf-yun.com/v1"}],
+    "pricing": [
+      {"providerModelId": "spark-v3.5", "inputPrice": 0.6, "outputPrice": 1.2},
+      {"providerModelId": "spark-v4.0", "inputPrice": 1.2, "outputPrice": 2.4},
+      {"providerModelId": "spark-4.0-ultra", "inputPrice": 2.4, "outputPrice": 4.8}
+    ],
+    "description": "讯飞星火标准按量计费。星火Lite每月5万Token永久免费",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "minimax_standard",
+    "providerCode": "minimax",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [
+      {"protocol": "OPENAI", "url": "https://api.minimaxi.com/v1"},
+      {"protocol": "ANTHROPIC", "url": "https://api.minimaxi.com/anthropic"}
+    ],
+    "pricing": [
+      {"providerModelId": "minimax-m1", "inputPrice": 0.3, "outputPrice": 1.2},
+      {"providerModelId": "abab-7-chat", "inputPrice": 0.3, "outputPrice": 1.2},
+      {"providerModelId": "abab-6.5s-chat", "inputPrice": 0.1, "outputPrice": 0.4},
+      {"providerModelId": "abab-6.5g-chat", "inputPrice": 0.15, "outputPrice": 0.6}
+    ],
+    "description": "国内版标准按量计费，支持双协议。注意域名: minimaxi.com（多一个i）",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "minimax_anthropic_compat",
+    "providerCode": "minimax",
+    "planName": "Anthropic兼容",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "ANTHROPIC", "url": "https://api.minimaxi.com/anthropic"}],
+    "pricing": [
+      {"providerModelId": "minimax-m1", "inputPrice": 0.3, "outputPrice": 1.2},
+      {"providerModelId": "abab-7-chat", "inputPrice": 0.3, "outputPrice": 1.2}
+    ],
+    "description": "Anthropic兼容端点按量计费，支持Claude SDK直接接入",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "minimax_international",
+    "providerCode": "minimax",
+    "planName": "国际版按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.minimax.io/v1"}],
+    "pricing": [
+      {"providerModelId": "minimax-m1", "inputPrice": 0.3, "outputPrice": 1.2},
+      {"providerModelId": "abab-7-chat", "inputPrice": 0.3, "outputPrice": 1.2}
+    ],
+    "description": "国际版标准按量计费，使用minimax.io域名",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "baichuan_standard",
+    "providerCode": "baichuan",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.baichuan-ai.com/v1"}],
+    "pricing": [],
+    "description": "标准按量计费",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "stepfun_standard",
+    "providerCode": "stepfun",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.stepfun.com/v1"}],
+    "pricing": [
+      {"providerModelId": "step-2-16k", "inputPrice": 0.7, "outputPrice": 2.1},
+      {"providerModelId": "step-1-8k", "inputPrice": 0.35, "outputPrice": 1.05},
+      {"providerModelId": "step-1-flash", "inputPrice": 0.14, "outputPrice": 0.42}
+    ],
+    "description": "标准按量计费",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "360zhinao_standard",
+    "providerCode": "360zhinao",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.360.cn/v1"}],
+    "pricing": [
+      {"providerModelId": "360gpt2-pro", "inputPrice": 1.0, "outputPrice": 2.0}
+    ],
+    "description": "标准按量计费，平台提供虚拟模型智能路由",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "xai_standard",
+    "providerCode": "xai",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.x.ai/v1"}],
+    "pricing": [
+      {"providerModelId": "grok-3", "inputPrice": 2.0, "outputPrice": 6.0},
+      {"providerModelId": "grok-3-mini", "inputPrice": 0.2, "outputPrice": 0.5}
+    ],
+    "description": "标准按量计费，兼容 OpenAI API",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "mistral_standard",
+    "providerCode": "mistral",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://api.mistral.ai/v1"}],
+    "pricing": [
+      {"providerModelId": "mistral-large", "inputPrice": 2.0, "outputPrice": 6.0},
+      {"providerModelId": "mistral-medium", "inputPrice": 0.7, "outputPrice": 2.1},
+      {"providerModelId": "mistral-small", "inputPrice": 0.15, "outputPrice": 0.6}
+    ],
+    "description": "标准按量计费，兼容 OpenAI API",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "azure_standard",
+    "providerCode": "azure",
+    "planName": "Global Standard",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://{resource}.openai.azure.com"}],
+    "pricing": [],
+    "description": "Azure AI Foundry 全球标准按量计费，与OpenAI价格联动",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "aws_bedrock_ondemand",
+    "providerCode": "aws_bedrock",
+    "planName": "On-Demand",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [{"protocol": "OPENAI", "url": "https://bedrock-runtime.{region}.amazonaws.com"}],
+    "pricing": [],
+    "description": "AWS Bedrock 按量付费，支持多厂商模型按Token调用",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  }
+]

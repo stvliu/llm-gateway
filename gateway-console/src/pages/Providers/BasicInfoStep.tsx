@@ -1,17 +1,14 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useProviderMetadataList } from '@/services/query/useMetadata';
+import { useProviderCatalogs } from '@/services/query/useCatalog';
 import type { CreateProviderRequest } from '@/types/provider';
-import type { ProviderMetadata } from '@/types/metadata';
 
 const { Text } = Typography;
 
 interface BasicInfoStepProps {
   basicInfo: CreateProviderRequest | null;
   onChange: (info: CreateProviderRequest | null) => void;
-  onMetadataLoad: (metadata: ProviderMetadata | null) => void;
-  onSelectedModelIdsChange: (modelIds: string[]) => void;
 }
 
 /**
@@ -21,8 +18,6 @@ interface BasicInfoStepProps {
 export function BasicInfoStep({
   basicInfo,
   onChange,
-  onMetadataLoad: _onMetadataLoad,
-  onSelectedModelIdsChange: _onSelectedModelIdsChange,
 }: BasicInfoStepProps) {
   const { t } = useTranslation('providers');
 
@@ -30,8 +25,8 @@ export function BasicInfoStep({
   const basicInfoRef = useRef(basicInfo);
   basicInfoRef.current = basicInfo;
 
-  // 查询供应商元数据列表
-  const { data: _metadataList } = useProviderMetadataList();
+  // 查询供应商目录列表
+  const { data: _catalogList } = useProviderCatalogs();
 
   // 初始化基本信息
   useEffect(() => {

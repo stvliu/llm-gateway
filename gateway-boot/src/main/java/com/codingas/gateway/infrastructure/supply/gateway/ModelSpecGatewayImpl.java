@@ -79,7 +79,7 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
     private ModelSpec toEntity(ModelSpecDo doObj) {
         ModelSpec entity = new ModelSpec();
         entity.setId(doObj.getId());
-        entity.setProviderId(doObj.getProviderId());
+        // TODO: providerId 已从 ModelSpec 移除，此处不再映射
         entity.setProviderModelId(doObj.getProviderModelId());
         entity.setDisplayName(doObj.getDisplayName());
         entity.setModelFamily(doObj.getModelFamily());
@@ -101,7 +101,7 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
     private ModelSpecDo toDo(ModelSpec entity) {
         ModelSpecDo doObj = new ModelSpecDo();
         doObj.setId(entity.getId());
-        doObj.setProviderId(entity.getProviderId());
+        // TODO: providerId 已从 ModelSpec 移除，数据库字段暂保留但不再从 entity 映射
         doObj.setProviderModelId(entity.getProviderModelId());
         doObj.setDisplayName(entity.getDisplayName());
         doObj.setModelFamily(entity.getModelFamily());

@@ -1,0 +1,81 @@
+{
+  "title": "目录管理",
+  "tabs": {
+    "providers": "供应商目录",
+    "plans": "套餐目录",
+    "modelSpecs": "模型规格目录"
+  },
+  "provider": {
+    "code": "供应商编码",
+    "name": "供应商名称",
+    "providerType": "供应商类型",
+    "materialized": "已物化",
+    "notMaterialized": "未物化"
+  },
+  "providerType": {
+    "INTERNATIONAL": "国际",
+    "DOMESTIC": "国内"
+  },
+  "plan": {
+    "planCode": "套餐编码",
+    "providerCode": "供应商编码",
+    "planName": "套餐名称",
+    "billingMode": "计费模式",
+    "endpoints": "端点",
+    "pricing": "定价",
+    "materialized": "已物化",
+    "notMaterialized": "未物化",
+    "detail": "套餐详情"
+  },
+  "billingMode": {
+    "PAY_AS_YOU_GO": "按量计费",
+    "SUBSCRIPTION": "订阅",
+    "PACKAGE": "套餐包"
+  },
+  "modelSpec": {
+    "providerModelId": "模型标识",
+    "modelName": "模型名称",
+    "providerCode": "供应商编码",
+    "capabilities": "能力标签",
+    "contextWindow": "上下文窗口",
+    "maxOutputTokens": "最大输出 Token",
+    "materialized": "已物化",
+    "notMaterialized": "未物化"
+  },
+  "source": {
+    "label": "数据来源",
+    "BUILTIN": "内置",
+    "MODELS_DEV": "Models.dev",
+    "PROVIDER_API": "供应商 API",
+    "MANUAL": "手动",
+    "OVERRIDE": "覆盖"
+  },
+  "materialize": {
+    "provider": "物化供应商",
+    "plan": "物化套餐",
+    "modelSpec": "物化模型规格",
+    "confirmTitle": "确认物化",
+    "confirmContent": "确定要将「{{name}}」物化为运营实体吗？",
+    "status": {
+      "CREATED": "已创建",
+      "SKIPPED": "已跳过"
+    }
+  },
+  "sync": {
+    "title": "同步目录",
+    "builtin": "同步内置数据",
+    "modelsDev": "同步 Models.dev"
+  },
+  "message": {
+    "materializeSuccess": "物化成功",
+    "materializeFailed": "物化失败",
+    "syncSuccess": "同步成功",
+    "syncFailed": "同步失败"
+  },
+  "filter": {
+    "keyword": "关键词搜索",
+    "providerType": "供应商类型",
+    "capability": "能力标签",
+    "all": "全部"
+  }
+}

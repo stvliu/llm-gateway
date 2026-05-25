@@ -43,7 +43,7 @@ public class ModelServiceImpl implements ModelService {
 
         // 创建模型规格
         ModelSpec modelSpec = new ModelSpec();
-        modelSpec.setProviderId(request.getProviderId());
+        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联
         modelSpec.setProviderModelId(request.getProviderModelId());
         modelSpec.setDisplayName(request.getDisplayName());
         modelSpec.setContextWindow(request.getContextWindow());
@@ -83,12 +83,7 @@ public class ModelServiceImpl implements ModelService {
                 .collect(Collectors.toList());
         }
 
-        if (request.getProviderId() != null) {
-            models = models.stream()
-                .filter(m -> request.getProviderId().equals(m.getProviderId()))
-                .collect(Collectors.toList());
-        }
-
+        // TODO: providerId 过滤暂时移除，后续通过 Supply 实体关联重新实现
         if (request.getState() != null) {
             models = models.stream()
                 .filter(m -> m.getState().equals(request.getState()))
@@ -173,7 +168,7 @@ public class ModelServiceImpl implements ModelService {
     private ModelResponse toResponse(ModelSpec modelSpec) {
         ModelResponse response = new ModelResponse();
         response.setId(modelSpec.getId());
-        response.setProviderId(modelSpec.getProviderId());
+        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联查询
         response.setProviderModelId(modelSpec.getProviderModelId());
         response.setDisplayName(modelSpec.getDisplayName());
         response.setContextWindow(modelSpec.getContextWindow());
@@ -184,11 +179,7 @@ public class ModelServiceImpl implements ModelService {
         response.setWeight(modelSpec.getWeight());
         response.setCreatedAt(modelSpec.getCreatedAt());
         response.setUpdatedAt(modelSpec.getUpdatedAt());
-        // 补充供应商名称
-        if (modelSpec.getProviderId() != null) {
-            providerGateway.findById(modelSpec.getProviderId())
-                .ifPresent(p -> response.setProviderName(p.getName()));
-        }
+        // TODO: 供应商名称查询后续通过 Supply 实体关联重新实现
         return response;
     }
 }

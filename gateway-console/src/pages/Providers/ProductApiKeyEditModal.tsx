@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Modal, Form, Input, InputNumber, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useUpdateProductApiKey } from '@/services/query/useProducts';
+import { useUpdateChannelCredential } from '@/services/query/useProducts';
 import type { ProductApiKey, UpdateProductApiKeyRequest } from '@/types/product';
 
 interface ProductApiKeyEditModalProps {
@@ -14,7 +14,7 @@ interface ProductApiKeyEditModalProps {
 export default function ProductApiKeyEditModal({ open, productId, apiKey, onClose }: ProductApiKeyEditModalProps) {
   const { t } = useTranslation('products');
   const [form] = Form.useForm<UpdateProductApiKeyRequest>();
-  const updateMutation = useUpdateProductApiKey();
+  const updateMutation = useUpdateChannelCredential();
 
   useEffect(() => {
     if (open && apiKey) {
@@ -29,7 +29,7 @@ export default function ProductApiKeyEditModal({ open, productId, apiKey, onClos
 
   const handleOk = async () => {
     const values = await form.validateFields();
-    await updateMutation.mutateAsync({ productId, id: apiKey!.id, data: values });
+    await updateMutation.mutateAsync({ channelId: productId, id: apiKey!.id, data: values });
     onClose();
   };
 
