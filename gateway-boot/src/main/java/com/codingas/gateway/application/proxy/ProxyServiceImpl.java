@@ -2,8 +2,8 @@ package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 /**
  * 代理服务实现
  *
- * <p>通过 ProtocolGatewayFactory 创建绑定 Provider 配置的 Gateway 实例分发请求，
+ * <p>通过 UpstreamClientRegistry 获取绑定 Provider 配置的 UpstreamClient 实例分发请求，
  * 跨协议场景通过 ProtocolConverter 做请求/响应转换。</p>
  */
 @Service
@@ -26,14 +26,14 @@ public class ProxyServiceImpl implements ProxyService {
     private static final Logger log = LoggerFactory.getLogger(ProxyServiceImpl.class);
 
     private final SupplyRoutingService supplyRoutingService;
-    private final ProtocolGatewayFactory protocolGatewayFactory;
+    private final UpstreamClientRegistry upstreamClientRegistry;
     private final ProtocolConverter protocolConverter;
 
     public ProxyServiceImpl(SupplyRoutingService supplyRoutingService,
-                            ProtocolGatewayFactory protocolGatewayFactory,
+                            UpstreamClientRegistry upstreamClientRegistry,
                             ProtocolConverter protocolConverter) {
         this.supplyRoutingService = supplyRoutingService;
-        this.protocolGatewayFactory = protocolGatewayFactory;
+        this.upstreamClientRegistry = upstreamClientRegistry;
         this.protocolConverter = protocolConverter;
     }
 
@@ -47,12 +47,12 @@ public class ProxyServiceImpl implements ProxyService {
 
         String protocolName = context.upstreamProtocol() != null ? context.upstreamProtocol().name().toLowerCase() : "openai";
         int timeoutSeconds = context.timeout() != null ? context.timeout() : 60;
-        ProtocolGateway gateway = protocolGatewayFactory.create(
+        UpstreamClient client = upstreamClientRegistry.getClient(
                 protocolName, context.endpointUrl(), context.providerApiKey(), timeoutSeconds);
 
         // 跨协议请求转换
-        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);
-        ProtocolResponse response = gateway.chat(gatewayRequest);
+        ProtocolRequest clientRequest = convertRequestIfNeeded(request, protocolName);
+        ProtocolResponse response = client.chat(clientRequest);
 
         // 跨协议响应转换
         return convertResponseIfNeeded(response, protocolName, request.getProtocol());
@@ -69,14 +69,14 @@ public class ProxyServiceImpl implements ProxyService {
 
         String protocolName = context.upstreamProtocol() != null ? context.upstreamProtocol().name().toLowerCase() : "openai";
         int timeoutSeconds = context.timeout() != null ? context.timeout() : 60;
-        ProtocolGateway gateway = protocolGatewayFactory.create(
+        UpstreamClient client = upstreamClientRegistry.getClient(
                 protocolName, context.endpointUrl(), context.providerApiKey(), timeoutSeconds);
 
         // 跨协议请求转换
-        ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);
+        ProtocolRequest clientRequest = convertRequestIfNeeded(request, protocolName);
         boolean needsConversion = !request.getProtocol().equals(protocolName);
 
-        gateway.chatStream(gatewayRequest, new StreamCallback() {
+        client.chatStream(clientRequest, new StreamCallback() {
             @Override
             public void onChunk(String data) {
                 if (needsConversion) {

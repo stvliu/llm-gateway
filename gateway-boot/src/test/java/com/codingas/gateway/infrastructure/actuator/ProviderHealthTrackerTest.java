@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -22,13 +22,13 @@ import static org.mockito.Mockito.*;
 class ProviderHealthTrackerTest {
 
     @Mock
-    private ProtocolGatewayFactory protocolGatewayFactory;
+    private UpstreamClientRegistry upstreamClientRegistry;
 
     @Mock
-    private ProtocolGateway openaiGateway;
+    private UpstreamClient openaiGateway;
 
     @Mock
-    private ProtocolGateway anthropicGateway;
+    private UpstreamClient anthropicGateway;
 
     private ProviderHealthProperties properties;
     private ProviderHealthTracker tracker;
@@ -41,9 +41,9 @@ class ProviderHealthTrackerTest {
         properties.setStaleThreshold(Duration.ofSeconds(300));
         properties.setProbeTimeout(Duration.ofSeconds(10));
 
-        lenient().when(protocolGatewayFactory.getSupportedProtocols()).thenReturn(List.of("openai", "anthropic"));
+        lenient().when(upstreamClientRegistry.getSupportedProtocols()).thenReturn(List.of("openai", "anthropic"));
 
-        tracker = new ProviderHealthTracker(protocolGatewayFactory, properties);
+        tracker = new ProviderHealthTracker(upstreamClientRegistry, properties);
     }
 
     @Test

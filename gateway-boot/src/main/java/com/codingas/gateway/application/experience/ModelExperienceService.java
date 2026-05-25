@@ -10,8 +10,8 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
@@ -46,7 +46,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ModelExperienceService {
 
-    private final ProtocolGatewayFactory protocolGatewayFactory;
+    private final UpstreamClientRegistry upstreamClientRegistry;
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
@@ -54,13 +54,13 @@ public class ModelExperienceService {
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper;
 
-    public ModelExperienceService(ProtocolGatewayFactory protocolGatewayFactory,
+    public ModelExperienceService(UpstreamClientRegistry upstreamClientRegistry,
                                   ProviderGateway providerGateway,
                                   ChannelGateway channelGateway,
                                   ChannelCredentialGateway channelCredentialGateway,
                                   ModelSpecGateway modelSpecGateway,
                                   ObjectMapper objectMapper) {
-        this.protocolGatewayFactory = protocolGatewayFactory;
+        this.upstreamClientRegistry = upstreamClientRegistry;
         this.providerGateway = providerGateway;
         this.channelGateway = channelGateway;
         this.channelCredentialGateway = channelCredentialGateway;
@@ -162,7 +162,7 @@ public class ModelExperienceService {
         log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
 
         String baseUrl = config.baseUrl != null ? config.baseUrl : "";
-        ProtocolGateway protocolGateway = protocolGatewayFactory.create(config.protocolName, baseUrl, config.apiKey, 60);
+        UpstreamClient client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
 
         ProtocolRequest protocolRequest = buildProtocolRequest(config.protocolName, request);
 
@@ -210,7 +210,7 @@ public class ModelExperienceService {
             }
         };
 
-        protocolGateway.chatStream(protocolRequest, callback);
+        client.chatStream(protocolRequest, callback);
     }
 
     /**

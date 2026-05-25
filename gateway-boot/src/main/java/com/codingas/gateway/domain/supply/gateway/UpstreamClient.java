@@ -6,11 +6,11 @@ import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
 
 /**
- * 协议网关接口，负责调用上游 LLM API
+ * 上游调用接口，负责调用上游 LLM API
  *
- * <p>每个实例绑定特定 Provider 配置（baseUrl/apiKey/timeout），通过 ProtocolGatewayFactory 创建。</p>
+ * <p>每个实例绑定特定 Provider 配置（endpointUrl/apiKey/timeout），通过 UpstreamClientRegistry 获取。</p>
  */
-public interface ProtocolGateway {
+public interface UpstreamClient {
 
     /**
      * 非流式调用

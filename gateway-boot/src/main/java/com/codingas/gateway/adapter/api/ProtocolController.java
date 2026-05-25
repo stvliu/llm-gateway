@@ -1,6 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,7 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ProtocolController {
 
-    private final ProtocolGatewayFactory protocolGatewayFactory;
+    private final UpstreamClientRegistry upstreamClientRegistry;
 
     private static final Map<String, String> PROTOCOL_LABELS = Map.of(
             "openai", "OpenAI Chat Completions",
@@ -32,7 +32,7 @@ public class ProtocolController {
      */
     @GetMapping
     public List<Map<String, String>> listProtocols() {
-        return protocolGatewayFactory.getSupportedProtocols().stream()
+        return upstreamClientRegistry.getSupportedProtocols().stream()
             .map(protocol -> Map.of("name", protocol, "label", PROTOCOL_LABELS.getOrDefault(protocol, protocol)))
             .toList();
     }

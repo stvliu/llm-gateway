@@ -5,8 +5,8 @@ import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,10 +38,10 @@ class ProxyServiceTest {
     private SupplyRoutingService supplyRoutingService;
 
     @Mock
-    private ProtocolGatewayFactory protocolGatewayFactory;
+    private UpstreamClientRegistry upstreamClientRegistry;
 
     @Mock
-    private ProtocolGateway protocolGateway;
+    private UpstreamClient upstreamClient;
 
     @Mock
     private ProtocolConverter protocolConverter;
@@ -58,7 +58,7 @@ class ProxyServiceTest {
 
     @BeforeEach
     void setUp() {
-        proxyService = new ProxyServiceImpl(supplyRoutingService, protocolGatewayFactory, protocolConverter);
+        proxyService = new ProxyServiceImpl(supplyRoutingService, upstreamClientRegistry, protocolConverter);
 
         testAuthResult = mock(Identity.class);
 
@@ -98,8 +98,8 @@ class ProxyServiceTest {
         @DisplayName("同协议代理：OpenAI→OpenAI")
         void proxy_sameProtocol_openai() {
             when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
-            when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
-            when(protocolGateway.chat(any())).thenReturn(testOpenAIResponse);
+            when(upstreamClientRegistry.getClient(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(upstreamClient);
+            when(upstreamClient.chat(any())).thenReturn(testOpenAIResponse);
 
             var response = proxyService.proxy(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED);
 
@@ -112,8 +112,8 @@ class ProxyServiceTest {
         @DisplayName("跨协议代理：OpenAI→Anthropic")
         void proxy_crossProtocol_openaiToAnthropic() {
             when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testAnthropicContext);
-            when(protocolGatewayFactory.create(eq("anthropic"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
-            when(protocolGateway.chat(any())).thenReturn(testAnthropicResponse);
+            when(upstreamClientRegistry.getClient(eq("anthropic"), anyString(), anyString(), anyInt())).thenReturn(upstreamClient);
+            when(upstreamClient.chat(any())).thenReturn(testAnthropicResponse);
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(testAnthropicRequest);
             when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(testOpenAIResponse);
 
@@ -128,7 +128,7 @@ class ProxyServiceTest {
         @DisplayName("不支持的协议时抛出异常")
         void proxy_unsupportedProtocol_throwsException() {
             when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
-            when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
+            when(upstreamClientRegistry.getClient(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 
             assertThatThrownBy(() -> proxyService.proxy(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED))
@@ -144,20 +144,20 @@ class ProxyServiceTest {
         @DisplayName("同协议流式代理：OpenAI→OpenAI")
         void proxyStream_sameProtocol() {
             when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
-            when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(protocolGateway);
+            when(upstreamClientRegistry.getClient(eq("openai"), anyString(), anyString(), anyInt())).thenReturn(upstreamClient);
 
             AtomicReference<String> received = new AtomicReference<>();
             proxyService.proxyStream(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED,
                     received::set, () -> {}, error -> {});
 
-            verify(protocolGateway).chatStream(any(), any());
+            verify(upstreamClient).chatStream(any(), any());
         }
 
         @Test
         @DisplayName("不支持的协议时抛出异常")
         void proxyStream_unsupportedProtocol_throwsException() {
             when(supplyRoutingService.resolve(any(Identity.class), anyString(), anyString())).thenReturn(testOpenAIContext);
-            when(protocolGatewayFactory.create(eq("openai"), anyString(), anyString(), anyInt()))
+            when(upstreamClientRegistry.getClient(eq("openai"), anyString(), anyString(), anyInt()))
                     .thenThrow(new IllegalArgumentException("不支持的协议: openai"));
 
             assertThatThrownBy(() -> proxyService.proxyStream(testOpenAIRequest, testAuthResult, RoutingStrategy.WEIGHTED,
