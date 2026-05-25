@@ -1,11 +1,12 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
 import com.codingas.gateway.domain.supply.gateway.ProtocolGatewayFactory;
-import com.codingas.gateway.domain.supply.gateway.StreamCallback;
-import com.codingas.gateway.domain.supply.protocol.*;
+import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,29 +25,30 @@ public class ProxyServiceImpl implements ProxyService {
 
     private static final Logger log = LoggerFactory.getLogger(ProxyServiceImpl.class);
 
-    private final ChannelRoutingService channelRoutingService;
+    private final SupplyRoutingService supplyRoutingService;
     private final ProtocolGatewayFactory protocolGatewayFactory;
     private final ProtocolConverter protocolConverter;
 
-    public ProxyServiceImpl(ChannelRoutingService channelRoutingService,
+    public ProxyServiceImpl(SupplyRoutingService supplyRoutingService,
                             ProtocolGatewayFactory protocolGatewayFactory,
                             ProtocolConverter protocolConverter) {
-        this.channelRoutingService = channelRoutingService;
+        this.supplyRoutingService = supplyRoutingService;
         this.protocolGatewayFactory = protocolGatewayFactory;
         this.protocolConverter = protocolConverter;
     }
 
     @Override
     public ProtocolResponse proxy(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
-        RoutingContext context = channelRoutingService.resolve(
+        RoutingContext context = supplyRoutingService.resolve(
                 identity, request.getModel(), request.getProtocol());
 
-        log.info("Proxy request routed: model={}, channelId={}, protocol={}, endpoint={}",
-                request.getModel(), context.channelId(), context.protocol(), context.endpoint());
+        log.info("Proxy request routed: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
+                request.getModel(), context.channelId(), context.upstreamProtocol(), context.endpointUrl());
 
-        String protocolName = context.protocol() != null ? context.protocol().name().toLowerCase() : "openai";
+        String protocolName = context.upstreamProtocol() != null ? context.upstreamProtocol().name().toLowerCase() : "openai";
+        int timeoutSeconds = context.timeout() != null ? context.timeout() : 60;
         ProtocolGateway gateway = protocolGatewayFactory.create(
-                protocolName, context.endpoint(), context.providerApiKey(), 60);
+                protocolName, context.endpointUrl(), context.providerApiKey(), timeoutSeconds);
 
         // 跨协议请求转换
         ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);
@@ -59,15 +61,16 @@ public class ProxyServiceImpl implements ProxyService {
     @Override
     public void proxyStream(ProtocolRequest request, Identity identity, RoutingStrategy strategy,
                             Consumer<String> onChunk, Runnable onComplete, Consumer<Throwable> onError) {
-        RoutingContext context = channelRoutingService.resolve(
+        RoutingContext context = supplyRoutingService.resolve(
                 identity, request.getModel(), request.getProtocol());
 
-        log.info("Stream request routed: model={}, channelId={}, protocol={}, endpoint={}",
-                request.getModel(), context.channelId(), context.protocol(), context.endpoint());
+        log.info("Stream request routed: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
+                request.getModel(), context.channelId(), context.upstreamProtocol(), context.endpointUrl());
 
-        String protocolName = context.protocol() != null ? context.protocol().name().toLowerCase() : "openai";
+        String protocolName = context.upstreamProtocol() != null ? context.upstreamProtocol().name().toLowerCase() : "openai";
+        int timeoutSeconds = context.timeout() != null ? context.timeout() : 60;
         ProtocolGateway gateway = protocolGatewayFactory.create(
-                protocolName, context.endpoint(), context.providerApiKey(), 60);
+                protocolName, context.endpointUrl(), context.providerApiKey(), timeoutSeconds);
 
         // 跨协议请求转换
         ProtocolRequest gatewayRequest = convertRequestIfNeeded(request, protocolName);

@@ -1,4 +1,6 @@
-package com.codingas.gateway.domain.supply.protocol;
+package com.codingas.gateway.domain.protocol.validation;
+
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 
 /**
  * 协议校验器接口

@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.supply.protocol;
+package com.codingas.gateway.domain.protocol.contract;
 
 /**
  * 流式 chunk 转换结果

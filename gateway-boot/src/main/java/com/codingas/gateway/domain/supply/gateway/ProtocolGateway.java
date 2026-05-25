@@ -1,7 +1,8 @@
 package com.codingas.gateway.domain.supply.gateway;
 
-import com.codingas.gateway.domain.supply.protocol.ProtocolRequest;
-import com.codingas.gateway.domain.supply.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
+import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
 
 /**

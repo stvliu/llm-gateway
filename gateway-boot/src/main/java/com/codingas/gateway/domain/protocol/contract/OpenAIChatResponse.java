@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.supply.protocol;
+package com.codingas.gateway.domain.protocol.contract;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;

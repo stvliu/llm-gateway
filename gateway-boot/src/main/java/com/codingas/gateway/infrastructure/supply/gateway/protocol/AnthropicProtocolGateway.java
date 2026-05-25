@@ -2,11 +2,11 @@ package com.codingas.gateway.infrastructure.supply.gateway.protocol;
 
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResultVO;
 import com.codingas.gateway.domain.supply.gateway.ProtocolGateway;
-import com.codingas.gateway.domain.supply.gateway.StreamCallback;
-import com.codingas.gateway.domain.supply.protocol.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.supply.protocol.AnthropicMessagesResponse;
-import com.codingas.gateway.domain.supply.protocol.ProtocolRequest;
-import com.codingas.gateway.domain.supply.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 

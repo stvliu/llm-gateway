@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.supply.protocol;
+package com.codingas.gateway.domain.protocol.contract;
 
 /**
  * 协议响应接口，所有协议响应 DTO 实现此接口

@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.proxy;
 
-import com.codingas.gateway.domain.supply.protocol.*;
+import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;

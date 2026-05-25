@@ -1,12 +1,12 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.domain.supply.protocol.OpenAIChatRequest;
-import com.codingas.gateway.domain.supply.protocol.OpenAIChatResponse;
-import com.codingas.gateway.domain.supply.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.application.proxy.ProxyService;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
-import com.codingas.gateway.domain.supply.exception.ProtocolValidationException;
-import com.codingas.gateway.domain.supply.protocol.OpenAIProtocolValidator;
+import com.codingas.gateway.adapter.protocol.openai.OpenAIProtocolValidator;
+import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

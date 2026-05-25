@@ -1,8 +1,8 @@
 package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
-import com.codingas.gateway.domain.supply.protocol.ProtocolRequest;
-import com.codingas.gateway.domain.supply.protocol.ProtocolResponse;
+import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 
 import java.util.function.Consumer;

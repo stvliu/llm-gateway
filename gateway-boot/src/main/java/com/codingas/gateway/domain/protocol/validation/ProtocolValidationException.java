@@ -1,4 +1,4 @@
-package com.codingas.gateway.domain.supply.exception;
+package com.codingas.gateway.domain.protocol.validation;
 
 import com.codingas.gateway.common.exception.GatewayException;
 

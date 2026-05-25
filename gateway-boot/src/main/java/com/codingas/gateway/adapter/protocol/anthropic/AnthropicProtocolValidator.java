@@ -1,9 +1,11 @@
-package com.codingas.gateway.domain.supply.protocol;
+package com.codingas.gateway.adapter.protocol.anthropic;
 
-import com.codingas.gateway.domain.supply.exception.ProtocolValidationException;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
+import com.codingas.gateway.domain.protocol.validation.ProtocolValidator;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
-import org.springframework.stereotype.Component;
 
 /**
  * Anthropic Messages 协议校验器
