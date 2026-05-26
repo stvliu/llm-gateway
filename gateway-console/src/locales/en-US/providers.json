@@ -5,6 +5,8 @@
   "name": "Provider Name",
   "code": "Code",
   "state": "Status",
+  "state.active": "Active",
+  "state.inactive": "Inactive",
   "websiteUrl": "Website",
   "apiDocUrl": "API Documentation",
   "priority": "Priority",

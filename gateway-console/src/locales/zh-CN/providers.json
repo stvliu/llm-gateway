@@ -5,6 +5,8 @@
   "name": "供应商名称",
   "code": "编码",
   "state": "状态",
+  "state.active": "启用",
+  "state.inactive": "停用",
   "websiteUrl": "官网地址",
   "apiDocUrl": "API 文档",
   "priority": "优先级",
