@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { Modal, App, Button, Space, Card, Tag, Spin, Typography } from 'antd';
+import { Modal, App, Button, Space, Card, Tag, Spin, Typography, Form, Input } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviderCatalogs, useMaterializeProvider } from '@/services/query/useCatalog';
+import { useCreateProvider } from '@/services/query/useProviders';
 import { ProviderIcon } from '@/components/ui';
 import type { Provider } from '@/types/provider';
 import type { ProviderCatalog } from '@/types/catalog';
@@ -28,7 +29,9 @@ export function ProviderCreateModal({ open, providers: _providers, onClose, onCr
   const { t } = useTranslation('providers');
   const { message } = App.useApp();
   const materializeMutation = useMaterializeProvider();
+  const createMutation = useCreateProvider();
   const { data: catalogList, isLoading: catalogLoading } = useProviderCatalogs();
+  const [customForm] = Form.useForm();
 
   const [currentStep, setCurrentStep] = useState<Step>('select-catalog');
   const [selectedCatalog, setSelectedCatalog] = useState<ProviderCatalog | null>(null);
@@ -37,8 +40,9 @@ export function ProviderCreateModal({ open, providers: _providers, onClose, onCr
   const handleClose = useCallback(() => {
     setCurrentStep('select-catalog');
     setSelectedCatalog(null);
+    customForm.resetFields();
     onClose();
-  }, [onClose]);
+  }, [onClose, customForm]);
 
   // 选择目录后进入物化步骤
   const handleSelectCatalog = useCallback((catalog: ProviderCatalog) => {
@@ -154,13 +158,68 @@ export function ProviderCreateModal({ open, providers: _providers, onClose, onCr
     </div>
   );
 
-  // 渲染自定义创建步骤（保留原有逻辑供后续实现）
+  // 自定义创建提交
+  const handleCustomCreate = useCallback(async () => {
+    try {
+      const values = await customForm.validateFields();
+      setSaving(true);
+      await createMutation.mutateAsync(values);
+      message.success(t('createSuccess', { defaultValue: '供应商创建成功' }));
+      onCreated();
+      handleClose();
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) return; // 表单校验失败
+      console.error('Create provider failed:', error);
+      message.error(t('createFailed', { defaultValue: '创建失败' }));
+    } finally {
+      setSaving(false);
+    }
+  }, [customForm, createMutation, message, t, onCreated, handleClose]);
+
+  // 渲染自定义创建步骤
   const renderCustomForm = () => (
-    <div>
-      <Paragraph type="secondary">
-        {t('template.customCreateHint', { defaultValue: '手动输入供应商信息创建' })}
-      </Paragraph>
-    </div>
+    <Form
+      form={customForm}
+      layout="vertical"
+      autoComplete="off"
+    >
+      <Form.Item
+        name="code"
+        label={t('fields.code', { defaultValue: '品牌标识' })}
+        rules={[
+          { required: true, message: t('fields.codeRequired', { defaultValue: '请输入品牌标识' }) },
+          { pattern: /^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/, message: t('fields.codePattern', { defaultValue: '只能包含小写字母、数字和中划线，长度3-64' }) },
+        ]}
+        extra={t('fields.codeExtra', { defaultValue: '如 openai、anthropic，全局唯一，创建后不可修改' })}
+      >
+        <Input placeholder="openai" />
+      </Form.Item>
+      <Form.Item
+        name="providerName"
+        label={t('fields.providerName', { defaultValue: '供应商名称' })}
+        rules={[{ required: true, message: t('fields.providerNameRequired', { defaultValue: '请输入供应商名称' }) }]}
+      >
+        <Input placeholder="OpenAI" />
+      </Form.Item>
+      <Form.Item
+        name="websiteUrl"
+        label={t('fields.websiteUrl', { defaultValue: '官网地址' })}
+      >
+        <Input placeholder="https://openai.com" />
+      </Form.Item>
+      <Form.Item
+        name="apiDocUrl"
+        label={t('fields.apiDocUrl', { defaultValue: 'API 文档地址' })}
+      >
+        <Input placeholder="https://platform.openai.com/docs" />
+      </Form.Item>
+      <Form.Item
+        name="description"
+        label={t('fields.description', { defaultValue: '描述' })}
+      >
+        <Input.TextArea rows={3} placeholder={t('fields.descriptionPlaceholder', { defaultValue: '供应商描述信息' })} />
+      </Form.Item>
+    </Form>
   );
 
   // 根据当前步骤渲染内容
@@ -212,7 +271,7 @@ export function ProviderCreateModal({ open, providers: _providers, onClose, onCr
           <Button onClick={handleBackToSelect}>
             {t('wizard.previous', { defaultValue: '上一步' })}
           </Button>
-          <Button type="primary" disabled>
+          <Button type="primary" onClick={handleCustomCreate} loading={saving}>
             {t('wizard.create', { defaultValue: '完成创建' })}
           </Button>
         </Space>

@@ -1,13 +1,19 @@
 import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
+  Button,
   Form,
   Input,
+  InputNumber,
   Select,
 } from 'antd';
+import { ApiOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import {
   useUpdateProvider,
 } from '@/services/query';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
+import ConnectivityTestPanel from './ConnectivityTestPanel';
 import type { Provider, UpdateProviderRequest } from '@/types/provider';
 
 /**
@@ -47,8 +53,11 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
 
     const [form] = Form.useForm();
     const [dirty, setDirty] = useState(false);
+    const [showConnectivityTest, setShowConnectivityTest] = useState(false);
 
     const updateMutation = useUpdateProvider();
+    const { hasPermission } = useAuthStore();
+    const canWrite = hasPermission(P.PROVIDER_WRITE);
 
     // 初始化表单值
     useEffect(() => {
@@ -82,8 +91,11 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
           const values = await form.validateFields();
           const request: UpdateProviderRequest = {
             providerName: values.providerName,
+            description: values.description,
             websiteUrl: values.websiteUrl,
             apiDocUrl: values.apiDocUrl,
+            priority: values.priority,
+            state: values.state,
           };
 
           // 检查名称唯一性
@@ -116,6 +128,9 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
           layout="vertical"
           disabled
         >
+          <Form.Item name="providerId" label={t('provider.providerId', { defaultValue: '品牌标识' })}>
+            <Input />
+          </Form.Item>
           <Form.Item name="providerName" label={t('provider.name')}>
             <Input />
           </Form.Item>
@@ -125,11 +140,17 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
           <Form.Item name="apiDocUrl" label={t('provider.apiDocUrl', { defaultValue: 'API 文档' })}>
             <Input />
           </Form.Item>
+          <Form.Item name="description" label={t('fields.description', { defaultValue: '描述' })}>
+            <Input.TextArea rows={3} />
+          </Form.Item>
           <Form.Item name="state" label={t('provider.state')}>
             <Select>
               <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-              <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
+              <Select.Option value="INACTIVE">{t('state.disabled', { ns: 'common' })}</Select.Option>
             </Select>
+          </Form.Item>
+          <Form.Item name="priority" label={t('provider.priority', { defaultValue: '优先级' })}>
+            <InputNumber min={0} max={9999} style={{ width: '100%' }} />
           </Form.Item>
           {provider && (
             <>
@@ -140,6 +161,22 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
                 <Input disabled value={new Date(provider.updatedAt).toLocaleString()} />
               </Form.Item>
             </>
+          )}
+          {canWrite && provider && (
+            <Form.Item>
+              <Button
+                icon={<ApiOutlined />}
+                onClick={() => setShowConnectivityTest(!showConnectivityTest)}
+              >
+                {t('detail.connectivityTest', { defaultValue: '连通性测试' })}
+              </Button>
+            </Form.Item>
+          )}
+          {showConnectivityTest && provider && (
+            <ConnectivityTestPanel
+              providerCode={provider.providerId || ''}
+              defaultBaseUrl={provider.websiteUrl}
+            />
           )}
         </Form>
       );
@@ -165,11 +202,17 @@ export const ProviderBasicInfoTab = forwardRef<ProviderBasicInfoTabHandle, Provi
         <Form.Item name="apiDocUrl" label={t('provider.apiDocUrl', { defaultValue: 'API 文档' })}>
           <Input placeholder="https://docs.example.com" />
         </Form.Item>
+        <Form.Item name="description" label={t('fields.description', { defaultValue: '描述' })}>
+          <Input.TextArea rows={3} placeholder={t('fields.descriptionPlaceholder', { defaultValue: '供应商描述信息' })} />
+        </Form.Item>
         <Form.Item name="state" label={t('provider.state')}>
           <Select>
             <Select.Option value="ACTIVE">{t('state.active', { ns: 'common' })}</Select.Option>
-            <Select.Option value="DISABLED">{t('state.disabled', { ns: 'common' })}</Select.Option>
+            <Select.Option value="INACTIVE">{t('state.disabled', { ns: 'common' })}</Select.Option>
           </Select>
+        </Form.Item>
+        <Form.Item name="priority" label={t('provider.priority', { defaultValue: '优先级' })}>
+          <InputNumber min={0} max={9999} style={{ width: '100%' }} />
         </Form.Item>
       </Form>
     );

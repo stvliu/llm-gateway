@@ -43,6 +43,7 @@ export interface CreateProviderRequest {
 /** 更新供应商请求 */
 export interface UpdateProviderRequest {
   providerName?: string;
+  description?: string;
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
