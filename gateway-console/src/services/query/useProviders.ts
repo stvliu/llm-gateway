@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { providerApi } from '@/services/api/provider';
-import type { CreateProviderRequest, UpdateProviderRequest } from '@/types/provider';
+import type { CreateProviderRequest, UpdateProviderRequest, ConnectivityTestRequest } from '@/types/provider';
 
 export const providerKeys = {
   all: ['providers'] as const,
@@ -69,5 +69,11 @@ export function useSetEnabledProvider() {
       queryClient.invalidateQueries({ queryKey: providerKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: providerKeys.lists() });
     },
+  });
+}
+
+export function useTestConnectivity() {
+  return useMutation({
+    mutationFn: (data: ConnectivityTestRequest) => providerApi.testConnectivity(data),
   });
 }
