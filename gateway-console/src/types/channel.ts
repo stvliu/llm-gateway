@@ -1,0 +1,127 @@
+/** 协议类型（与后端 ProtocolGateway.getProtocolName() 对应） */
+export type EndpointProtocol = 'openai' | 'anthropic';
+
+/** 协议信息（从 /api/protocols 获取） */
+export interface ProtocolInfo {
+  name: string;
+  label: string;
+}
+
+/** 渠道状态 */
+export type ChannelState = 'ACTIVE' | 'INACTIVE';
+
+/** 渠道端点状态 */
+export type ChannelEndpointState = 'ACTIVE' | 'INACTIVE';
+
+/** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
+export interface ChannelEndpointResponse {
+  id: number;
+  channelId: number;
+  protocol: string;
+  endpointUrl: string;
+  state: ChannelEndpointState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 创建渠道端点请求 */
+export interface CreateChannelEndpointRequest {
+  protocol: string;
+  endpointUrl: string;
+}
+
+/** 渠道信息（与后端 ChannelResponse 一致） */
+export interface Channel {
+  id: number;
+  providerId: number;
+  providerName: string;
+  name: string;
+  billingMode: string;
+  quotaLimit: number | null;
+  priority: number;
+  weight: number;
+  timeout: number | null;
+  maxRetries: number | null;
+  state: ChannelState;
+  endpoints: ChannelEndpointResponse[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 创建渠道请求（与后端 ChannelRequest 一致） */
+export interface CreateChannelRequest {
+  providerId: number;
+  name: string;
+  billingMode: string;
+  quotaLimit?: number | null;
+  priority?: number;
+  weight?: number;
+  timeout?: number | null;
+  maxRetries?: number | null;
+}
+
+/** 更新渠道请求（与后端 ChannelRequest 一致，PUT 使用同一请求体） */
+export interface UpdateChannelRequest {
+  providerId?: number;
+  name?: string;
+  billingMode?: string;
+  quotaLimit?: number | null;
+  priority?: number;
+  weight?: number;
+  timeout?: number | null;
+  maxRetries?: number | null;
+}
+
+/** 渠道凭证状态 */
+export type ChannelCredentialState = 'ACTIVE' | 'INACTIVE';
+
+/** 渠道凭证（与后端 ChannelCredentialResponse 一致） */
+export interface ChannelCredential {
+  id: number;
+  channelId: number;
+  apiKeyPrefix: string;
+  name: string;
+  description: string | null;
+  weight: number;
+  priority: number;
+  state: ChannelCredentialState;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 创建渠道凭证请求（与后端 ChannelCredentialCreateRequest 一致） */
+export interface CreateChannelCredentialRequest {
+  channelId: number;
+  apiKey: string;
+  priority?: number;
+  weight?: number;
+  description?: string;
+}
+
+/** 创建渠道凭证响应（与后端 ChannelCredentialCreateResponse 一致） */
+export interface CreateChannelCredentialResponse {
+  id: number;
+  apiKeyMasked: string;
+  apiKeyPlain: string;
+}
+
+/** 更新渠道凭证请求（与后端 ChannelCredentialUpdateRequest 一致） */
+export interface UpdateChannelCredentialRequest {
+  priority?: number;
+  weight?: number;
+  description?: string;
+  state?: ChannelCredentialState;
+}
+
+/** API Key 测试响应 */
+export interface ApiKeyTestResponse {
+  success: boolean;
+  latency: number | null;
+  modelName: string | null;
+  responsePreview: string | null;
+  testedAt: string | null;
+  error: {
+    code: string;
+    message: string;
+  } | null;
+}

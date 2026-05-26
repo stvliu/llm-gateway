@@ -1,0 +1,182 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { channelApi } from '@/services/api/channel';
+import type {
+  CreateChannelRequest,
+  UpdateChannelRequest,
+  CreateChannelEndpointRequest,
+  CreateChannelCredentialRequest,
+  UpdateChannelCredentialRequest,
+} from '@/types/channel';
+
+export const channelKeys = {
+  all: ['channels'] as const,
+  lists: () => [...channelKeys.all, 'list'] as const,
+  list: (providerId: number) => [...channelKeys.lists(), providerId] as const,
+  details: () => [...channelKeys.all, 'detail'] as const,
+  detail: (id: number) => [...channelKeys.details(), id] as const,
+  credentials: (channelId: number) => [...channelKeys.all, 'credentials', channelId] as const,
+  endpoints: (channelId: number) => [...channelKeys.all, 'endpoints', channelId] as const,
+};
+
+/** 获取供应商下的渠道列表 */
+export function useChannels(providerId: number) {
+  return useQuery({
+    queryKey: channelKeys.list(providerId),
+    queryFn: () => channelApi.list({ providerId }),
+    enabled: !!providerId,
+  });
+}
+
+/** 获取渠道详情 */
+export function useChannel(id: number) {
+  return useQuery({
+    queryKey: channelKeys.detail(id),
+    queryFn: () => channelApi.get(id),
+    enabled: !!id,
+  });
+}
+
+/** 创建渠道 */
+export function useCreateChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: CreateChannelRequest) => channelApi.create(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.list(variables.providerId) });
+    },
+  });
+}
+
+/** 更新渠道 */
+export function useUpdateChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateChannelRequest }) =>
+      channelApi.update(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** 删除渠道 */
+export function useDeleteChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id }: { id: number; providerId: number }) =>
+      channelApi.delete(id),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.list(variables.providerId) });
+    },
+  });
+}
+
+/** ---- 渠道端点 ---- */
+
+/** 添加渠道端点 */
+export function useAddChannelEndpoint() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, data }: { channelId: number; data: CreateChannelEndpointRequest }) =>
+      channelApi.addEndpoint(channelId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** 删除渠道端点 */
+export function useRemoveChannelEndpoint() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
+      channelApi.removeEndpoint(channelId, endpointId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** 启用渠道端点 */
+export function useEnableChannelEndpoint() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
+      channelApi.enableEndpoint(channelId, endpointId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** 停用渠道端点 */
+export function useDisableChannelEndpoint() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
+      channelApi.disableEndpoint(channelId, endpointId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** ---- 渠道凭证 ---- */
+
+/** 获取渠道下的凭证列表 */
+export function useChannelCredentials(channelId: number) {
+  return useQuery({
+    queryKey: channelKeys.credentials(channelId),
+    queryFn: () => channelApi.listCredentials(channelId),
+    enabled: !!channelId,
+  });
+}
+
+/** 创建渠道凭证 */
+export function useCreateChannelCredential() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, data }: { channelId: number; data: CreateChannelCredentialRequest }) =>
+      channelApi.createCredential(channelId, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.credentials(variables.channelId) });
+    },
+  });
+}
+
+/** 更新渠道凭证 */
+export function useUpdateChannelCredential() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, id, data }: { channelId: number; id: number; data: UpdateChannelCredentialRequest }) =>
+      channelApi.updateCredential(channelId, id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.credentials(variables.channelId) });
+    },
+  });
+}
+
+/** 删除渠道凭证 */
+export function useDeleteChannelCredential() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
+      channelApi.deleteCredential(channelId, id),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.credentials(variables.channelId) });
+    },
+  });
+}
+
+/** 测试渠道凭证 */
+export function useTestChannelCredential() {
+  return useMutation({
+    mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
+      channelApi.testCredential(channelId, id),
+  });
+}
