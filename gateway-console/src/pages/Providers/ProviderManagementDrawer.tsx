@@ -4,18 +4,22 @@ import {
   LeftOutlined,
   RightOutlined,
   SettingOutlined,
+  ApiOutlined,
+  RobotOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
   CloseOutlined,
-  ShoppingOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
-import ProviderProductsTab from './ProviderProductsTab';
+import ProviderChannelTab from './ProviderChannelTab';
+import ProviderModelSpecTab from './ProviderModelSpecTab';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useProvider, useDeleteProvider } from '@/services/query';
+import { useAuthStore } from '@/stores/authStore';
+import { P } from '@/constants/permissions';
 import type { Provider } from '@/types/provider';
 
 interface ProviderManagementDrawerProps {
@@ -24,14 +28,15 @@ interface ProviderManagementDrawerProps {
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
   onProviderDeleted?: () => void;
-  defaultTab?: 'basic' | 'products';
+  defaultTab?: 'basic' | 'channels' | 'modelSpecs';
   startEditing?: boolean;
 }
 
 /**
  * 供应商详情抽屉
- * 查看模式：标签页展示（基本信息 + 产品）
+ * 查看模式：标签页展示（基本信息 + 渠道 + 模型规格）
  * 编辑基本信息：隐藏其它标签页，只显示基本信息表单
+ * 无 PROVIDER_WRITE 权限的用户隐藏编辑/删除按钮
  * 操作按钮放在标题栏右侧
  */
 export function ProviderManagementDrawer({
@@ -45,6 +50,8 @@ export function ProviderManagementDrawer({
 }: ProviderManagementDrawerProps) {
   const { t } = useTranslation('providers');
   const { confirm } = useConfirm();
+  const { hasPermission } = useAuthStore();
+  const canWrite = hasPermission(P.PROVIDER_WRITE);
 
   // 状态
   const [activeTab, setActiveTab] = useState(defaultTab);
@@ -140,17 +147,22 @@ export function ProviderManagementDrawer({
       label: t('detail.basicInfo', { defaultValue: '基本信息' }),
       icon: <SettingOutlined />,
     },
-        {
-      key: 'products',
-      label: t('product.title', { ns: 'products' }),
-      icon: <ShoppingOutlined />,
+    {
+      key: 'channels',
+      label: t('detail.channels', { defaultValue: '渠道' }),
+      icon: <ApiOutlined />,
+    },
+    {
+      key: 'modelSpecs',
+      label: t('detail.modelSpecs', { defaultValue: '模型规格' }),
+      icon: <RobotOutlined />,
     },
   ];
 
   // 标题
   const title = provider?.providerName || t('detail.providerDetail', { defaultValue: '供应商详情' });
 
-  // 标题栏操作按钮
+  // 标题栏操作按钮（无写入权限时隐藏编辑/删除）
   const extra = editing ? (
     <Space>
       <Button
@@ -169,7 +181,7 @@ export function ProviderManagementDrawer({
         {t('actions.revertChanges', { defaultValue: '撤消更改' })}
       </Button>
     </Space>
-  ) : (
+  ) : canWrite ? (
     <Space>
       <Button icon={<EditOutlined />} onClick={handleEdit}>
         {t('actions.edit', { ns: 'common' })}
@@ -178,7 +190,7 @@ export function ProviderManagementDrawer({
         {t('actions.delete', { ns: 'common' })}
       </Button>
     </Space>
-  );
+  ) : null;
 
   // 底部导航
   const footer = providers.length > 1 ? (
@@ -214,7 +226,7 @@ export function ProviderManagementDrawer({
       extra={extra}
       open={providerId !== null}
       onClose={handleClose}
-      size={560}
+      width={720}
       placement="right"
       mask={{ closable: true }}
       styles={{
@@ -255,10 +267,14 @@ export function ProviderManagementDrawer({
         />
       )}
 
-      
-      {/* 产品：编辑基本信息时隐藏 */}
-      {!isLoading && !editing && activeTab === 'products' && providerId && (
-        <ProviderProductsTab providerId={providerId} />
+      {/* 渠道（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'channels' && providerId && (
+        <ProviderChannelTab providerId={providerId} editing={false} />
+      )}
+
+      {/* 模型规格（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'modelSpecs' && providerId && (
+        <ProviderModelSpecTab providerId={providerId} editing={false} />
       )}
     </Drawer>
   );
