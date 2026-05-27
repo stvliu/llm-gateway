@@ -19,7 +19,6 @@ import ModelSpecFormModal from './ModelSpecFormModal';
 import type { ModelSpec } from '@/types/modelSpec';
 
 interface ProviderModelSpecTabProps {
-  providerId: number;
   editing?: boolean;
 }
 
@@ -33,14 +32,14 @@ function stateColor(state: string): 'success' | 'default' {
  * 展示供应商下的模型规格列表，支持创建、编辑、启用/禁用、删除操作
  * 权限控制：无 PROVIDER_WRITE 时隐藏所有写操作按钮
  */
-export default function ProviderModelSpecTab({ providerId, editing }: ProviderModelSpecTabProps) {
+export default function ProviderModelSpecTab({ editing }: ProviderModelSpecTabProps) {
   const { t } = useTranslation('providers');
   const { message } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.PROVIDER_WRITE);
 
   // 数据查询与变更
-  const { data: modelSpecs, isLoading } = useModelSpecs(providerId);
+  const { data: modelSpecs, isLoading } = useModelSpecs();
   const deleteMutation = useDeleteModelSpec();
   const setEnabledMutation = useSetEnabledModelSpec();
 
@@ -221,7 +220,6 @@ export default function ProviderModelSpecTab({ providerId, editing }: ProviderMo
       {/* 模型规格创建/编辑弹窗 */}
       <ModelSpecFormModal
         open={formOpen}
-        providerId={providerId}
         modelSpec={editingSpec}
         onClose={() => {
           setFormOpen(false);

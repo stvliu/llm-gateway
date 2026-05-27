@@ -4,8 +4,6 @@ export type ModelSpecState = 'ACTIVE' | 'INACTIVE';
 /** 模型规格信息（与后端 ModelSpecResponse 一致） */
 export interface ModelSpec {
   id: number;
-  /** 所属供应商 ID */
-  providerId: number;
   /** 供应商模型标识（如 gpt-4o、claude-3-opus） */
   providerModelId: string;
   /** 显示名称 */
@@ -34,8 +32,6 @@ export interface ModelSpec {
 
 /** 创建模型规格请求 */
 export interface CreateModelSpecRequest {
-  /** 所属供应商 ID */
-  providerId: number;
   /** 供应商模型标识 */
   providerModelId: string;
   /** 显示名称 */

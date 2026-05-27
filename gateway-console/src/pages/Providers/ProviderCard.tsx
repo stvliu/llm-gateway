@@ -22,7 +22,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
 
   const providerId = provider?.id ?? 0;
   const { data: channels, isLoading } = useChannels(providerId);
-  const { data: modelSpecs, isLoading: modelSpecsLoading } = useModelSpecs(providerId);
+  const { data: modelSpecs, isLoading: modelSpecsLoading } = useModelSpecs();
 
   const activeChannels = channels?.filter(c => c.state?.toUpperCase() === 'ACTIVE') || [];
   const displayChannels = activeChannels.slice(0, 3);

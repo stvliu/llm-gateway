@@ -274,7 +274,7 @@ export function ProviderManagementDrawer({
 
       {/* 模型规格（编辑模式下隐藏） */}
       {!isLoading && !editing && activeTab === 'modelSpecs' && providerId && (
-        <ProviderModelSpecTab providerId={providerId} editing={false} />
+        <ProviderModelSpecTab editing={false} />
       )}
     </Drawer>
   );

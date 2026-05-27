@@ -10,11 +10,11 @@ export const modelSpecKeys = {
   detail: (id: number) => [...modelSpecKeys.details(), id] as const,
 };
 
-/** 获取模型规格列表（可按供应商筛选） */
-export function useModelSpecs(providerId?: number) {
+/** 获取模型规格列表 */
+export function useModelSpecs() {
   return useQuery({
-    queryKey: modelSpecKeys.list({ providerId }),
-    queryFn: () => modelSpecApi.list({ providerId }),
+    queryKey: modelSpecKeys.lists(),
+    queryFn: () => modelSpecApi.list(),
   });
 }
 

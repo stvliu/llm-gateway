@@ -6,7 +6,6 @@ import type { ModelSpec } from '@/types/modelSpec';
 
 interface ModelSpecFormModalProps {
   open: boolean;
-  providerId: number;
   modelSpec?: ModelSpec | null;
   onClose: () => void;
 }
@@ -24,7 +23,7 @@ const CAPABILITY_OPTIONS = [
  * 模型规格创建/编辑弹窗
  * 支持创建和编辑两种模式，capabilities 字段使用多选下拉
  */
-export default function ModelSpecFormModal({ open, providerId, modelSpec, onClose }: ModelSpecFormModalProps) {
+export default function ModelSpecFormModal({ open, modelSpec, onClose }: ModelSpecFormModalProps) {
   const { t } = useTranslation('providers');
   const [form] = Form.useForm();
   const createMutation = useCreateModelSpec();
@@ -54,10 +53,10 @@ export default function ModelSpecFormModal({ open, providerId, modelSpec, onClos
       } else {
         // 创建模式：重置表单并设置默认值
         form.resetFields();
-        form.setFieldsValue({ providerId, priority: 0, weight: 100 });
+        form.setFieldsValue({ priority: 0, weight: 100 });
       }
     }
-  }, [open, modelSpec, providerId, form]);
+  }, [open, modelSpec, form]);
 
   const handleSubmit = async () => {
     const values = await form.validateFields();
@@ -89,9 +88,6 @@ export default function ModelSpecFormModal({ open, providerId, modelSpec, onClos
       destroyOnClose
     >
       <Form form={form} layout="vertical">
-        <Form.Item name="providerId" hidden>
-          <Input />
-        </Form.Item>
         <Form.Item
           name="providerModelId"
           label={t('modelSpec.providerModelId')}
