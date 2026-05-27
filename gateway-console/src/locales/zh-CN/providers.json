@@ -208,5 +208,9 @@
   "channelModel.associatedModels": "已关联模型",
   "channelModel.providerModelId": "供应商模型 ID",
   "channelModel.displayName": "显示名称",
-  "channelModel.modelFamily": "模型族"
+  "channelModel.modelFamily": "模型族",
+  "channelModel.addFailed": "关联失败",
+  "channelModel.deleteFailed": "解绑失败",
+  "channelModel.enabledFailed": "启用失败",
+  "channelModel.disabledFailed": "禁用失败"
 }

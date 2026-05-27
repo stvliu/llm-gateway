@@ -208,5 +208,9 @@
   "channelModel.associatedModels": "Associated Models",
   "channelModel.providerModelId": "Provider Model ID",
   "channelModel.displayName": "Display Name",
-  "channelModel.modelFamily": "Model Family"
+  "channelModel.modelFamily": "Model Family",
+  "channelModel.addFailed": "Failed to associate model",
+  "channelModel.deleteFailed": "Failed to unbind model",
+  "channelModel.enabledFailed": "Failed to enable model",
+  "channelModel.disabledFailed": "Failed to disable model"
 }

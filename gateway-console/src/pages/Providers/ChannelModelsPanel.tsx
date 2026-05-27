@@ -48,6 +48,9 @@ export default function ChannelModelsPanel({ channelId, canWrite }: ChannelModel
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedModelSpecId, setSelectedModelSpecId] = useState<number | undefined>(undefined);
 
+  /** 开关加载状态（按记录 ID） */
+  const [pendingToggleId, setPendingToggleId] = useState<number | null>(null);
+
   /** 已关联的 modelSpecId 集合，用于筛选可选模型 */
   const associatedModelSpecIds = useMemo(
     () => new Set((channelModels ?? []).map((cm) => cm.modelSpecId)),
@@ -79,7 +82,7 @@ export default function ChannelModelsPanel({ channelId, canWrite }: ChannelModel
       message.success(t('channelModel.add'));
       handleCloseModal();
     } catch {
-      message.error(t('channelModel.add'));
+      message.error(t('channelModel.addFailed') || t('channelModel.add'));
     }
   }, [createMutation, channelId, selectedModelSpecId, message, t, handleCloseModal]);
 
@@ -89,7 +92,7 @@ export default function ChannelModelsPanel({ channelId, canWrite }: ChannelModel
         await deleteMutation.mutateAsync({ channelId, id: record.id });
         message.success(t('channelModel.deleteSuccess'));
       } catch {
-        message.error(t('channelModel.deleteSuccess'));
+        message.error(t('channelModel.deleteFailed') || t('channelModel.deleteSuccess'));
       }
     },
     [deleteMutation, channelId, message, t],
@@ -97,11 +100,14 @@ export default function ChannelModelsPanel({ channelId, canWrite }: ChannelModel
 
   const handleToggleEnabled = useCallback(
     async (record: ChannelModel, enabled: boolean) => {
+      setPendingToggleId(record.id);
       try {
         await setEnabledMutation.mutateAsync({ channelId, id: record.id, enabled });
         message.success(enabled ? t('channelModel.enabled') : t('channelModel.disabled'));
+        setPendingToggleId(null);
       } catch {
-        message.error(enabled ? t('channelModel.enabled') : t('channelModel.disabled'));
+        message.error(enabled ? t('channelModel.enabledFailed') || t('channelModel.enabled') : t('channelModel.disabledFailed') || t('channelModel.disabled'));
+        setPendingToggleId(null);
       }
     },
     [setEnabledMutation, channelId, message, t],
@@ -159,7 +165,7 @@ export default function ChannelModelsPanel({ channelId, canWrite }: ChannelModel
                   <Switch
                     size="small"
                     checked={record.state === 'ACTIVE'}
-                    loading={setEnabledMutation.isPending}
+                    loading={pendingToggleId === record.id}
                     onChange={(checked) => handleToggleEnabled(record, checked)}
                   />
                 </Tooltip>
