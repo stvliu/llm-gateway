@@ -32,6 +32,7 @@ export function BasicInfoStep({
   useEffect(() => {
     if (!basicInfo) {
       onChange({
+        code: '',
         providerName: '',
         websiteUrl: '',
         apiDocUrl: '',
@@ -50,6 +51,18 @@ export function BasicInfoStep({
   return (
     <div>
       <div style={{ display: 'grid', gap: 16 }}>
+        {/* 品牌标识 */}
+        <div>
+          <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+            {t('code', { defaultValue: '品牌标识' })} <Text type="danger">*</Text>
+          </Text>
+          <Input
+            value={basicInfo?.code || ''}
+            onChange={(e) => handleFieldChange('code', e.target.value)}
+            placeholder="openai"
+          />
+        </div>
+
         {/* 供应商名称 */}
         <div>
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>

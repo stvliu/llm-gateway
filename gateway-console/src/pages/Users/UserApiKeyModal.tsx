@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { Modal, Form, Input, Select, InputNumber, Table, Tag, Button, Space, message } from 'antd'
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
-import type { Product } from '@/types/product'
+import type { Channel } from '@/types/channel'
 import { userApiKeyApi } from '@/services/api/userApiKey'
-import { productApi } from '@/services/api/product'
+import { channelApi } from '@/services/api/channel'
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
@@ -28,7 +28,7 @@ export default function UserApiKeyModal({
   const { confirm } = useConfirm()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
+  const [channels, setChannels] = useState<Channel[]>([])
   const [createdKey, setCreatedKey] = useState<string | null>(null)
   const [editingKey, setEditingKey] = useState<UserApiKey | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -38,17 +38,17 @@ export default function UserApiKeyModal({
 
   useEffect(() => {
     if (open) {
-      loadProducts()
+      loadChannels()
       setCreatedKey(null)
       setEditingKey(null)
       setShowForm(false)
     }
   }, [open])
 
-  const loadProducts = async () => {
+  const loadChannels = async () => {
     try {
-      const res = await productApi.listAll()
-      setProducts(res)
+      const res = await channelApi.list()
+      setChannels(res)
     } catch {
       // 产品列表加载失败时静默处理
     }
@@ -66,7 +66,7 @@ export default function UserApiKeyModal({
     setCreatedKey(null)
     form.setFieldsValue({
       name: key.name,
-      productIds: key.productIds,
+      channelIds: key.channelIds,
       models: key.models,
       quotaLimit: key.quotaLimit,
       state: key.state,
@@ -94,7 +94,7 @@ export default function UserApiKeyModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          productIds: values.productIds,
+          channelIds: values.channelIds,
           models: values.models,
           quotaLimit: values.quotaLimit,
           state: values.state,
@@ -104,7 +104,7 @@ export default function UserApiKeyModal({
       } else {
         const request: CreateUserApiKeyRequest = {
           userId,
-          productIds: values.productIds,
+          channelIds: values.channelIds,
           name: values.name,
           models: values.models,
           quotaLimit: values.quotaLimit,
@@ -130,7 +130,7 @@ export default function UserApiKeyModal({
     setCreatedKey(null)
   }
 
-  const productOptions = products.map((p) => ({
+  const channelOptions = channels.map((p) => ({
     label: p.name,
     value: p.id,
   }))
@@ -212,14 +212,14 @@ export default function UserApiKeyModal({
               <Input placeholder={t('apiKey.namePlaceholder')} />
             </Form.Item>
             <Form.Item
-              name="productIds"
-              label={t('apiKey.products')}
-              rules={[{ required: true, message: t('apiKey.productsRequired') }]}
+              name="channelIds"
+              label={t('apiKey.channels')}
+              rules={[{ required: true, message: t('apiKey.channelsRequired') }]}
             >
               <Select
                 mode="multiple"
-                placeholder={t('apiKey.productsPlaceholder')}
-                options={productOptions}
+                placeholder={t('apiKey.channelsPlaceholder')}
+                options={channelOptions}
                 optionFilterProp="label"
                 maxTagCount="responsive"
               />

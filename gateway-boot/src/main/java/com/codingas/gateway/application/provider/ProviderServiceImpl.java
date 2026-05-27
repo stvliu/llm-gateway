@@ -55,6 +55,7 @@ public class ProviderServiceImpl implements ProviderService {
     @Override
     @Transactional
     public ProviderResponse create(ProviderCreateRequest request) {
+
         Provider provider = new Provider();
         provider.setName(request.getProviderName());
         provider.setWebsiteUrl(request.getWebsiteUrl());
@@ -168,28 +169,33 @@ public class ProviderServiceImpl implements ProviderService {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
-        // 删除关联的渠道凭证
         List<Channel> channels = channelGateway.findByProviderId(id);
+
+        // 1. 删除 ChannelModel（所有状态，包括 INACTIVE）
+        for (Channel channel : channels) {
+            List<ChannelModel> channelModels = channelModelGateway.findByChannelId(channel.getId());
+            for (ChannelModel cm : channelModels) {
+                channelModelGateway.deleteById(cm.getId());
+            }
+        }
+        log.info("Deleted channel models for provider {}", id);
+
+        // 3. 删除渠道凭证
         for (Channel channel : channels) {
             List<ChannelCredential> credentials = channelCredentialGateway.findByChannelId(channel.getId());
             for (ChannelCredential credential : credentials) {
                 channelCredentialGateway.deleteById(credential.getId());
             }
+        }
+        log.info("Deleted {} channels' credentials for provider {}", channels.size(), id);
+
+        // 4. 删除渠道
+        for (Channel channel : channels) {
             channelGateway.deleteById(channel.getId());
         }
-        log.info("Deleted {} channels and their credentials for provider {}", channels.size(), id);
+        log.info("Deleted {} channels for provider {}", channels.size(), id);
 
-        // 删除关联的渠道下的 ChannelModel → ModelSpec
-        for (Channel channel : channels) {
-            List<ChannelModel> channelModels = channelModelGateway.findActiveByChannelId(channel.getId());
-            for (ChannelModel cm : channelModels) {
-                modelSpecGateway.findById(cm.getModelSpecId()).ifPresent(modelSpecGateway::delete);
-                channelModelGateway.deleteById(cm.getId());
-            }
-        }
-        log.info("Deleted channel models and specs for provider {}", id);
-
-        // 最后删除 Provider
+        // 5. 最后删除 Provider
         providerGateway.delete(provider);
         log.info("Deleted provider {}", id);
     }
@@ -202,7 +208,7 @@ public class ProviderServiceImpl implements ProviderService {
     public ProviderResponse setEnabled(Long id, boolean enabled) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        provider.setState(enabled ? ProviderState.ACTIVE : ProviderState.DISABLED);
+        provider.setState(enabled ? ProviderState.ACTIVE : ProviderState.INACTIVE);
         return toResponse(providerGateway.save(provider));
     }
 

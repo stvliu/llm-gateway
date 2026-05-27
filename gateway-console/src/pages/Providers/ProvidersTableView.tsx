@@ -20,7 +20,7 @@ interface Props {
  * 供应商表格视图
  * 使用 Ant Design Table 渲染供应商列表，支持行点击选择和操作按钮
  */
-export default function ProvidersTableView({ providers, onSelect, onEdit, onDelete, onViewChannels }: Props) {
+export default function ProvidersTableView({ providers, onSelect, onEdit, onDelete }: Props) {
   const { t } = useTranslation('providers');
   const { t: tc } = useTranslation('common');
   const { hasPermission } = useAuthStore();

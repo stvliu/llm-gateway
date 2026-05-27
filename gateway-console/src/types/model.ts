@@ -2,7 +2,7 @@
 export type ModelType = 'CHAT' | 'COMPLETION' | 'EMBEDDING' | 'IMAGE' | 'AUDIO';
 
 /** 模型状态枚举 */
-export type ModelState = 'ACTIVE' | 'DISABLED' | 'DELETED';
+export type ModelState = 'ACTIVE' | 'INACTIVE';
 
 /** 模型信息（与后端 ModelResponse 一致，定价信息已迁移到 Product） */
 export interface Model {

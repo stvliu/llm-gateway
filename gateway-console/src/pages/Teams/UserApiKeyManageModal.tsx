@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react'
 import { Modal, Form, Input, Select, InputNumber, message } from 'antd'
 import type { Team, UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
-import type { Product } from '@/types/product'
+import type { Channel } from '@/types/channel'
 import { teamApi } from '@/services/api/team'
-import { productApi } from '@/services/api/product'
+import { channelApi } from '@/services/api/channel'
 
 interface UserApiKeyManageModalProps {
   open: boolean
@@ -24,16 +24,16 @@ export default function UserApiKeyManageModal({
 }: UserApiKeyManageModalProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
+  const [channels, setChannels] = useState<Channel[]>([])
   const [createdKey, setCreatedKey] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
-      loadProducts()
+      loadChannels()
       if (editingKey) {
         form.setFieldsValue({
           name: editingKey.name,
-          productIds: editingKey.productIds,
+          channelIds: editingKey.channelIds,
           models: editingKey.models,
           quotaLimit: editingKey.quotaLimit,
           state: editingKey.state,
@@ -46,10 +46,10 @@ export default function UserApiKeyManageModal({
     }
   }, [open, editingKey, form])
 
-  const loadProducts = async () => {
+  const loadChannels = async () => {
     try {
-      const res = await productApi.listAll()
-      setProducts(res)
+      const res = await channelApi.list()
+      setChannels(res)
     } catch {
       // 产品列表加载失败时静默处理
     }
@@ -63,7 +63,7 @@ export default function UserApiKeyManageModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          productIds: values.productIds,
+          channelIds: values.channelIds,
           models: values.models,
           quotaLimit: values.quotaLimit,
           state: values.state,
@@ -74,7 +74,7 @@ export default function UserApiKeyManageModal({
         const request: CreateUserApiKeyRequest = {
           teamId: team.id,
           userId: values.userId,
-          productIds: values.productIds,
+          channelIds: values.channelIds,
           name: values.name,
           models: values.models,
           quotaLimit: values.quotaLimit,
@@ -93,7 +93,7 @@ export default function UserApiKeyManageModal({
     }
   }
 
-  const productOptions = products.map((p) => ({
+  const channelOptions = channels.map((p) => ({
     label: p.name,
     value: p.id,
   }))
@@ -128,14 +128,14 @@ export default function UserApiKeyManageModal({
         )}
 
         <Form.Item
-          name="productIds"
+          name="channelIds"
           label="关联产品"
           rules={[{ required: true, message: '请选择至少一个产品' }]}
         >
           <Select
             mode="multiple"
             placeholder="选择关联的产品"
-            options={productOptions}
+            options={channelOptions}
             optionFilterProp="label"
             maxTagCount="responsive"
           />

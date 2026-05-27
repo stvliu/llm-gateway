@@ -16,4 +16,6 @@ public interface ModelSpecRepository extends JpaRepository<ModelSpecDo, Long> {
     List<ModelSpecDo> findByState(String state);
 
     List<ModelSpecDo> findByIdIn(List<Long> ids);
+
+    List<ModelSpecDo> findByProviderModelIdAndState(String providerModelId, String state);
 }

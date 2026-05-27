@@ -14,22 +14,21 @@ import lombok.EqualsAndHashCode;
 @Table(name = "providers")
 public class ProviderDo extends BaseDo {
 
-    @Column(name = "code", nullable = false, unique = true, length = 64)
+    @Column(name = "provider_id", unique = true, length = 64)
     private String code;
 
-    @Column(name = "name", nullable = false, length = 128)
+    @Column(name = "provider_name", nullable = false, length = 128)
     private String name;
 
-    @Column(name = "logo_url", length = 512)
+    @Column(name = "icon_url", length = 512)
     private String logoUrl;
 
     @Column(name = "website_url", length = 512)
     private String websiteUrl;
 
-    @Column(name = "description", length = 1024)
+    @Column(name = "description", length = 512)
     private String description;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false, length = 32)
+    @Column(name = "state", nullable = false)
     private String state;
 }

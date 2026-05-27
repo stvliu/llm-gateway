@@ -5,8 +5,8 @@ import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyProductDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyProductRepository;
+import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyChannelDo;
+import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyChannelRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +28,7 @@ import java.util.Optional;
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
     private final UserApiKeyRepository repository;
-    private final UserApiKeyProductRepository productRepository;
+    private final UserApiKeyChannelRepository channelRepository;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     @Override
@@ -73,12 +73,12 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
         // 保存渠道关联
         if (userApiKey.getChannelIds() != null) {
-            productRepository.deleteByUserApiKeyId(saved.getId());
+            channelRepository.deleteByUserApiKeyId(saved.getId());
             for (Long channelId : userApiKey.getChannelIds()) {
-                UserApiKeyProductDo rel = new UserApiKeyProductDo();
+                UserApiKeyChannelDo rel = new UserApiKeyChannelDo();
                 rel.setUserApiKeyId(saved.getId());
-                rel.setProductId(channelId);
-                productRepository.save(rel);
+                rel.setChannelId(channelId);
+                channelRepository.save(rel);
             }
         }
 
@@ -88,13 +88,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     @Override
     @Transactional
     public void delete(UserApiKey userApiKey) {
-        productRepository.deleteByUserApiKeyId(userApiKey.getId());
+        channelRepository.deleteByUserApiKeyId(userApiKey.getId());
         repository.deleteById(userApiKey.getId());
     }
 
     @Override
-    public List<Long> findIdsByProductId(Long productId) {
-        return productRepository.findUserApiKeyIdByProductId(productId);
+    public List<Long> findIdsByChannelId(Long channelId) {
+        return channelRepository.findUserApiKeyIdByChannelId(channelId);
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
@@ -111,7 +111,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setUpdatedAt(dataObject.getUpdatedAt());
 
         // 加载渠道关联
-        List<Long> channelIds = productRepository.findProductIdByUserApiKeyId(dataObject.getId());
+        List<Long> channelIds = channelRepository.findChannelIdByUserApiKeyId(dataObject.getId());
         entity.setChannelIds(channelIds);
 
         // 解密返回明文 Key

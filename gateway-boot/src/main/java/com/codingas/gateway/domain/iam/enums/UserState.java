@@ -7,7 +7,7 @@ package com.codingas.gateway.domain.iam.enums;
  *
  * <h3>状态转换图</h3>
  * <pre>
- * ACTIVE ⇄ DISABLED
+ * ACTIVE ⇄ INACTIVE
  *    ↓
  * LOCKED（安全事件触发）
  * </pre>
@@ -15,7 +15,7 @@ package com.codingas.gateway.domain.iam.enums;
  * <h3>状态说明</h3>
  * <ul>
  *   <li>ACTIVE：账户正常，可正常使用</li>
- *   <li>DISABLED：账户禁用，无法登录（可恢复）</li>
+ *   <li>INACTIVE：账户停用，无法登录（可恢复）</li>
  *   <li>LOCKED：账户锁定，登录失败次数过多触发（可恢复）</li>
  * </ul>
  */
@@ -24,7 +24,7 @@ public enum UserState {
     ACTIVE,
 
     /** 账户停用，无法登录（可恢复） */
-    DISABLED,
+    INACTIVE,
 
     /** 账户锁定（登录失败次数过多触发，可恢复） */
     LOCKED;

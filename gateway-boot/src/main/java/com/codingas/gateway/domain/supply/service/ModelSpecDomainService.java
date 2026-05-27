@@ -53,7 +53,7 @@ public class ModelSpecDomainService {
     public ModelSpec disable(Long id) {
         ModelSpec spec = modelSpecGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("MODEL_SPEC_NOT_FOUND", "模型规格不存在: " + id));
-        spec.setState(ModelSpecState.DISABLED);
+        spec.setState(ModelSpecState.INACTIVE);
         return modelSpecGateway.save(spec);
     }
 

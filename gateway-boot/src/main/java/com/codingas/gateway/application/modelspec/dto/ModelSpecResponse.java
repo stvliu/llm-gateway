@@ -14,8 +14,6 @@ public class ModelSpecResponse {
 
     private Long id;
 
-    private Long providerId;
-
     private String providerModelId;
 
     private String displayName;

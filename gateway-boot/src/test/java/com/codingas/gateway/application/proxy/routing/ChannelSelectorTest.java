@@ -55,7 +55,7 @@ class ChannelSelectorTest {
             when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1, cm2));
 
             Channel ch1 = mock(Channel.class);
-            when(ch1.getState()).thenReturn(ChannelState.DISABLED);
+            when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
 
             Channel ch2 = mock(Channel.class);
             when(ch2.getId()).thenReturn(200L);
@@ -77,7 +77,7 @@ class ChannelSelectorTest {
             when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1));
 
             Channel ch1 = mock(Channel.class);
-            when(ch1.getState()).thenReturn(ChannelState.DISABLED);
+            when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
 
             when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));
 

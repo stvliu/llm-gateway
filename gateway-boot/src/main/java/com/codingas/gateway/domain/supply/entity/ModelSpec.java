@@ -21,6 +21,7 @@ import java.util.Map;
 @Slf4j
 public class ModelSpec extends BaseEntity {
 
+    
     /** 供应商侧标识（如 "gpt-4o"，路由匹配用） */
     private String providerModelId;
 

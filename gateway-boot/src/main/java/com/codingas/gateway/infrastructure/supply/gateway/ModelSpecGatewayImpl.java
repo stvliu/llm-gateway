@@ -41,7 +41,10 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
 
     @Override
     public List<ModelSpec> findActiveByProviderModelId(String providerModelId) {
-        return List.of();
+        return modelSpecRepository.findByProviderModelIdAndState(providerModelId, ModelSpecState.ACTIVE.name())
+                .stream()
+                .map(this::toEntity)
+                .toList();
     }
 
     @Override
@@ -93,7 +96,6 @@ public class ModelSpecGatewayImpl implements ModelSpecGateway {
     private ModelSpecDo toDo(ModelSpec entity) {
         ModelSpecDo doObj = new ModelSpecDo();
         doObj.setId(entity.getId());
-        // TODO: providerId 已从 ModelSpec 移除，数据库字段暂保留但不再从 entity 映射
         doObj.setProviderModelId(entity.getProviderModelId());
         doObj.setDisplayName(entity.getDisplayName());
         doObj.setModelFamily(entity.getModelFamily());

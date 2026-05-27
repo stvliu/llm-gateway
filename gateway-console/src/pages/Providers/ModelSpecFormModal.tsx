@@ -95,7 +95,7 @@ export default function ModelSpecFormModal({ open, providerId, modelSpec, onClos
         <Form.Item
           name="providerModelId"
           label={t('modelSpec.providerModelId')}
-          rules={[{ required: true, message: '请输入供应商模型 ID' }]}
+          rules={[{ required: true, message: t('modelSpec.providerModelIdRequired', { defaultValue: '请输入供应商模型 ID' }) }]}
         >
           <Input placeholder="gpt-4o" />
         </Form.Item>
@@ -109,10 +109,10 @@ export default function ModelSpecFormModal({ open, providerId, modelSpec, onClos
           <Form.Item name="contextWindow" label={t('modelSpec.contextWindow')}>
             <InputNumber min={0} style={{ width: 160 }} />
           </Form.Item>
-          <Form.Item name="maxInputTokens" label="最大输入 Tokens">
+          <Form.Item name="maxInputTokens" label={t('modelSpec.maxInputTokens', { defaultValue: '最大输入 Tokens' })}>
             <InputNumber min={0} style={{ width: 160 }} />
           </Form.Item>
-          <Form.Item name="maxOutputTokens" label="最大输出 Tokens">
+          <Form.Item name="maxOutputTokens" label={t('modelSpec.maxOutputTokens', { defaultValue: '最大输出 Tokens' })}>
             <InputNumber min={0} style={{ width: 160 }} />
           </Form.Item>
         </Space>
@@ -120,7 +120,7 @@ export default function ModelSpecFormModal({ open, providerId, modelSpec, onClos
           <Select
             mode="multiple"
             options={CAPABILITY_OPTIONS}
-            placeholder="选择模型能力"
+            placeholder={t('modelSpec.capabilityPlaceholder', { defaultValue: '选择模型能力' })}
             allowClear
           />
         </Form.Item>

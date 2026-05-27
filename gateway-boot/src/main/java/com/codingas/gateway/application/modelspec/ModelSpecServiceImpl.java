@@ -31,7 +31,6 @@ public class ModelSpecServiceImpl implements ModelSpecService {
     @Transactional
     public ModelSpecResponse create(ModelSpecCreateRequest request) {
         ModelSpec modelSpec = new ModelSpec();
-        modelSpec.setProviderId(request.getProviderId());
         modelSpec.setProviderModelId(request.getProviderModelId());
         modelSpec.setDisplayName(request.getDisplayName());
         modelSpec.setModelFamily(request.getModelFamily());
@@ -61,11 +60,7 @@ public class ModelSpecServiceImpl implements ModelSpecService {
     public List<ModelSpecResponse> query(ModelSpecQueryRequest request) {
         List<ModelSpec> specs;
 
-        if (request.getProviderId() != null) {
-            specs = modelSpecGateway.findByProviderId(request.getProviderId());
-        } else {
-            specs = modelSpecGateway.findAll();
-        }
+        specs = modelSpecGateway.findAll();
 
         // 按状态过滤
         if (request.getState() != null) {
@@ -165,7 +160,6 @@ public class ModelSpecServiceImpl implements ModelSpecService {
     private ModelSpecResponse toResponse(ModelSpec modelSpec) {
         ModelSpecResponse response = new ModelSpecResponse();
         response.setId(modelSpec.getId());
-        response.setProviderId(modelSpec.getProviderId());
         response.setProviderModelId(modelSpec.getProviderModelId());
         response.setDisplayName(modelSpec.getDisplayName());
         response.setModelFamily(modelSpec.getModelFamily());

@@ -13,11 +13,12 @@ import java.util.Optional;
  */
 public interface UserApiKeyRepository extends JpaRepository<UserApiKeyDo, Long> {
 
-    List<UserApiKeyDo> findByUserId(Long userId);
+    Optional<UserApiKeyDo> findByKeyHash(String keyHash);
 
     Optional<UserApiKeyDo> findByKeyPrefix(String keyPrefix);
 
-    /** 查询关联某产品的 Key ID 列表 */
-    @Query("SELECT DISTINCT u.id FROM UserApiKeyDo u JOIN u.productIds p WHERE p = :productId")
-    List<Long> findIdsByProductId(@Param("productId") Long productId);
+    @Query("SELECT u FROM UserApiKeyDo u WHERE u.userId = :userId AND u.state <> 'DELETED'")
+    List<UserApiKeyDo> findByUserId(@Param("userId") Long userId);
+
+    boolean existsByKeyPrefix(String keyPrefix);
 }

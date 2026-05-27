@@ -29,4 +29,4 @@ export interface ApiResponse<T> {
 }
 
 /** 通用状态枚举 */
-export type Status = 'ENABLED' | 'DISABLED';
+export type Status = 'ENABLED' | 'INACTIVE';

@@ -46,12 +46,12 @@ export interface UserApiKey {
   id: number;
   teamId: number;
   userId: number;
-  productIds: number[];
+  channelIds: number[];
   keyPrefix: string;
   name: string;
   models: string[];
   quotaLimit: number | null;
-  state: 'ACTIVE' | 'DISABLED';
+  state: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
 }
@@ -59,11 +59,11 @@ export interface UserApiKey {
 /** 用户 API Key 详情（含明文 Key） */
 export interface UserApiKeyDetail extends UserApiKey {
   keyPlain: string;
-  products: ProductBrief[];
+  channels: ChannelBrief[];
 }
 
-/** 产品简要信息 */
-export interface ProductBrief {
+/** 渠道简要信息 */
+export interface ChannelBrief {
   id: number;
   name: string;
 }
@@ -85,7 +85,7 @@ export interface UpdateUserApiKeyRequest {
   productIds?: number[];
   models?: string[];
   quotaLimit?: number | null;
-  state?: 'ACTIVE' | 'DISABLED';
+  state?: 'ACTIVE' | 'INACTIVE';
 }
 
 /** 创建用户 API Key 响应 */

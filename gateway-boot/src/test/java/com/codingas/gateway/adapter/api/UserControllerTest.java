@@ -148,17 +148,17 @@ class UserControllerTest {
         void updateState_validRequest_returnsUpdated() {
             // given
             UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.DISABLED);
+            request.setState(UserState.INACTIVE);
 
             UserResponse response = createTestResponse();
-            response.setState(UserState.DISABLED);
+            response.setState(UserState.INACTIVE);
             when(userService.updateState(eq(1L), any())).thenReturn(response);
 
             // when
             UserResponse result = controller.updateState(1L, request);
 
             // then
-            assertThat(result.getState()).isEqualTo(UserState.DISABLED);
+            assertThat(result.getState()).isEqualTo(UserState.INACTIVE);
         }
     }
 

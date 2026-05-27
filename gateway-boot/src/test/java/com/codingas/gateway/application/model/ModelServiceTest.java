@@ -465,8 +465,8 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelSpecState.DISABLED);
-            assertThat(response.getState()).isEqualTo(ModelSpecState.DISABLED);
+            assertThat(testModel.getState()).isEqualTo(ModelSpecState.INACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelSpecState.INACTIVE);
             verify(modelSpecGateway).save(testModel);
         }
 
@@ -500,7 +500,7 @@ class ModelServiceTest {
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
-        model.setState(status ? ModelSpecState.ACTIVE : ModelSpecState.DISABLED);
+        model.setState(status ? ModelSpecState.ACTIVE : ModelSpecState.INACTIVE);
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;

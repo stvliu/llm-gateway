@@ -40,7 +40,6 @@ class ModelSpecControllerTest {
     private ModelSpecResponse createResponse(Long id) {
         ModelSpecResponse response = new ModelSpecResponse();
         response.setId(id);
-        response.setProviderId(100L);
         response.setProviderModelId("gpt-4o");
         response.setDisplayName("GPT-4o");
         response.setModelFamily("gpt-4");
@@ -59,7 +58,6 @@ class ModelSpecControllerTest {
     @Test
     void create_success() {
         ModelSpecCreateRequest request = new ModelSpecCreateRequest();
-        request.setProviderId(100L);
         request.setProviderModelId("gpt-4o");
 
         ModelSpecResponse expected = createResponse(SPEC_ID);
@@ -87,7 +85,6 @@ class ModelSpecControllerTest {
     @Test
     void query_success() {
         ModelSpecQueryRequest request = new ModelSpecQueryRequest();
-        request.setProviderId(100L);
 
         when(modelSpecService.query(any(ModelSpecQueryRequest.class)))
                 .thenReturn(List.of(createResponse(SPEC_ID)));

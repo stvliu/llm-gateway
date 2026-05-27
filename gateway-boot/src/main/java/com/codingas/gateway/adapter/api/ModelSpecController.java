@@ -45,7 +45,7 @@ public class ModelSpecController {
      * 查询模型规格列表
      */
     @GetMapping
-    public ResponseEntity<List<ModelSpecResponse>> query(ModelSpecQueryRequest request) {
+    public ResponseEntity<List<ModelSpecResponse>> query(@Valid ModelSpecQueryRequest request) {
         List<ModelSpecResponse> responses = modelSpecService.query(request);
         return ResponseEntity.ok(responses);
     }

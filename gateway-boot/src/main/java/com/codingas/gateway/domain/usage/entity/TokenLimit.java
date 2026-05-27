@@ -61,9 +61,7 @@ public class TokenLimit extends BaseEntity {
         /** 正常 */
         ACTIVE,
         /** 暂停 */
-        SUSPENDED,
-        /** 已删除 */
-        DELETED
+        SUSPENDED
     }
 
     /**

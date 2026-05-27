@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
     /**
      * SPA 路由支持
      *
-     * <p>将非 API、非静态资源的请求转发到 index.html，让前端路由处理。</p>
+     * <p>将非 API、非 Actuator、非静态资源的请求转发到 index.html。</p>
      */
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
@@ -57,18 +57,15 @@ public class WebConfig implements WebMvcConfigurer {
                 protected Resource getResource(String resourcePath, Resource location) throws IOException {
                     Resource requestedResource = location.createRelative(resourcePath);
 
-                    // 如果请求的资源存在，直接返回
                     if (requestedResource.exists() && requestedResource.isReadable()) {
                         return requestedResource;
                     }
 
-                    // API 请求不转发
                     if (resourcePath.startsWith("api/") || resourcePath.startsWith("v1/") ||
                         resourcePath.startsWith("actuator/")) {
                         return null;
                     }
 
-                    // 其他请求转发到 index.html（SPA 路由）
                     return new ClassPathResource("/static/index.html");
                 }
             });

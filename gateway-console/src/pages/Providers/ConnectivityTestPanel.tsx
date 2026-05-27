@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Form, Input, Select, Button, Collapse, Tag, Alert, Space, Typography } from 'antd';
+import { App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useTestConnectivity } from '@/services/query/useProviders';
 import type { ConnectivityTestResult, ConnectivityTestLevelResult } from '@/types/provider';
@@ -15,6 +16,7 @@ interface ConnectivityTestPanelProps {
  */
 export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
   const { t } = useTranslation('providers');
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const testMutation = useTestConnectivity();
   const [result, setResult] = useState<ConnectivityTestResult | null>(null);
@@ -30,6 +32,7 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
       },
       {
         onSuccess: (data) => setResult(data),
+        onError: () => message.error(t('detail.testFailed', { defaultValue: '测试请求失败' })),
       }
     );
   };
@@ -49,7 +52,7 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
           {level.message && <Typography.Text type={level.success ? 'success' : 'danger'}>{level.message}</Typography.Text>}
           {level.models && level.models.length > 0 && (
             <div>
-              <Typography.Text strong>可用模型:</Typography.Text>
+              <Typography.Text strong>{t('detail.availableModels', { defaultValue: '可用模型' })}:</Typography.Text>
               <div style={{ marginTop: 4 }}>
                 {level.models.map(m => <Tag key={m}>{m}</Tag>)}
               </div>
@@ -66,14 +69,14 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
         <Form.Item name="protocol" label={t('channel.protocol', { defaultValue: '协议' })} rules={[{ required: true }]}>
           <Select options={[{ value: 'openai', label: 'OpenAI' }, { value: 'anthropic', label: 'Anthropic' }]} />
         </Form.Item>
-        <Form.Item name="baseUrl" label="Base URL">
-          <Input placeholder="https://api.openai.com" />
+        <Form.Item name="baseUrl" label={t('channel.baseUrl', { defaultValue: 'Base URL' })}>
+          <Input placeholder={t('detail.baseUrlPlaceholder', { defaultValue: 'https://api.openai.com' })} />
         </Form.Item>
         <Form.Item name="apiKey" label={t('credential.apiKey', { defaultValue: 'API Key' })} rules={[{ required: true }]}>
           <Input.Password placeholder="sk-..." />
         </Form.Item>
-        <Form.Item name="model" label="Model">
-          <Input placeholder="gpt-4o (optional)" />
+        <Form.Item name="model" label={t('modelSpec.model', { defaultValue: 'Model' })}>
+          <Input placeholder={t('detail.modelPlaceholder', { defaultValue: 'gpt-4o (optional)' })} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={handleTest} loading={testMutation.isPending}>

@@ -64,7 +64,7 @@ class CredentialResolverTest {
             defaultKey.setId(1L);
             defaultKey.setChannelId(10L);
             defaultKey.setApiKeyPlain("sk-default-key");
-            defaultKey.setState(CredentialState.DISABLED);
+            defaultKey.setState(CredentialState.INACTIVE);
 
             ChannelCredential activeKey = new ChannelCredential();
             activeKey.setId(2L);

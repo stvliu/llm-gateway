@@ -41,7 +41,7 @@ public class ChannelEndpoint extends BaseEntity {
      * 禁用端点
      */
     public void disable() {
-        this.state = ChannelEndpointState.DISABLED;
+        this.state = ChannelEndpointState.INACTIVE;
     }
 
     /**

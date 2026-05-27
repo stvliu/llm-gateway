@@ -4,7 +4,10 @@
       "Bash(rm -rf data/*.db)",
       "Bash(rm -rf data/gateway*)",
       "Bash(rm -rf gateway-boot/data/gateway*)",
-      "Read(//mnt/e/workspace/llm-gateway/**)"
+      "Read(//mnt/e/workspace/llm-gateway/**)",
+      "Bash(dir \"E:\\\\workspace\\\\llm-gateway\\\\gateway-console\\\\src\")",
+      "Bash(cd \"E:\\\\\\\\workspace\\\\\\\\llm-gateway\")",
+      "Bash(cd \"E:\\\\\\\\workspace\\\\\\\\llm-gateway\\\\\\\\gateway-console\")"
     ]
   },
   "outputStyle": "default"

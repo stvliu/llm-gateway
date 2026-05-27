@@ -36,7 +36,6 @@ class ModelSpecServiceImplTest {
     private ModelSpecServiceImpl service;
 
     private static final Long SPEC_ID = 1L;
-    private static final Long PROVIDER_ID = 100L;
 
     @Test
     void create_success() {
@@ -44,7 +43,6 @@ class ModelSpecServiceImplTest {
         when(modelSpecGateway.save(any(ModelSpec.class))).thenReturn(saved);
 
         ModelSpecCreateRequest request = new ModelSpecCreateRequest();
-        request.setProviderId(PROVIDER_ID);
         request.setProviderModelId("gpt-4o");
         request.setDisplayName("GPT-4o");
         request.setModelFamily("gpt-4");
@@ -59,7 +57,6 @@ class ModelSpecServiceImplTest {
 
         assertNotNull(response);
         assertEquals(SPEC_ID, response.getId());
-        assertEquals(PROVIDER_ID, response.getProviderId());
         assertEquals("gpt-4o", response.getProviderModelId());
         assertEquals("ACTIVE", response.getState());
         verify(modelSpecGateway).save(argThat(spec ->
@@ -84,20 +81,6 @@ class ModelSpecServiceImplTest {
     void getById_notFound() {
         when(modelSpecGateway.findById(SPEC_ID)).thenReturn(Optional.empty());
         assertThrows(ResourceNotFoundException.class, () -> service.getById(SPEC_ID));
-    }
-
-    @Test
-    void query_byProviderId() {
-        ModelSpec spec = createSampleSpec();
-        when(modelSpecGateway.findByProviderId(PROVIDER_ID)).thenReturn(List.of(spec));
-
-        ModelSpecQueryRequest request = new ModelSpecQueryRequest();
-        request.setProviderId(PROVIDER_ID);
-
-        List<ModelSpecResponse> responses = service.query(request);
-
-        assertEquals(1, responses.size());
-        assertEquals(SPEC_ID, responses.get(0).getId());
     }
 
     @Test
@@ -244,7 +227,6 @@ class ModelSpecServiceImplTest {
     private ModelSpec createSampleSpec() {
         ModelSpec spec = new ModelSpec();
         spec.setId(SPEC_ID);
-        spec.setProviderId(PROVIDER_ID);
         spec.setProviderModelId("gpt-4o");
         spec.setDisplayName("GPT-4o");
         spec.setModelFamily("gpt-4");

@@ -158,7 +158,7 @@ public class ModelServiceImpl implements ModelService {
     public ModelResponse setEnabled(Long id, boolean enabled) {
         ModelSpec modelSpec = modelSpecGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
-        modelSpec.setState(enabled ? ModelSpecState.ACTIVE : ModelSpecState.DISABLED);
+        modelSpec.setState(enabled ? ModelSpecState.ACTIVE : ModelSpecState.INACTIVE);
         return toResponse(modelSpecGateway.save(modelSpec));
     }
 

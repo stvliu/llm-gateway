@@ -6,8 +6,7 @@ package com.codingas.gateway.domain.team.enums;
 public enum TeamState {
 
     ACTIVE("active"),
-    INACTIVE("inactive"),
-    DELETED("deleted");
+    INACTIVE("inactive");
 
     private final String code;
 

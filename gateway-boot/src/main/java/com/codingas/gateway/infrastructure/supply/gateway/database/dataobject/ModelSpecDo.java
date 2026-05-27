@@ -19,6 +19,7 @@ import java.util.Map;
 @Table(name = "model_specs")
 public class ModelSpecDo extends BaseDo {
 
+    
     @Column(name = "provider_model_id", nullable = false, length = 128)
     private String providerModelId;
 
@@ -51,7 +52,6 @@ public class ModelSpecDo extends BaseDo {
     @Column(name = "modalities", columnDefinition = "jsonb")
     private List<String> modalities;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false, length = 32)
+    @Column(name = "state", nullable = false)
     private String state;
 }

@@ -69,7 +69,7 @@ class EndpointResolverTest {
             disabled.setChannelId(10L);
             disabled.setEndpointUrl("https://disabled.example.com");
             disabled.setProtocol(Protocol.OPENAI);
-            disabled.setState(ChannelEndpointState.DISABLED);
+            disabled.setState(ChannelEndpointState.INACTIVE);
 
             ChannelEndpoint active = new ChannelEndpoint();
             active.setId(2L);
@@ -97,7 +97,7 @@ class EndpointResolverTest {
             ChannelEndpoint disabled = new ChannelEndpoint();
             disabled.setId(1L);
             disabled.setChannelId(10L);
-            disabled.setState(ChannelEndpointState.DISABLED);
+            disabled.setState(ChannelEndpointState.INACTIVE);
 
             when(channelEndpointGateway.findByChannelId(10L))
                     .thenReturn(List.of(disabled));

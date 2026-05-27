@@ -78,7 +78,7 @@ class ModelMatcherTest {
             ModelSpec modelSpec = new ModelSpec();
             modelSpec.setId(1L);
             modelSpec.setProviderModelId("gpt-4o");
-            modelSpec.setState(ModelSpecState.DISABLED);
+            modelSpec.setState(ModelSpecState.INACTIVE);
 
             when(modelSpecGateway.findByProviderModelId("gpt-4o"))
                     .thenReturn(Optional.of(modelSpec));
