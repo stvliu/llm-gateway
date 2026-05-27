@@ -4,7 +4,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
@@ -33,10 +33,10 @@ public class RoutingResolver {
      */
     public RoutingContext resolve(String modelName, Protocol protocol) {
         // 1. 模型匹配
-        ModelSpec modelSpec = modelMatcher.match(modelName);
+        Model model = modelMatcher.match(modelName);
 
         // 2. 通道选择
-        ChannelModel channelModel = channelSelector.select(modelSpec.getId());
+        ChannelModel channelModel = channelSelector.select(model.getId());
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(channelModel.getChannelId());
@@ -59,7 +59,9 @@ public class RoutingResolver {
                 endpoint.getProtocol(),
                 apiKey,
                 channel.getTimeout(),
-                needsAdaptation
+                needsAdaptation,
+                model.getModelName(),
+                channelModel.getUpstreamModelName()
         );
     }
 }

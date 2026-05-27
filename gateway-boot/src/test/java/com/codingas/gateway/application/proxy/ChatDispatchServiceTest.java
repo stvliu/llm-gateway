@@ -70,7 +70,7 @@ class ChatDispatchServiceTest {
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
-                Protocol.OPENAI, "sk-test", 60, false);
+                Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
     }
@@ -119,7 +119,7 @@ class ChatDispatchServiceTest {
                     .build();
 
             RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
-                    Protocol.ANTHROPIC, "sk-ant-key", 60, true);
+                    Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null);
 
             AnthropicMessagesRequest convertedRequest = AnthropicMessagesRequest.builder()
                     .model("claude-3-5-sonnet-20241022")

@@ -50,8 +50,12 @@ public class OutboundTuner {
             log.debug("协议级调谐完成: protocol={}", protocol);
         }
 
-        // TODO: upstreamModelName 已从 RoutingContext 移除，后续通过 ChannelModel 关联获取上游模型名
-        // 第二层：通道级调谐 — 模型名替换暂不执行
+        // 第二层：通道级调谐 — 模型名替换
+        String upstreamModelName = context.upstreamModelName();
+        if (upstreamModelName != null && !upstreamModelName.isBlank()) {
+            request.setModel(upstreamModelName);
+            log.debug("模型名替换: {} -> {}", context.modelName(), upstreamModelName);
+        }
 
         return request;
     }
