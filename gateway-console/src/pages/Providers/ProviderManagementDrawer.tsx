@@ -5,7 +5,6 @@ import {
   RightOutlined,
   SettingOutlined,
   ApiOutlined,
-  RobotOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
@@ -14,7 +13,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
 import ProviderChannelTab from './ProviderChannelTab';
-import ProviderModelSpecTab from './ProviderModelSpecTab';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useProvider, useDeleteProvider } from '@/services/query';
@@ -28,7 +26,7 @@ interface ProviderManagementDrawerProps {
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
   onProviderDeleted?: () => void;
-  defaultTab?: 'basic' | 'channels' | 'modelSpecs';
+  defaultTab?: 'basic' | 'channels';
   startEditing?: boolean;
 }
 
@@ -152,11 +150,6 @@ export function ProviderManagementDrawer({
       label: t('detail.channels', { defaultValue: '渠道' }),
       icon: <ApiOutlined />,
     },
-    {
-      key: 'modelSpecs',
-      label: t('detail.modelSpecs', { defaultValue: '模型规格' }),
-      icon: <RobotOutlined />,
-    },
   ];
 
   // 标题
@@ -270,11 +263,6 @@ export function ProviderManagementDrawer({
       {/* 渠道（编辑模式下隐藏） */}
       {!isLoading && !editing && activeTab === 'channels' && providerId && (
         <ProviderChannelTab providerId={providerId} editing={false} />
-      )}
-
-      {/* 模型规格（编辑模式下隐藏） */}
-      {!isLoading && !editing && activeTab === 'modelSpecs' && providerId && (
-        <ProviderModelSpecTab editing={false} />
       )}
     </Drawer>
   );
