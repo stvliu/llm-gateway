@@ -1,28 +1,38 @@
 package com.codingas.gateway.application.catalog;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelSpecCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -35,13 +45,13 @@ class CatalogMaterializeServiceTest {
     private ProviderCatalogGateway providerCatalogGateway;
 
     @Mock
-    private ModelSpecCatalogGateway modelSpecCatalogGateway;
+    private ModelCatalogGateway modelCatalogGateway;
 
     @Mock
     private ProviderGateway providerGateway;
 
     @Mock
-    private ModelSpecGateway modelSpecGateway;
+    private ModelGateway modelGateway;
 
     @Mock
     private com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway planCatalogGateway;
@@ -110,37 +120,106 @@ class CatalogMaterializeServiceTest {
     }
 
     @Test
-    void materializeModelSpec_success() {
-        // ModelSpec 尚未物化
-        when(modelSpecGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.empty());
+    void materializeModel_success() {
+        // Model 尚未物化
+        when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.empty());
 
         // 目录存在
-        ModelSpecCatalog catalog = createModelSpecCatalog();
-        when(modelSpecCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.of(catalog));
+        ModelCatalog catalog = createModelCatalog();
+        when(modelCatalogGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(catalog));
 
         // 保存成功
-        ModelSpec saved = createModelSpec();
+        Model saved = createModel();
         saved.setId(10L);
-        when(modelSpecGateway.save(any(ModelSpec.class))).thenReturn(saved);
+        when(modelGateway.save(any(Model.class))).thenReturn(saved);
 
-        var result = service.materializeModelSpec("gpt-4o");
+        var result = service.materializeModel("gpt-4o");
 
         assertNotNull(result);
-        assertEquals("MODEL_SPEC", result.getType());
+        assertEquals("MODEL", result.getType());
         assertEquals("gpt-4o", result.getCode());
         assertEquals(10L, result.getEntityId());
         assertEquals("CREATED", result.getStatus());
-        verify(modelSpecGateway).save(any(ModelSpec.class));
+        verify(modelGateway).save(any(Model.class));
     }
 
     @Test
-    void materializeModelSpec_alreadyMaterialized_throwsException() {
-        // ModelSpec 已物化
-        when(modelSpecGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.of(createModelSpec()));
+    void materializeModel_alreadyMaterialized_throwsException() {
+        // Model 已物化
+        when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(createModel()));
 
-        assertThrows(CatalogException.class, () -> service.materializeModelSpec("gpt-4o"));
+        assertThrows(CatalogException.class, () -> service.materializeModel("gpt-4o"));
 
-        verify(modelSpecGateway, never()).save(any());
+        verify(modelGateway, never()).save(any());
+    }
+
+    @Test
+    void shouldPrefillUpstreamModelNameWhenRulesMatch() throws Exception {
+        // Prepare azure-openai data
+        PlanCatalog plan = new PlanCatalog();
+        plan.setPlanCode("azure-openai-standard");
+        plan.setProviderCode("azure-openai");
+        plan.setBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode.PAY_AS_YOU_GO);
+        plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://azure.openai.com\"}]");
+        plan.setPricing("[{\"modelName\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]");
+
+        when(planCatalogGateway.findByPlanCode("azure-openai-standard")).thenReturn(Optional.of(plan));
+        when(providerGateway.findByCode("azure-openai")).thenReturn(Optional.of(createTestProvider("azure-openai")));
+        when(channelGateway.existsByProviderIdAndName(anyLong(), eq("azure-openai-standard"))).thenReturn(false);
+        when(channelGateway.save(any())).thenReturn(createTestChannel(1L));
+
+        // objectMapper 模拟：解析 endpoints
+        when(objectMapper.readValue(eq("[{\"protocol\":\"OPENAI\",\"url\":\"https://azure.openai.com\"}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("protocol", "OPENAI", "url", "https://azure.openai.com")));
+        // objectMapper 模拟：解析 pricing
+        when(objectMapper.readValue(eq("[{\"modelName\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("modelName", "chat-latest", "inputPrice", BigDecimal.valueOf(2.5), "outputPrice", BigDecimal.valueOf(10.0))));
+
+        Model model = new Model();
+        model.setId(1L);
+        model.setModelName("chat-latest");
+        when(modelGateway.findByModelName("chat-latest")).thenReturn(Optional.of(model));
+
+        service.materializePlan("azure-openai-standard");
+
+        ArgumentCaptor<ChannelModel> captor = ArgumentCaptor.forClass(ChannelModel.class);
+        verify(channelModelGateway, times(1)).save(captor.capture());
+        ChannelModel saved = captor.getValue();
+        assertEquals("gpt-chat-latest", saved.getUpstreamModelName());
+    }
+
+    @Test
+    void shouldSetNullUpstreamModelNameWhenNoRuleMatches() throws Exception {
+        PlanCatalog plan = new PlanCatalog();
+        plan.setPlanCode("deepseek-standard");
+        plan.setProviderCode("deepseek");
+        plan.setBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode.PAY_AS_YOU_GO);
+        plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.deepseek.com\"}]");
+        plan.setPricing("[{\"modelName\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
+
+        when(planCatalogGateway.findByPlanCode("deepseek-standard")).thenReturn(Optional.of(plan));
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(createTestProvider("deepseek")));
+        when(channelGateway.existsByProviderIdAndName(anyLong(), eq("deepseek-standard"))).thenReturn(false);
+        when(channelGateway.save(any())).thenReturn(createTestChannel(2L));
+
+        // objectMapper 模拟：解析 endpoints
+        when(objectMapper.readValue(eq("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.deepseek.com\"}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("protocol", "OPENAI", "url", "https://api.deepseek.com")));
+        // objectMapper 模拟：解析 pricing
+        when(objectMapper.readValue(eq("[{\"modelName\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("modelName", "deepseek-v4-flash", "inputPrice", BigDecimal.valueOf(1.0), "outputPrice", BigDecimal.valueOf(4.0))));
+
+        Model model = new Model();
+        model.setId(2L);
+        model.setModelName("deepseek-v4-flash");
+        when(modelGateway.findByModelName("deepseek-v4-flash")).thenReturn(Optional.of(model));
+
+        service.materializePlan("deepseek-standard");
+
+        ArgumentCaptor<ChannelModel> captor = ArgumentCaptor.forClass(ChannelModel.class);
+        verify(channelModelGateway, times(1)).save(captor.capture());
+        ChannelModel saved = captor.getValue();
+        assertNull(saved.getUpstreamModelName());
     }
 
     // ===== 辅助方法 =====
@@ -165,9 +244,9 @@ class CatalogMaterializeServiceTest {
         return provider;
     }
 
-    private ModelSpecCatalog createModelSpecCatalog() {
-        ModelSpecCatalog catalog = new ModelSpecCatalog();
-        catalog.setProviderModelId("gpt-4o");
+    private ModelCatalog createModelCatalog() {
+        ModelCatalog catalog = new ModelCatalog();
+        catalog.setModelName("gpt-4o");
         catalog.setDisplayName("GPT-4o");
         catalog.setModelFamily("gpt-4");
         catalog.setContextWindow(128000);
@@ -177,11 +256,27 @@ class CatalogMaterializeServiceTest {
         return catalog;
     }
 
-    private ModelSpec createModelSpec() {
-        ModelSpec spec = new ModelSpec();
-        spec.setProviderModelId("gpt-4o");
+    private Model createModel() {
+        Model spec = new Model();
+        spec.setModelName("gpt-4o");
         spec.setDisplayName("GPT-4o");
-        spec.setState(com.codingas.gateway.domain.supply.enums.ModelSpecState.ACTIVE);
+        spec.setState(ModelState.ACTIVE);
         return spec;
+    }
+
+    private Provider createTestProvider(String code) {
+        Provider p = new Provider();
+        p.setId(1L);
+        p.setCode(code);
+        p.setName(code);
+        p.setState(ProviderState.ACTIVE);
+        return p;
+    }
+
+    private Channel createTestChannel(Long id) {
+        Channel c = new Channel();
+        c.setId(id);
+        c.setState(ChannelState.ACTIVE);
+        return c;
     }
 }
