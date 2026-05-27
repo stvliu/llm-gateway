@@ -5,9 +5,9 @@ import {
   Tag,
   Space,
   Popconfirm,
+  Segmented,
   Tooltip,
   Typography,
-  Divider,
   App,
 } from 'antd';
 import {
@@ -35,6 +35,7 @@ import { P } from '@/constants/permissions';
 import ChannelFormModal from './ChannelFormModal';
 import ChannelEndpointFormModal from './ChannelEndpointFormModal';
 import CredentialFormModal from './CredentialFormModal';
+import ChannelModelsPanel from './ChannelModelsPanel';
 import type { Channel, ChannelEndpointResponse, ChannelCredential } from '@/types/channel';
 
 interface ProviderChannelTabProps {
@@ -339,6 +340,7 @@ function ChannelExpandedRow({
   const { t } = useTranslation('providers');
   const { data: credentials, isLoading: credentialsLoading } = useChannelCredentials(channel.id);
   const endpoints = channel.endpoints ?? [];
+  const [activeTab, setActiveTab] = useState<string>('endpoints');
 
   // 端点列定义
   const endpointColumns = [
@@ -498,68 +500,89 @@ function ChannelExpandedRow({
 
   return (
     <div style={{ padding: '8px 0' }}>
-      {/* 端点列表 */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 8,
-        }}
-      >
-        <span style={{ fontWeight: 500 }}>{t('channel.endpoints')}</span>
-        {canWrite && (
-          <Button
-            size="small"
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => onAddEndpoint(channel.id)}
-          >
-            {t('channel.addEndpoint')}
-          </Button>
-        )}
-      </div>
-      <Table
-        dataSource={endpoints}
-        rowKey="id"
-        pagination={false}
-        size="small"
-        columns={endpointColumns}
-        locale={{ emptyText: t('channel.noEndpoints') }}
+      <Segmented
+        value={activeTab}
+        onChange={(value) => setActiveTab(value as string)}
+        options={[
+          { label: t('channel.endpoints'), value: 'endpoints' },
+          { label: t('credential.plural'), value: 'credentials' },
+          { label: t('channelModel.title'), value: 'models' },
+        ]}
+        style={{ marginBottom: 16 }}
       />
 
-      <Divider />
-
-      {/* 凭证列表 */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: 8,
-        }}
-      >
-        <span style={{ fontWeight: 500 }}>{t('credential.plural')}</span>
-        {canWrite && (
-          <Button
-            size="small"
-            type="dashed"
-            icon={<PlusOutlined />}
-            onClick={() => onAddCredential(channel.id)}
+      {activeTab === 'endpoints' && (
+        <>
+          {/* 端点列表 */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
           >
-            {t('credential.add')}
-          </Button>
-        )}
-      </div>
-      <Table
-        dataSource={credentials}
-        loading={credentialsLoading}
-        rowKey="id"
-        pagination={false}
-        size="small"
-        columns={credentialColumns}
-        locale={{ emptyText: t('credential.noCredentials') }}
-      />
+            <span style={{ fontWeight: 500 }}>{t('channel.endpoints')}</span>
+            {canWrite && (
+              <Button
+                size="small"
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => onAddEndpoint(channel.id)}
+              >
+                {t('channel.addEndpoint')}
+              </Button>
+            )}
+          </div>
+          <Table
+            dataSource={endpoints}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            columns={endpointColumns}
+            locale={{ emptyText: t('channel.noEndpoints') }}
+          />
+        </>
+      )}
+
+      {activeTab === 'credentials' && (
+        <>
+          {/* 凭证列表 */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 8,
+            }}
+          >
+            <span style={{ fontWeight: 500 }}>{t('credential.plural')}</span>
+            {canWrite && (
+              <Button
+                size="small"
+                type="dashed"
+                icon={<PlusOutlined />}
+                onClick={() => onAddCredential(channel.id)}
+              >
+                {t('credential.add')}
+              </Button>
+            )}
+          </div>
+          <Table
+            dataSource={credentials}
+            loading={credentialsLoading}
+            rowKey="id"
+            pagination={false}
+            size="small"
+            columns={credentialColumns}
+            locale={{ emptyText: t('credential.noCredentials') }}
+          />
+        </>
+      )}
+
+      {activeTab === 'models' && (
+        <ChannelModelsPanel channelId={channel.id} canWrite={canWrite} />
+      )}
     </div>
   );
 }
