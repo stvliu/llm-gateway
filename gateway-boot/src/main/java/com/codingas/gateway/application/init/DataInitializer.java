@@ -64,8 +64,8 @@ public class DataInitializer implements CommandLineRunner {
         createModel("gpt-3.5-turbo", "GPT-3.5 Turbo", 16385);
         createModel("claude-sonnet-4-20250514", "Claude Sonnet 4", 200000);
         createModel("claude-3-5-haiku-20241022", "Claude 3.5 Haiku", 200000);
-        createModel(" doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini", 64000);
-        createModel(" glm-5.1", "doubao-seed-2-0-mini-260428", 64000);
+        createModel("doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini", 64000);
+        createModel("glm-5.1", "GLM-5.1", 64000);
         createModel("deepseek-v4-pro", "DeepSeek Reasoner", 64000);
         createModel("deepseek-v4-flash", "DeepSeek-V4-flash", 64000);
 

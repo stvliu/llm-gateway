@@ -359,12 +359,12 @@ Map<String, Map<String, String>> UPSTREAM_MODEL_NAME_RULES:
 | SyncResult 字段 `ModelSpecs` → `Models` | ✅ 已完成 | `ModelsDevSyncClient.java` |
 | `uk_cm_channel_model_spec` 约束名 | ✅ 已完成 | 与 V42 实际 DB 状态一致 |
 
-当前分支还需完成的变更：
+当前分支本次迭代完成的变更：
 
-| 变更 | 工作量 | 说明 |
-|------|--------|------|
-| OutboundTuner 模型名改写 | 小 | 新增 resolveModelName 逻辑（RoutingContext 已增加字段，Tuner 从实体注入改为值对象读取） |
-| Catalog 预填 upstreamModelName | 小 | CatalogMaterializeService 增加 UPSTREAM_MODEL_NAME_RULES 内置映射表 + materializePlan 中预填逻辑 |
-| 用户面 `/v1/models` 接口 | 小 | 新建 ModelDiscoveryController，兼容 OpenAI 模型列表 API |
+| 变更 | 工作量 | 说明 | 提交 |
+|------|--------|------|------|
+| OutboundTuner 模型名改写 | 小 | RoutingContext 增加 String 字段，Tuner 从实体注入改为值对象读取 | `c35f8bf` |
+| Catalog 预填 upstreamModelName | 小 | CatalogMaterializeService 增加 UPSTREAM_MODEL_NAME_RULES 内置映射表 + materializePlan 中预填逻辑 | `19276ed` |
+| 用户面 `/v1/models` 接口 | 小 | 新建 ModelDiscoveryController，兼容 OpenAI 模型列表 API | `684a4db` |
 
 > **注**：ChannelModel 的 `upstreamModelName` 字段已在领域实体、DO、Service、Controller、DTO 中完成实现，包括 `ChannelModelDo.upstream_model_name` 列（已在 V42 Flyway 中添加）。
