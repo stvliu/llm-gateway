@@ -194,5 +194,19 @@
   "credential.testFailed": "凭证测试失败",
   "credential.createdSuccess": "凭证创建成功",
   "credential.createdHint": "请妥善保管此 API Key，关闭后将无法再次查看明文。",
-  "credential.noCredentials": "暂无凭证"
+  "credential.noCredentials": "暂无凭证",
+  "channelModel.title": "关联模型",
+  "channelModel.add": "关联模型",
+  "channelModel.delete": "解绑",
+  "channelModel.confirmDelete": "确定要解绑该模型吗？",
+  "channelModel.deleteSuccess": "模型解绑成功",
+  "channelModel.enabled": "模型已启用",
+  "channelModel.disabled": "模型已禁用",
+  "channelModel.noModels": "暂无关联模型",
+  "channelModel.selectModel": "选择模型",
+  "channelModel.searchPlaceholder": "搜索模型名称或供应商模型 ID",
+  "channelModel.associatedModels": "已关联模型",
+  "channelModel.providerModelId": "供应商模型 ID",
+  "channelModel.displayName": "显示名称",
+  "channelModel.modelFamily": "模型族"
 }

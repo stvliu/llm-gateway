@@ -194,5 +194,19 @@
   "credential.testFailed": "Credential test failed",
   "credential.createdSuccess": "Credential created successfully",
   "credential.createdHint": "Please save this API Key securely. You will not be able to view the plain text again after closing.",
-  "credential.noCredentials": "No credentials"
+  "credential.noCredentials": "No credentials",
+  "channelModel.title": "Associated Models",
+  "channelModel.add": "Associate Model",
+  "channelModel.delete": "Unbind",
+  "channelModel.confirmDelete": "Are you sure you want to unbind this model?",
+  "channelModel.deleteSuccess": "Model unbound successfully",
+  "channelModel.enabled": "Model enabled",
+  "channelModel.disabled": "Model disabled",
+  "channelModel.noModels": "No associated models",
+  "channelModel.selectModel": "Select Model",
+  "channelModel.searchPlaceholder": "Search by display name or provider model ID",
+  "channelModel.associatedModels": "Associated Models",
+  "channelModel.providerModelId": "Provider Model ID",
+  "channelModel.displayName": "Display Name",
+  "channelModel.modelFamily": "Model Family"
 }
