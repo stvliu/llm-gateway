@@ -3,7 +3,7 @@ import { GlobalOutlined, LinkOutlined, AppstoreOutlined, RobotOutlined, MoreOutl
 import type { MenuProps } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useChannels } from '@/services/query/useChannels';
-import { useModelSpecs } from '@/services/query/useModelSpecs';
+import { useModels } from '@/services/query/useModels';
 import { ProviderIcon } from '@/components/ui';
 import type { Provider } from '@/types/provider';
 
@@ -22,15 +22,15 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
 
   const providerId = provider?.id ?? 0;
   const { data: channels, isLoading } = useChannels(providerId);
-  const { data: modelSpecs, isLoading: modelSpecsLoading } = useModelSpecs();
+  const { data: models, isLoading: modelsLoading } = useModels();
 
   const activeChannels = channels?.filter(c => c.state?.toUpperCase() === 'ACTIVE') || [];
   const displayChannels = activeChannels.slice(0, 3);
   const remainingCount = activeChannels.length - displayChannels.length;
 
-  const activeModelSpecs = modelSpecs?.filter(s => s.state?.toUpperCase() === 'ACTIVE') || [];
-  const displayModelSpecs = activeModelSpecs.slice(0, 3);
-  const remainingModels = activeModelSpecs.length - displayModelSpecs.length;
+  const activeModels = models?.filter(m => m.state?.toUpperCase() === 'ACTIVE') || [];
+  const displayModels = activeModels.slice(0, 3);
+  const remainingModels = activeModels.length - displayModels.length;
 
   const menuItems: MenuProps['items'] = [
     {
@@ -162,20 +162,20 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
           <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
             <RobotOutlined />
             <Text type="secondary">
-              {t('card.models', { defaultValue: 'Models' })} ({activeModelSpecs.length})
+              {t('card.models', { defaultValue: 'Models' })} ({activeModels.length})
             </Text>
           </div>
-          {modelSpecsLoading ? (
+          {modelsLoading ? (
             <Text type="secondary" style={{ fontSize: 12 }}>...</Text>
-          ) : activeModelSpecs.length === 0 ? (
+          ) : activeModels.length === 0 ? (
             <Text type="secondary" style={{ fontSize: 12 }}>
               {t('card.noModels', { defaultValue: 'No models' })}
             </Text>
           ) : (
             <Space wrap size={[4, 4]}>
-              {displayModelSpecs.map((spec) => (
-                <Tag key={spec.id} color="purple" style={{ cursor: 'pointer' }}>
-                  {spec.displayName || spec.providerModelId}
+              {displayModels.map((m) => (
+                <Tag key={m.id} color="purple" style={{ cursor: 'pointer' }}>
+                  {m.displayName || m.modelName}
                 </Tag>
               ))}
               {remainingModels > 0 && (

@@ -14,15 +14,18 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "channel_models", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_cm_channel_model_spec", columnNames = {"channel_id", "model_spec_id"})
+        @UniqueConstraint(name = "uk_cm_channel_model", columnNames = {"channel_id", "model_id"})
 })
 public class ChannelModelDo extends BaseDo {
 
     @Column(name = "channel_id", nullable = false)
     private Long channelId;
 
-    @Column(name = "model_spec_id", nullable = false)
-    private Long modelSpecId;
+    @Column(name = "model_id", nullable = false)
+    private Long modelId;
+
+    @Column(name = "upstream_model_name", length = 256)
+    private String upstreamModelName;
 
     @Column(name = "input_price", precision = 18, scale = 6)
     private BigDecimal inputPrice;

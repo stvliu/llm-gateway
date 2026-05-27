@@ -6,17 +6,17 @@ import lombok.Getter;
 import java.util.List;
 
 /**
- * 模型规格目录响应
+ * 模型目录响应
  */
 @Getter
 @Builder
-public class ModelSpecCatalogResponse {
-
-    /** 供应商模型标识 */
-    private final String providerModelId;
+public class ModelCatalogResponse {
 
     /** 模型名称 */
     private final String modelName;
+
+    /** 展示名称 */
+    private final String displayName;
 
     /** 所属供应商编码 */
     private final String providerCode;

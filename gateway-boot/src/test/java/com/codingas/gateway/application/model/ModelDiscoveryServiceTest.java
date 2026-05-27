@@ -3,6 +3,7 @@ package com.codingas.gateway.application.model;
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.ChannelModelState;
@@ -173,7 +174,7 @@ class ModelDiscoveryServiceTest {
             when(userApiKeyGateway.findById(99L)).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.getVisibleModels(99L))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("API Key 不存在");
         }
     }

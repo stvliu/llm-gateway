@@ -11,17 +11,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 模型规格数据对象
+ * 模型数据对象
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "model_specs")
-public class ModelSpecDo extends BaseDo {
+@Table(name = "models")
+public class ModelDo extends BaseDo {
 
-    
-    @Column(name = "provider_model_id", nullable = false, length = 128)
-    private String providerModelId;
+
+    @Column(name = "model_name", nullable = false, length = 128)
+    private String modelName;
 
     @Column(name = "display_name", length = 128)
     private String displayName;
@@ -37,12 +37,6 @@ public class ModelSpecDo extends BaseDo {
 
     @Column(name = "max_output_tokens")
     private Integer maxOutputTokens;
-
-    @Column(name = "priority")
-    private Integer priority;
-
-    @Column(name = "weight")
-    private Integer weight;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "capabilities", columnDefinition = "jsonb")

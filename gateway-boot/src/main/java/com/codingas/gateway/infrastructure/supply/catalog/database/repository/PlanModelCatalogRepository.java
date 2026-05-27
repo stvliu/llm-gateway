@@ -11,11 +11,11 @@ import java.util.Optional;
  */
 public interface PlanModelCatalogRepository extends JpaRepository<PlanModelCatalogDo, Long> {
 
-    Optional<PlanModelCatalogDo> findByPlanCodeAndProviderModelId(String planCode, String providerModelId);
+    Optional<PlanModelCatalogDo> findByPlanCodeAndModelName(String planCode, String modelName);
 
     List<PlanModelCatalogDo> findByPlanCode(String planCode);
 
-    List<PlanModelCatalogDo> findByProviderModelId(String providerModelId);
+    List<PlanModelCatalogDo> findByModelName(String modelName);
 
     List<PlanModelCatalogDo> findBySource(String source);
 }

@@ -41,6 +41,6 @@ public class CatalogSyncService {
         var result = modelsDevSyncClient.sync();
         log.info("Models.dev 同步完成: added={}, updated={}, skipped={}",
                 result.totalAdded(), result.totalUpdated(),
-                result.skippedProviders() + result.skippedModelSpecs() + result.skippedPlans() + result.skippedPlanModels());
+                result.skippedProviders() + result.skippedModels() + result.skippedPlans() + result.skippedPlanModels());
     }
 }

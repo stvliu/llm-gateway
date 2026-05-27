@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.loader;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
@@ -83,7 +83,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
 
         try {
             loadProviders();
-            loadModelSpecs();
+            loadModels();
             loadPlans();
             loadPlanModels();
 
@@ -123,14 +123,14 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     }
 
     /**
-     * 加载模型规格目录
+     * 加载模型目录
      */
-    private void loadModelSpecs() throws Exception {
-        var specs = loadJson("catalog/model-specs.json", new TypeReference<List<ModelSpecCatalogData>>() {});
+    private void loadModels() throws Exception {
+        var specs = loadJson("catalog/model-specs.json", new TypeReference<List<ModelCatalogData>>() {});
         int added = 0, updated = 0, skipped = 0;
         for (var data : specs) {
-            var catalog = new ModelSpecCatalog();
-            catalog.setProviderModelId(data.providerModelId());
+            var catalog = new ModelCatalog();
+            catalog.setModelName(data.modelName());
             catalog.setDisplayName(data.displayName());
             catalog.setModelFamily(data.modelFamily());
             catalog.setContextWindow(data.contextWindow());
@@ -143,14 +143,14 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
-            String result = catalogDomainService.upsertModelSpec(catalog);
+            String result = catalogDomainService.upsertModel(catalog);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
                 default -> skipped++;
             }
         }
-        log.info("加载模型规格目录: added={}, updated={}, skipped={}", added, updated, skipped);
+        log.info("加载模型目录: added={}, updated={}, skipped={}", added, updated, skipped);
     }
 
     /**
@@ -191,7 +191,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
         for (var data : planModels) {
             var catalog = new PlanModelCatalog();
             catalog.setPlanCode(data.planCode());
-            catalog.setProviderModelId(data.providerModelId());
+            catalog.setModelName(data.modelName());
             catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
@@ -224,8 +224,8 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
         String logoUrl, String websiteUrl, String description
     ) {}
 
-    record ModelSpecCatalogData(
-        String providerModelId, String displayName, String modelFamily,
+    record ModelCatalogData(
+        String modelName, String displayName, String modelFamily,
         Integer contextWindow, Integer maxInputTokens, Integer maxOutputTokens,
         String knowledgeCutoff, Object capabilities, Object modalities
     ) {}
@@ -236,6 +236,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     ) {}
 
     record PlanModelCatalogData(
-        String planCode, String providerModelId
+        String planCode, String modelName
     ) {}
 }

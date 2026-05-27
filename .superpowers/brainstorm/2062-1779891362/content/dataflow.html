@@ -1,0 +1,83 @@
+<h2>当前数据流 vs 目标数据流</h2>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">当前实现</div>
+    <div class="mockup-body" style="padding:16px;text-align:left;font-family:monospace;font-size:13px;line-height:1.8">
+      ChatDispatchService<br>
+      │<br>
+      ├─ RoutingResolver.resolve(modelName)<br>
+      │   ├─ ModelMatcher → Model<br>
+      │   ├─ ChannelSelector → ChannelModel<br>
+      │   ├─ CredentialResolver → apiKey<br>
+      │   └─ EndpointResolver → endpoint<br>
+      │<br>
+      ├─ RoutingContext ← {channelId, endpointUrl, apiKey...}<br>
+      │   <span style="color:#e74c3c">✗ 不含 modelName / upstreamModelName</span><br>
+      │<br>
+      ├─ OutboundTuner.tune(request, ctx)<br>
+      │   ├─ 协议调谐 ✅<br>
+      │   └─ 模型名替换 <span style="color:#e74c3c">✗ TODO</span><br>
+      │<br>
+      ├─ 上游调用<br>
+      └─ 后置处理
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">目标实现</div>
+    <div class="mockup-body" style="padding:16px;text-align:left;font-family:monospace;font-size:13px;line-height:1.8">
+      ChatDispatchService<br>
+      │<br>
+      ├─ RoutingResolver.resolve(modelName)<br>
+      │   ├─ ModelMatcher → Model<br>
+      │   ├─ ChannelSelector → ChannelModel<br>
+      │   ├─ CredentialResolver → apiKey<br>
+      │   └─ EndpointResolver → endpoint<br>
+      │<br>
+      ├─ RoutingContext ← {channelId, endpointUrl, apiKey...,<br>
+      │   <span style="color:#27ae60">✓ modelName, upstreamModelName}</span><br>
+      │<br>
+      ├─ OutboundTuner.tune(request, ctx)<br>
+      │   ├─ 协议调谐 ✅<br>
+      │   └─ <span style="color:#27ae60">模型名替换: ctx.upstreamModelName → request.model</span><br>
+      │<br>
+      ├─ 上游调用（已使用替换后的模型名）<br>
+      └─ 后置处理
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>需实现的工作包</h3>
+</div>
+
+<div class="options" data-multiselect>
+  <div class="option" data-choice="routingctx" onclick="toggleSelect(this)">
+    <div class="letter">1</div>
+    <div class="content">
+      <h3>RoutingContext 增加模型名字段</h3>
+      <p>在 RoutingContext record 中添加 modelName / upstreamModelName，由 RoutingResolver 组装时填入。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="outbound" onclick="toggleSelect(this)">
+    <div class="letter">2</div>
+    <div class="content">
+      <h3>OutboundTuner 模型名替换逻辑</h3>
+      <p>读取 RoutingContext.upstreamModelName，写入 request.model。null 时走默认（= modelName）。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="catalog" onclick="toggleSelect(this)">
+    <div class="letter">3</div>
+    <div class="content">
+      <h3>Catalog 物化时预填 upstreamModelName</h3>
+      <p>UPSTREAM_MODEL_NAME_RULES 内置映射表 + materializePlan 中设置值。</p>
+    </div>
+  </div>
+  <div class="option" data-choice="v1models" onclick="toggleSelect(this)">
+    <div class="letter">4</div>
+    <div class="content">
+      <h3>/v1/models 用户面接口</h3>
+      <p>按 API Key 可见的 Model 列表（兼容 OpenAI 格式），去重后返回。</p>
+    </div>
+  </div>
+</div>Written and pushed to your browser at **http://localhost:64309**.

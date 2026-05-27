@@ -46,8 +46,8 @@ public class ChannelModelGatewayImpl implements ChannelModelGateway {
     }
 
     @Override
-    public List<ChannelModel> findActiveByModelSpecId(Long modelSpecId) {
-        return channelModelRepository.findByModelSpecIdAndState(modelSpecId, ChannelModelState.ACTIVE.name())
+    public List<ChannelModel> findActiveByModelId(Long modelId) {
+        return channelModelRepository.findByModelIdAndState(modelId, ChannelModelState.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
@@ -68,9 +68,9 @@ public class ChannelModelGatewayImpl implements ChannelModelGateway {
     }
 
     @Override
-    public boolean existsByChannelIdAndModelId(Long channelId, Long modelSpecId) {
+    public boolean existsByChannelIdAndModelId(Long channelId, Long modelId) {
         return channelModelRepository.findByChannelId(channelId).stream()
-                .anyMatch(cm -> cm.getModelSpecId().equals(modelSpecId));
+                .anyMatch(cm -> cm.getModelId().equals(modelId));
     }
 
     @Override
@@ -83,7 +83,8 @@ public class ChannelModelGatewayImpl implements ChannelModelGateway {
         ChannelModel entity = new ChannelModel();
         entity.setId(doObj.getId());
         entity.setChannelId(doObj.getChannelId());
-        entity.setModelSpecId(doObj.getModelSpecId());
+        entity.setModelId(doObj.getModelId());
+        entity.setUpstreamModelName(doObj.getUpstreamModelName());
         entity.setInputPrice(doObj.getInputPrice());
         entity.setOutputPrice(doObj.getOutputPrice());
         entity.setReasoningPrice(doObj.getReasoningPrice());
@@ -104,7 +105,8 @@ public class ChannelModelGatewayImpl implements ChannelModelGateway {
         ChannelModelDo doObj = new ChannelModelDo();
         doObj.setId(entity.getId());
         doObj.setChannelId(entity.getChannelId());
-        doObj.setModelSpecId(entity.getModelSpecId());
+        doObj.setModelId(entity.getModelId());
+        doObj.setUpstreamModelName(entity.getUpstreamModelName());
         doObj.setInputPrice(entity.getInputPrice());
         doObj.setOutputPrice(entity.getOutputPrice());
         doObj.setReasoningPrice(entity.getReasoningPrice());

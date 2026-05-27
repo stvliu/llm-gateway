@@ -2,18 +2,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   providerCatalogApi,
   planCatalogApi,
-  modelSpecCatalogApi,
+  modelCatalogApi,
   catalogMaterializeApi,
   catalogSyncApi,
 } from '@/services/api/catalog';
 import type {
   ProviderCatalogListParams,
-  ModelSpecCatalogListParams,
+  ModelCatalogListParams,
 } from '@/types/catalog';
 
 const PROVIDER_CATALOG_KEY = 'provider-catalog';
 const PLAN_CATALOG_KEY = 'plan-catalog';
-const MODEL_SPEC_CATALOG_KEY = 'model-spec-catalog';
+const MODEL_CATALOG_KEY = 'model-catalog';
 
 // ===== 供应商目录 =====
 
@@ -44,13 +44,13 @@ export function usePlanDetail(planCode: string | null) {
   });
 }
 
-// ===== 模型规格目录 =====
+// ===== 模型目录 =====
 
-/** 模型规格目录列表查询 */
-export function useModelSpecCatalogs(params?: ModelSpecCatalogListParams) {
+/** 模型目录列表查询 */
+export function useModelCatalogs(params?: ModelCatalogListParams) {
   return useQuery({
-    queryKey: [MODEL_SPEC_CATALOG_KEY, 'list', params],
-    queryFn: () => modelSpecCatalogApi.list(params),
+    queryKey: [MODEL_CATALOG_KEY, 'list', params],
+    queryFn: () => modelCatalogApi.list(params),
   });
 }
 
@@ -82,14 +82,14 @@ export function useMaterializePlan() {
   });
 }
 
-/** 物化模型规格 */
-export function useMaterializeModelSpec() {
+/** 物化模型 */
+export function useMaterializeModel() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (providerModelId: string) =>
-      catalogMaterializeApi.materializeModelSpec(providerModelId),
+    mutationFn: (modelName: string) =>
+      catalogMaterializeApi.materializeModel(modelName),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [MODEL_SPEC_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MODEL_CATALOG_KEY] });
       queryClient.invalidateQueries({ queryKey: ['models'] });
     },
   });
@@ -110,7 +110,7 @@ export function useSyncCatalog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
       queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: [MODEL_SPEC_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MODEL_CATALOG_KEY] });
     },
   });
 }

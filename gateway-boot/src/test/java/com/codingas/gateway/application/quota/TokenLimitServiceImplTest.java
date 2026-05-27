@@ -7,7 +7,7 @@ import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.domain.usage.enums.ExceededAction;
 import com.codingas.gateway.domain.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.iam.entity.User;
@@ -47,7 +47,7 @@ class TokenLimitServiceImplTest {
     private ProviderGateway providerGateway;
 
     @Mock
-    private ModelSpecGateway modelSpecGateway;
+    private ModelGateway modelGateway;
 
     @InjectMocks
     private TokenLimitServiceImpl service;

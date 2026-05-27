@@ -170,3 +170,6 @@ For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
 <!-- SPECKIT END -->
 On every task, check for relevant Superpowers skills and use them.
+
+## gstack
+Use /browse from gstack for all web browsing. Never use mcp__claude-in-chrome__* tools.

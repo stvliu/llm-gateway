@@ -4,7 +4,11 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import com.codingas.gateway.application.catalog.CatalogMaterializeService;
 import com.codingas.gateway.application.catalog.CatalogService;
 import com.codingas.gateway.application.catalog.CatalogSyncService;
-import com.codingas.gateway.application.catalog.dto.*;
+import com.codingas.gateway.application.catalog.dto.MaterializeResult;
+import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
+import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
+import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
+import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +18,7 @@ import java.util.List;
 /**
  * 目录管理 REST 控制器
  *
- * <p>提供供应商目录、套餐目录、模型规格目录的查询、物化、同步 API。</p>
+ * <p>提供供应商目录、套餐目录、模型目录的查询、物化、同步 API。</p>
  */
 @RestController
 @RequestMapping("/api/v1/catalog")
@@ -66,20 +70,20 @@ public class CatalogController {
         return ResponseEntity.ok(catalogService.getPlanDetail(planCode));
     }
 
-    // ===== 模型规格目录 =====
+    // ===== 模型目录 =====
 
     /**
-     * 列出模型规格目录
+     * 列出模型目录
      *
      * @param keyword 关键词过滤（可选）
      * @param capability 能力标签过滤（可选）
-     * @return 模型规格目录列表
+     * @return 模型目录列表
      */
-    @GetMapping("/model-specs")
-    public ResponseEntity<List<ModelSpecCatalogResponse>> listModelSpecs(
+    @GetMapping("/models")
+    public ResponseEntity<List<ModelCatalogResponse>> listModels(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String capability) {
-        return ResponseEntity.ok(catalogService.listModelSpecCatalogs(null, keyword, capability));
+        return ResponseEntity.ok(catalogService.listModelCatalogs(null, keyword, capability));
     }
 
     // ===== 物化（管理操作） =====
@@ -113,17 +117,17 @@ public class CatalogController {
     }
 
     /**
-     * 物化模型规格
+     * 物化模型
      *
-     * <p>从 ModelSpecCatalog 创建 ModelSpec 运营实体。</p>
+     * <p>从 ModelCatalog 创建 Model 运营实体。</p>
      *
-     * @param providerModelId 供应商模型标识
+     * @param modelName 模型名称
      * @return 物化结果
      */
-    @PostMapping("/materialize/model-spec/{providerModelId}")
+    @PostMapping("/materialize/model/{modelName}")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeResult> materializeModelSpec(@PathVariable String providerModelId) {
-        return ResponseEntity.ok(catalogMaterializeService.materializeModelSpec(providerModelId));
+    public ResponseEntity<MaterializeResult> materializeModel(@PathVariable String modelName) {
+        return ResponseEntity.ok(catalogMaterializeService.materializeModel(modelName));
     }
 
     // ===== 同步（管理操作） =====

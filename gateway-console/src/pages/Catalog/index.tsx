@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { HomeOutlined } from '@ant-design/icons';
 import ProviderCatalogView from './ProviderCatalogView';
 import PlanCatalogView from './PlanCatalogView';
-import ModelSpecCatalogView from './ModelSpecCatalogView';
+import ModelCatalogView from './ModelCatalogView';
 import MaterializeModal from './MaterializeModal';
 import type { MaterializeType } from '@/types/catalog';
 
-/** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型规格目录 */
+/** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型目录 */
 export default function CatalogPage() {
   const { t } = useTranslation('catalog');
 
@@ -44,7 +44,7 @@ export default function CatalogPage() {
     setPlanName('');
   };
 
-  /** 选择套餐 → 进入模型规格目录 */
+  /** 选择套餐 → 进入模型目录 */
   const handleSelectPlan = (code: string, name: string) => {
     setPlanCode(code);
     setPlanName(name);
@@ -103,7 +103,7 @@ export default function CatalogPage() {
           {
             title: (
               <span style={{ fontWeight: 600 }}>
-                {t('tabs.modelSpecs')}
+                {t('tabs.models')}
                 {planName && (
                   <span style={{ marginLeft: 4, fontSize: 12, opacity: 0.65 }}>
                     ({planName})
@@ -139,7 +139,7 @@ export default function CatalogPage() {
           />
         )}
         {providerCode && planCode && (
-          <ModelSpecCatalogView
+          <ModelCatalogView
             providerCode={providerCode}
             planCode={planCode}
             onMaterialize={handleMaterialize}

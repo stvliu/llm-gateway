@@ -3,7 +3,7 @@
   "tabs": {
     "providers": "Provider Catalog",
     "plans": "Plan Catalog",
-    "modelSpecs": "Model Spec Catalog"
+    "models": "Model Catalog"
   },
   "provider": {
     "code": "Provider Code",
@@ -32,8 +32,7 @@
     "SUBSCRIPTION": "Subscription",
     "PACKAGE": "Package"
   },
-  "modelSpec": {
-    "providerModelId": "Model ID",
+  "model": {
     "modelName": "Model Name",
     "providerCode": "Provider Code",
     "capabilities": "Capabilities",
@@ -53,7 +52,7 @@
   "materialize": {
     "provider": "Materialize Provider",
     "plan": "Materialize Plan",
-    "modelSpec": "Materialize Model Spec",
+    "model": "Materialize Model",
     "confirmTitle": "Confirm Materialization",
     "confirmContent": "Are you sure you want to materialize \"{{name}}\" into an operational entity?",
     "status": {

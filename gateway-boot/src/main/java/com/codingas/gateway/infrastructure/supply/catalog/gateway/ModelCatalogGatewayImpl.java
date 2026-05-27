@@ -1,11 +1,11 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelSpecCatalogGateway;
-import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.ModelSpecCatalogDo;
-import com.codingas.gateway.infrastructure.supply.catalog.database.repository.ModelSpecCatalogRepository;
+import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
+import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.ModelCatalogDo;
+import com.codingas.gateway.infrastructure.supply.catalog.database.repository.ModelCatalogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,64 +14,64 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 模型规格目录持久化实现
+ * 模型目录持久化实现
  */
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class ModelSpecCatalogGatewayImpl implements ModelSpecCatalogGateway {
+public class ModelCatalogGatewayImpl implements ModelCatalogGateway {
 
-    private final ModelSpecCatalogRepository repository;
+    private final ModelCatalogRepository repository;
 
     @Override
-    public ModelSpecCatalog save(ModelSpecCatalog catalog) {
+    public ModelCatalog save(ModelCatalog catalog) {
         var doEntity = toDo(catalog);
         var saved = repository.save(doEntity);
         return toEntity(saved);
     }
 
     @Override
-    public Optional<ModelSpecCatalog> findByProviderModelId(String providerModelId) {
-        return repository.findByProviderModelId(providerModelId).map(this::toEntity);
+    public Optional<ModelCatalog> findByModelName(String modelName) {
+        return repository.findByModelName(modelName).map(this::toEntity);
     }
 
     @Override
-    public boolean existsByProviderModelId(String providerModelId) {
-        return repository.existsByProviderModelId(providerModelId);
+    public boolean existsByModelName(String modelName) {
+        return repository.existsByModelName(modelName);
     }
 
     @Override
-    public List<ModelSpecCatalog> findBySource(CatalogSource source) {
+    public List<ModelCatalog> findBySource(CatalogSource source) {
         return repository.findBySource(source.name()).stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelSpecCatalog> findAll() {
+    public List<ModelCatalog> findAll() {
         return repository.findAll().stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelSpecCatalog> findByKeyword(String keyword) {
-        return repository.findByProviderModelIdContainingOrDisplayNameContaining(keyword, keyword)
+    public List<ModelCatalog> findByKeyword(String keyword) {
+        return repository.findByModelNameContainingOrDisplayNameContaining(keyword, keyword)
             .stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelSpecCatalog> findByCapability(String capability) {
+    public List<ModelCatalog> findByCapability(String capability) {
         return repository.findByCapability(capability).stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelSpecCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeProviderModelIds) {
+    public List<ModelCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeModelNames) {
         return findBySource(source).stream()
-            .filter(entry -> !activeProviderModelIds.contains(entry.getProviderModelId()))
+            .filter(entry -> !activeModelNames.contains(entry.getModelName()))
             .toList();
     }
 
-    private ModelSpecCatalog toEntity(ModelSpecCatalogDo doObj) {
-        var entity = new ModelSpecCatalog();
+    private ModelCatalog toEntity(ModelCatalogDo doObj) {
+        var entity = new ModelCatalog();
         entity.setId(doObj.getId());
-        entity.setProviderModelId(doObj.getProviderModelId());
+        entity.setModelName(doObj.getModelName());
         entity.setDisplayName(doObj.getDisplayName());
         entity.setModelFamily(doObj.getModelFamily());
         entity.setContextWindow(doObj.getContextWindow());
@@ -90,10 +90,10 @@ public class ModelSpecCatalogGatewayImpl implements ModelSpecCatalogGateway {
         return entity;
     }
 
-    private ModelSpecCatalogDo toDo(ModelSpecCatalog entity) {
-        var doObj = new ModelSpecCatalogDo();
+    private ModelCatalogDo toDo(ModelCatalog entity) {
+        var doObj = new ModelCatalogDo();
         doObj.setId(entity.getId());
-        doObj.setProviderModelId(entity.getProviderModelId());
+        doObj.setModelName(entity.getModelName());
         doObj.setDisplayName(entity.getDisplayName());
         doObj.setModelFamily(entity.getModelFamily());
         doObj.setContextWindow(entity.getContextWindow());

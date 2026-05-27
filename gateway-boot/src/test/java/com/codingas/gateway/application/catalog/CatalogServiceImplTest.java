@@ -1,17 +1,17 @@
 package com.codingas.gateway.application.catalog;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelSpecCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,7 @@ class CatalogServiceImplTest {
     private PlanCatalogGateway planCatalogGateway;
 
     @Mock
-    private ModelSpecCatalogGateway modelSpecCatalogGateway;
+    private ModelCatalogGateway modelCatalogGateway;
 
     @Mock
     private PlanModelCatalogGateway planModelCatalogGateway;
@@ -48,7 +48,7 @@ class CatalogServiceImplTest {
     private ProviderGateway providerGateway;
 
     @Mock
-    private ModelSpecGateway modelSpecGateway;
+    private ModelGateway modelGateway;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -174,18 +174,18 @@ class CatalogServiceImplTest {
     }
 
     @Test
-    void listModelSpecCatalogs_returnsActiveCatalogs() {
-        ModelSpecCatalog catalog = createModelSpecCatalog("gpt-4o", "GPT-4o");
-        when(modelSpecCatalogGateway.findAll()).thenReturn(List.of(catalog));
-        when(modelSpecGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.empty());
+    void listModelCatalogs_returnsActiveCatalogs() {
+        ModelCatalog catalog = createModelCatalog("gpt-4o", "GPT-4o");
+        when(modelCatalogGateway.findAll()).thenReturn(List.of(catalog));
+        when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.empty());
         // findProviderCodeForModel 会调用 planModelCatalogGateway
-        when(planModelCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(List.of());
+        when(planModelCatalogGateway.findByModelName("gpt-4o")).thenReturn(List.of());
 
-        var result = service.listModelSpecCatalogs(null, null, null);
+        var result = service.listModelCatalogs(null, null, null);
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("gpt-4o", result.get(0).getProviderModelId());
+        assertEquals("gpt-4o", result.get(0).getModelName());
         assertFalse(result.get(0).getMaterialized());
     }
 
@@ -212,9 +212,9 @@ class CatalogServiceImplTest {
         return catalog;
     }
 
-    private ModelSpecCatalog createModelSpecCatalog(String providerModelId, String displayName) {
-        ModelSpecCatalog catalog = new ModelSpecCatalog();
-        catalog.setProviderModelId(providerModelId);
+    private ModelCatalog createModelCatalog(String modelName, String displayName) {
+        ModelCatalog catalog = new ModelCatalog();
+        catalog.setModelName(modelName);
         catalog.setDisplayName(displayName);
         catalog.setContextWindow(128000);
         catalog.setMaxOutputTokens(16384);

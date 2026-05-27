@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 通道选择器 — 根据 modelSpecId 查找可用通道，按路由策略选择
+ * 通道选择器 — 根据 modelId 查找可用通道，按路由策略选择
  */
 @Component
 @RequiredArgsConstructor
@@ -24,19 +24,19 @@ public class ChannelSelector {
     private final ChannelGateway channelGateway;
 
     /**
-     * 根据 modelSpecId 选择可用通道
+     * 根据 modelId 选择可用通道
      *
      * <p>查找所有活跃的 ChannelModel，过滤出对应的活跃 Channel，按优先级选择第一个。</p>
      *
-     * @param modelSpecId 模型规格 ID
-     * @return 选中的 ChannelModel（包含 channelId 和 modelSpecId）
+     * @param modelId 模型 ID
+     * @return 选中的 ChannelModel（包含 channelId 和 modelId）
      * @throws ResourceNotFoundException 无可用通道
      */
-    public ChannelModel select(Long modelSpecId) {
-        List<ChannelModel> channelModels = channelModelGateway.findActiveByModelSpecId(modelSpecId);
+    public ChannelModel select(Long modelId) {
+        List<ChannelModel> channelModels = channelModelGateway.findActiveByModelId(modelId);
 
         if (channelModels.isEmpty()) {
-            throw new ResourceNotFoundException("ChannelModel", modelSpecId);
+            throw new ResourceNotFoundException("ChannelModel", modelId);
         }
 
         // 批量查询所有关联的 Channel，避免 N+1 问题
@@ -51,7 +51,7 @@ public class ChannelSelector {
                 .toList();
 
         if (activeModels.isEmpty()) {
-            throw new ResourceNotFoundException("ChannelModel", modelSpecId);
+            throw new ResourceNotFoundException("ChannelModel", modelId);
         }
 
         // 按优先级返回第一个（后续可扩展为 WEIGHTED/ROUND_ROBIN/FAILOVER）

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { channelModelApi } from '@/services/api/channelModel';
-import type { CreateChannelModelRequest } from '@/types/channelModel';
+import type { CreateChannelModelRequest, UpdateUpstreamModelNameRequest } from '@/types/channelModel';
 
 export const channelModelKeys = {
   all: ['channel-models'] as const,
@@ -47,6 +47,18 @@ export function useSetEnabledChannelModel() {
   return useMutation({
     mutationFn: ({ channelId, id, enabled }: { channelId: number; id: number; enabled: boolean }) =>
       channelModelApi.setEnabled(channelId, id, enabled),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: channelModelKeys.list(channelId) });
+    },
+  });
+}
+
+/** 更新上游模型名 */
+export function useUpdateUpstreamModelName() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, id, data }: { channelId: number; id: number; data: UpdateUpstreamModelNameRequest }) =>
+      channelModelApi.updateUpstreamModelName(channelId, id, data),
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: channelModelKeys.list(channelId) });
     },

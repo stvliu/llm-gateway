@@ -20,7 +20,7 @@ export type BillingMode = 'PAY_AS_YOU_GO' | 'SUBSCRIPTION' | 'PACKAGE';
 export type MaterializeStatus = 'CREATED' | 'SKIPPED';
 
 /** 物化类型 */
-export type MaterializeType = 'PROVIDER' | 'PLAN' | 'MODEL_SPEC';
+export type MaterializeType = 'PROVIDER' | 'PLAN' | 'MODEL';
 
 /** 供应商目录（与后端 ProviderCatalogResponse 对齐） */
 export interface ProviderCatalog {
@@ -49,7 +49,7 @@ export interface PlanEndpoint {
 
 /** 套餐定价信息 */
 export interface PlanPricing {
-  providerModelId: string;
+  modelName: string;
   inputPrice: number | null;
   outputPrice: number | null;
   cacheReadPrice: number | null;
@@ -68,9 +68,8 @@ export interface PlanDetail {
   materialized: boolean;
 }
 
-/** 模型规格目录（与后端 ModelSpecCatalogResponse 对齐） */
-export interface ModelSpecCatalog {
-  providerModelId: string;
+/** 模型目录（与后端 ModelCatalogResponse 对齐） */
+export interface ModelCatalog {
   modelName: string;
   providerCode: string;
   capabilities: string[] | null;
@@ -94,8 +93,8 @@ export interface ProviderCatalogListParams {
   keyword?: string;
 }
 
-/** 模型规格目录查询参数 */
-export interface ModelSpecCatalogListParams {
+/** 模型目录查询参数 */
+export interface ModelCatalogListParams {
   keyword?: string;
   capability?: string;
 }

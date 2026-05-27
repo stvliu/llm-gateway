@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.loader;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
@@ -58,7 +58,7 @@ class BuiltinCatalogLoaderTest {
         when(providerCatalogGateway.findAll()).thenReturn(Collections.emptyList());
         // 默认 stub：所有 upsert 返回 ADDED
         when(catalogDomainService.upsertProvider(any(ProviderCatalog.class))).thenReturn("ADDED");
-        when(catalogDomainService.upsertModelSpec(any(ModelSpecCatalog.class))).thenReturn("ADDED");
+        when(catalogDomainService.upsertModel(any(ModelCatalog.class))).thenReturn("ADDED");
         when(catalogDomainService.upsertPlan(any(PlanCatalog.class))).thenReturn("ADDED");
         when(catalogDomainService.upsertPlanModel(any(PlanModelCatalog.class))).thenReturn("ADDED");
 
@@ -76,7 +76,7 @@ class BuiltinCatalogLoaderTest {
 
             // 验证四种目录数据都被加载
             verify(catalogDomainService, atLeastOnce()).upsertProvider(any(ProviderCatalog.class));
-            verify(catalogDomainService, atLeastOnce()).upsertModelSpec(any(ModelSpecCatalog.class));
+            verify(catalogDomainService, atLeastOnce()).upsertModel(any(ModelCatalog.class));
             verify(catalogDomainService, atLeastOnce()).upsertPlan(any(PlanCatalog.class));
             verify(catalogDomainService, atLeastOnce()).upsertPlanModel(any(PlanModelCatalog.class));
         }
@@ -112,7 +112,7 @@ class BuiltinCatalogLoaderTest {
             assertThatNoException().isThrownBy(() -> loader.run());
 
             // 验证至少有一条 model spec 的 capabilities 是合法 JSON 字符串
-            verify(catalogDomainService, atLeastOnce()).upsertModelSpec(argThat(catalog -> {
+            verify(catalogDomainService, atLeastOnce()).upsertModel(argThat(catalog -> {
                 if (catalog.getCapabilities() == null) return true;
                 try {
                     objectMapper.readTree(catalog.getCapabilities());
@@ -189,7 +189,7 @@ class BuiltinCatalogLoaderTest {
 
             // 验证没有任何 upsert 被调用
             verify(catalogDomainService, never()).upsertProvider(any());
-            verify(catalogDomainService, never()).upsertModelSpec(any());
+            verify(catalogDomainService, never()).upsertModel(any());
             verify(catalogDomainService, never()).upsertPlan(any());
             verify(catalogDomainService, never()).upsertPlanModel(any());
         }

@@ -1,14 +1,14 @@
 package com.codingas.gateway.domain.supply.enums;
 
 /**
- * 模型规格状态枚举
+ * 模型状态枚举
  *
  * <h3>状态转换图</h3>
  * <pre>
  * ACTIVE ⇄ INACTIVE
  * </pre>
  */
-public enum ModelSpecState {
+public enum ModelState {
     /** 正常运行，可接受请求 */
     ACTIVE,
 

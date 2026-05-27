@@ -1,12 +1,12 @@
 import { Tag, Space, Button, Typography, Spin, Table } from 'antd';
 import { CloudDownloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useModelSpecCatalogs } from '@/services/query/useCatalog';
-import type { ModelSpecCatalog, MaterializeType } from '@/types/catalog';
+import { useModelCatalogs } from '@/services/query/useCatalog';
+import type { ModelCatalog, MaterializeType } from '@/types/catalog';
 
 const { Text } = Typography;
 
-interface ModelSpecCatalogViewProps {
+interface ModelCatalogViewProps {
   /** 供应商编码（用于筛选） */
   providerCode: string;
   /** 套餐编码（展示用） */
@@ -27,53 +27,46 @@ const sourceColor = (source: string) => {
   }
 };
 
-/** 模型规格目录表格视图 */
-export default function ModelSpecCatalogView({ providerCode, onMaterialize }: ModelSpecCatalogViewProps) {
+/** 模型目录表格视图 */
+export default function ModelCatalogView({ providerCode, onMaterialize }: ModelCatalogViewProps) {
   const { t } = useTranslation('catalog');
 
-  // 数据查询：按供应商编码筛选模型规格
-  const { data: modelSpecs, isLoading } = useModelSpecCatalogs({
+  // 数据查询：按供应商编码筛选模型
+  const { data: models, isLoading } = useModelCatalogs({
     keyword: providerCode,
   });
 
   /** 表格列定义 */
   const columns = [
     {
-      title: t('modelSpec.modelName'),
+      title: t('model.modelName'),
       dataIndex: 'modelName',
       key: 'modelName',
-      render: (name: string, record: ModelSpecCatalog) => (
+      render: (name: string, record: ModelCatalog) => (
         <Space>
           <Text strong>{name}</Text>
           {record.materialized && (
-            <Tag color="success" style={{ fontSize: 10 }}>{t('modelSpec.materialized')}</Tag>
+            <Tag color="success" style={{ fontSize: 10 }}>{t('model.materialized')}</Tag>
           )}
         </Space>
       ),
     },
     {
-      title: t('modelSpec.providerModelId'),
-      dataIndex: 'providerModelId',
-      key: 'providerModelId',
-      width: 200,
-      render: (id: string) => <Text code style={{ fontSize: 11 }}>{id}</Text>,
-    },
-    {
-      title: t('modelSpec.contextWindow'),
+      title: t('model.contextWindow'),
       dataIndex: 'contextWindow',
       key: 'contextWindow',
       width: 120,
       render: (v: number | null) => v ? `${(v / 1024).toFixed(0)}K` : '-',
     },
     {
-      title: t('modelSpec.maxOutputTokens'),
+      title: t('model.maxOutputTokens'),
       dataIndex: 'maxOutputTokens',
       key: 'maxOutputTokens',
       width: 130,
       render: (v: number | null) => v ? `${(v / 1024).toFixed(0)}K` : '-',
     },
     {
-      title: t('modelSpec.capabilities'),
+      title: t('model.capabilities'),
       dataIndex: 'capabilities',
       key: 'capabilities',
       render: (caps: string[] | null) => (
@@ -99,7 +92,7 @@ export default function ModelSpecCatalogView({ providerCode, onMaterialize }: Mo
       title: '',
       key: 'actions',
       width: 140,
-      render: (_: unknown, record: ModelSpecCatalog) => (
+      render: (_: unknown, record: ModelCatalog) => (
         <Button
           type="link"
           size="small"
@@ -108,28 +101,28 @@ export default function ModelSpecCatalogView({ providerCode, onMaterialize }: Mo
           onClick={(e) => {
             e.stopPropagation();
             if (record.materialized) return;
-            onMaterialize('MODEL_SPEC', record.providerModelId, record.modelName);
+            onMaterialize('MODEL', record.modelName, record.modelName);
           }}
         >
-          {record.materialized ? t('modelSpec.materialized') : t('materialize.modelSpec')}
+          {record.materialized ? t('model.materialized') : t('materialize.model')}
         </Button>
       ),
     },
   ];
 
-  const modelSpecList = modelSpecs ?? [];
+  const modelList = models ?? [];
 
   return (
     <Spin spinning={isLoading}>
-      {modelSpecList.length === 0 && !isLoading ? (
+      {modelList.length === 0 && !isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}>
           <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
         </div>
       ) : (
         <Table
-          dataSource={modelSpecList}
+          dataSource={modelList}
           columns={columns}
-          rowKey="providerModelId"
+          rowKey="modelName"
           size="small"
           pagination={false}
         />

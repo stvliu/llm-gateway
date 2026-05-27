@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 渠道模型关联 REST 控制器
@@ -46,6 +47,16 @@ public class ChannelModelController {
             @PathVariable Long id,
             @RequestParam boolean enabled) {
         channelModelService.setEnabled(channelId, id, enabled);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/upstream-model-name")
+    public ResponseEntity<Void> updateUpstreamModelName(
+            @PathVariable Long channelId,
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String upstreamModelName = body.get("upstreamModelName");
+        channelModelService.updateUpstreamModelName(channelId, id, upstreamModelName);
         return ResponseEntity.noContent().build();
     }
 }

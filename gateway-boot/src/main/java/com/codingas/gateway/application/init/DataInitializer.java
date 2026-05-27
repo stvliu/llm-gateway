@@ -3,19 +3,19 @@ package com.codingas.gateway.application.init;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
-import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
@@ -36,7 +36,7 @@ import java.util.List;
 public class DataInitializer implements CommandLineRunner {
 
     private final ProviderGateway providerGateway;
-    private final ModelSpecGateway modelSpecGateway;
+    private final ModelGateway modelGateway;
     private final ChannelGateway channelGateway;
     private final ChannelEndpointGateway channelEndpointGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
@@ -56,15 +56,18 @@ public class DataInitializer implements CommandLineRunner {
         Provider openai = createProvider("openai", "OpenAI");
         Provider anthropic = createProvider("anthropic", "Anthropic");
         Provider deepseek = createProvider("deepseek", "DeepSeek");
+        Provider volcengine = createProvider("volcengine", "Volcengine");
 
-        // ===== 2. 创建 ModelSpec =====
-        createModelSpec("gpt-4o", "GPT-4o", 128000);
-        createModelSpec("gpt-4o-mini", "GPT-4o Mini", 128000);
-        createModelSpec("gpt-3.5-turbo", "GPT-3.5 Turbo", 16385);
-        createModelSpec("claude-sonnet-4-20250514", "Claude Sonnet 4", 200000);
-        createModelSpec("claude-3-5-haiku-20241022", "Claude 3.5 Haiku", 200000);
-        createModelSpec("deepseek-chat", "DeepSeek Chat", 64000);
-        createModelSpec("deepseek-reasoner", "DeepSeek Reasoner", 64000);
+        // ===== 2. 创建 Model =====
+        createModel("gpt-4o", "GPT-4o", 128000);
+        createModel("gpt-4o-mini", "GPT-4o Mini", 128000);
+        createModel("gpt-3.5-turbo", "GPT-3.5 Turbo", 16385);
+        createModel("claude-sonnet-4-20250514", "Claude Sonnet 4", 200000);
+        createModel("claude-3-5-haiku-20241022", "Claude 3.5 Haiku", 200000);
+        createModel(" doubao-seed-2-0-mini-260428", "Doubao-Seed-2.0-mini", 64000);
+        createModel(" glm-5.1", "doubao-seed-2-0-mini-260428", 64000);
+        createModel("deepseek-v4-pro", "DeepSeek Reasoner", 64000);
+        createModel("deepseek-v4-flash", "DeepSeek-V4-flash", 64000);
 
         // ===== 3. 创建 Channel =====
         Channel openaiChannel = createChannel(openai.getId(), "OpenAI Standard");
@@ -113,15 +116,13 @@ public class DataInitializer implements CommandLineRunner {
         return channelGateway.save(channel);
     }
 
-    private void createModelSpec(String providerModelId, String displayName, int contextWindow) {
-        ModelSpec modelSpec = new ModelSpec();
-        modelSpec.setProviderModelId(providerModelId);
-        modelSpec.setDisplayName(displayName);
-        modelSpec.setContextWindow(contextWindow);
-        modelSpec.setPriority(100);
-        modelSpec.setWeight(100);
-        modelSpec.setState(ModelSpecState.ACTIVE);
-        modelSpecGateway.save(modelSpec);
+    private void createModel(String modelName, String displayName, int contextWindow) {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setContextWindow(contextWindow);
+        model.setState(ModelState.ACTIVE);
+        modelGateway.save(model);
     }
 
     private void createEndpoint(Long channelId, Protocol protocol, String url) {

@@ -29,4 +29,11 @@ public interface ChannelModelService {
      * 启用/禁用渠道模型关联
      */
     void setEnabled(Long channelId, Long id, boolean enabled);
+
+    /**
+     * 更新渠道模型关联的上游模型名
+     *
+     * @param upstreamModelName 新的上游模型名，null 表示走默认（= Model.modelName）
+     */
+    void updateUpstreamModelName(Long channelId, Long id, String upstreamModelName);
 }

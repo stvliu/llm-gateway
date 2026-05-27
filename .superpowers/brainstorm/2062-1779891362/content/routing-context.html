@@ -1,0 +1,55 @@
+<h2>RoutingContext 设计确认</h2>
+<p class="subtitle">spec 原文 vs 实际决策 — 请确认以下变更</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Spec 原设计</div>
+    <div class="mockup-body" style="padding:16px;text-align:left;font-family:monospace;font-size:12px;line-height:1.8">
+      class RoutingContext {<br>
+      <span style="color:#e74c3c">    Model model;        // 实体引用</span><br>
+      <span style="color:#e74c3c">    Channel channel;    // 实体引用</span><br>
+      <span style="color:#e74c3c">    ChannelModel cm;    // 实体引用</span><br>
+      }<br><br>
+      OutboundTuner: ctx.getChannelModel().getUpstreamModelName()
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">实际决策（推荐）</div>
+    <div class="mockup-body" style="padding:16px;text-align:left;font-family:monospace;font-size:12px;line-height:1.8">
+      record RoutingContext(<br>
+      &nbsp;&nbsp;...<br>
+      <span style="color:#27ae60">    String modelName,</span><br>
+      <span style="color:#27ae60">    String upstreamModelName</span><br>
+      ) {}<br><br>
+      OutboundTuner: ctx.upstreamModelName()<br>
+      &nbsp;&nbsp;if null → ctx.modelName()
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="pros-cons">
+    <div class="pros"><h4>保持轻量的理由</h4><ul>
+      <li>RoutingContext 是值对象，不应持有实体引用</li>
+      <li>Resolver 已查完所有数据，只需传结果</li>
+      <li>Tuner 零 DB 查询、零依赖</li>
+    </ul></div>
+    <div class="cons"><h4>对 spec 的影响</h4><ul>
+      <li>更新 RoutingContext 伪代码</li>
+      <li>更新 OutboundTuner 伪代码</li>
+      <li>其他部分无需改动</li>
+    </ul></div>
+  </div>
+</div>
+
+<p class="subtitle">这个变更你同意吗？</p>
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>同意，按此更新 spec</h3></div>
+  </div>
+  <div class="option" data-choice="reject" onclick="toggleSelect(this)">
+    <div class="letter">✗</div>
+    <div class="content"><h3>保留原设计（实体引用方式）</h3></div>
+  </div>
+</div>

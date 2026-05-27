@@ -1,6 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.service;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
@@ -8,7 +8,7 @@ import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelSpecCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
@@ -48,7 +48,7 @@ class CatalogDomainServiceTest {
     private PlanModelCatalogGateway planModelCatalogGateway;
 
     @Mock
-    private ModelSpecCatalogGateway modelSpecCatalogGateway;
+    private ModelCatalogGateway modelCatalogGateway;
 
     private CatalogDomainService service;
 
@@ -58,7 +58,7 @@ class CatalogDomainServiceTest {
                 providerCatalogGateway,
                 planCatalogGateway,
                 planModelCatalogGateway,
-                modelSpecCatalogGateway
+                modelCatalogGateway
         );
     }
 
@@ -193,7 +193,7 @@ class CatalogDomainServiceTest {
         void upsertPlanModel_notExists_returnsAdded() {
             PlanModelCatalog catalog = buildPlanModelCatalog("openai_payg", "gpt-4o", CatalogSource.BUILTIN);
 
-            when(planModelCatalogGateway.findByPlanCodeAndProviderModelId("openai_payg", "gpt-4o"))
+            when(planModelCatalogGateway.findByPlanCodeAndModelName("openai_payg", "gpt-4o"))
                     .thenReturn(Optional.empty());
             when(planModelCatalogGateway.save(any(PlanModelCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -209,7 +209,7 @@ class CatalogDomainServiceTest {
             PlanModelCatalog incoming = buildPlanModelCatalog("openai_payg", "gpt-4o", CatalogSource.BUILTIN);
             PlanModelCatalog existing = buildPlanModelCatalog("openai_payg", "gpt-4o", CatalogSource.BUILTIN);
 
-            when(planModelCatalogGateway.findByPlanCodeAndProviderModelId("openai_payg", "gpt-4o"))
+            when(planModelCatalogGateway.findByPlanCodeAndModelName("openai_payg", "gpt-4o"))
                     .thenReturn(Optional.of(existing));
             when(planModelCatalogGateway.save(any(PlanModelCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -225,7 +225,7 @@ class CatalogDomainServiceTest {
             PlanModelCatalog incoming = buildPlanModelCatalog("openai_payg", "gpt-4o", CatalogSource.BUILTIN);
             PlanModelCatalog existing = buildPlanModelCatalog("openai_payg", "gpt-4o", CatalogSource.PROVIDER_API);
 
-            when(planModelCatalogGateway.findByPlanCodeAndProviderModelId("openai_payg", "gpt-4o"))
+            when(planModelCatalogGateway.findByPlanCodeAndModelName("openai_payg", "gpt-4o"))
                     .thenReturn(Optional.of(existing));
 
             String result = service.upsertPlanModel(incoming);
@@ -235,39 +235,39 @@ class CatalogDomainServiceTest {
         }
     }
 
-    // ===== upsertModelSpec =====
+    // ===== upsertModel =====
 
     @Nested
-    @DisplayName("upsertModelSpec 测试")
-    class UpsertModelSpecTests {
+    @DisplayName("upsertModel 测试")
+    class UpsertModelTests {
 
         @Test
         @DisplayName("不存在时新增，返回 ADDED")
-        void upsertModelSpec_notExists_returnsAdded() {
-            ModelSpecCatalog catalog = buildModelSpecCatalog("gpt-4o", CatalogSource.BUILTIN);
+        void upsertModel_notExists_returnsAdded() {
+            ModelCatalog catalog = buildModelCatalog("gpt-4o", CatalogSource.BUILTIN);
 
-            when(modelSpecCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.empty());
-            when(modelSpecCatalogGateway.save(any(ModelSpecCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(modelCatalogGateway.findByModelName("gpt-4o")).thenReturn(Optional.empty());
+            when(modelCatalogGateway.save(any(ModelCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            String result = service.upsertModelSpec(catalog);
+            String result = service.upsertModel(catalog);
 
             assertThat(result).isEqualTo("ADDED");
-            verify(modelSpecCatalogGateway).save(catalog);
+            verify(modelCatalogGateway).save(catalog);
         }
 
         @Test
         @DisplayName("高优先级可覆盖，返回 UPDATED，字段被拷贝")
-        void upsertModelSpec_higherPriority_returnsUpdated() {
-            ModelSpecCatalog incoming = buildModelSpecCatalog("gpt-4o", CatalogSource.PROVIDER_API);
+        void upsertModel_higherPriority_returnsUpdated() {
+            ModelCatalog incoming = buildModelCatalog("gpt-4o", CatalogSource.PROVIDER_API);
             incoming.setDisplayName("GPT-4o Updated");
 
-            ModelSpecCatalog existing = buildModelSpecCatalog("gpt-4o", CatalogSource.BUILTIN);
+            ModelCatalog existing = buildModelCatalog("gpt-4o", CatalogSource.BUILTIN);
             existing.setDisplayName("GPT-4o Old");
 
-            when(modelSpecCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.of(existing));
-            when(modelSpecCatalogGateway.save(any(ModelSpecCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(modelCatalogGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existing));
+            when(modelCatalogGateway.save(any(ModelCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            String result = service.upsertModelSpec(incoming);
+            String result = service.upsertModel(incoming);
 
             assertThat(result).isEqualTo("UPDATED");
             assertThat(existing.getDisplayName()).isEqualTo("GPT-4o Updated");
@@ -276,16 +276,16 @@ class CatalogDomainServiceTest {
 
         @Test
         @DisplayName("低优先级不可覆盖，返回 SKIPPED")
-        void upsertModelSpec_lowerPriority_returnsSkipped() {
-            ModelSpecCatalog incoming = buildModelSpecCatalog("gpt-4o", CatalogSource.BUILTIN);
-            ModelSpecCatalog existing = buildModelSpecCatalog("gpt-4o", CatalogSource.MANUAL);
+        void upsertModel_lowerPriority_returnsSkipped() {
+            ModelCatalog incoming = buildModelCatalog("gpt-4o", CatalogSource.BUILTIN);
+            ModelCatalog existing = buildModelCatalog("gpt-4o", CatalogSource.MANUAL);
 
-            when(modelSpecCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.of(existing));
+            when(modelCatalogGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existing));
 
-            String result = service.upsertModelSpec(incoming);
+            String result = service.upsertModel(incoming);
 
             assertThat(result).isEqualTo("SKIPPED");
-            verify(modelSpecCatalogGateway, never()).save(any());
+            verify(modelCatalogGateway, never()).save(any());
         }
     }
 
@@ -368,26 +368,26 @@ class CatalogDomainServiceTest {
         }
     }
 
-    // ===== markModelSpecsDeprecated =====
+    // ===== markModelsDeprecated =====
 
     @Nested
-    @DisplayName("markModelSpecsDeprecated 测试")
-    class MarkModelSpecsDeprecatedTests {
+    @DisplayName("markModelsDeprecated 测试")
+    class MarkModelsDeprecatedTests {
 
         @Test
         @DisplayName("未出现的条目标记为 DEPRECATED")
-        void markModelSpecsDeprecated_deprecatesMissingEntries() {
-            ModelSpecCatalog removedSpec = buildModelSpecCatalog("old-model", CatalogSource.BUILTIN);
+        void markModelsDeprecated_deprecatesMissingEntries() {
+            ModelCatalog removedSpec = buildModelCatalog("old-model", CatalogSource.BUILTIN);
             removedSpec.setState(CatalogState.ACTIVE);
 
-            when(modelSpecCatalogGateway.findBySourceExcludingKeys(CatalogSource.BUILTIN, List.of("active-model")))
+            when(modelCatalogGateway.findBySourceExcludingKeys(CatalogSource.BUILTIN, List.of("active-model")))
                     .thenReturn(List.of(removedSpec));
-            when(modelSpecCatalogGateway.save(any(ModelSpecCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
+            when(modelCatalogGateway.save(any(ModelCatalog.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            service.markModelSpecsDeprecated(CatalogSource.BUILTIN, List.of("active-model"));
+            service.markModelsDeprecated(CatalogSource.BUILTIN, List.of("active-model"));
 
             assertThat(removedSpec.getState()).isEqualTo(CatalogState.DEPRECATED);
-            verify(modelSpecCatalogGateway).save(removedSpec);
+            verify(modelCatalogGateway).save(removedSpec);
         }
     }
 
@@ -458,16 +458,16 @@ class CatalogDomainServiceTest {
     private static PlanModelCatalog buildPlanModelCatalog(String planCode, String providerModelId, CatalogSource source) {
         PlanModelCatalog catalog = new PlanModelCatalog();
         catalog.setPlanCode(planCode);
-        catalog.setProviderModelId(providerModelId);
+        catalog.setModelName(providerModelId);
         catalog.setSource(source);
         catalog.setState(CatalogState.ACTIVE);
         catalog.setSyncedAt(Instant.now());
         return catalog;
     }
 
-    private static ModelSpecCatalog buildModelSpecCatalog(String providerModelId, CatalogSource source) {
-        ModelSpecCatalog catalog = new ModelSpecCatalog();
-        catalog.setProviderModelId(providerModelId);
+    private static ModelCatalog buildModelCatalog(String providerModelId, CatalogSource source) {
+        ModelCatalog catalog = new ModelCatalog();
+        catalog.setModelName(providerModelId);
         catalog.setDisplayName(providerModelId + "-display");
         catalog.setModelFamily("gpt");
         catalog.setContextWindow(128000);

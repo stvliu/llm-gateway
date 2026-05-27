@@ -6,4 +6,3 @@ export * from './useStats';
 export * from './useChannels';
 export * from './useTeams';
 export * from './useCatalog';
-export * from './useModelSpecs';

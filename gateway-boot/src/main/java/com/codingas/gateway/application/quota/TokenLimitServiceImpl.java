@@ -6,9 +6,9 @@ import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
 import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.usage.entity.TokenLimit;
 import com.codingas.gateway.domain.usage.entity.TokenLimit.TokenLimitState;
@@ -38,7 +38,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     private final TokenLimitGateway tokenLimitGateway;
     private final UserGateway userGateway;
     private final ProviderGateway providerGateway;
-    private final ModelSpecGateway modelSpecGateway;
+    private final ModelGateway modelGateway;
 
     /**
      * 创建 Token 限额
@@ -58,17 +58,17 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         }
 
         // 查找模型（可选）
-        ModelSpec model = null;
+        Model model = null;
         if (request.getModelId() != null) {
-            model = modelSpecGateway.findById(request.getModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", request.getModelId()));
+            model = modelGateway.findById(request.getModelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getModelId()));
         }
 
         // 查找切换模型（可选）
-        ModelSpec switchModel = null;
+        Model switchModel = null;
         if (request.getSwitchModelId() != null) {
-            switchModel = modelSpecGateway.findById(request.getSwitchModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", request.getSwitchModelId()));
+            switchModel = modelGateway.findById(request.getSwitchModelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
         }
 
         // 创建限额
@@ -182,8 +182,8 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             tokenLimit.setExceededAction(request.getExceededAction());
         }
         if (request.getSwitchModelId() != null) {
-            ModelSpec switchModel = modelSpecGateway.findById(request.getSwitchModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", request.getSwitchModelId()));
+            Model switchModel = modelGateway.findById(request.getSwitchModelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
             tokenLimit.setSwitchModel(switchModel);
         }
         if (request.getEnabled() != null) {
@@ -231,7 +231,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         }
         if (tokenLimit.getModel() != null) {
             response.setModelId(tokenLimit.getModel().getId());
-            response.setModelName(tokenLimit.getModel() instanceof ModelSpec ms ? ms.getDisplayName() : null);
+            response.setModelName(tokenLimit.getModel() instanceof Model m ? m.getDisplayName() : null);
         }
         response.setLimitType(tokenLimit.getLimitType());
         response.setMaxTokens(tokenLimit.getMaxTokens());
@@ -245,7 +245,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         response.setExceededAction(tokenLimit.getExceededAction());
         if (tokenLimit.getSwitchModel() != null) {
             response.setSwitchModelId(tokenLimit.getSwitchModel().getId());
-            response.setSwitchModelName(tokenLimit.getSwitchModel() instanceof ModelSpec ms ? ms.getDisplayName() : null);
+            response.setSwitchModelName(tokenLimit.getSwitchModel() instanceof Model m ? m.getDisplayName() : null);
         }
         response.setState(tokenLimit.getState());
         response.setEnabled(tokenLimit.getState() == TokenLimitState.ACTIVE);

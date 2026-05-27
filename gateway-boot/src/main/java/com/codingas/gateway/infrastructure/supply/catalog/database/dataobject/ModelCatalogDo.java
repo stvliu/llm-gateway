@@ -10,18 +10,18 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
- * 模型规格目录数据对象
+ * 模型目录数据对象
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "model_spec_catalogs", uniqueConstraints = @UniqueConstraint(columnNames = "provider_model_id"))
-public class ModelSpecCatalogDo extends BaseDo {
+@Table(name = "model_catalogs", uniqueConstraints = @UniqueConstraint(columnNames = "model_name"))
+public class ModelCatalogDo extends BaseDo {
 
-    @Column(name = "provider_model_id", nullable = false, unique = true, length = 128)
-    private String providerModelId;
+    @Column(name = "model_name", nullable = false, unique = true, length = 128)
+    private String modelName;
 
     @Column(name = "display_name", length = 128)
     private String displayName;

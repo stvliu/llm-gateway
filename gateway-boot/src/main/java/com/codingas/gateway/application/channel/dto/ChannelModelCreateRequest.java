@@ -10,5 +10,8 @@ import lombok.Data;
 public class ChannelModelCreateRequest {
 
     @NotNull(message = "模型 ID 不能为空")
-    private Long modelSpecId;
+    private Long modelId;
+
+    /** 上游模型名，为空表示与 Model.modelName 相同 */
+    private String upstreamModelName;
 }

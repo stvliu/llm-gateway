@@ -7,7 +7,7 @@ import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
@@ -16,10 +16,10 @@ import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class ProviderServiceImpl implements ProviderService {
 
     private final ProviderGateway providerGateway;
-    private final ModelSpecGateway modelSpecGateway;
+    private final ModelGateway modelGateway;
     private final ChannelGateway channelGateway;
     private final ChannelModelGateway channelModelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
@@ -69,13 +69,13 @@ public class ProviderServiceImpl implements ProviderService {
         // 创建嵌套的模型
         if (request.getModels() != null && !request.getModels().isEmpty()) {
             for (ModelNestedRequest modelRequest : request.getModels()) {
-                ModelSpec model = new ModelSpec();
-                model.setProviderModelId(modelRequest.getProviderModelId());
+                Model model = new Model();
+                model.setModelName(modelRequest.getModelName());
                 model.setDisplayName(modelRequest.getDisplayName());
                 model.setContextWindow(modelRequest.getContextWindow());
                 model.setCapabilities(modelRequest.getCapabilities());
-                model.setState(ModelSpecState.ACTIVE);
-                modelSpecGateway.save(model);
+                model.setState(ModelState.ACTIVE);
+                modelGateway.save(model);
             }
             log.info("Created {} models for provider {}", request.getModels().size(), providerId);
         }

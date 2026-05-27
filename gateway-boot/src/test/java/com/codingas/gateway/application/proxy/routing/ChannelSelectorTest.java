@@ -52,7 +52,7 @@ class ChannelSelectorTest {
             ChannelModel cm2 = mock(ChannelModel.class);
             when(cm2.getChannelId()).thenReturn(200L);
 
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1, cm2));
+            when(channelModelGateway.findActiveByModelId(1L)).thenReturn(List.of(cm1, cm2));
 
             Channel ch1 = mock(Channel.class);
             when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
@@ -74,7 +74,7 @@ class ChannelSelectorTest {
             ChannelModel cm1 = mock(ChannelModel.class);
             when(cm1.getChannelId()).thenReturn(100L);
 
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1));
+            when(channelModelGateway.findActiveByModelId(1L)).thenReturn(List.of(cm1));
 
             Channel ch1 = mock(Channel.class);
             when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
@@ -88,7 +88,7 @@ class ChannelSelectorTest {
         @Test
         @DisplayName("没有 ChannelModel 时抛出 ResourceNotFoundException")
         void select_noChannelModel_throwsException() {
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of());
+            when(channelModelGateway.findActiveByModelId(1L)).thenReturn(List.of());
 
             assertThatThrownBy(() -> selector.select(1L))
                     .isInstanceOf(ResourceNotFoundException.class);

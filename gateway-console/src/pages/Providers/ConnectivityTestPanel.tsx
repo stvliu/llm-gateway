@@ -75,7 +75,7 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
         <Form.Item name="apiKey" label={t('credential.apiKey', { defaultValue: 'API Key' })} rules={[{ required: true }]}>
           <Input.Password placeholder="sk-..." />
         </Form.Item>
-        <Form.Item name="model" label={t('modelSpec.model', { defaultValue: 'Model' })}>
+        <Form.Item name="model" label={t('model.model', { defaultValue: 'Model' })}>
           <Input placeholder={t('detail.modelPlaceholder', { defaultValue: 'gpt-4o (optional)' })} />
         </Form.Item>
         <Form.Item>

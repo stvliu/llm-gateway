@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.sync;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
@@ -25,7 +25,7 @@ import java.util.List;
  * Models.dev 目录同步客户端
  *
  * <p>从 classpath:catalog/ JSON 文件加载目录数据，以 {@link CatalogSource#MODELS_DEV} 来源写入目录表。
- * 后续可替换为真实的 Models.dev API 调用，只需替换 {@link #fetchProviders()}, {@link #fetchModelSpecs()},
+ * 后续可替换为真实的 Models.dev API 调用，只需替换 {@link #fetchProviders()}, {@link #fetchModels()},
  * {@link #fetchPlans()}, {@link #fetchPlanModels()} 四个方法的实现。</p>
  *
  * <p>同步流程：
@@ -81,21 +81,21 @@ public class ModelsDevSyncClient {
             catalogDomainService.markProvidersDeprecated(CatalogSource.MODELS_DEV, providerCodes);
 
             // Step 2: 同步模型规格目录
-            List<ModelSpecCatalog> modelSpecs = fetchModelSpecs();
+            List<ModelCatalog> models = fetchModels();
             List<String> modelIds = new ArrayList<>();
-            for (var catalog : modelSpecs) {
+            for (var catalog : models) {
                 catalog.setSource(CatalogSource.MODELS_DEV);
                 catalog.setState(CatalogState.ACTIVE);
                 catalog.setSyncedAt(now);
-                String r = catalogDomainService.upsertModelSpec(catalog);
+                String r = catalogDomainService.upsertModel(catalog);
                 switch (r) {
-                    case "ADDED" -> c.addedModelSpecs++;
-                    case "UPDATED" -> c.updatedModelSpecs++;
-                    default -> c.skippedModelSpecs++;
+                    case "ADDED" -> c.addedModels++;
+                    case "UPDATED" -> c.updatedModels++;
+                    default -> c.skippedModels++;
                 }
-                modelIds.add(catalog.getProviderModelId());
+                modelIds.add(catalog.getModelName());
             }
-            catalogDomainService.markModelSpecsDeprecated(CatalogSource.MODELS_DEV, modelIds);
+            catalogDomainService.markModelsDeprecated(CatalogSource.MODELS_DEV, modelIds);
 
             // Step 3: 同步套餐目录
             List<PlanCatalog> plans = fetchPlans();
@@ -129,7 +129,7 @@ public class ModelsDevSyncClient {
                     default -> c.skippedPlanModels++;
                 }
                 activePlanCodes.add(catalog.getPlanCode());
-                activeModelIds.add(catalog.getProviderModelId());
+                activeModelIds.add(catalog.getModelName());
             }
             catalogDomainService.markPlanModelsDeprecated(
                     CatalogSource.MODELS_DEV, activePlanCodes, activeModelIds);
@@ -166,14 +166,14 @@ public class ModelsDevSyncClient {
     }
 
     /**
-     * 拉取模型规格目录数据
+     * 拉取模型目录数据
      */
-    protected List<ModelSpecCatalog> fetchModelSpecs() throws Exception {
+    protected List<ModelCatalog> fetchModels() throws Exception {
         var dataList = loadJson("catalog/model-specs.json",
-                new TypeReference<List<ModelSpecData>>() {});
+                new TypeReference<List<ModelData>>() {});
         return dataList.stream().map(d -> {
-            var c = new ModelSpecCatalog();
-            c.setProviderModelId(d.providerModelId());
+            var c = new ModelCatalog();
+            c.setModelName(d.modelName());
             c.setDisplayName(d.displayName());
             c.setModelFamily(d.modelFamily());
             c.setContextWindow(d.contextWindow());
@@ -214,7 +214,7 @@ public class ModelsDevSyncClient {
         return dataList.stream().map(d -> {
             var c = new PlanModelCatalog();
             c.setPlanCode(d.planCode());
-            c.setProviderModelId(d.providerModelId());
+            c.setModelName(d.modelName());
             return c;
         }).toList();
     }
@@ -247,30 +247,30 @@ public class ModelsDevSyncClient {
      */
     public record SyncResult(
             int addedProviders, int updatedProviders, int skippedProviders,
-            int addedModelSpecs, int updatedModelSpecs, int skippedModelSpecs,
+            int addedModels, int updatedModels, int skippedModels,
             int addedPlans, int updatedPlans, int skippedPlans,
             int addedPlanModels, int updatedPlanModels, int skippedPlanModels
     ) {
         public int totalAdded() {
-            return addedProviders + addedModelSpecs + addedPlans + addedPlanModels;
+            return addedProviders + addedModels + addedPlans + addedPlanModels;
         }
 
         public int totalUpdated() {
-            return updatedProviders + updatedModelSpecs + updatedPlans + updatedPlanModels;
+            return updatedProviders + updatedModels + updatedPlans + updatedPlanModels;
         }
     }
 
     /** 可变计数器（用于累积同步过程中的统计值） */
     private static class Counters {
         int addedProviders, updatedProviders, skippedProviders;
-        int addedModelSpecs, updatedModelSpecs, skippedModelSpecs;
+        int addedModels, updatedModels, skippedModels;
         int addedPlans, updatedPlans, skippedPlans;
         int addedPlanModels, updatedPlanModels, skippedPlanModels;
 
         SyncResult toResult() {
             return new SyncResult(
                     addedProviders, updatedProviders, skippedProviders,
-                    addedModelSpecs, updatedModelSpecs, skippedModelSpecs,
+                    addedModels, updatedModels, skippedModels,
                     addedPlans, updatedPlans, skippedPlans,
                     addedPlanModels, updatedPlanModels, skippedPlanModels);
         }
@@ -281,12 +281,12 @@ public class ModelsDevSyncClient {
     record ProviderData(String providerCode, String providerName, String providerType,
                         String logoUrl, String websiteUrl, String description) {}
 
-    record ModelSpecData(String providerModelId, String displayName, String modelFamily,
+    record ModelData(String modelName, String displayName, String modelFamily,
                          Integer contextWindow, Integer maxInputTokens, Integer maxOutputTokens,
                          String knowledgeCutoff, Object capabilities, Object modalities) {}
 
     record PlanData(String planCode, String providerCode, String planName, String billingMode,
                     Object endpoints, Object pricing, String description) {}
 
-    record PlanModelData(String planCode, String providerModelId) {}
+    record PlanModelData(String planCode, String modelName) {}
 }

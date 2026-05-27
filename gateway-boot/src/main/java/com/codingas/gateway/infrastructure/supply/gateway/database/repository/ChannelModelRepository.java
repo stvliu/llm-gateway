@@ -16,7 +16,7 @@ public interface ChannelModelRepository extends JpaRepository<ChannelModelDo, Lo
 
     List<ChannelModelDo> findByChannelIdAndState(Long channelId, String state);
 
-    List<ChannelModelDo> findByModelSpecIdAndState(Long modelSpecId, String state);
+    List<ChannelModelDo> findByModelIdAndState(Long modelId, String state);
 
     List<ChannelModelDo> findByIdIn(List<Long> ids);
 }

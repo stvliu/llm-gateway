@@ -1,5 +1,5 @@
 import { api } from './client';
-import type { ChannelModel, CreateChannelModelRequest } from '@/types/channelModel';
+import type { ChannelModel, CreateChannelModelRequest, UpdateUpstreamModelNameRequest } from '@/types/channelModel';
 
 /** 渠道模型关联 API */
 export const channelModelApi = {
@@ -18,4 +18,8 @@ export const channelModelApi = {
   /** 启用/禁用渠道模型关联 */
   setEnabled: (channelId: number, id: number, enabled: boolean) =>
     api.patch<void>(`/channels/${channelId}/models/${id}/state`, null, { params: { enabled } }),
+
+  /** 更新上游模型名 */
+  updateUpstreamModelName: (channelId: number, id: number, data: UpdateUpstreamModelNameRequest) =>
+    api.patch<void>(`/channels/${channelId}/models/${id}/upstream-model-name`, data),
 };

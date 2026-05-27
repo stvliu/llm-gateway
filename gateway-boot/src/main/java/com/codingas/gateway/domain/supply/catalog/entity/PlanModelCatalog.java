@@ -24,8 +24,8 @@ public class PlanModelCatalog extends BaseEntity {
     /** 套餐代码 → PlanCatalog */
     private String planCode;
 
-    /** 供应商模型标识 → ModelSpecCatalog */
-    private String providerModelId;
+    /** 供应商模型标识 → ModelCatalog */
+    private String modelName;
 
     /** 目录数据来源，默认 BUILTIN */
     private CatalogSource source = CatalogSource.BUILTIN;

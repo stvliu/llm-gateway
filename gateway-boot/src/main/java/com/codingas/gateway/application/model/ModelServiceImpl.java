@@ -5,17 +5,15 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
-import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,8 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ModelServiceImpl implements ModelService {
 
-    private final ModelSpecGateway modelSpecGateway;
-    private final ProviderGateway providerGateway;
+    private final ModelGateway modelGateway;
 
     /**
      * 创建模型
@@ -36,24 +33,15 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse create(ModelCreateRequest request) {
-        // 验证提供商存在
-        if (providerGateway.findById(request.getProviderId()).isEmpty()) {
-            throw new ResourceNotFoundException("Provider", request.getProviderId());
-        }
+        // 创建模型
+        Model model = new Model();
+        model.setModelName(request.getModelName());
+        model.setDisplayName(request.getDisplayName());
+        model.setContextWindow(request.getContextWindow());
+        model.setCapabilities(request.getCapabilities());
+        model.setState(ModelState.ACTIVE);
 
-        // 创建模型规格
-        ModelSpec modelSpec = new ModelSpec();
-        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联
-        modelSpec.setProviderModelId(request.getProviderModelId());
-        modelSpec.setDisplayName(request.getDisplayName());
-        modelSpec.setContextWindow(request.getContextWindow());
-        modelSpec.setCapabilities(request.getCapabilities());
-        modelSpec.setState(ModelSpecState.ACTIVE);
-        // 路由字段
-        modelSpec.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        modelSpec.setWeight(request.getWeight() != null ? request.getWeight() : 100);
-
-        ModelSpec savedModel = modelSpecGateway.save(modelSpec);
+        Model savedModel = modelGateway.save(model);
         return toResponse(savedModel);
     }
 
@@ -62,9 +50,9 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     public ModelResponse getById(Long id) {
-        ModelSpec modelSpec = modelSpecGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
-        return toResponse(modelSpec);
+        Model model = modelGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
+        return toResponse(model);
     }
 
     /**
@@ -72,18 +60,17 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     public PageResponse<ModelResponse> query(ModelQueryRequest request) {
-        List<ModelSpec> models = modelSpecGateway.findAll();
+        List<Model> models = modelGateway.findAll();
 
         // 过滤
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
             String keyword = request.getKeyword().toLowerCase();
             models = models.stream()
                 .filter(m -> (m.getDisplayName() != null && m.getDisplayName().toLowerCase().contains(keyword))
-                    || m.getProviderModelId().toLowerCase().contains(keyword))
+                    || m.getModelName().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
-        // TODO: providerId 过滤暂时移除，后续通过 Supply 实体关联重新实现
         if (request.getState() != null) {
             models = models.stream()
                 .filter(m -> m.getState().equals(request.getState()))
@@ -96,7 +83,7 @@ public class ModelServiceImpl implements ModelService {
         // 分页
         int offset = request.getOffset();
         int limit = request.getLimit();
-        List<ModelSpec> pagedModels = models.stream()
+        List<Model> pagedModels = models.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
@@ -114,29 +101,23 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse update(Long id, ModelUpdateRequest request) {
-        ModelSpec modelSpec = modelSpecGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
+        Model model = modelGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
         if (request.getDisplayName() != null) {
-            modelSpec.setDisplayName(request.getDisplayName());
+            model.setDisplayName(request.getDisplayName());
         }
         if (request.getContextWindow() != null) {
-            modelSpec.setContextWindow(request.getContextWindow());
+            model.setContextWindow(request.getContextWindow());
         }
         if (request.getCapabilities() != null) {
-            modelSpec.setCapabilities(request.getCapabilities());
+            model.setCapabilities(request.getCapabilities());
         }
         if (request.getState() != null) {
-            modelSpec.setState(request.getState());
-        }
-        if (request.getPriority() != null) {
-            modelSpec.setPriority(request.getPriority());
-        }
-        if (request.getWeight() != null) {
-            modelSpec.setWeight(request.getWeight());
+            model.setState(request.getState());
         }
 
-        return toResponse(modelSpecGateway.save(modelSpec));
+        return toResponse(modelGateway.save(model));
     }
 
     /**
@@ -145,9 +126,9 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public void delete(Long id) {
-        ModelSpec modelSpec = modelSpecGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
-        modelSpecGateway.delete(modelSpec);
+        Model model = modelGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
+        modelGateway.delete(model);
     }
 
     /**
@@ -156,30 +137,25 @@ public class ModelServiceImpl implements ModelService {
     @Override
     @Transactional
     public ModelResponse setEnabled(Long id, boolean enabled) {
-        ModelSpec modelSpec = modelSpecGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("ModelSpec", id));
-        modelSpec.setState(enabled ? ModelSpecState.ACTIVE : ModelSpecState.INACTIVE);
-        return toResponse(modelSpecGateway.save(modelSpec));
+        Model model = modelGateway.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Model", id));
+        model.setState(enabled ? ModelState.ACTIVE : ModelState.INACTIVE);
+        return toResponse(modelGateway.save(model));
     }
 
     /**
      * 转换为响应 DTO
      */
-    private ModelResponse toResponse(ModelSpec modelSpec) {
+    private ModelResponse toResponse(Model model) {
         ModelResponse response = new ModelResponse();
-        response.setId(modelSpec.getId());
-        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联查询
-        response.setProviderModelId(modelSpec.getProviderModelId());
-        response.setDisplayName(modelSpec.getDisplayName());
-        response.setContextWindow(modelSpec.getContextWindow());
-        response.setCapabilities(modelSpec.getCapabilities());
-        response.setState(modelSpec.getState());
-        // 路由字段
-        response.setPriority(modelSpec.getPriority());
-        response.setWeight(modelSpec.getWeight());
-        response.setCreatedAt(modelSpec.getCreatedAt());
-        response.setUpdatedAt(modelSpec.getUpdatedAt());
-        // TODO: 供应商名称查询后续通过 Supply 实体关联重新实现
+        response.setId(model.getId());
+        response.setModelName(model.getModelName());
+        response.setDisplayName(model.getDisplayName());
+        response.setContextWindow(model.getContextWindow());
+        response.setCapabilities(model.getCapabilities());
+        response.setState(model.getState());
+        response.setCreatedAt(model.getCreatedAt());
+        response.setUpdatedAt(model.getUpdatedAt());
         return response;
     }
 }

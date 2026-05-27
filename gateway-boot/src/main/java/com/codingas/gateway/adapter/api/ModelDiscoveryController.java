@@ -2,6 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.model.ModelDiscoveryService;
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +32,7 @@ public class ModelDiscoveryController {
     public ModelDiscoveryResponse listModels(HttpServletRequest request) {
         Identity identity = (Identity) request.getAttribute("identity");
         if (identity == null || identity.credentialId() == null) {
-            throw new IllegalArgumentException("缺少认证信息");
+            throw new GatewayRequestException("AUTH_REQUIRED", "缺少认证信息");
         }
         return modelDiscoveryService.getVisibleModels(identity.credentialId());
     }

@@ -1,6 +1,6 @@
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class ConfigVersionChecker {
     private static final long CHECK_INTERVAL_SECONDS = 30;
 
     private final ProviderGateway providerGateway;
-    private final ModelSpecGateway modelSpecGateway;
+    private final ModelGateway modelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final ConfigCacheService cacheService;
 
@@ -40,7 +40,7 @@ public class ConfigVersionChecker {
      */
     public void initVersions() {
         lastProviderVersion = providerGateway.getMaxVersion();
-        lastModelVersion = modelSpecGateway.getMaxVersion();
+        lastModelVersion = modelGateway.getMaxVersion();
         lastCredentialVersion = channelCredentialGateway.getMaxVersion();
         log.info("Version checker initialized: provider={}, model={}, credential={}",
             lastProviderVersion, lastModelVersion, lastCredentialVersion);
@@ -62,7 +62,7 @@ public class ConfigVersionChecker {
         }
 
         // 检查 Model 版本
-        long currentModelVersion = modelSpecGateway.getMaxVersion();
+        long currentModelVersion = modelGateway.getMaxVersion();
         if (currentModelVersion > lastModelVersion) {
             log.info("Model version changed: {} -> {}", lastModelVersion, currentModelVersion);
             cacheService.refreshModels();

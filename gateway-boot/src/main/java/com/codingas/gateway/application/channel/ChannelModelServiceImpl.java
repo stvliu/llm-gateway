@@ -6,10 +6,9 @@ import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
 import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.List;
 public class ChannelModelServiceImpl implements ChannelModelService {
 
     private final ChannelModelGateway channelModelGateway;
-    private final ModelSpecGateway modelSpecGateway;
+    private final ModelGateway modelGateway;
 
     /**
      * 查询指定渠道下的所有模型关联
@@ -47,18 +46,19 @@ public class ChannelModelServiceImpl implements ChannelModelService {
     @Override
     public ChannelModelResponse create(Long channelId, ChannelModelCreateRequest request) {
         // 检查是否已关联
-        boolean exists = channelModelGateway.existsByChannelIdAndModelId(channelId, request.getModelSpecId());
+        boolean exists = channelModelGateway.existsByChannelIdAndModelId(channelId, request.getModelId());
         if (exists) {
-            log.warn("模型已关联到该渠道, channelId={}, modelSpecId={}", channelId, request.getModelSpecId());
-            throw new DuplicateResourceException("ChannelModel", "modelSpecId");
+            log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, request.getModelId());
+            throw new DuplicateResourceException("ChannelModel", "modelId");
         }
 
         ChannelModel cm = new ChannelModel();
         cm.setChannelId(channelId);
-        cm.setModelSpecId(request.getModelSpecId());
+        cm.setModelId(request.getModelId());
+        cm.setUpstreamModelName(request.getUpstreamModelName());
         cm.setState(ChannelModelState.ACTIVE);
         cm = channelModelGateway.save(cm);
-        log.info("渠道模型关联创建成功, id={}, channelId={}, modelSpecId={}", cm.getId(), channelId, request.getModelSpecId());
+        log.info("渠道模型关联创建成功, id={}, channelId={}, modelId={}", cm.getId(), channelId, request.getModelId());
         return toResponse(cm);
     }
 
@@ -102,15 +102,33 @@ public class ChannelModelServiceImpl implements ChannelModelService {
         ChannelModelResponse resp = new ChannelModelResponse();
         resp.setId(cm.getId());
         resp.setChannelId(cm.getChannelId());
-        resp.setModelSpecId(cm.getModelSpecId());
+        resp.setModelId(cm.getModelId());
+        resp.setUpstreamModelName(cm.getUpstreamModelName());
         resp.setState(cm.getState().name());
 
-        modelSpecGateway.findById(cm.getModelSpecId()).ifPresent(spec -> {
-            resp.setProviderModelId(spec.getProviderModelId());
+        modelGateway.findById(cm.getModelId()).ifPresent(spec -> {
+            resp.setModelName(spec.getModelName());
             resp.setDisplayName(spec.getDisplayName());
             resp.setModelFamily(spec.getModelFamily());
         });
 
         return resp;
+    }
+
+    /**
+     * 更新渠道模型关联的上游模型名
+     */
+    @Transactional
+    @Override
+    public void updateUpstreamModelName(Long channelId, Long id, String upstreamModelName) {
+        ChannelModel cm = channelModelGateway.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ChannelModel", id));
+        if (!cm.getChannelId().equals(channelId)) {
+            log.warn("模型关联不属于该渠道, id={}, channelId={}, actualChannelId={}", id, channelId, cm.getChannelId());
+            throw new GatewayRequestException("CHANNEL_MISMATCH", "模型关联不属于该渠道");
+        }
+        cm.setUpstreamModelName(upstreamModelName);
+        channelModelGateway.save(cm);
+        log.info("渠道模型关联上游模型名更新成功, id={}, channelId={}, upstreamModelName={}", id, channelId, upstreamModelName);
     }
 }

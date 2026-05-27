@@ -1,0 +1,68 @@
+<h2>剩余实现细节确认</h2>
+<p class="subtitle">与 spec 描述一致，确认实现方式</p>
+
+<div class="section">
+  <h3>1. OutboundTuner 模型名替换</h3>
+  <div style="padding:12px;text-align:left;font-family:monospace;font-size:13px;line-height:1.8;background:#f8f9fa;border-radius:8px">
+    tune(request, ctx):<br>
+    &nbsp;&nbsp;// 第一层：协议调谐（已有）<br>
+    &nbsp;&nbsp;request = protocolTuner.tune(request)<br><br>
+    &nbsp;&nbsp;// 第二层：模型名替换<br>
+    &nbsp;&nbsp;upstreamName = ctx.upstreamModelName()<br>
+    &nbsp;&nbsp;if upstreamName != null:<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;request.setModel(upstreamName)<br>
+    &nbsp;&nbsp;// else: 保持 request 中原 model 值（= Model.modelName）<br>
+    &nbsp;&nbsp;return request
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Catalog 预填 upstreamModelName</h3>
+  <div style="padding:12px;text-align:left;font-family:monospace;font-size:13px;line-height:1.8;background:#f8f9fa;border-radius:8px">
+    CatalogMaterializeService:<br>
+    <br>
+    // 内置映射表（静态常量）<br>
+    private static final Map&lt;String, Map&lt;String, String&gt;&gt; <br>
+    &nbsp;&nbsp;UPSTREAM_MODEL_NAME_RULES = Map.of(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"aws-bedrock", Map.of(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"claude-opus-4-7", "anthropic.claude-opus-4-7",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"claude-sonnet-4-6", "anthropic.claude-sonnet-4-6",<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;),<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"azure-openai", Map.of(<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"chat-latest", "gpt-chat-latest"<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;)<br>
+    &nbsp;&nbsp;);<br>
+    <br>
+    // materializePlan 中增加预填逻辑<br>
+    channelModel.setUpstreamModelName(<br>
+    &nbsp;&nbsp;resolveUpstreamModelName(provider.getCode(), modelName));
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. /v1/models 用户面接口</h3>
+  <div style="padding:12px;text-align:left;font-family:monospace;font-size:13px;line-height:1.8;background:#f8f9fa;border-radius:8px">
+    ModelDiscoveryController<br>
+    <br>
+    GET /v1/models<br>
+    Header: Authorization: Bearer &lt;api-key&gt;<br>
+    <br>
+    1. 通过 API Key 查找关联的渠道列表<br>
+    2. 渠道 → ChannelModel → Model（去重）<br>
+    3. 只返回 state = ACTIVE 的记录<br>
+    4. 格式: { object, data: [{ id, object, created, owned_by }] }
+  </div>
+</div>
+
+<p class="subtitle">以上实现方式与你预期一致吗？</p>
+<div class="options">
+  <div class="option" data-choice="yes" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content"><h3>一致，按此更新 spec</h3></div>
+  </div>
+  <div class="option" data-choice="adjust" onclick="toggleSelect(this)">
+    <div class="letter">△</div>
+    <div class="content"><h3>部分需要调整</h3></div>
+  </div>
+</div>

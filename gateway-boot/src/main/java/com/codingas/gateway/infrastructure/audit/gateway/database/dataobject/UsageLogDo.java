@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.audit.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ModelSpecDo;
+import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ProviderDo;
 import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserDo;
 import jakarta.persistence.*;
@@ -42,7 +42,7 @@ public class UsageLogDo extends BaseDo {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "model_id", nullable = false)
-    private ModelSpecDo model;
+    private ModelDo model;
 
     /** 新架构：团队 ID */
     @Column(name = "team_id")

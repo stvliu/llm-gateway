@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.ModelState;
@@ -34,7 +35,7 @@ public class ModelDiscoveryService {
      */
     public ModelDiscoveryResponse getVisibleModels(Long apiKeyId) {
         var apiKey = userApiKeyGateway.findById(apiKeyId)
-                .orElseThrow(() -> new IllegalArgumentException("API Key 不存在"));
+                .orElseThrow(() -> new GatewayRequestException("API_KEY_NOT_FOUND", "API Key 不存在"));
 
         List<Long> channelIds = apiKey.getChannelIds();
         if (channelIds == null || channelIds.isEmpty()) {
@@ -43,7 +44,13 @@ public class ModelDiscoveryService {
 
         List<Model> visibleModels = channelIds.stream()
                 .flatMap(channelId -> channelModelGateway.findActiveByChannelId(channelId).stream())
-                .map(cm -> modelGateway.findById(cm.getModelId()).orElse(null))
+                .map(cm -> {
+                    var modelOpt = modelGateway.findById(cm.getModelId());
+                    if (modelOpt.isEmpty()) {
+                        log.warn("模型引用不存在: modelId={}, channelId={}", cm.getModelId(), cm.getChannelId());
+                    }
+                    return modelOpt.orElse(null);
+                })
                 .filter(m -> m != null && ModelState.ACTIVE.equals(m.getState()))
                 .distinct()
                 .toList();

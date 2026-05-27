@@ -82,7 +82,7 @@ export interface CreateUserApiKeyRequest {
 /** 更新用户 API Key 请求 */
 export interface UpdateUserApiKeyRequest {
   name?: string;
-  productIds?: number[];
+  channelIds?: number[];
   models?: string[];
   quotaLimit?: number | null;
   state?: 'ACTIVE' | 'INACTIVE';

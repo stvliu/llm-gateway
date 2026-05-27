@@ -10,16 +10,15 @@ export const modelKeys = {
   detail: (id: number) => [...modelKeys.details(), id] as const,
 };
 
-export function useModels(params?: { page?: number; size?: number; limit?: number; providerId?: number }, options?: { enabled?: boolean }) {
-  // 支持 size 或 limit 参数，统一转换为 limit
-  const limit = params?.limit ?? params?.size;
+/** 获取模型列表 */
+export function useModels() {
   return useQuery({
-    queryKey: modelKeys.list({ ...params, limit }),
-    queryFn: () => modelApi.list({ ...params, limit }),
-    enabled: options?.enabled ?? true,
+    queryKey: modelKeys.lists(),
+    queryFn: () => modelApi.list(),
   });
 }
 
+/** 获取模型详情 */
 export function useModel(id: number) {
   return useQuery({
     queryKey: modelKeys.detail(id),
@@ -28,6 +27,7 @@ export function useModel(id: number) {
   });
 }
 
+/** 创建模型 */
 export function useCreateModel() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -38,6 +38,7 @@ export function useCreateModel() {
   });
 }
 
+/** 更新模型 */
 export function useUpdateModel() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -50,6 +51,7 @@ export function useUpdateModel() {
   });
 }
 
+/** 删除模型 */
 export function useDeleteModel() {
   const queryClient = useQueryClient();
   return useMutation({
@@ -60,6 +62,7 @@ export function useDeleteModel() {
   });
 }
 
+/** 启用/禁用模型 */
 export function useSetEnabledModel() {
   const queryClient = useQueryClient();
   return useMutation({
