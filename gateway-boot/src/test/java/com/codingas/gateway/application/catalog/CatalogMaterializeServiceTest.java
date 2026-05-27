@@ -118,20 +118,6 @@ class CatalogMaterializeServiceTest {
         ModelSpecCatalog catalog = createModelSpecCatalog();
         when(modelSpecCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(Optional.of(catalog));
 
-        // 反查供应商 ID
-        var planModelAssoc = new com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog();
-        planModelAssoc.setPlanCode("openai_standard");
-        planModelAssoc.setProviderModelId("gpt-4o");
-        when(planModelCatalogGateway.findByProviderModelId("gpt-4o")).thenReturn(java.util.List.of(planModelAssoc));
-
-        var planCatalog = new com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog();
-        planCatalog.setProviderCode("openai");
-        when(planCatalogGateway.findByPlanCode("openai_standard")).thenReturn(Optional.of(planCatalog));
-
-        Provider provider = createProvider();
-        provider.setId(1L);
-        when(providerGateway.findByCode("openai")).thenReturn(Optional.of(provider));
-
         // 保存成功
         ModelSpec saved = createModelSpec();
         saved.setId(10L);

@@ -160,7 +160,7 @@ public class CatalogMaterializeService {
             String providerModelId = (String) p.get("providerModelId");
 
             // 级联物化 ModelSpec（如果不存在）
-            ModelSpec modelSpec = findOrCreateModelSpec(providerModelId, provider.getId());
+            ModelSpec modelSpec = findOrCreateModelSpec(providerModelId);
 
             ChannelModel channelModel = new ChannelModel();
             channelModel.setChannelId(savedChannel.getId());
@@ -206,10 +206,6 @@ public class CatalogMaterializeService {
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "模型规格目录不存在: " + providerModelId));
 
-        // 查找供应商 ID（通过 PlanModelCatalog 反查）
-        Long providerId = findProviderIdForModel(providerModelId);
-
-        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联
         // 创建 ModelSpec 运营实体
         ModelSpec spec = new ModelSpec();
         spec.setProviderModelId(catalog.getProviderModelId());
@@ -240,7 +236,7 @@ public class CatalogMaterializeService {
     /**
      * 查找或创建 ModelSpec（级联物化）
      */
-    private ModelSpec findOrCreateModelSpec(String providerModelId, Long providerId) {
+    private ModelSpec findOrCreateModelSpec(String providerModelId) {
         Optional<ModelSpec> existing = modelSpecGateway.findByProviderModelId(providerModelId);
         if (existing.isPresent()) {
             return existing.get();
@@ -251,7 +247,6 @@ public class CatalogMaterializeService {
                 .orElse(null);
 
         ModelSpec spec = new ModelSpec();
-        // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联
         spec.setProviderModelId(providerModelId);
         if (catalog != null) {
             spec.setDisplayName(catalog.getDisplayName());
