@@ -169,7 +169,7 @@ class ModelDiscoveryServiceTest {
         }
 
         @Test
-        @DisplayName("API Key 不存在时抛出 IllegalArgumentException")
+        @DisplayName("API Key 不存在时抛出 GatewayRequestException")
         void shouldThrowWhenApiKeyNotFound() {
             when(userApiKeyGateway.findById(99L)).thenReturn(Optional.empty());
 
