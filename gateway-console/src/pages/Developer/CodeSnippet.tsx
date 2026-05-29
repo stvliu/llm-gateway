@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { Segmented, Button, App } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 
+const GATEWAY_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.your-gateway.com';
+
 interface Props {
   apiKey?: string;
 }
 
 const snippets: Record<string, (key: string) => string> = {
-  curl: (key) => `curl https://api.your-gateway.com/v1/chat/completions \\
+  curl: (key) => `curl ${GATEWAY_URL}/v1/chat/completions \\
   -H "Authorization: Bearer ${key || 'sk-your-api-key'}" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -17,7 +19,7 @@ const snippets: Record<string, (key: string) => string> = {
   python: (key) => `import requests
 
 response = requests.post(
-    "https://api.your-gateway.com/v1/chat/completions",
+    "${GATEWAY_URL}/v1/chat/completions",
     headers={
         "Authorization": "Bearer ${key || 'sk-your-api-key'}",
         "Content-Type": "application/json"
@@ -28,7 +30,7 @@ response = requests.post(
     }
 )
 print(response.json())`,
-  node: (key) => `const response = await fetch("https://api.your-gateway.com/v1/chat/completions", {
+  node: (key) => `const response = await fetch("${GATEWAY_URL}/v1/chat/completions", {
   method: "POST",
   headers: {
     "Authorization": "Bearer ${key || 'sk-your-api-key'}",
@@ -50,9 +52,13 @@ export default function CodeSnippet({ apiKey }: Props) {
   const [lang, setLang] = useState<Lang>('curl');
   const code = snippets[lang](apiKey || '');
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    message.success('已复制到剪贴板');
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      message.success('已复制到剪贴板');
+    } catch {
+      message.error('复制失败，请手动选择复制');
+    }
   };
 
   return (

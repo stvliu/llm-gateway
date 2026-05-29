@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Modal, App, Result, Button, Typography } from 'antd';
+import { CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useCreateUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
@@ -44,6 +45,15 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
     onClose();
   };
 
+  const handleCopyKey = async () => {
+    try {
+      await navigator.clipboard.writeText(result!.keyPlain);
+      message.success(t('keyCopied', { defaultValue: '已复制' }));
+    } catch {
+      message.error(t('keyCopyFailed', { defaultValue: '复制失败' }));
+    }
+  };
+
   return (
     <Modal
       title={t('createKey', { defaultValue: '创建 API Key' })}
@@ -66,8 +76,11 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
           title={t('keyCreated', { defaultValue: 'API Key 已创建' })}
           subTitle={t('keySaveHint', { defaultValue: '请立即复制，关闭后不再显示' })}
           extra={[
-            <div key="key" style={{ background: '#1e293b', color: '#e2e8f0', padding: '12px 16px', borderRadius: 8, fontFamily: 'monospace', fontSize: 13, wordBreak: 'break-all' }}>
-              {result.keyPlain}
+            <div key="key" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#1e293b', color: '#e2e8f0', padding: '12px 16px', borderRadius: 8 }}>
+              <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 13, wordBreak: 'break-all' }}>
+                {result.keyPlain}
+              </span>
+              <Button type="text" icon={<CopyOutlined />} style={{ color: '#e2e8f0' }} onClick={handleCopyKey} />
             </div>,
           ]}
         />

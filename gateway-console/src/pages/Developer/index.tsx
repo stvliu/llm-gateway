@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Row, Col, Input, Button, Typography, Empty } from 'antd';
+import { Row, Col, Input, Button, Typography, Empty, Skeleton } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useModels } from '@/services/query/useModels';
@@ -38,11 +38,20 @@ export default function Developer() {
       <Input.Search
         placeholder={t('search', { defaultValue: '搜索模型...' })}
         style={{ width: 320, marginBottom: 16 }}
-        onSearch={setSearch}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         allowClear
       />
 
-      {filtered.length === 0 && !isLoading ? (
+      {isLoading ? (
+        <Row gutter={[12, 12]}>
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Col key={i} xs={24} sm={12} md={8}>
+              <Skeleton active paragraph={{ rows: 2 }} />
+            </Col>
+          ))}
+        </Row>
+      ) : filtered.length === 0 ? (
         <Empty description={t('noModels', { defaultValue: '暂无可用模型，请联系团队管理员开通' })} />
       ) : (
         <Row gutter={[12, 12]}>
