@@ -8,7 +8,7 @@ export default function ApiKeys() {
     <div>
       <PageHeader
         title={t('title', { defaultValue: 'API Key 管理' })}
-        subtitle={t('subtitle', { defaultValue: '集中管理所有 API Key' })}
+        subtitle={t('subtitle', { defaultValue: '管理上游供应商凭证和下游用户密钥' })}
       />
       <Card>
         <Typography.Text type="secondary">

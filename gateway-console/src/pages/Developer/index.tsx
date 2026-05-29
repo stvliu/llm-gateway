@@ -8,7 +8,7 @@ export default function Developer() {
     <div>
       <PageHeader
         title={t('title', { defaultValue: '开发者门户' })}
-        subtitle={t('subtitle', { defaultValue: 'API 接入指南与开发者工具' })}
+        subtitle={t('subtitle', { defaultValue: '浏览可用模型，创建 API Key 快速开始' })}
       />
       <Card>
         <Typography.Text type="secondary">

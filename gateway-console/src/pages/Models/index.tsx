@@ -8,7 +8,7 @@ export default function Models() {
     <div>
       <PageHeader
         title={t('title', { defaultValue: '模型目录' })}
-        subtitle={t('subtitle', { defaultValue: '浏览和管理全局模型' })}
+        subtitle={t('subtitle', { defaultValue: '浏览和管理全局模型注册表' })}
       />
       <Card>
         <Typography.Text type="secondary">
