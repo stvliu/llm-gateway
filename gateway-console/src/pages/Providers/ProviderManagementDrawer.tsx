@@ -16,7 +16,6 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
-import ProviderChannelTab from './ProviderChannelTab';
 import ExpertEndpointTab from './ExpertEndpointTab';
 import ExpertCredentialTab from './ExpertCredentialTab';
 import ExpertModelMappingTab from './ExpertModelMappingTab';
