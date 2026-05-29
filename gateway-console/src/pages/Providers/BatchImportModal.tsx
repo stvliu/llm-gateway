@@ -70,6 +70,7 @@ export default function BatchImportModal({ open, onClose }: Props) {
         )
       }
       width={640}
+      destroyOnHidden
     >
       {step === 'input' ? (
         <Space direction="vertical" style={{ width: '100%' }} size="middle">

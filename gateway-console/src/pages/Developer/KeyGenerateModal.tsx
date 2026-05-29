@@ -69,6 +69,7 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
         </Button>
       )}
       width={560}
+      destroyOnHidden
     >
       {result ? (
         <Result
