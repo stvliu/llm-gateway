@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Table, Button, Tag, Space, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, KeyOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, KeyOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
@@ -8,6 +8,7 @@ import { useTeams, useDeleteTeam } from '@/services/query/useTeams';
 import TeamFormModal from './TeamFormModal';
 import MemberManageModal from './MemberManageModal';
 import UserApiKeyManageModal from './UserApiKeyManageModal';
+import ModelVisibilityModal from './ModelVisibilityModal';
 import type { Team, TeamMember } from '@/types/team';
 
 const ROLE_COLOR: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function TeamsPage() {
   const [editingTeam, setEditingTeam] = useState<Team | undefined>();
   const [memberTeam, setMemberTeam] = useState<Team | undefined>();
   const [apiKeyTeam, setApiKeyTeam] = useState<Team | undefined>();
+  const [visibilityTeam, setVisibilityTeam] = useState<Team | null>(null);
 
   const handleAdd = () => {
     setEditingTeam(undefined);
@@ -93,6 +95,9 @@ export default function TeamsPage() {
       key: 'actions',
       render: (_: unknown, record: Team) => (
         <Space>
+          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setVisibilityTeam(record)}>
+            {t('modelVisibility.title', { defaultValue: '模型可见性' })}
+          </Button>
           <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => setApiKeyTeam(record)}>
             {t('apiKey.manageTitle', { defaultValue: '密钥管理' })}
           </Button>
@@ -147,6 +152,12 @@ export default function TeamsPage() {
           onClose={() => setApiKeyTeam(undefined)}
         />
       )}
+
+      <ModelVisibilityModal
+        open={visibilityTeam !== null}
+        team={visibilityTeam}
+        onClose={() => setVisibilityTeam(null)}
+      />
     </>
   );
 }
