@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Button, Input, Select, Segmented, Space } from 'antd';
-import { PlusOutlined, AppstoreOutlined, UnorderedListOutlined } from '@ant-design/icons';
+import { PlusOutlined, AppstoreOutlined, UnorderedListOutlined, ImportOutlined, AppstoreAddOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
@@ -11,6 +11,9 @@ import ProviderCardView from './ProviderCardView';
 import ProvidersTableView from './ProvidersTableView';
 import { ProviderManagementDrawer } from './ProviderManagementDrawer';
 import { ProviderCreateModal } from './ProviderCreateModal';
+import TemplateLibrary from './TemplateLibrary';
+import BatchImportModal from './BatchImportModal';
+import BatchExportButton from './BatchExportButton';
 
 export default function Providers() {
   const { t } = useTranslation('providers');
@@ -28,6 +31,8 @@ export default function Providers() {
   const [createOpen, setCreateOpen] = useState(false);
   const [defaultTab, setDefaultTab] = useState<'basic'>('basic');
   const [startEditing, setStartEditing] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const filtered = providers.filter((p) => {
     // 关键字过滤
@@ -43,6 +48,11 @@ export default function Providers() {
 
   const handleCreated = useCallback(() => {
     setCreateOpen(false);
+  }, []);
+
+  const handleSelectTemplate = useCallback((_code: string) => {
+    // 选择模板后打开创建模态框，预填模板 code
+    setCreateOpen(true);
   }, []);
 
   const handleViewChannels = useCallback((provider: Provider) => {
@@ -104,9 +114,18 @@ export default function Providers() {
             ]}
           />
           {canWrite && (
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
-              {t('addProvider', { defaultValue: '新增供应商' })}
-            </Button>
+            <Space size="middle">
+              <Button icon={<AppstoreAddOutlined />} onClick={() => setTemplateOpen(true)}>
+                {t('template.button', { defaultValue: '模板库' })}
+              </Button>
+              <Button icon={<ImportOutlined />} onClick={() => setImportOpen(true)}>
+                {t('batch.importButton', { defaultValue: '导入' })}
+              </Button>
+              <BatchExportButton />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+                {t('addProvider', { defaultValue: '新增供应商' })}
+              </Button>
+            </Space>
           )}
         </Space>
       </div>
@@ -146,6 +165,17 @@ export default function Providers() {
         providers={providers}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
+      />
+
+      <TemplateLibrary
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        onSelectTemplate={handleSelectTemplate}
+      />
+
+      <BatchImportModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
       />
     </>
   );
