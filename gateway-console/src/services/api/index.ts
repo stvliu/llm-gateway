@@ -6,4 +6,5 @@ export { userApi } from './user';
 export { tokenLimitApi } from './tokenLimit';
 export { channelApi } from './channel';
 export { teamApi } from './team';
+export { userApiKeyApi } from './userApiKey';
 export { providerCatalogApi, planCatalogApi, modelCatalogApi, catalogMaterializeApi, catalogSyncApi } from './catalog';
