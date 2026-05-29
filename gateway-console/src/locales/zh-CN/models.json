@@ -1,5 +1,7 @@
 {
   "title": "模型中心",
+  "subtitle": "浏览和管理全局模型注册表",
+  "placeholder": "模型目录页面开发中...",
   "providerList": "供应商列表",
   "modelList": "模型列表",
   "addProvider": "新增供应商",

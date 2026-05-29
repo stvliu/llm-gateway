@@ -4,6 +4,9 @@ import Login from '@/pages/Login';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Providers from '@/pages/Providers';
+import Models from '@/pages/Models';
+import ApiKeys from '@/pages/ApiKeys';
+import Developer from '@/pages/Developer';
 import Catalog from '@/pages/Catalog';
 import Users from '@/pages/Users';
 import ChangePassword from '@/pages/ChangePassword';
@@ -33,6 +36,18 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
       },
       {
+        path: 'models',
+        element: <PermissionGuard permission={P.MODEL_READ}><Models /></PermissionGuard>,
+      },
+      {
+        path: 'keys',
+        element: <PermissionGuard permission={P.KEY_READ}><ApiKeys /></PermissionGuard>,
+      },
+      {
+        path: 'developer',
+        element: <PermissionGuard permission={P.DEVELOPER}><Developer /></PermissionGuard>,
+      },
+      {
         path: 'catalog',
         element: <PermissionGuard permission={P.CATALOG_READ}><Catalog /></PermissionGuard>,
       },
@@ -54,10 +69,8 @@ export const router = createBrowserRouter([
   // 兼容旧路由重定向
   { path: '/admin/*', element: <Navigate to="/" replace /> },
   { path: '/user/*', element: <Navigate to="/" replace /> },
-  { path: '/models', element: <Navigate to="/providers" replace /> },
   { path: '/experience', element: <Navigate to="/dashboard" replace /> },
   { path: '/api-key-pool', element: <Navigate to="/providers" replace /> },
-  { path: '/api-keys', element: <Navigate to="/teams" replace /> },
   { path: '/metadata', element: <Navigate to="/catalog" replace /> },
 
   // 默认重定向

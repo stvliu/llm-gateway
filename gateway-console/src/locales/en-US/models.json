@@ -1,5 +1,7 @@
 {
   "title": "Model Center",
+  "subtitle": "Browse and manage global model registry",
+  "placeholder": "Models page under development...",
   "providerList": "Provider List",
   "modelList": "Model List",
   "addProvider": "Add Provider",
