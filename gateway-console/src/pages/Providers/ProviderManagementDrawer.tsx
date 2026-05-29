@@ -5,6 +5,10 @@ import {
   RightOutlined,
   SettingOutlined,
   ApiOutlined,
+  KeyOutlined,
+  DatabaseOutlined,
+  DashboardOutlined,
+  ControlOutlined,
   EditOutlined,
   DeleteOutlined,
   CheckOutlined,
@@ -13,6 +17,12 @@ import {
 import { useTranslation } from 'react-i18next';
 import { ProviderBasicInfoTab, ProviderBasicInfoTabHandle } from './ProviderBasicInfoTab';
 import ProviderChannelTab from './ProviderChannelTab';
+import ExpertEndpointTab from './ExpertEndpointTab';
+import ExpertCredentialTab from './ExpertCredentialTab';
+import ExpertModelMappingTab from './ExpertModelMappingTab';
+import ExpertQuotaTab from './ExpertQuotaTab';
+import ExpertAdvancedTab from './ExpertAdvancedTab';
+import YamlPreview from './YamlPreview';
 import { DrawerSkeleton } from '@/components/ui/Drawer/DrawerSkeleton';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useProvider, useDeleteProvider } from '@/services/query';
@@ -26,7 +36,7 @@ interface ProviderManagementDrawerProps {
   onClose: () => void;
   onProviderChange: (providerId: number) => void;
   onProviderDeleted?: () => void;
-  defaultTab?: 'basic' | 'channels';
+  defaultTab?: 'basic' | 'endpoints' | 'credentials' | 'models' | 'quota' | 'advanced';
   startEditing?: boolean;
 }
 
@@ -146,9 +156,29 @@ export function ProviderManagementDrawer({
       icon: <SettingOutlined />,
     },
     {
-      key: 'channels',
-      label: t('detail.channels', { defaultValue: '渠道' }),
+      key: 'endpoints',
+      label: t('detail.endpoints', { defaultValue: '接入点' }),
       icon: <ApiOutlined />,
+    },
+    {
+      key: 'credentials',
+      label: t('detail.credentials', { defaultValue: 'API Key' }),
+      icon: <KeyOutlined />,
+    },
+    {
+      key: 'models',
+      label: t('detail.modelMapping', { defaultValue: '模型映射' }),
+      icon: <DatabaseOutlined />,
+    },
+    {
+      key: 'quota',
+      label: t('detail.quota', { defaultValue: '限流与配额' }),
+      icon: <DashboardOutlined />,
+    },
+    {
+      key: 'advanced',
+      label: t('detail.advanced', { defaultValue: '高级设置' }),
+      icon: <ControlOutlined />,
     },
   ];
 
@@ -219,7 +249,7 @@ export function ProviderManagementDrawer({
       extra={extra}
       open={providerId !== null}
       onClose={handleClose}
-      width={720}
+      width={960}
       placement="right"
       mask={{ closable: true }}
       styles={{
@@ -260,9 +290,34 @@ export function ProviderManagementDrawer({
         />
       )}
 
-      {/* 渠道（编辑模式下隐藏） */}
-      {!isLoading && !editing && activeTab === 'channels' && providerId && (
-        <ProviderChannelTab providerId={providerId} editing={false} />
+      {/* 接入点（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'endpoints' && provider && (
+        <ExpertEndpointTab provider={provider} />
+      )}
+
+      {/* API Key（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'credentials' && provider && (
+        <ExpertCredentialTab provider={provider} />
+      )}
+
+      {/* 模型映射（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'models' && provider && (
+        <ExpertModelMappingTab provider={provider} />
+      )}
+
+      {/* 限流与配额（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'quota' && provider && (
+        <ExpertQuotaTab provider={provider} />
+      )}
+
+      {/* 高级设置（编辑模式下隐藏） */}
+      {!isLoading && !editing && activeTab === 'advanced' && provider && (
+        <ExpertAdvancedTab provider={provider} />
+      )}
+
+      {/* YAML 实时预览（编辑模式下隐藏） */}
+      {!isLoading && !editing && (
+        <YamlPreview provider={provider as unknown as Record<string, unknown>} onEnterYamlMode={() => setEditing(true)} />
       )}
     </Drawer>
   );
