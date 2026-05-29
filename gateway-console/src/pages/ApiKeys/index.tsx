@@ -1,20 +1,26 @@
-import { Card, Typography } from 'antd';
+import { Tabs } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '@/components/ui/PageHeader';
+import UpstreamKeysTable from './UpstreamKeysTable';
+import DownstreamKeysTable from './DownstreamKeysTable';
 
 export default function ApiKeys() {
   const { t } = useTranslation('apiKeys');
+
   return (
-    <div>
-      <PageHeader
-        title={t('title', { defaultValue: 'API Key 管理' })}
-        subtitle={t('subtitle', { defaultValue: '管理上游供应商凭证和下游用户密钥' })}
-      />
-      <Card>
-        <Typography.Text type="secondary">
-          {t('placeholder', { defaultValue: 'API Key 管理页面开发中...' })}
-        </Typography.Text>
-      </Card>
-    </div>
+    <Tabs
+      defaultActiveKey="upstream"
+      items={[
+        {
+          key: 'upstream',
+          label: <span>🔼 {t('upstream', { defaultValue: '上游 Key（供应商凭证）' })}</span>,
+          children: <UpstreamKeysTable />,
+        },
+        {
+          key: 'downstream',
+          label: <span>🔽 {t('downstream', { defaultValue: '下游 Key（用户密钥）' })}</span>,
+          children: <DownstreamKeysTable />,
+        },
+      ]}
+    />
   );
 }

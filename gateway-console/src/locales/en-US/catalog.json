@@ -53,12 +53,20 @@
     "provider": "Materialize Provider",
     "plan": "Materialize Plan",
     "model": "Materialize Model",
+    "cascade": "Cascade Materialize",
+    "cascadeTitle": "Cascade Materialize — {{name}}",
+    "cascadeDesc": "The following plans will be materialized as operational entities (Channel + Endpoint + Model):",
+    "cascadeSelected": "{{count}} plans selected",
+    "cascadeTotal": "{{count}} plans total",
     "confirmTitle": "Confirm Materialization",
     "confirmContent": "Are you sure you want to materialize \"{{name}}\" into an operational entity?",
     "status": {
       "CREATED": "Created",
-      "SKIPPED": "Skipped"
-    }
+      "SKIPPED": "Skipped",
+      "FAILED": "Failed"
+    },
+    "result": "Materialization Result",
+    "resultSummary": "Success {{success}} / Skipped {{skipped}} / Failed {{failed}}"
   },
   "sync": {
     "title": "Sync Catalog",
