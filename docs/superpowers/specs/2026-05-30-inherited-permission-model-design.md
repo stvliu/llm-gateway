@@ -1,168 +1,134 @@
-# 纯继承式权限模型设计
+---
+comet_change: inherited-permission-model
+role: technical-design
+canonical_spec: openspec
+---
 
-日期：2026-05-30
+# 纯继承式权限模型 — 技术设计
 
-## 目标
+## 1. 权限模型变更
 
-将权限模型从"API Key 自带渠道权限"改为"API Key 完全继承团队渠道权限"，简化权限链路。
+**变更后权限链路**：`UserApiKey → User → Team → Channels`
 
-**变更后的权限链路**：`UserApiKey → User → Team → Channels`
+```
+┌──────────┐     ┌──────┐     ┌──────┐     ┌──────────┐
+│ UserApiKey│────▶│ User │────▶│ Team │────▶│ Channels │
+└──────────┘     └──────┘     └──────┘     └──────────┘
+    1:N             N:1           N:N           1:N
+  (userId)      (user_teams)  (team_channels)
+```
 
-## 设计决策
+API Key 不再持有渠道权限，完全通过用户所属团队继承。User → Team 保留多对多表，业务层限制单团队。
 
-| 决策 | 选择 | 理由 |
-|------|------|------|
-| User → Team 关系 | 保留 `user_teams` 多对多表，业务层限制单团队 | 未来可扩展多团队 |
-| 权限校验时机 | ChannelSelector 中注入团队渠道过滤 | 无权限自然无可用通道，简洁不侵入 |
-| API Key channelIds | 彻底删除 | 避免残留代码造成混淆 |
-| 前端渠道管理 | 团队页面新增"渠道管理"弹窗 | 权限由 Team ↔ Channel 决定，需管理入口 |
+## 2. 路由层权限过滤
 
-## 后端变更
+权限校验在 ChannelSelector 中注入，无权限自然无可用通道：
 
-### 删除
+```
+Request → Auth(Identity) → RoutingResolver
+  → ChannelSelector.select(modelId, userId)
+    → UserTeamGateway.findTeamIdByUserId(userId)
+    → TeamChannelGateway.findChannelIdsByTeamId(teamId)
+    → Filter ChannelModel by team channel set
+    → No match → ResourceNotFoundException
+  → Selected ChannelModel → CredentialResolver → EndpointResolver → Upstream
+```
 
-| 内容 | 路径 |
-|------|------|
-| `user_api_key_channels` 表 | 迁移脚本 V43 |
-| `UserApiKey.channelIds` 字段 | `domain/iam/entity/UserApiKey.java` |
-| `UserApiKeyChannelDo` | `infrastructure/iam/gateway/database/dataobject/` |
-| `UserApiKeyChannelRepository` | `infrastructure/iam/gateway/database/repository/` |
-| `UserApiKeyGateway.findIdsByChannelId()` | `domain/iam/gateway/UserApiKeyGateway.java` |
-| `UserApiKeyGatewayImpl` 中渠道关联逻辑 | `infrastructure/iam/gateway/UserApiKeyGatewayImpl.java` |
-| `UserApiKeyCreateRequest.channelIds` | `application/userapikey/dto/` |
-| `UserApiKeyUpdateRequest.channelIds` | `application/userapikey/dto/` |
-
-### 修改
-
-**ChannelSelector** — 注入团队渠道过滤
-
+**ChannelSelector 签名变更**：
 ```java
-// 签名变更：新增 userId 参数
 public ChannelModel select(Long modelId, Long userId)
 ```
 
-逻辑：通过 `UserTeamGateway.findTeamIdByUserId(userId)` → `TeamChannelGateway.findChannelIdsByTeamId(teamId)` 获取团队渠道集合，过滤 ChannelModel 结果中不在该集合的通道。
-
-**RoutingResolver** — 传递 userId
-
+**RoutingResolver 签名变更**：
 ```java
-// 签名变更
 public RoutingContext resolve(String modelName, Protocol protocol, Long userId)
 ```
 
-**ChatDispatchServiceImpl** — 从 Identity 取 userId 传给路由
+**ChatDispatchServiceImpl**：从 `Identity.userId()` 取 userId 传给 `RoutingResolver.resolve()`。
 
-**ModelDiscoveryService** — 通过用户团队查渠道
+**ModelDiscoveryService**：原逻辑 `apiKey.getChannelIds()` → 查模型，改为 `userId → teamId → teamChannelIds` → 查模型。
 
-原逻辑：`apiKey.getChannelIds()` → 查模型
-新逻辑：`userId → teamId → teamChannelIds` → 查模型
+## 3. 删除清单
 
-**UserApiKeyServiceImpl** — 移除 channelIds 相关逻辑
+| 删除项 | 文件 |
+|--------|------|
+| `user_api_key_channels` 表 | V43 迁移脚本 |
+| `UserApiKey.channelIds` | `domain/iam/entity/UserApiKey.java` |
+| `UserApiKeyChannelDo` | `infrastructure/iam/gateway/database/dataobject/` |
+| `UserApiKeyChannelRepository` | `infrastructure/iam/gateway/database/repository/` |
+| `UserApiKeyGateway.findIdsByChannelId()` | `domain/iam/gateway/UserApiKeyGateway.java` |
+| 渠道关联 save/load 逻辑 | `UserApiKeyGatewayImpl.java` |
+| `UserApiKeyCreateRequest.channelIds` | `application/userapikey/dto/` |
+| `UserApiKeyUpdateRequest.channelIds` | `application/userapikey/dto/` |
+| `ChannelBrief` 类型 | 前端 `types/team.ts` |
+| `UserApiKeyDetail.channels` | 前端 `types/team.ts` |
+| `UserApiKey.teamId` | 前端 `types/team.ts` |
+| `CreateUserApiKeyRequest.teamId/productIds` | 前端 `types/team.ts` |
 
-- `create()`: 移除 `setChannelIds`
-- `update()`: 移除 channelIds 更新
-- `toResponse()`: 移除 channelIds 和 channelBriefs
-- `toDetailResponse()`: 移除 channelIds 和 channelBriefs
-- 删除 `toChannelBriefs()` 方法，移除 `ChannelGateway` 依赖
+## 4. 新增端点
 
-**TeamController.createApiKey()** — 移除 channelIds 参数
-
-**UserTeamGateway** — 新增便捷方法
+**团队渠道管理 API**（TeamController）：
 
 ```java
-Long findTeamIdByUserId(Long userId);
-// 返回用户加入的第一个团队 ID（业务层限制单团队）
+GET  /api/v1/teams/{teamId}/channels       → List<Long>
+PUT  /api/v1/teams/{teamId}/channels       → void
+     Body: { "channelIds": [1, 2, 3] }
 ```
 
-**TeamChannelGateway** — 新增便捷方法
-
+**Gateway 便捷方法**：
 ```java
+// UserTeamGateway
+Long findTeamIdByUserId(Long userId);
+
+// TeamChannelGateway
 List<Long> findChannelIdsByTeamId(Long teamId);
 ```
 
-**DataInitializer** — 移除 API Key 渠道关联初始化
+## 5. 边界条件与错误处理
 
-### 新增
+| 场景 | 处理 |
+|------|------|
+| 用户无团队 | `findTeamIdByUserId` 返回 null → ChannelSelector 过滤结果为空 → `ResourceNotFoundException` |
+| 团队无渠道 | `findChannelIdsByTeamId` 返回空列表 → 同上 |
+| 用户属于多个团队 | `findTeamIdByUserId` 返回第一个团队 ID（业务层限制单团队） |
+| 团队渠道不覆盖请求模型 | 过滤后无匹配 ChannelModel → `ResourceNotFoundException` |
 
-**迁移脚本 V43__drop_user_api_key_channels.sql**
+## 6. 前端变更
 
-```sql
--- 1. 删除关联表
-DROP TABLE IF EXISTS user_api_key_channels;
-
--- 2. 删除 UserApiKeyGateway.findIdsByChannelId 对应的查询（代码层面）
-```
-
-**团队渠道管理 API**（TeamController 新增端点）
-
-```java
-// 查询团队的渠道列表
-GET /api/v1/teams/{teamId}/channels
-
-// 更新团队的渠道列表（全量替换）
-PUT /api/v1/teams/{teamId}/channels
-// Body: { "channelIds": [1, 2, 3] }
-```
-
-## 前端变更
-
-### 修改
-
-**`types/team.ts`**
-
-- 删除 `UserApiKeyDetail.channels`（`ChannelBrief[]`）
-- 删除 `UserApiKey.teamId`
-- 删除 `CreateUserApiKeyRequest.teamId`、`productIds`
-- 删除 `ChannelBrief` 类型
-
-**`services/api/team.ts`**
-
-- 新增 `listChannels(teamId)` → `GET /teams/{teamId}/channels`
-- 新增 `updateChannels(teamId, channelIds)` → `PUT /teams/{teamId}/channels`
-
-**`pages/Teams/index.tsx`**
-
-- 操作列新增"渠道管理"按钮（`<ApiOutlined />` 图标）
-- 引入 `ChannelManageModal`
-
-### 新增
-
-**`pages/Teams/ChannelManageModal.tsx`**
-
-团队渠道管理弹窗：
-- 展示所有渠道的 Checkbox 列表（从现有渠道 API 获取）
-- 勾选的渠道 = 团队可访问的渠道
-- 保存时调用 `teamApi.updateChannels(teamId, channelIds)`
-- 标题：`{team.name} - 渠道管理`
+**新增** `ChannelManageModal.tsx`：
+- 展示所有渠道的 Checkbox 列表
+- 勾选 = 团队可访问渠道
+- 保存调用 `teamApi.updateChannels(teamId, channelIds)`
 - 提示文案："配置该团队可访问的渠道，团队成员的 API Key 将继承这些渠道权限"
 
-### 无需改动
+**修改** `Teams/index.tsx`：操作列新增"渠道管理"按钮
 
-- `UserApiKeyManageModal.tsx` — 已无渠道选择器，已有继承提示
-- `UserApiKeyModal.tsx` — 已无渠道选择器，已有继承提示
+**修改** `services/api/team.ts`：新增 `listChannels`、`updateChannels` 方法
 
-## 权限校验流程（变更后）
+**无需改动**：两个 API Key Modal 已无渠道选择器，已有继承提示
 
-```
-请求 → 认证(Identity) → 路由解析
-  → ChannelSelector.select(modelId, userId)
-    → 查用户团队(teamId)
-    → 查团队渠道(channelIds)
-    → 过滤：只保留团队渠道内的 ChannelModel
-    → 无匹配 → ResourceNotFoundException（自然拒绝）
-  → 选中的 ChannelModel → 凭证/端点解析 → 上游调用
-```
+## 7. 测试策略
 
-## 影响范围
+| 测试目标 | 方法 |
+|----------|------|
+| ChannelSelector 团队过滤 | 单元测试：mock UserTeamGateway/TeamChannelGateway，验证过滤逻辑 |
+| 用户无团队/团队无渠道 | 单元测试：验证返回 ResourceNotFoundException |
+| ModelDiscoveryService 继承 | 单元测试：验证通过团队查渠道 |
+| UserApiKeyGatewayImpl 清理 | 单元测试：验证 save/load 不包含渠道逻辑 |
+| 团队渠道管理 API | 集成测试：验证 GET/PUT 端点 |
+| 端到端 | 手动验证：创建团队→分配渠道→创建 Key→调用 API→确认权限继承生效 |
 
-| 层 | 影响文件数 | 风险 |
-|---|---|---|
-| 迁移脚本 | 1 | 低 — 仅删表 |
-| Domain 实体 | 2 | 低 — 删字段 |
-| Domain Gateway | 2 | 低 — 增删方法 |
-| Infrastructure Gateway | 2 | 中 — 重写 save/toEntity 逻辑 |
-| Application Service | 3 | 中 — 核心路由逻辑变更 |
-| Controller | 1 | 低 — 参数调整 |
-| 前端类型 | 1 | 低 — 删字段 |
-| 前端页面 | 2 | 低 — 新增弹窗 + 按钮入口 |
-| 前端 API | 1 | 低 — 新增 2 个方法 |
+## 8. Spec Patch
+
+delta spec `team-channel-management/spec.md` 中 REQ-3（路由层权限过滤）缺少验收场景，补充：
+
+### REQ-3 验收场景补充
+
+**Scenario: 用户无团队时请求模型**
+- WHEN 用户无团队关联，使用 API Key 请求模型
+- THEN ChannelSelector 返回 ResourceNotFoundException
+- THEN 错误信息包含模型 ID
+
+**Scenario: 团队渠道不覆盖请求模型**
+- WHEN 用户团队仅关联渠道 A，但请求的模型仅在渠道 B 上可用
+- THEN ChannelSelector 过滤后无匹配，返回 ResourceNotFoundException
