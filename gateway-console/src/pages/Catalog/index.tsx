@@ -4,11 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { HomeOutlined } from '@ant-design/icons';
 import ProviderCatalogView from './ProviderCatalogView';
 import PlanCatalogView from './PlanCatalogView';
-import ModelSpecCatalogView from './ModelSpecCatalogView';
+import ModelCatalogView from './ModelCatalogView';
 import MaterializeModal from './MaterializeModal';
+import CascadeMaterializeDialog from './CascadeMaterializeDialog';
 import type { MaterializeType } from '@/types/catalog';
 
-/** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型规格目录 */
+/** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型目录 */
 export default function CatalogPage() {
   const { t } = useTranslation('catalog');
 
@@ -26,6 +27,13 @@ export default function CatalogPage() {
     name: string;
   }>({ open: false, type: 'PROVIDER', code: '', name: '' });
 
+  // 级联物化弹窗状态
+  const [cascadeDialog, setCascadeDialog] = useState<{
+    open: boolean;
+    providerCode: string;
+    providerName: string;
+  }>({ open: false, providerCode: '', providerName: '' });
+
   /** 打开物化确认弹窗 */
   const handleMaterialize = (type: MaterializeType, code: string, name: string) => {
     setMaterializeModal({ open: true, type, code, name });
@@ -36,6 +44,16 @@ export default function CatalogPage() {
     setMaterializeModal((prev) => ({ ...prev, open: false }));
   };
 
+  /** 打开级联物化弹窗 */
+  const handleCascadeMaterialize = (code: string, name: string) => {
+    setCascadeDialog({ open: true, providerCode: code, providerName: name });
+  };
+
+  /** 关闭级联物化弹窗 */
+  const handleCloseCascade = () => {
+    setCascadeDialog((prev) => ({ ...prev, open: false }));
+  };
+
   /** 选择供应商 → 进入套餐目录 */
   const handleSelectProvider = (code: string, name: string) => {
     setProviderCode(code);
@@ -44,7 +62,7 @@ export default function CatalogPage() {
     setPlanName('');
   };
 
-  /** 选择套餐 → 进入模型规格目录 */
+  /** 选择套餐 → 进入模型目录 */
   const handleSelectPlan = (code: string, name: string) => {
     setPlanCode(code);
     setPlanName(name);
@@ -103,7 +121,7 @@ export default function CatalogPage() {
           {
             title: (
               <span style={{ fontWeight: 600 }}>
-                {t('tabs.modelSpecs')}
+                {t('tabs.models')}
                 {planName && (
                   <span style={{ marginLeft: 4, fontSize: 12, opacity: 0.65 }}>
                     ({planName})
@@ -128,7 +146,7 @@ export default function CatalogPage() {
         {!providerCode && (
           <ProviderCatalogView
             onSelectProvider={handleSelectProvider}
-            onMaterialize={handleMaterialize}
+            onCascadeMaterialize={handleCascadeMaterialize}
           />
         )}
         {providerCode && !planCode && (
@@ -139,7 +157,7 @@ export default function CatalogPage() {
           />
         )}
         {providerCode && planCode && (
-          <ModelSpecCatalogView
+          <ModelCatalogView
             providerCode={providerCode}
             planCode={planCode}
             onMaterialize={handleMaterialize}
@@ -154,6 +172,14 @@ export default function CatalogPage() {
         code={materializeModal.code}
         name={materializeModal.name}
         onClose={handleCloseMaterialize}
+      />
+
+      {/* 级联物化弹窗 */}
+      <CascadeMaterializeDialog
+        open={cascadeDialog.open}
+        providerCode={cascadeDialog.providerCode}
+        providerName={cascadeDialog.providerName}
+        onClose={handleCloseCascade}
       />
     </div>
   );

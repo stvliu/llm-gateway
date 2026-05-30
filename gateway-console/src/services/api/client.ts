@@ -1,11 +1,14 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, AxiosError } from 'axios';
 import { setServiceUnavailable } from '@/components/common/ServiceUnavailable';
+import { useAuthStore } from '@/stores/authStore';
 
 // 环境判断
 const isDev = import.meta.env.DEV;
 
+export const API_BASE_URL = '/api/v1';
+
 const instance: AxiosInstance = axios.create({
-  baseURL: '/api/v1',
+  baseURL: API_BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
@@ -15,7 +18,7 @@ const instance: AxiosInstance = axios.create({
 // 请求拦截器
 instance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = useAuthStore.getState().token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -169,8 +172,7 @@ instance.interceptors.response.use(
     const axiosError = error as AxiosError;
     const isLoginRequest = axiosError.config?.url?.includes('/auth/login');
     if (axiosError.response?.status === 401 && !isLoginRequest) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
+      useAuthStore.getState().logout();
       // 保留来源路径信息，登录成功后可跳回原页面
       const from = window.location.pathname;
       const target = from !== '/login' ? `/login?from=${encodeURIComponent(from)}` : '/login';

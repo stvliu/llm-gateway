@@ -11,6 +11,7 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.domain.team.entity.UserTeam;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
+import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,16 +44,18 @@ class TeamControllerUserApiKeyTest {
     @Mock
     private UserTeamGateway userTeamGateway;
 
+    @Mock
+    private TeamChannelGateway teamChannelGateway;
+
     private TeamController controller;
 
     private static final Long TEAM_ID = 1L;
     private static final Long USER_ID = 50L;
-    private static final Long PRODUCT_ID = 10L;
     private static final Long API_KEY_ID = 100L;
 
     @BeforeEach
     void setUp() {
-        controller = new TeamController(teamService, userApiKeyService, userTeamGateway);
+        controller = new TeamController(teamService, userApiKeyService, userTeamGateway, teamChannelGateway);
     }
 
     @Test
@@ -74,8 +77,7 @@ class TeamControllerUserApiKeyTest {
     @DisplayName("查询密钥详情")
     void getApiKey_success() {
         UserApiKeyDetailResponse detailResponse = new UserApiKeyDetailResponse(
-                API_KEY_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
-                "sk-abc1", "sk-abc1xxxxx", "test-key",
+                API_KEY_ID, USER_ID, "sk-abc1", "sk-abc1xxxxx", "test-key",
                 List.of("gpt-4o"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
         );
@@ -94,7 +96,7 @@ class TeamControllerUserApiKeyTest {
             stpUtilMock.when(StpUtil::getLoginIdAsLong).thenReturn(USER_ID);
             stpUtilMock.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, "test-key", List.of("gpt-4o"), 100000L
             );
             UserApiKeyCreateResponse createResponse = new UserApiKeyCreateResponse(
                     API_KEY_ID, "sk-abc1", "sk-abc1xxxxx"
@@ -115,11 +117,10 @@ class TeamControllerUserApiKeyTest {
     @DisplayName("更新密钥")
     void updateApiKey_success() {
         UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                "updated-name", List.of(PRODUCT_ID), List.of("claude-3-5-sonnet"), null, null
+                "updated-name", List.of("claude-3-5-sonnet"), null, null
         );
         UserApiKeyResponse updateResponse = new UserApiKeyResponse(
-                API_KEY_ID, USER_ID, List.of(PRODUCT_ID), List.of(),
-                "sk-abc1", "updated-name",
+                API_KEY_ID, USER_ID, "sk-abc1", "updated-name",
                 List.of("claude-3-5-sonnet"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
         );

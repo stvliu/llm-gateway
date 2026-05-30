@@ -1,8 +1,6 @@
 package com.codingas.gateway.application.userapikey;
 
 import com.codingas.gateway.application.userapikey.dto.*;
-import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
@@ -36,16 +34,12 @@ class UserApiKeyServiceImplTest {
     private UserApiKeyGateway userApiKeyGateway;
 
     @Mock
-    private ChannelGateway channelGateway;
-
-    @Mock
     private UserApiKeyGenerator userApiKeyGenerator;
 
     @InjectMocks
     private UserApiKeyServiceImpl service;
 
     private static final Long USER_ID = 50L;
-    private static final Long PRODUCT_ID = 10L;
     private static final Long API_KEY_ID = 100L;
 
     @Nested
@@ -62,7 +56,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenReturn(saved);
 
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, "test-key", List.of("gpt-4o"), 100000L
             );
             UserApiKeyCreateResponse response = service.create(request);
 
@@ -81,7 +75,7 @@ class UserApiKeyServiceImplTest {
                     .thenThrow(new IllegalStateException("无法生成唯一的 API Key，请重试"));
 
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, List.of(PRODUCT_ID), "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, "test-key", List.of("gpt-4o"), 100000L
             );
             assertThatThrownBy(() -> service.create(request))
                     .isInstanceOf(IllegalStateException.class)
@@ -98,7 +92,6 @@ class UserApiKeyServiceImplTest {
         void findByUserId_success() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
-            mockProductBriefs();
 
             List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
 
@@ -126,7 +119,6 @@ class UserApiKeyServiceImplTest {
         void getById_success() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
-            mockProductBriefs();
 
             UserApiKeyResponse response = service.getById(API_KEY_ID);
 
@@ -152,7 +144,6 @@ class UserApiKeyServiceImplTest {
         void getDetailById_success() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
-            mockProductBriefs();
 
             UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
 
@@ -180,10 +171,9 @@ class UserApiKeyServiceImplTest {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
-            mockProductBriefs();
 
             UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                    "updated-name", List.of(PRODUCT_ID), List.of("claude-3-5-sonnet"), null, null
+                    "updated-name", List.of("claude-3-5-sonnet"), null, null
             );
             UserApiKeyResponse response = service.update(API_KEY_ID, request);
 
@@ -200,7 +190,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
             UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                    "updated", null, null, null, null
+                    "updated", null, null, null
             );
             assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                     .isInstanceOf(IllegalArgumentException.class);
@@ -227,7 +217,6 @@ class UserApiKeyServiceImplTest {
         UserApiKey apiKey = new UserApiKey();
         apiKey.setId(API_KEY_ID);
         apiKey.setUserId(USER_ID);
-        apiKey.setChannelIds(List.of(PRODUCT_ID));
         apiKey.setKeyPlain("sk-abc1xxxxx");
         apiKey.setKeyPrefix("sk-abc1");
         apiKey.setName("test-key");
@@ -235,13 +224,5 @@ class UserApiKeyServiceImplTest {
         apiKey.setQuotaLimit(100000L);
         apiKey.setState(UserApiKeyState.ACTIVE);
         return apiKey;
-    }
-
-    /** Mock ChannelGateway.findByIds 用于 toProductBriefs 转换 */
-    private void mockProductBriefs() {
-        Channel product = new Channel();
-        product.setId(PRODUCT_ID);
-        product.setName("Test Product");
-        when(channelGateway.findByIds(List.of(PRODUCT_ID))).thenReturn(List.of(product));
     }
 }

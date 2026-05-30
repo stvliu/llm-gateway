@@ -62,7 +62,7 @@ public class ChannelDomainService {
     public Channel disable(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setState(ChannelState.DISABLED);
+        channel.setState(ChannelState.INACTIVE);
         return channelGateway.save(channel);
     }
 
@@ -72,8 +72,7 @@ public class ChannelDomainService {
     public void delete(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setState(ChannelState.DELETED);
-        channelGateway.save(channel);
+        channelGateway.deleteById(id);
     }
 
     /**

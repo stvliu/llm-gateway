@@ -27,7 +27,7 @@ public class ChannelCredentialDo extends BaseDo {
     @Column(name = "api_key_plain", length = 512)
     private String apiKeyPlain;
 
-    @Column(name = "api_key_encrypted", length = 1024)
+    @Column(name = "encrypted_api_key", length = 1024)
     private String apiKeyEncrypted;
 
     @Column(name = "api_key_prefix", length = 32)

@@ -1,12 +1,12 @@
 package com.codingas.gateway.domain.supply.catalog.service;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelSpecCatalog;
+import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelSpecCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
@@ -36,7 +36,7 @@ public class CatalogDomainService {
     private final ProviderCatalogGateway providerCatalogGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
-    private final ModelSpecCatalogGateway modelSpecCatalogGateway;
+    private final ModelCatalogGateway modelCatalogGateway;
 
     // ===== upsert =====
 
@@ -94,8 +94,8 @@ public class CatalogDomainService {
      */
     @Transactional
     public String upsertPlanModel(PlanModelCatalog catalog) {
-        return planModelCatalogGateway.findByPlanCodeAndProviderModelId(
-                        catalog.getPlanCode(), catalog.getProviderModelId())
+        return planModelCatalogGateway.findByPlanCodeAndModelName(
+                        catalog.getPlanCode(), catalog.getModelName())
                 .map(existing -> {
                     if (catalog.getSource().canOverride(existing.getSource())) {
                         existing.setSource(catalog.getSource());
@@ -113,24 +113,24 @@ public class CatalogDomainService {
     }
 
     /**
-     * 新增或更新模型规格目录
+     * 新增或更新模型目录
      *
-     * @param catalog 待写入的模型规格目录
+     * @param catalog 待写入的模型目录
      * @return "ADDED" | "UPDATED" | "SKIPPED"
      */
     @Transactional
-    public String upsertModelSpec(ModelSpecCatalog catalog) {
-        return modelSpecCatalogGateway.findByProviderModelId(catalog.getProviderModelId())
+    public String upsertModel(ModelCatalog catalog) {
+        return modelCatalogGateway.findByModelName(catalog.getModelName())
                 .map(existing -> {
                     if (catalog.getSource().canOverride(existing.getSource())) {
-                        copyModelSpecFields(catalog, existing);
-                        modelSpecCatalogGateway.save(existing);
+                        copyModelFields(catalog, existing);
+                        modelCatalogGateway.save(existing);
                         return "UPDATED";
                     }
                     return "SKIPPED";
                 })
                 .orElseGet(() -> {
-                    modelSpecCatalogGateway.save(catalog);
+                    modelCatalogGateway.save(catalog);
                     return "ADDED";
                 });
     }
@@ -174,19 +174,19 @@ public class CatalogDomainService {
     }
 
     /**
-     * 将指定来源中不在活跃集合里的模型规格目录标记为 DEPRECATED
+     * 将指定来源中不在活跃集合里的模型目录标记为 DEPRECATED
      *
-     * @param source        数据来源
-     * @param activeModelIds 仍然活跃的 providerModelId 集合
+     * @param source         数据来源
+     * @param activeModelNames 仍然活跃的 modelName 集合
      */
     @Transactional
-    public void markModelSpecsDeprecated(CatalogSource source, List<String> activeModelIds) {
-        var toDeprecate = modelSpecCatalogGateway.findBySourceExcludingKeys(source, activeModelIds);
+    public void markModelsDeprecated(CatalogSource source, List<String> activeModelNames) {
+        var toDeprecate = modelCatalogGateway.findBySourceExcludingKeys(source, activeModelNames);
         for (var entry : toDeprecate) {
             if (entry.getState() == CatalogState.ACTIVE) {
                 entry.setState(CatalogState.DEPRECATED);
-                modelSpecCatalogGateway.save(entry);
-                log.info("Deprecated model spec: id={}", entry.getProviderModelId());
+                modelCatalogGateway.save(entry);
+                log.info("Deprecated model: name={}", entry.getModelName());
             }
         }
     }
@@ -196,18 +196,18 @@ public class CatalogDomainService {
      *
      * @param source         数据来源
      * @param activePlanCodes 仍然活跃的 planCode 集合
-     * @param activeModelIds  仍然活跃的 providerModelId 集合
+     * @param activeModelNames  仍然活跃的 modelName 集合
      */
     @Transactional
     public void markPlanModelsDeprecated(CatalogSource source,
                                          List<String> activePlanCodes,
-                                         List<String> activeModelIds) {
-        var toDeprecate = planModelCatalogGateway.findBySourceExcludingKeys(source, activePlanCodes, activeModelIds);
+                                         List<String> activeModelNames) {
+        var toDeprecate = planModelCatalogGateway.findBySourceExcludingKeys(source, activePlanCodes, activeModelNames);
         for (var entry : toDeprecate) {
             if (entry.getState() == CatalogState.ACTIVE) {
                 entry.setState(CatalogState.DEPRECATED);
                 planModelCatalogGateway.save(entry);
-                log.info("Deprecated plan-model: plan={}, model={}", entry.getPlanCode(), entry.getProviderModelId());
+                log.info("Deprecated plan-model: plan={}, model={}", entry.getPlanCode(), entry.getModelName());
             }
         }
     }
@@ -241,9 +241,9 @@ public class CatalogDomainService {
     }
 
     /**
-     * 将源模型规格目录的业务字段拷贝到目标实体
+     * 将源模型目录的业务字段拷贝到目标实体
      */
-    private void copyModelSpecFields(ModelSpecCatalog src, ModelSpecCatalog dst) {
+    private void copyModelFields(ModelCatalog src, ModelCatalog dst) {
         dst.setDisplayName(src.getDisplayName());
         dst.setModelFamily(src.getModelFamily());
         dst.setContextWindow(src.getContextWindow());

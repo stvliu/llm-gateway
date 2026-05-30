@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Table, Checkbox, Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useModelSpecCatalogs } from '@/services/query/useCatalog';
-import type { ModelSpecCatalog } from '@/types/catalog';
+import { useModelCatalogs } from '@/services/query/useCatalog';
+import type { ModelCatalog } from '@/types/catalog';
 
 const { Text } = Typography;
 
@@ -22,7 +22,7 @@ function formatContext(tokens: number | undefined): string {
 
 /**
  * 模型配置步骤
- * 从 ModelSpecCatalog 获取某供应商的模型规格列表，用户勾选需要的模型
+ * 从 ModelCatalog 获取某供应商的模型列表，用户勾选需要的模型
  */
 export function ModelSetupStep({
   providerCode,
@@ -32,30 +32,27 @@ export function ModelSetupStep({
   const { t } = useTranslation('providers');
   const [searchText, setSearchText] = useState('');
 
-  const { data: models, isLoading } = useModelSpecCatalogs({ keyword: providerCode });
+  const { data: models, isLoading } = useModelCatalogs({ keyword: providerCode });
 
-  const filteredModels = (models ?? []).filter((m: ModelSpecCatalog) =>
+  const filteredModels = (models ?? []).filter((m: ModelCatalog) =>
     m.providerCode === providerCode &&
     (!searchText ||
-    m.modelName?.toLowerCase().includes(searchText.toLowerCase()) ||
-    m.providerModelId?.toLowerCase().includes(searchText.toLowerCase()))
+    m.modelName?.toLowerCase().includes(searchText.toLowerCase()))
   );
 
   const columns = [
     {
-      title: t('template.modelName', { defaultValue: '模型名称' }),
+      title: t('model.modelName', { defaultValue: '模型名称' }),
       dataIndex: 'modelName',
       key: 'modelName',
-      render: (name: string, record: ModelSpecCatalog) => (
+      render: (name: string) => (
         <div>
           <Text strong>{name}</Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: 11 }}>{record.providerModelId}</Text>
         </div>
       ),
     },
     {
-      title: t('template.contextWindow', { defaultValue: '上下文窗口' }),
+      title: t('model.contextWindow', { defaultValue: '上下文窗口' }),
       dataIndex: 'maxContextTokens',
       key: 'maxContextTokens',
       width: 100,
@@ -78,7 +75,7 @@ export function ModelSetupStep({
           indeterminate={selectedModels.length > 0 && selectedModels.length < filteredModels.length}
           onChange={(e) => {
             if (e.target.checked) {
-              onSelectedModelsChange(filteredModels.map((m: ModelSpecCatalog) => m.providerModelId));
+              onSelectedModelsChange(filteredModels.map((m: ModelCatalog) => m.modelName));
             } else {
               onSelectedModelsChange([]);
             }
@@ -93,7 +90,7 @@ export function ModelSetupStep({
       <Table
         dataSource={filteredModels}
         columns={columns}
-        rowKey="providerModelId"
+        rowKey="modelName"
         size="small"
         loading={isLoading}
         pagination={false}

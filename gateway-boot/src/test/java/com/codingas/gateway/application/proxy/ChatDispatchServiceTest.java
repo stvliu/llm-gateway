@@ -70,7 +70,7 @@ class ChatDispatchServiceTest {
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
-                Protocol.OPENAI, "sk-test", 60, false);
+                Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
     }
@@ -90,7 +90,7 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient rawClient = mock(UpstreamClient.class);
@@ -119,7 +119,7 @@ class ChatDispatchServiceTest {
                     .build();
 
             RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
-                    Protocol.ANTHROPIC, "sk-ant-key", 60, true);
+                    Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null);
 
             AnthropicMessagesRequest convertedRequest = AnthropicMessagesRequest.builder()
                     .model("claude-3-5-sonnet-20241022")
@@ -132,7 +132,7 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(anthropicContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(anthropicContext);
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
 
@@ -162,7 +162,7 @@ class ChatDispatchServiceTest {
             // when & then
             assertThatThrownBy(() -> dispatchService.dispatch(unsupportedRequest, testIdentity, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("不支持的请求类型");
+                    .hasMessageContaining("不支持的协议类型");
         }
     }
 
@@ -179,7 +179,7 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient rawClient = mock(UpstreamClient.class);
@@ -207,7 +207,7 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient rawClient = mock(UpstreamClient.class);

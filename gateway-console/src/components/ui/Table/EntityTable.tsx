@@ -211,7 +211,13 @@ export function EntityTable<T extends object>({
               type="text"
               size="small"
               icon={action.icon}
-              onClick={() => action.onClick(selection.selectedRowKeys, [])}
+              onClick={() => {
+                const selectedRows = dataSource.filter((row) => {
+                  const key = typeof rowKey === 'function' ? rowKey(row) : (row as Record<string, unknown>)[rowKey as string];
+                  return selection.selectedRowKeys.includes(key as string | number);
+                });
+                action.onClick(selection.selectedRowKeys, selectedRows);
+              }}
             >
               {action.label}
             </Button>

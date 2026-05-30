@@ -17,14 +17,14 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "plan_model_catalogs", uniqueConstraints = @UniqueConstraint(columnNames = {"plan_code", "provider_model_id"}))
+@Table(name = "plan_model_catalogs", uniqueConstraints = @UniqueConstraint(columnNames = {"plan_code", "model_name"}))
 public class PlanModelCatalogDo extends BaseDo {
 
     @Column(name = "plan_code", nullable = false, length = 128)
     private String planCode;
 
-    @Column(name = "provider_model_id", nullable = false, length = 128)
-    private String providerModelId;
+    @Column(name = "model_name", nullable = false, length = 128)
+    private String modelName;
 
     @Column(name = "source", nullable = false, length = 32)
     private String source;

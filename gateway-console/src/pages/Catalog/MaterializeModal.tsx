@@ -4,7 +4,7 @@ import { App } from 'antd';
 import {
   useMaterializeProvider,
   useMaterializePlan,
-  useMaterializeModelSpec,
+  useMaterializeModel,
 } from '@/services/query/useCatalog';
 import type { MaterializeType } from '@/types/catalog';
 
@@ -27,7 +27,7 @@ interface MaterializeModalProps {
 const MATERIALIZE_TYPE_CONFIG: Record<MaterializeType, { color: string; labelKey: string }> = {
   PROVIDER: { color: 'blue', labelKey: 'materialize.provider' },
   PLAN: { color: 'purple', labelKey: 'materialize.plan' },
-  MODEL_SPEC: { color: 'cyan', labelKey: 'materialize.modelSpec' },
+  MODEL: { color: 'cyan', labelKey: 'materialize.model' },
 };
 
 /** 物化确认弹窗 */
@@ -38,14 +38,14 @@ export default function MaterializeModal({ open, type, code, name, onClose }: Ma
   // 物化 mutation hooks
   const materializeProviderMutation = useMaterializeProvider();
   const materializePlanMutation = useMaterializePlan();
-  const materializeModelSpecMutation = useMaterializeModelSpec();
+  const materializeModelMutation = useMaterializeModel();
 
   /** 当前物化类型对应的 mutation */
   const activeMutation = () => {
     switch (type) {
       case 'PROVIDER': return materializeProviderMutation;
       case 'PLAN': return materializePlanMutation;
-      case 'MODEL_SPEC': return materializeModelSpecMutation;
+      case 'MODEL': return materializeModelMutation;
     }
   };
 

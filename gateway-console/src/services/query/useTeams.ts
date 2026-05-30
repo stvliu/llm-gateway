@@ -113,8 +113,8 @@ export function useTeamApiKeys(teamId: number) {
   });
 }
 
-/** 创建用户 API Key */
-export function useCreateUserApiKey() {
+/** 创建团队维度的用户 API Key */
+export function useCreateTeamUserApiKey() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, data }: { teamId: number; data: CreateUserApiKeyRequest }) =>
@@ -125,8 +125,8 @@ export function useCreateUserApiKey() {
   });
 }
 
-/** 更新用户 API Key */
-export function useUpdateUserApiKey() {
+/** 更新团队维度的用户 API Key */
+export function useUpdateTeamUserApiKey() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, id, data }: { teamId: number; id: number; data: UpdateUserApiKeyRequest }) =>
@@ -137,8 +137,8 @@ export function useUpdateUserApiKey() {
   });
 }
 
-/** 删除用户 API Key */
-export function useDeleteUserApiKey() {
+/** 删除团队维度的用户 API Key */
+export function useDeleteTeamUserApiKey() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ teamId, id }: { teamId: number; id: number }) =>

@@ -16,6 +16,7 @@ public class ProviderResponse {
     /** 品牌标识（如 openai、anthropic），用于前端图标渲染 */
     private String providerId;
     private String providerName;
+    private String description;
     private String websiteUrl;
     private String apiDocUrl;
     private Integer priority;

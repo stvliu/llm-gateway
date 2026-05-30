@@ -34,7 +34,7 @@ public interface ChannelModelGateway {
     /**
      * 根据模型规格ID查找活跃的渠道模型
      */
-    List<ChannelModel> findActiveByModelSpecId(Long modelSpecId);
+    List<ChannelModel> findActiveByModelId(Long modelId);
 
     /**
      * 根据渠道ID和状态查找
@@ -49,7 +49,7 @@ public interface ChannelModelGateway {
     /**
      * 检查渠道模型关联是否已存在
      */
-    boolean existsByChannelIdAndModelId(Long channelId, Long modelSpecId);
+    boolean existsByChannelIdAndModelId(Long channelId, Long modelId);
 
     /**
      * 批量保存渠道模型关联

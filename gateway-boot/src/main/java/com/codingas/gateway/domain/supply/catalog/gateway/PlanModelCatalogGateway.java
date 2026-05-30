@@ -14,9 +14,9 @@ import java.util.Optional;
 public interface PlanModelCatalogGateway {
 
     /**
-     * 按唯一键 (planCode, providerModelId) 查找
+     * 按唯一键 (planCode, modelName) 查找
      */
-    Optional<PlanModelCatalog> findByPlanCodeAndProviderModelId(String planCode, String providerModelId);
+    Optional<PlanModelCatalog> findByPlanCodeAndModelName(String planCode, String modelName);
 
     /**
      * 按套餐查找
@@ -24,9 +24,9 @@ public interface PlanModelCatalogGateway {
     List<PlanModelCatalog> findByPlanCode(String planCode);
 
     /**
-     * 按模型查找
+     * 按模型名查找
      */
-    List<PlanModelCatalog> findByProviderModelId(String providerModelId);
+    List<PlanModelCatalog> findByModelName(String modelName);
 
     /**
      * 按数据来源查找所有条目
@@ -52,5 +52,5 @@ public interface PlanModelCatalogGateway {
      */
     List<PlanModelCatalog> findBySourceExcludingKeys(CatalogSource source,
                                                      List<String> activePlanCodes,
-                                                     List<String> activeProviderModelIds);
+                                                     List<String> activeModelNames);
 }

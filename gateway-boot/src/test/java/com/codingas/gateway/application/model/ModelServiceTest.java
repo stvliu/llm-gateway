@@ -5,11 +5,11 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelSpecState;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.gateway.ModelSpecGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.*;
 class ModelServiceTest {
 
     @Mock
-    private ModelSpecGateway modelSpecGateway;
+    private ModelGateway modelGateway;
 
     @Mock
     private ProviderGateway providerGateway;
@@ -48,7 +48,7 @@ class ModelServiceTest {
     @InjectMocks
     private ModelServiceImpl modelService;
 
-    private ModelSpec testModel;
+    private Model testModel;
     private Provider testProvider;
 
     @BeforeEach
@@ -68,14 +68,12 @@ class ModelServiceTest {
         void create_validRequest_returnsModelResponse() {
             // given
             ModelCreateRequest request = new ModelCreateRequest();
-            request.setProviderId(1L);
-            request.setProviderModelId("gpt-4o-2024-08-06");
+            request.setModelName("gpt-4o-2024-08-06");
             request.setDisplayName("GPT-4o");
             request.setContextWindow(128000);
 
-            when(providerGateway.findById(1L)).thenReturn(Optional.of(testProvider));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenAnswer(invocation -> {
-                ModelSpec model = invocation.getArgument(0);
+            when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> {
+                Model model = invocation.getArgument(0);
                 model.setId(2L);
                 return model;
             });
@@ -86,34 +84,15 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(2L);
-            assertThat(response.getProviderId()).isNull();
-            assertThat(response.getProviderModelId()).isEqualTo("gpt-4o-2024-08-06");
+            assertThat(response.getModelName()).isEqualTo("gpt-4o-2024-08-06");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4o");
             assertThat(response.getContextWindow()).isEqualTo(128000);
-            assertThat(response.getState()).isEqualTo(ModelSpecState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
-            verify(modelSpecGateway).save(any(ModelSpec.class));
+            verify(modelGateway).save(any(Model.class));
         }
 
-        @Test
-        @DisplayName("提供商不存在时抛出 ResourceNotFoundException")
-        void create_providerNotFound_throwsException() {
-            // given
-            ModelCreateRequest request = new ModelCreateRequest();
-            request.setProviderId(99L);
-            request.setProviderModelId("gpt-4o-2024-08-06");
-
-            when(providerGateway.findById(99L)).thenReturn(Optional.empty());
-
-            // when & then
-            assertThatThrownBy(() -> modelService.create(request))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("Provider")
-                .hasMessageContaining("99");
-
-            verify(modelSpecGateway, never()).save(any(ModelSpec.class));
         }
-    }
 
     // ==================== getById 测试 ====================
 
@@ -125,7 +104,7 @@ class ModelServiceTest {
         @DisplayName("模型存在时返回模型响应")
         void getById_existingModel_returnsModelResponse() {
             // given
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
 
             // when
             ModelResponse response = modelService.getById(1L);
@@ -133,19 +112,17 @@ class ModelServiceTest {
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getProviderId()).isNull();
-            assertThat(response.getProviderName()).isNull();
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            assertThat(response.getState()).isEqualTo(ModelSpecState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
-            verify(modelSpecGateway).findById(1L);
+            verify(modelGateway).findById(1L);
         }
 
         @Test
         @DisplayName("模型不存在时抛出 ResourceNotFoundException")
         void getById_nonExistingModel_throwsException() {
             // given
-            when(modelSpecGateway.findById(99L)).thenReturn(Optional.empty());
+            when(modelGateway.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> modelService.getById(99L))
@@ -153,7 +130,7 @@ class ModelServiceTest {
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
 
-            verify(modelSpecGateway).findById(99L);
+            verify(modelGateway).findById(99L);
         }
     }
 
@@ -168,9 +145,9 @@ class ModelServiceTest {
         void query_noFilter_returnsAllModels() {
             // given
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            ModelSpec model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
 
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel, model2));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setPage(1);
@@ -190,7 +167,7 @@ class ModelServiceTest {
         @DisplayName("关键字过滤 - 匹配 providerModelId")
         void query_withKeyword_matchesProviderModelId() {
             // given
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel));
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setKeyword("gpt");
@@ -202,14 +179,14 @@ class ModelServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderModelId()).isEqualTo("gpt-4");
+            assertThat(response.getItems().get(0).getModelName()).isEqualTo("gpt-4");
         }
 
         @Test
         @DisplayName("关键字过滤 - 匹配 displayName")
         void query_withKeyword_matchesDisplayName() {
             // given
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel));
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setKeyword("GPT");
@@ -228,7 +205,7 @@ class ModelServiceTest {
         @DisplayName("关键字过滤 - 不匹配时返回空列表")
         void query_withKeyword_noMatch_returnsEmptyList() {
             // given
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel));
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setKeyword("claude");
@@ -248,9 +225,9 @@ class ModelServiceTest {
         void query_withProviderId_returnsAllModels() {
             // given：providerId 过滤已移除，返回所有模型
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            ModelSpec model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
 
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel, model2));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setProviderId(1L);
@@ -269,12 +246,12 @@ class ModelServiceTest {
         void query_withStatusActive_filtersModels() {
             // given
             Provider provider2 = createTestProvider(2L, "Anthropic");
-            ModelSpec model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
+            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
 
-            when(modelSpecGateway.findAll()).thenReturn(List.of(testModel, model2));
+            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
 
             ModelQueryRequest request = new ModelQueryRequest();
-            request.setState(ModelSpecState.ACTIVE);
+            request.setState(ModelState.ACTIVE);
             request.setPage(1);
             request.setLimit(20);
 
@@ -283,19 +260,19 @@ class ModelServiceTest {
 
             // then
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().getFirst().getState()).isEqualTo(ModelSpecState.ACTIVE);
+            assertThat(response.getItems().getFirst().getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
         @DisplayName("分页查询 - 第二页")
         void query_withPagination_returnsPagedModels() {
             // given
-            List<ModelSpec> models = new ArrayList<>();
+            List<Model> models = new ArrayList<>();
             for (long i = 1; i <= 25; i++) {
                 Provider provider = createTestProvider(i, "Provider " + i);
                 models.add(createTestModel(i, "model-" + i, provider, "Model " + i, true));
             }
-            when(modelSpecGateway.findAll()).thenReturn(models);
+            when(modelGateway.findAll()).thenReturn(models);
 
             ModelQueryRequest request = new ModelQueryRequest();
             request.setPage(2);
@@ -323,8 +300,8 @@ class ModelServiceTest {
         @DisplayName("更新 displayName 成功")
         void update_validDisplayName_updatesModel() {
             // given
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenReturn(testModel);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
 
             ModelUpdateRequest request = new ModelUpdateRequest();
             request.setDisplayName("GPT-4 Updated");
@@ -334,16 +311,16 @@ class ModelServiceTest {
 
             // then
             assertThat(response).isNotNull();
-            verify(modelSpecGateway).findById(1L);
-            verify(modelSpecGateway).save(testModel);
+            verify(modelGateway).findById(1L);
+            verify(modelGateway).save(testModel);
         }
 
         @Test
         @DisplayName("更新 contextWindow 成功")
         void update_validContextWindow_updatesModel() {
             // given
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenReturn(testModel);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
 
             ModelUpdateRequest request = new ModelUpdateRequest();
             request.setContextWindow(200000);
@@ -352,8 +329,8 @@ class ModelServiceTest {
             modelService.update(1L, request);
 
             // then
-            ArgumentCaptor<ModelSpec> modelCaptor = ArgumentCaptor.forClass(ModelSpec.class);
-            verify(modelSpecGateway).save(modelCaptor.capture());
+            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+            verify(modelGateway).save(modelCaptor.capture());
             assertThat(modelCaptor.getValue().getContextWindow()).isEqualTo(200000);
         }
 
@@ -361,27 +338,27 @@ class ModelServiceTest {
         @DisplayName("更新 enabled=true 设置状态为 ACTIVE")
         void update_enabledTrue_setsStatusActive() {
             // given
-            testModel.setState(ModelSpecState.ACTIVE);
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenReturn(testModel);
+            testModel.setState(ModelState.ACTIVE);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
 
             ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setState(ModelSpecState.ACTIVE);
+            request.setState(ModelState.ACTIVE);
 
             // when
             modelService.update(1L, request);
 
             // then
-            ArgumentCaptor<ModelSpec> modelCaptor = ArgumentCaptor.forClass(ModelSpec.class);
-            verify(modelSpecGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getState()).isEqualTo(ModelSpecState.ACTIVE);
+            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
+            verify(modelGateway).save(modelCaptor.capture());
+            assertThat(modelCaptor.getValue().getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
         @DisplayName("更新不存在的模型抛出异常")
         void update_nonExistingModel_throwsException() {
             // given
-            when(modelSpecGateway.findById(99L)).thenReturn(Optional.empty());
+            when(modelGateway.findById(99L)).thenReturn(Optional.empty());
 
             ModelUpdateRequest request = new ModelUpdateRequest();
             request.setDisplayName("Updated Name");
@@ -404,21 +381,21 @@ class ModelServiceTest {
         @DisplayName("删除模型成功（软删除）")
         void delete_existingModel_softDeletes() {
             // given
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            doNothing().when(modelSpecGateway).delete(any(ModelSpec.class));
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            doNothing().when(modelGateway).delete(any(Model.class));
 
             // when
             modelService.delete(1L);
 
             // then
-            verify(modelSpecGateway).delete(any(ModelSpec.class));
+            verify(modelGateway).delete(any(Model.class));
         }
 
         @Test
         @DisplayName("删除不存在的模型抛出异常")
         void delete_nonExistingModel_throwsException() {
             // given
-            when(modelSpecGateway.findById(99L)).thenReturn(Optional.empty());
+            when(modelGateway.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> modelService.delete(99L))
@@ -426,7 +403,7 @@ class ModelServiceTest {
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
 
-            verify(modelSpecGateway, never()).save(any(ModelSpec.class));
+            verify(modelGateway, never()).save(any(Model.class));
         }
     }
 
@@ -440,41 +417,41 @@ class ModelServiceTest {
         @DisplayName("启用模型成功")
         void setEnabled_true_activatesModel() {
             // given
-            testModel.setState(ModelSpecState.ACTIVE);
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            testModel.setState(ModelState.ACTIVE);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             ModelResponse response = modelService.setEnabled(1L, true);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelSpecState.ACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelSpecState.ACTIVE);
-            verify(modelSpecGateway).save(testModel);
+            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            verify(modelGateway).save(testModel);
         }
 
         @Test
         @DisplayName("禁用模型成功")
         void setEnabled_false_deprecatesModel() {
             // given
-            testModel.setState(ModelSpecState.ACTIVE);
-            when(modelSpecGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelSpecGateway.save(any(ModelSpec.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            testModel.setState(ModelState.ACTIVE);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelSpecState.DISABLED);
-            assertThat(response.getState()).isEqualTo(ModelSpecState.DISABLED);
-            verify(modelSpecGateway).save(testModel);
+            assertThat(testModel.getState()).isEqualTo(ModelState.INACTIVE);
+            assertThat(response.getState()).isEqualTo(ModelState.INACTIVE);
+            verify(modelGateway).save(testModel);
         }
 
         @Test
         @DisplayName("启用不存在的模型抛出异常")
         void setEnabled_nonExistingModel_throwsException() {
             // given
-            when(modelSpecGateway.findById(99L)).thenReturn(Optional.empty());
+            when(modelGateway.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> modelService.setEnabled(99L, true))
@@ -493,14 +470,14 @@ class ModelServiceTest {
         return provider;
     }
 
-    private ModelSpec createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean status) {
-        ModelSpec model = new ModelSpec();
+    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean status) {
+        Model model = new Model();
         model.setId(id);
-        model.setProviderModelId(providerModelId);
+        model.setModelName(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
-        model.setState(status ? ModelSpecState.ACTIVE : ModelSpecState.DISABLED);
+        model.setState(status ? ModelState.ACTIVE : ModelState.INACTIVE);
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;

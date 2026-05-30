@@ -5,6 +5,8 @@ import {
   SettingOutlined,
   DatabaseOutlined,
   LockOutlined,
+  KeyOutlined,
+  CodeOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -25,36 +27,34 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'menu.home',
   },
   {
-    key: 'provider-management',
+    key: '/providers',
     icon: <CloudServerOutlined />,
-    label: 'menu.providerManagement',
-    children: [
-      {
-        key: '/providers',
-        icon: <CloudServerOutlined />,
-        label: 'menu.providers',
-        permission: 'provider:read',
-      },
-    ],
+    label: 'menu.providers',
+    permission: 'provider:read',
   },
   {
-    key: 'user-management',
+    key: '/models',
+    icon: <DatabaseOutlined />,
+    label: 'menu.models',
+    permission: 'model:read',
+  },
+  {
+    key: '/keys',
+    icon: <KeyOutlined />,
+    label: 'menu.apiKeys',
+    permission: 'key:read',
+  },
+  {
+    key: '/teams',
     icon: <TeamOutlined />,
-    label: 'menu.userManagement',
-    children: [
-      {
-        key: '/users',
-        icon: <TeamOutlined />,
-        label: 'menu.users',
-        permission: 'user:read',
-      },
-      {
-        key: '/teams',
-        icon: <TeamOutlined />,
-        label: 'menu.teams',
-        permission: 'user:read',
-      },
-    ],
+    label: 'menu.teams',
+    permission: 'user:read',
+  },
+  {
+    key: '/developer',
+    icon: <CodeOutlined />,
+    label: 'menu.developer',
+    permission: 'developer:access',
   },
   {
     key: 'system-settings',

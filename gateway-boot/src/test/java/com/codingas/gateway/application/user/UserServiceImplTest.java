@@ -217,7 +217,7 @@ class UserServiceImplTest {
             when(userGateway.save(any())).thenReturn(user);
 
             UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.DISABLED);
+            request.setState(UserState.INACTIVE);
 
             // when
             UserResponse result = service.updateState(1L, request);

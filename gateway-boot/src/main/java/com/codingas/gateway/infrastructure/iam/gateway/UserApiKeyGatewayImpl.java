@@ -5,8 +5,6 @@ import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyProductDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyProductRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +26,6 @@ import java.util.Optional;
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
     private final UserApiKeyRepository repository;
-    private final UserApiKeyProductRepository productRepository;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     @Override
@@ -60,6 +57,10 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
             if (plainKey != null && !plainKey.isBlank()) {
                 dataObject.setKeyHash(encryptionService.hashKey(plainKey));
                 dataObject.setKeyEncrypted(encryptionService.encrypt(plainKey));
+                // 自动生成 keyPrefix（取前 10 位）
+                if (dataObject.getKeyPrefix() == null) {
+                    dataObject.setKeyPrefix(plainKey.substring(0, Math.min(10, plainKey.length())));
+                }
             }
         } else {
             // 更新时：保留已有的 hash 和 encrypted
@@ -71,30 +72,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setUpdatedAt(Instant.now());
         UserApiKeyDo saved = repository.save(dataObject);
 
-        // 保存渠道关联
-        if (userApiKey.getChannelIds() != null) {
-            productRepository.deleteByUserApiKeyId(saved.getId());
-            for (Long channelId : userApiKey.getChannelIds()) {
-                UserApiKeyProductDo rel = new UserApiKeyProductDo();
-                rel.setUserApiKeyId(saved.getId());
-                rel.setProductId(channelId);
-                productRepository.save(rel);
-            }
-        }
-
         return toEntity(saved);
     }
 
     @Override
     @Transactional
     public void delete(UserApiKey userApiKey) {
-        productRepository.deleteByUserApiKeyId(userApiKey.getId());
         repository.deleteById(userApiKey.getId());
-    }
-
-    @Override
-    public List<Long> findIdsByProductId(Long productId) {
-        return productRepository.findUserApiKeyIdByProductId(productId);
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
@@ -109,10 +93,6 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setState(dataObject.getState());
         entity.setCreatedAt(dataObject.getCreatedAt());
         entity.setUpdatedAt(dataObject.getUpdatedAt());
-
-        // 加载渠道关联
-        List<Long> channelIds = productRepository.findProductIdByUserApiKeyId(dataObject.getId());
-        entity.setChannelIds(channelIds);
 
         // 解密返回明文 Key
         if (dataObject.getKeyEncrypted() != null && !dataObject.getKeyEncrypted().isBlank()) {

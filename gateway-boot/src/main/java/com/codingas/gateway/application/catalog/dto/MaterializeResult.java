@@ -10,7 +10,7 @@ import lombok.Getter;
 @Builder
 public class MaterializeResult {
 
-    /** 物化类型：PROVIDER / PLAN / MODEL_SPEC */
+    /** 物化类型：PROVIDER / PLAN / MODEL */
     private final String type;
 
     /** 业务编码 */

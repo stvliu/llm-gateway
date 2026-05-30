@@ -4,7 +4,7 @@ import type { Permission } from '@/constants/permissions';
 export type UserRole = 'ADMIN' | 'USER' | string;
 
 /** 用户状态枚举 */
-export type UserState = 'ACTIVE' | 'DISABLED' | 'LOCKED';
+export type UserState = 'ACTIVE' | 'INACTIVE' | 'LOCKED';
 
 /** 用户信息（完整，含审计字段） */
 export interface User {

@@ -4,19 +4,19 @@ import { SearchOutlined, CloseOutlined, SyncOutlined, CloudDownloadOutlined, Arr
 import { useTranslation } from 'react-i18next';
 import { App } from 'antd';
 import { useProviderCatalogs, useSyncCatalog } from '@/services/query/useCatalog';
-import type { ProviderType, MaterializeType } from '@/types/catalog';
+import type { ProviderType } from '@/types/catalog';
 
 const { Text } = Typography;
 
 interface ProviderCatalogViewProps {
   /** 选择供应商，进入套餐目录 */
   onSelectProvider: (code: string, name: string) => void;
-  /** 物化操作 */
-  onMaterialize: (type: MaterializeType, code: string, name: string) => void;
+  /** 级联物化供应商（含关联 Plans） */
+  onCascadeMaterialize: (code: string, name: string) => void;
 }
 
 /** 供应商目录卡片视图 */
-export default function ProviderCatalogView({ onSelectProvider, onMaterialize }: ProviderCatalogViewProps) {
+export default function ProviderCatalogView({ onSelectProvider, onCascadeMaterialize }: ProviderCatalogViewProps) {
   const { t } = useTranslation('catalog');
   const { message } = App.useApp();
 
@@ -131,10 +131,10 @@ export default function ProviderCatalogView({ onSelectProvider, onMaterialize }:
                       onClick={(e) => {
                         e.stopPropagation();
                         if (provider.materialized) return;
-                        onMaterialize('PROVIDER', provider.code, provider.name);
+                        onCascadeMaterialize(provider.code, provider.name);
                       }}
                     >
-                      {provider.materialized ? t('provider.materialized') : t('materialize.provider')}
+                      {provider.materialized ? t('provider.materialized') : t('materialize.cascade')}
                     </Button>,
                     <Button
                       key="view"

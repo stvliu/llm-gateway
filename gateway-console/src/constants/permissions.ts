@@ -12,6 +12,9 @@ export const P = {
   USER_WRITE: 'user:write',
   SETTINGS_READ: 'settings:read',
   SETTINGS_WRITE: 'settings:write',
+  KEY_READ: 'key:read',
+  KEY_WRITE: 'key:write',
+  DEVELOPER: 'developer:access',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

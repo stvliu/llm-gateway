@@ -13,7 +13,7 @@ class ChannelEndpointStateTest {
     @DisplayName("fromCode — 正常值")
     void fromCode_valid() {
         assertThat(ChannelEndpointState.fromCode("ACTIVE")).isEqualTo(ChannelEndpointState.ACTIVE);
-        assertThat(ChannelEndpointState.fromCode("DISABLED")).isEqualTo(ChannelEndpointState.DISABLED);
+        assertThat(ChannelEndpointState.fromCode("inactive")).isEqualTo(ChannelEndpointState.INACTIVE);
     }
 
     @Test
@@ -36,8 +36,8 @@ class ChannelEndpointStateTest {
     }
 
     @Test
-    @DisplayName("isAvailable — DISABLED 返回 false")
+    @DisplayName("isAvailable — INACTIVE 返回 false")
     void isAvailable_disabled() {
-        assertThat(ChannelEndpointState.DISABLED.isAvailable()).isFalse();
+        assertThat(ChannelEndpointState.INACTIVE.isAvailable()).isFalse();
     }
 }

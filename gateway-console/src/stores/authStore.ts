@@ -32,15 +32,9 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: !!loginUser,
         }),
       setToken: (token) => {
-        if (token) {
-          localStorage.setItem('token', token);
-        } else {
-          localStorage.removeItem('token');
-        }
         set({ token });
       },
       logout: () => {
-        localStorage.removeItem('token');
         set({
           user: null,
           token: null,
@@ -64,9 +58,6 @@ export const useAuthStore = create<AuthState>()(
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state?.token) {
-          localStorage.setItem('token', state.token);
-        }
         // 旧数据可能没有 permissions 字段，从 role 补全
         if (state?.user && !state.user.permissions) {
           state.user = {

@@ -4,7 +4,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.*;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
@@ -56,15 +56,15 @@ class RoutingResolverTest {
         @DisplayName("完整解析成功 — 组装 RoutingContext")
         void resolve_allSteps_succeeds() {
             // given
-            ModelSpec modelSpec = new ModelSpec();
-            modelSpec.setId(1L);
-            modelSpec.setProviderModelId("gpt-4o");
-            modelSpec.setState(ModelSpecState.ACTIVE);
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+            model.setState(ModelState.ACTIVE);
 
             ChannelModel channelModel = new ChannelModel();
             channelModel.setId(10L);
             channelModel.setChannelId(100L);
-            channelModel.setModelSpecId(1L);
+            channelModel.setModelId(1L);
             channelModel.setState(ChannelModelState.ACTIVE);
 
             Channel channel = new Channel();
@@ -80,14 +80,14 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
             endpoint.setState(ChannelEndpointState.ACTIVE);
 
-            when(modelMatcher.match("gpt-4o")).thenReturn(modelSpec);
-            when(channelSelector.select(1L)).thenReturn(channelModel);
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
-            when(endpointResolver.resolve(100L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI);
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L);
 
             // then
             assertThat(result).isNotNull();
@@ -104,15 +104,15 @@ class RoutingResolverTest {
         @DisplayName("协议不同时 needsProtocolAdaptation 为 true")
         void resolve_differentProtocol_needsAdaptation() {
             // given
-            ModelSpec modelSpec = new ModelSpec();
-            modelSpec.setId(1L);
-            modelSpec.setProviderModelId("gpt-4o");
-            modelSpec.setState(ModelSpecState.ACTIVE);
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+            model.setState(ModelState.ACTIVE);
 
             ChannelModel channelModel = new ChannelModel();
             channelModel.setId(10L);
             channelModel.setChannelId(100L);
-            channelModel.setModelSpecId(1L);
+            channelModel.setModelId(1L);
 
             Channel channel = new Channel();
             channel.setId(100L);
@@ -127,14 +127,14 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.ANTHROPIC);
             endpoint.setState(ChannelEndpointState.ACTIVE);
 
-            when(modelMatcher.match("gpt-4o")).thenReturn(modelSpec);
-            when(channelSelector.select(1L)).thenReturn(channelModel);
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
-            when(endpointResolver.resolve(100L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when — 入站协议是 OPENAI，端点协议是 ANTHROPIC
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI);
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L);
 
             // then
             assertThat(result.needsProtocolAdaptation()).isTrue();
@@ -146,20 +146,22 @@ class RoutingResolverTest {
         void resolve_modelNotFound_throwsException() {
             // given
             when(modelMatcher.match("non-existent"))
-                    .thenThrow(new ResourceNotFoundException("ModelSpec", "non-existent"));
+                    .thenThrow(new ResourceNotFoundException("Model", "non-existent"));
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI))
+            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI, 1L))
                     .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("ModelSpec");
+                    .hasMessageContaining("Model");
         }
 
         @Test
         @DisplayName("通道不存在时抛出异常")
         void resolve_channelNotFound_throwsException() {
             // given
-            ModelSpec modelSpec = new ModelSpec();
-            modelSpec.setId(1L);
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+            model.setState(ModelState.ACTIVE);
 
             ChannelModel channelModel = new ChannelModel();
             channelModel.setId(10L);
@@ -170,14 +172,14 @@ class RoutingResolverTest {
             endpoint.setChannelId(999L);
             endpoint.setProtocol(Protocol.OPENAI);
 
-            when(modelMatcher.match("gpt-4o")).thenReturn(modelSpec);
-            when(channelSelector.select(1L)).thenReturn(channelModel);
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
-            when(endpointResolver.resolve(999L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI))
+            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Channel");
         }

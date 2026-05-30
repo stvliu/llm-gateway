@@ -7,10 +7,10 @@ interface Props {
   onSelect: (provider: Provider) => void;
   onEdit: (provider: Provider) => void;
   onDelete: (provider: Provider) => void;
-  onViewProducts?: (provider: Provider) => void;
+  onViewChannels?: (provider: Provider) => void;
 }
 
-export default function ProviderCardView({ providers, onSelect, onEdit, onDelete, onViewProducts }: Props) {
+export default function ProviderCardView({ providers, onSelect, onEdit, onDelete, onViewChannels }: Props) {
   return (
     <Row gutter={[16, 16]}>
       {providers.map((provider) => (
@@ -20,7 +20,7 @@ export default function ProviderCardView({ providers, onSelect, onEdit, onDelete
             onView={() => onSelect(provider)}
             onEdit={() => onEdit(provider)}
             onDelete={() => onDelete(provider)}
-            onViewProducts={() => onViewProducts?.(provider)}
+            onViewChannels={() => onViewChannels?.(provider)}
           />
         </Col>
       ))}

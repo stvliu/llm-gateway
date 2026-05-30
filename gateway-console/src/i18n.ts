@@ -11,7 +11,6 @@ import zhCNDashboard from './locales/zh-CN/dashboard.json';
 import zhCNProviders from './locales/zh-CN/providers.json';
 import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
-import zhCNProducts from './locales/zh-CN/products.json';
 import zhCNTeams from './locales/zh-CN/teams.json';
 import zhCNCatalog from './locales/zh-CN/catalog.json';
 // 英文
@@ -23,7 +22,6 @@ import enUSDashboard from './locales/en-US/dashboard.json';
 import enUSProviders from './locales/en-US/providers.json';
 import enUSChat from './locales/en-US/chat.json';
 import enUSExperience from './locales/en-US/experience.json';
-import enUSProducts from './locales/en-US/products.json';
 import enUSTeams from './locales/en-US/teams.json';
 import enUSCatalog from './locales/en-US/catalog.json';
 
@@ -41,7 +39,6 @@ i18n
         providers: zhCNProviders,
         chat: zhCNChat,
         experience: zhCNExperience,
-        products: zhCNProducts,
         teams: zhCNTeams,
         catalog: zhCNCatalog,
       },
@@ -54,7 +51,6 @@ i18n
         providers: enUSProviders,
         chat: enUSChat,
         experience: enUSExperience,
-        products: enUSProducts,
         teams: enUSTeams,
         catalog: enUSCatalog,
       },

@@ -23,9 +23,6 @@ public class OpenAIChatResponse implements ProtocolResponse {
     private String model;
     private Long created;
 
-    @JsonProperty("model_select")
-    private String modelSelect;
-
     private List<Choice> choices;
     private Usage usage;
     private Error error;

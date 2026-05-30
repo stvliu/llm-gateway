@@ -4,7 +4,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
-import com.codingas.gateway.domain.supply.entity.ModelSpec;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
@@ -29,20 +29,21 @@ public class RoutingResolver {
      *
      * @param modelName 模型名称
      * @param protocol  入站协议
+     * @param userId    用户 ID（用于团队渠道权限过滤）
      * @return 路由上下文
      */
-    public RoutingContext resolve(String modelName, Protocol protocol) {
+    public RoutingContext resolve(String modelName, Protocol protocol, Long userId) {
         // 1. 模型匹配
-        ModelSpec modelSpec = modelMatcher.match(modelName);
+        Model model = modelMatcher.match(modelName);
 
         // 2. 通道选择
-        ChannelModel channelModel = channelSelector.select(modelSpec.getId());
+        ChannelModel channelModel = channelSelector.select(model.getId(), userId);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(channelModel.getChannelId());
 
-        // 4. 端点解析
-        ChannelEndpoint endpoint = endpointResolver.resolve(channelModel.getChannelId());
+        // 4. 端点解析（优先匹配协议同源）
+        ChannelEndpoint endpoint = endpointResolver.resolve(channelModel.getChannelId(), protocol);
 
         // 5. 通道信息
         Channel channel = channelGateway.findById(channelModel.getChannelId())
@@ -59,7 +60,9 @@ public class RoutingResolver {
                 endpoint.getProtocol(),
                 apiKey,
                 channel.getTimeout(),
-                needsAdaptation
+                needsAdaptation,
+                model.getModelName(),
+                channelModel.getUpstreamModelName()
         );
     }
 }

@@ -411,13 +411,13 @@ class UserServiceTest {
             when(userGateway.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.DISABLED);
+            request.setState(UserState.INACTIVE);
 
             // when
             UserResponse response = userService.updateState(1L, request);
 
             // then
-            assertThat(testUser.getState()).isEqualTo(UserState.DISABLED);
+            assertThat(testUser.getState()).isEqualTo(UserState.INACTIVE);
             verify(userGateway).save(testUser);
         }
 

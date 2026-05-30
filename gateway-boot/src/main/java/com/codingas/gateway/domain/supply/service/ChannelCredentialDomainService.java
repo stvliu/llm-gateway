@@ -45,7 +45,7 @@ public class ChannelCredentialDomainService {
     public ChannelCredential disable(Long id) {
         ChannelCredential credential = credentialGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CREDENTIAL_NOT_FOUND", "凭证不存在: " + id));
-        credential.setState(CredentialState.DISABLED);
+        credential.setState(CredentialState.INACTIVE);
         return credentialGateway.save(credential);
     }
 
@@ -55,8 +55,7 @@ public class ChannelCredentialDomainService {
     public void delete(Long id) {
         ChannelCredential credential = credentialGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CREDENTIAL_NOT_FOUND", "凭证不存在: " + id));
-        credential.setState(CredentialState.DELETED);
-        credentialGateway.save(credential);
+        credentialGateway.deleteById(id);
     }
 
     /**

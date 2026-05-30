@@ -1,7 +1,6 @@
 package com.codingas.gateway.application.model.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -12,13 +11,10 @@ import java.util.Map;
  */
 @Data
 public class ModelCreateRequest {
-    @NotNull(message = "Provider ID is required")
-    // TODO: providerId 已从 ModelSpec 移除，后续通过 Supply 实体关联，此字段保留用于前端兼容
-    private Long providerId;
 
     @NotBlank(message = "Provider model ID is required")
     @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
-    private String providerModelId;
+    private String modelName;
 
     @Size(max = 256, message = "Display name must not exceed 256 characters")
     private String displayName;
@@ -26,14 +22,4 @@ public class ModelCreateRequest {
     private Integer contextWindow;
 
     private Map<String, Boolean> capabilities;
-
-    /**
-     * 渠道优先级（用于 FAILOVER 策略，值越小越优先，默认 100）
-     */
-    private Integer priority;
-
-    /**
-     * 渠道权重（用于 WEIGHTED 策略，加权随机选择，默认 100）
-     */
-    private Integer weight;
 }

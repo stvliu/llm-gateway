@@ -1,8 +1,9 @@
-import { Card, Tag, Typography, Space, Tooltip, Spin, Dropdown } from 'antd';
-import { GlobalOutlined, LinkOutlined, AppstoreOutlined, MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { Card, Tag, Typography, Space, Tooltip, Dropdown } from 'antd';
+import { GlobalOutlined, LinkOutlined, AppstoreOutlined, RobotOutlined, MoreOutlined, EyeOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useProducts } from '@/services/query/useProducts';
+import { useChannels } from '@/services/query/useChannels';
+import { useModels } from '@/services/query/useModels';
 import { ProviderIcon } from '@/components/ui';
 import type { Provider } from '@/types/provider';
 
@@ -13,22 +14,24 @@ interface Props {
   onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onViewProducts?: () => void;
+  onViewChannels?: () => void;
 }
 
-export default function ProviderCard({ provider, onView, onEdit, onDelete, onViewProducts }: Props) {
+export default function ProviderCard({ provider, onView, onEdit, onDelete, onViewChannels }: Props) {
   const { t } = useTranslation('providers');
 
-  // ensure provider.id is valid
   const providerId = provider?.id ?? 0;
-  const { data: products, isLoading } = useProducts(providerId);
+  const { data: channels, isLoading } = useChannels(providerId);
+  const { data: models, isLoading: modelsLoading } = useModels();
 
-  // filter active products (backend uses lowercase "active")
-  const activeProducts = products?.filter(p => p.state?.toUpperCase() === 'ACTIVE') || [];
-  const displayProducts = activeProducts.slice(0, 3);
-  const remainingCount = activeProducts.length - displayProducts.length;
+  const activeChannels = channels?.filter(c => c.state?.toUpperCase() === 'ACTIVE') || [];
+  const displayChannels = activeChannels.slice(0, 3);
+  const remainingCount = activeChannels.length - displayChannels.length;
 
-  // dropdown menu items
+  const activeModels = models?.filter(m => m.state?.toUpperCase() === 'ACTIVE') || [];
+  const displayModels = activeModels.slice(0, 3);
+  const remainingModels = activeModels.length - displayModels.length;
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'view',
@@ -48,9 +51,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
         onEdit();
       },
     },
-    {
-      type: 'divider',
-    },
+    { type: 'divider' },
     {
       key: 'delete',
       label: t('actions.delete', { defaultValue: 'Delete' }),
@@ -63,7 +64,6 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
     },
   ];
 
-  // state indicator config: use colored Tag for better visibility
   const stateConfig: Record<string, { color: string; label: string }> = {
     ACTIVE: { color: 'success', label: t('state.active', { defaultValue: 'Active' }) },
     INACTIVE: { color: 'warning', label: t('state.inactive', { defaultValue: 'Inactive' }) },
@@ -97,7 +97,7 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
         </Dropdown>
       }
     >
-      <Space orientation="vertical" style={{ width: '100%' }} size="middle">
+      <Space direction="vertical" style={{ width: '100%' }} size="middle">
 
         {provider.description && (
           <Tooltip title={provider.description}>
@@ -121,37 +121,65 @@ export default function ProviderCard({ provider, onView, onEdit, onDelete, onVie
           </Paragraph>
         )}
 
-        {/* Products section */}
+        {/* Channels section */}
         <div style={{ marginTop: 8 }}>
           <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
             <AppstoreOutlined />
             <Text type="secondary">
-              {t('card.products', { defaultValue: 'Products' })} ({activeProducts.length})
+              {t('card.channels', { defaultValue: 'Channels' })} ({activeChannels.length})
             </Text>
           </div>
           {isLoading ? (
-            <Spin size="small" />
-          ) : activeProducts.length === 0 ? (
+            <Text type="secondary" style={{ fontSize: 12 }}>...</Text>
+          ) : activeChannels.length === 0 ? (
             <Text type="secondary" style={{ fontSize: 12 }}>
-              {t('card.noProducts', { defaultValue: 'No products' })}
+              {t('card.noChannels', { defaultValue: 'No channels' })}
             </Text>
           ) : (
             <Space wrap size={[4, 4]}>
-              {displayProducts.map((product) => (
+              {displayChannels.map((channel) => (
                 <Tag
-                  key={product.id}
+                  key={channel.id}
                   color="blue"
                   style={{ cursor: 'pointer' }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onViewProducts?.();
+                    onViewChannels?.();
                   }}
                 >
-                  {product.name}
+                  {channel.name}
                 </Tag>
               ))}
               {remainingCount > 0 && (
                 <Tag>+{remainingCount}</Tag>
+              )}
+            </Space>
+          )}
+        </div>
+
+        {/* Models section */}
+        <div style={{ marginTop: 8 }}>
+          <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <RobotOutlined />
+            <Text type="secondary">
+              {t('card.models', { defaultValue: 'Models' })} ({activeModels.length})
+            </Text>
+          </div>
+          {modelsLoading ? (
+            <Text type="secondary" style={{ fontSize: 12 }}>...</Text>
+          ) : activeModels.length === 0 ? (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              {t('card.noModels', { defaultValue: 'No models' })}
+            </Text>
+          ) : (
+            <Space wrap size={[4, 4]}>
+              {displayModels.map((m) => (
+                <Tag key={m.id} color="purple" style={{ cursor: 'pointer' }}>
+                  {m.displayName || m.modelName}
+                </Tag>
+              ))}
+              {remainingModels > 0 && (
+                <Tag>+{remainingModels}</Tag>
               )}
             </Space>
           )}

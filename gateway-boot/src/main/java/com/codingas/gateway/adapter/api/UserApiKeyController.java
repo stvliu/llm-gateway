@@ -13,7 +13,7 @@ import java.util.List;
  * 用户 API Key 管理 API
  */
 @RestController
-@RequestMapping("/api/user-api-keys")
+@RequestMapping("/api/v1/user-api-keys")
 public class UserApiKeyController {
 
     private final UserApiKeyService userApiKeyService;

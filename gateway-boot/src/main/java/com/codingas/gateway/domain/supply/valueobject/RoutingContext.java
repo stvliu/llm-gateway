@@ -14,5 +14,7 @@ public record RoutingContext(
         Protocol upstreamProtocol,
         String providerApiKey,
         Integer timeout,
-        boolean needsProtocolAdaptation
+        boolean needsProtocolAdaptation,
+        String modelName,
+        String upstreamModelName
 ) {}

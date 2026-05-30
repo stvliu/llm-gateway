@@ -1,5 +1,5 @@
 import apiClient from './client';
-import type { ProtocolInfo } from '../../types/product';
+import type { ProtocolInfo } from '@/types/channel';
 
 const BASE_URL = '/protocols';
 

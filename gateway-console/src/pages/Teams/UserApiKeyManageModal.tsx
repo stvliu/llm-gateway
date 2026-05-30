@@ -1,11 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Select, InputNumber, message } from 'antd'
+import { Modal, Form, Input, Select, InputNumber, message, Alert } from 'antd'
 import type { Team, UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
-import type { Product } from '@/types/product'
 import { teamApi } from '@/services/api/team'
-import { productApi } from '@/services/api/product'
 
 interface UserApiKeyManageModalProps {
   open: boolean
@@ -24,16 +22,13 @@ export default function UserApiKeyManageModal({
 }: UserApiKeyManageModalProps) {
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
   const [createdKey, setCreatedKey] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) {
-      loadProducts()
       if (editingKey) {
         form.setFieldsValue({
           name: editingKey.name,
-          productIds: editingKey.productIds,
           models: editingKey.models,
           quotaLimit: editingKey.quotaLimit,
           state: editingKey.state,
@@ -46,15 +41,6 @@ export default function UserApiKeyManageModal({
     }
   }, [open, editingKey, form])
 
-  const loadProducts = async () => {
-    try {
-      const res = await productApi.listAll()
-      setProducts(res)
-    } catch {
-      // 产品列表加载失败时静默处理
-    }
-  }
-
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields()
@@ -63,7 +49,6 @@ export default function UserApiKeyManageModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          productIds: values.productIds,
           models: values.models,
           quotaLimit: values.quotaLimit,
           state: values.state,
@@ -72,9 +57,7 @@ export default function UserApiKeyManageModal({
         message.success('API Key 更新成功')
       } else {
         const request: CreateUserApiKeyRequest = {
-          teamId: team.id,
           userId: values.userId,
-          productIds: values.productIds,
           name: values.name,
           models: values.models,
           quotaLimit: values.quotaLimit,
@@ -92,11 +75,6 @@ export default function UserApiKeyManageModal({
       setLoading(false)
     }
   }
-
-  const productOptions = products.map((p) => ({
-    label: p.name,
-    value: p.id,
-  }))
 
   return (
     <Modal
@@ -116,6 +94,16 @@ export default function UserApiKeyManageModal({
         </div>
       )}
 
+      {!editingKey && (
+        <Alert
+          message="权限说明"
+          description={`此 API Key 将继承团队「${team.name}」的渠道访问权限。`}
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <Form form={form} layout="vertical">
         <Form.Item name="name" label="密钥名称" rules={[{ required: true, message: '请输入密钥名称' }]}>
           <Input placeholder="例如：生产环境 Key" />
@@ -126,20 +114,6 @@ export default function UserApiKeyManageModal({
             <InputNumber style={{ width: '100%' }} placeholder="用户 ID" />
           </Form.Item>
         )}
-
-        <Form.Item
-          name="productIds"
-          label="关联产品"
-          rules={[{ required: true, message: '请选择至少一个产品' }]}
-        >
-          <Select
-            mode="multiple"
-            placeholder="选择关联的产品"
-            options={productOptions}
-            optionFilterProp="label"
-            maxTagCount="responsive"
-          />
-        </Form.Item>
 
         <Form.Item name="models" label="可用模型">
           <Select

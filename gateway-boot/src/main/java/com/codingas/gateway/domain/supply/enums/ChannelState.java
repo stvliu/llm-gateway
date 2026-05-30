@@ -7,9 +7,7 @@ import lombok.Getter;
  *
  * <h3>状态转换图</h3>
  * <pre>
- * ACTIVE ⇄ DISABLED
- *    ↓
- * DELETED（终态）
+ * ACTIVE ⇄ INACTIVE
  * </pre>
  */
 @Getter
@@ -18,10 +16,7 @@ public enum ChannelState {
     ACTIVE("active"),
 
     /** 已停用，暂停服务（可恢复） */
-    DISABLED("disabled"),
-
-    /** 已删除（终态） */
-    DELETED("deleted");
+    INACTIVE("inactive");
 
     private final String code;
 
@@ -43,12 +38,5 @@ public enum ChannelState {
      */
     public boolean isAvailable() {
         return this == ACTIVE;
-    }
-
-    /**
-     * 判断是否为终态
-     */
-    public boolean isTerminal() {
-        return this == DELETED;
     }
 }

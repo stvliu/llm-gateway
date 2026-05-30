@@ -114,8 +114,9 @@ export function useConfirm() {
         try {
           await options.onConfirm();
           message.success(options.successMessage ? tc(options.successMessage) : tc(defaultSuccessKey));
-        } catch {
-          message.error(tc(errorKey));
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : '';
+          message.error(errMsg || tc(errorKey));
         }
       },
     });

@@ -1,18 +1,26 @@
-/** 模型类型 */
-export type ModelType = 'CHAT' | 'COMPLETION' | 'EMBEDDING' | 'IMAGE' | 'AUDIO';
-
 /** 模型状态枚举 */
-export type ModelState = 'ACTIVE' | 'DISABLED' | 'DELETED';
+export type ModelState = 'ACTIVE' | 'INACTIVE';
 
-/** 模型信息（与后端 ModelResponse 一致，定价信息已迁移到 Product） */
+/** 模型信息（与后端 ModelResponse 一致） */
 export interface Model {
   id: number;
-  providerId: number;
-  providerName: string;
-  providerModelId?: string;
+  /** 供应商侧模型标识（如 gpt-4o、claude-3-opus） */
+  modelName: string;
+  /** 显示名称 */
   displayName?: string;
+  /** 模型族（如 gpt-4、claude-3） */
+  modelFamily?: string;
+  /** 上下文窗口大小 */
   contextWindow?: number;
+  /** 最大输入 Token 数 */
+  maxInputTokens?: number;
+  /** 最大输出 Token 数 */
+  maxOutputTokens?: number;
+  /** 模型能力（如 vision、function_calling） */
   capabilities?: Record<string, boolean>;
+  /** 支持的模态（如 text、image、audio） */
+  modalities?: string[];
+  /** 状态 */
   state: ModelState;
   createdAt: string;
   updatedAt: string;
@@ -20,17 +28,42 @@ export interface Model {
 
 /** 创建模型请求 */
 export interface CreateModelRequest {
-  providerId: number;
-  providerModelId?: string;
+  /** 供应商侧模型标识 */
+  modelName: string;
+  /** 显示名称 */
   displayName?: string;
+  /** 模型族 */
+  modelFamily?: string;
+  /** 上下文窗口大小 */
   contextWindow?: number;
+  /** 最大输入 Token 数 */
+  maxInputTokens?: number;
+  /** 最大输出 Token 数 */
+  maxOutputTokens?: number;
+  /** 模型能力 */
   capabilities?: Record<string, boolean>;
+  /** 支持的模态 */
+  modalities?: string[];
 }
 
 /** 更新模型请求 */
 export interface UpdateModelRequest {
+  /** 供应商侧模型标识 */
+  modelName?: string;
+  /** 显示名称 */
   displayName?: string;
+  /** 模型族 */
+  modelFamily?: string;
+  /** 上下文窗口大小 */
   contextWindow?: number;
+  /** 最大输入 Token 数 */
+  maxInputTokens?: number;
+  /** 最大输出 Token 数 */
+  maxOutputTokens?: number;
+  /** 模型能力 */
   capabilities?: Record<string, boolean>;
+  /** 支持的模态 */
+  modalities?: string[];
+  /** 状态 */
   state?: ModelState;
 }

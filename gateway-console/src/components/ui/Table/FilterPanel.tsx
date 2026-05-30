@@ -44,7 +44,6 @@ export function FilterPanel({
   );
   const [logic, setLogic] = useState<'and' | 'or'>(initialLogic);
 
-  // 操作符配置
   const operators = {
     string: [
       { key: 'eq', label: t('operators.eq') },
@@ -114,7 +113,7 @@ export function FilterPanel({
       title={t('filter.title')}
       width={600}
       footer={
-        <div className="flex justify-between">
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button onClick={handleReset}>{t('actions.reset')}</Button>
           <Space>
             <Button onClick={onClose}>{t('actions.cancel')}</Button>
@@ -125,17 +124,16 @@ export function FilterPanel({
         </div>
       }
     >
-      <div className="py-4">
+      <div style={{ padding: '16px 0' }}>
         {/* 过滤条件列表 */}
-        <div className="space-y-3">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {conditions.map((condition) => {
             const field = fields.find((f) => f.key === condition.field);
             const fieldType = field?.type || 'string';
             const fieldOperators = operators[fieldType];
 
             return (
-              <div key={condition.key} className="flex items-center gap-2">
-                {/* 字段选择 */}
+              <div key={condition.key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Select
                   value={condition.field}
                   onChange={(v) =>
@@ -146,38 +144,35 @@ export function FilterPanel({
                     })
                   }
                   placeholder={t('filter.addField')}
-                  className="w-32"
+                  style={{ width: 128 }}
                   options={fields.map((f) => ({
                     value: f.key,
                     label: f.label,
                   }))}
                 />
 
-                {/* 操作符选择 */}
                 <Select
                   value={condition.operator}
                   onChange={(v) =>
                     updateCondition(condition.key, { operator: v })
                   }
                   placeholder={t('operators.eq')}
-                  className="w-28"
+                  style={{ width: 112 }}
                   options={fieldOperators.map((o) => ({
                     value: o.key,
                     label: o.label,
                   }))}
                 />
 
-                {/* 值输入 */}
                 <Input
                   value={condition.value}
                   onChange={(e) =>
                     updateCondition(condition.key, { value: e.target.value })
                   }
                   placeholder={t('actions.search')}
-                  className="flex-1"
+                  style={{ flex: 1 }}
                 />
 
-                {/* 删除按钮 */}
                 <Button
                   type="text"
                   icon={<DeleteOutlined />}
@@ -190,19 +185,17 @@ export function FilterPanel({
           })}
         </div>
 
-        {/* 添加条件按钮 */}
         <Button
           type="dashed"
           icon={<PlusOutlined />}
           onClick={addCondition}
-          className="w-full mt-3"
+          style={{ width: '100%', marginTop: 12 }}
         >
           {t('filter.addField')}
         </Button>
 
-        {/* 条件关系 */}
-        <div className="mt-4">
-          <span className="text-sm text-gray-500 mr-4">
+        <div style={{ marginTop: 16 }}>
+          <span style={{ fontSize: 14, color: '#6b7280', marginRight: 16 }}>
             {t('filter.logicLabel')}:
           </span>
           <Radio.Group value={logic} onChange={(e) => setLogic(e.target.value)}>

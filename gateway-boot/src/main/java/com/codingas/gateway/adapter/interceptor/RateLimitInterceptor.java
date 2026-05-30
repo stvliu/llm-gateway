@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 限流拦截器
  *
- * <p>基于 API Key 级别的令牌桶限流，order=1 在 IP 封禁之后执行。</p>
+ * <p>基于 API Key 级别的令牌桶限流，在认证之后执行以获取 credentialId。</p>
  */
 @Slf4j
 @Component
@@ -27,7 +27,7 @@ public class RateLimitInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public int order() {
-        return 1;
+        return 4;
     }
 
     @Override
@@ -61,6 +61,8 @@ public class RateLimitInterceptor extends AbstractGatewayInterceptor {
     private boolean isProxyPath(String path) {
         return path.startsWith("/v1/chat/completions")
                 || path.startsWith("/v1/messages")
-                || path.startsWith("/v1/models");
+                || path.startsWith("/v1/models")
+                || path.startsWith("/anthropic/v1/messages")
+                || path.startsWith("/anthropic/v1/models");
     }
 }

@@ -1,6 +1,7 @@
 package com.codingas.gateway.infrastructure.supply.upstream;
 
 import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,12 +55,12 @@ public class OpenAIUpstreamClient implements UpstreamClient {
             try (Response response = timedClient.newCall(httpRequest).execute()) {
                 String responseBody = response.body() != null ? response.body().string() : "";
                 if (!response.isSuccessful()) {
-                    throw new RuntimeException("OpenAI API 调用失败: " + response.code() + " - " + responseBody);
+                    throw new ProviderException("UPSTREAM_ERROR", "OpenAI API 调用失败: " + response.code() + " - " + responseBody);
                 }
                 return objectMapper.readValue(responseBody, OpenAIChatResponse.class);
             }
         } catch (IOException e) {
-            throw new RuntimeException("OpenAI API 调用异常", e);
+            throw new ProviderException("UPSTREAM_ERROR", "OpenAI API 调用异常", e);
         }
     }
 
@@ -91,7 +92,7 @@ public class OpenAIUpstreamClient implements UpstreamClient {
                     try (ResponseBody body = response.body()) {
                         if (!response.isSuccessful() || body == null) {
                             String errorBody = body != null ? body.string() : "no body";
-                            callback.onError(new RuntimeException("OpenAI Stream 失败: " + response.code() + " - " + errorBody));
+                            callback.onError(new ProviderException("UPSTREAM_ERROR", "OpenAI Stream 失败: " + response.code() + " - " + errorBody));
                             return;
                         }
                         BufferedReader reader = new BufferedReader(

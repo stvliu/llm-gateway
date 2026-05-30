@@ -3,7 +3,7 @@
   "tabs": {
     "providers": "供应商目录",
     "plans": "套餐目录",
-    "modelSpecs": "模型规格目录"
+    "models": "模型目录"
   },
   "provider": {
     "code": "供应商编码",
@@ -32,8 +32,7 @@
     "SUBSCRIPTION": "订阅",
     "PACKAGE": "套餐包"
   },
-  "modelSpec": {
-    "providerModelId": "模型标识",
+  "model": {
     "modelName": "模型名称",
     "providerCode": "供应商编码",
     "capabilities": "能力标签",
@@ -53,13 +52,21 @@
   "materialize": {
     "provider": "物化供应商",
     "plan": "物化套餐",
-    "modelSpec": "物化模型规格",
+    "model": "物化模型",
+    "cascade": "级联物化",
+    "cascadeTitle": "级联物化 — {{name}}",
+    "cascadeDesc": "以下套餐将随供应商一起物化为运营实体（Channel + Endpoint + Model）：",
+    "cascadeSelected": "已选 {{count}} 个套餐",
+    "cascadeTotal": "共 {{count}} 个套餐",
     "confirmTitle": "确认物化",
     "confirmContent": "确定要将「{{name}}」物化为运营实体吗？",
     "status": {
       "CREATED": "已创建",
-      "SKIPPED": "已跳过"
-    }
+      "SKIPPED": "已跳过",
+      "FAILED": "失败"
+    },
+    "result": "物化结果",
+    "resultSummary": "成功 {{success}} / 跳过 {{skipped}} / 失败 {{failed}}"
   },
   "sync": {
     "title": "同步目录",

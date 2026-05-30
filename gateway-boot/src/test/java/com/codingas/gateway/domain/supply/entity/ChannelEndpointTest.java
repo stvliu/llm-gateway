@@ -33,10 +33,10 @@ class ChannelEndpointTest {
     }
 
     @Test
-    @DisplayName("isAvailable — DISABLED 返回 false")
+    @DisplayName("isAvailable — INACTIVE 返回 false")
     void isAvailable_disabled() {
         ChannelEndpoint endpoint = new ChannelEndpoint();
-        endpoint.setState(ChannelEndpointState.DISABLED);
+        endpoint.setState(ChannelEndpointState.INACTIVE);
         assertThat(endpoint.isAvailable()).isFalse();
     }
 
@@ -46,7 +46,7 @@ class ChannelEndpointTest {
         ChannelEndpoint endpoint = new ChannelEndpoint();
         endpoint.setState(ChannelEndpointState.ACTIVE);
         endpoint.disable();
-        assertThat(endpoint.getState()).isEqualTo(ChannelEndpointState.DISABLED);
+        assertThat(endpoint.getState()).isEqualTo(ChannelEndpointState.INACTIVE);
         assertThat(endpoint.isAvailable()).isFalse();
     }
 
@@ -54,7 +54,7 @@ class ChannelEndpointTest {
     @DisplayName("启用端点")
     void enable() {
         ChannelEndpoint endpoint = new ChannelEndpoint();
-        endpoint.setState(ChannelEndpointState.DISABLED);
+        endpoint.setState(ChannelEndpointState.INACTIVE);
         endpoint.enable();
         assertThat(endpoint.getState()).isEqualTo(ChannelEndpointState.ACTIVE);
         assertThat(endpoint.isAvailable()).isTrue();

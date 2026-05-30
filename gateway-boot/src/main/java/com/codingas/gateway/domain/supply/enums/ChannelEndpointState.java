@@ -6,7 +6,7 @@ package com.codingas.gateway.domain.supply.enums;
 public enum ChannelEndpointState {
 
     ACTIVE("active"),
-    DISABLED("disabled");
+    INACTIVE("inactive");
 
     private final String code;
 

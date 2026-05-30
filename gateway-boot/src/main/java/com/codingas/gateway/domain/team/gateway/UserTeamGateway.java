@@ -21,4 +21,9 @@ public interface UserTeamGateway {
     void removeMember(Long userId, Long teamId);
 
     void updateRole(Long userId, Long teamId, TeamRole role);
+
+    /**
+     * 查找用户所属的团队 ID（业务层限制单团队，返回第一个）
+     */
+    Long findTeamIdByUserId(Long userId);
 }

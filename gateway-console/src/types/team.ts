@@ -44,14 +44,12 @@ export interface UpdateMemberRoleRequest {
 /** 用户 API Key */
 export interface UserApiKey {
   id: number;
-  teamId: number;
   userId: number;
-  productIds: number[];
   keyPrefix: string;
   name: string;
   models: string[];
   quotaLimit: number | null;
-  state: 'ACTIVE' | 'DISABLED';
+  state: 'ACTIVE' | 'INACTIVE';
   createdAt: string;
   updatedAt: string;
 }
@@ -59,21 +57,11 @@ export interface UserApiKey {
 /** 用户 API Key 详情（含明文 Key） */
 export interface UserApiKeyDetail extends UserApiKey {
   keyPlain: string;
-  products: ProductBrief[];
-}
-
-/** 产品简要信息 */
-export interface ProductBrief {
-  id: number;
-  name: string;
 }
 
 /** 创建用户 API Key 请求 */
 export interface CreateUserApiKeyRequest {
-  teamId?: number;
   userId: number;
-  channelIds?: number[];
-  productIds?: number[];
   name: string;
   models?: string[];
   quotaLimit?: number | null;
@@ -82,10 +70,9 @@ export interface CreateUserApiKeyRequest {
 /** 更新用户 API Key 请求 */
 export interface UpdateUserApiKeyRequest {
   name?: string;
-  productIds?: number[];
   models?: string[];
   quotaLimit?: number | null;
-  state?: 'ACTIVE' | 'DISABLED';
+  state?: 'ACTIVE' | 'INACTIVE';
 }
 
 /** 创建用户 API Key 响应 */

@@ -1,12 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Select, InputNumber, Table, Tag, Button, Space, message } from 'antd'
+import { Modal, Form, Input, Select, InputNumber, Table, Tag, Button, Space, message, Alert } from 'antd'
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
-import type { Product } from '@/types/product'
 import { userApiKeyApi } from '@/services/api/userApiKey'
-import { productApi } from '@/services/api/product'
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
@@ -28,7 +26,6 @@ export default function UserApiKeyModal({
   const { confirm } = useConfirm()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
   const [createdKey, setCreatedKey] = useState<string | null>(null)
   const [editingKey, setEditingKey] = useState<UserApiKey | null>(null)
   const [showForm, setShowForm] = useState(false)
@@ -38,21 +35,11 @@ export default function UserApiKeyModal({
 
   useEffect(() => {
     if (open) {
-      loadProducts()
       setCreatedKey(null)
       setEditingKey(null)
       setShowForm(false)
     }
   }, [open])
-
-  const loadProducts = async () => {
-    try {
-      const res = await productApi.listAll()
-      setProducts(res)
-    } catch {
-      // 产品列表加载失败时静默处理
-    }
-  }
 
   const handleCreate = () => {
     setEditingKey(null)
@@ -66,7 +53,6 @@ export default function UserApiKeyModal({
     setCreatedKey(null)
     form.setFieldsValue({
       name: key.name,
-      productIds: key.productIds,
       models: key.models,
       quotaLimit: key.quotaLimit,
       state: key.state,
@@ -94,7 +80,6 @@ export default function UserApiKeyModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          productIds: values.productIds,
           models: values.models,
           quotaLimit: values.quotaLimit,
           state: values.state,
@@ -104,7 +89,6 @@ export default function UserApiKeyModal({
       } else {
         const request: CreateUserApiKeyRequest = {
           userId,
-          productIds: values.productIds,
           name: values.name,
           models: values.models,
           quotaLimit: values.quotaLimit,
@@ -129,11 +113,6 @@ export default function UserApiKeyModal({
     setEditingKey(null)
     setCreatedKey(null)
   }
-
-  const productOptions = products.map((p) => ({
-    label: p.name,
-    value: p.id,
-  }))
 
   const columns = [
     {
@@ -201,6 +180,13 @@ export default function UserApiKeyModal({
 
       {!showForm && (
         <div style={{ marginBottom: 12 }}>
+          <Alert
+            message="权限说明"
+            description="API Key 的渠道访问权限由用户所属团队决定，创建时无需选择渠道。"
+            type="info"
+            showIcon
+            style={{ marginBottom: 12 }}
+          />
           <Button type="primary" onClick={handleCreate}>{t('addApiKey')}</Button>
         </div>
       )}
@@ -210,19 +196,6 @@ export default function UserApiKeyModal({
           <Form form={form} layout="vertical">
             <Form.Item name="name" label={t('apiKey.name')} rules={[{ required: true, message: t('apiKey.nameRequired') }]}>
               <Input placeholder={t('apiKey.namePlaceholder')} />
-            </Form.Item>
-            <Form.Item
-              name="productIds"
-              label={t('apiKey.products')}
-              rules={[{ required: true, message: t('apiKey.productsRequired') }]}
-            >
-              <Select
-                mode="multiple"
-                placeholder={t('apiKey.productsPlaceholder')}
-                options={productOptions}
-                optionFilterProp="label"
-                maxTagCount="responsive"
-              />
             </Form.Item>
             <Form.Item name="models" label={t('apiKey.models')}>
               <Select

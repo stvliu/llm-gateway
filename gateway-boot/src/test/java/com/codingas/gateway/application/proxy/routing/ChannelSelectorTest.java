@@ -6,6 +6,8 @@ import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
+import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,11 +35,21 @@ class ChannelSelectorTest {
     @Mock
     private ChannelGateway channelGateway;
 
+    @Mock
+    private UserTeamGateway userTeamGateway;
+
+    @Mock
+    private TeamChannelGateway teamChannelGateway;
+
     private ChannelSelector selector;
+
+    private static final Long USER_ID = 1L;
+    private static final Long TEAM_ID = 100L;
+    private static final Long MODEL_ID = 1L;
 
     @BeforeEach
     void setUp() {
-        selector = new ChannelSelector(channelModelGateway, channelGateway);
+        selector = new ChannelSelector(channelModelGateway, channelGateway, userTeamGateway, teamChannelGateway);
     }
 
     @Nested
@@ -47,15 +59,19 @@ class ChannelSelectorTest {
         @Test
         @DisplayName("有活跃通道时返回第一个活跃的 ChannelModel")
         void select_withActiveChannel_returnsFirstActive() {
+            // Arrange — 用户属于团队，团队有渠道 10L 和 20L
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L, 200L));
+
             ChannelModel cm1 = mock(ChannelModel.class);
             when(cm1.getChannelId()).thenReturn(100L);
             ChannelModel cm2 = mock(ChannelModel.class);
             when(cm2.getChannelId()).thenReturn(200L);
 
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1, cm2));
+            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(cm1, cm2));
 
             Channel ch1 = mock(Channel.class);
-            when(ch1.getState()).thenReturn(ChannelState.DISABLED);
+            when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
 
             Channel ch2 = mock(Channel.class);
             when(ch2.getId()).thenReturn(200L);
@@ -63,34 +79,68 @@ class ChannelSelectorTest {
 
             when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
 
-            ChannelModel result = selector.select(1L);
+            // Act
+            ChannelModel result = selector.select(MODEL_ID, USER_ID);
 
+            // Assert
             assertThat(result).isSameAs(cm2);
         }
 
         @Test
         @DisplayName("没有活跃通道时抛出 ResourceNotFoundException")
         void select_noActiveChannel_throwsException() {
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L));
+
             ChannelModel cm1 = mock(ChannelModel.class);
             when(cm1.getChannelId()).thenReturn(100L);
 
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of(cm1));
+            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(cm1));
 
             Channel ch1 = mock(Channel.class);
-            when(ch1.getState()).thenReturn(ChannelState.DISABLED);
+            when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
 
             when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));
 
-            assertThatThrownBy(() -> selector.select(1L))
+            // Act & Assert
+            assertThatThrownBy(() -> selector.select(MODEL_ID, USER_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
         @Test
         @DisplayName("没有 ChannelModel 时抛出 ResourceNotFoundException")
         void select_noChannelModel_throwsException() {
-            when(channelModelGateway.findActiveByModelSpecId(1L)).thenReturn(List.of());
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L));
+            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of());
 
-            assertThatThrownBy(() -> selector.select(1L))
+            // Act & Assert
+            assertThatThrownBy(() -> selector.select(MODEL_ID, USER_ID))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("用户未关联团队时抛出 ResourceNotFoundException")
+        void select_noTeam_throwsException() {
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(null);
+
+            // Act & Assert
+            assertThatThrownBy(() -> selector.select(MODEL_ID, USER_ID))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("团队未关联渠道时抛出 ResourceNotFoundException")
+        void select_noTeamChannels_throwsException() {
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of());
+
+            // Act & Assert
+            assertThatThrownBy(() -> selector.select(MODEL_ID, USER_ID))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }

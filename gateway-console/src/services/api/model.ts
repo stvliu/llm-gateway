@@ -1,11 +1,11 @@
 import { api } from './client';
 import type { Model, CreateModelRequest, UpdateModelRequest } from '@/types/model';
-import type { PageResponse, PageParams } from '@/types/api';
 
+/** 模型 API */
 export const modelApi = {
   /** 获取模型列表 */
-  list: (params?: PageParams & { providerId?: number }) =>
-    api.get<PageResponse<Model>>('/models', { params }),
+  list: (params?: Record<string, unknown>) =>
+    api.get<Model[]>('/models', { params }),
 
   /** 获取模型详情 */
   get: (id: number) =>
@@ -25,5 +25,5 @@ export const modelApi = {
 
   /** 启用/禁用模型 */
   setEnabled: (id: number, enabled: boolean) =>
-    api.patch<Model>(`/models/${id}/enabled`, null, { params: { enabled } }),
+    api.patch<Model>(`/models/${id}/state`, null, { params: { enabled } }),
 };

@@ -25,12 +25,12 @@ class PlanModelCatalogTest {
     void setAndGetFields() {
         PlanModelCatalog catalog = new PlanModelCatalog();
         catalog.setPlanCode("volcengine_doubao_payg");
-        catalog.setProviderModelId("doubao-pro-32k");
+        catalog.setModelName("doubao-pro-32k");
         catalog.setSource(CatalogSource.PROVIDER_API);
         catalog.setSyncedAt(Instant.now());
 
         assertThat(catalog.getPlanCode()).isEqualTo("volcengine_doubao_payg");
-        assertThat(catalog.getProviderModelId()).isEqualTo("doubao-pro-32k");
+        assertThat(catalog.getModelName()).isEqualTo("doubao-pro-32k");
         assertThat(catalog.getSource()).isEqualTo(CatalogSource.PROVIDER_API);
     }
 }

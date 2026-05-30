@@ -22,7 +22,10 @@ public class ChannelModel extends BaseEntity {
 
     private Long channelId;
 
-    private Long modelSpecId;
+    private Long modelId;
+
+    /** 上游模型名，null 表示与 Model.modelName 相同 */
+    private String upstreamModelName;
 
     /** 输入价格（每百万 Token） */
     private BigDecimal inputPrice;

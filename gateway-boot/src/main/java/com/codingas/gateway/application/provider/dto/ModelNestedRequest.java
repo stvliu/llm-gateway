@@ -15,7 +15,7 @@ public class ModelNestedRequest {
 
     @NotBlank(message = "Provider model ID is required")
     @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
-    private String providerModelId;
+    private String modelName;
 
     @Size(max = 256, message = "Display name must not exceed 256 characters")
     private String displayName;

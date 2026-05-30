@@ -88,7 +88,7 @@ export default function Users() {
       render: (state: UserState) => {
         const colorMap: Record<UserState, string> = {
           ACTIVE: 'green',
-          DISABLED: 'red',
+          INACTIVE: 'red',
           LOCKED: 'orange',
         };
         return (
@@ -164,7 +164,7 @@ export default function Users() {
             <Form.Item name="state" label={t('user.state')}>
               <Select>
                 <Select.Option value="ACTIVE">{t('state.active')}</Select.Option>
-                <Select.Option value="DISABLED">{t('state.disabled')}</Select.Option>
+                <Select.Option value="INACTIVE">{t('state.disabled')}</Select.Option>
                 <Select.Option value="LOCKED">{t('state.locked')}</Select.Option>
               </Select>
             </Form.Item>

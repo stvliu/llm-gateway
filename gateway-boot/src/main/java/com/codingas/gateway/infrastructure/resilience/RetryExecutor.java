@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.resilience;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.function.Supplier;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
  *
  * <p>基于指数退避策略执行带重试的操作。</p>
  */
+@Component
 public class RetryExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(RetryExecutor.class);

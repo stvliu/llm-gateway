@@ -5,10 +5,12 @@ import {
   SunOutlined,
   MoonOutlined,
   LaptopOutlined,
+  CodeOutlined,
   LogoutOutlined,
   UserOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
 import logoSvg from '@/assets/images/logo-full.svg';
@@ -73,7 +75,8 @@ export function LeftHeader({ collapsed }: LeftHeaderProps) {
  */
 export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
   const { t, i18n } = useTranslation('common');
-  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, logout, hasPermission } = useAuthStore();
   const { setMode, getEffectiveTheme } = useThemeStore();
   const { token } = theme.useToken();
   const isDark = getEffectiveTheme() === 'dark';
@@ -145,6 +148,16 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
             { value: 'en-US', label: t('language.enUS') },
           ]}
         />
+
+        {hasPermission('developer:access') && (
+          <Button
+            type="text"
+            icon={<CodeOutlined />}
+            onClick={() => navigate('/developer')}
+          >
+            {t('header.switchToDeveloper', { defaultValue: '切换到开发者视图' })}
+          </Button>
+        )}
 
         <Dropdown menu={{ items: userItems }} trigger={['click']}>
           <Space style={{ cursor: 'pointer' }}>

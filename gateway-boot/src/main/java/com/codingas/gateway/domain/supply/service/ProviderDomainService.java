@@ -61,18 +61,17 @@ public class ProviderDomainService {
     public Provider disable(Long id) {
         Provider provider = providerGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("PROVIDER_NOT_FOUND", "供应商不存在: " + id));
-        provider.setState(ProviderState.DISABLED);
+        provider.setState(ProviderState.INACTIVE);
         return providerGateway.save(provider);
     }
 
     /**
-     * 软删除供应商
+     * 删除供应商
      */
     public void delete(Long id) {
         Provider provider = providerGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("PROVIDER_NOT_FOUND", "供应商不存在: " + id));
-        provider.setState(ProviderState.DELETED);
-        providerGateway.save(provider);
+        providerGateway.deleteById(id);
     }
 
     /**

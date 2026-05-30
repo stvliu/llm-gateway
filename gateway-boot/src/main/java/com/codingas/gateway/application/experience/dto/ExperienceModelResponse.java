@@ -7,6 +7,6 @@ package com.codingas.gateway.application.experience.dto;
  */
 public record ExperienceModelResponse(
     Long id,
-    String providerModelId,
+    String modelName,
     String displayName
 ) {}

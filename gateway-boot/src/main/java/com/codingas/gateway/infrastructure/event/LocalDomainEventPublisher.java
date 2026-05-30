@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * <p>使用 Spring ApplicationEvent，适用于单实例部署。</p>
  */
 @Component
-@Profile({"local", "dev", "standalone"})
+@Profile({"local", "dev", "standalone", "test"})
 @Slf4j
 @RequiredArgsConstructor
 public class LocalDomainEventPublisher implements DomainEventPublisher {

@@ -1,7 +1,7 @@
 import { Tooltip, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-export type StatusType = 'ACTIVE' | 'DISABLED' | 'LOCKED' | 'EXPIRING' | 'EXPIRED';
+export type StatusType = 'ACTIVE' | 'INACTIVE' | 'LOCKED' | 'EXPIRING' | 'EXPIRED';
 
 interface StatusIndicatorProps {
   status: StatusType;
@@ -28,7 +28,7 @@ export function StatusIndicator({
           label: t('state.active', { ns: 'common' }),
           pulse: true,
         };
-      case 'DISABLED':
+      case 'INACTIVE':
         return {
           color: token.colorTextDisabled,
           label: t('state.disabled', { ns: 'common' }),
@@ -87,18 +87,6 @@ export function StatusIndicator({
             {config.label}
           </span>
         )}
-        <style>{`
-          @keyframes pulse {
-            0%, 100% {
-              opacity: 1;
-              transform: scale(1);
-            }
-            50% {
-              opacity: 0.7;
-              transform: scale(1.1);
-            }
-          }
-        `}</style>
       </span>
     </Tooltip>
   );

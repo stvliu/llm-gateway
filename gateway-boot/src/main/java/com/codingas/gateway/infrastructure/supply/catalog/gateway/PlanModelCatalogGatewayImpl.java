@@ -31,8 +31,8 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
     }
 
     @Override
-    public Optional<PlanModelCatalog> findByPlanCodeAndProviderModelId(String planCode, String providerModelId) {
-        return repository.findByPlanCodeAndProviderModelId(planCode, providerModelId).map(this::toEntity);
+    public Optional<PlanModelCatalog> findByPlanCodeAndModelName(String planCode, String modelName) {
+        return repository.findByPlanCodeAndModelName(planCode, modelName).map(this::toEntity);
     }
 
     @Override
@@ -41,8 +41,8 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
     }
 
     @Override
-    public List<PlanModelCatalog> findByProviderModelId(String providerModelId) {
-        return repository.findByProviderModelId(providerModelId).stream().map(this::toEntity).toList();
+    public List<PlanModelCatalog> findByModelName(String modelName) {
+        return repository.findByModelName(modelName).stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -58,10 +58,10 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
     @Override
     public List<PlanModelCatalog> findBySourceExcludingKeys(CatalogSource source,
                                                              List<String> activePlanCodes,
-                                                             List<String> activeProviderModelIds) {
+                                                             List<String> activeModelNames) {
         return findBySource(source).stream()
             .filter(entry -> !(activePlanCodes.contains(entry.getPlanCode())
-                && activeProviderModelIds.contains(entry.getProviderModelId())))
+                && activeModelNames.contains(entry.getModelName())))
             .toList();
     }
 
@@ -69,7 +69,7 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         var entity = new PlanModelCatalog();
         entity.setId(doObj.getId());
         entity.setPlanCode(doObj.getPlanCode());
-        entity.setProviderModelId(doObj.getProviderModelId());
+        entity.setModelName(doObj.getModelName());
         entity.setSource(CatalogSource.valueOf(doObj.getSource()));
         entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
@@ -84,7 +84,7 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         var doObj = new PlanModelCatalogDo();
         doObj.setId(entity.getId());
         doObj.setPlanCode(entity.getPlanCode());
-        doObj.setProviderModelId(entity.getProviderModelId());
+        doObj.setModelName(entity.getModelName());
         doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
         doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());

@@ -19,12 +19,9 @@ public interface UserApiKeyGateway {
     /** 按 Key 前缀查找（认证用） */
     Optional<UserApiKey> findByKeyPrefix(String keyPrefix);
 
-    /** 保存（含产品关联） */
+    /** 保存（含渠道关联） */
     UserApiKey save(UserApiKey userApiKey);
 
     /** 删除 */
     void delete(UserApiKey userApiKey);
-
-    /** 查询关联某产品的 Key ID 列表 */
-    List<Long> findIdsByProductId(Long productId);
 }

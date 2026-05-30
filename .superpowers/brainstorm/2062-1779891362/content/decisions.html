@@ -1,0 +1,85 @@
+<h2>关键设计决策</h2>
+<p class="subtitle">每个决策提供 2 种方案，点击选择你的偏好</p>
+
+<div class="section">
+  <h3>决策 1：OutboundTuner 如何获取 upstreamModelName</h3>
+  <div class="options">
+    <div class="option" data-choice="route-a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>RoutingContext 携带字段（推荐）</h3>
+        <p>在 RoutingContext record 中增加 modelName / upstreamModelName 两个 String 字段。RoutingResolver 组装时从 Model/ChannelModel 取出填入。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>OutboundTuner 零依赖，纯读取</li><li>RoutingContext 仍是值对象（无实体引用）</li><li>数据流清晰：Resolver 组装 → Tuner 使用</li></ul></div>
+          <div class="cons"><h4>缺点</h4><ul><li>RoutingContext 多两个字段</li></ul></div>
+        </div>
+      </div>
+    </div>
+    <div class="option" data-choice="route-b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>Tuner 自行查找</h3>
+        <p>OutboundTuner 注入 ChannelModelGateway，通过 channelId + modelName 自行查找 ChannelModel 获取 upstreamModelName。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>RoutingContext 保持最小</li></ul></div>
+          <div class="cons"><h4>缺点</h4><ul><li>Tuner 多一次 DB 查询</li><li>Tuner 承担查找职责（越权）</li><li>Resolver 查完的数据又要再查一次</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>决策 2：UPSTREAM_MODEL_NAME_RULES 存储位置</h3>
+  <div class="options">
+    <div class="option" data-choice="rules-a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>内置 Map 常量（推荐）</h3>
+        <p>在 CatalogMaterializeService 中维护静态 Map，随版本更新。符合 spec 中"内置知识"的定位。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>零运行时开销</li><li>版本一致，无需额外配置</li><li>按 spec 原设计实现</li></ul></div>
+          <div class="cons"><h4>缺点</h4><ul><li>修改需重新部署</li></ul></div>
+        </div>
+      </div>
+    </div>
+    <div class="option" data-choice="rules-b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>@ConfigurationProperties 外部化</h3>
+        <p>将映射规则抽取到 application.yml，通过 Spring 配置加载，支持运行时刷新。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>无需改代码即可更新映射</li></ul></div>
+          <div class="cons"><h4>缺点</h4><ul><li>超出了 spec 设计的"内置知识"范畴</li><li>外部配置增加了运维心智负担</li><li>用户仍需在 ChannelModel 层面覆盖</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>决策 3：/v1/models 接口归属</h3>
+  <div class="options">
+    <div class="option" data-choice="endpoint-a" onclick="toggleSelect(this)">
+      <div class="letter">A</div>
+      <div class="content">
+        <h3>新建 ModelDiscoveryController（推荐）</h3>
+        <p>新建控制器，路径 /v1/models，专注模型发现用例，与后台 CRUD ModelController (/api/v1/models) 独立。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>职责单一，与 OpenAI 兼容端点对应</li><li>不影响后台管理 API</li><li>鉴权逻辑独立（API Key vs 管理员）</li></ul></div>
+        </div>
+      </div>
+    </div>
+    <div class="option" data-choice="endpoint-b" onclick="toggleSelect(this)">
+      <div class="letter">B</div>
+      <div class="content">
+        <h3>并入 ModelController</h3>
+        <p>在 ModelController 中增加路径 /v1/models 的兼容方法，复用 ModelService 查询。</p>
+        <div class="pros-cons">
+          <div class="pros"><h4>优点</h4><ul><li>复用已有 Service</li></ul></div>
+          <div class="cons"><h4>缺点</h4><ul><li>/v1/models 和 /api/v1/models 混在一起</li><li>鉴权逻辑混淆（API Key vs 管理员登录）</li></ul></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

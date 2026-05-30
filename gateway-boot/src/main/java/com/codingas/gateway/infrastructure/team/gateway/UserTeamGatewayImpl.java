@@ -59,6 +59,14 @@ public class UserTeamGatewayImpl implements UserTeamGateway {
         userTeamRepository.updateRole(userId, teamId, role.getCode());
     }
 
+    @Override
+    public Long findTeamIdByUserId(Long userId) {
+        return userTeamRepository.findByUserId(userId).stream()
+                .findFirst()
+                .map(UserTeamDo::getTeamId)
+                .orElse(null);
+    }
+
     private UserTeam toEntity(UserTeamDo dataObject) {
         UserTeam entity = new UserTeam();
         entity.setUserId(dataObject.getUserId());

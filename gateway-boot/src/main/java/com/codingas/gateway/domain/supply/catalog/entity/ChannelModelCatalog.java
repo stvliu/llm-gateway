@@ -17,7 +17,7 @@ public class ChannelModelCatalog extends BaseEntity {
 
     private Long channelModelId;
 
-    private String providerModelId;
+    private String modelName;
 
     private String channelName;
 

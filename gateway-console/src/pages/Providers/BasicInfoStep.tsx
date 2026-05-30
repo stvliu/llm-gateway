@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useProviderCatalogs } from '@/services/query/useCatalog';
 import type { CreateProviderRequest } from '@/types/provider';
 
 const { Text } = Typography;
@@ -25,19 +24,19 @@ export function BasicInfoStep({
   const basicInfoRef = useRef(basicInfo);
   basicInfoRef.current = basicInfo;
 
-  // 查询供应商目录列表
-  const { data: _catalogList } = useProviderCatalogs();
-
-  // 初始化基本信息
+  // 初始化基本信息（仅挂载时执行）
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   useEffect(() => {
     if (!basicInfo) {
-      onChange({
+      onChangeRef.current({
+        code: '',
         providerName: '',
         websiteUrl: '',
         apiDocUrl: '',
       });
     }
-  }, []); // 仅在挂载时初始化
+  }, []);
 
   // 处理字段变更（使用 ref 保持回调稳定，避免 Input 因回调重建而失去焦点）
   const handleFieldChange = useCallback((field: keyof CreateProviderRequest, value: string) => {
@@ -50,6 +49,18 @@ export function BasicInfoStep({
   return (
     <div>
       <div style={{ display: 'grid', gap: 16 }}>
+        {/* 品牌标识 */}
+        <div>
+          <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>
+            {t('code', { defaultValue: '品牌标识' })} <Text type="danger">*</Text>
+          </Text>
+          <Input
+            value={basicInfo?.code || ''}
+            onChange={(e) => handleFieldChange('code', e.target.value)}
+            placeholder="openai"
+          />
+        </div>
+
         {/* 供应商名称 */}
         <div>
           <Text type="secondary" style={{ fontSize: 12, marginBottom: 4, display: 'block' }}>

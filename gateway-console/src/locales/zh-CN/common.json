@@ -1,18 +1,14 @@
 {
   "menu": {
-    "home": "首页",
-    "providerManagement": "供应商管理",
+    "home": "仪表盘",
     "providers": "供应商",
-    "models": "模型",
+    "models": "模型目录",
+    "apiKeys": "API Key 管理",
+    "teams": "团队与权限",
+    "developer": "开发者门户",
+    "systemSettings": "系统设置",
     "catalog": "目录管理",
-    "templates": "供应商模板",
-    "providerKeys": "供应商密钥",
-    "keyManagement": "密钥管理",
-    "userManagement": "用户管理",
-    "users": "用户列表",
-    "myApiKeys": "我的密钥",
-    "changePassword": "修改密码",
-    "systemSettings": "系统设置"
+    "changePassword": "修改密码"
   },
   "app": {
     "title": "LLM Gateway",
@@ -159,6 +155,4 @@
     "before": "早于",
     "after": "晚于",
     "between": "在范围内"
-  },
-  "menu.teams": "团队管理"
-}
+  }}
