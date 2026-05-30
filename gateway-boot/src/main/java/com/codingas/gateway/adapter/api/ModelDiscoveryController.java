@@ -25,15 +25,15 @@ public class ModelDiscoveryController {
     /**
      * 获取可见模型列表
      *
-     * <p>从 request attribute 中获取已认证的 Identity，提取 credentialId（API Key ID）
+     * <p>从 request attribute 中获取已认证的 Identity，提取 userId
      * 调用服务查询可见模型。</p>
      */
     @GetMapping
     public ModelDiscoveryResponse listModels(HttpServletRequest request) {
         Identity identity = (Identity) request.getAttribute("identity");
-        if (identity == null || identity.credentialId() == null) {
+        if (identity == null || identity.userId() == null) {
             throw new GatewayRequestException("AUTH_REQUIRED", "缺少认证信息");
         }
-        return modelDiscoveryService.getVisibleModels(identity.credentialId());
+        return modelDiscoveryService.getVisibleModels(identity.userId());
     }
 }
