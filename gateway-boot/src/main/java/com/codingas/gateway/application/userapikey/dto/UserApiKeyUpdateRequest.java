@@ -9,7 +9,6 @@ import java.util.List;
  */
 public record UserApiKeyUpdateRequest(
         String name,
-        List<Long> channelIds,
         List<String> models,
         Long quotaLimit,
         UserApiKeyState state

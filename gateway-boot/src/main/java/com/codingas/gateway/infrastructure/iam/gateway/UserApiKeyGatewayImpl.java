@@ -5,8 +5,6 @@ import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyChannelDo;
-import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyChannelRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +26,6 @@ import java.util.Optional;
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
     private final UserApiKeyRepository repository;
-    private final UserApiKeyChannelRepository channelRepository;
     private final ApiKeyEncryptionDomainService encryptionService;
 
     @Override
@@ -75,30 +72,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setUpdatedAt(Instant.now());
         UserApiKeyDo saved = repository.save(dataObject);
 
-        // 保存渠道关联
-        if (userApiKey.getChannelIds() != null) {
-            channelRepository.deleteByUserApiKeyId(saved.getId());
-            for (Long channelId : userApiKey.getChannelIds()) {
-                UserApiKeyChannelDo rel = new UserApiKeyChannelDo();
-                rel.setUserApiKeyId(saved.getId());
-                rel.setChannelId(channelId);
-                channelRepository.save(rel);
-            }
-        }
-
         return toEntity(saved);
     }
 
     @Override
     @Transactional
     public void delete(UserApiKey userApiKey) {
-        channelRepository.deleteByUserApiKeyId(userApiKey.getId());
         repository.deleteById(userApiKey.getId());
-    }
-
-    @Override
-    public List<Long> findIdsByChannelId(Long channelId) {
-        return channelRepository.findUserApiKeyIdByChannelId(channelId);
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
@@ -113,10 +93,6 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setState(dataObject.getState());
         entity.setCreatedAt(dataObject.getCreatedAt());
         entity.setUpdatedAt(dataObject.getUpdatedAt());
-
-        // 加载渠道关联
-        List<Long> channelIds = channelRepository.findChannelIdByUserApiKeyId(dataObject.getId());
-        entity.setChannelIds(channelIds);
 
         // 解密返回明文 Key
         if (dataObject.getKeyEncrypted() != null && !dataObject.getKeyEncrypted().isBlank()) {

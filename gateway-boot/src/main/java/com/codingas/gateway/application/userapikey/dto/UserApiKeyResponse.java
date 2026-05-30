@@ -11,8 +11,6 @@ import java.util.List;
 public record UserApiKeyResponse(
         Long id,
         Long userId,
-        List<Long> productIds,
-        List<ChannelBrief> channels,
         String keyPrefix,
         String name,
         List<String> models,

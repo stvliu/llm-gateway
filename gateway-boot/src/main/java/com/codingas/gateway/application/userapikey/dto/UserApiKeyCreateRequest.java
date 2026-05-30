@@ -1,7 +1,6 @@
 package com.codingas.gateway.application.userapikey.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
@@ -12,8 +11,6 @@ import java.util.List;
 public record UserApiKeyCreateRequest(
         @NotNull(message = "用户 ID 不能为空")
         Long userId,
-        @NotEmpty(message = "至少需要关联一个渠道")
-        List<Long> channelIds,
         @NotBlank(message = "密钥名称不能为空")
         String name,
         List<String> models,

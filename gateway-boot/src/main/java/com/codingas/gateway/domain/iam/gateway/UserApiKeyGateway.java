@@ -24,7 +24,4 @@ public interface UserApiKeyGateway {
 
     /** 删除 */
     void delete(UserApiKey userApiKey);
-
-    /** 查询关联某渠道的 Key ID 列表 */
-    List<Long> findIdsByChannelId(Long channelId);
 }
