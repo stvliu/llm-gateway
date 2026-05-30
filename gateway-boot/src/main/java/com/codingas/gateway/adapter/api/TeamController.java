@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import cn.dev33.satoken.annotation.SaCheckRole;
 import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.team.TeamService;
 import com.codingas.gateway.application.team.dto.AddTeamMemberRequest;
@@ -164,6 +165,7 @@ public class TeamController {
     /**
      * 获取团队关联的渠道 ID 列表
      */
+    @SaCheckRole("ADMIN")
     @GetMapping("/{teamId}/channels")
     public List<Long> getTeamChannels(@PathVariable Long teamId) {
         return teamChannelGateway.findChannelIdsByTeamId(teamId);
@@ -172,17 +174,20 @@ public class TeamController {
     /**
      * 更新团队关联的渠道（全量替换）
      */
+    @SaCheckRole("ADMIN")
     @PutMapping("/{teamId}/channels")
     public ResponseEntity<Void> updateTeamChannels(
             @PathVariable Long teamId,
-            @RequestBody List<Long> channelIds) {
-        // 先删除旧的关联
+            @RequestBody TeamChannelsUpdateRequest request) {
         teamChannelGateway.deleteByTeamId(teamId);
-        // 创建新的关联
-        List<TeamChannel> teamChannels = channelIds.stream()
-                .map(channelId -> new TeamChannel(teamId, channelId))
-                .toList();
-        teamChannelGateway.saveAll(teamChannels);
+        for (Long channelId : request.channelIds()) {
+            teamChannelGateway.save(new TeamChannel(teamId, channelId));
+        }
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * 团队渠道更新请求
+     */
+    record TeamChannelsUpdateRequest(List<Long> channelIds) {}
 }

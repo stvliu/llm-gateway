@@ -49,21 +49,19 @@ public class ModelDiscoveryService {
             return new ModelDiscoveryResponse("list", List.of());
         }
 
-        // 通过渠道查找可用模型
-        List<Model> visibleModels = channelIds.stream()
+        // 通过渠道查找可用模型（按 ChannelModel 的 modelId 去重）
+        List<ModelDiscoveryResponse.ModelItem> items = channelIds.stream()
                 .flatMap(channelId -> channelModelGateway.findActiveByChannelId(channelId).stream())
-                .map(cm -> modelGateway.findById(cm.getModelId()).orElse(null))
-                .filter(m -> m != null && ModelState.ACTIVE.equals(m.getState()))
-                .distinct()
-                .toList();
-
-        List<ModelDiscoveryResponse.ModelItem> items = visibleModels.stream()
+                .map(cm -> modelGateway.findById(cm.getModelId()))
+                .flatMap(opt -> opt.stream())
+                .filter(m -> ModelState.ACTIVE.equals(m.getState()))
                 .map(m -> new ModelDiscoveryResponse.ModelItem(
                         m.getModelName(),
                         "model",
                         m.getCreatedAt() != null ? m.getCreatedAt().getEpochSecond() : 0L,
                         "system"
                 ))
+                .distinct()
                 .toList();
 
         log.debug("模型发现: userId={}, teamId={}, visibleModels={}", userId, teamId, items.size());

@@ -11,6 +11,7 @@ import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -41,9 +42,9 @@ public class ChannelSelector {
     public ChannelModel select(Long modelId, Long userId) {
         // 获取用户团队渠道集合
         Long teamId = userTeamGateway.findTeamIdByUserId(userId);
-        List<Long> teamChannelIds = teamId != null
-                ? teamChannelGateway.findChannelIdsByTeamId(teamId)
-                : List.of();
+        Set<Long> permittedChannelIds = teamId != null
+                ? new HashSet<>(teamChannelGateway.findChannelIdsByTeamId(teamId))
+                : Set.of();
 
         List<ChannelModel> channelModels = channelModelGateway.findActiveByModelId(modelId);
         if (channelModels.isEmpty()) {
@@ -51,10 +52,10 @@ public class ChannelSelector {
         }
 
         // 过滤：只保留团队渠道内的 ChannelModel
-        List<ChannelModel> permittedModels = teamChannelIds.isEmpty()
+        List<ChannelModel> permittedModels = permittedChannelIds.isEmpty()
                 ? List.of()
                 : channelModels.stream()
-                        .filter(cm -> teamChannelIds.contains(cm.getChannelId()))
+                        .filter(cm -> permittedChannelIds.contains(cm.getChannelId()))
                         .toList();
 
         // 再过滤活跃 Channel

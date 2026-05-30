@@ -81,5 +81,5 @@ export const teamApi = {
 
   /** 更新团队的渠道列表 */
   updateChannels: (teamId: number, channelIds: number[]) =>
-    api.put<void>(`/teams/${teamId}/channels`, channelIds),
+    api.put<void>(`/teams/${teamId}/channels`, { channelIds }),
 };

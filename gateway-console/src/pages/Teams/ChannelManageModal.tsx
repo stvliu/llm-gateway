@@ -51,8 +51,7 @@ export default function ChannelManageModal({
         ]);
         setChannels(allChannels);
         setSelectedChannelIds(new Set(teamChannelIds));
-      } catch (error) {
-        console.error('加载渠道数据失败:', error);
+      } catch {
         message.error(t('channelManage.loadError', { defaultValue: '加载渠道数据失败' }));
       } finally {
         setLoading(false);
@@ -97,8 +96,7 @@ export default function ChannelManageModal({
       await teamApi.updateChannels(teamId, Array.from(selectedChannelIds));
       message.success(t('channelManage.saveSuccess', { defaultValue: '渠道配置已保存' }));
       onCancel();
-    } catch (error) {
-      console.error('保存渠道配置失败:', error);
+    } catch {
       message.error(t('channelManage.saveError', { defaultValue: '保存失败' }));
     } finally {
       setSaving(false);
