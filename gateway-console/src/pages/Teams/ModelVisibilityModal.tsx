@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert } from 'antd';
+import { Modal, Table, Checkbox, Space, Tag, Typography, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useModels } from '@/services/query/useModels';
+import { teamApi } from '@/services/api/team';
 import type { Team } from '@/types/team';
 import type { Model } from '@/types/model';
 
@@ -26,32 +27,41 @@ export default function ModelVisibilityModal({
   const { message } = App.useApp();
   const { data: models, isLoading } = useModels();
 
-  // 本地状态存储可见性配置（实际项目中应从 API 获取）
   const [visibility, setVisibility] = useState<Record<number, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  // 当模态框打开时，初始化可见性状态
+  // 当模态框打开时，从 API 获取当前可见性配置
   useEffect(() => {
-    if (open && models) {
-      // 默认所有模型可见
-      const initialVisibility: Record<number, boolean> = {};
-      models.forEach((model: Model) => {
-        initialVisibility[model.id] = true;
-      });
-      setVisibility(initialVisibility);
+    if (open && team) {
+      setLoading(true);
+      teamApi.listAllowedModels(team.id)
+        .then((allowedIds) => {
+          const map: Record<number, boolean> = {};
+          const allowedSet = new Set(allowedIds);
+          // 如果 API 返回空列表，默认全部可见
+          const allVisible = allowedIds.length === 0;
+          models?.forEach((model: Model) => {
+            map[model.id] = allVisible || allowedSet.has(model.id);
+          });
+          setVisibility(map);
+        })
+        .catch(() => {
+          // 获取失败时默认全部可见
+          const map: Record<number, boolean> = {};
+          models?.forEach((model: Model) => {
+            map[model.id] = true;
+          });
+          setVisibility(map);
+        })
+        .finally(() => setLoading(false));
     }
-  }, [open, models]);
+  }, [open, team, models]);
 
-  /**
-   * 切换模型可见性
-   */
   const handleToggle = (modelId: number, checked: boolean) => {
     setVisibility((prev) => ({ ...prev, [modelId]: checked }));
   };
 
-  /**
-   * 全选/取消全选
-   */
   const handleSelectAll = (checked: boolean) => {
     if (!models) return;
     const newVisibility: Record<number, boolean> = {};
@@ -61,19 +71,19 @@ export default function ModelVisibilityModal({
     setVisibility(newVisibility);
   };
 
-  /**
-   * 保存配置
-   */
   const handleSave = async () => {
     if (!team) return;
     setSaving(true);
     try {
-      // 模拟保存操作（实际项目中应调用 API）
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const allowedIds = Object.entries(visibility)
+        .filter(([, v]) => v)
+        .map(([id]) => Number(id));
+      await teamApi.updateAllowedModels(team.id, allowedIds);
       message.success(t('modelVisibility.saveSuccess', { defaultValue: '模型可见性配置已保存' }));
       onClose();
-    } catch {
-      message.error(t('modelVisibility.saveError', { defaultValue: '保存失败' }));
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : '';
+      message.error(errMsg || t('modelVisibility.saveError', { defaultValue: '保存失败' }));
     } finally {
       setSaving(false);
     }
@@ -146,12 +156,6 @@ export default function ModelVisibilityModal({
       cancelText={t('modelVisibility.cancel', { defaultValue: '取消' })}
     >
       <div style={{ marginBottom: 16 }}>
-        <Alert
-          type="warning"
-          message={t('modelVisibility.demoMode', { defaultValue: '演示模式：此功能暂未接入后端 API，保存操作不会实际生效' })}
-          style={{ marginBottom: 12 }}
-          showIcon
-        />
         <Text type="secondary">
           {t('modelVisibility.description', { defaultValue: '配置该团队可访问的模型列表。取消勾选的模型将不会在该团队的模型列表中显示。' })}
         </Text>
@@ -169,7 +173,7 @@ export default function ModelVisibilityModal({
       <Table
         dataSource={models || []}
         columns={columns}
-        loading={isLoading}
+        loading={isLoading || loading}
         rowKey="id"
         pagination={false}
         size="small"

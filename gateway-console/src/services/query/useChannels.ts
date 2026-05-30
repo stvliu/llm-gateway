@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { channelApi } from '@/services/api/channel';
 import type {
   CreateChannelRequest,
@@ -6,6 +6,7 @@ import type {
   CreateChannelEndpointRequest,
   CreateChannelCredentialRequest,
   UpdateChannelCredentialRequest,
+  CreateChannelModelRequest,
 } from '@/types/channel';
 
 export const channelKeys = {
@@ -29,13 +30,13 @@ export function useChannels(providerId: number) {
 
 /** 批量获取多个供应商的渠道列表 */
 export function useChannelsBatch(providerIds: number[]) {
-  return providerIds.map((providerId) =>
-    useQuery({
+  return useQueries({
+    queries: providerIds.map((providerId) => ({
       queryKey: channelKeys.list(providerId),
       queryFn: () => channelApi.list({ providerId }),
       enabled: !!providerId,
-    })
-  );
+    })),
+  });
 }
 
 /** 获取渠道详情 */
@@ -150,13 +151,13 @@ export function useChannelCredentials(channelId: number) {
 
 /** 批量获取多个渠道的凭证列表 */
 export function useChannelCredentialsBatch(channelIds: number[]) {
-  return channelIds.map((channelId) =>
-    useQuery({
+  return useQueries({
+    queries: channelIds.map((channelId) => ({
       queryKey: channelKeys.credentials(channelId),
       queryFn: () => channelApi.listCredentials(channelId),
       enabled: !!channelId,
-    })
-  );
+    })),
+  });
 }
 
 /** 创建渠道凭证 */
@@ -200,5 +201,54 @@ export function useTestChannelCredential() {
   return useMutation({
     mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
       channelApi.testCredential(channelId, id),
+  });
+}
+
+/** ---- 别名导出（兼容消费方命名） ---- */
+
+/** 创建通道（接受 { providerId, data } 格式参数） */
+export function useAddChannel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ data }: { providerId: number; data: CreateChannelRequest }) =>
+      channelApi.create(data),
+    onSuccess: (_, { providerId }) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.list(providerId) });
+    },
+  });
+}
+
+/** ---- 渠道模型映射 ---- */
+
+/** 获取渠道的模型映射列表 */
+export function useChannelModels(channelId: number) {
+  return useQuery({
+    queryKey: [...channelKeys.detail(channelId), 'models'],
+    queryFn: () => channelApi.listModels(channelId),
+    enabled: channelId > 0,
+  });
+}
+
+/** 创建渠道模型映射 */
+export function useCreateChannelModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, data }: { channelId: number; data: CreateChannelModelRequest }) =>
+      channelApi.createModel(channelId, data),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
+    },
+  });
+}
+
+/** 删除渠道模型映射 */
+export function useDeleteChannelModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, modelId }: { channelId: number; modelId: number }) =>
+      channelApi.deleteModel(channelId, modelId),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
+    },
   });
 }

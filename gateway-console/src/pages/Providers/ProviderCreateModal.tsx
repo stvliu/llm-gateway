@@ -1,9 +1,10 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Modal, Steps, App, Button, Space, Card, Tag, Spin, Typography, Form, Input } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviderCatalogs, useMaterializeProvider } from '@/services/query/useCatalog';
 import { useCreateProvider } from '@/services/query/useProviders';
+import { useAddChannel, useCreateChannelCredential, useCreateChannelModel } from '@/services/query/useChannels';
 import { ProviderIcon } from '@/components/ui';
 import CredentialStep from './CredentialStep';
 import { ModelSetupStep } from './ModelSetupStep';
@@ -11,6 +12,32 @@ import type { ProviderCatalog } from '@/types/catalog';
 import type { CredentialEntry } from './CredentialStep';
 
 const { Text, Paragraph } = Typography;
+
+const DRAFT_KEY = 'provider-create-draft';
+
+interface DraftData {
+  step: number;
+  selectedCatalogCode: string | null;
+  isCustomMode: boolean;
+  credentials: CredentialEntry[];
+  selectedModels: string[];
+  customFormValues: Record<string, string>;
+}
+
+function saveDraft(draft: DraftData) {
+  try { sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft)); } catch { /* ignore */ }
+}
+
+function loadDraft(): DraftData | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearDraft() {
+  try { sessionStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
+}
 
 interface Props {
   open: boolean;
@@ -30,6 +57,9 @@ export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
   const { message } = App.useApp();
   const materializeMutation = useMaterializeProvider();
   const createMutation = useCreateProvider();
+  const addChannelMutation = useAddChannel();
+  const createCredentialMutation = useCreateChannelCredential();
+  const createModelMutation = useCreateChannelModel();
   const { data: catalogList, isLoading: catalogLoading } = useProviderCatalogs();
   const [customForm] = Form.useForm();
 
@@ -40,7 +70,42 @@ export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
 
+  // 恢复草稿
+  useEffect(() => {
+    if (open) {
+      const draft = loadDraft();
+      if (draft) {
+        setCurrentStep(draft.step);
+        setIsCustomMode(draft.isCustomMode);
+        setCredentials(draft.credentials);
+        setSelectedModels(draft.selectedModels);
+        if (draft.customFormValues) {
+          customForm.setFieldsValue(draft.customFormValues);
+        }
+        if (draft.selectedCatalogCode && catalogList) {
+          const cat = catalogList.find((c) => c.code === draft.selectedCatalogCode);
+          if (cat) setSelectedCatalog(cat);
+        }
+      }
+    }
+  }, [open, catalogList, customForm]);
+
+  // 自动保存草稿
+  useEffect(() => {
+    if (open) {
+      saveDraft({
+        step: currentStep,
+        selectedCatalogCode: selectedCatalog?.code ?? null,
+        isCustomMode,
+        credentials,
+        selectedModels,
+        customFormValues: customForm.getFieldsValue(),
+      });
+    }
+  }, [open, currentStep, selectedCatalog, isCustomMode, credentials, selectedModels, customForm]);
+
   const handleClose = useCallback(() => {
+    clearDraft();
     setCurrentStep(0);
     setSelectedCatalog(null);
     setIsCustomMode(false);
@@ -74,32 +139,57 @@ export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
     setCurrentStep((s) => Math.max(s - 1, 0));
   }, []);
 
-  /** 完成创建 */
+  /** 完成创建：供应商 → 通道 → 凭证 → 模型关联 */
   const handleFinish = useCallback(async () => {
     setSaving(true);
     try {
       if (selectedCatalog && !isCustomMode) {
+        // 模板模式：物化创建
         await materializeMutation.mutateAsync(selectedCatalog.code);
-        message.success(t('template.createSuccess', {
-          defaultValue: `已创建供应商 "${selectedCatalog.name}"`,
-          name: selectedCatalog.name,
-        }));
       } else {
+        // 自定义模式：先创建供应商
         const values = await customForm.validateFields();
-        await createMutation.mutateAsync(values);
-        message.success(t('createSuccess', { defaultValue: '供应商创建成功' }));
+        const provider = await createMutation.mutateAsync(values);
+
+        // 创建默认通道
+        const channel = await addChannelMutation.mutateAsync({
+          providerId: provider.id,
+          data: {
+            name: `${provider.providerName} 默认通道`,
+            providerId: provider.id,
+            billingMode: 'PAY_AS_YOU_GO',
+          },
+        });
+
+        // 保存 API Key 凭证
+        const validKeys = credentials.filter((c) => c.value.trim());
+        for (const cred of validKeys) {
+          await createCredentialMutation.mutateAsync({
+            channelId: channel.id,
+            data: { channelId: channel.id, apiKey: cred.value.trim() },
+          });
+        }
+
+        // 关联选中的模型
+        for (const modelName of selectedModels) {
+          await createModelMutation.mutateAsync({
+            channelId: channel.id,
+            data: { modelName, upstreamModelName: modelName },
+          });
+        }
       }
-      // TODO: 保存凭证和模型关联（后端 API 就绪后接入）
+      message.success(t('createSuccess', { defaultValue: '供应商创建成功' }));
+      clearDraft();
       onCreated();
       handleClose();
     } catch (error: unknown) {
-      if (error && typeof error === 'object' && 'errorFields' in error) return; // 表单校验失败
-      console.error('Create failed:', error);
-      message.error(t('createFailed', { defaultValue: '创建失败' }));
+      if (error && typeof error === 'object' && 'errorFields' in error) return;
+      const errMsg = error instanceof Error ? error.message : '';
+      message.error(errMsg || t('createFailed', { defaultValue: '创建失败' }));
     } finally {
       setSaving(false);
     }
-  }, [selectedCatalog, isCustomMode, materializeMutation, createMutation, customForm, message, t, onCreated, handleClose]);
+  }, [selectedCatalog, isCustomMode, materializeMutation, createMutation, customForm, credentials, selectedModels, addChannelMutation, createCredentialMutation, createModelMutation, message, t, onCreated, handleClose]);
 
   // ========== 步骤内容 ==========
 

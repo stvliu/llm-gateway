@@ -43,9 +43,27 @@ print(response.json())`,
 });
 const data = await response.json();
 console.log(data);`,
+  java: (key) => `HttpClient client = HttpClient.newHttpClient();
+String body = """
+{
+  "model": "gpt-4o",
+  "messages": [{"role": "user", "content": "Hello"}]
+}
+""";
+
+HttpRequest request = HttpRequest.newBuilder()
+    .uri(URI.create("${GATEWAY_URL}/v1/chat/completions"))
+    .header("Authorization", "Bearer ${key || 'sk-your-api-key'}")
+    .header("Content-Type", "application/json")
+    .POST(HttpRequest.BodyPublishers.ofString(body))
+    .build();
+
+HttpResponse<String> response =
+    client.send(request, HttpResponse.BodyHandlers.ofString());
+System.out.println(response.body());`,
 };
 
-type Lang = 'curl' | 'python' | 'node';
+type Lang = 'curl' | 'python' | 'node' | 'java';
 
 export default function CodeSnippet({ apiKey }: Props) {
   const { message } = App.useApp();
@@ -72,6 +90,7 @@ export default function CodeSnippet({ apiKey }: Props) {
             { value: 'curl', label: 'cURL' },
             { value: 'python', label: 'Python' },
             { value: 'node', label: 'Node.js' },
+        { value: 'java', label: 'Java' },
           ]}
         />
         <Button size="small" icon={<CopyOutlined />} onClick={handleCopy}>

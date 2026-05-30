@@ -91,6 +91,25 @@ export default function Models() {
       render: (val: string) => val || '-',
     },
     {
+      title: t('provider', { defaultValue: '供应商' }),
+      dataIndex: 'providerName',
+      key: 'providerName',
+      width: 120,
+      render: (val: string) => val || '-',
+    },
+    {
+      title: t('pricing', { defaultValue: '定价' }),
+      key: 'pricing',
+      width: 140,
+      render: (_: unknown, record: Model) => {
+        const p = record.pricing;
+        if (!p?.inputPricePerMillion && !p?.outputPricePerMillion) return '-';
+        const input = p.inputPricePerMillion != null ? `$${p.inputPricePerMillion}` : '-';
+        const output = p.outputPricePerMillion != null ? `$${p.outputPricePerMillion}` : '-';
+        return <span style={{ fontSize: 12 }}>{input} / {output}</span>;
+      },
+    },
+    {
       title: t('contextWindow', { defaultValue: '上下文窗口' }),
       dataIndex: 'contextWindow',
       key: 'contextWindow',

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Table, Tag, Button, Popconfirm, App, Input, Typography } from 'antd';
-import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { Table, Tag, Button, Popconfirm, App, Input, Typography, Modal } from 'antd';
+import { DeleteOutlined, EyeOutlined, CopyOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
@@ -8,10 +8,12 @@ import type { UserApiKey } from '@/types/team';
 
 const { Text } = Typography;
 
-/** 下游 Key 状态映射（色盲友好） */
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  ACTIVE: { label: '活跃', color: '#16a34a', bg: '#dcfce7', icon: '✅' },
-  INACTIVE: { label: '未激活', color: '#64748b', bg: '#f1f5f9', icon: '⏸️' },
+/** 下游 Key 状态映射 */
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  ACTIVE: { label: '活跃', color: '#16a34a', bg: '#dcfce7' },
+  INACTIVE: { label: '未激活', color: '#64748b', bg: '#f1f5f9' },
+  DEGRADED: { label: '已降级', color: '#d97706', bg: '#fef3c7' },
+  EXPIRED: { label: '过期', color: '#dc2626', bg: '#fee2e2' },
 };
 
 export default function DownstreamKeysTable() {
@@ -39,16 +41,37 @@ export default function DownstreamKeysTable() {
     }
   };
 
+  const handleViewPlain = (record: UserApiKey) => {
+    Modal.info({
+      title: record.name || record.keyPrefix,
+      content: (
+        <div>
+          <Text code style={{ fontSize: 13, wordBreak: 'break-all' }}>{record.keyPrefix}••••••••</Text>
+          <Button
+            type="link"
+            size="small"
+            icon={<CopyOutlined />}
+            onClick={() => { navigator.clipboard.writeText(record.keyPrefix); message.success(t('copied', { defaultValue: '已复制' })); }}
+          />
+          <div style={{ marginTop: 8, color: '#64748b', fontSize: 12 }}>
+            出于安全考虑，完整 Key 仅在创建时展示一次，此处仅显示前缀。
+          </div>
+        </div>
+      ),
+      okText: t('close', { defaultValue: '关闭' }),
+    });
+  };
+
   const columns = [
     {
       title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
       dataIndex: 'keyPrefix',
       key: 'keyPrefix',
       width: 200,
-      render: (prefix: string) => (
+      render: (prefix: string, record: UserApiKey) => (
         <Text code style={{ fontSize: 12 }}>
           {prefix}
-          <Button type="link" size="small" icon={<EyeOutlined />} style={{ marginLeft: 4 }} />
+          <Button type="link" size="small" icon={<EyeOutlined />} style={{ marginLeft: 4 }} onClick={() => handleViewPlain(record)} />
         </Text>
       ),
     },
@@ -70,12 +93,26 @@ export default function DownstreamKeysTable() {
       key: 'state',
       width: 100,
       render: (state: string) => {
-        const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9', icon: '❓' };
+        const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9' };
         return (
           <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 4, padding: '2px 8px' }}>
-            {cfg.icon} {cfg.label}
+            {cfg.label}
           </Tag>
         );
+      },
+    },
+    {
+      title: t('expiresAt', { defaultValue: '过期时间' }),
+      dataIndex: 'expiresAt',
+      key: 'expiresAt',
+      width: 130,
+      render: (val: string | null | undefined) => {
+        if (!val) return <Text type="secondary">-</Text>;
+        const expires = new Date(val);
+        const daysLeft = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+        if (daysLeft <= 0) return <Tag color="red"><WarningOutlined /> 已过期</Tag>;
+        if (daysLeft <= 7) return <Tag color="orange"><WarningOutlined /> {daysLeft}天后过期</Tag>;
+        return <Text type="secondary" style={{ fontSize: 12 }}>{expires.toLocaleDateString('zh-CN')}</Text>;
       },
     },
     {

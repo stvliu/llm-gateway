@@ -25,11 +25,23 @@ export default function BatchExportButton() {
       providers: providers.map((p) => ({
         name: p.providerName,
         code: p.providerId || p.providerName.toLowerCase(),
-        // API keys excluded for security
+        websiteUrl: p.websiteUrl || undefined,
+        apiDocUrl: p.apiDocUrl || undefined,
+        state: p.state || undefined,
+        description: p.description || undefined,
       })),
     };
 
-    const yaml = `version: "${exportData.version}"\nproviders:\n${exportData.providers.map((p) => `  - name: ${p.name}\n    code: ${p.code}`).join('\n')}`;
+    const yaml = `version: "${exportData.version}"\nproviders:\n${exportData.providers
+      .map((p) => {
+        const fields = [`  - name: "${p.name}"`, `    code: "${p.code}"`];
+        if (p.websiteUrl) fields.push(`    websiteUrl: "${p.websiteUrl}"`);
+        if (p.apiDocUrl) fields.push(`    apiDocUrl: "${p.apiDocUrl}"`);
+        if (p.state) fields.push(`    state: ${p.state}`);
+        if (p.description) fields.push(`    description: "${p.description}"`);
+        return fields.join('\n');
+      })
+      .join('\n')}`;
 
     const blob = new Blob([yaml], { type: 'text/yaml' });
     const url = URL.createObjectURL(blob);

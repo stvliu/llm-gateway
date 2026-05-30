@@ -27,6 +27,10 @@ export const userApiKeyApi = {
   update: (id: number, data: UpdateUserApiKeyRequest) =>
     api.put<UserApiKey>(`/user-api-keys/${id}`, data),
 
+  /** 轮换 API Key（生成新 Key，旧 Key 失效） */
+  rotate: (id: number) =>
+    api.post<CreateUserApiKeyResponse>(`/user-api-keys/${id}/rotate`),
+
   /** 删除用户 API Key */
   delete: (id: number) =>
     api.delete<void>(`/user-api-keys/${id}`),

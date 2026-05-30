@@ -148,7 +148,7 @@ export default function ProviderChannelTab({ providerId }: ProviderChannelTabPro
   const handleTestCredential = useCallback(async (channelId: number, credentialId: number) => {
     setTestingCredentialId(credentialId);
     try {
-      const result = await testCredentialMutation.mutateAsync({ channelId, id: credentialId });
+      const result = await testCredentialMutation.mutateAsync({ channelId, id: credentialId }) as { success: boolean; error?: { message?: string } };
       if (result.success) {
         message.success(t('credential.testSuccess'));
       } else {
