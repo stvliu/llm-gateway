@@ -58,7 +58,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     public ProtocolResponse dispatch(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
         String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
-        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol);
+        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.userId());
 
         log.info("Dispatch request: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);
@@ -107,7 +107,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                                StreamCallback callback) {
         String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
-        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol);
+        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.userId());
 
         log.info("Stream dispatch: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);

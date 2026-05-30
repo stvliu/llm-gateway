@@ -29,14 +29,15 @@ public class RoutingResolver {
      *
      * @param modelName 模型名称
      * @param protocol  入站协议
+     * @param userId    用户 ID（用于团队渠道权限过滤）
      * @return 路由上下文
      */
-    public RoutingContext resolve(String modelName, Protocol protocol) {
+    public RoutingContext resolve(String modelName, Protocol protocol, Long userId) {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
         // 2. 通道选择
-        ChannelModel channelModel = channelSelector.select(model.getId());
+        ChannelModel channelModel = channelSelector.select(model.getId(), userId);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(channelModel.getChannelId());
