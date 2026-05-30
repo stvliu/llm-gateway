@@ -57,7 +57,6 @@ export default function UserApiKeyManageModal({
         message.success('API Key 更新成功')
       } else {
         const request: CreateUserApiKeyRequest = {
-          teamId: team.id,
           userId: values.userId,
           name: values.name,
           models: values.models,

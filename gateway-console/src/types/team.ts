@@ -44,7 +44,6 @@ export interface UpdateMemberRoleRequest {
 /** 用户 API Key */
 export interface UserApiKey {
   id: number;
-  teamId: number;
   userId: number;
   keyPrefix: string;
   name: string;
@@ -58,20 +57,11 @@ export interface UserApiKey {
 /** 用户 API Key 详情（含明文 Key） */
 export interface UserApiKeyDetail extends UserApiKey {
   keyPlain: string;
-  channels: ChannelBrief[];
-}
-
-/** 渠道简要信息 */
-export interface ChannelBrief {
-  id: number;
-  name: string;
 }
 
 /** 创建用户 API Key 请求 */
 export interface CreateUserApiKeyRequest {
-  teamId?: number;
   userId: number;
-  productIds?: number[];
   name: string;
   models?: string[];
   quotaLimit?: number | null;

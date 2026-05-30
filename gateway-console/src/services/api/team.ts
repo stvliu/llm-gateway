@@ -72,4 +72,14 @@ export const teamApi = {
   /** 获取指定用户的 API Key 列表 */
   listUserApiKeys: (userId: number) =>
     api.get<UserApiKey[]>(`/users/${userId}/api-keys`),
+
+  // ---- 团队渠道管理 ----
+
+  /** 查询团队的渠道列表 */
+  listChannels: (teamId: number) =>
+    api.get<number[]>(`/teams/${teamId}/channels`),
+
+  /** 更新团队的渠道列表 */
+  updateChannels: (teamId: number, channelIds: number[]) =>
+    api.put<void>(`/teams/${teamId}/channels`, channelIds),
 };
