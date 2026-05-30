@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useRef } from 'react';
 import { Typography, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useProviderCatalogs } from '@/services/query/useCatalog';
 import type { CreateProviderRequest } from '@/types/provider';
 
 const { Text } = Typography;
@@ -24,9 +23,6 @@ export function BasicInfoStep({
   // 使用 ref 保持最新的 basicInfo 引用，避免 handleFieldChange 因 basicInfo 变化而重建
   const basicInfoRef = useRef(basicInfo);
   basicInfoRef.current = basicInfo;
-
-  // 查询供应商目录列表
-  const { data: _catalogList } = useProviderCatalogs();
 
   // 初始化基本信息（仅挂载时执行）
   const onChangeRef = useRef(onChange);
