@@ -1,6 +1,8 @@
 import { Modal, Form, Input, InputNumber, Select, Tag, App } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useCreateModel } from '@/services/query/useModels';
+import { useProviders } from '@/services/query/useProviders';
+import { useChannels, useCreateChannelModel } from '@/services/query/useChannels';
 import type { CreateModelRequest } from '@/types/model';
 
 interface Props {
@@ -25,30 +27,75 @@ export default function ModelCreateModal({ open, onClose }: Props) {
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const createMutation = useCreateModel();
+  const createChannelModelMutation = useCreateChannelModel();
+
+  const { data: providersPage } = useProviders();
+  const providers = providersPage?.items ?? [];
+
+  const selectedProviderId = Form.useWatch('providerId', form);
+  const { data: channels } = useChannels(selectedProviderId || 0);
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      const { providerId, ...modelFields } = values;
       const payload: CreateModelRequest = {
-        ...values,
-        capabilities: values.capabilities?.reduce((acc: Record<string, boolean>, k: string) => {
+        ...modelFields,
+        capabilities: modelFields.capabilities?.reduce((acc: Record<string, boolean>, k: string) => {
           acc[k] = true;
           return acc;
         }, {}) || {},
       };
-      await createMutation.mutateAsync(payload);
+      const model = await createMutation.mutateAsync(payload);
+
+      // 自动关联到供应商的第一个通道
+      if (providerId && channels?.length) {
+        const firstChannel = channels[0];
+        await createChannelModelMutation.mutateAsync({
+          channelId: firstChannel.id,
+          data: {
+            modelName: model.modelName,
+            upstreamModelName: model.modelName,
+          },
+        });
+      }
+
       message.success(t('created', { defaultValue: '模型创建成功' }));
       form.resetFields();
       onClose();
     } catch (e: unknown) {
       if (e && typeof e === 'object' && 'errorFields' in e) return;
-      message.error(t('createFailed', { defaultValue: '创建失败' }));
+      const errMsg = e instanceof Error ? e.message : '';
+      message.error(errMsg || t('createFailed', { defaultValue: '创建失败' }));
     }
   };
 
   return (
-    <Modal title={t('createModel', { defaultValue: '新增模型' })} open={open} onOk={handleOk} onCancel={onClose} width={560} confirmLoading={createMutation.isPending}>
+    <Modal
+      title={t('createModel', { defaultValue: '新增模型' })}
+      open={open}
+      onOk={handleOk}
+      onCancel={onClose}
+      width={560}
+      confirmLoading={createMutation.isPending}
+      destroyOnHidden
+    >
       <Form form={form} layout="vertical">
+        <Form.Item
+          name="providerId"
+          label={t('provider', { defaultValue: '归属供应商' })}
+          rules={[{ required: true, message: t('providerRequired', { defaultValue: '请选择归属供应商' }) }]}
+        >
+          <Select
+            placeholder={t('selectProvider', { defaultValue: '选择供应商' })}
+            showSearch
+            optionFilterProp="label"
+            options={providers.map((p) => ({
+              value: p.id,
+              label: p.providerName,
+            }))}
+          />
+        </Form.Item>
         <Form.Item name="modelName" label={t('modelName', { defaultValue: '模型标识' })} rules={[{ required: true }]}>
           <Input placeholder="gpt-4o" />
         </Form.Item>

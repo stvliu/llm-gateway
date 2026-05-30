@@ -128,3 +128,20 @@ export interface ApiKeyTestResponse {
     message: string;
   } | null;
 }
+
+/** 渠道模型映射（与后端 ChannelModelResponse 一致） */
+export interface ChannelModel {
+  id: number;
+  channelId: number;
+  modelName: string;
+  upstreamModelName: string;
+  state: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** 创建渠道模型映射请求 */
+export interface CreateChannelModelRequest {
+  modelName: string;
+  upstreamModelName: string;
+}

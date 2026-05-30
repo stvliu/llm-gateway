@@ -202,7 +202,7 @@ export default function ExpertCredentialTab({ provider }: Props) {
   const handleTest = async (cred: ChannelCredential) => {
     setTestingId(cred.id);
     try {
-      const result = await testMutation.mutateAsync({ channelId: cred.channelId, id: cred.id });
+      const result = await testMutation.mutateAsync({ channelId: cred.channelId, id: cred.id }) as ApiKeyTestResponse;
       if (result.success) {
         modal.success({
           title: t('credential.testSuccess', { defaultValue: '连通性测试通过' }),

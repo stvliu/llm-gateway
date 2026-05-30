@@ -3,11 +3,13 @@ import type {
   Channel,
   ChannelEndpointResponse,
   ChannelCredential,
+  ChannelModel,
   CreateChannelRequest,
   UpdateChannelRequest,
   CreateChannelEndpointRequest,
   CreateChannelCredentialRequest,
   CreateChannelCredentialResponse,
+  CreateChannelModelRequest,
   UpdateChannelCredentialRequest,
   ApiKeyTestResponse,
 } from '@/types/channel';
@@ -73,4 +75,18 @@ export const channelApi = {
   /** 测试渠道凭证 */
   testCredential: (channelId: number, credentialId: number) =>
     api.post<ApiKeyTestResponse>(`/channels/${channelId}/credentials/${credentialId}/test`),
+
+  /** ---- 渠道模型映射 ---- */
+
+  /** 获取渠道的模型映射列表 */
+  listModels: (channelId: number) =>
+    api.get<ChannelModel[]>(`/channels/${channelId}/models`),
+
+  /** 创建渠道模型映射 */
+  createModel: (channelId: number, data: CreateChannelModelRequest) =>
+    api.post<ChannelModel>(`/channels/${channelId}/models`, data),
+
+  /** 删除渠道模型映射 */
+  deleteModel: (channelId: number, modelId: number) =>
+    api.delete<void>(`/channels/${channelId}/models/${modelId}`),
 };

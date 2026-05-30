@@ -6,6 +6,7 @@ import { useModels } from '@/services/query/useModels';
 import ModelCard from './ModelCard';
 import KeyGenerateModal from './KeyGenerateModal';
 import CodeSnippet from './CodeSnippet';
+import DeveloperKeyList from './DeveloperKeyList';
 
 const { Title, Paragraph } = Typography;
 
@@ -62,6 +63,11 @@ export default function Developer() {
           ))}
         </Row>
       )}
+
+      <div style={{ marginTop: 32 }}>
+        <Title level={5}>{t('myKeys', { defaultValue: '我的 API Key' })}</Title>
+        <DeveloperKeyList />
+      </div>
 
       <div style={{ marginTop: 32 }}>
         <Title level={5}>{t('quickStart', { defaultValue: '快速开始' })}</Title>

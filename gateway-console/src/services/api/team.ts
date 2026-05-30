@@ -82,4 +82,14 @@ export const teamApi = {
   /** 更新团队的渠道列表 */
   updateChannels: (teamId: number, channelIds: number[]) =>
     api.put<void>(`/teams/${teamId}/channels`, { channelIds }),
+
+  // ---- 团队模型可见性 ----
+
+  /** 查询团队可见的模型 ID 列表 */
+  listAllowedModels: (teamId: number) =>
+    api.get<number[]>(`/teams/${teamId}/allowed-models`),
+
+  /** 更新团队可见的模型列表 */
+  updateAllowedModels: (teamId: number, modelIds: number[]) =>
+    api.put<void>(`/teams/${teamId}/allowed-models`, { modelIds }),
 };
