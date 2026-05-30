@@ -1,0 +1,16 @@
+workflow: full
+phase: archive
+build_mode: subagent-driven-development
+isolation: branch
+verify_mode: full
+base_ref: 8b0a8b620971f31db3837d8420ab06dfeae2f888
+design_doc: docs/superpowers/specs/2026-05-30-inherited-permission-model-design.md
+plan: docs/superpowers/plans/2026-05-30-inherited-permission-model.md
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-05-30-inherited-permission-model-verify.md
+branch_status: handled
+created_at: 2026-05-30
+verified_at: 2026-05-30
+archived: true
+handoff_context: openspec/changes/inherited-permission-model/.comet/handoff/design-context.json
+handoff_hash: 82f258f21d8f668356f5435f98303c88b04862ff49eab4652b2e0d1fe1e76c18

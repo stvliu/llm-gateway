@@ -1,0 +1,14 @@
+{
+  "change": "inherited-permission-model",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "82f258f21d8f668356f5435f98303c88b04862ff49eab4652b2e0d1fe1e76c18",
+  "files": [
+    { "path": "openspec/changes/inherited-permission-model/proposal.md", "sha256": "9cbbabd4b4be811fc994f59048223bb9404fd08b72910d4f36846f079d5336db" },
+    { "path": "openspec/changes/inherited-permission-model/design.md", "sha256": "1ca9ad563bc9fd790972960a5a245dae82033420ef093b83ea9049bb9528bfb3" },
+    { "path": "openspec/changes/inherited-permission-model/tasks.md", "sha256": "bb2900d3d8fea459fa0df523e8cfc4ef22aa32cfa5fc5841da93f4ad0fdd23ab" },
+    { "path": "openspec/changes/inherited-permission-model/specs/team-channel-management/spec.md", "sha256": "526226f22bed86645e3d6f1fd91c04a4a1731888ac6905764efd396e5e40c242" }
+  ]
+}

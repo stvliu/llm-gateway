@@ -2,6 +2,7 @@
 change: inherited-permission-model
 design-doc: docs/superpowers/specs/2026-05-30-inherited-permission-model-design.md
 base-ref: 9b3cb87c6dd5c1ba55c9f41d054fac4bda303a10
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 # 纯继承式权限模型实现计划
@@ -14,6 +15,7 @@ base-ref: 9b3cb87c6dd5c1ba55c9f41d054fac4bda303a10
 
 **Tech Stack:** Java 21, Spring Boot 3.5.x, JPA, React/Ant Design (前端)
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 1: 数据库迁移 — 删除 user_api_key_channels 表
@@ -35,6 +37,7 @@ git add gateway-boot/src/main/resources/db/migration/V43__drop_user_api_key_chan
 git commit -m "feat: 迁移脚本 V43 删除 user_api_key_channels 表"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 2: 删除渠道关联 DO 和 Repository
@@ -58,6 +61,7 @@ git add -u
 git commit -m "refactor: 删除 UserApiKeyChannelDo 和 UserApiKeyChannelRepository"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 3: 清理 UserApiKeyGateway 接口和实现
@@ -122,6 +126,7 @@ git add -u
 git commit -m "refactor: UserApiKeyGateway 清理渠道关联逻辑"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 4: 清理 DTO — 移除 channelIds/channels/ChannelBrief
@@ -208,6 +213,7 @@ git add -u
 git commit -m "refactor: DTO 移除 channelIds/channels/ChannelBrief"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 5: 清理 UserApiKeyServiceImpl
@@ -283,6 +289,7 @@ git add -u
 git commit -m "refactor: UserApiKeyServiceImpl 移除渠道关联逻辑"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 6: Gateway 便捷方法 — findTeamIdByUserId / findChannelIdsByTeamId
@@ -334,6 +341,7 @@ git add -u
 git commit -m "feat: Gateway 新增 findTeamIdByUserId 和 findChannelIdsByTeamId 便捷方法"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 7: ChannelSelector 注入团队渠道过滤
@@ -391,6 +399,7 @@ git add -u
 git commit -m "feat: ChannelSelector 注入团队渠道过滤"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 8: RoutingResolver 和 ChatDispatchServiceImpl 传递 userId
@@ -430,6 +439,7 @@ git add -u
 git commit -m "feat: RoutingResolver 和 ChatDispatchServiceImpl 传递 userId"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 9: ModelDiscoveryService 改为通过团队查渠道
@@ -482,6 +492,7 @@ git add -u
 git commit -m "feat: ModelDiscoveryService 改为通过用户团队查渠道"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 10: TeamController — 新增渠道管理端点 + 清理 createApiKey
@@ -530,6 +541,7 @@ git add -u
 git commit -m "feat: TeamController 新增渠道管理端点，移除 createApiKey 的 channelIds"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 11: 前端 — 类型清理 + API 新增 + 渠道管理弹窗
@@ -580,6 +592,7 @@ git add gateway-console/src/pages/Teams/ChannelManageModal.tsx
 git commit -m "feat: 前端团队渠道管理弹窗 + 类型清理"
 ```
 
+archived-with: 2026-05-30-inherited-permission-model
 ---
 
 ### Task 12: 构建验证

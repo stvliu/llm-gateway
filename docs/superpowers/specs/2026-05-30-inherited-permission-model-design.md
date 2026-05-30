@@ -2,6 +2,8 @@
 comet_change: inherited-permission-model
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-05-30-inherited-permission-model
+status: final
 ---
 
 # 纯继承式权限模型 — 技术设计
