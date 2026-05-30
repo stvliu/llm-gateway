@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 用户 API Key 领域实体
  * <p>
- * 一个 Key 归属一个用户，可关联多个产品，路由时按 model name 匹配对应的 Product。
+ * 一个 Key 归属一个用户，通过用户所属团队继承渠道访问权限。
  * keyHash 用于认证验证，keyPlain 用于创建时传入和详情展示（由基础设施层加解密）。
  * </p>
  */
@@ -20,7 +20,6 @@ public class UserApiKey {
 
     private Long id;
     private Long userId;
-    private List<Long> channelIds;
     /**
      * -- GETTER --
      * Key 哈希（SHA-256），用于认证验证，由基础设施层在 save 时计算
@@ -55,7 +54,6 @@ public class UserApiKey {
         return "UserApiKey{" +
                 "id=" + id +
                 ", userId=" + userId +
-                ", channelIds=" + channelIds +
                 ", keyPrefix='" + keyPrefix + '\'' +
                 ", name='" + name + '\'' +
                 ", state=" + state +

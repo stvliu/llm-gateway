@@ -60,6 +60,10 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
             if (plainKey != null && !plainKey.isBlank()) {
                 dataObject.setKeyHash(encryptionService.hashKey(plainKey));
                 dataObject.setKeyEncrypted(encryptionService.encrypt(plainKey));
+                // 自动生成 keyPrefix（取前 10 位）
+                if (dataObject.getKeyPrefix() == null) {
+                    dataObject.setKeyPrefix(plainKey.substring(0, Math.min(10, plainKey.length())));
+                }
             }
         } else {
             // 更新时：保留已有的 hash 和 encrypted

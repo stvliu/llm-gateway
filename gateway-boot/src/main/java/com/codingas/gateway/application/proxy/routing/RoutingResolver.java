@@ -41,8 +41,8 @@ public class RoutingResolver {
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(channelModel.getChannelId());
 
-        // 4. 端点解析
-        ChannelEndpoint endpoint = endpointResolver.resolve(channelModel.getChannelId());
+        // 4. 端点解析（优先匹配协议同源）
+        ChannelEndpoint endpoint = endpointResolver.resolve(channelModel.getChannelId(), protocol);
 
         // 5. 通道信息
         Channel channel = channelGateway.findById(channelModel.getChannelId())

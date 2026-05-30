@@ -7,7 +7,6 @@ import { useCreateProvider } from '@/services/query/useProviders';
 import { ProviderIcon } from '@/components/ui';
 import CredentialStep from './CredentialStep';
 import { ModelSetupStep } from './ModelSetupStep';
-import type { Provider } from '@/types/provider';
 import type { ProviderCatalog } from '@/types/catalog';
 import type { CredentialEntry } from './CredentialStep';
 
@@ -15,7 +14,6 @@ const { Text, Paragraph } = Typography;
 
 interface Props {
   open: boolean;
-  providers: Provider[];
   onClose: () => void;
   onCreated: () => void;
 }
@@ -27,7 +25,7 @@ interface Props {
  * Step 2: 配置 API Key
  * Step 3: 选择模型
  */
-export function ProviderCreateModal({ open, providers: _providers, onClose, onCreated }: Props) {
+export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
   const { t } = useTranslation('providers');
   const { message } = App.useApp();
   const materializeMutation = useMaterializeProvider();

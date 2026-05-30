@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Modal, Table, Checkbox, Space, Tag, Typography, App } from 'antd';
+import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useModels } from '@/services/query/useModels';
 import type { Team } from '@/types/team';
@@ -146,6 +146,12 @@ export default function ModelVisibilityModal({
       cancelText={t('modelVisibility.cancel', { defaultValue: '取消' })}
     >
       <div style={{ marginBottom: 16 }}>
+        <Alert
+          type="warning"
+          message={t('modelVisibility.demoMode', { defaultValue: '演示模式：此功能暂未接入后端 API，保存操作不会实际生效' })}
+          style={{ marginBottom: 12 }}
+          showIcon
+        />
         <Text type="secondary">
           {t('modelVisibility.description', { defaultValue: '配置该团队可访问的模型列表。取消勾选的模型将不会在该团队的模型列表中显示。' })}
         </Text>

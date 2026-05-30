@@ -113,13 +113,6 @@ export function DrawerSkeleton({
           <div style={{ height: 16, width: 64, borderRadius: 6, background: token.colorFillSecondary }} />
         </div>
       )}
-
-      <style>{`
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-      `}</style>
     </div>
   );
 }

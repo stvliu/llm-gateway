@@ -2,8 +2,10 @@ package com.codingas.gateway.adapter.api;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.team.TeamService;
+import com.codingas.gateway.application.team.dto.AddTeamMemberRequest;
 import com.codingas.gateway.application.team.dto.TeamRequest;
 import com.codingas.gateway.application.team.dto.TeamResponse;
+import com.codingas.gateway.application.team.dto.UpdateMemberRoleRequest;
 import com.codingas.gateway.application.userapikey.UserApiKeyService;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateRequest;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
@@ -68,9 +70,8 @@ public class TeamController {
     @PostMapping("/{teamId}/members")
     public ResponseEntity<Void> addMember(
             @PathVariable Long teamId,
-            @RequestParam Long userId,
-            @RequestParam(defaultValue = "member") String role) {
-        teamService.addMember(teamId, userId, TeamRole.fromCode(role));
+            @Valid @RequestBody AddTeamMemberRequest request) {
+        teamService.addMember(teamId, request.getUserId(), TeamRole.fromCode(request.getRole()));
         return ResponseEntity.ok().build();
     }
 
@@ -86,8 +87,8 @@ public class TeamController {
     public ResponseEntity<Void> updateMemberRole(
             @PathVariable Long teamId,
             @PathVariable Long userId,
-            @RequestParam String role) {
-        teamService.updateMemberRole(teamId, userId, TeamRole.fromCode(role));
+            @Valid @RequestBody UpdateMemberRoleRequest request) {
+        teamService.updateMemberRole(teamId, userId, TeamRole.fromCode(request.getRole()));
         return ResponseEntity.ok().build();
     }
 

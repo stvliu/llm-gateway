@@ -8,8 +8,10 @@ import com.codingas.gateway.domain.protocol.contract.*;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 跨协议转换器，处理 OpenAI ↔ Anthropic 的请求/响应/流式 chunk 转换
@@ -52,7 +54,7 @@ public class ProtocolConverter {
                 .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : DEFAULT_MAX_TOKENS)
                 .temperature(request.getTemperature())
                 .stopSequences(request.getStop())
-                .tools(request.getTools())
+                .tools(convertToolsToAnthropic(request.getTools()))
                 .toolChoice(request.getToolChoice() != null ? Map.of("type", request.getToolChoice()) : null)
                 .stream(request.isStream() ? true : null)
                 .system(system)
@@ -90,7 +92,7 @@ public class ProtocolConverter {
                 .maxTokens(request.getMaxTokens())
                 .temperature(request.getTemperature())
                 .stop(request.getStopSequences())
-                .tools(request.getTools())
+                .tools(convertToolsToOpenAI(request.getTools()))
                 .toolChoice(convertAnthropicToolChoice(request.getToolChoice()))
                 .stream(request.isStream() ? true : null)
                 .build();
@@ -109,11 +111,26 @@ public class ProtocolConverter {
         if (response.getChoices() != null && !response.getChoices().isEmpty()) {
             OpenAIChatResponse.Choice choice = response.getChoices().get(0);
             if (choice.getMessage() != null) {
+                // text content
                 if (choice.getMessage().getContent() != null) {
                     contentBlocks.add(AnthropicMessagesResponse.ContentBlock.builder()
                             .type("text")
                             .text(choice.getMessage().getContent())
                             .build());
+                }
+                // tool_calls → tool_use content blocks
+                if (choice.getMessage().getToolCalls() != null) {
+                    for (OpenAIChatResponse.ToolCall tc : choice.getMessage().getToolCalls()) {
+                        AnthropicMessagesResponse.ToolUse toolUse = AnthropicMessagesResponse.ToolUse.builder()
+                                .id(tc.getId())
+                                .name(tc.getFunction() != null ? tc.getFunction().getName() : null)
+                                .input(tc.getFunction() != null ? tc.getFunction().getArguments() : null)
+                                .build();
+                        contentBlocks.add(AnthropicMessagesResponse.ContentBlock.builder()
+                                .type("tool_use")
+                                .toolUse(toolUse)
+                                .build());
+                    }
                 }
             }
         }
@@ -144,10 +161,23 @@ public class ProtocolConverter {
      */
     public OpenAIChatResponse toOpenAI(AnthropicMessagesResponse response) {
         StringBuilder contentText = new StringBuilder();
+        List<OpenAIChatResponse.ToolCall> toolCalls = new ArrayList<>();
+
         if (response.getContent() != null) {
             for (AnthropicMessagesResponse.ContentBlock block : response.getContent()) {
                 if ("text".equals(block.getType()) && block.getText() != null) {
                     contentText.append(block.getText());
+                } else if ("tool_use".equals(block.getType()) && block.getToolUse() != null) {
+                    AnthropicMessagesResponse.ToolUse tu = block.getToolUse();
+                    OpenAIChatResponse.FunctionCall fn = OpenAIChatResponse.FunctionCall.builder()
+                            .name(tu.getName())
+                            .arguments(tu.getInput() != null ? tu.getInput().toString() : null)
+                            .build();
+                    toolCalls.add(OpenAIChatResponse.ToolCall.builder()
+                            .id(tu.getId())
+                            .type("function")
+                            .function(fn)
+                            .build());
                 }
             }
         }
@@ -155,6 +185,7 @@ public class ProtocolConverter {
         OpenAIChatResponse.Message message = OpenAIChatResponse.Message.builder()
                 .role("assistant")
                 .content(contentText.toString())
+                .toolCalls(toolCalls.isEmpty() ? null : toolCalls)
                 .build();
 
         List<OpenAIChatResponse.Choice> choices = List.of(
@@ -323,5 +354,43 @@ public class ProtocolConverter {
         if (toolChoice == null) return null;
         Object type = toolChoice.get("type");
         return type != null ? type.toString() : null;
+    }
+
+    /**
+     * OpenAI tools 格式 → Anthropic tools 格式
+     *
+     * <p>OpenAI: {"type":"function","function":{"name":"fn","description":"...","parameters":{}}}
+     * Anthropic: {"name":"fn","description":"...","input_schema":{}}</p>
+     */
+    @SuppressWarnings("unchecked")
+    private List<Map<String, Object>> convertToolsToAnthropic(List<Map<String, Object>> openaiTools) {
+        if (openaiTools == null) return null;
+        return openaiTools.stream().map(openaiTool -> {
+            Map<String, Object> anthropicTool = new HashMap<>();
+            Map<String, Object> function = (Map<String, Object>) openaiTool.get("function");
+            if (function != null) {
+                anthropicTool.put("name", function.get("name"));
+                anthropicTool.put("description", function.get("description"));
+                anthropicTool.put("input_schema", function.get("parameters"));
+            }
+            return anthropicTool;
+        }).collect(Collectors.toList());
+    }
+
+    /**
+     * Anthropic tools 格式 → OpenAI tools 格式
+     */
+    private List<Map<String, Object>> convertToolsToOpenAI(List<Map<String, Object>> anthropicTools) {
+        if (anthropicTools == null) return null;
+        return anthropicTools.stream().map(anthropicTool -> {
+            Map<String, Object> openaiTool = new HashMap<>();
+            openaiTool.put("type", "function");
+            Map<String, Object> function = new HashMap<>();
+            function.put("name", anthropicTool.get("name"));
+            function.put("description", anthropicTool.get("description"));
+            function.put("parameters", anthropicTool.get("input_schema"));
+            openaiTool.put("function", function);
+            return openaiTool;
+        }).collect(Collectors.toList());
     }
 }

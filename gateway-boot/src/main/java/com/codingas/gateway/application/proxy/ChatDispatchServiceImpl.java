@@ -18,6 +18,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 /**
  * 聊天调度服务实现
  *
@@ -54,13 +56,14 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
 
     @Override
     public ProtocolResponse dispatch(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
+        String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
         RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol);
 
-        log.info("Dispatch request: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
-                request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl());
+        log.info("Dispatch request: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
+                request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);
 
-        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol);
+        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol, traceId);
         long startTime = System.currentTimeMillis();
 
         try {
@@ -86,7 +89,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             // 阶段 7：后置处理 — 审计终点 + Token 计量
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
             callLog.setSuccess(true);
-            publishTokenUsedEvent(response, identity, ctx);
+            publishTokenUsedEvent(response, identity, ctx, traceId);
             auditGateway.saveCallLog(callLog);
 
             return response;
@@ -102,13 +105,14 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     @Override
     public void dispatchStream(ProtocolRequest request, Identity identity, RoutingStrategy strategy,
                                StreamCallback callback) {
+        String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
         RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol);
 
-        log.info("Stream dispatch: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}",
-                request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl());
+        log.info("Stream dispatch: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
+                request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);
 
-        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol);
+        CallLog callLog = createCallLog(identity, request, ctx, inboundProtocol, traceId);
         long startTime = System.currentTimeMillis();
 
         ProtocolRequest outboundReq = request;
@@ -146,7 +150,28 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         if (ctx.needsProtocolAdaptation()) {
             dispatchStreamCrossProtocol(client, outboundReq, ctx, inboundProtocol, auditingCallback);
         } else {
-            client.chatStream(outboundReq, auditingCallback);
+            // 非跨协议：包装 callback，注入协议对应的结束标记
+            StreamCallback protocolCallback = new StreamCallback() {
+                @Override
+                public void onChunk(String data) {
+                    auditingCallback.onChunk(data);
+                }
+
+                @Override
+                public void onComplete() {
+                    // OpenAI 入站注入 [DONE] 标记；Anthropic 无需标记，流关闭即结束
+                    if (inboundProtocol == Protocol.OPENAI) {
+                        auditingCallback.onChunk("[DONE]");
+                    }
+                    auditingCallback.onComplete();
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    auditingCallback.onError(t);
+                }
+            };
+            client.chatStream(outboundReq, protocolCallback);
         }
     }
 
@@ -176,7 +201,9 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             public void onChunk(String data) {
                 StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
                 if (result != null) {
-                    callback.onChunk(formatSseEvent(result));
+                    // 直接传递 data，由 SseStreamHelper.writeChunk 统一加 "data: " 前缀
+                    // eventType 已编码在 JSON payload 的 "type" 字段中
+                    callback.onChunk(result.data());
                 }
             }
 
@@ -184,7 +211,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             public void onComplete() {
                 StreamChunkResult doneResult = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
                 if (doneResult != null) {
-                    callback.onChunk(formatSseEvent(doneResult));
+                    // 完成标记（如 "[DONE]"）直接传递，由 writeChunk 格式化
+                    callback.onChunk(doneResult.data());
                 }
                 callback.onComplete();
             }
@@ -199,8 +227,9 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     /**
      * 创建调用日志记录
      */
-    private CallLog createCallLog(Identity identity, ProtocolRequest request, RoutingContext ctx, Protocol inboundProtocol) {
+    private CallLog createCallLog(Identity identity, ProtocolRequest request, RoutingContext ctx, Protocol inboundProtocol, String traceId) {
         CallLog callLog = new CallLog();
+        callLog.setTraceId(traceId);
         callLog.setUserId(identity.userId());
         callLog.setModel(request.getModel());
         callLog.setChannelId(ctx.channelId());
@@ -214,7 +243,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     /**
      * 发布 Token 使用事件
      */
-    private void publishTokenUsedEvent(ProtocolResponse response, Identity identity, RoutingContext ctx) {
+    private void publishTokenUsedEvent(ProtocolResponse response, Identity identity, RoutingContext ctx, String traceId) {
+        String provider = ctx.upstreamProtocol().name().toLowerCase();
         if (response instanceof OpenAIChatResponse openai && openai.getUsage() != null) {
             int inputTokens = openai.getUsage().getPromptTokens() != null ? openai.getUsage().getPromptTokens() : 0;
             int outputTokens = openai.getUsage().getCompletionTokens() != null ? openai.getUsage().getCompletionTokens() : 0;
@@ -222,8 +252,10 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                     .userId(identity.userId())
                     .apiKeyId(identity.credentialId())
                     .model(openai.getModel())
+                    .provider(provider)
                     .promptTokens(inputTokens)
                     .completionTokens(outputTokens)
+                    .traceId(traceId)
                     .build());
         } else if (response instanceof AnthropicMessagesResponse anthropic && anthropic.getUsage() != null) {
             int inputTokens = anthropic.getUsage().getInputTokens() != null ? anthropic.getUsage().getInputTokens() : 0;
@@ -232,16 +264,19 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                     .userId(identity.userId())
                     .apiKeyId(identity.credentialId())
                     .model(anthropic.getModel())
+                    .provider(provider)
                     .promptTokens(inputTokens)
                     .completionTokens(outputTokens)
+                    .traceId(traceId)
                     .build());
         }
     }
 
     private Protocol getInboundProtocol(ProtocolRequest request) {
-        if (request instanceof OpenAIChatRequest) return Protocol.OPENAI;
-        if (request instanceof AnthropicMessagesRequest) return Protocol.ANTHROPIC;
-        throw new IllegalArgumentException("不支持的请求类型: " + request.getClass().getSimpleName());
+        String protocol = request.getProtocol();
+        if ("openai".equals(protocol)) return Protocol.OPENAI;
+        if ("anthropic".equals(protocol)) return Protocol.ANTHROPIC;
+        throw new IllegalArgumentException("不支持的协议类型: " + protocol);
     }
 
     private ProtocolRequest convertRequest(ProtocolRequest request, RoutingContext ctx) {
@@ -265,13 +300,4 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         return response;
     }
 
-    /**
-     * 格式化 SSE 事件
-     */
-    private String formatSseEvent(StreamChunkResult result) {
-        if (result.eventType() != null) {
-            return "event: " + result.eventType() + "\ndata: " + result.data() + "\n\n";
-        }
-        return "data: " + result.data() + "\n\n";
     }
-}

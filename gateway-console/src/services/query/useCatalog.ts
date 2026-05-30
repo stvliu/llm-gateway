@@ -69,6 +69,20 @@ export function useMaterializeProvider() {
   });
 }
 
+/** 级联物化供应商 */
+export function useMaterializeProviderWithPlans() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ providerCode, data }: { providerCode: string; data?: { planCodes?: string[] } }) =>
+      catalogMaterializeApi.materializeProviderWithPlans(providerCode, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['providers'] });
+    },
+  });
+}
+
 /** 物化套餐 */
 export function useMaterializePlan() {
   const queryClient = useQueryClient();

@@ -75,6 +75,10 @@ export default function BatchImportModal({ open, onClose }: Props) {
       {step === 'input' ? (
         <Space direction="vertical" style={{ width: '100%' }} size="middle">
           <Alert
+            type="warning"
+            message={t('batch.demoMode', { defaultValue: '演示模式：此功能暂未接入后端 API，导入操作不会实际生效' })}
+          />
+          <Alert
             type="info"
             message={t('batch.formatHint', { defaultValue: '支持 YAML / JSON 格式，导入不包含 API Key 明文' })}
           />

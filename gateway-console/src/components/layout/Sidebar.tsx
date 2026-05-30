@@ -50,7 +50,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
 
   const menuItems = useMemo(() => {
     return buildMenuItems(menuConfig, hasPermission, t);
-  }, [t, hasPermission]);
+  }, [menuConfig, hasPermission, t]);
 
   const openKeys = useMemo(() => {
     return menuConfig

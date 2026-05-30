@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { Input, Button, Tag, Space, Typography, App } from 'antd';
 import { PlusOutlined, DeleteOutlined, CheckCircleFilled, CloseCircleFilled } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +24,10 @@ export default function CredentialStep({ credentials, onChange }: Props) {
   const { t } = useTranslation('providers');
   const { message } = App.useApp();
 
+  // 使用 ref 保持最新 credentials 引用，避免异步回调中的 stale closure
+  const credentialsRef = useRef(credentials);
+  credentialsRef.current = credentials;
+
   const handlePaste = useCallback((e: React.ClipboardEvent) => {
     const text = e.clipboardData.getData('text');
     const keys = text.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
@@ -34,36 +38,38 @@ export default function CredentialStep({ credentials, onChange }: Props) {
         value: k,
         status: 'pending' as const,
       }));
-      onChange([...credentials, ...newEntries]);
+      onChange([...credentialsRef.current, ...newEntries]);
       message.success(t('batchPaste', { defaultValue: `已添加 ${newEntries.length} 个 Key`, count: newEntries.length }));
     }
-  }, [credentials, onChange, message, t]);
+  }, [onChange, message, t]);
 
   const addEntry = useCallback(() => {
-    onChange([...credentials, { id: crypto.randomUUID(), value: '', status: 'pending' }]);
-  }, [credentials, onChange]);
+    onChange([...credentialsRef.current, { id: crypto.randomUUID(), value: '', status: 'pending' }]);
+  }, [onChange]);
 
   const removeEntry = useCallback((id: string) => {
-    onChange(credentials.filter((c) => c.id !== id));
-  }, [credentials, onChange]);
+    onChange(credentialsRef.current.filter((c) => c.id !== id));
+  }, [onChange]);
 
   const updateValue = useCallback((id: string, value: string) => {
-    onChange(credentials.map((c) => (c.id === id ? { ...c, value } : c)));
-  }, [credentials, onChange]);
+    onChange(credentialsRef.current.map((c) => (c.id === id ? { ...c, value } : c)));
+  }, [onChange]);
 
   const testConnectivity = useCallback(async (id: string) => {
-    onChange(credentials.map((c) => (c.id === id ? { ...c, status: 'testing' as const } : c)));
-    // 模拟连通性测试延迟
+    // 标记为测试中
+    onChange(credentialsRef.current.map((c) => (c.id === id ? { ...c, status: 'testing' as const } : c)));
+    // 模拟连通性测试延迟（后端 API 未实现，仅做格式校验）
     await new Promise((r) => setTimeout(r, 1500));
-    const entry = credentials.find((c) => c.id === id);
+    const current = credentialsRef.current;
+    const entry = current.find((c) => c.id === id);
     if (entry && entry.value.startsWith('sk-')) {
-      onChange(credentials.map((c) => (c.id === id ? { ...c, status: 'success' as const } : c)));
+      onChange(current.map((c) => (c.id === id ? { ...c, status: 'success' as const } : c)));
       message.success(t('credential.testSuccess', { defaultValue: '连通性测试通过' }));
     } else {
-      onChange(credentials.map((c) => (c.id === id ? { ...c, status: 'fail' as const } : c)));
+      onChange(current.map((c) => (c.id === id ? { ...c, status: 'fail' as const } : c)));
       message.error(t('credential.testFailed', { defaultValue: '连通性测试失败，请检查 Key 是否正确' }));
     }
-  }, [credentials, onChange, message, t]);
+  }, [onChange, message, t]);
 
   return (
     <div>

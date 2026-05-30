@@ -5,31 +5,27 @@
 ALTER TABLE model_specs DROP CONSTRAINT IF EXISTS fk_models_provider;
 
 -- 2. 合并相同 provider_model_id 的重复记录（保留 id 最小的那行）
-WITH duplicates AS (
-    SELECT provider_model_id, MIN(id) AS keep_id
-    FROM model_specs
-    GROUP BY provider_model_id
-    HAVING COUNT(*) > 1
-)
 UPDATE channel_models cm
-SET model_spec_id = d.keep_id
-FROM duplicates d
-WHERE cm.model_spec_id IN (
-    SELECT ms.id FROM model_specs ms
-    WHERE ms.provider_model_id = d.provider_model_id
-      AND ms.id != d.keep_id
-);
+SET model_spec_id = (
+    SELECT MIN(ms2.id) FROM model_specs ms2
+    WHERE ms2.provider_model_id = (
+        SELECT ms3.provider_model_id FROM model_specs ms3 WHERE ms3.id = cm.model_spec_id
+    )
+)
+WHERE (
+    SELECT COUNT(*) FROM model_specs ms2
+    WHERE ms2.provider_model_id = (
+        SELECT ms3.provider_model_id FROM model_specs ms3 WHERE ms3.id = cm.model_spec_id
+    )
+) > 1;
 
 -- 3. 删除重复的 model_specs 记录
 DELETE FROM model_specs ms
-USING (
-    SELECT provider_model_id, MIN(id) AS keep_id
-    FROM model_specs
-    GROUP BY provider_model_id
-    HAVING COUNT(*) > 1
-) d
-WHERE ms.provider_model_id = d.provider_model_id
-  AND ms.id != d.keep_id;
+WHERE EXISTS (
+    SELECT 1 FROM model_specs ms2
+    WHERE ms2.provider_model_id = ms.provider_model_id
+      AND ms2.id < ms.id
+);
 
 -- 4. 先改为 nullable
 ALTER TABLE model_specs ALTER COLUMN provider_id DROP NOT NULL;

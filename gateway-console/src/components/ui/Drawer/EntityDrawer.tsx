@@ -5,6 +5,7 @@ import {
   RightOutlined,
   EditOutlined,
   DeleteOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -198,9 +199,9 @@ export function EntityDrawer<T>({
         title={title || t('drawer.title.details')}
         open={open}
         onClose={handleClose}
-        size={size}
+        width={size}
         placement="right"
-        mask={{ closable: true }}
+        maskClosable
         extra={extra}
         styles={{
           body: { padding: 16 },
@@ -238,7 +239,7 @@ export function EntityDrawer<T>({
               gap: 16,
             }}
           >
-            <span style={{ fontSize: 32 }}>⚠️</span>
+            <WarningOutlined style={{ fontSize: 32, color: token.colorWarning }} />
             <h3 style={{ fontSize: 16, fontWeight: 500, margin: 0 }}>
               {t('drawer.error.loadFailed')}
             </h3>

@@ -35,7 +35,7 @@ public class WebConfig implements WebMvcConfigurer {
                                      Object handler) throws Exception {
                 return securityInterceptorChain.execute(request, response);
             }
-        }).addPathPatterns("/api/**", "/v1/**", "/actuator/health/**");
+        }).addPathPatterns("/api/**", "/v1/**", "/anthropic/**", "/actuator/health/**");
 
         if (actuatorHealthProperties.isPublicAccess()) {
             registration.excludePathPatterns("/actuator/health/**");

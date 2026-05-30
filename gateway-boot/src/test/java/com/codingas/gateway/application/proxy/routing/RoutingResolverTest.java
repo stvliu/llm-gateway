@@ -83,7 +83,7 @@ class RoutingResolverTest {
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(channelSelector.select(1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
-            when(endpointResolver.resolve(100L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
@@ -130,7 +130,7 @@ class RoutingResolverTest {
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(channelSelector.select(1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
-            when(endpointResolver.resolve(100L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when — 入站协议是 OPENAI，端点协议是 ANTHROPIC
@@ -175,7 +175,7 @@ class RoutingResolverTest {
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(channelSelector.select(1L)).thenReturn(channelModel);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
-            when(endpointResolver.resolve(999L)).thenReturn(endpoint);
+            when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when & then

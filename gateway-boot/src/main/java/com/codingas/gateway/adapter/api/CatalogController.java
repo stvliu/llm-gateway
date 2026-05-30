@@ -4,6 +4,8 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import com.codingas.gateway.application.catalog.CatalogMaterializeService;
 import com.codingas.gateway.application.catalog.CatalogService;
 import com.codingas.gateway.application.catalog.CatalogSyncService;
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
@@ -87,6 +89,24 @@ public class CatalogController {
     }
 
     // ===== 物化（管理操作） =====
+
+    /**
+     * 级联物化供应商（含关联 Plans）
+     *
+     * <p>物化 Provider 并级联创建所有（或指定）Plans 的 Channel + Endpoint + Model。</p>
+     *
+     * @param providerCode 供应商编码
+     * @param request      批量物化请求（可选 planCodes）
+     * @return 批量物化结果
+     */
+    @PostMapping("/materialize/provider/{providerCode}/with-plans")
+    @SaCheckRole("ADMIN")
+    public ResponseEntity<MaterializeBatchResult> materializeProviderWithPlans(
+            @PathVariable String providerCode,
+            @RequestBody(required = false) MaterializeBatchRequest request) {
+        return ResponseEntity.ok(
+                catalogMaterializeService.materializeProviderWithPlans(providerCode, request));
+    }
 
     /**
      * 物化供应商

@@ -46,7 +46,6 @@ export interface UserApiKey {
   id: number;
   teamId: number;
   userId: number;
-  channelIds: number[];
   keyPrefix: string;
   name: string;
   models: string[];
@@ -72,7 +71,6 @@ export interface ChannelBrief {
 export interface CreateUserApiKeyRequest {
   teamId?: number;
   userId: number;
-  channelIds?: number[];
   productIds?: number[];
   name: string;
   models?: string[];
@@ -82,7 +80,6 @@ export interface CreateUserApiKeyRequest {
 /** 更新用户 API Key 请求 */
 export interface UpdateUserApiKeyRequest {
   name?: string;
-  channelIds?: number[];
   models?: string[];
   quotaLimit?: number | null;
   state?: 'ACTIVE' | 'INACTIVE';

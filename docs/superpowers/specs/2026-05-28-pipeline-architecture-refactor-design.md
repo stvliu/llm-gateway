@@ -50,10 +50,10 @@
 - 影响: RoutingResolver 在构造 RoutingContext 时从 `Channel.providerCode` 回填。
 - **连带变更**: `domain/supply/entity/Channel.java` 新增 `providerCode` 字段（String，标识提供商代号如 `"openai"`、`"anthropic"`）；`DataInitializer` 预填该字段
 
-#### 1.4 新增 ProtocolContract
+#### 1.4 新增 TokenUsage
 
-- **文件**: `domain/protocol/contract/ProtocolContract.java`（新增）
-- 内容: `TokenUsage` record，作为跨 DTO 的共用值对象
+- **文件**: `domain/protocol/contract/TokenUsage.java`（新增）
+- 内容: `record TokenUsage(int promptTokens, int completionTokens)`，作为跨 DTO 的共用值对象
 
 ### 验收标准
 
@@ -172,16 +172,16 @@ public interface StreamStage extends Stage {
   - `Protocol inboundProtocol` → 入站协议
   - `Map<String, Object> attributes` → 扩展属性表
   - `CallLog callLog` → 审计日志（Pipeline 创建，AuditStage 完成）
+  - `Throwable executionError` → 执行异常（任一阶段抛异常时由 Pipeline 设置，AuditStage 由此判断成功/失败）
 
 #### 3.2 StagePipeline 编排器
 
 - **文件**: `application/proxy/pipeline/StagePipeline.java`（新增）
+- 构造器: `StagePipeline(List<Stage> stages, AuditStage auditStage)` — 注入阶段列表，按 order 升序排序，AuditStage 在 finally 中执行
 - 方法:
-  - `void addStage(Stage stage)` → 注册阶段
   - `ProtocolResponse execute(ProtocolRequest req, Identity identity, RoutingStrategy strategy)` → 创建 StageContext，按 order 升序执行
   - `void executeStream(...)` → 流式执行
 - **错误处理策略**: Pipeline 用 try-catch 包裹全阶段执行，确保**不管哪个阶段抛异常，AuditStage 始终执行**（AuditStage 不参与主阶段链，由 Pipeline 在 finally 中调用）
-- **条件开关**: `@ConditionalOnProperty(value = "app.pipeline.enabled", matchIfMissing = true)` 控制是否启用管道模式；关闭时回退到 ChatDispatchServiceImpl 旧路径
 
 #### 3.3 七阶段实现
 
@@ -202,7 +202,7 @@ public interface StreamStage extends Stage {
 - **文件**: `application/proxy/ChatDispatchServiceImpl.java`
 - 变更: 内部持有 `StagePipeline`，`dispatch()` 和 `dispatchStream()` 委托给管道
 - 保留: `ChatDispatchService` 接口签名不变（API 兼容）
-- **文件**: `application/proxy/pipeline/config/PipelineConfig.java`（新增）→ `@Bean` 注册所有 Stage 实例到 StagePipeline，声明条件开关 `@ConditionalOnProperty("app.pipeline.enabled")`
+- **文件**: `application/proxy/pipeline/config/PipelineConfig.java`（新增）→ `@Bean` 注册所有 Stage 实例到 StagePipeline
 
 #### 3.5 AbstractProtocolController 模板方法
 
@@ -213,8 +213,8 @@ public interface StreamStage extends Stage {
 #### 3.6 控制器迁移
 
 - **文件**:
-  - `adapter/api/openai/OpenAIController.java` → 继承 AbstractProtocolController<OpenAIChatRequest>
-  - `adapter/api/anthropic/AnthropicController.java` → 继承 AbstractProtocolController<AnthropicMessagesRequest>
+  - `adapter/api/OpenAIController.java` → 继承 AbstractProtocolController<OpenAIChatRequest>
+  - `adapter/api/AnthropicController.java` → 继承 AbstractProtocolController<AnthropicMessagesRequest>
 
 ### 验收标准
 
@@ -224,7 +224,6 @@ public interface StreamStage extends Stage {
 | AC3.2 | 7 个阶段按 order 顺序执行，可通过日志验证 | 集成测试 + 日志断言 |
 | AC3.3 | 流式/非流式两种模式端到端回归 | 完整的模拟 HTTP 请求测试 |
 | AC3.4 | 任何阶段抛异常时 Pipeline 仍执行审计日志，异常传递到调用方 | Mock 验证审计日志始终写入 |
-| AC3.5 | `app.pipeline.enabled=false` 时管道不生效，调度回退到 ChatDispatchServiceImpl 旧路径 | 配置覆盖测试 |
 | AC3.6 | OpenAIController 和 AnthropicController 均继承 AbstractProtocolController | 编译 + 类型断言 |
 
 ---
@@ -242,8 +241,8 @@ public interface StreamStage extends Stage {
 
 #### 4.2 RoutingCacheInvalidator
 
-- **文件**: `application/proxy/routing/RoutingCacheInvalidator.java`（新增）
-- `@EventListener` 监听 `ChannelStateChangedEvent` → 清空缓存
+- **文件**: `infrastructure/event/RoutingCacheInvalidator.java`（新增）
+- `@EventListener` 监听 `ConfigChangedEvent`（覆盖 PROVIDER / MODEL / PROVIDER_API_KEY 变更）→ 清空缓存
 
 #### 4.3 MDC TraceId 传播
 
@@ -253,7 +252,7 @@ public interface StreamStage extends Stage {
 
 #### 4.4 JSR-305 注解
 
-- 所有 Gateway 接口参数/返回值增加 `@NonNull` / `@Nullable`
+- 所有 Gateway 接口参数/返回值增加 `@Nonnull` / `@Nullable`
 
 ### 验收标准
 
@@ -263,7 +262,7 @@ public interface StreamStage extends Stage {
 | AC4.2 | 渠道状态变更事件触发后，缓存命中率归零 | 集成测试 |
 | AC4.3 | 所有请求日志中包含 traceId MDC 字段 | 日志格式断言 |
 | AC4.4 | `app.routing.cache.enabled=false` 时可关闭缓存 | 配置覆盖测试 |
-| AC4.5 | @NonNull/@Nullable 注解覆盖率在 Gateway 接口中达 100% | 代码审查 |
+| AC4.5 | 所有 Gateway 接口已添加 @Nonnull/@Nullable 注解 | 代码审查 |
 
 ---
 
@@ -347,7 +346,6 @@ public interface StreamStage extends Stage {
 | Phase 1 编译失败 | 回退该 Phase 变更，检查契约接口兼容性 |
 | Phase 3 集成测试失败 | 保留 Phase 1/2，回退 Phase 3；ChatDispatchServiceImpl 回退到直接调用 |
 | 性能退化 >5% | 禁用 Caffeine 缓存（配置开关），Profile 瓶颈阶段 |
-| 流式回归 | 通过配置开关 `app.pipeline.enabled=false` 回退到旧路径 |
 
 ---
 

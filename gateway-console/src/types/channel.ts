@@ -1,6 +1,9 @@
 /** 协议类型（与后端 ProtocolGateway.getProtocolName() 对应） */
 export type EndpointProtocol = 'openai' | 'anthropic';
 
+/** 计费模式（与 catalog.ts BillingMode 对齐） */
+export type BillingMode = 'PAY_AS_YOU_GO' | 'SUBSCRIPTION' | 'PACKAGE';
+
 /** 协议信息（从 /api/protocols 获取） */
 export interface ProtocolInfo {
   name: string;
@@ -64,7 +67,7 @@ export interface CreateChannelRequest {
 export interface UpdateChannelRequest {
   providerId?: number;
   name?: string;
-  billingMode?: string;
+  billingMode?: BillingMode;
   quotaLimit?: number | null;
   priority?: number;
   weight?: number;

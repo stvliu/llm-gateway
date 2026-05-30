@@ -250,7 +250,7 @@ export function ProviderManagementDrawer({
       onClose={handleClose}
       width={960}
       placement="right"
-      mask={{ closable: true }}
+      maskClosable
       styles={{
         body: { padding: 16 },
         footer: { padding: 16 },
@@ -315,7 +315,7 @@ export function ProviderManagementDrawer({
       )}
 
       {/* YAML 实时预览（编辑模式下隐藏） */}
-      {!isLoading && !editing && (
+      {!isLoading && !editing && provider && (
         <YamlPreview provider={provider as unknown as Record<string, unknown>} onEnterYamlMode={() => setEditing(true)} />
       )}
     </Drawer>

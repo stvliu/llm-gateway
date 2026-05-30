@@ -1,10 +1,14 @@
 package com.codingas.gateway.application.catalog;
 
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
+import com.codingas.gateway.application.catalog.dto.PlanResult;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
+import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
@@ -111,6 +115,86 @@ public class CatalogMaterializeService {
                 .code(providerCode)
                 .entityId(saved.getId())
                 .status("CREATED")
+                .build();
+    }
+
+    /**
+     * 级联物化供应商（含关联 Plans）
+     *
+     * <p>从 ProviderCatalog 创建 Provider，并级联物化该供应商下所有（或指定）的 Plans。</p>
+     * <p>如果 Provider 已物化、Plan 已物化，自动跳过并计入 SKIPPED 统计。</p>
+     *
+     * @param providerCode 供应商编码
+     * @param request      批量物化请求（可选 planCodes）
+     * @return 批量物化结果
+     */
+    @Transactional(timeout = 30)
+    public MaterializeBatchResult materializeProviderWithPlans(String providerCode, MaterializeBatchRequest request) {
+        // 1. 物化 Provider（已存在则跳过）
+        boolean providerAlreadyExists = providerGateway.findByCode(providerCode).isPresent();
+        if (!providerAlreadyExists) {
+            materializeProvider(providerCode);
+        }
+
+        // 2. 查询关联 Plans
+        List<PlanCatalog> allPlans = planCatalogGateway.findByProviderCode(providerCode);
+        List<String> targetPlanCodes;
+
+        if (request != null && request.getPlanCodes() != null && !request.getPlanCodes().isEmpty()) {
+            targetPlanCodes = request.getPlanCodes();
+        } else {
+            targetPlanCodes = allPlans.stream()
+                    .filter(p -> p.getState() == null || p.getState() == CatalogState.ACTIVE)
+                    .map(PlanCatalog::getPlanCode)
+                    .toList();
+        }
+
+        // 3. 逐条物化 Plan
+        List<PlanResult> results = new java.util.ArrayList<>();
+        int successCount = 0;
+        int skippedCount = 0;
+        int failedCount = 0;
+
+        for (String planCode : targetPlanCodes) {
+            PlanResult.PlanResultBuilder builder = PlanResult.builder()
+                    .type("PLAN")
+                    .planCode(planCode);
+
+            try {
+                MaterializeResult result = materializePlan(planCode);
+                builder.entityId(result.getEntityId());
+                builder.status(result.getStatus());
+                if ("CREATED".equals(result.getStatus())) {
+                    successCount++;
+                } else {
+                    skippedCount++;
+                }
+            } catch (CatalogException e) {
+                if ("ALREADY_MATERIALIZED".equals(e.getCode())) {
+                    builder.status("SKIPPED");
+                    skippedCount++;
+                } else {
+                    builder.status("FAILED");
+                    builder.errorMessage(e.getMessage());
+                    failedCount++;
+                }
+            } catch (Exception e) {
+                builder.status("FAILED");
+                builder.errorMessage(e.getMessage());
+                failedCount++;
+            }
+
+            results.add(builder.build());
+        }
+
+        // 4. 汇总
+        return MaterializeBatchResult.builder()
+                .providerCode(providerCode)
+                .totalCount(targetPlanCodes.size())
+                .successCount(successCount)
+                .skippedCount(skippedCount)
+                .failedCount(failedCount)
+                .results(results)
                 .build();
     }
 

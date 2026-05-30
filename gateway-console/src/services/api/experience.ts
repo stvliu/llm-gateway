@@ -1,4 +1,4 @@
-import { api } from './client';
+import { api, API_BASE_URL } from './client';
 import type { ExperienceChatRequest, ExperienceModelResponse, ExperienceStreamCallbacks } from '@/types/experience';
 
 export const experienceApi = {
@@ -6,7 +6,7 @@ export const experienceApi = {
    * 获取供应商可用模型列表
    */
   async getProviderModels(providerId: number): Promise<ExperienceModelResponse[]> {
-    return api.get<ExperienceModelResponse[]>(`/providers/${providerId}/models`);
+    return api.get<ExperienceModelResponse[]>(`/experience/providers/${providerId}/models`);
   },
 
   /**
@@ -17,7 +17,7 @@ export const experienceApi = {
     callbacks: ExperienceStreamCallbacks,
     signal?: AbortSignal
   ): Promise<void> {
-    const response = await fetch('/api/experience/chat', {
+    const response = await fetch(`${API_BASE_URL}/experience/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -162,7 +162,6 @@ export default function Providers() {
 
       <ProviderCreateModal
         open={createOpen}
-        providers={providers}
         onClose={() => setCreateOpen(false)}
         onCreated={handleCreated}
       />

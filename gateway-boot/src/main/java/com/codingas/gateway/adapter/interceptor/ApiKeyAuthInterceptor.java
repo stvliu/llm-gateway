@@ -30,7 +30,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
     @Override
     public int order() {
-        return 3;
+        return 1;
     }
 
     @Override
@@ -81,6 +81,8 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
     private boolean isProxyPath(String path) {
         return path.startsWith("/v1/chat/completions")
                 || path.startsWith("/v1/messages")
-                || path.startsWith("/v1/models");
+                || path.startsWith("/v1/models")
+                || path.startsWith("/anthropic/v1/messages")
+                || path.startsWith("/anthropic/v1/models");
     }
 }

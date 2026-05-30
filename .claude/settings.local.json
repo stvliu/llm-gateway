@@ -12,7 +12,26 @@
       "Bash(C:\\\\Users\\\\liuye\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh *)",
       "Bash(\"C:\\\\Users\\\\liuye\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh\" --help)",
       "Bash(C:\\\\Users\\\\liuye\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts\\\\stop-server.sh *)",
-      "Bash(.\\\\mvnw compile *)"
+      "Bash(.\\\\mvnw compile *)",
+      "Bash(tee E:/workspace/llm-gateway/gateway-boot/startup.log)",
+      "Bash(rm -rf E:/workspace/llm-gateway/gateway-boot/data)",
+      "Bash(timeout 90 ./mvnw spring-boot:run -pl gateway-boot)",
+      "Bash(nohup ./mvnw spring-boot:run -pl gateway-boot)",
+      "Bash(lsof -ti:8080)",
+      "Bash(findstr :8080)",
+      "Bash(findstr LISTEN)",
+      "Bash(C:\\\\Users\\\\liuye\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\start-server.sh *)",
+      "Bash(C:\\\\Users\\\\liuye\\\\.claude\\\\skills\\\\brainstorming\\\\scripts\\\\stop-server.sh *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(/e/workspace/llm-gateway/gateway-console/node_modules/.bin/tsc *)",
+      "Bash(ls gateway-console/node_modules/.bin/tsc)",
+      "Bash(ls node_modules/.bin/tsc)",
+      "Bash(ls gateway-console/node_modules/typescript/bin/tsc)",
+      "Bash(openspec new *)",
+      "Bash(./gateway-console/node_modules/.bin/tsc --noEmit --project gateway-console/tsconfig.json)",
+      "Bash(openspec status *)",
+      "Bash(openspec instructions *)",
+      "Bash(./node_modules/.bin/tsc --noEmit --project tsconfig.json)"
     ]
   },
   "outputStyle": "default"

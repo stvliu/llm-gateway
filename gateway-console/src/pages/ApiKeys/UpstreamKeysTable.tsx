@@ -3,16 +3,16 @@ import { Table, Tag, Space, Button, Popconfirm, App, Typography, Spin, Input } f
 import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders } from '@/services/query/useProviders';
-import { useChannels, useChannelCredentials, useDeleteChannelCredential } from '@/services/query/useChannels';
+import { useChannelsBatch, useChannelCredentialsBatch, useDeleteChannelCredential } from '@/services/query/useChannels';
 import { ProviderIcon } from '@/components/ui';
 import type { Provider } from '@/types/provider';
 
 const { Text } = Typography;
 
 /** 上游凭证的展示状态映射（色盲友好） */
-const statusConfig: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  ACTIVE: { label: '活跃', color: '#16a34a', bg: '#dcfce7', icon: '✅' },
-  INACTIVE: { label: '未激活', color: '#64748b', bg: '#f1f5f9', icon: '⏸️' },
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+  ACTIVE: { label: '活跃', color: '#16a34a', bg: '#dcfce7' },
+  INACTIVE: { label: '未激活', color: '#64748b', bg: '#f1f5f9' },
 };
 
 /** 聚合后的上游凭证行数据 */
@@ -38,76 +38,98 @@ export default function UpstreamKeysTable() {
 
   const [search, setSearch] = useState('');
 
-  // PageResponse<Provider> → Provider[]
   const providers: Provider[] = providersPage?.items ?? [];
 
-  // 取第一个供应商加载通道（简化版，生产环境应聚合所有供应商）
-  const firstProviderId = providers[0]?.id ?? 0;
-  const { data: channels, isLoading: channelsLoading } = useChannels(firstProviderId);
+  // 获取所有供应商的通道
+  const channelQueries = useChannelsBatch(providers.map((p) => p.id));
 
-  // 取第一个通道的凭证（简化版）
-  const firstChannelId = channels?.[0]?.id ?? 0;
-  const { data: credentials, isLoading: credentialsLoading } = useChannelCredentials(firstChannelId);
+  // 收集所有有通道的 providerId → channelId 映射
+  const allChannelEntries = useMemo(() => {
+    const entries: { providerId: number; channelId: number; channelName: string }[] = [];
+    providers.forEach((provider, idx) => {
+      const channels = channelQueries[idx]?.data;
+      channels?.forEach((ch) => {
+        entries.push({ providerId: provider.id, channelId: ch.id, channelName: ch.name });
+      });
+    });
+    return entries;
+  }, [providers, channelQueries]);
 
-  /** 聚合所有级别数据为平面行 */
+  // 获取所有通道的凭证
+  const credentialQueries = useChannelCredentialsBatch(allChannelEntries.map((e) => e.channelId));
+
+  // 聚合所有数据
   const allCredentials: AggregateCredential[] = useMemo(() => {
     if (providers.length === 0) return [];
-    // 没有通道时，按供应商显示占位行
-    if (!channels?.length) {
-      return providers.map((p) => ({
-        key: `placeholder-${p.id}`,
-        credentialId: 0,
-        channelId: 0,
-        providerId: p.id,
-        apiKeyPrefix: '-',
-        providerCode: p.providerId,
-        providerName: p.providerName,
-        channelName: `${p.providerName} ${t('channel', { defaultValue: '通道' })}`,
-        state: '',
-        priority: 0,
-        weight: 0,
-      }));
-    }
-    // 有通道 + 凭证时做关联
+
     const rows: AggregateCredential[] = [];
-    channels.forEach((ch) => {
-      const provider = providers.find((p) => p.id === ch.providerId);
-      const creds = credentials?.filter((c) => c.channelId === ch.id) ?? [];
-      if (creds.length === 0) {
-        // 通道无凭证，显示空行
+
+    providers.forEach((provider) => {
+      const providerChannels = channelQueries.find((q) => q.data)?.data?.filter(
+        (ch) => ch.providerId === provider.id
+      );
+
+      if (!providerChannels?.length) {
+        // 供应商无通道，显示占位行
         rows.push({
-          key: `no-cred-${ch.id}`,
+          key: `placeholder-${provider.id}`,
           credentialId: 0,
-          channelId: ch.id,
-          providerId: ch.providerId,
+          channelId: 0,
+          providerId: provider.id,
           apiKeyPrefix: '-',
-          providerCode: provider?.providerId,
-          providerName: provider?.providerName ?? String(ch.providerId),
-          channelName: ch.name,
+          providerCode: provider.providerId,
+          providerName: provider.providerName,
+          channelName: `${provider.providerName} ${t('channel', { defaultValue: '通道' })}`,
           state: '',
           priority: 0,
           weight: 0,
         });
-      } else {
-        creds.forEach((cr) => {
-          rows.push({
-            key: `cred-${cr.id}`,
-            credentialId: cr.id,
-            channelId: cr.channelId,
-            providerId: ch.providerId,
-            apiKeyPrefix: cr.apiKeyPrefix,
-            providerCode: provider?.providerId,
-            providerName: provider?.providerName ?? String(ch.providerId),
-            channelName: ch.name,
-            state: cr.state,
-            priority: cr.priority,
-            weight: cr.weight,
-          });
-        });
+        return;
       }
+
+      providerChannels.forEach((ch) => {
+        const entryIdx = allChannelEntries.findIndex((e) => e.channelId === ch.id);
+        const creds = entryIdx >= 0 ? credentialQueries[entryIdx]?.data : undefined;
+        const credList = creds?.filter((c) => c.channelId === ch.id) ?? [];
+
+        if (credList.length === 0) {
+          rows.push({
+            key: `no-cred-${ch.id}`,
+            credentialId: 0,
+            channelId: ch.id,
+            providerId: ch.providerId,
+            apiKeyPrefix: '-',
+            providerCode: provider.providerId,
+            providerName: provider.providerName,
+            channelName: ch.name,
+            state: '',
+            priority: 0,
+            weight: 0,
+          });
+        } else {
+          credList.forEach((cr) => {
+            rows.push({
+              key: `cred-${cr.id}`,
+              credentialId: cr.id,
+              channelId: cr.channelId,
+              providerId: ch.providerId,
+              apiKeyPrefix: cr.apiKeyPrefix,
+              providerCode: provider.providerId,
+              providerName: provider.providerName,
+              channelName: ch.name,
+              state: cr.state,
+              priority: cr.priority,
+              weight: cr.weight,
+            });
+          });
+        }
+      });
     });
+
     return rows;
-  }, [providers, channels, credentials, t]);
+  }, [providers, channelQueries, credentialQueries, allChannelEntries, t]);
+
+  const isLoading = providersLoading || channelQueries.some((q) => q.isLoading) || credentialQueries.some((q) => q.isLoading);
 
   /** 搜索过滤 */
   const filtered = useMemo(() => {
@@ -115,9 +137,9 @@ export default function UpstreamKeysTable() {
     const q = search.toLowerCase();
     return allCredentials.filter(
       (r) =>
-        r.apiKeyPrefix.toLowerCase().includes(q) ||
-        r.providerName.toLowerCase().includes(q) ||
-        r.channelName.toLowerCase().includes(q)
+        (r.apiKeyPrefix ?? '').toLowerCase().includes(q) ||
+        (r.providerName ?? '').toLowerCase().includes(q) ||
+        (r.channelName ?? '').toLowerCase().includes(q)
     );
   }, [allCredentials, search]);
 
@@ -171,10 +193,10 @@ export default function UpstreamKeysTable() {
       width: 100,
       render: (state: string) => {
         if (!state) return <Text type="secondary">-</Text>;
-        const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9', icon: '❓' };
+        const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9' };
         return (
           <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 4, padding: '2px 8px' }}>
-            {cfg.icon} {cfg.label}
+            {cfg.label}
           </Tag>
         );
       },
@@ -207,7 +229,7 @@ export default function UpstreamKeysTable() {
     },
   ];
 
-  if (providersLoading || channelsLoading || credentialsLoading) {
+  if (isLoading) {
     return <Spin />;
   }
 

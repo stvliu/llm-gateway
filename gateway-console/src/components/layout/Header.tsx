@@ -155,7 +155,7 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
             icon={<CodeOutlined />}
             onClick={() => navigate('/developer')}
           >
-            切换到开发者视图
+            {t('header.switchToDeveloper', { defaultValue: '切换到开发者视图' })}
           </Button>
         )}
 

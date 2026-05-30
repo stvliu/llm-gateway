@@ -15,5 +15,5 @@ export function PermissionGuard({
   children,
 }: PermissionGuardProps) {
   const { hasPermission } = useAuthStore();
-  return hasPermission(permission) ? <>{children}</> : <>{fallback}</>;
+  return hasPermission(permission) ? children : fallback;
 }

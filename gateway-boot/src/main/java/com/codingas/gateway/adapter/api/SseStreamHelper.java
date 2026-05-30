@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * SSE 流式响应处理工具
  *
- * <p>提取公共的 SSE 流式写入逻辑，避免 Controller 代码重复。</p>
+ * <p>提取公共的 SSE 流式写入逻辑，避免 Controller 代码重复。
+ * 完成标记由调度服务根据协议类型注入，此处仅做 flush 和 latch 释放。</p>
  */
 @Slf4j
 public final class SseStreamHelper {
@@ -50,7 +51,7 @@ public final class SseStreamHelper {
 
             @Override
             public void onComplete() {
-                writeDone(writer, latch);
+                completeStream(writer, latch);
             }
 
             @Override
@@ -84,12 +85,11 @@ public final class SseStreamHelper {
         }
     }
 
-    private static void writeDone(PrintWriter writer, CountDownLatch latch) {
+    private static void completeStream(PrintWriter writer, CountDownLatch latch) {
         try {
-            writer.write("data: [DONE]\n\n");
             writer.flush();
         } catch (Exception e) {
-            log.warn("Error writing SSE done marker: {}", e.getMessage());
+            log.warn("Error flushing SSE stream: {}", e.getMessage());
         }
         latch.countDown();
     }

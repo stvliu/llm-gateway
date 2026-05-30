@@ -16,7 +16,7 @@ export interface Provider {
   /** @deprecated 图标渲染已由 ProviderIcon 组件接管 */
   iconUrl?: string;
   description?: string;
-  tags?: unknown;
+  tags?: string[];
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;

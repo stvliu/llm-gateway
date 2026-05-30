@@ -12,6 +12,7 @@ import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -225,7 +226,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     ) {}
 
     record ModelCatalogData(
-        String modelName, String displayName, String modelFamily,
+        @JsonProperty("providerModelId") String modelName, String displayName, String modelFamily,
         Integer contextWindow, Integer maxInputTokens, Integer maxOutputTokens,
         String knowledgeCutoff, Object capabilities, Object modalities
     ) {}
@@ -236,6 +237,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     ) {}
 
     record PlanModelCatalogData(
-        String planCode, String modelName
+        String planCode, @JsonProperty("providerModelId") String modelName
     ) {}
 }

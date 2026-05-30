@@ -6,6 +6,7 @@ import ProviderCatalogView from './ProviderCatalogView';
 import PlanCatalogView from './PlanCatalogView';
 import ModelCatalogView from './ModelCatalogView';
 import MaterializeModal from './MaterializeModal';
+import CascadeMaterializeDialog from './CascadeMaterializeDialog';
 import type { MaterializeType } from '@/types/catalog';
 
 /** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型目录 */
@@ -26,6 +27,13 @@ export default function CatalogPage() {
     name: string;
   }>({ open: false, type: 'PROVIDER', code: '', name: '' });
 
+  // 级联物化弹窗状态
+  const [cascadeDialog, setCascadeDialog] = useState<{
+    open: boolean;
+    providerCode: string;
+    providerName: string;
+  }>({ open: false, providerCode: '', providerName: '' });
+
   /** 打开物化确认弹窗 */
   const handleMaterialize = (type: MaterializeType, code: string, name: string) => {
     setMaterializeModal({ open: true, type, code, name });
@@ -34,6 +42,16 @@ export default function CatalogPage() {
   /** 关闭物化弹窗 */
   const handleCloseMaterialize = () => {
     setMaterializeModal((prev) => ({ ...prev, open: false }));
+  };
+
+  /** 打开级联物化弹窗 */
+  const handleCascadeMaterialize = (code: string, name: string) => {
+    setCascadeDialog({ open: true, providerCode: code, providerName: name });
+  };
+
+  /** 关闭级联物化弹窗 */
+  const handleCloseCascade = () => {
+    setCascadeDialog((prev) => ({ ...prev, open: false }));
   };
 
   /** 选择供应商 → 进入套餐目录 */
@@ -128,7 +146,7 @@ export default function CatalogPage() {
         {!providerCode && (
           <ProviderCatalogView
             onSelectProvider={handleSelectProvider}
-            onMaterialize={handleMaterialize}
+            onCascadeMaterialize={handleCascadeMaterialize}
           />
         )}
         {providerCode && !planCode && (
@@ -154,6 +172,14 @@ export default function CatalogPage() {
         code={materializeModal.code}
         name={materializeModal.name}
         onClose={handleCloseMaterialize}
+      />
+
+      {/* 级联物化弹窗 */}
+      <CascadeMaterializeDialog
+        open={cascadeDialog.open}
+        providerCode={cascadeDialog.providerCode}
+        providerName={cascadeDialog.providerName}
+        onClose={handleCloseCascade}
       />
     </div>
   );

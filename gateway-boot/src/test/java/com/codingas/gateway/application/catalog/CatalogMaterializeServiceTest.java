@@ -1,13 +1,18 @@
 package com.codingas.gateway.application.catalog;
 
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
+import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
+import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
+import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.codingas.gateway.domain.supply.entity.Channel;
@@ -24,6 +29,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
@@ -71,6 +77,7 @@ class CatalogMaterializeServiceTest {
     @Mock
     private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
+    @Spy
     @InjectMocks
     private CatalogMaterializeService service;
 
@@ -222,15 +229,198 @@ class CatalogMaterializeServiceTest {
         assertNull(saved.getUpstreamModelName());
     }
 
+    @Test
+    void materializeProviderWithPlans_cascadeAll() throws Exception {
+        // 供应商尚未物化 → 物化 Provider
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+
+        when(providerCatalogGateway.findByProviderCode("deepseek")).thenReturn(Optional.of(createProviderCatalog("deepseek")));
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.empty());
+        when(providerGateway.save(any(Provider.class))).thenReturn(savedProvider);
+
+        // 关联 2 个 ACTIVE Plans
+        PlanCatalog plan1 = createPlanCatalog("deepseek", "deepseek_std", CatalogState.ACTIVE);
+        PlanCatalog plan2 = createPlanCatalog("deepseek", "deepseek_pro", CatalogState.ACTIVE);
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of(plan1, plan2));
+
+        // 短路 materializePlan：模拟成功
+        MaterializeResult planResult1 = MaterializeResult.builder().type("PLAN").code("deepseek_std").entityId(2L).status("CREATED").build();
+        MaterializeResult planResult2 = MaterializeResult.builder().type("PLAN").code("deepseek_pro").entityId(3L).status("CREATED").build();
+        doReturn(planResult1).when(service).materializePlan("deepseek_std");
+        doReturn(planResult2).when(service).materializePlan("deepseek_pro");
+
+        // 执行级联物化
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", null);
+
+        // 验证
+        assertNotNull(result);
+        assertEquals("deepseek", result.getProviderCode());
+        assertEquals(2, result.getTotalCount());
+        assertEquals(2, result.getSuccessCount());
+        assertEquals(0, result.getFailedCount());
+        assertEquals(2, result.getResults().size());
+        assertEquals("CREATED", result.getResults().get(0).getStatus());
+        assertEquals("CREATED", result.getResults().get(1).getStatus());
+
+        verify(providerGateway).save(any(Provider.class));
+    }
+
+    @Test
+    void materializeProviderWithPlans_cascadeSpecificPlans() throws Exception {
+        // 供应商已存在
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(savedProvider));
+
+        // 关联 3 个 Plans（只物化指定的 2 个）
+        PlanCatalog plan1 = createPlanCatalog("deepseek", "deepseek_std", CatalogState.ACTIVE);
+        PlanCatalog plan2 = createPlanCatalog("deepseek", "deepseek_pro", CatalogState.ACTIVE);
+        PlanCatalog plan3 = createPlanCatalog("deepseek", "deepseek_ultra", CatalogState.ACTIVE);
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of(plan1, plan2, plan3));
+
+        // 短路 materializePlan
+        MaterializeResult planResult1 = MaterializeResult.builder().type("PLAN").code("deepseek_std").entityId(2L).status("CREATED").build();
+        MaterializeResult planResult2 = MaterializeResult.builder().type("PLAN").code("deepseek_pro").entityId(3L).status("CREATED").build();
+        doReturn(planResult1).when(service).materializePlan("deepseek_std");
+        doReturn(planResult2).when(service).materializePlan("deepseek_pro");
+
+        // 执行级联（只物化 2 个指定 plan）
+        MaterializeBatchRequest request = new MaterializeBatchRequest();
+        request.setPlanCodes(List.of("deepseek_std", "deepseek_pro"));
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", request);
+
+        assertNotNull(result);
+        assertEquals(2, result.getTotalCount());
+        assertEquals(2, result.getSuccessCount());
+        assertEquals(2, result.getResults().size());
+
+        // 验证第三个 Plan 没有被物化
+        verify(service, never()).materializePlan("deepseek_ultra");
+    }
+
+    @Test
+    void materializeProviderWithPlans_allPlansAlreadyMaterialized() throws Exception {
+        // 供应商已存在
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(savedProvider));
+
+        // 关联 1 个 Plan
+        PlanCatalog plan = createPlanCatalog("deepseek", "deepseek_std", CatalogState.ACTIVE);
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of(plan));
+
+        // 短路 materializePlan → 抛 ALREADY_MATERIALIZED
+        doThrow(new CatalogException("ALREADY_MATERIALIZED", "套餐已物化")).when(service).materializePlan("deepseek_std");
+
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalCount());
+        assertEquals(0, result.getSuccessCount());
+        assertEquals(1, result.getSkippedCount());
+        assertEquals("SKIPPED", result.getResults().get(0).getStatus());
+        verify(providerGateway, never()).save(any(Provider.class));
+    }
+
+    @Test
+    void materializeProviderWithPlans_providerAlreadyExists() throws Exception {
+        // 供应商已存在
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(savedProvider));
+
+        // 有 1 个 Plan 待物化
+        PlanCatalog plan = createPlanCatalog("deepseek", "deepseek_std", CatalogState.ACTIVE);
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of(plan));
+
+        // 短路 materializePlan → 成功
+        MaterializeResult planResult = MaterializeResult.builder().type("PLAN").code("deepseek_std").entityId(5L).status("CREATED").build();
+        doReturn(planResult).when(service).materializePlan("deepseek_std");
+
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", null);
+
+        assertNotNull(result);
+        assertEquals(1, result.getTotalCount());
+        assertEquals(1, result.getSuccessCount());
+        // Provider 已存在，不应再次调用 save
+        verify(providerGateway, never()).save(any(Provider.class));
+    }
+
+    @Test
+    void materializeProviderWithPlans_noPlans_returnsEmpty() throws Exception {
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.empty());
+
+        ProviderCatalog catalog = createProviderCatalog("deepseek");
+        when(providerCatalogGateway.findByProviderCode("deepseek")).thenReturn(Optional.of(catalog));
+
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+        when(providerGateway.save(any(Provider.class))).thenReturn(savedProvider);
+
+        // 无关联 Plans
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of());
+
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", null);
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalCount());
+        assertEquals(0, result.getSuccessCount());
+        assertTrue(result.getResults().isEmpty());
+        verify(providerGateway).save(any(Provider.class));
+    }
+
+    @Test
+    void materializeProviderWithPlans_partialFailure() throws Exception {
+        // 供应商已存在
+        Provider savedProvider = new Provider();
+        savedProvider.setId(1L);
+        savedProvider.setCode("deepseek");
+        savedProvider.setState(ProviderState.ACTIVE);
+        when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(savedProvider));
+
+        PlanCatalog plan1 = createPlanCatalog("deepseek", "deepseek_std", CatalogState.ACTIVE);
+        PlanCatalog plan2 = createPlanCatalog("deepseek", "deepseek_pro", CatalogState.ACTIVE);
+        when(planCatalogGateway.findByProviderCode("deepseek")).thenReturn(List.of(plan1, plan2));
+
+        // plan1 成功，plan2 失败
+        MaterializeResult planResult1 = MaterializeResult.builder().type("PLAN").code("deepseek_std").entityId(2L).status("CREATED").build();
+        doReturn(planResult1).when(service).materializePlan("deepseek_std");
+        doThrow(new RuntimeException("JSON parse error")).when(service).materializePlan("deepseek_pro");
+
+        MaterializeBatchResult result = service.materializeProviderWithPlans("deepseek", null);
+
+        assertNotNull(result);
+        assertEquals(2, result.getTotalCount());
+        assertEquals(1, result.getSuccessCount());
+        assertEquals(1, result.getFailedCount());
+        assertEquals("CREATED", result.getResults().get(0).getStatus());
+        assertEquals("FAILED", result.getResults().get(1).getStatus());
+        assertEquals("JSON parse error", result.getResults().get(1).getErrorMessage());
+    }
+
     // ===== 辅助方法 =====
 
     private ProviderCatalog createProviderCatalog() {
+        return createProviderCatalog("openai");
+    }
+
+    private ProviderCatalog createProviderCatalog(String code) {
         ProviderCatalog catalog = new ProviderCatalog();
-        catalog.setProviderCode("openai");
-        catalog.setProviderName("OpenAI");
+        catalog.setProviderCode(code);
+        catalog.setProviderName(code);
         catalog.setProviderType(ProviderType.INTERNATIONAL);
-        catalog.setWebsiteUrl("https://openai.com");
-        catalog.setDescription("OpenAI 官方 API");
+        catalog.setWebsiteUrl("https://example.com");
         catalog.setSource(CatalogSource.BUILTIN);
         catalog.setState(CatalogState.ACTIVE);
         return catalog;
@@ -278,5 +468,18 @@ class CatalogMaterializeServiceTest {
         c.setId(id);
         c.setState(ChannelState.ACTIVE);
         return c;
+    }
+
+    private PlanCatalog createPlanCatalog(String providerCode, String planCode, CatalogState state) {
+        PlanCatalog p = new PlanCatalog();
+        p.setProviderCode(providerCode);
+        p.setPlanCode(planCode);
+        p.setPlanName(planCode);
+        p.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+        p.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.example.com\"}]");
+        p.setPricing("[{\"modelName\":\"deepseek-chat\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
+        p.setSource(CatalogSource.BUILTIN);
+        p.setState(state);
+        return p;
     }
 }

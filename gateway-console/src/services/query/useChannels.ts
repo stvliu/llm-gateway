@@ -27,6 +27,17 @@ export function useChannels(providerId: number) {
   });
 }
 
+/** 批量获取多个供应商的渠道列表 */
+export function useChannelsBatch(providerIds: number[]) {
+  return providerIds.map((providerId) =>
+    useQuery({
+      queryKey: channelKeys.list(providerId),
+      queryFn: () => channelApi.list({ providerId }),
+      enabled: !!providerId,
+    })
+  );
+}
+
 /** 获取渠道详情 */
 export function useChannel(id: number) {
   return useQuery({
@@ -135,6 +146,17 @@ export function useChannelCredentials(channelId: number) {
     queryFn: () => channelApi.listCredentials(channelId),
     enabled: !!channelId,
   });
+}
+
+/** 批量获取多个渠道的凭证列表 */
+export function useChannelCredentialsBatch(channelIds: number[]) {
+  return channelIds.map((channelId) =>
+    useQuery({
+      queryKey: channelKeys.credentials(channelId),
+      queryFn: () => channelApi.listCredentials(channelId),
+      enabled: !!channelId,
+    })
+  );
 }
 
 /** 创建渠道凭证 */

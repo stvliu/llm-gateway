@@ -28,17 +28,19 @@ export function BasicInfoStep({
   // 查询供应商目录列表
   const { data: _catalogList } = useProviderCatalogs();
 
-  // 初始化基本信息
+  // 初始化基本信息（仅挂载时执行）
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
   useEffect(() => {
     if (!basicInfo) {
-      onChange({
+      onChangeRef.current({
         code: '',
         providerName: '',
         websiteUrl: '',
         apiDocUrl: '',
       });
     }
-  }, []); // 仅在挂载时初始化
+  }, []);
 
   // 处理字段变更（使用 ref 保持回调稳定，避免 Input 因回调重建而失去焦点）
   const handleFieldChange = useCallback((field: keyof CreateProviderRequest, value: string) => {

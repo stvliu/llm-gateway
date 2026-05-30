@@ -162,7 +162,7 @@ class ChatDispatchServiceTest {
             // when & then
             assertThatThrownBy(() -> dispatchService.dispatch(unsupportedRequest, testIdentity, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("不支持的请求类型");
+                    .hasMessageContaining("不支持的协议类型");
         }
     }
 
