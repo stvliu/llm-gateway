@@ -14,6 +14,8 @@ export const P = {
   SETTINGS_WRITE: 'settings:write',
   KEY_READ: 'key:read',
   KEY_WRITE: 'key:write',
+  CHANNEL_READ: 'channel:read',
+  CHANNEL_WRITE: 'channel:write',
   DEVELOPER: 'developer:access',
 } as const;
 

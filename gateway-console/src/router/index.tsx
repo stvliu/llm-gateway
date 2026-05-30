@@ -7,6 +7,7 @@ import Providers from '@/pages/Providers';
 import Models from '@/pages/Models';
 import ApiKeys from '@/pages/ApiKeys';
 import Developer from '@/pages/Developer';
+import Channels from '@/pages/Channels';
 import Catalog from '@/pages/Catalog';
 import Users from '@/pages/Users';
 import ChangePassword from '@/pages/ChangePassword';
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
+      {
+        path: 'channels',
+        element: <PermissionGuard permission={P.CHANNEL_READ}><Channels /></PermissionGuard>,
+      },
       {
         path: 'providers',
         element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
