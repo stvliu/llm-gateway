@@ -1,8 +1,6 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
-import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.entity.Model;
@@ -10,6 +8,8 @@ import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
+import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
+import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,7 +34,9 @@ import static org.mockito.Mockito.when;
 class ModelDiscoveryServiceTest {
 
     @Mock
-    private UserApiKeyGateway userApiKeyGateway;
+    private UserTeamGateway userTeamGateway;
+    @Mock
+    private TeamChannelGateway teamChannelGateway;
     @Mock
     private ChannelModelGateway channelModelGateway;
     @Mock
@@ -42,9 +44,12 @@ class ModelDiscoveryServiceTest {
 
     private ModelDiscoveryService service;
 
+    private static final Long USER_ID = 1L;
+    private static final Long TEAM_ID = 100L;
+
     @BeforeEach
     void setUp() {
-        service = new ModelDiscoveryService(userApiKeyGateway, channelModelGateway, modelGateway);
+        service = new ModelDiscoveryService(userTeamGateway, teamChannelGateway, channelModelGateway, modelGateway);
     }
 
     @Nested
@@ -52,14 +57,11 @@ class ModelDiscoveryServiceTest {
     class GetVisibleModelsTests {
 
         @Test
-        @DisplayName("返回 API Key 渠道关联的所有活跃模型")
-        void shouldReturnModelsVisibleToApiKey() {
+        @DisplayName("返回用户团队渠道关联的所有活跃模型")
+        void shouldReturnModelsVisibleToUser() {
             // Arrange
-            UserApiKey apiKey = new UserApiKey();
-            apiKey.setId(1L);
-            apiKey.setChannelIds(List.of(10L, 20L));
-
-            when(userApiKeyGateway.findById(1L)).thenReturn(Optional.of(apiKey));
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(10L, 20L));
 
             ChannelModel cm1 = new ChannelModel();
             cm1.setModelId(100L);
@@ -86,7 +88,7 @@ class ModelDiscoveryServiceTest {
             when(modelGateway.findById(200L)).thenReturn(Optional.of(model2));
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(1L);
+            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
 
             // Assert
             assertThat(response.getObject()).isEqualTo("list");
@@ -96,29 +98,22 @@ class ModelDiscoveryServiceTest {
         }
 
         @Test
-        @DisplayName("API Key 没有关联渠道时返回空列表")
-        void shouldReturnEmptyListWhenNoChannels() {
-            UserApiKey apiKey = new UserApiKey();
-            apiKey.setId(2L);
-            apiKey.setChannelIds(List.of());
+        @DisplayName("用户未关联团队时返回空列表")
+        void shouldReturnEmptyListWhenNoTeam() {
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(null);
 
-            when(userApiKeyGateway.findById(2L)).thenReturn(Optional.of(apiKey));
-
-            ModelDiscoveryResponse response = service.getVisibleModels(2L);
+            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
 
             assertThat(response.getData()).isEmpty();
         }
 
         @Test
-        @DisplayName("API Key 的 channelIds 为 null 时返回空列表")
-        void shouldReturnEmptyListWhenChannelIdsNull() {
-            UserApiKey apiKey = new UserApiKey();
-            apiKey.setId(3L);
-            apiKey.setChannelIds(null);
+        @DisplayName("团队未关联渠道时返回空列表")
+        void shouldReturnEmptyListWhenNoChannels() {
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of());
 
-            when(userApiKeyGateway.findById(3L)).thenReturn(Optional.of(apiKey));
-
-            ModelDiscoveryResponse response = service.getVisibleModels(3L);
+            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
 
             assertThat(response.getData()).isEmpty();
         }
@@ -126,11 +121,9 @@ class ModelDiscoveryServiceTest {
         @Test
         @DisplayName("仅返回状态为 ACTIVE 的模型，过滤掉 INACTIVE 的模型")
         void shouldFilterInactiveModels() {
-            UserApiKey apiKey = new UserApiKey();
-            apiKey.setId(4L);
-            apiKey.setChannelIds(List.of(30L));
-
-            when(userApiKeyGateway.findById(4L)).thenReturn(Optional.of(apiKey));
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(30L));
 
             ChannelModel cm = new ChannelModel();
             cm.setModelId(300L);
@@ -144,38 +137,32 @@ class ModelDiscoveryServiceTest {
 
             when(modelGateway.findById(300L)).thenReturn(Optional.of(inactiveModel));
 
-            ModelDiscoveryResponse response = service.getVisibleModels(4L);
+            // Act
+            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
 
+            // Assert
             assertThat(response.getData()).isEmpty();
         }
 
         @Test
         @DisplayName("模型不存在时（findById 返回空）直接跳过")
         void shouldSkipWhenModelNotFound() {
-            UserApiKey apiKey = new UserApiKey();
-            apiKey.setId(5L);
-            apiKey.setChannelIds(List.of(40L));
+            // Arrange
+            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
+            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(40L));
 
-            when(userApiKeyGateway.findById(5L)).thenReturn(Optional.of(apiKey));
-            when(channelModelGateway.findActiveByChannelId(40L)).thenReturn(List.of(new ChannelModel() {{
-                setModelId(999L);
-                setState(ChannelModelState.ACTIVE);
-            }}));
+            ChannelModel cm = new ChannelModel();
+            cm.setModelId(999L);
+            cm.setState(ChannelModelState.ACTIVE);
+
+            when(channelModelGateway.findActiveByChannelId(40L)).thenReturn(List.of(cm));
             when(modelGateway.findById(999L)).thenReturn(Optional.empty());
 
-            ModelDiscoveryResponse response = service.getVisibleModels(5L);
+            // Act
+            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
 
+            // Assert
             assertThat(response.getData()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("API Key 不存在时抛出 GatewayRequestException")
-        void shouldThrowWhenApiKeyNotFound() {
-            when(userApiKeyGateway.findById(99L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> service.getVisibleModels(99L))
-                    .isInstanceOf(GatewayRequestException.class)
-                    .hasMessageContaining("API Key 不存在");
         }
     }
 }

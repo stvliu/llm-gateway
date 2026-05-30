@@ -59,7 +59,7 @@ class ModelDiscoveryControllerTest {
         void listModels_withValidIdentity_returnsModels() {
             // given
             when(request.getAttribute("identity")).thenReturn(identity);
-            when(modelDiscoveryService.getVisibleModels(100L)).thenReturn(sampleResponse);
+            when(modelDiscoveryService.getVisibleModels(1L)).thenReturn(sampleResponse);
 
             // when
             ModelDiscoveryResponse result = controller.listModels(request);
@@ -83,11 +83,11 @@ class ModelDiscoveryControllerTest {
         }
 
         @Test
-        @DisplayName("credentialId 为 null 时抛出异常")
-        void listModels_withNullCredentialId_throwsException() {
+        @DisplayName("userId 为 null 时抛出异常")
+        void listModels_withNullUserId_throwsException() {
             // given
-            Identity identityWithoutCredential = Identity.of(1L, "user", null);
-            when(request.getAttribute("identity")).thenReturn(identityWithoutCredential);
+            Identity identityWithoutUserId = new Identity(null, "user", 100L);
+            when(request.getAttribute("identity")).thenReturn(identityWithoutUserId);
 
             // when & then
             assertThatThrownBy(() -> controller.listModels(request))
