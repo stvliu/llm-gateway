@@ -12,8 +12,10 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyCreateResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyDetailResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
+import com.codingas.gateway.domain.team.entity.TeamChannel;
 import com.codingas.gateway.domain.team.entity.UserTeam;
 import com.codingas.gateway.domain.team.enums.TeamRole;
+import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +36,7 @@ public class TeamController {
     private final TeamService teamService;
     private final UserApiKeyService userApiKeyService;
     private final UserTeamGateway userTeamGateway;
+    private final TeamChannelGateway teamChannelGateway;
 
     @PostMapping
     public ResponseEntity<TeamResponse> create(@Valid @RequestBody TeamRequest request) {
@@ -131,8 +134,7 @@ public class TeamController {
         }
 
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
-                targetUserId, request.channelIds(), request.name(),
-                request.models(), request.quotaLimit()
+                targetUserId, request.name(), request.models(), request.quotaLimit()
         );
         UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -155,5 +157,32 @@ public class TeamController {
     public ResponseEntity<Void> deleteApiKey(@PathVariable Long id) {
         userApiKeyService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    // ==================== 渠道管理 ====================
+
+    /**
+     * 获取团队关联的渠道 ID 列表
+     */
+    @GetMapping("/{teamId}/channels")
+    public List<Long> getTeamChannels(@PathVariable Long teamId) {
+        return teamChannelGateway.findChannelIdsByTeamId(teamId);
+    }
+
+    /**
+     * 更新团队关联的渠道（全量替换）
+     */
+    @PutMapping("/{teamId}/channels")
+    public ResponseEntity<Void> updateTeamChannels(
+            @PathVariable Long teamId,
+            @RequestBody List<Long> channelIds) {
+        // 先删除旧的关联
+        teamChannelGateway.deleteByTeamId(teamId);
+        // 创建新的关联
+        List<TeamChannel> teamChannels = channelIds.stream()
+                .map(channelId -> new TeamChannel(teamId, channelId))
+                .toList();
+        teamChannelGateway.saveAll(teamChannels);
+        return ResponseEntity.ok().build();
     }
 }
