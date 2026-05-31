@@ -40,20 +40,17 @@ export default function MaterializeModal({ open, type, code, name, onClose }: Ma
   const materializePlanMutation = useMaterializePlan();
   const materializeModelMutation = useMaterializeModel();
 
-  /** 当前物化类型对应的 mutation */
-  const activeMutation = () => {
-    switch (type) {
-      case 'PROVIDER': return materializeProviderMutation;
-      case 'PLAN': return materializePlanMutation;
-      case 'MODEL': return materializeModelMutation;
-    }
-  };
-
   /** 确认物化 */
   const handleConfirm = async () => {
-    const mutation = activeMutation();
     try {
-      await mutation.mutateAsync(code);
+      // 根据类型调用不同的 mutation
+      if (type === 'PROVIDER') {
+        await materializeProviderMutation.mutateAsync(code);
+      } else if (type === 'PLAN') {
+        await materializePlanMutation.mutateAsync({ planCode: code });
+      } else if (type === 'MODEL') {
+        await materializeModelMutation.mutateAsync(code);
+      }
       message.success(t('message.materializeSuccess'));
       onClose();
     } catch {
@@ -61,8 +58,16 @@ export default function MaterializeModal({ open, type, code, name, onClose }: Ma
     }
   };
 
+  /** 获取当前 mutation 的 isPending 状态 */
+  const getIsPending = () => {
+    if (type === 'PROVIDER') return materializeProviderMutation.isPending;
+    if (type === 'PLAN') return materializePlanMutation.isPending;
+    if (type === 'MODEL') return materializeModelMutation.isPending;
+    return false;
+  };
+
   const typeConfig = MATERIALIZE_TYPE_CONFIG[type];
-  const isPending = activeMutation().isPending;
+  const isPending = getIsPending();
 
   return (
     <Modal

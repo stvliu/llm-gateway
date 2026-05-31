@@ -7,6 +7,7 @@ import PlanCatalogView from './PlanCatalogView';
 import ModelCatalogView from './ModelCatalogView';
 import MaterializeModal from './MaterializeModal';
 import CascadeMaterializeDialog from './CascadeMaterializeDialog';
+import { ChannelCreateWizard } from '@/pages/Channels/ChannelCreateWizard';
 import type { MaterializeType } from '@/types/catalog';
 
 /** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型目录 */
@@ -34,6 +35,11 @@ export default function CatalogPage() {
     providerName: string;
   }>({ open: false, providerCode: '', providerName: '' });
 
+  // 渠道创建向导状态
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardPlanCode, setWizardPlanCode] = useState<string | undefined>();
+  const [wizardPlanName, setWizardPlanName] = useState<string | undefined>();
+
   /** 打开物化确认弹窗 */
   const handleMaterialize = (type: MaterializeType, code: string, name: string) => {
     setMaterializeModal({ open: true, type, code, name });
@@ -52,6 +58,20 @@ export default function CatalogPage() {
   /** 关闭级联物化弹窗 */
   const handleCloseCascade = () => {
     setCascadeDialog((prev) => ({ ...prev, open: false }));
+  };
+
+  /** 打开渠道创建向导 */
+  const handleQuickCreate = (planCode: string, planName: string) => {
+    setWizardPlanCode(planCode);
+    setWizardPlanName(planName);
+    setWizardOpen(true);
+  };
+
+  /** 关闭渠道创建向导 */
+  const handleCloseWizard = () => {
+    setWizardOpen(false);
+    setWizardPlanCode(undefined);
+    setWizardPlanName(undefined);
   };
 
   /** 选择供应商 → 进入套餐目录 */
@@ -154,6 +174,7 @@ export default function CatalogPage() {
             providerCode={providerCode}
             onSelectPlan={handleSelectPlan}
             onMaterialize={handleMaterialize}
+            onQuickCreate={handleQuickCreate}
           />
         )}
         {providerCode && planCode && (
@@ -180,6 +201,14 @@ export default function CatalogPage() {
         providerCode={cascadeDialog.providerCode}
         providerName={cascadeDialog.providerName}
         onClose={handleCloseCascade}
+      />
+
+      {/* 渠道创建向导 */}
+      <ChannelCreateWizard
+        open={wizardOpen}
+        onClose={handleCloseWizard}
+        initialPlanCode={wizardPlanCode}
+        initialPlanName={wizardPlanName}
       />
     </div>
   );
