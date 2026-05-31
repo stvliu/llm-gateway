@@ -10,6 +10,7 @@ import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
+import com.codingas.gateway.infrastructure.util.KeyMasker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -113,6 +114,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
                 apiKey.getId(),
                 apiKey.getUserId(),
                 apiKey.getKeyPrefix(),
+                KeyMasker.mask(apiKey.getKeyPrefix()),
                 apiKey.getName(),
                 apiKey.getModels(),
                 apiKey.getQuotaLimit(),
