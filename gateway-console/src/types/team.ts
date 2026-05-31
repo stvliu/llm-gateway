@@ -46,6 +46,7 @@ export interface UserApiKey {
   id: number;
   userId: number;
   keyPrefix: string;
+  keyMasked: string;  // 新增：脱敏格式
   name: string;
   models: string[];
   quotaLimit: number | null;

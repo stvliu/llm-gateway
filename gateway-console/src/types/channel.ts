@@ -1,8 +1,8 @@
 /** 协议类型（与后端 ProtocolGateway.getProtocolName() 对应） */
 export type EndpointProtocol = 'openai' | 'anthropic';
 
-/** 计费模式（与 catalog.ts BillingMode 对齐） */
-export type BillingMode = 'PAY_AS_YOU_GO' | 'SUBSCRIPTION' | 'PACKAGE';
+/** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
+export type BillingMode = 'pay_as_you_go' | 'subscription' | 'package';
 
 /** 协议信息（从 /api/protocols 获取） */
 export interface ProtocolInfo {
@@ -51,7 +51,7 @@ export interface Channel {
   updatedAt: string;
 }
 
-/** 创建渠道请求（与后端 ChannelRequest 一致） */
+/** 创建渠道请求（与后端 ChannelRequest 一致，仅基础属性） */
 export interface CreateChannelRequest {
   providerId: number;
   name: string;
@@ -61,6 +61,24 @@ export interface CreateChannelRequest {
   weight?: number;
   timeout?: number | null;
   maxRetries?: number | null;
+}
+
+/** 渠道创建/更新响应（与后端 ChannelResponse 一致，包含 id） */
+export interface ChannelResponse {
+  id: number;
+  providerId: number;
+  providerName: string;
+  name: string;
+  billingMode: string;
+  quotaLimit: number | null;
+  priority: number;
+  weight: number;
+  timeout: number | null;
+  maxRetries: number | null;
+  state: ChannelState;
+  endpoints: ChannelEndpointResponse[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** 更新渠道请求（与后端 ChannelRequest 一致，PUT 使用同一请求体） */
@@ -73,6 +91,7 @@ export interface UpdateChannelRequest {
   weight?: number;
   timeout?: number | null;
   maxRetries?: number | null;
+  state?: ChannelState;
 }
 
 /** 渠道凭证状态 */
@@ -83,6 +102,7 @@ export interface ChannelCredential {
   id: number;
   channelId: number;
   apiKeyPrefix: string;
+  apiKeyMasked: string;  // 新增：脱敏格式
   name: string;
   description: string | null;
   weight: number;
@@ -92,9 +112,8 @@ export interface ChannelCredential {
   updatedAt: string;
 }
 
-/** 创建渠道凭证请求（与后端 ChannelCredentialCreateRequest 一致） */
+/** 创建渠道凭证请求（与后端 ChannelCredentialCreateRequest 一致，channelId 在 URL 路径中） */
 export interface CreateChannelCredentialRequest {
-  channelId: number;
   apiKey: string;
   priority?: number;
   weight?: number;
@@ -110,6 +129,7 @@ export interface CreateChannelCredentialResponse {
 
 /** 更新渠道凭证请求（与后端 ChannelCredentialUpdateRequest 一致） */
 export interface UpdateChannelCredentialRequest {
+  apiKey?: string;  // 新增：可选，传值则替换
   priority?: number;
   weight?: number;
   description?: string;
