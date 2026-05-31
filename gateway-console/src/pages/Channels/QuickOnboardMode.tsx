@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Steps, Select, Input, Checkbox, Button, Space, Typography, App, Spin, Tag, Divider } from 'antd';
+import { Steps, Select, Input, Checkbox, Button, Space, Typography, App, Spin, Tag, Divider, theme } from 'antd';
 import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { providerCatalogApi, planCatalogApi, catalogMaterializeApi } from '@/services/api/catalog';
@@ -26,11 +26,12 @@ interface EditableEndpoint {
 }
 
 /**
- * 快速接入模式——三步完成渠道创建
+ * 快速接入模式——四步完成渠道创建
  * 支持从目录入口预选套餐
  */
 export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName }: QuickOnboardModeProps) {
   const { message } = App.useApp();
+  const { token } = theme.useToken();
   const queryClient = useQueryClient();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -311,7 +312,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
 
       {/* 套餐预览 */}
       {planDetail && (
-        <div style={{ marginTop: 16, padding: 12, background: '#fafafa', borderRadius: 8 }}>
+        <div style={{ marginTop: 16, padding: 12, background: token.colorBgLayout, borderRadius: 8 }}>
           <Text strong style={{ display: 'block', marginBottom: 8 }}>套餐预览</Text>
           <Space direction="vertical" size="small">
             <Text>
@@ -466,16 +467,16 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
                   justifyContent: 'space-between',
                   padding: '8px 12px',
                   marginBottom: 4,
-                  background: key.valid ? '#f6ffed' : '#fff2f0',
+                  background: key.valid ? token.colorSuccessBg : token.colorErrorBg,
                   borderRadius: 4,
-                  border: `1px solid ${key.valid ? '#b7eb8f' : '#ffccc7'}`,
+                  border: `1px solid ${key.valid ? token.colorSuccessBorder : token.colorErrorBorder}`,
                 }}
               >
                 <Space>
                   {key.valid ? (
-                    <CheckCircleOutlined style={{ color: '#52c41a' }} />
+                    <CheckCircleOutlined style={{ color: token.colorSuccess }} />
                   ) : (
-                    <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />
+                    <ExclamationCircleOutlined style={{ color: token.colorError }} />
                   )}
                   <Text code>{key.masked}</Text>
                 </Space>
@@ -492,11 +493,75 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
     </div>
   );
 
+  // Step 3: 确认创建
+  const renderStep3 = () => {
+    const checkedEndpoints = endpoints.filter((ep) => ep.checked && ep.url.trim());
+    const validKeys = parsedApiKeys.filter((k) => k.valid);
+
+    return (
+      <div>
+        <Title level={5}>确认创建</Title>
+        <div style={{ marginBottom: 8 }}>
+          <Text type="secondary">请确认以下配置信息，点击"创建渠道"完成创建</Text>
+        </div>
+
+        <div style={{ marginTop: 16, padding: 16, background: token.colorBgLayout, borderRadius: 8 }}>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            {/* 套餐信息 */}
+            <div>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>套餐名称</Text>
+              <Text strong>{selectedPlanName || planDetail?.planName || '-'}</Text>
+            </div>
+
+            {/* 端点统计 */}
+            <div>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>端点数量</Text>
+              <Space>
+                <Tag color="blue">{checkedEndpoints.length} 个</Tag>
+                {checkedEndpoints.length > 0 && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {checkedEndpoints.map((ep) => ep.url).join(', ')}
+                  </Text>
+                )}
+              </Space>
+            </div>
+
+            {/* 模型统计 */}
+            <div>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>模型数量</Text>
+              <Tag color="green">{selectedModels.length} 个</Tag>
+            </div>
+
+            {/* API Key 统计 */}
+            <div>
+              <Text type="secondary" style={{ display: 'block', marginBottom: 4 }}>API Key 数量</Text>
+              <Space>
+                <Tag color={validKeys.length > 0 ? 'green' : 'red'}>{parsedApiKeys.length} 个</Tag>
+                {parsedApiKeys.length > 0 && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {parsedApiKeys.map((k) => k.masked).join(', ')}
+                  </Text>
+                )}
+              </Space>
+            </div>
+          </Space>
+        </div>
+
+        {parsedApiKeys.length === 0 && (
+          <div style={{ marginTop: 12, padding: 12, background: token.colorWarningBg, borderRadius: 8 }}>
+            <Text type="warning">未配置 API Key，创建后渠道将无法正常使用，请在创建后及时配置</Text>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // 渲染步骤指示器
   const stepItems = [
     { title: '选择套餐' },
     { title: '端点与模型' },
     { title: '粘贴 Key' },
+    { title: '确认创建' },
   ];
 
   return (
@@ -534,11 +599,24 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
           <div style={{ marginTop: 24, textAlign: 'right' }}>
             <Space>
               <Button onClick={() => setStep(1)}>上一步</Button>
+              <Button type="primary" onClick={handleNext}>
+                下一步
+              </Button>
+            </Space>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && (
+        <div>
+          {renderStep3()}
+          <div style={{ marginTop: 24, textAlign: 'right' }}>
+            <Space>
+              <Button onClick={() => setStep(2)}>上一步</Button>
               <Button
                 type="primary"
                 onClick={handleFinish}
                 loading={submitting}
-                disabled={parsedApiKeys.length === 0}
               >
                 创建渠道
               </Button>
