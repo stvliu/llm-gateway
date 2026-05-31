@@ -5,7 +5,6 @@ import {
   Select,
   Button,
   Space,
-  Drawer,
   Empty,
   Spin,
 } from 'antd';
@@ -15,13 +14,13 @@ import { useProviders } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
+import { ChannelCreateWizard } from './ChannelCreateWizard';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
   ChannelCredential,
 } from '@/types/channel';
-
 const { Title } = Typography;
 const { Search } = Input;
 
@@ -61,18 +60,25 @@ export default function Channels() {
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
 
   // 获取所有渠道的凭证（批量）
-  const channelIds = channels?.map((c) => c.id) || [];
+  const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
   const credentialsQueries = useChannelCredentialsBatch(channelIds);
+
+  // 提取凭证数据为稳定引用
+  const credentialsData = useMemo(
+    () => credentialsQueries.map((q) => q.data),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [channels, credentialsQueries.map((q) => q.data?.length).join(',')]
+  );
 
   // 构建渠道卡片数据（含统计）
   const channelsWithStats: ChannelCard[] = useMemo(() => {
     if (!channels) return [];
 
     return channels.map((channel, index) => {
-      const credentials = credentialsQueries[index]?.data;
+      const credentials = credentialsData[index];
       return calculateChannelStats(channel, credentials);
     });
-  }, [channels, credentialsQueries]);
+  }, [channels, credentialsData]);
 
   // 按供应商分组
   const groupedChannels: ChannelGroup[] = useMemo(() => {
@@ -115,7 +121,7 @@ export default function Channels() {
     let result = groupedChannels;
 
     // 按供应商筛选
-    if (providerFilter) {
+    if (providerFilter !== undefined) {
       result = result.filter((g) => g.provider.id === providerFilter);
     }
 
@@ -231,18 +237,11 @@ export default function Channels() {
         onClose={() => setDrawerVisible(false)}
       />
 
-      {/* 创建向导（占位，Task 4 完善） */}
-      <Drawer
-        title="创建渠道"
-        placement="right"
-        width={720}
+      {/* 创建向导 */}
+      <ChannelCreateWizard
         open={wizardVisible}
         onClose={() => setWizardVisible(false)}
-      >
-        <div>
-          <p>创建向导将在 Task 4 完善</p>
-        </div>
-      </Drawer>
+      />
     </div>
   );
 }

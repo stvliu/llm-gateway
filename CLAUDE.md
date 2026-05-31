@@ -2,6 +2,7 @@
 
 该文件为 Claude Code (claude.ai/code) 在处理此存储库中的代码时提供指导。
 
+
 ## 项目概述
 
 LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网关（APIPark 竞品），支持 OpenAI 和 Anthropic 双 API 标准。
@@ -156,20 +157,13 @@ GatewayException (根异常)
 - 常量: UPPER_SNAKE_CASE
 
 ## Active Technologies
-- Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) (001-provider-adapter)
-- H2（开发调试）/ PostgreSQL 14+（生产） (001-provider-adapter)
-- Java 21 + Spring Boot 3.5.x, WebClient (spring-boot-starter-webflux), Reactor (Project Reactor), Jackson (002-openai-anthropic-adapters)
-- PostgreSQL 14+ (provider credentials, encrypted API keys) (002-openai-anthropic-adapters)
-- Java 21 + Spring Boot 3.5.x, Spring MVC (spring-boot-starter-web), RestClient, OkHttp 4.12.0, Jackson (002-openai-anthropic-adapters)
+- Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) 
+- H2（开发调试）/ PostgreSQL 14+（生产）
+- RestClient, OkHttp 4.12.0, Jackson
 
-## Recent Changes
-- 001-provider-adapter: Added Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化)
-
-<!-- SPECKIT START -->
-For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the current plan
-<!-- SPECKIT END -->
-On every task, check for relevant Superpowers skills and use them.
-
-## gstack
-Use /browse from gstack for all web browsing. Never use mcp__claude-in-chrome__* tools.
+## 项目语言规范
+请严格遵守以下规则：
+1. 所有对话、解释、建议必须使用**简体中文**。
+2. 代码注释必须使用中文。
+3. 生成的 Commit Message 必须使用中文。
+4. 严禁出现大段未翻译的英文技术名词（保留专业术语如 API、SDK 除外）。

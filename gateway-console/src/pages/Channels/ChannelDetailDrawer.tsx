@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Drawer,
   Typography,
@@ -42,7 +41,6 @@ export function ChannelDetailDrawer({
   open,
   onClose,
 }: ChannelDetailDrawerProps) {
-  const [activeTab, setActiveTab] = useState<string>('endpoints');
 
   // 获取渠道详情（包含端点）
   const { data: channelDetail, isLoading: detailLoading } = useChannel(channel?.id || 0);
@@ -87,7 +85,7 @@ export function ChannelDetailDrawer({
       {/* 供应商名称（可点击） */}
       <div style={{ marginBottom: 8 }}>
         <Text type="secondary">供应商: </Text>
-        <Link href="#" onClick={() => message.info('供应商详情页面将在后续实现')}>
+        <Link onClick={() => message.info('供应商详情页面将在后续实现')}>
           {channel.providerName}
         </Link>
       </div>

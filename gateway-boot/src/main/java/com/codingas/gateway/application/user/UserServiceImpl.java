@@ -8,7 +8,9 @@ import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
+import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -139,24 +141,38 @@ public class UserServiceImpl implements UserService {
 
     /**
      * 删除用户（软删除）
+     *
+     * <p>禁止删除内建用户，防止系统失去管理入口。</p>
      */
     @Override
     @Transactional
     public void delete(Long id) {
         User user = userGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (user.isBuiltin()) {
+            throw new ForbiddenException("不允许删除系统内建用户");
+        }
+
         user.setDeletedAt(Instant.now());
         userGateway.save(user);
     }
 
     /**
      * 更新用户状态
+     *
+     * <p>禁止禁用内建用户，防止系统失去管理入口。</p>
      */
     @Override
     @Transactional
     public UserResponse updateState(Long id, UserStateUpdateRequest request) {
         User user = userGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (user.isBuiltin() && request.getState() != UserState.ACTIVE) {
+            throw new ForbiddenException("不允许禁用系统内建用户");
+        }
+
         user.setState(request.getState());
         return toResponse(userGateway.save(user));
     }
@@ -165,6 +181,7 @@ public class UserServiceImpl implements UserService {
      * 分配用户角色
      *
      * <p>简化角色模型：直接设置 User.role 字段。</p>
+     * <p>禁止变更内建用户的角色，防止系统失去管理入口。</p>
      */
     @Override
     @Transactional
@@ -172,9 +189,14 @@ public class UserServiceImpl implements UserService {
         User user = userGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        // 简化角色模型：取第一个角色代码设置
         if (request.getRoleCodes() != null && !request.getRoleCodes().isEmpty()) {
             String roleCode = request.getRoleCodes().get(0);
+
+            // 禁止变更内建用户的角色
+            if (user.isBuiltin()) {
+                throw new ForbiddenException("不允许变更系统内建用户的角色");
+            }
+
             user.setRole(roleCode);
         }
 
@@ -260,6 +282,7 @@ public class UserServiceImpl implements UserService {
         response.setState(user.getState());
         response.setEmailVerified(user.getEmailVerified());
         response.setRole(user.getRole());
+        response.setBuiltin(user.getBuiltin());
         response.setLastLoginAt(user.getLastLoginAt());
         response.setCreatedAt(user.getCreatedAt());
         response.setUpdatedAt(user.getUpdatedAt());

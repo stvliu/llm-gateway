@@ -18,6 +18,10 @@ export interface InlineEditableListProps<T> {
   onAdd: () => void;
   /** 删除项回调 */
   onDelete?: (item: T) => void;
+  /** 编辑保存回调 */
+  onSave?: (item: T) => void;
+  /** 新增保存回调 */
+  onSaveNew?: (item: Partial<T>) => void;
   /** 获取项的唯一标识 */
   getKey: (item: T) => string | number;
   /** 添加按钮文本 */
@@ -31,6 +35,8 @@ export function InlineEditableList<T>({
   renderAddForm,
   onAdd,
   onDelete,
+  onSave,
+  onSaveNew,
   getKey,
   addLabel = '添加',
 }: InlineEditableListProps<T>) {
@@ -53,6 +59,7 @@ export function InlineEditableList<T>({
   /** 保存编辑 */
   const handleSaveEdit = (updated: T) => {
     setEditingKey(null);
+    onSave?.(updated);
   };
 
   /** 开始新增 */
@@ -70,6 +77,7 @@ export function InlineEditableList<T>({
   /** 保存新增 */
   const handleSaveAdd = (newItem: Partial<T>) => {
     setIsAdding(false);
+    onSaveNew?.(newItem);
   };
 
   return (

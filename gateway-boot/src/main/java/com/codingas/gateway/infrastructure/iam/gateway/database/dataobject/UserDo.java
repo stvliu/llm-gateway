@@ -63,4 +63,10 @@ public class UserDo extends BaseDo {
 
     @Column(name = "deleted_at")
     private Instant deletedAt;
+
+    /**
+     * 是否为系统内建用户（不可删除、不可降级、不可禁用）
+     */
+    @Column(name = "builtin", nullable = false)
+    private Boolean builtin = false;
 }

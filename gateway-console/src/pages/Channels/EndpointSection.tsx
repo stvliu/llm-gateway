@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Switch, Input, Select, Button, Space, Form, message } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
 import type { ChannelEndpointResponse, CreateChannelEndpointRequest } from '@/types/channel';
@@ -16,6 +16,7 @@ interface EndpointSectionProps {
 export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   // Mutations
   const addEndpoint = useAddChannelEndpoint();
@@ -35,6 +36,20 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
   const getStateColor = (state: string) => {
     return state === 'ACTIVE' ? 'green' : 'default';
   };
+
+  /** 编辑时同步表单值 */
+  useEffect(() => {
+    if (editingId !== null) {
+      const endpoint = endpoints.find(e => e.id === editingId);
+      if (endpoint) {
+        form.setFieldsValue({
+          protocol: endpoint.protocol,
+          endpointUrl: endpoint.endpointUrl,
+          state: endpoint.state,
+        });
+      }
+    }
+  }, [editingId, endpoints, form]);
 
   /** 渲染展示行 */
   const renderItem = (endpoint: ChannelEndpointResponse) => (
@@ -82,12 +97,6 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
         setLoading(false);
       }
     };
-
-    form.setFieldsValue({
-      protocol: endpoint.protocol,
-      endpointUrl: endpoint.endpointUrl,
-      state: endpoint.state,
-    });
 
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>
@@ -142,14 +151,13 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
       }
     };
 
-    form.resetFields();
-
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>
         <Form.Item
           name="protocol"
           label="协议"
           rules={[{ required: true, message: '请选择协议' }]}
+          initialValue="openai"
         >
           <Select style={{ width: 120 }} placeholder="选择协议">
             <Select.Option value="openai">OpenAI</Select.Option>

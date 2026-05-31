@@ -49,6 +49,11 @@ public class User extends BaseEntity {
     private Instant deletedAt;
 
     /**
+     * 是否为系统内建用户（不可删除、不可降级、不可禁用）
+     */
+    private Boolean builtin = false;
+
+    /**
      * 检查用户是否激活
      */
     public boolean isActive() {
@@ -60,5 +65,12 @@ public class User extends BaseEntity {
      */
     public boolean isAdmin() {
         return "ADMIN".equals(role);
+    }
+
+    /**
+     * 检查是否为内建用户
+     */
+    public boolean isBuiltin() {
+        return Boolean.TRUE.equals(builtin);
     }
 }

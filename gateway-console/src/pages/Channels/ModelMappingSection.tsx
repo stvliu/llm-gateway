@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Input, Button, Space, Form, message, Typography } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
 import type { ChannelModel, CreateChannelModelRequest } from '@/types/channel';
@@ -19,6 +19,7 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   // 获取模型映射
   const { data: models = [] } = useChannelModels(channelId);
@@ -26,6 +27,24 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
   // Mutations
   const createModel = useCreateChannelModel();
   const deleteModel = useDeleteChannelModel();
+
+  /** 编辑时同步表单值 */
+  useEffect(() => {
+    if (editingId !== null) {
+      const model = models.find(m => m.id === editingId);
+      if (model) {
+        form.setFieldsValue({
+          modelName: model.modelName,
+          upstreamModelName: model.upstreamModelName,
+        });
+      }
+    }
+  }, [editingId, models, form]);
+
+  /** channelId 变化时重置展开状态 */
+  useEffect(() => {
+    setShowAll(false);
+  }, [channelId]);
 
   /** 渲染展示行 */
   const renderItem = (model: ChannelModel) => (
@@ -54,19 +73,14 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
         setLoading(true);
         const values = await form.validateFields();
         // TODO: 调用更新模型映射 API（目前后端未提供）
-        message.success('模型映射更新成功');
+        message.warning('编辑功能暂未实现');
         onSave({ ...model, ...values });
       } catch (error) {
-        message.error('模型映射更新失败');
+        // 校验失败，无需额外提示
       } finally {
         setLoading(false);
       }
     };
-
-    form.setFieldsValue({
-      modelName: model.modelName,
-      upstreamModelName: model.upstreamModelName,
-    });
 
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>
@@ -118,8 +132,6 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
         setLoading(false);
       }
     };
-
-    form.resetFields();
 
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>

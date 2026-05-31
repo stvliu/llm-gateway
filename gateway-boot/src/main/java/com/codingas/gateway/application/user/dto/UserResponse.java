@@ -20,6 +20,10 @@ public class UserResponse {
      * 用户角色：ADMIN（管理员）/ USER（普通用户）
      */
     private String role;
+    /**
+     * 是否为系统内建用户
+     */
+    private Boolean builtin;
     private Instant lastLoginAt;
     private Instant createdAt;
     private Instant updatedAt;

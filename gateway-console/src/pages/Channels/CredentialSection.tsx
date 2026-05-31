@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Tag, Input, InputNumber, Button, Space, Form, message, Popconfirm } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
 import type { ChannelCredential, CreateChannelCredentialRequest, UpdateChannelCredentialRequest } from '@/types/channel';
@@ -22,12 +22,27 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   // Mutations
   const createCredential = useCreateChannelCredential();
   const updateCredential = useUpdateChannelCredential();
   const deleteCredential = useDeleteChannelCredential();
   const testCredential = useTestChannelCredential();
+
+  /** 编辑时同步表单值 */
+  useEffect(() => {
+    if (editingId !== null) {
+      const credential = credentials.find(c => c.id === editingId);
+      if (credential) {
+        form.setFieldsValue({
+          priority: credential.priority,
+          weight: credential.weight,
+          description: credential.description || '',
+        });
+      }
+    }
+  }, [editingId, credentials, form]);
 
   /** 状态点颜色 */
   const getStateColor = (state: string) => {
@@ -115,12 +130,6 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
       }
     };
 
-    form.setFieldsValue({
-      priority: credential.priority,
-      weight: credential.weight,
-      description: credential.description || '',
-    });
-
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>
         <Form.Item
@@ -188,8 +197,6 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         setLoading(false);
       }
     };
-
-    form.resetFields();
 
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>

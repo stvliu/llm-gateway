@@ -41,6 +41,14 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
   return (
     <div
       onClick={onToggle}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onToggle();
+        }
+      }}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -52,12 +60,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
         marginBottom: '8px',
         transition: 'all 0.2s',
       }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = '#f0f0f0';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = '#fafafa';
-      }}
+      className="provider-group-header"
     >
       {/* 左侧：供应商信息 */}
       <Space size={12}>

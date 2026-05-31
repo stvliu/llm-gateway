@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Descriptions, InputNumber, Select, Button, Space, Form, message } from 'antd';
+import { Descriptions, InputNumber, Input, Select, Button, Space, Form, message } from 'antd';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
 
@@ -79,7 +79,7 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
           <InputNumber min={0} max={5} style={{ width: '100%' }} placeholder="使用默认值" />
         </Form.Item>
         <Form.Item label="自定义 Header">
-          <InputNumber style={{ width: '100%' }} placeholder="暂不支持" disabled />
+          <Input style={{ width: '100%' }} placeholder="暂不支持" disabled />
         </Form.Item>
         <Space>
           <Button type="primary" onClick={handleSave} loading={loading}>

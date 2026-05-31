@@ -57,7 +57,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
         border: isIncomplete ? '2px solid #faad14' : undefined,
         transition: 'all 0.2s',
       }}
-      bodyStyle={{ padding: '16px' }}
+      styles={{ body: { padding: '16px' } }}
     >
       <div
         style={{

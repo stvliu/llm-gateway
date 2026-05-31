@@ -1,0 +1,13 @@
+{
+  "change": "provider-frontend-ux-redesign",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "ff9b6148ec409e388ea24159f76a871675eeda1d67026d977c5a396443c7ea3f",
+  "files": [
+    { "path": "openspec/changes/provider-frontend-ux-redesign/proposal.md", "sha256": "1130d5efc84429de7e1388f9bb4ab45023f31a5aeeb0767d74c0bf317d9b7ceb" },
+    { "path": "openspec/changes/provider-frontend-ux-redesign/design.md", "sha256": "33f418777c988d3380bc7f56bd28681df56f290ac0a669c2043f305c753842a5" },
+    { "path": "openspec/changes/provider-frontend-ux-redesign/tasks.md", "sha256": "675cfa635b51e76cddcd7185617d9ddfb89a9b4eb9ceded133d9c017dff7a7ca" }
+  ]
+}
