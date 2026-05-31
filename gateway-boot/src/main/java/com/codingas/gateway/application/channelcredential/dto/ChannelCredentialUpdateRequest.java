@@ -9,11 +9,13 @@ import com.codingas.gateway.domain.supply.enums.CredentialState;
  * @param weight 权重
  * @param state 状态
  * @param description 描述
+ * @param apiKey 可选，传值则替换 API Key
  */
 public record ChannelCredentialUpdateRequest(
         Integer priority,
         Integer weight,
         CredentialState state,
-        String description
+        String description,
+        String apiKey
 ) {
 }

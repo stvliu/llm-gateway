@@ -86,6 +86,13 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         if (request.state() != null) {
             credential.setState(request.state());
         }
+        // 替换 API Key
+        if (request.apiKey() != null && !request.apiKey().isBlank()) {
+            String newKey = request.apiKey().trim();
+            String keyPrefix = newKey.substring(0, Math.min(8, newKey.length()));
+            credential.setApiKeyPlain(newKey);
+            credential.setApiKeyPrefix(keyPrefix);
+        }
 
         ChannelCredential saved = channelCredentialGateway.save(credential);
         log.info("Updated ChannelCredential: id={}", saved.getId());
