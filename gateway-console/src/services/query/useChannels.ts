@@ -12,19 +12,28 @@ import type {
 export const channelKeys = {
   all: ['channels'] as const,
   lists: () => [...channelKeys.all, 'list'] as const,
-  list: (providerId: number) => [...channelKeys.lists(), providerId] as const,
+  list: (providerId?: number) => [...channelKeys.lists(), providerId] as const,
+  allChannels: () => [...channelKeys.all, 'all'] as const,
   details: () => [...channelKeys.all, 'detail'] as const,
   detail: (id: number) => [...channelKeys.details(), id] as const,
   credentials: (channelId: number) => [...channelKeys.all, 'credentials', channelId] as const,
   endpoints: (channelId: number) => [...channelKeys.all, 'endpoints', channelId] as const,
 };
 
+/** 获取所有渠道列表（不带 providerId 筛选） */
+export function useAllChannels() {
+  return useQuery({
+    queryKey: channelKeys.allChannels(),
+    queryFn: () => channelApi.list(),
+  });
+}
+
 /** 获取供应商下的渠道列表 */
-export function useChannels(providerId: number) {
+export function useChannels(providerId?: number) {
   return useQuery({
     queryKey: channelKeys.list(providerId),
     queryFn: () => channelApi.list({ providerId }),
-    enabled: !!providerId,
+    enabled: providerId !== undefined,
   });
 }
 

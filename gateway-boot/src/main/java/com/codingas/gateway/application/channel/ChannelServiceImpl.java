@@ -94,6 +94,13 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
+    public List<ChannelResponse> getAll() {
+        return channelGateway.findAll().stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    @Override
     public List<ChannelResponse> getByProviderId(Long providerId) {
         return channelGateway.findByProviderId(providerId).stream()
             .map(this::toResponse)

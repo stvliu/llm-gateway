@@ -17,6 +17,7 @@ import {
   Spin,
   Tooltip,
 } from 'antd';
+import type { ApiKeyTestResponse } from '@/types/channel';
 import {
   PlusOutlined,
   EditOutlined,

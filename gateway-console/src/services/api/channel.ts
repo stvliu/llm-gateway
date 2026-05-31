@@ -16,9 +16,13 @@ import type {
 
 /** 渠道 API */
 export const channelApi = {
-  /** 获取渠道列表 */
+  /** 获取渠道列表（支持按 providerId 筛选，不传则返回全部） */
   list: (params?: Record<string, unknown>) =>
     api.get<Channel[]>('/channels', { params }),
+
+  /** 获取供应商下的渠道列表（兼容旧版） */
+  listByProvider: (providerId: number) =>
+    api.get<Channel[]>('/channels', { params: { providerId } }),
 
   /** 获取渠道详情 */
   get: (id: number) =>

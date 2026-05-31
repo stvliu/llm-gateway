@@ -19,6 +19,11 @@ public interface ChannelService {
 
     ChannelResponse getById(Long id);
 
+    /**
+     * 获取所有渠道列表
+     */
+    List<ChannelResponse> getAll();
+
     List<ChannelResponse> getByProviderId(Long providerId);
 
     List<ChannelResponse> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);

@@ -41,17 +41,28 @@ public class ChannelController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * 获取所有渠道列表（用于渠道管理页面）
+     * 不带 providerId 参数时返回所有渠道
+     */
     @GetMapping
-    public ResponseEntity<List<ChannelResponse>> getByProviderId(
-            @RequestParam Long providerId,
+    public ResponseEntity<List<ChannelResponse>> list(
+            @RequestParam(required = false) Long providerId,
             @RequestParam(required = false) String billingMode) {
         List<ChannelResponse> responses;
-        if (billingMode != null) {
+
+        if (providerId == null) {
+            // 获取所有渠道
+            responses = channelService.getAll();
+        } else if (billingMode != null) {
+            // 按 providerId 和 billingMode 筛选
             responses = channelService.getByProviderIdAndBillingMode(
                 providerId, BillingMode.fromCode(billingMode));
         } else {
+            // 按 providerId 筛选
             responses = channelService.getByProviderId(providerId);
         }
+
         return ResponseEntity.ok(responses);
     }
 

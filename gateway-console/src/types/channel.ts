@@ -145,3 +145,30 @@ export interface CreateChannelModelRequest {
   modelName: string;
   upstreamModelName: string;
 }
+
+/** 渠道聚合统计（前端计算） */
+export interface ChannelStats {
+  /** 端点数量 */
+  endpointCount: number;
+  /** 凭证数量 */
+  credentialCount: number;
+  /** 模型映射数量 */
+  modelCount: number;
+  /** 平均响应时间（毫秒），未测试为 null */
+  avgResponseTime: number | null;
+}
+
+/** 渠道卡片数据（Channel + Stats） */
+export interface ChannelCard extends Channel {
+  stats: ChannelStats;
+}
+
+/** 供应商分组（用于渠道列表） */
+export interface ChannelGroup {
+  provider: {
+    id: number;
+    providerId?: string;
+    providerName: string;
+  };
+  channels: ChannelCard[];
+}
