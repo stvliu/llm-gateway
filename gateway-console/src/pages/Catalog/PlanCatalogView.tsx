@@ -1,5 +1,5 @@
 import { Tag, Space, Button, Typography, Spin, Table } from 'antd';
-import { CloudDownloadOutlined } from '@ant-design/icons';
+import { CloudDownloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { usePlanCatalogs } from '@/services/query/useCatalog';
 import type { PlanCatalog, MaterializeType } from '@/types/catalog';
@@ -13,17 +13,19 @@ interface PlanCatalogViewProps {
   onSelectPlan: (planCode: string, planName: string) => void;
   /** 物化操作 */
   onMaterialize: (type: MaterializeType, code: string, name: string) => void;
+  /** 快速创建渠道 */
+  onQuickCreate?: (planCode: string, planName: string) => void;
 }
 
 /** 计费模式标签配置 */
 const BILLING_MODE_CONFIG: Record<string, { color: string }> = {
-  PAY_AS_YOU_GO: { color: 'green' },
-  SUBSCRIPTION: { color: 'purple' },
-  PACKAGE: { color: 'orange' },
+  pay_as_you_go: { color: 'green' },
+  subscription: { color: 'purple' },
+  package: { color: 'orange' },
 };
 
 /** 套餐目录表格视图 */
-export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterialize }: PlanCatalogViewProps) {
+export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterialize, onQuickCreate }: PlanCatalogViewProps) {
   const { t } = useTranslation('catalog');
 
   // 数据查询
@@ -87,9 +89,22 @@ export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterial
     {
       title: '',
       key: 'actions',
-      width: 180,
+      width: 260,
       render: (_: unknown, record: PlanCatalog) => (
         <Space size="small">
+          {onQuickCreate && (
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlusOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                onQuickCreate(record.planCode, record.planName);
+              }}
+            >
+              {t('quickCreate', { defaultValue: '快速创建' })}
+            </Button>
+          )}
           <Button
             type="link"
             size="small"
