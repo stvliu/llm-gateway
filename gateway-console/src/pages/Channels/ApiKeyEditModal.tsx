@@ -35,8 +35,8 @@ export const ApiKeyEditModal: React.FC<ApiKeyEditModalProps> = ({
       message.success('API Key 已更新');
       onSuccess();
       onClose();
-    } catch {
-      // 错误已在 mutation 中处理
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'API Key 更新失败');
     } finally {
       setLoading(false);
     }

@@ -69,8 +69,8 @@ export default function UpstreamKeysTable() {
 
     const rows: AggregateCredential[] = [];
 
-    providers.forEach((provider) => {
-      const providerChannels = channelQueries.find((q) => q.data)?.data?.filter(
+    providers.forEach((provider, providerIdx) => {
+      const providerChannels = channelQueries[providerIdx]?.data?.filter(
         (ch) => ch.providerId === provider.id
       );
 

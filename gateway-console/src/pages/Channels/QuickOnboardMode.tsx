@@ -99,9 +99,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       setSelectedModels(modelNames);
 
       // 设置套餐名称
-      if (!selectedPlanName) {
-        setSelectedPlanName(planDetail.planName);
-      }
+      setSelectedPlanName((prev) => prev || planDetail.planName);
 
       // 从套餐编码中提取供应商编码
       const providerCode = planDetail.providerCode;
@@ -109,7 +107,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
         setSelectedProviderCode(providerCode);
       }
     }
-  }, [planDetail, selectedPlanName]);
+  }, [planDetail]);
 
   // ===== 解析 API Keys =====
   const parsedApiKeys = useMemo(() => {
