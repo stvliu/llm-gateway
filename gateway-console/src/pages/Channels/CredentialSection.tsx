@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Tag, Input, InputNumber, Button, Space, Form, message, Popconfirm } from 'antd';
+import { Tag, Input, InputNumber, Button, Space, Form, message, theme } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
+import { ApiKeyEditModal } from './ApiKeyEditModal';
 import type { ChannelCredential, CreateChannelCredentialRequest, UpdateChannelCredentialRequest } from '@/types/channel';
 import {
   useCreateChannelCredential,
@@ -19,6 +21,7 @@ interface CredentialSectionProps {
  * 展示渠道的凭证列表，支持行内编辑和测试
  */
 export function CredentialSection({ channelId, credentials }: CredentialSectionProps) {
+  const { token } = theme.useToken();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
@@ -49,23 +52,21 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
     return state === 'ACTIVE' ? 'green' : 'default';
   };
 
-  /** 格式化 API Key 前缀显示 */
-  const formatApiKeyPrefix = (prefix: string) => {
-    return `${prefix}****`;
-  };
-
   /** 渲染展示行 */
   const renderItem = (credential: ChannelCredential) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-      {/* Key 前缀 */}
-      <span style={{ fontFamily: 'monospace', minWidth: 150 }}>
-        {formatApiKeyPrefix(credential.apiKeyPrefix)}
-      </span>
+      {/* Key 前缀（使用 MaskedKeyDisplay 组件） */}
+      <MaskedKeyDisplay
+        keyMasked={credential.apiKeyMasked}
+        mode="editable"
+        size="small"
+        onEdit={() => setEditingId(credential.id)}
+      />
       {/* 优先级/权重 */}
       <Tag color="blue">P{credential.priority}</Tag>
       <Tag color="purple">W{credential.weight}</Tag>
       {/* 最后使用时间（暂无字段，显示占位） */}
-      <span style={{ color: '#999', fontSize: 12 }}>
+      <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
         最后使用: 暂无数据
       </span>
       {/* 状态点 */}
@@ -171,7 +172,6 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         setLoading(true);
         const values = await form.validateFields();
         const data: CreateChannelCredentialRequest = {
-          channelId,
           apiKey: values.apiKey,
           priority: values.priority,
           weight: values.weight,
@@ -249,17 +249,36 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   };
 
   return (
-    <InlineEditableList
-      items={credentials}
-      renderItem={renderItem}
-      renderEditForm={renderEditForm}
-      renderAddForm={renderAddForm}
-      onAdd={() => {
-        form.resetFields();
-      }}
-      onDelete={handleDelete}
-      getKey={(credential) => credential.id}
-      addLabel="添加 API Key"
-    />
+    <>
+      <InlineEditableList
+        items={credentials}
+        renderItem={renderItem}
+        renderEditForm={renderEditForm}
+        renderAddForm={renderAddForm}
+        onAdd={() => {
+          form.resetFields();
+        }}
+        onDelete={handleDelete}
+        getKey={(credential) => credential.id}
+        addLabel="添加 API Key"
+      />
+
+      {/* API Key 编辑弹窗 */}
+      {editingId !== null && (
+        <ApiKeyEditModal
+          open={true}
+          channelId={channelId}
+          credentialId={editingId}
+          keyMasked={credentials.find(c => c.id === editingId)?.apiKeyMasked || ''}
+          onClose={() => setEditingId(null)}
+          onSuccess={() => {
+            message.success('API Key 已更新');
+          }}
+          onUpdate={async (chId, credId, data) => {
+            await updateCredential.mutateAsync({ channelId: chId, id: credId, data });
+          }}
+        />
+      )}
+    </>
   );
 }
