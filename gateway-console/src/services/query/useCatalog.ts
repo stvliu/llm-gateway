@@ -9,6 +9,7 @@ import {
 import type {
   ProviderCatalogListParams,
   ModelCatalogListParams,
+  MaterializePlanRequest,
 } from '@/types/catalog';
 
 const PROVIDER_CATALOG_KEY = 'provider-catalog';
@@ -83,15 +84,16 @@ export function useMaterializeProviderWithPlans() {
   });
 }
 
-/** 物化套餐 */
+/** 物化套餐（支持传入端点、模型、API Key 等配置） */
 export function useMaterializePlan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (planCode: string) =>
-      catalogMaterializeApi.materializePlan(planCode),
+    mutationFn: ({ planCode, data }: { planCode: string; data?: MaterializePlanRequest }) =>
+      catalogMaterializeApi.materializePlan(planCode, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
       queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
     },
   });
 }
