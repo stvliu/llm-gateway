@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from 'react';
 import { Table, Tag, Button, Popconfirm, App, Typography, Modal } from 'antd';
 import { DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -26,16 +27,16 @@ export default function DeveloperKeyList() {
   const deleteMutation = useDeleteUserApiKey(userId);
   const rotateMutation = useRotateUserApiKey();
 
-  const handleRevoke = async (id: number) => {
+  const handleRevoke = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
       message.success(t('keyRevoked', { defaultValue: 'Key 已吊销' }));
     } catch {
       message.error(t('keyRevokeFailed', { defaultValue: '吊销失败' }));
     }
-  };
+  }, [deleteMutation, message, t]);
 
-  const handleRotate = async (id: number) => {
+  const handleRotate = useCallback(async (id: number) => {
     try {
       const result = await rotateMutation.mutateAsync(id);
       message.success(t('keyRotated', { defaultValue: 'Key 已轮换，新 Key 已生成' }));
@@ -53,9 +54,9 @@ export default function DeveloperKeyList() {
     } catch {
       message.error(t('keyRotateFailed', { defaultValue: '轮换失败' }));
     }
-  };
+  }, [rotateMutation, message, t]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
       dataIndex: 'keyMasked',
@@ -112,7 +113,7 @@ export default function DeveloperKeyList() {
         </div>
       ),
     },
-  ];
+  ], [t, handleRotate, handleRevoke]);
 
   return (
     <Table

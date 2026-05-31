@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Table, Tag, Space, Button, Popconfirm, App, Typography, Spin, Input } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -150,7 +150,7 @@ export default function UpstreamKeysTable() {
     );
   }, [allCredentials, search]);
 
-  const handleDelete = async (credentialId: number, channelId: number) => {
+  const handleDelete = useCallback(async (credentialId: number, channelId: number) => {
     if (!credentialId || !channelId) {
       message.warning(t('noDeleteForPlaceholder', { defaultValue: '示例数据不可删除' }));
       return;
@@ -161,9 +161,9 @@ export default function UpstreamKeysTable() {
     } catch {
       message.error(t('deleteFailed', { defaultValue: '删除失败' }));
     }
-  };
+  }, [deleteMutation, message, t]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
       dataIndex: 'apiKeyMasked',
@@ -241,7 +241,7 @@ export default function UpstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ];
+  ], [t, handleDelete, setEditingCredential]);
 
   if (isLoading) {
     return <Spin />;

@@ -398,7 +398,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       <div style={{ maxHeight: 200, overflow: 'auto', marginBottom: 16 }}>
         <Checkbox.Group
           value={selectedModels}
-          onChange={(values) => setSelectedModels(values as string[])}
+          onChange={(values: (string | number | boolean)[]) => setSelectedModels(values.filter((v): v is string => typeof v === 'string'))}
           style={{ width: '100%' }}
         >
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>

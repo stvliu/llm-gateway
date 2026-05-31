@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Tag, Input, InputNumber, Button, Space, Form, message, theme } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
@@ -53,7 +53,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   };
 
   /** 渲染展示行 */
-  const renderItem = (credential: ChannelCredential) => (
+  const renderItem = useCallback((credential: ChannelCredential) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
       {/* Key 前缀（使用 MaskedKeyDisplay 组件） */}
       <MaskedKeyDisplay
@@ -100,7 +100,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         测试
       </Button>
     </div>
-  );
+  ), [channelId, token.colorTextSecondary, testingId, testCredential, setEditingId]);
 
   /** 渲染编辑表单 */
   const renderEditForm = (

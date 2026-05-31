@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Table, Tag, Button, Popconfirm, App, Input, Typography } from 'antd';
 import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -34,16 +34,16 @@ export default function DownstreamKeysTable() {
     return k.keyPrefix?.toLowerCase().includes(q) || k.name?.toLowerCase().includes(q);
   });
 
-  const handleRevoke = async (id: number) => {
+  const handleRevoke = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
       message.success(t('revoked', { defaultValue: 'Key 已吊销' }));
     } catch {
       message.error(t('revokeFailed', { defaultValue: '吊销失败' }));
     }
-  };
+  }, [deleteMutation, message, t]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
       dataIndex: 'keyMasked',
@@ -128,7 +128,7 @@ export default function DownstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ];
+  ], [t, handleRevoke]);
 
   return (
     <div>

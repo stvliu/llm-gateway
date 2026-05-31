@@ -120,7 +120,7 @@ class TeamControllerUserApiKeyTest {
                 "updated-name", List.of("claude-3-5-sonnet"), null, null
         );
         UserApiKeyResponse updateResponse = new UserApiKeyResponse(
-                API_KEY_ID, USER_ID, "sk-abc1", "updated-name",
+                API_KEY_ID, USER_ID, "sk-abc1", "sk-abc****bc1", "updated-name",
                 List.of("claude-3-5-sonnet"), 100000L, UserApiKeyState.ACTIVE,
                 Instant.now(), Instant.now()
         );

@@ -38,7 +38,7 @@ class ChannelCredentialControllerTest {
 
     private ChannelCredentialResponse createResponse(Long id, CredentialState state) {
         return new ChannelCredentialResponse(
-                id, CHANNEL_ID, "sk-test-", "test-key", "test key",
+                id, CHANNEL_ID, "sk-test-", "sk-tes****est-", "test-key", "test key",
                 1, 1, state, Instant.now(), Instant.now()
         );
     }
@@ -87,7 +87,7 @@ class ChannelCredentialControllerTest {
     @Test
     void update_success() {
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                10, 5, null, null
+                10, 5, null, null, null
         );
         when(channelCredentialService.update(eq(CHANNEL_ID), eq(1L), any(ChannelCredentialUpdateRequest.class)))
                 .thenReturn(createResponse(1L, CredentialState.ACTIVE));

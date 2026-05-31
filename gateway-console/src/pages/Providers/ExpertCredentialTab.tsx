@@ -258,7 +258,7 @@ export default function ExpertCredentialTab({ provider }: Props) {
   );
 
   // ---- 表格列定义 ----
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('credential.apiKeyPrefix', { defaultValue: 'Key 前缀' }),
       dataIndex: 'apiKeyMasked',
@@ -364,7 +364,7 @@ export default function ExpertCredentialTab({ provider }: Props) {
         </Space>
       ),
     },
-  ];
+  ], [t, testingId, handleTest, handleToggleState, handleOpenEdit, handleDelete, setEditingKeyCredential, setKeyEditModalOpen]);
 
   // ---- 空状态判断 ----
   if (!provider) {

@@ -110,7 +110,7 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                5, 10, null, "updated-description"
+                5, 10, null, "updated-description", null
         );
         ChannelCredentialResponse response = service.update(CHANNEL_ID, API_KEY_ID, request);
 
@@ -125,7 +125,7 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                null, null, null, "updated"
+                null, null, null, "updated", null
         );
         assertThrows(ResourceNotFoundException.class, () -> service.update(CHANNEL_ID, API_KEY_ID, request));
     }

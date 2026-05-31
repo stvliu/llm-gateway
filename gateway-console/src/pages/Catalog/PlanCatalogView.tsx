@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Tag, Space, Button, Typography, Spin, Table } from 'antd';
 import { CloudDownloadOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -44,7 +45,7 @@ export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterial
   };
 
   /** 表格列定义 */
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('plan.planName'),
       dataIndex: 'planName',
@@ -128,7 +129,7 @@ export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterial
         </Space>
       ),
     },
-  ];
+  ], [t, onSelectPlan, onMaterialize, onQuickCreate]);
 
   const planList = plans ?? [];
 
