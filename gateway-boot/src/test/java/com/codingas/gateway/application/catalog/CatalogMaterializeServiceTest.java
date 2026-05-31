@@ -168,7 +168,7 @@ class CatalogMaterializeServiceTest {
         plan.setProviderCode("azure-openai");
         plan.setBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode.PAY_AS_YOU_GO);
         plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://azure.openai.com\"}]");
-        plan.setPricing("[{\"modelName\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]");
+        plan.setPricing("[{\"providerModelId\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]");
 
         when(planCatalogGateway.findByPlanCode("azure-openai-standard")).thenReturn(Optional.of(plan));
         when(providerGateway.findByCode("azure-openai")).thenReturn(Optional.of(createTestProvider("azure-openai")));
@@ -179,8 +179,8 @@ class CatalogMaterializeServiceTest {
         when(objectMapper.readValue(eq("[{\"protocol\":\"OPENAI\",\"url\":\"https://azure.openai.com\"}]"), any(TypeReference.class)))
                 .thenReturn(List.of(Map.of("protocol", "OPENAI", "url", "https://azure.openai.com")));
         // objectMapper 模拟：解析 pricing
-        when(objectMapper.readValue(eq("[{\"modelName\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]"), any(TypeReference.class)))
-                .thenReturn(List.of(Map.of("modelName", "chat-latest", "inputPrice", BigDecimal.valueOf(2.5), "outputPrice", BigDecimal.valueOf(10.0))));
+        when(objectMapper.readValue(eq("[{\"providerModelId\":\"chat-latest\",\"inputPrice\":2.5,\"outputPrice\":10.0}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("providerModelId", "chat-latest", "inputPrice", BigDecimal.valueOf(2.5), "outputPrice", BigDecimal.valueOf(10.0))));
 
         Model model = new Model();
         model.setId(1L);
@@ -202,7 +202,7 @@ class CatalogMaterializeServiceTest {
         plan.setProviderCode("deepseek");
         plan.setBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode.PAY_AS_YOU_GO);
         plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.deepseek.com\"}]");
-        plan.setPricing("[{\"modelName\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
+        plan.setPricing("[{\"providerModelId\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
 
         when(planCatalogGateway.findByPlanCode("deepseek-standard")).thenReturn(Optional.of(plan));
         when(providerGateway.findByCode("deepseek")).thenReturn(Optional.of(createTestProvider("deepseek")));
@@ -213,8 +213,8 @@ class CatalogMaterializeServiceTest {
         when(objectMapper.readValue(eq("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.deepseek.com\"}]"), any(TypeReference.class)))
                 .thenReturn(List.of(Map.of("protocol", "OPENAI", "url", "https://api.deepseek.com")));
         // objectMapper 模拟：解析 pricing
-        when(objectMapper.readValue(eq("[{\"modelName\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]"), any(TypeReference.class)))
-                .thenReturn(List.of(Map.of("modelName", "deepseek-v4-flash", "inputPrice", BigDecimal.valueOf(1.0), "outputPrice", BigDecimal.valueOf(4.0))));
+        when(objectMapper.readValue(eq("[{\"providerModelId\":\"deepseek-v4-flash\",\"inputPrice\":1.0,\"outputPrice\":4.0}]"), any(TypeReference.class)))
+                .thenReturn(List.of(Map.of("providerModelId", "deepseek-v4-flash", "inputPrice", BigDecimal.valueOf(1.0), "outputPrice", BigDecimal.valueOf(4.0))));
 
         Model model = new Model();
         model.setId(2L);
@@ -477,7 +477,7 @@ class CatalogMaterializeServiceTest {
         p.setPlanName(planCode);
         p.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         p.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://api.example.com\"}]");
-        p.setPricing("[{\"modelName\":\"deepseek-chat\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
+        p.setPricing("[{\"providerModelId\":\"deepseek-chat\",\"inputPrice\":1.0,\"outputPrice\":4.0}]");
         p.setSource(CatalogSource.BUILTIN);
         p.setState(state);
         return p;

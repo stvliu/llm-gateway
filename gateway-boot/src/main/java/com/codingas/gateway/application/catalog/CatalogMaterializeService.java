@@ -250,7 +250,7 @@ public class CatalogMaterializeService {
 
         List<Map<String, Object>> pricing = parsePricing(catalog.getPricing());
         for (Map<String, Object> p : pricing) {
-            String modelName = (String) p.get("modelName");
+            String modelName = (String) p.get("providerModelId");
 
             Model model = findOrCreateModel(modelName);
 
@@ -380,6 +380,10 @@ public class CatalogMaterializeService {
      * 查找或创建 Model（级联物化）
      */
     private Model findOrCreateModel(String modelName) {
+        if (modelName == null || modelName.isBlank()) {
+            throw new CatalogException("INVALID_CATALOG_DATA", "模型名称不能为空，请检查套餐 pricing 数据");
+        }
+
         Optional<Model> existing = modelGateway.findByModelName(modelName);
         if (existing.isPresent()) {
             return existing.get();
