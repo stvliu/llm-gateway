@@ -126,11 +126,25 @@ export default function CodeSnippet({ apiKey: propApiKey }: Props) {
   const code = snippets[lang](gatewayUrl, displayApiKey);
 
   const handleCopy = async () => {
+    // 优先使用 Clipboard API，失败时降级到 execCommand
     try {
       await navigator.clipboard.writeText(code);
       message.success('已复制到剪贴板');
     } catch {
-      message.error('复制失败，请手动选择复制');
+      // Fallback: 使用 execCommand（兼容非 HTTPS 环境）
+      const textArea = document.createElement('textarea');
+      textArea.value = code;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-9999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        message.success('已复制到剪贴板');
+      } catch {
+        message.error('复制失败，请手动选择复制');
+      }
+      document.body.removeChild(textArea);
     }
   };
 
