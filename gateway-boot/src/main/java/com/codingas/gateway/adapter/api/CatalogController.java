@@ -6,6 +6,7 @@ import com.codingas.gateway.application.catalog.CatalogService;
 import com.codingas.gateway.application.catalog.CatalogSyncService;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
+import com.codingas.gateway.application.catalog.dto.MaterializePlanRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
@@ -126,13 +127,20 @@ public class CatalogController {
      * 物化套餐
      *
      * <p>从 PlanCatalog 创建 Channel + ChannelEndpoint + ChannelModel 运营实体。</p>
+     * <p>支持通过 request 批量创建 API Key 凭证。</p>
      *
      * @param planCode 套餐编码
+     * @param request  扩展请求（可选：apiKeys / endpoints / models）
      * @return 物化结果
      */
     @PostMapping("/materialize/plan/{planCode}")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeResult> materializePlan(@PathVariable String planCode) {
+    public ResponseEntity<MaterializeResult> materializePlan(
+            @PathVariable String planCode,
+            @RequestBody(required = false) MaterializePlanRequest request) {
+        if (request != null && (request.getApiKeys() != null || request.getEndpoints() != null || request.getModels() != null)) {
+            return ResponseEntity.ok(catalogMaterializeService.materializePlan(planCode, request));
+        }
         return ResponseEntity.ok(catalogMaterializeService.materializePlan(planCode));
     }
 
