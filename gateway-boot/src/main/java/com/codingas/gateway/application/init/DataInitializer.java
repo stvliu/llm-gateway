@@ -592,7 +592,6 @@ public class DataInitializer implements CommandLineRunner {
         ChannelCredential credential = new ChannelCredential();
         credential.setChannelId(channelId);
         credential.setApiKeyPlain(plainApiKey);
-        credential.setApiKeyEncrypted("ENCRYPTED:" + plainApiKey);
         credential.setApiKeyPrefix(plainApiKey.substring(0, Math.min(8, plainApiKey.length())));
         credential.setName("default");
         credential.setState(CredentialState.ACTIVE);
