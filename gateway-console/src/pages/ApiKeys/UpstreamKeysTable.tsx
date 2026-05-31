@@ -1,10 +1,9 @@
 import { useState, useMemo } from 'react';
 import { Table, Tag, Space, Button, Popconfirm, App, Typography, Spin, Input } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders } from '@/services/query/useProviders';
 import { useChannelsBatch, useChannelCredentialsBatch, useDeleteChannelCredential, useUpdateChannelCredential } from '@/services/query/useChannels';
-import { channelApi } from '@/services/api/channel';
 import { ProviderIcon } from '@/components/ui';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import { ApiKeyEditModal } from '@/pages/Channels/ApiKeyEditModal';
