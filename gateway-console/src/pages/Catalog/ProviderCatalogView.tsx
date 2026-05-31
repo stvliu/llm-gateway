@@ -4,6 +4,7 @@ import { SearchOutlined, CloseOutlined, SyncOutlined, CloudDownloadOutlined, Arr
 import { useTranslation } from 'react-i18next';
 import { App } from 'antd';
 import { useProviderCatalogs, useSyncCatalog } from '@/services/query/useCatalog';
+import { ProviderIcon } from '@/components/ui/ProviderIcon';
 import type { ProviderType } from '@/types/catalog';
 
 const { Text } = Typography;
@@ -147,6 +148,7 @@ export default function ProviderCatalogView({ onSelectProvider, onCascadeMateria
                   ]}
                 >
                   <Card.Meta
+                    avatar={<ProviderIcon providerId={provider.code} size={40} />}
                     title={
                       <Space>
                         <span>{provider.name}</span>
