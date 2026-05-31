@@ -3,6 +3,8 @@ import { DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUserApiKeys, useDeleteUserApiKey, useRotateUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
+import { userApiKeyApi } from '@/services/api/userApiKey';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
 
 const { Text } = Typography;
@@ -56,9 +58,19 @@ export default function DeveloperKeyList() {
   const columns = [
     {
       title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'keyPrefix',
-      key: 'keyPrefix',
-      render: (prefix: string) => <Text code style={{ fontSize: 12 }}>{prefix}</Text>,
+      dataIndex: 'keyMasked',
+      key: 'keyMasked',
+      render: (keyMasked: string, record: UserApiKey) => (
+        <MaskedKeyDisplay
+          keyMasked={keyMasked || record.keyPrefix}
+          mode="readonly"
+          size="small"
+          onFetchPlain={async () => {
+            const detail = await userApiKeyApi.getDetail(record.id);
+            return detail.keyPlain;
+          }}
+        />
+      ),
     },
     {
       title: t('keyName', { defaultValue: '名称' }),
