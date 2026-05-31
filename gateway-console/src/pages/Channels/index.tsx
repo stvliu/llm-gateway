@@ -14,6 +14,7 @@ import { useAllChannels } from '@/services/query/useChannels';
 import { useProviders } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
+import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import type {
   ChannelCard,
   ChannelGroup,
@@ -223,24 +224,12 @@ export default function Channels() {
         />
       )}
 
-      {/* 渠道详情抽屉（占位，Task 3 完善） */}
-      <Drawer
-        title="渠道详情"
-        placement="right"
-        width={640}
+      {/* 渠道详情抽屉 */}
+      <ChannelDetailDrawer
+        channel={selectedChannel}
         open={drawerVisible}
         onClose={() => setDrawerVisible(false)}
-      >
-        {selectedChannel && (
-          <div>
-            <p>渠道名称: {selectedChannel.name}</p>
-            <p>状态: {selectedChannel.state}</p>
-            <p>
-              （详情内容将在 Task 3 完善）
-            </p>
-          </div>
-        )}
-      </Drawer>
+      />
 
       {/* 创建向导（占位，Task 4 完善） */}
       <Drawer
