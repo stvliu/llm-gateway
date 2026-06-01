@@ -17,15 +17,16 @@
   },
   "memberManage": {
     "title": "成员管理",
+    "addMemberTitle": "添加成员",
     "selectedMembers": "已选成员",
     "searchUser": "搜索用户",
     "searchPlaceholder": "输入用户名搜索",
     "noResults": "未找到匹配用户",
-    "addHint": "点击搜索结果添加成员",
-    "removeHint": "点击 × 移除成员",
+    "emptyMembers": "暂无成员",
     "save": "保存",
     "cancel": "取消",
     "saveSuccess": "成员已更新",
+    "partialSuccess": "部分操作失败（{{count}} 个）",
     "saveError": "保存失败"
   },
   "channelPermission": {

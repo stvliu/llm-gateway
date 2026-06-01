@@ -17,15 +17,16 @@
   },
   "memberManage": {
     "title": "Member Management",
+    "addMemberTitle": "Add Members",
     "selectedMembers": "Selected Members",
     "searchUser": "Search User",
     "searchPlaceholder": "Enter username to search",
     "noResults": "No matching users found",
-    "addHint": "Click search result to add member",
-    "removeHint": "Click × to remove member",
+    "emptyMembers": "No members yet",
     "save": "Save",
     "cancel": "Cancel",
     "saveSuccess": "Members updated",
+    "partialSuccess": "Some operations failed ({{count}})",
     "saveError": "Failed to save"
   },
   "channelPermission": {
