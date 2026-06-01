@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Modal, Tag, Input, List, Avatar, Spin, Empty, Space, Typography, App } from 'antd';
-import { UserOutlined, SearchOutlined } from '@ant-design/icons';
+import { Modal, Input, List, Avatar, Spin, Empty, Typography, App, Button } from 'antd';
+import { UserOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUsers } from '@/services/query/useUsers';
 import { useAddTeamMember, useRemoveTeamMember } from '@/services/query/useTeams';
@@ -15,27 +15,25 @@ interface MemberManageModalProps {
   onClose: () => void;
 }
 
+const LIST_HEIGHT = 400;
+
 /**
  * 团队成员管理弹窗
- * 采用"已选成员 + 搜索添加"模式
+ * 左侧搜索添加，右侧已选成员列表
  */
 export default function MemberManageModal({ visible, team, onClose }: MemberManageModalProps) {
   const { t } = useTranslation('teams');
   const { message } = App.useApp();
 
-  // 已选成员 ID 集合
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
-  // 搜索关键词
   const [searchKeyword, setSearchKeyword] = useState('');
-  // 保存中状态
   const [saving, setSaving] = useState(false);
 
-  // 获取用户列表（用于搜索）
   const { data: usersData, isLoading: usersLoading } = useUsers({ size: 100 });
   const addMemberMutation = useAddTeamMember();
   const removeMemberMutation = useRemoveTeamMember();
 
-  // 初始化已选成员（从 team.members 提取）
+  // 初始化已选成员
   useEffect(() => {
     if (visible && team?.members) {
       setSelectedUserIds(new Set(team.members.map((m: TeamMember) => m.userId)));
@@ -43,37 +41,40 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
     }
   }, [visible, team]);
 
-  // 用户 ID -> 用户名 映射
+  // 用户 ID -> User 映射
   const userMap = useMemo(() => {
     const map = new Map<number, User>();
     usersData?.items?.forEach((u: User) => map.set(u.id, u));
     return map;
   }, [usersData]);
 
-  // 已选成员列表（带用户名）
+  // 已选成员列表（带完整用户信息）
   const selectedMembers = useMemo(() => {
-    return Array.from(selectedUserIds).map((id) => ({
-      id,
-      name: userMap.get(id)?.username ?? `用户 ${id}`,
-    }));
+    return Array.from(selectedUserIds)
+      .map((id) => {
+        const user = userMap.get(id);
+        return user ? { id: user.id, username: user.username, email: user.email ?? '' } : null;
+      })
+      .filter(Boolean) as { id: number; username: string; email: string }[];
   }, [selectedUserIds, userMap]);
 
-  // 搜索结果（排除已选成员）
-  const searchResults = useMemo(() => {
-    if (!searchKeyword.trim() || !usersData?.items) return [];
-    const keyword = searchKeyword.toLowerCase();
-    return usersData.items
-      .filter((u: User) => !selectedUserIds.has(u.id))
-      .filter((u: User) => u.username.toLowerCase().includes(keyword))
-      .slice(0, 10);
-  }, [searchKeyword, usersData, selectedUserIds]);
+  // 左侧可用用户列表（排除已选，支持搜索，限制 20 条）
+  const availableUsers = useMemo(() => {
+    if (!usersData?.items) return [];
+    const list = usersData.items.filter((u: User) => !selectedUserIds.has(u.id));
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      return list
+        .filter((u: User) => u.username.toLowerCase().includes(keyword))
+        .slice(0, 20);
+    }
+    return list.slice(0, 20);
+  }, [usersData, selectedUserIds, searchKeyword]);
 
-  // 添加成员
   const handleAdd = useCallback((userId: number) => {
     setSelectedUserIds((prev) => new Set(prev).add(userId));
   }, []);
 
-  // 移除成员
   const handleRemove = useCallback((userId: number) => {
     setSelectedUserIds((prev) => {
       const next = new Set(prev);
@@ -82,7 +83,6 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
     });
   }, []);
 
-  // 保存
   const handleSave = async () => {
     if (!team) return;
 
@@ -109,7 +109,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
         addResults.filter((r) => r.status === 'rejected').length;
 
       if (failedCount > 0) {
-        message.warning(t('memberManage.partialSuccess', { defaultValue: `部分操作失败（${failedCount} 个）` }));
+        message.warning(t('memberManage.partialSuccess', { count: failedCount }));
       } else {
         message.success(t('memberManage.saveSuccess'));
       }
@@ -121,6 +121,17 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
     }
   };
 
+  // 渲染用户行（左右两栏共用）
+  const renderUserItem = (user: { id: number; username: string; email: string }, action: React.ReactNode) => (
+    <List.Item style={{ padding: '8px 12px' }} extra={action}>
+      <List.Item.Meta
+        avatar={<Avatar size="small" icon={<UserOutlined />} />}
+        title={user.username}
+        description={<Text type="secondary" style={{ fontSize: 12 }}>{user.email}</Text>}
+      />
+    </List.Item>
+  );
+
   return (
     <Modal
       title={`${team?.name ?? ''} - ${t('memberManage.title')}`}
@@ -130,74 +141,81 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
       okText={t('memberManage.save')}
       cancelText={t('memberManage.cancel')}
       confirmLoading={saving}
-      width={500}
+      width={700}
       destroyOnHidden
     >
-      {/* 已选成员 */}
-      <div style={{ marginBottom: 16 }}>
-        <Text type="secondary">{t('memberManage.selectedMembers')} ({selectedMembers.length})</Text>
-        <div style={{ marginTop: 8, minHeight: 32 }}>
-          {selectedMembers.length === 0 ? (
-            <Text type="secondary">暂无成员</Text>
-          ) : (
-            <Space wrap size={[4, 4]}>
-              {selectedMembers.map((m) => (
-                <Tag
-                  key={m.id}
-                  closable
-                  onClose={() => handleRemove(m.id)}
-                  style={{ padding: '4px 8px' }}
-                >
-                  <UserOutlined style={{ marginRight: 4 }} />
-                  {m.name}
-                </Tag>
-              ))}
-            </Space>
-          )}
-        </div>
-      </div>
-
-      {/* 搜索添加 */}
-      <div>
-        <Text type="secondary">{t('memberManage.searchUser')}</Text>
-        <Input
-          placeholder={t('memberManage.searchPlaceholder')}
-          prefix={<SearchOutlined />}
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          allowClear
-          style={{ marginTop: 8, marginBottom: 8 }}
-        />
-
-        {usersLoading ? (
-          <div style={{ textAlign: 'center', padding: 20 }}>
-            <Spin />
-          </div>
-        ) : searchKeyword.trim() ? (
-          searchResults.length === 0 ? (
-            <Empty description={t('memberManage.noResults')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
-          ) : (
-            <List
-              dataSource={searchResults}
-              renderItem={(user: User) => (
-                <List.Item
-                  style={{ padding: '8px 0', cursor: 'pointer' }}
-                  onClick={() => handleAdd(user.id)}
-                >
-                  <List.Item.Meta
-                    avatar={<Avatar icon={<UserOutlined />} />}
-                    title={user.username}
-                    description={user.email}
-                  />
-                </List.Item>
-              )}
-            />
-          )
-        ) : (
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {t('memberManage.addHint')}
+      <div style={{ display: 'flex', gap: 16 }}>
+        {/* 左侧：搜索添加 */}
+        <div style={{ flex: 1, borderRight: '1px solid #f0f0f0', paddingRight: 16 }}>
+          <Text strong style={{ marginBottom: 8, display: 'block' }}>
+            {t('memberManage.addMemberTitle')}
           </Text>
-        )}
+          <Input
+            placeholder={t('memberManage.searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            allowClear
+            size="small"
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ height: LIST_HEIGHT, overflowY: 'auto' }}>
+            {usersLoading ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Spin />
+              </div>
+            ) : availableUsers.length === 0 ? (
+              <Empty
+                description={t('memberManage.noResults')}
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                style={{ marginTop: 60 }}
+              />
+            ) : (
+              <List
+                dataSource={availableUsers}
+                renderItem={(user: User) => renderUserItem(
+                  { id: user.id, username: user.username, email: user.email ?? '' },
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<UserOutlined />}
+                    onClick={() => handleAdd(user.id)}
+                  />
+                )}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* 右侧：已选成员 */}
+        <div style={{ flex: 1, paddingLeft: 16 }}>
+          <Text strong style={{ marginBottom: 8, display: 'block' }}>
+            {t('memberManage.selectedMembers')} ({selectedMembers.length})
+          </Text>
+          <div style={{ height: LIST_HEIGHT, overflowY: 'auto' }}>
+            {selectedMembers.length === 0 ? (
+              <div style={{ textAlign: 'center', marginTop: 80 }}>
+                <UserOutlined style={{ fontSize: 32, color: '#d9d9d9', marginBottom: 8 }} />
+                <br />
+                <Text type="secondary">{t('memberManage.emptyMembers')}</Text>
+              </div>
+            ) : (
+              <List
+                dataSource={selectedMembers}
+                renderItem={(member) => renderUserItem(
+                  member,
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleRemove(member.id)}
+                  />
+                )}
+              />
+            )}
+          </div>
+        </div>
       </div>
     </Modal>
   );
