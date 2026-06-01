@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Tag, Space, App, Input, Select, Popconfirm, Typography } from 'antd';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
@@ -14,7 +14,6 @@ const { Link } = Typography;
 
 export default function TeamsPage() {
   const { t } = useTranslation('teams');
-  const { modal } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.USER_WRITE);
 
@@ -38,15 +37,6 @@ export default function TeamsPage() {
   const handleEdit = (team: Team) => {
     setEditingTeam(team);
     setFormVisible(true);
-  };
-
-  const handleDelete = (team: Team) => {
-    modal.confirm({
-      title: t('team.deleteTeam'),
-      content: t('team.deleteConfirm', { name: team.name }),
-      okType: 'danger',
-      onOk: () => deleteMutation.mutateAsync(team.id),
-    });
   };
 
   // 筛选后的团队列表
