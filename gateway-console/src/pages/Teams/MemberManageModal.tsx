@@ -92,17 +92,27 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
       const toAdd = Array.from(selectedUserIds).filter((id) => !originalIds.has(id));
       const toRemove = Array.from(originalIds).filter((id) => !selectedUserIds.has(id));
 
-      // 并行执行添加和移除
-      await Promise.all([
-        ...toAdd.map((userId) =>
-          addMemberMutation.mutateAsync({ teamId: team.id, data: { userId, role: 'member' } })
-        ),
-        ...toRemove.map((userId) =>
+      // 先移除再添加（顺序执行，避免并发冲突）
+      const removeResults = await Promise.allSettled(
+        toRemove.map((userId) =>
           removeMemberMutation.mutateAsync({ teamId: team.id, userId })
         ),
-      ]);
+      );
+      const addResults = await Promise.allSettled(
+        toAdd.map((userId) =>
+          addMemberMutation.mutateAsync({ teamId: team.id, data: { userId, role: 'member' } })
+        ),
+      );
 
-      message.success(t('memberManage.saveSuccess'));
+      const failedCount =
+        removeResults.filter((r) => r.status === 'rejected').length +
+        addResults.filter((r) => r.status === 'rejected').length;
+
+      if (failedCount > 0) {
+        message.warning(t('memberManage.partialSuccess', { defaultValue: `部分操作失败（${failedCount} 个）` }));
+      } else {
+        message.success(t('memberManage.saveSuccess'));
+      }
       onClose();
     } catch {
       message.error(t('memberManage.saveError'));
