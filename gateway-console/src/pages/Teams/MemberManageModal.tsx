@@ -1,16 +1,13 @@
-import { useState } from 'react';
-import { Modal, Table, Button, Select, Space, Tag, App } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Modal, Tag, Input, List, Avatar, Spin, Empty, Space, Typography, App } from 'antd';
+import { UserOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAddTeamMember, useRemoveTeamMember, useUpdateMemberRole } from '@/services/query/useTeams';
 import { useUsers } from '@/services/query/useUsers';
-import type { Team, TeamMember, TeamRole } from '@/types/team';
+import { useAddTeamMember, useRemoveTeamMember } from '@/services/query/useTeams';
+import type { Team, TeamMember } from '@/types/team';
+import type { User } from '@/types/user';
 
-const ROLE_COLOR: Record<string, string> = {
-  owner: 'gold',
-  admin: 'blue',
-  member: 'default',
-};
+const { Text } = Typography;
 
 interface MemberManageModalProps {
   visible: boolean;
@@ -18,147 +15,180 @@ interface MemberManageModalProps {
   onClose: () => void;
 }
 
+/**
+ * 团队成员管理弹窗
+ * 采用"已选成员 + 搜索添加"模式
+ */
 export default function MemberManageModal({ visible, team, onClose }: MemberManageModalProps) {
   const { t } = useTranslation('teams');
-  const { message, modal } = App.useApp();
+  const { message } = App.useApp();
+
+  // 已选成员 ID 集合
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  // 搜索关键词
+  const [searchKeyword, setSearchKeyword] = useState('');
+  // 保存中状态
+  const [saving, setSaving] = useState(false);
+
+  // 获取用户列表（用于搜索）
+  const { data: usersData, isLoading: usersLoading } = useUsers({ size: 100 });
   const addMemberMutation = useAddTeamMember();
   const removeMemberMutation = useRemoveTeamMember();
-  const updateRoleMutation = useUpdateMemberRole();
-  const { data: usersData } = useUsers({ size: 100 });
 
-  const [adding, setAdding] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<number | undefined>();
-  const [selectedRole, setSelectedRole] = useState<TeamRole>('member');
-
-  const handleAddMember = async () => {
-    if (!team || !selectedUser) return;
-    try {
-      await addMemberMutation.mutateAsync({
-        teamId: team.id,
-        data: { userId: selectedUser, role: selectedRole },
-      });
-      message.success(t('team.addMember'));
-      setAdding(false);
-      setSelectedUser(undefined);
-      setSelectedRole('member');
-    } catch {
-      message.error(t('team.addMember'));
+  // 初始化已选成员（从 team.members 提取）
+  useEffect(() => {
+    if (visible && team?.members) {
+      setSelectedUserIds(new Set(team.members.map((m: TeamMember) => m.userId)));
+      setSearchKeyword('');
     }
-  };
+  }, [visible, team]);
 
-  const handleRemove = (userId: number) => {
-    if (!team) return;
-    modal.confirm({
-      title: t('team.removeMember'),
-      content: t('team.removeMemberConfirm'),
-      okType: 'danger',
-      onOk: () => removeMemberMutation.mutateAsync({ teamId: team.id, userId }),
+  // 用户 ID -> 用户名 映射
+  const userMap = useMemo(() => {
+    const map = new Map<number, User>();
+    usersData?.items?.forEach((u: User) => map.set(u.id, u));
+    return map;
+  }, [usersData]);
+
+  // 已选成员列表（带用户名）
+  const selectedMembers = useMemo(() => {
+    return Array.from(selectedUserIds).map((id) => ({
+      id,
+      name: userMap.get(id)?.username ?? `用户 ${id}`,
+    }));
+  }, [selectedUserIds, userMap]);
+
+  // 搜索结果（排除已选成员）
+  const searchResults = useMemo(() => {
+    if (!searchKeyword.trim() || !usersData?.items) return [];
+    const keyword = searchKeyword.toLowerCase();
+    return usersData.items
+      .filter((u: User) => !selectedUserIds.has(u.id))
+      .filter((u: User) => u.username.toLowerCase().includes(keyword))
+      .slice(0, 10);
+  }, [searchKeyword, usersData, selectedUserIds]);
+
+  // 添加成员
+  const handleAdd = useCallback((userId: number) => {
+    setSelectedUserIds((prev) => new Set(prev).add(userId));
+  }, []);
+
+  // 移除成员
+  const handleRemove = useCallback((userId: number) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
     });
-  };
+  }, []);
 
-  const handleRoleChange = async (userId: number, role: TeamRole) => {
+  // 保存
+  const handleSave = async () => {
     if (!team) return;
+
+    setSaving(true);
     try {
-      await updateRoleMutation.mutateAsync({ teamId: team.id, userId, data: { role } });
-      message.success(t('team.editTeam'));
+      const originalIds = new Set(team.members?.map((m: TeamMember) => m.userId) ?? []);
+      const toAdd = Array.from(selectedUserIds).filter((id) => !originalIds.has(id));
+      const toRemove = Array.from(originalIds).filter((id) => !selectedUserIds.has(id));
+
+      // 并行执行添加和移除
+      await Promise.all([
+        ...toAdd.map((userId) =>
+          addMemberMutation.mutateAsync({ teamId: team.id, data: { userId, role: 'member' } })
+        ),
+        ...toRemove.map((userId) =>
+          removeMemberMutation.mutateAsync({ teamId: team.id, userId })
+        ),
+      ]);
+
+      message.success(t('memberManage.saveSuccess'));
+      onClose();
     } catch {
-      message.error(t('team.editTeam'));
+      message.error(t('memberManage.saveError'));
+    } finally {
+      setSaving(false);
     }
   };
-
-  const memberIds = new Set(team?.members?.map((m: TeamMember) => m.userId) ?? []);
-  const availableUsers = usersData?.items?.filter((u) => !memberIds.has(u.id)) ?? [];
-
-  const columns = [
-    {
-      title: 'ID',
-      dataIndex: 'userId',
-      key: 'userId',
-      width: 80,
-    },
-    {
-      title: t('team.role'),
-      dataIndex: 'role',
-      key: 'role',
-      width: 140,
-      render: (role: string, record: { userId: number }) =>
-        role === 'owner' ? (
-          <Tag color={ROLE_COLOR[role]}>{t('team.roleOwner')}</Tag>
-        ) : (
-          <Select
-            value={role}
-            size="small"
-            style={{ width: 100 }}
-            onChange={(val: string) => handleRoleChange(record.userId, val as TeamRole)}
-            options={[
-              { value: 'admin', label: t('team.roleAdmin') },
-              { value: 'member', label: t('team.roleMember') },
-            ]}
-          />
-        ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 80,
-      render: (_: unknown, record: { userId: number; role: string }) =>
-        record.role !== 'owner' ? (
-          <Button type="link" size="small" danger onClick={() => handleRemove(record.userId)}>
-            {t('team.removeMember')}
-          </Button>
-        ) : null,
-    },
-  ];
 
   return (
     <Modal
-      title={`${team?.name ?? ''} - ${t('team.manageMembers')}`}
+      title={`${team?.name ?? ''} - ${t('memberManage.title')}`}
       open={visible}
       onCancel={onClose}
-      footer={null}
-      width={600}
+      onOk={handleSave}
+      okText={t('memberManage.save')}
+      cancelText={t('memberManage.cancel')}
+      confirmLoading={saving}
+      width={500}
       destroyOnHidden
     >
+      {/* 已选成员 */}
       <div style={{ marginBottom: 16 }}>
-        {adding ? (
-          <Space>
-            <Select
-              style={{ width: 200 }}
-              placeholder={t('team.selectUser')}
-              value={selectedUser}
-              onChange={setSelectedUser}
-              options={availableUsers.map((u) => ({ value: u.id, label: u.username }))}
-              showSearch
-              optionFilterProp="label"
-            />
-            <Select
-              style={{ width: 120 }}
-              value={selectedRole}
-              onChange={setSelectedRole}
-              options={[
-                { value: 'admin', label: t('team.roleAdmin') },
-                { value: 'member', label: t('team.roleMember') },
-              ]}
-            />
-            <Button type="primary" onClick={handleAddMember} disabled={!selectedUser}>
-              确定
-            </Button>
-            <Button onClick={() => setAdding(false)}>取消</Button>
-          </Space>
-        ) : (
-          <Button type="dashed" icon={<PlusOutlined />} onClick={() => setAdding(true)}>
-            {t('team.addMember')}
-          </Button>
-        )}
+        <Text type="secondary">{t('memberManage.selectedMembers')} ({selectedMembers.length})</Text>
+        <div style={{ marginTop: 8, minHeight: 32 }}>
+          {selectedMembers.length === 0 ? (
+            <Text type="secondary">暂无成员</Text>
+          ) : (
+            <Space wrap size={[4, 4]}>
+              {selectedMembers.map((m) => (
+                <Tag
+                  key={m.id}
+                  closable
+                  onClose={() => handleRemove(m.id)}
+                  style={{ padding: '4px 8px' }}
+                >
+                  <UserOutlined style={{ marginRight: 4 }} />
+                  {m.name}
+                </Tag>
+              ))}
+            </Space>
+          )}
+        </div>
       </div>
 
-      <Table
-        rowKey="userId"
-        columns={columns}
-        dataSource={team?.members ?? []}
-        pagination={false}
-        size="small"
-      />
+      {/* 搜索添加 */}
+      <div>
+        <Text type="secondary">{t('memberManage.searchUser')}</Text>
+        <Input
+          placeholder={t('memberManage.searchPlaceholder')}
+          prefix={<SearchOutlined />}
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          allowClear
+          style={{ marginTop: 8, marginBottom: 8 }}
+        />
+
+        {usersLoading ? (
+          <div style={{ textAlign: 'center', padding: 20 }}>
+            <Spin />
+          </div>
+        ) : searchKeyword.trim() ? (
+          searchResults.length === 0 ? (
+            <Empty description={t('memberManage.noResults')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          ) : (
+            <List
+              dataSource={searchResults}
+              renderItem={(user: User) => (
+                <List.Item
+                  style={{ padding: '8px 0', cursor: 'pointer' }}
+                  onClick={() => handleAdd(user.id)}
+                >
+                  <List.Item.Meta
+                    avatar={<Avatar icon={<UserOutlined />} />}
+                    title={user.username}
+                    description={user.email}
+                  />
+                </List.Item>
+              )}
+            />
+          )
+        ) : (
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {t('memberManage.addHint')}
+          </Text>
+        )}
+      </div>
     </Modal>
   );
 }
