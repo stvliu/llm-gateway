@@ -4,6 +4,7 @@ import { UserOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useTranslation } from 'react-i18next';
 import { useUsers } from '@/services/query/useUsers';
 import { useAddTeamMember, useRemoveTeamMember } from '@/services/query/useTeams';
+import { teamApi } from '@/services/api/team';
 import type { Team, TeamMember } from '@/types/team';
 import type { User } from '@/types/user';
 
@@ -26,19 +27,33 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
   const { message } = App.useApp();
 
   const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [initialMemberIds, setInitialMemberIds] = useState<Set<number>>(new Set());
   const [searchKeyword, setSearchKeyword] = useState('');
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { data: usersData, isLoading: usersLoading } = useUsers({ size: 100 });
   const addMemberMutation = useAddTeamMember();
   const removeMemberMutation = useRemoveTeamMember();
 
-  // 初始化已选成员
+  // 打开弹窗时获取完整成员列表（列表接口不含 members）
   useEffect(() => {
-    if (visible && team?.members) {
-      setSelectedUserIds(new Set(team.members.map((m: TeamMember) => m.userId)));
-      setSearchKeyword('');
-    }
+    if (!visible || !team) return;
+
+    setLoading(true);
+    teamApi.getById(team.id)
+      .then((detail) => {
+        const ids = new Set((detail.members ?? []).map((m: TeamMember) => m.userId));
+        setSelectedUserIds(ids);
+        setInitialMemberIds(ids);
+      })
+      .catch(() => {
+        setSelectedUserIds(new Set());
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+    setSearchKeyword('');
   }, [visible, team]);
 
   // 用户 ID -> User 映射
@@ -48,14 +63,14 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
     return map;
   }, [usersData]);
 
-  // 已选成员列表（带完整用户信息）
+  // 已选成员列表（带完整用户信息，优先用 userMap，fallback 显示占位信息）
   const selectedMembers = useMemo(() => {
     return Array.from(selectedUserIds)
       .map((id) => {
         const user = userMap.get(id);
-        return user ? { id: user.id, username: user.username, email: user.email ?? '' } : null;
-      })
-      .filter(Boolean) as { id: number; username: string; email: string }[];
+        if (user) return { id: user.id, username: user.username, email: user.email ?? '' };
+        return { id, username: `用户 ${id}`, email: '' };
+      });
   }, [selectedUserIds, userMap]);
 
   // 左侧可用用户列表（排除已选，支持搜索，限制 20 条）
@@ -88,7 +103,7 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
 
     setSaving(true);
     try {
-      const originalIds = new Set(team.members?.map((m: TeamMember) => m.userId) ?? []);
+      const originalIds = initialMemberIds;
       const toAdd = Array.from(selectedUserIds).filter((id) => !originalIds.has(id));
       const toRemove = Array.from(originalIds).filter((id) => !selectedUserIds.has(id));
 
@@ -193,7 +208,11 @@ export default function MemberManageModal({ visible, team, onClose }: MemberMana
             {t('memberManage.selectedMembers')} ({selectedMembers.length})
           </Text>
           <div style={{ height: LIST_HEIGHT, overflowY: 'auto' }}>
-            {selectedMembers.length === 0 ? (
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Spin />
+              </div>
+            ) : selectedMembers.length === 0 ? (
               <div style={{ textAlign: 'center', marginTop: 80 }}>
                 <UserOutlined style={{ fontSize: 32, color: '#d9d9d9', marginBottom: 8 }} />
                 <br />
