@@ -1,4 +1,4 @@
-import { Button, Card, Popconfirm, Tag, Typography, Tooltip, theme } from 'antd';
+import { Button, Card, Col, Popconfirm, Row, Tag, Typography, theme } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -19,7 +19,7 @@ export interface ChannelCardProps {
 
 /**
  * 渠道卡片组件
- * 一行一个，横向铺满
+ * 一行一个，横向铺满，展示端点/Key/模型统计和用量
  */
 export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }) => {
   const { token } = theme.useToken();
@@ -27,6 +27,8 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
 
   // 检查是否缺少关键配置（凭证为 0 表示配置中）
   const isIncomplete = channel.stats.credentialCount === 0;
+
+  const { endpointCount, credentialCount, modelCount } = channel.stats;
 
   /**
    * 根据响应时间返回颜色 token
@@ -47,18 +49,27 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
     return `${(responseTime / 1000).toFixed(1)}s`;
   };
 
+  /** 统计数字颜色 */
+  const statNumberColor = (type: 'endpoint' | 'credential' | 'model') => {
+    if (!isActive) return '#999';
+    if (type === 'endpoint') return '#1677ff';
+    if (type === 'credential') return credentialCount === 0 ? '#fa8c16' : '#722ed1';
+    return '#13c2c2';
+  };
+
   return (
     <Card
       hoverable
       onClick={() => onClick(channel)}
       style={{
         marginBottom: '8px',
-        opacity: isActive ? 1 : 0.6,
+        opacity: isActive ? 1 : 0.5,
         border: isIncomplete ? `2px solid ${token.colorWarning}` : undefined,
         transition: 'all 0.2s',
       }}
       styles={{ body: { padding: '16px' } }}
     >
+      {/* 第一行：名称 + 状态 + 计费/优先级 + 操作 */}
       <div
         style={{
           display: 'flex',
@@ -81,7 +92,12 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
           </Text>
           {isIncomplete && (
             <Tag color="warning" style={{ marginLeft: '4px' }}>
-              配置中
+              ⚠ 配置中
+            </Tag>
+          )}
+          {!isActive && (
+            <Tag color="default" style={{ marginLeft: '4px' }}>
+              已停用
             </Tag>
           )}
         </div>
@@ -89,31 +105,8 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
         {/* 状态标签 */}
         <div style={{ flex: '0 0 80px' }}>
           <Tag color={isActive ? 'success' : 'default'}>
-            {isActive ? '已启用' : '已停用'}
+            {isActive ? '运行中' : '已停用'}
           </Tag>
-        </div>
-
-        {/* 资源统计 */}
-        <div style={{ flex: '0 0 280px', display: 'flex', gap: '16px' }}>
-          <Tooltip title="端点数量">
-            <Text type="secondary" style={{ fontSize: '13px' }}>
-              端点: {channel.stats.endpointCount}
-            </Text>
-          </Tooltip>
-          <Tooltip title="凭证数量">
-            <Text
-              type={isIncomplete ? 'warning' : 'secondary'}
-              style={{ fontSize: '13px' }}
-            >
-              Key: {channel.stats.credentialCount}
-              {isIncomplete && ' ⚠'}
-            </Text>
-          </Tooltip>
-          <Tooltip title="模型映射数量">
-            <Text type="secondary" style={{ fontSize: '13px' }}>
-              模型: {channel.stats.modelCount}
-            </Text>
-          </Tooltip>
         </div>
 
         {/* 计费信息 */}
@@ -182,6 +175,51 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
           </Popconfirm>
         </div>
       </div>
+
+      {/* 第二行：端点/Key/模型三列统计 + 今日用量 */}
+      <Row gutter={8} style={{ marginTop: 10, marginBottom: 4 }}>
+        <Col span={6}>
+          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('endpoint') }}>
+              {endpointCount}
+            </div>
+            <div style={{ fontSize: 10, color: '#999' }}>端点</div>
+          </div>
+        </Col>
+        <Col span={6}>
+          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('credential') }}>
+              {credentialCount}
+            </div>
+            <div style={{ fontSize: 10, color: '#999' }}>Key</div>
+          </div>
+        </Col>
+        <Col span={6}>
+          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('model') }}>
+              {modelCount}
+            </div>
+            <div style={{ fontSize: 10, color: '#999' }}>模型</div>
+          </div>
+        </Col>
+        <Col span={6}>
+          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? '#1677ff' : '#999' }}>
+              --
+            </div>
+            <div style={{ fontSize: 10, color: '#999' }}>今日Token</div>
+          </div>
+        </Col>
+      </Row>
+
+      {/* 停用渠道显示最后活跃时间 */}
+      {!isActive && channel.updatedAt && (
+        <div style={{ marginTop: 4 }}>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            最后活跃: {new Date(channel.updatedAt).toLocaleDateString()}
+          </Text>
+        </div>
+      )}
     </Card>
   );
 };
