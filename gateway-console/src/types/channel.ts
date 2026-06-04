@@ -189,6 +189,7 @@ export interface ChannelGroup {
     id: number;
     providerId?: string;
     providerName: string;
+    state?: string;
   };
   channels: ChannelCard[];
 }

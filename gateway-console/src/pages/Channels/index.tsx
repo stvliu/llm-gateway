@@ -108,6 +108,7 @@ export default function Channels() {
             id: provider.id,
             providerId: provider.providerId,
             providerName: provider.providerName,
+            state: provider.state,
           },
           channels: channelList,
         });
