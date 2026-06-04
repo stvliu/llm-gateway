@@ -16,7 +16,7 @@ import {
   UnorderedListOutlined,
   ImportOutlined,
 } from '@ant-design/icons';
-import { useAllChannels, useDeleteChannel } from '@/services/query/useChannels';
+import { useAllChannels, useDeleteChannel, useUpdateChannel } from '@/services/query/useChannels';
 import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
@@ -100,6 +100,7 @@ export default function Channels() {
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
+  const updateChannel = useUpdateChannel();
   const setEnabledProvider = useSetEnabledProvider();
 
   // 获取所有渠道的凭证（批量）
@@ -302,6 +303,9 @@ export default function Channels() {
             groups={filteredGroups}
             onChannelClick={handleChannelClick}
             onChannelDelete={handleDelete}
+            onChannelToggleState={(id, enabled) => {
+              updateChannel.mutate({ id, data: { state: enabled ? 'ACTIVE' : 'INACTIVE' } });
+            }}
             onEditProvider={(id) => {
               const p = providersData?.items?.find((p) => p.id === id);
               if (p) {

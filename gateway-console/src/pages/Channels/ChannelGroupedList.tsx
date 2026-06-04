@@ -8,6 +8,7 @@ export interface ChannelGroupedListProps {
   groups: ChannelGroup[];
   onChannelClick: (channel: ChannelCardType) => void;
   onChannelDelete: (id: number) => void;
+  onChannelToggleState: (id: number, enabled: boolean) => void;
   onEditProvider?: (providerId: number) => void;
   onToggleProviderEnabled?: (providerId: number) => void;
   onTestProviderConnectivity?: (providerId: number) => void;
@@ -22,6 +23,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   groups,
   onChannelClick,
   onChannelDelete,
+  onChannelToggleState,
   onEditProvider,
   onToggleProviderEnabled,
   onTestProviderConnectivity,
@@ -84,6 +86,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     channel={channel}
                     onClick={onChannelClick}
                     onDelete={onChannelDelete}
+                    onToggleState={onChannelToggleState}
                   />
                 ))}
               </div>

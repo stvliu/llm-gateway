@@ -4,6 +4,8 @@ import {
   CloseCircleOutlined,
   ClockCircleOutlined,
   DeleteOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
@@ -15,13 +17,14 @@ export interface ChannelCardProps {
   channel: ChannelCardType;
   onClick: (channel: ChannelCardType) => void;
   onDelete: (id: number) => void;
+  onToggleState: (id: number, enabled: boolean) => void;
 }
 
 /**
  * 渠道卡片组件
  * 一行一个，横向铺满，展示端点/Key/模型统计和用量
  */
-export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }) => {
+export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, onToggleState }) => {
   const { token } = theme.useToken();
   const isActive = channel.state === 'ACTIVE';
 
@@ -123,14 +126,14 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
           </Text>
         </div>
 
-        {/* 右侧：响应时间 + 详情入口 + 删除 */}
+        {/* 右侧：响应时间 + 详情入口 + 启用/停用 + 删除 */}
         <div
           style={{
-            flex: '0 0 160px',
+            flex: '0 0 200px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
-            gap: '8px',
+            gap: '4px',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
@@ -156,6 +159,23 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
           <Text type="secondary" style={{ fontSize: '12px' }}>
             详情 &gt;
           </Text>
+          <Popconfirm
+            title={isActive ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
+            onConfirm={(e) => {
+              e?.stopPropagation();
+              onToggleState(channel.id, !isActive);
+            }}
+            onCancel={(e) => e?.stopPropagation()}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button
+              type="text"
+              size="small"
+              icon={isActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
           <Popconfirm
             title="确认删除"
             description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
