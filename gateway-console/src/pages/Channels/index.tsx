@@ -10,17 +10,19 @@ import {
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 import { useAllChannels, useDeleteChannel } from '@/services/query/useChannels';
-import { useProviders } from '@/services/query/useProviders';
+import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import { ChannelCreateWizard } from './ChannelCreateWizard';
+import { ProviderEditModal } from './ProviderEditModal';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
   ChannelCredential,
 } from '@/types/channel';
+import type { Provider } from '@/types/provider';
 const { Title } = Typography;
 const { Search } = Input;
 
@@ -54,11 +56,14 @@ export default function Channels() {
   const [selectedChannel, setSelectedChannel] = useState<ChannelCard | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [wizardVisible, setWizardVisible] = useState(false);
+  const [editProviderModalOpen, setEditProviderModalOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
 
   // 数据获取
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
+  const setEnabledProvider = useSetEnabledProvider();
 
   // 获取所有渠道的凭证（批量）
   const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
@@ -235,6 +240,19 @@ export default function Channels() {
           groups={filteredGroups}
           onChannelClick={handleChannelClick}
           onChannelDelete={handleDelete}
+          onEditProvider={(id) => {
+            const p = providersData?.items?.find((p) => p.id === id);
+            if (p) {
+              setEditingProvider(p);
+              setEditProviderModalOpen(true);
+            }
+          }}
+          onToggleProviderEnabled={(id) => {
+            const p = providersData?.items?.find((p) => p.id === id);
+            if (p) {
+              setEnabledProvider.mutate({ id, enabled: p.state !== 'ACTIVE' });
+            }
+          }}
         />
       )}
 
@@ -249,6 +267,16 @@ export default function Channels() {
       <ChannelCreateWizard
         open={wizardVisible}
         onClose={() => setWizardVisible(false)}
+      />
+
+      {/* 供应商编辑弹窗 */}
+      <ProviderEditModal
+        open={editProviderModalOpen}
+        provider={editingProvider}
+        onClose={() => {
+          setEditProviderModalOpen(false);
+          setEditingProvider(null);
+        }}
       />
     </div>
   );
