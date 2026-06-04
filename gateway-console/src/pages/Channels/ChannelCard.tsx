@@ -1,4 +1,4 @@
-import { Button, Card, Col, Popconfirm, Row, Tag, Typography, theme } from 'antd';
+import { Button, Card, Col, Popconfirm, Row, Tag, Tooltip, Typography, theme } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -7,6 +7,7 @@ import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   QuestionCircleOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
 import type { FC } from 'react';
@@ -156,9 +157,9 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
               {getResponseTimeText(channel.stats.avgResponseTime)}
             </Text>
           </div>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            详情 &gt;
-          </Text>
+          <Tooltip title="查看详情">
+            <RightOutlined style={{ fontSize: 12, color: token.colorTextSecondary }} />
+          </Tooltip>
           <Popconfirm
             title={isActive ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
             onConfirm={(e) => {
@@ -169,12 +170,14 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             okText="确定"
             cancelText="取消"
           >
-            <Button
-              type="text"
-              size="small"
-              icon={isActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <Tooltip title={isActive ? '停用' : '启用'}>
+              <Button
+                type="text"
+                size="small"
+                icon={isActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
           </Popconfirm>
           <Popconfirm
             title="确认删除"
@@ -188,13 +191,15 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             cancelText="取消"
             okButtonProps={{ danger: true }}
           >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={(e) => e.stopPropagation()}
-            />
+            <Tooltip title="删除">
+              <Button
+                type="text"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </Tooltip>
           </Popconfirm>
         </div>
       </div>
