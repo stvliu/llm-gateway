@@ -282,7 +282,7 @@ export default function Channels() {
             icon={<PlusOutlined />}
             onClick={handleCreateChannel}
           >
-            新增供应商
+            新增渠道
           </Button>
         </Space>
       </div>
@@ -314,7 +314,7 @@ export default function Channels() {
               }
             }}
           />
-          {/* 底部新增供应商虚线卡片 */}
+          {/* 底部新增渠道虚线卡片 */}
           <Card
             hoverable
             style={{
@@ -327,7 +327,7 @@ export default function Channels() {
             onClick={handleCreateChannel}
           >
             <PlusOutlined style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 8 }} />
-            <div style={{ color: token.colorPrimary, fontSize: 14 }}>新增供应商</div>
+            <div style={{ color: token.colorPrimary, fontSize: 14 }}>新增渠道</div>
           </Card>
         </>
       ) : (
