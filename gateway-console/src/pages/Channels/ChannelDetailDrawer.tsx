@@ -6,7 +6,6 @@ import {
   Button,
   Space,
   Divider,
-  Badge,
   message,
   Spin,
   Tabs,
@@ -17,12 +16,14 @@ import {
   KeyOutlined,
   RobotOutlined,
   SettingOutlined,
+  BarChartOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import type { ChannelCard } from '@/types/channel';
 import {
   useChannel,
   useChannelCredentials,
+  useChannelModels,
   useUpdateChannel,
   useTestChannelCredential,
   useDeleteChannel,
@@ -31,6 +32,9 @@ import { EndpointSection } from './EndpointSection';
 import { CredentialSection } from './CredentialSection';
 import { ModelMappingSection } from './ModelMappingSection';
 import { QuotaSettingsSection } from './QuotaSettingsSection';
+import { ChannelOverviewTab } from './ChannelOverviewTab';
+import { ProviderEditModal } from './ProviderEditModal';
+import { useProvider } from '@/services/query/useProviders';
 
 const { Text } = Typography;
 
@@ -42,15 +46,15 @@ interface ChannelDetailDrawerProps {
 
 /**
  * 渠道详情抽屉
- * 顶部信息栏 + Tabs 标签页（端点 / API Key / 模型映射 / 配额与设置）
+ * 头部：供应商Logo+渠道名+快捷操作条 → 概览/端点/API Key/模型映射/配额与设置
  */
 export function ChannelDetailDrawer({
   channel,
   open,
   onClose,
 }: ChannelDetailDrawerProps) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('endpoints');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [editProviderOpen, setEditProviderOpen] = useState(false);
   const updateChannel = useUpdateChannel();
   const deleteChannel = useDeleteChannel();
 
@@ -58,6 +62,8 @@ export function ChannelDetailDrawer({
   const { data: credentials = [], isLoading: credentialsLoading } = useChannelCredentials(
     channel?.id || 0
   );
+  const { data: channelModels = [] } = useChannelModels(channel?.id || 0);
+  const { data: provider } = useProvider(channel?.providerId || 0);
   const testCredential = useTestChannelCredential();
 
   if (!channel) return null;
@@ -122,16 +128,39 @@ export function ChannelDetailDrawer({
     }
   };
 
+  /** 跳转到指定Tab */
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const endpointCount = channelDetail?.endpoints?.length || 0;
+  const credentialCount = credentials.length;
+  const modelCount = channelModels.length;
+
   const tabItems = [
+    {
+      key: 'overview',
+      label: (
+        <Space>
+          <BarChartOutlined />
+          <span>概览</span>
+        </Space>
+      ),
+      children: (
+        <ChannelOverviewTab
+          channel={channelDetail || channel}
+          credentials={credentials}
+          channelModels={channelModels}
+          onTabChange={handleTabChange}
+        />
+      ),
+    },
     {
       key: 'endpoints',
       label: (
         <Space>
           <GlobalOutlined />
-          <span>端点</span>
-          {channelDetail?.endpoints ? (
-            <Badge count={channelDetail.endpoints.length} size="small" />
-          ) : null}
+          <span>端点 ({endpointCount})</span>
         </Space>
       ),
       children: (
@@ -146,8 +175,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <KeyOutlined />
-          <span>API Key</span>
-          <Badge count={credentials.length} size="small" />
+          <span>API Key ({credentialCount})</span>
         </Space>
       ),
       children: (
@@ -159,13 +187,13 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <RobotOutlined />
-          <span>模型映射</span>
+          <span>模型映射 ({modelCount})</span>
         </Space>
       ),
       children: <ModelMappingSection channelId={channel.id} />,
     },
     {
-      key: 'settings',
+      key: 'quota',
       label: (
         <Space>
           <SettingOutlined />
@@ -177,85 +205,104 @@ export function ChannelDetailDrawer({
   ];
 
   return (
-    <Drawer
-      title={channel.name}
-      placement="right"
-      width={800}
-      open={open}
-      onClose={onClose}
-      destroyOnClose
-      extra={
-        <Space>
-          <Button onClick={handleTest} loading={testCredential.isPending}>
-            测试
-          </Button>
-          <Popconfirm
-            title={channel.state === 'ACTIVE' ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
-            onConfirm={handleToggleState}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button
-              danger={channel.state === 'ACTIVE'}
-              loading={updateChannel.isPending}
-            >
-              {channel.state === 'ACTIVE' ? '停用' : '启用'}
-            </Button>
-          </Popconfirm>
-          <Popconfirm
-            title="确认删除"
-            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
-            onConfirm={handleDelete}
-            okText="删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button danger loading={deleteChannel.isPending}>
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      }
-    >
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div>
-          {/* 摘要信息 */}
-          <div style={{ marginBottom: 16 }}>
-            <Space split={<Divider type="vertical" />} size="small">
-              <Text type="secondary">
-                供应商:{' '}
-                <Typography.Link
-                  onClick={() => navigate(`/providers?id=${channel.providerId}`)}
-                >
-                  {channel.providerName}
-                </Typography.Link>
-              </Text>
-              <Text type="secondary">
-                计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
-              </Text>
-              <Text type="secondary">
-                优先级: <Text strong>P{channel.priority}</Text>
-              </Text>
-              <Text type="secondary">
-                权重: <Text strong>W{channel.weight}</Text>
-              </Text>
-              <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
-                {channel.state === 'ACTIVE' ? '已启用' : '已停用'}
-              </Tag>
-            </Space>
+    <>
+      <Drawer
+        placement="right"
+        width={720}
+        open={open}
+        onClose={onClose}
+        destroyOnClose
+        title={null}
+        styles={{
+          header: { display: 'none' },
+        }}
+      >
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '48px' }}>
+            <Spin size="large" />
           </div>
+        ) : (
+          <div>
+            {/* 头部区域 */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Text strong style={{ fontSize: 18 }}>{channel.name}</Text>
+                  <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
+                    {channel.state === 'ACTIVE' ? '运行中' : '已停用'}
+                  </Tag>
+                </div>
+              </div>
+              <div style={{ marginBottom: 12 }}>
+                <Space split={<Divider type="vertical" />} size="small">
+                  <Text type="secondary">
+                    供应商:{' '}
+                    <Typography.Link onClick={() => setEditProviderOpen(true)}>
+                      {channel.providerName}
+                    </Typography.Link>
+                  </Text>
+                  <Text type="secondary">
+                    计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
+                  </Text>
+                  <Text type="secondary">
+                    优先级: <Text strong>P{channel.priority}</Text>
+                  </Text>
+                  <Text type="secondary">
+                    权重: <Text strong>W{channel.weight}</Text>
+                  </Text>
+                </Space>
+              </div>
 
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-          />
-        </div>
-      )}
-    </Drawer>
+              {/* 快捷操作条 */}
+              <Space size={8}>
+                <Button
+                  type="primary"
+                  icon={<ApiOutlined />}
+                  onClick={handleTest}
+                  loading={testCredential.isPending}
+                >
+                  连通性测试
+                </Button>
+                <Popconfirm
+                  title={channel.state === 'ACTIVE' ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
+                  onConfirm={handleToggleState}
+                  okText="确定"
+                  cancelText="取消"
+                >
+                  <Button loading={updateChannel.isPending}>
+                    {channel.state === 'ACTIVE' ? '停用渠道' : '启用渠道'}
+                  </Button>
+                </Popconfirm>
+                <Popconfirm
+                  title="确认删除"
+                  description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
+                  onConfirm={handleDelete}
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button danger loading={deleteChannel.isPending}>
+                    删除
+                  </Button>
+                </Popconfirm>
+              </Space>
+            </div>
+
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              items={tabItems}
+            />
+          </div>
+        )}
+      </Drawer>
+
+      {/* 供应商编辑弹窗 */}
+      <ProviderEditModal
+        open={editProviderOpen}
+        provider={provider || null}
+        onClose={() => setEditProviderOpen(false)}
+      />
+    </>
   );
 }
