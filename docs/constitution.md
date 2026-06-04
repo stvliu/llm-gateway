@@ -5,7 +5,7 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.6.0 |
+| 版本 | 2.7.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
 | 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
@@ -572,7 +572,27 @@ gateway:
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
 | 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
 
-### 3.2 异常处理规范
+### 3.2 前端主题色规范
+
+**定义**:
+```
+前端页面所有组件的颜色必须使用 Ant Design 主题 token（如 colorPrimary、colorBgContainer），
+禁止硬编码自定义颜色值。确保全局主题一致性，支持主题切换。
+```
+
+**推论**:
+- ✅ 使用 Ant Design 5.x 的 `token.useToken()` 获取主题色
+- ✅ 背景色、边框色、文字色等均从 token 获取
+- ✅ 代码块/代码卡片等特殊组件使用 Ant Design Card 组件默认样式
+- ✅ 需要自定义色值时，通过 ConfigProvider theme 配置扩展
+- ❌ 禁止：在组件中硬编码 `#1e293b`、`#1890ff` 等色值
+- ❌ 禁止：使用内联 style 设置自定义颜色（背景色、边框色等）
+
+**验证规则**:
+- 代码扫描不得发现硬编码色值（`#[0-9a-fA-F]{3,8}`、`rgb()`、`hsl()`）
+- 所有颜色值必须来自 Ant Design token 或 CSS 变量
+
+### 3.3 异常处理规范
 
 **异常分层**:
 ```
@@ -702,7 +722,7 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.6.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-25
+**版本**: 2.7.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-31
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
@@ -715,3 +735,4 @@ GatewayException (根异常)
 | v2.4.0 | 2026-05-24 | **安全子域拆分**：security 域拆分为 iam（身份与访问控制）、threat（威胁防护）、dataprotection（数据保护）三子域；异常分层更新 |
 | v2.5.0 | 2026-05-24 | **供给域重构**：将 model、product、proxy、metadata 四个子域合并为统一的 supply（供给域）；实体重命名 Product→Channel、ProductApiKey→ChannelCredential、ProductModel→ChannelModel、Model→ModelSpec；元数据目录迁移为 supply/catalog；协议层迁移为 supply/protocol |
 | v2.6.0 | 2026-05-25 | **协议体系重构+调用链路**：新增 protocol 域（contract/conversion/validation）；协议 DTO 从 supply/protocol 迁至 domain/protocol/contract；校验实现迁至 adapter/protocol；ProtocolGateway→UpstreamClient、ProtocolGatewayFactory→UpstreamClientRegistry；新增 OutboundTuner（出站调谐器）；路由拆为 application/routing/（RoutingResolver/ModelMatcher/ChannelSelector）；新增 §2.6 大模型调用链路（七阶段：校验→路由→转换→调谐→调用→转换→后置） |
+| v2.7.0 | 2026-05-31 | **前端主题色规范**：新增 §3.2 前端主题色规范，禁止硬编码颜色值，所有组件颜色必须使用 Ant Design 主题 token |

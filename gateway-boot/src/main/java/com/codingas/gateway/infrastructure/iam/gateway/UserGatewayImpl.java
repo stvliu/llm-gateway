@@ -94,6 +94,7 @@ public class UserGatewayImpl implements UserGateway {
         user.setLastLoginAt(doEntity.getLastLoginAt());
         user.setDeletedAt(doEntity.getDeletedAt());
         user.setRole(doEntity.getRole());
+        user.setBuiltin(doEntity.getBuiltin());
         user.setCreatedBy(doEntity.getCreatedBy());
         user.setCreatedAt(doEntity.getCreatedAt());
         user.setUpdatedBy(doEntity.getUpdatedBy());
@@ -125,6 +126,7 @@ public class UserGatewayImpl implements UserGateway {
         doEntity.setLastLoginAt(user.getLastLoginAt());
         doEntity.setDeletedAt(user.getDeletedAt());
         doEntity.setRole(user.getRole());
+        doEntity.setBuiltin(user.getBuiltin());
         return doEntity;
     }
 }

@@ -49,7 +49,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         ChannelCredential saved = channelCredentialGateway.save(credential);
         log.info("Created ChannelCredential: id={}, channelId={}", saved.getId(), saved.getChannelId());
 
-        return new ChannelCredentialCreateResponse(saved.getId(), keyPrefix, plainKey);
+        return new ChannelCredentialCreateResponse(saved.getId(), plainKey);
     }
 
     @Override
@@ -84,6 +84,13 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         }
         if (request.state() != null) {
             credential.setState(request.state());
+        }
+        // 替换 API Key
+        if (request.apiKey() != null && !request.apiKey().isBlank()) {
+            String newKey = request.apiKey().trim();
+            String keyPrefix = newKey.substring(0, Math.min(8, newKey.length()));
+            credential.setApiKeyPlain(newKey);
+            credential.setApiKeyPrefix(keyPrefix);
         }
 
         ChannelCredential saved = channelCredentialGateway.save(credential);
@@ -139,6 +146,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
                 credential.getId(),
                 credential.getChannelId(),
                 credential.getApiKeyPrefix(),
+                credential.getApiKeyPlain(),
                 credential.getName(),
                 null, // description not in ChannelCredential
                 credential.getWeight(),

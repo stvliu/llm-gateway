@@ -28,9 +28,9 @@
     "detail": "Plan Detail"
   },
   "billingMode": {
-    "PAY_AS_YOU_GO": "Pay As You Go",
-    "SUBSCRIPTION": "Subscription",
-    "PACKAGE": "Package"
+    "pay_as_you_go": "Pay As You Go",
+    "subscription": "Subscription",
+    "package": "Package"
   },
   "model": {
     "modelName": "Model Name",

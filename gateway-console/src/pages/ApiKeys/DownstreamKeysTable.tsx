@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Table, Tag, Button, Popconfirm, App, Input, Typography, Modal } from 'antd';
-import { DeleteOutlined, EyeOutlined, CopyOutlined, WarningOutlined } from '@ant-design/icons';
+import { useState, useCallback, useMemo } from 'react';
+import { Table, Tag, Button, Popconfirm, App, Input, Typography } from 'antd';
+import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
+import { userApiKeyApi } from '@/services/api/userApiKey';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
 
 const { Text } = Typography;
@@ -32,47 +34,27 @@ export default function DownstreamKeysTable() {
     return k.keyPrefix?.toLowerCase().includes(q) || k.name?.toLowerCase().includes(q);
   });
 
-  const handleRevoke = async (id: number) => {
+  const handleRevoke = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
       message.success(t('revoked', { defaultValue: 'Key 已吊销' }));
     } catch {
       message.error(t('revokeFailed', { defaultValue: '吊销失败' }));
     }
-  };
+  }, [deleteMutation, message, t]);
 
-  const handleViewPlain = (record: UserApiKey) => {
-    Modal.info({
-      title: record.name || record.keyPrefix,
-      content: (
-        <div>
-          <Text code style={{ fontSize: 13, wordBreak: 'break-all' }}>{record.keyPrefix}••••••••</Text>
-          <Button
-            type="link"
-            size="small"
-            icon={<CopyOutlined />}
-            onClick={() => { navigator.clipboard.writeText(record.keyPrefix); message.success(t('copied', { defaultValue: '已复制' })); }}
-          />
-          <div style={{ marginTop: 8, color: '#64748b', fontSize: 12 }}>
-            出于安全考虑，完整 Key 仅在创建时展示一次，此处仅显示前缀。
-          </div>
-        </div>
-      ),
-      okText: t('close', { defaultValue: '关闭' }),
-    });
-  };
-
-  const columns = [
+  const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'keyPrefix',
-      key: 'keyPrefix',
+      title: t('keyPrefix', { defaultValue: 'Key' }),
+      dataIndex: 'keyPlain',
+      key: 'keyPlain',
       width: 200,
-      render: (prefix: string, record: UserApiKey) => (
-        <Text code style={{ fontSize: 12 }}>
-          {prefix}
-          <Button type="link" size="small" icon={<EyeOutlined />} style={{ marginLeft: 4 }} onClick={() => handleViewPlain(record)} />
-        </Text>
+      render: (_: string, record: UserApiKey) => (
+        <MaskedKeyDisplay
+          keyPlain={record.keyPlain}
+          mode="readonly"
+          size="small"
+        />
       ),
     },
     {
@@ -142,7 +124,7 @@ export default function DownstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ];
+  ], [t, handleRevoke]);
 
   return (
     <div>

@@ -7,6 +7,7 @@ import type {
   MaterializeResult,
   MaterializeBatchResult,
   MaterializeBatchRequest,
+  MaterializePlanRequest,
   ProviderCatalogListParams,
   ModelCatalogListParams,
 } from '@/types/catalog';
@@ -48,9 +49,9 @@ export const catalogMaterializeApi = {
   materializeProviderWithPlans: (providerCode: string, data?: MaterializeBatchRequest) =>
     api.post<MaterializeBatchResult>(`${BASE_URL}/materialize/provider/${providerCode}/with-plans`, { data }),
 
-  /** 物化套餐 */
-  materializePlan: (planCode: string) =>
-    api.post<MaterializeResult>(`${BASE_URL}/materialize/plan/${planCode}`),
+  /** 物化套餐（支持传入端点、模型、API Key 等配置） */
+  materializePlan: (planCode: string, data?: MaterializePlanRequest) =>
+    api.post<MaterializeResult>(`${BASE_URL}/materialize/plan/${planCode}`, data),
 
   /** 物化模型 */
   materializeModel: (modelName: string) =>

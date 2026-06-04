@@ -28,9 +28,10 @@
     "detail": "套餐详情"
   },
   "billingMode": {
-    "PAY_AS_YOU_GO": "按量计费",
-    "SUBSCRIPTION": "订阅",
-    "PACKAGE": "套餐包"
+    "pay_as_you_go": "按量计费",
+    "subscription": "订阅制",
+    "hybrid": "混合计费",
+    "prepaid_package": "资源包"
   },
   "model": {
     "modelName": "模型名称",

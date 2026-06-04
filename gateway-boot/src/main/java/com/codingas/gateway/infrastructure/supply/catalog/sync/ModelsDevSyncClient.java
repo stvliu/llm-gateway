@@ -4,7 +4,7 @@ import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
@@ -197,7 +197,7 @@ public class ModelsDevSyncClient {
             c.setPlanCode(d.planCode());
             c.setProviderCode(d.providerCode());
             c.setPlanName(d.planName());
-            c.setBillingMode(BillingMode.valueOf(d.billingMode()));
+            c.setBillingMode(BillingMode.resolve(d.billingMode()));
             c.setEndpoints(d.endpoints() != null ? toJson(d.endpoints()) : null);
             c.setPricing(d.pricing() != null ? toJson(d.pricing()) : null);
             c.setDescription(d.description());

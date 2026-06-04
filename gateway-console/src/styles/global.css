@@ -123,3 +123,11 @@ body {
     opacity: 0;
   }
 }
+
+/* ============================================
+   供应商分组头 hover 效果
+   ============================================ */
+
+.provider-group-header:hover {
+  background: var(--ant-color-fill-tertiary, #f0f0f0) !important;
+}

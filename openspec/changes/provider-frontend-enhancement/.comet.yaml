@@ -1,0 +1,16 @@
+workflow: full
+phase: design
+build_mode: null
+isolation: null
+verify_mode: null
+base_ref: 09ebbd55138fcf75d096439f13f67f5abbe617be
+design_doc: docs/superpowers/specs/2026-05-29-provider-frontend-enhancement-design.md
+plan: null
+verify_result: pending
+verification_report: null
+branch_status: pending
+created_at: 2026-05-29
+verified_at: null
+archived: false
+handoff_context: openspec/changes/provider-frontend-enhancement/.comet/handoff/design-context.json
+handoff_hash: 96bf5a3cd2dfcfac630d4e285b59598ea130a195fe6c6202ac5c6da0e6ab1023

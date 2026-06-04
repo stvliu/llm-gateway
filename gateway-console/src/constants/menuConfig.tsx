@@ -1,11 +1,11 @@
 import {
   DashboardOutlined,
-  CloudServerOutlined,
+  AppstoreOutlined,
+  ThunderboltOutlined,
   TeamOutlined,
   SettingOutlined,
   DatabaseOutlined,
   LockOutlined,
-  KeyOutlined,
   CodeOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
@@ -27,22 +27,16 @@ export const menuConfig: MenuItemConfig[] = [
     label: 'menu.home',
   },
   {
+    key: '/channels',
+    icon: <ThunderboltOutlined />,
+    label: 'menu.channels',
+    permission: 'channel:read',
+  },
+  {
     key: '/providers',
-    icon: <CloudServerOutlined />,
-    label: 'menu.providers',
+    icon: <AppstoreOutlined />,
+    label: 'menu.providerDirectory',
     permission: 'provider:read',
-  },
-  {
-    key: '/models',
-    icon: <DatabaseOutlined />,
-    label: 'menu.models',
-    permission: 'model:read',
-  },
-  {
-    key: '/keys',
-    icon: <KeyOutlined />,
-    label: 'menu.apiKeys',
-    permission: 'key:read',
   },
   {
     key: '/teams',

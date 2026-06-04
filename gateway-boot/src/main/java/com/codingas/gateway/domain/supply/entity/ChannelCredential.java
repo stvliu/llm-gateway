@@ -29,11 +29,8 @@ public class ChannelCredential extends BaseEntity {
     /** 密钥名称 */
     private String name;
 
-    /** Key 明文（创建时设置，查询时由基础设施层解密填充） */
+    /** Key 明文，创建时设置，查询时由基础设施层解密填充 */
     private String apiKeyPlain;
-
-    /** Key 加密存储 */
-    private String apiKeyEncrypted;
 
     /** Key 前缀，用于识别 */
     private String apiKeyPrefix;

@@ -6,7 +6,6 @@ import com.codingas.gateway.domain.supply.enums.BillingMode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,76 +21,84 @@ public class ChannelController {
     private final ChannelService channelService;
 
     @PostMapping
-    public ResponseEntity<ChannelResponse> create(@Valid @RequestBody ChannelRequest request) {
-        ChannelResponse response = channelService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChannelResponse create(@Valid @RequestBody ChannelRequest request) {
+        return channelService.create(request);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ChannelResponse> update(
+    public ChannelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ChannelRequest request) {
-        ChannelResponse response = channelService.update(id, request);
-        return ResponseEntity.ok(response);
+        return channelService.update(id, request);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ChannelResponse> getById(@PathVariable Long id) {
-        ChannelResponse response = channelService.getById(id);
-        return ResponseEntity.ok(response);
+    public ChannelResponse getById(@PathVariable Long id) {
+        return channelService.getById(id);
     }
 
+    /**
+     * 获取所有渠道列表（用于渠道管理页面）
+     * 不带 providerId 参数时返回所有渠道
+     */
     @GetMapping
-    public ResponseEntity<List<ChannelResponse>> getByProviderId(
-            @RequestParam Long providerId,
+    public List<ChannelResponse> list(
+            @RequestParam(required = false) Long providerId,
             @RequestParam(required = false) String billingMode) {
-        List<ChannelResponse> responses;
-        if (billingMode != null) {
-            responses = channelService.getByProviderIdAndBillingMode(
+        if (providerId == null) {
+            return channelService.getAll();
+        } else if (billingMode != null) {
+            return channelService.getByProviderIdAndBillingMode(
                 providerId, BillingMode.fromCode(billingMode));
         } else {
-            responses = channelService.getByProviderId(providerId);
+            return channelService.getByProviderId(providerId);
         }
-        return ResponseEntity.ok(responses);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         channelService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     // ===== 端点管理 =====
 
     @PostMapping("/{channelId}/endpoints")
-    public ResponseEntity<ChannelEndpointResponse> addEndpoint(
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChannelEndpointResponse addEndpoint(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        ChannelEndpointResponse response = channelService.addEndpoint(channelId, request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return channelService.addEndpoint(channelId, request);
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")
-    public ResponseEntity<Void> removeEndpoint(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeEndpoint(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
         channelService.removeEndpoint(channelId, endpointId);
-        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{channelId}/endpoints/{endpointId}")
+    public ChannelEndpointResponse updateEndpoint(
+            @PathVariable Long channelId,
+            @PathVariable Long endpointId,
+            @Valid @RequestBody ChannelEndpointRequest request) {
+        return channelService.updateEndpoint(channelId, endpointId, request);
     }
 
     @PutMapping("/{channelId}/endpoints/{endpointId}/enable")
-    public ResponseEntity<ChannelEndpointResponse> enableEndpoint(
+    public ChannelEndpointResponse enableEndpoint(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        ChannelEndpointResponse response = channelService.enableEndpoint(channelId, endpointId);
-        return ResponseEntity.ok(response);
+        return channelService.enableEndpoint(channelId, endpointId);
     }
 
     @PutMapping("/{channelId}/endpoints/{endpointId}/disable")
-    public ResponseEntity<ChannelEndpointResponse> disableEndpoint(
+    public ChannelEndpointResponse disableEndpoint(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        ChannelEndpointResponse response = channelService.disableEndpoint(channelId, endpointId);
-        return ResponseEntity.ok(response);
+        return channelService.disableEndpoint(channelId, endpointId);
     }
 }

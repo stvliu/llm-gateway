@@ -6,13 +6,13 @@ import com.codingas.gateway.application.catalog.CatalogService;
 import com.codingas.gateway.application.catalog.CatalogSyncService;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
+import com.codingas.gateway.application.catalog.dto.MaterializePlanRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
 import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,10 +41,10 @@ public class CatalogController {
      * @return 供应商目录列表
      */
     @GetMapping("/providers")
-    public ResponseEntity<List<ProviderCatalogResponse>> listProviders(
+    public List<ProviderCatalogResponse> listProviders(
             @RequestParam(required = false) String providerType,
             @RequestParam(required = false) String keyword) {
-        return ResponseEntity.ok(catalogService.listProviderCatalogs(providerType, keyword));
+        return catalogService.listProviderCatalogs(providerType, keyword);
     }
 
     // ===== 套餐目录 =====
@@ -56,9 +56,9 @@ public class CatalogController {
      * @return 套餐目录列表
      */
     @GetMapping("/plans")
-    public ResponseEntity<List<PlanCatalogResponse>> listPlans(
+    public List<PlanCatalogResponse> listPlans(
             @RequestParam(required = false) String providerCode) {
-        return ResponseEntity.ok(catalogService.listPlanCatalogs(providerCode));
+        return catalogService.listPlanCatalogs(providerCode);
     }
 
     /**
@@ -68,8 +68,8 @@ public class CatalogController {
      * @return 套餐详情
      */
     @GetMapping("/plans/{planCode}")
-    public ResponseEntity<PlanDetailResponse> getPlanDetail(@PathVariable String planCode) {
-        return ResponseEntity.ok(catalogService.getPlanDetail(planCode));
+    public PlanDetailResponse getPlanDetail(@PathVariable String planCode) {
+        return catalogService.getPlanDetail(planCode);
     }
 
     // ===== 模型目录 =====
@@ -82,10 +82,10 @@ public class CatalogController {
      * @return 模型目录列表
      */
     @GetMapping("/models")
-    public ResponseEntity<List<ModelCatalogResponse>> listModels(
+    public List<ModelCatalogResponse> listModels(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String capability) {
-        return ResponseEntity.ok(catalogService.listModelCatalogs(null, keyword, capability));
+        return catalogService.listModelCatalogs(null, keyword, capability);
     }
 
     // ===== 物化（管理操作） =====
@@ -101,11 +101,10 @@ public class CatalogController {
      */
     @PostMapping("/materialize/provider/{providerCode}/with-plans")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeBatchResult> materializeProviderWithPlans(
+    public MaterializeBatchResult materializeProviderWithPlans(
             @PathVariable String providerCode,
             @RequestBody(required = false) MaterializeBatchRequest request) {
-        return ResponseEntity.ok(
-                catalogMaterializeService.materializeProviderWithPlans(providerCode, request));
+        return catalogMaterializeService.materializeProviderWithPlans(providerCode, request);
     }
 
     /**
@@ -118,22 +117,29 @@ public class CatalogController {
      */
     @PostMapping("/materialize/provider/{providerCode}")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeResult> materializeProvider(@PathVariable String providerCode) {
-        return ResponseEntity.ok(catalogMaterializeService.materializeProvider(providerCode));
+    public MaterializeResult materializeProvider(@PathVariable String providerCode) {
+        return catalogMaterializeService.materializeProvider(providerCode);
     }
 
     /**
      * 物化套餐
      *
      * <p>从 PlanCatalog 创建 Channel + ChannelEndpoint + ChannelModel 运营实体。</p>
+     * <p>支持通过 request 批量创建 API Key 凭证。</p>
      *
      * @param planCode 套餐编码
+     * @param request  扩展请求（可选：apiKeys / endpoints / models）
      * @return 物化结果
      */
     @PostMapping("/materialize/plan/{planCode}")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeResult> materializePlan(@PathVariable String planCode) {
-        return ResponseEntity.ok(catalogMaterializeService.materializePlan(planCode));
+    public MaterializeResult materializePlan(
+            @PathVariable String planCode,
+            @RequestBody(required = false) MaterializePlanRequest request) {
+        if (request != null && (request.getApiKeys() != null || request.getEndpoints() != null || request.getModels() != null)) {
+            return catalogMaterializeService.materializePlan(planCode, request);
+        }
+        return catalogMaterializeService.materializePlan(planCode);
     }
 
     /**
@@ -146,8 +152,8 @@ public class CatalogController {
      */
     @PostMapping("/materialize/model/{modelName}")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<MaterializeResult> materializeModel(@PathVariable String modelName) {
-        return ResponseEntity.ok(catalogMaterializeService.materializeModel(modelName));
+    public MaterializeResult materializeModel(@PathVariable String modelName) {
+        return catalogMaterializeService.materializeModel(modelName);
     }
 
     // ===== 同步（管理操作） =====
@@ -159,9 +165,8 @@ public class CatalogController {
      */
     @PostMapping("/sync/builtin")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<Void> syncBuiltin() {
+    public void syncBuiltin() {
         catalogSyncService.syncBuiltin();
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -169,8 +174,7 @@ public class CatalogController {
      */
     @PostMapping("/sync/models-dev")
     @SaCheckRole("ADMIN")
-    public ResponseEntity<Void> syncModelsDev() {
+    public void syncModelsDev() {
         catalogSyncService.syncModelsDev();
-        return ResponseEntity.ok().build();
     }
 }

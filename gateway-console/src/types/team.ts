@@ -7,7 +7,8 @@ export interface Team {
   name: string;
   description: string;
   state: string;
-  members: TeamMember[];
+  memberCount?: number;
+  members?: TeamMember[];
   createdAt: string;
   updatedAt: string;
 }
@@ -46,6 +47,7 @@ export interface UserApiKey {
   id: number;
   userId: number;
   keyPrefix: string;
+  keyPlain: string;  // 新增：脱敏格式
   name: string;
   models: string[];
   quotaLimit: number | null;
@@ -54,9 +56,8 @@ export interface UserApiKey {
   updatedAt: string;
 }
 
-/** 用户 API Key 详情（含明文 Key） */
+/** 用户 API Key 详情 */
 export interface UserApiKeyDetail extends UserApiKey {
-  keyPlain: string;
 }
 
 /** 创建用户 API Key 请求 */

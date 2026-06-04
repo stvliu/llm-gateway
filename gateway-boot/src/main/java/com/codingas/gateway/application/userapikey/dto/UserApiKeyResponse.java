@@ -12,6 +12,7 @@ public record UserApiKeyResponse(
         Long id,
         Long userId,
         String keyPrefix,
+        String keyPlain,
         String name,
         List<String> models,
         Long quotaLimit,

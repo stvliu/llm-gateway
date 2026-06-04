@@ -1,26 +1,19 @@
-import { useState } from 'react';
-import { Table, Button, Tag, Space, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, KeyOutlined, EyeOutlined, PartitionOutlined } from '@ant-design/icons';
+import { useState, useMemo } from 'react';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography, Tooltip } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useTeams, useDeleteTeam } from '@/services/query/useTeams';
 import TeamFormModal from './TeamFormModal';
 import MemberManageModal from './MemberManageModal';
-import UserApiKeyManageModal from './UserApiKeyManageModal';
-import ModelVisibilityModal from './ModelVisibilityModal';
 import ChannelManageModal from './ChannelManageModal';
-import type { Team, TeamMember } from '@/types/team';
+import type { Team } from '@/types/team';
 
-const ROLE_COLOR: Record<string, string> = {
-  owner: 'gold',
-  admin: 'blue',
-  member: 'default',
-};
+const { Link } = Typography;
 
 export default function TeamsPage() {
   const { t } = useTranslation('teams');
-  const { modal } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.USER_WRITE);
 
@@ -30,9 +23,11 @@ export default function TeamsPage() {
   const [formVisible, setFormVisible] = useState(false);
   const [editingTeam, setEditingTeam] = useState<Team | undefined>();
   const [memberTeam, setMemberTeam] = useState<Team | undefined>();
-  const [apiKeyTeam, setApiKeyTeam] = useState<Team | undefined>();
-  const [visibilityTeam, setVisibilityTeam] = useState<Team | null>(null);
   const [channelManageTeam, setChannelManageTeam] = useState<Team | null>(null);
+
+  // 搜索筛选状态
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [stateFilter, setStateFilter] = useState<string | undefined>(undefined);
 
   const handleAdd = () => {
     setEditingTeam(undefined);
@@ -44,14 +39,21 @@ export default function TeamsPage() {
     setFormVisible(true);
   };
 
-  const handleDelete = (team: Team) => {
-    modal.confirm({
-      title: t('team.deleteTeam'),
-      content: t('team.deleteConfirm', { name: team.name }),
-      okType: 'danger',
-      onOk: () => deleteMutation.mutateAsync(team.id),
+  // 筛选后的团队列表
+  const filteredTeams = useMemo(() => {
+    if (!teams) return [];
+    return teams.filter((team: Team) => {
+      // 名称搜索
+      if (searchKeyword && !team.name.toLowerCase().includes(searchKeyword.toLowerCase())) {
+        return false;
+      }
+      // 状态筛选
+      if (stateFilter && team.state !== stateFilter) {
+        return false;
+      }
+      return true;
     });
-  };
+  }, [teams, searchKeyword, stateFilter]);
 
   const columns = [
     {
@@ -68,12 +70,18 @@ export default function TeamsPage() {
     {
       title: t('team.memberCount'),
       key: 'memberCount',
-      render: (_: unknown, record: Team) => record.members?.length ?? 0,
+      width: 100,
+      render: (_: unknown, record: Team) => (
+        <Link onClick={() => setMemberTeam(record)}>
+          {record.memberCount ?? record.members?.length ?? 0}
+        </Link>
+      ),
     },
     {
       title: t('team.state'),
       dataIndex: 'state',
       key: 'state',
+      width: 100,
       render: (state: string) => (
         <Tag color={state === 'active' ? 'green' : 'default'}>
           {state === 'active' ? t('team.stateActive') : t('team.stateInactive')}
@@ -81,38 +89,33 @@ export default function TeamsPage() {
       ),
     },
     {
-      title: t('team.role'),
-      key: 'roles',
-      render: (_: unknown, record: Team) => {
-        const roles = [...new Set(record.members?.map((m: TeamMember) => m.role) || [])];
-        return roles.map((role: string) => (
-          <Tag key={role} color={ROLE_COLOR[role]}>
-            {t(`team.role${role.charAt(0).toUpperCase() + role.slice(1)}`)}
-          </Tag>
-        ));
-      },
-    },
-    {
-      title: t('team.actions', { defaultValue: '操作' }),
+      title: t('team.actions'),
       key: 'actions',
+      width: 200,
+      fixed: 'right' as const,
       render: (_: unknown, record: Team) => (
-        <Space>
-          <Button type="link" size="small" icon={<PartitionOutlined />} onClick={() => setChannelManageTeam(record)}>
-            {t('channelManage.title', { defaultValue: '渠道管理' })}
-          </Button>
-          <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setVisibilityTeam(record)}>
-            {t('modelVisibility.title', { defaultValue: '模型可见性' })}
-          </Button>
-          <Button type="link" size="small" icon={<KeyOutlined />} onClick={() => setApiKeyTeam(record)}>
-            {t('apiKey.manageTitle', { defaultValue: '密钥管理' })}
-          </Button>
-          <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => setMemberTeam(record)}>
-            {t('team.manageMembers')}
-          </Button>
+        <Space size="small">
+          <Tooltip title={t('team.manageMembers')}>
+            <Button type="text" size="small" icon={<TeamOutlined />} onClick={() => setMemberTeam(record)} />
+          </Tooltip>
+          <Tooltip title={t('channelPermission.title')}>
+            <Button type="text" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageTeam(record)} />
+          </Tooltip>
           {canWrite && (
             <>
-              <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-              <Button type="link" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record)} />
+              <Tooltip title={t('team.edit')}>
+                <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+              </Tooltip>
+              <Popconfirm
+                title={t('team.deleteTeam')}
+                description={t('team.deleteConfirm', { name: record.name })}
+                okType="danger"
+                onConfirm={() => deleteMutation.mutateAsync(record.id)}
+              >
+                <Tooltip title={t('team.delete')}>
+                  <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                </Tooltip>
+              </Popconfirm>
             </>
           )}
         </Space>
@@ -122,20 +125,40 @@ export default function TeamsPage() {
 
   return (
     <>
-      <div style={{ marginBottom: 16 }}>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             {t('team.addTeam')}
           </Button>
         )}
+        <Input
+          placeholder={t('team.searchPlaceholder', { defaultValue: '搜索团队名称' })}
+          prefix={<SearchOutlined />}
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+          allowClear
+          style={{ width: 250 }}
+        />
+        <Select
+          placeholder={t('team.state', { defaultValue: '状态' })}
+          value={stateFilter}
+          onChange={setStateFilter}
+          allowClear
+          style={{ width: 120 }}
+          options={[
+            { value: 'active', label: t('team.stateActive') },
+            { value: 'inactive', label: t('team.stateInactive') },
+          ]}
+        />
       </div>
 
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={teams}
+        dataSource={filteredTeams}
         loading={isLoading}
         pagination={false}
+        scroll={{ x: 800 }}
       />
 
       <TeamFormModal
@@ -148,20 +171,6 @@ export default function TeamsPage() {
         visible={!!memberTeam}
         team={memberTeam}
         onClose={() => setMemberTeam(undefined)}
-      />
-
-      {apiKeyTeam && (
-        <UserApiKeyManageModal
-          team={apiKeyTeam}
-          open={true}
-          onClose={() => setApiKeyTeam(undefined)}
-        />
-      )}
-
-      <ModelVisibilityModal
-        open={visibilityTeam !== null}
-        team={visibilityTeam}
-        onClose={() => setVisibilityTeam(null)}
       />
 
       {channelManageTeam && (

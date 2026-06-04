@@ -4,7 +4,6 @@ import com.codingas.gateway.application.userapikey.UserApiKeyService;
 import com.codingas.gateway.application.userapikey.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,8 +22,9 @@ public class UserApiKeyController {
     }
 
     @PostMapping
-    public ResponseEntity<UserApiKeyCreateResponse> create(@Valid @RequestBody UserApiKeyCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userApiKeyService.create(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserApiKeyCreateResponse create(@Valid @RequestBody UserApiKeyCreateRequest request) {
+        return userApiKeyService.create(request);
     }
 
     @GetMapping(params = "userId")

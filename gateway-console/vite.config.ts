@@ -1,6 +1,20 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
+import { execSync } from 'node:child_process';
+
+// WSL2 下获取 Windows 主机 IP
+function getBackendTarget(): string {
+  if (process.env.WSL_DISTRO_NAME) {
+    try {
+      const hostIp = execSync("hostname -I | awk '{print $1}'", { encoding: 'utf-8' }).trim();
+      return `http://${hostIp}:8080`;
+    } catch {
+      return 'http://localhost:8080';
+    }
+  }
+  return 'http://localhost:8080';
+}
 
 export default defineConfig({
   plugins: [react()],
@@ -14,8 +28,7 @@ export default defineConfig({
     historyApiFallback: true,
     proxy: {
       '/api/v1': {
-        // WSL2 需要使用 Windows 主机 IP
-        target: 'http://172.26.208.1:8080',
+        target: getBackendTarget(),
         changeOrigin: true,
       },
     },

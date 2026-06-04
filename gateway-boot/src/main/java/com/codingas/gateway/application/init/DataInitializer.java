@@ -214,7 +214,7 @@ public class DataInitializer implements CommandLineRunner {
      * <p>根据各供应商的实际计费模式配置，共12个接入点：</p>
      * <ul>
      *   <li><b>OpenAI</b>: 纯按量计费（PAY_AS_YOU_GO），无订阅制</li>
-     *   <li><b>Anthropic</b>: 个人/团队用分层订阅（TIERED_SUBSCRIPTION），企业用混合计费（HYBRID_BASE_PLUS_USAGE）</li>
+     *   <li><b>Anthropic</b>: 订阅制（SUBSCRIPTION），企业用混合计费（HYBRID）</li>
      *   <li><b>DeepSeek</b>: 按量计费 + 资源包</li>
      *   <li><b>通义千问</b>: 按量计费 + 资源包</li>
      *   <li><b>智谱AI</b>: 按量计费 + 分层订阅</li>
@@ -240,9 +240,9 @@ public class DataInitializer implements CommandLineRunner {
         // ==================== Anthropic 渠道 ====================
         // Anthropic 个人/团队采用分层订阅，企业采用混合计费
         channels.put("anthropic-pro", createChannel(providers.get("anthropic").getId(), 
-            "Anthropic Pro ($20/月)", BillingMode.TIERED_SUBSCRIPTION));
-        channels.put("anthropic-enterprise", createChannel(providers.get("anthropic").getId(), 
-            "Anthropic Enterprise ($20/用户+按量)", BillingMode.HYBRID_BASE_PLUS_USAGE));
+            "Anthropic Pro ($20/月)", BillingMode.SUBSCRIPTION));
+        channels.put("anthropic-enterprise", createChannel(providers.get("anthropic").getId(),
+            "Anthropic Enterprise ($20/用户+按量)", BillingMode.HYBRID));
         
         // ==================== DeepSeek 渠道 ====================
         // DeepSeek 支持按量计费和预付费资源包
@@ -263,7 +263,7 @@ public class DataInitializer implements CommandLineRunner {
         channels.put("zhipu-default", createChannel(providers.get("zhipu").getId(), 
             "智谱AI按量计费", BillingMode.PAY_AS_YOU_GO));
         channels.put("zhipu-subscription", createChannel(providers.get("zhipu").getId(), 
-            "智谱AI专业订阅", BillingMode.SUBSCRIPTION_TOKEN));
+            "智谱AI专业订阅", BillingMode.SUBSCRIPTION));
         
         // ==================== 火山方舟渠道 ====================
         // 火山方舟支持按量计费和预付费套餐
@@ -418,15 +418,21 @@ public class DataInitializer implements CommandLineRunner {
      */
     private List<User> initializeUsers() {
         log.info("Step 6: Initializing users...");
-        
+
         List<User> users = new ArrayList<>();
+
+        // 创建管理员用户 admin（标记为内建用户，不可删除/降级/禁用）
+        User adminUser = createUser("admin", "admin@example.com", ADMIN_ROLE, true);
+        users.add(adminUser);
+
+        // 创建测试用户 test1-test10
         for (int i = 1; i <= 10; i++) {
             String username = "test" + i;
             String email = username + "@example.com";
-            users.add(createUser(username, email));
+            users.add(createUser(username, email, USER_ROLE, false));
         }
-        
-        log.info("  Created {} users", users.size());
+
+        log.info("  Created {} users (1 admin + 10 test users)", users.size());
         return users;
     }
 
@@ -443,23 +449,28 @@ public class DataInitializer implements CommandLineRunner {
             TEAM_OPENCLAW, teams.get(3)
         );
         
+        // admin 用户：加入所有团队并设置为 OWNER
+        for (Team team : teams) {
+            addUserToTeam(users.get(0).getId(), team.getId(), TeamRole.OWNER);
+        }
+        
         // default 团队: test1, test2
-        addUserToTeam(users.get(0).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
         addUserToTeam(users.get(1).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(2).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
         
         // dev 团队: test3, test4(管理员), test5
-        addUserToTeam(users.get(2).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(3).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.ADMIN);
-        addUserToTeam(users.get(4).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(3).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(4).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.ADMIN);
+        addUserToTeam(users.get(5).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
         
         // product 团队: test6, test7(管理员)
-        addUserToTeam(users.get(5).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(6).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.ADMIN);
+        addUserToTeam(users.get(6).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(7).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.ADMIN);
         
         // OpenClaw 团队: test8, test9, test10(所有者)
-        addUserToTeam(users.get(7).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
         addUserToTeam(users.get(8).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(9).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.OWNER);
+        addUserToTeam(users.get(9).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(10).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.OWNER);
         
         log.info("  Assigned users to teams");
     }
@@ -470,6 +481,7 @@ public class DataInitializer implements CommandLineRunner {
      * <p>API Key 通过用户所属团队继承渠道访问权限，不再直接关联渠道。</p>
      * <p>不同团队的权限由 Team ↔ Channel 关系控制：</p>
      * <ul>
+     *   <li><b>admin</b>: 所有12个渠道（通过加入所有团队）</li>
      *   <li><b>default</b>: OpenAI + Anthropic Pro（2个渠道）</li>
      *   <li><b>dev</b>: 全部12个渠道</li>
      *   <li><b>product</b>: 企业级/付费渠道（6个）</li>
@@ -479,25 +491,28 @@ public class DataInitializer implements CommandLineRunner {
     private void initializeApiKeys(List<User> users) {
         log.info("Step 8: Initializing API keys...");
         
+        // ==================== admin 管理员 ====================
+        createUserApiKey(users.get(0).getId(), "admin-master-key");
+        
         // ==================== default 团队 ====================
-        createUserApiKey(users.get(0).getId(), "default-team-key-1");
-        createUserApiKey(users.get(1).getId(), "default-team-key-2");
+        createUserApiKey(users.get(1).getId(), "default-team-key-1");
+        createUserApiKey(users.get(2).getId(), "default-team-key-2");
         
         // ==================== dev 团队 ====================
-        createUserApiKey(users.get(2).getId(), "dev-team-key-1");
-        createUserApiKey(users.get(3).getId(), "dev-team-key-2");
-        createUserApiKey(users.get(4).getId(), "dev-team-key-3");
+        createUserApiKey(users.get(3).getId(), "dev-team-key-1");
+        createUserApiKey(users.get(4).getId(), "dev-team-key-2");
+        createUserApiKey(users.get(5).getId(), "dev-team-key-3");
         
         // ==================== product 团队 ====================
-        createUserApiKey(users.get(5).getId(), "product-team-key-1");
-        createUserApiKey(users.get(6).getId(), "product-team-key-2");
+        createUserApiKey(users.get(6).getId(), "product-team-key-1");
+        createUserApiKey(users.get(7).getId(), "product-team-key-2");
         
         // ==================== OpenClaw 团队 ====================
-        createUserApiKey(users.get(7).getId(), "openclaw-team-key-1");
-        createUserApiKey(users.get(8).getId(), "openclaw-team-key-2");
-        createUserApiKey(users.get(9).getId(), "openclaw-team-key-3");
+        createUserApiKey(users.get(8).getId(), "openclaw-team-key-1");
+        createUserApiKey(users.get(9).getId(), "openclaw-team-key-2");
+        createUserApiKey(users.get(10).getId(), "openclaw-team-key-3");
         
-        log.info("  Created 10 API keys (channel permissions inherited from teams)");
+        log.info("  Created 11 API keys (1 admin + 10 team keys, channel permissions inherited from teams)");
     }
 
     /**
@@ -512,12 +527,12 @@ public class DataInitializer implements CommandLineRunner {
         log.info("  Models: 20");
         log.info("  Channels: {}", channelCount);
         log.info("  Teams: {} (default, dev, product, openclaw)", teamCount);
-        log.info("  Users: {} (test1-test10)", userCount);
-        log.info("  UserApiKeys: 10");
+        log.info("  Users: {} (admin + test1-test10)", userCount);
+        log.info("  UserApiKeys: 11 (1 admin + 10 team keys)");
         log.info("========================================");
         log.info("Test accounts:");
-        log.info("  Username: test1 ~ test10");
-        log.info("  Password: same as username");
+        log.info("  Admin - Username: admin, Password: admin, Role: ADMIN");
+        log.info("  Users - Username: test1 ~ test10, Password: same as username, Role: USER");
         log.info("========================================");
         log.info("Permission model (3-layer inheritance):");
         log.info("  Team ↔ Channel (M:N) - Define team's accessible channels");
@@ -525,6 +540,7 @@ public class DataInitializer implements CommandLineRunner {
         log.info("  UserApiKey → User (N:1) - API Key inherits team's permissions");
         log.info("========================================");
         log.info("Channel access by team:");
+        log.info("  admin: All 12 channels (via all teams as OWNER)");
         log.info("  default: OpenAI + Anthropic Pro (2 channels)");
         log.info("  dev: All 12 channels (full access)");
         log.info("  product: Premium/Enterprise channels (6 channels)");
@@ -576,7 +592,6 @@ public class DataInitializer implements CommandLineRunner {
         ChannelCredential credential = new ChannelCredential();
         credential.setChannelId(channelId);
         credential.setApiKeyPlain(plainApiKey);
-        credential.setApiKeyEncrypted("ENCRYPTED:" + plainApiKey);
         credential.setApiKeyPrefix(plainApiKey.substring(0, Math.min(8, plainApiKey.length())));
         credential.setName("default");
         credential.setState(CredentialState.ACTIVE);
@@ -591,13 +606,14 @@ public class DataInitializer implements CommandLineRunner {
         return teamGateway.save(team);
     }
 
-    private User createUser(String username, String email) {
+    private User createUser(String username, String email, String role, boolean builtin) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
         user.setPasswordHash(passwordEncoder.encode(username)); // 密码与用户名相同
-        user.setRole(USER_ROLE);
+        user.setRole(role);
         user.setState(UserState.ACTIVE);
+        user.setBuiltin(builtin);
         return userGateway.save(user);
     }
 
@@ -613,8 +629,9 @@ public class DataInitializer implements CommandLineRunner {
         UserApiKey userApiKey = new UserApiKey();
         userApiKey.setUserId(userId);
         userApiKey.setName(name);
-        userApiKey.setKeyPlain("sk-" + name.toLowerCase().replace(" ", "-") + "-" + 
-            java.util.UUID.randomUUID().toString().substring(0, 8));
+        // UUID 靠前确保 keyPrefix（前10位）唯一
+        String uuid8 = java.util.UUID.randomUUID().toString().substring(0, 8);
+        userApiKey.setKeyPlain("sk-" + uuid8 + "-" + name.toLowerCase().replace(" ", "-"));
         userApiKey.setModels(null); // null = 允许所有模型
         userApiKey.setState(UserApiKeyState.ACTIVE);
         userApiKeyGateway.save(userApiKey);

@@ -2,6 +2,7 @@ package com.codingas.gateway.application.catalog;
 
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
+import com.codingas.gateway.application.catalog.dto.MaterializePlanRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.application.catalog.dto.PlanResult;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
@@ -15,6 +16,7 @@ import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.entity.Model;
@@ -23,10 +25,12 @@ import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
@@ -61,6 +65,7 @@ public class CatalogMaterializeService {
     private final ChannelGateway channelGateway;
     private final ChannelEndpointGateway channelEndpointGateway;
     private final ChannelModelGateway channelModelGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
     private final ModelGateway modelGateway;
     private final ObjectMapper objectMapper;
 
@@ -203,6 +208,7 @@ public class CatalogMaterializeService {
      *
      * <p>从 PlanCatalog 创建 Channel + ChannelEndpoint + ChannelModel 运营实体。</p>
      * <p>物化 Plan 时如果 Model 不存在，自动级联物化。</p>
+     * <p>如果 Provider 尚未物化，自动先物化 Provider。</p>
      */
     @Transactional
     public MaterializeResult materializePlan(String planCode) {
@@ -210,9 +216,21 @@ public class CatalogMaterializeService {
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "套餐目录不存在: " + planCode));
 
+        // 自动物化 Provider（如果尚未物化）
         Provider provider = providerGateway.findByCode(catalog.getProviderCode())
-                .orElseThrow(() -> new CatalogException("PROVIDER_NOT_MATERIALIZED",
-                        "供应商尚未物化: " + catalog.getProviderCode() + "，请先物化供应商"));
+                .orElseGet(() -> {
+                    log.info("供应商尚未物化，自动物化: {}", catalog.getProviderCode());
+                    try {
+                        materializeProvider(catalog.getProviderCode());
+                        return providerGateway.findByCode(catalog.getProviderCode()).orElseThrow();
+                    } catch (CatalogException e) {
+                        if ("ALREADY_MATERIALIZED".equals(e.getCode())) {
+                            // 并发情况下可能已被其他请求物化，重新查询即可
+                            return providerGateway.findByCode(catalog.getProviderCode()).orElseThrow();
+                        }
+                        throw e;
+                    }
+                });
 
         if (channelGateway.existsByProviderIdAndName(provider.getId(), planCode)) {
             throw new CatalogException("ALREADY_MATERIALIZED",
@@ -222,7 +240,7 @@ public class CatalogMaterializeService {
         Channel channel = new Channel();
         channel.setProviderId(provider.getId());
         channel.setName(planCode);
-        channel.setBillingMode(mapBillingMode(catalog.getBillingMode()));
+        channel.setBillingMode(catalog.getBillingMode());
         channel.setPriority(100);
         channel.setWeight(100);
         channel.setTimeout(30);
@@ -245,7 +263,7 @@ public class CatalogMaterializeService {
 
         List<Map<String, Object>> pricing = parsePricing(catalog.getPricing());
         for (Map<String, Object> p : pricing) {
-            String modelName = (String) p.get("modelName");
+            String modelName = (String) p.get("providerModelId");
 
             Model model = findOrCreateModel(modelName);
 
@@ -273,6 +291,62 @@ public class CatalogMaterializeService {
                 .entityId(savedChannel.getId())
                 .status("CREATED")
                 .build();
+    }
+
+    /**
+     * 物化套餐（扩展版）
+     *
+     * <p>支持批量创建 API Key 凭证和自定义端点/模型配置。</p>
+     * <p>先完成基础物化，再根据 request 中的扩展配置进行补充。</p>
+     *
+     * @param planCode 套餐编码
+     * @param request  扩展请求（apiKeys / endpoints / models）
+     * @return 物化结果
+     */
+    @Transactional
+    public MaterializeResult materializePlan(String planCode, MaterializePlanRequest request) {
+        // 1. 先完成基础物化
+        MaterializeResult baseResult = materializePlan(planCode);
+
+        // 2. 如果不是 CREATED（已有），直接返回
+        if (!"CREATED".equals(baseResult.getStatus())) {
+            return baseResult;
+        }
+
+        Long channelId = baseResult.getEntityId();
+
+        // 3. 批量创建 API Key 凭证
+        if (request != null && request.getApiKeys() != null && !request.getApiKeys().isEmpty()) {
+            int priority = 1; // 从 1 开始递增
+            for (String apiKey : request.getApiKeys()) {
+                if (apiKey == null || apiKey.isBlank()) {
+                    continue;
+                }
+
+                ChannelCredential credential = new ChannelCredential();
+                credential.setChannelId(channelId);
+                credential.setApiKeyPlain(apiKey);
+                // 提取前缀（最多 8 位）
+                String keyPrefix = apiKey.substring(0, Math.min(8, apiKey.length()));
+                credential.setApiKeyPrefix(keyPrefix);
+                credential.setPriority(priority);
+                credential.setWeight(100);
+                credential.setState(CredentialState.ACTIVE);
+
+                // Gateway 内部处理加密存储
+                channelCredentialGateway.save(credential);
+                priority++;
+            }
+            log.info("物化套餐-批量创建凭证成功: planCode={}, count={}", planCode, request.getApiKeys().size());
+        }
+
+        // 4. 自定义端点（暂时跳过，等后续扩展）
+        // TODO: 实现自定义端点逻辑
+
+        // 5. 自定义模型（暂时跳过，等后续扩展）
+        // TODO: 实现自定义模型逻辑
+
+        return baseResult;
     }
 
     /**
@@ -319,6 +393,10 @@ public class CatalogMaterializeService {
      * 查找或创建 Model（级联物化）
      */
     private Model findOrCreateModel(String modelName) {
+        if (modelName == null || modelName.isBlank()) {
+            throw new CatalogException("INVALID_CATALOG_DATA", "模型名称不能为空，请检查套餐 pricing 数据");
+        }
+
         Optional<Model> existing = modelGateway.findByModelName(modelName);
         if (existing.isPresent()) {
             return existing.get();
@@ -363,17 +441,6 @@ public class CatalogMaterializeService {
             return null;
         }
         return rules.get(modelName);
-    }
-
-    private BillingMode mapBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode catalogMode) {
-        if (catalogMode == null) {
-            return BillingMode.PAY_AS_YOU_GO;
-        }
-        return switch (catalogMode) {
-            case PAY_AS_YOU_GO -> BillingMode.PAY_AS_YOU_GO;
-            case SUBSCRIPTION -> BillingMode.SUBSCRIPTION_CODING;
-            case PACKAGE -> BillingMode.SUBSCRIPTION_TOKEN;
-        };
     }
 
     private List<Map<String, String>> parseEndpoints(String endpointsJson) {

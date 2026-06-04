@@ -10,7 +10,7 @@ import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,51 +31,52 @@ public class ProviderController {
      * 创建提供商
      */
     @PostMapping
-    public ResponseEntity<ProviderResponse> create(@Valid @RequestBody ProviderCreateRequest request) {
-        return ResponseEntity.ok(providerService.create(request));
+    @ResponseStatus(HttpStatus.CREATED)
+    public ProviderResponse create(@Valid @RequestBody ProviderCreateRequest request) {
+        return providerService.create(request);
     }
 
     /**
      * 获取提供商详情
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ProviderResponse> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(providerService.getById(id));
+    public ProviderResponse getById(@PathVariable Long id) {
+        return providerService.getById(id);
     }
 
     /**
      * 查询提供商列表
      */
     @GetMapping
-    public ResponseEntity<PageResponse<ProviderResponse>> query(ProviderQueryRequest request) {
-        return ResponseEntity.ok(providerService.query(request));
+    public PageResponse<ProviderResponse> query(ProviderQueryRequest request) {
+        return providerService.query(request);
     }
 
     /**
      * 更新提供商
      */
     @PutMapping("/{id}")
-    public ResponseEntity<ProviderResponse> update(@PathVariable Long id,
-                                                    @Valid @RequestBody ProviderUpdateRequest request) {
-        return ResponseEntity.ok(providerService.update(id, request));
+    public ProviderResponse update(@PathVariable Long id,
+                                   @Valid @RequestBody ProviderUpdateRequest request) {
+        return providerService.update(id, request);
     }
 
     /**
      * 删除提供商
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         providerService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     /**
      * 启用/禁用提供商
      */
     @PatchMapping("/{id}/state")
-    public ResponseEntity<ProviderResponse> setEnabled(@PathVariable Long id,
-                                                        @RequestParam boolean enabled) {
-        return ResponseEntity.ok(providerService.setEnabled(id, enabled));
+    public ProviderResponse setEnabled(@PathVariable Long id,
+                                       @RequestParam boolean enabled) {
+        return providerService.setEnabled(id, enabled);
     }
 
     /**
@@ -84,16 +85,16 @@ public class ProviderController {
      * <p>返回所有已注册供应商的名称，供前端选择。</p>
      */
     @GetMapping("/names")
-    public ResponseEntity<List<String>> getProviderNames() {
-        return ResponseEntity.ok(providerService.getProviderNames());
+    public List<String> getProviderNames() {
+        return providerService.getProviderNames();
     }
 
     /**
      * 测试连通性
      */
     @PostMapping("/test-connectivity")
-    public ResponseEntity<ConnectivityTestResult> testConnectivity(
+    public ConnectivityTestResult testConnectivity(
             @Valid @RequestBody ConnectivityTestRequest request) {
-        return ResponseEntity.ok(providerService.testConnectivity(request));
+        return providerService.testConnectivity(request);
     }
 }

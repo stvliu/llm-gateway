@@ -1,16 +1,14 @@
-import { useState } from 'react';
-import { Modal, Table, Button, Select, Space, Tag, App } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Modal, Input, List, Avatar, Spin, Empty, Typography, App, Button } from 'antd';
+import { UserOutlined, SearchOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAddTeamMember, useRemoveTeamMember, useUpdateMemberRole } from '@/services/query/useTeams';
 import { useUsers } from '@/services/query/useUsers';
-import type { Team, TeamMember, TeamRole } from '@/types/team';
+import { useAddTeamMember, useRemoveTeamMember } from '@/services/query/useTeams';
+import { teamApi } from '@/services/api/team';
+import type { Team, TeamMember } from '@/types/team';
+import type { User } from '@/types/user';
 
-const ROLE_COLOR: Record<string, string> = {
-  owner: 'gold',
-  admin: 'blue',
-  member: 'default',
-};
+const { Text } = Typography;
 
 interface MemberManageModalProps {
   visible: boolean;
@@ -18,147 +16,226 @@ interface MemberManageModalProps {
   onClose: () => void;
 }
 
+const LIST_HEIGHT = 400;
+
+/**
+ * 团队成员管理弹窗
+ * 左侧搜索添加，右侧已选成员列表
+ */
 export default function MemberManageModal({ visible, team, onClose }: MemberManageModalProps) {
   const { t } = useTranslation('teams');
-  const { message, modal } = App.useApp();
+  const { message } = App.useApp();
+
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<number>>(new Set());
+  const [initialMemberIds, setInitialMemberIds] = useState<Set<number>>(new Set());
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const { data: usersData, isLoading: usersLoading } = useUsers({ size: 100 });
   const addMemberMutation = useAddTeamMember();
   const removeMemberMutation = useRemoveTeamMember();
-  const updateRoleMutation = useUpdateMemberRole();
-  const { data: usersData } = useUsers({ size: 100 });
 
-  const [adding, setAdding] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<number | undefined>();
-  const [selectedRole, setSelectedRole] = useState<TeamRole>('member');
+  // 打开弹窗时获取完整成员列表（列表接口不含 members）
+  useEffect(() => {
+    if (!visible || !team) return;
 
-  const handleAddMember = async () => {
-    if (!team || !selectedUser) return;
-    try {
-      await addMemberMutation.mutateAsync({
-        teamId: team.id,
-        data: { userId: selectedUser, role: selectedRole },
+    setLoading(true);
+    teamApi.getById(team.id)
+      .then((detail) => {
+        const ids = new Set((detail.members ?? []).map((m: TeamMember) => m.userId));
+        setSelectedUserIds(ids);
+        setInitialMemberIds(ids);
+      })
+      .catch(() => {
+        setSelectedUserIds(new Set());
+      })
+      .finally(() => {
+        setLoading(false);
       });
-      message.success(t('team.addMember'));
-      setAdding(false);
-      setSelectedUser(undefined);
-      setSelectedRole('member');
-    } catch {
-      message.error(t('team.addMember'));
-    }
-  };
+    setSearchKeyword('');
+  }, [visible, team]);
 
-  const handleRemove = (userId: number) => {
-    if (!team) return;
-    modal.confirm({
-      title: t('team.removeMember'),
-      content: t('team.removeMemberConfirm'),
-      okType: 'danger',
-      onOk: () => removeMemberMutation.mutateAsync({ teamId: team.id, userId }),
+  // 用户 ID -> User 映射
+  const userMap = useMemo(() => {
+    const map = new Map<number, User>();
+    usersData?.items?.forEach((u: User) => map.set(u.id, u));
+    return map;
+  }, [usersData]);
+
+  // 已选成员列表（带完整用户信息，优先用 userMap，fallback 显示占位信息）
+  const selectedMembers = useMemo(() => {
+    return Array.from(selectedUserIds)
+      .map((id) => {
+        const user = userMap.get(id);
+        if (user) return { id: user.id, username: user.username, email: user.email ?? '' };
+        return { id, username: `用户 ${id}`, email: '' };
+      });
+  }, [selectedUserIds, userMap]);
+
+  // 左侧可用用户列表（排除已选，支持搜索，限制 20 条）
+  const availableUsers = useMemo(() => {
+    if (!usersData?.items) return [];
+    const list = usersData.items.filter((u: User) => !selectedUserIds.has(u.id));
+    if (searchKeyword.trim()) {
+      const keyword = searchKeyword.toLowerCase();
+      return list
+        .filter((u: User) => u.username.toLowerCase().includes(keyword))
+        .slice(0, 20);
+    }
+    return list.slice(0, 20);
+  }, [usersData, selectedUserIds, searchKeyword]);
+
+  const handleAdd = useCallback((userId: number) => {
+    setSelectedUserIds((prev) => new Set(prev).add(userId));
+  }, []);
+
+  const handleRemove = useCallback((userId: number) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      next.delete(userId);
+      return next;
     });
-  };
+  }, []);
 
-  const handleRoleChange = async (userId: number, role: TeamRole) => {
+  const handleSave = async () => {
     if (!team) return;
+
+    setSaving(true);
     try {
-      await updateRoleMutation.mutateAsync({ teamId: team.id, userId, data: { role } });
-      message.success(t('team.editTeam'));
+      const originalIds = initialMemberIds;
+      const toAdd = Array.from(selectedUserIds).filter((id) => !originalIds.has(id));
+      const toRemove = Array.from(originalIds).filter((id) => !selectedUserIds.has(id));
+
+      // 先移除再添加（顺序执行，避免并发冲突）
+      const removeResults = await Promise.allSettled(
+        toRemove.map((userId) =>
+          removeMemberMutation.mutateAsync({ teamId: team.id, userId })
+        ),
+      );
+      const addResults = await Promise.allSettled(
+        toAdd.map((userId) =>
+          addMemberMutation.mutateAsync({ teamId: team.id, data: { userId, role: 'member' } })
+        ),
+      );
+
+      const failedCount =
+        removeResults.filter((r) => r.status === 'rejected').length +
+        addResults.filter((r) => r.status === 'rejected').length;
+
+      if (failedCount > 0) {
+        message.warning(t('memberManage.partialSuccess', { count: failedCount }));
+      } else {
+        message.success(t('memberManage.saveSuccess'));
+      }
+      onClose();
     } catch {
-      message.error(t('team.editTeam'));
+      message.error(t('memberManage.saveError'));
+    } finally {
+      setSaving(false);
     }
   };
 
-  const memberIds = new Set(team?.members?.map((m: TeamMember) => m.userId) ?? []);
-  const availableUsers = usersData?.items?.filter((u) => !memberIds.has(u.id)) ?? [];
-
-  const columns = [
-    {
-      title: 'ID',
-      dataIndex: 'userId',
-      key: 'userId',
-      width: 80,
-    },
-    {
-      title: t('team.role'),
-      dataIndex: 'role',
-      key: 'role',
-      width: 140,
-      render: (role: string, record: { userId: number }) =>
-        role === 'owner' ? (
-          <Tag color={ROLE_COLOR[role]}>{t('team.roleOwner')}</Tag>
-        ) : (
-          <Select
-            value={role}
-            size="small"
-            style={{ width: 100 }}
-            onChange={(val: string) => handleRoleChange(record.userId, val as TeamRole)}
-            options={[
-              { value: 'admin', label: t('team.roleAdmin') },
-              { value: 'member', label: t('team.roleMember') },
-            ]}
-          />
-        ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 80,
-      render: (_: unknown, record: { userId: number; role: string }) =>
-        record.role !== 'owner' ? (
-          <Button type="link" size="small" danger onClick={() => handleRemove(record.userId)}>
-            {t('team.removeMember')}
-          </Button>
-        ) : null,
-    },
-  ];
+  // 渲染用户行（左右两栏共用）
+  const renderUserItem = (user: { id: number; username: string; email: string }, action: React.ReactNode) => (
+    <List.Item style={{ padding: '8px 12px' }} extra={action}>
+      <List.Item.Meta
+        avatar={<Avatar size="small" icon={<UserOutlined />} />}
+        title={user.username}
+        description={<Text type="secondary" style={{ fontSize: 12 }}>{user.email}</Text>}
+      />
+    </List.Item>
+  );
 
   return (
     <Modal
-      title={`${team?.name ?? ''} - ${t('team.manageMembers')}`}
+      title={`${team?.name ?? ''} - ${t('memberManage.title')}`}
       open={visible}
       onCancel={onClose}
-      footer={null}
-      width={600}
+      onOk={handleSave}
+      okText={t('memberManage.save')}
+      cancelText={t('memberManage.cancel')}
+      confirmLoading={saving}
+      width={700}
       destroyOnHidden
     >
-      <div style={{ marginBottom: 16 }}>
-        {adding ? (
-          <Space>
-            <Select
-              style={{ width: 200 }}
-              placeholder={t('team.selectUser')}
-              value={selectedUser}
-              onChange={setSelectedUser}
-              options={availableUsers.map((u) => ({ value: u.id, label: u.username }))}
-              showSearch
-              optionFilterProp="label"
-            />
-            <Select
-              style={{ width: 120 }}
-              value={selectedRole}
-              onChange={setSelectedRole}
-              options={[
-                { value: 'admin', label: t('team.roleAdmin') },
-                { value: 'member', label: t('team.roleMember') },
-              ]}
-            />
-            <Button type="primary" onClick={handleAddMember} disabled={!selectedUser}>
-              确定
-            </Button>
-            <Button onClick={() => setAdding(false)}>取消</Button>
-          </Space>
-        ) : (
-          <Button type="dashed" icon={<PlusOutlined />} onClick={() => setAdding(true)}>
-            {t('team.addMember')}
-          </Button>
-        )}
-      </div>
+      <div style={{ display: 'flex', gap: 16 }}>
+        {/* 左侧：搜索添加 */}
+        <div style={{ flex: 1, borderRight: '1px solid #f0f0f0', paddingRight: 16 }}>
+          <Text strong style={{ marginBottom: 8, display: 'block' }}>
+            {t('memberManage.addMemberTitle')}
+          </Text>
+          <Input
+            placeholder={t('memberManage.searchPlaceholder')}
+            prefix={<SearchOutlined />}
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            allowClear
+            size="small"
+            style={{ marginBottom: 8 }}
+          />
+          <div style={{ height: LIST_HEIGHT, overflowY: 'auto' }}>
+            {usersLoading ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Spin />
+              </div>
+            ) : availableUsers.length === 0 ? (
+              <Empty
+                description={t('memberManage.noResults')}
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                style={{ marginTop: 60 }}
+              />
+            ) : (
+              <List
+                dataSource={availableUsers}
+                renderItem={(user: User) => renderUserItem(
+                  { id: user.id, username: user.username, email: user.email ?? '' },
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<UserOutlined />}
+                    onClick={() => handleAdd(user.id)}
+                  />
+                )}
+              />
+            )}
+          </div>
+        </div>
 
-      <Table
-        rowKey="userId"
-        columns={columns}
-        dataSource={team?.members ?? []}
-        pagination={false}
-        size="small"
-      />
+        {/* 右侧：已选成员 */}
+        <div style={{ flex: 1, paddingLeft: 16 }}>
+          <Text strong style={{ marginBottom: 8, display: 'block' }}>
+            {t('memberManage.selectedMembers')} ({selectedMembers.length})
+          </Text>
+          <div style={{ height: LIST_HEIGHT, overflowY: 'auto' }}>
+            {loading ? (
+              <div style={{ textAlign: 'center', padding: 40 }}>
+                <Spin />
+              </div>
+            ) : selectedMembers.length === 0 ? (
+              <div style={{ textAlign: 'center', marginTop: 80 }}>
+                <UserOutlined style={{ fontSize: 32, color: '#d9d9d9', marginBottom: 8 }} />
+                <br />
+                <Text type="secondary">{t('memberManage.emptyMembers')}</Text>
+              </div>
+            ) : (
+              <List
+                dataSource={selectedMembers}
+                renderItem={(member) => renderUserItem(
+                  member,
+                  <Button
+                    type="text"
+                    size="small"
+                    danger
+                    icon={<DeleteOutlined />}
+                    onClick={() => handleRemove(member.id)}
+                  />
+                )}
+              />
+            )}
+          </div>
+        </div>
+      </div>
     </Modal>
   );
 }

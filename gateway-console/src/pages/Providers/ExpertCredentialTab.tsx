@@ -17,6 +17,7 @@ import {
   Spin,
   Tooltip,
 } from 'antd';
+import type { ApiKeyTestResponse } from '@/types/channel';
 import {
   PlusOutlined,
   EditOutlined,
@@ -27,6 +28,7 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   useChannels,
   useChannelCredentials,
@@ -35,6 +37,7 @@ import {
   useDeleteChannelCredential,
   useTestChannelCredential,
 } from '@/services/query/useChannels';
+import { channelApi } from '@/services/api/channel';
 import type {
   Channel,
   ChannelCredential,
@@ -42,6 +45,8 @@ import type {
   UpdateChannelCredentialRequest,
 } from '@/types/channel';
 import type { Provider } from '@/types/provider';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
+import { ApiKeyEditModal } from '../Channels/ApiKeyEditModal';
 
 const { Text } = Typography;
 
@@ -61,6 +66,7 @@ function stateTagColor(state: string): 'success' | 'default' {
 export default function ExpertCredentialTab({ provider }: Props) {
   const { t } = useTranslation('providers');
   const { message, modal } = App.useApp();
+  const queryClient = useQueryClient();
 
   // ---- 数据查询 ----
   const { data: channels, isLoading: channelsLoading } = useChannels(provider?.id ?? 0);
@@ -96,6 +102,8 @@ export default function ExpertCredentialTab({ provider }: Props) {
   const [createdResult, setCreatedResult] = useState<CreateChannelCredentialResponse | null>(null);
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
+  const [keyEditModalOpen, setKeyEditModalOpen] = useState(false);
+  const [editingKeyCredential, setEditingKeyCredential] = useState<ChannelCredential | null>(null);
 
   // ---- 创建凭证 ----
   const [addForm] = Form.useForm();
@@ -116,7 +124,6 @@ export default function ExpertCredentialTab({ provider }: Props) {
       const result = await createMutation.mutateAsync({
         channelId: values.channelId,
         data: {
-          channelId: values.channelId,
           apiKey: values.apiKey,
           priority: values.priority,
           weight: values.weight,
@@ -251,14 +258,26 @@ export default function ExpertCredentialTab({ provider }: Props) {
   );
 
   // ---- 表格列定义 ----
-  const columns = [
+  const columns = useMemo(() => [
     {
       title: t('credential.apiKeyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'apiKeyPrefix',
-      key: 'apiKeyPrefix',
-      width: 180,
-      render: (prefix: string) => (
-        <Text code style={{ fontSize: 12 }}>{prefix}****</Text>
+      dataIndex: 'apiKeyPlain',
+      key: 'apiKeyPlain',
+      width: 200,
+      render: (_: unknown, record: ChannelCredential) => (
+        <MaskedKeyDisplay
+          keyPlain={record.apiKeyPlain}
+          mode="editable"
+          size="small"
+          onEdit={() => {
+            setEditingKeyCredential(record);
+            setKeyEditModalOpen(true);
+          }}
+          onFetchPlain={async () => {
+            // 后端暂不支持获取明文 Key，返回 undefined
+            return undefined;
+          }}
+        />
       ),
     },
     {
@@ -345,7 +364,7 @@ export default function ExpertCredentialTab({ provider }: Props) {
         </Space>
       ),
     },
-  ];
+  ], [t, testingId, handleTest, handleToggleState, handleOpenEdit, handleDelete, setEditingKeyCredential, setKeyEditModalOpen]);
 
   // ---- 空状态判断 ----
   if (!provider) {
@@ -541,6 +560,25 @@ export default function ExpertCredentialTab({ provider }: Props) {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* ---- 替换 API Key 弹窗 ---- */}
+      <ApiKeyEditModal
+        open={keyEditModalOpen}
+        channelId={selectedChannelId ?? 0}
+        credentialId={editingKeyCredential?.id ?? 0}
+        keyMasked={editingKeyCredential?.apiKeyMasked || `${editingKeyCredential?.apiKeyPrefix}****`}
+        onClose={() => {
+          setKeyEditModalOpen(false);
+          setEditingKeyCredential(null);
+        }}
+        onSuccess={() => {
+          // 刷新凭证列表
+          queryClient.invalidateQueries({ queryKey: ['channelCredentials', selectedChannelId] });
+        }}
+        onUpdate={async (channelId, credentialId, data) => {
+          await channelApi.updateCredential(channelId, credentialId, data);
+        }}
+      />
     </div>
   );
 }

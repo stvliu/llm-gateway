@@ -21,7 +21,7 @@ import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -40,60 +40,55 @@ public class TeamController {
     private final TeamChannelGateway teamChannelGateway;
 
     @PostMapping
-    public ResponseEntity<TeamResponse> create(@Valid @RequestBody TeamRequest request) {
-        TeamResponse response = teamService.create(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    @ResponseStatus(HttpStatus.CREATED)
+    public TeamResponse create(@Valid @RequestBody TeamRequest request) {
+        return teamService.create(request);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<TeamResponse> update(
+    public TeamResponse update(
             @PathVariable Long id,
             @Valid @RequestBody TeamRequest request) {
-        TeamResponse response = teamService.update(id, request);
-        return ResponseEntity.ok(response);
+        return teamService.update(id, request);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<TeamResponse> getById(@PathVariable Long id) {
-        TeamResponse response = teamService.getById(id);
-        return ResponseEntity.ok(response);
+    public TeamResponse getById(@PathVariable Long id) {
+        return teamService.getById(id);
     }
 
     @GetMapping
-    public ResponseEntity<List<TeamResponse>> listAll() {
-        List<TeamResponse> responses = teamService.listAll();
-        return ResponseEntity.ok(responses);
+    public List<TeamResponse> listAll() {
+        return teamService.listAll();
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) {
         teamService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{teamId}/members")
-    public ResponseEntity<Void> addMember(
+    public void addMember(
             @PathVariable Long teamId,
             @Valid @RequestBody AddTeamMemberRequest request) {
         teamService.addMember(teamId, request.getUserId(), TeamRole.fromCode(request.getRole()));
-        return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{teamId}/members/{userId}")
-    public ResponseEntity<Void> removeMember(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeMember(
             @PathVariable Long teamId,
             @PathVariable Long userId) {
         teamService.removeMember(teamId, userId);
-        return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{teamId}/members/{userId}/role")
-    public ResponseEntity<Void> updateMemberRole(
+    public void updateMemberRole(
             @PathVariable Long teamId,
             @PathVariable Long userId,
             @Valid @RequestBody UpdateMemberRoleRequest request) {
         teamService.updateMemberRole(teamId, userId, TeamRole.fromCode(request.getRole()));
-        return ResponseEntity.ok().build();
     }
 
     // ==================== UserApiKey 子资源 ====================
@@ -103,7 +98,6 @@ public class TeamController {
      */
     @GetMapping("/{teamId}/api-keys")
     public List<UserApiKeyResponse> listApiKeys(@PathVariable Long teamId) {
-        // 查找团队中所有用户，再查找他们的 Key
         List<UserTeam> members = userTeamGateway.findByTeamId(teamId);
         List<Long> userIds = members.stream().map(UserTeam::getUserId).toList();
         return userIds.stream()
@@ -123,7 +117,8 @@ public class TeamController {
      * 创建用户 API Key
      */
     @PostMapping("/{teamId}/api-keys")
-    public ResponseEntity<UserApiKeyCreateResponse> createApiKey(
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserApiKeyCreateResponse createApiKey(
             @PathVariable Long teamId,
             @Valid @RequestBody UserApiKeyCreateRequest request) {
         Long currentUserId = StpUtil.getLoginIdAsLong();
@@ -137,8 +132,7 @@ public class TeamController {
         UserApiKeyCreateRequest fixedRequest = new UserApiKeyCreateRequest(
                 targetUserId, request.name(), request.models(), request.quotaLimit()
         );
-        UserApiKeyCreateResponse response = userApiKeyService.create(fixedRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return userApiKeyService.create(fixedRequest);
     }
 
     /**
@@ -155,9 +149,9 @@ public class TeamController {
      * 删除用户 API Key
      */
     @DeleteMapping("/{teamId}/api-keys/{id}")
-    public ResponseEntity<Void> deleteApiKey(@PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteApiKey(@PathVariable Long id) {
         userApiKeyService.delete(id);
-        return ResponseEntity.noContent().build();
     }
 
     // ==================== 渠道管理 ====================
@@ -176,14 +170,14 @@ public class TeamController {
      */
     @SaCheckRole("ADMIN")
     @PutMapping("/{teamId}/channels")
-    public ResponseEntity<Void> updateTeamChannels(
+    @Transactional
+    public void updateTeamChannels(
             @PathVariable Long teamId,
             @RequestBody TeamChannelsUpdateRequest request) {
         teamChannelGateway.deleteByTeamId(teamId);
         for (Long channelId : request.channelIds()) {
             teamChannelGateway.save(new TeamChannel(teamId, channelId));
         }
-        return ResponseEntity.ok().build();
     }
 
     /**

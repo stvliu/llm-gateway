@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { modelApi } from '@/services/api/model';
-import type { CreateModelRequest, UpdateModelRequest } from '@/types/model';
+import type { CreateModelRequest, UpdateModelRequest, Model } from '@/types/model';
+import type { PageResponse } from '@/types/api';
 
 export const modelKeys = {
   all: ['models'] as const,
@@ -10,11 +11,16 @@ export const modelKeys = {
   detail: (id: number) => [...modelKeys.details(), id] as const,
 };
 
-/** 获取模型列表 */
+/** 获取模型列表（自动解包分页响应，返回 items 数组） */
 export function useModels() {
   return useQuery({
     queryKey: modelKeys.lists(),
-    queryFn: () => modelApi.list(),
+    queryFn: async () => {
+      const page = await modelApi.list();
+      // 后端返回 PageResponse，解包为 items 数组
+      const items = (page as unknown as PageResponse<Model>).items;
+      return Array.isArray(items) ? items : (Array.isArray(page) ? page : []);
+    },
   });
 }
 

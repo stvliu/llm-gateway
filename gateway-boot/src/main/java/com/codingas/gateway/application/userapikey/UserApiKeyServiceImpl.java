@@ -113,6 +113,7 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
                 apiKey.getId(),
                 apiKey.getUserId(),
                 apiKey.getKeyPrefix(),
+                apiKey.getKeyPlain(),
                 apiKey.getName(),
                 apiKey.getModels(),
                 apiKey.getQuotaLimit(),

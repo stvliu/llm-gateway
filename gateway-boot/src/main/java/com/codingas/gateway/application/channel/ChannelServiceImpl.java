@@ -94,6 +94,13 @@ public class ChannelServiceImpl implements ChannelService {
     }
 
     @Override
+    public List<ChannelResponse> getAll() {
+        return channelGateway.findAll().stream()
+            .map(this::toResponse)
+            .toList();
+    }
+
+    @Override
     public List<ChannelResponse> getByProviderId(Long providerId) {
         return channelGateway.findByProviderId(providerId).stream()
             .map(this::toResponse)
@@ -140,6 +147,30 @@ public class ChannelServiceImpl implements ChannelService {
         return response;
     }
 
+    private void validateEndpointRequest(Long channelId, Long excludeEndpointId, ChannelEndpointRequest request) {
+        if (request.getProtocol() == null || request.getProtocol().isBlank()) {
+            throw new IllegalArgumentException("协议不能为空");
+        }
+        Protocol protocol = Protocol.fromCode(request.getProtocol());
+        if (request.getEndpointUrl() == null || request.getEndpointUrl().isBlank()) {
+            throw new IllegalArgumentException("端点 URL 不能为空");
+        }
+        String normalizedUrl = request.getEndpointUrl().trim();
+        List<ChannelEndpoint> existing = channelEndpointGateway.findByChannelId(channelId);
+        // 同渠道下同协议唯一（排除自身）
+        if (existing.stream()
+                .filter(ep -> !ep.getId().equals(excludeEndpointId))
+                .anyMatch(ep -> ep.getProtocol().equals(protocol))) {
+            throw new IllegalArgumentException("渠道下已存在该协议端点: " + request.getProtocol());
+        }
+        // 同渠道下 URL 唯一（排除自身）
+        if (existing.stream()
+                .filter(ep -> !ep.getId().equals(excludeEndpointId))
+                .anyMatch(ep -> ep.getEndpointUrl().equals(normalizedUrl))) {
+            throw new IllegalArgumentException("渠道下已存在相同 URL 的端点: " + normalizedUrl);
+        }
+    }
+
     private ChannelEndpointResponse toEndpointResponse(ChannelEndpoint endpoint) {
         ChannelEndpointResponse resp = new ChannelEndpointResponse();
         resp.setId(endpoint.getId());
@@ -161,20 +192,38 @@ public class ChannelServiceImpl implements ChannelService {
         channelGateway.findById(channelId)
                 .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + channelId));
 
-        Protocol protocol = Protocol.fromCode(request.getProtocol());
-        if (channelEndpointGateway.findByChannelIdAndProtocol(channelId, protocol).isPresent()) {
-            throw new IllegalArgumentException("渠道下已存在该协议端点: " + request.getProtocol());
-        }
+        validateEndpointRequest(channelId, null, request);
 
         ChannelEndpoint endpoint = new ChannelEndpoint();
         endpoint.setChannelId(channelId);
-        endpoint.setProtocol(protocol);
-        endpoint.setEndpointUrl(request.getEndpointUrl());
+        endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
+        endpoint.setEndpointUrl(request.getEndpointUrl().trim());
         endpoint.setState(ChannelEndpointState.ACTIVE);
 
         ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
         log.info("Added endpoint to channel: channelId={}, endpointId={}, protocol={}",
-                channelId, saved.getId(), protocol);
+                channelId, saved.getId(), saved.getProtocol());
+        return toEndpointResponse(saved);
+    }
+
+    /**
+     * 更新渠道端点
+     */
+    @Override
+    @Transactional
+    public ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request) {
+        ChannelEndpoint endpoint = channelEndpointGateway.findById(endpointId)
+                .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
+        if (!endpoint.getChannelId().equals(channelId)) {
+            throw new IllegalArgumentException("端点不属于该渠道");
+        }
+
+        validateEndpointRequest(channelId, endpointId, request);
+
+        endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
+        endpoint.setEndpointUrl(request.getEndpointUrl().trim());
+        ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
+        log.info("Updated endpoint: channelId={}, endpointId={}", channelId, endpointId);
         return toEndpointResponse(saved);
     }
 

@@ -31,7 +31,16 @@
       "Bash(./gateway-console/node_modules/.bin/tsc --noEmit --project gateway-console/tsconfig.json)",
       "Bash(openspec status *)",
       "Bash(openspec instructions *)",
-      "Bash(./node_modules/.bin/tsc --noEmit --project tsconfig.json)"
+      "Bash(./node_modules/.bin/tsc --noEmit --project tsconfig.json)",
+      "Bash(cc-connect *)",
+      "Bash(claude *)",
+      "Bash(env)",
+      "Bash(unset CLAUDECODE)",
+      "Bash(bash *)",
+      "Bash(openspec list *)",
+      "Bash(openspec init *)",
+      "Read(//e/workspace/**)",
+      "Read(//e//**)"
     ]
   },
   "outputStyle": "default"

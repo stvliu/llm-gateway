@@ -17,6 +17,10 @@ export const teamApi = {
   list: () =>
     api.get<Team[]>('/teams'),
 
+  /** 获取团队详情（含成员列表） */
+  getById: (id: number) =>
+    api.get<Team>(`/teams/${id}`),
+
   /** 创建团队 */
   create: (data: CreateTeamRequest) =>
     api.post<Team>('/teams', data),

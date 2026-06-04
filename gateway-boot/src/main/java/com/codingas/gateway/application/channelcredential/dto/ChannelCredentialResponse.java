@@ -10,6 +10,7 @@ import java.time.Instant;
  * @param id 主键
  * @param channelId 渠道 ID
  * @param apiKeyPrefix Key 前缀
+ * @param apiKeyPlain 明文 API Key（前端脱敏显示）
  * @param name 密钥名称
  * @param description 描述
  * @param weight 权重
@@ -22,6 +23,7 @@ public record ChannelCredentialResponse(
         Long id,
         Long channelId,
         String apiKeyPrefix,
+        String apiKeyPlain,
         String name,
         String description,
         Integer weight,

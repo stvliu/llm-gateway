@@ -19,6 +19,11 @@ public interface ChannelService {
 
     ChannelResponse getById(Long id);
 
+    /**
+     * 获取所有渠道列表
+     */
+    List<ChannelResponse> getAll();
+
     List<ChannelResponse> getByProviderId(Long providerId);
 
     List<ChannelResponse> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
@@ -26,6 +31,8 @@ public interface ChannelService {
     void delete(Long id);
 
     ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request);
+
+    ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request);
 
     void removeEndpoint(Long channelId, Long endpointId);
 

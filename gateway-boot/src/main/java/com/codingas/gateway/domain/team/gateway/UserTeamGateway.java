@@ -23,6 +23,11 @@ public interface UserTeamGateway {
     void updateRole(Long userId, Long teamId, TeamRole role);
 
     /**
+     * 统计团队成员数
+     */
+    long countByTeamId(Long teamId);
+
+    /**
      * 查找用户所属的团队 ID（业务层限制单团队，返回第一个）
      */
     Long findTeamIdByUserId(Long userId);

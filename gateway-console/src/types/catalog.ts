@@ -13,8 +13,8 @@ export type CatalogSource = 'BUILTIN' | 'MODELS_DEV' | 'PROVIDER_API' | 'MANUAL'
 /** 供应商类型 */
 export type ProviderType = 'INTERNATIONAL' | 'DOMESTIC';
 
-/** 计费模式 */
-export type BillingMode = 'PAY_AS_YOU_GO' | 'SUBSCRIPTION' | 'PACKAGE';
+/** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
+export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
 
 /** 物化状态 */
 export type MaterializeStatus = 'CREATED' | 'SKIPPED';
@@ -49,7 +49,7 @@ export interface PlanEndpoint {
 
 /** 套餐定价信息 */
 export interface PlanPricing {
-  modelName: string;
+  providerModelId: string;
   inputPrice: number | null;
   outputPrice: number | null;
   cacheReadPrice: number | null;
@@ -112,6 +112,14 @@ export interface MaterializeBatchResult {
 /** 批量物化请求 */
 export interface MaterializeBatchRequest {
   planCodes?: string[];
+}
+
+/** 套餐物化扩展请求 */
+export interface MaterializePlanRequest {
+  apiKeys?: string[];
+  endpoints?: Array<{ protocol: string; url: string }>;
+  models?: string[];
+  channelName?: string;
 }
 
 /** 供应商目录查询参数 */

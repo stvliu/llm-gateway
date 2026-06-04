@@ -1,10 +1,12 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Table, Tag, Space, Button, Popconfirm, App, Typography, Spin, Input } from 'antd';
-import { DeleteOutlined, EyeOutlined } from '@ant-design/icons';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders } from '@/services/query/useProviders';
-import { useChannelsBatch, useChannelCredentialsBatch, useDeleteChannelCredential } from '@/services/query/useChannels';
+import { useChannelsBatch, useChannelCredentialsBatch, useDeleteChannelCredential, useUpdateChannelCredential } from '@/services/query/useChannels';
 import { ProviderIcon } from '@/components/ui';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
+import { ApiKeyEditModal } from '@/pages/Channels/ApiKeyEditModal';
 import type { Provider } from '@/types/provider';
 
 const { Text } = Typography;
@@ -22,6 +24,7 @@ interface AggregateCredential {
   channelId: number;
   providerId: number;
   apiKeyPrefix: string;
+  apiKeyPlain?: string;
   providerCode?: string;
   providerName: string;
   channelName: string;
@@ -35,8 +38,10 @@ export default function UpstreamKeysTable() {
   const { message } = App.useApp();
   const { data: providersPage, isLoading: providersLoading } = useProviders();
   const deleteMutation = useDeleteChannelCredential();
+  const updateCredential = useUpdateChannelCredential();
 
   const [search, setSearch] = useState('');
+  const [editingCredential, setEditingCredential] = useState<AggregateCredential | null>(null);
 
   const providers: Provider[] = providersPage?.items ?? [];
 
@@ -64,8 +69,8 @@ export default function UpstreamKeysTable() {
 
     const rows: AggregateCredential[] = [];
 
-    providers.forEach((provider) => {
-      const providerChannels = channelQueries.find((q) => q.data)?.data?.filter(
+    providers.forEach((provider, providerIdx) => {
+      const providerChannels = channelQueries[providerIdx]?.data?.filter(
         (ch) => ch.providerId === provider.id
       );
 
@@ -99,6 +104,7 @@ export default function UpstreamKeysTable() {
             channelId: ch.id,
             providerId: ch.providerId,
             apiKeyPrefix: '-',
+            apiKeyPlain: '-',
             providerCode: provider.providerId,
             providerName: provider.providerName,
             channelName: ch.name,
@@ -114,6 +120,7 @@ export default function UpstreamKeysTable() {
               channelId: cr.channelId,
               providerId: ch.providerId,
               apiKeyPrefix: cr.apiKeyPrefix,
+              apiKeyPlain: cr.apiKeyPlain,
               providerCode: provider.providerId,
               providerName: provider.providerName,
               channelName: ch.name,
@@ -143,7 +150,7 @@ export default function UpstreamKeysTable() {
     );
   }, [allCredentials, search]);
 
-  const handleDelete = async (credentialId: number, channelId: number) => {
+  const handleDelete = useCallback(async (credentialId: number, channelId: number) => {
     if (!credentialId || !channelId) {
       message.warning(t('noDeleteForPlaceholder', { defaultValue: '示例数据不可删除' }));
       return;
@@ -154,20 +161,27 @@ export default function UpstreamKeysTable() {
     } catch {
       message.error(t('deleteFailed', { defaultValue: '删除失败' }));
     }
-  };
+  }, [deleteMutation, message, t]);
 
-  const columns = [
+  const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'apiKeyPrefix',
-      key: 'apiKeyPrefix',
-      width: 180,
-      render: (prefix: string) => (
-        <Text code style={{ fontSize: 12 }}>
-          {prefix || '-'}
-          <Button type="link" size="small" icon={<EyeOutlined />} style={{ marginLeft: 4 }} />
-        </Text>
-      ),
+      title: t('keyPrefix', { defaultValue: 'Key' }),
+      dataIndex: 'apiKeyPlain',
+      key: 'apiKeyPlain',
+      width: 220,
+      render: (_: string, record: AggregateCredential) => {
+        if (!record.credentialId || !record.apiKeyPlain || record.apiKeyPlain === '-') {
+          return <Text type="secondary">-</Text>;
+        }
+        return (
+          <MaskedKeyDisplay
+            keyPlain={record.apiKeyPlain}
+            mode="editable"
+            size="small"
+            onEdit={() => setEditingCredential(record)}
+          />
+        );
+      },
     },
     {
       title: t('provider', { defaultValue: '供应商' }),
@@ -227,7 +241,7 @@ export default function UpstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ];
+  ], [t, handleDelete, setEditingCredential]);
 
   if (isLoading) {
     return <Spin />;
@@ -252,6 +266,24 @@ export default function UpstreamKeysTable() {
         pagination={{ pageSize: 15, showSizeChanger: true }}
         locale={{ emptyText: t('noUpstreamKeys', { defaultValue: '暂无上游 Key，请先配置供应商' }) }}
       />
+
+      {/* API Key 编辑弹窗 */}
+      {editingCredential && (
+        <ApiKeyEditModal
+          open={true}
+          channelId={editingCredential.channelId}
+          credentialId={editingCredential.credentialId}
+          keyPlain={editingCredential.apiKeyPlain || ''}
+          onClose={() => setEditingCredential(null)}
+          onSuccess={() => {
+            // 刷新凭证列表（通过 refetch）
+            message.success('API Key 已更新');
+          }}
+          onUpdate={async (channelId, credentialId, data) => {
+            await updateCredential.mutateAsync({ channelId, id: credentialId, data });
+          }}
+        />
+      )}
     </div>
   );
 }
