@@ -1,14 +1,12 @@
 import { useCallback, useMemo } from 'react';
-import { Table, Tag, Button, Popconfirm, App, Typography, Modal } from 'antd';
-import { DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Tag, Button, Popconfirm, App } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useUserApiKeys, useDeleteUserApiKey, useRotateUserApiKey } from '@/services/query/useUserApiKeys';
+import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
 import { userApiKeyApi } from '@/services/api/userApiKey';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
-
-const { Text } = Typography;
 
 const statusConfig: Record<string, { label: string; color: string }> = {
   ACTIVE: { label: '活跃', color: 'green' },
@@ -25,7 +23,6 @@ export default function DeveloperKeyList() {
 
   const { data: keys, isLoading } = useUserApiKeys(userId);
   const deleteMutation = useDeleteUserApiKey(userId);
-  const rotateMutation = useRotateUserApiKey();
 
   const handleRevoke = useCallback(async (id: number) => {
     try {
@@ -36,40 +33,16 @@ export default function DeveloperKeyList() {
     }
   }, [deleteMutation, message, t]);
 
-  const handleRotate = useCallback(async (id: number) => {
-    try {
-      const result = await rotateMutation.mutateAsync(id);
-      message.success(t('keyRotated', { defaultValue: 'Key 已轮换，新 Key 已生成' }));
-      Modal.info({
-        title: t('newKey', { defaultValue: '新 API Key' }),
-        content: (
-          <div>
-            <Text code style={{ wordBreak: 'break-all' }}>{result.keyPlain}</Text>
-            <div style={{ marginTop: 8, color: '#64748b', fontSize: 12 }}>
-              请立即复制新 Key，关闭后不再显示。
-            </div>
-          </div>
-        ),
-      });
-    } catch {
-      message.error(t('keyRotateFailed', { defaultValue: '轮换失败' }));
-    }
-  }, [rotateMutation, message, t]);
-
   const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'keyMasked',
-      key: 'keyMasked',
-      render: (keyMasked: string, record: UserApiKey) => (
+      title: t('keyPrefix', { defaultValue: 'Key' }),
+      dataIndex: 'keyPlain',
+      key: 'keyPlain',
+      render: (_: string, record: UserApiKey) => (
         <MaskedKeyDisplay
-          keyMasked={keyMasked || record.keyPrefix}
+          keyPlain={record.keyPlain}
           mode="readonly"
           size="small"
-          onFetchPlain={async () => {
-            const detail = await userApiKeyApi.getDetail(record.id);
-            return detail.keyPlain;
-          }}
         />
       ),
     },
@@ -98,22 +71,17 @@ export default function DeveloperKeyList() {
     {
       title: t('keyActions', { defaultValue: '操作' }),
       key: 'actions',
-      width: 120,
+      width: 80,
       render: (_: unknown, record: UserApiKey) => (
-        <div style={{ display: 'flex', gap: 4 }}>
-          <Button type="link" size="small" icon={<ReloadOutlined />} onClick={() => handleRotate(record.id)}>
-            {t('rotate', { defaultValue: '轮换' })}
-          </Button>
-          <Popconfirm
-            title={t('confirmRevoke', { defaultValue: '确定吊销此 Key？' })}
-            onConfirm={() => handleRevoke(record.id)}
-          >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </div>
+        <Popconfirm
+          title={t('confirmRevoke', { defaultValue: '确定吊销此 Key？' })}
+          onConfirm={() => handleRevoke(record.id)}
+        >
+          <Button type="link" size="small" danger icon={<DeleteOutlined />} />
+        </Popconfirm>
       ),
     },
-  ], [t, handleRotate, handleRevoke]);
+  ], [t, handleRevoke]);
 
   return (
     <Table

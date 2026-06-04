@@ -10,7 +10,6 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
-import com.codingas.gateway.infrastructure.util.KeyMasker;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,7 +49,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         ChannelCredential saved = channelCredentialGateway.save(credential);
         log.info("Created ChannelCredential: id={}, channelId={}", saved.getId(), saved.getChannelId());
 
-        return new ChannelCredentialCreateResponse(saved.getId(), keyPrefix, plainKey);
+        return new ChannelCredentialCreateResponse(saved.getId(), plainKey);
     }
 
     @Override
@@ -147,7 +146,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
                 credential.getId(),
                 credential.getChannelId(),
                 credential.getApiKeyPrefix(),
-                KeyMasker.mask(credential.getApiKeyPrefix()),
+                credential.getApiKeyPlain(),
                 credential.getName(),
                 null, // description not in ChannelCredential
                 credential.getWeight(),

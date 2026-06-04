@@ -57,7 +57,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
       {/* Key 前缀（使用 MaskedKeyDisplay 组件） */}
       <MaskedKeyDisplay
-        keyMasked={credential.apiKeyMasked}
+        keyPlain={credential.apiKeyPlain}
         mode="editable"
         size="small"
         onEdit={() => setEditingId(credential.id)}
@@ -181,7 +181,8 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         message.success('凭证添加成功');
         onSave({
           id: result.id,
-          apiKeyPrefix: result.apiKeyMasked.substring(0, 10),
+          apiKeyPrefix: result.apiKeyPlain.substring(0, Math.min(10, result.apiKeyPlain.length)),
+          apiKeyPlain: result.apiKeyPlain,
           name: '',
           description: values.description || null,
           weight: values.weight,
@@ -269,7 +270,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           open={true}
           channelId={channelId}
           credentialId={editingId}
-          keyMasked={credentials.find(c => c.id === editingId)?.apiKeyMasked || ''}
+          keyPlain={credentials.find(c => c.id === editingId)?.apiKeyPlain || ''}
           onClose={() => setEditingId(null)}
           onSuccess={() => {
             message.success('API Key 已更新');

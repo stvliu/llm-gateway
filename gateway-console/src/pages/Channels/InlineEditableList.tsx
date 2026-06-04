@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Popconfirm, Space } from 'antd';
+import { Button, Popconfirm, Space, theme } from 'antd';
 
 /**
  * 通用行内编辑列表组件
@@ -40,6 +40,7 @@ export function InlineEditableList<T>({
   getKey,
   addLabel = '添加',
 }: InlineEditableListProps<T>) {
+  const { token } = theme.useToken();
   // 正在编辑的项ID
   const [editingKey, setEditingKey] = useState<string | number | null>(null);
   // 是否显示新增表单
@@ -94,9 +95,9 @@ export function InlineEditableList<T>({
               <div
                 style={{
                   padding: 12,
-                  border: '1px solid #1890ff',
+                  border: `1px solid ${token.colorPrimary}`,
                   borderRadius: 6,
-                  backgroundColor: '#f0f7ff',
+                  backgroundColor: token.colorPrimaryBg,
                 }}
               >
                 {renderEditForm(item, handleSaveEdit, handleCancelEdit)}
@@ -106,7 +107,7 @@ export function InlineEditableList<T>({
               <div
                 style={{
                   padding: 12,
-                  border: '1px solid #d9d9d9',
+                  border: `1px solid ${token.colorBorder}`,
                   borderRadius: 6,
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -146,9 +147,9 @@ export function InlineEditableList<T>({
         <div
           style={{
             padding: 12,
-            border: '1px solid #1890ff',
+            border: `1px solid ${token.colorPrimary}`,
             borderRadius: 6,
-            backgroundColor: '#f0f7ff',
+            backgroundColor: token.colorPrimaryBg,
             marginBottom: 8,
           }}
         >

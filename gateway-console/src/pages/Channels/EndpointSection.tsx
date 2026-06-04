@@ -1,30 +1,40 @@
-import { useState, useEffect } from 'react';
-import { Tag, Switch, Input, Select, Button, Space, Form, message } from 'antd';
-import { InlineEditableList } from './InlineEditableList';
+import { useState } from 'react';
+import { Tag, Switch, Select, Input, Button, Space, Form, message, Popconfirm } from 'antd';
 import type { ChannelEndpointResponse, CreateChannelEndpointRequest } from '@/types/channel';
-import { useAddChannelEndpoint, useRemoveChannelEndpoint, useEnableChannelEndpoint, useDisableChannelEndpoint } from '@/services/query/useChannels';
+import {
+  useAddChannelEndpoint,
+  useUpdateChannelEndpoint,
+  useRemoveChannelEndpoint,
+  useEnableChannelEndpoint,
+  useDisableChannelEndpoint,
+} from '@/services/query/useChannels';
 
 interface EndpointSectionProps {
   channelId: number;
   endpoints: ChannelEndpointResponse[];
 }
 
+const PROTOCOL_OPTIONS = [
+  { value: 'openai', label: 'OpenAI' },
+  { value: 'anthropic', label: 'Anthropic' },
+];
+
 /**
  * 端点区组件
- * 展示渠道的端点列表，支持行内编辑
+ * 展示渠道的端点列表，支持行内编辑、添加、启用/停用、删除
  */
 export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) {
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [editForm] = Form.useForm();
+  const [addForm] = Form.useForm();
 
-  // Mutations
   const addEndpoint = useAddChannelEndpoint();
+  const updateEndpoint = useUpdateChannelEndpoint();
   const removeEndpoint = useRemoveChannelEndpoint();
   const enableEndpoint = useEnableChannelEndpoint();
   const disableEndpoint = useDisableChannelEndpoint();
 
-  /** 协议标签颜色 */
   const getProtocolColor = (protocol: string) => {
     const lower = protocol.toLowerCase();
     if (lower === 'openai') return 'blue';
@@ -32,182 +42,181 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
     return 'default';
   };
 
-  /** 状态点颜色 */
-  const getStateColor = (state: string) => {
-    return state === 'ACTIVE' ? 'green' : 'default';
+  /** 开始编辑 */
+  const handleStartEdit = (ep: ChannelEndpointResponse) => {
+    editForm.setFieldsValue({ protocol: ep.protocol, endpointUrl: ep.endpointUrl });
+    setEditingId(ep.id);
+    setIsAdding(false);
   };
 
-  /** 编辑时同步表单值 */
-  useEffect(() => {
-    if (editingId !== null) {
-      const endpoint = endpoints.find(e => e.id === editingId);
-      if (endpoint) {
-        form.setFieldsValue({
-          protocol: endpoint.protocol,
-          endpointUrl: endpoint.endpointUrl,
-          state: endpoint.state,
-        });
-      }
+  /** 保存编辑 */
+  const handleSaveEdit = async (endpointId: number) => {
+    try {
+      const values = await editForm.validateFields();
+      const data: CreateChannelEndpointRequest = {
+        protocol: values.protocol,
+        endpointUrl: values.endpointUrl,
+      };
+      await updateEndpoint.mutateAsync({ channelId, endpointId, data });
+      message.success('端点更新成功');
+      setEditingId(null);
+    } catch {
+      // 校验失败或 API 错误
     }
-  }, [editingId, endpoints, form]);
-
-  /** 渲染展示行 */
-  const renderItem = (endpoint: ChannelEndpointResponse) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-      {/* 协议标签 */}
-      <Tag color={getProtocolColor(endpoint.protocol)}>
-        {endpoint.protocol.toUpperCase()}
-      </Tag>
-      {/* URL */}
-      <span style={{ fontFamily: 'monospace', flex: 1 }}>
-        {endpoint.endpointUrl}
-      </span>
-      {/* 状态点 */}
-      <Tag color={getStateColor(endpoint.state)}>
-        {endpoint.state === 'ACTIVE' ? '已启用' : '已停用'}
-      </Tag>
-    </div>
-  );
-
-  /** 渲染编辑表单 */
-  const renderEditForm = (
-    endpoint: ChannelEndpointResponse,
-    onSave: (updated: ChannelEndpointResponse) => void,
-    onCancel: () => void
-  ) => {
-    const handleSave = async () => {
-      try {
-        setLoading(true);
-        const values = await form.validateFields();
-
-        // 调用启用/停用接口
-        if (values.state !== endpoint.state) {
-          if (values.state === 'ACTIVE') {
-            await enableEndpoint.mutateAsync({ channelId, endpointId: endpoint.id });
-          } else {
-            await disableEndpoint.mutateAsync({ channelId, endpointId: endpoint.id });
-          }
-        }
-
-        message.success('端点更新成功');
-        onSave({ ...endpoint, ...values });
-      } catch (error) {
-        message.error('端点更新失败');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <Form form={form} layout="inline" style={{ gap: 12 }}>
-        <Form.Item name="protocol" label="协议">
-          <Select style={{ width: 120 }} disabled>
-            <Select.Option value="openai">OpenAI</Select.Option>
-            <Select.Option value="anthropic">Anthropic</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item name="endpointUrl" label="URL">
-          <Input style={{ width: 300 }} disabled />
-        </Form.Item>
-        <Form.Item name="state" label="状态" valuePropName="checked">
-          <Switch
-            checkedChildren="启用"
-            unCheckedChildren="停用"
-            style={{ width: 60 }}
-          />
-        </Form.Item>
-        <Space>
-          <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
-          </Button>
-          <Button size="small" onClick={onCancel}>
-            取消
-          </Button>
-        </Space>
-      </Form>
-    );
   };
 
-  /** 渲染新增表单 */
-  const renderAddForm = (
-    onSave: (newItem: Partial<ChannelEndpointResponse>) => void,
-    onCancel: () => void
-  ) => {
-    const handleSave = async () => {
-      try {
-        setLoading(true);
-        const values = await form.validateFields();
-        const data: CreateChannelEndpointRequest = {
-          protocol: values.protocol,
-          endpointUrl: values.endpointUrl,
-        };
-        const result = await addEndpoint.mutateAsync({ channelId, data });
-        message.success('端点添加成功');
-        onSave(result);
-      } catch (error) {
-        message.error('端点添加失败');
-      } finally {
-        setLoading(false);
+  /** 切换启用/停用 */
+  const handleToggleState = async (ep: ChannelEndpointResponse, enabled: boolean) => {
+    try {
+      if (enabled) {
+        await enableEndpoint.mutateAsync({ channelId, endpointId: ep.id });
+      } else {
+        await disableEndpoint.mutateAsync({ channelId, endpointId: ep.id });
       }
-    };
-
-    return (
-      <Form form={form} layout="inline" style={{ gap: 12 }}>
-        <Form.Item
-          name="protocol"
-          label="协议"
-          rules={[{ required: true, message: '请选择协议' }]}
-          initialValue="openai"
-        >
-          <Select style={{ width: 120 }} placeholder="选择协议">
-            <Select.Option value="openai">OpenAI</Select.Option>
-            <Select.Option value="anthropic">Anthropic</Select.Option>
-          </Select>
-        </Form.Item>
-        <Form.Item
-          name="endpointUrl"
-          label="URL"
-          rules={[
-            { required: true, message: '请输入端点 URL' },
-            { type: 'url', message: '请输入有效的 URL' },
-          ]}
-        >
-          <Input style={{ width: 300 }} placeholder="https://api.example.com/v1" />
-        </Form.Item>
-        <Space>
-          <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
-          </Button>
-          <Button size="small" onClick={onCancel}>
-            取消
-          </Button>
-        </Space>
-      </Form>
-    );
+    } catch {
+      message.error('状态切换失败');
+    }
   };
 
   /** 删除端点 */
-  const handleDelete = async (endpoint: ChannelEndpointResponse) => {
+  const handleDelete = async (ep: ChannelEndpointResponse) => {
     try {
-      await removeEndpoint.mutateAsync({ channelId, endpointId: endpoint.id });
-      message.success('端点删除成功');
-    } catch (error) {
+      await removeEndpoint.mutateAsync({ channelId, endpointId: ep.id });
+      message.success('端点已删除');
+    } catch {
       message.error('端点删除失败');
     }
   };
 
+  /** 添加端点 */
+  const handleAdd = async () => {
+    try {
+      const values = await addForm.validateFields();
+      const data: CreateChannelEndpointRequest = {
+        protocol: values.protocol,
+        endpointUrl: values.endpointUrl,
+      };
+      await addEndpoint.mutateAsync({ channelId, data });
+      message.success('端点添加成功');
+      addForm.resetFields();
+      setIsAdding(false);
+    } catch {
+      // 校验失败
+    }
+  };
+
   return (
-    <InlineEditableList
-      items={endpoints}
-      renderItem={renderItem}
-      renderEditForm={renderEditForm}
-      renderAddForm={renderAddForm}
-      onAdd={() => {
-        form.resetFields();
-      }}
-      onDelete={handleDelete}
-      getKey={(endpoint) => endpoint.id}
-      addLabel="添加端点"
-    />
+    <div>
+      {endpoints.map((ep) => (
+        <div key={ep.id} style={{ marginBottom: 8 }}>
+          {editingId === ep.id ? (
+            /* 编辑模式 */
+            <Form form={editForm} layout="inline" style={{ gap: 8 }}>
+              <Form.Item name="protocol" rules={[{ required: true }]}>
+                <Select style={{ width: 120 }} options={PROTOCOL_OPTIONS} />
+              </Form.Item>
+              <Form.Item
+                name="endpointUrl"
+                rules={[
+                  { required: true, message: '请输入 URL' },
+                  { type: 'url', message: '请输入有效 URL' },
+                ]}
+              >
+                <Input style={{ width: 280 }} />
+              </Form.Item>
+              <Space>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => handleSaveEdit(ep.id)}
+                  loading={updateEndpoint.isPending}
+                >
+                  保存
+                </Button>
+                <Button size="small" onClick={() => setEditingId(null)}>
+                  取消
+                </Button>
+              </Space>
+            </Form>
+          ) : (
+            /* 展示模式 */
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 12,
+                padding: '8px 12px',
+                borderRadius: 4,
+              }}
+            >
+              <Tag color={getProtocolColor(ep.protocol)}>
+                {ep.protocol.toUpperCase()}
+              </Tag>
+              <span style={{ fontFamily: 'monospace', flex: 1, fontSize: 13 }}>
+                {ep.endpointUrl}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                <Switch
+                  checked={ep.state === 'ACTIVE'}
+                  onChange={(checked) => handleToggleState(ep, checked)}
+                  checkedChildren="启用"
+                  unCheckedChildren="停用"
+                  loading={enableEndpoint.isPending || disableEndpoint.isPending}
+                />
+                <Button type="link" size="small" onClick={() => handleStartEdit(ep)}>
+                  编辑
+                </Button>
+                <Popconfirm
+                  title="确定删除此端点吗？"
+                  onConfirm={() => handleDelete(ep)}
+                  okText="删除"
+                  cancelText="取消"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button type="link" size="small" danger>
+                    删除
+                  </Button>
+                </Popconfirm>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {isAdding && (
+        <Form form={addForm} layout="inline" style={{ gap: 8, marginTop: 8 }}>
+          <Form.Item
+            name="protocol"
+            rules={[{ required: true, message: '请选择协议' }]}
+            initialValue="openai"
+          >
+            <Select style={{ width: 120 }} options={PROTOCOL_OPTIONS} />
+          </Form.Item>
+          <Form.Item
+            name="endpointUrl"
+            rules={[
+              { required: true, message: '请输入 URL' },
+              { type: 'url', message: '请输入有效 URL' },
+            ]}
+          >
+            <Input style={{ width: 280 }} placeholder="https://api.example.com/v1" />
+          </Form.Item>
+          <Space>
+            <Button type="primary" size="small" onClick={handleAdd} loading={addEndpoint.isPending}>
+              保存
+            </Button>
+            <Button size="small" onClick={() => { setIsAdding(false); addForm.resetFields(); }}>
+              取消
+            </Button>
+          </Space>
+        </Form>
+      )}
+
+      {!isAdding && editingId === null && (
+        <Button type="dashed" block onClick={() => setIsAdding(true)} style={{ marginTop: 8 }}>
+          + 添加端点
+        </Button>
+      )}
+    </div>
   );
 }

@@ -45,19 +45,15 @@ export default function DownstreamKeysTable() {
 
   const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'keyMasked',
-      key: 'keyMasked',
+      title: t('keyPrefix', { defaultValue: 'Key' }),
+      dataIndex: 'keyPlain',
+      key: 'keyPlain',
       width: 200,
-      render: (keyMasked: string, record: UserApiKey) => (
+      render: (_: string, record: UserApiKey) => (
         <MaskedKeyDisplay
-          keyMasked={keyMasked || record.keyPrefix}
+          keyPlain={record.keyPlain}
           mode="readonly"
           size="small"
-          onFetchPlain={async () => {
-            const detail = await userApiKeyApi.getDetail(record.id);
-            return detail.keyPlain;
-          }}
         />
       ),
     },

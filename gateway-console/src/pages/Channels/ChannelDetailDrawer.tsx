@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Drawer,
   Typography,
@@ -6,10 +7,10 @@ import {
   Space,
   Divider,
   Badge,
-  Row,
-  Col,
   message,
   Spin,
+  Tabs,
+  Popconfirm,
 } from 'antd';
 import {
   GlobalOutlined,
@@ -17,14 +18,21 @@ import {
   RobotOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import type { ChannelCard } from '@/types/channel';
-import { useChannel, useChannelCredentials } from '@/services/query/useChannels';
+import {
+  useChannel,
+  useChannelCredentials,
+  useUpdateChannel,
+  useTestChannelCredential,
+  useDeleteChannel,
+} from '@/services/query/useChannels';
 import { EndpointSection } from './EndpointSection';
 import { CredentialSection } from './CredentialSection';
 import { ModelMappingSection } from './ModelMappingSection';
 import { QuotaSettingsSection } from './QuotaSettingsSection';
 
-const { Title, Text, Link } = Typography;
+const { Text } = Typography;
 
 interface ChannelDetailDrawerProps {
   channel: ChannelCard | null;
@@ -33,246 +41,221 @@ interface ChannelDetailDrawerProps {
 }
 
 /**
- * 渠道详情抽屉主组件
- * 展示渠道的完整信息，包含四个可编辑区域
+ * 渠道详情抽屉
+ * 顶部信息栏 + Tabs 标签页（端点 / API Key / 模型映射 / 配额与设置）
  */
 export function ChannelDetailDrawer({
   channel,
   open,
   onClose,
 }: ChannelDetailDrawerProps) {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('endpoints');
+  const updateChannel = useUpdateChannel();
+  const deleteChannel = useDeleteChannel();
 
-  // 获取渠道详情（包含端点）
   const { data: channelDetail, isLoading: detailLoading } = useChannel(channel?.id || 0);
-
-  // 获取凭证列表
   const { data: credentials = [], isLoading: credentialsLoading } = useChannelCredentials(
     channel?.id || 0
   );
+  const testCredential = useTestChannelCredential();
 
   if (!channel) return null;
 
   const isLoading = detailLoading || credentialsLoading;
 
-  /** 计费模式显示 */
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
-      PAY_AS_YOU_GO: '按量付费',
-      SUBSCRIPTION: '订阅',
-      PACKAGE: '套餐',
+      pay_as_you_go: '按量付费',
+      subscription: '订阅',
+      package: '套餐',
     };
     return labels[mode] || mode;
   };
 
-  /** 状态标签颜色 */
-  const getStateColor = (state: string) => {
-    return state === 'ACTIVE' ? 'green' : 'default';
-  };
-
-  /** 头部区域 */
-  const renderHeader = () => (
-    <div>
-      {/* 供应商 Logo + 渠道名 + 状态标签 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          {channel.name}
-        </Title>
-        <Tag color={getStateColor(channel.state)}>
-          {channel.state === 'ACTIVE' ? '已启用' : '已停用'}
-        </Tag>
-      </div>
-
-      {/* 供应商名称（可点击） */}
-      <div style={{ marginBottom: 8 }}>
-        <Text type="secondary">供应商: </Text>
-        <Link onClick={() => message.info('供应商详情页面将在后续实现')}>
-          {channel.providerName}
-        </Link>
-      </div>
-
-      {/* 计费模式 · 优先级 · 权重 */}
-      <Space split={<Divider type="vertical" />} size="small">
-        <Text type="secondary">
-          计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
-        </Text>
-        <Text type="secondary">
-          优先级: <Text strong>P{channel.priority}</Text>
-        </Text>
-        <Text type="secondary">
-          权重: <Text strong>W{channel.weight}</Text>
-        </Text>
-      </Space>
-
-      {/* 操作按钮 */}
-      <div style={{ marginTop: 16 }}>
-        <Space>
-          <Button
-            type="primary"
-            onClick={() => message.info('测试功能将在后续实现')}
-          >
-            测试
-          </Button>
-          <Button onClick={() => message.info('编辑功能将在后续实现')}>
-            编辑
-          </Button>
-          <Button
-            danger
-            onClick={() => message.info('停用功能将在后续实现')}
-          >
-            停用
-          </Button>
-        </Space>
-      </div>
-    </div>
-  );
-
-  /** 四宫格区域 */
-  const renderGrid = () => {
-    if (isLoading) {
-      return (
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
-        </div>
-      );
+  /** 测试所有凭证 */
+  const handleTest = async () => {
+    if (credentials.length === 0) {
+      message.warning('暂无凭证，请先添加 API Key');
+      return;
     }
-
-    return (
-      <Row gutter={[16, 16]}>
-        {/* 🌐 端点 */}
-        <Col span={12}>
-          <div
-            style={{
-              border: '1px solid #d9d9d9',
-              borderRadius: 8,
-              padding: 16,
-              height: '100%',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <Space>
-                <GlobalOutlined style={{ fontSize: 18 }} />
-                <Text strong>端点</Text>
-                <Badge count={channelDetail?.endpoints?.length || 0} />
-              </Space>
-            </div>
-            <EndpointSection
-              channelId={channel.id}
-              endpoints={channelDetail?.endpoints || []}
-            />
-          </div>
-        </Col>
-
-        {/* 🔑 API Key */}
-        <Col span={12}>
-          <div
-            style={{
-              border: '1px solid #d9d9d9',
-              borderRadius: 8,
-              padding: 16,
-              height: '100%',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <Space>
-                <KeyOutlined style={{ fontSize: 18 }} />
-                <Text strong>API Key</Text>
-                <Badge count={credentials.length} />
-              </Space>
-            </div>
-            <CredentialSection channelId={channel.id} credentials={credentials} />
-          </div>
-        </Col>
-
-        {/* 🤖 模型映射 */}
-        <Col span={12}>
-          <div
-            style={{
-              border: '1px solid #d9d9d9',
-              borderRadius: 8,
-              padding: 16,
-              height: '100%',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <Space>
-                <RobotOutlined style={{ fontSize: 18 }} />
-                <Text strong>模型映射</Text>
-                {/* 模型数量将在数据加载后显示 */}
-              </Space>
-            </div>
-            <ModelMappingSection channelId={channel.id} />
-          </div>
-        </Col>
-
-        {/* ⚙️ 配额与设置 */}
-        <Col span={12}>
-          <div
-            style={{
-              border: '1px solid #d9d9d9',
-              borderRadius: 8,
-              padding: 16,
-              height: '100%',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 12,
-              }}
-            >
-              <Space>
-                <SettingOutlined style={{ fontSize: 18 }} />
-                <Text strong>配额与设置</Text>
-              </Space>
-            </div>
-            <QuotaSettingsSection channel={channelDetail || channel} />
-          </div>
-        </Col>
-      </Row>
-    );
+    try {
+      let successCount = 0;
+      let failCount = 0;
+      for (const cred of credentials) {
+        try {
+          await testCredential.mutateAsync({ channelId: channel.id, id: cred.id });
+          successCount++;
+        } catch {
+          failCount++;
+        }
+      }
+      if (failCount === 0) {
+        message.success(`测试完成：全部 ${successCount} 个凭证可用`);
+      } else {
+        message.warning(`测试完成：${successCount} 个可用，${failCount} 个不可用`);
+      }
+    } catch {
+      message.error('测试失败');
+    }
   };
+
+  /** 切换渠道状态 */
+  const handleToggleState = async () => {
+    const newState = channel.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    try {
+      await updateChannel.mutateAsync({ id: channel.id, data: { state: newState } });
+      message.success(newState === 'ACTIVE' ? '渠道已启用' : '渠道已停用');
+    } catch {
+      message.error('状态切换失败');
+    }
+  };
+
+  /** 删除渠道 */
+  const handleDelete = async () => {
+    try {
+      await deleteChannel.mutateAsync({ id: channel.id, providerId: channel.providerId });
+      message.success('渠道已删除');
+      onClose();
+    } catch {
+      message.error('删除失败');
+    }
+  };
+
+  const tabItems = [
+    {
+      key: 'endpoints',
+      label: (
+        <Space>
+          <GlobalOutlined />
+          <span>端点</span>
+          {channelDetail?.endpoints ? (
+            <Badge count={channelDetail.endpoints.length} size="small" />
+          ) : null}
+        </Space>
+      ),
+      children: (
+        <EndpointSection
+          channelId={channel.id}
+          endpoints={channelDetail?.endpoints || []}
+        />
+      ),
+    },
+    {
+      key: 'credentials',
+      label: (
+        <Space>
+          <KeyOutlined />
+          <span>API Key</span>
+          <Badge count={credentials.length} size="small" />
+        </Space>
+      ),
+      children: (
+        <CredentialSection channelId={channel.id} credentials={credentials} />
+      ),
+    },
+    {
+      key: 'models',
+      label: (
+        <Space>
+          <RobotOutlined />
+          <span>模型映射</span>
+        </Space>
+      ),
+      children: <ModelMappingSection channelId={channel.id} />,
+    },
+    {
+      key: 'settings',
+      label: (
+        <Space>
+          <SettingOutlined />
+          <span>配额与设置</span>
+        </Space>
+      ),
+      children: <QuotaSettingsSection channel={channelDetail || channel} />,
+    },
+  ];
 
   return (
     <Drawer
-      title="渠道详情"
+      title={channel.name}
       placement="right"
       width={800}
       open={open}
       onClose={onClose}
       destroyOnClose
+      extra={
+        <Space>
+          <Button onClick={handleTest} loading={testCredential.isPending}>
+            测试
+          </Button>
+          <Popconfirm
+            title={channel.state === 'ACTIVE' ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
+            onConfirm={handleToggleState}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button
+              danger={channel.state === 'ACTIVE'}
+              loading={updateChannel.isPending}
+            >
+              {channel.state === 'ACTIVE' ? '停用' : '启用'}
+            </Button>
+          </Popconfirm>
+          <Popconfirm
+            title="确认删除"
+            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
+            onConfirm={handleDelete}
+            okText="删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Button danger loading={deleteChannel.isPending}>
+              删除
+            </Button>
+          </Popconfirm>
+        </Space>
+      }
     >
-      <div>
-        {/* 头部区域 */}
-        {renderHeader()}
+      {isLoading ? (
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <div>
+          {/* 摘要信息 */}
+          <div style={{ marginBottom: 16 }}>
+            <Space split={<Divider type="vertical" />} size="small">
+              <Text type="secondary">
+                供应商:{' '}
+                <Typography.Link
+                  onClick={() => navigate(`/providers?id=${channel.providerId}`)}
+                >
+                  {channel.providerName}
+                </Typography.Link>
+              </Text>
+              <Text type="secondary">
+                计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
+              </Text>
+              <Text type="secondary">
+                优先级: <Text strong>P{channel.priority}</Text>
+              </Text>
+              <Text type="secondary">
+                权重: <Text strong>W{channel.weight}</Text>
+              </Text>
+              <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
+                {channel.state === 'ACTIVE' ? '已启用' : '已停用'}
+              </Tag>
+            </Space>
+          </div>
 
-        <Divider />
-
-        {/* 四宫格区域 */}
-        {renderGrid()}
-      </div>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={tabItems}
+          />
+        </div>
+      )}
     </Drawer>
   );
 }

@@ -221,13 +221,13 @@ export default function BatchImportModal({ open, onClose }: Props) {
           for (const ch of provider.channels) {
             await addChannelMutation.mutateAsync({
               providerId: created.id,
-              data: { name: ch.name, providerId: created.id, billingMode: 'PAY_AS_YOU_GO' },
+              data: { name: ch.name, providerId: created.id, billingMode: 'pay_as_you_go' },
             });
           }
         } else {
           await addChannelMutation.mutateAsync({
             providerId: created.id,
-            data: { name: `${created.providerName} 默认通道`, providerId: created.id, billingMode: 'PAY_AS_YOU_GO' },
+            data: { name: `${created.providerName} 默认通道`, providerId: created.id, billingMode: 'pay_as_you_go' },
           });
         }
       }

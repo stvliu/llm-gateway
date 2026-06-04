@@ -157,7 +157,7 @@ export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
           data: {
             name: `${provider.providerName} 默认通道`,
             providerId: provider.id,
-            billingMode: 'PAY_AS_YOU_GO',
+            billingMode: 'pay_as_you_go',
           },
         });
 
@@ -166,7 +166,7 @@ export function ProviderCreateModal({ open, onClose, onCreated }: Props) {
         for (const cred of validKeys) {
           await createCredentialMutation.mutateAsync({
             channelId: channel.id,
-            data: { channelId: channel.id, apiKey: cred.value.trim() },
+            data: { apiKey: cred.value.trim() },
           });
         }
 

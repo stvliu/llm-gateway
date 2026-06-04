@@ -44,12 +44,17 @@ export default function ChannelManageModal({
     const loadData = async () => {
       setLoading(true);
       try {
-        // 并行加载所有渠道和团队已配置的渠道
-        const [allChannels, teamChannelIds] = await Promise.all([
-          channelApi.list(),
-          teamApi.listChannels(teamId),
-        ]);
+        // 独立加载，避免某个 API 失败导致全部数据丢失
+        const allChannels = await channelApi.list();
+        console.log('[ChannelManageModal] channelApi.list() 返回:', allChannels, 'type:', typeof allChannels, 'isArray:', Array.isArray(allChannels));
         setChannels(allChannels);
+
+        const teamChannelIds = await teamApi.listChannels(teamId).catch((err) => {
+          console.log('[ChannelManageModal] teamApi.listChannels 失败:', err);
+          // 非管理员可能无权查询团队渠道，此时默认为空
+          return [] as number[];
+        });
+        console.log('[ChannelManageModal] teamChannelIds:', teamChannelIds);
         setSelectedChannelIds(new Set(teamChannelIds));
       } catch {
         message.error(t('channelPermission.loadError', { defaultValue: '加载渠道数据失败' }));

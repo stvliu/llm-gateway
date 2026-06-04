@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Tag, Input, Button, Space, Form, message, Typography } from 'antd';
+import { Tag, Input, Button, Space, Form, message, Typography, theme } from 'antd';
 import { InlineEditableList } from './InlineEditableList';
 import type { ChannelModel, CreateChannelModelRequest } from '@/types/channel';
-import { useChannelModels, useCreateChannelModel, useDeleteChannelModel } from '@/services/query/useChannels';
+import { useChannelModels, useCreateChannelModel, useDeleteChannelModel, useUpdateChannelModel } from '@/services/query/useChannels';
 
 const { Link } = Typography;
 
@@ -16,10 +16,11 @@ interface ModelMappingSectionProps {
  * 展示渠道的模型映射列表，支持行内编辑
  */
 export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMappingSectionProps) {
+  const { token } = theme.useToken();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId] = useState<number | null>(null);
 
   // 获取模型映射
   const { data: models = [] } = useChannelModels(channelId);
@@ -27,6 +28,7 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
   // Mutations
   const createModel = useCreateChannelModel();
   const deleteModel = useDeleteChannelModel();
+  const updateModel = useUpdateChannelModel();
 
   /** 编辑时同步表单值 */
   useEffect(() => {
@@ -52,7 +54,7 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
       {/* 模型名 */}
       <span style={{ fontWeight: 500, minWidth: 150 }}>{model.modelName}</span>
       {/* 箭头 */}
-      <span style={{ color: '#999' }}>→</span>
+      <span style={{ color: token.colorTextSecondary }}>→</span>
       {/* 上游模型名 */}
       <span style={{ fontFamily: 'monospace', flex: 1 }}>
         {model.upstreamModelName}
@@ -72,11 +74,18 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
       try {
         setLoading(true);
         const values = await form.validateFields();
-        // TODO: 调用更新模型映射 API（目前后端未提供）
-        message.warning('编辑功能暂未实现');
+        // 仅更新上游模型名（后端 API 限制）
+        if (values.upstreamModelName !== model.upstreamModelName) {
+          await updateModel.mutateAsync({
+            channelId,
+            modelId: model.id,
+            upstreamModelName: values.upstreamModelName,
+          });
+        }
+        message.success('模型映射更新成功');
         onSave({ ...model, ...values });
       } catch (error) {
-        // 校验失败，无需额外提示
+        message.error('模型映射更新失败');
       } finally {
         setLoading(false);
       }
@@ -89,7 +98,7 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
           label="模型名"
           rules={[{ required: true, message: '请输入模型名' }]}
         >
-          <Input style={{ width: 200 }} placeholder="gpt-4o" />
+          <Input style={{ width: 200 }} placeholder="gpt-4o" disabled />
         </Form.Item>
         <Form.Item
           name="upstreamModelName"

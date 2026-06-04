@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Channel,
+  ChannelResponse,
   ChannelEndpointResponse,
   ChannelCredential,
   ChannelModel,
@@ -28,13 +29,13 @@ export const channelApi = {
   get: (id: number) =>
     api.get<Channel>(`/channels/${id}`),
 
-  /** 创建渠道 */
+  /** 创建渠道（仅基础属性，返回含 id） */
   create: (data: CreateChannelRequest) =>
-    api.post<Channel>('/channels', data),
+    api.post<ChannelResponse>('/channels', data),
 
   /** 更新渠道 */
   update: (id: number, data: UpdateChannelRequest) =>
-    api.put<Channel>(`/channels/${id}`, data),
+    api.put<ChannelResponse>(`/channels/${id}`, data),
 
   /** 删除渠道 */
   delete: (id: number) =>
@@ -49,6 +50,10 @@ export const channelApi = {
   /** 删除渠道端点 */
   removeEndpoint: (channelId: number, endpointId: number) =>
     api.delete<void>(`/channels/${channelId}/endpoints/${endpointId}`),
+
+  /** 更新渠道端点 */
+  updateEndpoint: (channelId: number, endpointId: number, data: CreateChannelEndpointRequest) =>
+    api.put<ChannelEndpointResponse>(`/channels/${channelId}/endpoints/${endpointId}`, data),
 
   /** 启用渠道端点 */
   enableEndpoint: (channelId: number, endpointId: number) =>
@@ -93,4 +98,12 @@ export const channelApi = {
   /** 删除渠道模型映射 */
   deleteModel: (channelId: number, modelId: number) =>
     api.delete<void>(`/channels/${channelId}/models/${modelId}`),
+
+  /** 更新模型映射的上游模型名 */
+  updateUpstreamModelName: (channelId: number, modelId: number, upstreamModelName: string) =>
+    api.patch<void>(`/channels/${channelId}/models/${modelId}/upstream-model-name`, { upstreamModelName }),
+
+  /** 启用/停用模型映射 */
+  setModelEnabled: (channelId: number, modelId: number, enabled: boolean) =>
+    api.patch<void>(`/channels/${channelId}/models/${modelId}/state`, null, { params: { enabled } }),
 };

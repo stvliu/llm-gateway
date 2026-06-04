@@ -32,6 +32,8 @@ public interface ChannelService {
 
     ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request);
 
+    ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request);
+
     void removeEndpoint(Long channelId, Long endpointId);
 
     ChannelEndpointResponse enableEndpoint(Long channelId, Long endpointId);

@@ -9,7 +9,7 @@ import {
   Spin,
 } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useAllChannels } from '@/services/query/useChannels';
+import { useAllChannels, useDeleteChannel } from '@/services/query/useChannels';
 import { useProviders } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
@@ -58,6 +58,7 @@ export default function Channels() {
   // 数据获取
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
+  const deleteChannel = useDeleteChannel();
 
   // 获取所有渠道的凭证（批量）
   const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
@@ -159,6 +160,11 @@ export default function Channels() {
 
   const isLoading = providersLoading || channelsLoading;
 
+  const handleDelete = (id: number) => {
+    const ch = channels?.find(c => c.id === id);
+    deleteChannel.mutate({ id, providerId: ch?.providerId ?? 0 });
+  };
+
   return (
     <div style={{ padding: '24px' }}>
       {/* 页面标题 */}
@@ -227,6 +233,7 @@ export default function Channels() {
         <ChannelGroupedList
           groups={filteredGroups}
           onChannelClick={handleChannelClick}
+          onChannelDelete={handleDelete}
         />
       )}
 

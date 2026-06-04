@@ -261,12 +261,12 @@ export default function ExpertCredentialTab({ provider }: Props) {
   const columns = useMemo(() => [
     {
       title: t('credential.apiKeyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'apiKeyMasked',
-      key: 'apiKeyMasked',
+      dataIndex: 'apiKeyPlain',
+      key: 'apiKeyPlain',
       width: 200,
       render: (_: unknown, record: ChannelCredential) => (
         <MaskedKeyDisplay
-          keyMasked={record.apiKeyMasked || `${record.apiKeyPrefix}****`}
+          keyPlain={record.apiKeyPlain}
           mode="editable"
           size="small"
           onEdit={() => {

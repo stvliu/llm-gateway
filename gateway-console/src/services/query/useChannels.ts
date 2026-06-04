@@ -57,13 +57,14 @@ export function useChannel(id: number) {
   });
 }
 
-/** 创建渠道 */
+/** 创建渠道（返回含 id 的 ChannelResponse） */
 export function useCreateChannel() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateChannelRequest) => channelApi.create(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.list(variables.providerId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
     },
   });
 }
@@ -89,6 +90,7 @@ export function useDeleteChannel() {
       channelApi.delete(id),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.list(variables.providerId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
     },
   });
 }
@@ -114,6 +116,19 @@ export function useRemoveChannelEndpoint() {
   return useMutation({
     mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
       channelApi.removeEndpoint(channelId, endpointId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    },
+  });
+}
+
+/** 更新渠道端点 */
+export function useUpdateChannelEndpoint() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, endpointId, data }: { channelId: number; endpointId: number; data: CreateChannelEndpointRequest }) =>
+      channelApi.updateEndpoint(channelId, endpointId, data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
       queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
@@ -256,6 +271,30 @@ export function useDeleteChannelModel() {
   return useMutation({
     mutationFn: ({ channelId, modelId }: { channelId: number; modelId: number }) =>
       channelApi.deleteModel(channelId, modelId),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
+    },
+  });
+}
+
+/** 更新模型映射的上游模型名 */
+export function useUpdateChannelModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, modelId, upstreamModelName }: { channelId: number; modelId: number; upstreamModelName: string }) =>
+      channelApi.updateUpstreamModelName(channelId, modelId, upstreamModelName),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
+    },
+  });
+}
+
+/** 启用/停用模型映射 */
+export function useSetChannelModelEnabled() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, modelId, enabled }: { channelId: number; modelId: number; enabled: boolean }) =>
+      channelApi.setModelEnabled(channelId, modelId, enabled),
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
     },

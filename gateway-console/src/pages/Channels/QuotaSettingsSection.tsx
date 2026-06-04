@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Descriptions, InputNumber, Input, Select, Button, Space, Form, message } from 'antd';
+import { Descriptions, InputNumber, Input, Button, Space, Form, message } from 'antd';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
 

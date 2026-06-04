@@ -12,6 +12,8 @@
     "deleteTeam": "删除团队",
     "deleteConfirm": "确定删除团队「{{name}}」？此操作不可撤销。",
     "manageMembers": "成员",
+    "edit": "编辑",
+    "delete": "删除",
     "searchPlaceholder": "搜索团队名称",
     "allState": "全部状态"
   },

@@ -95,7 +95,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       setEndpoints(initialEndpoints);
 
       // 初始化模型（从 pricing 中提取，默认全选）
-      const modelNames = planDetail.pricing.map((p) => p.modelName);
+      const modelNames = planDetail.pricing.map((p) => p.providerModelId);
       setSelectedModels(modelNames);
 
       // 设置套餐名称
@@ -120,29 +120,17 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       .filter((k) => k.length > 0);
 
     return keys.map((raw, index) => {
-      const masked = maskApiKey(raw);
       const valid = raw.length >= 8;
       const warning = !valid ? 'API Key 长度过短（<8位）' : undefined;
 
       return {
         id: `key-${index}`,
         raw,
-        masked,
         valid,
         warning,
       };
     });
   }, [apiKeyInput]);
-
-  // ===== API Key 脱敏 =====
-  function maskApiKey(key: string): string {
-    if (key.length <= 8) {
-      return '****';
-    }
-    const prefix = key.slice(0, 4);
-    const suffix = key.slice(-4);
-    return `${prefix}****${suffix}`;
-  }
 
   // ===== 端点操作 =====
   const handleAddEndpoint = () => {
@@ -178,10 +166,6 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       setSelectedModels([...selectedModels, modelName]);
       setCustomModelInput('');
     }
-  };
-
-  const handleRemoveModel = (modelName: string) => {
-    setSelectedModels(selectedModels.filter((m) => m !== modelName));
   };
 
   // ===== 导航 =====
@@ -395,26 +379,27 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
         <Text type="secondary">勾选需要启用的模型（已选 {selectedModels.length} 个）</Text>
       </div>
 
-      <div style={{ maxHeight: 200, overflow: 'auto', marginBottom: 16 }}>
+      <div style={{ maxHeight: 300, overflow: 'auto', marginBottom: 16 }}>
         <Checkbox.Group
           value={selectedModels}
           onChange={(values: (string | number | boolean)[]) => setSelectedModels(values.filter((v): v is string => typeof v === 'string'))}
           style={{ width: '100%' }}
         >
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-            {selectedModels.map((modelName) => (
-              <Tag
-                key={modelName}
-                closable
-                onClose={(e) => {
-                  e.preventDefault();
-                  handleRemoveModel(modelName);
-                }}
-                style={{ padding: '4px 8px' }}
-              >
-                <Checkbox value={modelName} style={{ marginRight: 4 }} />
-                {modelName}
-              </Tag>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {(planDetail?.pricing ?? []).map((p) => (
+              <Checkbox key={p.providerModelId} value={p.providerModelId}>
+                <span style={{ fontWeight: 500 }}>{p.providerModelId}</span>
+                {p.inputPrice != null && (
+                  <span style={{ color: '#8c8c8c', marginLeft: 8, fontSize: 12 }}>
+                    输入 ${p.inputPrice}/1M
+                  </span>
+                )}
+                {p.outputPrice != null && (
+                  <span style={{ color: '#8c8c8c', marginLeft: 8, fontSize: 12 }}>
+                    输出 ${p.outputPrice}/1M
+                  </span>
+                )}
+              </Checkbox>
             ))}
           </div>
         </Checkbox.Group>
@@ -476,7 +461,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
                   ) : (
                     <ExclamationCircleOutlined style={{ color: token.colorError }} />
                   )}
-                  <Text code>{key.masked}</Text>
+                  <Text code>{key.raw}</Text>
                 </Space>
                 {key.warning && (
                   <Text type="danger" style={{ fontSize: 12 }}>
@@ -537,7 +522,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
                 <Tag color={validKeys.length > 0 ? 'green' : 'red'}>{parsedApiKeys.length} 个</Tag>
                 {parsedApiKeys.length > 0 && (
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    {parsedApiKeys.map((k) => k.masked).join(', ')}
+                    {parsedApiKeys.map((k) => k.raw).join(', ')}
                   </Text>
                 )}
               </Space>

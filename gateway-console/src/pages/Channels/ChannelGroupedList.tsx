@@ -5,10 +5,9 @@ import { ChannelCard } from './ChannelCard';
 import type { FC } from 'react';
 
 export interface ChannelGroupedListProps {
-  /** 按供应商分组的渠道数据 */
   groups: ChannelGroup[];
-  /** 渠道点击回调 */
   onChannelClick: (channel: ChannelCardType) => void;
+  onChannelDelete: (id: number) => void;
 }
 
 /**
@@ -18,6 +17,7 @@ export interface ChannelGroupedListProps {
 export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   groups,
   onChannelClick,
+  onChannelDelete,
 }) => {
   // 管理每个供应商的折叠状态
   const [collapsedMap, setCollapsedMap] = useState<Record<number, boolean>>({});
@@ -70,6 +70,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     key={channel.id}
                     channel={channel}
                     onClick={onChannelClick}
+              onDelete={onChannelDelete}
                   />
                 ))}
               </div>

@@ -38,7 +38,9 @@
       "Bash(unset CLAUDECODE)",
       "Bash(bash *)",
       "Bash(openspec list *)",
-      "Bash(openspec init *)"
+      "Bash(openspec init *)",
+      "Read(//e/workspace/**)",
+      "Read(//e//**)"
     ]
   },
   "outputStyle": "default"

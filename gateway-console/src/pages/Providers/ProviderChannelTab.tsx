@@ -37,6 +37,7 @@ import ChannelEndpointFormModal from './ChannelEndpointFormModal';
 import CredentialFormModal from './CredentialFormModal';
 import ChannelModelsPanel from './ChannelModelsPanel';
 import type { Channel, ChannelEndpointResponse, ChannelCredential } from '@/types/channel';
+import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 
 interface ProviderChannelTabProps {
   providerId: number;
@@ -419,7 +420,7 @@ function ChannelExpandedRow({
       title: t('credential.apiKey'),
       key: 'apiKeyPrefix',
       render: (_: unknown, record: ChannelCredential) => (
-        <Typography.Text code>{record.apiKeyPrefix}****</Typography.Text>
+        <MaskedKeyDisplay keyPlain={record.apiKeyPlain} mode="readonly" size="small" />
       ),
     },
     {

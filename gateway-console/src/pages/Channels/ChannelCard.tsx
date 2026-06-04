@@ -1,8 +1,9 @@
-import { Card, Tag, Typography, Tooltip } from 'antd';
+import { Button, Card, Popconfirm, Tag, Typography, Tooltip, theme } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ClockCircleOutlined,
+  DeleteOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
@@ -11,41 +12,40 @@ import type { FC } from 'react';
 const { Text } = Typography;
 
 export interface ChannelCardProps {
-  /** 渠道数据（含统计） */
   channel: ChannelCardType;
-  /** 点击回调 */
   onClick: (channel: ChannelCardType) => void;
+  onDelete: (id: number) => void;
 }
-
-/**
- * 根据响应时间返回颜色
- * ≤500ms 绿, ≤2s 黄, >2s 红, 未测试 灰
- */
-const getResponseTimeColor = (responseTime: number | null | undefined): string => {
-  if (responseTime === null || responseTime === undefined) return '#999';
-  if (responseTime <= 500) return '#52c41a';
-  if (responseTime <= 2000) return '#faad14';
-  return '#ff4d4f';
-};
-
-/**
- * 根据响应时间返回文本
- */
-const getResponseTimeText = (responseTime: number | null | undefined): string => {
-  if (responseTime === null || responseTime === undefined) return '未测试';
-  if (responseTime < 1000) return `${responseTime}ms`;
-  return `${(responseTime / 1000).toFixed(1)}s`;
-};
 
 /**
  * 渠道卡片组件
  * 一行一个，横向铺满
  */
-export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
+export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }) => {
+  const { token } = theme.useToken();
   const isActive = channel.state === 'ACTIVE';
 
   // 检查是否缺少关键配置（凭证为 0 表示配置中）
   const isIncomplete = channel.stats.credentialCount === 0;
+
+  /**
+   * 根据响应时间返回颜色 token
+   */
+  const getResponseTimeColor = (responseTime: number | null | undefined): string => {
+    if (responseTime === null || responseTime === undefined) return token.colorTextSecondary;
+    if (responseTime <= 500) return token.colorSuccess;
+    if (responseTime <= 2000) return token.colorWarning;
+    return token.colorError;
+  };
+
+  /**
+   * 根据响应时间返回文本
+   */
+  const getResponseTimeText = (responseTime: number | null | undefined): string => {
+    if (responseTime === null || responseTime === undefined) return '未测试';
+    if (responseTime < 1000) return `${responseTime}ms`;
+    return `${(responseTime / 1000).toFixed(1)}s`;
+  };
 
   return (
     <Card
@@ -54,7 +54,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
       style={{
         marginBottom: '8px',
         opacity: isActive ? 1 : 0.6,
-        border: isIncomplete ? '2px solid #faad14' : undefined,
+        border: isIncomplete ? `2px solid ${token.colorWarning}` : undefined,
         transition: 'all 0.2s',
       }}
       styles={{ body: { padding: '16px' } }}
@@ -73,7 +73,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              backgroundColor: isActive ? '#52c41a' : '#d9d9d9',
+              backgroundColor: isActive ? token.colorSuccess : token.colorBorder,
             }}
           />
           <Text strong style={{ fontSize: '15px' }}>
@@ -119,18 +119,18 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
         {/* 计费信息 */}
         <div style={{ flex: '0 0 100px' }}>
           <Text type="secondary" style={{ fontSize: '13px' }}>
-            {channel.billingMode === 'PAY_AS_YOU_GO'
+            {channel.billingMode === 'pay_as_you_go'
               ? '按量付费'
-              : channel.billingMode === 'SUBSCRIPTION'
+              : channel.billingMode === 'subscription'
               ? '订阅'
               : channel.billingMode}
           </Text>
         </div>
 
-        {/* 右侧：响应时间 + 详情入口 */}
+        {/* 右侧：响应时间 + 详情入口 + 删除 */}
         <div
           style={{
-            flex: '0 0 120px',
+            flex: '0 0 160px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-end',
@@ -140,13 +140,13 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
             {channel.stats.avgResponseTime === null ||
             channel.stats.avgResponseTime === undefined ? (
-              <QuestionCircleOutlined style={{ color: '#999' }} />
+              <QuestionCircleOutlined style={{ color: token.colorTextSecondary }} />
             ) : channel.stats.avgResponseTime <= 500 ? (
-              <CheckCircleOutlined style={{ color: '#52c41a' }} />
+              <CheckCircleOutlined style={{ color: token.colorSuccess }} />
             ) : channel.stats.avgResponseTime <= 2000 ? (
-              <ClockCircleOutlined style={{ color: '#faad14' }} />
+              <ClockCircleOutlined style={{ color: token.colorWarning }} />
             ) : (
-              <CloseCircleOutlined style={{ color: '#ff4d4f' }} />
+              <CloseCircleOutlined style={{ color: token.colorError }} />
             )}
             <Text
               style={{
@@ -160,6 +160,26 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick }) => {
           <Text type="secondary" style={{ fontSize: '12px' }}>
             详情 &gt;
           </Text>
+          <Popconfirm
+            title="确认删除"
+            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
+            onConfirm={(e) => {
+              e?.stopPropagation();
+              onDelete(channel.id);
+            }}
+            onCancel={(e) => e?.stopPropagation()}
+            okText="删除"
+            cancelText="取消"
+            okButtonProps={{ danger: true }}
+          >
+            <Button
+              type="text"
+              size="small"
+              danger
+              icon={<DeleteOutlined />}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </Popconfirm>
         </div>
       </div>
     </Card>

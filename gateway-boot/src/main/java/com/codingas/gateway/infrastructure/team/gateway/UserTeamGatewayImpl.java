@@ -60,6 +60,11 @@ public class UserTeamGatewayImpl implements UserTeamGateway {
     }
 
     @Override
+    public long countByTeamId(Long teamId) {
+        return userTeamRepository.countByTeamId(teamId);
+    }
+
+    @Override
     public Long findTeamIdByUserId(Long userId) {
         return userTeamRepository.findByUserId(userId).stream()
                 .findFirst()

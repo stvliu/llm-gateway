@@ -134,6 +134,7 @@ public class TeamServiceImpl implements TeamService {
         response.setName(team.getName());
         response.setDescription(team.getDescription());
         response.setState(team.getState().getCode());
+        response.setMemberCount((int) userTeamGateway.countByTeamId(team.getId()));
         return response;
     }
 }

@@ -1,71 +1,39 @@
 import { useState } from 'react';
 import { Space, Button, Typography, message, Tooltip } from 'antd';
 import { EyeOutlined, EyeInvisibleOutlined, CopyOutlined, EditOutlined } from '@ant-design/icons';
+import { maskApiKey } from '@/utils/maskApiKey';
 
 const { Text } = Typography;
 
 export interface MaskedKeyDisplayProps {
-  keyMasked: string;
-  keyPlain?: string;
+  keyPlain: string;
   mode?: 'editable' | 'readonly';
   onEdit?: () => void;
   showCopy?: boolean;
   size?: 'small' | 'default';
-  onFetchPlain?: () => Promise<string | undefined>;
 }
 
 export const MaskedKeyDisplay: React.FC<MaskedKeyDisplayProps> = ({
-  keyMasked,
   keyPlain,
   mode = 'readonly',
   onEdit,
   showCopy = true,
   size = 'default',
-  onFetchPlain,
 }) => {
   const [visible, setVisible] = useState(false);
-  const [plain, setPlain] = useState<string | undefined>(keyPlain);
-  const [loading, setLoading] = useState(false);
 
-  const displayText = visible && plain ? plain : keyMasked;
+  const displayText = visible ? keyPlain : maskApiKey(keyPlain);
 
-  const handleToggleVisibility = async () => {
-    if (!visible && !plain && onFetchPlain) {
-      setLoading(true);
-      try {
-        const fetched = await onFetchPlain();
-        if (fetched) {
-          setPlain(fetched);
-          setVisible(true);
-        }
-      } finally {
-        setLoading(false);
-      }
-    } else {
-      setVisible(!visible);
-    }
+  const handleToggleVisibility = () => {
+    setVisible(!visible);
   };
 
   const handleCopy = async () => {
-    let textToCopy = plain || keyMasked;
-    if (!plain && onFetchPlain) {
-      setLoading(true);
-      try {
-        const fetched = await onFetchPlain();
-        if (fetched) {
-          setPlain(fetched);
-          textToCopy = fetched;
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    // 优先使用 Clipboard API，失败时降级到 execCommand
+    const textToCopy = keyPlain;
     try {
       await navigator.clipboard.writeText(textToCopy);
       message.success('已复制到剪贴板');
     } catch {
-      // Fallback: 使用 execCommand（兼容非 HTTPS 环境）
       const textArea = document.createElement('textarea');
       textArea.value = textToCopy;
       textArea.style.position = 'fixed';
@@ -96,7 +64,6 @@ export const MaskedKeyDisplay: React.FC<MaskedKeyDisplayProps> = ({
           size={buttonSize}
           icon={visible ? <EyeInvisibleOutlined style={{ fontSize: iconSize }} /> : <EyeOutlined style={{ fontSize: iconSize }} />}
           onClick={handleToggleVisibility}
-          loading={loading}
           style={{ padding: '0 4px' }}
         />
       </Tooltip>

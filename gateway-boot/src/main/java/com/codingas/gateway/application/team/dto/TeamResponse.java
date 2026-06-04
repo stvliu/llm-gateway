@@ -19,6 +19,9 @@ public class TeamResponse {
 
     private String state;
 
+    /** 成员数（列表接口填充，避免查询完整成员列表） */
+    private Integer memberCount;
+
     private List<MemberResponse> members;
 
     private LocalDateTime createdAt;

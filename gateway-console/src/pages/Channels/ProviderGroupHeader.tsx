@@ -1,4 +1,4 @@
-import { Typography, Space, Tooltip } from 'antd';
+import { Typography, Space, Tooltip, theme } from 'antd';
 import { RightOutlined } from '@ant-design/icons';
 import { ProviderIcon } from '@/components/ui/ProviderIcon';
 import type { FC } from 'react';
@@ -38,6 +38,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
   collapsed,
   onToggle,
 }) => {
+  const { token } = theme.useToken();
   return (
     <div
       onClick={onToggle}
@@ -54,7 +55,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '12px 16px',
-        background: '#fafafa',
+        background: token.colorFillQuaternary,
         borderRadius: '8px',
         cursor: 'pointer',
         marginBottom: '8px',
@@ -97,7 +98,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
         </Space>
         <RightOutlined
           rotate={collapsed ? 0 : 90}
-          style={{ transition: 'transform 0.2s', color: '#999' }}
+          style={{ transition: 'transform 0.2s', color: token.colorTextSecondary }}
         />
       </Space>
     </div>

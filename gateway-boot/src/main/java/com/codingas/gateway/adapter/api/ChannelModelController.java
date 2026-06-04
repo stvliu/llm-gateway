@@ -6,7 +6,6 @@ import com.codingas.gateway.application.channel.dto.ChannelModelResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,40 +22,40 @@ public class ChannelModelController {
     private final ChannelModelService channelModelService;
 
     @GetMapping
-    public ResponseEntity<List<ChannelModelResponse>> list(@PathVariable Long channelId) {
-        return ResponseEntity.ok(channelModelService.getModelsByChannelId(channelId));
+    public List<ChannelModelResponse> list(@PathVariable Long channelId) {
+        return channelModelService.getModelsByChannelId(channelId);
     }
 
     @PostMapping
-    public ResponseEntity<ChannelModelResponse> create(
+    @ResponseStatus(HttpStatus.CREATED)
+    public ChannelModelResponse create(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelModelCreateRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(channelModelService.create(channelId, request));
+        return channelModelService.create(channelId, request);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long channelId, @PathVariable Long id) {
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long channelId, @PathVariable Long id) {
         channelModelService.delete(channelId, id);
-        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/state")
-    public ResponseEntity<Void> setEnabled(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setEnabled(
             @PathVariable Long channelId,
             @PathVariable Long id,
             @RequestParam boolean enabled) {
         channelModelService.setEnabled(channelId, id, enabled);
-        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/upstream-model-name")
-    public ResponseEntity<Void> updateUpstreamModelName(
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateUpstreamModelName(
             @PathVariable Long channelId,
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String upstreamModelName = body.get("upstreamModelName");
         channelModelService.updateUpstreamModelName(channelId, id, upstreamModelName);
-        return ResponseEntity.noContent().build();
     }
 }

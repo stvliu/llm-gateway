@@ -24,7 +24,7 @@ interface AggregateCredential {
   channelId: number;
   providerId: number;
   apiKeyPrefix: string;
-  apiKeyMasked?: string;
+  apiKeyPlain?: string;
   providerCode?: string;
   providerName: string;
   channelName: string;
@@ -104,7 +104,7 @@ export default function UpstreamKeysTable() {
             channelId: ch.id,
             providerId: ch.providerId,
             apiKeyPrefix: '-',
-            apiKeyMasked: '-',
+            apiKeyPlain: '-',
             providerCode: provider.providerId,
             providerName: provider.providerName,
             channelName: ch.name,
@@ -120,7 +120,7 @@ export default function UpstreamKeysTable() {
               channelId: cr.channelId,
               providerId: ch.providerId,
               apiKeyPrefix: cr.apiKeyPrefix,
-              apiKeyMasked: cr.apiKeyMasked,
+              apiKeyPlain: cr.apiKeyPlain,
               providerCode: provider.providerId,
               providerName: provider.providerName,
               channelName: ch.name,
@@ -165,17 +165,17 @@ export default function UpstreamKeysTable() {
 
   const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key 前缀' }),
-      dataIndex: 'apiKeyMasked',
-      key: 'apiKeyMasked',
+      title: t('keyPrefix', { defaultValue: 'Key' }),
+      dataIndex: 'apiKeyPlain',
+      key: 'apiKeyPlain',
       width: 220,
-      render: (keyMasked: string, record: AggregateCredential) => {
-        if (!record.credentialId || !keyMasked || keyMasked === '-') {
+      render: (_: string, record: AggregateCredential) => {
+        if (!record.credentialId || !record.apiKeyPlain || record.apiKeyPlain === '-') {
           return <Text type="secondary">-</Text>;
         }
         return (
           <MaskedKeyDisplay
-            keyMasked={keyMasked}
+            keyPlain={record.apiKeyPlain}
             mode="editable"
             size="small"
             onEdit={() => setEditingCredential(record)}
@@ -273,7 +273,7 @@ export default function UpstreamKeysTable() {
           open={true}
           channelId={editingCredential.channelId}
           credentialId={editingCredential.credentialId}
-          keyMasked={editingCredential.apiKeyMasked || ''}
+          keyPlain={editingCredential.apiKeyPlain || ''}
           onClose={() => setEditingCredential(null)}
           onSuccess={() => {
             // 刷新凭证列表（通过 refetch）

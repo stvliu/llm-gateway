@@ -9,9 +9,9 @@ const { Text } = Typography;
 
 /** 计费模式标签颜色 */
 const BILLING_MODE_CONFIG: Record<string, { color: string }> = {
-  PAY_AS_YOU_GO: { color: 'green' },
-  SUBSCRIPTION: { color: 'purple' },
-  PACKAGE: { color: 'orange' },
+  pay_as_you_go: { color: 'green' },
+  subscription: { color: 'purple' },
+  package: { color: 'orange' },
 };
 
 interface CascadeMaterializeDialogProps {

@@ -20,6 +20,8 @@ public interface UserTeamRepository extends JpaRepository<UserTeamDo, UserTeamId
 
     List<UserTeamDo> findByTeamId(Long teamId);
 
+    long countByTeamId(Long teamId);
+
     @Query("SELECT COUNT(ut) > 0 FROM UserTeamDo ut WHERE ut.userId = :userId AND ut.teamId = :teamId")
     boolean isMember(@Param("userId") Long userId, @Param("teamId") Long teamId);
 

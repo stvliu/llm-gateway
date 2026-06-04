@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography } from 'antd';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
@@ -73,7 +73,7 @@ export default function TeamsPage() {
       width: 100,
       render: (_: unknown, record: Team) => (
         <Link onClick={() => setMemberTeam(record)}>
-          {record.members?.length ?? 0}
+          {record.memberCount ?? record.members?.length ?? 0}
         </Link>
       ),
     },
@@ -95,22 +95,26 @@ export default function TeamsPage() {
       fixed: 'right' as const,
       render: (_: unknown, record: Team) => (
         <Space size="small">
-          <Button type="link" size="small" icon={<TeamOutlined />} onClick={() => setMemberTeam(record)}>
-            {t('team.manageMembers')}
-          </Button>
-          <Button type="link" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageTeam(record)}>
-            {t('channelPermission.title', { defaultValue: '渠道权限' })}
-          </Button>
+          <Tooltip title={t('team.manageMembers')}>
+            <Button type="text" size="small" icon={<TeamOutlined />} onClick={() => setMemberTeam(record)} />
+          </Tooltip>
+          <Tooltip title={t('channelPermission.title')}>
+            <Button type="text" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageTeam(record)} />
+          </Tooltip>
           {canWrite && (
             <>
-              <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+              <Tooltip title={t('team.edit')}>
+                <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+              </Tooltip>
               <Popconfirm
                 title={t('team.deleteTeam')}
                 description={t('team.deleteConfirm', { name: record.name })}
                 okType="danger"
                 onConfirm={() => deleteMutation.mutateAsync(record.id)}
               >
-                <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                <Tooltip title={t('team.delete')}>
+                  <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+                </Tooltip>
               </Popconfirm>
             </>
           )}

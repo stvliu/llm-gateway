@@ -12,6 +12,8 @@
     "deleteTeam": "Delete Team",
     "deleteConfirm": "Are you sure you want to delete team \"{{name}}\"? This cannot be undone.",
     "manageMembers": "Members",
+    "edit": "Edit",
+    "delete": "Delete",
     "searchPlaceholder": "Search team name",
     "allState": "All States"
   },

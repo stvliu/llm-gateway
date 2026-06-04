@@ -129,5 +129,5 @@ body {
    ============================================ */
 
 .provider-group-header:hover {
-  background: #f0f0f0 !important;
+  background: var(--ant-color-fill-tertiary, #f0f0f0) !important;
 }
