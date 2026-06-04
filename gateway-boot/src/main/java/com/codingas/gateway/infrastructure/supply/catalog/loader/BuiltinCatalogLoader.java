@@ -4,7 +4,7 @@ import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
@@ -165,7 +165,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setPlanCode(data.planCode());
             catalog.setProviderCode(data.providerCode());
             catalog.setPlanName(data.planName());
-            catalog.setBillingMode(BillingMode.valueOf(data.billingMode()));
+            catalog.setBillingMode(BillingMode.resolve(data.billingMode()));
             // endpoints 和 pricing 存储为 JSON String
             catalog.setEndpoints(data.endpoints() != null ? objectMapper.writeValueAsString(data.endpoints()) : null);
             catalog.setPricing(data.pricing() != null ? objectMapper.writeValueAsString(data.pricing()) : null);

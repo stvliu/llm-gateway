@@ -214,7 +214,7 @@ public class DataInitializer implements CommandLineRunner {
      * <p>根据各供应商的实际计费模式配置，共12个接入点：</p>
      * <ul>
      *   <li><b>OpenAI</b>: 纯按量计费（PAY_AS_YOU_GO），无订阅制</li>
-     *   <li><b>Anthropic</b>: 个人/团队用分层订阅（TIERED_SUBSCRIPTION），企业用混合计费（HYBRID_BASE_PLUS_USAGE）</li>
+     *   <li><b>Anthropic</b>: 订阅制（SUBSCRIPTION），企业用混合计费（HYBRID）</li>
      *   <li><b>DeepSeek</b>: 按量计费 + 资源包</li>
      *   <li><b>通义千问</b>: 按量计费 + 资源包</li>
      *   <li><b>智谱AI</b>: 按量计费 + 分层订阅</li>
@@ -240,9 +240,9 @@ public class DataInitializer implements CommandLineRunner {
         // ==================== Anthropic 渠道 ====================
         // Anthropic 个人/团队采用分层订阅，企业采用混合计费
         channels.put("anthropic-pro", createChannel(providers.get("anthropic").getId(), 
-            "Anthropic Pro ($20/月)", BillingMode.TIERED_SUBSCRIPTION));
-        channels.put("anthropic-enterprise", createChannel(providers.get("anthropic").getId(), 
-            "Anthropic Enterprise ($20/用户+按量)", BillingMode.HYBRID_BASE_PLUS_USAGE));
+            "Anthropic Pro ($20/月)", BillingMode.SUBSCRIPTION));
+        channels.put("anthropic-enterprise", createChannel(providers.get("anthropic").getId(),
+            "Anthropic Enterprise ($20/用户+按量)", BillingMode.HYBRID));
         
         // ==================== DeepSeek 渠道 ====================
         // DeepSeek 支持按量计费和预付费资源包
@@ -263,7 +263,7 @@ public class DataInitializer implements CommandLineRunner {
         channels.put("zhipu-default", createChannel(providers.get("zhipu").getId(), 
             "智谱AI按量计费", BillingMode.PAY_AS_YOU_GO));
         channels.put("zhipu-subscription", createChannel(providers.get("zhipu").getId(), 
-            "智谱AI专业订阅", BillingMode.SUBSCRIPTION_TOKEN));
+            "智谱AI专业订阅", BillingMode.SUBSCRIPTION));
         
         // ==================== 火山方舟渠道 ====================
         // 火山方舟支持按量计费和预付费套餐

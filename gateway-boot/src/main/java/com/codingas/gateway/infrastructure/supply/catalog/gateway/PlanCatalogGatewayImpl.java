@@ -1,10 +1,10 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.PlanCatalogDo;
 import com.codingas.gateway.infrastructure.supply.catalog.database.repository.PlanCatalogRepository;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +69,7 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
         entity.setPlanCode(doObj.getPlanCode());
         entity.setProviderCode(doObj.getProviderCode());
         entity.setPlanName(doObj.getPlanName());
-        entity.setBillingMode(BillingMode.valueOf(doObj.getBillingMode()));
+        entity.setBillingMode(BillingMode.resolve(doObj.getBillingMode()));
         entity.setEndpoints(doObj.getEndpoints());
         entity.setPricing(doObj.getPricing());
         entity.setDescription(doObj.getDescription());

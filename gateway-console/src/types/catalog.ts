@@ -14,7 +14,7 @@ export type CatalogSource = 'BUILTIN' | 'MODELS_DEV' | 'PROVIDER_API' | 'MANUAL'
 export type ProviderType = 'INTERNATIONAL' | 'DOMESTIC';
 
 /** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
-export type BillingMode = 'pay_as_you_go' | 'subscription' | 'package';
+export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
 
 /** 物化状态 */
 export type MaterializeStatus = 'CREATED' | 'SKIPPED';
@@ -49,7 +49,7 @@ export interface PlanEndpoint {
 
 /** 套餐定价信息 */
 export interface PlanPricing {
-  modelName: string;
+  providerModelId: string;
   inputPrice: number | null;
   outputPrice: number | null;
   cacheReadPrice: number | null;

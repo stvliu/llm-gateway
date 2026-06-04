@@ -208,6 +208,7 @@ public class CatalogMaterializeService {
      *
      * <p>从 PlanCatalog 创建 Channel + ChannelEndpoint + ChannelModel 运营实体。</p>
      * <p>物化 Plan 时如果 Model 不存在，自动级联物化。</p>
+     * <p>如果 Provider 尚未物化，自动先物化 Provider。</p>
      */
     @Transactional
     public MaterializeResult materializePlan(String planCode) {
@@ -215,9 +216,21 @@ public class CatalogMaterializeService {
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "套餐目录不存在: " + planCode));
 
+        // 自动物化 Provider（如果尚未物化）
         Provider provider = providerGateway.findByCode(catalog.getProviderCode())
-                .orElseThrow(() -> new CatalogException("PROVIDER_NOT_MATERIALIZED",
-                        "供应商尚未物化: " + catalog.getProviderCode() + "，请先物化供应商"));
+                .orElseGet(() -> {
+                    log.info("供应商尚未物化，自动物化: {}", catalog.getProviderCode());
+                    try {
+                        materializeProvider(catalog.getProviderCode());
+                        return providerGateway.findByCode(catalog.getProviderCode()).orElseThrow();
+                    } catch (CatalogException e) {
+                        if ("ALREADY_MATERIALIZED".equals(e.getCode())) {
+                            // 并发情况下可能已被其他请求物化，重新查询即可
+                            return providerGateway.findByCode(catalog.getProviderCode()).orElseThrow();
+                        }
+                        throw e;
+                    }
+                });
 
         if (channelGateway.existsByProviderIdAndName(provider.getId(), planCode)) {
             throw new CatalogException("ALREADY_MATERIALIZED",
@@ -227,7 +240,7 @@ public class CatalogMaterializeService {
         Channel channel = new Channel();
         channel.setProviderId(provider.getId());
         channel.setName(planCode);
-        channel.setBillingMode(mapBillingMode(catalog.getBillingMode()));
+        channel.setBillingMode(catalog.getBillingMode());
         channel.setPriority(100);
         channel.setWeight(100);
         channel.setTimeout(30);
@@ -428,17 +441,6 @@ public class CatalogMaterializeService {
             return null;
         }
         return rules.get(modelName);
-    }
-
-    private BillingMode mapBillingMode(com.codingas.gateway.domain.supply.catalog.enums.BillingMode catalogMode) {
-        if (catalogMode == null) {
-            return BillingMode.PAY_AS_YOU_GO;
-        }
-        return switch (catalogMode) {
-            case PAY_AS_YOU_GO -> BillingMode.PAY_AS_YOU_GO;
-            case SUBSCRIPTION -> BillingMode.SUBSCRIPTION_CODING;
-            case PACKAGE -> BillingMode.SUBSCRIPTION_TOKEN;
-        };
     }
 
     private List<Map<String, String>> parseEndpoints(String endpointsJson) {

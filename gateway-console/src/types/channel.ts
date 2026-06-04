@@ -2,7 +2,7 @@
 export type EndpointProtocol = 'openai' | 'anthropic';
 
 /** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
-export type BillingMode = 'pay_as_you_go' | 'subscription' | 'package';
+export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
 
 /** 协议信息（从 /api/protocols 获取） */
 export interface ProtocolInfo {
@@ -102,7 +102,7 @@ export interface ChannelCredential {
   id: number;
   channelId: number;
   apiKeyPrefix: string;
-  apiKeyMasked: string;  // 新增：脱敏格式
+  apiKeyPlain: string;  // 新增：脱敏格式
   name: string;
   description: string | null;
   weight: number;
@@ -123,7 +123,7 @@ export interface CreateChannelCredentialRequest {
 /** 创建渠道凭证响应（与后端 ChannelCredentialCreateResponse 一致） */
 export interface CreateChannelCredentialResponse {
   id: number;
-  apiKeyMasked: string;
+  apiKeyPlain: string;
   apiKeyPlain: string;
 }
 

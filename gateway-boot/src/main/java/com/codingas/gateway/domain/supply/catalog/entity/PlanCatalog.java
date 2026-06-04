@@ -1,9 +1,9 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.domain.supply.catalog.enums.BillingMode;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
