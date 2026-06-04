@@ -3,7 +3,6 @@ import { AuthGuard, PermissionGuard } from './guards';
 import Login from '@/pages/Login';
 import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
-import Providers from '@/pages/Providers';
 import Models from '@/pages/Models';
 import ApiKeys from '@/pages/ApiKeys';
 import Developer from '@/pages/Developer';
@@ -38,7 +37,7 @@ export const router = createBrowserRouter([
       },
       {
         path: 'providers',
-        element: <PermissionGuard permission={P.PROVIDER_READ}><Providers /></PermissionGuard>,
+        element: <Navigate to="/channels" replace />,
       },
       {
         path: 'models',

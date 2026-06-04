@@ -1,6 +1,5 @@
 import {
   DashboardOutlined,
-  AppstoreOutlined,
   ThunderboltOutlined,
   TeamOutlined,
   SettingOutlined,
@@ -29,14 +28,8 @@ export const menuConfig: MenuItemConfig[] = [
   {
     key: '/channels',
     icon: <ThunderboltOutlined />,
-    label: 'menu.channels',
+    label: 'menu.channelManagement',
     permission: 'channel:read',
-  },
-  {
-    key: '/providers',
-    icon: <AppstoreOutlined />,
-    label: 'menu.providerDirectory',
-    permission: 'provider:read',
   },
   {
     key: '/teams',

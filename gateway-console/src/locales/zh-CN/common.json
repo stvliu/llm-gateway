@@ -5,6 +5,7 @@
     "providerDirectory": "供应商目录",
     "models": "模型目录",
     "channels": "渠道管理",
+    "channelManagement": "渠道管理",
     "apiKeys": "API Key 管理",
     "teams": "团队与权限",
     "developer": "开发者门户",
