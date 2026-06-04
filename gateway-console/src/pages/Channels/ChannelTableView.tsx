@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Table, Tag, Typography } from 'antd';
+import { Table, Tag, Typography, theme } from 'antd';
 import type { ChannelCard } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
@@ -21,6 +21,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   providers,
   onChannelClick,
 }) => {
+  const { token } = theme.useToken();
   const providerMap = useMemo(() => {
     return new Map(providers.map((p) => [p.id, p]));
   }, [providers]);
@@ -76,7 +77,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       key: 'credentials',
       width: 60,
       render: (_: unknown, r: ChannelCard) => (
-        <Text style={{ color: r.stats.credentialCount === 0 ? '#fa8c16' : undefined }}>
+        <Text style={{ color: r.stats.credentialCount === 0 ? token.colorWarning : undefined }}>
           {r.stats.credentialCount}
         </Text>
       ),

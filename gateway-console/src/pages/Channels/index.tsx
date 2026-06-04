@@ -33,6 +33,7 @@ import type {
   ChannelCredential,
 } from '@/types/channel';
 import type { Provider } from '@/types/provider';
+import { theme } from 'antd';
 
 const { Title } = Typography;
 const { Search } = Input;
@@ -62,6 +63,7 @@ const calculateChannelStats = (
  * 支持分组视图/列表视图 + 筛选 + 批量操作 + 搜索增强
  */
 export default function Channels() {
+  const { token } = theme.useToken();
   // 状态管理
   const [searchText, setSearchText] = useState('');
   const [providerFilter, setProviderFilter] = useState<number | undefined>();
@@ -316,7 +318,7 @@ export default function Channels() {
           <Card
             hoverable
             style={{
-              border: '2px dashed #d9d9d9',
+              border: `2px dashed ${token.colorBorder}`,
               textAlign: 'center',
               cursor: 'pointer',
               marginTop: 16,
@@ -324,8 +326,8 @@ export default function Channels() {
             styles={{ body: { padding: '24px' } }}
             onClick={handleCreateChannel}
           >
-            <PlusOutlined style={{ fontSize: 24, color: '#1677ff', marginBottom: 8 }} />
-            <div style={{ color: '#1677ff', fontSize: 14 }}>新增供应商</div>
+            <PlusOutlined style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 8 }} />
+            <div style={{ color: token.colorPrimary, fontSize: 14 }}>新增供应商</div>
           </Card>
         </>
       ) : (

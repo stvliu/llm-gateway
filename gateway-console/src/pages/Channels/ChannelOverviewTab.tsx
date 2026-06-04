@@ -1,4 +1,4 @@
-import { Row, Col, Card, Tag, Typography, Button, Timeline } from 'antd';
+import { Row, Col, Card, Tag, Typography, Button, Timeline, theme } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -8,7 +8,7 @@ import {
 import type { Channel, ChannelEndpointResponse, ChannelCredential, ChannelModel } from '@/types/channel';
 import type { FC } from 'react';
 
-const { Text, Title: AntTitle } = Typography;
+const { Text } = Typography;
 
 interface ChannelOverviewTabProps {
   channel: Channel;
@@ -18,31 +18,33 @@ interface ChannelOverviewTabProps {
 }
 
 /** 连通状态卡片 */
-const ConnectivityCard: FC<{ channel: Channel }> = ({ channel }) => {
+const ConnectivityCard: FC<{ channel: Channel }> = () => {
+  const { token } = theme.useToken();
   // 预留：从本地缓存或测试结果获取连通状态
-  const status: 'ok' | 'fail' | 'unknown' = 'unknown' as const;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const status: 'ok' | 'fail' | 'unknown' = 'unknown' as 'ok' | 'fail' | 'unknown';
 
   return (
     <Card size="small" title="连通状态" style={{ height: '100%' }}>
       {status === 'ok' && (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <CheckCircleOutlined style={{ fontSize: 28, color: '#52c41a' }} />
+          <CheckCircleOutlined style={{ fontSize: 28, color: token.colorSuccess }} />
           <div style={{ marginTop: 8 }}>
-            <Text strong style={{ color: '#52c41a' }}>连通正常</Text>
+            <Text strong style={{ color: token.colorSuccess }}>连通正常</Text>
           </div>
         </div>
       )}
       {status === 'fail' && (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <CloseCircleOutlined style={{ fontSize: 28, color: '#ff4d4f' }} />
+          <CloseCircleOutlined style={{ fontSize: 28, color: token.colorError }} />
           <div style={{ marginTop: 8 }}>
-            <Text strong style={{ color: '#ff4d4f' }}>连通异常</Text>
+            <Text strong style={{ color: token.colorError }}>连通异常</Text>
           </div>
         </div>
       )}
       {status === 'unknown' && (
         <div style={{ textAlign: 'center', padding: '16px 0' }}>
-          <QuestionCircleOutlined style={{ fontSize: 28, color: '#d9d9d9' }} />
+          <QuestionCircleOutlined style={{ fontSize: 28, color: token.colorTextDisabled }} />
           <div style={{ marginTop: 8 }}>
             <Text type="secondary">未测试</Text>
           </div>
@@ -56,24 +58,30 @@ const ConnectivityCard: FC<{ channel: Channel }> = ({ channel }) => {
 };
 
 /** Token 用量卡片（预留） */
-const TokenUsageCard: FC = () => (
-  <Card size="small" title="今日 Token" style={{ height: '100%' }}>
-    <div style={{ textAlign: 'center', padding: '16px 0' }}>
-      <div style={{ fontSize: 24, fontWeight: 700, color: '#1677ff' }}>--</div>
-      <Text type="secondary" style={{ fontSize: 12 }}>输入/输出</Text>
-    </div>
-  </Card>
-);
+const TokenUsageCard: FC = () => {
+  const { token } = theme.useToken();
+  return (
+    <Card size="small" title="今日 Token" style={{ height: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '16px 0' }}>
+        <div style={{ fontSize: 24, fontWeight: 700, color: token.colorPrimary }}>--</div>
+        <Text type="secondary" style={{ fontSize: 12 }}>输入/输出</Text>
+      </div>
+    </Card>
+  );
+};
 
 /** 成本卡片（预留） */
-const CostCard: FC = () => (
-  <Card size="small" title="今日成本" style={{ height: '100%' }}>
-    <div style={{ textAlign: 'center', padding: '16px 0' }}>
-      <div style={{ fontSize: 24, fontWeight: 700, color: '#722ed1' }}>--</div>
-      <Text type="secondary" style={{ fontSize: 12 }}>本月累计: --</Text>
-    </div>
-  </Card>
-);
+const CostCard: FC = () => {
+  const { token } = theme.useToken();
+  return (
+    <Card size="small" title="今日成本" style={{ height: '100%' }}>
+      <div style={{ textAlign: 'center', padding: '16px 0' }}>
+        <div style={{ fontSize: 24, fontWeight: 700, color: token.colorLink }}>--</div>
+        <Text type="secondary" style={{ fontSize: 12 }}>本月累计: --</Text>
+      </div>
+    </Card>
+  );
+};
 
 /** 端点摘要卡片 */
 const EndpointSummaryCard: FC<{

@@ -51,11 +51,14 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
 
   /** 统计数字颜色 */
   const statNumberColor = (type: 'endpoint' | 'credential' | 'model') => {
-    if (!isActive) return '#999';
-    if (type === 'endpoint') return '#1677ff';
-    if (type === 'credential') return credentialCount === 0 ? '#fa8c16' : '#722ed1';
-    return '#13c2c2';
+    if (!isActive) return token.colorTextDisabled;
+    if (type === 'endpoint') return token.colorPrimary;
+    if (type === 'credential') return credentialCount === 0 ? token.colorWarning : token.colorLink;
+    return token.colorInfo;
   };
+
+  /** 统计区域背景色 */
+  const statBgColor = token.colorFillQuaternary;
 
   return (
     <Card
@@ -179,35 +182,35 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }
       {/* 第二行：端点/Key/模型三列统计 + 今日用量 */}
       <Row gutter={8} style={{ marginTop: 10, marginBottom: 4 }}>
         <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('endpoint') }}>
               {endpointCount}
             </div>
-            <div style={{ fontSize: 10, color: '#999' }}>端点</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>端点</div>
           </div>
         </Col>
         <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('credential') }}>
               {credentialCount}
             </div>
-            <div style={{ fontSize: 10, color: '#999' }}>Key</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>Key</div>
           </div>
         </Col>
         <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
+          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('model') }}>
               {modelCount}
             </div>
-            <div style={{ fontSize: 10, color: '#999' }}>模型</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>模型</div>
           </div>
         </Col>
         <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: '#f9f9f9', borderRadius: 4 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? '#1677ff' : '#999' }}>
+          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? token.colorPrimary : token.colorTextDisabled }}>
               --
             </div>
-            <div style={{ fontSize: 10, color: '#999' }}>今日Token</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>今日Token</div>
           </div>
         </Col>
       </Row>
