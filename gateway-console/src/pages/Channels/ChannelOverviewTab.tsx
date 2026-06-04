@@ -20,7 +20,7 @@ interface ChannelOverviewTabProps {
 /** 连通状态卡片 */
 const ConnectivityCard: FC<{ channel: Channel }> = ({ channel }) => {
   // 预留：从本地缓存或测试结果获取连通状态
-  const status: 'ok' | 'fail' | 'unknown' = 'unknown';
+  const status: 'ok' | 'fail' | 'unknown' = 'unknown' as const;
 
   return (
     <Card size="small" title="连通状态" style={{ height: '100%' }}>
