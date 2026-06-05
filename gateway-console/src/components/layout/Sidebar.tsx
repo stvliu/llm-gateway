@@ -3,8 +3,8 @@ import { Menu } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
-import { menuConfig } from '@/constants/menuConfig';
-import type { MenuItemConfig } from '@/constants/menuConfig';
+import { topLevelMenuItems, menuGroups } from '@/constants/menuConfig';
+import type { MenuItemConfig, MenuGroupConfig } from '@/constants/menuConfig';
 import type { MenuProps } from 'antd';
 import type { Permission } from '@/constants/permissions';
 
@@ -12,34 +12,41 @@ interface SidebarProps {
   collapsed: boolean;
 }
 
-/** 递归过滤+翻译菜单项 */
-function buildMenuItems(
-  items: MenuItemConfig[],
+/** 过滤单个菜单项 */
+function filterMenuItem(
+  item: MenuItemConfig,
   hasPermission: (p: Permission) => boolean,
   t: (key: string) => string
-): MenuProps['items'] {
-  return items
-    .map((item) => {
-      if (item.permission && !hasPermission(item.permission)) {
-        return null;
-      }
-      if (item.children) {
-        const filteredChildren = buildMenuItems(item.children, hasPermission, t);
-        if (!filteredChildren || filteredChildren.length === 0) return null;
-        return {
-          key: item.key,
-          icon: item.icon,
-          label: t(item.label),
-          children: filteredChildren,
-        };
-      }
-      return {
-        key: item.key,
-        icon: item.icon,
-        label: t(item.label),
-      };
-    })
-    .filter(Boolean) as NonNullable<MenuProps['items']>;
+): MenuProps['items'][number] | null {
+  if (item.permission && !hasPermission(item.permission)) {
+    return null;
+  }
+  return {
+    key: item.key,
+    icon: item.icon,
+    label: t(item.label),
+    disabled: item.reserved,
+  };
+}
+
+/** 过滤菜单分组 */
+function filterMenuGroup(
+  group: MenuGroupConfig,
+  hasPermission: (p: Permission) => boolean,
+  t: (key: string) => string
+): MenuProps['items'][number] | null {
+  const filteredItems = group.items
+    .map((item) => filterMenuItem(item, hasPermission, t))
+    .filter(Boolean);
+
+  if (filteredItems.length === 0) return null;
+
+  return {
+    type: 'group' as const,
+    key: group.key,
+    label: t(group.label),
+    children: filteredItems,
+  };
 }
 
 export function Sidebar({ collapsed }: SidebarProps) {
@@ -49,18 +56,28 @@ export function Sidebar({ collapsed }: SidebarProps) {
   const { hasPermission } = useAuthStore();
 
   const menuItems = useMemo(() => {
-    return buildMenuItems(menuConfig, hasPermission, t);
-  }, [menuConfig, hasPermission, t]);
+    const items: MenuProps['items'] = [];
 
-  const openKeys = useMemo(() => {
-    return menuConfig
-      .filter((item) => item.children)
-      .map((item) => item.key);
-  }, []);
+    // 顶层独立菜单项
+    topLevelMenuItems.forEach((item) => {
+      const filtered = filterMenuItem(item, hasPermission, t);
+      if (filtered) items.push(filtered);
+    });
+
+    // 分组菜单项
+    menuGroups.forEach((group) => {
+      const filtered = filterMenuGroup(group, hasPermission, t);
+      if (filtered) items.push(filtered);
+    });
+
+    return items;
+  }, [hasPermission, t]);
 
   const selectedKeys = [location.pathname];
 
-  const handleMenuClick = ({ key }: { key: string }) => {
+  const handleMenuClick = ({ key, item }: { key: string; item?: { props?: { disabled?: boolean } } }) => {
+    // 禁用项不跳转
+    if (item?.props?.disabled) return;
     navigate(key);
   };
 
@@ -68,7 +85,6 @@ export function Sidebar({ collapsed }: SidebarProps) {
     <Menu
       mode="inline"
       inlineCollapsed={collapsed}
-      defaultOpenKeys={openKeys}
       selectedKeys={selectedKeys}
       items={menuItems}
       onClick={handleMenuClick}
