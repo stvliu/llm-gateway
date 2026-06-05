@@ -62,8 +62,8 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
           <div key={group.provider.id} style={{ marginBottom: '24px' }}>
             {/* 供应商分组头 */}
             <ProviderGroupHeader
-              providerId={group.provider.providerId}
               providerName={group.provider.providerName}
+              providerCode={group.provider.providerId}
               providerState={group.provider.state}
               channelCount={group.channels.length}
               endpointCount={totalEndpoints}

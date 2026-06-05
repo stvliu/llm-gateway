@@ -148,17 +148,24 @@ export interface ApiKeyTestResponse {
 export interface ChannelModel {
   id: number;
   channelId: number;
-  modelName: string;
-  upstreamModelName: string;
+  modelId: number;
+  /** 供应商侧模型名称（如 gpt-4o） */
+  modelName?: string;
+  /** 模型展示名称 */
+  displayName?: string;
+  /** 模型系列 */
+  modelFamily?: string;
+  /** 上游模型名，null 表示与 modelName 相同 */
+  upstreamModelName?: string | null;
+  /** 关联状态 */
   state: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-/** 创建渠道模型映射请求 */
+/** 创建渠道模型映射请求体（与后端 ChannelModelCreateRequest 一致） */
 export interface CreateChannelModelRequest {
-  modelName: string;
-  upstreamModelName: string;
+  modelId: number;
+  /** 上游模型名，为空表示与 Model.modelName 相同 */
+  upstreamModelName?: string;
 }
 
 /** 渠道聚合统计（前端计算） */

@@ -125,7 +125,7 @@ export default function TeamsPage() {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       <Title level={4} style={{ marginBottom: '24px' }}>
         {t('title')}
       </Title>

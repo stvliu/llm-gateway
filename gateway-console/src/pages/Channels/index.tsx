@@ -10,6 +10,8 @@ import {
   Segmented,
   Card,
   Dropdown,
+  message,
+  Modal,
 } from 'antd';
 import {
   PlusOutlined,
@@ -19,7 +21,7 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAllChannels, useDeleteChannel, useUpdateChannel } from '@/services/query/useChannels';
+import { useAllChannels, useDeleteChannel, useUpdateChannel, useChannelModelsBatch } from '@/services/query/useChannels';
 import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
@@ -28,13 +30,15 @@ import { ChannelCreateWizard } from './ChannelCreateWizard';
 import { ProviderEditModal } from './ProviderEditModal';
 import { ProviderCreateModal } from './ProviderCreateModal';
 import { ChannelTableView } from './ChannelTableView';
+import { ConnectivityTestPanel } from './ConnectivityTestPanel';
 import BatchImportModal from './BatchImportModal';
-import BatchExportButton from './BatchExportButton';
+import { BatchExportButton } from './BatchExportButton';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
   ChannelCredential,
+  ChannelModel,
 } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import { theme } from 'antd';
@@ -49,15 +53,16 @@ type ViewMode = 'grouped' | 'table';
  */
 const calculateChannelStats = (
   channel: Channel,
-  credentials: ChannelCredential[] | undefined
+  credentials: ChannelCredential[] | undefined,
+  models: ChannelModel[] | undefined
 ): ChannelCard => {
   return {
     ...channel,
     stats: {
       endpointCount: channel.endpoints?.length || 0,
       credentialCount: credentials?.length || 0,
-      modelCount: 0, // TODO: 从模型映射 API 获取
-      avgResponseTime: null, // TODO: 从测试结果获取
+      modelCount: models?.length || 0,
+      avgResponseTime: null,
     },
   };
 };
@@ -80,6 +85,7 @@ export default function Channels() {
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [batchImportOpen, setBatchImportOpen] = useState(false);
   const [createProviderOpen, setCreateProviderOpen] = useState(false);
+  const [connectivityProviderId, setConnectivityProviderId] = useState<number | null>(null);
 
   // 视图切换（持久化到 localStorage）
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -110,12 +116,12 @@ export default function Channels() {
   // 获取所有渠道的凭证（批量）
   const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
   const credentialsQueries = useChannelCredentialsBatch(channelIds);
+  const modelsQueries = useChannelModelsBatch(channelIds);
 
   // 提取凭证数据为稳定引用
   const credentialsData = useMemo(
     () => credentialsQueries.map((q) => q.data),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channels, credentialsQueries.map((q) => q.data?.length).join(',')]
+    [credentialsQueries]
   );
 
   // 构建渠道卡片数据（含统计）
@@ -124,9 +130,10 @@ export default function Channels() {
 
     return channels.map((channel, index) => {
       const credentials = credentialsData[index];
-      return calculateChannelStats(channel, credentials);
+      const models = modelsQueries[index]?.data;
+      return calculateChannelStats(channel, credentials, models);
     });
-  }, [channels, credentialsData]);
+  }, [channels, credentialsData, modelsQueries]);
 
   // 按供应商分组
   const groupedChannels: ChannelGroup[] = useMemo(() => {
@@ -221,7 +228,7 @@ export default function Channels() {
   };
 
   return (
-    <div style={{ padding: '24px' }}>
+    <div>
       {/* 页面标题 + 视图切换 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
         <Title level={4} style={{ margin: 0 }}>
@@ -334,6 +341,12 @@ export default function Channels() {
                 setEnabledProvider.mutate({ id, enabled: p.state !== 'ACTIVE' });
               }
             }}
+            onTestProviderConnectivity={(providerCode) => {
+              setConnectivityProviderId(providerCode);
+            }}
+            onExportProvider={() => {
+              message.info(t('batch.exportHint'));
+            }}
           />
           {/* 底部新增渠道虚线卡片 */}
           <Card
@@ -396,6 +409,28 @@ export default function Channels() {
         open={createProviderOpen}
         onClose={() => setCreateProviderOpen(false)}
       />
+
+      {/* 供应商连通性测试弹窗 */}
+      {connectivityProviderId && (() => {
+        const provider = providersData?.items?.find(p => p.id === connectivityProviderId);
+        return (
+          <Modal
+            title={t('group.connectivityTest')}
+            open={!!connectivityProviderId}
+            onCancel={() => setConnectivityProviderId(null)}
+            footer={null}
+            width={560}
+            destroyOnClose
+          >
+            {provider && (
+              <ConnectivityTestPanel
+                providerCode={provider.providerId?.toLowerCase() ?? ''}
+                defaultBaseUrl={provider.websiteUrl}
+              />
+            )}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

@@ -1,21 +1,17 @@
-import { Button, Card, Col, Popconfirm, Row, Tag, Tooltip, Typography, theme } from 'antd';
+import { Card, Tag, Dropdown, App } from 'antd';
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ClockCircleOutlined,
   DeleteOutlined,
-  PauseCircleOutlined,
-  PlayCircleOutlined,
-  QuestionCircleOutlined,
-  RightOutlined,
+  EditOutlined,
+  StopOutlined,
+  CheckCircleOutlined,
+  MoreOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { theme } from 'antd';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
-import type { FC } from 'react';
 
-const { Text } = Typography;
-
-export interface ChannelCardProps {
+interface ChannelCardProps {
   channel: ChannelCardType;
   onClick: (channel: ChannelCardType) => void;
   onDelete: (id: number) => void;
@@ -24,232 +20,91 @@ export interface ChannelCardProps {
 
 /**
  * 渠道卡片组件
- * 一行一个，横向铺满，展示端点/Key/模型统计和用量
  */
-export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, onToggleState }) => {
+export function ChannelCard({ channel, onClick, onDelete, onToggleState }: ChannelCardProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
+  const { modal } = App.useApp();
   const isActive = channel.state === 'ACTIVE';
 
-  // 检查是否缺少关键配置（凭证为 0 表示配置中）
-  const isIncomplete = channel.stats.credentialCount === 0;
+  const menuItems = [
+    { key: 'edit', label: t('card.edit'), icon: <EditOutlined /> },
+    { key: 'test', label: t('card.testConnectivity'), icon: <ApiOutlined /> },
+    { type: 'divider' as const },
+    {
+      key: 'toggle',
+      label: isActive ? t('card.disable') : t('card.enable'),
+      icon: isActive ? <StopOutlined /> : <CheckCircleOutlined />,
+    },
+    { type: 'divider' as const },
+    { key: 'delete', label: t('card.delete'), icon: <DeleteOutlined />, danger: true },
+  ];
 
-  const { endpointCount, credentialCount, modelCount } = channel.stats;
-
-  /**
-   * 根据响应时间返回颜色 token
-   */
-  const getResponseTimeColor = (responseTime: number | null | undefined): string => {
-    if (responseTime === null || responseTime === undefined) return token.colorTextSecondary;
-    if (responseTime <= 500) return token.colorSuccess;
-    if (responseTime <= 2000) return token.colorWarning;
-    return token.colorError;
+  const handleMenuClick = (e: { key: string }) => {
+    switch (e.key) {
+      case 'edit':
+        onClick(channel);
+        break;
+      case 'test':
+        onClick(channel);
+        break;
+      case 'toggle':
+        onToggleState(channel.id, !isActive);
+        break;
+      case 'delete':
+        modal.confirm({
+          title: t('card.deleteConfirmTitle'),
+          content: t('card.deleteConfirmContent', { name: channel.name }),
+          okType: 'danger',
+          onOk: () => onDelete(channel.id),
+        });
+        break;
+    }
   };
-
-  /**
-   * 根据响应时间返回文本
-   */
-  const getResponseTimeText = (responseTime: number | null | undefined): string => {
-    if (responseTime === null || responseTime === undefined) return t('overview.notTested');
-    if (responseTime < 1000) return `${responseTime}ms`;
-    return `${(responseTime / 1000).toFixed(1)}s`;
-  };
-
-  /** 统计数字颜色 */
-  const statNumberColor = (type: 'endpoint' | 'credential' | 'model') => {
-    if (!isActive) return token.colorTextDisabled;
-    if (type === 'endpoint') return token.colorPrimary;
-    if (type === 'credential') return credentialCount === 0 ? token.colorWarning : token.colorLink;
-    return token.colorInfo;
-  };
-
-  /** 统计区域背景色 */
-  const statBgColor = token.colorFillQuaternary;
 
   return (
     <Card
       hoverable
       onClick={() => onClick(channel)}
       style={{
-        marginBottom: '8px',
-        opacity: isActive ? 1 : 0.5,
-        border: isIncomplete ? `2px solid ${token.colorWarning}` : undefined,
-        transition: 'all 0.2s',
+        opacity: isActive ? 1 : 0.6,
+        borderLeft: isActive
+          ? `3px solid ${token.colorSuccess}`
+          : `3px solid ${token.colorTextQuaternary}`,
       }}
       styles={{ body: { padding: '16px' } }}
     >
-      {/* 第一行：名称 + 状态 + 计费/优先级 + 操作 */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* 左侧：状态点 + 渠道名 */}
-        <div style={{ flex: '0 0 280px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: isActive ? token.colorSuccess : token.colorBorder,
-            }}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: token.marginSM, marginBottom: token.marginXS }}>
+            <span style={{ fontWeight: 600, fontSize: token.fontSizeLG, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {channel.name}
+            </span>
+            <Tag color={isActive ? 'success' : 'default'}>
+              {isActive ? t('status.active') : t('status.inactive')}
+            </Tag>
+          </div>
+
+          {channel.endpoints && channel.endpoints.length > 0 && (
+            <div style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM, marginBottom: token.marginXS, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {channel.endpoints[0].endpointUrl}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: token.marginSM, color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>
+            <span>{t('card.endpoints')}: {channel.stats?.endpointCount ?? 0}</span>
+            <span>Key: {channel.stats?.credentialCount ?? 0}</span>
+            <span>{t('card.models')}: {channel.stats?.modelCount ?? 0}</span>
+          </div>
+        </div>
+
+        <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
+          <MoreOutlined
+            style={{ fontSize: '16px', color: token.colorTextSecondary }}
+            onClick={(e) => e.stopPropagation()}
           />
-          <Text strong style={{ fontSize: '15px' }}>
-            {channel.name}
-          </Text>
-          {isIncomplete && (
-            <Tag color="warning" style={{ marginLeft: '4px' }}>
-              {t('card.configuring')}
-            </Tag>
-          )}
-          {!isActive && (
-            <Tag color="default" style={{ marginLeft: '4px' }}>
-              {t('status.stopped')}
-            </Tag>
-          )}
-        </div>
-
-        {/* 状态标签 */}
-        <div style={{ flex: '0 0 80px' }}>
-          <Tag color={isActive ? 'success' : 'default'}>
-            {isActive ? t('status.running') : t('status.stopped')}
-          </Tag>
-        </div>
-
-        {/* 计费信息 */}
-        <div style={{ flex: '0 0 100px' }}>
-          <Text type="secondary" style={{ fontSize: '13px' }}>
-            {channel.billingMode === 'pay_as_you_go'
-              ? t('billing.payAsYouGo')
-              : channel.billingMode === 'subscription'
-              ? t('billing.subscription')
-              : t('billing.default', { mode: channel.billingMode })}
-          </Text>
-        </div>
-
-        {/* 右侧：响应时间 + 详情入口 + 启用/停用 + 删除 */}
-        <div
-          style={{
-            flex: '0 0 200px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '4px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {channel.stats.avgResponseTime === null ||
-            channel.stats.avgResponseTime === undefined ? (
-              <QuestionCircleOutlined style={{ color: token.colorTextSecondary }} />
-            ) : channel.stats.avgResponseTime <= 500 ? (
-              <CheckCircleOutlined style={{ color: token.colorSuccess }} />
-            ) : channel.stats.avgResponseTime <= 2000 ? (
-              <ClockCircleOutlined style={{ color: token.colorWarning }} />
-            ) : (
-              <CloseCircleOutlined style={{ color: token.colorError }} />
-            )}
-            <Text
-              style={{
-                fontSize: '13px',
-                color: getResponseTimeColor(channel.stats.avgResponseTime),
-              }}
-            >
-              {getResponseTimeText(channel.stats.avgResponseTime)}
-            </Text>
-          </div>
-          <Tooltip title={t('card.viewDetail')}>
-            <RightOutlined style={{ fontSize: 12, color: token.colorTextSecondary }} />
-          </Tooltip>
-          <Popconfirm
-            title={isActive ? t('card.confirmDisable') : t('card.confirmEnable')}
-            onConfirm={(e) => {
-              e?.stopPropagation();
-              onToggleState(channel.id, !isActive);
-            }}
-            onCancel={(e) => e?.stopPropagation()}
-            okText={t('actions.confirm', { ns: 'common' })}
-            cancelText={t('actions.cancel', { ns: 'common' })}
-          >
-            <Tooltip title={isActive ? t('card.disable') : t('card.enable')}>
-              <Button
-                type="text"
-                size="small"
-                icon={isActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </Tooltip>
-          </Popconfirm>
-          <Popconfirm
-            title={t('card.confirmDelete')}
-            description={t('card.confirmDeleteDesc', { name: channel.name })}
-            onConfirm={(e) => {
-              e?.stopPropagation();
-              onDelete(channel.id);
-            }}
-            onCancel={(e) => e?.stopPropagation()}
-            okText={t('actions.delete', { ns: 'common' })}
-            cancelText={t('actions.cancel', { ns: 'common' })}
-            okButtonProps={{ danger: true }}
-          >
-            <Tooltip title={t('card.delete')}>
-              <Button
-                type="text"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={(e) => e.stopPropagation()}
-              />
-            </Tooltip>
-          </Popconfirm>
-        </div>
+        </Dropdown>
       </div>
-
-      {/* 第二行：端点/Key/模型三列统计 + 今日用量 */}
-      <Row gutter={8} style={{ marginTop: 10, marginBottom: 4 }}>
-        <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('endpoint') }}>
-              {endpointCount}
-            </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.endpoints')}</div>
-          </div>
-        </Col>
-        <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('credential') }}>
-              {credentialCount}
-            </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.keys')}</div>
-          </div>
-        </Col>
-        <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
-            <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('model') }}>
-              {modelCount}
-            </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.models')}</div>
-          </div>
-        </Col>
-        <Col span={6}>
-          <div style={{ textAlign: 'center', padding: '6px', background: statBgColor, borderRadius: token.borderRadiusSM }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? token.colorPrimary : token.colorTextDisabled }}>
-              --
-            </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.todayToken')}</div>
-          </div>
-        </Col>
-      </Row>
-
-      {/* 停用渠道显示最后活跃时间 */}
-      {!isActive && channel.updatedAt && (
-        <div style={{ marginTop: 4 }}>
-          <Text type="secondary" style={{ fontSize: 11 }}>
-            {t('card.lastActive') + ': '}{new Date(channel.updatedAt).toLocaleDateString()}
-          </Text>
-        </div>
-      )}
     </Card>
   );
-};
+}

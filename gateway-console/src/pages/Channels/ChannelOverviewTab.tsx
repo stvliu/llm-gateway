@@ -1,4 +1,5 @@
-import { Row, Col, Card, Tag, Typography, Button, Timeline, theme } from 'antd';
+import { useState } from 'react';
+import { Row, Col, Card, Tag, Typography, Button, Timeline, message, theme } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
@@ -7,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { Channel, ChannelEndpointResponse, ChannelCredential, ChannelModel } from '@/types/channel';
+import { useTestChannelCredential } from '@/services/query/useChannels';
 import type { FC } from 'react';
 
 const { Text } = Typography;
@@ -18,13 +20,36 @@ interface ChannelOverviewTabProps {
   onTabChange: (tab: string) => void;
 }
 
+/** 连通状态 */
+type ConnectivityStatus = 'ok' | 'fail' | 'unknown';
+
 /** 连通状态卡片 */
-const ConnectivityCard: FC<{ channel: Channel }> = () => {
+const ConnectivityCard: FC<{
+  channel: Channel;
+  credentials: ChannelCredential[];
+}> = ({ channel, credentials }) => {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
-  // 预留：从本地缓存或测试结果获取连通状态
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const status: 'ok' | 'fail' | 'unknown' = 'unknown' as 'ok' | 'fail' | 'unknown';
+  const [status, setStatus] = useState<ConnectivityStatus>('unknown');
+  const [testing, setTesting] = useState(false);
+  const testCredential = useTestChannelCredential();
+
+  const handleTest = async () => {
+    if (credentials.length === 0) {
+      message.warning(t('drawer.noCredentials'));
+      return;
+    }
+    setTesting(true);
+    try {
+      // 测试第一个凭证来判断连通性
+      const result = await testCredential.mutateAsync({ channelId: channel.id, id: credentials[0].id });
+      setStatus(result.success ? 'ok' : 'fail');
+    } catch {
+      setStatus('fail');
+    } finally {
+      setTesting(false);
+    }
+  };
 
   return (
     <Card size="small" title={t('overview.connectivity')} style={{ height: '100%' }}>
@@ -50,7 +75,7 @@ const ConnectivityCard: FC<{ channel: Channel }> = () => {
           <div style={{ marginTop: 8 }}>
             <Text type="secondary">{t('overview.notTested')}</Text>
           </div>
-          <Button type="link" size="small">
+          <Button type="link" size="small" onClick={handleTest} loading={testing}>
             {t('overview.testNow')}
           </Button>
         </div>
@@ -205,7 +230,7 @@ export const ChannelOverviewTab: FC<ChannelOverviewTabProps> = ({
       {/* 连通状态 + Token/成本 统计卡 */}
       <Row gutter={12} style={{ marginBottom: 16 }}>
         <Col span={8}>
-          <ConnectivityCard channel={channel} />
+          <ConnectivityCard channel={channel} credentials={credentials} />
         </Col>
         <Col span={8}>
           <TokenUsageCard />

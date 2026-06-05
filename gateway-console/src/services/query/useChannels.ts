@@ -196,9 +196,14 @@ export function useDeleteChannelCredential() {
 
 /** 测试渠道凭证 */
 export function useTestChannelCredential() {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ channelId, id }: { channelId: number; id: number }) =>
       channelApi.testCredential(channelId, id),
+    onSuccess: (_, { channelId }) => {
+      // 测试完成后刷新凭证列表（可能影响状态显示）
+      queryClient.invalidateQueries({ queryKey: channelKeys.credentials(channelId) });
+    },
   });
 }
 
@@ -212,6 +217,7 @@ export function useAddChannel() {
       channelApi.create(data),
     onSuccess: (_, { providerId }) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.list(providerId) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
     },
   });
 }
@@ -272,5 +278,16 @@ export function useSetChannelModelEnabled() {
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
     },
+  });
+}
+
+/** 批量获取多个渠道的模型映射列表 */
+export function useChannelModelsBatch(channelIds: number[]) {
+  return useQueries({
+    queries: channelIds.map((channelId) => ({
+      queryKey: [...channelKeys.detail(channelId), 'models'],
+      queryFn: () => channelApi.listModels(channelId),
+      enabled: !!channelId,
+    })),
   });
 }

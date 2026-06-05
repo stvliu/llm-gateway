@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Modal, Input, Button, Space, Steps, Alert, App, Upload, Tag, Typography } from 'antd';
+import { Modal, Input, Button, Space, Steps, Alert, App, Upload, Tag, Typography, theme } from 'antd';
 import { CopyOutlined, UploadOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useCreateProvider } from '@/services/query/useProviders';
@@ -102,6 +102,7 @@ function parseImportContent(content: string, t: (key: string, params?: Record<st
 export default function BatchImportModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation('channels');
   const { message } = App.useApp();
+  const { token } = theme.useToken();
   const createProviderMutation = useCreateProvider();
   const addChannelMutation = useAddChannel();
 
@@ -265,7 +266,7 @@ export default function BatchImportModal({ open, onClose }: { open: boolean; onC
           />
           <div style={{ maxHeight: 320, overflow: 'auto' }}>
             {parseResult.data.map((provider) => (
-              <div key={provider.code} style={{ marginBottom: 12, padding: 12, background: '#fafafa', borderRadius: 6 }}>
+              <div key={provider.code} style={{ marginBottom: 12, padding: 12, background: token.colorFillQuaternary, borderRadius: token.borderRadiusSM }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                   <Text strong>{provider.name}</Text>
                   <Tag>{provider.code}</Tag>

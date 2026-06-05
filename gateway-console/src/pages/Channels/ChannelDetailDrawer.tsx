@@ -192,7 +192,7 @@ export function ChannelDetailDrawer({
           <span>{t('drawer.tabModels', { count: modelCount })}</span>
         </Space>
       ),
-      children: <ModelMappingSection channelId={channel.id} />,
+      children: <ModelMappingSection channelId={channel.id} channelModels={channelModels} />,
     },
     {
       key: 'quota',

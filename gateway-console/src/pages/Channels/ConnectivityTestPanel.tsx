@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Form, Input, Select, Button, Collapse, Tag, Alert, Space, Typography } from 'antd';
-import { App } from 'antd';
+import { Card, Form, Input, Button, Tag, Typography, Space, Divider, Spin } from 'antd';
+import { LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTestConnectivity } from '@/services/query/useProviders';
 import type { ConnectivityTestResult, ConnectivityTestLevelResult } from '@/types/provider';
+
+const { Text } = Typography;
 
 interface ConnectivityTestPanelProps {
   providerCode: string;
@@ -11,12 +13,11 @@ interface ConnectivityTestPanelProps {
 }
 
 /**
- * 连通性测试面板
+ * 供应商连通性测试面板
  * 支持两级测试：认证检测 + 模型可用性
  */
-export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
+export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
   const { t } = useTranslation('channels');
-  const { message } = App.useApp();
   const [form] = Form.useForm();
   const testMutation = useTestConnectivity();
   const [result, setResult] = useState<ConnectivityTestResult | null>(null);
@@ -32,16 +33,16 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
       },
       {
         onSuccess: (data) => setResult(data),
-        onError: () => message.error(t('connectivity.testFailed')),
+        onError: () => setResult(null),
       }
     );
   };
 
   /** 渲染单级测试结果 */
-  const renderLevelResult = (label: string, level: ConnectivityTestLevelResult | null) => {
+  const renderLevelResult = (_label: string, level: ConnectivityTestLevelResult | null) => {
     if (!level) return null;
     return (
-      <Collapse.Panel key={label} header={label}>
+      <Card.Grid style={{ width: '100%', padding: '12px 16px' }}>
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>
             <Tag color={level.success ? 'success' : 'error'}>
@@ -59,15 +60,15 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
             </div>
           )}
         </Space>
-      </Collapse.Panel>
+      </Card.Grid>
     );
   };
 
   return (
-    <div style={{ marginTop: 16 }}>
+    <div>
       <Form form={form} layout="vertical" initialValues={{ protocol: providerCode === 'anthropic' ? 'anthropic' : 'openai', baseUrl: defaultBaseUrl }}>
         <Form.Item name="protocol" label={t('connectivity.protocol')} rules={[{ required: true }]}>
-          <Select options={[{ value: 'openai', label: 'OpenAI' }, { value: 'anthropic', label: 'Anthropic' }]} />
+          <Input disabled placeholder={providerCode === 'anthropic' ? 'Anthropic' : 'OpenAI'} />
         </Form.Item>
         <Form.Item name="baseUrl" label={t('connectivity.baseUrl')}>
           <Input placeholder={t('connectivity.baseUrlPlaceholder')} />
@@ -87,15 +88,19 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
 
       {result && (
         <div style={{ marginTop: 16 }}>
-          <Alert
-            type={result.success ? 'success' : 'error'}
-            message={result.message}
-            style={{ marginBottom: 12 }}
-          />
-          <Collapse>
-            {renderLevelResult(t('connectivity.level1Auth'), result.level1)}
-            {renderLevelResult(t('connectivity.level2Model'), result.level2)}
-          </Collapse>
+          <Tag color={result.success ? 'success' : 'error'} style={{ fontSize: 13, padding: '2px 8px' }}>
+            {result.success ? t('connectivity.success') : t('connectivity.failed')}
+          </Tag>
+          {result.message && <Text style={{ marginLeft: 8 }}>{result.message}</Text>}
+          <Divider style={{ margin: '12px 0' }} />
+          {renderLevelResult(t('connectivity.level1Auth'), result.level1)}
+          {renderLevelResult(t('connectivity.level2Model'), result.level2)}
+        </div>
+      )}
+
+      {testMutation.isPending && !result && (
+        <div style={{ textAlign: 'center', padding: 24 }}>
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 24 }} />} />
         </div>
       )}
     </div>

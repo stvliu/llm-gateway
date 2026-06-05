@@ -201,7 +201,7 @@ export default function Models() {
           },
         ]}
       />
-      <div style={{ padding: '0 24px' }}>
+      <div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <Input.Search
             placeholder={t('search', { defaultValue: '搜索模型...' })}

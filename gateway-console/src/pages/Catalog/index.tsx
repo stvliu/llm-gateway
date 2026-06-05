@@ -155,7 +155,7 @@ export default function CatalogPage() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Card>
         {/* 面包屑导航 */}
         <div style={{ marginBottom: 16 }}>

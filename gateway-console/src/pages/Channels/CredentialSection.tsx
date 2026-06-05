@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Tag, Input, InputNumber, Button, Space, Form, message, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { InlineEditableList } from './InlineEditableList';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import { ApiKeyEditModal } from './ApiKeyEditModal';
@@ -21,6 +22,7 @@ interface CredentialSectionProps {
  * 展示渠道的凭证列表，支持行内编辑和测试
  */
 export function CredentialSection({ channelId, credentials }: CredentialSectionProps) {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -55,25 +57,20 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   /** 渲染展示行 */
   const renderItem = useCallback((credential: ChannelCredential) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-      {/* Key 前缀（使用 MaskedKeyDisplay 组件） */}
       <MaskedKeyDisplay
         keyPlain={credential.apiKeyPlain}
         mode="editable"
         size="small"
         onEdit={() => setEditingId(credential.id)}
       />
-      {/* 优先级/权重 */}
       <Tag color="blue">P{credential.priority}</Tag>
       <Tag color="purple">W{credential.weight}</Tag>
-      {/* 最后使用时间（暂无字段，显示占位） */}
       <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-        最后使用: 暂无数据
+        {t('credential.lastUsed')}: {t('credential.noData')}
       </span>
-      {/* 状态点 */}
       <Tag color={getStateColor(credential.state)}>
-        {credential.state === 'ACTIVE' ? '已启用' : '已停用'}
+        {credential.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
       </Tag>
-      {/* 测试按钮 */}
       <Button
         type="link"
         size="small"
@@ -86,21 +83,21 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
               id: credential.id,
             });
             if (result.success) {
-              message.success(`测试成功，延迟: ${result.latency}ms`);
+              message.success(t('credential.testSuccess', { latency: result.latency }));
             } else {
-              message.error(`测试失败: ${result.error?.message || '未知错误'}`);
+              message.error(t('credential.testFail', { msg: result.error?.message || t('credential.unknownError') }));
             }
           } catch (error) {
-            message.error('测试请求失败');
+            message.error(t('credential.testRequestFail'));
           } finally {
             setTestingId(null);
           }
         }}
       >
-        测试
+        {t('credential.test')}
       </Button>
     </div>
-  ), [channelId, token.colorTextSecondary, testingId, testCredential, setEditingId]);
+  ), [channelId, token.colorTextSecondary, testingId, testCredential, setEditingId, t]);
 
   /** 渲染编辑表单 */
   const renderEditForm = (
@@ -122,10 +119,10 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           id: credential.id,
           data,
         });
-        message.success('凭证更新成功');
+        message.success(t('credential.updateSuccess'));
         onSave(result);
       } catch (error) {
-        message.error('凭证更新失败');
+        message.error(t('credential.updateFail'));
       } finally {
         setLoading(false);
       }
@@ -135,27 +132,27 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
       <Form form={form} layout="inline" style={{ gap: 12 }}>
         <Form.Item
           name="priority"
-          label="优先级"
-          rules={[{ required: true, message: '请输入优先级' }]}
+          label={t('credential.priority')}
+          rules={[{ required: true, message: t('credential.priorityRequired') }]}
         >
           <InputNumber min={1} max={10} style={{ width: 100 }} />
         </Form.Item>
         <Form.Item
           name="weight"
-          label="权重"
-          rules={[{ required: true, message: '请输入权重' }]}
+          label={t('credential.weight')}
+          rules={[{ required: true, message: t('credential.weightRequired') }]}
         >
           <InputNumber min={1} max={100} style={{ width: 100 }} />
         </Form.Item>
-        <Form.Item name="description" label="描述">
-          <Input style={{ width: 200 }} placeholder="凭证描述" />
+        <Form.Item name="description" label={t('credential.description')}>
+          <Input style={{ width: 200 }} placeholder={t('credential.descriptionPlaceholder')} />
         </Form.Item>
         <Space>
           <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
+            {t('drawer.save')}
           </Button>
           <Button size="small" onClick={onCancel}>
-            取消
+            {t('drawer.cancel')}
           </Button>
         </Space>
       </Form>
@@ -178,7 +175,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           description: values.description,
         };
         const result = await createCredential.mutateAsync({ channelId, data });
-        message.success('凭证添加成功');
+        message.success(t('credential.addSuccess'));
         onSave({
           id: result.id,
           apiKeyPrefix: result.apiKeyPlain.substring(0, Math.min(10, result.apiKeyPlain.length)),
@@ -193,7 +190,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           channelId,
         });
       } catch (error) {
-        message.error('凭证添加失败');
+        message.error(t('credential.addFail'));
       } finally {
         setLoading(false);
       }
@@ -204,35 +201,35 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         <Form.Item
           name="apiKey"
           label="API Key"
-          rules={[{ required: true, message: '请输入 API Key' }]}
+          rules={[{ required: true, message: t('credential.apiKeyRequired') }]}
         >
           <Input.Password style={{ width: 250 }} placeholder="sk-..." />
         </Form.Item>
         <Form.Item
           name="priority"
-          label="优先级"
-          rules={[{ required: true, message: '请输入优先级' }]}
+          label={t('credential.priority')}
+          rules={[{ required: true, message: t('credential.priorityRequired') }]}
           initialValue={1}
         >
           <InputNumber min={1} max={10} style={{ width: 100 }} />
         </Form.Item>
         <Form.Item
           name="weight"
-          label="权重"
-          rules={[{ required: true, message: '请输入权重' }]}
+          label={t('credential.weight')}
+          rules={[{ required: true, message: t('credential.weightRequired') }]}
           initialValue={50}
         >
           <InputNumber min={1} max={100} style={{ width: 100 }} />
         </Form.Item>
-        <Form.Item name="description" label="描述">
-          <Input style={{ width: 150 }} placeholder="凭证描述" />
+        <Form.Item name="description" label={t('credential.description')}>
+          <Input style={{ width: 150 }} placeholder={t('credential.descriptionPlaceholder')} />
         </Form.Item>
         <Space>
           <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
+            {t('drawer.save')}
           </Button>
           <Button size="small" onClick={onCancel}>
-            取消
+            {t('drawer.cancel')}
           </Button>
         </Space>
       </Form>
@@ -243,9 +240,9 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   const handleDelete = async (credential: ChannelCredential) => {
     try {
       await deleteCredential.mutateAsync({ channelId, id: credential.id });
-      message.success('凭证删除成功');
+      message.success(t('credential.deleteSuccess'));
     } catch (error) {
-      message.error('凭证删除失败');
+      message.error(t('credential.deleteFail'));
     }
   };
 
@@ -261,7 +258,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         }}
         onDelete={handleDelete}
         getKey={(credential) => credential.id}
-        addLabel="添加 API Key"
+        addLabel={t('credential.addKey')}
       />
 
       {/* API Key 编辑弹窗 */}
@@ -273,7 +270,7 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           keyPlain={credentials.find(c => c.id === editingId)?.apiKeyPlain || ''}
           onClose={() => setEditingId(null)}
           onSuccess={() => {
-            message.success('API Key 已更新');
+            message.success(t('credential.keyUpdated'));
           }}
           onUpdate={async (chId, credId, data) => {
             await updateCredential.mutateAsync({ channelId: chId, id: credId, data });

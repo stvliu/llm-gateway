@@ -11,7 +11,7 @@ import DeveloperKeyList from './DeveloperKeyList';
 const { Title, Paragraph } = Typography;
 
 export default function Developer() {
-  const { t } = useTranslation('developer');
+  const { t } = useTranslation('quickstart');
   const { data: models, isLoading } = useModels();
   const [search, setSearch] = useState('');
   const [keyModalOpen, setKeyModalOpen] = useState(false);
@@ -23,7 +23,7 @@ export default function Developer() {
   ) ?? [];
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto' }}>
+    <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
           <Title level={4} style={{ margin: 0 }}>{t('title')}</Title>

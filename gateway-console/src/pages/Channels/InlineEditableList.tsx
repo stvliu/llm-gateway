@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, Popconfirm, Space, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 /**
  * 通用行内编辑列表组件
@@ -38,8 +39,9 @@ export function InlineEditableList<T>({
   onSave,
   onSaveNew,
   getKey,
-  addLabel = '添加',
+  addLabel,
 }: InlineEditableListProps<T>) {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   // 正在编辑的项ID
   const [editingKey, setEditingKey] = useState<string | number | null>(null);
@@ -121,17 +123,17 @@ export function InlineEditableList<T>({
                     size="small"
                     onClick={() => handleEdit(key)}
                   >
-                    编辑
+                    {t('inlineList.edit')}
                   </Button>
                   {onDelete && (
                     <Popconfirm
-                      title="确定删除此项吗？"
+                      title={t('inlineList.confirmDelete')}
                       onConfirm={() => onDelete(item)}
-                      okText="确定"
-                      cancelText="取消"
+                      okText={t('inlineList.confirm')}
+                      cancelText={t('inlineList.cancel')}
                     >
                       <Button type="link" size="small" danger>
-                        删除
+                        {t('inlineList.delete')}
                       </Button>
                     </Popconfirm>
                   )}
@@ -160,7 +162,7 @@ export function InlineEditableList<T>({
       {/* 添加按钮 */}
       {!isAdding && editingKey === null && (
         <Button type="dashed" block onClick={handleStartAdd}>
-          + {addLabel}
+          + {addLabel || t('inlineList.add')}
         </Button>
       )}
     </div>
