@@ -16,7 +16,7 @@ interface Props {
   onCreateClick: () => void;
 }
 
-export default function ApiKeySelector({ currentKey, currentKeyId, onKeyChange, onCreateClick }: Props) {
+export default function ApiKeySelector({ currentKey, onKeyChange, onCreateClick }: Props) {
   const { t } = useTranslation('quickstart');
   const { token } = theme.useToken();
   const { message } = App.useApp();

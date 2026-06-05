@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback } from 'react';
-import { Button, Input, Switch, Typography, App, Alert, theme, Space } from 'antd';
+import { Button, Input, Switch, Typography, Alert, theme, Space } from 'antd';
 import { PlayCircleOutlined, StopOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { Protocol } from './CodeSnippet';
@@ -31,7 +31,7 @@ export default function PlaygroundPanel({ apiKey, model, protocol }: Props) {
 
   const gatewayUrl = import.meta.env.VITE_API_BASE_URL || window.location.origin;
 
-  const buildRequest = () => {
+  const buildRequest = (): { url: string; headers: Record<string, string>; body: string } => {
     if (protocol === 'openai') {
       return {
         url: `${gatewayUrl}/v1/chat/completions`,
