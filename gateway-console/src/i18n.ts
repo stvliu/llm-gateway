@@ -14,7 +14,7 @@ import zhCNExperience from './locales/zh-CN/experience.json';
 import zhCNTeams from './locales/zh-CN/teams.json';
 import zhCNCatalog from './locales/zh-CN/catalog.json';
 import zhCNChannels from './locales/zh-CN/channels.json';
-import zhCNDeveloper from './locales/zh-CN/developer.json';
+import zhCNQuickstart from './locales/zh-CN/quickstart.json';
 // 英文
 import enUSCommon from './locales/en-US/common.json';
 import enUSLogin from './locales/en-US/login.json';
@@ -27,7 +27,7 @@ import enUSExperience from './locales/en-US/experience.json';
 import enUSTeams from './locales/en-US/teams.json';
 import enUSCatalog from './locales/en-US/catalog.json';
 import enUSChannels from './locales/en-US/channels.json';
-import enUSDeveloper from './locales/en-US/developer.json';
+import enUSQuickstart from './locales/en-US/quickstart.json';
 
 i18n
   .use(LanguageDetector)
@@ -46,7 +46,7 @@ i18n
         teams: zhCNTeams,
         catalog: zhCNCatalog,
         channels: zhCNChannels,
-        developer: zhCNDeveloper,
+        quickstart: zhCNQuickstart,
       },
       'en-US': {
         common: enUSCommon,
@@ -60,7 +60,7 @@ i18n
         teams: enUSTeams,
         catalog: enUSCatalog,
         channels: enUSChannels,
-        developer: enUSDeveloper,
+        quickstart: enUSQuickstart,
       },
     },
     fallbackLng: 'zh-CN',
