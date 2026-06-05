@@ -5,11 +5,10 @@ import AppLayout from '@/components/layout/AppLayout';
 import Dashboard from '@/pages/Dashboard';
 import Models from '@/pages/Models';
 import ApiKeys from '@/pages/ApiKeys';
-import Developer from '@/pages/Developer';
+import Quickstart from '@/pages/Quickstart';
 import Channels from '@/pages/Channels';
 import Catalog from '@/pages/Catalog';
 import Users from '@/pages/Users';
-import ChangePassword from '@/pages/ChangePassword';
 import TeamsPage from '@/pages/Teams';
 import { P } from '@/constants/permissions';
 
@@ -48,8 +47,8 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.KEY_READ}><ApiKeys /></PermissionGuard>,
       },
       {
-        path: 'developer',
-        element: <PermissionGuard permission={P.DEVELOPER}><Developer /></PermissionGuard>,
+        path: 'quickstart',
+        element: <PermissionGuard permission={P.QUICKSTART}><Quickstart /></PermissionGuard>,
       },
       {
         path: 'catalog',
@@ -63,10 +62,6 @@ export const router = createBrowserRouter([
         path: 'teams',
         element: <PermissionGuard permission={P.USER_READ}><TeamsPage /></PermissionGuard>,
       },
-      {
-        path: 'change-password',
-        element: <ChangePassword />,
-      },
     ],
   },
 
@@ -76,6 +71,8 @@ export const router = createBrowserRouter([
   { path: '/experience', element: <Navigate to="/dashboard" replace /> },
   { path: '/api-key-pool', element: <Navigate to="/providers" replace /> },
   { path: '/metadata', element: <Navigate to="/catalog" replace /> },
+  { path: '/developer', element: <Navigate to="/quickstart" replace /> },
+  { path: '/change-password', element: <Navigate to="/dashboard" replace /> },
 
   // 默认重定向
   { path: '*', element: <Navigate to="/dashboard" replace /> },
