@@ -7,11 +7,12 @@ const { Text } = Typography;
 
 interface Props {
   model: Model;
+  selected?: boolean;
   onSelect?: (model: Model) => void;
 }
 
-export default function ModelCard({ model, onSelect }: Props) {
-  const { t } = useTranslation('developer');
+export default function ModelCard({ model, selected, onSelect }: Props) {
+  const { t } = useTranslation('quickstart');
   const { token } = theme.useToken();
 
   const capabilityKeys: Record<string, string> = {
@@ -31,7 +32,14 @@ export default function ModelCard({ model, onSelect }: Props) {
       hoverable
       size="small"
       onClick={() => onSelect?.(model)}
-      styles={{ body: { padding: 16 } }}
+      styles={{
+        body: { padding: 16 },
+      }}
+      style={selected ? {
+        borderColor: token.colorPrimary,
+        background: `${token.colorPrimary}08`,
+        borderWidth: 2,
+      } : undefined}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
@@ -40,12 +48,16 @@ export default function ModelCard({ model, onSelect }: Props) {
             <Text type="secondary" style={{ fontSize: 12 }}>{model.modelName}</Text>
           </div>
         </div>
-        <CheckCircleFilled style={{ color: token.colorSuccess, fontSize: 18 }} />
+        {selected ? (
+          <CheckCircleFilled style={{ color: token.colorPrimary, fontSize: 18 }} />
+        ) : (
+          <CheckCircleFilled style={{ color: token.colorTextQuaternary, fontSize: 18 }} />
+        )}
       </div>
       {caps.length > 0 && (
         <div style={{ marginTop: 8, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           {caps.map((c) => (
-            <Tag key={c} color="blue" style={{ fontSize: 11 }}>{c}</Tag>
+            <Tag key={c} color={selected ? 'blue' : 'default'} style={{ fontSize: 11 }}>{c}</Tag>
           ))}
         </div>
       )}
