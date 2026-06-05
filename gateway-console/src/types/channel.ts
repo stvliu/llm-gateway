@@ -124,7 +124,6 @@ export interface CreateChannelCredentialRequest {
 export interface CreateChannelCredentialResponse {
   id: number;
   apiKeyPlain: string;
-  apiKeyPlain: string;
 }
 
 /** 更新渠道凭证请求（与后端 ChannelCredentialUpdateRequest 一致） */

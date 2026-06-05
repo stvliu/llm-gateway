@@ -4,7 +4,6 @@ import { DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
-import { userApiKeyApi } from '@/services/api/userApiKey';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
 
