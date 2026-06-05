@@ -253,7 +253,7 @@ public class UserServiceImpl implements UserService {
 
         // 验证当前密码
         if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("当前密码错误");
+            throw new GatewayRequestException("INVALID_PASSWORD", "当前密码错误");
         }
 
         // 更新密码

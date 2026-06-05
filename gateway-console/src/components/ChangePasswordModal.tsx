@@ -30,8 +30,9 @@ export function ChangePasswordModal({ open, onClose }: ChangePasswordModalProps)
       message.success(t('message.success'));
       form.resetFields();
       onClose();
-    } catch {
-      message.error(t('message.error'));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t('message.error');
+      message.error(msg);
     } finally {
       setLoading(false);
     }
