@@ -9,6 +9,7 @@ import {
   QuestionCircleOutlined,
   RightOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
 import type { FC } from 'react';
 
@@ -26,6 +27,7 @@ export interface ChannelCardProps {
  * 一行一个，横向铺满，展示端点/Key/模型统计和用量
  */
 export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, onToggleState }) => {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const isActive = channel.state === 'ACTIVE';
 
@@ -48,7 +50,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
    * 根据响应时间返回文本
    */
   const getResponseTimeText = (responseTime: number | null | undefined): string => {
-    if (responseTime === null || responseTime === undefined) return '未测试';
+    if (responseTime === null || responseTime === undefined) return t('overview.notTested');
     if (responseTime < 1000) return `${responseTime}ms`;
     return `${(responseTime / 1000).toFixed(1)}s`;
   };
@@ -99,12 +101,12 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
           </Text>
           {isIncomplete && (
             <Tag color="warning" style={{ marginLeft: '4px' }}>
-              ⚠ 配置中
+              {t('card.configuring')}
             </Tag>
           )}
           {!isActive && (
             <Tag color="default" style={{ marginLeft: '4px' }}>
-              已停用
+              {t('status.stopped')}
             </Tag>
           )}
         </div>
@@ -112,7 +114,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
         {/* 状态标签 */}
         <div style={{ flex: '0 0 80px' }}>
           <Tag color={isActive ? 'success' : 'default'}>
-            {isActive ? '运行中' : '已停用'}
+            {isActive ? t('status.running') : t('status.stopped')}
           </Tag>
         </div>
 
@@ -120,10 +122,10 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
         <div style={{ flex: '0 0 100px' }}>
           <Text type="secondary" style={{ fontSize: '13px' }}>
             {channel.billingMode === 'pay_as_you_go'
-              ? '按量付费'
+              ? t('billing.payAsYouGo')
               : channel.billingMode === 'subscription'
-              ? '订阅'
-              : channel.billingMode}
+              ? t('billing.subscription')
+              : t('billing.default', { mode: channel.billingMode })}
           </Text>
         </div>
 
@@ -157,20 +159,20 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
               {getResponseTimeText(channel.stats.avgResponseTime)}
             </Text>
           </div>
-          <Tooltip title="查看详情">
+          <Tooltip title={t('card.viewDetail')}>
             <RightOutlined style={{ fontSize: 12, color: token.colorTextSecondary }} />
           </Tooltip>
           <Popconfirm
-            title={isActive ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
+            title={isActive ? t('card.confirmDisable') : t('card.confirmEnable')}
             onConfirm={(e) => {
               e?.stopPropagation();
               onToggleState(channel.id, !isActive);
             }}
             onCancel={(e) => e?.stopPropagation()}
-            okText="确定"
-            cancelText="取消"
+            okText={t('actions.confirm', { ns: 'common' })}
+            cancelText={t('actions.cancel', { ns: 'common' })}
           >
-            <Tooltip title={isActive ? '停用' : '启用'}>
+            <Tooltip title={isActive ? t('card.disable') : t('card.enable')}>
               <Button
                 type="text"
                 size="small"
@@ -180,18 +182,18 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             </Tooltip>
           </Popconfirm>
           <Popconfirm
-            title="确认删除"
-            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
+            title={t('card.confirmDelete')}
+            description={t('card.confirmDeleteDesc', { name: channel.name })}
             onConfirm={(e) => {
               e?.stopPropagation();
               onDelete(channel.id);
             }}
             onCancel={(e) => e?.stopPropagation()}
-            okText="删除"
-            cancelText="取消"
+            okText={t('actions.delete', { ns: 'common' })}
+            cancelText={t('actions.cancel', { ns: 'common' })}
             okButtonProps={{ danger: true }}
           >
-            <Tooltip title="删除">
+            <Tooltip title={t('card.delete')}>
               <Button
                 type="text"
                 size="small"
@@ -211,7 +213,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('endpoint') }}>
               {endpointCount}
             </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>端点</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.endpoints')}</div>
           </div>
         </Col>
         <Col span={6}>
@@ -219,7 +221,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('credential') }}>
               {credentialCount}
             </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>Key</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.keys')}</div>
           </div>
         </Col>
         <Col span={6}>
@@ -227,7 +229,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             <div style={{ fontSize: 16, fontWeight: 700, color: statNumberColor('model') }}>
               {modelCount}
             </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>模型</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.models')}</div>
           </div>
         </Col>
         <Col span={6}>
@@ -235,7 +237,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
             <div style={{ fontSize: 14, fontWeight: 600, color: isActive ? token.colorPrimary : token.colorTextDisabled }}>
               --
             </div>
-            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>今日Token</div>
+            <div style={{ fontSize: 10, color: token.colorTextSecondary }}>{t('card.todayToken')}</div>
           </div>
         </Col>
       </Row>
@@ -244,7 +246,7 @@ export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete, 
       {!isActive && channel.updatedAt && (
         <div style={{ marginTop: 4 }}>
           <Text type="secondary" style={{ fontSize: 11 }}>
-            最后活跃: {new Date(channel.updatedAt).toLocaleDateString()}
+            {t('card.lastActive') + ': '}{new Date(channel.updatedAt).toLocaleDateString()}
           </Text>
         </div>
       )}

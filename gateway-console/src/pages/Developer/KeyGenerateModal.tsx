@@ -28,13 +28,13 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
     try {
       const res = await createMutation.mutateAsync({
         userId: user.id,
-        name: `开发者 Key - ${new Date().toLocaleDateString()}`,
+        name: t('keyNamePrefix', { date: new Date().toLocaleDateString() }),
       });
       setResult(res);
       onKeyCreated?.(res.keyPlain);
-      message.success(t('keyCreated', { defaultValue: 'API Key 创建成功' }));
+      message.success(t('keyCreated'));
     } catch {
-      message.error(t('keyCreateFailed', { defaultValue: '创建失败' }));
+      message.error(t('keyCreateFailed'));
     } finally {
       setLoading(false);
     }
@@ -48,24 +48,24 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
   const handleCopyKey = async () => {
     try {
       await navigator.clipboard.writeText(result!.keyPlain);
-      message.success(t('keyCopied', { defaultValue: '已复制' }));
+      message.success(t('keyCopied'));
     } catch {
-      message.error(t('keyCopyFailed', { defaultValue: '复制失败' }));
+      message.error(t('keyCopyFailed'));
     }
   };
 
   return (
     <Modal
-      title={t('createKey', { defaultValue: '创建 API Key' })}
+      title={t('createKey')}
       open={open}
       onCancel={handleClose}
       footer={result ? (
         <Button type="primary" onClick={handleClose}>
-          {t('done', { defaultValue: '完成' })}
+          {t('done')}
         </Button>
       ) : (
         <Button type="primary" loading={loading} onClick={handleCreate}>
-          {t('generate', { defaultValue: '一键生成' })}
+          {t('generate')}
         </Button>
       )}
       width={560}
@@ -74,8 +74,8 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
       {result ? (
         <Result
           status="success"
-          title={t('keyCreated', { defaultValue: 'API Key 已创建' })}
-          subTitle={t('keySaveHint', { defaultValue: '请立即复制，关闭后不再显示' })}
+          title={t('keyCreatedTitle')}
+          subTitle={t('keySaveHint')}
           extra={[
             <div key="key" style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#1e293b', color: '#e2e8f0', padding: '12px 16px', borderRadius: 8 }}>
               <span style={{ flex: 1, fontFamily: 'monospace', fontSize: 13, wordBreak: 'break-all' }}>
@@ -87,7 +87,7 @@ export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props)
         />
       ) : (
         <Paragraph type="secondary">
-          {t('createKeyHint', { defaultValue: '点击下方按钮创建 API Key，创建后自动关联到当前用户，可调用团队已开通的所有模型。' })}
+          {t('createKeyHint')}
         </Paragraph>
       )}
     </Modal>

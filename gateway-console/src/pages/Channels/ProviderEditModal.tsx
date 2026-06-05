@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Modal, Form, Input } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { useUpdateProvider } from '@/services/query/useProviders';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
@@ -15,6 +16,7 @@ interface ProviderEditModalProps {
  * 轻量弹窗，仅修改供应商品牌信息
  */
 export const ProviderEditModal: FC<ProviderEditModalProps> = ({ open, provider, onClose }) => {
+  const { t } = useTranslation('channels');
   const [form] = Form.useForm();
   const updateProvider = useUpdateProvider();
 
@@ -46,7 +48,7 @@ export const ProviderEditModal: FC<ProviderEditModalProps> = ({ open, provider, 
 
   return (
     <Modal
-      title="编辑供应商"
+      title={t('providerEdit.title')}
       open={open}
       onCancel={onClose}
       onOk={handleSave}
@@ -57,18 +59,18 @@ export const ProviderEditModal: FC<ProviderEditModalProps> = ({ open, provider, 
       <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
         <Form.Item
           name="providerName"
-          label="供应商名称"
-          rules={[{ required: true, message: '请输入供应商名称' }]}
+          label={t('providerEdit.name')}
+          rules={[{ required: true, message: t('providerEdit.nameRequired') }]}
         >
           <Input />
         </Form.Item>
-        <Form.Item name="description" label="描述">
+        <Form.Item name="description" label={t('providerEdit.description')}>
           <Input.TextArea rows={3} />
         </Form.Item>
-        <Form.Item name="websiteUrl" label="官网地址">
+        <Form.Item name="websiteUrl" label={t('providerEdit.websiteUrl')}>
           <Input />
         </Form.Item>
-        <Form.Item name="apiDocUrl" label="API 文档地址">
+        <Form.Item name="apiDocUrl" label={t('providerEdit.apiDocUrl')}>
           <Input />
         </Form.Item>
       </Form>

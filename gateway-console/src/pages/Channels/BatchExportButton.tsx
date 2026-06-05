@@ -9,7 +9,7 @@ import { useProviders } from '@/services/query';
  * <p>导出所有供应商配置为 YAML 格式（不包含 API Key 明文）。</p>
  */
 export default function BatchExportButton() {
-  const { t } = useTranslation('providers');
+  const { t } = useTranslation('channels');
   const { message } = App.useApp();
   const { data: providersData } = useProviders();
 

@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Table, Tag, Typography, theme } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { ChannelCard } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
@@ -21,6 +22,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   providers,
   onChannelClick,
 }) => {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const providerMap = useMemo(() => {
     return new Map(providers.map((p) => [p.id, p]));
@@ -28,16 +30,16 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
-      pay_as_you_go: '按量付费',
-      subscription: '订阅',
-      package: '套餐',
+      pay_as_you_go: t('billing.payAsYouGo'),
+      subscription: t('billing.subscription'),
+      package: t('billing.package'),
     };
-    return labels[mode] || mode;
+    return labels[mode] || t('billing.default', { mode });
   };
 
   const columns = [
     {
-      title: '供应商',
+      title: t('table.provider'),
       dataIndex: 'providerId',
       width: 100,
       render: (id: number) => {
@@ -46,7 +48,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       },
     },
     {
-      title: '渠道名称',
+      title: t('table.channelName'),
       dataIndex: 'name',
       render: (name: string, record: ChannelCard) => (
         <Typography.Link onClick={() => onChannelClick(record.id)}>
@@ -55,25 +57,25 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       ),
     },
     {
-      title: '计费模式',
+      title: t('table.billingMode'),
       dataIndex: 'billingMode',
       width: 100,
       render: (mode: string) => getBillingModeLabel(mode),
     },
     {
-      title: '优先级',
+      title: t('table.priority'),
       dataIndex: 'priority',
       width: 70,
       sorter: (a: ChannelCard, b: ChannelCard) => a.priority - b.priority,
     },
     {
-      title: '端点',
+      title: t('table.endpoints'),
       key: 'endpoints',
       width: 60,
       render: (_: unknown, r: ChannelCard) => r.stats.endpointCount,
     },
     {
-      title: 'Key',
+      title: t('table.keys'),
       key: 'credentials',
       width: 60,
       render: (_: unknown, r: ChannelCard) => (
@@ -83,18 +85,18 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       ),
     },
     {
-      title: '模型',
+      title: t('table.models'),
       key: 'models',
       width: 60,
       render: (_: unknown, r: ChannelCard) => r.stats.modelCount,
     },
     {
-      title: '状态',
+      title: t('table.status'),
       key: 'status',
       width: 80,
       render: (_: unknown, r: ChannelCard) => (
         <Tag color={r.state === 'ACTIVE' ? 'green' : 'orange'}>
-          {r.state === 'ACTIVE' ? '运行中' : '已停用'}
+          {r.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
         </Tag>
       ),
     },

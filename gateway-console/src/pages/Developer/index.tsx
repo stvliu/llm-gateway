@@ -26,18 +26,18 @@ export default function Developer() {
     <div style={{ maxWidth: 960, margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
         <div>
-          <Title level={4} style={{ margin: 0 }}>{t('title', { defaultValue: '开发者门户' })}</Title>
+          <Title level={4} style={{ margin: 0 }}>{t('title')}</Title>
           <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
-            {t('subtitle', { defaultValue: '浏览可用模型，创建 API Key 快速开始' })}
+            {t('subtitle')}
           </Paragraph>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={() => setKeyModalOpen(true)}>
-          {t('createKey', { defaultValue: '创建 API Key' })}
+          {t('createKey')}
         </Button>
       </div>
 
       <Input.Search
-        placeholder={t('search', { defaultValue: '搜索模型...' })}
+        placeholder={t('search')}
         style={{ width: 320, marginBottom: 16 }}
         value={search}
         onChange={(e) => setSearch(e.target.value)}
@@ -53,7 +53,7 @@ export default function Developer() {
           ))}
         </Row>
       ) : filtered.length === 0 ? (
-        <Empty description={t('noModels', { defaultValue: '暂无可用模型，请联系团队管理员开通' })} />
+        <Empty description={t('noModels')} />
       ) : (
         <Row gutter={[12, 12]}>
           {filtered.map((m) => (
@@ -65,12 +65,12 @@ export default function Developer() {
       )}
 
       <div style={{ marginTop: 32 }}>
-        <Title level={5}>{t('myKeys', { defaultValue: '我的 API Key' })}</Title>
+        <Title level={5}>{t('myKeys')}</Title>
         <DeveloperKeyList />
       </div>
 
       <div style={{ marginTop: 32 }}>
-        <Title level={5}>{t('quickStart', { defaultValue: '快速开始' })}</Title>
+        <Title level={5}>{t('quickStart')}</Title>
         <CodeSnippet apiKey={currentKey} />
       </div>
 

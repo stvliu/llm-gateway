@@ -28,7 +28,7 @@ export const menuConfig: MenuItemConfig[] = [
   {
     key: '/channels',
     icon: <ThunderboltOutlined />,
-    label: 'menu.channelManagement',
+    label: 'menu.channels',
     permission: 'channel:read',
   },
   {

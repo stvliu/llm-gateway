@@ -15,7 +15,7 @@ interface ConnectivityTestPanelProps {
  * 支持两级测试：认证检测 + 模型可用性
  */
 export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
-  const { t } = useTranslation('providers');
+  const { t } = useTranslation('channels');
   const { message } = App.useApp();
   const [form] = Form.useForm();
   const testMutation = useTestConnectivity();
@@ -32,7 +32,7 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
       },
       {
         onSuccess: (data) => setResult(data),
-        onError: () => message.error(t('detail.testFailed', { defaultValue: '测试请求失败' })),
+        onError: () => message.error(t('connectivity.testFailed')),
       }
     );
   };
@@ -45,14 +45,14 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
         <Space direction="vertical" style={{ width: '100%' }}>
           <div>
             <Tag color={level.success ? 'success' : 'error'}>
-              {level.success ? t('detail.success', { defaultValue: '成功' }) : t('detail.failed', { defaultValue: '失败' })}
+              {level.success ? t('connectivity.success') : t('connectivity.failed')}
             </Tag>
-            {level.latencyMs !== null && <span>{t('detail.latency', { defaultValue: '延迟' })}: {level.latencyMs}ms</span>}
+            {level.latencyMs !== null && <span>{t('connectivity.latency')}: {level.latencyMs}ms</span>}
           </div>
           {level.message && <Typography.Text type={level.success ? 'success' : 'danger'}>{level.message}</Typography.Text>}
           {level.models && level.models.length > 0 && (
             <div>
-              <Typography.Text strong>{t('detail.availableModels', { defaultValue: '可用模型' })}:</Typography.Text>
+              <Typography.Text strong>{t('connectivity.availableModels')}:</Typography.Text>
               <div style={{ marginTop: 4 }}>
                 {level.models.map(m => <Tag key={m}>{m}</Tag>)}
               </div>
@@ -66,21 +66,21 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
   return (
     <div style={{ marginTop: 16 }}>
       <Form form={form} layout="vertical" initialValues={{ protocol: providerCode === 'anthropic' ? 'anthropic' : 'openai', baseUrl: defaultBaseUrl }}>
-        <Form.Item name="protocol" label={t('channel.protocol', { defaultValue: '协议' })} rules={[{ required: true }]}>
+        <Form.Item name="protocol" label={t('connectivity.protocol')} rules={[{ required: true }]}>
           <Select options={[{ value: 'openai', label: 'OpenAI' }, { value: 'anthropic', label: 'Anthropic' }]} />
         </Form.Item>
-        <Form.Item name="baseUrl" label={t('channel.baseUrl', { defaultValue: 'Base URL' })}>
-          <Input placeholder={t('detail.baseUrlPlaceholder', { defaultValue: 'https://api.openai.com' })} />
+        <Form.Item name="baseUrl" label={t('connectivity.baseUrl')}>
+          <Input placeholder={t('connectivity.baseUrlPlaceholder')} />
         </Form.Item>
-        <Form.Item name="apiKey" label={t('credential.apiKey', { defaultValue: 'API Key' })} rules={[{ required: true }]}>
+        <Form.Item name="apiKey" label={t('connectivity.apiKey')} rules={[{ required: true }]}>
           <Input.Password placeholder="sk-..." />
         </Form.Item>
-        <Form.Item name="model" label={t('model.model', { defaultValue: 'Model' })}>
-          <Input placeholder={t('detail.modelPlaceholder', { defaultValue: 'gpt-4o (optional)' })} />
+        <Form.Item name="model" label={t('connectivity.model')}>
+          <Input placeholder={t('connectivity.modelPlaceholder')} />
         </Form.Item>
         <Form.Item>
           <Button type="primary" onClick={handleTest} loading={testMutation.isPending}>
-            {t('detail.runTest', { defaultValue: '运行测试' })}
+            {t('connectivity.runTest')}
           </Button>
         </Form.Item>
       </Form>
@@ -93,8 +93,8 @@ export default function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: 
             style={{ marginBottom: 12 }}
           />
           <Collapse>
-            {renderLevelResult(t('detail.level1Auth', { defaultValue: '认证检测' }), result.level1)}
-            {renderLevelResult(t('detail.level2Model', { defaultValue: '模型可用性' }), result.level2)}
+            {renderLevelResult(t('connectivity.level1Auth'), result.level1)}
+            {renderLevelResult(t('connectivity.level2Model'), result.level2)}
           </Collapse>
         </div>
       )}

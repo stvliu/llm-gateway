@@ -3,9 +3,10 @@
     "home": "Dashboard",
     "providers": "Providers",
     "models": "Models",
+    "channels": "Channels",
     "apiKeys": "API Key Management",
-    "teams": "Teams & Permissions",
-    "developer": "Developer Portal",
+    "teams": "Teams",
+    "developer": "Quick Start",
     "systemSettings": "System Settings",
     "catalog": "Catalog",
     "changePassword": "Change Password"
@@ -13,6 +14,9 @@
   "app": {
     "title": "LLM Gateway",
     "copyright": "© 2024 LLM Gateway"
+  },
+  "header": {
+    "quickStart": "Quick Start"
   },
   "actions": {
     "label": "Actions",

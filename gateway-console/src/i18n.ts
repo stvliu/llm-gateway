@@ -13,6 +13,8 @@ import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
 import zhCNTeams from './locales/zh-CN/teams.json';
 import zhCNCatalog from './locales/zh-CN/catalog.json';
+import zhCNChannels from './locales/zh-CN/channels.json';
+import zhCNDeveloper from './locales/zh-CN/developer.json';
 // 英文
 import enUSCommon from './locales/en-US/common.json';
 import enUSLogin from './locales/en-US/login.json';
@@ -24,6 +26,8 @@ import enUSChat from './locales/en-US/chat.json';
 import enUSExperience from './locales/en-US/experience.json';
 import enUSTeams from './locales/en-US/teams.json';
 import enUSCatalog from './locales/en-US/catalog.json';
+import enUSChannels from './locales/en-US/channels.json';
+import enUSDeveloper from './locales/en-US/developer.json';
 
 i18n
   .use(LanguageDetector)
@@ -41,6 +45,8 @@ i18n
         experience: zhCNExperience,
         teams: zhCNTeams,
         catalog: zhCNCatalog,
+        channels: zhCNChannels,
+        developer: zhCNDeveloper,
       },
       'en-US': {
         common: enUSCommon,
@@ -53,6 +59,8 @@ i18n
         experience: enUSExperience,
         teams: enUSTeams,
         catalog: enUSCatalog,
+        channels: enUSChannels,
+        developer: enUSDeveloper,
       },
     },
     fallbackLng: 'zh-CN',

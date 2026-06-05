@@ -19,6 +19,7 @@ import {
   BarChartOutlined,
   ApiOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import type { ChannelCard } from '@/types/channel';
 import {
   useChannel,
@@ -53,6 +54,7 @@ export function ChannelDetailDrawer({
   open,
   onClose,
 }: ChannelDetailDrawerProps) {
+  const { t } = useTranslation('channels');
   const [activeTab, setActiveTab] = useState('overview');
   const [editProviderOpen, setEditProviderOpen] = useState(false);
   const updateChannel = useUpdateChannel();
@@ -72,17 +74,17 @@ export function ChannelDetailDrawer({
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
-      pay_as_you_go: '按量付费',
-      subscription: '订阅',
-      package: '套餐',
+      pay_as_you_go: t('billing.payAsYouGo'),
+      subscription: t('billing.subscription'),
+      package: t('billing.package'),
     };
-    return labels[mode] || mode;
+    return labels[mode] || t('billing.default', { mode });
   };
 
   /** 测试所有凭证 */
   const handleTest = async () => {
     if (credentials.length === 0) {
-      message.warning('暂无凭证，请先添加 API Key');
+      message.warning(t('drawer.noCredentials'));
       return;
     }
     try {
@@ -97,12 +99,12 @@ export function ChannelDetailDrawer({
         }
       }
       if (failCount === 0) {
-        message.success(`测试完成：全部 ${successCount} 个凭证可用`);
+        message.success(t('drawer.testAllSuccess', { count: successCount }));
       } else {
-        message.warning(`测试完成：${successCount} 个可用，${failCount} 个不可用`);
+        message.warning(t('drawer.testPartialSuccess', { success: successCount, fail: failCount }));
       }
     } catch {
-      message.error('测试失败');
+      message.error(t('drawer.testFailed'));
     }
   };
 
@@ -111,9 +113,9 @@ export function ChannelDetailDrawer({
     const newState = channel.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
       await updateChannel.mutateAsync({ id: channel.id, data: { state: newState } });
-      message.success(newState === 'ACTIVE' ? '渠道已启用' : '渠道已停用');
+      message.success(newState === 'ACTIVE' ? t('drawer.channelEnabled') : t('drawer.channelDisabled'));
     } catch {
-      message.error('状态切换失败');
+      message.error(t('drawer.stateToggleFailed'));
     }
   };
 
@@ -121,10 +123,10 @@ export function ChannelDetailDrawer({
   const handleDelete = async () => {
     try {
       await deleteChannel.mutateAsync({ id: channel.id, providerId: channel.providerId });
-      message.success('渠道已删除');
+      message.success(t('drawer.channelDeleted'));
       onClose();
     } catch {
-      message.error('删除失败');
+      message.error(t('drawer.deleteFailed'));
     }
   };
 
@@ -143,7 +145,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <BarChartOutlined />
-          <span>概览</span>
+          <span>{t('drawer.tabOverview')}</span>
         </Space>
       ),
       children: (
@@ -160,7 +162,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <GlobalOutlined />
-          <span>端点 ({endpointCount})</span>
+          <span>{t('drawer.tabEndpoints', { count: endpointCount })}</span>
         </Space>
       ),
       children: (
@@ -175,7 +177,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <KeyOutlined />
-          <span>API Key ({credentialCount})</span>
+          <span>{t('drawer.tabCredentials', { count: credentialCount })}</span>
         </Space>
       ),
       children: (
@@ -187,7 +189,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <RobotOutlined />
-          <span>模型映射 ({modelCount})</span>
+          <span>{t('drawer.tabModels', { count: modelCount })}</span>
         </Space>
       ),
       children: <ModelMappingSection channelId={channel.id} />,
@@ -197,7 +199,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <SettingOutlined />
-          <span>配额与设置</span>
+          <span>{t('drawer.tabQuota')}</span>
         </Space>
       ),
       children: <QuotaSettingsSection channel={channelDetail || channel} />,
@@ -229,26 +231,26 @@ export function ChannelDetailDrawer({
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Text strong style={{ fontSize: 18 }}>{channel.name}</Text>
                   <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
-                    {channel.state === 'ACTIVE' ? '运行中' : '已停用'}
+                    {channel.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
                   </Tag>
                 </div>
               </div>
               <div style={{ marginBottom: 12 }}>
                 <Space split={<Divider type="vertical" />} size="small">
                   <Text type="secondary">
-                    供应商:{' '}
+                    {t('drawer.provider') + ': '}
                     <Typography.Link onClick={() => setEditProviderOpen(true)}>
                       {channel.providerName}
                     </Typography.Link>
                   </Text>
                   <Text type="secondary">
-                    计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
+                    {t('drawer.billingMode') + ': '} <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
                   </Text>
                   <Text type="secondary">
-                    优先级: <Text strong>P{channel.priority}</Text>
+                    {t('drawer.priority') + ': '} <Text strong>P{channel.priority}</Text>
                   </Text>
                   <Text type="secondary">
-                    权重: <Text strong>W{channel.weight}</Text>
+                    {t('drawer.weight') + ': '} <Text strong>W{channel.weight}</Text>
                   </Text>
                 </Space>
               </div>
@@ -261,28 +263,28 @@ export function ChannelDetailDrawer({
                   onClick={handleTest}
                   loading={testCredential.isPending}
                 >
-                  连通性测试
+                  {t('drawer.connectivityTest')}
                 </Button>
                 <Popconfirm
-                  title={channel.state === 'ACTIVE' ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
+                  title={channel.state === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
                   onConfirm={handleToggleState}
-                  okText="确定"
-                  cancelText="取消"
+                  okText={t('actions.confirm', { ns: 'common' })}
+                  cancelText={t('actions.cancel', { ns: 'common' })}
                 >
                   <Button loading={updateChannel.isPending}>
-                    {channel.state === 'ACTIVE' ? '停用渠道' : '启用渠道'}
+                    {channel.state === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
                   </Button>
                 </Popconfirm>
                 <Popconfirm
-                  title="确认删除"
-                  description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
+                  title={t('drawer.confirmDelete')}
+                  description={t('drawer.confirmDeleteDesc', { name: channel.name })}
                   onConfirm={handleDelete}
-                  okText="删除"
-                  cancelText="取消"
+                  okText={t('actions.delete', { ns: 'common' })}
+                  cancelText={t('actions.cancel', { ns: 'common' })}
                   okButtonProps={{ danger: true }}
                 >
                   <Button danger loading={deleteChannel.isPending}>
-                    删除
+                    {t('card.delete')}
                   </Button>
                 </Popconfirm>
               </Space>

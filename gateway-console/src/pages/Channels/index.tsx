@@ -9,13 +9,16 @@ import {
   Spin,
   Segmented,
   Card,
+  Dropdown,
 } from 'antd';
 import {
   PlusOutlined,
   AppstoreOutlined,
   UnorderedListOutlined,
   ImportOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAllChannels, useDeleteChannel, useUpdateChannel } from '@/services/query/useChannels';
 import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
@@ -64,6 +67,7 @@ const calculateChannelStats = (
  * 支持分组视图/列表视图 + 筛选 + 批量操作 + 搜索增强
  */
 export default function Channels() {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   // 状态管理
   const [searchText, setSearchText] = useState('');
@@ -218,32 +222,45 @@ export default function Channels() {
 
   return (
     <div style={{ padding: '24px' }}>
-      {/* 页面标题 */}
-      <Title level={4} style={{ marginBottom: '24px' }}>
-        渠道管理
-      </Title>
+      {/* 页面标题 + 视图切换 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          {t('title')}
+        </Title>
+        <Segmented
+          value={viewMode}
+          onChange={handleViewChange}
+          options={[
+            { label: t('viewMode.grouped'), value: 'grouped', icon: <AppstoreOutlined /> },
+            { label: t('viewMode.table'), value: 'table', icon: <UnorderedListOutlined /> },
+          ]}
+        />
+      </div>
 
       {/* 工具栏 */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
+          alignItems: 'flex-start',
           marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '8px',
         }}
       >
         {/* 左侧：搜索 + 筛选 */}
-        <Space size={12}>
+        <Space size={12} wrap>
           <Search
-            placeholder="搜索渠道名称或端点URL"
+            placeholder={t('searchPlaceholder')}
             allowClear
-            style={{ width: 280 }}
+            style={{ width: 240 }}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
           <Select
-            placeholder="选择供应商"
+            placeholder={t('providerFilter')}
             allowClear
-            style={{ width: 180 }}
+            style={{ width: 160 }}
             value={providerFilter}
             onChange={setProviderFilter}
             options={
@@ -254,39 +271,37 @@ export default function Channels() {
             }
           />
           <Select
-            placeholder="选择状态"
+            placeholder={t('statusFilter')}
             allowClear
             style={{ width: 120 }}
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { label: '已启用', value: 'ACTIVE' },
-              { label: '已停用', value: 'INACTIVE' },
+              { label: t('status.active'), value: 'ACTIVE' },
+              { label: t('status.inactive'), value: 'INACTIVE' },
             ]}
           />
         </Space>
 
-        {/* 右侧：视图切换 + 操作按钮 */}
-        <Space size={12}>
-          <Segmented
-            value={viewMode}
-            onChange={handleViewChange}
-            options={[
-              { label: '分组', value: 'grouped', icon: <AppstoreOutlined /> },
-              { label: '列表', value: 'table', icon: <UnorderedListOutlined /> },
-            ]}
-          />
+        {/* 右侧：操作按钮 */}
+        <Space size={12} wrap>
           <BatchExportButton />
           <Button icon={<ImportOutlined />} onClick={() => setBatchImportOpen(true)}>
-            批量导入
+            {t('batchImport')}
           </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={handleCreateChannel}
-          >
-            新增渠道
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateChannel}>
+            {t('addChannel')}
           </Button>
+          <Dropdown menu={{
+            items: [
+              { key: 'provider', label: t('addProvider'), icon: <AppstoreOutlined /> },
+            ],
+            onClick: ({ key }) => {
+              if (key === 'provider') setCreateProviderOpen(true);
+            },
+          }}>
+            <Button icon={<DownOutlined />} />
+          </Dropdown>
         </Space>
       </div>
 
@@ -296,7 +311,7 @@ export default function Channels() {
           <Spin size="large" />
         </div>
       ) : filteredGroups.length === 0 ? (
-        <Empty description="暂无渠道数据" />
+        <Empty description={t('empty')} />
       ) : viewMode === 'grouped' ? (
         <>
           <ChannelGroupedList
@@ -333,7 +348,7 @@ export default function Channels() {
             onClick={() => setCreateProviderOpen(true)}
           >
             <PlusOutlined style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 8 }} />
-            <div style={{ color: token.colorPrimary, fontSize: 14 }}>新增供应商</div>
+            <div style={{ color: token.colorPrimary, fontSize: 14 }}>{t('addProvider')}</div>
           </Card>
         </>
       ) : (

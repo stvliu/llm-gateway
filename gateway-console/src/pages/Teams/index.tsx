@@ -10,6 +10,7 @@ import MemberManageModal from './MemberManageModal';
 import ChannelManageModal from './ChannelManageModal';
 import type { Team } from '@/types/team';
 
+const { Title } = Typography;
 const { Link } = Typography;
 
 export default function TeamsPage() {
@@ -124,7 +125,11 @@ export default function TeamsPage() {
   ];
 
   return (
-    <>
+    <div style={{ padding: '24px' }}>
+      <Title level={4} style={{ marginBottom: '24px' }}>
+        {t('title')}
+      </Title>
+
       <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
@@ -181,6 +186,6 @@ export default function TeamsPage() {
           onCancel={() => setChannelManageTeam(null)}
         />
       )}
-    </>
+    </div>
   );
 }

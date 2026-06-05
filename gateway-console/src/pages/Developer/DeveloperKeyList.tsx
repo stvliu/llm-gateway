@@ -8,11 +8,11 @@ import { userApiKeyApi } from '@/services/api/userApiKey';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  ACTIVE: { label: '活跃', color: 'green' },
-  INACTIVE: { label: '未激活', color: 'default' },
-  DEGRADED: { label: '已降级', color: 'orange' },
-  EXPIRED: { label: '过期', color: 'red' },
+const statusColors: Record<string, string> = {
+  ACTIVE: 'green',
+  INACTIVE: 'default',
+  DEGRADED: 'orange',
+  EXPIRED: 'red',
 };
 
 export default function DeveloperKeyList() {
@@ -27,15 +27,15 @@ export default function DeveloperKeyList() {
   const handleRevoke = useCallback(async (id: number) => {
     try {
       await deleteMutation.mutateAsync(id);
-      message.success(t('keyRevoked', { defaultValue: 'Key 已吊销' }));
+      message.success(t('keyRevoked'));
     } catch {
-      message.error(t('keyRevokeFailed', { defaultValue: '吊销失败' }));
+      message.error(t('keyRevokeFailed'));
     }
   }, [deleteMutation, message, t]);
 
   const columns = useMemo(() => [
     {
-      title: t('keyPrefix', { defaultValue: 'Key' }),
+      title: t('keyPrefix'),
       dataIndex: 'keyPlain',
       key: 'keyPlain',
       render: (_: string, record: UserApiKey) => (
@@ -47,34 +47,41 @@ export default function DeveloperKeyList() {
       ),
     },
     {
-      title: t('keyName', { defaultValue: '名称' }),
+      title: t('keyName'),
       dataIndex: 'name',
       key: 'name',
     },
     {
-      title: t('keyStatus', { defaultValue: '状态' }),
+      title: t('keyStatus'),
       dataIndex: 'state',
       key: 'state',
       width: 80,
       render: (state: string) => {
-        const cfg = statusConfig[state] || { label: state, color: 'default' };
-        return <Tag color={cfg.color}>{cfg.label}</Tag>;
+        const statusKeyMap: Record<string, string> = {
+          ACTIVE: 'status.active',
+          INACTIVE: 'status.inactive',
+          DEGRADED: 'status.degraded',
+          EXPIRED: 'status.expired',
+        };
+        const color = statusColors[state] || 'default';
+        const label = statusKeyMap[state] ? t(statusKeyMap[state]) : state;
+        return <Tag color={color}>{label}</Tag>;
       },
     },
     {
-      title: t('keyCreated', { defaultValue: '创建时间' }),
+      title: t('keyCreatedAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 150,
       render: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-',
     },
     {
-      title: t('keyActions', { defaultValue: '操作' }),
+      title: t('keyActions'),
       key: 'actions',
       width: 80,
       render: (_: unknown, record: UserApiKey) => (
         <Popconfirm
-          title={t('confirmRevoke', { defaultValue: '确定吊销此 Key？' })}
+          title={t('confirmRevoke')}
           onConfirm={() => handleRevoke(record.id)}
         >
           <Button type="link" size="small" danger icon={<DeleteOutlined />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Segmented, Button, App, theme, Typography, Spin, Empty } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserApiKeys } from '@/services/query/useUserApiKeys';
 import { userApiKeyApi } from '@/services/api/userApiKey';
@@ -69,6 +70,7 @@ System.out.println(response.body());`,
 type Lang = 'curl' | 'python' | 'node' | 'java';
 
 export default function CodeSnippet({ apiKey: propApiKey }: Props) {
+  const { t } = useTranslation('developer');
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const [lang, setLang] = useState<Lang>('curl');
@@ -129,7 +131,7 @@ export default function CodeSnippet({ apiKey: propApiKey }: Props) {
     // 优先使用 Clipboard API，失败时降级到 execCommand
     try {
       await navigator.clipboard.writeText(code);
-      message.success('已复制到剪贴板');
+      message.success(t('copySuccess'));
     } catch {
       // Fallback: 使用 execCommand（兼容非 HTTPS 环境）
       const textArea = document.createElement('textarea');
@@ -140,9 +142,9 @@ export default function CodeSnippet({ apiKey: propApiKey }: Props) {
       textArea.select();
       try {
         document.execCommand('copy');
-        message.success('已复制到剪贴板');
+        message.success(t('copySuccess'));
       } catch {
-        message.error('复制失败，请手动选择复制');
+        message.error(t('copyFailed'));
       }
       document.body.removeChild(textArea);
     }
@@ -173,7 +175,7 @@ export default function CodeSnippet({ apiKey: propApiKey }: Props) {
           ]}
         />
         <Button size="small" icon={<CopyOutlined />} onClick={handleCopy}>
-          复制
+          {t('copy')}
         </Button>
       </div>
       <Spin spinning={keysLoading || fetchingKey}>
@@ -188,8 +190,8 @@ export default function CodeSnippet({ apiKey: propApiKey }: Props) {
               description={
                 <Text type="secondary">
                   {userKeys && userKeys.length > 0
-                    ? '暂无活跃的 API Key，请先激活或创建 Key'
-                    : '暂无 API Key，请先创建'}
+                    ? t('noActiveKey')
+                    : t('noKey')}
                 </Text>
               }
             />

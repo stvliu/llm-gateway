@@ -8,6 +8,7 @@ import {
   PlayCircleOutlined,
   MoreOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { ProviderIcon } from '@/components/ui/ProviderIcon';
 import type { MenuProps } from 'antd';
 import type { FC } from 'react';
@@ -62,6 +63,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
   onTestConnectivity,
   onExport,
 }) => {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const isActive = providerState !== 'INACTIVE';
 
@@ -80,11 +82,11 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
       case 'toggle': {
         if (isActive) {
           Modal.confirm({
-            title: '停用供应商',
-            content: `停用供应商「${providerName}」将同时停用其下所有 ${channelCount} 个渠道，确定继续吗？`,
-            okText: '确认停用',
+            title: t('group.confirmDisableTitle'),
+            content: t('group.confirmDisableContent', { name: providerName, count: channelCount }),
+            okText: t('group.confirmDisableOk'),
             okType: 'danger',
-            cancelText: '取消',
+            cancelText: t('actions.cancel', { ns: 'common' }),
             onOk: () => onToggleEnabled?.(),
           });
         } else {
@@ -96,13 +98,13 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
   };
 
   const menuItems: MenuProps['items'] = [
-    { key: 'edit', label: '编辑供应商', icon: <EditOutlined /> },
-    { key: 'test', label: '连通性测试', icon: <ApiOutlined /> },
-    { key: 'export', label: '导出配置', icon: <ExportOutlined /> },
+    { key: 'edit', label: t('group.editProvider'), icon: <EditOutlined /> },
+    { key: 'test', label: t('group.connectivityTest'), icon: <ApiOutlined /> },
+    { key: 'export', label: t('group.exportConfig'), icon: <ExportOutlined /> },
     { type: 'divider' },
     {
       key: 'toggle',
-      label: isActive ? '停用供应商' : '启用供应商',
+      label: isActive ? t('group.disableProvider') : t('group.enableProvider'),
       icon: isActive ? <PauseCircleOutlined /> : <PlayCircleOutlined />,
       danger: isActive,
     },
@@ -142,7 +144,7 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
           </Text>
           <br />
           <Text type="secondary" style={{ fontSize: '12px' }}>
-            {channelCount} 个渠道
+            {t('group.channelCount', { count: channelCount })}
           </Text>
         </div>
       </Space>
@@ -150,19 +152,19 @@ export const ProviderGroupHeader: FC<ProviderGroupHeaderProps> = ({
       {/* 右侧：统计信息 + 操作菜单 + 折叠箭头 */}
       <Space size={16}>
         <Space size={16}>
-          <Tooltip title="端点数量">
+          <Tooltip title={t('card.endpoints')}>
             <Text type="secondary" style={{ fontSize: '13px' }}>
-              端点: {endpointCount}
+              {`${t('card.endpoints')}: ${endpointCount}`}
             </Text>
           </Tooltip>
-          <Tooltip title="凭证数量">
+          <Tooltip title={t('card.keys')}>
             <Text type="secondary" style={{ fontSize: '13px' }}>
-              Key: {credentialCount}
+              {`Key: ${credentialCount}`}
             </Text>
           </Tooltip>
-          <Tooltip title="模型数量">
+          <Tooltip title={t('card.models')}>
             <Text type="secondary" style={{ fontSize: '13px' }}>
-              模型: {modelCount}
+              {`${t('card.models')}: ${modelCount}`}
             </Text>
           </Tooltip>
         </Space>

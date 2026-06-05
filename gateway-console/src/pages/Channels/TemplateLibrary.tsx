@@ -13,23 +13,21 @@ interface Props {
 
 /**
  * 供应商模板库组件
- *
- * <p>展示预配置的供应商模板，用户可快速选择并创建供应商配置。</p>
  */
 export default function TemplateLibrary({ open, onClose, onSelectTemplate }: Props) {
-  const { t } = useTranslation('providers');
+  const { t } = useTranslation('channels');
   const { data: catalogs, isLoading } = useProviderCatalogs();
 
   return (
     <Modal
-      title={t('template.title', { defaultValue: '供应商模板库' })}
+      title={t('template.title')}
       open={open}
       onCancel={onClose}
       footer={null}
       width={720}
     >
       <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-        {t('template.desc', { defaultValue: '选择模板可快速创建供应商和模型配置' })}
+        {t('template.desc')}
       </Paragraph>
       {isLoading ? (
         <div style={{ textAlign: 'center', padding: 32 }}>
@@ -50,9 +48,7 @@ export default function TemplateLibrary({ open, onClose, onSelectTemplate }: Pro
                   <Space direction="vertical" size={4}>
                     <Text type="secondary" style={{ fontSize: 12 }}>{catalog.code}</Text>
                     <Tag color={catalog.materialized ? 'green' : 'blue'} style={{ fontSize: 11 }}>
-                      {catalog.materialized
-                        ? t('template.materialized', { defaultValue: '已物化' })
-                        : t('template.notMaterialized', { defaultValue: '未物化' })}
+                      {catalog.materialized ? t('template.materialized') : t('template.notMaterialized')}
                     </Tag>
                   </Space>
                 }
@@ -63,7 +59,7 @@ export default function TemplateLibrary({ open, onClose, onSelectTemplate }: Pro
                   size="small"
                   onClick={() => { onSelectTemplate(catalog.code); onClose(); }}
                 >
-                  {t('template.use', { defaultValue: '使用此模板' })}
+                  {t('template.use')}
                 </Button>
               </div>
             </Card>
@@ -72,7 +68,7 @@ export default function TemplateLibrary({ open, onClose, onSelectTemplate }: Pro
       )}
       {(!catalogs || catalogs.length === 0) && !isLoading && (
         <div style={{ textAlign: 'center', padding: 32 }}>
-          <Text type="secondary">{t('template.noTemplate', { defaultValue: '暂无模板' })}</Text>
+          <Text type="secondary">{t('template.noTemplate')}</Text>
         </div>
       )}
     </Modal>
