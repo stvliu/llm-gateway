@@ -95,7 +95,7 @@ public class ChannelDomainService {
      * @throws ChannelException 渠道无可用端点
      */
     public ChannelEndpoint resolveEndpoint(Channel channel, Protocol inboundProtocol) {
-        List<ChannelEndpoint> activeEndpoints = channelEndpointGateway.findActiveByChannelId(channel.getId());
+        List<ChannelEndpoint> activeEndpoints = channelEndpointGateway.findByChannelId(channel.getId());
 
         if (activeEndpoints.isEmpty()) {
             throw new ChannelException("CHANNEL_NO_ENDPOINT",

@@ -6,7 +6,6 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.enums.ModelState;
@@ -584,7 +583,6 @@ public class DataInitializer implements CommandLineRunner {
         endpoint.setChannelId(channelId);
         endpoint.setProtocol(protocol);
         endpoint.setEndpointUrl(url);
-        endpoint.setState(ChannelEndpointState.ACTIVE);
         channelEndpointGateway.save(endpoint);
     }
 

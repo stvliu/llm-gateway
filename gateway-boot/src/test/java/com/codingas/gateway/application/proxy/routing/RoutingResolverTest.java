@@ -78,7 +78,6 @@ class RoutingResolverTest {
             endpoint.setChannelId(100L);
             endpoint.setEndpointUrl("https://api.openai.com/v1");
             endpoint.setProtocol(Protocol.OPENAI);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
@@ -125,7 +124,6 @@ class RoutingResolverTest {
             endpoint.setChannelId(100L);
             endpoint.setEndpointUrl("https://api.anthropic.com/v1");
             endpoint.setProtocol(Protocol.ANTHROPIC);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(channelSelector.select(1L, 1L)).thenReturn(channelModel);

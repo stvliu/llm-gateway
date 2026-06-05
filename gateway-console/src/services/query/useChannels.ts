@@ -136,32 +136,6 @@ export function useUpdateChannelEndpoint() {
   });
 }
 
-/** 启用渠道端点 */
-export function useEnableChannelEndpoint() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
-      channelApi.enableEndpoint(channelId, endpointId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
-      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
-    },
-  });
-}
-
-/** 停用渠道端点 */
-export function useDisableChannelEndpoint() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ channelId, endpointId }: { channelId: number; endpointId: number }) =>
-      channelApi.disableEndpoint(channelId, endpointId),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: channelKeys.detail(variables.channelId) });
-      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
-    },
-  });
-}
-
 /** ---- 渠道凭证 ---- */
 
 /** 获取渠道下的凭证列表 */

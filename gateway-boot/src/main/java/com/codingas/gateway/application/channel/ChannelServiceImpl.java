@@ -6,7 +6,6 @@ import com.codingas.gateway.application.channel.dto.ChannelRequest;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
@@ -177,7 +176,6 @@ public class ChannelServiceImpl implements ChannelService {
         resp.setChannelId(endpoint.getChannelId());
         resp.setProtocol(endpoint.getProtocol().getCode());
         resp.setEndpointUrl(endpoint.getEndpointUrl());
-        resp.setState(endpoint.getState().getCode());
         resp.setCreatedAt(endpoint.getCreatedAt());
         resp.setUpdatedAt(endpoint.getUpdatedAt());
         return resp;
@@ -198,7 +196,6 @@ public class ChannelServiceImpl implements ChannelService {
         endpoint.setChannelId(channelId);
         endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
         endpoint.setEndpointUrl(request.getEndpointUrl().trim());
-        endpoint.setState(ChannelEndpointState.ACTIVE);
 
         ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
         log.info("Added endpoint to channel: channelId={}, endpointId={}, protocol={}",
@@ -240,37 +237,5 @@ public class ChannelServiceImpl implements ChannelService {
         }
         channelEndpointGateway.deleteById(endpointId);
         log.info("Removed endpoint: channelId={}, endpointId={}", channelId, endpointId);
-    }
-
-    /**
-     * 启用渠道端点
-     */
-    @Override
-    @Transactional
-    public ChannelEndpointResponse enableEndpoint(Long channelId, Long endpointId) {
-        ChannelEndpoint endpoint = channelEndpointGateway.findById(endpointId)
-                .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
-        if (!endpoint.getChannelId().equals(channelId)) {
-            throw new IllegalArgumentException("端点不属于该渠道");
-        }
-        endpoint.enable();
-        ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
-        return toEndpointResponse(saved);
-    }
-
-    /**
-     * 禁用渠道端点
-     */
-    @Override
-    @Transactional
-    public ChannelEndpointResponse disableEndpoint(Long channelId, Long endpointId) {
-        ChannelEndpoint endpoint = channelEndpointGateway.findById(endpointId)
-                .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
-        if (!endpoint.getChannelId().equals(channelId)) {
-            throw new IllegalArgumentException("端点不属于该渠道");
-        }
-        endpoint.disable();
-        ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
-        return toEndpointResponse(saved);
     }
 }

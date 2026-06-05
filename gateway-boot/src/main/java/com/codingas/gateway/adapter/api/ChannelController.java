@@ -87,18 +87,4 @@ public class ChannelController {
             @Valid @RequestBody ChannelEndpointRequest request) {
         return channelService.updateEndpoint(channelId, endpointId, request);
     }
-
-    @PutMapping("/{channelId}/endpoints/{endpointId}/enable")
-    public ChannelEndpointResponse enableEndpoint(
-            @PathVariable Long channelId,
-            @PathVariable Long endpointId) {
-        return channelService.enableEndpoint(channelId, endpointId);
-    }
-
-    @PutMapping("/{channelId}/endpoints/{endpointId}/disable")
-    public ChannelEndpointResponse disableEndpoint(
-            @PathVariable Long channelId,
-            @PathVariable Long endpointId) {
-        return channelService.disableEndpoint(channelId, endpointId);
-    }
 }

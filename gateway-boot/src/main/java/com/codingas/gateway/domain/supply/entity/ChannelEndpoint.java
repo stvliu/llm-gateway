@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.supply.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -26,28 +25,4 @@ public class ChannelEndpoint extends BaseEntity {
 
     /** 端点 URL */
     private String endpointUrl;
-
-    /** 端点状态 */
-    private ChannelEndpointState state = ChannelEndpointState.ACTIVE;
-
-    /**
-     * 判断端点是否可用
-     */
-    public boolean isAvailable() {
-        return ChannelEndpointState.ACTIVE.equals(state);
-    }
-
-    /**
-     * 禁用端点
-     */
-    public void disable() {
-        this.state = ChannelEndpointState.INACTIVE;
-    }
-
-    /**
-     * 启用端点
-     */
-    public void enable() {
-        this.state = ChannelEndpointState.ACTIVE;
-    }
 }

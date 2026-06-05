@@ -102,7 +102,7 @@ class BuiltinCatalogLoaderTest {
             verify(catalogDomainService, atLeastOnce()).upsertPlan(argThat(catalog ->
                 catalog.getBillingMode() == BillingMode.PAY_AS_YOU_GO
                     || catalog.getBillingMode() == BillingMode.SUBSCRIPTION
-                    || catalog.getBillingMode() == BillingMode.PACKAGE
+                    || catalog.getBillingMode() == BillingMode.PREPAID_PACKAGE
             ));
         }
 

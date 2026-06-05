@@ -23,8 +23,4 @@ public class ChannelEndpointDo extends BaseDo {
 
     @Column(name = "endpoint_url", nullable = false, length = 512)
     private String endpointUrl;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false, length = 16)
-    private com.codingas.gateway.domain.supply.enums.ChannelEndpointState state;
 }

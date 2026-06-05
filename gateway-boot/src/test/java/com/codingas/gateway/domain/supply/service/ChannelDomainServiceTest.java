@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.supply.service;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -51,15 +50,13 @@ class ChannelDomainServiceTest {
             anthropicEndpoint.setId(10L);
             anthropicEndpoint.setProtocol(Protocol.ANTHROPIC);
             anthropicEndpoint.setEndpointUrl("https://api.anthropic.com");
-            anthropicEndpoint.setState(ChannelEndpointState.ACTIVE);
 
             ChannelEndpoint openaiEndpoint = new ChannelEndpoint();
             openaiEndpoint.setId(11L);
             openaiEndpoint.setProtocol(Protocol.OPENAI);
             openaiEndpoint.setEndpointUrl("https://api.openai.com");
-            openaiEndpoint.setState(ChannelEndpointState.ACTIVE);
 
-            when(channelEndpointGateway.findActiveByChannelId(1L))
+            when(channelEndpointGateway.findByChannelId(1L))
                     .thenReturn(List.of(openaiEndpoint, anthropicEndpoint));
 
             ChannelEndpoint result = service.resolveEndpoint(channel, Protocol.ANTHROPIC);
@@ -69,8 +66,8 @@ class ChannelDomainServiceTest {
         }
 
         @Test
-        @DisplayName("无匹配端点时降级选第一个可用端点")
-        void resolveEndpoint_fallbackToFirstAvailable() {
+        @DisplayName("无匹配端点时降级选第一个端点")
+        void resolveEndpoint_fallbackToFirst() {
             Channel channel = new Channel();
             channel.setId(1L);
 
@@ -78,9 +75,8 @@ class ChannelDomainServiceTest {
             anthropicEndpoint.setId(10L);
             anthropicEndpoint.setProtocol(Protocol.ANTHROPIC);
             anthropicEndpoint.setEndpointUrl("https://api.anthropic.com");
-            anthropicEndpoint.setState(ChannelEndpointState.ACTIVE);
 
-            when(channelEndpointGateway.findActiveByChannelId(1L))
+            when(channelEndpointGateway.findByChannelId(1L))
                     .thenReturn(List.of(anthropicEndpoint));
 
             ChannelEndpoint result = service.resolveEndpoint(channel, Protocol.OPENAI);
@@ -90,12 +86,12 @@ class ChannelDomainServiceTest {
         }
 
         @Test
-        @DisplayName("渠道无可用端点时抛出异常")
-        void resolveEndpoint_noAvailableEndpoint_throwsException() {
+        @DisplayName("渠道无端点时抛出异常")
+        void resolveEndpoint_noEndpoint_throwsException() {
             Channel channel = new Channel();
             channel.setId(1L);
 
-            when(channelEndpointGateway.findActiveByChannelId(1L))
+            when(channelEndpointGateway.findByChannelId(1L))
                     .thenReturn(List.of());
 
             assertThatThrownBy(() -> service.resolveEndpoint(channel, Protocol.OPENAI))

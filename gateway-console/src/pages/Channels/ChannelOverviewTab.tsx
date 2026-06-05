@@ -101,8 +101,8 @@ const EndpointSummaryCard: FC<{
     </div>
     {endpoints.slice(0, 2).map((ep) => (
       <div key={ep.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-        <Tag color={ep.state === 'ACTIVE' ? 'green' : 'default'} style={{ fontSize: 10 }}>
-          {ep.state === 'ACTIVE' ? t('overview.endpointNormal') : t('overview.endpointStopped')}
+        <Tag color="blue" style={{ fontSize: 10 }}>
+          {ep.protocol?.toUpperCase()}
         </Tag>
         <Text style={{ fontSize: 12 }} ellipsis>{ep.endpointUrl}</Text>
       </div>

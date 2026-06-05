@@ -32,11 +32,9 @@ public class EndpointResolver {
     public ChannelEndpoint resolve(Long channelId, Protocol protocol) {
         // 优先匹配协议同源的端点
         return channelEndpointGateway.findByChannelIdAndProtocol(channelId, protocol)
-                .filter(ChannelEndpoint::isAvailable)
                 .orElseGet(() -> {
                     List<ChannelEndpoint> endpoints = channelEndpointGateway.findByChannelId(channelId);
                     return endpoints.stream()
-                            .filter(ChannelEndpoint::isAvailable)
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("ChannelEndpoint", channelId));
                 });

@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import org.junit.jupiter.api.DisplayName;
@@ -46,7 +45,6 @@ class EndpointResolverTest {
             endpoint.setChannelId(10L);
             endpoint.setEndpointUrl("https://api.openai.com/v1");
             endpoint.setProtocol(Protocol.OPENAI);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
                     .thenReturn(Optional.of(endpoint));
@@ -58,11 +56,10 @@ class EndpointResolverTest {
             assertThat(result).isNotNull();
             assertThat(result.getEndpointUrl()).isEqualTo("https://api.openai.com/v1");
             assertThat(result.getProtocol()).isEqualTo(Protocol.OPENAI);
-            assertThat(result.isAvailable()).isTrue();
         }
 
         @Test
-        @DisplayName("无协议匹配端点时，回退到任意可用端点")
+        @DisplayName("无协议匹配端点时，回退到任意端点")
         void resolve_noProtocolMatch_fallsBackToAny() {
             // given
             ChannelEndpoint endpoint = new ChannelEndpoint();
@@ -70,7 +67,6 @@ class EndpointResolverTest {
             endpoint.setChannelId(10L);
             endpoint.setEndpointUrl("https://api.anthropic.com/v1");
             endpoint.setProtocol(Protocol.ANTHROPIC);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
                     .thenReturn(Optional.empty());
@@ -83,59 +79,6 @@ class EndpointResolverTest {
             // then
             assertThat(result).isNotNull();
             assertThat(result.getEndpointUrl()).isEqualTo("https://api.anthropic.com/v1");
-        }
-
-        @Test
-        @DisplayName("跳过已禁用端点，返回可用端点")
-        void resolve_disabledEndpointSkipped_returnsActive() {
-            // given
-            ChannelEndpoint disabled = new ChannelEndpoint();
-            disabled.setId(1L);
-            disabled.setChannelId(10L);
-            disabled.setEndpointUrl("https://disabled.example.com");
-            disabled.setProtocol(Protocol.OPENAI);
-            disabled.setState(ChannelEndpointState.INACTIVE);
-
-            ChannelEndpoint active = new ChannelEndpoint();
-            active.setId(2L);
-            active.setChannelId(10L);
-            active.setEndpointUrl("https://api.openai.com/v1");
-            active.setProtocol(Protocol.OPENAI);
-            active.setState(ChannelEndpointState.ACTIVE);
-
-            when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
-                    .thenReturn(Optional.empty());
-            when(channelEndpointGateway.findByChannelId(10L))
-                    .thenReturn(List.of(disabled, active));
-
-            // when
-            ChannelEndpoint result = endpointResolver.resolve(10L, Protocol.OPENAI);
-
-            // then
-            assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(2L);
-            assertThat(result.getEndpointUrl()).isEqualTo("https://api.openai.com/v1");
-        }
-
-        @Test
-        @DisplayName("无可用端点时抛出 ResourceNotFoundException")
-        void resolve_noEndpoint_throwsException() {
-            // given
-            ChannelEndpoint disabled = new ChannelEndpoint();
-            disabled.setId(1L);
-            disabled.setChannelId(10L);
-            disabled.setState(ChannelEndpointState.INACTIVE);
-
-            when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
-                    .thenReturn(Optional.empty());
-            when(channelEndpointGateway.findByChannelId(10L))
-                    .thenReturn(List.of(disabled));
-
-            // when & then
-            assertThatThrownBy(() -> endpointResolver.resolve(10L, Protocol.OPENAI))
-                    .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("ChannelEndpoint")
-                    .hasMessageContaining("10");
         }
 
         @Test

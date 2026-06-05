@@ -13,16 +13,12 @@ export interface ProtocolInfo {
 /** 渠道状态 */
 export type ChannelState = 'ACTIVE' | 'INACTIVE';
 
-/** 渠道端点状态 */
-export type ChannelEndpointState = 'ACTIVE' | 'INACTIVE';
-
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
   id: number;
   channelId: number;
   protocol: string;
   endpointUrl: string;
-  state: ChannelEndpointState;
   createdAt: string;
   updatedAt: string;
 }

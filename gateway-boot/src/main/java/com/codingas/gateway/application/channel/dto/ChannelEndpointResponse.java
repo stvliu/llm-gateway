@@ -18,8 +18,6 @@ public class ChannelEndpointResponse {
 
     private String endpointUrl;
 
-    private String state;
-
     private Instant createdAt;
 
     private Instant updatedAt;

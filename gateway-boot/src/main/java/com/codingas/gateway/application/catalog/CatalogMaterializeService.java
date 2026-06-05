@@ -22,7 +22,6 @@ import com.codingas.gateway.domain.supply.entity.ChannelModel;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.CredentialState;
@@ -256,7 +255,6 @@ public class CatalogMaterializeService {
             endpoint.setChannelId(savedChannel.getId());
             endpoint.setProtocol(Protocol.valueOf(ep.get("protocol")));
             endpoint.setEndpointUrl(ep.get("url"));
-            endpoint.setState(ChannelEndpointState.ACTIVE);
             channelEndpointGateway.save(endpoint);
         }
         log.info("物化套餐-创建端点成功: planCode={}, count={}", planCode, endpoints.size());
