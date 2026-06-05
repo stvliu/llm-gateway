@@ -130,31 +130,33 @@ export default function TeamsPage() {
         {t('title')}
       </Title>
 
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+        <Space size={12} wrap>
+          <Input
+            placeholder={t('team.searchPlaceholder', { defaultValue: '搜索团队名称' })}
+            prefix={<SearchOutlined />}
+            value={searchKeyword}
+            onChange={(e) => setSearchKeyword(e.target.value)}
+            allowClear
+            style={{ width: 250 }}
+          />
+          <Select
+            placeholder={t('team.state', { defaultValue: '状态' })}
+            value={stateFilter}
+            onChange={setStateFilter}
+            allowClear
+            style={{ width: 120 }}
+            options={[
+              { value: 'active', label: t('team.stateActive') },
+              { value: 'inactive', label: t('team.stateInactive') },
+            ]}
+          />
+        </Space>
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             {t('team.addTeam')}
           </Button>
         )}
-        <Input
-          placeholder={t('team.searchPlaceholder', { defaultValue: '搜索团队名称' })}
-          prefix={<SearchOutlined />}
-          value={searchKeyword}
-          onChange={(e) => setSearchKeyword(e.target.value)}
-          allowClear
-          style={{ width: 250 }}
-        />
-        <Select
-          placeholder={t('team.state', { defaultValue: '状态' })}
-          value={stateFilter}
-          onChange={setStateFilter}
-          allowClear
-          style={{ width: 120 }}
-          options={[
-            { value: 'active', label: t('team.stateActive') },
-            { value: 'inactive', label: t('team.stateInactive') },
-          ]}
-        />
       </div>
 
       <Table

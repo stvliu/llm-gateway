@@ -214,10 +214,48 @@ export function ChannelDetailDrawer({
         open={open}
         onClose={onClose}
         destroyOnClose
-        title={null}
-        styles={{
-          header: { display: 'none' },
-        }}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Text strong style={{ fontSize: 16 }}>{channel.name}</Text>
+            <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
+              {channel.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
+            </Tag>
+          </div>
+        }
+        extra={
+          <Space size={8}>
+            <Button
+              type="primary"
+              icon={<ApiOutlined />}
+              onClick={handleTest}
+              loading={testCredential.isPending}
+            >
+              {t('drawer.connectivityTest')}
+            </Button>
+            <Popconfirm
+              title={channel.state === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
+              onConfirm={handleToggleState}
+              okText={t('actions.confirm', { ns: 'common' })}
+              cancelText={t('actions.cancel', { ns: 'common' })}
+            >
+              <Button loading={updateChannel.isPending}>
+                {channel.state === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
+              </Button>
+            </Popconfirm>
+            <Popconfirm
+              title={t('drawer.confirmDelete')}
+              description={t('drawer.confirmDeleteDesc', { name: channel.name })}
+              onConfirm={handleDelete}
+              okText={t('actions.delete', { ns: 'common' })}
+              cancelText={t('actions.cancel', { ns: 'common' })}
+              okButtonProps={{ danger: true }}
+            >
+              <Button danger loading={deleteChannel.isPending}>
+                {t('card.delete')}
+              </Button>
+            </Popconfirm>
+          </Space>
+        }
       >
         {isLoading ? (
           <div style={{ textAlign: 'center', padding: '48px' }}>
@@ -225,68 +263,23 @@ export function ChannelDetailDrawer({
           </div>
         ) : (
           <div>
-            {/* 头部区域 */}
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <Text strong style={{ fontSize: 18 }}>{channel.name}</Text>
-                  <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
-                    {channel.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
-                  </Tag>
-                </div>
-              </div>
-              <div style={{ marginBottom: 12 }}>
-                <Space split={<Divider type="vertical" />} size="small">
-                  <Text type="secondary">
-                    {t('drawer.provider') + ': '}
-                    <Typography.Link onClick={() => setEditProviderOpen(true)}>
-                      {channel.providerName}
-                    </Typography.Link>
-                  </Text>
-                  <Text type="secondary">
-                    {t('drawer.billingMode') + ': '} <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
-                  </Text>
-                  <Text type="secondary">
-                    {t('drawer.priority') + ': '} <Text strong>P{channel.priority}</Text>
-                  </Text>
-                  <Text type="secondary">
-                    {t('drawer.weight') + ': '} <Text strong>W{channel.weight}</Text>
-                  </Text>
-                </Space>
-              </div>
-
-              {/* 快捷操作条 */}
-              <Space size={8}>
-                <Button
-                  type="primary"
-                  icon={<ApiOutlined />}
-                  onClick={handleTest}
-                  loading={testCredential.isPending}
-                >
-                  {t('drawer.connectivityTest')}
-                </Button>
-                <Popconfirm
-                  title={channel.state === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
-                  onConfirm={handleToggleState}
-                  okText={t('actions.confirm', { ns: 'common' })}
-                  cancelText={t('actions.cancel', { ns: 'common' })}
-                >
-                  <Button loading={updateChannel.isPending}>
-                    {channel.state === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
-                  </Button>
-                </Popconfirm>
-                <Popconfirm
-                  title={t('drawer.confirmDelete')}
-                  description={t('drawer.confirmDeleteDesc', { name: channel.name })}
-                  onConfirm={handleDelete}
-                  okText={t('actions.delete', { ns: 'common' })}
-                  cancelText={t('actions.cancel', { ns: 'common' })}
-                  okButtonProps={{ danger: true }}
-                >
-                  <Button danger loading={deleteChannel.isPending}>
-                    {t('card.delete')}
-                  </Button>
-                </Popconfirm>
+            <div style={{ marginBottom: 12 }}>
+              <Space split={<Divider type="vertical" />} size="small">
+                <Text type="secondary">
+                  {t('drawer.provider') + ': '}
+                  <Typography.Link onClick={() => setEditProviderOpen(true)}>
+                    {channel.providerName}
+                  </Typography.Link>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.billingMode') + ': '} <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.priority') + ': '} <Text strong>P{channel.priority}</Text>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.weight') + ': '} <Text strong>W{channel.weight}</Text>
+                </Text>
               </Space>
             </div>
 
