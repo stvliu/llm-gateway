@@ -1,0 +1,15 @@
+{
+  "change": "channel-lifecycle-ui",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "34624a97db1505e772416d2828239977587ca60e277eb718e48e552eb260cf44",
+  "files": [
+    { "path": "openspec/changes/channel-lifecycle-ui/proposal.md", "sha256": "1b21321583b43324e3f751c0b4f6911d9d0c6168743483d7af5ee2552f6c8520" },
+    { "path": "openspec/changes/channel-lifecycle-ui/design.md", "sha256": "f9850ecef30989b6d3c66797b811e7af8fade82de4f91122091acb6ea22ba505" },
+    { "path": "openspec/changes/channel-lifecycle-ui/tasks.md", "sha256": "49021ced1816c9191a12c97a339bdff014be8b1bf32a5600f2a6d29d65510b77" },
+    { "path": "openspec/changes/channel-lifecycle-ui/specs/channel-lifecycle-page/spec.md", "sha256": "1e385bfc2e7867f59f3b9237fc2e228a32f9f5d7737cc2dcc56cabded8115b86" },
+    { "path": "openspec/changes/channel-lifecycle-ui/specs/channel-overview-tab/spec.md", "sha256": "f4a795fb490f9cfa8c168195f262fbc228daaf98606145765bc6206af986cab2" }
+  ]
+}
