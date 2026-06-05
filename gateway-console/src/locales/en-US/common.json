@@ -2,14 +2,22 @@
   "menu": {
     "home": "Dashboard",
     "providers": "Providers",
+    "providerDirectory": "Provider Directory",
     "models": "Models",
     "channels": "Channels",
-    "apiKeys": "API Key Management",
+    "apiKeys": "API Key",
     "teams": "Teams",
-    "developer": "Quick Start",
-    "systemSettings": "System Settings",
+    "quickstart": "Quick Start",
+    "users": "User Management",
+    "stats": "Statistics",
+    "auditLogs": "Audit Logs",
     "catalog": "Catalog",
-    "changePassword": "Change Password"
+    "changePassword": "Change Password",
+    "group": {
+      "supply": "Model Supply",
+      "identity": "Identity & Access",
+      "operations": "Operations & System"
+    }
   },
   "app": {
     "title": "LLM Gateway",
