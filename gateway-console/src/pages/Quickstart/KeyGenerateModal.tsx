@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default function KeyGenerateModal({ open, onClose, onKeyCreated }: Props) {
-  const { t } = useTranslation('developer');
+  const { t } = useTranslation('quickstart');
   const { message } = App.useApp();
   const { user } = useAuthStore();
   const createMutation = useCreateUserApiKey();
