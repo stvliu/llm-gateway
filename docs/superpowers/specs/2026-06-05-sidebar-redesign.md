@@ -78,12 +78,14 @@
 
 ```
 ┌──────────────┐
-│ 👤 admin      │
-│──────────────│
 │ 🔒 修改密码    │
 │ 🚪 退出登录    │
 └──────────────┘
 ```
+
+点击"修改密码"弹出 Modal 对话框，表单包含：当前密码、新密码、确认新密码。
+
+原有 `/change-password` 独立页面和路由删除，改为 `ChangePasswordModal` 组件，由 Header 头像下拉菜单触发。
 
 ## i18n 新增 Key
 
@@ -134,8 +136,10 @@ export interface MenuItemConfig {
 
 1. 修改 `menuConfig.tsx` — 新数据结构，三域分组
 2. 修改 `Sidebar.tsx` — 渲染 ItemGroup 分组
-3. 修改 `Header.tsx` — 头像下拉加"修改密码"，快速开始按钮路由改 `/quickstart`
-4. 修改路由 `/developer` → `/quickstart`
-5. 修改权限常量 `developer:access` → `quickstart:access`
-6. 更新 i18n 文件
-7. 预留项（统计/审计日志）渲染为禁用菜单项，点击无跳转
+3. 修改 `Header.tsx` — 头像下拉加"修改密码"（触发 Modal），快速开始按钮路由改 `/quickstart`
+4. 新建 `ChangePasswordModal` 组件 — 替代原独立页面
+5. 删除 `ChangePassword` 页面和 `/change-password` 路由
+6. 修改路由 `/developer` → `/quickstart`
+7. 修改权限常量 `developer:access` → `quickstart:access`
+8. 更新 i18n 文件
+9. 预留项（统计/审计日志）渲染为禁用菜单项，点击无跳转
