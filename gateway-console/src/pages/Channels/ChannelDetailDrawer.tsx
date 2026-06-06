@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Drawer,
   Typography,
@@ -43,6 +43,7 @@ interface ChannelDetailDrawerProps {
   channel: ChannelCard | null;
   open: boolean;
   onClose: () => void;
+  initialTab?: string;
 }
 
 /**
@@ -53,10 +54,18 @@ export function ChannelDetailDrawer({
   channel,
   open,
   onClose,
+  initialTab,
 }: ChannelDetailDrawerProps) {
   const { t } = useTranslation('channels');
   const [activeTab, setActiveTab] = useState('overview');
   const [editProviderOpen, setEditProviderOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [open, initialTab]);
+
   const updateChannel = useUpdateChannel();
   const deleteChannel = useDeleteChannel();
 

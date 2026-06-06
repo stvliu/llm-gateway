@@ -21,7 +21,7 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAllChannels, useDeleteChannel, useUpdateChannel, useChannelModelsBatch } from '@/services/query/useChannels';
+import { useAllChannels, useDeleteChannel, useUpdateChannel, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
 import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
@@ -86,6 +86,7 @@ export default function Channels() {
   const [batchImportOpen, setBatchImportOpen] = useState(false);
   const [createProviderOpen, setCreateProviderOpen] = useState(false);
   const [connectivityProviderId, setConnectivityProviderId] = useState<number | null>(null);
+  const [drawerInitialTab, setDrawerInitialTab] = useState<string | undefined>(undefined);
 
   // 视图切换（持久化到 localStorage）
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -111,6 +112,7 @@ export default function Channels() {
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
   const updateChannel = useUpdateChannel();
+  const testCredential = useTestChannelCredential();
   const setEnabledProvider = useSetEnabledProvider();
 
   // 获取所有渠道的凭证（批量）
@@ -227,6 +229,36 @@ export default function Channels() {
     deleteChannel.mutate({ id, providerId: ch?.providerId ?? 0 });
   };
 
+  /** 从卡片发起连通性测试 */
+  const handleTestChannel = async (channel: ChannelCard) => {
+    if (channel.state !== 'ACTIVE') return;
+    const idx = channels?.findIndex(c => c.id === channel.id) ?? -1;
+    const creds = credentialsData[idx];
+
+    if (!creds || creds.length === 0) {
+      message.warning(t('card.testNoCredential'));
+      return;
+    }
+
+    try {
+      const result = await testCredential.mutateAsync({ channelId: channel.id, id: creds[0].id });
+      if (result.success) {
+        message.success(t('card.testSuccess', { latency: result.latency ?? 0 }));
+      } else {
+        message.error(t('card.testFail', { msg: result.error?.message || t('credential.unknownError') }));
+      }
+    } catch (err) {
+      message.error(t('card.testFail', { msg: err instanceof Error ? err.message : t('credential.unknownError') }));
+    }
+  };
+
+  /** 从卡片菜单打开详情抽屉并跳转到指定 Tab */
+  const handleOpenDrawerTab = (channel: ChannelCard, tab: string) => {
+    setSelectedChannel(channel);
+    setDrawerInitialTab(tab);
+    setDrawerVisible(true);
+  };
+
   return (
     <div>
       {/* 页面标题 + 视图切换 */}
@@ -328,6 +360,8 @@ export default function Channels() {
             onChannelToggleState={(id, enabled) => {
               updateChannel.mutate({ id, data: { state: enabled ? 'ACTIVE' : 'INACTIVE' } });
             }}
+            onTestChannel={handleTestChannel}
+            onOpenDrawerTab={handleOpenDrawerTab}
             onEditProvider={(id) => {
               const p = providersData?.items?.find((p) => p.id === id);
               if (p) {
@@ -379,7 +413,11 @@ export default function Channels() {
       <ChannelDetailDrawer
         channel={selectedChannel}
         open={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
+        onClose={() => {
+          setDrawerVisible(false);
+          setDrawerInitialTab(undefined);
+        }}
+        initialTab={drawerInitialTab}
       />
 
       {/* 创建向导 */}
