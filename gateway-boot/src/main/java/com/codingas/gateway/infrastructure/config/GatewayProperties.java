@@ -36,7 +36,7 @@ public class GatewayProperties {
     @Setter
     public static class CorsProperties {
         private String allowedOrigins = "*";
-        private String allowedMethods = "GET,POST,PUT,DELETE,OPTIONS";
+        private String allowedMethods = "GET,POST,PUT,PATCH,DELETE,OPTIONS";
         private String allowedHeaders = "*";
         private boolean allowCredentials = true;
         private long maxAge = 3600;
