@@ -5,11 +5,13 @@ import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
+import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
-import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -28,6 +30,7 @@ import java.util.Map;
  * 内置目录数据加载器
  *
  * <p>应用启动时，如果 catalog 表为空，从 classpath:catalog/*.json 加载内置数据。</p>
+ * <p>upsert 逻辑内联于此，替代原 CatalogDomainService。</p>
  */
 @Slf4j
 @Component
@@ -37,8 +40,9 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
 
     private final ProviderGateway providerGateway;
     private final PlanCatalogGateway planCatalogGateway;
+    private final PlanModelCatalogGateway planModelCatalogGateway;
+    private final ModelGateway modelGateway;
     private final ObjectMapper objectMapper;
-    private final CatalogDomainService catalogDomainService;
 
     /** 用于反序列化 JSON 文件的 ObjectMapper（忽略未知字段如 syncedAt/state） */
     private ObjectMapper catalogObjectMapper;
@@ -111,7 +115,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             provider.setPriority(100);
             provider.setState(ProviderState.ACTIVE);
 
-            String result = catalogDomainService.upsertProvider(provider);
+            String result = upsertProvider(provider);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
@@ -143,7 +147,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             model.setCapabilities(parseCapabilities(data.capabilities()));
             model.setModalities(parseModalities(data.modalities()));
 
-            String result = catalogDomainService.upsertModel(model);
+            String result = upsertModel(model);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
@@ -171,7 +175,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setDescription(data.description());
             catalog.setState(CatalogState.ACTIVE);
 
-            String result = catalogDomainService.upsertPlan(catalog);
+            String result = upsertPlan(catalog);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
@@ -193,7 +197,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setModelName(data.modelName());
             catalog.setState(CatalogState.ACTIVE);
 
-            String result = catalogDomainService.upsertPlanModel(catalog);
+            String result = upsertPlanModel(catalog);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
@@ -202,6 +206,128 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
         }
         log.info("加载套餐模型关联目录: added={}, updated={}, skipped={}", added, updated, skipped);
     }
+
+    // ===== upsert 方法（内联原 CatalogDomainService 逻辑） =====
+
+    /**
+     * 新增或更新供应商
+     *
+     * @param provider 待写入的供应商
+     * @return "ADDED" | "UPDATED"
+     */
+    private String upsertProvider(Provider provider) {
+        return providerGateway.findByCode(provider.getCode())
+                .map(existing -> {
+                    copyProviderFields(provider, existing);
+                    providerGateway.save(existing);
+                    return "UPDATED";
+                })
+                .orElseGet(() -> {
+                    provider.setState(ProviderState.ACTIVE);
+                    providerGateway.save(provider);
+                    return "ADDED";
+                });
+    }
+
+    /**
+     * 新增或更新套餐目录
+     *
+     * @param catalog 待写入的套餐目录
+     * @return "ADDED" | "UPDATED"
+     */
+    private String upsertPlan(PlanCatalog catalog) {
+        return planCatalogGateway.findByPlanCode(catalog.getPlanCode())
+                .map(existing -> {
+                    copyPlanFields(catalog, existing);
+                    planCatalogGateway.save(existing);
+                    return "UPDATED";
+                })
+                .orElseGet(() -> {
+                    planCatalogGateway.save(catalog);
+                    return "ADDED";
+                });
+    }
+
+    /**
+     * 新增或更新套餐模型关联目录
+     *
+     * @param catalog 待写入的套餐模型关联目录
+     * @return "ADDED" | "UPDATED"
+     */
+    private String upsertPlanModel(PlanModelCatalog catalog) {
+        return planModelCatalogGateway.findByPlanCodeAndModelName(
+                        catalog.getPlanCode(), catalog.getModelName())
+                .map(existing -> {
+                    existing.setState(catalog.getState());
+                    planModelCatalogGateway.save(existing);
+                    return "UPDATED";
+                })
+                .orElseGet(() -> {
+                    planModelCatalogGateway.save(catalog);
+                    return "ADDED";
+                });
+    }
+
+    /**
+     * 新增或更新模型
+     *
+     * @param model 待写入的模型
+     * @return "ADDED" | "UPDATED"
+     */
+    private String upsertModel(Model model) {
+        return modelGateway.findByModelName(model.getModelName())
+                .map(existing -> {
+                    copyModelFields(model, existing);
+                    modelGateway.save(existing);
+                    return "UPDATED";
+                })
+                .orElseGet(() -> {
+                    model.setState(ModelState.ACTIVE);
+                    modelGateway.save(model);
+                    return "ADDED";
+                });
+    }
+
+    // ===== 字段拷贝 =====
+
+    /**
+     * 将源供应商的业务字段拷贝到目标实体
+     */
+    private void copyProviderFields(Provider src, Provider dst) {
+        dst.setName(src.getName());
+        dst.setLogoUrl(src.getLogoUrl());
+        dst.setWebsiteUrl(src.getWebsiteUrl());
+        dst.setDescription(src.getDescription());
+        dst.setApiDocUrl(src.getApiDocUrl());
+        dst.setPriority(src.getPriority());
+    }
+
+    /**
+     * 将源套餐目录的业务字段拷贝到目标实体
+     */
+    private void copyPlanFields(PlanCatalog src, PlanCatalog dst) {
+        dst.setPlanName(src.getPlanName());
+        dst.setBillingMode(src.getBillingMode());
+        dst.setEndpoints(src.getEndpoints());
+        dst.setPricing(src.getPricing());
+        dst.setDescription(src.getDescription());
+    }
+
+    /**
+     * 将源模型的业务字段拷贝到目标实体
+     */
+    private void copyModelFields(Model src, Model dst) {
+        dst.setDisplayName(src.getDisplayName());
+        dst.setModelFamily(src.getModelFamily());
+        dst.setContextWindow(src.getContextWindow());
+        dst.setMaxInputTokens(src.getMaxInputTokens());
+        dst.setMaxOutputTokens(src.getMaxOutputTokens());
+        dst.setKnowledgeCutoff(src.getKnowledgeCutoff());
+        dst.setCapabilities(src.getCapabilities());
+        dst.setModalities(src.getModalities());
+    }
+
+    // ===== 辅助方法 =====
 
     /**
      * 从 classpath 读取 JSON 文件

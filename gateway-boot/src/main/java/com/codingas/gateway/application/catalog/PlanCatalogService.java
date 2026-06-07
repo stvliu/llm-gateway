@@ -8,9 +8,12 @@ import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import java.util.List;
 
 /**
- * 目录查询服务接口
+ * 套餐目录查询服务接口
+ *
+ * <p>提供套餐目录、供应商目录、模型的查询功能。</p>
+ * <p>替代原 CatalogService 的查询功能。</p>
  */
-public interface CatalogService {
+public interface PlanCatalogService {
 
     /**
      * 列出供应商目录
@@ -40,8 +43,8 @@ public interface CatalogService {
      * 列出模型
      *
      * @param providerCode 供应商编码过滤（可选）
-     * @param keyword 关键词过滤（可选）
-     * @param capability 能力标签过滤（可选）
+     * @param keyword      关键词过滤（可选）
+     * @param capability   能力标签过滤（可选）
      * @return 模型列表
      */
     List<ModelResponse> listModels(String providerCode, String keyword, String capability);

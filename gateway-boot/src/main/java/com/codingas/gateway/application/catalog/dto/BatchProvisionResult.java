@@ -6,13 +6,13 @@ import lombok.Getter;
 import java.util.List;
 
 /**
- * 批量物化结果
+ * 批量开通结果
  *
- * <p>封装 Provider 级联物化时多条 Plan 的物化结果统计。</p>
+ * <p>封装供应商级联开通时多条套餐的处理结果统计。</p>
  */
 @Getter
 @Builder
-public class MaterializeBatchResult {
+public class BatchProvisionResult {
 
     /** 供应商编码 */
     private final String providerCode;
@@ -23,12 +23,12 @@ public class MaterializeBatchResult {
     /** 成功数 */
     private final int successCount;
 
-    /** 跳过数（已物化） */
+    /** 跳过数（已开通） */
     private final int skippedCount;
 
     /** 失败数 */
     private final int failedCount;
 
-    /** 每条 Plan 的独立物化结果 */
-    private final List<PlanResult> results;
+    /** 每条套餐的独立开通结果 */
+    private final List<ProvisionResult> results;
 }

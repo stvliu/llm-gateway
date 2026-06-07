@@ -7,6 +7,7 @@ import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
+import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
@@ -28,12 +29,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 目录查询服务实现
+ * 套餐目录查询服务实现
+ *
+ * <p>提供套餐目录、供应商目录、模型的查询功能。</p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CatalogServiceImpl implements CatalogService {
+public class PlanCatalogServiceImpl implements PlanCatalogService {
 
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
@@ -95,7 +98,7 @@ public class CatalogServiceImpl implements CatalogService {
     @Override
     public PlanDetailResponse getPlanDetail(String planCode) {
         PlanCatalog catalog = planCatalogGateway.findByPlanCode(planCode)
-                .orElseThrow(() -> new com.codingas.gateway.domain.supply.catalog.exception.CatalogException(
+                .orElseThrow(() -> new CatalogException(
                         "PLAN_NOT_FOUND", "套餐目录不存在: " + planCode));
 
         List<PlanDetailResponse.EndpointInfo> endpoints = parseEndpoints(catalog.getEndpoints());
