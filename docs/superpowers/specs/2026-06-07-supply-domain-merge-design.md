@@ -2,6 +2,8 @@
 comet_change: supply-domain-merge
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-07-supply-domain-merge
+status: final
 ---
 
 # 供应域合并方案 — 技术设计文档
