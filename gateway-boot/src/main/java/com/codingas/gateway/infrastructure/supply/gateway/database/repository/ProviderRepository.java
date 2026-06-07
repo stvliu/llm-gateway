@@ -20,4 +20,6 @@ public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
     boolean existsByCode(String code);
 
     boolean existsByName(String name);
+
+    List<ProviderDo> findByCodeContainingOrNameContaining(String codeKeyword, String nameKeyword);
 }

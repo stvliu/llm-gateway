@@ -3,8 +3,9 @@ package com.codingas.gateway.infrastructure.supply.catalog.sync;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
+import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -60,12 +61,11 @@ public class ModelsDevSyncClient {
         Instant now = Instant.now();
 
         try {
-            // Step 1: 同步供应商目录
-            List<ProviderCatalog> providers = fetchProviders();
-            for (var catalog : providers) {
-                catalog.setState(CatalogState.ACTIVE);
-                catalog.setSyncedAt(now);
-                String r = catalogDomainService.upsertProvider(catalog);
+            // Step 1: 同步供应商
+            List<Provider> providers = fetchProviders();
+            for (var provider : providers) {
+                provider.setState(ProviderState.ACTIVE);
+                String r = catalogDomainService.upsertProvider(provider);
                 switch (r) {
                     case "ADDED" -> c.addedProviders++;
                     case "UPDATED" -> c.updatedProviders++;
@@ -124,21 +124,22 @@ public class ModelsDevSyncClient {
     }
 
     /**
-     * 拉取供应商目录数据
+     * 拉取供应商数据
      *
      * <p>当前从 classpath JSON 文件加载，后续可替换为 Models.dev API 调用。</p>
      */
-    protected List<ProviderCatalog> fetchProviders() throws Exception {
+    protected List<Provider> fetchProviders() throws Exception {
         var dataList = loadJson("catalog/providers.json",
                 new TypeReference<List<ProviderData>>() {});
         return dataList.stream().map(d -> {
-            var c = new ProviderCatalog();
-            c.setProviderCode(d.providerCode());
-            c.setProviderName(d.providerName());
-            c.setLogoUrl(d.logoUrl());
-            c.setWebsiteUrl(d.websiteUrl());
-            c.setDescription(d.description());
-            return c;
+            var p = new Provider();
+            p.setCode(d.providerCode());
+            p.setName(d.providerName());
+            p.setLogoUrl(d.logoUrl());
+            p.setWebsiteUrl(d.websiteUrl());
+            p.setDescription(d.description());
+            p.setPriority(100);
+            return p;
         }).toList();
     }
 

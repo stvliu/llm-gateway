@@ -3,11 +3,12 @@ package com.codingas.gateway.infrastructure.supply.catalog.loader;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
+import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
-import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,7 +34,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BuiltinCatalogLoader implements CommandLineRunner {
 
-    private final ProviderCatalogGateway providerCatalogGateway;
+    private final ProviderGateway providerGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final ObjectMapper objectMapper;
     private final CatalogDomainService catalogDomainService;
@@ -50,7 +51,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
      * 如果表为空则加载 BUILTIN 数据（启动时自动调用）
      */
     public void loadIfNeeded() {
-        if (!providerCatalogGateway.findAll().isEmpty()) {
+        if (!providerGateway.findAll().isEmpty()) {
             log.info("目录数据已存在，跳过 BUILTIN 加载");
             return;
         }
@@ -100,15 +101,16 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
         var providers = loadJson("catalog/providers.json", new TypeReference<List<ProviderCatalogData>>() {});
         int added = 0, updated = 0, skipped = 0;
         for (var data : providers) {
-            var catalog = new ProviderCatalog();
-            catalog.setProviderCode(data.providerCode());
-            catalog.setProviderName(data.providerName());
-            catalog.setLogoUrl(data.logoUrl());
-            catalog.setWebsiteUrl(data.websiteUrl());
-            catalog.setDescription(data.description());
-            catalog.setState(CatalogState.ACTIVE);
+            var provider = new Provider();
+            provider.setCode(data.providerCode());
+            provider.setName(data.providerName());
+            provider.setLogoUrl(data.logoUrl());
+            provider.setWebsiteUrl(data.websiteUrl());
+            provider.setDescription(data.description());
+            provider.setPriority(100);
+            provider.setState(ProviderState.ACTIVE);
 
-            String result = catalogDomainService.upsertProvider(catalog);
+            String result = catalogDomainService.upsertProvider(provider);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;

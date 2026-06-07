@@ -7,12 +7,12 @@ import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
-import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
@@ -35,7 +35,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CatalogServiceImpl implements CatalogService {
 
-    private final ProviderCatalogGateway providerCatalogGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final ModelCatalogGateway modelCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
@@ -58,20 +57,20 @@ public class CatalogServiceImpl implements CatalogService {
 
     @Override
     public List<ProviderCatalogResponse> listProviderCatalogs(String keyword) {
-        List<ProviderCatalog> catalogs;
+        List<Provider> providers;
 
         if (keyword != null && !keyword.isBlank()) {
-            catalogs = providerCatalogGateway.findByKeyword(keyword);
+            providers = providerGateway.findByKeyword(keyword);
         } else {
-            catalogs = providerCatalogGateway.findAll();
+            providers = providerGateway.findAll();
         }
 
-        return catalogs.stream()
-                .filter(c -> c.getState() == CatalogState.ACTIVE)
-                .map(c -> ProviderCatalogResponse.builder()
-                        .code(c.getProviderCode())
-                        .name(c.getProviderName())
-                        .materialized(isProviderMaterialized(c.getProviderCode()))
+        return providers.stream()
+                .filter(p -> p.getState() == ProviderState.ACTIVE)
+                .map(p -> ProviderCatalogResponse.builder()
+                        .code(p.getCode())
+                        .name(p.getName())
+                        .materialized(true) // Provider 本身就是物化后的实体
                         .build())
                 .toList();
     }
@@ -250,13 +249,6 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     // ===== 物化状态检查 =====
-
-    /**
-     * 检查供应商是否已物化
-     */
-    private boolean isProviderMaterialized(String providerCode) {
-        return providerGateway.findByCode(providerCode).isPresent();
-    }
 
     /**
      * 检查套餐是否已物化（通过 Channel 名称关联）

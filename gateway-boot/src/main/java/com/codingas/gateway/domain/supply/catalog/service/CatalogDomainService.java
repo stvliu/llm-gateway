@@ -3,11 +3,12 @@ package com.codingas.gateway.domain.supply.catalog.service;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
-import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ProviderState;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class CatalogDomainService {
 
-    private final ProviderCatalogGateway providerCatalogGateway;
+    private final ProviderGateway providerGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
     private final ModelCatalogGateway modelCatalogGateway;
@@ -31,21 +32,22 @@ public class CatalogDomainService {
     // ===== upsert =====
 
     /**
-     * 新增或更新供应商目录
+     * 新增或更新供应商
      *
-     * @param catalog 待写入的供应商目录
+     * @param provider 待写入的供应商
      * @return "ADDED" | "UPDATED"
      */
     @Transactional
-    public String upsertProvider(ProviderCatalog catalog) {
-        return providerCatalogGateway.findByProviderCode(catalog.getProviderCode())
+    public String upsertProvider(Provider provider) {
+        return providerGateway.findByCode(provider.getCode())
                 .map(existing -> {
-                    copyProviderFields(catalog, existing);
-                    providerCatalogGateway.save(existing);
+                    copyProviderFields(provider, existing);
+                    providerGateway.save(existing);
                     return "UPDATED";
                 })
                 .orElseGet(() -> {
-                    providerCatalogGateway.save(catalog);
+                    provider.setState(ProviderState.ACTIVE);
+                    providerGateway.save(provider);
                     return "ADDED";
                 });
     }
@@ -115,14 +117,15 @@ public class CatalogDomainService {
     // ===== 字段拷贝 =====
 
     /**
-     * 将源供应商目录的业务字段拷贝到目标实体
+     * 将源供应商的业务字段拷贝到目标实体
      */
-    private void copyProviderFields(ProviderCatalog src, ProviderCatalog dst) {
-        dst.setProviderName(src.getProviderName());
+    private void copyProviderFields(Provider src, Provider dst) {
+        dst.setName(src.getName());
         dst.setLogoUrl(src.getLogoUrl());
         dst.setWebsiteUrl(src.getWebsiteUrl());
         dst.setDescription(src.getDescription());
-        dst.setSyncedAt(src.getSyncedAt());
+        dst.setApiDocUrl(src.getApiDocUrl());
+        dst.setPriority(src.getPriority());
     }
 
     /**

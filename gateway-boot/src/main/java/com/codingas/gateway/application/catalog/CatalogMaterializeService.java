@@ -8,13 +8,11 @@ import com.codingas.gateway.application.catalog.dto.PlanResult;
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
-import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
@@ -56,7 +54,6 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CatalogMaterializeService {
 
-    private final ProviderCatalogGateway providerCatalogGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
     private final ModelCatalogGateway modelCatalogGateway;
@@ -86,7 +83,7 @@ public class CatalogMaterializeService {
     /**
      * 物化供应商
      *
-     * <p>从 ProviderCatalog 创建 Provider 运营实体。</p>
+     * <p>创建 Provider 运营实体。供应商基础信息从 PlanCatalog 关联查询获取。</p>
      *
      * @param providerCode 供应商编码
      * @return 物化结果
@@ -98,16 +95,18 @@ public class CatalogMaterializeService {
                     "供应商已物化: " + providerCode);
         }
 
-        ProviderCatalog catalog = providerCatalogGateway.findByProviderCode(providerCode)
-                .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
-                        "供应商目录不存在: " + providerCode));
+        // 从 PlanCatalog 获取供应商基础信息
+        List<PlanCatalog> plans = planCatalogGateway.findByProviderCode(providerCode);
+        if (plans.isEmpty()) {
+            throw new CatalogException("CATALOG_NOT_FOUND",
+                    "供应商目录不存在: " + providerCode);
+        }
 
+        // 使用第一个套餐的供应商信息创建 Provider
+        // 注意：实际场景中供应商信息应该从独立的配置获取
         Provider provider = new Provider();
-        provider.setCode(catalog.getProviderCode());
-        provider.setName(catalog.getProviderName());
-        provider.setLogoUrl(catalog.getLogoUrl());
-        provider.setWebsiteUrl(catalog.getWebsiteUrl());
-        provider.setDescription(catalog.getDescription());
+        provider.setCode(providerCode);
+        provider.setName(providerCode); // 默认使用 code 作为 name
         provider.setPriority(100);
         provider.setState(ProviderState.ACTIVE);
 
