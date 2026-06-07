@@ -3,8 +3,8 @@ import { Steps, Select, Input, Checkbox, Button, Space, Typography, App, Spin, T
 import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { providerCatalogApi, planCatalogApi, catalogMaterializeApi } from '@/services/api/catalog';
-import type { MaterializePlanRequest } from '@/types/catalog';
+import { planCatalogApi, provisionApi } from '@/services/api/catalog';
+import type { ProvisionRequest } from '@/types/catalog';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -44,7 +44,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
 
   const { data: providers, isLoading: providersLoading } = useQuery({
     queryKey: ['provider-catalog', 'list'],
-    queryFn: () => providerCatalogApi.list(),
+    queryFn: () => planCatalogApi.listProviders(),
   });
 
   const { data: plans, isLoading: plansLoading } = useQuery({
@@ -75,7 +75,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
         checked: true,
       }));
       setEndpoints(initialEndpoints);
-      setSelectedModels(planDetail.pricing.map((p) => p.providerModelId));
+      setSelectedModels(planDetail.pricing.map((p) => p.modelName));
       setSelectedPlanName((prev) => prev || planDetail.planName);
       if (planDetail.providerCode) setSelectedProviderCode(planDetail.providerCode);
     }
@@ -145,13 +145,10 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
     }
     try {
       setSubmitting(true);
-      const requestData: MaterializePlanRequest = {
+      const requestData: ProvisionRequest = {
         apiKeys: parsedApiKeys.map((k) => k.raw),
-        endpoints: endpoints.filter((ep) => ep.checked && ep.url.trim()).map((ep) => ({ protocol: ep.protocol, url: ep.url.trim() })),
-        models: selectedModels,
-        channelName: selectedPlanName || planDetail.planName,
       };
-      await catalogMaterializeApi.materializePlan(selectedPlanCode, requestData);
+      await provisionApi.fromPlan(selectedPlanCode, requestData);
       message.success(t('onboard.createSuccess'));
       queryClient.invalidateQueries({ queryKey: ['channels'] });
       queryClient.invalidateQueries({ queryKey: ['providers'] });
@@ -193,7 +190,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
           loading={providersLoading}
           showSearch
           optionFilterProp="label"
-          options={providers?.map((p) => ({ label: p.name, value: p.code }))}
+          options={providers?.map((p: { code: string; name: string }) => ({ label: p.name, value: p.code }))}
         />
       </div>
       <div style={{ marginBottom: 16 }}>
@@ -207,7 +204,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
           disabled={!selectedProviderCode}
           showSearch
           optionFilterProp="label"
-          options={plans?.map((p) => ({ label: p.planName, value: p.planCode }))}
+          options={plans?.map((p: { planCode: string; planName: string }) => ({ label: p.planName, value: p.planCode }))}
         />
       </div>
       {planDetail && (
@@ -248,8 +245,8 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
         <Checkbox.Group value={selectedModels} onChange={(values: (string | number | boolean)[]) => setSelectedModels(values.filter((v): v is string => typeof v === 'string'))} style={{ width: '100%' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {(planDetail?.pricing ?? []).map((p) => (
-              <Checkbox key={p.providerModelId} value={p.providerModelId}>
-                <span style={{ fontWeight: 500 }}>{p.providerModelId}</span>
+              <Checkbox key={p.modelName} value={p.modelName}>
+                <span style={{ fontWeight: 500 }}>{p.modelName}</span>
                 {p.inputPrice != null && <span style={{ color: token.colorTextSecondary, marginLeft: 8, fontSize: 12 }}>{t('onboard.inputPrice')} ${p.inputPrice}/1M</span>}
                 {p.outputPrice != null && <span style={{ color: token.colorTextSecondary, marginLeft: 8, fontSize: 12 }}>{t('onboard.outputPrice')} ${p.outputPrice}/1M</span>}
               </Checkbox>

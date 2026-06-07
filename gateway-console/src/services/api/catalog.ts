@@ -1,70 +1,49 @@
 import { api } from './client';
 import type {
-  ProviderCatalog,
   PlanCatalog,
   PlanDetail,
-  ModelCatalog,
-  MaterializeResult,
-  MaterializeBatchResult,
-  MaterializeBatchRequest,
-  MaterializePlanRequest,
-  ProviderCatalogListParams,
-  ModelCatalogListParams,
+  ProviderCatalog,
+  ModelResponse,
+  ProvisionResult,
+  BatchProvisionResult,
+  ProvisionRequest,
+  BatchProvisionRequest,
 } from '@/types/catalog';
-
-const BASE_URL = '/catalog';
-
-/** 供应商目录 API */
-export const providerCatalogApi = {
-  /** 列出供应商目录 */
-  list: (params?: ProviderCatalogListParams) =>
-    api.get<ProviderCatalog[]>(`${BASE_URL}/providers`, { params }),
-};
 
 /** 套餐目录 API */
 export const planCatalogApi = {
+  /** 列出供应商目录 */
+  listProviders: (params?: { keyword?: string }) =>
+    api.get<ProviderCatalog[]>('/plan-catalogs/providers', { params }),
+
   /** 列出套餐目录 */
   list: (params?: { providerCode?: string }) =>
-    api.get<PlanCatalog[]>(`${BASE_URL}/plans`, { params }),
+    api.get<PlanCatalog[]>('/plan-catalogs', { params }),
 
   /** 获取套餐详情 */
   getDetail: (planCode: string) =>
-    api.get<PlanDetail>(`${BASE_URL}/plans/${planCode}`),
+    api.get<PlanDetail>(`/plan-catalogs/${planCode}`),
+
+  /** 列出模型 */
+  listModels: (params?: { keyword?: string; capability?: string }) =>
+    api.get<ModelResponse[]>('/plan-catalogs/models', { params }),
 };
 
-/** 模型目录 API */
-export const modelCatalogApi = {
-  /** 列出模型目录 */
-  list: (params?: ModelCatalogListParams) =>
-    api.get<ModelCatalog[]>(`${BASE_URL}/models`, { params }),
-};
+/** 渠道开通 API */
+export const provisionApi = {
+  /** 从套餐创建渠道 */
+  fromPlan: (planCode: string, data?: ProvisionRequest) =>
+    api.post<ProvisionResult>(`/provision/from-plan/${planCode}`, data),
 
-/** 物化 API */
-export const catalogMaterializeApi = {
-  /** 物化供应商 */
-  materializeProvider: (providerCode: string) =>
-    api.post<MaterializeResult>(`${BASE_URL}/materialize/provider/${providerCode}`),
+  /** 批量开通供应商 */
+  batch: (providerCode: string, data?: BatchProvisionRequest) =>
+    api.post<BatchProvisionResult>(`/provision/batch/${providerCode}`, data),
 
-  /** 级联物化供应商（含关联 Plans） */
-  materializeProviderWithPlans: (providerCode: string, data?: MaterializeBatchRequest) =>
-    api.post<MaterializeBatchResult>(`${BASE_URL}/materialize/provider/${providerCode}/with-plans`, { data }),
+  /** 开通模型 */
+  model: (modelName: string) =>
+    api.post<ProvisionResult>(`/provision/model/${modelName}`),
 
-  /** 物化套餐（支持传入端点、模型、API Key 等配置） */
-  materializePlan: (planCode: string, data?: MaterializePlanRequest) =>
-    api.post<MaterializeResult>(`${BASE_URL}/materialize/plan/${planCode}`, data),
-
-  /** 物化模型 */
-  materializeModel: (modelName: string) =>
-    api.post<MaterializeResult>(`${BASE_URL}/materialize/model/${modelName}`),
-};
-
-/** 同步 API */
-export const catalogSyncApi = {
   /** 同步 BUILTIN 目录数据 */
   syncBuiltin: () =>
-    api.post<void>(`${BASE_URL}/sync/builtin`),
-
-  /** 同步 Models.dev 数据 */
-  syncModelsDev: () =>
-    api.post<void>(`${BASE_URL}/sync/models-dev`),
+    api.post<void>('/provision/sync/builtin'),
 };

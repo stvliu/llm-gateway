@@ -8,13 +8,8 @@
   "provider": {
     "code": "Provider Code",
     "name": "Provider Name",
-    "providerType": "Provider Type",
-    "materialized": "Materialized",
-    "notMaterialized": "Not Materialized"
-  },
-  "providerType": {
-    "INTERNATIONAL": "International",
-    "DOMESTIC": "Domestic"
+    "materialized": "Provisioned",
+    "notMaterialized": "Not Provisioned"
   },
   "plan": {
     "planCode": "Plan Code",
@@ -23,14 +18,15 @@
     "billingMode": "Billing Mode",
     "endpoints": "Endpoints",
     "pricing": "Pricing",
-    "materialized": "Materialized",
-    "notMaterialized": "Not Materialized",
+    "materialized": "Provisioned",
+    "notMaterialized": "Not Provisioned",
     "detail": "Plan Detail"
   },
   "billingMode": {
     "pay_as_you_go": "Pay As You Go",
     "subscription": "Subscription",
-    "package": "Package"
+    "hybrid": "Hybrid",
+    "prepaid_package": "Prepaid Package"
   },
   "model": {
     "modelName": "Model Name",
@@ -38,51 +34,27 @@
     "capabilities": "Capabilities",
     "contextWindow": "Context Window",
     "maxOutputTokens": "Max Output Tokens",
-    "materialized": "Materialized",
-    "notMaterialized": "Not Materialized"
+    "materialized": "Provisioned",
+    "notMaterialized": "Not Provisioned"
   },
-  "source": {
-    "label": "Source",
-    "BUILTIN": "Built-in",
-    "MODELS_DEV": "Models.dev",
-    "PROVIDER_API": "Provider API",
-    "MANUAL": "Manual",
-    "OVERRIDE": "Override"
-  },
-  "materialize": {
-    "provider": "Materialize Provider",
-    "plan": "Materialize Plan",
-    "model": "Materialize Model",
-    "cascade": "Cascade Materialize",
-    "cascadeTitle": "Cascade Materialize — {{name}}",
-    "cascadeDesc": "The following plans will be materialized as operational entities (Channel + Endpoint + Model):",
-    "cascadeSelected": "{{count}} plans selected",
-    "cascadeTotal": "{{count}} plans total",
-    "confirmTitle": "Confirm Materialization",
-    "confirmContent": "Are you sure you want to materialize \"{{name}}\" into an operational entity?",
-    "status": {
-      "CREATED": "Created",
-      "SKIPPED": "Skipped",
-      "FAILED": "Failed"
-    },
-    "result": "Materialization Result",
+  "provision": {
+    "provider": "Provision Provider",
+    "plan": "Provision Plan",
+    "model": "Provision Model",
     "resultSummary": "Success {{success}} / Skipped {{skipped}} / Failed {{failed}}"
   },
   "sync": {
     "title": "Sync Catalog",
-    "builtin": "Sync Built-in",
-    "modelsDev": "Sync Models.dev"
+    "builtin": "Sync Built-in"
   },
   "message": {
-    "materializeSuccess": "Materialized successfully",
-    "materializeFailed": "Materialization failed",
+    "provisionSuccess": "Provisioned successfully",
+    "provisionFailed": "Provisioning failed",
     "syncSuccess": "Synced successfully",
     "syncFailed": "Sync failed"
   },
   "filter": {
     "keyword": "Keyword search",
-    "providerType": "Provider Type",
-    "capability": "Capability",
     "all": "All"
   }
 }
