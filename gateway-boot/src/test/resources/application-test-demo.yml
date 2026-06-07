@@ -1,0 +1,9 @@
+gateway:
+  init:
+    demo-data-enabled: true
+
+spring:
+  jpa:
+    show-sql: false
+  flyway:
+    enabled: false
