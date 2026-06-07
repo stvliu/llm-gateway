@@ -6,9 +6,9 @@ import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
 import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 套餐目录 REST 控制器
@@ -66,11 +66,11 @@ public class PlanCatalogController {
      * 获取套餐定价
      *
      * @param planCode 套餐编码
-     * @return 套餐定价详情
+     * @return 定价列表
      */
     @GetMapping("/{planCode}/pricing")
-    public PlanDetailResponse getPlanPricing(@PathVariable String planCode) {
-        return planCatalogService.getPlanDetail(planCode);
+    public List<PlanDetailResponse.PricingInfo> getPlanPricing(@PathVariable String planCode) {
+        return planCatalogService.getPricing(planCode);
     }
 
     // ===== 模型 =====

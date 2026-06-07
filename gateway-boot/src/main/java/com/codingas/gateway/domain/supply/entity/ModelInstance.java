@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -53,5 +54,29 @@ public class ModelInstance extends BaseEntity {
      */
     public boolean isAvailable() {
         return ChannelModelState.ACTIVE.equals(state);
+    }
+
+    /**
+     * 解析有效能力：capabilitiesOverride 覆盖 Model.capabilities 的默认值
+     * 当 override 中包含某个能力键时使用覆盖值，否则使用模型默认值
+     */
+    public Map<String, Boolean> resolveCapabilities(Map<String, Boolean> modelCapabilities) {
+        if (capabilitiesOverride == null || capabilitiesOverride.isEmpty()) {
+            return modelCapabilities;
+        }
+        if (modelCapabilities == null || modelCapabilities.isEmpty()) {
+            return capabilitiesOverride;
+        }
+        Map<String, Boolean> resolved = new LinkedHashMap<>(modelCapabilities);
+        resolved.putAll(capabilitiesOverride);
+        return resolved;
+    }
+
+    /**
+     * 解析有效上下文窗口：contextWindowOverride 覆盖 Model.contextWindow
+     * 当 override 不为 null 时使用覆盖值，否则使用模型默认值
+     */
+    public Integer resolveContextWindow(Integer modelContextWindow) {
+        return contextWindowOverride != null ? contextWindowOverride : modelContextWindow;
     }
 }

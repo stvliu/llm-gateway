@@ -117,6 +117,14 @@ public class PlanCatalogServiceImpl implements PlanCatalogService {
     }
 
     @Override
+    public List<PlanDetailResponse.PricingInfo> getPricing(String planCode) {
+        PlanCatalog catalog = planCatalogGateway.findByPlanCode(planCode)
+                .orElseThrow(() -> new CatalogException(
+                        "PLAN_NOT_FOUND", "套餐目录不存在: " + planCode));
+        return parsePricing(catalog.getPricing());
+    }
+
+    @Override
     public List<ModelResponse> listModels(String providerCode, String keyword, String capability) {
         List<Model> models;
 

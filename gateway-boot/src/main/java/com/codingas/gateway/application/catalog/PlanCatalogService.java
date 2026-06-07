@@ -40,6 +40,14 @@ public interface PlanCatalogService {
     PlanDetailResponse getPlanDetail(String planCode);
 
     /**
+     * 获取套餐定价列表
+     *
+     * @param planCode 套餐编码
+     * @return 定价列表
+     */
+    List<PlanDetailResponse.PricingInfo> getPricing(String planCode);
+
+    /**
      * 列出模型
      *
      * @param providerCode 供应商编码过滤（可选）
