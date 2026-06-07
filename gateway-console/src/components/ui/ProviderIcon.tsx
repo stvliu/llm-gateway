@@ -1,8 +1,9 @@
 import { theme } from 'antd';
 import {
+  // 品牌/产品图标（优先）
   OpenAI,
   Anthropic,
-  Google,
+  Gemini,
   DeepSeek,
   ChatGLM,
   Qwen,
@@ -12,35 +13,66 @@ import {
   Minimax,
   Spark,
   Wenxin,
+  Baichuan,
+  Stepfun,
+  Ai360,
+  XAI,
+  Mistral,
+  Azure,
+  Bedrock,
+  // 供应商/公司图标（次选）
+  Google,
+  Volcengine,
+  Zhipu,
+  Tencent,
 } from '@lobehub/icons';
 import type { FC } from 'react';
 
-/** 图标变体类型：color=品牌色SVG，mono=单色SVG */
-type IconVariant = 'color' | 'mono';
+type IconFC = FC<{ size?: number | string }>;
+
+/** 图标变体类型 */
+type IconVariant = 'brand-color' | 'brand-mono' | 'provider-color' | 'provider-mono';
 
 type IconEntry = {
-  Mono: FC<{ size?: number | string }>;
-  Color?: FC<{ size?: number | string }>;
+  /** 品牌/产品图标（辨识度最高） */
+  Brand: IconFC;
+  /** 品牌色变体 */
+  BrandColor?: IconFC;
+  /** 供应商/公司图标（品牌不可用时的次选） */
+  Provider?: IconFC;
+  /** 供应商色变体 */
+  ProviderColor?: IconFC;
 };
 
 /**
- * providerId 到 LobeHub 图标组件的映射。
- * 优先使用产品品牌图标（ChatGLM、Kimi、Doubao 等）而非公司图标，
- * 因为产品品牌辨识度更高。
+ * providerId 到图标的映射。
+ * 降级链路：品牌色 → 品牌单色 → 供应商色 → 供应商单色 → 字母兜底。
+ *
+ * 品牌 ≠ 供应商 的条目：
+ *   google(Gemini/Google)、zhipu(ChatGLM/Zhipu)、tencent(混元/Tencent)、volcengine(豆包/Volcengine)
+ * 品牌 = 供应商 的条目（Provider 可省略，降级自动跳到品牌单色）：
+ *   openai、anthropic、deepseek、qwen、moonshot、minimax、xunfei、wenxin、baichuan、stepfun、360zhinao、xai、mistral、azure、aws_bedrock
  */
 const PROVIDER_ICON_ENTRIES: Record<string, IconEntry> = {
-  openai:     { Mono: OpenAI },
-  anthropic:  { Mono: Anthropic },
-  gemini:     { Mono: Google,     Color: Google.BrandColor },
-  deepseek:   { Mono: DeepSeek,   Color: DeepSeek.Color },
-  zhipu:      { Mono: ChatGLM,    Color: ChatGLM.Color },
-  qwen:       { Mono: Qwen,       Color: Qwen.Color },
-  tencent:    { Mono: Hunyuan,    Color: Hunyuan.Color },
-  volcengine: { Mono: Doubao,     Color: Doubao.Color },
-  moonshot:   { Mono: Kimi,       Color: Kimi.Color },
-  minimax:    { Mono: Minimax,    Color: Minimax.Color },
-  xunfei:     { Mono: Spark,      Color: Spark.Color },
-  wenxin:     { Mono: Wenxin,     Color: Wenxin.Color },
+  openai:      { Brand: OpenAI,    BrandColor: undefined },
+  anthropic:   { Brand: Anthropic, BrandColor: undefined },
+  google:      { Brand: Gemini,    BrandColor: Gemini.Color,   Provider: Google,     ProviderColor: Google.BrandColor },
+  deepseek:    { Brand: DeepSeek,  BrandColor: DeepSeek.Color },
+  qwen:        { Brand: Qwen,      BrandColor: Qwen.Color },
+  zhipu:       { Brand: ChatGLM,   BrandColor: ChatGLM.Color,  Provider: Zhipu,     ProviderColor: Zhipu.Color },
+  tencent:     { Brand: Hunyuan,   BrandColor: Hunyuan.Color,  Provider: Tencent,   ProviderColor: Tencent.Color },
+  volcengine:  { Brand: Doubao,    BrandColor: Doubao.Color,   Provider: Volcengine, ProviderColor: Volcengine.Color },
+  moonshot:    { Brand: Kimi,      BrandColor: Kimi.Color },
+  minimax:     { Brand: Minimax,   BrandColor: Minimax.Color },
+  xunfei:      { Brand: Spark,     BrandColor: Spark.Color },
+  wenxin:      { Brand: Wenxin,    BrandColor: Wenxin.Color },
+  baichuan:    { Brand: Baichuan,  BrandColor: Baichuan.Color },
+  stepfun:     { Brand: Stepfun,   BrandColor: Stepfun.Color },
+  '360zhinao': { Brand: Ai360,     BrandColor: Ai360.Color },
+  xai:         { Brand: XAI,       BrandColor: undefined },
+  mistral:     { Brand: Mistral,   BrandColor: Mistral.Color },
+  azure:       { Brand: Azure,     BrandColor: Azure.Color },
+  aws_bedrock: { Brand: Bedrock,   BrandColor: Bedrock.Color },
 };
 
 export interface ProviderIconProps {
@@ -56,8 +88,7 @@ export interface ProviderIconProps {
 
 /**
  * 根据 providerId 渲染对应的 LobeHub 品牌图标。
- * 有 Color 变体用 Color（品牌色），无 Color 用 Mono（单色）。
- * 找不到图标时显示首字母降级。
+ * 降级链路：品牌色 → 品牌单色 → 供应商色 → 供应商单色 → 字母兜底。
  * 自动适配亮色/暗色主题。
  */
 export const ProviderIcon: FC<ProviderIconProps> = ({
@@ -68,11 +99,26 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
 }) => {
   const { token } = theme.useToken();
   const entry = providerId ? PROVIDER_ICON_ENTRIES[providerId.toLowerCase()] : undefined;
-  const variant: IconVariant = entry?.Color ? 'color' : 'mono';
-  const IconComponent = entry?.Color ?? entry?.Mono;
 
-  if (IconComponent) {
-    const isMono = variant === 'mono';
+  if (entry) {
+    let IconComponent: IconFC;
+    let variant: IconVariant;
+
+    if (entry.BrandColor) {
+      IconComponent = entry.BrandColor;
+      variant = 'brand-color';
+    } else if (entry.Brand) {
+      IconComponent = entry.Brand;
+      variant = 'brand-mono';
+    } else if (entry.ProviderColor) {
+      IconComponent = entry.ProviderColor;
+      variant = 'provider-color';
+    } else {
+      IconComponent = entry.Provider!;
+      variant = 'provider-mono';
+    }
+
+    const isMono = variant === 'brand-mono' || variant === 'provider-mono';
     return (
       <span
         className={className}
@@ -94,6 +140,7 @@ export const ProviderIcon: FC<ProviderIconProps> = ({
     );
   }
 
+  // 兜底：首字母占位符
   const letter = providerId && providerId.length > 0
     ? providerId.charAt(0).toUpperCase()
     : '?';

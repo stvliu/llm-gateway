@@ -12,10 +12,10 @@ import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.gateway.ConnectivityTester;
@@ -43,7 +43,7 @@ public class ProviderServiceImpl implements ProviderService {
     private final ProviderGateway providerGateway;
     private final ModelGateway modelGateway;
     private final ChannelGateway channelGateway;
-    private final ChannelModelGateway channelModelGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final ConnectivityTester connectivityTester;
 
@@ -171,14 +171,14 @@ public class ProviderServiceImpl implements ProviderService {
 
         List<Channel> channels = channelGateway.findByProviderId(id);
 
-        // 1. 删除 ChannelModel（所有状态，包括 INACTIVE）
+        // 1. 删除 ModelInstance（所有状态，包括 INACTIVE）
         for (Channel channel : channels) {
-            List<ChannelModel> channelModels = channelModelGateway.findByChannelId(channel.getId());
-            for (ChannelModel cm : channelModels) {
-                channelModelGateway.deleteById(cm.getId());
+            List<ModelInstance> modelInstances = modelInstanceGateway.findByChannelId(channel.getId());
+            for (ModelInstance mi : modelInstances) {
+                modelInstanceGateway.deleteById(mi.getId());
             }
         }
-        log.info("Deleted channel models for provider {}", id);
+        log.info("Deleted model instances for provider {}", id);
 
         // 3. 删除渠道凭证
         for (Channel channel : channels) {
@@ -257,7 +257,7 @@ public class ProviderServiceImpl implements ProviderService {
     private ProviderResponse toResponse(Provider provider) {
         ProviderResponse response = new ProviderResponse();
         response.setId(provider.getId());
-        response.setProviderId(provider.getName());
+        response.setProviderId(provider.getCode());
         response.setProviderName(provider.getName());
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());

@@ -1,121 +1,99 @@
-import { useState, useEffect } from 'react';
-import { Tag, Input, Button, Space, Form, message, Typography, theme } from 'antd';
+import { useState } from 'react';
+import { Tag, Button, Input, message, theme, Empty } from 'antd';
+import { PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 import { InlineEditableList } from './InlineEditableList';
 import type { ChannelModel, CreateChannelModelRequest } from '@/types/channel';
-import { useChannelModels, useCreateChannelModel, useDeleteChannelModel, useUpdateChannelModel } from '@/services/query/useChannels';
-
-const { Link } = Typography;
+import {
+  useCreateChannelModel,
+  useDeleteChannelModel,
+  useUpdateChannelModel,
+} from '@/services/query/useChannels';
 
 interface ModelMappingSectionProps {
   channelId: number;
-  onFetchUpstream?: () => void;
+  channelModels: ChannelModel[];
 }
 
 /**
  * 模型映射区组件
- * 展示渠道的模型映射列表，支持行内编辑
+ * 展示渠道的模型映射列表，支持行内编辑、添加和删除
  */
-export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMappingSectionProps) {
+export function ModelMappingSection({ channelId, channelModels }: ModelMappingSectionProps) {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
   const [showAll, setShowAll] = useState(false);
-  const [editingId] = useState<number | null>(null);
+  const [addMode, setAddMode] = useState(false);
+  const [newModelId, setNewModelId] = useState('');
+  const [newUpstreamName, setNewUpstreamName] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // 获取模型映射
-  const { data: models = [] } = useChannelModels(channelId);
-
-  // Mutations
   const createModel = useCreateChannelModel();
   const deleteModel = useDeleteChannelModel();
-  const updateModel = useUpdateChannelModel();
+  const updateUpstreamName = useUpdateChannelModel();
 
-  /** 编辑时同步表单值 */
-  useEffect(() => {
-    if (editingId !== null) {
-      const model = models.find(m => m.id === editingId);
-      if (model) {
-        form.setFieldsValue({
-          modelName: model.modelName,
-          upstreamModelName: model.upstreamModelName,
-        });
-      }
-    }
-  }, [editingId, models, form]);
-
-  /** channelId 变化时重置展开状态 */
-  useEffect(() => {
-    setShowAll(false);
-  }, [channelId]);
+  const displayModels = showAll ? channelModels : channelModels.slice(0, 5);
 
   /** 渲染展示行 */
-  const renderItem = (model: ChannelModel) => (
+  const renderItem = (mapping: ChannelModel) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-      {/* 模型名 */}
-      <span style={{ fontWeight: 500, minWidth: 150 }}>{model.modelName}</span>
-      {/* 箭头 */}
-      <span style={{ color: token.colorTextSecondary }}>→</span>
-      {/* 上游模型名 */}
-      <span style={{ fontFamily: 'monospace', flex: 1 }}>
-        {model.upstreamModelName}
-      </span>
-      {/* 定价占位（暂无数据） */}
-      <Tag color="default">$--/$-- per 1M</Tag>
+      <Tag color="blue">{mapping.modelName || String(mapping.modelId)}</Tag>
+      {mapping.upstreamModelName && mapping.upstreamModelName !== mapping.modelName && (
+        <>
+          <ArrowRightOutlined style={{ color: token.colorTextSecondary }} />
+          <Tag color="geekblue">{mapping.upstreamModelName}</Tag>
+        </>
+      )}
+      <Tag color={mapping.state === 'ACTIVE' ? 'green' : 'default'}>
+        {mapping.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
+      </Tag>
     </div>
   );
 
   /** 渲染编辑表单 */
   const renderEditForm = (
-    model: ChannelModel,
+    mapping: ChannelModel,
     onSave: (updated: ChannelModel) => void,
     onCancel: () => void
   ) => {
+    const [editUpstreamName, setEditUpstreamName] = useState(mapping.upstreamModelName || '');
+    const [editLoading, setEditLoading] = useState(false);
+
     const handleSave = async () => {
       try {
-        setLoading(true);
-        const values = await form.validateFields();
-        // 仅更新上游模型名（后端 API 限制）
-        if (values.upstreamModelName !== model.upstreamModelName) {
-          await updateModel.mutateAsync({
-            channelId,
-            modelId: model.id,
-            upstreamModelName: values.upstreamModelName,
-          });
-        }
-        message.success('模型映射更新成功');
-        onSave({ ...model, ...values });
-      } catch (error) {
-        message.error('模型映射更新失败');
+        setEditLoading(true);
+        await updateUpstreamName.mutateAsync({
+          channelId,
+          modelId: mapping.id,
+          upstreamModelName: editUpstreamName || '',
+        });
+        message.success(t('modelMapping.updateSuccess'));
+        onSave({ ...mapping, upstreamModelName: editUpstreamName || null });
+      } catch {
+        message.error(t('modelMapping.updateFail'));
       } finally {
-        setLoading(false);
+        setEditLoading(false);
       }
     };
 
     return (
-      <Form form={form} layout="inline" style={{ gap: 12 }}>
-        <Form.Item
-          name="modelName"
-          label="模型名"
-          rules={[{ required: true, message: '请输入模型名' }]}
-        >
-          <Input style={{ width: 200 }} placeholder="gpt-4o" disabled />
-        </Form.Item>
-        <Form.Item
-          name="upstreamModelName"
-          label="上游模型名"
-          rules={[{ required: true, message: '请输入上游模型名' }]}
-        >
-          <Input style={{ width: 200 }} placeholder="gpt-4o-2024-05-13" />
-        </Form.Item>
-        <Space>
-          <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
-          </Button>
-          <Button size="small" onClick={onCancel}>
-            取消
-          </Button>
-        </Space>
-      </Form>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Tag color="blue">{mapping.modelName || String(mapping.modelId)}</Tag>
+        <ArrowRightOutlined style={{ color: token.colorTextSecondary }} />
+        <Input
+          size="small"
+          value={editUpstreamName}
+          onChange={(e) => setEditUpstreamName(e.target.value)}
+          placeholder={t('modelMapping.fetchFromUpstream')}
+          style={{ width: 200 }}
+        />
+        <Button type="primary" size="small" onClick={handleSave} loading={editLoading}>
+          {t('drawer.save')}
+        </Button>
+        <Button size="small" onClick={onCancel}>
+          {t('drawer.cancel')}
+        </Button>
+      </div>
     );
   };
 
@@ -127,103 +105,107 @@ export function ModelMappingSection({ channelId, onFetchUpstream }: ModelMapping
     const handleSave = async () => {
       try {
         setLoading(true);
-        const values = await form.validateFields();
         const data: CreateChannelModelRequest = {
-          modelName: values.modelName,
-          upstreamModelName: values.upstreamModelName,
+          modelId: Number(newModelId),
+          upstreamModelName: newUpstreamName || undefined,
         };
         const result = await createModel.mutateAsync({ channelId, data });
-        message.success('模型映射添加成功');
+        message.success(t('modelMapping.addSuccess'));
         onSave(result);
-      } catch (error) {
-        message.error('模型映射添加失败');
+        setAddMode(false);
+        setNewModelId('');
+        setNewUpstreamName('');
+      } catch {
+        message.error(t('modelMapping.addFail'));
       } finally {
         setLoading(false);
       }
     };
 
     return (
-      <Form form={form} layout="inline" style={{ gap: 12 }}>
-        <Form.Item
-          name="modelName"
-          label="模型名"
-          rules={[{ required: true, message: '请输入模型名' }]}
-        >
-          <Input style={{ width: 200 }} placeholder="gpt-4o" />
-        </Form.Item>
-        <Form.Item
-          name="upstreamModelName"
-          label="上游模型名"
-          rules={[{ required: true, message: '请输入上游模型名' }]}
-        >
-          <Input style={{ width: 200 }} placeholder="gpt-4o-2024-05-13" />
-        </Form.Item>
-        <Space>
-          <Button type="primary" size="small" onClick={handleSave} loading={loading}>
-            保存
-          </Button>
-          <Button size="small" onClick={onCancel}>
-            取消
-          </Button>
-        </Space>
-      </Form>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <Input
+          size="small"
+          value={newModelId}
+          onChange={(e) => setNewModelId(e.target.value)}
+          placeholder={t('modelMapping.modelIdPlaceholder')}
+          style={{ width: 150 }}
+        />
+        <ArrowRightOutlined style={{ color: token.colorTextSecondary }} />
+        <Input
+          size="small"
+          value={newUpstreamName}
+          onChange={(e) => setNewUpstreamName(e.target.value)}
+          placeholder={t('modelMapping.fetchFromUpstream')}
+          style={{ width: 200 }}
+        />
+        <Button type="primary" size="small" onClick={handleSave} loading={loading}>
+          {t('drawer.save')}
+        </Button>
+        <Button size="small" onClick={onCancel}>
+          {t('drawer.cancel')}
+        </Button>
+      </div>
     );
   };
 
-  /** 删除模型映射 */
-  const handleDelete = async (model: ChannelModel) => {
+  /** 删除映射 */
+  const handleDelete = async (mapping: ChannelModel) => {
     try {
-      await deleteModel.mutateAsync({ channelId, modelId: model.id });
-      message.success('模型映射删除成功');
-    } catch (error) {
-      message.error('模型映射删除失败');
+      await deleteModel.mutateAsync({ channelId, modelId: mapping.id });
+      message.success(t('modelMapping.deleteSuccess'));
+    } catch {
+      message.error(t('modelMapping.deleteFail'));
     }
   };
 
-  // 显示前3个或全部
-  const displayedModels = showAll ? models : models.slice(0, 3);
+  if (channelModels.length === 0 && !addMode) {
+    return (
+      <Empty
+        image={Empty.PRESENTED_IMAGE_SIMPLE}
+        description={t('modelMapping.empty')}
+      >
+        <Button type="dashed" onClick={() => setAddMode(true)} icon={<PlusOutlined />}>
+          {t('modelMapping.addMapping')}
+        </Button>
+      </Empty>
+    );
+  }
 
   return (
-    <div>
-      {/* 从上游获取按钮 */}
-      <div style={{ marginBottom: 12 }}>
-        <Button
-          type="dashed"
-          size="small"
-          onClick={() => {
-            if (onFetchUpstream) {
-              onFetchUpstream();
-            } else {
-              message.info('此功能将在后续实现');
-            }
-          }}
-        >
-          从上游获取
-        </Button>
-      </div>
-
-      {/* 模型列表 */}
+    <>
       <InlineEditableList
-        items={displayedModels}
+        items={displayModels}
         renderItem={renderItem}
         renderEditForm={renderEditForm}
         renderAddForm={renderAddForm}
-        onAdd={() => {
-          form.resetFields();
-        }}
+        onAdd={() => setAddMode(true)}
         onDelete={handleDelete}
-        getKey={(model) => model.id}
-        addLabel="添加模型映射"
+        getKey={(mapping) => mapping.id}
+        addLabel={t('modelMapping.addMapping')}
       />
 
-      {/* 查看全部链接 */}
-      {models.length > 3 && !showAll && (
-        <div style={{ marginTop: 8, textAlign: 'center' }}>
-          <Link onClick={() => setShowAll(true)}>
-            查看全部 {models.length} 个 →
-          </Link>
-        </div>
+      {!showAll && channelModels.length > 5 && (
+        <Button
+          type="link"
+          size="small"
+          style={{ marginTop: 8 }}
+          onClick={() => setShowAll(true)}
+        >
+          {t('modelMapping.viewAll', { count: channelModels.length })}
+        </Button>
       )}
-    </div>
+
+      {showAll && channelModels.length > 5 && (
+        <Button
+          type="link"
+          size="small"
+          style={{ marginTop: 8 }}
+          onClick={() => setShowAll(false)}
+        >
+          {t('modelMapping.collapse')}
+        </Button>
+      )}
+    </>
   );
 }

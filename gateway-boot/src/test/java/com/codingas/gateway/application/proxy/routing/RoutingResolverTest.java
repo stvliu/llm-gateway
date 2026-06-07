@@ -3,7 +3,7 @@ package com.codingas.gateway.application.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.*;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -34,7 +34,8 @@ class RoutingResolverTest {
     private ModelMatcher modelMatcher;
 
     @Mock
-    private ChannelSelector channelSelector;
+    private InstanceSelector instanceSelector;
+
 
     @Mock
     private CredentialResolver credentialResolver;
@@ -61,11 +62,11 @@ class RoutingResolverTest {
             model.setModelName("gpt-4o");
             model.setState(ModelState.ACTIVE);
 
-            ChannelModel channelModel = new ChannelModel();
-            channelModel.setId(10L);
-            channelModel.setChannelId(100L);
-            channelModel.setModelId(1L);
-            channelModel.setState(ChannelModelState.ACTIVE);
+            ModelInstance modelInstance = new ModelInstance();
+            modelInstance.setId(10L);
+            modelInstance.setChannelId(100L);
+            modelInstance.setModelId(1L);
+            modelInstance.setState(ChannelModelState.ACTIVE);
 
             Channel channel = new Channel();
             channel.setId(100L);
@@ -78,10 +79,9 @@ class RoutingResolverTest {
             endpoint.setChannelId(100L);
             endpoint.setEndpointUrl("https://api.openai.com/v1");
             endpoint.setProtocol(Protocol.OPENAI);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -109,10 +109,10 @@ class RoutingResolverTest {
             model.setModelName("gpt-4o");
             model.setState(ModelState.ACTIVE);
 
-            ChannelModel channelModel = new ChannelModel();
-            channelModel.setId(10L);
-            channelModel.setChannelId(100L);
-            channelModel.setModelId(1L);
+            ModelInstance modelInstance = new ModelInstance();
+            modelInstance.setId(10L);
+            modelInstance.setChannelId(100L);
+            modelInstance.setModelId(1L);
 
             Channel channel = new Channel();
             channel.setId(100L);
@@ -125,10 +125,9 @@ class RoutingResolverTest {
             endpoint.setChannelId(100L);
             endpoint.setEndpointUrl("https://api.anthropic.com/v1");
             endpoint.setProtocol(Protocol.ANTHROPIC);
-            endpoint.setState(ChannelEndpointState.ACTIVE);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -163,9 +162,9 @@ class RoutingResolverTest {
             model.setModelName("gpt-4o");
             model.setState(ModelState.ACTIVE);
 
-            ChannelModel channelModel = new ChannelModel();
-            channelModel.setId(10L);
-            channelModel.setChannelId(999L);
+            ModelInstance modelInstance = new ModelInstance();
+            modelInstance.setId(10L);
+            modelInstance.setChannelId(999L);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
             endpoint.setId(50L);
@@ -173,7 +172,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(channelModel);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());

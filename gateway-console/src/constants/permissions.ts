@@ -16,7 +16,8 @@ export const P = {
   KEY_WRITE: 'key:write',
   CHANNEL_READ: 'channel:read',
   CHANNEL_WRITE: 'channel:write',
-  DEVELOPER: 'developer:access',
+  QUICKSTART: 'quickstart:access',
+  AUDIT_READ: 'audit:read',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

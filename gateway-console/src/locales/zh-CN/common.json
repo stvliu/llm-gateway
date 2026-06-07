@@ -3,18 +3,28 @@
     "home": "仪表盘",
     "providers": "供应商",
     "providerDirectory": "供应商目录",
-    "models": "模型目录",
-    "channels": "渠道管理",
-    "apiKeys": "API Key 管理",
-    "teams": "团队与权限",
-    "developer": "开发者门户",
-    "systemSettings": "系统设置",
-    "catalog": "目录管理",
-    "changePassword": "修改密码"
+    "models": "模型",
+    "channels": "渠道",
+    "apiKeys": "API Key",
+    "teams": "团队",
+    "quickstart": "快速开始",
+    "users": "用户管理",
+    "stats": "统计",
+    "auditLogs": "审计日志",
+    "catalog": "目录",
+    "changePassword": "修改密码",
+    "group": {
+      "supply": "模型供给",
+      "identity": "身份与权限",
+      "operations": "运营与系统"
+    }
   },
   "app": {
     "title": "LLM Gateway",
     "copyright": "© 2024 LLM Gateway"
+  },
+  "header": {
+    "quickStart": "快速开始"
   },
   "actions": {
     "label": "操作",

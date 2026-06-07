@@ -22,9 +22,6 @@ public class PlanCatalogResponse {
     /** 计费模式 */
     private final String billingMode;
 
-    /** 数据来源 */
-    private final String source;
-
     /** 是否已物化 */
     private final Boolean materialized;
 }

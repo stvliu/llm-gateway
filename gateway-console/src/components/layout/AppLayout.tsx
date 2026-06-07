@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Layout, FloatButton, theme } from 'antd';
 import { CommentOutlined } from '@ant-design/icons';
 import { Outlet } from 'react-router-dom';
@@ -14,8 +14,14 @@ export default function AppLayout() {
   const { isOpen, setOpen } = useChatStore();
   const { token } = theme.useToken();
 
+  // 同步 body 背景色到主题，防止滚动时底部露出白色
+  useEffect(() => {
+    document.body.style.backgroundColor = token.colorBgLayout;
+    return () => { document.body.style.backgroundColor = ''; };
+  }, [token.colorBgLayout]);
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
       <Sider
         width={200}
         collapsedWidth={80}
@@ -25,9 +31,9 @@ export default function AppLayout() {
         <LeftHeader collapsed={collapsed} />
         <Sidebar collapsed={collapsed} />
       </Sider>
-      <Layout style={{ background: token.colorBgLayout }}>
+      <Layout style={{ minHeight: '100vh', background: token.colorBgLayout }}>
         <RightHeader collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-        <Content style={{ padding: 16, overflow: 'auto', background: token.colorBgLayout }}>
+        <Content style={{ padding: 16, overflow: 'auto', minHeight: 'calc(100vh - 48px)', background: token.colorBgLayout }}>
           <Outlet />
         </Content>
       </Layout>

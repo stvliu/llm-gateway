@@ -1,0 +1,15 @@
+{
+  "change": "supply-domain-merge",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "f014eb80cbad99210e81d3fdde53b8819dddc53333ca5323015e21b1c0d02cf9",
+  "files": [
+    { "path": "openspec/changes/supply-domain-merge/proposal.md", "sha256": "16a77b0a4b22047e6c36f20a65f6c20c36b3d7fd25555486cb6fad4898f06b6d" },
+    { "path": "openspec/changes/supply-domain-merge/design.md", "sha256": "9fc8a31334101f07e6484387566a638def48a988e2cd1054f4e1efbf636998ef" },
+    { "path": "openspec/changes/supply-domain-merge/tasks.md", "sha256": "546afe7cb0dc068b0b65d7ce9a2286be80bdb827343a160286cf134f4eea2e3e" },
+    { "path": "openspec/changes/supply-domain-merge/specs/channel-provision/spec.md", "sha256": "785b03dec05dac33fa227e9f33d9cb74f11d4e3b88b4270e7d3dd76062b0ae72" },
+    { "path": "openspec/changes/supply-domain-merge/specs/model-instance/spec.md", "sha256": "aad3bb04a3f26890cd501b261d7bc2180fdc321e2cfeb230a2cbb32373505263" }
+  ]
+}

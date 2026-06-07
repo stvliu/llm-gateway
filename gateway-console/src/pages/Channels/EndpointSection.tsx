@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Tag, Switch, Select, Input, Button, Space, Form, message, Popconfirm } from 'antd';
+import { Tag, Select, Input, Button, Space, Form, message, Popconfirm } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { ChannelEndpointResponse, CreateChannelEndpointRequest } from '@/types/channel';
 import {
   useAddChannelEndpoint,
   useUpdateChannelEndpoint,
   useRemoveChannelEndpoint,
-  useEnableChannelEndpoint,
-  useDisableChannelEndpoint,
 } from '@/services/query/useChannels';
 
 interface EndpointSectionProps {
@@ -21,9 +20,10 @@ const PROTOCOL_OPTIONS = [
 
 /**
  * 端点区组件
- * 展示渠道的端点列表，支持行内编辑、添加、启用/停用、删除
+ * 展示渠道的端点列表，支持行内编辑、添加、删除
  */
 export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) {
+  const { t } = useTranslation('channels');
   const [editingId, setEditingId] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [editForm] = Form.useForm();
@@ -32,8 +32,6 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
   const addEndpoint = useAddChannelEndpoint();
   const updateEndpoint = useUpdateChannelEndpoint();
   const removeEndpoint = useRemoveChannelEndpoint();
-  const enableEndpoint = useEnableChannelEndpoint();
-  const disableEndpoint = useDisableChannelEndpoint();
 
   const getProtocolColor = (protocol: string) => {
     const lower = protocol.toLowerCase();
@@ -58,23 +56,10 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
         endpointUrl: values.endpointUrl,
       };
       await updateEndpoint.mutateAsync({ channelId, endpointId, data });
-      message.success('端点更新成功');
+      message.success(t('drawer.endpointUpdated'));
       setEditingId(null);
     } catch {
       // 校验失败或 API 错误
-    }
-  };
-
-  /** 切换启用/停用 */
-  const handleToggleState = async (ep: ChannelEndpointResponse, enabled: boolean) => {
-    try {
-      if (enabled) {
-        await enableEndpoint.mutateAsync({ channelId, endpointId: ep.id });
-      } else {
-        await disableEndpoint.mutateAsync({ channelId, endpointId: ep.id });
-      }
-    } catch {
-      message.error('状态切换失败');
     }
   };
 
@@ -82,9 +67,9 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
   const handleDelete = async (ep: ChannelEndpointResponse) => {
     try {
       await removeEndpoint.mutateAsync({ channelId, endpointId: ep.id });
-      message.success('端点已删除');
+      message.success(t('drawer.endpointDeleted'));
     } catch {
-      message.error('端点删除失败');
+      message.error(t('drawer.endpointDeleteFailed'));
     }
   };
 
@@ -97,7 +82,7 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
         endpointUrl: values.endpointUrl,
       };
       await addEndpoint.mutateAsync({ channelId, data });
-      message.success('端点添加成功');
+      message.success(t('drawer.endpointAdded'));
       addForm.resetFields();
       setIsAdding(false);
     } catch {
@@ -118,8 +103,8 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
               <Form.Item
                 name="endpointUrl"
                 rules={[
-                  { required: true, message: '请输入 URL' },
-                  { type: 'url', message: '请输入有效 URL' },
+                  { required: true, message: t('drawer.endpointUrlRequired') },
+                  { type: 'url', message: t('drawer.endpointUrlInvalid') },
                 ]}
               >
                 <Input style={{ width: 280 }} />
@@ -131,10 +116,10 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
                   onClick={() => handleSaveEdit(ep.id)}
                   loading={updateEndpoint.isPending}
                 >
-                  保存
+                  {t('drawer.save')}
                 </Button>
                 <Button size="small" onClick={() => setEditingId(null)}>
-                  取消
+                  {t('drawer.cancel')}
                 </Button>
               </Space>
             </Form>
@@ -156,25 +141,18 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
                 {ep.endpointUrl}
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                <Switch
-                  checked={ep.state === 'ACTIVE'}
-                  onChange={(checked) => handleToggleState(ep, checked)}
-                  checkedChildren="启用"
-                  unCheckedChildren="停用"
-                  loading={enableEndpoint.isPending || disableEndpoint.isPending}
-                />
                 <Button type="link" size="small" onClick={() => handleStartEdit(ep)}>
-                  编辑
+                  {t('drawer.edit')}
                 </Button>
                 <Popconfirm
-                  title="确定删除此端点吗？"
+                  title={t('drawer.confirmDeleteEndpoint')}
                   onConfirm={() => handleDelete(ep)}
-                  okText="删除"
-                  cancelText="取消"
+                  okText={t('actions.delete', { ns: 'common' })}
+                  cancelText={t('actions.cancel', { ns: 'common' })}
                   okButtonProps={{ danger: true }}
                 >
                   <Button type="link" size="small" danger>
-                    删除
+                    {t('drawer.delete')}
                   </Button>
                 </Popconfirm>
               </div>
@@ -187,7 +165,7 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
         <Form form={addForm} layout="inline" style={{ gap: 8, marginTop: 8 }}>
           <Form.Item
             name="protocol"
-            rules={[{ required: true, message: '请选择协议' }]}
+            rules={[{ required: true, message: t('drawer.protocolRequired') }]}
             initialValue="openai"
           >
             <Select style={{ width: 120 }} options={PROTOCOL_OPTIONS} />
@@ -195,18 +173,18 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
           <Form.Item
             name="endpointUrl"
             rules={[
-              { required: true, message: '请输入 URL' },
-              { type: 'url', message: '请输入有效 URL' },
+              { required: true, message: t('drawer.endpointUrlRequired') },
+              { type: 'url', message: t('drawer.endpointUrlInvalid') },
             ]}
           >
             <Input style={{ width: 280 }} placeholder="https://api.example.com/v1" />
           </Form.Item>
           <Space>
             <Button type="primary" size="small" onClick={handleAdd} loading={addEndpoint.isPending}>
-              保存
+              {t('drawer.save')}
             </Button>
             <Button size="small" onClick={() => { setIsAdding(false); addForm.resetFields(); }}>
-              取消
+              {t('drawer.cancel')}
             </Button>
           </Space>
         </Form>
@@ -214,7 +192,7 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
 
       {!isAdding && editingId === null && (
         <Button type="dashed" block onClick={() => setIsAdding(true)} style={{ marginTop: 8 }}>
-          + 添加端点
+          {t('drawer.addEndpoint')}
         </Button>
       )}
     </div>

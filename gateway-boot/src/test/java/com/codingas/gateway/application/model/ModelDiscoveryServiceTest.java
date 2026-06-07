@@ -2,11 +2,11 @@ package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.enums.ModelState;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
@@ -38,7 +38,7 @@ class ModelDiscoveryServiceTest {
     @Mock
     private TeamChannelGateway teamChannelGateway;
     @Mock
-    private ChannelModelGateway channelModelGateway;
+    private ModelInstanceGateway modelInstanceGateway;
     @Mock
     private ModelGateway modelGateway;
 
@@ -49,7 +49,7 @@ class ModelDiscoveryServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ModelDiscoveryService(userTeamGateway, teamChannelGateway, channelModelGateway, modelGateway);
+        service = new ModelDiscoveryService(userTeamGateway, teamChannelGateway, modelInstanceGateway, modelGateway);
     }
 
     @Nested
@@ -63,16 +63,16 @@ class ModelDiscoveryServiceTest {
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(10L, 20L));
 
-            ChannelModel cm1 = new ChannelModel();
-            cm1.setModelId(100L);
-            cm1.setState(ChannelModelState.ACTIVE);
+            ModelInstance mi1 = new ModelInstance();
+            mi1.setModelId(100L);
+            mi1.setState(ChannelModelState.ACTIVE);
 
-            ChannelModel cm2 = new ChannelModel();
-            cm2.setModelId(200L);
-            cm2.setState(ChannelModelState.ACTIVE);
+            ModelInstance mi2 = new ModelInstance();
+            mi2.setModelId(200L);
+            mi2.setState(ChannelModelState.ACTIVE);
 
-            when(channelModelGateway.findActiveByChannelId(10L)).thenReturn(List.of(cm1));
-            when(channelModelGateway.findActiveByChannelId(20L)).thenReturn(List.of(cm2));
+            when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of(mi1));
+            when(modelInstanceGateway.findActiveByChannelId(20L)).thenReturn(List.of(mi2));
 
             Model model1 = new Model();
             model1.setModelName("gpt-4");
@@ -125,11 +125,11 @@ class ModelDiscoveryServiceTest {
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(30L));
 
-            ChannelModel cm = new ChannelModel();
-            cm.setModelId(300L);
-            cm.setState(ChannelModelState.ACTIVE);
+            ModelInstance mi = new ModelInstance();
+            mi.setModelId(300L);
+            mi.setState(ChannelModelState.ACTIVE);
 
-            when(channelModelGateway.findActiveByChannelId(30L)).thenReturn(List.of(cm));
+            when(modelInstanceGateway.findActiveByChannelId(30L)).thenReturn(List.of(mi));
 
             Model inactiveModel = new Model();
             inactiveModel.setModelName("deprecated-model");
@@ -151,11 +151,11 @@ class ModelDiscoveryServiceTest {
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(40L));
 
-            ChannelModel cm = new ChannelModel();
-            cm.setModelId(999L);
-            cm.setState(ChannelModelState.ACTIVE);
+            ModelInstance mi = new ModelInstance();
+            mi.setModelId(999L);
+            mi.setState(ChannelModelState.ACTIVE);
 
-            when(channelModelGateway.findActiveByChannelId(40L)).thenReturn(List.of(cm));
+            when(modelInstanceGateway.findActiveByChannelId(40L)).thenReturn(List.of(mi));
             when(modelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // Act

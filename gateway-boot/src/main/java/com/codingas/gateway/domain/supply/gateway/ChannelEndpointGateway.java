@@ -27,11 +27,6 @@ public interface ChannelEndpointGateway {
     List<ChannelEndpoint> findByChannelId(Long channelId);
 
     /**
-     * 根据渠道 ID 查找活跃端点
-     */
-    List<ChannelEndpoint> findActiveByChannelId(Long channelId);
-
-    /**
      * 根据渠道 ID 和协议查找端点
      */
     Optional<ChannelEndpoint> findByChannelIdAndProtocol(Long channelId, Protocol protocol);

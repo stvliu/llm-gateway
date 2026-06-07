@@ -2,17 +2,29 @@
   "menu": {
     "home": "Dashboard",
     "providers": "Providers",
+    "providerDirectory": "Provider Directory",
     "models": "Models",
-    "apiKeys": "API Key Management",
-    "teams": "Teams & Permissions",
-    "developer": "Developer Portal",
-    "systemSettings": "System Settings",
+    "channels": "Channels",
+    "apiKeys": "API Key",
+    "teams": "Teams",
+    "quickstart": "Quick Start",
+    "users": "User Management",
+    "stats": "Statistics",
+    "auditLogs": "Audit Logs",
     "catalog": "Catalog",
-    "changePassword": "Change Password"
+    "changePassword": "Change Password",
+    "group": {
+      "supply": "Model Supply",
+      "identity": "Identity & Access",
+      "operations": "Operations & System"
+    }
   },
   "app": {
     "title": "LLM Gateway",
     "copyright": "© 2024 LLM Gateway"
+  },
+  "header": {
+    "quickStart": "Quick Start"
   },
   "actions": {
     "label": "Actions",

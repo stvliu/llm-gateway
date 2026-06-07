@@ -1,15 +1,12 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.time.Instant;
 
 /**
  * 套餐目录实体
@@ -43,12 +40,6 @@ public class PlanCatalog extends BaseEntity {
 
     /** 描述 */
     private String description;
-
-    /** 目录数据来源，默认 BUILTIN */
-    private CatalogSource source = CatalogSource.BUILTIN;
-
-    /** 同步时间 */
-    private Instant syncedAt;
 
     /** 目录状态，默认 ACTIVE */
     private CatalogState state = CatalogState.ACTIVE;

@@ -40,7 +40,14 @@
       "Bash(openspec list *)",
       "Bash(openspec init *)",
       "Read(//e/workspace/**)",
-      "Read(//e//**)"
+      "Read(//e//**)",
+      "Bash(ls __TRACKED_VAR__/components/Color.js)",
+      "Bash(ls __TRACKED_VAR__/components/Mono.js)",
+      "Bash(ls __TRACKED_VAR__/components/BrandColor.js)",
+      "Bash(ls -d Moonshot*)",
+      "Bash(ls -d Xunfei*)",
+      "Bash(ls -d Iflytek*)",
+      "Bash(ls -d iFlytek*)"
     ]
   },
   "outputStyle": "default"

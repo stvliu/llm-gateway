@@ -16,12 +16,6 @@ public class ProviderCatalogResponse {
     /** 供应商名称 */
     private final String name;
 
-    /** 供应商类型 */
-    private final String providerType;
-
-    /** 数据来源 */
-    private final String source;
-
     /** 是否已物化 */
     private final Boolean materialized;
 }

@@ -1,187 +1,224 @@
-import { Button, Card, Popconfirm, Tag, Typography, Tooltip, theme } from 'antd';
+import { Card, Dropdown, App, Tooltip, message } from 'antd';
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  ClockCircleOutlined,
   DeleteOutlined,
-  QuestionCircleOutlined,
+  EditOutlined,
+  PauseOutlined,
+  PlayCircleOutlined,
+  ThunderboltOutlined,
+  MoreOutlined,
+  EyeOutlined,
+  SwapOutlined,
+  PlusCircleOutlined,
+  FileAddOutlined,
+  CopyOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { theme } from 'antd';
 import type { ChannelCard as ChannelCardType } from '@/types/channel';
-import type { FC } from 'react';
 
-const { Text } = Typography;
-
-export interface ChannelCardProps {
+interface ChannelCardProps {
   channel: ChannelCardType;
   onClick: (channel: ChannelCardType) => void;
   onDelete: (id: number) => void;
+  onToggleState: (id: number, enabled: boolean) => void;
+  onTest: (channel: ChannelCardType) => void;
+  onOpenDrawerTab: (channel: ChannelCardType, tab: string) => void;
 }
 
 /**
  * 渠道卡片组件
- * 一行一个，横向铺满
+ * 右上角图标组：启停 + 测试 常驻，低频操作收入 ⋮ Dropdown
  */
-export const ChannelCard: FC<ChannelCardProps> = ({ channel, onClick, onDelete }) => {
+export function ChannelCard({ channel, onClick, onDelete, onToggleState, onTest, onOpenDrawerTab }: ChannelCardProps) {
+  const { t } = useTranslation('channels');
   const { token } = theme.useToken();
+  const { modal } = App.useApp();
   const isActive = channel.state === 'ACTIVE';
 
-  // 检查是否缺少关键配置（凭证为 0 表示配置中）
-  const isIncomplete = channel.stats.credentialCount === 0;
-
-  /**
-   * 根据响应时间返回颜色 token
-   */
-  const getResponseTimeColor = (responseTime: number | null | undefined): string => {
-    if (responseTime === null || responseTime === undefined) return token.colorTextSecondary;
-    if (responseTime <= 500) return token.colorSuccess;
-    if (responseTime <= 2000) return token.colorWarning;
-    return token.colorError;
+  /** 获取主端点 URL */
+  const getMainEndpointUrl = (): string | null => {
+    if (!channel.endpoints || channel.endpoints.length === 0) return null;
+    return channel.endpoints[0].endpointUrl;
   };
 
-  /**
-   * 根据响应时间返回文本
-   */
-  const getResponseTimeText = (responseTime: number | null | undefined): string => {
-    if (responseTime === null || responseTime === undefined) return '未测试';
-    if (responseTime < 1000) return `${responseTime}ms`;
-    return `${(responseTime / 1000).toFixed(1)}s`;
+  /** 复制主端点 URL */
+  const handleCopyUrl = () => {
+    const url = getMainEndpointUrl();
+    if (!url) return;
+    navigator.clipboard.writeText(url).then(() => {
+      message.success(t('card.urlCopied'));
+    });
   };
+
+  /** 启停按钮点击 */
+  const handleToggleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    modal.confirm({
+      title: isActive ? t('card.confirmDisable') : t('card.confirmEnable'),
+      onOk: () => onToggleState(channel.id, !isActive),
+    });
+  };
+
+  /** 测试按钮点击 */
+  const handleTestClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onTest(channel);
+  };
+
+  /** 低频菜单项 */
+  const menuItems = [
+    { key: 'detail', label: t('card.viewDetail'), icon: <EyeOutlined /> },
+    { key: 'edit', label: t('card.edit'), icon: <EditOutlined /> },
+    { type: 'divider' as const },
+    { key: 'credential', label: t('card.replaceKey'), icon: <SwapOutlined /> },
+    { key: 'endpoint', label: t('card.addEndpoint'), icon: <PlusCircleOutlined /> },
+    { key: 'model', label: t('card.addModel'), icon: <FileAddOutlined /> },
+    { type: 'divider' as const },
+    {
+      key: 'copyUrl',
+      label: t('card.copyMainUrl'),
+      icon: <CopyOutlined />,
+      disabled: !getMainEndpointUrl(),
+    },
+    { type: 'divider' as const },
+    { key: 'delete', label: t('card.delete'), icon: <DeleteOutlined />, danger: true },
+  ];
+
+  const handleMenuClick = (e: { key: string }) => {
+    switch (e.key) {
+      case 'detail':
+        onClick(channel);
+        break;
+      case 'edit':
+        onOpenDrawerTab(channel, 'quota');
+        break;
+      case 'credential':
+        onOpenDrawerTab(channel, 'credentials');
+        break;
+      case 'endpoint':
+        onOpenDrawerTab(channel, 'endpoints');
+        break;
+      case 'model':
+        onOpenDrawerTab(channel, 'models');
+        break;
+      case 'copyUrl':
+        handleCopyUrl();
+        break;
+      case 'delete':
+        modal.confirm({
+          title: t('card.deleteConfirmTitle'),
+          content: t('card.deleteConfirmContent', { name: channel.name }),
+          okType: 'danger',
+          onOk: () => onDelete(channel.id),
+        });
+        break;
+    }
+  };
+
+  /** 图标按钮通用样式 */
+  const iconBtnStyle = (extra?: React.CSSProperties): React.CSSProperties => ({
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 28,
+    height: 28,
+    borderRadius: token.borderRadiusSM,
+    cursor: 'pointer',
+    color: token.colorTextSecondary,
+    transition: 'color 0.2s, background 0.2s',
+    ...extra,
+  });
 
   return (
     <Card
       hoverable
       onClick={() => onClick(channel)}
       style={{
-        marginBottom: '8px',
         opacity: isActive ? 1 : 0.6,
-        border: isIncomplete ? `2px solid ${token.colorWarning}` : undefined,
-        transition: 'all 0.2s',
+        borderLeft: isActive
+          ? `3px solid ${token.colorSuccess}`
+          : `3px solid ${token.colorTextQuaternary}`,
       }}
       styles={{ body: { padding: '16px' } }}
     >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        {/* 左侧：状态点 + 渠道名 */}
-        <div style={{ flex: '0 0 280px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: isActive ? token.colorSuccess : token.colorBorder,
-            }}
-          />
-          <Text strong style={{ fontSize: '15px' }}>
-            {channel.name}
-          </Text>
-          {isIncomplete && (
-            <Tag color="warning" style={{ marginLeft: '4px' }}>
-              配置中
-            </Tag>
-          )}
-        </div>
+      {/* 第一行：渠道名称 + 操作按钮 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{
+          fontWeight: 600,
+          fontSize: token.fontSizeLG,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          flex: 1,
+          minWidth: 0,
+          marginRight: token.marginSM,
+        }}>
+          {channel.name}
+        </span>
 
-        {/* 状态标签 */}
-        <div style={{ flex: '0 0 80px' }}>
-          <Tag color={isActive ? 'success' : 'default'}>
-            {isActive ? '已启用' : '已停用'}
-          </Tag>
-        </div>
-
-        {/* 资源统计 */}
-        <div style={{ flex: '0 0 280px', display: 'flex', gap: '16px' }}>
-          <Tooltip title="端点数量">
-            <Text type="secondary" style={{ fontSize: '13px' }}>
-              端点: {channel.stats.endpointCount}
-            </Text>
-          </Tooltip>
-          <Tooltip title="凭证数量">
-            <Text
-              type={isIncomplete ? 'warning' : 'secondary'}
-              style={{ fontSize: '13px' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexShrink: 0 }}>
+          {/* 启停按钮 */}
+          <Tooltip title={isActive ? t('card.disable') : t('card.enable')}>
+            <span
+              role="button"
+              onClick={handleToggleClick}
+              style={iconBtnStyle({ color: isActive ? token.colorTextSecondary : token.colorPrimary })}
+              onMouseEnter={(e) => { e.currentTarget.style.background = token.colorBgTextHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              Key: {channel.stats.credentialCount}
-              {isIncomplete && ' ⚠'}
-            </Text>
+              {isActive ? <PauseOutlined /> : <PlayCircleOutlined />}
+            </span>
           </Tooltip>
-          <Tooltip title="模型映射数量">
-            <Text type="secondary" style={{ fontSize: '13px' }}>
-              模型: {channel.stats.modelCount}
-            </Text>
-          </Tooltip>
-        </div>
 
-        {/* 计费信息 */}
-        <div style={{ flex: '0 0 100px' }}>
-          <Text type="secondary" style={{ fontSize: '13px' }}>
-            {channel.billingMode === 'pay_as_you_go'
-              ? '按量付费'
-              : channel.billingMode === 'subscription'
-              ? '订阅'
-              : channel.billingMode}
-          </Text>
-        </div>
-
-        {/* 右侧：响应时间 + 详情入口 + 删除 */}
-        <div
-          style={{
-            flex: '0 0 160px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'flex-end',
-            gap: '8px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-            {channel.stats.avgResponseTime === null ||
-            channel.stats.avgResponseTime === undefined ? (
-              <QuestionCircleOutlined style={{ color: token.colorTextSecondary }} />
-            ) : channel.stats.avgResponseTime <= 500 ? (
-              <CheckCircleOutlined style={{ color: token.colorSuccess }} />
-            ) : channel.stats.avgResponseTime <= 2000 ? (
-              <ClockCircleOutlined style={{ color: token.colorWarning }} />
-            ) : (
-              <CloseCircleOutlined style={{ color: token.colorError }} />
-            )}
-            <Text
-              style={{
-                fontSize: '13px',
-                color: getResponseTimeColor(channel.stats.avgResponseTime),
-              }}
+          {/* 测试按钮 */}
+          <Tooltip title={isActive ? t('card.testConnect') : t('card.testDisabled')}>
+            <span
+              role="button"
+              onClick={isActive ? handleTestClick : undefined}
+              style={iconBtnStyle({
+                cursor: isActive ? 'pointer' : 'not-allowed',
+                opacity: isActive ? 1 : 0.4,
+              })}
+              onMouseEnter={(e) => { if (isActive) e.currentTarget.style.background = token.colorBgTextHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
             >
-              {getResponseTimeText(channel.stats.avgResponseTime)}
-            </Text>
-          </div>
-          <Text type="secondary" style={{ fontSize: '12px' }}>
-            详情 &gt;
-          </Text>
-          <Popconfirm
-            title="确认删除"
-            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
-            onConfirm={(e) => {
-              e?.stopPropagation();
-              onDelete(channel.id);
-            }}
-            onCancel={(e) => e?.stopPropagation()}
-            okText="删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button
-              type="text"
-              size="small"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={(e) => e.stopPropagation()}
-            />
-          </Popconfirm>
+              <ThunderboltOutlined />
+            </span>
+          </Tooltip>
+
+          {/* ⋮ 更多菜单 */}
+          <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
+            <Tooltip title={t('card.more')}>
+              <span
+                role="button"
+                onClick={(e) => e.stopPropagation()}
+                style={iconBtnStyle()}
+                onMouseEnter={(e) => { e.currentTarget.style.background = token.colorBgTextHover; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+              >
+                <MoreOutlined />
+              </span>
+            </Tooltip>
+          </Dropdown>
         </div>
+      </div>
+
+      {/* 第二行：状态圆点 + 状态文字 + 统计信息 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: token.marginXS, color: token.colorTextSecondary, fontSize: token.fontSizeSM, marginTop: token.marginXS }}>
+        <span style={{
+          display: 'inline-block',
+          width: 6,
+          height: 6,
+          borderRadius: '50%',
+          background: isActive ? token.colorSuccess : token.colorTextQuaternary,
+          flexShrink: 0,
+        }} />
+        <span>{isActive ? t('status.active') : t('status.inactive')}</span>
+        <span style={{ margin: '0 2px' }}>·</span>
+        <span>{channel.stats?.endpointCount ?? 0} {t('card.endpoints')}</span>
+        <span>{channel.stats?.credentialCount ?? 0} Key</span>
+        <span>{channel.stats?.modelCount ?? 0} {t('card.models')}</span>
       </div>
     </Card>
   );
-};
+}

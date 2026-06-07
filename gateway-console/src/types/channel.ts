@@ -13,16 +13,12 @@ export interface ProtocolInfo {
 /** 渠道状态 */
 export type ChannelState = 'ACTIVE' | 'INACTIVE';
 
-/** 渠道端点状态 */
-export type ChannelEndpointState = 'ACTIVE' | 'INACTIVE';
-
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
   id: number;
   channelId: number;
   protocol: string;
   endpointUrl: string;
-  state: ChannelEndpointState;
   createdAt: string;
   updatedAt: string;
 }
@@ -124,7 +120,6 @@ export interface CreateChannelCredentialRequest {
 export interface CreateChannelCredentialResponse {
   id: number;
   apiKeyPlain: string;
-  apiKeyPlain: string;
 }
 
 /** 更新渠道凭证请求（与后端 ChannelCredentialUpdateRequest 一致） */
@@ -153,17 +148,24 @@ export interface ApiKeyTestResponse {
 export interface ChannelModel {
   id: number;
   channelId: number;
-  modelName: string;
-  upstreamModelName: string;
+  modelId: number;
+  /** 供应商侧模型名称（如 gpt-4o） */
+  modelName?: string;
+  /** 模型展示名称 */
+  displayName?: string;
+  /** 模型系列 */
+  modelFamily?: string;
+  /** 上游模型名，null 表示与 modelName 相同 */
+  upstreamModelName?: string | null;
+  /** 关联状态 */
   state: string;
-  createdAt: string;
-  updatedAt: string;
 }
 
-/** 创建渠道模型映射请求 */
+/** 创建渠道模型映射请求体（与后端 ChannelModelCreateRequest 一致） */
 export interface CreateChannelModelRequest {
-  modelName: string;
-  upstreamModelName: string;
+  modelId: number;
+  /** 上游模型名，为空表示与 Model.modelName 相同 */
+  upstreamModelName?: string;
 }
 
 /** 渠道聚合统计（前端计算） */
@@ -189,6 +191,7 @@ export interface ChannelGroup {
     id: number;
     providerId?: string;
     providerName: string;
+    state?: string;
   };
   channels: ChannelCard[];
 }

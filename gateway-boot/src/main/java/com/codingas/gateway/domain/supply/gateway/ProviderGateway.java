@@ -66,6 +66,11 @@ public interface ProviderGateway {
     boolean existsByCode(String code);
 
     /**
+     * 关键词搜索（code 或 name 包含关键字）
+     */
+    List<Provider> findByKeyword(String keyword);
+
+    /**
      * 获取最大版本号
      */
     default long getMaxVersion() {

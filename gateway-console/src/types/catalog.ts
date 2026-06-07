@@ -1,33 +1,22 @@
 /**
- * 目录类型定义 — 替代旧 metadata.ts
+ * 目录类型定义
  *
- * <p>类型字段与后端 CatalogController 返回的 DTO 响应对齐。</p>
+ * <p>类型字段与后端 PlanCatalogController 返回的 DTO 响应对齐。</p>
  */
 
 /** 目录状态 */
 export type CatalogState = 'ACTIVE' | 'DEPRECATED';
 
-/** 数据来源 */
-export type CatalogSource = 'BUILTIN' | 'MODELS_DEV' | 'PROVIDER_API' | 'MANUAL' | 'OVERRIDE';
-
-/** 供应商类型 */
-export type ProviderType = 'INTERNATIONAL' | 'DOMESTIC';
-
 /** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
 export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
 
-/** 物化状态 */
-export type MaterializeStatus = 'CREATED' | 'SKIPPED';
-
-/** 物化类型 */
-export type MaterializeType = 'PROVIDER' | 'PLAN' | 'MODEL';
+/** 开通结果状态 */
+export type ProvisionStatus = 'CREATED' | 'SKIPPED' | 'FAILED';
 
 /** 供应商目录（与后端 ProviderCatalogResponse 对齐） */
 export interface ProviderCatalog {
   code: string;
   name: string;
-  providerType: ProviderType;
-  source: CatalogSource;
   materialized: boolean;
 }
 
@@ -37,7 +26,6 @@ export interface PlanCatalog {
   providerCode: string;
   planName: string;
   billingMode: BillingMode;
-  source: CatalogSource;
   materialized: boolean;
 }
 
@@ -49,7 +37,7 @@ export interface PlanEndpoint {
 
 /** 套餐定价信息 */
 export interface PlanPricing {
-  providerModelId: string;
+  modelName: string;
   inputPrice: number | null;
   outputPrice: number | null;
   cacheReadPrice: number | null;
@@ -62,74 +50,49 @@ export interface PlanDetail {
   planName: string;
   billingMode: BillingMode;
   description: string | null;
-  source: CatalogSource;
   endpoints: PlanEndpoint[];
   pricing: PlanPricing[];
   materialized: boolean;
 }
 
-/** 模型目录（与后端 ModelCatalogResponse 对齐） */
-export interface ModelCatalog {
+/** 模型响应（与后端 ModelResponse 对齐） */
+export interface ModelResponse {
   modelName: string;
-  providerCode: string;
-  capabilities: string[] | null;
+  providerCode: string | null;
+  displayName: string | null;
+  modelFamily: string | null;
   contextWindow: number | null;
   maxOutputTokens: number | null;
-  source: CatalogSource;
+  capabilities: string[] | null;
   materialized: boolean;
 }
 
-/** 物化结果（与后端 MaterializeResult 对齐） */
-export interface MaterializeResult {
-  type: MaterializeType;
-  code: string;
-  entityId: number | null;
-  status: MaterializeStatus;
-}
-
-/** 批量物化结果状态 */
-export type PlanResultStatus = 'CREATED' | 'SKIPPED' | 'FAILED';
-
-/** 单条 Plan 物化结果（与后端 PlanResult 对齐） */
-export interface PlanMaterializeResult {
-  type: 'PLAN';
+/** 开通结果（与后端 ProvisionResult 对齐） */
+export interface ProvisionResult {
   planCode: string;
-  entityId: number | null;
-  status: PlanResultStatus;
+  channelId: number | null;
+  endpointCount: number;
+  instanceCount: number;
+  status: ProvisionStatus;
   errorMessage: string | null;
 }
 
-/** 批量物化结果（与后端 MaterializeBatchResult 对齐） */
-export interface MaterializeBatchResult {
+/** 批量开通结果（与后端 BatchProvisionResult 对齐） */
+export interface BatchProvisionResult {
   providerCode: string;
   totalCount: number;
   successCount: number;
   skippedCount: number;
   failedCount: number;
-  results: PlanMaterializeResult[];
+  results: ProvisionResult[];
 }
 
-/** 批量物化请求 */
-export interface MaterializeBatchRequest {
-  planCodes?: string[];
-}
-
-/** 套餐物化扩展请求 */
-export interface MaterializePlanRequest {
+/** 开通请求 */
+export interface ProvisionRequest {
   apiKeys?: string[];
-  endpoints?: Array<{ protocol: string; url: string }>;
-  models?: string[];
-  channelName?: string;
 }
 
-/** 供应商目录查询参数 */
-export interface ProviderCatalogListParams {
-  providerType?: ProviderType;
-  keyword?: string;
-}
-
-/** 模型目录查询参数 */
-export interface ModelCatalogListParams {
-  keyword?: string;
-  capability?: string;
+/** 批量开通请求 */
+export interface BatchProvisionRequest {
+  planCodes?: string[];
 }

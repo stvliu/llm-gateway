@@ -1,11 +1,11 @@
 package com.codingas.gateway.infrastructure.config;
 
 import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
@@ -35,7 +35,7 @@ public class ConfigCacheService {
     private final ModelGateway modelGateway;
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
-    private final ChannelModelGateway channelModelGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final EncryptionService encryptionService;
 
@@ -76,7 +76,7 @@ public class ConfigCacheService {
     /**
      * 获取供应商下的模型列表
      *
-     * <p>通过 Channel → ChannelModel → Model 关联路径查询。</p>
+     * <p>通过 Channel → ModelInstance → Model 关联路径查询。</p>
      */
     @Cacheable(value = CacheNames.MODELS, key = "'provider:' + #providerId")
     public List<Model> getModelsByProviderId(Long providerId) {
@@ -85,8 +85,8 @@ public class ConfigCacheService {
         if (channelIds.isEmpty()) return List.of();
 
         List<Long> modelIds = channelIds.stream()
-                .flatMap(chId -> channelModelGateway.findActiveByChannelId(chId).stream())
-                .map(ChannelModel::getModelId)
+                .flatMap(chId -> modelInstanceGateway.findActiveByChannelId(chId).stream())
+                .map(ModelInstance::getModelId)
                 .distinct()
                 .toList();
         if (modelIds.isEmpty()) return List.of();

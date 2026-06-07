@@ -1,28 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  providerCatalogApi,
   planCatalogApi,
-  modelCatalogApi,
-  catalogMaterializeApi,
-  catalogSyncApi,
+  provisionApi,
 } from '@/services/api/catalog';
 import type {
-  ProviderCatalogListParams,
-  ModelCatalogListParams,
-  MaterializePlanRequest,
+  ProvisionRequest,
+  BatchProvisionRequest,
 } from '@/types/catalog';
 
-const PROVIDER_CATALOG_KEY = 'provider-catalog';
 const PLAN_CATALOG_KEY = 'plan-catalog';
-const MODEL_CATALOG_KEY = 'model-catalog';
+const PROVIDER_CATALOG_KEY = 'provider-catalog';
+const MODEL_KEY = 'model';
 
 // ===== 供应商目录 =====
 
 /** 供应商目录列表查询 */
-export function useProviderCatalogs(params?: ProviderCatalogListParams) {
+export function useProviderCatalogs(keyword?: string) {
   return useQuery({
-    queryKey: [PROVIDER_CATALOG_KEY, 'list', params],
-    queryFn: () => providerCatalogApi.list(params),
+    queryKey: [PROVIDER_CATALOG_KEY, 'list', keyword],
+    queryFn: () => planCatalogApi.listProviders({ keyword }),
   });
 }
 
@@ -45,88 +41,67 @@ export function usePlanDetail(planCode: string | null) {
   });
 }
 
-// ===== 模型目录 =====
+// ===== 模型 =====
 
-/** 模型目录列表查询 */
-export function useModelCatalogs(params?: ModelCatalogListParams) {
+/** 模型列表查询 */
+export function useModels(params?: { keyword?: string; capability?: string }) {
   return useQuery({
-    queryKey: [MODEL_CATALOG_KEY, 'list', params],
-    queryFn: () => modelCatalogApi.list(params),
+    queryKey: [MODEL_KEY, 'list', params],
+    queryFn: () => planCatalogApi.listModels(params),
   });
 }
 
-// ===== 物化操作 =====
+// ===== 开通操作 =====
 
-/** 物化供应商 */
-export function useMaterializeProvider() {
+/** 从套餐创建渠道 */
+export function useProvisionFromPlan() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (providerCode: string) =>
-      catalogMaterializeApi.materializeProvider(providerCode),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
-    },
-  });
-}
-
-/** 级联物化供应商 */
-export function useMaterializeProviderWithPlans() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ providerCode, data }: { providerCode: string; data?: { planCodes?: string[] } }) =>
-      catalogMaterializeApi.materializeProviderWithPlans(providerCode, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
-    },
-  });
-}
-
-/** 物化套餐（支持传入端点、模型、API Key 等配置） */
-export function useMaterializePlan() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ planCode, data }: { planCode: string; data?: MaterializePlanRequest }) =>
-      catalogMaterializeApi.materializePlan(planCode, data),
+    mutationFn: ({ planCode, data }: { planCode: string; data?: ProvisionRequest }) =>
+      provisionApi.fromPlan(planCode, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: ['providers'] });
+      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
       queryClient.invalidateQueries({ queryKey: ['channels'] });
     },
   });
 }
 
-/** 物化模型 */
-export function useMaterializeModel() {
+/** 批量开通供应商 */
+export function useProvisionBatch() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (modelName: string) =>
-      catalogMaterializeApi.materializeModel(modelName),
+    mutationFn: ({ providerCode, data }: { providerCode: string; data?: BatchProvisionRequest }) =>
+      provisionApi.batch(providerCode, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [MODEL_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: ['channels'] });
+    },
+  });
+}
+
+/** 开通模型 */
+export function useProvisionModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (modelName: string) => provisionApi.model(modelName),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [MODEL_KEY] });
       queryClient.invalidateQueries({ queryKey: ['models'] });
     },
   });
 }
 
-// ===== 同步操作 =====
-
 /** 同步目录数据 */
 export function useSyncCatalog() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (type: 'builtin' | 'models-dev') => {
-      switch (type) {
-        case 'builtin': return catalogSyncApi.syncBuiltin();
-        case 'models-dev': return catalogSyncApi.syncModelsDev();
-      }
-    },
+    mutationFn: () => provisionApi.syncBuiltin(),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
       queryClient.invalidateQueries({ queryKey: [PLAN_CATALOG_KEY] });
-      queryClient.invalidateQueries({ queryKey: [MODEL_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [PROVIDER_CATALOG_KEY] });
+      queryClient.invalidateQueries({ queryKey: [MODEL_KEY] });
     },
   });
 }

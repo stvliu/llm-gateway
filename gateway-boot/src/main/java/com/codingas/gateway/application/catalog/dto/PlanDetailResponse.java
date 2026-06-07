@@ -29,9 +29,6 @@ public class PlanDetailResponse {
     /** 描述 */
     private final String description;
 
-    /** 数据来源 */
-    private final String source;
-
     /** 解析后的端点列表 */
     private final List<EndpointInfo> endpoints;
 

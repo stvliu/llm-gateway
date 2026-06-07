@@ -58,6 +58,21 @@ public interface ModelGateway {
     void delete(Model model);
 
     /**
+     * 检查模型名是否存在
+     */
+    boolean existsByModelName(String modelName);
+
+    /**
+     * 关键词搜索（modelName 或 displayName 包含关键字）
+     */
+    List<Model> findByKeyword(String keyword);
+
+    /**
+     * 按能力过滤（capabilities 包含指定能力）
+     */
+    List<Model> findByCapability(String capability);
+
+    /**
      * 获取最大版本号
      */
     default long getMaxVersion() {

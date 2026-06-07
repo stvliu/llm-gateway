@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Descriptions, InputNumber, Input, Button, Space, Form, message } from 'antd';
+import { useTranslation } from 'react-i18next';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
 
@@ -12,6 +13,7 @@ interface QuotaSettingsSectionProps {
  * 展示渠道的配额和配置信息，支持编辑
  */
 export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
+  const { t } = useTranslation('channels');
   const [editing, setEditing] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
@@ -20,7 +22,7 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
 
   /** 格式化显示值 */
   const formatValue = (value: number | null | undefined, unit?: string) => {
-    if (value === null || value === undefined) return '未设置';
+    if (value === null || value === undefined) return t('quota.notSet');
     return unit ? `${value}${unit}` : String(value);
   };
 
@@ -51,10 +53,10 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
         maxRetries: values.maxRetries,
       };
       await updateChannel.mutateAsync({ id: channel.id, data });
-      message.success('设置更新成功');
+      message.success(t('quota.updateSuccess'));
       setEditing(false);
-    } catch (error) {
-      message.error('设置更新失败');
+    } catch {
+      message.error(t('quota.updateFail'));
     } finally {
       setLoading(false);
     }
@@ -63,29 +65,29 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
   if (editing) {
     return (
       <Form form={form} layout="vertical">
-        <Form.Item label="RPM（每分钟请求数）" name="rpm">
-          <InputNumber min={1} style={{ width: '100%' }} placeholder="暂不支持" disabled />
+        <Form.Item label={t('quota.rpm')} name="rpm">
+          <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
         </Form.Item>
-        <Form.Item label="TPM（每分钟 Token 数）" name="tpm">
-          <InputNumber min={1} style={{ width: '100%' }} placeholder="暂不支持" disabled />
+        <Form.Item label={t('quota.tpm')} name="tpm">
+          <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
         </Form.Item>
-        <Form.Item label="配额上限" name="quotaLimit">
-          <InputNumber min={0} style={{ width: '100%' }} placeholder="不限制" />
+        <Form.Item label={t('quota.quotaLimit')} name="quotaLimit">
+          <InputNumber min={0} style={{ width: '100%' }} placeholder={t('quota.unlimited')} />
         </Form.Item>
-        <Form.Item label="超时（毫秒）" name="timeout">
-          <InputNumber min={1000} style={{ width: '100%' }} placeholder="使用默认值" />
+        <Form.Item label={t('quota.timeoutMs')} name="timeout">
+          <InputNumber min={1000} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
         </Form.Item>
-        <Form.Item label="重试次数" name="maxRetries">
-          <InputNumber min={0} max={5} style={{ width: '100%' }} placeholder="使用默认值" />
+        <Form.Item label={t('quota.maxRetries')} name="maxRetries">
+          <InputNumber min={0} max={5} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
         </Form.Item>
-        <Form.Item label="自定义 Header">
-          <Input style={{ width: '100%' }} placeholder="暂不支持" disabled />
+        <Form.Item label={t('quota.customHeader')}>
+          <Input style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
         </Form.Item>
         <Space>
           <Button type="primary" onClick={handleSave} loading={loading}>
-            保存
+            {t('drawer.save')}
           </Button>
-          <Button onClick={handleCancel}>取消</Button>
+          <Button onClick={handleCancel}>{t('drawer.cancel')}</Button>
         </Space>
       </Form>
     );
@@ -94,27 +96,27 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
   return (
     <div>
       <Descriptions column={1} size="small">
-        <Descriptions.Item label="RPM（每分钟请求数）">
-          暂不支持
+        <Descriptions.Item label={t('quota.rpm')}>
+          {t('quota.notSupported')}
         </Descriptions.Item>
-        <Descriptions.Item label="TPM（每分钟 Token 数）">
-          暂不支持
+        <Descriptions.Item label={t('quota.tpm')}>
+          {t('quota.notSupported')}
         </Descriptions.Item>
-        <Descriptions.Item label="配额上限">
+        <Descriptions.Item label={t('quota.quotaLimit')}>
           {formatValue(channel.quotaLimit)}
         </Descriptions.Item>
-        <Descriptions.Item label="超时">
+        <Descriptions.Item label={t('quota.timeout')}>
           {formatValue(channel.timeout, 'ms')}
         </Descriptions.Item>
-        <Descriptions.Item label="重试次数">
+        <Descriptions.Item label={t('quota.maxRetries')}>
           {formatValue(channel.maxRetries)}
         </Descriptions.Item>
-        <Descriptions.Item label="自定义 Header">
-          暂不支持
+        <Descriptions.Item label={t('quota.customHeader')}>
+          {t('quota.notSupported')}
         </Descriptions.Item>
       </Descriptions>
       <Button type="link" style={{ padding: 0, marginTop: 12 }} onClick={handleStartEdit}>
-        编辑设置
+        {t('quota.editSettings')}
       </Button>
     </div>
   );

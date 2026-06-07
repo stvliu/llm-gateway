@@ -54,7 +54,7 @@ export default function ModelCreateModal({ open, onClose }: Props) {
         await createChannelModelMutation.mutateAsync({
           channelId: firstChannel.id,
           data: {
-            modelName: model.modelName,
+            modelId: model.id,
             upstreamModelName: model.modelName,
           },
         });

@@ -1,22 +1,18 @@
-import { useMemo } from 'react';
-import { Tag, Space, Button, Typography, Spin, Table } from 'antd';
-import { CloudDownloadOutlined, PlusOutlined } from '@ant-design/icons';
+import { useMemo, useState } from 'react';
+import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card } from 'antd';
+import { PlusOutlined, SyncOutlined, CloudDownloadOutlined, ArrowRightOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { usePlanCatalogs } from '@/services/query/useCatalog';
-import type { PlanCatalog, MaterializeType } from '@/types/catalog';
+import { App } from 'antd';
+import { ProviderIcon } from '@/components/ui/ProviderIcon';
+import {
+  useProviderCatalogs,
+  usePlanCatalogs,
+  useProvisionBatch,
+  useSyncCatalog,
+} from '@/services/query/useCatalog';
+import type { ProviderCatalog, PlanCatalog } from '@/types/catalog';
 
 const { Text } = Typography;
-
-interface PlanCatalogViewProps {
-  /** 供应商编码 */
-  providerCode: string;
-  /** 选择套餐，进入模型规格目录 */
-  onSelectPlan: (planCode: string, planName: string) => void;
-  /** 物化操作 */
-  onMaterialize: (type: MaterializeType, code: string, name: string) => void;
-  /** 快速创建渠道 */
-  onQuickCreate?: (planCode: string, planName: string) => void;
-}
 
 /** 计费模式标签配置 */
 const BILLING_MODE_CONFIG: Record<string, { color: string }> = {
@@ -25,27 +21,133 @@ const BILLING_MODE_CONFIG: Record<string, { color: string }> = {
   package: { color: 'orange' },
 };
 
-/** 套餐目录表格视图 */
-export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterialize, onQuickCreate }: PlanCatalogViewProps) {
+interface PlanCatalogViewProps {
+  /** 供应商编码（可选，用于筛选套餐） */
+  providerCode?: string;
+  /** 选择供应商 */
+  onSelectProvider?: (code: string, name: string) => void;
+  /** 选择套餐 */
+  onSelectPlan?: (planCode: string, planName: string) => void;
+  /** 快速创建渠道 */
+  onQuickCreate?: (planCode: string, planName: string) => void;
+}
+
+/** 套餐目录视图 */
+export default function PlanCatalogView({
+  providerCode,
+  onSelectProvider,
+  onSelectPlan,
+  onQuickCreate,
+}: PlanCatalogViewProps) {
   const { t } = useTranslation('catalog');
+  const { message } = App.useApp();
+
+  // 搜索状态
+  const [keyword, setKeyword] = useState('');
+  const [searchKeyword, setSearchKeyword] = useState('');
 
   // 数据查询
-  const { data: plans, isLoading } = usePlanCatalogs(providerCode);
+  const { data: providers, isLoading: providersLoading } = useProviderCatalogs(searchKeyword);
+  const { data: plans, isLoading: plansLoading } = usePlanCatalogs(providerCode);
 
-  /** 来源标签颜色 */
-  const sourceColor = (source: string) => {
-    switch (source) {
-      case 'BUILTIN': return 'blue';
-      case 'MODELS_DEV': return 'green';
-      case 'PROVIDER_API': return 'orange';
-      case 'MANUAL': return 'default';
-      case 'OVERRIDE': return 'red';
-      default: return 'default';
+  // 开通操作
+  const provisionBatchMutation = useProvisionBatch();
+  const syncMutation = useSyncCatalog();
+
+  // 是否显示供应商列表（未选择供应商时）
+  const showProviders = !providerCode;
+  const dataList = showProviders ? (providers ?? []) : (plans ?? []);
+
+  /** 同步目录 */
+  const handleSync = async () => {
+    try {
+      await syncMutation.mutateAsync();
+      message.success(t('message.syncSuccess'));
+    } catch {
+      message.error(t('message.syncFailed'));
     }
   };
 
-  /** 表格列定义 */
-  const columns = useMemo(() => [
+  /** 开通供应商 */
+  const handleProvisionProvider = async (code: string) => {
+    try {
+      const result = await provisionBatchMutation.mutateAsync({ providerCode: code });
+      const summary = t('provision.resultSummary', {
+        success: result.successCount,
+        skipped: result.skippedCount,
+        failed: result.failedCount,
+      });
+      message.success(summary);
+    } catch {
+      message.error(t('message.provisionFailed'));
+    }
+  };
+
+  const isLoading = showProviders ? providersLoading : plansLoading;
+  const hasActiveFilters = !!searchKeyword;
+
+  /** 供应商卡片视图 */
+  const renderProviders = () => (
+    <Spin spinning={isLoading}>
+      {dataList.length === 0 && !isLoading ? (
+        <div style={{ textAlign: 'center', padding: 48 }}>
+          <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
+        </div>
+      ) : (
+        <Row gutter={[16, 16]}>
+          {(dataList as ProviderCatalog[]).map((provider) => (
+            <Col key={provider.code} xs={24} sm={12} md={8} lg={6}>
+              <Card
+                size="small"
+                hoverable
+                actions={[
+                  <Button
+                    key="provision"
+                    type="link"
+                    icon={<CloudDownloadOutlined />}
+                    disabled={provider.materialized}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (provider.materialized) return;
+                      handleProvisionProvider(provider.code);
+                    }}
+                  >
+                    {provider.materialized ? t('provider.materialized') : t('provision.provider')}
+                  </Button>,
+                  onSelectProvider && (
+                    <Button
+                      key="view"
+                      type="link"
+                      icon={<ArrowRightOutlined />}
+                      onClick={() => onSelectProvider(provider.code, provider.name)}
+                    >
+                      {t('tabs.plans')}
+                    </Button>
+                  ),
+                ]}
+              >
+                <Card.Meta
+                  avatar={<ProviderIcon providerId={provider.code} size={40} />}
+                  title={
+                    <Space>
+                      <span>{provider.name}</span>
+                      <Tag color={provider.materialized ? 'success' : 'default'} style={{ fontSize: 10 }}>
+                        {provider.materialized ? t('provider.materialized') : t('provider.notMaterialized')}
+                      </Tag>
+                    </Space>
+                  }
+                  description={<Text type="secondary" style={{ fontSize: 12 }}>{provider.code}</Text>}
+                />
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      )}
+    </Spin>
+  );
+
+  /** 套餐表格列定义 */
+  const planColumns = useMemo(() => [
     {
       title: t('plan.planName'),
       dataIndex: 'planName',
@@ -77,20 +179,9 @@ export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterial
       },
     },
     {
-      title: t('source.label'),
-      dataIndex: 'source',
-      key: 'source',
-      width: 100,
-      render: (source: string) => (
-        <Tag color={sourceColor(source)} style={{ fontSize: 10 }}>
-          {t(`source.${source}`)}
-        </Tag>
-      ),
-    },
-    {
       title: '',
       key: 'actions',
-      width: 260,
+      width: 200,
       render: (_: unknown, record: PlanCatalog) => (
         <Space size="small">
           {onQuickCreate && (
@@ -103,51 +194,81 @@ export default function PlanCatalogView({ providerCode, onSelectPlan, onMaterial
                 onQuickCreate(record.planCode, record.planName);
               }}
             >
-              {t('quickCreate', { defaultValue: '快速创建' })}
+              {t('quickCreate', { defaultValue: '创建渠道' })}
             </Button>
           )}
-          <Button
-            type="link"
-            size="small"
-            icon={<CloudDownloadOutlined />}
-            disabled={record.materialized}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (record.materialized) return;
-              onMaterialize('PLAN', record.planCode, record.planName);
-            }}
-          >
-            {record.materialized ? t('plan.materialized') : t('materialize.plan')}
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => onSelectPlan(record.planCode, record.planName)}
-          >
-            {t('plan.detail')}
-          </Button>
+          {onSelectPlan && (
+            <Button
+              type="link"
+              size="small"
+              onClick={() => onSelectPlan(record.planCode, record.planName)}
+            >
+              {t('plan.detail')}
+            </Button>
+          )}
         </Space>
       ),
     },
-  ], [t, onSelectPlan, onMaterialize, onQuickCreate]);
+  ], [t, onQuickCreate, onSelectPlan]);
 
-  const planList = plans ?? [];
-
-  return (
+  /** 套餐表格视图 */
+  const renderPlans = () => (
     <Spin spinning={isLoading}>
-      {planList.length === 0 && !isLoading ? (
+      {(dataList as PlanCatalog[]).length === 0 && !isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}>
           <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
         </div>
       ) : (
         <Table
-          dataSource={planList}
-          columns={columns}
+          dataSource={dataList as PlanCatalog[]}
+          columns={planColumns}
           rowKey="planCode"
           size="small"
           pagination={false}
         />
       )}
     </Spin>
+  );
+
+  return (
+    <div>
+      {/* 搜索栏 + 同步按钮 */}
+      <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <Space wrap>
+          <Input.Search
+            placeholder={t('filter.keyword')}
+            allowClear
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onSearch={(value) => setSearchKeyword(value)}
+            style={{ width: 240 }}
+            prefix={<SearchOutlined />}
+          />
+          {hasActiveFilters && (
+            <Button
+              icon={<CloseOutlined />}
+              onClick={() => {
+                setKeyword('');
+                setSearchKeyword('');
+              }}
+            >
+              {t('filter.all')}
+            </Button>
+          )}
+        </Space>
+        {showProviders && (
+          <Button
+            icon={<SyncOutlined />}
+            onClick={handleSync}
+            loading={syncMutation.isPending}
+          >
+            {t('sync.builtin')}
+          </Button>
+        )}
+      </div>
+
+      {/* 供应商列表或套餐列表 */}
+      {showProviders ? renderProviders() : renderPlans()}
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import { Drawer } from 'antd';
+import { useTranslation } from 'react-i18next';
 import { QuickOnboardMode } from './QuickOnboardMode';
 
 export interface ChannelCreateWizardProps {
@@ -14,13 +15,14 @@ export interface ChannelCreateWizardProps {
  * 渠道创建向导——从套餐模板快速创建渠道
  */
 export function ChannelCreateWizard({ open, onClose, initialPlanCode, initialPlanName }: ChannelCreateWizardProps) {
+  const { t } = useTranslation('channels');
   const handleComplete = () => {
     onClose();
   };
 
   return (
     <Drawer
-      title="新建渠道"
+      title={t('wizard.title')}
       placement="right"
       width={720}
       open={open}

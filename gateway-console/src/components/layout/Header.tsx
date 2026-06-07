@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Space, Dropdown, Button, Select, Avatar, theme, type MenuProps } from 'antd';
 import {
   MenuFoldOutlined,
@@ -7,12 +8,13 @@ import {
   LaptopOutlined,
   CodeOutlined,
   LogoutOutlined,
-  UserOutlined,
+  LockOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { useThemeStore } from '@/stores/themeStore';
+import { ChangePasswordModal } from '@/components/ChangePasswordModal';
 import logoSvg from '@/assets/images/logo-full.svg';
 
 interface LeftHeaderProps {
@@ -80,6 +82,7 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
   const { setMode, getEffectiveTheme } = useThemeStore();
   const { token } = theme.useToken();
   const isDark = getEffectiveTheme() === 'dark';
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   const headerStyle = {
     display: 'flex',
@@ -113,6 +116,15 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
 
   const userItems: MenuProps['items'] = [
     {
+      key: 'change-password',
+      label: t('menu.changePassword'),
+      icon: <LockOutlined />,
+      onClick: () => setPasswordModalOpen(true),
+    },
+    {
+      type: 'divider' as const,
+    },
+    {
       key: 'logout',
       label: t('user.logout'),
       icon: <LogoutOutlined />,
@@ -127,47 +139,56 @@ export function RightHeader({ collapsed, onToggle }: RightHeaderProps) {
   const ThemeIcon = isDark ? MoonOutlined : SunOutlined;
 
   return (
-    <div style={{ ...headerStyle, justifyContent: 'space-between' }}>
-      <Button
-        type="text"
-        icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        onClick={onToggle}
-      />
-
-      <Space>
-        <Dropdown menu={{ items: themeItems }} trigger={['click']}>
-          <Button type="text" icon={<ThemeIcon />} />
-        </Dropdown>
-
-        <Select
-          value={i18n.language || 'zh-CN'}
-          onChange={handleLanguageChange}
-          variant="borderless"
-          options={[
-            { value: 'zh-CN', label: t('language.zhCN') },
-            { value: 'en-US', label: t('language.enUS') },
-          ]}
+    <>
+      <div style={{ ...headerStyle, justifyContent: 'space-between' }}>
+        <Button
+          type="text"
+          icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+          onClick={onToggle}
         />
 
-        {hasPermission('developer:access') && (
-          <Button
-            type="text"
-            icon={<CodeOutlined />}
-            onClick={() => navigate('/developer')}
-          >
-            {t('header.switchToDeveloper', { defaultValue: '切换到开发者视图' })}
-          </Button>
-        )}
+        <Space>
+          <Dropdown menu={{ items: themeItems }} trigger={['click']}>
+            <Button type="text" icon={<ThemeIcon />} />
+          </Dropdown>
 
-        <Dropdown menu={{ items: userItems }} trigger={['click']}>
-          <Space style={{ cursor: 'pointer' }}>
-            <Avatar size="small" icon={<UserOutlined />} />
-            <span style={{ color: token.colorText }}>
-              {user?.username}
-            </span>
-          </Space>
-        </Dropdown>
-      </Space>
-    </div>
+          <Select
+            value={i18n.language || 'zh-CN'}
+            onChange={handleLanguageChange}
+            variant="borderless"
+            options={[
+              { value: 'zh-CN', label: t('language.zhCN') },
+              { value: 'en-US', label: t('language.enUS') },
+            ]}
+          />
+
+          {hasPermission('quickstart:access') && (
+            <Button
+              type="text"
+              icon={<CodeOutlined />}
+              onClick={() => navigate('/quickstart')}
+            >
+              {t('header.quickStart')}
+            </Button>
+          )}
+
+          <Dropdown menu={{ items: userItems }} trigger={['click']}>
+            <Space style={{ cursor: 'pointer' }}>
+              <Avatar size="small" style={{ backgroundColor: token.colorPrimary }}>
+                {user?.username?.charAt(0).toUpperCase()}
+              </Avatar>
+              <span style={{ color: token.colorText }}>
+                {user?.username}
+              </span>
+            </Space>
+          </Dropdown>
+        </Space>
+      </div>
+
+      <ChangePasswordModal
+        open={passwordModalOpen}
+        onClose={() => setPasswordModalOpen(false)}
+      />
+    </>
   );
 }

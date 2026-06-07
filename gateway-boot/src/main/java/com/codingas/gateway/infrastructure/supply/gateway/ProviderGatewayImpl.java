@@ -79,6 +79,12 @@ public class ProviderGatewayImpl implements ProviderGateway {
         return providerRepository.existsByCode(code);
     }
 
+    @Override
+    public List<Provider> findByKeyword(String keyword) {
+        return providerRepository.findByCodeContainingOrNameContaining(keyword, keyword)
+                .stream().map(this::toEntity).toList();
+    }
+
     private Provider toEntity(ProviderDo doObj) {
         Provider entity = new Provider();
         entity.setId(doObj.getId());

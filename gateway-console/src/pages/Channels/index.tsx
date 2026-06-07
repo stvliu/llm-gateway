@@ -7,46 +7,73 @@ import {
   Space,
   Empty,
   Spin,
+  Segmented,
+  Card,
+  Dropdown,
+  message,
+  Modal,
 } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
-import { useAllChannels, useDeleteChannel } from '@/services/query/useChannels';
-import { useProviders } from '@/services/query/useProviders';
+import {
+  PlusOutlined,
+  AppstoreOutlined,
+  UnorderedListOutlined,
+  ImportOutlined,
+  DownOutlined,
+} from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
+import { useAllChannels, useDeleteChannel, useUpdateChannel, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
+import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import { ChannelCreateWizard } from './ChannelCreateWizard';
+import { ProviderEditModal } from './ProviderEditModal';
+import { ProviderCreateModal } from './ProviderCreateModal';
+import { ChannelTableView } from './ChannelTableView';
+import { ConnectivityTestPanel } from './ConnectivityTestPanel';
+import BatchImportModal from './BatchImportModal';
+import { BatchExportButton } from './BatchExportButton';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
   ChannelCredential,
+  ChannelModel,
 } from '@/types/channel';
+import type { Provider } from '@/types/provider';
+import { theme } from 'antd';
+
 const { Title } = Typography;
 const { Search } = Input;
+
+type ViewMode = 'grouped' | 'table';
 
 /**
  * 计算渠道的统计信息
  */
 const calculateChannelStats = (
   channel: Channel,
-  credentials: ChannelCredential[] | undefined
+  credentials: ChannelCredential[] | undefined,
+  models: ChannelModel[] | undefined
 ): ChannelCard => {
   return {
     ...channel,
     stats: {
       endpointCount: channel.endpoints?.length || 0,
       credentialCount: credentials?.length || 0,
-      modelCount: 0, // TODO: 从模型映射 API 获取
-      avgResponseTime: null, // TODO: 从测试结果获取
+      modelCount: models?.length || 0,
+      avgResponseTime: null,
     },
   };
 };
 
 /**
  * 渠道管理页面
- * 按供应商分组的渠道卡片列表 + 渠道详情抽屉
+ * 支持分组视图/列表视图 + 筛选 + 批量操作 + 搜索增强
  */
 export default function Channels() {
+  const { t } = useTranslation('channels');
+  const { token } = theme.useToken();
   // 状态管理
   const [searchText, setSearchText] = useState('');
   const [providerFilter, setProviderFilter] = useState<number | undefined>();
@@ -54,21 +81,49 @@ export default function Channels() {
   const [selectedChannel, setSelectedChannel] = useState<ChannelCard | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [wizardVisible, setWizardVisible] = useState(false);
+  const [editProviderModalOpen, setEditProviderModalOpen] = useState(false);
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
+  const [batchImportOpen, setBatchImportOpen] = useState(false);
+  const [createProviderOpen, setCreateProviderOpen] = useState(false);
+  const [connectivityProviderId, setConnectivityProviderId] = useState<number | null>(null);
+  const [drawerInitialTab, setDrawerInitialTab] = useState<string | undefined>(undefined);
+
+  // 视图切换（持久化到 localStorage）
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    try {
+      return (localStorage.getItem('channel-view-mode') as ViewMode) || 'grouped';
+    } catch {
+      return 'grouped';
+    }
+  });
+
+  const handleViewChange = (mode: string | number) => {
+    const newMode = mode as ViewMode;
+    setViewMode(newMode);
+    try {
+      localStorage.setItem('channel-view-mode', newMode);
+    } catch {
+      // localStorage 不可用时静默失败
+    }
+  };
 
   // 数据获取
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
+  const updateChannel = useUpdateChannel();
+  const testCredential = useTestChannelCredential();
+  const setEnabledProvider = useSetEnabledProvider();
 
   // 获取所有渠道的凭证（批量）
   const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
   const credentialsQueries = useChannelCredentialsBatch(channelIds);
+  const modelsQueries = useChannelModelsBatch(channelIds);
 
   // 提取凭证数据为稳定引用
   const credentialsData = useMemo(
     () => credentialsQueries.map((q) => q.data),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [channels, credentialsQueries.map((q) => q.data?.length).join(',')]
+    [credentialsQueries]
   );
 
   // 构建渠道卡片数据（含统计）
@@ -77,9 +132,10 @@ export default function Channels() {
 
     return channels.map((channel, index) => {
       const credentials = credentialsData[index];
-      return calculateChannelStats(channel, credentials);
+      const models = modelsQueries[index]?.data;
+      return calculateChannelStats(channel, credentials, models);
     });
-  }, [channels, credentialsData]);
+  }, [channels, credentialsData, modelsQueries]);
 
   // 按供应商分组
   const groupedChannels: ChannelGroup[] = useMemo(() => {
@@ -108,6 +164,7 @@ export default function Channels() {
             id: provider.id,
             providerId: provider.providerId,
             providerName: provider.providerName,
+            state: provider.state,
           },
           channels: channelList,
         });
@@ -117,7 +174,7 @@ export default function Channels() {
     return groups;
   }, [channelsWithStats, providersData]);
 
-  // 筛选后的数据
+  // 筛选 + 搜索增强（匹配渠道名称和端点URL）
   const filteredGroups = useMemo(() => {
     let result = groupedChannels;
 
@@ -134,19 +191,26 @@ export default function Channels() {
       })).filter((group) => group.channels.length > 0);
     }
 
-    // 按搜索文本筛选
+    // 搜索增强：匹配渠道名称和端点URL
     if (searchText) {
-      const lowerSearch = searchText.toLowerCase();
+      const q = searchText.toLowerCase();
       result = result.map((group) => ({
         ...group,
-        channels: group.channels.filter((ch) =>
-          ch.name.toLowerCase().includes(lowerSearch)
-        ),
+        channels: group.channels.filter((ch) => {
+          if (ch.name.toLowerCase().includes(q)) return true;
+          if (ch.endpoints?.some((ep) => ep.endpointUrl.toLowerCase().includes(q))) return true;
+          return false;
+        }),
       })).filter((group) => group.channels.length > 0);
     }
 
     return result;
   }, [groupedChannels, providerFilter, statusFilter, searchText]);
+
+  // 列表视图的扁平化渠道数据
+  const filteredChannels = useMemo(() => {
+    return filteredGroups.flatMap((g) => g.channels);
+  }, [filteredGroups]);
 
   // 事件处理
   const handleChannelClick = (channel: ChannelCard) => {
@@ -165,33 +229,77 @@ export default function Channels() {
     deleteChannel.mutate({ id, providerId: ch?.providerId ?? 0 });
   };
 
+  /** 从卡片发起连通性测试 */
+  const handleTestChannel = async (channel: ChannelCard) => {
+    if (channel.state !== 'ACTIVE') return;
+    const idx = channels?.findIndex(c => c.id === channel.id) ?? -1;
+    const creds = credentialsData[idx];
+
+    if (!creds || creds.length === 0) {
+      message.warning(t('card.testNoCredential'));
+      return;
+    }
+
+    try {
+      const result = await testCredential.mutateAsync({ channelId: channel.id, id: creds[0].id });
+      if (result.success) {
+        message.success(t('card.testSuccess', { latency: result.latency ?? 0 }));
+      } else {
+        message.error(t('card.testFail', { msg: result.error?.message || t('credential.unknownError') }));
+      }
+    } catch (err) {
+      message.error(t('card.testFail', { msg: err instanceof Error ? err.message : t('credential.unknownError') }));
+    }
+  };
+
+  /** 从卡片菜单打开详情抽屉并跳转到指定 Tab */
+  const handleOpenDrawerTab = (channel: ChannelCard, tab: string) => {
+    setSelectedChannel(channel);
+    setDrawerInitialTab(tab);
+    setDrawerVisible(true);
+  };
+
   return (
-    <div style={{ padding: '24px' }}>
-      {/* 页面标题 */}
-      <Title level={4} style={{ marginBottom: '24px' }}>
-        渠道管理
-      </Title>
+    <div>
+      {/* 页面标题 + 视图切换 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+        <Title level={4} style={{ margin: 0 }}>
+          {t('title')}
+        </Title>
+        <Segmented
+          value={viewMode}
+          onChange={handleViewChange}
+          options={[
+            { label: t('viewMode.grouped'), value: 'grouped', icon: <AppstoreOutlined /> },
+            { label: t('viewMode.table'), value: 'table', icon: <UnorderedListOutlined /> },
+          ]}
+        />
+      </div>
 
       {/* 工具栏 */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'space-between',
-          marginBottom: '24px',
+          alignItems: 'flex-start',
+          marginBottom: '16px',
+          flexWrap: 'wrap',
+          gap: '8px',
         }}
       >
-        <Space size={12}>
+        {/* 左侧：搜索 + 筛选 */}
+        <Space size={12} wrap>
           <Search
-            placeholder="搜索渠道名称"
+            placeholder={t('searchPlaceholder')}
             allowClear
             style={{ width: 240 }}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
           <Select
-            placeholder="选择供应商"
+            placeholder={t('providerFilter')}
             allowClear
-            style={{ width: 180 }}
+            style={{ width: 160 }}
             value={providerFilter}
             onChange={setProviderFilter}
             options={
@@ -202,24 +310,38 @@ export default function Channels() {
             }
           />
           <Select
-            placeholder="选择状态"
+            placeholder={t('statusFilter')}
             allowClear
             style={{ width: 120 }}
             value={statusFilter}
             onChange={setStatusFilter}
             options={[
-              { label: '已启用', value: 'ACTIVE' },
-              { label: '已停用', value: 'INACTIVE' },
+              { label: t('status.active'), value: 'ACTIVE' },
+              { label: t('status.inactive'), value: 'INACTIVE' },
             ]}
           />
         </Space>
-        <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          onClick={handleCreateChannel}
-        >
-          新建渠道
-        </Button>
+
+        {/* 右侧：操作按钮 */}
+        <Space size={12} wrap>
+          <BatchExportButton />
+          <Button icon={<ImportOutlined />} onClick={() => setBatchImportOpen(true)}>
+            {t('batchImport')}
+          </Button>
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateChannel}>
+            {t('addChannel')}
+          </Button>
+          <Dropdown menu={{
+            items: [
+              { key: 'provider', label: t('addProvider'), icon: <AppstoreOutlined /> },
+            ],
+            onClick: ({ key }) => {
+              if (key === 'provider') setCreateProviderOpen(true);
+            },
+          }}>
+            <Button icon={<DownOutlined />} />
+          </Dropdown>
+        </Space>
       </div>
 
       {/* 内容区 */}
@@ -228,12 +350,62 @@ export default function Channels() {
           <Spin size="large" />
         </div>
       ) : filteredGroups.length === 0 ? (
-        <Empty description="暂无渠道数据" />
+        <Empty description={t('empty')} />
+      ) : viewMode === 'grouped' ? (
+        <>
+          <ChannelGroupedList
+            groups={filteredGroups}
+            onChannelClick={handleChannelClick}
+            onChannelDelete={handleDelete}
+            onChannelToggleState={(id, enabled) => {
+              updateChannel.mutate({ id, data: { state: enabled ? 'ACTIVE' : 'INACTIVE' } });
+            }}
+            onTestChannel={handleTestChannel}
+            onOpenDrawerTab={handleOpenDrawerTab}
+            onEditProvider={(id) => {
+              const p = providersData?.items?.find((p) => p.id === id);
+              if (p) {
+                setEditingProvider(p);
+                setEditProviderModalOpen(true);
+              }
+            }}
+            onToggleProviderEnabled={(id) => {
+              const p = providersData?.items?.find((p) => p.id === id);
+              if (p) {
+                setEnabledProvider.mutate({ id, enabled: p.state !== 'ACTIVE' });
+              }
+            }}
+            onTestProviderConnectivity={(providerCode) => {
+              setConnectivityProviderId(providerCode);
+            }}
+            onExportProvider={() => {
+              message.info(t('batch.exportHint'));
+            }}
+          />
+          {/* 底部新增渠道虚线卡片 */}
+          <Card
+            hoverable
+            style={{
+              border: `2px dashed ${token.colorBorder}`,
+              textAlign: 'center',
+              cursor: 'pointer',
+              marginTop: 16,
+            }}
+            styles={{ body: { padding: '24px' } }}
+            onClick={() => setCreateProviderOpen(true)}
+          >
+            <PlusOutlined style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 8 }} />
+            <div style={{ color: token.colorPrimary, fontSize: 14 }}>{t('addProvider')}</div>
+          </Card>
+        </>
       ) : (
-        <ChannelGroupedList
-          groups={filteredGroups}
-          onChannelClick={handleChannelClick}
-          onChannelDelete={handleDelete}
+        <ChannelTableView
+          channels={filteredChannels}
+          providers={providersData?.items || []}
+          onChannelClick={(id) => {
+            const ch = channelsWithStats.find((c) => c.id === id);
+            if (ch) handleChannelClick(ch);
+          }}
         />
       )}
 
@@ -241,7 +413,11 @@ export default function Channels() {
       <ChannelDetailDrawer
         channel={selectedChannel}
         open={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
+        onClose={() => {
+          setDrawerVisible(false);
+          setDrawerInitialTab(undefined);
+        }}
+        initialTab={drawerInitialTab}
       />
 
       {/* 创建向导 */}
@@ -249,6 +425,50 @@ export default function Channels() {
         open={wizardVisible}
         onClose={() => setWizardVisible(false)}
       />
+
+      {/* 供应商编辑弹窗 */}
+      <ProviderEditModal
+        open={editProviderModalOpen}
+        provider={editingProvider}
+        onClose={() => {
+          setEditProviderModalOpen(false);
+          setEditingProvider(null);
+        }}
+      />
+
+      {/* 批量导入弹窗 */}
+      <BatchImportModal
+        open={batchImportOpen}
+        onClose={() => setBatchImportOpen(false)}
+      />
+
+      {/* 供应商创建弹窗 */}
+      <ProviderCreateModal
+        open={createProviderOpen}
+        onClose={() => setCreateProviderOpen(false)}
+      />
+
+      {/* 供应商连通性测试弹窗 */}
+      {connectivityProviderId && (() => {
+        const provider = providersData?.items?.find(p => p.id === connectivityProviderId);
+        return (
+          <Modal
+            title={t('group.connectivityTest')}
+            open={!!connectivityProviderId}
+            onCancel={() => setConnectivityProviderId(null)}
+            footer={null}
+            width={560}
+            destroyOnClose
+          >
+            {provider && (
+              <ConnectivityTestPanel
+                providerCode={provider.providerId?.toLowerCase() ?? ''}
+                defaultBaseUrl={provider.websiteUrl}
+              />
+            )}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

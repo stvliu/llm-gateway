@@ -8,6 +8,13 @@ export interface ChannelGroupedListProps {
   groups: ChannelGroup[];
   onChannelClick: (channel: ChannelCardType) => void;
   onChannelDelete: (id: number) => void;
+  onChannelToggleState: (id: number, enabled: boolean) => void;
+  onTestChannel: (channel: ChannelCardType) => void;
+  onOpenDrawerTab: (channel: ChannelCardType, tab: string) => void;
+  onEditProvider?: (providerId: number) => void;
+  onToggleProviderEnabled?: (providerId: number) => void;
+  onTestProviderConnectivity?: (providerId: number) => void;
+  onExportProvider?: (providerId: number) => void;
 }
 
 /**
@@ -18,6 +25,13 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   groups,
   onChannelClick,
   onChannelDelete,
+  onChannelToggleState,
+  onTestChannel,
+  onOpenDrawerTab,
+  onEditProvider,
+  onToggleProviderEnabled,
+  onTestProviderConnectivity,
+  onExportProvider,
 }) => {
   // 管理每个供应商的折叠状态
   const [collapsedMap, setCollapsedMap] = useState<Record<number, boolean>>({});
@@ -52,14 +66,19 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
           <div key={group.provider.id} style={{ marginBottom: '24px' }}>
             {/* 供应商分组头 */}
             <ProviderGroupHeader
-              providerId={group.provider.providerId}
               providerName={group.provider.providerName}
+              providerCode={group.provider.providerId}
+              providerState={group.provider.state}
               channelCount={group.channels.length}
               endpointCount={totalEndpoints}
               credentialCount={totalCredentials}
               modelCount={totalModels}
               collapsed={collapsed}
               onToggle={() => toggleCollapse(group.provider.id)}
+              onEdit={onEditProvider ? () => onEditProvider(group.provider.id) : undefined}
+              onToggleEnabled={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
+              onTestConnectivity={onTestProviderConnectivity ? () => onTestProviderConnectivity(group.provider.id) : undefined}
+              onExport={onExportProvider ? () => onExportProvider(group.provider.id) : undefined}
             />
 
             {/* 渠道卡片列表（折叠时隐藏） */}
@@ -70,7 +89,10 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     key={channel.id}
                     channel={channel}
                     onClick={onChannelClick}
-              onDelete={onChannelDelete}
+                    onDelete={onChannelDelete}
+                    onToggleState={onChannelToggleState}
+                    onTest={onTestChannel}
+                    onOpenDrawerTab={onOpenDrawerTab}
                   />
                 ))}
               </div>

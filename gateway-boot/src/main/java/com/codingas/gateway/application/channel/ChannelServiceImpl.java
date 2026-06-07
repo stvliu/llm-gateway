@@ -4,9 +4,9 @@ import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
 import com.codingas.gateway.application.channel.dto.ChannelRequest;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
@@ -39,7 +39,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     public ChannelResponse create(ChannelRequest request) {
         if (channelGateway.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-            throw new IllegalArgumentException("渠道名称已存在: " + request.getName());
+            throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
         }
 
         Channel channel = new Channel();
@@ -47,8 +47,6 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setName(request.getName());
         channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
         channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setPriority(request.getPriority());
-        channel.setWeight(request.getWeight());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
         channel.setState(ChannelState.ACTIVE);
@@ -63,11 +61,11 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     public ChannelResponse update(Long id, ChannelRequest request) {
         Channel channel = channelGateway.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + id));
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
         if (!channel.getName().equals(request.getName())) {
             if (channelGateway.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-                throw new IllegalArgumentException("渠道名称已存在: " + request.getName());
+                throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
             }
         }
 
@@ -75,8 +73,6 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setName(request.getName());
         channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
         channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setPriority(request.getPriority());
-        channel.setWeight(request.getWeight());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
 
@@ -89,7 +85,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelResponse getById(Long id) {
         Channel channel = channelGateway.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + id));
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
         return toResponse(channel);
     }
 
@@ -121,6 +117,21 @@ public class ChannelServiceImpl implements ChannelService {
         log.info("Deleted channel: id={}", id);
     }
 
+    @Override
+    @Transactional
+    public void setState(Long id, boolean enabled) {
+        Channel channel = channelGateway.findById(id)
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
+        ChannelState oldState = channel.getState();
+        ChannelState newState = enabled ? ChannelState.ACTIVE : ChannelState.INACTIVE;
+        if (oldState == newState) {
+            return;
+        }
+        channel.setState(newState);
+        channelGateway.save(channel);
+        log.info("切换渠道状态: id={}, {}→{}", id, oldState, newState);
+    }
+
     private ChannelResponse toResponse(Channel channel) {
         ChannelResponse response = new ChannelResponse();
         response.setId(channel.getId());
@@ -131,11 +142,9 @@ public class ChannelServiceImpl implements ChannelService {
         response.setName(channel.getName());
         response.setBillingMode(channel.getBillingMode().getCode());
         response.setQuotaLimit(channel.getQuotaLimit());
-        response.setPriority(channel.getPriority());
-        response.setWeight(channel.getWeight());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
-        response.setState(channel.getState().getCode());
+        response.setState(channel.getState().name());
         // 查询端点列表
         response.setEndpoints(
             channelEndpointGateway.findByChannelId(channel.getId()).stream()
@@ -177,7 +186,6 @@ public class ChannelServiceImpl implements ChannelService {
         resp.setChannelId(endpoint.getChannelId());
         resp.setProtocol(endpoint.getProtocol().getCode());
         resp.setEndpointUrl(endpoint.getEndpointUrl());
-        resp.setState(endpoint.getState().getCode());
         resp.setCreatedAt(endpoint.getCreatedAt());
         resp.setUpdatedAt(endpoint.getUpdatedAt());
         return resp;
@@ -198,7 +206,6 @@ public class ChannelServiceImpl implements ChannelService {
         endpoint.setChannelId(channelId);
         endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
         endpoint.setEndpointUrl(request.getEndpointUrl().trim());
-        endpoint.setState(ChannelEndpointState.ACTIVE);
 
         ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
         log.info("Added endpoint to channel: channelId={}, endpointId={}, protocol={}",
@@ -240,37 +247,5 @@ public class ChannelServiceImpl implements ChannelService {
         }
         channelEndpointGateway.deleteById(endpointId);
         log.info("Removed endpoint: channelId={}, endpointId={}", channelId, endpointId);
-    }
-
-    /**
-     * 启用渠道端点
-     */
-    @Override
-    @Transactional
-    public ChannelEndpointResponse enableEndpoint(Long channelId, Long endpointId) {
-        ChannelEndpoint endpoint = channelEndpointGateway.findById(endpointId)
-                .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
-        if (!endpoint.getChannelId().equals(channelId)) {
-            throw new IllegalArgumentException("端点不属于该渠道");
-        }
-        endpoint.enable();
-        ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
-        return toEndpointResponse(saved);
-    }
-
-    /**
-     * 禁用渠道端点
-     */
-    @Override
-    @Transactional
-    public ChannelEndpointResponse disableEndpoint(Long channelId, Long endpointId) {
-        ChannelEndpoint endpoint = channelEndpointGateway.findById(endpointId)
-                .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
-        if (!endpoint.getChannelId().equals(channelId)) {
-            throw new IllegalArgumentException("端点不属于该渠道");
-        }
-        endpoint.disable();
-        ChannelEndpoint saved = channelEndpointGateway.save(endpoint);
-        return toEndpointResponse(saved);
     }
 }

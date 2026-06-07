@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelEndpointState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelEndpointDo;
@@ -42,12 +41,6 @@ public class ChannelEndpointGatewayImpl implements ChannelEndpointGateway {
     }
 
     @Override
-    public List<ChannelEndpoint> findActiveByChannelId(Long channelId) {
-        return channelEndpointRepository.findByChannelIdAndState(channelId, ChannelEndpointState.ACTIVE)
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public Optional<ChannelEndpoint> findByChannelIdAndProtocol(Long channelId, Protocol protocol) {
         return channelEndpointRepository.findByChannelIdAndProtocol(channelId, protocol)
                 .map(this::toEntity);
@@ -70,7 +63,6 @@ public class ChannelEndpointGatewayImpl implements ChannelEndpointGateway {
         entity.setChannelId(doObj.getChannelId());
         entity.setProtocol(doObj.getProtocol());
         entity.setEndpointUrl(doObj.getEndpointUrl());
-        entity.setState(doObj.getState());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -84,7 +76,6 @@ public class ChannelEndpointGatewayImpl implements ChannelEndpointGateway {
         doObj.setChannelId(entity.getChannelId());
         doObj.setProtocol(entity.getProtocol());
         doObj.setEndpointUrl(entity.getEndpointUrl());
-        doObj.setState(entity.getState() != null ? entity.getState() : ChannelEndpointState.ACTIVE);
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

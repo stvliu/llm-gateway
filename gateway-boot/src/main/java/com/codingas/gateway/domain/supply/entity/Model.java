@@ -34,6 +34,9 @@ public class Model extends BaseEntity {
 
     private Integer maxOutputTokens;
 
+    /** 知识截止日期 */
+    private String knowledgeCutoff;
+
     private Map<String, Boolean> capabilities;
 
     private List<String> modalities;

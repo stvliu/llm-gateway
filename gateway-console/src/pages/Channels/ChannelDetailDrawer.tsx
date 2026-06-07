@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Drawer,
   Typography,
@@ -6,7 +6,6 @@ import {
   Button,
   Space,
   Divider,
-  Badge,
   message,
   Spin,
   Tabs,
@@ -17,12 +16,15 @@ import {
   KeyOutlined,
   RobotOutlined,
   SettingOutlined,
+  BarChartOutlined,
+  ApiOutlined,
 } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import type { ChannelCard } from '@/types/channel';
 import {
   useChannel,
   useChannelCredentials,
+  useChannelModels,
   useUpdateChannel,
   useTestChannelCredential,
   useDeleteChannel,
@@ -31,6 +33,9 @@ import { EndpointSection } from './EndpointSection';
 import { CredentialSection } from './CredentialSection';
 import { ModelMappingSection } from './ModelMappingSection';
 import { QuotaSettingsSection } from './QuotaSettingsSection';
+import { ChannelOverviewTab } from './ChannelOverviewTab';
+import { ProviderEditModal } from './ProviderEditModal';
+import { useProvider } from '@/services/query/useProviders';
 
 const { Text } = Typography;
 
@@ -38,19 +43,29 @@ interface ChannelDetailDrawerProps {
   channel: ChannelCard | null;
   open: boolean;
   onClose: () => void;
+  initialTab?: string;
 }
 
 /**
  * 渠道详情抽屉
- * 顶部信息栏 + Tabs 标签页（端点 / API Key / 模型映射 / 配额与设置）
+ * 头部：供应商Logo+渠道名+快捷操作条 → 概览/端点/API Key/模型映射/配额与设置
  */
 export function ChannelDetailDrawer({
   channel,
   open,
   onClose,
+  initialTab,
 }: ChannelDetailDrawerProps) {
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('endpoints');
+  const { t } = useTranslation('channels');
+  const [activeTab, setActiveTab] = useState('overview');
+  const [editProviderOpen, setEditProviderOpen] = useState(false);
+
+  useEffect(() => {
+    if (open && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [open, initialTab]);
+
   const updateChannel = useUpdateChannel();
   const deleteChannel = useDeleteChannel();
 
@@ -58,6 +73,8 @@ export function ChannelDetailDrawer({
   const { data: credentials = [], isLoading: credentialsLoading } = useChannelCredentials(
     channel?.id || 0
   );
+  const { data: channelModels = [] } = useChannelModels(channel?.id || 0);
+  const { data: provider } = useProvider(channel?.providerId || 0);
   const testCredential = useTestChannelCredential();
 
   if (!channel) return null;
@@ -66,17 +83,17 @@ export function ChannelDetailDrawer({
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
-      pay_as_you_go: '按量付费',
-      subscription: '订阅',
-      package: '套餐',
+      pay_as_you_go: t('billing.payAsYouGo'),
+      subscription: t('billing.subscription'),
+      package: t('billing.package'),
     };
-    return labels[mode] || mode;
+    return labels[mode] || t('billing.default', { mode });
   };
 
   /** 测试所有凭证 */
   const handleTest = async () => {
     if (credentials.length === 0) {
-      message.warning('暂无凭证，请先添加 API Key');
+      message.warning(t('drawer.noCredentials'));
       return;
     }
     try {
@@ -91,12 +108,12 @@ export function ChannelDetailDrawer({
         }
       }
       if (failCount === 0) {
-        message.success(`测试完成：全部 ${successCount} 个凭证可用`);
+        message.success(t('drawer.testAllSuccess', { count: successCount }));
       } else {
-        message.warning(`测试完成：${successCount} 个可用，${failCount} 个不可用`);
+        message.warning(t('drawer.testPartialSuccess', { success: successCount, fail: failCount }));
       }
     } catch {
-      message.error('测试失败');
+      message.error(t('drawer.testFailed'));
     }
   };
 
@@ -105,9 +122,9 @@ export function ChannelDetailDrawer({
     const newState = channel.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
       await updateChannel.mutateAsync({ id: channel.id, data: { state: newState } });
-      message.success(newState === 'ACTIVE' ? '渠道已启用' : '渠道已停用');
+      message.success(newState === 'ACTIVE' ? t('drawer.channelEnabled') : t('drawer.channelDisabled'));
     } catch {
-      message.error('状态切换失败');
+      message.error(t('drawer.stateToggleFailed'));
     }
   };
 
@@ -115,23 +132,46 @@ export function ChannelDetailDrawer({
   const handleDelete = async () => {
     try {
       await deleteChannel.mutateAsync({ id: channel.id, providerId: channel.providerId });
-      message.success('渠道已删除');
+      message.success(t('drawer.channelDeleted'));
       onClose();
     } catch {
-      message.error('删除失败');
+      message.error(t('drawer.deleteFailed'));
     }
   };
 
+  /** 跳转到指定Tab */
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+  };
+
+  const endpointCount = channelDetail?.endpoints?.length || 0;
+  const credentialCount = credentials.length;
+  const modelCount = channelModels.length;
+
   const tabItems = [
+    {
+      key: 'overview',
+      label: (
+        <Space>
+          <BarChartOutlined />
+          <span>{t('drawer.tabOverview')}</span>
+        </Space>
+      ),
+      children: (
+        <ChannelOverviewTab
+          channel={channelDetail || channel}
+          credentials={credentials}
+          channelModels={channelModels}
+          onTabChange={handleTabChange}
+        />
+      ),
+    },
     {
       key: 'endpoints',
       label: (
         <Space>
           <GlobalOutlined />
-          <span>端点</span>
-          {channelDetail?.endpoints ? (
-            <Badge count={channelDetail.endpoints.length} size="small" />
-          ) : null}
+          <span>{t('drawer.tabEndpoints', { count: endpointCount })}</span>
         </Space>
       ),
       children: (
@@ -146,8 +186,7 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <KeyOutlined />
-          <span>API Key</span>
-          <Badge count={credentials.length} size="small" />
+          <span>{t('drawer.tabCredentials', { count: credentialCount })}</span>
         </Space>
       ),
       children: (
@@ -159,17 +198,17 @@ export function ChannelDetailDrawer({
       label: (
         <Space>
           <RobotOutlined />
-          <span>模型映射</span>
+          <span>{t('drawer.tabModels', { count: modelCount })}</span>
         </Space>
       ),
-      children: <ModelMappingSection channelId={channel.id} />,
+      children: <ModelMappingSection channelId={channel.id} channelModels={channelModels} />,
     },
     {
-      key: 'settings',
+      key: 'quota',
       label: (
         <Space>
           <SettingOutlined />
-          <span>配额与设置</span>
+          <span>{t('drawer.tabQuota')}</span>
         </Space>
       ),
       children: <QuotaSettingsSection channel={channelDetail || channel} />,
@@ -177,85 +216,97 @@ export function ChannelDetailDrawer({
   ];
 
   return (
-    <Drawer
-      title={channel.name}
-      placement="right"
-      width={800}
-      open={open}
-      onClose={onClose}
-      destroyOnClose
-      extra={
-        <Space>
-          <Button onClick={handleTest} loading={testCredential.isPending}>
-            测试
-          </Button>
-          <Popconfirm
-            title={channel.state === 'ACTIVE' ? '确定停用此渠道吗？' : '确定启用此渠道吗？'}
-            onConfirm={handleToggleState}
-            okText="确定"
-            cancelText="取消"
-          >
-            <Button
-              danger={channel.state === 'ACTIVE'}
-              loading={updateChannel.isPending}
-            >
-              {channel.state === 'ACTIVE' ? '停用' : '启用'}
-            </Button>
-          </Popconfirm>
-          <Popconfirm
-            title="确认删除"
-            description={`确定要删除渠道「${channel.name}」吗？此操作不可撤销。`}
-            onConfirm={handleDelete}
-            okText="删除"
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-          >
-            <Button danger loading={deleteChannel.isPending}>
-              删除
-            </Button>
-          </Popconfirm>
-        </Space>
-      }
-    >
-      {isLoading ? (
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
-        </div>
-      ) : (
-        <div>
-          {/* 摘要信息 */}
-          <div style={{ marginBottom: 16 }}>
-            <Space split={<Divider type="vertical" />} size="small">
-              <Text type="secondary">
-                供应商:{' '}
-                <Typography.Link
-                  onClick={() => navigate(`/providers?id=${channel.providerId}`)}
-                >
-                  {channel.providerName}
-                </Typography.Link>
-              </Text>
-              <Text type="secondary">
-                计费模式: <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
-              </Text>
-              <Text type="secondary">
-                优先级: <Text strong>P{channel.priority}</Text>
-              </Text>
-              <Text type="secondary">
-                权重: <Text strong>W{channel.weight}</Text>
-              </Text>
-              <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
-                {channel.state === 'ACTIVE' ? '已启用' : '已停用'}
-              </Tag>
-            </Space>
+    <>
+      <Drawer
+        placement="right"
+        width={720}
+        open={open}
+        onClose={onClose}
+        destroyOnClose
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Text strong style={{ fontSize: 16 }}>{channel.name}</Text>
+            <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
+              {channel.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
+            </Tag>
           </div>
+        }
+        extra={
+          <Space size={8}>
+            <Button
+              type="primary"
+              icon={<ApiOutlined />}
+              onClick={handleTest}
+              loading={testCredential.isPending}
+            >
+              {t('drawer.connectivityTest')}
+            </Button>
+            <Popconfirm
+              title={channel.state === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
+              onConfirm={handleToggleState}
+              okText={t('actions.confirm', { ns: 'common' })}
+              cancelText={t('actions.cancel', { ns: 'common' })}
+            >
+              <Button loading={updateChannel.isPending}>
+                {channel.state === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
+              </Button>
+            </Popconfirm>
+            <Popconfirm
+              title={t('drawer.confirmDelete')}
+              description={t('drawer.confirmDeleteDesc', { name: channel.name })}
+              onConfirm={handleDelete}
+              okText={t('actions.delete', { ns: 'common' })}
+              cancelText={t('actions.cancel', { ns: 'common' })}
+              okButtonProps={{ danger: true }}
+            >
+              <Button danger loading={deleteChannel.isPending}>
+                {t('card.delete')}
+              </Button>
+            </Popconfirm>
+          </Space>
+        }
+      >
+        {isLoading ? (
+          <div style={{ textAlign: 'center', padding: '48px' }}>
+            <Spin size="large" />
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: 12 }}>
+              <Space split={<Divider type="vertical" />} size="small">
+                <Text type="secondary">
+                  {t('drawer.provider') + ': '}
+                  <Typography.Link onClick={() => setEditProviderOpen(true)}>
+                    {channel.providerName}
+                  </Typography.Link>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.billingMode') + ': '} <Text strong>{getBillingModeLabel(channel.billingMode)}</Text>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.priority') + ': '} <Text strong>P{channel.priority}</Text>
+                </Text>
+                <Text type="secondary">
+                  {t('drawer.weight') + ': '} <Text strong>W{channel.weight}</Text>
+                </Text>
+              </Space>
+            </div>
 
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-          />
-        </div>
-      )}
-    </Drawer>
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              items={tabItems}
+            />
+          </div>
+        )}
+      </Drawer>
+
+      {/* 供应商编辑弹窗 */}
+      <ProviderEditModal
+        open={editProviderOpen}
+        provider={provider || null}
+        onClose={() => setEditProviderOpen(false)}
+      />
+    </>
   );
 }

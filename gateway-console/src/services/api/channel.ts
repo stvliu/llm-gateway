@@ -55,14 +55,6 @@ export const channelApi = {
   updateEndpoint: (channelId: number, endpointId: number, data: CreateChannelEndpointRequest) =>
     api.put<ChannelEndpointResponse>(`/channels/${channelId}/endpoints/${endpointId}`, data),
 
-  /** 启用渠道端点 */
-  enableEndpoint: (channelId: number, endpointId: number) =>
-    api.put<ChannelEndpointResponse>(`/channels/${channelId}/endpoints/${endpointId}/enable`),
-
-  /** 停用渠道端点 */
-  disableEndpoint: (channelId: number, endpointId: number) =>
-    api.put<ChannelEndpointResponse>(`/channels/${channelId}/endpoints/${endpointId}/disable`),
-
   /** ---- 渠道凭证 ---- */
 
   /** 获取渠道凭证列表 */

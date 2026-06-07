@@ -2,63 +2,23 @@ import { useState } from 'react';
 import { Card, Breadcrumb, Button } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { HomeOutlined } from '@ant-design/icons';
-import ProviderCatalogView from './ProviderCatalogView';
 import PlanCatalogView from './PlanCatalogView';
-import ModelCatalogView from './ModelCatalogView';
-import MaterializeModal from './MaterializeModal';
-import CascadeMaterializeDialog from './CascadeMaterializeDialog';
 import { ChannelCreateWizard } from '@/pages/Channels/ChannelCreateWizard';
-import type { MaterializeType } from '@/types/catalog';
 
-/** 目录管理主页面 — 三级联动导航：供应商目录 → 套餐目录 → 模型目录 */
+/** 目录管理主页面 — 套餐目录浏览 */
 export default function CatalogPage() {
   const { t } = useTranslation('catalog');
 
-  // 三级导航状态
+  // 套餐导航状态
   const [providerCode, setProviderCode] = useState<string | undefined>();
   const [providerName, setProviderName] = useState<string>('');
   const [planCode, setPlanCode] = useState<string | undefined>();
   const [planName, setPlanName] = useState<string>('');
 
-  // 物化弹窗状态
-  const [materializeModal, setMaterializeModal] = useState<{
-    open: boolean;
-    type: MaterializeType;
-    code: string;
-    name: string;
-  }>({ open: false, type: 'PROVIDER', code: '', name: '' });
-
-  // 级联物化弹窗状态
-  const [cascadeDialog, setCascadeDialog] = useState<{
-    open: boolean;
-    providerCode: string;
-    providerName: string;
-  }>({ open: false, providerCode: '', providerName: '' });
-
   // 渠道创建向导状态
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardPlanCode, setWizardPlanCode] = useState<string | undefined>();
   const [wizardPlanName, setWizardPlanName] = useState<string | undefined>();
-
-  /** 打开物化确认弹窗 */
-  const handleMaterialize = (type: MaterializeType, code: string, name: string) => {
-    setMaterializeModal({ open: true, type, code, name });
-  };
-
-  /** 关闭物化弹窗 */
-  const handleCloseMaterialize = () => {
-    setMaterializeModal((prev) => ({ ...prev, open: false }));
-  };
-
-  /** 打开级联物化弹窗 */
-  const handleCascadeMaterialize = (code: string, name: string) => {
-    setCascadeDialog({ open: true, providerCode: code, providerName: name });
-  };
-
-  /** 关闭级联物化弹窗 */
-  const handleCloseCascade = () => {
-    setCascadeDialog((prev) => ({ ...prev, open: false }));
-  };
 
   /** 打开渠道创建向导 */
   const handleQuickCreate = (planCode: string, planName: string) => {
@@ -82,7 +42,7 @@ export default function CatalogPage() {
     setPlanName('');
   };
 
-  /** 选择套餐 → 进入模型目录 */
+  /** 选择套餐 → 进入套餐详情 */
   const handleSelectPlan = (code: string, name: string) => {
     setPlanCode(code);
     setPlanName(name);
@@ -141,12 +101,7 @@ export default function CatalogPage() {
           {
             title: (
               <span style={{ fontWeight: 600 }}>
-                {t('tabs.models')}
-                {planName && (
-                  <span style={{ marginLeft: 4, fontSize: 12, opacity: 0.65 }}>
-                    ({planName})
-                  </span>
-                )}
+                {planName}
               </span>
             ),
           },
@@ -155,53 +110,21 @@ export default function CatalogPage() {
   ];
 
   return (
-    <div style={{ padding: 24 }}>
+    <div>
       <Card>
         {/* 面包屑导航 */}
         <div style={{ marginBottom: 16 }}>
           <Breadcrumb items={breadcrumbItems} />
         </div>
 
-        {/* 三级视图切换 */}
-        {!providerCode && (
-          <ProviderCatalogView
-            onSelectProvider={handleSelectProvider}
-            onCascadeMaterialize={handleCascadeMaterialize}
-          />
-        )}
-        {providerCode && !planCode && (
-          <PlanCatalogView
-            providerCode={providerCode}
-            onSelectPlan={handleSelectPlan}
-            onMaterialize={handleMaterialize}
-            onQuickCreate={handleQuickCreate}
-          />
-        )}
-        {providerCode && planCode && (
-          <ModelCatalogView
-            providerCode={providerCode}
-            planCode={planCode}
-            onMaterialize={handleMaterialize}
-          />
-        )}
+        {/* 套餐目录视图 */}
+        <PlanCatalogView
+          providerCode={providerCode}
+          onSelectProvider={handleSelectProvider}
+          onSelectPlan={handleSelectPlan}
+          onQuickCreate={handleQuickCreate}
+        />
       </Card>
-
-      {/* 物化确认弹窗 */}
-      <MaterializeModal
-        open={materializeModal.open}
-        type={materializeModal.type}
-        code={materializeModal.code}
-        name={materializeModal.name}
-        onClose={handleCloseMaterialize}
-      />
-
-      {/* 级联物化弹窗 */}
-      <CascadeMaterializeDialog
-        open={cascadeDialog.open}
-        providerCode={cascadeDialog.providerCode}
-        providerName={cascadeDialog.providerName}
-        onClose={handleCloseCascade}
-      />
 
       {/* 渠道创建向导 */}
       <ChannelCreateWizard

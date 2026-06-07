@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
@@ -47,20 +46,8 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
     }
 
     @Override
-    public List<PlanCatalog> findBySource(CatalogSource source) {
-        return repository.findBySource(source.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<PlanCatalog> findAll() {
         return repository.findAll().stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<PlanCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activePlanCodes) {
-        return findBySource(source).stream()
-            .filter(entry -> !activePlanCodes.contains(entry.getPlanCode()))
-            .toList();
     }
 
     private PlanCatalog toEntity(PlanCatalogDo doObj) {
@@ -73,8 +60,6 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
         entity.setEndpoints(doObj.getEndpoints());
         entity.setPricing(doObj.getPricing());
         entity.setDescription(doObj.getDescription());
-        entity.setSource(CatalogSource.valueOf(doObj.getSource()));
-        entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -93,8 +78,6 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
         doObj.setEndpoints(entity.getEndpoints());
         doObj.setPricing(entity.getPricing());
         doObj.setDescription(entity.getDescription());
-        doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
-        doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());

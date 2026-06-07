@@ -1,0 +1,61 @@
+package com.codingas.gateway.adapter.api;
+
+import com.codingas.gateway.application.channel.ModelInstanceService;
+import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 模型实例 REST 控制器
+ */
+@RestController
+@RequestMapping("/api/v1/channels/{channelId}/models")
+@RequiredArgsConstructor
+public class ModelInstanceController {
+
+    private final ModelInstanceService modelInstanceService;
+
+    @GetMapping
+    public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
+        return modelInstanceService.getInstancesByChannelId(channelId);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ModelInstanceResponse create(
+            @PathVariable Long channelId,
+            @Valid @RequestBody ModelInstanceCreateRequest request) {
+        return modelInstanceService.create(channelId, request);
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long channelId, @PathVariable Long id) {
+        modelInstanceService.delete(channelId, id);
+    }
+
+    @PatchMapping("/{id}/state")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setEnabled(
+            @PathVariable Long channelId,
+            @PathVariable Long id,
+            @RequestParam boolean enabled) {
+        modelInstanceService.setEnabled(channelId, id, enabled);
+    }
+
+    @PatchMapping("/{id}/upstream-model-name")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateUpstreamModelName(
+            @PathVariable Long channelId,
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
+        String upstreamModelName = body.get("upstreamModelName");
+        modelInstanceService.updateUpstreamModelName(channelId, id, upstreamModelName);
+    }
+}

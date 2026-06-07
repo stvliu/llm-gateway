@@ -30,13 +30,14 @@ public interface ChannelService {
 
     void delete(Long id);
 
+    /**
+     * 切换渠道启用/停用状态
+     */
+    void setState(Long id, boolean enabled);
+
     ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request);
 
     ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request);
 
     void removeEndpoint(Long channelId, Long endpointId);
-
-    ChannelEndpointResponse enableEndpoint(Long channelId, Long endpointId);
-
-    ChannelEndpointResponse disableEndpoint(Long channelId, Long endpointId);
 }
