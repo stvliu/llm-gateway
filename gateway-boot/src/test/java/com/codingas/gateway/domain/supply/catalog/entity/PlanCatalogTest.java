@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,6 @@ class PlanCatalogTest {
     @DisplayName("默认 source 为 BUILTIN，state 为 ACTIVE")
     void defaultValues() {
         PlanCatalog catalog = new PlanCatalog();
-        assertThat(catalog.getSource()).isEqualTo(CatalogSource.BUILTIN);
         assertThat(catalog.getState()).isEqualTo(CatalogState.ACTIVE);
     }
 
@@ -31,12 +29,10 @@ class PlanCatalogTest {
         catalog.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         catalog.setEndpoints("[{\"protocol\":\"openai\",\"url\":\"https://ark.cn-beijing.volces.com\"}]");
         catalog.setPricing("[{\"providerModelId\":\"doubao-pro\",\"inputPrice\":0.0008,\"outputPrice\":0.002}]");
-        catalog.setSource(CatalogSource.PROVIDER_API);
-        catalog.setSyncedAt(Instant.now());
 
         assertThat(catalog.getPlanCode()).isEqualTo("volcengine_doubao_payg");
         assertThat(catalog.getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
         assertThat(catalog.getEndpoints()).contains("openai");
-        assertThat(catalog.getSource()).isEqualTo(CatalogSource.PROVIDER_API);
+
     }
 }

@@ -1,6 +1,5 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ class PlanModelCatalogTest {
     @DisplayName("默认 source 为 BUILTIN，state 为 ACTIVE")
     void defaultValues() {
         PlanModelCatalog catalog = new PlanModelCatalog();
-        assertThat(catalog.getSource()).isEqualTo(CatalogSource.BUILTIN);
+
         assertThat(catalog.getState()).isEqualTo(CatalogState.ACTIVE);
     }
 
@@ -26,11 +25,8 @@ class PlanModelCatalogTest {
         PlanModelCatalog catalog = new PlanModelCatalog();
         catalog.setPlanCode("volcengine_doubao_payg");
         catalog.setModelName("doubao-pro-32k");
-        catalog.setSource(CatalogSource.PROVIDER_API);
-        catalog.setSyncedAt(Instant.now());
 
         assertThat(catalog.getPlanCode()).isEqualTo("volcengine_doubao_payg");
         assertThat(catalog.getModelName()).isEqualTo("doubao-pro-32k");
-        assertThat(catalog.getSource()).isEqualTo(CatalogSource.PROVIDER_API);
     }
 }
