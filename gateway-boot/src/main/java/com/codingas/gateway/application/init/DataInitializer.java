@@ -44,14 +44,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 开发环境数据初始化器
- * 
- * <p>负责在应用启动时初始化测试数据，包括：</p>
+ * 数据初始化器
+ *
+ * <p>基础设施初始化（admin 内置用户）在所有环境下无条件执行。</p>
+ * <p>演示数据初始化（渠道、团队、演示用户）受 {@code gateway.init.demo-data-enabled} 配置控制。</p>
  * <ul>
- *   <li>5个主流大模型供应商（OpenAI、Anthropic、DeepSeek、通义千问、智谱AI）</li>
- *   <li>17个最新大模型</li>
+ *   <li>admin 内置用户（无条件创建）</li>
+ *   <li>5个主流大模型供应商（后备逻辑）</li>
+ *   <li>17个最新大模型（后备逻辑）</li>
  *   <li>10个接入点（每个供应商2个套餐）</li>
- *   <li>4个团队（default、dev、product、lobster）</li>
+ *   <li>4个团队（default、dev、product、openclaw）</li>
  *   <li>10个测试用户（test1-test10）</li>
  *   <li>10个API密钥（按团队分配不同权限）</li>
  * </ul>
@@ -63,7 +65,6 @@ public class DataInitializer implements CommandLineRunner {
 
     // ==================== 常量定义 ====================
     
-    private static final String DEFAULT_PASSWORD = "test"; // 测试用户默认密码前缀
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String USER_ROLE = "USER";
     
@@ -100,7 +101,7 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        // Phase 3: 幂等守卫 — 演示数据是否已初始化
+        // Phase 2 (cont): 幂等守卫 — 演示数据是否已初始化
         if (userGateway.findByUsername("test1").isPresent()) {
             log.info("演示数据已存在，跳过初始化");
             return;
@@ -108,7 +109,7 @@ public class DataInitializer implements CommandLineRunner {
 
         log.info("Initializing demo data...");
 
-        // Phase 4: 执行初始化
+        // Phase 3: 执行初始化
         // 后备：如果 BuiltinDataLoader 未执行，补充创建供应商和模型
         if (providerGateway.count() == 0) {
             log.info("BuiltinDataLoader 未加载供应商数据，执行后备初始化");
