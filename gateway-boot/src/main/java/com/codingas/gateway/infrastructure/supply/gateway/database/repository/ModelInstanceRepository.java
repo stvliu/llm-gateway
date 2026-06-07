@@ -18,7 +18,7 @@ public interface ModelInstanceRepository extends JpaRepository<ModelInstanceDo, 
 
     List<ModelInstanceDo> findByModelIdAndState(Long modelId, String state);
 
-    List<ModelInstanceDo> findByModelIdAndStateOrderByPriorityDesc(Long modelId, String state);
+    List<ModelInstanceDo> findByModelIdAndStateOrderByPriorityAsc(Long modelId, String state);
 
     List<ModelInstanceDo> findByIdIn(List<Long> ids);
 }

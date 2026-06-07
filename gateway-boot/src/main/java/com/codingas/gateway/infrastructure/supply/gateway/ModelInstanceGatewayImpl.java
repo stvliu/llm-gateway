@@ -53,7 +53,7 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
 
     @Override
     public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndStateOrderByPriorityDesc(modelId, ChannelModelState.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(modelId, ChannelModelState.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
