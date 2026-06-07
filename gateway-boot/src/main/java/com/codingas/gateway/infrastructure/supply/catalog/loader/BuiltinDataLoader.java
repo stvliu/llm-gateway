@@ -27,16 +27,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 内置目录数据加载器
+ * 内置数据加载器
  *
- * <p>应用启动时，如果 catalog 表为空，从 classpath:catalog/*.json 加载内置数据。</p>
- * <p>upsert 逻辑内联于此，替代原 CatalogDomainService。</p>
+ * <p>应用启动时，如果核心表为空，从 classpath:catalog/*.json 加载内置数据。</p>
+ * <p>负责加载 Provider、Model、PlanCatalog、PlanModelCatalog 四类数据。</p>
+ * <p>从 BuiltinCatalogLoader 重构而来，适配新的供应域架构。</p>
  */
 @Slf4j
 @Component
 @Order(1)
 @RequiredArgsConstructor
-public class BuiltinCatalogLoader implements CommandLineRunner {
+public class BuiltinDataLoader implements CommandLineRunner {
 
     private final ProviderGateway providerGateway;
     private final PlanCatalogGateway planCatalogGateway;
@@ -57,7 +58,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
      */
     public void loadIfNeeded() {
         if (!providerGateway.findAll().isEmpty()) {
-            log.info("目录数据已存在，跳过 BUILTIN 加载");
+            log.info("内置数据已存在，跳过 BUILTIN 加载");
             return;
         }
         doLoad();
@@ -82,7 +83,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
         catalogObjectMapper = objectMapper.copy()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
-        log.info("开始加载 BUILTIN 目录数据...");
+        log.info("开始加载 BUILTIN 数据...");
         long startTime = System.currentTimeMillis();
 
         try {
@@ -92,15 +93,15 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             loadPlanModels();
 
             long elapsed = System.currentTimeMillis() - startTime;
-            log.info("BUILTIN 目录数据加载完成，耗时 {}ms", elapsed);
+            log.info("BUILTIN 数据加载完成，耗时 {}ms", elapsed);
         } catch (Exception e) {
-            log.error("BUILTIN 目录数据加载失败", e);
+            log.error("BUILTIN 数据加载失败", e);
             // 不抛出异常，允许应用启动
         }
     }
 
     /**
-     * 加载供应商目录
+     * 加载供应商数据
      */
     private void loadProviders() throws Exception {
         var providers = loadJson("catalog/providers.json", new TypeReference<List<ProviderCatalogData>>() {});
@@ -122,11 +123,11 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
                 default -> skipped++;
             }
         }
-        log.info("加载供应商目录: added={}, updated={}, skipped={}", added, updated, skipped);
+        log.info("加载供应商: added={}, updated={}, skipped={}", added, updated, skipped);
     }
 
     /**
-     * 加载模型目录
+     * 加载模型数据
      *
      * <p>直接创建 Model 实体（替代原 ModelCatalog）。</p>
      * <p>capabilities 和 modalities 从 JSON 解析为 Map/List。</p>
@@ -154,7 +155,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
                 default -> skipped++;
             }
         }
-        log.info("加载模型目录: added={}, updated={}, skipped={}", added, updated, skipped);
+        log.info("加载模型: added={}, updated={}, skipped={}", added, updated, skipped);
     }
 
     /**
@@ -204,10 +205,10 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
                 default -> skipped++;
             }
         }
-        log.info("加载套餐模型关联目录: added={}, updated={}, skipped={}", added, updated, skipped);
+        log.info("加载套餐模型关联: added={}, updated={}, skipped={}", added, updated, skipped);
     }
 
-    // ===== upsert 方法（内联原 CatalogDomainService 逻辑） =====
+    // ===== upsert 方法 =====
 
     /**
      * 新增或更新供应商

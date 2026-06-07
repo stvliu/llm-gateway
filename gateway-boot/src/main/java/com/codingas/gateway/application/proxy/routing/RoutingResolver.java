@@ -19,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class RoutingResolver {
 
     private final ModelMatcher modelMatcher;
-    private final ChannelSelector channelSelector;
+    private final InstanceSelector instanceSelector;
     private final CredentialResolver credentialResolver;
     private final EndpointResolver endpointResolver;
     private final ChannelGateway channelGateway;
@@ -36,8 +36,8 @@ public class RoutingResolver {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
-        // 2. 通道选择
-        ModelInstance modelInstance = channelSelector.select(model.getId(), userId);
+        // 2. 实例选择（按 priority 排序）
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());
