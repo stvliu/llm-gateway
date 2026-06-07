@@ -34,7 +34,8 @@ class RoutingResolverTest {
     private ModelMatcher modelMatcher;
 
     @Mock
-    private ChannelSelector channelSelector;
+    private InstanceSelector instanceSelector;
+
 
     @Mock
     private CredentialResolver credentialResolver;
@@ -80,7 +81,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -126,7 +127,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.ANTHROPIC);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -171,7 +172,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(channelSelector.select(1L, 1L)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L)).thenReturn(modelInstance);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());
