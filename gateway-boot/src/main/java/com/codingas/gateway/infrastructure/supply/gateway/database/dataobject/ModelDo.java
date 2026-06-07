@@ -38,6 +38,10 @@ public class ModelDo extends BaseDo {
     @Column(name = "max_output_tokens")
     private Integer maxOutputTokens;
 
+    /** 知识截止日期 */
+    @Column(name = "knowledge_cutoff", length = 32)
+    private String knowledgeCutoff;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "capabilities", columnDefinition = "jsonb")
     private Map<String, Boolean> capabilities;

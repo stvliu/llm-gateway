@@ -72,6 +72,27 @@ public class ModelGatewayImpl implements ModelGateway {
         modelRepository.deleteById(model.getId());
     }
 
+    @Override
+    public boolean existsByModelName(String modelName) {
+        return modelRepository.existsByModelName(modelName);
+    }
+
+    @Override
+    public List<Model> findByKeyword(String keyword) {
+        return modelRepository.findByModelNameContainingOrDisplayNameContaining(keyword, keyword)
+                .stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
+    @Override
+    public List<Model> findByCapability(String capability) {
+        return modelRepository.findByCapability(capability)
+                .stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
     private Model toEntity(ModelDo doObj) {
         Model entity = new Model();
         entity.setId(doObj.getId());
@@ -81,6 +102,7 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setContextWindow(doObj.getContextWindow());
         entity.setMaxInputTokens(doObj.getMaxInputTokens());
         entity.setMaxOutputTokens(doObj.getMaxOutputTokens());
+        entity.setKnowledgeCutoff(doObj.getKnowledgeCutoff());
         entity.setCapabilities(doObj.getCapabilities());
         entity.setModalities(doObj.getModalities());
         entity.setState(ModelState.valueOf(doObj.getState()));
@@ -100,6 +122,7 @@ public class ModelGatewayImpl implements ModelGateway {
         doObj.setContextWindow(entity.getContextWindow());
         doObj.setMaxInputTokens(entity.getMaxInputTokens());
         doObj.setMaxOutputTokens(entity.getMaxOutputTokens());
+        doObj.setKnowledgeCutoff(entity.getKnowledgeCutoff());
         doObj.setCapabilities(entity.getCapabilities());
         doObj.setModalities(entity.getModalities());
         doObj.setState(entity.getState() != null ? entity.getState().name() : ModelState.ACTIVE.name());

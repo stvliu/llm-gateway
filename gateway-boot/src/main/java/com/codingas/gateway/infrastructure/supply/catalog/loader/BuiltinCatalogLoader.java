@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.supply.catalog.loader;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 内置目录数据加载器
@@ -122,25 +123,27 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
 
     /**
      * 加载模型目录
+     *
+     * <p>直接创建 Model 实体（替代原 ModelCatalog）。</p>
+     * <p>capabilities 和 modalities 从 JSON 解析为 Map/List。</p>
      */
     private void loadModels() throws Exception {
         var specs = loadJson("catalog/model-specs.json", new TypeReference<List<ModelCatalogData>>() {});
         int added = 0, updated = 0, skipped = 0;
         for (var data : specs) {
-            var catalog = new ModelCatalog();
-            catalog.setModelName(data.modelName());
-            catalog.setDisplayName(data.displayName());
-            catalog.setModelFamily(data.modelFamily());
-            catalog.setContextWindow(data.contextWindow());
-            catalog.setMaxInputTokens(data.maxInputTokens());
-            catalog.setMaxOutputTokens(data.maxOutputTokens());
-            catalog.setKnowledgeCutoff(data.knowledgeCutoff());
-            // capabilities 和 modalities 存储为 JSON String
-            catalog.setCapabilities(data.capabilities() != null ? objectMapper.writeValueAsString(data.capabilities()) : null);
-            catalog.setModalities(data.modalities() != null ? objectMapper.writeValueAsString(data.modalities()) : null);
-            catalog.setState(CatalogState.ACTIVE);
+            var model = new Model();
+            model.setModelName(data.modelName());
+            model.setDisplayName(data.displayName());
+            model.setModelFamily(data.modelFamily());
+            model.setContextWindow(data.contextWindow());
+            model.setMaxInputTokens(data.maxInputTokens());
+            model.setMaxOutputTokens(data.maxOutputTokens());
+            model.setKnowledgeCutoff(data.knowledgeCutoff());
+            // capabilities 和 modalities 解析为 Map/List
+            model.setCapabilities(parseCapabilities(data.capabilities()));
+            model.setModalities(parseModalities(data.modalities()));
 
-            String result = catalogDomainService.upsertModel(catalog);
+            String result = catalogDomainService.upsertModel(model);
             switch (result) {
                 case "ADDED" -> added++;
                 case "UPDATED" -> updated++;
@@ -209,6 +212,36 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
                 throw new IllegalStateException("未找到资源文件: " + path);
             }
             return catalogObjectMapper.readValue(is, typeRef);
+        }
+    }
+
+    /**
+     * 解析 capabilities JSON 对象为 Map
+     */
+    private Map<String, Boolean> parseCapabilities(Object capabilities) {
+        if (capabilities == null) {
+            return Map.of();
+        }
+        try {
+            return catalogObjectMapper.convertValue(capabilities, new TypeReference<Map<String, Boolean>>() {});
+        } catch (Exception e) {
+            log.warn("解析 capabilities 失败: {}", capabilities, e);
+            return Map.of();
+        }
+    }
+
+    /**
+     * 解析 modalities JSON 对象为 List
+     */
+    private List<String> parseModalities(Object modalities) {
+        if (modalities == null) {
+            return List.of();
+        }
+        try {
+            return catalogObjectMapper.convertValue(modalities, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("解析 modalities 失败: {}", modalities, e);
+            return List.of();
         }
     }
 

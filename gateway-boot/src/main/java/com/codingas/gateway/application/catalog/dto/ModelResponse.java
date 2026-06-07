@@ -6,11 +6,14 @@ import lombok.Getter;
 import java.util.List;
 
 /**
- * 模型目录响应
+ * 模型响应 DTO
+ *
+ * <p>用于模型目录查询 API 的响应。</p>
+ * <p>原 ModelCatalogResponse，合并 ModelCatalog 到 Model 后重命名。</p>
  */
 @Getter
 @Builder
-public class ModelCatalogResponse {
+public class ModelResponse {
 
     /** 模型名称 */
     private final String modelName;

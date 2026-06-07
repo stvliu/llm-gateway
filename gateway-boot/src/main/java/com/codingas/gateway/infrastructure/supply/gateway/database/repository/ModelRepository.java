@@ -2,6 +2,8 @@ package com.codingas.gateway.infrastructure.supply.gateway.database.repository;
 
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ModelDo;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,9 +15,22 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
 
     Optional<ModelDo> findByModelName(String modelName);
 
+    boolean existsByModelName(String modelName);
+
     List<ModelDo> findByState(String state);
 
     List<ModelDo> findByIdIn(List<Long> ids);
 
     List<ModelDo> findByModelNameAndState(String modelName, String state);
+
+    /**
+     * 关键词搜索（modelName 或 displayName 包含关键字）
+     */
+    List<ModelDo> findByModelNameContainingOrDisplayNameContaining(String modelNameKeyword, String displayNameKeyword);
+
+    /**
+     * 按能力过滤：使用 LIKE 查询 capabilities JSON 字段
+     */
+    @Query("SELECT m FROM ModelDo m WHERE m.capabilities LIKE %:capability%")
+    List<ModelDo> findByCapability(@Param("capability") String capability);
 }

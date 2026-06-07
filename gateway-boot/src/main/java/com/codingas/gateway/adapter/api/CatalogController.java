@@ -8,7 +8,7 @@ import com.codingas.gateway.application.catalog.dto.MaterializeBatchRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
 import com.codingas.gateway.application.catalog.dto.MaterializePlanRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
-import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
+import com.codingas.gateway.application.catalog.dto.ModelResponse;
 import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
 import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * 目录管理 REST 控制器
  *
- * <p>提供供应商目录、套餐目录、模型目录的查询、物化、同步 API。</p>
+ * <p>提供供应商目录、套餐目录、模型的查询、物化、同步 API。</p>
  */
 @RestController
 @RequestMapping("/api/v1/catalog")
@@ -70,20 +70,20 @@ public class CatalogController {
         return catalogService.getPlanDetail(planCode);
     }
 
-    // ===== 模型目录 =====
+    // ===== 模型 =====
 
     /**
-     * 列出模型目录
+     * 列出模型
      *
      * @param keyword 关键词过滤（可选）
      * @param capability 能力标签过滤（可选）
-     * @return 模型目录列表
+     * @return 模型列表
      */
     @GetMapping("/models")
-    public List<ModelCatalogResponse> listModels(
+    public List<ModelResponse> listModels(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String capability) {
-        return catalogService.listModelCatalogs(null, keyword, capability);
+        return catalogService.listModels(null, keyword, capability);
     }
 
     // ===== 物化（管理操作） =====
@@ -143,7 +143,7 @@ public class CatalogController {
     /**
      * 物化模型
      *
-     * <p>从 ModelCatalog 创建 Model 运营实体。</p>
+     * <p>创建 Model 运营实体。</p>
      *
      * @param modelName 模型名称
      * @return 物化结果

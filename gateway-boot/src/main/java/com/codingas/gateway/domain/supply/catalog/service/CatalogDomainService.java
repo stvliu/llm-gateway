@@ -1,18 +1,21 @@
 package com.codingas.gateway.domain.supply.catalog.service;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
+import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Map;
 
 /**
  * 目录领域服务
@@ -27,7 +30,7 @@ public class CatalogDomainService {
     private final ProviderGateway providerGateway;
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
-    private final ModelCatalogGateway modelCatalogGateway;
+    private final ModelGateway modelGateway;
 
     // ===== upsert =====
 
@@ -95,21 +98,25 @@ public class CatalogDomainService {
     }
 
     /**
-     * 新增或更新模型目录
+     * 新增或更新模型
      *
-     * @param catalog 待写入的模型目录
+     * <p>直接操作 Model 实体（替代原 ModelCatalog）。</p>
+     * <p>capabilities 和 modalities 已从 JSON 字符串解析为 Map/List。</p>
+     *
+     * @param model 待写入的模型
      * @return "ADDED" | "UPDATED"
      */
     @Transactional
-    public String upsertModel(ModelCatalog catalog) {
-        return modelCatalogGateway.findByModelName(catalog.getModelName())
+    public String upsertModel(Model model) {
+        return modelGateway.findByModelName(model.getModelName())
                 .map(existing -> {
-                    copyModelFields(catalog, existing);
-                    modelCatalogGateway.save(existing);
+                    copyModelFields(model, existing);
+                    modelGateway.save(existing);
                     return "UPDATED";
                 })
                 .orElseGet(() -> {
-                    modelCatalogGateway.save(catalog);
+                    model.setState(ModelState.ACTIVE);
+                    modelGateway.save(model);
                     return "ADDED";
                 });
     }
@@ -141,9 +148,9 @@ public class CatalogDomainService {
     }
 
     /**
-     * 将源模型目录的业务字段拷贝到目标实体
+     * 将源模型的业务字段拷贝到目标实体
      */
-    private void copyModelFields(ModelCatalog src, ModelCatalog dst) {
+    private void copyModelFields(Model src, Model dst) {
         dst.setDisplayName(src.getDisplayName());
         dst.setModelFamily(src.getModelFamily());
         dst.setContextWindow(src.getContextWindow());
@@ -152,6 +159,5 @@ public class CatalogDomainService {
         dst.setKnowledgeCutoff(src.getKnowledgeCutoff());
         dst.setCapabilities(src.getCapabilities());
         dst.setModalities(src.getModalities());
-        dst.setSyncedAt(src.getSyncedAt());
     }
 }

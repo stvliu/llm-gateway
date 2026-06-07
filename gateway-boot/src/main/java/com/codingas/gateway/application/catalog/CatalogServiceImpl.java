@@ -1,17 +1,17 @@
 package com.codingas.gateway.application.catalog;
 
-import com.codingas.gateway.application.catalog.dto.ModelCatalogResponse;
+import com.codingas.gateway.application.catalog.dto.ModelResponse;
 import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
 import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
 import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
-import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
@@ -36,7 +36,6 @@ import java.util.Map;
 public class CatalogServiceImpl implements CatalogService {
 
     private final PlanCatalogGateway planCatalogGateway;
-    private final ModelCatalogGateway modelCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
@@ -49,10 +48,6 @@ public class CatalogServiceImpl implements CatalogService {
 
     /** pricing JSON 类型引用 */
     private static final TypeReference<List<Map<String, Object>>> PRICING_TYPE =
-            new TypeReference<>() {};
-
-    /** capabilities JSON 类型引用 */
-    private static final TypeReference<Map<String, Boolean>> CAPABILITIES_TYPE =
             new TypeReference<>() {};
 
     @Override
@@ -119,21 +114,21 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     @Override
-    public List<ModelCatalogResponse> listModelCatalogs(String providerCode, String keyword, String capability) {
-        List<ModelCatalog> catalogs;
+    public List<ModelResponse> listModels(String providerCode, String keyword, String capability) {
+        List<Model> models;
 
         if (keyword != null && !keyword.isBlank()) {
-            catalogs = modelCatalogGateway.findByKeyword(keyword);
+            models = modelGateway.findByKeyword(keyword);
         } else if (capability != null && !capability.isBlank()) {
-            catalogs = modelCatalogGateway.findByCapability(capability);
+            models = modelGateway.findByCapability(capability);
         } else {
-            catalogs = modelCatalogGateway.findAll();
+            models = modelGateway.findAll();
         }
 
         // 如果指定了 providerCode，需要二次过滤
-        // 由于 ModelCatalog 没有 providerCode 字段，需要通过 PlanModelCatalog 间接关联
+        // 通过 PlanModelCatalog 间接关联
         if (providerCode != null && !providerCode.isBlank()) {
-            List<String> modelIds = planModelCatalogGateway.findAll().stream()
+            List<String> modelNames = planModelCatalogGateway.findAll().stream()
                     .filter(pm -> {
                         // 通过 PlanCatalog 找到属于该供应商的套餐
                         return planCatalogGateway.findByProviderCode(providerCode)
@@ -144,24 +139,24 @@ public class CatalogServiceImpl implements CatalogService {
                     .distinct()
                     .toList();
 
-            catalogs = catalogs.stream()
-                    .filter(c -> modelIds.contains(c.getModelName()))
+            models = models.stream()
+                    .filter(m -> modelNames.contains(m.getModelName()))
                     .toList();
         }
 
-        return catalogs.stream()
-                .filter(c -> c.getState() == CatalogState.ACTIVE)
-                .map(c -> {
-                    // 解析 capabilities 为能力名称列表
-                    List<String> capList = parseCapabilities(c.getCapabilities());
-                    return ModelCatalogResponse.builder()
-                            .modelName(c.getModelName())
-                            .displayName(c.getDisplayName())
-                            .providerCode(findProviderCodeForModel(c.getModelName()))
+        return models.stream()
+                .filter(m -> m.getState() == ModelState.ACTIVE)
+                .map(m -> {
+                    // 从 Map<String, Boolean> 中提取能力名称列表
+                    List<String> capList = extractCapabilityNames(m.getCapabilities());
+                    return ModelResponse.builder()
+                            .modelName(m.getModelName())
+                            .displayName(m.getDisplayName())
+                            .providerCode(findProviderCodeForModel(m.getModelName()))
                             .capabilities(capList)
-                            .contextWindow(c.getContextWindow())
-                            .maxOutputTokens(c.getMaxOutputTokens())
-                            .materialized(isModelMaterialized(c.getModelName()))
+                            .contextWindow(m.getContextWindow())
+                            .maxOutputTokens(m.getMaxOutputTokens())
+                            .materialized(true) // Model 本身就是物化后的实体
                             .build();
                 })
                 .toList();
@@ -214,22 +209,16 @@ public class CatalogServiceImpl implements CatalogService {
     }
 
     /**
-     * 解析 capabilities JSON 为能力名称列表
+     * 从 capabilities Map 中提取能力名称列表
      */
-    private List<String> parseCapabilities(String capabilitiesJson) {
-        if (capabilitiesJson == null || capabilitiesJson.isBlank()) {
+    private List<String> extractCapabilityNames(Map<String, Boolean> capabilities) {
+        if (capabilities == null || capabilities.isEmpty()) {
             return Collections.emptyList();
         }
-        try {
-            Map<String, Boolean> caps = objectMapper.readValue(capabilitiesJson, CAPABILITIES_TYPE);
-            return caps.entrySet().stream()
-                    .filter(Map.Entry::getValue)
-                    .map(Map.Entry::getKey)
-                    .toList();
-        } catch (Exception e) {
-            log.warn("解析 capabilities JSON 失败: {}", capabilitiesJson, e);
-            return Collections.emptyList();
-        }
+        return capabilities.entrySet().stream()
+                .filter(Map.Entry::getValue)
+                .map(Map.Entry::getKey)
+                .toList();
     }
 
     /**
@@ -261,13 +250,6 @@ public class CatalogServiceImpl implements CatalogService {
                         .map(provider -> channelGateway.existsByProviderIdAndName(
                                 provider.getId(), planCode)))
                 .orElse(false);
-    }
-
-    /**
-     * 检查模型是否已物化
-     */
-    private boolean isModelMaterialized(String modelName) {
-        return modelGateway.findByModelName(modelName).isPresent();
     }
 
     /**

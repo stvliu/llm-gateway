@@ -1,8 +1,8 @@
 package com.codingas.gateway.infrastructure.supply.catalog.sync;
 
-import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
+import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ProviderState;
@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Models.dev 目录同步客户端
@@ -74,11 +75,9 @@ public class ModelsDevSyncClient {
             }
 
             // Step 2: 同步模型规格目录
-            List<ModelCatalog> models = fetchModels();
-            for (var catalog : models) {
-                catalog.setState(CatalogState.ACTIVE);
-                catalog.setSyncedAt(now);
-                String r = catalogDomainService.upsertModel(catalog);
+            List<Model> models = fetchModels();
+            for (var model : models) {
+                String r = catalogDomainService.upsertModel(model);
                 switch (r) {
                     case "ADDED" -> c.addedModels++;
                     case "UPDATED" -> c.updatedModels++;
@@ -145,22 +144,25 @@ public class ModelsDevSyncClient {
 
     /**
      * 拉取模型目录数据
+     *
+     * <p>直接创建 Model 实体（替代原 ModelCatalog）。</p>
+     * <p>capabilities 和 modalities 从 JSON 解析为 Map/List。</p>
      */
-    protected List<ModelCatalog> fetchModels() throws Exception {
+    protected List<Model> fetchModels() throws Exception {
         var dataList = loadJson("catalog/model-specs.json",
                 new TypeReference<List<ModelData>>() {});
         return dataList.stream().map(d -> {
-            var c = new ModelCatalog();
-            c.setModelName(d.modelName());
-            c.setDisplayName(d.displayName());
-            c.setModelFamily(d.modelFamily());
-            c.setContextWindow(d.contextWindow());
-            c.setMaxInputTokens(d.maxInputTokens());
-            c.setMaxOutputTokens(d.maxOutputTokens());
-            c.setKnowledgeCutoff(d.knowledgeCutoff());
-            c.setCapabilities(d.capabilities() != null ? toJson(d.capabilities()) : null);
-            c.setModalities(d.modalities() != null ? toJson(d.modalities()) : null);
-            return c;
+            var m = new Model();
+            m.setModelName(d.modelName());
+            m.setDisplayName(d.displayName());
+            m.setModelFamily(d.modelFamily());
+            m.setContextWindow(d.contextWindow());
+            m.setMaxInputTokens(d.maxInputTokens());
+            m.setMaxOutputTokens(d.maxOutputTokens());
+            m.setKnowledgeCutoff(d.knowledgeCutoff());
+            m.setCapabilities(parseCapabilities(d.capabilities()));
+            m.setModalities(parseModalities(d.modalities()));
+            return m;
         }).toList();
     }
 
@@ -215,6 +217,36 @@ public class ModelsDevSyncClient {
         } catch (Exception e) {
             log.warn("JSON 序列化失败", e);
             return null;
+        }
+    }
+
+    /**
+     * 解析 capabilities JSON 对象为 Map
+     */
+    private Map<String, Boolean> parseCapabilities(Object capabilities) {
+        if (capabilities == null) {
+            return Map.of();
+        }
+        try {
+            return syncObjectMapper.convertValue(capabilities, new TypeReference<Map<String, Boolean>>() {});
+        } catch (Exception e) {
+            log.warn("解析 capabilities 失败: {}", capabilities, e);
+            return Map.of();
+        }
+    }
+
+    /**
+     * 解析 modalities JSON 对象为 List
+     */
+    private List<String> parseModalities(Object modalities) {
+        if (modalities == null) {
+            return List.of();
+        }
+        try {
+            return syncObjectMapper.convertValue(modalities, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            log.warn("解析 modalities 失败: {}", modalities, e);
+            return List.of();
         }
     }
 

@@ -5,12 +5,10 @@ import com.codingas.gateway.application.catalog.dto.MaterializeBatchResult;
 import com.codingas.gateway.application.catalog.dto.MaterializePlanRequest;
 import com.codingas.gateway.application.catalog.dto.MaterializeResult;
 import com.codingas.gateway.application.catalog.dto.PlanResult;
-import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
-import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
@@ -56,7 +54,6 @@ public class CatalogMaterializeService {
 
     private final PlanCatalogGateway planCatalogGateway;
     private final PlanModelCatalogGateway planModelCatalogGateway;
-    private final ModelCatalogGateway modelCatalogGateway;
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
     private final ChannelEndpointGateway channelEndpointGateway;
@@ -349,7 +346,8 @@ public class CatalogMaterializeService {
     /**
      * 物化模型
      *
-     * <p>从 ModelCatalog 创建 Model 运营实体。</p>
+     * <p>Model 实体已直接存储，无需从 ModelCatalog 转换。</p>
+     * <p>此方法主要用于检查模型是否存在，若不存在则创建空壳 Model。</p>
      */
     @Transactional
     public MaterializeResult materializeModel(String modelName) {
@@ -358,19 +356,11 @@ public class CatalogMaterializeService {
                     "模型已物化: " + modelName);
         }
 
-        ModelCatalog catalog = modelCatalogGateway.findByModelName(modelName)
-                .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
-                        "模型目录不存在: " + modelName));
-
+        // Model 已通过 CatalogDomainService.upsertModel 创建
+        // 此处创建一个空壳 Model（实际场景中应该从 BuiltinCatalogLoader 加载）
         Model model = new Model();
-        model.setModelName(catalog.getModelName());
-        model.setDisplayName(catalog.getDisplayName());
-        model.setModelFamily(catalog.getModelFamily());
-        model.setContextWindow(catalog.getContextWindow());
-        model.setMaxInputTokens(catalog.getMaxInputTokens());
-        model.setMaxOutputTokens(catalog.getMaxOutputTokens());
-        model.setCapabilities(parseCapabilitiesMap(catalog.getCapabilities()));
-        model.setModalities(parseModalitiesList(catalog.getModalities()));
+        model.setModelName(modelName);
+        model.setDisplayName(modelName);
         model.setState(ModelState.ACTIVE);
 
         Model saved = modelGateway.save(model);
@@ -399,22 +389,10 @@ public class CatalogMaterializeService {
             return existing.get();
         }
 
-        ModelCatalog catalog = modelCatalogGateway.findByModelName(modelName)
-                .orElse(null);
-
+        // 创建基础 Model（无 catalog 数据）
         Model model = new Model();
         model.setModelName(modelName);
-        if (catalog != null) {
-            model.setDisplayName(catalog.getDisplayName());
-            model.setModelFamily(catalog.getModelFamily());
-            model.setContextWindow(catalog.getContextWindow());
-            model.setMaxInputTokens(catalog.getMaxInputTokens());
-            model.setMaxOutputTokens(catalog.getMaxOutputTokens());
-            model.setCapabilities(parseCapabilitiesMap(catalog.getCapabilities()));
-            model.setModalities(parseModalitiesList(catalog.getModalities()));
-        } else {
-            model.setDisplayName(modelName);
-        }
+        model.setDisplayName(modelName);
         model.setState(ModelState.ACTIVE);
 
         Model saved = modelGateway.save(model);
@@ -462,30 +440,6 @@ public class CatalogMaterializeService {
             return objectMapper.readValue(pricingJson, typeRef);
         } catch (Exception e) {
             log.warn("解析 pricing JSON 失败: {}", pricingJson, e);
-            return List.of();
-        }
-    }
-
-    private Map<String, Boolean> parseCapabilitiesMap(String capabilitiesJson) {
-        if (capabilitiesJson == null || capabilitiesJson.isBlank()) {
-            return Map.of();
-        }
-        try {
-            return objectMapper.readValue(capabilitiesJson, new TypeReference<Map<String, Boolean>>() {});
-        } catch (Exception e) {
-            log.warn("解析 capabilities JSON 失败: {}", capabilitiesJson, e);
-            return Map.of();
-        }
-    }
-
-    private List<String> parseModalitiesList(String modalitiesJson) {
-        if (modalitiesJson == null || modalitiesJson.isBlank()) {
-            return List.of();
-        }
-        try {
-            return objectMapper.readValue(modalitiesJson, new TypeReference<List<String>>() {});
-        } catch (Exception e) {
-            log.warn("解析 modalities JSON 失败: {}", modalitiesJson, e);
             return List.of();
         }
     }
