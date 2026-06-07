@@ -54,7 +54,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         entity.setId(doObj.getId());
         entity.setPlanCode(doObj.getPlanCode());
         entity.setModelName(doObj.getModelName());
-        entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -68,7 +67,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         doObj.setId(entity.getId());
         doObj.setPlanCode(entity.getPlanCode());
         doObj.setModelName(entity.getModelName());
-        doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());

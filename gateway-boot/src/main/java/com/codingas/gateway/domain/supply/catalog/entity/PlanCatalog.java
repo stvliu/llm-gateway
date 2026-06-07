@@ -8,8 +8,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 /**
  * 套餐目录实体
  *
@@ -42,9 +40,6 @@ public class PlanCatalog extends BaseEntity {
 
     /** 描述 */
     private String description;
-
-    /** 同步时间 */
-    private Instant syncedAt;
 
     /** 目录状态，默认 ACTIVE */
     private CatalogState state = CatalogState.ACTIVE;

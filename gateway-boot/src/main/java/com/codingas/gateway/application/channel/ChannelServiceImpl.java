@@ -4,6 +4,7 @@ import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
 import com.codingas.gateway.application.channel.dto.ChannelRequest;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
@@ -38,7 +39,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     public ChannelResponse create(ChannelRequest request) {
         if (channelGateway.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-            throw new IllegalArgumentException("渠道名称已存在: " + request.getName());
+            throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
         }
 
         Channel channel = new Channel();
@@ -46,8 +47,6 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setName(request.getName());
         channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
         channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setPriority(request.getPriority());
-        channel.setWeight(request.getWeight());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
         channel.setState(ChannelState.ACTIVE);
@@ -62,11 +61,11 @@ public class ChannelServiceImpl implements ChannelService {
     @Transactional
     public ChannelResponse update(Long id, ChannelRequest request) {
         Channel channel = channelGateway.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + id));
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
         if (!channel.getName().equals(request.getName())) {
             if (channelGateway.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-                throw new IllegalArgumentException("渠道名称已存在: " + request.getName());
+                throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
             }
         }
 
@@ -74,8 +73,6 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setName(request.getName());
         channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
         channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setPriority(request.getPriority());
-        channel.setWeight(request.getWeight());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
 
@@ -88,7 +85,7 @@ public class ChannelServiceImpl implements ChannelService {
     @Override
     public ChannelResponse getById(Long id) {
         Channel channel = channelGateway.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + id));
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
         return toResponse(channel);
     }
 
@@ -120,6 +117,21 @@ public class ChannelServiceImpl implements ChannelService {
         log.info("Deleted channel: id={}", id);
     }
 
+    @Override
+    @Transactional
+    public void setState(Long id, boolean enabled) {
+        Channel channel = channelGateway.findById(id)
+            .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
+        ChannelState oldState = channel.getState();
+        ChannelState newState = enabled ? ChannelState.ACTIVE : ChannelState.INACTIVE;
+        if (oldState == newState) {
+            return;
+        }
+        channel.setState(newState);
+        channelGateway.save(channel);
+        log.info("切换渠道状态: id={}, {}→{}", id, oldState, newState);
+    }
+
     private ChannelResponse toResponse(Channel channel) {
         ChannelResponse response = new ChannelResponse();
         response.setId(channel.getId());
@@ -130,11 +142,9 @@ public class ChannelServiceImpl implements ChannelService {
         response.setName(channel.getName());
         response.setBillingMode(channel.getBillingMode().getCode());
         response.setQuotaLimit(channel.getQuotaLimit());
-        response.setPriority(channel.getPriority());
-        response.setWeight(channel.getWeight());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
-        response.setState(channel.getState().getCode());
+        response.setState(channel.getState().name());
         // 查询端点列表
         response.setEndpoints(
             channelEndpointGateway.findByChannelId(channel.getId()).stream()

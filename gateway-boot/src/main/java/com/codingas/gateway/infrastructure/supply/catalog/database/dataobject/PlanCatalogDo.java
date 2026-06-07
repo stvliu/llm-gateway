@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 /**
  * 套餐目录数据对象
  */
@@ -40,9 +38,6 @@ public class PlanCatalogDo extends BaseDo {
 
     @Column(name = "description", length = 1024)
     private String description;
-
-    @Column(name = "synced_at")
-    private Instant syncedAt;
 
     @Column(name = "state", nullable = false, length = 32)
     private String state;

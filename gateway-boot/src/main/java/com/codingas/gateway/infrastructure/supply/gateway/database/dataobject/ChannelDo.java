@@ -27,12 +27,6 @@ public class ChannelDo extends BaseDo {
     @Column(name = "quota_limit")
     private Long quotaLimit;
 
-    @Column(name = "priority")
-    private Integer priority;
-
-    @Column(name = "weight")
-    private Integer weight;
-
     @Column(name = "timeout")
     private Integer timeout;
 

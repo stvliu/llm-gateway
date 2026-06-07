@@ -24,10 +24,6 @@ public class ChannelResponse {
 
     private Long quotaLimit;
 
-    private Integer priority;
-
-    private Integer weight;
-
     private Integer timeout;
 
     private Integer maxRetries;

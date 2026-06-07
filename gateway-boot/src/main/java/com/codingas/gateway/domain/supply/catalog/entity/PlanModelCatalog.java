@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 /**
  * 套餐模型关联目录实体
  *
@@ -25,9 +23,6 @@ public class PlanModelCatalog extends BaseEntity {
 
     /** 供应商模型标识 → ModelCatalog */
     private String modelName;
-
-    /** 同步时间 */
-    private Instant syncedAt;
 
     /** 目录状态，默认 ACTIVE */
     private CatalogState state = CatalogState.ACTIVE;

@@ -236,8 +236,6 @@ public class CatalogMaterializeService {
         channel.setProviderId(provider.getId());
         channel.setName(planCode);
         channel.setBillingMode(catalog.getBillingMode());
-        channel.setPriority(100);
-        channel.setWeight(100);
         channel.setTimeout(30);
         channel.setMaxRetries(3);
         channel.setState(ChannelState.ACTIVE);

@@ -86,7 +86,6 @@ public class CatalogDomainService {
         return planModelCatalogGateway.findByPlanCodeAndModelName(
                         catalog.getPlanCode(), catalog.getModelName())
                 .map(existing -> {
-                    existing.setSyncedAt(catalog.getSyncedAt());
                     existing.setState(catalog.getState());
                     planModelCatalogGateway.save(existing);
                     return "UPDATED";
@@ -144,7 +143,6 @@ public class CatalogDomainService {
         dst.setEndpoints(src.getEndpoints());
         dst.setPricing(src.getPricing());
         dst.setDescription(src.getDescription());
-        dst.setSyncedAt(src.getSyncedAt());
     }
 
     /**

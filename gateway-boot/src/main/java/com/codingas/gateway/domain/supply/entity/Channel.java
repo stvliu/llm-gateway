@@ -32,10 +32,6 @@ public class Channel extends BaseEntity {
     /** 配额限制（Token 数） */
     private Long quotaLimit;
 
-    private Integer priority;
-
-    private Integer weight;
-
     private Integer timeout;
 
     private Integer maxRetries;

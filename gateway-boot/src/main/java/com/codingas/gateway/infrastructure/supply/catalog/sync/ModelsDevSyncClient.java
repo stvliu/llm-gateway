@@ -89,7 +89,6 @@ public class ModelsDevSyncClient {
             List<PlanCatalog> plans = fetchPlans();
             for (var catalog : plans) {
                 catalog.setState(CatalogState.ACTIVE);
-                catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertPlan(catalog);
                 switch (r) {
                     case "ADDED" -> c.addedPlans++;
@@ -102,7 +101,6 @@ public class ModelsDevSyncClient {
             List<PlanModelCatalog> planModels = fetchPlanModels();
             for (var catalog : planModels) {
                 catalog.setState(CatalogState.ACTIVE);
-                catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertPlanModel(catalog);
                 switch (r) {
                     case "ADDED" -> c.addedPlanModels++;

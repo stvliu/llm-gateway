@@ -77,8 +77,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setProviderId(doObj.getProviderId());
         entity.setName(doObj.getName());
         entity.setBillingMode(doObj.getBillingMode());
-        entity.setPriority(doObj.getPriority());
-        entity.setWeight(doObj.getWeight());
+        entity.setQuotaLimit(doObj.getQuotaLimit());
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
         entity.setState(doObj.getState());
@@ -95,8 +94,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setProviderId(entity.getProviderId());
         doObj.setName(entity.getName());
         doObj.setBillingMode(entity.getBillingMode());
-        doObj.setPriority(entity.getPriority());
-        doObj.setWeight(entity.getWeight());
+        doObj.setQuotaLimit(entity.getQuotaLimit());
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
         doObj.setState(entity.getState() != null ? entity.getState() : ChannelState.ACTIVE);

@@ -60,7 +60,6 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
         entity.setEndpoints(doObj.getEndpoints());
         entity.setPricing(doObj.getPricing());
         entity.setDescription(doObj.getDescription());
-        entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -79,7 +78,6 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
         doObj.setEndpoints(entity.getEndpoints());
         doObj.setPricing(entity.getPricing());
         doObj.setDescription(entity.getDescription());
-        doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
