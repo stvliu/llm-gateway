@@ -6,6 +6,7 @@ import com.codingas.gateway.application.auth.dto.LoginResponse;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.enums.UserState;
