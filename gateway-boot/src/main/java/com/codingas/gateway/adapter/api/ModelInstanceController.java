@@ -1,8 +1,8 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.channel.ChannelModelService;
-import com.codingas.gateway.application.channel.dto.ChannelModelCreateRequest;
-import com.codingas.gateway.application.channel.dto.ChannelModelResponse;
+import com.codingas.gateway.application.channel.ModelInstanceService;
+import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,32 +12,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 渠道模型关联 REST 控制器
+ * 模型实例 REST 控制器
  */
 @RestController
 @RequestMapping("/api/v1/channels/{channelId}/models")
 @RequiredArgsConstructor
-public class ChannelModelController {
+public class ModelInstanceController {
 
-    private final ChannelModelService channelModelService;
+    private final ModelInstanceService modelInstanceService;
 
     @GetMapping
-    public List<ChannelModelResponse> list(@PathVariable Long channelId) {
-        return channelModelService.getModelsByChannelId(channelId);
+    public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
+        return modelInstanceService.getInstancesByChannelId(channelId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ChannelModelResponse create(
+    public ModelInstanceResponse create(
             @PathVariable Long channelId,
-            @Valid @RequestBody ChannelModelCreateRequest request) {
-        return channelModelService.create(channelId, request);
+            @Valid @RequestBody ModelInstanceCreateRequest request) {
+        return modelInstanceService.create(channelId, request);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long channelId, @PathVariable Long id) {
-        channelModelService.delete(channelId, id);
+        modelInstanceService.delete(channelId, id);
     }
 
     @PatchMapping("/{id}/state")
@@ -46,7 +46,7 @@ public class ChannelModelController {
             @PathVariable Long channelId,
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        channelModelService.setEnabled(channelId, id, enabled);
+        modelInstanceService.setEnabled(channelId, id, enabled);
     }
 
     @PatchMapping("/{id}/upstream-model-name")
@@ -56,6 +56,6 @@ public class ChannelModelController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String upstreamModelName = body.get("upstreamModelName");
-        channelModelService.updateUpstreamModelName(channelId, id, upstreamModelName);
+        modelInstanceService.updateUpstreamModelName(channelId, id, upstreamModelName);
     }
 }

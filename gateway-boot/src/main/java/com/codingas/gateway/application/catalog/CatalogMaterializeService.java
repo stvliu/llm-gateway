@@ -14,7 +14,7 @@ import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGatewa
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
@@ -27,7 +27,7 @@ import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -57,7 +57,7 @@ public class CatalogMaterializeService {
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
     private final ChannelEndpointGateway channelEndpointGateway;
-    private final ChannelModelGateway channelModelGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final ModelGateway modelGateway;
     private final ObjectMapper objectMapper;
@@ -261,23 +261,18 @@ public class CatalogMaterializeService {
 
             Model model = findOrCreateModel(modelName);
 
-            ChannelModel channelModel = new ChannelModel();
-            channelModel.setChannelId(savedChannel.getId());
-            channelModel.setModelId(model.getId());
+            ModelInstance modelInstance = new ModelInstance();
+            modelInstance.setChannelId(savedChannel.getId());
+            modelInstance.setModelId(model.getId());
             // 预填上游模型名
             String resolved = resolveUpstreamModelName(provider.getCode(), modelName);
-            channelModel.setUpstreamModelName(resolved);
-            channelModel.setInputPrice(toBigDecimal(p.get("inputPrice")));
-            channelModel.setOutputPrice(toBigDecimal(p.get("outputPrice")));
-            channelModel.setCacheReadPrice(toBigDecimal(p.get("cacheReadPrice")));
-            channelModel.setReasoningPrice(toBigDecimal(p.get("reasoningPrice")));
-            channelModel.setCacheWritePrice(toBigDecimal(p.get("cacheWritePrice")));
-            channelModel.setInputAudioPrice(toBigDecimal(p.get("inputAudioPrice")));
-            channelModel.setOutputAudioPrice(toBigDecimal(p.get("outputAudioPrice")));
-            channelModel.setState(ChannelModelState.ACTIVE);
-            channelModelGateway.save(channelModel);
+            modelInstance.setUpstreamModelName(resolved);
+            modelInstance.setPriority(100);
+            modelInstance.setWeight(100);
+            modelInstance.setState(ChannelModelState.ACTIVE);
+            modelInstanceGateway.save(modelInstance);
         }
-        log.info("物化套餐-创建渠道模型成功: planCode={}, count={}", planCode, pricing.size());
+        log.info("物化套餐-创建模型实例成功: planCode={}, count={}", planCode, pricing.size());
 
         return MaterializeResult.builder()
                 .type("PLAN")

@@ -5,12 +5,12 @@ import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
 import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
@@ -51,7 +51,7 @@ public class ModelExperienceService {
     private final UpstreamClientRegistry upstreamClientRegistry;
     private final ProviderGateway providerGateway;
     private final ChannelGateway channelGateway;
-    private final ChannelModelGateway channelModelGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
     private final ModelGateway modelGateway;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
@@ -60,14 +60,14 @@ public class ModelExperienceService {
     public ModelExperienceService(UpstreamClientRegistry upstreamClientRegistry,
                                   ProviderGateway providerGateway,
                                   ChannelGateway channelGateway,
-                                  ChannelModelGateway channelModelGateway,
+                                  ModelInstanceGateway modelInstanceGateway,
                                   ChannelCredentialGateway channelCredentialGateway,
                                   ModelGateway modelGateway,
                                   ObjectMapper objectMapper) {
         this.upstreamClientRegistry = upstreamClientRegistry;
         this.providerGateway = providerGateway;
         this.channelGateway = channelGateway;
-        this.channelModelGateway = channelModelGateway;
+        this.modelInstanceGateway = modelInstanceGateway;
         this.channelCredentialGateway = channelCredentialGateway;
         this.modelGateway = modelGateway;
         this.objectMapper = objectMapper;
@@ -90,7 +90,7 @@ public class ModelExperienceService {
     /**
      * 获取供应商的模型列表
      *
-     * <p>通过 Channel → ChannelModel → Model 关联路径查询。</p>
+     * <p>通过 Channel → ModelInstance → Model 关联路径查询。</p>
      *
      * @param providerId 供应商 ID
      * @return 模型列表
@@ -101,8 +101,8 @@ public class ModelExperienceService {
         if (channelIds.isEmpty()) return List.of();
 
         List<Long> modelIds = channelIds.stream()
-                .flatMap(chId -> channelModelGateway.findActiveByChannelId(chId).stream())
-                .map(ChannelModel::getModelId)
+                .flatMap(chId -> modelInstanceGateway.findActiveByChannelId(chId).stream())
+                .map(ModelInstance::getModelId)
                 .distinct()
                 .toList();
         if (modelIds.isEmpty()) return List.of();

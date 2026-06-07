@@ -3,7 +3,7 @@ package com.codingas.gateway.application.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -37,17 +37,17 @@ public class RoutingResolver {
         Model model = modelMatcher.match(modelName);
 
         // 2. 通道选择
-        ChannelModel channelModel = channelSelector.select(model.getId(), userId);
+        ModelInstance modelInstance = channelSelector.select(model.getId(), userId);
 
         // 3. 凭证解析
-        String apiKey = credentialResolver.resolve(channelModel.getChannelId());
+        String apiKey = credentialResolver.resolve(modelInstance.getChannelId());
 
         // 4. 端点解析（优先匹配协议同源）
-        ChannelEndpoint endpoint = endpointResolver.resolve(channelModel.getChannelId(), protocol);
+        ChannelEndpoint endpoint = endpointResolver.resolve(modelInstance.getChannelId(), protocol);
 
         // 5. 通道信息
-        Channel channel = channelGateway.findById(channelModel.getChannelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Channel", channelModel.getChannelId()));
+        Channel channel = channelGateway.findById(modelInstance.getChannelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Channel", modelInstance.getChannelId()));
 
         // 6. 判断是否需要协议适配
         boolean needsAdaptation = endpoint.getProtocol() != protocol;
@@ -62,7 +62,7 @@ public class RoutingResolver {
                 channel.getTimeout(),
                 needsAdaptation,
                 model.getModelName(),
-                channelModel.getUpstreamModelName()
+                modelInstance.getUpstreamModelName()
         );
     }
 }

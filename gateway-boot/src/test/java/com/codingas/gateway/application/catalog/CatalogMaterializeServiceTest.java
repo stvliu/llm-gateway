@@ -16,7 +16,7 @@ import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
@@ -26,7 +26,7 @@ import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -76,7 +76,7 @@ class CatalogMaterializeServiceTest {
     @Mock
     private ChannelEndpointGateway channelEndpointGateway;
     @Mock
-    private ChannelModelGateway channelModelGateway;
+    private ModelInstanceGateway modelInstanceGateway;
     @Mock
     private ChannelCredentialGateway channelCredentialGateway;
     @Spy
@@ -232,7 +232,7 @@ class CatalogMaterializeServiceTest {
             when(modelCatalogGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(modelCatalog));
             Model savedModel = createTestModel(4L, "gpt-4o");
             when(modelGateway.save(any(Model.class))).thenReturn(savedModel);
-            when(channelModelGateway.save(any(ChannelModel.class))).thenReturn(new ChannelModel());
+            when(modelInstanceGateway.save(any(ModelInstance.class))).thenReturn(new ModelInstance());
 
             MaterializeResult result = service.materializePlan("openai_standard");
 
@@ -243,8 +243,8 @@ class CatalogMaterializeServiceTest {
 
             // 验证创建了 1 个端点
             verify(channelEndpointGateway, times(1)).save(any(ChannelEndpoint.class));
-            // 验证创建了 1 个渠道模型
-            verify(channelModelGateway, times(1)).save(any(ChannelModel.class));
+            // 验证创建了 1 个模型实例
+            verify(modelInstanceGateway, times(1)).save(any(ModelInstance.class));
             // 验证级联物化了 1 个模型
             verify(modelGateway, times(1)).save(any(Model.class));
         }
@@ -267,8 +267,8 @@ class CatalogMaterializeServiceTest {
 
             service.materializePlan("aws-bedrock-standard");
 
-            ArgumentCaptor<ChannelModel> captor = ArgumentCaptor.forClass(ChannelModel.class);
-            verify(channelModelGateway).save(captor.capture());
+            ArgumentCaptor<ModelInstance> captor = ArgumentCaptor.forClass(ModelInstance.class);
+            verify(modelInstanceGateway).save(captor.capture());
             assertEquals("anthropic.claude-opus-4-7", captor.getValue().getUpstreamModelName());
         }
 
@@ -290,8 +290,8 @@ class CatalogMaterializeServiceTest {
 
             service.materializePlan("deepseek-standard");
 
-            ArgumentCaptor<ChannelModel> captor = ArgumentCaptor.forClass(ChannelModel.class);
-            verify(channelModelGateway).save(captor.capture());
+            ArgumentCaptor<ModelInstance> captor = ArgumentCaptor.forClass(ModelInstance.class);
+            verify(modelInstanceGateway).save(captor.capture());
             assertNull(captor.getValue().getUpstreamModelName());
         }
 
@@ -336,7 +336,7 @@ class CatalogMaterializeServiceTest {
 
             Model existingModel = createTestModel(4L, "gpt-4o");
             when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existingModel));
-            when(channelModelGateway.save(any())).thenReturn(new ChannelModel());
+            when(modelInstanceGateway.save(any())).thenReturn(new ModelInstance());
 
             // 凭证保存返回
             ChannelCredential savedCred = new ChannelCredential();
@@ -379,7 +379,7 @@ class CatalogMaterializeServiceTest {
 
             Model existingModel = createTestModel(4L, "gpt-4o");
             when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existingModel));
-            when(channelModelGateway.save(any())).thenReturn(new ChannelModel());
+            when(modelInstanceGateway.save(any())).thenReturn(new ModelInstance());
 
             ChannelCredential savedCred = new ChannelCredential();
             savedCred.setId(100L);
@@ -408,7 +408,7 @@ class CatalogMaterializeServiceTest {
 
             Model existingModel = createTestModel(4L, "gpt-4o");
             when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existingModel));
-            when(channelModelGateway.save(any())).thenReturn(new ChannelModel());
+            when(modelInstanceGateway.save(any())).thenReturn(new ModelInstance());
 
             MaterializePlanRequest request = new MaterializePlanRequest();
             // apiKeys 为 null
@@ -447,7 +447,7 @@ class CatalogMaterializeServiceTest {
 
             Model existingModel = createTestModel(4L, "gpt-4o");
             when(modelGateway.findByModelName("gpt-4o")).thenReturn(Optional.of(existingModel));
-            when(channelModelGateway.save(any())).thenReturn(new ChannelModel());
+            when(modelInstanceGateway.save(any())).thenReturn(new ModelInstance());
 
             // request 为 null，扩展版直接调用基础版
             MaterializeResult result = service.materializePlan("openai_standard", (MaterializePlanRequest) null);

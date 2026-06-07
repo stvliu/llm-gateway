@@ -3,10 +3,10 @@ package com.codingas.gateway.application.channel.dto;
 import lombok.Data;
 
 /**
- * 渠道模型关联响应
+ * 模型实例响应
  */
 @Data
-public class ChannelModelResponse {
+public class ModelInstanceResponse {
 
     private Long id;
 
@@ -25,6 +25,12 @@ public class ChannelModelResponse {
 
     /** 上游模型名（为 null 表示与 modelName 相同） */
     private String upstreamModelName;
+
+    /** 优先级 */
+    private Integer priority;
+
+    /** 权重 */
+    private Integer weight;
 
     /** 关联状态 */
     private String state;

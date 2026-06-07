@@ -2,10 +2,10 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.entity.ChannelModel;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.*;
 class ChannelSelectorTest {
 
     @Mock
-    private ChannelModelGateway channelModelGateway;
+    private ModelInstanceGateway modelInstanceGateway;
 
     @Mock
     private ChannelGateway channelGateway;
@@ -49,7 +49,7 @@ class ChannelSelectorTest {
 
     @BeforeEach
     void setUp() {
-        selector = new ChannelSelector(channelModelGateway, channelGateway, userTeamGateway, teamChannelGateway);
+        selector = new ChannelSelector(modelInstanceGateway, channelGateway, userTeamGateway, teamChannelGateway);
     }
 
     @Nested
@@ -57,18 +57,18 @@ class ChannelSelectorTest {
     class SelectTests {
 
         @Test
-        @DisplayName("有活跃通道时返回第一个活跃的 ChannelModel")
+        @DisplayName("有活跃通道时返回第一个活跃的 ModelInstance")
         void select_withActiveChannel_returnsFirstActive() {
             // Arrange — 用户属于团队，团队有渠道 10L 和 20L
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L, 200L));
 
-            ChannelModel cm1 = mock(ChannelModel.class);
-            when(cm1.getChannelId()).thenReturn(100L);
-            ChannelModel cm2 = mock(ChannelModel.class);
-            when(cm2.getChannelId()).thenReturn(200L);
+            ModelInstance mi1 = mock(ModelInstance.class);
+            when(mi1.getChannelId()).thenReturn(100L);
+            ModelInstance mi2 = mock(ModelInstance.class);
+            when(mi2.getChannelId()).thenReturn(200L);
 
-            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(cm1, cm2));
+            when(modelInstanceGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(mi1, mi2));
 
             Channel ch1 = mock(Channel.class);
             when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
@@ -80,10 +80,10 @@ class ChannelSelectorTest {
             when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
 
             // Act
-            ChannelModel result = selector.select(MODEL_ID, USER_ID);
+            ModelInstance result = selector.select(MODEL_ID, USER_ID);
 
             // Assert
-            assertThat(result).isSameAs(cm2);
+            assertThat(result).isSameAs(mi2);
         }
 
         @Test
@@ -93,10 +93,10 @@ class ChannelSelectorTest {
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L));
 
-            ChannelModel cm1 = mock(ChannelModel.class);
-            when(cm1.getChannelId()).thenReturn(100L);
+            ModelInstance mi1 = mock(ModelInstance.class);
+            when(mi1.getChannelId()).thenReturn(100L);
 
-            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(cm1));
+            when(modelInstanceGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of(mi1));
 
             Channel ch1 = mock(Channel.class);
             when(ch1.getState()).thenReturn(ChannelState.INACTIVE);
@@ -109,12 +109,12 @@ class ChannelSelectorTest {
         }
 
         @Test
-        @DisplayName("没有 ChannelModel 时抛出 ResourceNotFoundException")
-        void select_noChannelModel_throwsException() {
+        @DisplayName("没有 ModelInstance 时抛出 ResourceNotFoundException")
+        void select_noModelInstance_throwsException() {
             // Arrange
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
             when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(100L));
-            when(channelModelGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of());
+            when(modelInstanceGateway.findActiveByModelId(MODEL_ID)).thenReturn(List.of());
 
             // Act & Assert
             assertThatThrownBy(() -> selector.select(MODEL_ID, USER_ID))

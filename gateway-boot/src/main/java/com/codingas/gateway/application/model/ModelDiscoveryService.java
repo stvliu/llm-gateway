@@ -2,8 +2,9 @@ package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.ModelState;
-import com.codingas.gateway.domain.supply.gateway.ChannelModelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
@@ -25,7 +26,7 @@ public class ModelDiscoveryService {
 
     private final UserTeamGateway userTeamGateway;
     private final TeamChannelGateway teamChannelGateway;
-    private final ChannelModelGateway channelModelGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ModelGateway modelGateway;
 
     /**
@@ -49,10 +50,10 @@ public class ModelDiscoveryService {
             return new ModelDiscoveryResponse("list", List.of());
         }
 
-        // 通过渠道查找可用模型（按 ChannelModel 的 modelId 去重）
+        // 通过渠道查找可用模型（按 ModelInstance 的 modelId 去重）
         List<ModelDiscoveryResponse.ModelItem> items = channelIds.stream()
-                .flatMap(channelId -> channelModelGateway.findActiveByChannelId(channelId).stream())
-                .map(cm -> modelGateway.findById(cm.getModelId()))
+                .flatMap(channelId -> modelInstanceGateway.findActiveByChannelId(channelId).stream())
+                .map(mi -> modelGateway.findById(mi.getModelId()))
                 .flatMap(opt -> opt.stream())
                 .filter(m -> ModelState.ACTIVE.equals(m.getState()))
                 .map(m -> new ModelDiscoveryResponse.ModelItem(
