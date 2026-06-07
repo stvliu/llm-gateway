@@ -16,6 +16,4 @@ public interface PlanCatalogRepository extends JpaRepository<PlanCatalogDo, Long
     boolean existsByPlanCode(String planCode);
 
     List<PlanCatalogDo> findByProviderCode(String providerCode);
-
-    List<PlanCatalogDo> findBySource(String source);
 }

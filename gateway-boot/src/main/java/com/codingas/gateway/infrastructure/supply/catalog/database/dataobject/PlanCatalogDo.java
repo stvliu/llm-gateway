@@ -41,9 +41,6 @@ public class PlanCatalogDo extends BaseDo {
     @Column(name = "description", length = 1024)
     private String description;
 
-    @Column(name = "source", nullable = false, length = 32)
-    private String source;
-
     @Column(name = "synced_at")
     private Instant syncedAt;
 

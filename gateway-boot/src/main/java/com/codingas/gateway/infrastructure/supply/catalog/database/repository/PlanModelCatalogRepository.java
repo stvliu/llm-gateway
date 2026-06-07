@@ -16,6 +16,4 @@ public interface PlanModelCatalogRepository extends JpaRepository<PlanModelCatal
     List<PlanModelCatalogDo> findByPlanCode(String planCode);
 
     List<PlanModelCatalogDo> findByModelName(String modelName);
-
-    List<PlanModelCatalogDo> findBySource(String source);
 }

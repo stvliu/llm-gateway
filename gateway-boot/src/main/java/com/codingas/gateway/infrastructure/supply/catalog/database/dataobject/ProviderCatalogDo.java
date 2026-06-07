@@ -26,9 +26,6 @@ public class ProviderCatalogDo extends BaseDo {
     @Column(name = "provider_name", nullable = false, length = 128)
     private String providerName;
 
-    @Column(name = "provider_type", nullable = false, length = 32)
-    private String providerType;
-
     @Column(name = "logo_url", length = 512)
     private String logoUrl;
 
@@ -37,9 +34,6 @@ public class ProviderCatalogDo extends BaseDo {
 
     @Column(name = "description", length = 1024)
     private String description;
-
-    @Column(name = "source", nullable = false, length = 32)
-    private String source;
 
     @Column(name = "synced_at")
     private Instant syncedAt;

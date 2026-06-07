@@ -1,8 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
-import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,16 +23,6 @@ public interface ProviderCatalogGateway {
     boolean existsByProviderCode(String providerCode);
 
     /**
-     * 按数据来源查找所有条目
-     */
-    List<ProviderCatalog> findBySource(CatalogSource source);
-
-    /**
-     * 按供应商类型查找
-     */
-    List<ProviderCatalog> findByProviderType(ProviderType providerType);
-
-    /**
      * 查询所有
      */
     List<ProviderCatalog> findAll();
@@ -48,11 +36,4 @@ public interface ProviderCatalogGateway {
      * 保存
      */
     ProviderCatalog save(ProviderCatalog catalog);
-
-    /**
-     * 按来源查找，排除指定 providerCode 集合
-     *
-     * <p>用于 markDeprecated：查找指定来源中不在 activeProviderCodes 集合里的条目。</p>
-     */
-    List<ProviderCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeProviderCodes);
 }

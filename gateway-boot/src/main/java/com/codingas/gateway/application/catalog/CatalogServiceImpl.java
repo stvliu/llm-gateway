@@ -9,7 +9,6 @@ import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
@@ -58,13 +57,11 @@ public class CatalogServiceImpl implements CatalogService {
             new TypeReference<>() {};
 
     @Override
-    public List<ProviderCatalogResponse> listProviderCatalogs(String providerType, String keyword) {
+    public List<ProviderCatalogResponse> listProviderCatalogs(String keyword) {
         List<ProviderCatalog> catalogs;
 
         if (keyword != null && !keyword.isBlank()) {
             catalogs = providerCatalogGateway.findByKeyword(keyword);
-        } else if (providerType != null && !providerType.isBlank()) {
-            catalogs = providerCatalogGateway.findByProviderType(ProviderType.valueOf(providerType));
         } else {
             catalogs = providerCatalogGateway.findAll();
         }
@@ -74,8 +71,6 @@ public class CatalogServiceImpl implements CatalogService {
                 .map(c -> ProviderCatalogResponse.builder()
                         .code(c.getProviderCode())
                         .name(c.getProviderName())
-                        .providerType(c.getProviderType() != null ? c.getProviderType().name() : null)
-                        .source(c.getSource() != null ? c.getSource().name() : null)
                         .materialized(isProviderMaterialized(c.getProviderCode()))
                         .build())
                 .toList();
@@ -98,7 +93,6 @@ public class CatalogServiceImpl implements CatalogService {
                         .providerCode(c.getProviderCode())
                         .planName(c.getPlanName())
                         .billingMode(c.getBillingMode() != null ? c.getBillingMode().name() : null)
-                        .source(c.getSource() != null ? c.getSource().name() : null)
                         .materialized(isPlanMaterialized(c.getPlanCode()))
                         .build())
                 .toList();
@@ -119,7 +113,6 @@ public class CatalogServiceImpl implements CatalogService {
                 .planName(catalog.getPlanName())
                 .billingMode(catalog.getBillingMode() != null ? catalog.getBillingMode().name() : null)
                 .description(catalog.getDescription())
-                .source(catalog.getSource() != null ? catalog.getSource().name() : null)
                 .endpoints(endpoints)
                 .pricing(pricing)
                 .materialized(isPlanMaterialized(planCode))
@@ -169,7 +162,6 @@ public class CatalogServiceImpl implements CatalogService {
                             .capabilities(capList)
                             .contextWindow(c.getContextWindow())
                             .maxOutputTokens(c.getMaxOutputTokens())
-                            .source(c.getSource() != null ? c.getSource().name() : null)
                             .materialized(isModelMaterialized(c.getModelName()))
                             .build();
                 })

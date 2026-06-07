@@ -36,15 +36,13 @@ public class CatalogController {
     /**
      * 列出供应商目录
      *
-     * @param providerType 供应商类型过滤（可选）
      * @param keyword 关键词过滤（可选）
      * @return 供应商目录列表
      */
     @GetMapping("/providers")
     public List<ProviderCatalogResponse> listProviders(
-            @RequestParam(required = false) String providerType,
             @RequestParam(required = false) String keyword) {
-        return catalogService.listProviderCatalogs(providerType, keyword);
+        return catalogService.listProviderCatalogs(keyword);
     }
 
     // ===== 套餐目录 =====

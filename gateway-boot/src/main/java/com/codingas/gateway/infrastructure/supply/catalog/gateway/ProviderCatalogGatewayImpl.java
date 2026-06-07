@@ -1,9 +1,7 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.ProviderCatalogDo;
 import com.codingas.gateway.infrastructure.supply.catalog.database.repository.ProviderCatalogRepository;
@@ -42,16 +40,6 @@ public class ProviderCatalogGatewayImpl implements ProviderCatalogGateway {
     }
 
     @Override
-    public List<ProviderCatalog> findBySource(CatalogSource source) {
-        return repository.findBySource(source.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<ProviderCatalog> findByProviderType(ProviderType providerType) {
-        return repository.findByProviderType(providerType.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<ProviderCatalog> findAll() {
         return repository.findAll().stream().map(this::toEntity).toList();
     }
@@ -62,23 +50,14 @@ public class ProviderCatalogGatewayImpl implements ProviderCatalogGateway {
             .stream().map(this::toEntity).toList();
     }
 
-    @Override
-    public List<ProviderCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeProviderCodes) {
-        return findBySource(source).stream()
-            .filter(entry -> !activeProviderCodes.contains(entry.getProviderCode()))
-            .toList();
-    }
-
     private ProviderCatalog toEntity(ProviderCatalogDo doObj) {
         var entity = new ProviderCatalog();
         entity.setId(doObj.getId());
         entity.setProviderCode(doObj.getProviderCode());
         entity.setProviderName(doObj.getProviderName());
-        entity.setProviderType(ProviderType.valueOf(doObj.getProviderType()));
         entity.setLogoUrl(doObj.getLogoUrl());
         entity.setWebsiteUrl(doObj.getWebsiteUrl());
         entity.setDescription(doObj.getDescription());
-        entity.setSource(CatalogSource.valueOf(doObj.getSource()));
         entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
@@ -93,11 +72,9 @@ public class ProviderCatalogGatewayImpl implements ProviderCatalogGateway {
         doObj.setId(entity.getId());
         doObj.setProviderCode(entity.getProviderCode());
         doObj.setProviderName(entity.getProviderName());
-        doObj.setProviderType(entity.getProviderType() != null ? entity.getProviderType().name() : ProviderType.INTERNATIONAL.name());
         doObj.setLogoUrl(entity.getLogoUrl());
         doObj.setWebsiteUrl(entity.getWebsiteUrl());
         doObj.setDescription(entity.getDescription());
-        doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
         doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());

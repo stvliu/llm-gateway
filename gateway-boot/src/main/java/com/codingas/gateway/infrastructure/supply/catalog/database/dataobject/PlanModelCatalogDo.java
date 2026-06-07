@@ -26,9 +26,6 @@ public class PlanModelCatalogDo extends BaseDo {
     @Column(name = "model_name", nullable = false, length = 128)
     private String modelName;
 
-    @Column(name = "source", nullable = false, length = 32)
-    private String source;
-
     @Column(name = "synced_at")
     private Instant syncedAt;
 

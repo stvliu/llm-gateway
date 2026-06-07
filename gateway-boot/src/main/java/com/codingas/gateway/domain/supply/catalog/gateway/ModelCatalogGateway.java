@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,11 +23,6 @@ public interface ModelCatalogGateway {
     boolean existsByModelName(String modelName);
 
     /**
-     * 按数据来源查找所有条目
-     */
-    List<ModelCatalog> findBySource(CatalogSource source);
-
-    /**
      * 查询所有
      */
     List<ModelCatalog> findAll();
@@ -47,11 +41,4 @@ public interface ModelCatalogGateway {
      * 保存
      */
     ModelCatalog save(ModelCatalog catalog);
-
-    /**
-     * 按来源查找，排除指定 modelName 集合
-     *
-     * <p>用于 markDeprecated：查找指定来源中不在 activeModelNames 集合里的条目。</p>
-     */
-    List<ModelCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeModelNames);
 }

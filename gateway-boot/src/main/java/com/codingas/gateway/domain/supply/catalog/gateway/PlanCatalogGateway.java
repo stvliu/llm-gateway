@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,11 +28,6 @@ public interface PlanCatalogGateway {
     List<PlanCatalog> findByProviderCode(String providerCode);
 
     /**
-     * 按数据来源查找所有条目
-     */
-    List<PlanCatalog> findBySource(CatalogSource source);
-
-    /**
      * 查询所有
      */
     List<PlanCatalog> findAll();
@@ -42,11 +36,4 @@ public interface PlanCatalogGateway {
      * 保存
      */
     PlanCatalog save(PlanCatalog catalog);
-
-    /**
-     * 按来源查找，排除指定 planCode 集合
-     *
-     * <p>用于 markDeprecated：查找指定来源中不在 activePlanCodes 集合里的条目。</p>
-     */
-    List<PlanCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activePlanCodes);
 }

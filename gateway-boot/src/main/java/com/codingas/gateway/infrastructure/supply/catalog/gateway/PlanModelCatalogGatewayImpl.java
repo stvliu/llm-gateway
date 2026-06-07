@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.PlanModelCatalogDo;
@@ -46,23 +45,8 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
     }
 
     @Override
-    public List<PlanModelCatalog> findBySource(CatalogSource source) {
-        return repository.findBySource(source.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<PlanModelCatalog> findAll() {
         return repository.findAll().stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<PlanModelCatalog> findBySourceExcludingKeys(CatalogSource source,
-                                                             List<String> activePlanCodes,
-                                                             List<String> activeModelNames) {
-        return findBySource(source).stream()
-            .filter(entry -> !(activePlanCodes.contains(entry.getPlanCode())
-                && activeModelNames.contains(entry.getModelName())))
-            .toList();
     }
 
     private PlanModelCatalog toEntity(PlanModelCatalogDo doObj) {
@@ -70,7 +54,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         entity.setId(doObj.getId());
         entity.setPlanCode(doObj.getPlanCode());
         entity.setModelName(doObj.getModelName());
-        entity.setSource(CatalogSource.valueOf(doObj.getSource()));
         entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
@@ -85,7 +68,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         doObj.setId(entity.getId());
         doObj.setPlanCode(entity.getPlanCode());
         doObj.setModelName(entity.getModelName());
-        doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
         doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());

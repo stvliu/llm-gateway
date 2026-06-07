@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,9 +25,6 @@ public class PlanModelCatalog extends BaseEntity {
 
     /** 供应商模型标识 → ModelCatalog */
     private String modelName;
-
-    /** 目录数据来源，默认 BUILTIN */
-    private CatalogSource source = CatalogSource.BUILTIN;
 
     /** 同步时间 */
     private Instant syncedAt;

@@ -15,11 +15,10 @@ public interface CatalogService {
     /**
      * 列出供应商目录
      *
-     * @param providerType 供应商类型过滤（可选）
      * @param keyword 关键词过滤（可选）
      * @return 供应商目录列表
      */
-    List<ProviderCatalogResponse> listProviderCatalogs(String providerType, String keyword);
+    List<ProviderCatalogResponse> listProviderCatalogs(String keyword);
 
     /**
      * 列出套餐目录

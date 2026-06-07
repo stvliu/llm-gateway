@@ -15,9 +15,5 @@ public interface ProviderCatalogRepository extends JpaRepository<ProviderCatalog
 
     boolean existsByProviderCode(String providerCode);
 
-    List<ProviderCatalogDo> findBySource(String source);
-
-    List<ProviderCatalogDo> findByProviderType(String providerType);
-
     List<ProviderCatalogDo> findByProviderCodeContainingOrProviderNameContaining(String codeKeyword, String nameKeyword);
 }

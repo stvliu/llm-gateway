@@ -47,9 +47,6 @@ public class ModelCatalogDo extends BaseDo {
     @Column(name = "modalities", columnDefinition = "TEXT")
     private String modalities;
 
-    @Column(name = "source", nullable = false, length = 32)
-    private String source;
-
     @Column(name = "synced_at")
     private Instant syncedAt;
 

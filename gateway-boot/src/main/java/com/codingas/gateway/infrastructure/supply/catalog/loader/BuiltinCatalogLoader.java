@@ -5,11 +5,8 @@ import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
-import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.ProviderCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -41,7 +38,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     private final ObjectMapper objectMapper;
     private final CatalogDomainService catalogDomainService;
 
-    /** 用于反序列化 JSON 文件的 ObjectMapper（忽略未知字段如 source/syncedAt/state） */
+    /** 用于反序列化 JSON 文件的 ObjectMapper（忽略未知字段如 syncedAt/state） */
     private ObjectMapper catalogObjectMapper;
 
     @Override
@@ -75,7 +72,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
      */
     private void doLoad() {
         // 延迟初始化：复制全局 ObjectMapper 并忽略未知字段
-        // JSON 文件中含 source/syncedAt/state 等元数据字段，record 中不包含
+        // JSON 文件中含 syncedAt/state 等元数据字段，record 中不包含
         catalogObjectMapper = objectMapper.copy()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
 
@@ -106,11 +103,9 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             var catalog = new ProviderCatalog();
             catalog.setProviderCode(data.providerCode());
             catalog.setProviderName(data.providerName());
-            catalog.setProviderType(ProviderType.valueOf(data.providerType()));
             catalog.setLogoUrl(data.logoUrl());
             catalog.setWebsiteUrl(data.websiteUrl());
             catalog.setDescription(data.description());
-            catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
             String result = catalogDomainService.upsertProvider(catalog);
@@ -141,7 +136,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             // capabilities 和 modalities 存储为 JSON String
             catalog.setCapabilities(data.capabilities() != null ? objectMapper.writeValueAsString(data.capabilities()) : null);
             catalog.setModalities(data.modalities() != null ? objectMapper.writeValueAsString(data.modalities()) : null);
-            catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
             String result = catalogDomainService.upsertModel(catalog);
@@ -170,7 +164,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             catalog.setEndpoints(data.endpoints() != null ? objectMapper.writeValueAsString(data.endpoints()) : null);
             catalog.setPricing(data.pricing() != null ? objectMapper.writeValueAsString(data.pricing()) : null);
             catalog.setDescription(data.description());
-            catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
             String result = catalogDomainService.upsertPlan(catalog);
@@ -193,7 +186,6 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
             var catalog = new PlanModelCatalog();
             catalog.setPlanCode(data.planCode());
             catalog.setModelName(data.modelName());
-            catalog.setSource(CatalogSource.BUILTIN);
             catalog.setState(CatalogState.ACTIVE);
 
             String result = catalogDomainService.upsertPlanModel(catalog);
@@ -221,7 +213,7 @@ public class BuiltinCatalogLoader implements CommandLineRunner {
     // ===== JSON 数据 record（用于反序列化） =====
 
     record ProviderCatalogData(
-        String providerCode, String providerName, String providerType,
+        String providerCode, String providerName,
         String logoUrl, String websiteUrl, String description
     ) {}
 

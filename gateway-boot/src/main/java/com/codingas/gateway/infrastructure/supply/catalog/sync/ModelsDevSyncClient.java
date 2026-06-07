@@ -5,9 +5,7 @@ import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.ProviderCatalog;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
-import com.codingas.gateway.domain.supply.catalog.enums.ProviderType;
 import com.codingas.gateway.domain.supply.catalog.service.CatalogDomainService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -24,15 +22,14 @@ import java.util.List;
 /**
  * Models.dev 目录同步客户端
  *
- * <p>从 classpath:catalog/ JSON 文件加载目录数据，以 {@link CatalogSource#MODELS_DEV} 来源写入目录表。
- * 后续可替换为真实的 Models.dev API 调用，只需替换 {@link #fetchProviders()}, {@link #fetchModels()},
+ * <p>从 classpath:catalog/ JSON 文件加载目录数据并写入目录表。</p>
+ * <p>后续可替换为真实的 Models.dev API 调用，只需替换 {@link #fetchProviders()}, {@link #fetchModels()},
  * {@link #fetchPlans()}, {@link #fetchPlanModels()} 四个方法的实现。</p>
  *
  * <p>同步流程：
  * <ol>
  *   <li>拉取四类目录数据</li>
- *   <li>逐条 upsert（由 {@link CatalogDomainService} 按 source 优先级处理覆盖策略）</li>
- *   <li>标记已消失的条目为 DEPRECATED</li>
+ *   <li>逐条 upsert（由 {@link CatalogDomainService} 处理）</li>
  * </ol>
  * </p>
  */
@@ -65,9 +62,7 @@ public class ModelsDevSyncClient {
         try {
             // Step 1: 同步供应商目录
             List<ProviderCatalog> providers = fetchProviders();
-            List<String> providerCodes = new ArrayList<>();
             for (var catalog : providers) {
-                catalog.setSource(CatalogSource.MODELS_DEV);
                 catalog.setState(CatalogState.ACTIVE);
                 catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertProvider(catalog);
@@ -76,15 +71,11 @@ public class ModelsDevSyncClient {
                     case "UPDATED" -> c.updatedProviders++;
                     default -> c.skippedProviders++;
                 }
-                providerCodes.add(catalog.getProviderCode());
             }
-            catalogDomainService.markProvidersDeprecated(CatalogSource.MODELS_DEV, providerCodes);
 
             // Step 2: 同步模型规格目录
             List<ModelCatalog> models = fetchModels();
-            List<String> modelIds = new ArrayList<>();
             for (var catalog : models) {
-                catalog.setSource(CatalogSource.MODELS_DEV);
                 catalog.setState(CatalogState.ACTIVE);
                 catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertModel(catalog);
@@ -93,15 +84,11 @@ public class ModelsDevSyncClient {
                     case "UPDATED" -> c.updatedModels++;
                     default -> c.skippedModels++;
                 }
-                modelIds.add(catalog.getModelName());
             }
-            catalogDomainService.markModelsDeprecated(CatalogSource.MODELS_DEV, modelIds);
 
             // Step 3: 同步套餐目录
             List<PlanCatalog> plans = fetchPlans();
-            List<String> planCodes = new ArrayList<>();
             for (var catalog : plans) {
-                catalog.setSource(CatalogSource.MODELS_DEV);
                 catalog.setState(CatalogState.ACTIVE);
                 catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertPlan(catalog);
@@ -110,16 +97,11 @@ public class ModelsDevSyncClient {
                     case "UPDATED" -> c.updatedPlans++;
                     default -> c.skippedPlans++;
                 }
-                planCodes.add(catalog.getPlanCode());
             }
-            catalogDomainService.markPlansDeprecated(CatalogSource.MODELS_DEV, planCodes);
 
             // Step 4: 同步套餐模型关联
             List<PlanModelCatalog> planModels = fetchPlanModels();
-            List<String> activePlanCodes = new ArrayList<>();
-            List<String> activeModelIds = new ArrayList<>();
             for (var catalog : planModels) {
-                catalog.setSource(CatalogSource.MODELS_DEV);
                 catalog.setState(CatalogState.ACTIVE);
                 catalog.setSyncedAt(now);
                 String r = catalogDomainService.upsertPlanModel(catalog);
@@ -128,11 +110,7 @@ public class ModelsDevSyncClient {
                     case "UPDATED" -> c.updatedPlanModels++;
                     default -> c.skippedPlanModels++;
                 }
-                activePlanCodes.add(catalog.getPlanCode());
-                activeModelIds.add(catalog.getModelName());
             }
-            catalogDomainService.markPlanModelsDeprecated(
-                    CatalogSource.MODELS_DEV, activePlanCodes, activeModelIds);
 
             long elapsed = System.currentTimeMillis() - startTime;
             log.info("Models.dev 同步完成，耗时 {}ms: {}", elapsed, c.toResult());
@@ -157,7 +135,6 @@ public class ModelsDevSyncClient {
             var c = new ProviderCatalog();
             c.setProviderCode(d.providerCode());
             c.setProviderName(d.providerName());
-            c.setProviderType(ProviderType.valueOf(d.providerType()));
             c.setLogoUrl(d.logoUrl());
             c.setWebsiteUrl(d.websiteUrl());
             c.setDescription(d.description());
@@ -278,7 +255,7 @@ public class ModelsDevSyncClient {
 
     // ===== JSON 数据 record（用于反序列化） =====
 
-    record ProviderData(String providerCode, String providerName, String providerType,
+    record ProviderData(String providerCode, String providerName,
                         String logoUrl, String websiteUrl, String description) {}
 
     record ModelData(String modelName, String displayName, String modelFamily,

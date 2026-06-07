@@ -17,8 +17,6 @@ public interface ModelCatalogRepository extends JpaRepository<ModelCatalogDo, Lo
 
     boolean existsByModelName(String modelName);
 
-    List<ModelCatalogDo> findBySource(String source);
-
     List<ModelCatalogDo> findByModelNameContainingOrDisplayNameContaining(String idKeyword, String nameKeyword);
 
     /**

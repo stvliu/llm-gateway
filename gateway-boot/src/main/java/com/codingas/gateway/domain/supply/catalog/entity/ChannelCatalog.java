@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -18,8 +17,6 @@ public class ChannelCatalog extends BaseEntity {
     private String channelName;
 
     private String providerCode;
-
-    private CatalogSource source;
 
     private CatalogState state;
 }

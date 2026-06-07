@@ -30,9 +30,6 @@ public class ModelCatalogResponse {
     /** 最大输出 Token */
     private final Integer maxOutputTokens;
 
-    /** 数据来源 */
-    private final String source;
-
     /** 是否已物化 */
     private final Boolean materialized;
 }

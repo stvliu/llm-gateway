@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.ModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogSource;
 import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.ModelCatalogGateway;
 import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.ModelCatalogDo;
@@ -41,11 +40,6 @@ public class ModelCatalogGatewayImpl implements ModelCatalogGateway {
     }
 
     @Override
-    public List<ModelCatalog> findBySource(CatalogSource source) {
-        return repository.findBySource(source.name()).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<ModelCatalog> findAll() {
         return repository.findAll().stream().map(this::toEntity).toList();
     }
@@ -61,13 +55,6 @@ public class ModelCatalogGatewayImpl implements ModelCatalogGateway {
         return repository.findByCapability(capability).stream().map(this::toEntity).toList();
     }
 
-    @Override
-    public List<ModelCatalog> findBySourceExcludingKeys(CatalogSource source, List<String> activeModelNames) {
-        return findBySource(source).stream()
-            .filter(entry -> !activeModelNames.contains(entry.getModelName()))
-            .toList();
-    }
-
     private ModelCatalog toEntity(ModelCatalogDo doObj) {
         var entity = new ModelCatalog();
         entity.setId(doObj.getId());
@@ -80,7 +67,6 @@ public class ModelCatalogGatewayImpl implements ModelCatalogGateway {
         entity.setKnowledgeCutoff(doObj.getKnowledgeCutoff());
         entity.setCapabilities(doObj.getCapabilities());
         entity.setModalities(doObj.getModalities());
-        entity.setSource(CatalogSource.valueOf(doObj.getSource()));
         entity.setSyncedAt(doObj.getSyncedAt());
         entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
@@ -102,7 +88,6 @@ public class ModelCatalogGatewayImpl implements ModelCatalogGateway {
         doObj.setKnowledgeCutoff(entity.getKnowledgeCutoff());
         doObj.setCapabilities(entity.getCapabilities());
         doObj.setModalities(entity.getModalities());
-        doObj.setSource(entity.getSource() != null ? entity.getSource().name() : CatalogSource.BUILTIN.name());
         doObj.setSyncedAt(entity.getSyncedAt());
         doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
