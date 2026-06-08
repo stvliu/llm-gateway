@@ -1,16 +1,10 @@
-import { Card, Dropdown, App, Tooltip, message } from 'antd';
+import { Card, App, Tooltip } from 'antd';
 import {
   DeleteOutlined,
-  EditOutlined,
   PauseOutlined,
   PlayCircleOutlined,
   ThunderboltOutlined,
-  MoreOutlined,
   EyeOutlined,
-  SwapOutlined,
-  PlusCircleOutlined,
-  FileAddOutlined,
-  CopyOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
@@ -22,33 +16,17 @@ interface ChannelCardProps {
   onDelete: (id: number) => void;
   onToggleState: (id: number, enabled: boolean) => void;
   onTest: (channel: ChannelCardType) => void;
-  onOpenDrawerTab: (channel: ChannelCardType, tab: string) => void;
 }
 
 /**
  * 渠道卡片组件
- * 右上角图标组：启停 + 测试 常驻，低频操作收入 ⋮ Dropdown
+ * 右上角图标组：启停 + 测试 + 详情 + 删除
  */
-export function ChannelCard({ channel, onClick, onDelete, onToggleState, onTest, onOpenDrawerTab }: ChannelCardProps) {
+export function ChannelCard({ channel, onClick, onDelete, onToggleState, onTest }: ChannelCardProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
   const isActive = channel.state === 'ACTIVE';
-
-  /** 获取主端点 URL */
-  const getMainEndpointUrl = (): string | null => {
-    if (!channel.endpoints || channel.endpoints.length === 0) return null;
-    return channel.endpoints[0].endpointUrl;
-  };
-
-  /** 复制主端点 URL */
-  const handleCopyUrl = () => {
-    const url = getMainEndpointUrl();
-    if (!url) return;
-    navigator.clipboard.writeText(url).then(() => {
-      message.success(t('card.urlCopied'));
-    });
-  };
 
   /** 启停按钮点击 */
   const handleToggleClick = (e: React.MouseEvent) => {
@@ -65,54 +43,21 @@ export function ChannelCard({ channel, onClick, onDelete, onToggleState, onTest,
     onTest(channel);
   };
 
-  /** 低频菜单项 */
-  const menuItems = [
-    { key: 'detail', label: t('card.viewDetail'), icon: <EyeOutlined /> },
-    { key: 'edit', label: t('card.edit'), icon: <EditOutlined /> },
-    { type: 'divider' as const },
-    { key: 'credential', label: t('card.replaceKey'), icon: <SwapOutlined /> },
-    { key: 'endpoint', label: t('card.addEndpoint'), icon: <PlusCircleOutlined /> },
-    { key: 'model', label: t('card.addModel'), icon: <FileAddOutlined /> },
-    { type: 'divider' as const },
-    {
-      key: 'copyUrl',
-      label: t('card.copyMainUrl'),
-      icon: <CopyOutlined />,
-      disabled: !getMainEndpointUrl(),
-    },
-    { type: 'divider' as const },
-    { key: 'delete', label: t('card.delete'), icon: <DeleteOutlined />, danger: true },
-  ];
+  /** 详情按钮点击 */
+  const handleDetailClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onClick(channel);
+  };
 
-  const handleMenuClick = (e: { key: string }) => {
-    switch (e.key) {
-      case 'detail':
-        onClick(channel);
-        break;
-      case 'edit':
-        onOpenDrawerTab(channel, 'quota');
-        break;
-      case 'credential':
-        onOpenDrawerTab(channel, 'credentials');
-        break;
-      case 'endpoint':
-        onOpenDrawerTab(channel, 'endpoints');
-        break;
-      case 'model':
-        onOpenDrawerTab(channel, 'models');
-        break;
-      case 'copyUrl':
-        handleCopyUrl();
-        break;
-      case 'delete':
-        modal.confirm({
-          title: t('card.deleteConfirmTitle'),
-          content: t('card.deleteConfirmContent', { name: channel.name }),
-          okType: 'danger',
-          onOk: () => onDelete(channel.id),
-        });
-        break;
-    }
+  /** 删除按钮点击 */
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    modal.confirm({
+      title: t('card.deleteConfirmTitle'),
+      content: t('card.deleteConfirmContent', { name: channel.name }),
+      okType: 'danger',
+      onOk: () => onDelete(channel.id),
+    });
   };
 
   /** 图标按钮通用样式 */
@@ -186,20 +131,31 @@ export function ChannelCard({ channel, onClick, onDelete, onToggleState, onTest,
             </span>
           </Tooltip>
 
-          {/* ⋮ 更多菜单 */}
-          <Dropdown menu={{ items: menuItems, onClick: handleMenuClick }} trigger={['click']}>
-            <Tooltip title={t('card.more')}>
-              <span
-                role="button"
-                onClick={(e) => e.stopPropagation()}
-                style={iconBtnStyle()}
-                onMouseEnter={(e) => { e.currentTarget.style.background = token.colorBgTextHover; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
-              >
-                <MoreOutlined />
-              </span>
-            </Tooltip>
-          </Dropdown>
+          {/* 详情按钮 */}
+          <Tooltip title={t('card.viewDetail')}>
+            <span
+              role="button"
+              onClick={handleDetailClick}
+              style={iconBtnStyle()}
+              onMouseEnter={(e) => { e.currentTarget.style.background = token.colorBgTextHover; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <EyeOutlined />
+            </span>
+          </Tooltip>
+
+          {/* 删除按钮 */}
+          <Tooltip title={t('card.delete')}>
+            <span
+              role="button"
+              onClick={handleDeleteClick}
+              style={iconBtnStyle({ color: token.colorError })}
+              onMouseEnter={(e) => { e.currentTarget.style.background = token.colorErrorBg; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; }}
+            >
+              <DeleteOutlined />
+            </span>
+          </Tooltip>
         </div>
       </div>
 

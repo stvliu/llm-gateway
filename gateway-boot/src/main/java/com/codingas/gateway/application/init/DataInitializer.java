@@ -26,7 +26,6 @@ import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
@@ -670,8 +669,6 @@ public class DataInitializer implements CommandLineRunner {
         // UUID 靠前确保 keyPrefix（前10位）唯一
         String uuid8 = java.util.UUID.randomUUID().toString().substring(0, 8);
         userApiKey.setKeyPlain("sk-" + uuid8 + "-" + name.toLowerCase().replace(" ", "-"));
-        userApiKey.setModels(null); // null = 允许所有模型
-        userApiKey.setState(UserApiKeyState.ACTIVE);
         userApiKeyGateway.save(userApiKey);
     }
 }

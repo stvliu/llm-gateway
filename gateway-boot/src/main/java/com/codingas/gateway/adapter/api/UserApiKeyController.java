@@ -32,6 +32,12 @@ public class UserApiKeyController {
         return userApiKeyService.findByUserId(userId);
     }
 
+    /** 查询所有 API Key（管理员用） */
+    @GetMapping
+    public List<UserApiKeyResponse> findAll() {
+        return userApiKeyService.findAllNonDeleted();
+    }
+
     @GetMapping("/{id}")
     public UserApiKeyResponse getById(@PathVariable Long id) {
         return userApiKeyService.getById(id);

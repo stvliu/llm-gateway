@@ -5,8 +5,6 @@
   "statusFilter": "选择状态",
   "status.active": "已启用",
   "status.inactive": "已停用",
-  "status.running": "运行中",
-  "status.stopped": "已停用",
   "viewMode.grouped": "分组",
   "viewMode.table": "列表",
   "batchImport": "批量导入",
@@ -135,6 +133,7 @@
   "table.keys": "Key",
   "table.models": "模型",
   "table.status": "状态",
+  "table.actions": "操作",
   "providerEdit.title": "编辑供应商",
   "providerEdit.name": "供应商名称",
   "providerEdit.nameRequired": "请输入供应商名称",
@@ -321,5 +320,8 @@
   "apiKeyModal.newKey": "新 API Key",
   "apiKeyModal.newKeyRequired": "请输入新的 API Key",
   "apiKeyModal.updateSuccess": "API Key 已更新",
-  "apiKeyModal.updateFail": "API Key 更新失败"
+  "apiKeyModal.updateFail": "API Key 更新失败",
+  "statusToggle.enabled": "渠道已启用",
+  "statusToggle.disabled": "渠道已停用",
+  "statusToggle.failed": "状态切换失败"
 }

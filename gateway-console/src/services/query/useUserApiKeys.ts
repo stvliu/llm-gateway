@@ -18,6 +18,14 @@ export function useUserApiKeys(userId: number) {
   });
 }
 
+/** 查询所有 API Key（管理员用） */
+export function useAllUserApiKeys() {
+  return useQuery({
+    queryKey: userApiKeyKeys.list(),
+    queryFn: () => userApiKeyApi.listAll(),
+  });
+}
+
 /** 创建用户 API Key（用户维度） */
 export function useCreateUserApiKey() {
   const queryClient = useQueryClient();
@@ -53,12 +61,11 @@ export function useRotateUserApiKey() {
 }
 
 /** 删除用户 API Key */
-export function useDeleteUserApiKey(userId: number) {
+export function useDeleteUserApiKey() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: number) => userApiKeyApi.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userApiKeyKeys.byUser(userId) });
       queryClient.invalidateQueries({ queryKey: userApiKeyKeys.all });
     },
   });

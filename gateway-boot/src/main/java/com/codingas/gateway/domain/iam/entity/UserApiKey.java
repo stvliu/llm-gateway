@@ -1,11 +1,9 @@
 package com.codingas.gateway.domain.iam.entity;
 
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * 用户 API Key 领域实体
@@ -32,18 +30,17 @@ public class UserApiKey {
      */
     private String keyPlain;
     private String name;
-    private List<String> models;
-    private Long quotaLimit;
-    private UserApiKeyState state;
+    /** 是否已删除（逻辑删除） */
+    private boolean deleted;
     private Instant createdAt;
     private Instant updatedAt;
 
     public UserApiKey() {
     }
 
-    /** 检查密钥是否可用（简单状态判断，允许保留在实体中） */
+    /** 检查密钥是否可用 */
     public boolean isAvailable() {
-        return state != null && state.isAvailable();
+        return !deleted;
     }
 
     /**
@@ -56,7 +53,7 @@ public class UserApiKey {
                 ", userId=" + userId +
                 ", keyPrefix='" + keyPrefix + '\'' +
                 ", name='" + name + '\'' +
-                ", state=" + state +
+                ", deleted=" + deleted +
                 '}';
     }
 }

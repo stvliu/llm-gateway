@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Card } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined } from '@ant-design/icons';
+import { useState, useMemo } from 'react';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Card, Tooltip } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
 import { useMessage } from '@/hooks/useMessage';
@@ -9,6 +9,7 @@ import { P } from '@/constants/permissions';
 import { useUsers, useCreateUser, useUpdateUser, useDeleteUser, useResetPassword } from '@/services/query';
 import type { User, CreateUserRequest, UserRole, UserState } from '@/types/user';
 import type { ColumnsType } from 'antd/es/table';
+import UserApiKeyModal from './UserApiKeyModal';
 
 export default function Users() {
   const { t } = useTranslation('users');
@@ -19,12 +20,25 @@ export default function Users() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [form] = Form.useForm();
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [apiKeyUserId, setApiKeyUserId] = useState<number | null>(null);
+  const [apiKeyUsername, setApiKeyUsername] = useState('');
 
   const { data, isLoading } = useUsers({ size: 100 });
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
   const deleteMutation = useDeleteUser();
   const resetPasswordMutation = useResetPassword();
+
+  const filtered = useMemo(() => {
+    if (!searchKeyword.trim()) return data?.items ?? [];
+    const q = searchKeyword.toLowerCase();
+    return (data?.items ?? []).filter(
+      (u: User) =>
+        u.username.toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q)
+    );
+  }, [data, searchKeyword]);
 
   const handleAdd = () => {
     setEditingUser(null);
@@ -102,16 +116,30 @@ export default function Users() {
       title: t('user.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
+      width: 160,
+      render: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-',
     },
     ...(canWrite ? [{
       title: t('actions.label', { ns: 'common' }),
       key: 'actions',
-      width: 150,
+      width: 60,
       render: (_: unknown, record: User) => (
         <Space>
-          <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Button type="text" icon={<KeyOutlined />} onClick={() => handleResetPassword(record.id)} />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
+          <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          <Tooltip title="管理 API Key">
+            <Button
+              type="text" size="small"
+              icon={<SafetyCertificateOutlined />}
+              onClick={() => {
+                setApiKeyUserId(record.id);
+                setApiKeyUsername(record.username);
+              }}
+            />
+          </Tooltip>
+          <Tooltip title="重置密码">
+            <Button type="text" size="small" icon={<KeyOutlined />} onClick={() => handleResetPassword(record.id)} />
+          </Tooltip>
+          <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
         </Space>
       ),
     }] : []),
@@ -120,7 +148,13 @@ export default function Users() {
   return (
     <Card title={t('title')}>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-        <Input.Search placeholder={t('searchPlaceholder')} style={{ width: 250 }} allowClear />
+        <Input.Search
+          placeholder={t('searchPlaceholder')}
+          style={{ width: 250 }}
+          allowClear
+          value={searchKeyword}
+          onChange={(e) => setSearchKeyword(e.target.value)}
+        />
         {canWrite && (
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             {t('addUser')}
@@ -130,7 +164,7 @@ export default function Users() {
 
       <Table
         columns={columns}
-        dataSource={data?.items || []}
+        dataSource={filtered}
         rowKey="id"
         loading={isLoading}
         pagination={{ pageSize: 10 }}
@@ -179,6 +213,14 @@ export default function Users() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* API Key 管理弹窗 */}
+      <UserApiKeyModal
+        open={apiKeyUserId !== null}
+        userId={apiKeyUserId ?? 0}
+        username={apiKeyUsername}
+        onClose={() => setApiKeyUserId(null)}
+      />
     </Card>
   );
 }

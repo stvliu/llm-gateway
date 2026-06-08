@@ -12,7 +12,7 @@ import {
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { PageHeader } from '@/components/ui/PageHeader';
+import { Card } from 'antd';
 import { useModels, useDeleteModel, useSetEnabledModel } from '@/services/query/useModels';
 import ModelCreateModal from './ModelCreateModal';
 import ModelEditDrawer from './ModelEditDrawer';
@@ -188,20 +188,15 @@ export default function Models() {
 
   return (
     <div>
-      <PageHeader
+      <Card
         title={t('title', { defaultValue: '模型目录' })}
-        subtitle={t('subtitle', { defaultValue: '浏览和管理全局模型注册表' })}
-        actions={[
-          {
-            key: 'add',
-            label: t('addModel', { defaultValue: '新增模型' }),
-            type: 'primary',
-            icon: <PlusOutlined />,
-            onClick: () => setCreateOpen(true),
-          },
-        ]}
-      />
-      <div>
+        extra={
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+            {t('addModel', { defaultValue: '新增模型' })}
+          </Button>
+        }
+      >
+        <div>
         <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
           <Input.Search
             placeholder={t('search', { defaultValue: '搜索模型...' })}
@@ -247,6 +242,8 @@ export default function Models() {
           size="middle"
         />
       </div>
+      </Card>
+
       <ModelCreateModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}

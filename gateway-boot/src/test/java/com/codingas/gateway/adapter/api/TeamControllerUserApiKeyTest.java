@@ -3,7 +3,6 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.team.TeamService;
 import com.codingas.gateway.application.userapikey.UserApiKeyService;
 import com.codingas.gateway.application.userapikey.dto.*;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.team.entity.UserTeam;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
@@ -64,7 +63,6 @@ class TeamControllerUserApiKeyTest {
 
             UserApiKeyResponse keyResponse = new UserApiKeyResponse(
                     API_KEY_ID, USER_ID, "sk-abc", "sk-abc****bc1", "test-key",
-                    List.of("gpt-4o"), 100000L, UserApiKeyState.ACTIVE,
                     Instant.now(), Instant.now()
             );
             when(userApiKeyService.findByUserId(USER_ID)).thenReturn(List.of(keyResponse));
@@ -95,7 +93,6 @@ class TeamControllerUserApiKeyTest {
         void returnsDetail() {
             UserApiKeyDetailResponse detail = new UserApiKeyDetailResponse(
                     API_KEY_ID, USER_ID, "sk-abc", "sk-abc1xxxxx", "test-key",
-                    List.of("gpt-4o"), 100000L, UserApiKeyState.ACTIVE,
                     Instant.now(), Instant.now()
             );
             when(userApiKeyService.getDetailById(API_KEY_ID)).thenReturn(detail);
@@ -115,11 +112,10 @@ class TeamControllerUserApiKeyTest {
         @DisplayName("更新 API Key 并返回结果")
         void updatesAndReturns() {
             UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                    "updated-name", List.of("claude-3-5-sonnet"), null, null
+                    "updated-name"
             );
             UserApiKeyResponse updated = new UserApiKeyResponse(
                     API_KEY_ID, USER_ID, "sk-abc", "sk-abc****bc1", "updated-name",
-                    List.of("claude-3-5-sonnet"), 100000L, UserApiKeyState.ACTIVE,
                     Instant.now(), Instant.now()
             );
             when(userApiKeyService.update(eq(API_KEY_ID), any(UserApiKeyUpdateRequest.class)))
@@ -128,7 +124,6 @@ class TeamControllerUserApiKeyTest {
             UserApiKeyResponse result = controller.updateApiKey(API_KEY_ID, request);
 
             assertThat(result.name()).isEqualTo("updated-name");
-            assertThat(result.models()).containsExactly("claude-3-5-sonnet");
         }
     }
 

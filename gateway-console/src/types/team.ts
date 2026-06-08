@@ -47,11 +47,9 @@ export interface UserApiKey {
   id: number;
   userId: number;
   keyPrefix: string;
-  keyPlain: string;  // 新增：脱敏格式
+  keyPlain: string;
   name: string;
-  models: string[];
-  quotaLimit: number | null;
-  state: 'ACTIVE' | 'INACTIVE';
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,16 +62,11 @@ export interface UserApiKeyDetail extends UserApiKey {
 export interface CreateUserApiKeyRequest {
   userId: number;
   name: string;
-  models?: string[];
-  quotaLimit?: number | null;
 }
 
 /** 更新用户 API Key 请求 */
 export interface UpdateUserApiKeyRequest {
   name?: string;
-  models?: string[];
-  quotaLimit?: number | null;
-  state?: 'ACTIVE' | 'INACTIVE';
 }
 
 /** 创建用户 API Key 响应 */

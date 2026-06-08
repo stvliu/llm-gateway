@@ -1,16 +1,9 @@
 package com.codingas.gateway.application.userapikey.dto;
 
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
-
-import java.util.List;
-
 /**
  * 更新用户 API Key 请求
  */
 public record UserApiKeyUpdateRequest(
-        String name,
-        List<String> models,
-        Long quotaLimit,
-        UserApiKeyState state
+        String name
 ) {
 }

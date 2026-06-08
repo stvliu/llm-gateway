@@ -17,6 +17,9 @@ public interface UserApiKeyService {
 
     List<UserApiKeyResponse> findByUserId(Long userId);
 
+    /** 查询所有非删除状态的 Key（管理员用） */
+    List<UserApiKeyResponse> findAllNonDeleted();
+
     UserApiKeyResponse getById(Long id);
 
     UserApiKeyDetailResponse getDetailById(Long id);

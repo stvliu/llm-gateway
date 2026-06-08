@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Select, InputNumber, Table, Tag, Button, Space, message, Alert } from 'antd'
+import { Modal, Form, Input, Table, Button, Space, message, Alert } from 'antd'
 import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
 import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
 import { userApiKeyApi } from '@/services/api/userApiKey'
@@ -31,7 +31,7 @@ export default function UserApiKeyModal({
   const [showForm, setShowForm] = useState(false)
 
   const { data: apiKeys, isLoading } = useUserApiKeys(userId)
-  const deleteMutation = useDeleteUserApiKey(userId)
+  const deleteMutation = useDeleteUserApiKey()
 
   useEffect(() => {
     if (open) {
@@ -53,9 +53,6 @@ export default function UserApiKeyModal({
     setCreatedKey(null)
     form.setFieldsValue({
       name: key.name,
-      models: key.models,
-      quotaLimit: key.quotaLimit,
-      state: key.state,
     })
     setShowForm(true)
   }
@@ -80,9 +77,6 @@ export default function UserApiKeyModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          models: values.models,
-          quotaLimit: values.quotaLimit,
-          state: values.state,
         }
         await userApiKeyApi.update(editingKey.id, request)
         message.success(t('apiKey.updateSuccess'))
@@ -90,8 +84,6 @@ export default function UserApiKeyModal({
         const request: CreateUserApiKeyRequest = {
           userId,
           name: values.name,
-          models: values.models,
-          quotaLimit: values.quotaLimit,
         }
         const result = await userApiKeyApi.create(request)
         setCreatedKey(result.keyPlain)
@@ -129,16 +121,6 @@ export default function UserApiKeyModal({
           <code>{prefix}...</code>
           <Button type="text" size="small" icon={<CopyOutlined />} onClick={() => handleCopyKey(prefix)} />
         </Space>
-      ),
-    },
-    {
-      title: t('apiKey.state'),
-      dataIndex: 'state',
-      key: 'state',
-      render: (state: string) => (
-        <Tag color={state === 'ACTIVE' ? 'green' : 'red'}>
-          {state === 'ACTIVE' ? t('state.active') : t('state.disabled')}
-        </Tag>
       ),
     },
     {
@@ -197,26 +179,6 @@ export default function UserApiKeyModal({
             <Form.Item name="name" label={t('apiKey.name')} rules={[{ required: true, message: t('apiKey.nameRequired') }]}>
               <Input placeholder={t('apiKey.namePlaceholder')} />
             </Form.Item>
-            <Form.Item name="models" label={t('apiKey.models')}>
-              <Select
-                mode="tags"
-                placeholder={t('apiKey.modelsPlaceholder')}
-                tokenSeparators={[',']}
-              />
-            </Form.Item>
-            <Form.Item name="quotaLimit" label={t('apiKey.quotaLimit')}>
-              <InputNumber style={{ width: '100%' }} placeholder={t('apiKey.quotaPlaceholder')} min={0} />
-            </Form.Item>
-            {editingKey && (
-              <Form.Item name="state" label={t('apiKey.state')}>
-                <Select
-                  options={[
-                    { label: t('state.active'), value: 'ACTIVE' },
-                    { label: t('state.disabled'), value: 'DISABLED' },
-                  ]}
-                />
-              </Form.Item>
-            )}
             <Form.Item>
               <Space>
                 <Button type="primary" onClick={handleSubmit} loading={loading}>

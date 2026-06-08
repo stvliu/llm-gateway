@@ -56,6 +56,16 @@ public class ChannelController {
         }
     }
 
+    /**
+     * 切换渠道启用/停用状态
+     */
+    @PatchMapping("/{id}/state")
+    public void setState(
+            @PathVariable Long id,
+            @RequestParam boolean enabled) {
+        channelService.setState(id, enabled);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
