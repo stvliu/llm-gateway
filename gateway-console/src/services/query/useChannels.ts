@@ -82,6 +82,20 @@ export function useUpdateChannel() {
   });
 }
 
+/** 切换渠道启用/停用状态 */
+export function useSetChannelState() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
+      channelApi.setState(id, enabled),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: channelKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
+    },
+  });
+}
+
 /** 删除渠道 */
 export function useDeleteChannel() {
   const queryClient = useQueryClient();

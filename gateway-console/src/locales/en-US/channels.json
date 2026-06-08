@@ -5,8 +5,6 @@
   "statusFilter": "Select status",
   "status.active": "Active",
   "status.inactive": "Inactive",
-  "status.running": "Running",
-  "status.stopped": "Stopped",
   "viewMode.grouped": "Grouped",
   "viewMode.table": "Table",
   "batchImport": "Batch Import",
@@ -135,6 +133,7 @@
   "table.keys": "Keys",
   "table.models": "Models",
   "table.status": "Status",
+  "table.actions": "Actions",
   "providerEdit.title": "Edit Provider",
   "providerEdit.name": "Provider Name",
   "providerEdit.nameRequired": "Please enter provider name",
@@ -321,5 +320,8 @@
   "apiKeyModal.newKey": "New API Key",
   "apiKeyModal.newKeyRequired": "Please enter a new API Key",
   "apiKeyModal.updateSuccess": "API Key updated",
-  "apiKeyModal.updateFail": "API Key update failed"
+  "apiKeyModal.updateFail": "API Key update failed",
+  "statusToggle.enabled": "Channel enabled",
+  "statusToggle.disabled": "Channel disabled",
+  "statusToggle.failed": "State toggle failed"
 }

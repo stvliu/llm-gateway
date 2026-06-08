@@ -26,10 +26,10 @@ import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -43,14 +43,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 开发环境数据初始化器
- * 
- * <p>负责在应用启动时初始化测试数据，包括：</p>
+ * 数据初始化器
+ *
+ * <p>基础设施初始化（admin 内置用户）在所有环境下无条件执行。</p>
+ * <p>演示数据初始化（渠道、团队、演示用户）受 {@code gateway.init.demo-data-enabled} 配置控制。</p>
  * <ul>
- *   <li>5个主流大模型供应商（OpenAI、Anthropic、DeepSeek、通义千问、智谱AI）</li>
- *   <li>17个最新大模型</li>
+ *   <li>admin 内置用户（无条件创建）</li>
+ *   <li>5个主流大模型供应商（后备逻辑）</li>
+ *   <li>17个最新大模型（后备逻辑）</li>
  *   <li>10个接入点（每个供应商2个套餐）</li>
- *   <li>4个团队（default、dev、product、lobster）</li>
+ *   <li>4个团队（default、dev、product、openclaw）</li>
  *   <li>10个测试用户（test1-test10）</li>
  *   <li>10个API密钥（按团队分配不同权限）</li>
  * </ul>
@@ -62,7 +64,6 @@ public class DataInitializer implements CommandLineRunner {
 
     // ==================== 常量定义 ====================
     
-    private static final String DEFAULT_PASSWORD = "test"; // 测试用户默认密码前缀
     private static final String ADMIN_ROLE = "ADMIN";
     private static final String USER_ROLE = "USER";
     
@@ -85,27 +86,58 @@ public class DataInitializer implements CommandLineRunner {
     private final UserTeamGateway userTeamGateway;
     private final TeamChannelGateway teamChannelGateway;
     private final PasswordEncoder passwordEncoder;
+    private final GatewayProperties gatewayProperties;
 
     @Override
     @Transactional
     public void run(String... args) {
-        if (providerGateway.count() > 0) {
-            log.info("Data already initialized, skipping...");
+        // Phase 1: 基础设施 — 确保 admin 内置用户存在（无条件执行）
+        ensureAdminUser();
+
+        // Phase 2: 演示开关检查
+        if (!gatewayProperties.getInit().isDemoDataEnabled()) {
+            log.info("演示数据初始化已禁用 (demo-data-enabled=false)");
             return;
         }
 
-        log.info("Initializing development data...");
+        // Phase 2 (cont): 幂等守卫 — 演示数据是否已初始化
+        if (userGateway.findByUsername("test1").isPresent()) {
+            log.info("演示数据已存在，跳过初始化");
+            return;
+        }
 
-        // 执行初始化流程
-        Map<String, Provider> providers = initializeProviders();
+        log.info("Initializing demo data...");
+
+        // Phase 3: 执行初始化
+        // 后备：如果 BuiltinDataLoader 未执行，补充创建供应商和模型
+        if (providerGateway.count() == 0) {
+            log.info("BuiltinDataLoader 未加载供应商数据，执行后备初始化");
+            initializeProviders();
+            initializeModels();
+        }
+
         Map<String, Channel> channels = initializeChannels();
         List<Team> teams = initializeTeams();
         initializeTeamChannelAssignments(teams, channels);
-        List<User> users = initializeUsers();
+        List<User> users = initializeDemoUsers();
         initializeUserTeamAssignments(users, teams);
         initializeApiKeys(users);
 
-        logInitializationSummary(providers.size(), channels.size(), teams.size(), users.size());
+        logInitializationSummary((int) providerGateway.count(), channels.size(), teams.size(), users.size());
+    }
+
+    /**
+     * 确保 admin 内置用户存在
+     *
+     * <p>admin 是系统基础设施用户，生产环境和开发环境都需要。
+     * 如果 admin 已存在则跳过，不存在则创建。</p>
+     */
+    private void ensureAdminUser() {
+        if (userGateway.findByUsername("admin").isPresent()) {
+            return;
+        }
+        User admin = createUser("admin", "admin@example.com", ADMIN_ROLE, true);
+        log.info("Admin 内置用户已创建 (id={})", admin.getId());
     }
 
     /**
@@ -413,25 +445,21 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     /**
-     * 初始化用户
+     * 初始化演示用户
+     *
+     * <p>创建 test1-test10 共 10 个测试用户，密码与用户名相同。</p>
      */
-    private List<User> initializeUsers() {
-        log.info("Step 6: Initializing users...");
+    private List<User> initializeDemoUsers() {
+        log.info("Step 6: Initializing demo users...");
 
         List<User> users = new ArrayList<>();
-
-        // 创建管理员用户 admin（标记为内建用户，不可删除/降级/禁用）
-        User adminUser = createUser("admin", "admin@example.com", ADMIN_ROLE, true);
-        users.add(adminUser);
-
-        // 创建测试用户 test1-test10
         for (int i = 1; i <= 10; i++) {
             String username = "test" + i;
             String email = username + "@example.com";
             users.add(createUser(username, email, USER_ROLE, false));
         }
 
-        log.info("  Created {} users (1 admin + 10 test users)", users.size());
+        log.info("  Created {} demo users (test1-test10)", users.size());
         return users;
     }
 
@@ -449,27 +477,28 @@ public class DataInitializer implements CommandLineRunner {
         );
         
         // admin 用户：加入所有团队并设置为 OWNER
+        User admin = getAdminUser();
         for (Team team : teams) {
-            addUserToTeam(users.get(0).getId(), team.getId(), TeamRole.OWNER);
+            addUserToTeam(admin.getId(), team.getId(), TeamRole.OWNER);
         }
-        
+
         // default 团队: test1, test2
+        addUserToTeam(users.get(0).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
         addUserToTeam(users.get(1).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(2).getId(), teamMap.get(TEAM_DEFAULT).getId(), TeamRole.MEMBER);
-        
+
         // dev 团队: test3, test4(管理员), test5
-        addUserToTeam(users.get(3).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(4).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.ADMIN);
-        addUserToTeam(users.get(5).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
-        
+        addUserToTeam(users.get(2).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(3).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.ADMIN);
+        addUserToTeam(users.get(4).getId(), teamMap.get(TEAM_DEV).getId(), TeamRole.MEMBER);
+
         // product 团队: test6, test7(管理员)
-        addUserToTeam(users.get(6).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(7).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.ADMIN);
-        
+        addUserToTeam(users.get(5).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.MEMBER);
+        addUserToTeam(users.get(6).getId(), teamMap.get(TEAM_PRODUCT).getId(), TeamRole.ADMIN);
+
         // OpenClaw 团队: test8, test9, test10(所有者)
+        addUserToTeam(users.get(7).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
         addUserToTeam(users.get(8).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(9).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.MEMBER);
-        addUserToTeam(users.get(10).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.OWNER);
+        addUserToTeam(users.get(9).getId(), teamMap.get(TEAM_OPENCLAW).getId(), TeamRole.OWNER);
         
         log.info("  Assigned users to teams");
     }
@@ -489,28 +518,28 @@ public class DataInitializer implements CommandLineRunner {
      */
     private void initializeApiKeys(List<User> users) {
         log.info("Step 8: Initializing API keys...");
-        
+
         // ==================== admin 管理员 ====================
-        createUserApiKey(users.get(0).getId(), "admin-master-key");
-        
+        createUserApiKey(getAdminUser().getId(), "admin-master-key");
+
         // ==================== default 团队 ====================
-        createUserApiKey(users.get(1).getId(), "default-team-key-1");
-        createUserApiKey(users.get(2).getId(), "default-team-key-2");
-        
+        createUserApiKey(users.get(0).getId(), "default-team-key-1");
+        createUserApiKey(users.get(1).getId(), "default-team-key-2");
+
         // ==================== dev 团队 ====================
-        createUserApiKey(users.get(3).getId(), "dev-team-key-1");
-        createUserApiKey(users.get(4).getId(), "dev-team-key-2");
-        createUserApiKey(users.get(5).getId(), "dev-team-key-3");
-        
+        createUserApiKey(users.get(2).getId(), "dev-team-key-1");
+        createUserApiKey(users.get(3).getId(), "dev-team-key-2");
+        createUserApiKey(users.get(4).getId(), "dev-team-key-3");
+
         // ==================== product 团队 ====================
-        createUserApiKey(users.get(6).getId(), "product-team-key-1");
-        createUserApiKey(users.get(7).getId(), "product-team-key-2");
-        
+        createUserApiKey(users.get(5).getId(), "product-team-key-1");
+        createUserApiKey(users.get(6).getId(), "product-team-key-2");
+
         // ==================== OpenClaw 团队 ====================
-        createUserApiKey(users.get(8).getId(), "openclaw-team-key-1");
-        createUserApiKey(users.get(9).getId(), "openclaw-team-key-2");
-        createUserApiKey(users.get(10).getId(), "openclaw-team-key-3");
-        
+        createUserApiKey(users.get(7).getId(), "openclaw-team-key-1");
+        createUserApiKey(users.get(8).getId(), "openclaw-team-key-2");
+        createUserApiKey(users.get(9).getId(), "openclaw-team-key-3");
+
         log.info("  Created 11 API keys (1 admin + 10 team keys, channel permissions inherited from teams)");
     }
 
@@ -526,12 +555,12 @@ public class DataInitializer implements CommandLineRunner {
         log.info("  Models: 20");
         log.info("  Channels: {}", channelCount);
         log.info("  Teams: {} (default, dev, product, openclaw)", teamCount);
-        log.info("  Users: {} (admin + test1-test10)", userCount);
+        log.info("  Demo users: {} (test1-test10)", userCount);
         log.info("  UserApiKeys: 11 (1 admin + 10 team keys)");
         log.info("========================================");
         log.info("Test accounts:");
-        log.info("  Admin - Username: admin, Password: admin, Role: ADMIN");
-        log.info("  Users - Username: test1 ~ test10, Password: same as username, Role: USER");
+        log.info("  Admin (built-in) - Username: admin, Password: admin, Role: ADMIN");
+        log.info("  Demo users - Username: test1 ~ test10, Password: same as username, Role: USER");
         log.info("========================================");
         log.info("Permission model (3-layer inheritance):");
         log.info("  Team ↔ Channel (M:N) - Define team's accessible channels");
@@ -548,6 +577,16 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     // ==================== 辅助方法 ====================
+
+    /**
+     * 获取 admin 用户
+     *
+     * <p>admin 由 ensureAdminUser() 确保存在，此方法用于在初始化流程中查找 admin 用户。</p>
+     */
+    private User getAdminUser() {
+        return userGateway.findByUsername("admin")
+            .orElseThrow(() -> new IllegalStateException("Admin user not found - ensureAdminUser() must be called first"));
+    }
 
     private Provider createProvider(String code, String name, String websiteUrl, String apiDocUrl, String description) {
         Provider provider = new Provider();
@@ -630,8 +669,6 @@ public class DataInitializer implements CommandLineRunner {
         // UUID 靠前确保 keyPrefix（前10位）唯一
         String uuid8 = java.util.UUID.randomUUID().toString().substring(0, 8);
         userApiKey.setKeyPlain("sk-" + uuid8 + "-" + name.toLowerCase().replace(" ", "-"));
-        userApiKey.setModels(null); // null = 允许所有模型
-        userApiKey.setState(UserApiKeyState.ACTIVE);
         userApiKeyGateway.save(userApiKey);
     }
 }

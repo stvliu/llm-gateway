@@ -16,6 +16,9 @@ public interface UserApiKeyGateway {
     /** 按用户 ID 查找 */
     List<UserApiKey> findByUserId(Long userId);
 
+    /** 查询所有非删除状态的 Key（管理员用） */
+    List<UserApiKey> findAllNonDeleted();
+
     /** 按 Key 前缀查找（认证用） */
     Optional<UserApiKey> findByKeyPrefix(String keyPrefix);
 

@@ -8,7 +8,6 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
 import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,9 +43,6 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         apiKey.setKeyPrefix(generated.keyPrefix());
         apiKey.setKeyPlain(generated.plainKey());
         apiKey.setName(request.name());
-        apiKey.setModels(request.models());
-        apiKey.setQuotaLimit(request.quotaLimit());
-        apiKey.setState(UserApiKeyState.ACTIVE);
 
         UserApiKey saved = userApiKeyGateway.save(apiKey);
         log.info("Created UserApiKey: id={}, userId={}", saved.getId(), saved.getUserId());
@@ -57,6 +53,13 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
     @Override
     public List<UserApiKeyResponse> findByUserId(Long userId) {
         return userApiKeyGateway.findByUserId(userId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Override
+    public List<UserApiKeyResponse> findAllNonDeleted() {
+        return userApiKeyGateway.findAllNonDeleted().stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -84,15 +87,6 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         if (request.name() != null) {
             apiKey.setName(request.name());
         }
-        if (request.models() != null) {
-            apiKey.setModels(request.models());
-        }
-        if (request.quotaLimit() != null) {
-            apiKey.setQuotaLimit(request.quotaLimit());
-        }
-        if (request.state() != null) {
-            apiKey.setState(request.state());
-        }
 
         UserApiKey saved = userApiKeyGateway.save(apiKey);
         log.info("Updated UserApiKey: id={}", saved.getId());
@@ -115,9 +109,6 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
                 apiKey.getKeyPrefix(),
                 apiKey.getKeyPlain(),
                 apiKey.getName(),
-                apiKey.getModels(),
-                apiKey.getQuotaLimit(),
-                apiKey.getState(),
                 apiKey.getCreatedAt(),
                 apiKey.getUpdatedAt()
         );
@@ -130,9 +121,6 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
                 apiKey.getKeyPrefix(),
                 apiKey.getKeyPlain(),
                 apiKey.getName(),
-                apiKey.getModels(),
-                apiKey.getQuotaLimit(),
-                apiKey.getState(),
                 apiKey.getCreatedAt(),
                 apiKey.getUpdatedAt()
         );

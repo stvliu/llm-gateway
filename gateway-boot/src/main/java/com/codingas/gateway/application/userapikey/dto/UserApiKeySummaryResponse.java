@@ -1,7 +1,5 @@
 package com.codingas.gateway.application.userapikey.dto;
 
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
-
 import java.time.Instant;
 import java.util.List;
 
@@ -14,9 +12,6 @@ public record UserApiKeySummaryResponse(
         List<Long> productIds,
         String keyPrefix,
         String name,
-        List<String> models,
-        Long quotaLimit,
-        UserApiKeyState state,
         Instant createdAt,
         Instant updatedAt
 ) {

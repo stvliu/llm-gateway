@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Select, InputNumber, message, Alert } from 'antd'
+import { Modal, Form, Input, message, Alert } from 'antd'
 import type { Team, UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
 import { teamApi } from '@/services/api/team'
 
@@ -29,9 +29,6 @@ export default function UserApiKeyManageModal({
       if (editingKey) {
         form.setFieldsValue({
           name: editingKey.name,
-          models: editingKey.models,
-          quotaLimit: editingKey.quotaLimit,
-          state: editingKey.state,
         })
         setCreatedKey(null)
       } else {
@@ -49,9 +46,6 @@ export default function UserApiKeyManageModal({
       if (editingKey) {
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
-          models: values.models,
-          quotaLimit: values.quotaLimit,
-          state: values.state,
         }
         await teamApi.updateApiKey(team.id, editingKey.id, request)
         message.success('API Key 更新成功')
@@ -59,8 +53,6 @@ export default function UserApiKeyManageModal({
         const request: CreateUserApiKeyRequest = {
           userId: values.userId,
           name: values.name,
-          models: values.models,
-          quotaLimit: values.quotaLimit,
         }
         const result = await teamApi.createApiKey(team.id, request)
         setCreatedKey(result.keyPlain)
@@ -111,32 +103,10 @@ export default function UserApiKeyManageModal({
 
         {!editingKey && (
           <Form.Item name="userId" label="用户 ID" rules={[{ required: true, message: '请输入用户 ID' }]}>
-            <InputNumber style={{ width: '100%' }} placeholder="用户 ID" />
+            <Input placeholder="用户 ID" />
           </Form.Item>
         )}
 
-        <Form.Item name="models" label="可用模型">
-          <Select
-            mode="tags"
-            placeholder="留空表示允许所有模型，或输入模型名称"
-            tokenSeparators={[',']}
-          />
-        </Form.Item>
-
-        <Form.Item name="quotaLimit" label="额度限制">
-          <InputNumber style={{ width: '100%' }} placeholder="留空表示不限制" min={0} />
-        </Form.Item>
-
-        {editingKey && (
-          <Form.Item name="state" label="状态">
-            <Select
-              options={[
-                { label: '启用', value: 'ACTIVE' },
-                { label: '禁用', value: 'DISABLED' },
-              ]}
-            />
-          </Form.Item>
-        )}
       </Form>
     </Modal>
   )

@@ -1,31 +1,36 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Table, Tag, Button, Popconfirm, App, Input, Typography } from 'antd';
-import { DeleteOutlined, WarningOutlined } from '@ant-design/icons';
+import { Table, Button, Popconfirm, App, Input, Typography, Modal, Form, Select, Card } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys';
-import { useAuthStore } from '@/stores/authStore';
+import { useAllUserApiKeys, useDeleteUserApiKey, useCreateUserApiKey } from '@/services/query/useUserApiKeys';
+import { useUsers } from '@/services/query/useUsers';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/team';
+import type { User } from '@/types/user';
 
 const { Text } = Typography;
-
-/** 下游 Key 状态映射 */
-const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
-  ACTIVE: { label: '活跃', color: '#16a34a', bg: '#dcfce7' },
-  INACTIVE: { label: '未激活', color: '#64748b', bg: '#f1f5f9' },
-  DEGRADED: { label: '已降级', color: '#d97706', bg: '#fef3c7' },
-  EXPIRED: { label: '过期', color: '#dc2626', bg: '#fee2e2' },
-};
 
 export default function DownstreamKeysTable() {
   const { t } = useTranslation('apiKeys');
   const { message } = App.useApp();
-  const currentUser = useAuthStore((s) => s.user);
-  const userId = currentUser?.id ?? 0;
 
-  const { data: keys, isLoading } = useUserApiKeys(userId);
-  const deleteMutation = useDeleteUserApiKey(userId);
+  const { data: keys, isLoading } = useAllUserApiKeys();
+  const { data: usersData } = useUsers({ size: 200 });
+  const deleteMutation = useDeleteUserApiKey();
+  const createMutation = useCreateUserApiKey();
   const [search, setSearch] = useState('');
+
+  // 创建弹窗
+  const [formVisible, setFormVisible] = useState(false);
+  const [form] = Form.useForm();
+  const [creating, setCreating] = useState(false);
+  const [createdKeyPlain, setCreatedKeyPlain] = useState<string | null>(null);
+
+  const userMap = useMemo(() => {
+    const map = new Map<number, User>();
+    usersData?.items?.forEach((u: User) => map.set(u.id, u));
+    return map;
+  }, [usersData]);
 
   const filtered = (keys ?? []).filter((k: UserApiKey) => {
     if (!search) return true;
@@ -41,6 +46,32 @@ export default function DownstreamKeysTable() {
       message.error(t('revokeFailed', { defaultValue: '吊销失败' }));
     }
   }, [deleteMutation, message, t]);
+
+  const handleAdd = () => {
+    setCreatedKeyPlain(null);
+    form.resetFields();
+    setFormVisible(true);
+  };
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields();
+      setCreating(true);
+
+      const result = await createMutation.mutateAsync({
+        userId: values.userId,
+        name: values.name,
+      });
+      setCreatedKeyPlain(result.keyPlain);
+      message.success(t('createSuccess', { defaultValue: 'Key 创建成功' }));
+      form.resetFields();
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) return;
+      message.error(t('createFailed', { defaultValue: '创建失败' }));
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const columns = useMemo(() => [
     {
@@ -60,60 +91,29 @@ export default function DownstreamKeysTable() {
       title: t('keyName', { defaultValue: '名称' }),
       dataIndex: 'name',
       key: 'name',
-      width: 160,
+      width: 100,
     },
     {
       title: t('user', { defaultValue: '所属用户' }),
       dataIndex: 'userId',
       key: 'userId',
-      width: 100,
-    },
-    {
-      title: t('status', { defaultValue: '状态' }),
-      dataIndex: 'state',
-      key: 'state',
-      width: 100,
-      render: (state: string) => {
-        const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9' };
-        return (
-          <Tag style={{ background: cfg.bg, color: cfg.color, border: 'none', borderRadius: 4, padding: '2px 8px' }}>
-            {cfg.label}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: t('expiresAt', { defaultValue: '过期时间' }),
-      dataIndex: 'expiresAt',
-      key: 'expiresAt',
-      width: 130,
-      render: (val: string | null | undefined) => {
-        if (!val) return <Text type="secondary">-</Text>;
-        const expires = new Date(val);
-        const daysLeft = Math.ceil((expires.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
-        if (daysLeft <= 0) return <Tag color="red"><WarningOutlined /> 已过期</Tag>;
-        if (daysLeft <= 7) return <Tag color="orange"><WarningOutlined /> {daysLeft}天后过期</Tag>;
-        return <Text type="secondary" style={{ fontSize: 12 }}>{expires.toLocaleDateString('zh-CN')}</Text>;
+      width: 80,
+      render: (userId: number) => {
+        const user = userMap.get(userId);
+        return user ? `${user.username} (${userId})` : `用户 ${userId}`;
       },
     },
     {
       title: t('createdAt', { defaultValue: '创建时间' }),
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 170,
-      render: (val: string) => (val ? new Date(val).toLocaleString('zh-CN') : <Text type="secondary">-</Text>),
-    },
-    {
-      title: t('updatedAt', { defaultValue: '更新时间' }),
-      dataIndex: 'updatedAt',
-      key: 'updatedAt',
-      width: 170,
+      width: 80,
       render: (val: string) => (val ? new Date(val).toLocaleString('zh-CN') : <Text type="secondary">-</Text>),
     },
     {
       title: t('actions', { defaultValue: '操作' }),
       key: 'actions',
-      width: 80,
+      width: 40,
       render: (_: unknown, record: UserApiKey) => (
         <Popconfirm
           title={t('confirmRevoke', { defaultValue: '确定吊销此 Key？' })}
@@ -123,28 +123,73 @@ export default function DownstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ], [t, handleRevoke]);
+  ], [t, handleRevoke, userMap]);
 
   return (
     <div>
-      <div style={{ marginBottom: 16 }}>
-        <Input.Search
-          placeholder={t('searchKeys', { defaultValue: '搜索 Key 前缀/名称...' })}
-          style={{ width: 320 }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          allowClear
+      <Card title={t('title')}>
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+          <Input.Search
+            placeholder={t('searchKeys', { defaultValue: '搜索 Key 前缀/名称...' })}
+            style={{ width: 320 }}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            allowClear
+          />
+          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
+            {t('createKey', { defaultValue: '创建 API Key' })}
+          </Button>
+        </div>
+
+        <Table
+          dataSource={filtered}
+          columns={columns}
+          rowKey="id"
+          size="middle"
+          loading={isLoading}
+          pagination={{ pageSize: 15, showSizeChanger: true }}
+          locale={{ emptyText: t('noKeys', { defaultValue: '暂无 API Key' }) }}
         />
-      </div>
-      <Table
-        dataSource={filtered}
-        columns={columns}
-        rowKey="id"
-        size="middle"
-        loading={isLoading}
-        pagination={{ pageSize: 15, showSizeChanger: true }}
-        locale={{ emptyText: t('noDownstreamKeys', { defaultValue: '暂无下游 Key' }) }}
-      />
+      </Card>
+
+      <Modal
+        title={t('createKey', { defaultValue: '创建 API Key' })}
+        open={formVisible}
+        onOk={handleSubmit}
+        onCancel={() => setFormVisible(false)}
+        confirmLoading={creating}
+        okText={t('create', { defaultValue: '创建' })}
+        width={520}
+        destroyOnClose
+      >
+        {createdKeyPlain && (
+          <div style={{ marginBottom: 16, padding: 12, background: '#f6ffed', border: '1px solid #b7eb8f', borderRadius: 6 }}>
+            <div style={{ marginBottom: 4, fontWeight: 500 }}>{t('createSuccess', { defaultValue: 'Key 创建成功' })}</div>
+            <code style={{ wordBreak: 'break-all', fontSize: 13 }}>{createdKeyPlain}</code>
+            <div style={{ marginTop: 4, color: '#999', fontSize: 12 }}>{t('oneTimeHint', { defaultValue: '此密钥仅显示一次，关闭后无法再次查看' })}</div>
+          </div>
+        )}
+
+        <Form form={form} layout="vertical">
+          <Form.Item name="userId" label={t('user', { defaultValue: '所属用户' })} rules={[{ required: true, message: '请选择用户' }]}>
+            <Select
+              showSearch
+              placeholder="搜索并选择用户"
+              filterOption={(input, option) =>
+                (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={(usersData?.items ?? []).map((u: User) => ({
+                label: `${u.username} (${u.id})`,
+                value: u.id,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item name="name" label={t('keyName', { defaultValue: '名称' })} rules={[{ required: true, message: '请输入名称' }]}>
+            <Input placeholder="例如：生产环境 Key" />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 }

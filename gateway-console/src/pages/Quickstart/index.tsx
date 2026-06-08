@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Input, Typography, Empty, Skeleton } from 'antd';
+import { Row, Col, Input, Typography, Empty, Skeleton, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useModels } from '@/services/query/useModels';
 import ModelCard from './ModelCard';
@@ -61,7 +61,8 @@ export default function Quickstart() {
 
   return (
     <div>
-      <div style={{ marginBottom: 24 }}>
+      <Card>
+        <div style={{ marginBottom: 24 }}>
         <Title level={4} style={{ margin: 0 }}>{t('title')}</Title>
         <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
           {t('subtitle')}
@@ -131,6 +132,8 @@ export default function Quickstart() {
         model={selectedModel}
         protocol={protocol}
       />
+
+      </Card>
 
       <KeyGenerateModal
         open={keyModalOpen}

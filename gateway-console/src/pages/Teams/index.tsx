@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography, Tooltip } from 'antd';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Typography, Tooltip, Card } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, TeamOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
@@ -10,7 +10,6 @@ import MemberManageModal from './MemberManageModal';
 import ChannelManageModal from './ChannelManageModal';
 import type { Team } from '@/types/team';
 
-const { Title } = Typography;
 const { Link } = Typography;
 
 export default function TeamsPage() {
@@ -61,6 +60,7 @@ export default function TeamsPage() {
       title: t('team.name'),
       dataIndex: 'name',
       key: 'name',
+      width: 140,
     },
     {
       title: t('team.description'),
@@ -71,7 +71,7 @@ export default function TeamsPage() {
     {
       title: t('team.memberCount'),
       key: 'memberCount',
-      width: 100,
+      width: 60,
       render: (_: unknown, record: Team) => (
         <Link onClick={() => setMemberTeam(record)}>
           {record.memberCount ?? record.members?.length ?? 0}
@@ -92,8 +92,7 @@ export default function TeamsPage() {
     {
       title: t('team.actions'),
       key: 'actions',
-      width: 200,
-      fixed: 'right' as const,
+      width: 140,
       render: (_: unknown, record: Team) => (
         <Space size="small">
           <Tooltip title={t('team.manageMembers')}>
@@ -126,10 +125,7 @@ export default function TeamsPage() {
 
   return (
     <div>
-      <Title level={4} style={{ marginBottom: '24px' }}>
-        {t('title')}
-      </Title>
-
+      <Card title={t('title')}>
       <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
         <Space size={12} wrap>
           <Input
@@ -167,6 +163,8 @@ export default function TeamsPage() {
         pagination={false}
         scroll={{ x: 800 }}
       />
+
+      </Card>
 
       <TeamFormModal
         visible={formVisible}

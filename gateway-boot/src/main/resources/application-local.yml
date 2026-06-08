@@ -40,3 +40,5 @@ sa-token:
 gateway:
   security:
     encryption-key: ${GATEWAY_ENCRYPTION_KEY:}
+  init:
+    demo-data-enabled: true

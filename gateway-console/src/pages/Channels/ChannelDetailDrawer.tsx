@@ -25,7 +25,7 @@ import {
   useChannel,
   useChannelCredentials,
   useChannelModels,
-  useUpdateChannel,
+  useSetChannelState,
   useTestChannelCredential,
   useDeleteChannel,
 } from '@/services/query/useChannels';
@@ -66,7 +66,7 @@ export function ChannelDetailDrawer({
     }
   }, [open, initialTab]);
 
-  const updateChannel = useUpdateChannel();
+  const setChannelState = useSetChannelState();
   const deleteChannel = useDeleteChannel();
 
   const { data: channelDetail, isLoading: detailLoading } = useChannel(channel?.id || 0);
@@ -80,6 +80,8 @@ export function ChannelDetailDrawer({
   if (!channel) return null;
 
   const isLoading = detailLoading || credentialsLoading;
+  /** 使用详情查询结果驱动状态，确保启停后即时刷新 */
+  const currentState = channelDetail?.state ?? channel.state;
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
@@ -119,10 +121,10 @@ export function ChannelDetailDrawer({
 
   /** 切换渠道状态 */
   const handleToggleState = async () => {
-    const newState = channel.state === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const enabled = currentState !== 'ACTIVE';
     try {
-      await updateChannel.mutateAsync({ id: channel.id, data: { state: newState } });
-      message.success(newState === 'ACTIVE' ? t('drawer.channelEnabled') : t('drawer.channelDisabled'));
+      await setChannelState.mutateAsync({ id: channel.id, enabled });
+      message.success(enabled ? t('drawer.channelEnabled') : t('drawer.channelDisabled'));
     } catch {
       message.error(t('drawer.stateToggleFailed'));
     }
@@ -226,8 +228,8 @@ export function ChannelDetailDrawer({
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Text strong style={{ fontSize: 16 }}>{channel.name}</Text>
-            <Tag color={channel.state === 'ACTIVE' ? 'green' : 'default'}>
-              {channel.state === 'ACTIVE' ? t('status.running') : t('status.stopped')}
+            <Tag color={currentState === 'ACTIVE' ? 'green' : 'default'}>
+              {currentState === 'ACTIVE' ? t('status.active') : t('status.inactive')}
             </Tag>
           </div>
         }
@@ -242,13 +244,13 @@ export function ChannelDetailDrawer({
               {t('drawer.connectivityTest')}
             </Button>
             <Popconfirm
-              title={channel.state === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
+              title={currentState === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
               onConfirm={handleToggleState}
               okText={t('actions.confirm', { ns: 'common' })}
               cancelText={t('actions.cancel', { ns: 'common' })}
             >
-              <Button loading={updateChannel.isPending}>
-                {channel.state === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
+              <Button loading={setChannelState.isPending}>
+                {currentState === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
               </Button>
             </Popconfirm>
             <Popconfirm

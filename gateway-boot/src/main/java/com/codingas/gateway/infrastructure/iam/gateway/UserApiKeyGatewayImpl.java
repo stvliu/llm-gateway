@@ -2,7 +2,6 @@ package com.codingas.gateway.infrastructure.iam.gateway;
 
 import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.infrastructure.iam.gateway.database.dataobject.UserApiKeyDo;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserApiKeyRepository;
@@ -41,6 +40,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     }
 
     @Override
+    public List<UserApiKey> findAllNonDeleted() {
+        return repository.findAllNonDeleted().stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
+    @Override
     public Optional<UserApiKey> findByKeyPrefix(String keyPrefix) {
         return repository.findByKeyPrefix(keyPrefix).map(this::toEntity);
     }
@@ -51,6 +57,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         UserApiKeyDo dataObject = toDataObject(userApiKey);
         if (userApiKey.getId() == null) {
             dataObject.setCreatedAt(Instant.now());
+            dataObject.setDeleted(false);
 
             // 创建时：从明文计算哈希和密文
             String plainKey = userApiKey.getKeyPlain();
@@ -78,7 +85,11 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     @Override
     @Transactional
     public void delete(UserApiKey userApiKey) {
-        repository.deleteById(userApiKey.getId());
+        repository.findById(userApiKey.getId()).ifPresent(existing -> {
+            existing.setDeleted(true);
+            existing.setUpdatedAt(Instant.now());
+            repository.save(existing);
+        });
     }
 
     private UserApiKey toEntity(UserApiKeyDo dataObject) {
@@ -88,9 +99,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         entity.setKeyHash(dataObject.getKeyHash());
         entity.setKeyPrefix(dataObject.getKeyPrefix());
         entity.setName(dataObject.getName());
-        entity.setModels(parseModels(dataObject.getModels()));
-        entity.setQuotaLimit(dataObject.getQuotaLimit());
-        entity.setState(dataObject.getState());
+        entity.setDeleted(dataObject.isDeleted());
         entity.setCreatedAt(dataObject.getCreatedAt());
         entity.setUpdatedAt(dataObject.getUpdatedAt());
 
@@ -113,25 +122,9 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         dataObject.setUserId(entity.getUserId());
         dataObject.setKeyPrefix(entity.getKeyPrefix());
         dataObject.setName(entity.getName());
-        dataObject.setModels(formatModels(entity.getModels()));
-        dataObject.setQuotaLimit(entity.getQuotaLimit());
-        dataObject.setState(entity.getState() != null ? entity.getState() : UserApiKeyState.ACTIVE);
+        dataObject.setDeleted(entity.isDeleted());
         dataObject.setCreatedAt(entity.getCreatedAt());
         dataObject.setUpdatedAt(entity.getUpdatedAt());
         return dataObject;
-    }
-
-    private List<String> parseModels(String modelsStr) {
-        if (modelsStr == null || modelsStr.isBlank()) {
-            return null;
-        }
-        return List.of(modelsStr.split(","));
-    }
-
-    private String formatModels(List<String> models) {
-        if (models == null || models.isEmpty()) {
-            return null;
-        }
-        return String.join(",", models);
     }
 }
