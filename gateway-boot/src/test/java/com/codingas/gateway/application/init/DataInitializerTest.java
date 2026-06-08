@@ -41,18 +41,19 @@ class DataInitializerTest {
     }
 
     @Test
-    @DisplayName("admin 用户应标记为 builtin")
+    @DisplayName("admin 用户应标记为 builtin 且邮箱正确")
     void adminUserShouldBeBuiltin() {
-        dataInitializer.run();
-        User admin = userGateway.findByUsername("admin").get();
+        User admin = userGateway.findByUsername("admin")
+            .orElseThrow(() -> new AssertionError("admin 应存在"));
         assertTrue(admin.isBuiltin());
+        assertEquals("admin@example.com", admin.getEmail());
     }
 
     @Test
     @DisplayName("admin 用户角色应为 ADMIN")
     void adminUserShouldHaveAdminRole() {
-        dataInitializer.run();
-        User admin = userGateway.findByUsername("admin").get();
+        User admin = userGateway.findByUsername("admin")
+            .orElseThrow(() -> new AssertionError("admin 应存在"));
         assertEquals("ADMIN", admin.getRole());
     }
 
@@ -73,7 +74,8 @@ class DataInitializerTest {
     @DisplayName("演示用户不应标记为 builtin")
     void demoUserShouldNotBeBuiltin() {
         dataInitializer.run();
-        User test1 = userGateway.findByUsername("test1").get();
+        User test1 = userGateway.findByUsername("test1")
+            .orElseThrow(() -> new AssertionError("test1 应存在"));
         assertFalse(test1.isBuiltin());
     }
 
@@ -88,10 +90,11 @@ class DataInitializerTest {
     }
 
     @Test
-    @DisplayName("应创建供应商和模型（后备逻辑）")
-    void shouldCreateProvidersAndModels() {
+    @DisplayName("应存在供应商（由 BuiltinDataLoader 或后备逻辑创建）")
+    void shouldHaveProviders() {
         dataInitializer.run();
-        assertTrue(providerGateway.count() > 0);
+        assertTrue(providerGateway.count() >= 6,
+            "应有至少 6 个供应商（来自 BuiltinDataLoader 或后备逻辑）");
     }
 
     // ===== 幂等性 =====
@@ -104,9 +107,13 @@ class DataInitializerTest {
         @DisplayName("重复调用不应创建重复的 admin")
         void repeatedRunShouldNotDuplicateAdmin() {
             dataInitializer.run();
-            long adminCount1 = userGateway.findByUsername("admin").stream().count();
+            long adminCount1 = userGateway.findAll().stream()
+                .filter(u -> "admin".equals(u.getUsername()))
+                .count();
             dataInitializer.run();
-            long adminCount2 = userGateway.findByUsername("admin").stream().count();
+            long adminCount2 = userGateway.findAll().stream()
+                .filter(u -> "admin".equals(u.getUsername()))
+                .count();
             assertEquals(adminCount1, adminCount2);
         }
 
