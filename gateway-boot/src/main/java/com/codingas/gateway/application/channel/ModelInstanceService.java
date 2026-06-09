@@ -18,7 +18,7 @@ public interface ModelInstanceService {
     /**
      * 创建模型实例
      */
-    ModelInstanceResponse create(Long channelId, ModelInstanceCreateRequest request);
+    ModelInstanceResponse create(ModelInstanceCreateRequest request);
 
     /**
      * 删除模型实例

@@ -79,7 +79,9 @@ public class ChannelController {
     public ChannelEndpointResponse addEndpoint(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        return channelService.addEndpoint(channelId, request);
+        // 适配层补全 channelId（不同协议从各自上下文中提取）
+        request.setChannelId(channelId);
+        return channelService.addEndpoint(request);
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")

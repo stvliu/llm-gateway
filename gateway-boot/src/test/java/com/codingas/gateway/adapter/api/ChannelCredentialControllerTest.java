@@ -19,6 +19,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
+import org.mockito.ArgumentCaptor;
+
 /**
  * ChannelCredentialController 单元测试
  */
@@ -87,12 +89,18 @@ class ChannelCredentialControllerTest {
         @Test
         @DisplayName("创建成功返回含明文的响应")
         void createsCredential() {
-            var request = new ChannelCredentialCreateRequest(CHANNEL_ID, "sk-test-key", 1, 1, "test key");
+            // 请求体不含 channelId，由适配层补全
+            var request = new ChannelCredentialCreateRequest(null, "sk-test-key", 1, 1, "test key");
             var createResponse = new ChannelCredentialCreateResponse(CREDENTIAL_ID, "sk-test-key");
-            when(channelCredentialService.create(eq(CHANNEL_ID), any(ChannelCredentialCreateRequest.class)))
+            when(channelCredentialService.create(any(ChannelCredentialCreateRequest.class)))
                     .thenReturn(createResponse);
 
             ChannelCredentialCreateResponse result = controller.create(CHANNEL_ID, request);
+
+            // 验证适配层补全了 channelId
+            var captured = ArgumentCaptor.forClass(ChannelCredentialCreateRequest.class);
+            verify(channelCredentialService).create(captured.capture());
+            assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
 
             assertThat(result.id()).isEqualTo(CREDENTIAL_ID);
             assertThat(result.apiKeyPlain()).isEqualTo("sk-test-key");
@@ -106,11 +114,18 @@ class ChannelCredentialControllerTest {
         @Test
         @DisplayName("更新成功返回更新后的凭证")
         void updatesCredential() {
-            var request = new ChannelCredentialUpdateRequest(10, 5, null, null, null);
-            when(channelCredentialService.update(eq(CHANNEL_ID), eq(CREDENTIAL_ID), any(ChannelCredentialUpdateRequest.class)))
+            // 请求体不含 channelId 和 id，由适配层补全
+            var request = new ChannelCredentialUpdateRequest(null, null, 10, 5, null, null, null);
+            when(channelCredentialService.update(any(ChannelCredentialUpdateRequest.class)))
                     .thenReturn(buildResponse());
 
             ChannelCredentialResponse result = controller.update(CHANNEL_ID, CREDENTIAL_ID, request);
+
+            // 验证适配层补全了 channelId 和 id
+            var captured = ArgumentCaptor.forClass(ChannelCredentialUpdateRequest.class);
+            verify(channelCredentialService).update(captured.capture());
+            assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
+            assertThat(captured.getValue().id()).isEqualTo(CREDENTIAL_ID);
 
             assertThat(result).isNotNull();
             assertThat(result.id()).isEqualTo(CREDENTIAL_ID);

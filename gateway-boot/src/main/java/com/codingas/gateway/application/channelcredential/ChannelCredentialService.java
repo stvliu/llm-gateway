@@ -18,7 +18,7 @@ public interface ChannelCredentialService {
     /**
      * 创建渠道凭证
      */
-    ChannelCredentialCreateResponse create(Long channelId, ChannelCredentialCreateRequest request);
+    ChannelCredentialCreateResponse create(ChannelCredentialCreateRequest request);
 
     /**
      * 根据 ID 获取渠道凭证（校验渠道归属，不含明文）
@@ -38,7 +38,7 @@ public interface ChannelCredentialService {
     /**
      * 更新渠道凭证（校验渠道归属）
      */
-    ChannelCredentialResponse update(Long channelId, Long id, ChannelCredentialUpdateRequest request);
+    ChannelCredentialResponse update(ChannelCredentialUpdateRequest request);
 
     /**
      * 删除渠道凭证（校验渠道归属）

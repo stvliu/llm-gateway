@@ -47,7 +47,15 @@
       "Bash(ls -d Moonshot*)",
       "Bash(ls -d Xunfei*)",
       "Bash(ls -d Iflytek*)",
-      "Bash(ls -d iFlytek*)"
+      "Bash(ls -d iFlytek*)",
+      "Bash(kill %1)",
+      "Bash(wait %1)",
+      "Bash(powershell -Command \"Get-Process -Id \\(Get-NetTCPConnection -LocalPort 8080 -ErrorAction SilentlyContinue\\).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Output 'checked port 8080'\")",
+      "Bash(.\\\\mvnw.cmd test *)",
+      "Bash(ls -la mvnw*)",
+      "Bash(which mvn *)",
+      "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw\")",
+      "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw.cmd\")"
     ]
   },
   "outputStyle": "default"
