@@ -45,7 +45,7 @@ class ChannelCredentialServiceImplTest {
         ChannelCredentialCreateRequest request = new ChannelCredentialCreateRequest(
                 CHANNEL_ID, "sk-test-api-key-12345", 1, 1, "test-key"
         );
-        ChannelCredentialCreateResponse response = service.create(CHANNEL_ID, request);
+        ChannelCredentialCreateResponse response = service.create(request);
 
         assertNotNull(response);
         assertNotNull(response.apiKeyPlain());
@@ -110,9 +110,9 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                5, 10, null, "updated-description", null
+                CHANNEL_ID, API_KEY_ID, 5, 10, null, "updated-description", null
         );
-        ChannelCredentialResponse response = service.update(CHANNEL_ID, API_KEY_ID, request);
+        ChannelCredentialResponse response = service.update(request);
 
         assertNotNull(response);
         verify(channelCredentialGateway).save(argThat(key ->
@@ -125,9 +125,9 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                null, null, null, "updated", null
+                CHANNEL_ID, API_KEY_ID, null, null, null, "updated", null
         );
-        assertThrows(ResourceNotFoundException.class, () -> service.update(CHANNEL_ID, API_KEY_ID, request));
+        assertThrows(ResourceNotFoundException.class, () -> service.update(request));
     }
 
     @Test

@@ -44,7 +44,8 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public ModelInstanceResponse create(Long channelId, ModelInstanceCreateRequest request) {
+    public ModelInstanceResponse create(ModelInstanceCreateRequest request) {
+        Long channelId = request.getChannelId();
         // 检查是否已关联
         boolean exists = modelInstanceGateway.existsByChannelIdAndModelId(channelId, request.getModelId());
         if (exists) {

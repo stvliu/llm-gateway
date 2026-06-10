@@ -29,15 +29,16 @@ public class RoutingResolver {
      *
      * @param modelName 模型名称
      * @param protocol  入站协议
-     * @param userId    用户 ID（用于团队渠道权限过滤）
+     * @param userId    用户 ID
+     * @param role      用户角色（ADMIN 跳过团队渠道过滤）
      * @return 路由上下文
      */
-    public RoutingContext resolve(String modelName, Protocol protocol, Long userId) {
+    public RoutingContext resolve(String modelName, Protocol protocol, Long userId, String role) {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
         // 2. 实例选择（按 priority 排序）
-        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId);
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId, role);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());

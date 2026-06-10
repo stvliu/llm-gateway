@@ -196,7 +196,8 @@ public class ChannelServiceImpl implements ChannelService {
      */
     @Override
     @Transactional
-    public ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request) {
+    public ChannelEndpointResponse addEndpoint(ChannelEndpointRequest request) {
+        Long channelId = request.getChannelId();
         channelGateway.findById(channelId)
                 .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + channelId));
 

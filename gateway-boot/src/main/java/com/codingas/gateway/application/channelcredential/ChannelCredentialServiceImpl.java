@@ -32,12 +32,12 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
 
     @Override
     @Transactional
-    public ChannelCredentialCreateResponse create(Long channelId, ChannelCredentialCreateRequest request) {
+    public ChannelCredentialCreateResponse create(ChannelCredentialCreateRequest request) {
         String plainKey = request.apiKey();
         String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
 
         ChannelCredential credential = new ChannelCredential();
-        credential.setChannelId(channelId);
+        credential.setChannelId(request.channelId());
         credential.setApiKeyPlain(plainKey);
         credential.setApiKeyPrefix(keyPrefix);
         credential.setName(request.description());
@@ -73,8 +73,8 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
 
     @Override
     @Transactional
-    public ChannelCredentialResponse update(Long channelId, Long id, ChannelCredentialUpdateRequest request) {
-        ChannelCredential credential = findAndValidateOwnership(channelId, id);
+    public ChannelCredentialResponse update(ChannelCredentialUpdateRequest request) {
+        ChannelCredential credential = findAndValidateOwnership(request.channelId(), request.id());
 
         if (request.weight() != null) {
             credential.setWeight(request.weight());

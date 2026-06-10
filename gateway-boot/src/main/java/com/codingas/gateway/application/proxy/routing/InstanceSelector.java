@@ -32,23 +32,33 @@ public class InstanceSelector {
     private final TeamChannelGateway teamChannelGateway;
 
     /**
-     * 根据 modelId 和用户团队权限选择可用模型实例
+     * 根据 modelId 和用户身份选择可用模型实例
      *
      * <p>查找所有活跃的 ModelInstance（按 priority 升序排序），过滤出对应的活跃 Channel，
      * 选择 priority 最小的实例。</p>
-     * <p>同时根据用户所属团队的渠道权限进行过滤。</p>
+     * <p>ADMIN 角色跳过团队渠道过滤，可以访问所有活跃渠道。</p>
      *
      * @param modelId 模型 ID
-     * @param userId  用户 ID（用于团队渠道权限过滤）
+     * @param userId  用户 ID
+     * @param role    用户角色（ADMIN 跳过团队渠道过滤）
      * @return 选中的 ModelInstance（包含 channelId 和 modelId，priority 最优）
      * @throws ResourceNotFoundException 无可用实例
      */
-    public ModelInstance select(Long modelId, Long userId) {
-        // 获取用户团队渠道集合
-        Long teamId = userTeamGateway.findTeamIdByUserId(userId);
-        Set<Long> permittedChannelIds = teamId != null
-                ? new HashSet<>(teamChannelGateway.findChannelIdsByTeamId(teamId))
-                : Set.of();
+    public ModelInstance select(Long modelId, Long userId, String role) {
+        // 获取用户团队渠道集合（ADMIN 角色跳过团队过滤）
+        Set<Long> permittedChannelIds;
+        if ("ADMIN".equals(role)) {
+            // ADMIN 可以访问所有活跃渠道
+            permittedChannelIds = channelGateway.findAll().stream()
+                    .filter(ch -> ch.getState() == ChannelState.ACTIVE)
+                    .map(Channel::getId)
+                    .collect(Collectors.toSet());
+        } else {
+            Long teamId = userTeamGateway.findTeamIdByUserId(userId);
+            permittedChannelIds = teamId != null
+                    ? new HashSet<>(teamChannelGateway.findChannelIdsByTeamId(teamId))
+                    : Set.of();
+        }
 
         // 按 priority 升序获取活跃 ModelInstance
         List<ModelInstance> modelInstances = modelInstanceGateway.findActiveByModelIdOrderByPriority(modelId);
