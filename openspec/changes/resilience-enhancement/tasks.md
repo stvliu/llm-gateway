@@ -33,12 +33,12 @@
 
 ## P2 — Metrics 与智能降级
 
-- [ ] **7. Metrics 埋点**
+- [x] **7. Metrics 埋点**
   - `CircuitBreaker` 上报 `gateway.provider.errors` 和 `gateway.circuitbreaker.state`
   - `RetryExecutor` 上报 `gateway.retry.attempts` 和 `gateway.retry.exhausted`
   - 故障转移上报 `gateway.failover.triggered` 和 `gateway.failover.exhausted`
 
-- [ ] **8. 模型级智能降级骨架**
+- [x] **8. 模型级智能降级骨架**
   - `DegradationService` 接口 + 实现
   - 降级链配置加载与解析
   - 降级触发逻辑（基于 ProviderException 类型）

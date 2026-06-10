@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
@@ -67,6 +68,9 @@ class ChatDispatchServiceTest {
     @Mock
     private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
 
+    @Mock
+    private DegradationService degradationService;
+
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -76,7 +80,7 @@ class ChatDispatchServiceTest {
     void setUp() {
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry,
                 protocolConverter, resilientClientFactory, auditGateway, eventPublisher,
-                credentialResolver, circuitBreakerManager);
+                credentialResolver, circuitBreakerManager, degradationService);
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
@@ -84,6 +88,7 @@ class ChatDispatchServiceTest {
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
         lenient().when(circuitBreakerManager.isAvailable(anyLong())).thenReturn(true);
+        lenient().when(degradationService.degrade(anyString(), any())).thenReturn(null);
     }
 
     @Nested

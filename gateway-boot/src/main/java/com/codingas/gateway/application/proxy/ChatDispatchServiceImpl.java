@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.audit.entity.CallLog;
@@ -46,6 +47,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final DomainEventPublisher eventPublisher;
     private final CredentialResolver credentialResolver;
     private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private final DegradationService degradationService;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
@@ -55,7 +57,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                                    AuditGateway auditGateway,
                                    DomainEventPublisher eventPublisher,
                                    CredentialResolver credentialResolver,
-                                   ChannelEndpointCircuitBreakerManager circuitBreakerManager) {
+                                   ChannelEndpointCircuitBreakerManager circuitBreakerManager,
+                                   DegradationService degradationService) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.clientRegistry = clientRegistry;
@@ -65,6 +68,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         this.eventPublisher = eventPublisher;
         this.credentialResolver = credentialResolver;
         this.circuitBreakerManager = circuitBreakerManager;
+        this.degradationService = degradationService;
     }
 
     @Override
@@ -110,6 +114,16 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             callLog.setSuccess(false);
             callLog.setErrorMessage(e.getMessage());
             auditGateway.saveCallLog(callLog);
+
+            // 尝试降级：ProviderException 时切换到备选模型
+            if (e instanceof ProviderException pe) {
+                String fallbackModel = degradationService.degrade(request.getModel(), pe.getErrorType());
+                if (fallbackModel != null) {
+                    log.info("模型 {} 降级为 {}，重新调度", request.getModel(), fallbackModel);
+                    request.setModel(fallbackModel);
+                    return dispatch(request, identity, strategy);
+                }
+            }
             throw e;
         }
     }
