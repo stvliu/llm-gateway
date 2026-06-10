@@ -21,7 +21,7 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAllChannels, useDeleteChannel, useUpdateChannel, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
+import { useAllChannels, useDeleteChannel, useSetChannelState, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
 import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
@@ -111,7 +111,7 @@ export default function Channels() {
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
-  const updateChannel = useUpdateChannel();
+  const setChannelState = useSetChannelState();
   const testCredential = useTestChannelCredential();
   const setEnabledProvider = useSetEnabledProvider();
 
@@ -252,21 +252,12 @@ export default function Channels() {
     }
   };
 
-  /** 从卡片菜单打开详情抽屉并跳转到指定 Tab */
-  const handleOpenDrawerTab = (channel: ChannelCard, tab: string) => {
-    setSelectedChannel(channel);
-    setDrawerInitialTab(tab);
-    setDrawerVisible(true);
-  };
-
   return (
     <div>
-      {/* 页面标题 + 视图切换 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <Title level={4} style={{ margin: 0 }}>
-          {t('title')}
-        </Title>
-        <Segmented
+      <Card title={t('title')}>
+        {/* 视图切换 */}
+        <div style={{ marginBottom: '16px' }}>
+          <Segmented
           value={viewMode}
           onChange={handleViewChange}
           options={[
@@ -357,11 +348,15 @@ export default function Channels() {
             groups={filteredGroups}
             onChannelClick={handleChannelClick}
             onChannelDelete={handleDelete}
-            onChannelToggleState={(id, enabled) => {
-              updateChannel.mutate({ id, data: { state: enabled ? 'ACTIVE' : 'INACTIVE' } });
+            onChannelToggleState={async (id, enabled) => {
+              try {
+                await setChannelState.mutateAsync({ id, enabled });
+                message.success(enabled ? t('statusToggle.enabled') : t('statusToggle.disabled'));
+              } catch {
+                message.error(t('statusToggle.failed'));
+              }
             }}
             onTestChannel={handleTestChannel}
-            onOpenDrawerTab={handleOpenDrawerTab}
             onEditProvider={(id) => {
               const p = providersData?.items?.find((p) => p.id === id);
               if (p) {
@@ -406,8 +401,20 @@ export default function Channels() {
             const ch = channelsWithStats.find((c) => c.id === id);
             if (ch) handleChannelClick(ch);
           }}
+          onToggleState={async (id, enabled) => {
+            try {
+              await setChannelState.mutateAsync({ id, enabled });
+              message.success(enabled ? t('statusToggle.enabled') : t('statusToggle.disabled'));
+            } catch {
+              message.error(t('statusToggle.failed'));
+            }
+          }}
+          onDelete={(id) => handleDelete(id)}
+          onTest={(channel) => handleTestChannel(channel)}
         />
       )}
+
+        </Card>
 
       {/* 渠道详情抽屉 */}
       <ChannelDetailDrawer

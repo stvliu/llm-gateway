@@ -43,23 +43,43 @@ public class ChannelCredentialController {
 
     /**
      * 创建渠道凭证
+     * <p>适配层从路径参数中提取 channelId，补全 DTO 后传给 Service</p>
      */
     @PostMapping
     public ChannelCredentialCreateResponse create(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelCredentialCreateRequest request) {
-        return channelCredentialService.create(channelId, request);
+        // 适配层补全 channelId（不同协议从各自上下文中提取）
+        var fullRequest = new ChannelCredentialCreateRequest(
+                channelId,
+                request.apiKey(),
+                request.priority(),
+                request.weight(),
+                request.description()
+        );
+        return channelCredentialService.create(fullRequest);
     }
 
     /**
      * 更新渠道凭证
+     * <p>适配层从路径参数中提取 channelId 和 id，补全 DTO 后传给 Service</p>
      */
     @PutMapping("/{id}")
     public ChannelCredentialResponse update(
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ChannelCredentialUpdateRequest request) {
-        return channelCredentialService.update(channelId, id, request);
+        // 适配层补全 channelId 和 id（不同协议从各自上下文中提取）
+        var fullRequest = new ChannelCredentialUpdateRequest(
+                channelId,
+                id,
+                request.priority(),
+                request.weight(),
+                request.state(),
+                request.description(),
+                request.apiKey()
+        );
+        return channelCredentialService.update(fullRequest);
     }
 
     /**

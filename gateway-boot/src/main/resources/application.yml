@@ -191,6 +191,8 @@ management:
 # 网关配置
 # ==============================================
 gateway:
+  init:
+    demo-data-enabled: false
   actuator:
     health:
       public-access: true

@@ -32,3 +32,7 @@ server:
 # SaToken 日志启用
 sa-token:
   is-log: true
+
+gateway:
+  init:
+    demo-data-enabled: true

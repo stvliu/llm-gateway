@@ -31,7 +31,9 @@ public class ModelInstanceController {
     public ModelInstanceResponse create(
             @PathVariable Long channelId,
             @Valid @RequestBody ModelInstanceCreateRequest request) {
-        return modelInstanceService.create(channelId, request);
+        // 适配层补全 channelId（不同协议从各自上下文中提取）
+        request.setChannelId(channelId);
+        return modelInstanceService.create(request);
     }
 
     @DeleteMapping("/{id}")

@@ -37,6 +37,10 @@ export const channelApi = {
   update: (id: number, data: UpdateChannelRequest) =>
     api.put<ChannelResponse>(`/channels/${id}`, data),
 
+  /** 切换渠道启用/停用状态 */
+  setState: (id: number, enabled: boolean) =>
+    api.patch<void>(`/channels/${id}/state`, null, { params: { enabled } }),
+
   /** 删除渠道 */
   delete: (id: number) =>
     api.delete<void>(`/channels/${id}`),

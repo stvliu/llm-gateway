@@ -10,7 +10,6 @@ export interface ChannelGroupedListProps {
   onChannelDelete: (id: number) => void;
   onChannelToggleState: (id: number, enabled: boolean) => void;
   onTestChannel: (channel: ChannelCardType) => void;
-  onOpenDrawerTab: (channel: ChannelCardType, tab: string) => void;
   onEditProvider?: (providerId: number) => void;
   onToggleProviderEnabled?: (providerId: number) => void;
   onTestProviderConnectivity?: (providerId: number) => void;
@@ -27,7 +26,6 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   onChannelDelete,
   onChannelToggleState,
   onTestChannel,
-  onOpenDrawerTab,
   onEditProvider,
   onToggleProviderEnabled,
   onTestProviderConnectivity,
@@ -92,7 +90,6 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     onDelete={onChannelDelete}
                     onToggleState={onChannelToggleState}
                     onTest={onTestChannel}
-                    onOpenDrawerTab={onOpenDrawerTab}
                   />
                 ))}
               </div>

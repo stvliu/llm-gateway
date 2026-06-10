@@ -15,6 +15,10 @@ export const userApiKeyApi = {
   listByUser: (userId: number) =>
     api.get<UserApiKey[]>(`/users/${userId}/api-keys`),
 
+  /** 查询所有 API Key（管理员用） */
+  listAll: () =>
+    api.get<UserApiKey[]>('/user-api-keys'),
+
   /** 获取 API Key 详情 */
   getDetail: (id: number) =>
     api.get<UserApiKeyDetail>(`/user-api-keys/${id}/detail`),

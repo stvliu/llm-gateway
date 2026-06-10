@@ -110,7 +110,7 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             ChannelCredential credential = new ChannelCredential();
@@ -157,7 +157,7 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(anthropicContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(anthropicContext);
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
 
@@ -209,7 +209,7 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient rawClient = mock(UpstreamClient.class);
@@ -237,7 +237,7 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L)).thenReturn(openAIContext);
+            when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             UpstreamClient rawClient = mock(UpstreamClient.class);

@@ -1,0 +1,47 @@
+[
+  {
+    "code": "anthropic",
+    "name": "Anthropic",
+    "websiteUrl": "https://www.anthropic.com",
+    "apiDocUrl": "https://docs.anthropic.com/en/api/getting-started",
+    "description": "专注于安全 AI 的研究公司，Claude 系列模型开发商",
+    "models": [
+      { "modelName": "claude-opus-4-8", "displayName": "Claude Opus 4.8", "contextWindow": 1000000 },
+      { "modelName": "claude-sonnet-4-6", "displayName": "Claude Sonnet 4.6", "contextWindow": 1000000 },
+      { "modelName": "claude-haiku-4-5-20251001", "displayName": "Claude Haiku 4.5", "contextWindow": 200000 },
+      { "modelName": "claude-opus-4-7", "displayName": "Claude Opus 4.7", "contextWindow": 1000000 },
+      { "modelName": "claude-opus-4-6", "displayName": "Claude Opus 4.6", "contextWindow": 1000000 },
+      { "modelName": "claude-sonnet-4-5-20250929", "displayName": "Claude Sonnet 4.5", "contextWindow": 200000 }
+    ],
+    "channels": [
+      {
+        "key": "anthropic-default",
+        "name": "Anthropic 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "ANTHROPIC", "url": "https://api.anthropic.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "claude-haiku-4-5-20251001", "upstreamModelName": "claude-haiku-4-5-20251001", "priority": 10, "weight": 100 },
+          { "modelName": "claude-sonnet-4-6", "upstreamModelName": "claude-sonnet-4-6", "priority": 20, "weight": 100 },
+          { "modelName": "claude-opus-4-7", "upstreamModelName": "claude-opus-4-7", "priority": 30, "weight": 100 },
+          { "modelName": "claude-opus-4-8", "upstreamModelName": "claude-opus-4-8", "priority": 40, "weight": 100 }
+        ]
+      },
+      {
+        "key": "anthropic-batch",
+        "name": "Anthropic 批量处理 (50% 折扣)",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "ANTHROPIC", "url": "https://api.anthropic.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "claude-haiku-4-5-20251001", "upstreamModelName": "claude-haiku-4-5-20251001", "priority": 10, "weight": 100 },
+          { "modelName": "claude-sonnet-4-6", "upstreamModelName": "claude-sonnet-4-6", "priority": 20, "weight": 100 },
+          { "modelName": "claude-opus-4-7", "upstreamModelName": "claude-opus-4-7", "priority": 30, "weight": 100 },
+          { "modelName": "claude-opus-4-8", "upstreamModelName": "claude-opus-4-8", "priority": 40, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

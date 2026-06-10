@@ -1,6 +1,5 @@
 package com.codingas.gateway.infrastructure.iam.gateway.database.dataobject;
 
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import jakarta.persistence.*;
 
 import java.time.Instant;
@@ -31,15 +30,8 @@ public class UserApiKeyDo {
     @Column(name = "name", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "models", length = 1000)
-    private String models;
-
-    @Column(name = "quota_limit")
-    private Long quotaLimit;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "state", nullable = false)
-    private UserApiKeyState state;
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -64,12 +56,8 @@ public class UserApiKeyDo {
     public void setKeyEncrypted(String keyEncrypted) { this.keyEncrypted = keyEncrypted; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getModels() { return models; }
-    public void setModels(String models) { this.models = models; }
-    public Long getQuotaLimit() { return quotaLimit; }
-    public void setQuotaLimit(Long quotaLimit) { this.quotaLimit = quotaLimit; }
-    public UserApiKeyState getState() { return state; }
-    public void setState(UserApiKeyState state) { this.state = state; }
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
     public Instant getUpdatedAt() { return updatedAt; }

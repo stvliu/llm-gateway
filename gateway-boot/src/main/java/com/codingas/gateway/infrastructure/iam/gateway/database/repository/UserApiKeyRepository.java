@@ -17,8 +17,11 @@ public interface UserApiKeyRepository extends JpaRepository<UserApiKeyDo, Long> 
 
     Optional<UserApiKeyDo> findByKeyPrefix(String keyPrefix);
 
-    @Query("SELECT u FROM UserApiKeyDo u WHERE u.userId = :userId AND u.state <> 'DELETED'")
+    @Query("SELECT u FROM UserApiKeyDo u WHERE u.userId = :userId AND u.deleted = false")
     List<UserApiKeyDo> findByUserId(@Param("userId") Long userId);
+
+    @Query("SELECT u FROM UserApiKeyDo u WHERE u.deleted = false")
+    List<UserApiKeyDo> findAllNonDeleted();
 
     boolean existsByKeyPrefix(String keyPrefix);
 }

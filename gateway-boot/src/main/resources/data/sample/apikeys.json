@@ -1,0 +1,16 @@
+[
+  { "username": "admin", "name": "admin-master-key" },
+  { "username": "test1", "name": "default-team-key-1" },
+  { "username": "test2", "name": "default-team-key-2" },
+  { "username": "test3", "name": "dev-team-key-1" },
+  { "username": "test4", "name": "dev-team-key-2" },
+  { "username": "test5", "name": "dev-team-key-3" },
+  { "username": "test6", "name": "product-team-key-1" },
+  { "username": "test7", "name": "product-team-key-2" },
+  { "username": "test8", "name": "openclaw-team-key-1" },
+  { "username": "test9", "name": "openclaw-team-key-2" },
+  { "username": "test10", "name": "openclaw-team-key-3" },
+  { "username": "hermes-agent", "name": "hermes-agent-key" },
+  { "username": "claude-code", "name": "claude-code-key" },
+  { "username": "bi-report", "name": "bi-report-key" }
+]

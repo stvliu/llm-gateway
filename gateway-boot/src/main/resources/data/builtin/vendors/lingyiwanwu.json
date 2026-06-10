@@ -1,0 +1,37 @@
+[
+  {
+    "code": "lingyiwanwu",
+    "name": "零一万物",
+    "websiteUrl": "https://www.lingyiwanwu.com",
+    "apiDocUrl": "https://platform.lingyiwanwu.com/docs",
+    "description": "零一万物 Yi 系列大模型平台，支持文本生成和多模态能力",
+    "models": [
+      { "modelName": "yi-lightning", "displayName": "Yi-Lightning", "contextWindow": 128000 },
+      { "modelName": "yi-large-fc", "displayName": "Yi-Large-FC", "contextWindow": 128000 },
+      { "modelName": "yi-large", "displayName": "Yi-Large", "contextWindow": 32000 },
+      { "modelName": "yi-medium", "displayName": "Yi-Medium", "contextWindow": 16000 },
+      { "modelName": "yi-medium-200k", "displayName": "Yi-Medium-200K", "contextWindow": 200000 },
+      { "modelName": "yi-spark", "displayName": "Yi-Spark", "contextWindow": 16000 },
+      { "modelName": "yi-vision", "displayName": "Yi-Vision", "contextWindow": 32000 }
+    ],
+    "channels": [
+      {
+        "key": "lingyiwanwu-default",
+        "name": "零一万物按量付费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.lingyiwanwu.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "yi-spark", "upstreamModelName": "yi-spark", "priority": 5, "weight": 100 },
+          { "modelName": "yi-medium", "upstreamModelName": "yi-medium", "priority": 10, "weight": 100 },
+          { "modelName": "yi-medium-200k", "upstreamModelName": "yi-medium-200k", "priority": 15, "weight": 100 },
+          { "modelName": "yi-large", "upstreamModelName": "yi-large", "priority": 20, "weight": 100 },
+          { "modelName": "yi-large-fc", "upstreamModelName": "yi-large-fc", "priority": 25, "weight": 100 },
+          { "modelName": "yi-lightning", "upstreamModelName": "yi-lightning", "priority": 30, "weight": 100 },
+          { "modelName": "yi-vision", "upstreamModelName": "yi-vision", "priority": 40, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

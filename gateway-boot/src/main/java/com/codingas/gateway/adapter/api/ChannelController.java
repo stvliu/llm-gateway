@@ -56,6 +56,16 @@ public class ChannelController {
         }
     }
 
+    /**
+     * 切换渠道启用/停用状态
+     */
+    @PatchMapping("/{id}/state")
+    public void setState(
+            @PathVariable Long id,
+            @RequestParam boolean enabled) {
+        channelService.setState(id, enabled);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
@@ -69,7 +79,9 @@ public class ChannelController {
     public ChannelEndpointResponse addEndpoint(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        return channelService.addEndpoint(channelId, request);
+        // 适配层补全 channelId（不同协议从各自上下文中提取）
+        request.setChannelId(channelId);
+        return channelService.addEndpoint(request);
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")

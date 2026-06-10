@@ -35,7 +35,7 @@ public interface ChannelService {
      */
     void setState(Long id, boolean enabled);
 
-    ChannelEndpointResponse addEndpoint(Long channelId, ChannelEndpointRequest request);
+    ChannelEndpointResponse addEndpoint(ChannelEndpointRequest request);
 
     ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request);
 

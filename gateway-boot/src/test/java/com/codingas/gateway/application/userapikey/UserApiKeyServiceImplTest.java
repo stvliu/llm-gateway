@@ -4,7 +4,6 @@ import com.codingas.gateway.application.userapikey.dto.*;
 import com.codingas.gateway.domain.iam.service.UserApiKeyGenerator;
 import com.codingas.gateway.domain.iam.service.GeneratedApiKey;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -56,7 +55,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenReturn(saved);
 
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, "test-key"
             );
             UserApiKeyCreateResponse response = service.create(request);
 
@@ -75,7 +74,7 @@ class UserApiKeyServiceImplTest {
                     .thenThrow(new IllegalStateException("无法生成唯一的 API Key，请重试"));
 
             UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, "test-key", List.of("gpt-4o"), 100000L
+                    USER_ID, "test-key"
             );
             assertThatThrownBy(() -> service.create(request))
                     .isInstanceOf(IllegalStateException.class)
@@ -166,21 +165,20 @@ class UserApiKeyServiceImplTest {
     class UpdateTests {
 
         @Test
-        @DisplayName("更新密钥名称和模型")
-        void update_nameAndModels() {
+        @DisplayName("更新密钥名称")
+        void update_name() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
             UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                    "updated-name", List.of("claude-3-5-sonnet"), null, null
+                    "updated-name"
             );
             UserApiKeyResponse response = service.update(API_KEY_ID, request);
 
             assertThat(response).isNotNull();
             verify(userApiKeyGateway).save(argThat(key ->
-                    "updated-name".equals(key.getName()) &&
-                    key.getModels().equals(List.of("claude-3-5-sonnet"))
+                    "updated-name".equals(key.getName())
             ));
         }
 
@@ -190,7 +188,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
             UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(
-                    "updated", null, null, null
+                    "updated"
             );
             assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                     .isInstanceOf(IllegalArgumentException.class);
@@ -220,9 +218,6 @@ class UserApiKeyServiceImplTest {
         apiKey.setKeyPlain("sk-abc1xxxxx");
         apiKey.setKeyPrefix("sk-abc1");
         apiKey.setName("test-key");
-        apiKey.setModels(List.of("gpt-4o"));
-        apiKey.setQuotaLimit(100000L);
-        apiKey.setState(UserApiKeyState.ACTIVE);
         return apiKey;
     }
 }

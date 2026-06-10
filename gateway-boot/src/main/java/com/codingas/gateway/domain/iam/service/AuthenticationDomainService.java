@@ -60,7 +60,7 @@ public class AuthenticationDomainService {
         }
 
         if (!userApiKey.isAvailable()) {
-            log.warn("API Key 不可用: id={}, state={}", userApiKey.getId(), userApiKey.getState());
+            log.warn("API Key 不可用: id={}, deleted={}", userApiKey.getId(), userApiKey.isDeleted());
             throw new AuthenticationFailedException("API Key 已禁用");
         }
 

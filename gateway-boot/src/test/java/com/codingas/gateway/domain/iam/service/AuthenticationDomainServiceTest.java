@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.iam.service;
 
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.enums.UserApiKeyState;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,10 +88,10 @@ class AuthenticationDomainServiceTest {
         }
 
         @Test
-        @DisplayName("Key 已禁用 — 抛异常")
-        void authenticate_keyDisabled() {
+        @DisplayName("Key 已删除 — 抛异常")
+        void authenticate_keyDeleted() {
             UserApiKey apiKey = createSampleApiKey();
-            apiKey.setState(UserApiKeyState.INACTIVE);
+            apiKey.setDeleted(true);
             when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
             when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
 
@@ -108,7 +107,6 @@ class AuthenticationDomainServiceTest {
         apiKey.setUserId(50L);
         apiKey.setKeyHash("hash123");
         apiKey.setKeyPrefix("sk-abc1x");
-        apiKey.setState(UserApiKeyState.ACTIVE);
         return apiKey;
     }
 }

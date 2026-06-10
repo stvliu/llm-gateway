@@ -1,0 +1,51 @@
+[
+  {
+    "code": "azure",
+    "name": "Microsoft Azure",
+    "websiteUrl": "https://azure.microsoft.com",
+    "apiDocUrl": "https://learn.microsoft.com/en-us/azure/ai-services/openai",
+    "description": "Microsoft Azure AI 服务平台，提供 OpenAI、Meta、Mistral 等第三方模型",
+    "models": [
+      { "modelName": "gpt-5.5", "displayName": "GPT-5.5", "contextWindow": 1000000 },
+      { "modelName": "gpt-5.4", "displayName": "GPT-5.4", "contextWindow": 1000000 },
+      { "modelName": "gpt-5.4-mini", "displayName": "GPT-5.4 Mini", "contextWindow": 400000 },
+      { "modelName": "gpt-4o", "displayName": "GPT-4o", "contextWindow": 128000 },
+      { "modelName": "gpt-4o-mini", "displayName": "GPT-4o Mini", "contextWindow": 128000 },
+      { "modelName": "claude-sonnet-4-6", "displayName": "Claude Sonnet 4.6", "contextWindow": 1000000 },
+      { "modelName": "claude-opus-4-7", "displayName": "Claude Opus 4.7", "contextWindow": 1000000 },
+      { "modelName": "mistral-large-3", "displayName": "Mistral Large 3", "contextWindow": 128000 },
+      { "modelName": "llama-4-maverick", "displayName": "Llama 4 Maverick", "contextWindow": 128000 }
+    ],
+    "channels": [
+      {
+        "key": "azure-default",
+        "name": "Azure OpenAI 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://{resource}.openai.azure.com/openai/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "gpt-4o-mini", "upstreamModelName": "gpt-4o-mini", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-4o", "upstreamModelName": "gpt-4o", "priority": 15, "weight": 100 },
+          { "modelName": "gpt-5.4-mini", "upstreamModelName": "gpt-5.4-mini", "priority": 20, "weight": 100 },
+          { "modelName": "gpt-5.4", "upstreamModelName": "gpt-5.4", "priority": 25, "weight": 100 },
+          { "modelName": "gpt-5.5", "upstreamModelName": "gpt-5.5", "priority": 30, "weight": 100 },
+          { "modelName": "mistral-large-3", "upstreamModelName": "mistral-large-3", "priority": 40, "weight": 100 },
+          { "modelName": "llama-4-maverick", "upstreamModelName": "llama-4-maverick", "priority": 50, "weight": 100 }
+        ]
+      },
+      {
+        "key": "azure-anthropic",
+        "name": "Azure Anthropic 模型",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "ANTHROPIC", "url": "https://{resource}.openai.azure.com/openai/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "claude-sonnet-4-6", "upstreamModelName": "claude-sonnet-4-6", "priority": 10, "weight": 100 },
+          { "modelName": "claude-opus-4-7", "upstreamModelName": "claude-opus-4-7", "priority": 20, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,27 @@
+[
+  {
+    "code": "360zhinao",
+    "name": "360智脑",
+    "websiteUrl": "https://ai.360.com",
+    "apiDocUrl": "https://ai.360.com/platform/docs",
+    "description": "360智脑开放平台，提供自研和第三方模型智能路由服务",
+    "models": [
+      { "modelName": "360zhinao-turbo", "displayName": "360zhinao-turbo", "contextWindow": 32768 },
+      { "modelName": "360zhinao-pro", "displayName": "360zhinao-pro", "contextWindow": 65536 }
+    ],
+    "channels": [
+      {
+        "key": "360zhinao-default",
+        "name": "360智脑按量后付费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.360.cn/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "360zhinao-turbo", "upstreamModelName": "360zhinao-turbo", "priority": 10, "weight": 100 },
+          { "modelName": "360zhinao-pro", "upstreamModelName": "360zhinao-pro", "priority": 20, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

@@ -25,13 +25,10 @@ export default function ApiKeySelector({ currentKey, onKeyChange, onCreateClick 
   const { data: keys } = useUserApiKeys(userId);
   const [loadingKeyId, setLoadingKeyId] = useState<number | null>(null);
 
-  // 自动选择第一个 Key
+  // 自动选择第一个可用 Key
   useEffect(() => {
     if (currentKey || !keys || keys.length === 0) return;
-    const activeKey = keys.find((k) => k.state === 'ACTIVE');
-    if (activeKey) {
-      loadKeyDetail(activeKey.id);
-    }
+    loadKeyDetail(keys[0].id);
   }, [keys, currentKey]);
 
   const loadKeyDetail = async (keyId: number) => {

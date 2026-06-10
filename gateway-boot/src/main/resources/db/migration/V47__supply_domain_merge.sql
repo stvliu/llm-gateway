@@ -37,8 +37,12 @@ AND (p.icon_url IS NULL OR p.website_url IS NULL OR p.description IS NULL);
 
 -- === Phase 2: Model 合并 ===
 
--- 2.1 确保 models 表有 knowledge_cutoff 列
+-- 2.1 确保 models 表有 models 表缺少的列
 ALTER TABLE models ADD COLUMN IF NOT EXISTS knowledge_cutoff VARCHAR(32);
+ALTER TABLE models ADD COLUMN IF NOT EXISTS model_family VARCHAR(64);
+ALTER TABLE models ADD COLUMN IF NOT EXISTS max_input_tokens INTEGER;
+ALTER TABLE models ADD COLUMN IF NOT EXISTS max_output_tokens INTEGER;
+ALTER TABLE models ADD COLUMN IF NOT EXISTS modalities TEXT;
 
 -- 2.2 从 model_catalogs 迁移不存在的 Model
 -- model_catalogs 表的 model_name 对应 models.model_name
@@ -73,44 +77,28 @@ AND (
 );
 
 
--- === Phase 3: ChannelModels → ModelInstances（如果尚未完成） ===
+-- === Phase 3: ChannelModels → ModelInstances ===
 
--- 3.1 重命名表（如果尚未完成）
--- H2 不支持 IF EXISTS，先检查表是否存在
--- 在 PostgreSQL 中使用 DO 块处理
-DO $$
-BEGIN
-    -- 检查 channel_models 表是否存在
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'channel_models') THEN
-        -- 重命名表
-        ALTER TABLE channel_models RENAME TO model_instances;
+-- 3.1 重命名表（H2 兼容）
+-- V35 已将 product_models 改名为 channel_models，此处进一步改为 model_instances
+ALTER TABLE channel_models RENAME TO model_instances;
 
-        -- 删除旧的定价字段（如果存在）
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS input_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS output_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS reasoning_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS cache_read_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS cache_write_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS input_audio_price;
-        ALTER TABLE model_instances DROP COLUMN IF EXISTS output_audio_price;
+-- 删除旧的定价字段
+ALTER TABLE model_instances DROP COLUMN IF EXISTS input_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS output_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS reasoning_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS cache_read_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS cache_write_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS input_audio_price;
+ALTER TABLE model_instances DROP COLUMN IF EXISTS output_audio_price;
 
-        -- 新增实例级覆盖字段（如果不存在）
-        ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS capabilities_override JSONB;
-        ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS context_window_override INTEGER;
+-- 新增实例级覆盖字段（使用 JSON 而非 JSONB 以兼容 H2）
+ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS capabilities_override JSON;
+ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS context_window_override INTEGER;
 
-        -- 新增 priority/weight（从 Channel 下沉，如果不存在）
-        ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 100;
-        ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS weight INTEGER DEFAULT 100;
-
-        -- 更新唯一约束名（如果存在旧约束名）
-        IF EXISTS (
-            SELECT 1 FROM information_schema.table_constraints
-            WHERE table_name = 'model_instances' AND constraint_name = 'uk_pm_product_model'
-        ) THEN
-            ALTER TABLE model_instances RENAME CONSTRAINT uk_pm_product_model TO uk_model_instances_channel_model;
-        END IF;
-    END IF;
-END $$;
+-- 新增 priority/weight（从 Channel 下沉）
+ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 100;
+ALTER TABLE model_instances ADD COLUMN IF NOT EXISTS weight INTEGER DEFAULT 100;
 
 
 -- === Phase 4: Catalog 表精简 ===

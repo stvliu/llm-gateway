@@ -1,0 +1,42 @@
+[
+  {
+    "code": "aws-bedrock",
+    "name": "AWS Bedrock",
+    "websiteUrl": "https://aws.amazon.com/bedrock",
+    "apiDocUrl": "https://docs.aws.amazon.com/bedrock",
+    "description": "Amazon Web Services 基础模型服务平台，提供多种领先大模型",
+    "models": [
+      { "modelName": "claude-sonnet-4-6", "displayName": "Claude Sonnet 4.6", "contextWindow": 1000000 },
+      { "modelName": "claude-opus-4-7", "displayName": "Claude Opus 4.7", "contextWindow": 1000000 },
+      { "modelName": "claude-haiku-4-5", "displayName": "Claude Haiku 4.5", "contextWindow": 200000 },
+      { "modelName": "llama-4-maverick", "displayName": "Llama 4 Maverick", "contextWindow": 128000 },
+      { "modelName": "llama-4-scout", "displayName": "Llama 4 Scout", "contextWindow": 128000 },
+      { "modelName": "mistral-large-3", "displayName": "Mistral Large 3", "contextWindow": 128000 },
+      { "modelName": "mistral-small-4", "displayName": "Mistral Small 4", "contextWindow": 128000 },
+      { "modelName": "amazon-nova-pro", "displayName": "Amazon Nova Pro", "contextWindow": 128000 },
+      { "modelName": "amazon-nova-lite", "displayName": "Amazon Nova Lite", "contextWindow": 128000 }
+    ],
+    "channels": [
+      {
+        "key": "aws-bedrock-default",
+        "name": "AWS Bedrock 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://bedrock-runtime.{region}.amazonaws.com" },
+          { "protocol": "ANTHROPIC", "url": "https://bedrock-runtime.{region}.amazonaws.com" }
+        ],
+        "modelInstances": [
+          { "modelName": "claude-haiku-4-5", "upstreamModelName": "anthropic.claude-haiku-4-5", "priority": 10, "weight": 100 },
+          { "modelName": "claude-sonnet-4-6", "upstreamModelName": "anthropic.claude-sonnet-4-6", "priority": 20, "weight": 100 },
+          { "modelName": "claude-opus-4-7", "upstreamModelName": "anthropic.claude-opus-4-7", "priority": 30, "weight": 100 },
+          { "modelName": "llama-4-scout", "upstreamModelName": "meta.llama-4-scout", "priority": 40, "weight": 100 },
+          { "modelName": "llama-4-maverick", "upstreamModelName": "meta.llama-4-maverick", "priority": 45, "weight": 100 },
+          { "modelName": "mistral-small-4", "upstreamModelName": "mistral.mistral-small-4", "priority": 50, "weight": 100 },
+          { "modelName": "mistral-large-3", "upstreamModelName": "mistral.mistral-large-3", "priority": 55, "weight": 100 },
+          { "modelName": "amazon-nova-lite", "upstreamModelName": "amazon.nova-lite", "priority": 60, "weight": 100 },
+          { "modelName": "amazon-nova-pro", "upstreamModelName": "amazon.nova-pro", "priority": 70, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]
