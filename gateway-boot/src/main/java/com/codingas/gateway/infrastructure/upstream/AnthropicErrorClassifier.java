@@ -17,13 +17,22 @@ public class AnthropicErrorClassifier implements ErrorClassificationStrategy {
     public ProviderErrorType classify(int statusCode, String responseBody) {
         return switch (statusCode) {
             case 401 -> ProviderErrorType.AUTHENTICATION_ERROR;
-            case 429 -> ProviderErrorType.RATE_LIMIT_ERROR;
+            case 429 -> classifyRateLimit(responseBody);
             case 400 -> ProviderErrorType.INVALID_REQUEST;
             case 408 -> ProviderErrorType.TIMEOUT_ERROR;
             case 504 -> ProviderErrorType.TIMEOUT_ERROR;
             case 500, 502, 503, 529 -> ProviderErrorType.UPSTREAM_ERROR;
             default -> ProviderErrorType.UNKNOWN_ERROR;
         };
+    }
+
+    private ProviderErrorType classifyRateLimit(String responseBody) {
+        if (responseBody == null) return ProviderErrorType.RATE_LIMIT_ERROR;
+        String lower = responseBody.toLowerCase();
+        if (lower.contains("quota") || lower.contains("insufficient_quota")) {
+            return ProviderErrorType.QUOTA_EXCEEDED;
+        }
+        return ProviderErrorType.RATE_LIMIT_ERROR;
     }
 
     @Override

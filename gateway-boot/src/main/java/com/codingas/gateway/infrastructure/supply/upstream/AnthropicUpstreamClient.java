@@ -136,8 +136,13 @@ public class AnthropicUpstreamClient implements UpstreamClient {
                         }
                         // 流正常结束（无 message_stop 事件）
                         callback.onComplete();
+                    } catch (IOException e) {
+                        ProviderErrorType errorType = e instanceof SocketTimeoutException
+                                ? ProviderErrorType.TIMEOUT_ERROR
+                                : ProviderErrorType.NETWORK_ERROR;
+                        callback.onError(new ProviderException(errorType, "Anthropic 流读取异常: " + e.getMessage()));
                     } catch (Exception e) {
-                        callback.onError(e);
+                        callback.onError(new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "Anthropic 流未知异常", e));
                     }
                 }
             });

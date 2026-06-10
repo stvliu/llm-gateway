@@ -127,8 +127,13 @@ public class OpenAIUpstreamClient implements UpstreamClient {
                             }
                         }
                         callback.onComplete();
+                    } catch (IOException e) {
+                        ProviderErrorType errorType = e instanceof SocketTimeoutException
+                                ? ProviderErrorType.TIMEOUT_ERROR
+                                : ProviderErrorType.NETWORK_ERROR;
+                        callback.onError(new ProviderException(errorType, "OpenAI 流读取异常: " + e.getMessage()));
                     } catch (Exception e) {
-                        callback.onError(e);
+                        callback.onError(new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "OpenAI 流未知异常", e));
                     }
                 }
             });

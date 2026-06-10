@@ -33,6 +33,20 @@ class AnthropicErrorClassifierTest {
         }
 
         @Test
+        @DisplayName("429 + quota 关键字 → QUOTA_EXCEEDED")
+        void status429_withQuota_quotaExceeded() {
+            assertThat(classifier.classify(429, "{\"error\":{\"message\":\"You exceeded your current quota\"}}"))
+                    .isEqualTo(ProviderErrorType.QUOTA_EXCEEDED);
+        }
+
+        @Test
+        @DisplayName("429 + insufficient_quota 关键字 → QUOTA_EXCEEDED")
+        void status429_withInsufficientQuota_quotaExceeded() {
+            assertThat(classifier.classify(429, "{\"error\":{\"message\":\"insufficient_quota\"}}"))
+                    .isEqualTo(ProviderErrorType.QUOTA_EXCEEDED);
+        }
+
+        @Test
         @DisplayName("400 → INVALID_REQUEST")
         void status400_invalidRequest() {
             assertThat(classifier.classify(400, "{}")).isEqualTo(ProviderErrorType.INVALID_REQUEST);
