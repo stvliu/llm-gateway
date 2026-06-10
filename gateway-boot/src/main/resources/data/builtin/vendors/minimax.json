@@ -1,0 +1,62 @@
+[
+  {
+    "code": "minimax",
+    "name": "MiniMax",
+    "websiteUrl": "https://minimaxi.com",
+    "apiDocUrl": "https://platform.minimaxi.com/document",
+    "description": "MiniMax API，国产大模型，支持超长上下文、多模态和语音生成",
+    "models": [
+      { "modelName": "minimax-m3", "displayName": "MiniMax M3", "contextWindow": 1000000 },
+      { "modelName": "minimax-m2.7", "displayName": "MiniMax M2.7", "contextWindow": 200000 },
+      { "modelName": "minimax-m2.5", "displayName": "MiniMax M2.5", "contextWindow": 200000 },
+      { "modelName": "minimax-m2.1", "displayName": "MiniMax M2.1", "contextWindow": 200000 },
+      { "modelName": "minimax-m1", "displayName": "MiniMax M1", "contextWindow": 1000000 },
+      { "modelName": "minimax-text-01", "displayName": "MiniMax-Text-01", "contextWindow": 256000 },
+      { "modelName": "minimax-vl-01", "displayName": "MiniMax-VL-01", "contextWindow": 256000 },
+      { "modelName": "minimax-hailuo-2.3", "displayName": "MiniMax Hailuo 2.3", "contextWindow": 65536 },
+      { "modelName": "minimax-speech-2.8", "displayName": "MiniMax Speech 2.8", "contextWindow": 8192 },
+      { "modelName": "abab6.5s-chat", "displayName": "ABAB 6.5s", "contextWindow": 245760 },
+      { "modelName": "abab6.5-chat", "displayName": "ABAB 6.5", "contextWindow": 245760 },
+      { "modelName": "abab5.5-chat", "displayName": "ABAB 5.5", "contextWindow": 65536 }
+    ],
+    "channels": [
+      {
+        "key": "minimax-default",
+        "name": "MiniMax 按量付费（国内）",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.minimaxi.com/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://api.minimaxi.com/anthropic" }
+        ],
+        "modelInstances": [
+          { "modelName": "minimax-m2.7", "upstreamModelName": "minimax-m2.7", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m2.5", "upstreamModelName": "minimax-m2.5", "priority": 15, "weight": 100 },
+          { "modelName": "minimax-m2.1", "upstreamModelName": "minimax-m2.1", "priority": 20, "weight": 100 },
+          { "modelName": "minimax-m1", "upstreamModelName": "minimax-m1", "priority": 25, "weight": 100 },
+          { "modelName": "minimax-m3", "upstreamModelName": "minimax-m3", "priority": 30, "weight": 100 },
+          { "modelName": "minimax-text-01", "upstreamModelName": "minimax-text-01", "priority": 35, "weight": 100 },
+          { "modelName": "minimax-vl-01", "upstreamModelName": "minimax-vl-01", "priority": 40, "weight": 100 },
+          { "modelName": "abab6.5s-chat", "upstreamModelName": "abab6.5s-chat", "priority": 45, "weight": 100 },
+          { "modelName": "abab6.5-chat", "upstreamModelName": "abab6.5-chat", "priority": 50, "weight": 100 },
+          { "modelName": "abab5.5-chat", "upstreamModelName": "abab5.5-chat", "priority": 55, "weight": 100 }
+        ]
+      },
+      {
+        "key": "minimax-token-plan",
+        "name": "MiniMax Token Plan（订阅制）",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.minimaxi.com/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://api.minimaxi.com/anthropic" }
+        ],
+        "modelInstances": [
+          { "modelName": "minimax-m2.7", "upstreamModelName": "minimax-m2.7", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m2.5", "upstreamModelName": "minimax-m2.5", "priority": 15, "weight": 100 },
+          { "modelName": "minimax-m3", "upstreamModelName": "minimax-m3", "priority": 20, "weight": 100 },
+          { "modelName": "minimax-text-01", "upstreamModelName": "minimax-text-01", "priority": 25, "weight": 100 },
+          { "modelName": "minimax-vl-01", "upstreamModelName": "minimax-vl-01", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

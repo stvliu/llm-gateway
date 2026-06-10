@@ -1,0 +1,68 @@
+[
+  {
+    "name": "default",
+    "description": "默认团队",
+    "channels": ["openai-default", "anthropic-default"]
+  },
+  {
+    "name": "dev",
+    "description": "开发团队",
+    "channels": [
+      "openai-default", "openai-batch",
+      "anthropic-default", "anthropic-batch",
+      "deepseek-default",
+      "google-default",
+      "qwen-default", "qwen-batch", "qwen-coding-lite", "qwen-coding-pro",
+      "moonshot-default", "moonshot-resource-package",
+      "minimax-default", "minimax-token-plan",
+      "xunfei-default",
+      "tencent-default", "tencent-token-plan-lite", "tencent-token-plan-pro",
+      "wenxin-default", "wenxin-coding-lite", "wenxin-coding-pro",
+      "huawei-default",
+      "zhipu-default", "zhipu-resource-package",
+      "volcengine-default", "volcengine-agent-plan", "volcengine-coding-plan",
+      "stepfun-default",
+      "360zhinao-default",
+      "xai-default",
+      "mistral-default",
+      "baichuan-default",
+      "lingyiwanwu-default",
+      "azure-default", "azure-anthropic",
+      "aws-bedrock-default"
+    ]
+  },
+  {
+    "name": "product",
+    "description": "产品团队",
+    "channels": [
+      "openai-batch",
+      "anthropic-batch",
+      "qwen-batch",
+      "zhipu-resource-package"
+    ]
+  },
+  {
+    "name": "openclaw",
+    "description": "OpenClaw 团队",
+    "channels": [
+      "deepseek-default",
+      "zhipu-default", "zhipu-resource-package",
+      "volcengine-default"
+    ]
+  },
+  {
+    "name": "volc-ai",
+    "description": "AI Agent 团队 — 使用 TokenPlan 价格计划",
+    "channels": ["volcengine-agent-plan"]
+  },
+  {
+    "name": "volc-coding",
+    "description": "编码辅助团队 — 使用 CodingPlan 价格计划",
+    "channels": ["volcengine-coding-plan"]
+  },
+  {
+    "name": "volc-bi",
+    "description": "BI 报表团队 — 使用默认价格计划",
+    "channels": ["volcengine-default"]
+  }
+]

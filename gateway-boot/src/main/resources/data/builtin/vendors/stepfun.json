@@ -1,0 +1,50 @@
+[
+  {
+    "code": "stepfun",
+    "name": "阶跃星辰",
+    "websiteUrl": "https://www.stepfun.com",
+    "apiDocUrl": "https://platform.stepfun.com/docs",
+    "description": "阶跃星辰大模型平台，支持文本、视觉、音频多模态模型",
+    "models": [
+      { "modelName": "step-3.7-flash", "displayName": "Step 3.7 Flash", "contextWindow": 128000 },
+      { "modelName": "step-3.5-flash", "displayName": "Step 3.5 Flash", "contextWindow": 128000 },
+      { "modelName": "step-3.5-turbo", "displayName": "Step 3.5 Turbo", "contextWindow": 128000 },
+      { "modelName": "step-2", "displayName": "Step 2", "contextWindow": 128000 },
+      { "modelName": "step-audio-2.5-realtime", "displayName": "StepAudio 2.5 Realtime", "contextWindow": 32768 },
+      { "modelName": "step-audio-2.5-chat", "displayName": "StepAudio 2.5 Chat", "contextWindow": 32768 },
+      { "modelName": "step-image-edit-2", "displayName": "Step Image Edit 2", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "stepfun-default",
+        "name": "阶跃星辰按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.stepfun.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "step-3.5-flash", "upstreamModelName": "step-3.5-flash", "priority": 10, "weight": 100 },
+          { "modelName": "step-3.5-turbo", "upstreamModelName": "step-3.5-turbo", "priority": 15, "weight": 100 },
+          { "modelName": "step-3.7-flash", "upstreamModelName": "step-3.7-flash", "priority": 20, "weight": 100 },
+          { "modelName": "step-2", "upstreamModelName": "step-2", "priority": 30, "weight": 100 },
+          { "modelName": "step-audio-2.5-chat", "upstreamModelName": "step-audio-2.5-chat", "priority": 40, "weight": 100 },
+          { "modelName": "step-image-edit-2", "upstreamModelName": "step-image-edit-2", "priority": 50, "weight": 100 }
+        ]
+      },
+      {
+        "key": "stepfun-step-plan",
+        "name": "阶跃星辰 Step Plan（订阅制）",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.stepfun.com/step_plan/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://api.stepfun.com/step_plan" }
+        ],
+        "modelInstances": [
+          { "modelName": "step-3.5-flash", "upstreamModelName": "step-3.5-flash", "priority": 10, "weight": 100 },
+          { "modelName": "step-3.7-flash", "upstreamModelName": "step-3.7-flash", "priority": 15, "weight": 100 },
+          { "modelName": "step-2", "upstreamModelName": "step-2", "priority": 20, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

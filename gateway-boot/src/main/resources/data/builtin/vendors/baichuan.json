@@ -1,0 +1,31 @@
+[
+  {
+    "code": "baichuan",
+    "name": "百川智能",
+    "websiteUrl": "https://www.baichuan-ai.com",
+    "apiDocUrl": "https://platform.baichuan-ai.com/docs",
+    "description": "百川智能大模型平台，提供通用大模型和医疗大模型服务",
+    "models": [
+      { "modelName": "baichuan-m3plus", "displayName": "Baichuan M3Plus", "contextWindow": 128000 },
+      { "modelName": "baichuan4-turbo", "displayName": "Baichuan4-Turbo", "contextWindow": 128000 },
+      { "modelName": "baichuan4-air", "displayName": "Baichuan4-Air", "contextWindow": 32768 },
+      { "modelName": "baichuan3-turbo", "displayName": "Baichuan3-Turbo", "contextWindow": 32768 }
+    ],
+    "channels": [
+      {
+        "key": "baichuan-default",
+        "name": "百川智能按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.baichuan-ai.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "baichuan4-air", "upstreamModelName": "baichuan4-air", "priority": 10, "weight": 100 },
+          { "modelName": "baichuan3-turbo", "upstreamModelName": "baichuan3-turbo", "priority": 15, "weight": 100 },
+          { "modelName": "baichuan4-turbo", "upstreamModelName": "baichuan4-turbo", "priority": 20, "weight": 100 },
+          { "modelName": "baichuan-m3plus", "upstreamModelName": "baichuan-m3plus", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

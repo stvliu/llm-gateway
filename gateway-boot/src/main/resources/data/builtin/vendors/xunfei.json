@@ -1,0 +1,39 @@
+[
+  {
+    "code": "xunfei",
+    "name": "讯飞星火",
+    "websiteUrl": "https://xinghuo.xfyun.cn",
+    "apiDocUrl": "https://www.xfyun.cn/doc/spark",
+    "description": "科大讯飞自研大语言模型，支持多模态和语音交互",
+    "models": [
+      { "modelName": "spark-x2-flash", "displayName": "星火 X2 Flash", "contextWindow": 256000 },
+      { "modelName": "spark-x2", "displayName": "星火 X2", "contextWindow": 131072 },
+      { "modelName": "spark-x1.5", "displayName": "星火 X1.5", "contextWindow": 131072 },
+      { "modelName": "spark-ultra", "displayName": "星火 4.0 Ultra", "contextWindow": 32768 },
+      { "modelName": "spark-max", "displayName": "星火 Max", "contextWindow": 32768 },
+      { "modelName": "spark-pro-128k", "displayName": "星火 Pro 128K", "contextWindow": 131072 },
+      { "modelName": "spark-pro", "displayName": "星火 Pro", "contextWindow": 8192 },
+      { "modelName": "spark-lite", "displayName": "星火 Lite", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "xunfei-default",
+        "name": "讯飞星火按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://spark-api-open.xf-yun.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "spark-lite", "upstreamModelName": "lite", "priority": 5, "weight": 100 },
+          { "modelName": "spark-pro", "upstreamModelName": "generalv3", "priority": 10, "weight": 100 },
+          { "modelName": "spark-pro-128k", "upstreamModelName": "pro-128k", "priority": 12, "weight": 100 },
+          { "modelName": "spark-max", "upstreamModelName": "generalv3.5", "priority": 15, "weight": 100 },
+          { "modelName": "spark-ultra", "upstreamModelName": "4.0Ultra", "priority": 20, "weight": 100 },
+          { "modelName": "spark-x1.5", "upstreamModelName": "spark-x1.5", "priority": 25, "weight": 100 },
+          { "modelName": "spark-x2", "upstreamModelName": "spark-x2", "priority": 30, "weight": 100 },
+          { "modelName": "spark-x2-flash", "upstreamModelName": "spark-x2-flash", "priority": 35, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

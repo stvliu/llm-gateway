@@ -1,0 +1,48 @@
+[
+  {
+    "code": "openai",
+    "name": "OpenAI",
+    "websiteUrl": "https://openai.com",
+    "apiDocUrl": "https://platform.openai.com/docs/api-reference",
+    "description": "全球领先的人工智能研究公司，提供 GPT 系列模型",
+    "models": [
+      { "modelName": "gpt-5.5", "displayName": "GPT-5.5", "contextWindow": 1000000 },
+      { "modelName": "gpt-5.4", "displayName": "GPT-5.4", "contextWindow": 1000000 },
+      { "modelName": "gpt-5.4-mini", "displayName": "GPT-5.4 Mini", "contextWindow": 400000 },
+      { "modelName": "gpt-4o", "displayName": "GPT-4o", "contextWindow": 128000 },
+      { "modelName": "gpt-4o-mini", "displayName": "GPT-4o Mini", "contextWindow": 128000 }
+    ],
+    "channels": [
+      {
+        "key": "openai-default",
+        "name": "OpenAI 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.openai.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "gpt-5.5", "upstreamModelName": "gpt-5.5", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-5.4", "upstreamModelName": "gpt-5.4", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-5.4-mini", "upstreamModelName": "gpt-5.4-mini", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-4o", "upstreamModelName": "gpt-4o", "priority": 20, "weight": 100 },
+          { "modelName": "gpt-4o-mini", "upstreamModelName": "gpt-4o-mini", "priority": 20, "weight": 100 }
+        ]
+      },
+      {
+        "key": "openai-batch",
+        "name": "OpenAI 批量处理 (50% 折扣)",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.openai.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "gpt-5.5", "upstreamModelName": "gpt-5.5", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-5.4", "upstreamModelName": "gpt-5.4", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-5.4-mini", "upstreamModelName": "gpt-5.4-mini", "priority": 10, "weight": 100 },
+          { "modelName": "gpt-4o", "upstreamModelName": "gpt-4o", "priority": 20, "weight": 100 },
+          { "modelName": "gpt-4o-mini", "upstreamModelName": "gpt-4o-mini", "priority": 20, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

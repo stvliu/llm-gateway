@@ -1,0 +1,29 @@
+[
+  {
+    "code": "huawei",
+    "name": "华为云",
+    "websiteUrl": "https://www.huaweicloud.com/product/modelarts/studio.html",
+    "apiDocUrl": "https://support.huaweicloud.com/modelarts",
+    "description": "华为云 ModelArts Studio，提供盘古自研模型和第三方模型服务",
+    "models": [
+      { "modelName": "pangu-ultra", "displayName": "盘古 Ultra", "contextWindow": 128000 },
+      { "modelName": "pangu-pro", "displayName": "盘古 Pro", "contextWindow": 128000 },
+      { "modelName": "pangu-lite", "displayName": "盘古 Lite", "contextWindow": 32768 }
+    ],
+    "channels": [
+      {
+        "key": "huawei-default",
+        "name": "华为云按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://{endpoint}.modelarts.cn-southwest-2.myhuaweicloud.com/api/v2" }
+        ],
+        "modelInstances": [
+          { "modelName": "pangu-lite", "upstreamModelName": "pangu-lite", "priority": 10, "weight": 100 },
+          { "modelName": "pangu-pro", "upstreamModelName": "pangu-pro", "priority": 20, "weight": 100 },
+          { "modelName": "pangu-ultra", "upstreamModelName": "pangu-ultra", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

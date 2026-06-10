@@ -1,0 +1,59 @@
+[
+  {
+    "code": "zhipu",
+    "name": "智谱AI",
+    "websiteUrl": "https://www.zhipuai.cn",
+    "apiDocUrl": "https://open.bigmodel.cn/dev/api",
+    "description": "清华大学系 AI 公司，GLM 系列模型开发商",
+    "models": [
+      { "modelName": "glm-5.1", "displayName": "GLM-5.1", "contextWindow": 200000 },
+      { "modelName": "glm-5", "displayName": "GLM-5", "contextWindow": 200000 },
+      { "modelName": "glm-5-turbo", "displayName": "GLM-5-Turbo", "contextWindow": 200000 },
+      { "modelName": "glm-4.7", "displayName": "GLM-4.7", "contextWindow": 200000 },
+      { "modelName": "glm-4.7-flash", "displayName": "GLM-4.7-Flash", "contextWindow": 200000 },
+      { "modelName": "glm-4.7-flashx", "displayName": "GLM-4.7-FlashX", "contextWindow": 200000 },
+      { "modelName": "glm-4.6", "displayName": "GLM-4.6", "contextWindow": 200000 },
+      { "modelName": "glm-4.5-air", "displayName": "GLM-4.5-Air", "contextWindow": 128000 },
+      { "modelName": "glm-4.5-airx", "displayName": "GLM-4.5-AirX", "contextWindow": 128000 },
+      { "modelName": "glm-4-long", "displayName": "GLM-4-Long", "contextWindow": 1000000 }
+    ],
+    "channels": [
+      {
+        "key": "zhipu-default",
+        "name": "智谱AI 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/paas/v4" }
+        ],
+        "modelInstances": [
+          { "modelName": "glm-4.7-flash", "upstreamModelName": "glm-4.7-flash", "priority": 10, "weight": 100 },
+          { "modelName": "glm-4.7-flashx", "upstreamModelName": "glm-4.7-flashx", "priority": 15, "weight": 100 },
+          { "modelName": "glm-4.5-air", "upstreamModelName": "glm-4.5-air", "priority": 20, "weight": 100 },
+          { "modelName": "glm-4.5-airx", "upstreamModelName": "glm-4.5-airx", "priority": 25, "weight": 100 },
+          { "modelName": "glm-4.6", "upstreamModelName": "glm-4.6", "priority": 30, "weight": 100 },
+          { "modelName": "glm-4.7", "upstreamModelName": "glm-4.7", "priority": 40, "weight": 100 },
+          { "modelName": "glm-5-turbo", "upstreamModelName": "glm-5-turbo", "priority": 50, "weight": 100 },
+          { "modelName": "glm-5", "upstreamModelName": "glm-5", "priority": 60, "weight": 100 },
+          { "modelName": "glm-5.1", "upstreamModelName": "glm-5.1", "priority": 70, "weight": 100 },
+          { "modelName": "glm-4-long", "upstreamModelName": "glm-4-long", "priority": 80, "weight": 100 }
+        ]
+      },
+      {
+        "key": "zhipu-resource-package",
+        "name": "智谱AI 资源包",
+        "billingMode": "PREPAID_PACKAGE",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://open.bigmodel.cn/api/paas/v4" }
+        ],
+        "modelInstances": [
+          { "modelName": "glm-4.7-flash", "upstreamModelName": "glm-4.7-flash", "priority": 10, "weight": 100 },
+          { "modelName": "glm-4.7", "upstreamModelName": "glm-4.7", "priority": 20, "weight": 100 },
+          { "modelName": "glm-4.6", "upstreamModelName": "glm-4.6", "priority": 30, "weight": 100 },
+          { "modelName": "glm-5-turbo", "upstreamModelName": "glm-5-turbo", "priority": 40, "weight": 100 },
+          { "modelName": "glm-5", "upstreamModelName": "glm-5", "priority": 50, "weight": 100 },
+          { "modelName": "glm-5.1", "upstreamModelName": "glm-5.1", "priority": 60, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,94 @@
+[
+  {
+    "code": "volcengine",
+    "name": "火山方舟",
+    "websiteUrl": "https://www.volcengine.com/product/ark",
+    "apiDocUrl": "https://www.volcengine.com/docs/82379/1263482",
+    "description": "字节跳动推出的大模型服务平台，支持多种开源和自研模型",
+    "models": [
+      { "modelName": "deepseek-v4-flash-260425", "displayName": "DeepSeek-V4-Flash-260425", "contextWindow": 64000 },
+      { "modelName": "deepseek-v4-pro-260425", "displayName": "DeepSeek-V4-Pro-260425", "contextWindow": 64000 },
+      { "modelName": "doubao-seed-2-0-lite-260428", "displayName": "Doubao-Seed-2.0-Lite-260428", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2-0-code-preview-260215", "displayName": "Doubao-Seed-2.0-Code-Preview-260215", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2-0-mini-260428", "displayName": "Doubao-Seed-2.0-Mini-260428", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2-0-pro-260215", "displayName": "Doubao-Seed-2.0-Pro-260215", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2.0-code", "displayName": "Doubao-Seed-2.0-Code", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2.0-pro", "displayName": "Doubao-Seed-2.0-Pro", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-2.0-lite", "displayName": "Doubao-Seed-2.0-Lite", "contextWindow": 128000 },
+      { "modelName": "doubao-seed-code", "displayName": "Doubao-Seed-Code", "contextWindow": 128000 },
+      { "modelName": "minimax-m2.7", "displayName": "MiniMax-M2.7", "contextWindow": 128000 },
+      { "modelName": "minimax-m3", "displayName": "MiniMax-M3", "contextWindow": 128000 },
+      { "modelName": "kimi-k2.6", "displayName": "Kimi-K2.6", "contextWindow": 128000 },
+      { "modelName": "doubao-embedding-vision", "displayName": "Doubao-Embedding-Vision", "contextWindow": 8192 },
+      { "modelName": "doubao-seedream-5.0-lite", "displayName": "Doubao-Seedream-5.0-Lite", "contextWindow": 128000 },
+      { "modelName": "doubao-seedance-1.5-pro", "displayName": "Doubao-Seedance-1.5-Pro", "contextWindow": 128000 },
+      { "modelName": "doubao-seedance-2.0", "displayName": "Doubao-Seedance-2.0", "contextWindow": 128000 },
+      { "modelName": "doubao-seedance-2.0-fast", "displayName": "Doubao-Seedance-2.0-Fast", "contextWindow": 128000 }
+    ],
+    "channels": [
+      {
+        "key": "volcengine-default",
+        "name": "火山引擎默认计划（按 Token）",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://ark.cn-beijing.volces.com/api/v3/chat/completions" }
+        ],
+        "modelInstances": [
+          { "modelName": "deepseek-v4-flash-260425", "upstreamModelName": "deepseek-v4-flash-260425", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-pro-260425", "upstreamModelName": "deepseek-v4-pro-260425", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2-0-lite-260428", "upstreamModelName": "doubao-seed-2-0-lite-260428", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2-0-code-preview-260215", "upstreamModelName": "doubao-seed-2-0-code-preview-260215", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2-0-mini-260428", "upstreamModelName": "doubao-seed-2-0-mini-260428", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2-0-pro-260215", "upstreamModelName": "doubao-seed-2-0-pro-260215", "priority": 10, "weight": 100 }
+        ]
+      },
+      {
+        "key": "volcengine-agent-plan",
+        "name": "火山引擎 AgentPlan（燃料值/包月）",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://ark.cn-beijing.volces.com/api/plan/v3" },
+          { "protocol": "ANTHROPIC", "url": "https://ark.cn-beijing.volces.com/api/plan" }
+        ],
+        "modelInstances": [
+          { "modelName": "doubao-seed-2.0-mini", "upstreamModelName": "doubao-seed-2.0-mini", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2.0-lite", "upstreamModelName": "doubao-seed-2.0-lite", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-flash", "upstreamModelName": "deepseek-v4-flash", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2.0-code", "upstreamModelName": "doubao-seed-2.0-code", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2.0-pro", "upstreamModelName": "doubao-seed-2.0-pro", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m2.7", "upstreamModelName": "minimax-m2.7", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m3", "upstreamModelName": "minimax-m3", "priority": 10, "weight": 100 },
+          { "modelName": "glm-5.1", "upstreamModelName": "glm-5.1", "priority": 10, "weight": 100 },
+          { "modelName": "kimi-k2.6", "upstreamModelName": "kimi-k2.6", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-pro", "upstreamModelName": "deepseek-v4-pro", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-embedding-vision", "upstreamModelName": "doubao-embedding-vision", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seedream-5.0-lite", "upstreamModelName": "doubao-seedream-5.0-lite", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seedance-1.5-pro", "upstreamModelName": "doubao-seedance-1.5-pro", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seedance-2.0", "upstreamModelName": "doubao-seedance-2.0", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seedance-2.0-fast", "upstreamModelName": "doubao-seedance-2.0-fast", "priority": 10, "weight": 100 }
+        ]
+      },
+      {
+        "key": "volcengine-coding-plan",
+        "name": "火山引擎 CodingPlan（调用次数/包月）",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://ark.cn-beijing.volces.com/api/coding/v3" },
+          { "protocol": "ANTHROPIC", "url": "https://ark.cn-beijing.volces.com/api/coding" }
+        ],
+        "modelInstances": [
+          { "modelName": "doubao-seed-2.0-code", "upstreamModelName": "doubao-seed-2.0-code", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2.0-pro", "upstreamModelName": "doubao-seed-2.0-pro", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-2.0-lite", "upstreamModelName": "doubao-seed-2.0-lite", "priority": 10, "weight": 100 },
+          { "modelName": "doubao-seed-code", "upstreamModelName": "doubao-seed-code", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m2.7", "upstreamModelName": "minimax-m2.7", "priority": 10, "weight": 100 },
+          { "modelName": "minimax-m3", "upstreamModelName": "minimax-m3", "priority": 10, "weight": 100 },
+          { "modelName": "glm-5.1", "upstreamModelName": "glm-5.1", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-flash", "upstreamModelName": "deepseek-v4-flash", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-pro", "upstreamModelName": "deepseek-v4-pro", "priority": 10, "weight": 100 },
+          { "modelName": "kimi-k2.6", "upstreamModelName": "kimi-k2.6", "priority": 10, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

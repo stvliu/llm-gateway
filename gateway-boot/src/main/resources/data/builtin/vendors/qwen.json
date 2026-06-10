@@ -1,0 +1,92 @@
+[
+  {
+    "code": "qwen",
+    "name": "通义千问",
+    "websiteUrl": "https://tongyi.aliyun.com/qianwen",
+    "apiDocUrl": "https://help.aliyun.com/zh/model-studio/developer-reference",
+    "description": "阿里云推出的大规模语言模型系列，提供文本生成、多模态、语音等多种模型",
+    "models": [
+      { "modelName": "qwen3.7-max", "displayName": "Qwen3.7-Max", "contextWindow": 131072 },
+      { "modelName": "qwen3.7-plus", "displayName": "Qwen3.7-Plus", "contextWindow": 131072 },
+      { "modelName": "qwen3.6-flash", "displayName": "Qwen3.6-Flash", "contextWindow": 1000000 },
+      { "modelName": "qwen3-max", "displayName": "Qwen3-Max", "contextWindow": 131072 },
+      { "modelName": "qwen3-plus", "displayName": "Qwen3-Plus", "contextWindow": 131072 },
+      { "modelName": "qwen3-turbo", "displayName": "Qwen3-Turbo", "contextWindow": 1000000 },
+      { "modelName": "qwen-max", "displayName": "Qwen-Max", "contextWindow": 32000 },
+      { "modelName": "qwen-plus", "displayName": "Qwen-Plus", "contextWindow": 131072 },
+      { "modelName": "qwen-turbo", "displayName": "Qwen-Turbo", "contextWindow": 1000000 },
+      { "modelName": "qwen3.5-omni-plus", "displayName": "Qwen3.5-Omni-Plus", "contextWindow": 131072 },
+      { "modelName": "text-embedding-v4", "displayName": "Text-Embedding-V4", "contextWindow": 8192 },
+      { "modelName": "qwen3-rerank", "displayName": "Qwen3-Rerank", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "qwen-default",
+        "name": "通义千问按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "qwen3.6-flash", "upstreamModelName": "qwen3.6-flash", "priority": 5, "weight": 100 },
+          { "modelName": "qwen3-turbo", "upstreamModelName": "qwen3-turbo", "priority": 10, "weight": 100 },
+          { "modelName": "qwen3.7-plus", "upstreamModelName": "qwen3.7-plus", "priority": 15, "weight": 100 },
+          { "modelName": "qwen3-plus", "upstreamModelName": "qwen3-plus", "priority": 20, "weight": 100 },
+          { "modelName": "qwen3.7-max", "upstreamModelName": "qwen3.7-max", "priority": 25, "weight": 100 },
+          { "modelName": "qwen3-max", "upstreamModelName": "qwen3-max", "priority": 30, "weight": 100 },
+          { "modelName": "qwen-turbo", "upstreamModelName": "qwen-turbo", "priority": 40, "weight": 100 },
+          { "modelName": "qwen-plus", "upstreamModelName": "qwen-plus", "priority": 50, "weight": 100 },
+          { "modelName": "qwen-max", "upstreamModelName": "qwen-max", "priority": 60, "weight": 100 },
+          { "modelName": "qwen3.5-omni-plus", "upstreamModelName": "qwen3.5-omni-plus", "priority": 70, "weight": 100 },
+          { "modelName": "text-embedding-v4", "upstreamModelName": "text-embedding-v4", "priority": 80, "weight": 100 },
+          { "modelName": "qwen3-rerank", "upstreamModelName": "qwen3-rerank", "priority": 90, "weight": 100 }
+        ]
+      },
+      {
+        "key": "qwen-batch",
+        "name": "通义千问批量处理",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "qwen3.6-flash", "upstreamModelName": "qwen3.6-flash", "priority": 5, "weight": 100 },
+          { "modelName": "qwen3-turbo", "upstreamModelName": "qwen3-turbo", "priority": 10, "weight": 100 },
+          { "modelName": "qwen3.7-plus", "upstreamModelName": "qwen3.7-plus", "priority": 15, "weight": 100 },
+          { "modelName": "qwen3-plus", "upstreamModelName": "qwen3-plus", "priority": 20, "weight": 100 },
+          { "modelName": "qwen3.7-max", "upstreamModelName": "qwen3.7-max", "priority": 25, "weight": 100 },
+          { "modelName": "qwen3-max", "upstreamModelName": "qwen3-max", "priority": 30, "weight": 100 }
+        ]
+      },
+      {
+        "key": "qwen-coding-lite",
+        "name": "阿里云 Coding Plan Lite",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "qwen3.6-flash", "upstreamModelName": "qwen3.6-flash", "priority": 10, "weight": 100 },
+          { "modelName": "qwen3.7-plus", "upstreamModelName": "qwen3.7-plus", "priority": 20, "weight": 100 },
+          { "modelName": "qwen3.7-max", "upstreamModelName": "qwen3.7-max", "priority": 30, "weight": 100 }
+        ]
+      },
+      {
+        "key": "qwen-coding-pro",
+        "name": "阿里云 Coding Plan Pro",
+        "billingMode": "SUBSCRIPTION",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://dashscope.aliyuncs.com/compatible-mode/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "qwen3.6-flash", "upstreamModelName": "qwen3.6-flash", "priority": 10, "weight": 100 },
+          { "modelName": "qwen3.7-plus", "upstreamModelName": "qwen3.7-plus", "priority": 20, "weight": 100 },
+          { "modelName": "qwen3.7-max", "upstreamModelName": "qwen3.7-max", "priority": 30, "weight": 100 },
+          { "modelName": "qwen3.5-omni-plus", "upstreamModelName": "qwen3.5-omni-plus", "priority": 40, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]
