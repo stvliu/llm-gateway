@@ -1,5 +1,7 @@
 package com.codingas.gateway.infrastructure.resilience;
 
+import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -24,8 +26,6 @@ class RetryExecutorTest {
     void setUp() {
         properties = new GatewayRetryProperties();
         properties.setMaxAttempts(3);
-        properties.setBackoffInitial(1); // 测试用最小退避
-        properties.setBackoffMultiplier(1.0);
         properties.setRetryableStatusCodes(Set.of(429, 500, 502, 503));
         executor = new RetryExecutor(properties);
     }
@@ -75,6 +75,45 @@ class RetryExecutorTest {
             })).isInstanceOf(RetryableException.class)
               .hasMessageContaining("500");
         }
+
+        @Test
+        @DisplayName("ProviderException RATE_LIMIT_ERROR 重试")
+        void rateLimit_retriesWithStrategy() {
+            properties.getRateLimit().setMaxAttempts(3);
+            properties.getRateLimit().setBackoffInitial(1);
+            executor = new RetryExecutor(properties);
+            AtomicInteger counter = new AtomicInteger(0);
+            String result = executor.execute(() -> {
+                if (counter.incrementAndGet() < 3) {
+                    throw new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429 限流");
+                }
+                return "ok";
+            });
+            assertThat(result).isEqualTo("ok");
+            assertThat(counter.get()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("QUOTA_EXCEEDED 不可重试")
+        void quotaExceeded_notRetryable() {
+            AtomicInteger counter = new AtomicInteger(0);
+            assertThatThrownBy(() -> executor.execute(() -> {
+                counter.incrementAndGet();
+                throw new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限");
+            })).isInstanceOf(ProviderException.class);
+            assertThat(counter.get()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("AUTHENTICATION_ERROR 不可重试")
+        void authenticationError_notRetryable() {
+            AtomicInteger counter = new AtomicInteger(0);
+            assertThatThrownBy(() -> executor.execute(() -> {
+                counter.incrementAndGet();
+                throw new ProviderException(ProviderErrorType.AUTHENTICATION_ERROR, "401");
+            })).isInstanceOf(ProviderException.class);
+            assertThat(counter.get()).isEqualTo(1);
+        }
     }
 
     @Nested
@@ -92,27 +131,19 @@ class RetryExecutorTest {
         void isRetryable_plainException_returnsFalse() {
             assertThat(executor.isRetryable(new IllegalArgumentException("bad"))).isFalse();
         }
-    }
-
-    @Nested
-    @DisplayName("calculateDelay 退避计算")
-    class CalculateDelayTests {
 
         @Test
-        @DisplayName("第一次重试延迟为 backoffInitial")
-        void calculateDelay_firstAttempt_returnsInitial() {
-            assertThat(executor.calculateDelay(1)).isEqualTo(1);
+        @DisplayName("ProviderException RATE_LIMIT_ERROR 可重试")
+        void isRetryable_rateLimitError_returnsTrue() {
+            assertThat(executor.isRetryable(
+                new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))).isTrue();
         }
 
         @Test
-        @DisplayName("退避按倍数增长")
-        void calculateDelay_withMultiplier_grows() {
-            properties.setBackoffInitial(1000);
-            properties.setBackoffMultiplier(2.0);
-            RetryExecutor exec = new RetryExecutor(properties);
-            assertThat(exec.calculateDelay(1)).isEqualTo(1000);
-            assertThat(exec.calculateDelay(2)).isEqualTo(2000);
-            assertThat(exec.calculateDelay(3)).isEqualTo(4000);
+        @DisplayName("ProviderException QUOTA_EXCEEDED 不可重试")
+        void isRetryable_quotaExceeded_returnsFalse() {
+            assertThat(executor.isRetryable(
+                new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限"))).isFalse();
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.codingas.gateway.infrastructure.resilience;
 
+import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -10,22 +12,18 @@ import java.util.function.Supplier;
 /**
  * 重试执行器
  *
- * <p>基于指数退避策略执行带重试的操作。</p>
+ * <p>基于策略模式执行带重试的操作，根据异常类型选择对应的重试策略。</p>
  */
 @Component
 public class RetryExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(RetryExecutor.class);
 
-    private final int maxAttempts;
-    private final long backoffInitial;
-    private final double backoffMultiplier;
+    private final GatewayRetryProperties properties;
     private final Set<Integer> retryableStatusCodes;
 
     public RetryExecutor(GatewayRetryProperties properties) {
-        this.maxAttempts = properties.getMaxAttempts();
-        this.backoffInitial = properties.getBackoffInitial();
-        this.backoffMultiplier = properties.getBackoffMultiplier();
+        this.properties = properties;
         this.retryableStatusCodes = properties.getRetryableStatusCodes();
     }
 
@@ -38,6 +36,21 @@ public class RetryExecutor {
      */
     public <T> T execute(Supplier<T> action) {
         Exception lastException = null;
+
+        // 第一次执行
+        try {
+            return action.get();
+        } catch (Exception e) {
+            lastException = e;
+            if (!isRetryable(e)) {
+                throw e;
+            }
+        }
+
+        // 根据异常类型选择策略
+        RetryStrategy strategy = selectStrategy(lastException);
+        int maxAttempts = strategy.maxAttempts();
+
         for (int attempt = 1; attempt <= maxAttempts; attempt++) {
             try {
                 return action.get();
@@ -46,7 +59,7 @@ public class RetryExecutor {
                 if (!isRetryable(e) || attempt == maxAttempts) {
                     throw e;
                 }
-                long delay = calculateDelay(attempt);
+                long delay = strategy.calculateDelay(attempt);
                 log.warn("重试 {}/{}，{}ms 后重试: {}", attempt, maxAttempts, delay, e.getMessage());
                 sleep(delay);
             }
@@ -54,16 +67,36 @@ public class RetryExecutor {
         throw new RuntimeException("重试耗尽", lastException);
     }
 
+    /**
+     * 根据异常类型选择对应的重试策略
+     */
+    private RetryStrategy selectStrategy(Exception e) {
+        if (e instanceof ProviderException pe) {
+            return switch (pe.getErrorType()) {
+                case RATE_LIMIT_ERROR -> new RateLimitRetryStrategy(properties);
+                case TIMEOUT_ERROR -> new FastRetryStrategy(properties);
+                case UPSTREAM_ERROR -> new ServiceUnavailableStrategy(properties);
+                default -> new ExponentialBackoffStrategy(properties);
+            };
+        }
+        return new ExponentialBackoffStrategy(properties);
+    }
+
+    /**
+     * 判断异常是否可重试
+     */
     boolean isRetryable(Exception e) {
+        if (e instanceof ProviderException pe) {
+            return switch (pe.getErrorType()) {
+                case QUOTA_EXCEEDED, AUTHENTICATION_ERROR, INVALID_REQUEST -> false;
+                default -> true;
+            };
+        }
         if (e instanceof RetryableException) return true;
         String message = e.getMessage();
         if (message == null) return false;
         return retryableStatusCodes.stream()
             .anyMatch(code -> message.contains(String.valueOf(code)));
-    }
-
-    long calculateDelay(int attempt) {
-        return (long) (backoffInitial * Math.pow(backoffMultiplier, attempt - 1));
     }
 
     private void sleep(long millis) {
