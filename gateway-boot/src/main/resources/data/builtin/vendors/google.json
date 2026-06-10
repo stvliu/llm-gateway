@@ -1,0 +1,39 @@
+[
+  {
+    "code": "google",
+    "name": "Google",
+    "websiteUrl": "https://ai.google.dev",
+    "apiDocUrl": "https://ai.google.dev/gemini-api/docs",
+    "description": "Google Gemini API，支持 Gemini 系列模型，超长上下文和原生多模态能力",
+    "models": [
+      { "modelName": "gemini-3.5-flash", "displayName": "Gemini 3.5 Flash", "contextWindow": 1048576 },
+      { "modelName": "gemini-3.1-pro-preview", "displayName": "Gemini 3.1 Pro", "contextWindow": 2097152 },
+      { "modelName": "gemini-3.1-flash-lite", "displayName": "Gemini 3.1 Flash-Lite", "contextWindow": 1048576 },
+      { "modelName": "gemini-3-flash-preview", "displayName": "Gemini 3 Flash", "contextWindow": 1048576 },
+      { "modelName": "gemini-2.5-pro", "displayName": "Gemini 2.5 Pro", "contextWindow": 1048576 },
+      { "modelName": "gemini-2.5-flash", "displayName": "Gemini 2.5 Flash", "contextWindow": 1048576 },
+      { "modelName": "gemini-2.5-flash-lite", "displayName": "Gemini 2.5 Flash-Lite", "contextWindow": 1048576 },
+      { "modelName": "gemini-embedding-2", "displayName": "Gemini Embedding 2", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "google-default",
+        "name": "Google Gemini 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://generativelanguage.googleapis.com/v1beta/openai" }
+        ],
+        "modelInstances": [
+          { "modelName": "gemini-3.5-flash", "upstreamModelName": "gemini-3.5-flash", "priority": 10, "weight": 100 },
+          { "modelName": "gemini-3.1-flash-lite", "upstreamModelName": "gemini-3.1-flash-lite", "priority": 15, "weight": 100 },
+          { "modelName": "gemini-2.5-flash", "upstreamModelName": "gemini-2.5-flash", "priority": 20, "weight": 100 },
+          { "modelName": "gemini-2.5-flash-lite", "upstreamModelName": "gemini-2.5-flash-lite", "priority": 25, "weight": 100 },
+          { "modelName": "gemini-3-flash-preview", "upstreamModelName": "gemini-3-flash-preview", "priority": 30, "weight": 100 },
+          { "modelName": "gemini-2.5-pro", "upstreamModelName": "gemini-2.5-pro", "priority": 40, "weight": 100 },
+          { "modelName": "gemini-3.1-pro-preview", "upstreamModelName": "gemini-3.1-pro-preview", "priority": 50, "weight": 100 },
+          { "modelName": "gemini-embedding-2", "upstreamModelName": "gemini-embedding-2", "priority": 60, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

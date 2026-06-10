@@ -1,0 +1,33 @@
+[
+  {
+    "code": "xai",
+    "name": "xAI",
+    "websiteUrl": "https://x.ai",
+    "apiDocUrl": "https://docs.x.ai",
+    "description": "Elon Musk 创立的 AI 公司，Grok 系列模型开发商",
+    "models": [
+      { "modelName": "grok-4.3", "displayName": "Grok 4.3", "contextWindow": 1000000 },
+      { "modelName": "grok-4.20-reasoning", "displayName": "Grok 4.20 Reasoning", "contextWindow": 1000000 },
+      { "modelName": "grok-4.20-non-reasoning", "displayName": "Grok 4.20 Non-Reasoning", "contextWindow": 1000000 },
+      { "modelName": "grok-4.20-multi-agent", "displayName": "Grok 4.20 Multi-Agent", "contextWindow": 1000000 },
+      { "modelName": "grok-build-0.1", "displayName": "Grok Build 0.1", "contextWindow": 256000 }
+    ],
+    "channels": [
+      {
+        "key": "xai-default",
+        "name": "xAI 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.x.ai/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "grok-4.3", "upstreamModelName": "grok-4.3", "priority": 10, "weight": 100 },
+          { "modelName": "grok-4.20-non-reasoning", "upstreamModelName": "grok-4.20-0309-non-reasoning", "priority": 15, "weight": 100 },
+          { "modelName": "grok-4.20-reasoning", "upstreamModelName": "grok-4.20-0309-reasoning", "priority": 20, "weight": 100 },
+          { "modelName": "grok-4.20-multi-agent", "upstreamModelName": "grok-4.20-multi-agent-0309", "priority": 25, "weight": 100 },
+          { "modelName": "grok-build-0.1", "upstreamModelName": "grok-build-0.1", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

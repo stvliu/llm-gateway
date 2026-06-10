@@ -1,0 +1,134 @@
+[
+  {
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": "admin",
+    "role": "ADMIN",
+    "teamAssignments": [
+      { "team": "default", "role": "OWNER" },
+      { "team": "dev", "role": "OWNER" },
+      { "team": "product", "role": "OWNER" },
+      { "team": "openclaw", "role": "OWNER" },
+      { "team": "volc-ai", "role": "OWNER" },
+      { "team": "volc-coding", "role": "OWNER" },
+      { "team": "volc-bi", "role": "OWNER" }
+    ]
+  },
+  {
+    "username": "test1",
+    "email": "test1@example.com",
+    "password": "test1",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "default", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test2",
+    "email": "test2@example.com",
+    "password": "test2",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "default", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test3",
+    "email": "test3@example.com",
+    "password": "test3",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "dev", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test4",
+    "email": "test4@example.com",
+    "password": "test4",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "dev", "role": "ADMIN" }
+    ]
+  },
+  {
+    "username": "test5",
+    "email": "test5@example.com",
+    "password": "test5",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "dev", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test6",
+    "email": "test6@example.com",
+    "password": "test6",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "product", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test7",
+    "email": "test7@example.com",
+    "password": "test7",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "product", "role": "ADMIN" }
+    ]
+  },
+  {
+    "username": "test8",
+    "email": "test8@example.com",
+    "password": "test8",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "openclaw", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test9",
+    "email": "test9@example.com",
+    "password": "test9",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "openclaw", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "test10",
+    "email": "test10@example.com",
+    "password": "test10",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "openclaw", "role": "OWNER" }
+    ]
+  },
+  {
+    "username": "hermes-agent",
+    "email": "hermes@example.com",
+    "password": "hermes-agent",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "volc-ai", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "claude-code",
+    "email": "claude@example.com",
+    "password": "claude-code",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "volc-coding", "role": "MEMBER" }
+    ]
+  },
+  {
+    "username": "bi-report",
+    "email": "bi@example.com",
+    "password": "bi-report",
+    "role": "USER",
+    "teamAssignments": [
+      { "team": "volc-bi", "role": "MEMBER" }
+    ]
+  }
+]

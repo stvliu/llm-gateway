@@ -1,0 +1,30 @@
+[
+  {
+    "code": "deepseek",
+    "name": "DeepSeek",
+    "websiteUrl": "https://www.deepseek.com",
+    "apiDocUrl": "https://api-docs.deepseek.com",
+    "description": "深度求索，专注于通用人工智能的科技公司",
+    "models": [
+      { "modelName": "deepseek-v4-pro", "displayName": "DeepSeek-V4-Pro", "contextWindow": 64000 },
+      { "modelName": "deepseek-v4-flash", "displayName": "DeepSeek-V4-Flash", "contextWindow": 64000 },
+      { "modelName": "deepseek-r1", "displayName": "DeepSeek-R1", "contextWindow": 64000 }
+    ],
+    "channels": [
+      {
+        "key": "deepseek-default",
+        "name": "DeepSeek 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.deepseek.com/v1" },
+          { "protocol": "ANTHROPIC", "url": "https://api.deepseek.com/anthropic" }
+        ],
+        "modelInstances": [
+          { "modelName": "deepseek-v4-flash", "upstreamModelName": "deepseek-v4-flash", "priority": 10, "weight": 100 },
+          { "modelName": "deepseek-v4-pro", "upstreamModelName": "deepseek-v4-pro", "priority": 20, "weight": 100 },
+          { "modelName": "deepseek-r1", "upstreamModelName": "deepseek-r1", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

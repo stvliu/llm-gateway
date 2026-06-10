@@ -1,0 +1,73 @@
+[
+  {
+    "code": "tencent",
+    "name": "腾讯混元",
+    "websiteUrl": "https://cloud.tencent.com/product/hunyuan",
+    "apiDocUrl": "https://cloud.tencent.com/document/product/1729",
+    "description": "腾讯自研大语言模型，支持长上下文、多模态和推理增强",
+    "models": [
+      { "modelName": "hunyuan-2.0-thinking-20251109", "displayName": "Tencent HY 2.0 Think", "contextWindow": 128000 },
+      { "modelName": "hunyuan-2.0-instruct-20251111", "displayName": "Tencent HY 2.0 Instruct", "contextWindow": 128000 },
+      { "modelName": "hunyuan-t1-latest", "displayName": "混元 T1", "contextWindow": 32768 },
+      { "modelName": "hunyuan-a13b", "displayName": "混元 A13B", "contextWindow": 224000 },
+      { "modelName": "hunyuan-turbos-latest", "displayName": "混元 TurboS", "contextWindow": 32768 },
+      { "modelName": "hunyuan-lite", "displayName": "混元 Lite", "contextWindow": 250000 },
+      { "modelName": "hunyuan-vision-1.5-instruct", "displayName": "Tencent HY Vision 1.5", "contextWindow": 24000 },
+      { "modelName": "hunyuan-t1-vision-20250916", "displayName": "混元 T1 Vision", "contextWindow": 28000 },
+      { "modelName": "hunyuan-translation", "displayName": "混元翻译", "contextWindow": 4096 },
+      { "modelName": "hunyuan-translation-lite", "displayName": "混元翻译 Lite", "contextWindow": 4096 },
+      { "modelName": "hunyuan-large-role-latest", "displayName": "混元角色扮演", "contextWindow": 28000 }
+    ],
+    "channels": [
+      {
+        "key": "tencent-default",
+        "name": "腾讯混元按量后付费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.hunyuan.cloud.tencent.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "hunyuan-lite", "upstreamModelName": "hunyuan-lite", "priority": 5, "weight": 100 },
+          { "modelName": "hunyuan-translation-lite", "upstreamModelName": "hunyuan-translation-lite", "priority": 8, "weight": 100 },
+          { "modelName": "hunyuan-turbos-latest", "upstreamModelName": "hunyuan-turbos-latest", "priority": 10, "weight": 100 },
+          { "modelName": "hunyuan-a13b", "upstreamModelName": "hunyuan-a13b", "priority": 15, "weight": 100 },
+          { "modelName": "hunyuan-t1-latest", "upstreamModelName": "hunyuan-t1-latest", "priority": 20, "weight": 100 },
+          { "modelName": "hunyuan-2.0-instruct-20251111", "upstreamModelName": "hunyuan-2.0-instruct-20251111", "priority": 25, "weight": 100 },
+          { "modelName": "hunyuan-2.0-thinking-20251109", "upstreamModelName": "hunyuan-2.0-thinking-20251109", "priority": 30, "weight": 100 },
+          { "modelName": "hunyuan-vision-1.5-instruct", "upstreamModelName": "hunyuan-vision-1.5-instruct", "priority": 40, "weight": 100 },
+          { "modelName": "hunyuan-t1-vision-20250916", "upstreamModelName": "hunyuan-t1-vision-20250916", "priority": 45, "weight": 100 },
+          { "modelName": "hunyuan-translation", "upstreamModelName": "hunyuan-translation", "priority": 50, "weight": 100 },
+          { "modelName": "hunyuan-large-role-latest", "upstreamModelName": "hunyuan-large-role-latest", "priority": 55, "weight": 100 }
+        ]
+      },
+      {
+        "key": "tencent-token-plan-lite",
+        "name": "腾讯混元 Token Plan Lite",
+        "billingMode": "PREPAID_PACKAGE",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.hunyuan.cloud.tencent.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "hunyuan-turbos-latest", "upstreamModelName": "hunyuan-turbos-latest", "priority": 10, "weight": 100 },
+          { "modelName": "hunyuan-a13b", "upstreamModelName": "hunyuan-a13b", "priority": 20, "weight": 100 },
+          { "modelName": "hunyuan-t1-latest", "upstreamModelName": "hunyuan-t1-latest", "priority": 30, "weight": 100 }
+        ]
+      },
+      {
+        "key": "tencent-token-plan-pro",
+        "name": "腾讯混元 Token Plan Pro",
+        "billingMode": "PREPAID_PACKAGE",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.hunyuan.cloud.tencent.com/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "hunyuan-turbos-latest", "upstreamModelName": "hunyuan-turbos-latest", "priority": 10, "weight": 100 },
+          { "modelName": "hunyuan-a13b", "upstreamModelName": "hunyuan-a13b", "priority": 20, "weight": 100 },
+          { "modelName": "hunyuan-t1-latest", "upstreamModelName": "hunyuan-t1-latest", "priority": 30, "weight": 100 },
+          { "modelName": "hunyuan-2.0-instruct-20251111", "upstreamModelName": "hunyuan-2.0-instruct-20251111", "priority": 40, "weight": 100 },
+          { "modelName": "hunyuan-2.0-thinking-20251109", "upstreamModelName": "hunyuan-2.0-thinking-20251109", "priority": 50, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

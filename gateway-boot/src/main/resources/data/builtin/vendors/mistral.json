@@ -1,0 +1,39 @@
+[
+  {
+    "code": "mistral",
+    "name": "Mistral AI",
+    "websiteUrl": "https://mistral.ai",
+    "apiDocUrl": "https://docs.mistral.ai",
+    "description": "法国领先的 AI 公司，提供高效开源和商业大语言模型",
+    "models": [
+      { "modelName": "mistral-large-3", "displayName": "Mistral Large 3", "contextWindow": 128000 },
+      { "modelName": "mistral-medium-3.5", "displayName": "Mistral Medium 3.5", "contextWindow": 128000 },
+      { "modelName": "mistral-small-4", "displayName": "Mistral Small 4", "contextWindow": 128000 },
+      { "modelName": "ministral-3-14b", "displayName": "Ministral 3 14B", "contextWindow": 128000 },
+      { "modelName": "ministral-3-8b", "displayName": "Ministral 3 8B", "contextWindow": 128000 },
+      { "modelName": "codestral", "displayName": "Codestral", "contextWindow": 256000 },
+      { "modelName": "mistral-embed", "displayName": "Mistral Embed", "contextWindow": 8192 },
+      { "modelName": "mistral-moderation-2", "displayName": "Mistral Moderation 2", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "mistral-default",
+        "name": "Mistral 按量计费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.mistral.ai/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "mistral-small-4", "upstreamModelName": "mistral-small-latest", "priority": 10, "weight": 100 },
+          { "modelName": "mistral-medium-3.5", "upstreamModelName": "mistral-medium-3-5-26-04", "priority": 20, "weight": 100 },
+          { "modelName": "mistral-large-3", "upstreamModelName": "mistral-large-latest", "priority": 30, "weight": 100 },
+          { "modelName": "ministral-3-8b", "upstreamModelName": "ministral-3-8b", "priority": 40, "weight": 100 },
+          { "modelName": "ministral-3-14b", "upstreamModelName": "ministral-3-14b", "priority": 45, "weight": 100 },
+          { "modelName": "codestral", "upstreamModelName": "codestral-latest", "priority": 50, "weight": 100 },
+          { "modelName": "mistral-embed", "upstreamModelName": "mistral-embed", "priority": 60, "weight": 100 },
+          { "modelName": "mistral-moderation-2", "upstreamModelName": "mistral-moderation-2", "priority": 70, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,52 @@
+[
+  {
+    "code": "moonshot",
+    "name": "Moonshot Kimi",
+    "websiteUrl": "https://moonshot.cn",
+    "apiDocUrl": "https://platform.kimi.com/docs/models",
+    "description": "月之暗面 Kimi API，国产长上下文大模型，以超长上下文能力著称",
+    "models": [
+      { "modelName": "kimi-k2.6", "displayName": "Kimi K2.6", "contextWindow": 262144 },
+      { "modelName": "kimi-k2.5", "displayName": "Kimi K2.5", "contextWindow": 262144 },
+      { "modelName": "moonshot-v1-128k", "displayName": "Moonshot V1 128K", "contextWindow": 131072 },
+      { "modelName": "moonshot-v1-32k", "displayName": "Moonshot V1 32K", "contextWindow": 32768 },
+      { "modelName": "moonshot-v1-8k", "displayName": "Moonshot V1 8K", "contextWindow": 8192 },
+      { "modelName": "moonshot-v1-128k-vision-preview", "displayName": "Moonshot V1 Vision 128K", "contextWindow": 131072 },
+      { "modelName": "moonshot-v1-32k-vision-preview", "displayName": "Moonshot V1 Vision 32K", "contextWindow": 32768 },
+      { "modelName": "moonshot-v1-8k-vision-preview", "displayName": "Moonshot V1 Vision 8K", "contextWindow": 8192 }
+    ],
+    "channels": [
+      {
+        "key": "moonshot-default",
+        "name": "Kimi 按量后付费",
+        "billingMode": "PAY_AS_YOU_GO",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.moonshot.cn/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "moonshot-v1-8k", "upstreamModelName": "moonshot-v1-8k", "priority": 10, "weight": 100 },
+          { "modelName": "moonshot-v1-32k", "upstreamModelName": "moonshot-v1-32k", "priority": 15, "weight": 100 },
+          { "modelName": "moonshot-v1-128k", "upstreamModelName": "moonshot-v1-128k", "priority": 20, "weight": 100 },
+          { "modelName": "moonshot-v1-8k-vision-preview", "upstreamModelName": "moonshot-v1-8k-vision-preview", "priority": 25, "weight": 100 },
+          { "modelName": "moonshot-v1-32k-vision-preview", "upstreamModelName": "moonshot-v1-32k-vision-preview", "priority": 30, "weight": 100 },
+          { "modelName": "moonshot-v1-128k-vision-preview", "upstreamModelName": "moonshot-v1-128k-vision-preview", "priority": 35, "weight": 100 },
+          { "modelName": "kimi-k2.5", "upstreamModelName": "kimi-k2.5", "priority": 40, "weight": 100 },
+          { "modelName": "kimi-k2.6", "upstreamModelName": "kimi-k2.6", "priority": 50, "weight": 100 }
+        ]
+      },
+      {
+        "key": "moonshot-resource-package",
+        "name": "Kimi 预付费资源包",
+        "billingMode": "PREPAID_PACKAGE",
+        "endpoints": [
+          { "protocol": "OPENAI", "url": "https://api.moonshot.cn/v1" }
+        ],
+        "modelInstances": [
+          { "modelName": "kimi-k2.5", "upstreamModelName": "kimi-k2.5", "priority": 10, "weight": 100 },
+          { "modelName": "kimi-k2.6", "upstreamModelName": "kimi-k2.6", "priority": 20, "weight": 100 },
+          { "modelName": "moonshot-v1-128k", "upstreamModelName": "moonshot-v1-128k", "priority": 30, "weight": 100 }
+        ]
+      }
+    ]
+  }
+]
