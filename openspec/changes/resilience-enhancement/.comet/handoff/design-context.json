@@ -1,0 +1,15 @@
+{
+  "change": "resilience-enhancement",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "2419ac14d87b28c8fca0c7d0dc944d624ad93b69e395bdf84dc2f7fdb8c00c04",
+  "files": [
+    { "path": "openspec/changes/resilience-enhancement/proposal.md", "sha256": "e16d0de39bea31d79d8d2a944bd1592aeec0429bb811e9a678c9cff94a5d3b6e" },
+    { "path": "openspec/changes/resilience-enhancement/design.md", "sha256": "5f9da00bd97b1a55a6ae3f0890e0058d52d70d60510c9e89d819cedac08f8007" },
+    { "path": "openspec/changes/resilience-enhancement/tasks.md", "sha256": "ff4d0479b197535869330e94e9f5b6605c06d9a422be6a720787674d91de8997" },
+    { "path": "openspec/changes/resilience-enhancement/specs/intelligent-degradation/spec.md", "sha256": "a20d2178ecc47d4e500acc35a9effb63d8c078cdfe840e1a2f606045a12e9aaf" },
+    { "path": "openspec/changes/resilience-enhancement/specs/upstream-exception-classification/spec.md", "sha256": "1b0c3565cf6c4036f39838cbec8159a0f5b2671b54ed8c833eebc685e5ee63eb" }
+  ]
+}

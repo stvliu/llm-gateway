@@ -2,6 +2,9 @@ package com.codingas.gateway.infrastructure.resilience;
 
 import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import com.codingas.gateway.infrastructure.supply.upstream.AnthropicUpstreamClient;
+import com.codingas.gateway.infrastructure.supply.upstream.OpenAIUpstreamClient;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 
 /**
@@ -14,16 +17,30 @@ public class ResilientClientFactoryImpl implements ResilientClientFactory {
 
     private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
     private final RetryExecutor retryExecutor;
+    private final MeterRegistry meterRegistry;
 
     public ResilientClientFactoryImpl(ChannelEndpointCircuitBreakerManager circuitBreakerManager,
-                                       RetryExecutor retryExecutor) {
+                                       RetryExecutor retryExecutor, MeterRegistry meterRegistry) {
         this.circuitBreakerManager = circuitBreakerManager;
         this.retryExecutor = retryExecutor;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
     public UpstreamClient wrap(UpstreamClient rawClient, Long channelEndpointId) {
         CircuitBreaker breaker = circuitBreakerManager.getBreaker(channelEndpointId);
-        return new ResilientUpstreamClient(rawClient, breaker, retryExecutor);
+        String providerCode = resolveProviderCode(rawClient);
+        return new ResilientUpstreamClient(rawClient, breaker, retryExecutor,
+                meterRegistry, providerCode, channelEndpointId);
+    }
+
+    private String resolveProviderCode(UpstreamClient client) {
+        if (client instanceof OpenAIUpstreamClient) {
+            return "openai";
+        }
+        if (client instanceof AnthropicUpstreamClient) {
+            return "anthropic";
+        }
+        return "unknown";
     }
 }

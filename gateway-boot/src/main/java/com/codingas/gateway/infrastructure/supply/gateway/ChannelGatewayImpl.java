@@ -66,6 +66,11 @@ public class ChannelGatewayImpl implements ChannelGateway {
     }
 
     @Override
+    public Optional<Channel> findByProviderIdAndName(Long providerId, String name) {
+        return channelRepository.findByProviderIdAndName(providerId, name).map(this::toEntity);
+    }
+
+    @Override
     public List<Channel> findByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
         return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode)
                 .stream().map(this::toEntity).toList();

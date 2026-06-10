@@ -1,8 +1,11 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.application.degradation.DegradationService;
+import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
@@ -12,6 +15,9 @@ import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,6 +64,16 @@ class ChatDispatchServiceTest {
     @Mock
     private DomainEventPublisher eventPublisher;
 
+    @Mock
+    private CredentialResolver credentialResolver;
+
+    @Mock
+    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+
+    @Mock
+    private DegradationService degradationService;
+
+    private MeterRegistry meterRegistry;
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -65,14 +81,18 @@ class ChatDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry,
-                protocolConverter, resilientClientFactory, auditGateway, eventPublisher);
+                protocolConverter, resilientClientFactory, auditGateway, eventPublisher,
+                credentialResolver, circuitBreakerManager, degradationService, meterRegistry);
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
+        lenient().when(circuitBreakerManager.isAvailable(anyLong())).thenReturn(true);
+        lenient().when(degradationService.degrade(anyString(), any())).thenReturn(null);
     }
 
     @Nested
@@ -92,6 +112,11 @@ class ChatDispatchServiceTest {
 
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(openAIContext);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
+
+            ChannelCredential credential = new ChannelCredential();
+            credential.setId(100L);
+            credential.setApiKeyPlain("sk-test");
+            when(credentialResolver.resolveAll(10L)).thenReturn(List.of(credential));
 
             UpstreamClient rawClient = mock(UpstreamClient.class);
             when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-test", 60)).thenReturn(rawClient);
@@ -135,6 +160,11 @@ class ChatDispatchServiceTest {
             when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER")).thenReturn(anthropicContext);
             when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
+
+            ChannelCredential credential = new ChannelCredential();
+            credential.setId(200L);
+            credential.setApiKeyPlain("sk-ant-key");
+            when(credentialResolver.resolveAll(10L)).thenReturn(List.of(credential));
 
             UpstreamClient rawClient = mock(UpstreamClient.class);
             when(clientRegistry.getClient("anthropic", "https://api.anthropic.com", "sk-ant-key", 60)).thenReturn(rawClient);

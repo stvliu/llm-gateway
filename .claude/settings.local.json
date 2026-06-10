@@ -55,6 +55,9 @@
       "Bash(ls -la mvnw*)",
       "Bash(which mvn *)",
       "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw\")",
+      "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw.cmd\")",
+      "Bash(../mvnw test *)",
+      "Bash(../mvnw compile *)",
       "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw.cmd\")"
     ]
   },

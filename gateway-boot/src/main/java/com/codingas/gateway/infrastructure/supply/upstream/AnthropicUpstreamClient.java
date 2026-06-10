@@ -1,15 +1,18 @@
 package com.codingas.gateway.infrastructure.supply.upstream;
 
 import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
+import com.codingas.gateway.infrastructure.upstream.ErrorClassificationStrategy;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
@@ -26,14 +29,17 @@ public class AnthropicUpstreamClient implements UpstreamClient {
     private final String apiKey;
     private final int timeoutSeconds;
     private final ObjectMapper objectMapper;
+    private final ErrorClassificationStrategy classifier;
 
     public AnthropicUpstreamClient(OkHttpClient httpClient, String endpointUrl, String apiKey,
-                                   int timeoutSeconds, ObjectMapper objectMapper) {
+                                   int timeoutSeconds, ObjectMapper objectMapper,
+                                   ErrorClassificationStrategy classifier) {
         this.httpClient = httpClient;
         this.endpointUrl = endpointUrl;
         this.apiKey = apiKey;
         this.timeoutSeconds = timeoutSeconds;
         this.objectMapper = objectMapper;
+        this.classifier = classifier;
     }
 
     @Override
@@ -56,12 +62,17 @@ public class AnthropicUpstreamClient implements UpstreamClient {
             try (Response response = timedClient.newCall(httpRequest).execute()) {
                 String responseBody = response.body() != null ? response.body().string() : "";
                 if (!response.isSuccessful()) {
-                    throw new ProviderException("UPSTREAM_ERROR", "Anthropic API 调用失败: " + response.code() + " - " + responseBody);
+                    ProviderErrorType errorType = classifier.classify(response.code(), responseBody);
+                    throw new ProviderException(errorType,
+                            "Anthropic API 调用失败: " + response.code() + " - " + responseBody);
                 }
                 return objectMapper.readValue(responseBody, AnthropicMessagesResponse.class);
             }
         } catch (IOException e) {
-            throw new ProviderException("UPSTREAM_ERROR", "Anthropic API 调用异常", e);
+            ProviderErrorType errorType = e instanceof SocketTimeoutException
+                    ? ProviderErrorType.TIMEOUT_ERROR
+                    : ProviderErrorType.NETWORK_ERROR;
+            throw new ProviderException(errorType, "Anthropic API 调用异常", e);
         }
     }
 
@@ -86,7 +97,10 @@ public class AnthropicUpstreamClient implements UpstreamClient {
             timedClient.newCall(httpRequest).enqueue(new Callback() {
                 @Override
                 public void onFailure(Call call, IOException e) {
-                    callback.onError(e);
+                    ProviderErrorType errorType = e instanceof SocketTimeoutException
+                            ? ProviderErrorType.TIMEOUT_ERROR
+                            : ProviderErrorType.NETWORK_ERROR;
+                    callback.onError(new ProviderException(errorType, "Anthropic 网络异常: " + e.getMessage()));
                 }
 
                 @Override
@@ -94,7 +108,9 @@ public class AnthropicUpstreamClient implements UpstreamClient {
                     try (ResponseBody body = response.body()) {
                         if (!response.isSuccessful() || body == null) {
                             String errorBody = body != null ? body.string() : "no body";
-                            callback.onError(new ProviderException("UPSTREAM_ERROR", "Anthropic Stream 失败: " + response.code() + " - " + errorBody));
+                            ProviderErrorType errorType = classifier.classify(response.code(), errorBody);
+                            callback.onError(new ProviderException(errorType,
+                                    "Anthropic Stream 失败: " + response.code() + " - " + errorBody));
                             return;
                         }
                         BufferedReader reader = new BufferedReader(
@@ -120,13 +136,21 @@ public class AnthropicUpstreamClient implements UpstreamClient {
                         }
                         // 流正常结束（无 message_stop 事件）
                         callback.onComplete();
+                    } catch (IOException e) {
+                        ProviderErrorType errorType = e instanceof SocketTimeoutException
+                                ? ProviderErrorType.TIMEOUT_ERROR
+                                : ProviderErrorType.NETWORK_ERROR;
+                        callback.onError(new ProviderException(errorType, "Anthropic 流读取异常: " + e.getMessage()));
                     } catch (Exception e) {
-                        callback.onError(e);
+                        callback.onError(new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "Anthropic 流未知异常", e));
                     }
                 }
             });
         } catch (IOException e) {
-            callback.onError(e);
+            ProviderErrorType errorType = e instanceof SocketTimeoutException
+                    ? ProviderErrorType.TIMEOUT_ERROR
+                    : ProviderErrorType.NETWORK_ERROR;
+            callback.onError(new ProviderException(errorType, "Anthropic 流式请求异常: " + e.getMessage()));
         }
     }
 

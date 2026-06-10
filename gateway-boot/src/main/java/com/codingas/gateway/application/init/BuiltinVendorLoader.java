@@ -161,7 +161,7 @@ public class BuiltinVendorLoader implements DataLoader {
                     channel.setProviderId(providerId);
                     channel.setName(data.name());
                     channel.setBillingMode(BillingMode.valueOf(data.billingMode()));
-                    channel.setState(ChannelState.INACTIVE);
+                    channel.setState(ChannelState.ACTIVE);
                     return channelGateway.save(channel);
                 });
     }
