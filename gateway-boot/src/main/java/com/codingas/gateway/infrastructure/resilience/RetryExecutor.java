@@ -75,7 +75,7 @@ public class RetryExecutor {
             return switch (pe.getErrorType()) {
                 case RATE_LIMIT_ERROR -> new RateLimitRetryStrategy(properties);
                 case TIMEOUT_ERROR -> new FastRetryStrategy(properties);
-                case UPSTREAM_ERROR -> new ServiceUnavailableStrategy(properties);
+                case UPSTREAM_ERROR, SERVICE_UNAVAILABLE -> new ServiceUnavailableStrategy(properties);
                 default -> new ExponentialBackoffStrategy(properties);
             };
         }

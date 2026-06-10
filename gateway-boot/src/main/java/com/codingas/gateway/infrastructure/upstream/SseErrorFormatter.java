@@ -25,6 +25,7 @@ public class SseErrorFormatter {
             case AUTHENTICATION_ERROR -> "authentication_error";
             case TIMEOUT_ERROR -> "timeout";
             case UPSTREAM_ERROR -> "api_error";
+            case SERVICE_UNAVAILABLE -> "server_error";
             case NETWORK_ERROR -> "network_error";
             case INVALID_REQUEST -> "invalid_request_error";
             case UNKNOWN_ERROR -> "unknown_error";

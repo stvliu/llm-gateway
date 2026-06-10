@@ -24,6 +24,9 @@ public enum ProviderErrorType {
     /** 上游 Provider 错误 */
     UPSTREAM_ERROR,
 
+    /** 上游服务不可用 (503) */
+    SERVICE_UNAVAILABLE,
+
     /** 网络错误 */
     NETWORK_ERROR,
 

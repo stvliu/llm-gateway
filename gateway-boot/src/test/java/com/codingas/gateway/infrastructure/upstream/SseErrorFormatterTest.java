@@ -51,6 +51,14 @@ class SseErrorFormatterTest {
     }
 
     @Test
+    @DisplayName("SERVICE_UNAVAILABLE 格式化为 server_error")
+    void serviceUnavailable_format() {
+        ProviderException e = new ProviderException(ProviderErrorType.SERVICE_UNAVAILABLE, "服务不可用");
+        assertThat(SseErrorFormatter.format(e))
+                .isEqualTo("{\"error\":\"server_error\",\"retry_after\":0}");
+    }
+
+    @Test
     @DisplayName("NETWORK_ERROR 格式化为 network_error")
     void networkError_format() {
         ProviderException e = new ProviderException(ProviderErrorType.NETWORK_ERROR, "网络异常");

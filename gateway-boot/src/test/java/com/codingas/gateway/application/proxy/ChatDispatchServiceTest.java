@@ -16,6 +16,8 @@ import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -71,6 +73,7 @@ class ChatDispatchServiceTest {
     @Mock
     private DegradationService degradationService;
 
+    private MeterRegistry meterRegistry;
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -78,9 +81,10 @@ class ChatDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
+        meterRegistry = new SimpleMeterRegistry();
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner, clientRegistry,
                 protocolConverter, resilientClientFactory, auditGateway, eventPublisher,
-                credentialResolver, circuitBreakerManager, degradationService);
+                credentialResolver, circuitBreakerManager, degradationService, meterRegistry);
 
         testIdentity = Identity.of(1L, "user", 1L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",

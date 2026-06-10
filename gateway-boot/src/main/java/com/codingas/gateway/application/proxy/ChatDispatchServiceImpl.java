@@ -21,6 +21,7 @@ import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.infrastructure.upstream.SseErrorFormatter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final CredentialResolver credentialResolver;
     private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
     private final DegradationService degradationService;
+    private final MeterRegistry meterRegistry;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
@@ -58,7 +60,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                                    DomainEventPublisher eventPublisher,
                                    CredentialResolver credentialResolver,
                                    ChannelEndpointCircuitBreakerManager circuitBreakerManager,
-                                   DegradationService degradationService) {
+                                   DegradationService degradationService,
+                                   MeterRegistry meterRegistry) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.clientRegistry = clientRegistry;
@@ -69,6 +72,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         this.credentialResolver = credentialResolver;
         this.circuitBreakerManager = circuitBreakerManager;
         this.degradationService = degradationService;
+        this.meterRegistry = meterRegistry;
     }
 
     @Override
@@ -155,11 +159,18 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 return client.chat(outboundReq);
             } catch (ProviderException e) {
                 lastException = e;
+                meterRegistry.counter("gateway.failover.triggered",
+                        "provider", provider,
+                        "from_key", String.valueOf(cred.getId()),
+                        "error_type", e.getErrorType().name()).increment();
                 log.warn("Key {} 失败: {} {}, 尝试下一个 Key", cred.getId(), e.getErrorType(), e.getMessage());
             }
         }
 
         // 所有 Key 失败，注入上下文后抛出
+        meterRegistry.counter("gateway.failover.exhausted",
+                "provider", provider,
+                "channel_id", String.valueOf(ctx.channelId())).increment();
         throw new ProviderException(
                 lastException != null ? lastException.getErrorType() : ProviderErrorType.UPSTREAM_ERROR,
                 "所有 Key 均失败: " + (lastException != null ? lastException.getMessage() : "无可用 Key"),

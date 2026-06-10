@@ -71,9 +71,9 @@ class AnthropicErrorClassifierTest {
         }
 
         @Test
-        @DisplayName("503 → UPSTREAM_ERROR")
-        void status503_upstreamError() {
-            assertThat(classifier.classify(503, "{}")).isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
+        @DisplayName("503 → SERVICE_UNAVAILABLE")
+        void status503_serviceUnavailable() {
+            assertThat(classifier.classify(503, "{}")).isEqualTo(ProviderErrorType.SERVICE_UNAVAILABLE);
         }
 
         @Test

@@ -21,7 +21,8 @@ public class AnthropicErrorClassifier implements ErrorClassificationStrategy {
             case 400 -> ProviderErrorType.INVALID_REQUEST;
             case 408 -> ProviderErrorType.TIMEOUT_ERROR;
             case 504 -> ProviderErrorType.TIMEOUT_ERROR;
-            case 500, 502, 503, 529 -> ProviderErrorType.UPSTREAM_ERROR;
+            case 500, 502, 529 -> ProviderErrorType.UPSTREAM_ERROR;
+            case 503 -> ProviderErrorType.SERVICE_UNAVAILABLE;
             default -> ProviderErrorType.UNKNOWN_ERROR;
         };
     }
