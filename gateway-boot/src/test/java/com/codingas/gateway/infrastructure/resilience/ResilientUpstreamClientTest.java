@@ -3,7 +3,11 @@ package com.codingas.gateway.infrastructure.resilience;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,6 +40,7 @@ class ResilientUpstreamClientTest {
 
     private CircuitBreaker circuitBreaker;
     private RetryExecutor retryExecutor;
+    private MeterRegistry meterRegistry;
     private ResilientUpstreamClient resilientClient;
 
     @BeforeEach
@@ -47,7 +52,9 @@ class ResilientUpstreamClientTest {
         props.setBackoffMultiplier(1.0);
         props.setRetryableStatusCodes(Set.of(429, 500));
         retryExecutor = new RetryExecutor(props);
-        resilientClient = new ResilientUpstreamClient(delegate, circuitBreaker, retryExecutor);
+        meterRegistry = new SimpleMeterRegistry();
+        resilientClient = new ResilientUpstreamClient(delegate, circuitBreaker, retryExecutor,
+                meterRegistry, "test-provider", 1L);
     }
 
     @Nested
@@ -91,6 +98,35 @@ class ResilientUpstreamClientTest {
 
             // 熔断器中至少记录了一次失败（具体状态取决于失败率阈值和窗口大小）
             assertThat(circuitBreaker.getState()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("ProviderException 时记录错误类型 Metrics")
+        void chat_providerException_recordsMetrics() {
+            when(delegate.chat(request)).thenThrow(new ProviderException(
+                    ProviderErrorType.RATE_LIMIT_ERROR, "429 限流"));
+
+            assertThatThrownBy(() -> resilientClient.chat(request))
+                    .isInstanceOf(ProviderException.class);
+
+            assertThat(meterRegistry.counter("gateway.provider.errors",
+                    "provider", "test-provider",
+                    "error_type", "RATE_LIMIT_ERROR").count()).isPositive();
+        }
+
+        @Test
+        @DisplayName("熔断器开启时记录 circuitbreaker.blocked Metrics")
+        void chat_circuitOpen_recordsMetrics() {
+            for (int i = 0; i < 10; i++) {
+                circuitBreaker.recordFailure();
+            }
+
+            assertThatThrownBy(() -> resilientClient.chat(request))
+                    .isInstanceOf(CircuitOpenException.class);
+
+            assertThat(meterRegistry.counter("gateway.circuitbreaker.blocked",
+                    "provider", "test-provider",
+                    "endpoint_id", "1").count()).isPositive();
         }
 
         @Test
