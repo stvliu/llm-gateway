@@ -29,8 +29,8 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
     List<ModelDo> findByModelNameContainingOrDisplayNameContaining(String modelNameKeyword, String displayNameKeyword);
 
     /**
-     * 按能力过滤：使用 LIKE 查询 capabilities JSON 字段
+     * 按能力过滤：使用原生查询匹配 capabilities JSON 字段
      */
-    @Query("SELECT m FROM ModelDo m WHERE m.capabilities LIKE %:capability%")
+    @Query(value = "SELECT * FROM models WHERE CAST(capabilities AS text) LIKE CONCAT('%', :capability, '%')", nativeQuery = true)
     List<ModelDo> findByCapability(@Param("capability") String capability);
 }

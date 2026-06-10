@@ -22,6 +22,7 @@ public class GatewayProperties {
     private RateLimitProperties rateLimit = new RateLimitProperties();
     private SecurityProperties security = new SecurityProperties();
     private RouterProperties router = new RouterProperties();
+    private InitProperties init = new InitProperties();
 
     @Getter
     @Setter
@@ -72,5 +73,11 @@ public class GatewayProperties {
     @Setter
     public static class RouterProperties {
         private String defaultModelCode = "openai/gpt-4o";
+    }
+
+    @Getter
+    @Setter
+    public static class InitProperties {
+        private boolean demoDataEnabled = false;
     }
 }

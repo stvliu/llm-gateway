@@ -78,6 +78,13 @@ class OpenAIErrorClassifierTest {
         }
 
         @Test
+        @DisplayName("408 → TIMEOUT_ERROR")
+        void status408_timeoutError() {
+            assertThat(classifier.classify(408, "{}"))
+                    .isEqualTo(ProviderErrorType.TIMEOUT_ERROR);
+        }
+
+        @Test
         @DisplayName("504 → TIMEOUT_ERROR")
         void status504_timeoutError() {
             assertThat(classifier.classify(504, "{}"))

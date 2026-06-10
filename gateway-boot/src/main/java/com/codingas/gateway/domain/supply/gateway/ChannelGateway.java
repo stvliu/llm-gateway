@@ -55,6 +55,11 @@ public interface ChannelGateway {
     boolean existsByProviderIdAndName(Long providerId, String name);
 
     /**
+     * 根据供应商 ID 和名称查找渠道
+     */
+    Optional<Channel> findByProviderIdAndName(Long providerId, String name);
+
+    /**
      * 根据供应商ID和计费模式查找渠道
      */
     List<Channel> findByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
