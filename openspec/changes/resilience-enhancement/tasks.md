@@ -7,7 +7,7 @@
   - `OpenAIUpstreamClient.chatStream()` 和 `AnthropicUpstreamClient.chatStream()` 同样映射
   - IOException 统一映射为 `NETWORK_ERROR`
 
-- [ ] **2. CircuitOpenException 继承改造**
+- [x] **2. CircuitOpenException 继承改造**
   - `CircuitOpenException` 改为继承 `ProviderException`
   - 更新 `GlobalExceptionHandler` 统一捕获
 

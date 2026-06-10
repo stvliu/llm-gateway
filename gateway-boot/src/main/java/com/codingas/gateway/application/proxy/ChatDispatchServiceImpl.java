@@ -14,6 +14,8 @@ import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.infrastructure.upstream.SseErrorFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -139,11 +141,17 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
 
             @Override
             public void onError(Throwable t) {
+                String errorJson;
+                if (t instanceof ProviderException pe) {
+                    errorJson = SseErrorFormatter.format(pe);
+                } else {
+                    errorJson = "{\"error\":\"unknown_error\",\"retry_after\":0}";
+                }
                 callLog.setDurationMs(System.currentTimeMillis() - startTime);
                 callLog.setSuccess(false);
-                callLog.setErrorMessage(t.getMessage());
+                callLog.setErrorMessage(errorJson);
                 auditGateway.saveCallLog(callLog);
-                callback.onError(t);
+                callback.onError(new RuntimeException(errorJson));
             }
         };
 
