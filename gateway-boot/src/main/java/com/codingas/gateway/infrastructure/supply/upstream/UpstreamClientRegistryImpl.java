@@ -37,7 +37,7 @@ public class UpstreamClientRegistryImpl implements UpstreamClientRegistry {
             case "openai" -> new OpenAIUpstreamClient(httpClient, endpointUrl, apiKey, timeoutSeconds,
                     objectMapper, classifier);
             case "anthropic" -> new AnthropicUpstreamClient(httpClient, endpointUrl, apiKey, timeoutSeconds,
-                    objectMapper);
+                    objectMapper, classifier);
             default -> throw new IllegalArgumentException("不支持的协议: " + protocol);
         };
     }

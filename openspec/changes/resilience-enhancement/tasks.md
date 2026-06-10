@@ -2,7 +2,7 @@
 
 ## P0 — 异常分类与异常体系完善
 
-- [ ] **1. ProviderErrorType 落地到 UpstreamClient**
+- [x] **1. ProviderErrorType 落地到 UpstreamClient**
   - `OpenAIUpstreamClient.chat()` 和 `AnthropicUpstreamClient.chat()` 按 HTTP 状态码 + 错误体映射 `ProviderErrorType`
   - `OpenAIUpstreamClient.chatStream()` 和 `AnthropicUpstreamClient.chatStream()` 同样映射
   - IOException 统一映射为 `NETWORK_ERROR`
