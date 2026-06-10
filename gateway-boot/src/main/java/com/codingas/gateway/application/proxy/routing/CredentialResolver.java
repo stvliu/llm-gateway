@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -39,5 +40,19 @@ public class CredentialResolver {
                 .findFirst()
                 .map(ChannelCredential::getApiKeyPlain)
                 .orElseThrow(() -> new ResourceNotFoundException("ChannelCredential", channelId));
+    }
+
+    /**
+     * 根据 channelId 解析所有可用凭证（按优先级排序）
+     *
+     * <p>用于渠道级故障转移，按 priority 升序排列。</p>
+     *
+     * @param channelId 通道 ID
+     * @return 可用凭证列表（已按优先级排序）
+     */
+    public List<ChannelCredential> resolveAll(Long channelId) {
+        List<ChannelCredential> activeKeys = channelCredentialGateway.findActiveByChannelId(channelId);
+        activeKeys.sort(Comparator.comparingInt(ChannelCredential::getPriority));
+        return activeKeys;
     }
 }

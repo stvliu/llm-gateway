@@ -1,12 +1,16 @@
 package com.codingas.gateway.application.proxy;
 
+import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.audit.entity.CallLog;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
@@ -14,12 +18,13 @@ import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.common.event.DomainEventPublisher;
-import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.infrastructure.upstream.SseErrorFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,6 +44,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final ResilientClientFactory resilientClientFactory;
     private final AuditGateway auditGateway;
     private final DomainEventPublisher eventPublisher;
+    private final CredentialResolver credentialResolver;
+    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
@@ -46,7 +53,9 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                                    ProtocolConverter protocolConverter,
                                    ResilientClientFactory resilientClientFactory,
                                    AuditGateway auditGateway,
-                                   DomainEventPublisher eventPublisher) {
+                                   DomainEventPublisher eventPublisher,
+                                   CredentialResolver credentialResolver,
+                                   ChannelEndpointCircuitBreakerManager circuitBreakerManager) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.clientRegistry = clientRegistry;
@@ -54,6 +63,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         this.resilientClientFactory = resilientClientFactory;
         this.auditGateway = auditGateway;
         this.eventPublisher = eventPublisher;
+        this.credentialResolver = credentialResolver;
+        this.circuitBreakerManager = circuitBreakerManager;
     }
 
     @Override
@@ -79,9 +90,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             // 阶段 4：出站调谐
             outboundReq = outboundTuner.tune(outboundReq, ctx);
 
-            // 阶段 5：上游调用（带韧性保护）
-            UpstreamClient client = getResilientClient(ctx);
-            ProtocolResponse response = client.chat(outboundReq);
+            // 阶段 5：上游调用（带韧性保护 + Key 级故障转移）
+            ProtocolResponse response = callWithKeyFailover(ctx, outboundReq, traceId);
 
             // 阶段 6：响应转换（仅跨协议时执行）
             if (ctx.needsProtocolAdaptation()) {
@@ -102,6 +112,44 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             auditGateway.saveCallLog(callLog);
             throw e;
         }
+    }
+
+    /**
+     * 带 Key 级故障转移的上游调用
+     *
+     * <p>遍历同一 Channel 下的多个 Key，跳过熔断中的 Key，重试耗尽后切换到下一个 Key。</p>
+     */
+    private ProtocolResponse callWithKeyFailover(RoutingContext ctx, ProtocolRequest outboundReq, String traceId) {
+        List<ChannelCredential> credentials = credentialResolver.resolveAll(ctx.channelId());
+        String provider = ctx.upstreamProtocol().name().toLowerCase();
+        ProviderException lastException = null;
+
+        for (ChannelCredential cred : credentials) {
+            if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
+                log.debug("端点 {} 熔断中，跳过 Key {}", ctx.channelEndpointId(), cred.getId());
+                continue;
+            }
+
+            UpstreamClient rawClient = clientRegistry.getClient(
+                    ctx.upstreamProtocol().name().toLowerCase(),
+                    ctx.endpointUrl(),
+                    cred.getApiKeyPlain(),
+                    ctx.timeout() != null ? ctx.timeout() : 60);
+            UpstreamClient client = resilientClientFactory.wrap(rawClient, ctx.channelEndpointId());
+
+            try {
+                return client.chat(outboundReq);
+            } catch (ProviderException e) {
+                lastException = e;
+                log.warn("Key {} 失败: {} {}, 尝试下一个 Key", cred.getId(), e.getErrorType(), e.getMessage());
+            }
+        }
+
+        // 所有 Key 失败，注入上下文后抛出
+        throw new ProviderException(
+                lastException != null ? lastException.getErrorType() : ProviderErrorType.UPSTREAM_ERROR,
+                "所有 Key 均失败: " + (lastException != null ? lastException.getMessage() : "无可用 Key"),
+                traceId, outboundReq.getModel(), provider, ctx.channelEndpointId(), null);
     }
 
     @Override

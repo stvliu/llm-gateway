@@ -11,24 +11,24 @@
   - `CircuitOpenException` 改为继承 `ProviderException`
   - 更新 `GlobalExceptionHandler` 统一捕获
 
-- [ ] **3. SSE 流式错误结构化**
+- [x] **3. SSE 流式错误结构化**
   - `OpenAIUpstreamClient` / `AnthropicUpstreamClient` 流式错误格式化为结构化 SSE 事件
   - 按错误类型生成对应的 `error` / `retry_after` 字段
 
 ## P1 — 差异化重试与故障转移
 
-- [ ] **4. 差异化重试策略**
+- [x] **4. 差异化重试策略**
   - 策略接口 `RetryStrategy` + 四种实现（ExponentialBackoff/RateLimit/Fast/ServiceUnavailable）
   - `RetryExecutor` 按 `ProviderErrorType` 选择策略
   - 配置参数支持（`GatewayRetryProperties` 扩展）
 
-- [ ] **5. 异常上下文注入**
+- [x] **5. 异常上下文注入**
   - `ProviderException` 增加 `traceId`/`model`/`provider`/`channelEndpointId`/`errorType` 字段
   - `ChatDispatchServiceImpl` catch 块中注入上下文
 
-- [ ] **6. 渠道级故障转移**
+- [x] **6. 渠道级故障转移**
   - `RoutingResolver` 返回备用 Channel 列表
-  - `ChatDispatchServiceImpl` 主→备切换逻辑
+  - `ChatDispatchServiceImpl` Key 级故障转移（同 Channel 下多 Key 按 priority 遍历）
   - 审计日志记录故障转移事件
 
 ## P2 — Metrics 与智能降级
