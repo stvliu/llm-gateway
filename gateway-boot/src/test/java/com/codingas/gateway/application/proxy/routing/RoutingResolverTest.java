@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.*;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import org.junit.jupiter.api.DisplayName;
@@ -81,13 +82,13 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER")).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER");
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
 
             // then
             assertThat(result).isNotNull();
@@ -127,13 +128,13 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.ANTHROPIC);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER")).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when — 入站协议是 OPENAI，端点协议是 ANTHROPIC
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER");
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
 
             // then
             assertThat(result.needsProtocolAdaptation()).isTrue();
@@ -148,7 +149,7 @@ class RoutingResolverTest {
                     .thenThrow(new ResourceNotFoundException("Model", "non-existent"));
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI, 1L, "USER"))
+            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Model");
         }
@@ -172,13 +173,13 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER")).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER"))
+            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Channel");
         }
