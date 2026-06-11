@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +32,15 @@ public class RoutingResolver {
      * @param protocol  入站协议
      * @param userId    用户 ID
      * @param role      用户角色（ADMIN 跳过团队渠道过滤）
+     * @param strategy  路由策略
      * @return 路由上下文
      */
-    public RoutingContext resolve(String modelName, Protocol protocol, Long userId, String role) {
+    public RoutingContext resolve(String modelName, Protocol protocol, Long userId, String role, RoutingStrategy strategy) {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
-        // 2. 实例选择（按 priority 排序）
-        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId, role);
+        // 2. 实例选择（委托 RouterChain）
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId, role, strategy);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());
