@@ -21,16 +21,19 @@ public class ResilientUpstreamClient implements UpstreamClient {
     private final CircuitBreaker circuitBreaker;
     private final RetryExecutor retryExecutor;
     private final MeterRegistry meterRegistry;
+    private final EndpointMetricsRegistry metricsRegistry;
     private final String providerCode;
     private final Long endpointId;
 
     public ResilientUpstreamClient(UpstreamClient delegate, CircuitBreaker circuitBreaker,
                                     RetryExecutor retryExecutor, MeterRegistry meterRegistry,
+                                    EndpointMetricsRegistry metricsRegistry,
                                     String providerCode, Long endpointId) {
         this.delegate = delegate;
         this.circuitBreaker = circuitBreaker;
         this.retryExecutor = retryExecutor;
         this.meterRegistry = meterRegistry;
+        this.metricsRegistry = metricsRegistry;
         this.providerCode = providerCode;
         this.endpointId = endpointId;
     }
@@ -44,18 +47,25 @@ public class ResilientUpstreamClient implements UpstreamClient {
             throw new CircuitOpenException("熔断器开启，拒绝请求");
         }
 
+        EndpointMetrics metrics = metricsRegistry.get(endpointId);
+        metrics.beginCall();
+        long startTime = System.currentTimeMillis();
+
         try {
             ProtocolResponse response = retryExecutor.execute(() -> delegate.chat(request));
             circuitBreaker.recordSuccess();
+            metrics.endCall(System.currentTimeMillis() - startTime, true);
             return response;
         } catch (ProviderException e) {
             circuitBreaker.recordFailure();
+            metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",
                     "provider", providerCode,
                     "error_type", e.getErrorType().name()).increment();
             throw e;
         } catch (Exception e) {
             circuitBreaker.recordFailure();
+            metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",
                     "provider", providerCode,
                     "error_type", "UNKNOWN").increment();
@@ -72,6 +82,10 @@ public class ResilientUpstreamClient implements UpstreamClient {
             throw new CircuitOpenException("熔断器开启，拒绝流式请求");
         }
 
+        EndpointMetrics metrics = metricsRegistry.get(endpointId);
+        metrics.beginCall();
+        long startTime = System.currentTimeMillis();
+
         try {
             delegate.chatStream(request, new StreamCallback() {
                 @Override
@@ -82,12 +96,14 @@ public class ResilientUpstreamClient implements UpstreamClient {
                 @Override
                 public void onComplete() {
                     circuitBreaker.recordSuccess();
+                    metrics.endCall(System.currentTimeMillis() - startTime, true);
                     callback.onComplete();
                 }
 
                 @Override
                 public void onError(Throwable t) {
                     circuitBreaker.recordFailure();
+                    metrics.endCall(System.currentTimeMillis() - startTime, false);
                     if (t instanceof ProviderException pe) {
                         meterRegistry.counter("gateway.provider.errors",
                                 "provider", providerCode,
@@ -102,12 +118,14 @@ public class ResilientUpstreamClient implements UpstreamClient {
             });
         } catch (ProviderException e) {
             circuitBreaker.recordFailure();
+            metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",
                     "provider", providerCode,
                     "error_type", e.getErrorType().name()).increment();
             throw e;
         } catch (Exception e) {
             circuitBreaker.recordFailure();
+            metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",
                     "provider", providerCode,
                     "error_type", "UNKNOWN").increment();
