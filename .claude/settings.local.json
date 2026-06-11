@@ -56,7 +56,13 @@
       "Bash(which mvn *)",
       "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw\")",
       "Bash(ls \"E:\\\\workspace\\\\llm-gateway\\\\mvnw.cmd\")",
-      "Bash(cmd.exe *)"
+      "Bash(cmd.exe *)",
+      "Bash(dir \"E:\\\\workspace\\\\llm-gateway\\\\gateway-boot\\\\src\\\\test\\\\java\\\\com\\\\codingas\\\\gateway\\\\application\\\\proxy\" /b)",
+      "Bash(./mvnv)",
+      "Bash(cat .mvn/jvm.config)",
+      "Bash(ls .mvn/)",
+      "Read(//c/Users/liuye/.m2/repository/org/projectlombok/**)",
+      "Bash(gitee --version)"
     ]
   },
   "outputStyle": "default"
