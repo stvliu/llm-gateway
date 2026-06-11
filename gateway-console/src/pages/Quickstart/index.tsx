@@ -13,7 +13,7 @@ const { Title, Paragraph, Text } = Typography;
 
 export default function Quickstart() {
   const { t } = useTranslation('quickstart');
-  const { data: models, isLoading } = useModels();
+  const { data: models, isLoading } = useModels({ limit: 1000 });
   const [search, setSearch] = useState('');
   const [keyModalOpen, setKeyModalOpen] = useState(false);
 
@@ -23,7 +23,7 @@ export default function Quickstart() {
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [protocol, setProtocol] = useState<Protocol>('openai');
 
-  const filtered = models?.filter((m) =>
+  const filtered = models?.items?.filter((m) =>
     m.state === 'ACTIVE' &&
     (m.displayName || m.modelName).toLowerCase().includes(search.toLowerCase())
   ) ?? [];

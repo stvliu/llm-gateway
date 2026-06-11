@@ -25,7 +25,7 @@ export default function ModelVisibilityModal({
 }: ModelVisibilityModalProps) {
   const { t } = useTranslation('teams');
   const { message } = App.useApp();
-  const { data: models, isLoading } = useModels();
+  const { data: models, isLoading } = useModels({ limit: 1000 });
 
   const [visibility, setVisibility] = useState<Record<number, boolean>>({});
   const [saving, setSaving] = useState(false);
@@ -41,7 +41,7 @@ export default function ModelVisibilityModal({
           const allowedSet = new Set(allowedIds);
           // 如果 API 返回空列表，默认全部可见
           const allVisible = allowedIds.length === 0;
-          models?.forEach((model: Model) => {
+          models?.items.forEach((model: Model) => {
             map[model.id] = allVisible || allowedSet.has(model.id);
           });
           setVisibility(map);
@@ -49,7 +49,7 @@ export default function ModelVisibilityModal({
         .catch(() => {
           // 获取失败时默认全部可见
           const map: Record<number, boolean> = {};
-          models?.forEach((model: Model) => {
+          models?.items.forEach((model: Model) => {
             map[model.id] = true;
           });
           setVisibility(map);
@@ -63,9 +63,9 @@ export default function ModelVisibilityModal({
   };
 
   const handleSelectAll = (checked: boolean) => {
-    if (!models) return;
+    if (!models?.items) return;
     const newVisibility: Record<number, boolean> = {};
-    models.forEach((model: Model) => {
+    models.items.forEach((model: Model) => {
       newVisibility[model.id] = checked;
     });
     setVisibility(newVisibility);
@@ -118,11 +118,11 @@ export default function ModelVisibilityModal({
       title: (
         <Space>
           <Checkbox
-            checked={models && models.length > 0 && models.every((m: Model) => visibility[m.id])}
+            checked={models?.items && models.items.length > 0 && models.items.every((m: Model) => visibility[m.id])}
             indeterminate={
-              models &&
-              models.some((m: Model) => visibility[m.id]) &&
-              !models.every((m: Model) => visibility[m.id])
+              models?.items &&
+              models.items.some((m: Model) => visibility[m.id]) &&
+              !models.items.every((m: Model) => visibility[m.id])
             }
             onChange={(e) => handleSelectAll(e.target.checked)}
           />
@@ -141,7 +141,7 @@ export default function ModelVisibilityModal({
   ];
 
   const visibleCount = Object.values(visibility).filter(Boolean).length;
-  const totalCount = models?.length || 0;
+  const totalCount = models?.items?.length || 0;
 
   return (
     <Modal
@@ -171,7 +171,7 @@ export default function ModelVisibilityModal({
       </div>
 
       <Table
-        dataSource={models || []}
+        dataSource={models?.items || []}
         columns={columns}
         loading={isLoading || loading}
         rowKey="id"

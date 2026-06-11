@@ -1,11 +1,12 @@
 import { api } from './client';
 import type { Model, CreateModelRequest, UpdateModelRequest } from '@/types/model';
+import type { PageResponse, PageParams } from '@/types/api';
 
 /** 模型 API */
 export const modelApi = {
   /** 获取模型列表 */
-  list: (params?: Record<string, unknown>) =>
-    api.get<Model[]>('/models', { params }),
+  list: (params?: PageParams) =>
+    api.get<PageResponse<Model>>('/models', { params }),
 
   /** 获取模型详情 */
   get: (id: number) =>

@@ -21,25 +21,49 @@ import type { Model } from '@/types/model';
 export default function Models() {
   const { t } = useTranslation('models');
   const { message } = App.useApp();
-  const { data: models, isLoading } = useModels();
-  const deleteMutation = useDeleteModel();
-  const setEnabledMutation = useSetEnabledModel();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [searchText, setSearchText] = useState('');
   const [search, setSearch] = useState('');
   const [stateFilter, setStateFilter] = useState<string>();
+  const deleteMutation = useDeleteModel();
+  const setEnabledMutation = useSetEnabledModel();
   const [createOpen, setCreateOpen] = useState(false);
   const [editingModel, setEditingModel] = useState<Model | null>(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  const filtered =
-    models?.filter((m) => {
-      const matchSearch = search
-        ? (m.displayName || m.modelName)
-            .toLowerCase()
-            .includes(search.toLowerCase())
-        : true;
-      const matchState = stateFilter ? m.state === stateFilter : true;
-      return matchSearch && matchState;
-    }) ?? [];
+  const params = {
+    page,
+    limit: pageSize,
+    keyword: search || undefined,
+    state: stateFilter || undefined,
+  };
+  const { data, isLoading } = useModels(params);
+
+  const handleSearch = (value: string) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    if (!value) {
+      // 清空时立即触发搜索重置
+      setSearch('');
+      setPage(1);
+    }
+  };
+
+  const handleStateFilter = (value?: string) => {
+    setStateFilter(value);
+    setPage(1);
+  };
+
+  const handleTableChange = (pagination: { current?: number; pageSize?: number }) => {
+    if (pagination.current) setPage(pagination.current);
+    if (pagination.pageSize) setPageSize(pagination.pageSize);
+  };
 
   const handleDelete = async (id: number) => {
     try {
@@ -201,8 +225,9 @@ export default function Models() {
           <Input.Search
             placeholder={t('search', { defaultValue: '搜索模型...' })}
             style={{ width: 280 }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchText}
+            onSearch={handleSearch}
+            onChange={handleSearchChange}
             allowClear
           />
           <Select
@@ -210,7 +235,7 @@ export default function Models() {
             style={{ width: 140 }}
             allowClear
             value={stateFilter}
-            onChange={setStateFilter}
+            onChange={handleStateFilter}
             options={[
               {
                 value: 'ACTIVE',
@@ -224,15 +249,18 @@ export default function Models() {
           />
         </div>
         <Table
-          dataSource={filtered}
+          dataSource={data?.items ?? []}
           columns={columns}
           rowKey="id"
           loading={isLoading}
           pagination={{
-            pageSize: 20,
+            current: page,
+            pageSize,
+            total: data?.pagination?.total ?? 0,
             showSizeChanger: true,
             showTotal: (total) =>
               t('total', { defaultValue: `共 ${total} 条`, count: total }),
+            onChange: (current, size) => handleTableChange({ current, pageSize: size }),
           }}
           locale={{
             emptyText: t('emptyList', {
