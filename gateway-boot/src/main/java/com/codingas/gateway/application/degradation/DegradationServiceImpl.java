@@ -3,6 +3,7 @@ package com.codingas.gateway.application.degradation;
 import com.codingas.gateway.application.degradation.DegradationProperties.DegradationChain;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.infrastructure.actuator.ProviderHealthTracker;
 import com.codingas.gateway.infrastructure.actuator.ProviderHealthState;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -114,7 +115,10 @@ public class DegradationServiceImpl implements DegradationService {
         }
 
         log.warn("模型 {} 降级失败: 所有备选均不可用", originalModel);
-        return null;
+        meterRegistry.counter("gateway.degradation.exhausted",
+                "model", originalModel,
+                "reason", reason.name()).increment();
+        throw new ProviderException(reason, "ALL_MODELS_DEGRADED: 模型 " + originalModel + " 所有备选均不可用");
     }
 
     @Override

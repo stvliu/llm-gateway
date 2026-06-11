@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.resilience;
 
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -21,10 +22,12 @@ public class RetryExecutor {
 
     private final GatewayRetryProperties properties;
     private final Set<Integer> retryableStatusCodes;
+    private final MeterRegistry meterRegistry;
 
-    public RetryExecutor(GatewayRetryProperties properties) {
+    public RetryExecutor(GatewayRetryProperties properties, MeterRegistry meterRegistry) {
         this.properties = properties;
         this.retryableStatusCodes = properties.getRetryableStatusCodes();
+        this.meterRegistry = meterRegistry;
     }
 
     /**
@@ -56,7 +59,10 @@ public class RetryExecutor {
                 return action.get();
             } catch (Exception e) {
                 lastException = e;
+                recordRetryAttempt(e, attempt);
                 if (!isRetryable(e) || attempt == maxAttempts) {
+                    meterRegistry.counter("gateway.retry.exhausted",
+                            "error_type", extractErrorType(e)).increment();
                     throw e;
                 }
                 long delay = strategy.calculateDelay(attempt);
@@ -65,6 +71,23 @@ public class RetryExecutor {
             }
         }
         throw new RuntimeException("重试耗尽", lastException);
+    }
+
+    /**
+     * 记录重试 Metrics
+     */
+    private void recordRetryAttempt(Exception e, int attempt) {
+        String errorType = extractErrorType(e);
+        meterRegistry.counter("gateway.retry.attempts",
+                "attempt", String.valueOf(attempt),
+                "error_type", errorType).increment();
+    }
+
+    private String extractErrorType(Exception e) {
+        if (e instanceof ProviderException pe && pe.getErrorType() != null) {
+            return pe.getErrorType().name();
+        }
+        return "UNKNOWN";
     }
 
     /**

@@ -51,8 +51,8 @@ class ResilientUpstreamClientTest {
         props.setBackoffInitial(1);
         props.setBackoffMultiplier(1.0);
         props.setRetryableStatusCodes(Set.of(429, 500));
-        retryExecutor = new RetryExecutor(props);
         meterRegistry = new SimpleMeterRegistry();
+        retryExecutor = new RetryExecutor(props, meterRegistry);
         resilientClient = new ResilientUpstreamClient(delegate, circuitBreaker, retryExecutor,
                 meterRegistry, "test-provider", 1L);
     }

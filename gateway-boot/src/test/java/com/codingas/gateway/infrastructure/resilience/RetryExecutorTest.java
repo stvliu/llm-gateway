@@ -2,6 +2,8 @@ package com.codingas.gateway.infrastructure.resilience;
 
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -21,13 +23,15 @@ class RetryExecutorTest {
 
     private GatewayRetryProperties properties;
     private RetryExecutor executor;
+    private MeterRegistry meterRegistry;
 
     @BeforeEach
     void setUp() {
         properties = new GatewayRetryProperties();
         properties.setMaxAttempts(3);
         properties.setRetryableStatusCodes(Set.of(429, 500, 502, 503));
-        executor = new RetryExecutor(properties);
+        meterRegistry = new SimpleMeterRegistry();
+        executor = new RetryExecutor(properties, meterRegistry);
     }
 
     @Nested

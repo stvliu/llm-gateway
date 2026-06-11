@@ -2,6 +2,7 @@
 change: resilience-enhancement
 design-doc: docs/superpowers/specs/2026-06-10-resilience-enhancement-design.md
 base-ref: 48497ca575c41de1c3ef359c48d817fb4e7e0d4f
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 # 韧性增强实施计划
@@ -14,6 +15,7 @@ base-ref: 48497ca575c41de1c3ef359c48d817fb4e7e0d4f
 
 **依赖链:** Task 1 → Task 3,4,5,7 → Task 6 → Task 8（Task 2 独立）
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 1: ProviderException 增强 + ErrorClassificationStrategy 接口 + OpenAI 实现
@@ -390,6 +392,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/domain/supply/exception/
 git commit -m "feat(resilience): ProviderException 增加 errorType/上下文字段 + OpenAI 错误分类器"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 2: AnthropicErrorClassifier + AnthropicUpstreamClient 改造
@@ -438,6 +441,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/upstream/
 git commit -m "feat(resilience): Anthropic 错误分类器 + UpstreamClient 集成"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 3: CircuitOpenException 继承改造 + GlobalExceptionHandler 适配
@@ -488,6 +492,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/resilienc
 git commit -m "feat(resilience): CircuitOpenException 继承 ProviderException，纳入统一异常体系"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 4: 差异化重试策略（RetryStrategy 接口 + 四种实现 + RetryExecutor 集成）
@@ -771,6 +776,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/resilienc
 git commit -m "feat(resilience): 差异化重试策略 — 429 长退避/504 快速重试/503 固定等待"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 5: SSE 流式错误结构化
@@ -872,6 +878,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/upstream/
 git commit -m "feat(resilience): SSE 流式错误结构化为 JSON 事件"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 6: 渠道级故障转移（Key 级 + Channel 级）
@@ -940,6 +947,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/ChatDi
 git commit -m "feat(resilience): 渠道级 Key 故障转移 — 重试耗尽后切换下一 Key"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 7: Metrics 埋点
@@ -1075,6 +1083,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/resilienc
 git commit -m "feat(resilience): ResilientUpstreamClient Metrics 埋点 — provider.errors/circuitbreaker.blocked"
 ```
 
+archived-with: 2026-06-11-resilience-enhancement
 ---
 
 ### Task 8: 模型级智能降级骨架（DegradationService + 降级链 + 自动回切）

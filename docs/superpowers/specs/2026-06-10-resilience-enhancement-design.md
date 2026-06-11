@@ -2,6 +2,8 @@
 comet_change: resilience-enhancement
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-11-resilience-enhancement
+status: final
 ---
 
 # 韧性增强 — 上游大模型异常处理体系深度设计
@@ -10,6 +12,8 @@ canonical_spec: openspec
 > **日期**: 2026-06-10
 > **关联 Change**: resilience-enhancement
 
+archived-with: 2026-06-11-resilience-enhancement
+status: final
 ---
 
 ## 1. 技术架构
