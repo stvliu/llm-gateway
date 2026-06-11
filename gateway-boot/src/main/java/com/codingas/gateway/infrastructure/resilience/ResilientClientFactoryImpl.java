@@ -18,12 +18,15 @@ public class ResilientClientFactoryImpl implements ResilientClientFactory {
     private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
     private final RetryExecutor retryExecutor;
     private final MeterRegistry meterRegistry;
+    private final EndpointMetricsRegistry metricsRegistry;
 
     public ResilientClientFactoryImpl(ChannelEndpointCircuitBreakerManager circuitBreakerManager,
-                                       RetryExecutor retryExecutor, MeterRegistry meterRegistry) {
+                                       RetryExecutor retryExecutor, MeterRegistry meterRegistry,
+                                       EndpointMetricsRegistry metricsRegistry) {
         this.circuitBreakerManager = circuitBreakerManager;
         this.retryExecutor = retryExecutor;
         this.meterRegistry = meterRegistry;
+        this.metricsRegistry = metricsRegistry;
     }
 
     @Override
@@ -31,7 +34,7 @@ public class ResilientClientFactoryImpl implements ResilientClientFactory {
         CircuitBreaker breaker = circuitBreakerManager.getBreaker(channelEndpointId);
         String providerCode = resolveProviderCode(rawClient);
         return new ResilientUpstreamClient(rawClient, breaker, retryExecutor,
-                meterRegistry, providerCode, channelEndpointId);
+                meterRegistry, metricsRegistry, providerCode, channelEndpointId);
     }
 
     private String resolveProviderCode(UpstreamClient client) {

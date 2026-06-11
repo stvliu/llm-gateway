@@ -1,0 +1,13 @@
+{
+  "change": "load-balance-and-invoker-refactor",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "6c8e205617b19a51d503a0c2efe17619d563a610b50f853cec6dc12aa980610e",
+  "files": [
+    { "path": "openspec/changes/load-balance-and-invoker-refactor/proposal.md", "sha256": "4b243cd162b65120c5b60db9b4ba6766a6d4df0f7037a05a74c6d368b2c36f97" },
+    { "path": "openspec/changes/load-balance-and-invoker-refactor/design.md", "sha256": "da3fb8afc09d98bb44764d374d936c7377ad928493be7924ebdc78f4aa1b2ee8" },
+    { "path": "openspec/changes/load-balance-and-invoker-refactor/tasks.md", "sha256": "4690b35b40d586e0f4823150995f0d93352704959ae8e302f370aae55762a03b" }
+  ]
+}

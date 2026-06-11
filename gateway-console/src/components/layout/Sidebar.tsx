@@ -17,7 +17,7 @@ function filterMenuItem(
   item: MenuItemConfig,
   hasPermission: (p: Permission) => boolean,
   t: (key: string) => string
-): MenuProps['items'][number] | null {
+): NonNullable<MenuProps['items']>[number] | null {
   if (item.permission && !hasPermission(item.permission)) {
     return null;
   }
@@ -34,7 +34,7 @@ function filterMenuGroup(
   group: MenuGroupConfig,
   hasPermission: (p: Permission) => boolean,
   t: (key: string) => string
-): MenuProps['items'][number] | null {
+): NonNullable<MenuProps['items']>[number] | null {
   const filteredItems = group.items
     .map((item) => filterMenuItem(item, hasPermission, t))
     .filter(Boolean);
@@ -75,9 +75,7 @@ export function Sidebar({ collapsed }: SidebarProps) {
 
   const selectedKeys = [location.pathname];
 
-  const handleMenuClick = ({ key, item }: { key: string; item?: { props?: { disabled?: boolean } } }) => {
-    // 禁用项不跳转
-    if (item?.props?.disabled) return;
+  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
     navigate(key);
   };
 
