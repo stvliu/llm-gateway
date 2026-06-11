@@ -73,6 +73,7 @@ public class DegradationInvoker {
                 RoutingContext newCtx = routingResolver.resolve(
                         fallbackModel, inboundProtocol, userId, role, strategy);
                 invokeStream(newCtx, request, callback, inboundProtocol, userId, role, strategy);
+                return;
             }
             throw e;
         }

@@ -2,6 +2,7 @@
 change: load-balance-and-invoker-refactor
 design-doc: docs/superpowers/specs/2026-06-11-load-balance-and-invoker-refactor-design.md
 base-ref: 3ebffc1917a455cf45f0b7999ab847c641c90230
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 # 负载均衡与 Invoker 链重构 — 实施计划
@@ -14,6 +15,7 @@ base-ref: 3ebffc1917a455cf45f0b7999ab847c641c90230
 
 **Tech Stack:** Java 21, Spring Boot 3.5.x, JUnit 5 + Mockito + AssertJ
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## 文件结构总览
@@ -48,6 +50,7 @@ base-ref: 3ebffc1917a455cf45f0b7999ab847c641c90230
 | `application/proxy/ChatDispatchServiceImpl.java` | 集成 Invoker 链，简化（T13） |
 | `application/proxy/routing/RoutingResolver.java` | 传递 strategy 参数（T10） |
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 1: 创建 Router 接口 + RoutingRequest + RouterChain
@@ -204,6 +207,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 Router 接口 + RoutingRequest + RouterChain 责任链"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 2: 创建 PermissionRouter
@@ -305,6 +309,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 PermissionRouter — 从 InstanceSelector 提取团队权限过滤"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 3: 创建 PriorityRouter
@@ -364,6 +369,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 PriorityRouter — 从 InstanceSelector 提取 priority 分组逻辑"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 4: 创建 HealthRouter
@@ -419,6 +425,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 HealthRouter — 过滤熔断中的端点"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 5: 创建 LoadBalanceRouter
@@ -481,6 +488,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 LoadBalanceRouter — 链终结者，委托 LoadBalance.select()"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 6: 创建 LoadBalance 接口 + AbstractLoadBalance
@@ -559,6 +567,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 创建 LoadBalance 接口 + AbstractLoadBalance 抽象基类"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 7: 实现 WeightedRandomLoadBalance
@@ -638,6 +647,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 实现 WeightedRandomLoadBalance — 参照 Dubbo RandomLoadBalance"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 8: 创建 EndpointMetrics + EndpointMetricsRegistry
@@ -768,6 +778,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/infrastructure/resilienc
 git commit -m "feat(resilience): 创建 EndpointMetrics + EndpointMetricsRegistry — 端点级调用统计"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 9: ResilientUpstreamClient 增加 EndpointMetrics 埋点
@@ -926,6 +937,7 @@ git add <ResilientClientFactory.java path>
 git commit -m "feat(resilience): ResilientUpstreamClient 增加 EndpointMetrics 埋点"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 10: InstanceSelector 简化 — 委托给 RouterChain
@@ -1009,6 +1021,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "refactor(routing): InstanceSelector 委托给 RouterChain，RoutingResolver 传递 strategy"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 11: 创建 KeyFailoverInvoker
@@ -1167,6 +1180,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/invoke
 git commit -m "feat(invoker): 创建 KeyFailoverInvoker — 从 ChatDispatchServiceImpl 提取 Key 故障转移"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 12: 创建 DegradationInvoker
@@ -1270,6 +1284,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/invoke
 git commit -m "feat(invoker): 创建 DegradationInvoker — 从 ChatDispatchServiceImpl 提取降级逻辑"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 13: ChatDispatchServiceImpl 集成 Invoker 链
@@ -1416,6 +1431,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/ChatDi
 git commit -m "refactor(proxy): ChatDispatchServiceImpl 集成 Invoker 链，移除直接依赖的 credentialResolver/circuitBreakerManager 等"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 14: 实现 RoundRobinLoadBalance
@@ -1512,6 +1528,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 实现 RoundRobinLoadBalance — 平滑加权轮询"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 15: 实现 LeastActiveLoadBalance
@@ -1612,6 +1629,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/proxy/routin
 git commit -m "feat(routing): 实现 LeastActiveLoadBalance — 最少活跃优先"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 16: 测试 RouterChain（含所有 Router 实现）
@@ -1715,6 +1733,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/application/proxy/routin
 git commit -m "test(routing): 添加 RouterChain 及所有 Router 实现的单元测试"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 17: 测试 LoadBalance 实现
@@ -1795,6 +1814,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/application/proxy/routin
 git commit -m "test(routing): 添加 LoadBalance 三种实现的单元测试"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 18: 测试 Invoker 链
@@ -1857,6 +1877,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/application/proxy/invoke
 git commit -m "test(invoker): 添加 KeyFailoverInvoker 和 DegradationInvoker 单元测试"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## Task 19: 回归测试
@@ -1913,6 +1934,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/application/proxy/ChatDi
 git commit -m "test(proxy): 更新 ChatDispatchServiceTest 适配 Invoker 链重构"
 ```
 
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
 ---
 
 ## 任务执行顺序

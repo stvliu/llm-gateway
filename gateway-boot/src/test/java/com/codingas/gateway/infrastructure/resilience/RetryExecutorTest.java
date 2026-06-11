@@ -85,7 +85,7 @@ class RetryExecutorTest {
         void rateLimit_retriesWithStrategy() {
             properties.getRateLimit().setMaxAttempts(3);
             properties.getRateLimit().setBackoffInitial(1);
-            executor = new RetryExecutor(properties);
+            executor = new RetryExecutor(properties, new SimpleMeterRegistry());
             AtomicInteger counter = new AtomicInteger(0);
             String result = executor.execute(() -> {
                 if (counter.incrementAndGet() < 3) {

@@ -22,8 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * DegradationInvoker 单元测试
+/** DegradationInvoker 单元测试
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("DegradationInvoker 单元测试")
@@ -51,7 +50,7 @@ class DegradationInvokerTest {
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         request = mock(ProtocolRequest.class);
-        when(request.getModel()).thenReturn("gpt-4o");
+        lenient().when(request.getModel()).thenReturn("gpt-4o");
     }
 
     @Test
@@ -114,7 +113,7 @@ class DegradationInvokerTest {
     @DisplayName("流式调用：失败时触发降级")
     void invokeStream_triggersDegradation() {
         ProviderException ex = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "上游错误");
-        doThrow(ex).when(keyFailoverInvoker).invokeStream(ctx, request, any());
+        doThrow(ex).when(keyFailoverInvoker).invokeStream(eq(ctx), eq(request), any(StreamCallback.class));
 
         when(degradationService.degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR)).thenReturn("gpt-3.5-turbo");
 

@@ -64,7 +64,7 @@ class KeyFailoverInvokerTest {
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         request = mock(ProtocolRequest.class);
-        when(request.getModel()).thenReturn("gpt-4o");
+        lenient().when(request.getModel()).thenReturn("gpt-4o");
     }
 
     @Test

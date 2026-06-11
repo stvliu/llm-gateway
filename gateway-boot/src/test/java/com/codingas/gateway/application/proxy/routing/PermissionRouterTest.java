@@ -122,7 +122,7 @@ class PermissionRouterTest {
         ch2.setState(ChannelState.INACTIVE);
 
         when(channelGateway.findAll()).thenReturn(List.of(ch1, ch2));
-        when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
+        when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));
 
         RoutingRequest request = new RoutingRequest(1L, 1L, "ADMIN", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);

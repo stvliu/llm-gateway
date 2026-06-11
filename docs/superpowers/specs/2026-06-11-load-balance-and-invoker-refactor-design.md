@@ -2,6 +2,8 @@
 comet_change: load-balance-and-invoker-refactor
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-12-load-balance-and-invoker-refactor
+status: final
 ---
 
 # 负载均衡与 Invoker 链重构 — 技术设计

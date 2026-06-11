@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import {
-  Typography,
   Input,
   Select,
   Button,
@@ -43,7 +42,6 @@ import type {
 import type { Provider } from '@/types/provider';
 import { theme } from 'antd';
 
-const { Title } = Typography;
 const { Search } = Input;
 
 type ViewMode = 'grouped' | 'table';

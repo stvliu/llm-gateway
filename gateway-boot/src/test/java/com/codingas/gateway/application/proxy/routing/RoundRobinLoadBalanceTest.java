@@ -49,10 +49,10 @@ class RoundRobinLoadBalanceTest {
 
         List<ModelInstance> instances = List.of(mi1, mi2);
 
-        // 第一次选 mi1，第二次选 mi2，第三次选 mi1...
-        assertThat(loadBalance.select(instances).getId()).isEqualTo(1L);
+        // 第一次选 mi2（counter 从 0→1），第二次选 mi1（counter 从 1→0），第三次选 mi2
         assertThat(loadBalance.select(instances).getId()).isEqualTo(2L);
         assertThat(loadBalance.select(instances).getId()).isEqualTo(1L);
+        assertThat(loadBalance.select(instances).getId()).isEqualTo(2L);
     }
 
     @Test

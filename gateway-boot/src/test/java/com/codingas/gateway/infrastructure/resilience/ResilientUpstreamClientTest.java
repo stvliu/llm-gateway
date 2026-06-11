@@ -54,7 +54,7 @@ class ResilientUpstreamClientTest {
         meterRegistry = new SimpleMeterRegistry();
         retryExecutor = new RetryExecutor(props, meterRegistry);
         resilientClient = new ResilientUpstreamClient(delegate, circuitBreaker, retryExecutor,
-                meterRegistry, "test-provider", 1L);
+                meterRegistry, new EndpointMetricsRegistry(), "test-provider", 1L);
     }
 
     @Nested

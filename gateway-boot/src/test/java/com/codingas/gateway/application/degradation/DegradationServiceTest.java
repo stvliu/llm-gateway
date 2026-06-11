@@ -69,8 +69,8 @@ class DegradationServiceTest {
         }
 
         @Test
-        @DisplayName("所有备选均不可用时返回 null")
-        void degrade_allFallbacksUnavailable_returnsNull() {
+        @DisplayName("所有备选均不可用时抛出 ProviderException")
+        void degrade_allFallbacksUnavailable_throwsException() {
             when(healthTracker.getCachedStatus("claude-sonnet-4"))
                     .thenReturn(new ProviderHealthState("claude-sonnet-4", Status.DOWN, null, 5, 0, "error"));
             when(healthTracker.getCachedStatus("gpt-4o-mini"))
@@ -78,9 +78,9 @@ class DegradationServiceTest {
             degradationService = new DegradationServiceImpl(properties, healthTracker,
                     meterRegistry, eventPublisher);
 
-            String result = degradationService.degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR);
-
-            assertThat(result).isNull();
+            assertThatThrownBy(() -> degradationService.degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR))
+                    .isInstanceOf(com.codingas.gateway.domain.supply.exception.ProviderException.class)
+                    .hasMessageContaining("ALL_MODELS_DEGRADED");
         }
 
         @Test
