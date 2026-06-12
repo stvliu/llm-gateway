@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,7 +43,6 @@ class CredentialResolverTest {
             defaultKey.setId(1L);
             defaultKey.setChannelId(10L);
             defaultKey.setApiKeyPlain("sk-default-key");
-            defaultKey.setState(CredentialState.ACTIVE);
 
             when(channelCredentialGateway.findDefaultByChannelId(10L))
                     .thenReturn(Optional.of(defaultKey));
@@ -64,13 +62,11 @@ class CredentialResolverTest {
             defaultKey.setId(1L);
             defaultKey.setChannelId(10L);
             defaultKey.setApiKeyPlain("sk-default-key");
-            defaultKey.setState(CredentialState.INACTIVE);
 
             ChannelCredential activeKey = new ChannelCredential();
             activeKey.setId(2L);
             activeKey.setChannelId(10L);
             activeKey.setApiKeyPlain("sk-active-key");
-            activeKey.setState(CredentialState.ACTIVE);
 
             when(channelCredentialGateway.findDefaultByChannelId(10L))
                     .thenReturn(Optional.of(defaultKey));
@@ -92,7 +88,6 @@ class CredentialResolverTest {
             activeKey.setId(2L);
             activeKey.setChannelId(10L);
             activeKey.setApiKeyPlain("sk-active-key");
-            activeKey.setState(CredentialState.ACTIVE);
 
             when(channelCredentialGateway.findDefaultByChannelId(10L))
                     .thenReturn(Optional.empty());

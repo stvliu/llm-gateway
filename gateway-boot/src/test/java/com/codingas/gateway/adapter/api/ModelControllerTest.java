@@ -6,7 +6,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -149,14 +148,13 @@ class ModelControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setState(ModelState.ACTIVE);
             when(modelService.setEnabled(1L, true)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, true);
 
             // then
-            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(result.getModelName()).isEqualTo("gpt-4");
         }
 
         @Test
@@ -164,14 +162,13 @@ class ModelControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             ModelResponse response = createTestResponse();
-            response.setState(ModelState.ACTIVE);
             when(modelService.setEnabled(1L, false)).thenReturn(response);
 
             // when
             ModelResponse result = controller.setEnabled(1L, false);
 
             // then
-            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(result.getModelName()).isEqualTo("gpt-4");
         }
     }
 
@@ -180,9 +177,8 @@ class ModelControllerTest {
         ModelResponse response = new ModelResponse();
         response.setId(1L);
         response.setModelName("gpt-4");
-                response.setDisplayName("GPT-4");
+        response.setDisplayName("GPT-4");
         response.setContextWindow(8192);
-        response.setState(ModelState.ACTIVE);
         response.setCreatedAt(Instant.now());
         response.setUpdatedAt(Instant.now());
         return response;

@@ -5,7 +5,6 @@ import com.codingas.gateway.application.catalog.dto.BatchProvisionResult;
 import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
 import com.codingas.gateway.application.catalog.dto.ProvisionResult;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
@@ -201,7 +200,6 @@ public class ChannelProvisionService {
             targetPlanCodes = request.getPlanCodes();
         } else {
             targetPlanCodes = allPlans.stream()
-                    .filter(p -> p.getState() == null)
                     .map(PlanCatalog::getPlanCode)
                     .toList();
         }

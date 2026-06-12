@@ -7,7 +7,6 @@ import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialR
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -155,7 +154,6 @@ class ChannelCredentialServiceImplTest {
         apiKey.setName("test-key");
         apiKey.setWeight(1);
         apiKey.setPriority(1);
-        apiKey.setState(CredentialState.ACTIVE);
         return apiKey;
     }
 }

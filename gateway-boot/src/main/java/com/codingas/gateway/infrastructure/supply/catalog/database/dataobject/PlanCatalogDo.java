@@ -38,7 +38,4 @@ public class PlanCatalogDo extends BaseDo {
 
     @Column(name = "description", length = 1024)
     private String description;
-
-    @Column(name = "state", nullable = false, length = 32)
-    private String state;
 }

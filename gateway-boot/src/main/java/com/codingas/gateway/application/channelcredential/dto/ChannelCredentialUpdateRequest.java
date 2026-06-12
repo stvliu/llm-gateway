@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.channelcredential.dto;
 
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import jakarta.validation.constraints.NotNull;
 
 /**

@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.catalog.gateway;
 
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.infrastructure.supply.catalog.database.dataobject.PlanModelCatalogDo;
 import com.codingas.gateway.infrastructure.supply.catalog.database.repository.PlanModelCatalogRepository;
@@ -54,7 +53,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         entity.setId(doObj.getId());
         entity.setPlanCode(doObj.getPlanCode());
         entity.setModelName(doObj.getModelName());
-        entity.setState(CatalogState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
         entity.setUpdatedBy(doObj.getUpdatedBy());
@@ -67,7 +65,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
         doObj.setId(entity.getId());
         doObj.setPlanCode(entity.getPlanCode());
         doObj.setModelName(entity.getModelName());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : CatalogState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

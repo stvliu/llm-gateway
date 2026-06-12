@@ -2,7 +2,6 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.channelcredential.ChannelCredentialService;
 import com.codingas.gateway.application.channelcredential.dto.*;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -39,7 +38,7 @@ class ChannelCredentialControllerTest {
     private ChannelCredentialResponse buildResponse() {
         return new ChannelCredentialResponse(
                 CREDENTIAL_ID, CHANNEL_ID, "sk-test-", "sk-tes****est-", "test-key", "test key",
-                1, 1, CredentialState.ACTIVE, Instant.now(), Instant.now()
+                1, 1, Instant.now(), Instant.now()
         );
     }
 
@@ -71,7 +70,7 @@ class ChannelCredentialControllerTest {
             var detail = new ChannelCredentialDetailResponse(
                     CREDENTIAL_ID, CHANNEL_ID, "sk-test-", "sk-test-api-key-12345",
                     "test-key", "test key",
-                    1, 1, CredentialState.ACTIVE, Instant.now(), Instant.now()
+                    1, 1, Instant.now(), Instant.now()
             );
             when(channelCredentialService.getDetailById(CHANNEL_ID, CREDENTIAL_ID)).thenReturn(detail);
 

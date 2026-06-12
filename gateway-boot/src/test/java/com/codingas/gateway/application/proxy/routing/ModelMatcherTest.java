@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,7 +41,6 @@ class ModelMatcherTest {
             Model model = new Model();
             model.setId(1L);
             model.setModelName("gpt-4o");
-            model.setState(ModelState.ACTIVE);
 
             when(modelGateway.findByModelName("gpt-4o"))
                     .thenReturn(Optional.of(model));
@@ -54,7 +52,6 @@ class ModelMatcherTest {
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
             assertThat(result.getModelName()).isEqualTo("gpt-4o");
-            assertThat(result.getState()).isEqualTo(ModelState.ACTIVE);
         }
 
         @Test
@@ -78,7 +75,7 @@ class ModelMatcherTest {
             Model model = new Model();
             model.setId(1L);
             model.setModelName("gpt-4o");
-            model.setState(ModelState.INACTIVE);
+            model.setDeprecatedAt(java.time.Instant.now());
 
             when(modelGateway.findByModelName("gpt-4o"))
                     .thenReturn(Optional.of(model));

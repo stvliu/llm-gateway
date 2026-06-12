@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
@@ -50,10 +49,10 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
+        ch1.setPhase(Channel.Phase.ACTIVE);
         Channel ch2 = new Channel();
         ch2.setId(200L);
-        ch2.setState(ChannelState.ACTIVE);
+        ch2.setPhase(Channel.Phase.ACTIVE);
 
         when(channelGateway.findAll()).thenReturn(List.of(ch1, ch2));
         when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
@@ -77,7 +76,7 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
+        ch1.setPhase(Channel.Phase.ACTIVE);
 
         when(userTeamGateway.findTeamIdByUserId(1L)).thenReturn(1L);
         when(teamChannelGateway.findChannelIdsByTeamId(1L)).thenReturn(List.of(100L));
@@ -116,10 +115,10 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setState(ChannelState.ACTIVE);
+        ch1.setPhase(Channel.Phase.ACTIVE);
         Channel ch2 = new Channel();
         ch2.setId(200L);
-        ch2.setState(ChannelState.INACTIVE);
+        ch2.setPhase(Channel.Phase.SUSPENDED);
 
         when(channelGateway.findAll()).thenReturn(List.of(ch1, ch2));
         when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));

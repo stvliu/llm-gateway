@@ -5,7 +5,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
@@ -87,12 +86,11 @@ class ModelServiceTest {
             assertThat(response.getModelName()).isEqualTo("gpt-4o-2024-08-06");
             assertThat(response.getDisplayName()).isEqualTo("GPT-4o");
             assertThat(response.getContextWindow()).isEqualTo(128000);
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(modelGateway).save(any(Model.class));
         }
 
-        }
+    }
 
     // ==================== getById 测试 ====================
 
@@ -113,7 +111,6 @@ class ModelServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
 
             verify(modelGateway).findById(1L);
         }
@@ -242,28 +239,6 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("按状态过滤 - ACTIVE")
-        void query_withStatusActive_filtersModels() {
-            // given
-            Provider provider2 = createTestProvider(2L, "Anthropic");
-            Model model2 = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
-
-            when(modelGateway.findAll()).thenReturn(List.of(testModel, model2));
-
-            ModelQueryRequest request = new ModelQueryRequest();
-            request.setState(ModelState.ACTIVE);
-            request.setPage(1);
-            request.setLimit(20);
-
-            // when
-            PageResponse<ModelResponse> response = modelService.query(request);
-
-            // then
-            assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().getFirst().getState()).isEqualTo(ModelState.ACTIVE);
-        }
-
-        @Test
         @DisplayName("分页查询 - 第二页")
         void query_withPagination_returnsPagedModels() {
             // given
@@ -335,26 +310,6 @@ class ModelServiceTest {
         }
 
         @Test
-        @DisplayName("更新 enabled=true 设置状态为 ACTIVE")
-        void update_enabledTrue_setsStatusActive() {
-            // given
-            testModel.setState(ModelState.ACTIVE);
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
-            when(modelGateway.save(any(Model.class))).thenReturn(testModel);
-
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setState(ModelState.ACTIVE);
-
-            // when
-            modelService.update(1L, request);
-
-            // then
-            ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
-            verify(modelGateway).save(modelCaptor.capture());
-            assertThat(modelCaptor.getValue().getState()).isEqualTo(ModelState.ACTIVE);
-        }
-
-        @Test
         @DisplayName("更新不存在的模型抛出异常")
         void update_nonExistingModel_throwsException() {
             // given
@@ -417,7 +372,6 @@ class ModelServiceTest {
         @DisplayName("启用模型成功")
         void setEnabled_true_activatesModel() {
             // given
-            testModel.setState(ModelState.ACTIVE);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -425,8 +379,7 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, true);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelState.ACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelState.ACTIVE);
+            assertThat(response).isNotNull();
             verify(modelGateway).save(testModel);
         }
 
@@ -434,7 +387,6 @@ class ModelServiceTest {
         @DisplayName("禁用模型成功")
         void setEnabled_false_deprecatesModel() {
             // given
-            testModel.setState(ModelState.ACTIVE);
             when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -442,8 +394,7 @@ class ModelServiceTest {
             ModelResponse response = modelService.setEnabled(1L, false);
 
             // then
-            assertThat(testModel.getState()).isEqualTo(ModelState.INACTIVE);
-            assertThat(response.getState()).isEqualTo(ModelState.INACTIVE);
+            assertThat(response).isNotNull();
             verify(modelGateway).save(testModel);
         }
 
@@ -470,14 +421,13 @@ class ModelServiceTest {
         return provider;
     }
 
-    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean status) {
+    private Model createTestModel(Long id, String providerModelId, Provider provider, String displayName, Boolean available) {
         Model model = new Model();
         model.setId(id);
         model.setModelName(providerModelId);
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
-        model.setState(status ? ModelState.ACTIVE : ModelState.INACTIVE);
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;
