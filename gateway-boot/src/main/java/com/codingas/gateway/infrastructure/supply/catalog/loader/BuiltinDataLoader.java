@@ -5,9 +5,6 @@ import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ModelState;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
@@ -114,7 +111,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
             provider.setWebsiteUrl(data.websiteUrl());
             provider.setDescription(data.description());
             provider.setPriority(100);
-            provider.setState(ProviderState.ACTIVE);
 
             String result = upsertProvider(provider);
             switch (result) {
@@ -174,7 +170,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
             catalog.setEndpoints(data.endpoints() != null ? objectMapper.writeValueAsString(data.endpoints()) : null);
             catalog.setPricing(data.pricing() != null ? objectMapper.writeValueAsString(data.pricing()) : null);
             catalog.setDescription(data.description());
-            catalog.setState(CatalogState.ACTIVE);
 
             String result = upsertPlan(catalog);
             switch (result) {
@@ -196,7 +191,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
             var catalog = new PlanModelCatalog();
             catalog.setPlanCode(data.planCode());
             catalog.setModelName(data.modelName());
-            catalog.setState(CatalogState.ACTIVE);
 
             String result = upsertPlanModel(catalog);
             switch (result) {
@@ -224,7 +218,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
                     return "UPDATED";
                 })
                 .orElseGet(() -> {
-                    provider.setState(ProviderState.ACTIVE);
                     providerGateway.save(provider);
                     return "ADDED";
                 });
@@ -283,7 +276,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
                     return "UPDATED";
                 })
                 .orElseGet(() -> {
-                    model.setState(ModelState.ACTIVE);
                     modelGateway.save(model);
                     return "ADDED";
                 });

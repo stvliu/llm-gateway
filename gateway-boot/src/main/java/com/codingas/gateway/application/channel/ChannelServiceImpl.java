@@ -8,7 +8,6 @@ import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -49,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setQuotaLimit(request.getQuotaLimit());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
-        channel.setState(ChannelState.ACTIVE);
+        channel.setPhase(Channel.Phase.ACTIVE);
 
         Channel saved = channelGateway.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
@@ -122,14 +121,14 @@ public class ChannelServiceImpl implements ChannelService {
     public void setState(Long id, boolean enabled) {
         Channel channel = channelGateway.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        ChannelState oldState = channel.getState();
-        ChannelState newState = enabled ? ChannelState.ACTIVE : ChannelState.INACTIVE;
-        if (oldState == newState) {
+        Channel.Phase oldPhase = channel.getPhase();
+        Channel.Phase newPhase = enabled ? Channel.Phase.ACTIVE : Channel.Phase.SUSPENDED;
+        if (oldPhase == newPhase) {
             return;
         }
-        channel.setState(newState);
+        channel.setPhase(newPhase);
         channelGateway.save(channel);
-        log.info("切换渠道状态: id={}, {}→{}", id, oldState, newState);
+        log.info("切换渠道状态: id={}, {}→{}", id, oldPhase, newPhase);
     }
 
     private ChannelResponse toResponse(Channel channel) {
@@ -144,7 +143,7 @@ public class ChannelServiceImpl implements ChannelService {
         response.setQuotaLimit(channel.getQuotaLimit());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
-        response.setState(channel.getState().name());
+        response.setPhase(channel.getPhase().name());
         // 查询端点列表
         response.setEndpoints(
             channelEndpointGateway.findByChannelId(channel.getId()).stream()

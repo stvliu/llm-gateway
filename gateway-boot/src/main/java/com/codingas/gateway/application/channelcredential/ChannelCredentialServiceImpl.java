@@ -8,7 +8,6 @@ import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialR
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,7 +42,6 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         credential.setName(request.description());
         credential.setWeight(request.weight());
         credential.setPriority(request.priority());
-        credential.setState(CredentialState.ACTIVE);
 
         // GatewayImpl 内部处理加密和哈希
         ChannelCredential saved = channelCredentialGateway.save(credential);
@@ -81,9 +79,6 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         }
         if (request.priority() != null) {
             credential.setPriority(request.priority());
-        }
-        if (request.state() != null) {
-            credential.setState(request.state());
         }
         // 替换 API Key
         if (request.apiKey() != null && !request.apiKey().isBlank()) {
@@ -151,7 +146,6 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
                 null, // description not in ChannelCredential
                 credential.getWeight(),
                 credential.getPriority(),
-                credential.getState(),
                 credential.getCreatedAt(),
                 credential.getUpdatedAt()
         );
@@ -167,7 +161,6 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
                 null, // description not in ChannelCredential
                 credential.getWeight(),
                 credential.getPriority(),
-                credential.getState(),
                 credential.getCreatedAt(),
                 credential.getUpdatedAt()
         );

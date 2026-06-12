@@ -3,7 +3,6 @@ package com.codingas.gateway.application.model;
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
@@ -55,7 +54,7 @@ public class ModelDiscoveryService {
                 .flatMap(channelId -> modelInstanceGateway.findActiveByChannelId(channelId).stream())
                 .map(mi -> modelGateway.findById(mi.getModelId()))
                 .flatMap(opt -> opt.stream())
-                .filter(m -> ModelState.ACTIVE.equals(m.getState()))
+                .filter(m -> m.isAvailable())
                 .map(m -> new ModelDiscoveryResponse.ModelItem(
                         m.getModelName(),
                         "model",

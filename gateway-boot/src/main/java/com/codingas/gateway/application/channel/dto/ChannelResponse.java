@@ -28,7 +28,7 @@ public class ChannelResponse {
 
     private Integer maxRetries;
 
-    private String state;
+    private String phase;
 
     private List<ChannelEndpointResponse> endpoints;
 

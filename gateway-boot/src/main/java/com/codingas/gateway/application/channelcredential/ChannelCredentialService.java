@@ -6,7 +6,6 @@ import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialC
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialDetailResponse;
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialResponse;
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 import java.util.List;
 

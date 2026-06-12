@@ -15,7 +15,6 @@ import java.time.Instant;
  * @param description 描述
  * @param weight 权重
  * @param priority 优先级
- * @param state 状态
  * @param createdAt 创建时间
  * @param updatedAt 更新时间
  */
@@ -28,7 +27,6 @@ public record ChannelCredentialDetailResponse(
         String description,
         Integer weight,
         Integer priority,
-        CredentialState state,
         Instant createdAt,
         Instant updatedAt
 ) {

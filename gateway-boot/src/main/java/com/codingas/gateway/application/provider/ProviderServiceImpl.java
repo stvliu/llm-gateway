@@ -7,8 +7,6 @@ import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
 import com.codingas.gateway.application.provider.dto.ProviderResponse;
 import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelState;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
@@ -61,7 +59,6 @@ public class ProviderServiceImpl implements ProviderService {
         provider.setWebsiteUrl(request.getWebsiteUrl());
         provider.setApiDocUrl(request.getApiDocUrl());
         provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        provider.setState(ProviderState.ACTIVE);
 
         Provider savedProvider = providerGateway.save(provider);
         Long providerId = savedProvider.getId();
@@ -74,7 +71,6 @@ public class ProviderServiceImpl implements ProviderService {
                 model.setDisplayName(modelRequest.getDisplayName());
                 model.setContextWindow(modelRequest.getContextWindow());
                 model.setCapabilities(modelRequest.getCapabilities());
-                model.setState(ModelState.ACTIVE);
                 modelGateway.save(model);
             }
             log.info("Created {} models for provider {}", request.getModels().size(), providerId);
@@ -105,13 +101,6 @@ public class ProviderServiceImpl implements ProviderService {
             String keyword = request.getKeyword().toLowerCase();
             providers = providers.stream()
                 .filter(p -> p.getName().toLowerCase().contains(keyword))
-                .collect(Collectors.toList());
-        }
-
-        if (request.getState() != null && !request.getState().isBlank()) {
-            ProviderState state = ProviderState.valueOf(request.getState());
-            providers = providers.stream()
-                .filter(p -> p.getState().equals(state))
                 .collect(Collectors.toList());
         }
 
@@ -208,7 +197,6 @@ public class ProviderServiceImpl implements ProviderService {
     public ProviderResponse setEnabled(Long id, boolean enabled) {
         Provider provider = providerGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        provider.setState(enabled ? ProviderState.ACTIVE : ProviderState.INACTIVE);
         return toResponse(providerGateway.save(provider));
     }
 
@@ -262,7 +250,6 @@ public class ProviderServiceImpl implements ProviderService {
         response.setWebsiteUrl(provider.getWebsiteUrl());
         response.setApiDocUrl(provider.getApiDocUrl());
         response.setPriority(provider.getPriority());
-        response.setState(provider.getState() != null ? provider.getState().name() : null);
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;

@@ -6,7 +6,6 @@ import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +58,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         instance.setUpstreamModelName(request.getUpstreamModelName());
         instance.setPriority(request.getPriority() != null ? request.getPriority() : 100);
         instance.setWeight(request.getWeight() != null ? request.getWeight() : 100);
-        instance.setState(ChannelModelState.ACTIVE);
+        instance.setPhase(ModelInstance.Phase.ACTIVE);
         instance = modelInstanceGateway.save(instance);
         log.info("模型实例创建成功, id={}, channelId={}, modelId={}", instance.getId(), channelId, request.getModelId());
         return toResponse(instance);
@@ -93,7 +92,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
             log.warn("模型实例不属于该渠道, id={}, channelId={}, actualChannelId={}", id, channelId, instance.getChannelId());
             throw new GatewayRequestException("CHANNEL_MISMATCH", "模型实例不属于该渠道");
         }
-        instance.setState(enabled ? ChannelModelState.ACTIVE : ChannelModelState.INACTIVE);
+        instance.setPhase(enabled ? ModelInstance.Phase.ACTIVE : ModelInstance.Phase.SUSPENDED);
         modelInstanceGateway.save(instance);
         log.info("模型实例状态更新成功, id={}, channelId={}, enabled={}", id, channelId, enabled);
     }
@@ -109,7 +108,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         resp.setUpstreamModelName(instance.getUpstreamModelName());
         resp.setPriority(instance.getPriority());
         resp.setWeight(instance.getWeight());
-        resp.setState(instance.getState().name());
+        resp.setPhase(instance.getPhase().name());
 
         modelGateway.findById(instance.getModelId()).ifPresent(spec -> {
             resp.setModelName(spec.getModelName());

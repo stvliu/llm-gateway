@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.model.dto;
 
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import lombok.Data;
 
 import java.time.Instant;
@@ -17,7 +16,8 @@ public class ModelResponse {
     private String displayName;
     private Integer contextWindow;
     private Map<String, Boolean> capabilities;
-    private ModelState state;
+    private Instant deprecatedAt;
+    private String deprecationMessage;
 
     private Instant createdAt;
     private Instant updatedAt;

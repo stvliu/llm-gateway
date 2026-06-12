@@ -33,5 +33,5 @@ public class ModelInstanceResponse {
     private Integer weight;
 
     /** 关联状态 */
-    private String state;
+    private String phase;
 }
