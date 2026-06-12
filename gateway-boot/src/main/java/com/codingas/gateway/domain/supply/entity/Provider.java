@@ -4,6 +4,7 @@ import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 供应商实体

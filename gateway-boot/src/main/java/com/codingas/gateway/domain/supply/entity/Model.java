@@ -4,7 +4,9 @@ import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 

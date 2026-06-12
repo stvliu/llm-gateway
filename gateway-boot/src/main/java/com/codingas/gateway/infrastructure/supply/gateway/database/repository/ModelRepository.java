@@ -19,8 +19,6 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
 
     List<ModelDo> findByIdIn(List<Long> ids);
 
-    List<ModelDo> findByModelNameAndPhase(String modelName, String phase);
-
     /**
      * 关键词搜索（modelName 或 displayName 包含关键字）
      */

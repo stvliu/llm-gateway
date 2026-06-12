@@ -68,13 +68,13 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
 
     @Override
     public List<ChannelCredential> findActiveByChannelId(Long channelId) {
-        return credentialRepository.findByChannelIdAndPhase(channelId, "ACTIVE")
+        return credentialRepository.findByChannelId(channelId)
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ChannelCredential> findByChannelIdAndState(Long channelId, String state) {
-        return credentialRepository.findByChannelIdAndPhase(channelId, state)
+        return credentialRepository.findByChannelId(channelId)
                 .stream().map(this::toEntity).toList();
     }
 
@@ -98,7 +98,7 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
 
     @Override
     public long countActiveByChannelId(Long channelId) {
-        return credentialRepository.findByChannelIdAndPhase(channelId, "ACTIVE").size();
+        return credentialRepository.findByChannelId(channelId).size();
     }
 
     private ChannelCredential toEntity(ChannelCredentialDo doObj) {

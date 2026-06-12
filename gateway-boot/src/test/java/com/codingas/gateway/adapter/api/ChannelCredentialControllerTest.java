@@ -114,7 +114,7 @@ class ChannelCredentialControllerTest {
         @DisplayName("更新成功返回更新后的凭证")
         void updatesCredential() {
             // 请求体不含 channelId 和 id，由适配层补全
-            var request = new ChannelCredentialUpdateRequest(null, null, 10, 5, null, null, null);
+            var request = new ChannelCredentialUpdateRequest(null, null, 10, 5, null, null);
             when(channelCredentialService.update(any(ChannelCredentialUpdateRequest.class)))
                     .thenReturn(buildResponse());
 

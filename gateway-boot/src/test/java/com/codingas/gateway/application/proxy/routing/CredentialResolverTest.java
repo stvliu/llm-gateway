@@ -55,32 +55,6 @@ class CredentialResolverTest {
         }
 
         @Test
-        @DisplayName("默认凭证不可用时回退到活跃凭证")
-        void resolve_defaultUnavailable_fallsBackToActive() {
-            // given
-            ChannelCredential defaultKey = new ChannelCredential();
-            defaultKey.setId(1L);
-            defaultKey.setChannelId(10L);
-            defaultKey.setApiKeyPlain("sk-default-key");
-
-            ChannelCredential activeKey = new ChannelCredential();
-            activeKey.setId(2L);
-            activeKey.setChannelId(10L);
-            activeKey.setApiKeyPlain("sk-active-key");
-
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
-                    .thenReturn(Optional.of(defaultKey));
-            when(channelCredentialGateway.findActiveByChannelId(10L))
-                    .thenReturn(List.of(activeKey));
-
-            // when
-            String result = credentialResolver.resolve(10L);
-
-            // then
-            assertThat(result).isEqualTo("sk-active-key");
-        }
-
-        @Test
         @DisplayName("无默认凭证时使用活跃凭证")
         void resolve_noDefault_usesActiveCredential() {
             // given

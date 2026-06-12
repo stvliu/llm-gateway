@@ -41,10 +41,11 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findActiveByModelName(String modelName) {
-        return modelRepository.findByModelNameAndPhase(modelName, ModelInstance.Phase.ACTIVE.name())
-                .stream()
+        return modelRepository.findByModelName(modelName)
                 .map(this::toEntity)
-                .toList();
+                .filter(Model::isAvailable)
+                .map(List::of)
+                .orElseGet(List::of);
     }
 
     @Override

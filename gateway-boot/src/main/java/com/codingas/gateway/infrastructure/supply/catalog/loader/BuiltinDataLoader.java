@@ -252,7 +252,6 @@ public class BuiltinDataLoader implements CommandLineRunner {
         return planModelCatalogGateway.findByPlanCodeAndModelName(
                         catalog.getPlanCode(), catalog.getModelName())
                 .map(existing -> {
-                    existing.setState(catalog.getState());
                     planModelCatalogGateway.save(existing);
                     return "UPDATED";
                 })
