@@ -3,7 +3,6 @@ package com.codingas.gateway.domain.supply.entity;
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +18,36 @@ import java.time.Instant;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @DomainEntity
-@Slf4j
 public class Channel extends BaseEntity {
+
+    /**
+     * 渠道生命周期阶段
+     */
+    public enum Phase {
+        PENDING,
+        ACTIVE,
+        SUSPENDED,
+        DEPRECATED,
+        RETIRED;
+
+        public boolean isRoutable() {
+            return this == ACTIVE || this == DEPRECATED;
+        }
+
+        public boolean isTerminal() {
+            return this == RETIRED;
+        }
+
+        public boolean canTransitionTo(Phase target) {
+            return switch (this) {
+                case PENDING    -> target == ACTIVE;
+                case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
+                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED;
+                case DEPRECATED -> target == RETIRED;
+                case RETIRED    -> false;
+            };
+        }
+    }
 
     private Long providerId;
 

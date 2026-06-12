@@ -1,0 +1,14 @@
+{
+  "change": "supply-lifecycle-enum-refactor",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "913736ce4ad15abbe5325dae7e9fe0ad47d583be30c7517b8ea35d040f3e9c46",
+  "files": [
+    { "path": "openspec/changes/supply-lifecycle-enum-refactor/proposal.md", "sha256": "3a76500b98d8e2dd5e048d15d95c3cedd5680c876d79788a5aa9b9d9f3280666" },
+    { "path": "openspec/changes/supply-lifecycle-enum-refactor/design.md", "sha256": "b13b3fb88683011d82f9273ee140d842fe9d017c294bdc2fc835e1fdfe23c2e5" },
+    { "path": "openspec/changes/supply-lifecycle-enum-refactor/tasks.md", "sha256": "cfe5e2f0cd4e118897441c97cdd873b99f968729732ba0d1243291d70899a0c5" },
+    { "path": "openspec/changes/supply-lifecycle-enum-refactor/specs/entity-lifecycle/spec.md", "sha256": "651b46cdc2ae3f1da6302b41a9771bf3ebc887001cefe93c143992c6a5fe730d" }
+  ]
+}
