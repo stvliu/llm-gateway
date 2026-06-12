@@ -51,7 +51,7 @@ public class ChannelDomainService {
     public Channel enable(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setPhase(Channel.Phase.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
         return channelGateway.save(channel);
     }
 
@@ -61,7 +61,7 @@ public class ChannelDomainService {
     public Channel disable(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setPhase(Channel.Phase.SUSPENDED);
+        channel.setState(Channel.State.SUSPENDED);
         return channelGateway.save(channel);
     }
 

@@ -48,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setQuotaLimit(request.getQuotaLimit());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
-        channel.setPhase(Channel.Phase.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
 
         Channel saved = channelGateway.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
@@ -121,14 +121,14 @@ public class ChannelServiceImpl implements ChannelService {
     public void setState(Long id, boolean enabled) {
         Channel channel = channelGateway.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        Channel.Phase oldPhase = channel.getPhase();
-        Channel.Phase newPhase = enabled ? Channel.Phase.ACTIVE : Channel.Phase.SUSPENDED;
-        if (oldPhase == newPhase) {
+        Channel.State oldState = channel.getState();
+        Channel.State newState = enabled ? Channel.State.ACTIVE : Channel.State.SUSPENDED;
+        if (oldState == newState) {
             return;
         }
-        channel.setPhase(newPhase);
+        channel.setState(newState);
         channelGateway.save(channel);
-        log.info("切换渠道状态: id={}, {}→{}", id, oldPhase, newPhase);
+        log.info("切换渠道状态: id={}, {}→{}", id, oldState, newState);
     }
 
     private ChannelResponse toResponse(Channel channel) {
@@ -143,7 +143,7 @@ public class ChannelServiceImpl implements ChannelService {
         response.setQuotaLimit(channel.getQuotaLimit());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
-        response.setPhase(channel.getPhase().name());
+        response.setState(channel.getState().name());
         // 查询端点列表
         response.setEndpoints(
             channelEndpointGateway.findByChannelId(channel.getId()).stream()

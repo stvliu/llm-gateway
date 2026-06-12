@@ -14,11 +14,11 @@ public interface ModelInstanceRepository extends JpaRepository<ModelInstanceDo, 
 
     List<ModelInstanceDo> findByChannelId(Long channelId);
 
-    List<ModelInstanceDo> findByChannelIdAndPhase(Long channelId, String phase);
+    List<ModelInstanceDo> findByChannelIdAndState(Long channelId, String state);
 
-    List<ModelInstanceDo> findByModelIdAndPhase(Long modelId, String phase);
+    List<ModelInstanceDo> findByModelIdAndState(Long modelId, String state);
 
-    List<ModelInstanceDo> findByModelIdAndPhaseOrderByPriorityAsc(Long modelId, String phase);
+    List<ModelInstanceDo> findByModelIdAndStateOrderByPriorityAsc(Long modelId, String state);
 
     List<ModelInstanceDo> findByIdIn(List<Long> ids);
 }

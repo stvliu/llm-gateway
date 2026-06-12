@@ -43,7 +43,7 @@ public interface ModelInstanceGateway {
     /**
      * 根据渠道ID和状态查找
      */
-    List<ModelInstance> findByChannelIdAndPhase(Long channelId, String phase);
+    List<ModelInstance> findByChannelIdAndState(Long channelId, String state);
 
     /**
      * 根据ID列表批量查找

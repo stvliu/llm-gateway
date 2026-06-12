@@ -21,9 +21,9 @@ import java.util.Map;
 public class ModelInstance extends BaseEntity {
 
     /**
-     * 模型实例生命周期阶段
+     * 模型实例生命周期状态
      */
-    public enum Phase {
+    public enum State {
         PENDING,
         ACTIVE,
         SUSPENDED,
@@ -38,11 +38,11 @@ public class ModelInstance extends BaseEntity {
             return this == RETIRED;
         }
 
-        public boolean canTransitionTo(Phase target) {
+        public boolean canTransitionTo(State target) {
             return switch (this) {
                 case PENDING    -> target == ACTIVE;
                 case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
-                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED;
+                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED || target == RETIRED;
                 case DEPRECATED -> target == RETIRED;
                 case RETIRED    -> false;
             };
@@ -74,13 +74,13 @@ public class ModelInstance extends BaseEntity {
     private Long quotaLimit;
 
     /** 实例状态 */
-    private Phase phase = Phase.PENDING;
+    private State state = State.PENDING;
 
     /**
      * 检查是否可用
      */
     public boolean isAvailable() {
-        return Phase.ACTIVE.equals(phase);
+        return State.ACTIVE.equals(state);
     }
 
     /**

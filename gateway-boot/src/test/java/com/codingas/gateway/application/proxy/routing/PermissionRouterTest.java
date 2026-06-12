@@ -49,10 +49,10 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setPhase(Channel.Phase.ACTIVE);
+        ch1.setState(Channel.State.ACTIVE);
         Channel ch2 = new Channel();
         ch2.setId(200L);
-        ch2.setPhase(Channel.Phase.ACTIVE);
+        ch2.setState(Channel.State.ACTIVE);
 
         when(channelGateway.findAll()).thenReturn(List.of(ch1, ch2));
         when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
@@ -76,7 +76,7 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setPhase(Channel.Phase.ACTIVE);
+        ch1.setState(Channel.State.ACTIVE);
 
         when(userTeamGateway.findTeamIdByUserId(1L)).thenReturn(1L);
         when(teamChannelGateway.findChannelIdsByTeamId(1L)).thenReturn(List.of(100L));
@@ -115,10 +115,10 @@ class PermissionRouterTest {
 
         Channel ch1 = new Channel();
         ch1.setId(100L);
-        ch1.setPhase(Channel.Phase.ACTIVE);
+        ch1.setState(Channel.State.ACTIVE);
         Channel ch2 = new Channel();
         ch2.setId(200L);
-        ch2.setPhase(Channel.Phase.SUSPENDED);
+        ch2.setState(Channel.State.SUSPENDED);
 
         when(channelGateway.findAll()).thenReturn(List.of(ch1, ch2));
         when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));

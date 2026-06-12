@@ -63,11 +63,11 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi1 = new ModelInstance();
             mi1.setModelId(100L);
-            mi1.setPhase(ModelInstance.Phase.ACTIVE);
+            mi1.setState(ModelInstance.State.ACTIVE);
 
             ModelInstance mi2 = new ModelInstance();
             mi2.setModelId(200L);
-            mi2.setPhase(ModelInstance.Phase.ACTIVE);
+            mi2.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of(mi1));
             when(modelInstanceGateway.findActiveByChannelId(20L)).thenReturn(List.of(mi2));
@@ -123,7 +123,7 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(300L);
-            mi.setPhase(ModelInstance.Phase.ACTIVE);
+            mi.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(30L)).thenReturn(List.of(mi));
 
@@ -149,7 +149,7 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(999L);
-            mi.setPhase(ModelInstance.Phase.ACTIVE);
+            mi.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(40L)).thenReturn(List.of(mi));
             when(modelGateway.findById(999L)).thenReturn(Optional.empty());

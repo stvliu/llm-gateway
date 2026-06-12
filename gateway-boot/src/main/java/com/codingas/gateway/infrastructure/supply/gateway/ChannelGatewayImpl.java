@@ -41,7 +41,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
 
     @Override
     public List<Channel> findAllActive() {
-        return channelRepository.findByPhase(Channel.Phase.ACTIVE.name()).stream().map(this::toEntity).toList();
+        return channelRepository.findByState(Channel.State.ACTIVE.name()).stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -84,7 +84,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setQuotaLimit(doObj.getQuotaLimit());
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
-        entity.setPhase(Channel.Phase.valueOf(doObj.getPhase()));
+        entity.setState(Channel.State.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -101,7 +101,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setQuotaLimit(entity.getQuotaLimit());
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
-        doObj.setPhase(entity.getPhase() != null ? entity.getPhase().name() : Channel.Phase.ACTIVE.name());
+        doObj.setState(entity.getState() != null ? entity.getState().name() : Channel.State.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

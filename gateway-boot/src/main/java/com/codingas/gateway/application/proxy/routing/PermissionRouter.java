@@ -49,7 +49,7 @@ public class PermissionRouter implements Router {
         // 再过滤活跃 Channel
         List<Long> channelIds = permitted.stream().map(ModelInstance::getChannelId).toList();
         List<Channel> activeChannels = channelGateway.findByIds(channelIds).stream()
-                .filter(ch -> ch.getPhase() != null && ch.getPhase().isRoutable())
+                .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
                 .toList();
         Set<Long> activeChannelIds = activeChannels.stream().map(Channel::getId).collect(Collectors.toSet());
 
@@ -64,7 +64,7 @@ public class PermissionRouter implements Router {
     private Set<Long> getPermittedChannelIds(RoutingRequest request) {
         if ("ADMIN".equals(request.getRole())) {
             return channelGateway.findAll().stream()
-                    .filter(ch -> ch.getPhase() != null && ch.getPhase().isRoutable())
+                    .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
                     .map(Channel::getId)
                     .collect(Collectors.toSet());
         }

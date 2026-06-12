@@ -66,12 +66,12 @@ class RoutingResolverTest {
             modelInstance.setId(10L);
             modelInstance.setChannelId(100L);
             modelInstance.setModelId(1L);
-            modelInstance.setPhase(ModelInstance.Phase.ACTIVE);
+            modelInstance.setState(ModelInstance.State.ACTIVE);
 
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("openai-main");
-            channel.setPhase(Channel.Phase.ACTIVE);
+            channel.setState(Channel.State.ACTIVE);
             channel.setTimeout(30);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
@@ -116,7 +116,7 @@ class RoutingResolverTest {
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("anthropic-via-openai");
-            channel.setPhase(Channel.Phase.ACTIVE);
+            channel.setState(Channel.State.ACTIVE);
             channel.setTimeout(60);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();

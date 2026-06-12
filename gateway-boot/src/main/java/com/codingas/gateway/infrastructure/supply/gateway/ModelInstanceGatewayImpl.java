@@ -40,25 +40,25 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
 
     @Override
     public List<ModelInstance> findActiveByChannelId(Long channelId) {
-        return modelInstanceRepository.findByChannelIdAndPhase(channelId, ModelInstance.Phase.ACTIVE.name())
+        return modelInstanceRepository.findByChannelIdAndState(channelId, ModelInstance.State.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ModelInstance> findActiveByModelId(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndPhase(modelId, ModelInstance.Phase.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndState(modelId, ModelInstance.State.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndPhaseOrderByPriorityAsc(modelId, ModelInstance.Phase.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(modelId, ModelInstance.State.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelInstance> findByChannelIdAndPhase(Long channelId, String phase) {
-        return modelInstanceRepository.findByChannelIdAndPhase(channelId, phase)
+    public List<ModelInstance> findByChannelIdAndState(Long channelId, String state) {
+        return modelInstanceRepository.findByChannelIdAndState(channelId, state)
                 .stream().map(this::toEntity).toList();
     }
 
@@ -95,7 +95,7 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
         entity.setPriority(doObj.getPriority() != null ? doObj.getPriority() : 100);
         entity.setWeight(doObj.getWeight() != null ? doObj.getWeight() : 100);
         entity.setQuotaLimit(doObj.getQuotaLimit());
-        entity.setPhase(ModelInstance.Phase.valueOf(doObj.getPhase()));
+        entity.setState(ModelInstance.State.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -114,7 +114,7 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
         doObj.setPriority(entity.getPriority() != null ? entity.getPriority() : 100);
         doObj.setWeight(entity.getWeight() != null ? entity.getWeight() : 100);
         doObj.setQuotaLimit(entity.getQuotaLimit());
-        doObj.setPhase(entity.getPhase() != null ? entity.getPhase().name() : ModelInstance.Phase.ACTIVE.name());
+        doObj.setState(entity.getState() != null ? entity.getState().name() : ModelInstance.State.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

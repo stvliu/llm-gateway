@@ -34,5 +34,5 @@ public class ChannelDo extends BaseDo {
     private Integer maxRetries;
 
     @Column(name = "state", nullable = false, length = 32)
-    private String phase;
+    private String state;
 }

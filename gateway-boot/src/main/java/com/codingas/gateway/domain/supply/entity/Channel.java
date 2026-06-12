@@ -21,9 +21,9 @@ import java.time.Instant;
 public class Channel extends BaseEntity {
 
     /**
-     * 渠道生命周期阶段
+     * 渠道生命周期状态
      */
-    public enum Phase {
+    public enum State {
         PENDING,
         ACTIVE,
         SUSPENDED,
@@ -38,11 +38,11 @@ public class Channel extends BaseEntity {
             return this == RETIRED;
         }
 
-        public boolean canTransitionTo(Phase target) {
+        public boolean canTransitionTo(State target) {
             return switch (this) {
                 case PENDING    -> target == ACTIVE;
                 case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
-                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED;
+                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED || target == RETIRED;
                 case DEPRECATED -> target == RETIRED;
                 case RETIRED    -> false;
             };
@@ -63,7 +63,7 @@ public class Channel extends BaseEntity {
 
     private Integer maxRetries;
 
-    private Phase phase = Phase.PENDING;
+    private State state = State.PENDING;
 
     @Override
     public Instant getCreatedAt() {
@@ -79,6 +79,6 @@ public class Channel extends BaseEntity {
      * 检查渠道是否可用
      */
     public boolean isAvailable() {
-        return Phase.ACTIVE.equals(phase) || Phase.DEPRECATED.equals(phase);
+        return State.ACTIVE.equals(state) || State.DEPRECATED.equals(state);
     }
 }

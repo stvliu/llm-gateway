@@ -114,7 +114,7 @@ public class ChannelProvisionService {
         channel.setBillingMode(catalog.getBillingMode());
         channel.setTimeout(30);
         channel.setMaxRetries(3);
-        channel.setPhase(Channel.Phase.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
 
         Channel savedChannel = channelGateway.save(channel);
         log.info("开通套餐-创建渠道成功: planCode={}, channelId={}", planCode, savedChannel.getId());
@@ -145,7 +145,7 @@ public class ChannelProvisionService {
             modelInstance.setUpstreamModelName(resolved);
             modelInstance.setPriority(100);
             modelInstance.setWeight(100);
-            modelInstance.setPhase(ModelInstance.Phase.ACTIVE);
+            modelInstance.setState(ModelInstance.State.ACTIVE);
             modelInstanceGateway.save(modelInstance);
         }
         log.info("开通套餐-创建模型实例成功: planCode={}, count={}", planCode, pricing.size());

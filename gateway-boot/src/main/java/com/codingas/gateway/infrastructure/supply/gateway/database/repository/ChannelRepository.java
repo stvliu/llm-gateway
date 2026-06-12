@@ -14,7 +14,7 @@ public interface ChannelRepository extends JpaRepository<ChannelDo, Long> {
 
     List<ChannelDo> findByProviderId(Long providerId);
 
-    List<ChannelDo> findByPhase(String phase);
+    List<ChannelDo> findByState(String state);
 
     List<ChannelDo> findByIdIn(List<Long> ids);
 
