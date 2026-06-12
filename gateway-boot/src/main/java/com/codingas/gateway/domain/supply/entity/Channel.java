@@ -5,7 +5,7 @@ import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
+
 
 import java.time.Instant;
 
@@ -63,7 +63,7 @@ public class Channel extends BaseEntity {
 
     private Integer maxRetries;
 
-    private ChannelState state = ChannelState.ACTIVE;
+    private Phase phase = Phase.PENDING;
 
     @Override
     public Instant getCreatedAt() {

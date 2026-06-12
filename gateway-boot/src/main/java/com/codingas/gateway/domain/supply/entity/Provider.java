@@ -2,10 +2,8 @@ package com.codingas.gateway.domain.supply.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * 供应商实体
@@ -37,7 +35,7 @@ public class Provider extends BaseEntity {
     /** 路由优先级（数值越小优先级越高） */
     private Integer priority;
 
-    private ProviderState state = ProviderState.ACTIVE;
+    
 
     /**
      * 检查供应商是否可用

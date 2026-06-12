@@ -4,7 +4,7 @@ import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
+
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -74,7 +74,7 @@ public class ModelInstance extends BaseEntity {
     private Long quotaLimit;
 
     /** 实例状态 */
-    private ChannelModelState state = ChannelModelState.ACTIVE;
+    private Phase phase = Phase.PENDING;
 
     /**
      * 检查是否可用
