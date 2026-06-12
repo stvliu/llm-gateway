@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 
 import java.util.List;
@@ -26,9 +27,10 @@ public interface ModelInstanceService {
     void delete(Long channelId, Long id);
 
     /**
-     * 启用/禁用模型实例
+     * 切换模型实例状态
+     * <p>由后端校验 canTransitionTo()。</p>
      */
-    void setEnabled(Long channelId, Long id, boolean enabled);
+    void setEnabled(Long channelId, Long id, ModelInstanceStateTransitionRequest request);
 
     /**
      * 更新模型实例的上游模型名

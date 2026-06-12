@@ -71,15 +71,6 @@ public class ProviderController {
     }
 
     /**
-     * 启用/禁用提供商
-     */
-    @PatchMapping("/{id}/state")
-    public ProviderResponse setEnabled(@PathVariable Long id,
-                                       @RequestParam boolean enabled) {
-        return providerService.setEnabled(id, enabled);
-    }
-
-    /**
      * 获取所有供应商名称列表
      *
      * <p>返回所有已注册供应商的名称，供前端选择。</p>

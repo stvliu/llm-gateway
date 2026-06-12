@@ -19,7 +19,4 @@ public class ProviderUpdateRequest {
     private String apiDocUrl;
 
     private Integer priority;
-
-    /** 状态（ACTIVE / INACTIVE） */
-    private String state;
 }

@@ -12,6 +12,4 @@ import lombok.EqualsAndHashCode;
 public class ProviderQueryRequest extends PageRequest {
 
     private String keyword;
-
-    private String state;
 }

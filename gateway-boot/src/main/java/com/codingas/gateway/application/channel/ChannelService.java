@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.channel;
 
+import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
 import com.codingas.gateway.application.channel.dto.ChannelRequest;
@@ -31,9 +32,11 @@ public interface ChannelService {
     void delete(Long id);
 
     /**
-     * 切换渠道启用/停用状态
+     * 切换渠道状态
+     *
+     * <p>由后端校验 canTransitionTo()，PENDING→ACTIVE 时校验前置条件并级联激活 ModelInstance。</p>
      */
-    void setState(Long id, boolean enabled);
+    void setState(Long id, ChannelStateTransitionRequest request);
 
     ChannelEndpointResponse addEndpoint(ChannelEndpointRequest request);
 

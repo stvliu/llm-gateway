@@ -190,17 +190,6 @@ public class ProviderServiceImpl implements ProviderService {
     }
 
     /**
-     * 启用/禁用提供商
-     */
-    @Override
-    @Transactional
-    public ProviderResponse setEnabled(Long id, boolean enabled) {
-        Provider provider = providerGateway.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        return toResponse(providerGateway.save(provider));
-    }
-
-    /**
      * 获取所有供应商名称列表
      */
     @Override

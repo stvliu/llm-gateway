@@ -1,16 +1,21 @@
 package com.codingas.gateway.application.channel;
 
+import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
 import com.codingas.gateway.application.channel.dto.ChannelRequest;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.Protocol;
+import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +37,8 @@ public class ChannelServiceImpl implements ChannelService {
 
     private final ChannelGateway channelGateway;
     private final ChannelEndpointGateway channelEndpointGateway;
+    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ModelInstanceGateway modelInstanceGateway;
     private final ProviderGateway providerGateway;
 
     @Override
@@ -118,17 +125,93 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public void setState(Long id, boolean enabled) {
+    public void setState(Long id, ChannelStateTransitionRequest request) {
         Channel channel = channelGateway.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        Channel.State oldState = channel.getState();
-        Channel.State newState = enabled ? Channel.State.ACTIVE : Channel.State.SUSPENDED;
-        if (oldState == newState) {
-            return;
+
+        Channel.State currentState = channel.getState();
+        Channel.State targetState = Channel.State.valueOf(request.getTargetState());
+
+        // 校验状态转换合法性
+        if (!currentState.canTransitionTo(targetState)) {
+            throw new GatewayRequestException("INVALID_STATE_TRANSITION",
+                String.format("不允许从 %s 转换为 %s", currentState, targetState));
         }
-        channel.setState(newState);
+
+        // PENDING→ACTIVE：强制前置校验
+        if (currentState == Channel.State.PENDING && targetState == Channel.State.ACTIVE) {
+            validateActivationPrerequisites(channel.getId());
+        }
+
+        // PENDING→ACTIVE：级联激活 PENDING 状态的 ModelInstance
+        if (currentState == Channel.State.PENDING && targetState == Channel.State.ACTIVE) {
+            cascadeActivateModelInstances(channel.getId());
+        }
+
+        // SUSPENDED→ACTIVE：检查完整性（仅警告不阻塞）
+        if (currentState == Channel.State.SUSPENDED && targetState == Channel.State.ACTIVE) {
+            checkSuspendedActivationReadiness(channel.getId());
+        }
+
+        channel.setState(targetState);
         channelGateway.save(channel);
-        log.info("切换渠道状态: id={}, {}→{}", id, oldState, newState);
+        log.info("渠道状态转换: id={}, {}→{}, reason={}", id, currentState, targetState, request.getReason());
+    }
+
+    /**
+     * 校验 PENDING→ACTIVE 前置条件
+     * <p>要求至少 1 个 Endpoint + 1 个 Credential + 1 个 ModelInstance。</p>
+     */
+    private void validateActivationPrerequisites(Long channelId) {
+        List<ChannelEndpoint> endpoints = channelEndpointGateway.findByChannelId(channelId);
+        if (endpoints.isEmpty()) {
+            throw new GatewayRequestException("CHANNEL_NO_ENDPOINT", "请先添加端点");
+        }
+
+        List<ChannelCredential> credentials = channelCredentialGateway.findByChannelId(channelId);
+        if (credentials.isEmpty()) {
+            throw new GatewayRequestException("CHANNEL_NO_CREDENTIAL", "请先添加凭证");
+        }
+
+        List<ModelInstance> instances = modelInstanceGateway.findByChannelId(channelId);
+        if (instances.isEmpty()) {
+            throw new GatewayRequestException("CHANNEL_NO_MODEL_INSTANCE", "请先关联模型实例");
+        }
+    }
+
+    /**
+     * 级联激活 PENDING 状态的 ModelInstance
+     * <p>将同 Channel 下所有 PENDING 状态的 ModelInstance 设为 ACTIVE。</p>
+     */
+    private void cascadeActivateModelInstances(Long channelId) {
+        List<ModelInstance> pendingInstances = modelInstanceGateway.findByChannelId(channelId).stream()
+            .filter(mi -> mi.getState() == ModelInstance.State.PENDING)
+            .toList();
+        if (!pendingInstances.isEmpty()) {
+            pendingInstances.forEach(mi -> mi.setState(ModelInstance.State.ACTIVE));
+            modelInstanceGateway.saveAll(pendingInstances);
+            log.info("级联激活 {} 个 PENDING 模型实例: channelId={}", pendingInstances.size(), channelId);
+        }
+    }
+
+    /**
+     * 检查 SUSPENDED→ACTIVE 完整性
+     * <p>仅警告不阻塞，提示管理员检查 Endpoint/Credential/ModelInstance 是否仍完整。</p>
+     */
+    private void checkSuspendedActivationReadiness(Long channelId) {
+        List<ChannelEndpoint> endpoints = channelEndpointGateway.findByChannelId(channelId);
+        List<ChannelCredential> credentials = channelCredentialGateway.findByChannelId(channelId);
+        List<ModelInstance> instances = modelInstanceGateway.findByChannelId(channelId);
+
+        if (endpoints.isEmpty()) {
+            log.warn("渠道恢复激活但无端点: channelId={}", channelId);
+        }
+        if (credentials.isEmpty()) {
+            log.warn("渠道恢复激活但无凭证: channelId={}", channelId);
+        }
+        if (instances.isEmpty()) {
+            log.warn("渠道恢复激活但无模型实例: channelId={}", channelId);
+        }
     }
 
     private ChannelResponse toResponse(Channel channel) {

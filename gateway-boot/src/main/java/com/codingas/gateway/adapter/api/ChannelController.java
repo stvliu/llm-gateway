@@ -3,6 +3,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.channel.dto.*;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -57,13 +58,14 @@ public class ChannelController {
     }
 
     /**
-     * 切换渠道启用/停用状态
+     * 切换渠道状态
+     * <p>由后端校验 canTransitionTo() 和前置条件。</p>
      */
-    @PatchMapping("/{id}/state")
+    @PutMapping("/{id}/state")
     public void setState(
             @PathVariable Long id,
-            @RequestParam boolean enabled) {
-        channelService.setState(id, enabled);
+            @Valid @RequestBody ChannelStateTransitionRequest request) {
+        channelService.setState(id, request);
     }
 
     @DeleteMapping("/{id}")
