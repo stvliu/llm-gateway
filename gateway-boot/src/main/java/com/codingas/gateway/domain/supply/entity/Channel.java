@@ -79,6 +79,6 @@ public class Channel extends BaseEntity {
      * 检查渠道是否可用
      */
     public boolean isAvailable() {
-        return ChannelState.ACTIVE.equals(state);
+        return Phase.ACTIVE.equals(phase) || Phase.DEPRECATED.equals(phase);
     }
 }

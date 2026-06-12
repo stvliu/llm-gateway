@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ModelInstanceDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ModelInstanceRepository;
@@ -41,25 +40,25 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
 
     @Override
     public List<ModelInstance> findActiveByChannelId(Long channelId) {
-        return modelInstanceRepository.findByChannelIdAndState(channelId, ChannelModelState.ACTIVE.name())
+        return modelInstanceRepository.findByChannelIdAndPhase(channelId, ModelInstance.Phase.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ModelInstance> findActiveByModelId(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndState(modelId, ChannelModelState.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndPhase(modelId, ModelInstance.Phase.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
     public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(modelId, ChannelModelState.ACTIVE.name())
+        return modelInstanceRepository.findByModelIdAndPhaseOrderByPriorityAsc(modelId, ModelInstance.Phase.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ModelInstance> findByChannelIdAndState(Long channelId, ChannelModelState state) {
-        return modelInstanceRepository.findByChannelIdAndState(channelId, state.name())
+    public List<ModelInstance> findByChannelIdAndPhase(Long channelId, String phase) {
+        return modelInstanceRepository.findByChannelIdAndPhase(channelId, phase)
                 .stream().map(this::toEntity).toList();
     }
 
@@ -96,7 +95,7 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
         entity.setPriority(doObj.getPriority() != null ? doObj.getPriority() : 100);
         entity.setWeight(doObj.getWeight() != null ? doObj.getWeight() : 100);
         entity.setQuotaLimit(doObj.getQuotaLimit());
-        entity.setState(ChannelModelState.valueOf(doObj.getState()));
+        entity.setPhase(ModelInstance.Phase.valueOf(doObj.getPhase()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -115,7 +114,7 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
         doObj.setPriority(entity.getPriority() != null ? entity.getPriority() : 100);
         doObj.setWeight(entity.getWeight() != null ? entity.getWeight() : 100);
         doObj.setQuotaLimit(entity.getQuotaLimit());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : ChannelModelState.ACTIVE.name());
+        doObj.setPhase(entity.getPhase() != null ? entity.getPhase().name() : ModelInstance.Phase.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

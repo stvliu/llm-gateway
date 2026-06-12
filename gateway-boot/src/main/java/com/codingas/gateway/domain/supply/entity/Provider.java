@@ -38,9 +38,9 @@ public class Provider extends BaseEntity {
     
 
     /**
-     * 检查供应商是否可用
+     * 检查供应商是否可用（供应商始终可用）
      */
     public boolean isAvailable() {
-        return ProviderState.ACTIVE.equals(state);
+        return true;
     }
 }

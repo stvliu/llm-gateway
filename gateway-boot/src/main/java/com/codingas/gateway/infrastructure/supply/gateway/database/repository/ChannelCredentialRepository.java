@@ -12,5 +12,5 @@ public interface ChannelCredentialRepository extends JpaRepository<ChannelCreden
 
     List<ChannelCredentialDo> findByChannelId(Long channelId);
 
-    List<ChannelCredentialDo> findByChannelIdAndState(Long channelId, String state);
+    List<ChannelCredentialDo> findByChannelIdAndPhase(Long channelId, String phase);
 }

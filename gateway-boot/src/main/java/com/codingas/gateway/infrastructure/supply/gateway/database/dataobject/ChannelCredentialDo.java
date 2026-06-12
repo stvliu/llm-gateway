@@ -42,9 +42,6 @@ public class ChannelCredentialDo extends BaseDo {
     @Column(name = "priority")
     private Integer priority;
 
-    @Column(name = "state", nullable = false, length = 32)
-    private String state;
-
     @Column(name = "last_used_at")
     private Instant lastUsedAt;
 }

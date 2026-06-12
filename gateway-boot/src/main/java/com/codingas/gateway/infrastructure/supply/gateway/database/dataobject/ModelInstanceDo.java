@@ -50,5 +50,5 @@ public class ModelInstanceDo extends BaseDo {
     private Long quotaLimit;
 
     @Column(name = "state", nullable = false, length = 32)
-    private String state;
+    private String phase;
 }

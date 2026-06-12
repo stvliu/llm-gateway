@@ -1,7 +1,7 @@
 package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.ModelState;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ModelDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ModelRepository;
@@ -41,7 +41,7 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findActiveByModelName(String modelName) {
-        return modelRepository.findByModelNameAndState(modelName, ModelState.ACTIVE.name())
+        return modelRepository.findByModelNameAndPhase(modelName, ModelInstance.Phase.ACTIVE.name())
                 .stream()
                 .map(this::toEntity)
                 .toList();
@@ -54,7 +54,7 @@ public class ModelGatewayImpl implements ModelGateway {
 
     @Override
     public List<Model> findAllActive() {
-        return modelRepository.findByState(ModelState.ACTIVE.name()).stream().map(this::toEntity).toList();
+        return modelRepository.findAll().stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -105,7 +105,9 @@ public class ModelGatewayImpl implements ModelGateway {
         entity.setKnowledgeCutoff(doObj.getKnowledgeCutoff());
         entity.setCapabilities(doObj.getCapabilities());
         entity.setModalities(doObj.getModalities());
-        entity.setState(ModelState.valueOf(doObj.getState()));
+        entity.setDeprecatedAt(doObj.getDeprecatedAt());
+        entity.setScheduledRetiredAt(doObj.getScheduledRetiredAt());
+        entity.setDeprecationMessage(doObj.getDeprecationMessage());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -125,7 +127,9 @@ public class ModelGatewayImpl implements ModelGateway {
         doObj.setKnowledgeCutoff(entity.getKnowledgeCutoff());
         doObj.setCapabilities(entity.getCapabilities());
         doObj.setModalities(entity.getModalities());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : ModelState.ACTIVE.name());
+        doObj.setDeprecatedAt(entity.getDeprecatedAt());
+        doObj.setScheduledRetiredAt(entity.getScheduledRetiredAt());
+        doObj.setDeprecationMessage(entity.getDeprecationMessage());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

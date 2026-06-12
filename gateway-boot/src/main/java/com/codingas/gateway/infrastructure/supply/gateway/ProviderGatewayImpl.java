@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ProviderDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ProviderRepository;
@@ -51,7 +50,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
 
     @Override
     public List<Provider> findAllActive() {
-        return providerRepository.findByState(ProviderState.ACTIVE.name()).stream().map(this::toEntity).toList();
+        return providerRepository.findAll().stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -93,7 +92,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         entity.setLogoUrl(doObj.getLogoUrl());
         entity.setWebsiteUrl(doObj.getWebsiteUrl());
         entity.setDescription(doObj.getDescription());
-        entity.setState(ProviderState.valueOf(doObj.getState()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -109,7 +107,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
         doObj.setLogoUrl(entity.getLogoUrl());
         doObj.setWebsiteUrl(entity.getWebsiteUrl());
         doObj.setDescription(entity.getDescription());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : ProviderState.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

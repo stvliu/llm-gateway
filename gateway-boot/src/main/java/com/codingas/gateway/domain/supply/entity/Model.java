@@ -51,9 +51,9 @@ public class Model extends BaseEntity {
     
 
     /**
-     * 检查模型是否可用
+     * 检查模型是否可用（未被废弃）
      */
     public boolean isAvailable() {
-        return ModelState.ACTIVE.equals(state);
+        return deprecatedAt == null;
     }
 }

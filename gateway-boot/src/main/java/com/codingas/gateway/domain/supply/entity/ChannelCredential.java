@@ -49,9 +49,9 @@ public class ChannelCredential extends BaseEntity {
     private Instant lastUsedAt;
 
     /**
-     * 检查凭证是否可用
+     * 检查凭证是否可用（凭证始终可用）
      */
     public boolean isAvailable() {
-        return CredentialState.ACTIVE.equals(state);
+        return true;
     }
 }

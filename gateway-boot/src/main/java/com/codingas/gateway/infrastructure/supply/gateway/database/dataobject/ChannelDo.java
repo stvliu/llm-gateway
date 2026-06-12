@@ -33,7 +33,6 @@ public class ChannelDo extends BaseDo {
     @Column(name = "max_retries")
     private Integer maxRetries;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "state", nullable = false, length = 32)
-    private com.codingas.gateway.domain.supply.enums.ChannelState state;
+    private String phase;
 }

@@ -59,7 +59,4 @@ public class ModelDo extends BaseDo {
 
     @Column(name = "deprecation_message", length = 512)
     private String deprecationMessage;
-
-    @Column(name = "state", nullable = false)
-    private String state;
 }

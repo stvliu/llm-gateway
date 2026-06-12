@@ -80,7 +80,7 @@ public class ModelInstance extends BaseEntity {
      * 检查是否可用
      */
     public boolean isAvailable() {
-        return ChannelModelState.ACTIVE.equals(state);
+        return Phase.ACTIVE.equals(phase);
     }
 
     /**

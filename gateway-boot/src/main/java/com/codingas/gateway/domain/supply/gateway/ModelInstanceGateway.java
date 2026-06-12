@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,7 +43,7 @@ public interface ModelInstanceGateway {
     /**
      * 根据渠道ID和状态查找
      */
-    List<ModelInstance> findByChannelIdAndState(Long channelId, ChannelModelState state);
+    List<ModelInstance> findByChannelIdAndPhase(Long channelId, String phase);
 
     /**
      * 根据ID列表批量查找

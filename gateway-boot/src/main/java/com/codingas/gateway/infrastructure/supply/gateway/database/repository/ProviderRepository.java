@@ -15,7 +15,7 @@ public interface ProviderRepository extends JpaRepository<ProviderDo, Long> {
 
     Optional<ProviderDo> findByName(String name);
 
-    List<ProviderDo> findByState(String state);
+    List<ProviderDo> findByPhase(String phase);
 
     boolean existsByCode(String code);
 

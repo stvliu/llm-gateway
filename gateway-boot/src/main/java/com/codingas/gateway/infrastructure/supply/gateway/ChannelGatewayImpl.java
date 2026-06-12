@@ -2,7 +2,6 @@ package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
@@ -42,7 +41,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
 
     @Override
     public List<Channel> findAllActive() {
-        return channelRepository.findByState(ChannelState.ACTIVE).stream().map(this::toEntity).toList();
+        return channelRepository.findByPhase(Channel.Phase.ACTIVE.name()).stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -85,7 +84,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setQuotaLimit(doObj.getQuotaLimit());
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
-        entity.setState(doObj.getState());
+        entity.setPhase(Channel.Phase.valueOf(doObj.getPhase()));
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -102,7 +101,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setQuotaLimit(entity.getQuotaLimit());
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
-        doObj.setState(entity.getState() != null ? entity.getState() : ChannelState.ACTIVE);
+        doObj.setPhase(entity.getPhase() != null ? entity.getPhase().name() : Channel.Phase.ACTIVE.name());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;
