@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.supply.gateway.database.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.*;
+import java.time.Instant;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -49,6 +50,15 @@ public class ModelDo extends BaseDo {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "modalities", columnDefinition = "jsonb")
     private List<String> modalities;
+
+    @Column(name = "deprecated_at")
+    private Instant deprecatedAt;
+
+    @Column(name = "scheduled_retired_at")
+    private Instant scheduledRetiredAt;
+
+    @Column(name = "deprecation_message", length = 512)
+    private String deprecationMessage;
 
     @Column(name = "state", nullable = false)
     private String state;
