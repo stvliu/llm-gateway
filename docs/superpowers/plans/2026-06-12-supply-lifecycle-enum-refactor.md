@@ -1,3 +1,7 @@
+---
+archived-with: 2026-06-12-supply-lifecycle-enum-refactor
+status: final
+---
 # 供应域状态枚举重构实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

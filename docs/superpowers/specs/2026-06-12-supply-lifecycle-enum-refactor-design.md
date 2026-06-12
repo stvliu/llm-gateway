@@ -2,6 +2,8 @@
 comet_change: supply-lifecycle-enum-refactor
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-12-supply-lifecycle-enum-refactor
+status: final
 ---
 
 # 供应域状态枚举重构 — 生命周期管理设计
