@@ -42,7 +42,6 @@ spring:
           fetch_size: 100
         order_inserts: true
         order_updates: true
-        dialect: org.hibernate.dialect.H2Dialect
 
   # ==============================================
   # Flyway 数据库迁移配置

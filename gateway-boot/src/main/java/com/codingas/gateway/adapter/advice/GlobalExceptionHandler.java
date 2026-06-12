@@ -4,6 +4,7 @@ import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.infrastructure.resilience.CircuitOpenException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +31,17 @@ public class GlobalExceptionHandler {
         log.warn("Gateway request error: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
+    }
+
+    /**
+     * 处理熔断器开启异常
+     */
+    @ExceptionHandler(CircuitOpenException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCircuitOpenException(CircuitOpenException ex) {
+        log.warn("Circuit breaker open: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
                 .body(ApiResponse.error(ex.getCode(), ex.getMessage()));
     }
 
