@@ -4,8 +4,6 @@ import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
@@ -65,23 +63,21 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi1 = new ModelInstance();
             mi1.setModelId(100L);
-            mi1.setState(ChannelModelState.ACTIVE);
+            mi1.setState(ModelInstance.State.ACTIVE);
 
             ModelInstance mi2 = new ModelInstance();
             mi2.setModelId(200L);
-            mi2.setState(ChannelModelState.ACTIVE);
+            mi2.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of(mi1));
             when(modelInstanceGateway.findActiveByChannelId(20L)).thenReturn(List.of(mi2));
 
             Model model1 = new Model();
             model1.setModelName("gpt-4");
-            model1.setState(ModelState.ACTIVE);
             model1.setCreatedAt(Instant.ofEpochSecond(1700000000L));
 
             Model model2 = new Model();
             model2.setModelName("gpt-3.5-turbo");
-            model2.setState(ModelState.ACTIVE);
             model2.setCreatedAt(Instant.ofEpochSecond(1700000001L));
 
             when(modelGateway.findById(100L)).thenReturn(Optional.of(model1));
@@ -119,7 +115,7 @@ class ModelDiscoveryServiceTest {
         }
 
         @Test
-        @DisplayName("仅返回状态为 ACTIVE 的模型，过滤掉 INACTIVE 的模型")
+        @DisplayName("仅返回状态为 ACTIVE 的模型，过滤掉已废弃的模型")
         void shouldFilterInactiveModels() {
             // Arrange
             when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
@@ -127,13 +123,13 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(300L);
-            mi.setState(ChannelModelState.ACTIVE);
+            mi.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(30L)).thenReturn(List.of(mi));
 
             Model inactiveModel = new Model();
             inactiveModel.setModelName("deprecated-model");
-            inactiveModel.setState(ModelState.INACTIVE);
+            inactiveModel.setDeprecatedAt(Instant.now());
 
             when(modelGateway.findById(300L)).thenReturn(Optional.of(inactiveModel));
 
@@ -153,7 +149,7 @@ class ModelDiscoveryServiceTest {
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(999L);
-            mi.setState(ChannelModelState.ACTIVE);
+            mi.setState(ModelInstance.State.ACTIVE);
 
             when(modelInstanceGateway.findActiveByChannelId(40L)).thenReturn(List.of(mi));
             when(modelGateway.findById(999L)).thenReturn(Optional.empty());

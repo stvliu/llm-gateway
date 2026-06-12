@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,5 +24,5 @@ public class PlanModelCatalog extends BaseEntity {
     private String modelName;
 
     /** 目录状态，默认 ACTIVE */
-    private CatalogState state = CatalogState.ACTIVE;
+    
 }

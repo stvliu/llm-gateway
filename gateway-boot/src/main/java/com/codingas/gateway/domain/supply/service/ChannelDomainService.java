@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.supply.service;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.exception.ChannelException;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
@@ -52,17 +51,17 @@ public class ChannelDomainService {
     public Channel enable(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setState(ChannelState.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
         return channelGateway.save(channel);
     }
 
     /**
-     * 禁用渠道
+     * 暂停渠道
      */
     public Channel disable(Long id) {
         Channel channel = channelGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        channel.setState(ChannelState.INACTIVE);
+        channel.setState(Channel.State.SUSPENDED);
         return channelGateway.save(channel);
     }
 

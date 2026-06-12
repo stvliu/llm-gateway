@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +33,7 @@ public interface ChannelCredentialGateway {
     /**
      * 根据渠道 ID 和状态查找凭证
      */
-    List<ChannelCredential> findByChannelIdAndState(Long channelId, CredentialState state);
+    List<ChannelCredential> findByChannelIdAndState(Long channelId, String state);
 
     /**
      * 查找渠道的默认凭证

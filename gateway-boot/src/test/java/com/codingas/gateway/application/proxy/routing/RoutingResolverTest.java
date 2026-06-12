@@ -5,7 +5,7 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.*;
+import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
@@ -61,18 +61,17 @@ class RoutingResolverTest {
             Model model = new Model();
             model.setId(1L);
             model.setModelName("gpt-4o");
-            model.setState(ModelState.ACTIVE);
 
             ModelInstance modelInstance = new ModelInstance();
             modelInstance.setId(10L);
             modelInstance.setChannelId(100L);
             modelInstance.setModelId(1L);
-            modelInstance.setState(ChannelModelState.ACTIVE);
+            modelInstance.setState(ModelInstance.State.ACTIVE);
 
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("openai-main");
-            channel.setState(ChannelState.ACTIVE);
+            channel.setState(Channel.State.ACTIVE);
             channel.setTimeout(30);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
@@ -108,7 +107,6 @@ class RoutingResolverTest {
             Model model = new Model();
             model.setId(1L);
             model.setModelName("gpt-4o");
-            model.setState(ModelState.ACTIVE);
 
             ModelInstance modelInstance = new ModelInstance();
             modelInstance.setId(10L);
@@ -118,7 +116,7 @@ class RoutingResolverTest {
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("anthropic-via-openai");
-            channel.setState(ChannelState.ACTIVE);
+            channel.setState(Channel.State.ACTIVE);
             channel.setTimeout(60);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
@@ -161,7 +159,6 @@ class RoutingResolverTest {
             Model model = new Model();
             model.setId(1L);
             model.setModelName("gpt-4o");
-            model.setState(ModelState.ACTIVE);
 
             ModelInstance modelInstance = new ModelInstance();
             modelInstance.setId(10L);

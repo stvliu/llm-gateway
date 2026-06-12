@@ -23,7 +23,4 @@ public class PlanModelCatalogDo extends BaseDo {
 
     @Column(name = "model_name", nullable = false, length = 128)
     private String modelName;
-
-    @Column(name = "state", nullable = false, length = 32)
-    private String state;
 }

@@ -17,11 +17,7 @@ public interface ModelRepository extends JpaRepository<ModelDo, Long> {
 
     boolean existsByModelName(String modelName);
 
-    List<ModelDo> findByState(String state);
-
     List<ModelDo> findByIdIn(List<Long> ids);
-
-    List<ModelDo> findByModelNameAndState(String modelName, String state);
 
     /**
      * 关键词搜索（modelName 或 displayName 包含关键字）

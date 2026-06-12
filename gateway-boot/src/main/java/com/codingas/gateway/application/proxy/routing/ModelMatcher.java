@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,7 +24,7 @@ public class ModelMatcher {
      */
     public Model match(String modelName) {
         return modelGateway.findByModelName(modelName)
-                .filter(m -> m.getState() == ModelState.ACTIVE)
+                .filter(Model::isAvailable)
                 .orElseThrow(() -> new ResourceNotFoundException("Model", modelName));
     }
 }

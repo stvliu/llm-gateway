@@ -1,13 +1,13 @@
 package com.codingas.gateway.domain.supply.service;
 
 import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,17 +43,17 @@ public class ModelDomainService {
     public Model enable(Long id) {
         Model model = modelGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("MODEL_NOT_FOUND", "模型不存在: " + id));
-        model.setState(ModelState.ACTIVE);
+        model.setDeprecatedAt(null);
         return modelGateway.save(model);
     }
 
     /**
-     * 禁用模型
+     * 废弃模型
      */
     public Model disable(Long id) {
         Model model = modelGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("MODEL_NOT_FOUND", "模型不存在: " + id));
-        model.setState(ModelState.INACTIVE);
+        model.setDeprecatedAt(Instant.now());
         return modelGateway.save(model);
     }
 

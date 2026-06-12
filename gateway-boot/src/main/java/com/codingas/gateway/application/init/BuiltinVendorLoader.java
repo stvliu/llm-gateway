@@ -5,12 +5,9 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
@@ -136,7 +133,6 @@ public class BuiltinVendorLoader implements DataLoader {
             provider.setWebsiteUrl(vendor.websiteUrl());
             provider.setApiDocUrl(vendor.apiDocUrl());
             provider.setDescription(vendor.description());
-            provider.setState(ProviderState.ACTIVE);
             return providerGateway.save(provider);
         });
     }
@@ -149,7 +145,6 @@ public class BuiltinVendorLoader implements DataLoader {
         m.setModelName(model.modelName());
         m.setDisplayName(model.displayName());
         m.setContextWindow(model.contextWindow());
-        m.setState(ModelState.ACTIVE);
         modelGateway.save(m);
     }
 
@@ -161,7 +156,6 @@ public class BuiltinVendorLoader implements DataLoader {
                     channel.setProviderId(providerId);
                     channel.setName(data.name());
                     channel.setBillingMode(BillingMode.valueOf(data.billingMode()));
-                    channel.setState(ChannelState.INACTIVE);
                     return channelGateway.save(channel);
                 });
     }
@@ -194,7 +188,6 @@ public class BuiltinVendorLoader implements DataLoader {
         instance.setUpstreamModelName(data.upstreamModelName());
         instance.setPriority(data.priority());
         instance.setWeight(data.weight());
-        instance.setState(ChannelModelState.ACTIVE);
         modelInstanceGateway.save(instance);
     }
 }

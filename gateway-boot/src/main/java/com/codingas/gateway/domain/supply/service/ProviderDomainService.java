@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.service;
 
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import lombok.RequiredArgsConstructor;
@@ -46,22 +45,20 @@ public class ProviderDomainService {
     }
 
     /**
-     * 启用供应商
+     * 启用供应商（供应商无状态管理，仅保持兼容）
      */
     public Provider enable(Long id) {
         Provider provider = providerGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("PROVIDER_NOT_FOUND", "供应商不存在: " + id));
-        provider.setState(ProviderState.ACTIVE);
         return providerGateway.save(provider);
     }
 
     /**
-     * 禁用供应商
+     * 禁用供应商（供应商无状态管理，仅保持兼容）
      */
     public Provider disable(Long id) {
         Provider provider = providerGateway.findById(id)
                 .orElseThrow(() -> new ProviderException("PROVIDER_NOT_FOUND", "供应商不存在: " + id));
-        provider.setState(ProviderState.INACTIVE);
         return providerGateway.save(provider);
     }
 

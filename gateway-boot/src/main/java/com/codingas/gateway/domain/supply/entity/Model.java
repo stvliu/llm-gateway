@@ -2,11 +2,11 @@ package com.codingas.gateway.domain.supply.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -41,12 +41,21 @@ public class Model extends BaseEntity {
 
     private List<String> modalities;
 
-    private ModelState state = ModelState.ACTIVE;
+    /** 上游标记废弃时间，null 表示正常 */
+    private Instant deprecatedAt;
+
+    /** 计划下线日期 */
+    private Instant scheduledRetiredAt;
+
+    /** 下线原因或建议迁移目标 */
+    private String deprecationMessage;
+
+    
 
     /**
-     * 检查模型是否可用
+     * 检查模型是否可用（未被废弃）
      */
     public boolean isAvailable() {
-        return ModelState.ACTIVE.equals(state);
+        return deprecatedAt == null;
     }
 }

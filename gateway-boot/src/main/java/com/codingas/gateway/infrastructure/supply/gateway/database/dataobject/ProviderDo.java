@@ -28,7 +28,4 @@ public class ProviderDo extends BaseDo {
 
     @Column(name = "description", length = 512)
     private String description;
-
-    @Column(name = "state", nullable = false)
-    private String state;
 }

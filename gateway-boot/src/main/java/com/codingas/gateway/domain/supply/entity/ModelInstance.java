@@ -2,10 +2,9 @@ package com.codingas.gateway.domain.supply.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
+
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,8 +18,36 @@ import java.util.Map;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @DomainEntity
-@Slf4j
 public class ModelInstance extends BaseEntity {
+
+    /**
+     * 模型实例生命周期状态
+     */
+    public enum State {
+        PENDING,
+        ACTIVE,
+        SUSPENDED,
+        DEPRECATED,
+        RETIRED;
+
+        public boolean isRoutable() {
+            return this == ACTIVE || this == DEPRECATED;
+        }
+
+        public boolean isTerminal() {
+            return this == RETIRED;
+        }
+
+        public boolean canTransitionTo(State target) {
+            return switch (this) {
+                case PENDING    -> target == ACTIVE;
+                case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
+                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED || target == RETIRED;
+                case DEPRECATED -> target == RETIRED;
+                case RETIRED    -> false;
+            };
+        }
+    }
 
     /** 所属渠道 ID */
     private Long channelId;
@@ -47,13 +74,13 @@ public class ModelInstance extends BaseEntity {
     private Long quotaLimit;
 
     /** 实例状态 */
-    private ChannelModelState state = ChannelModelState.ACTIVE;
+    private State state = State.PENDING;
 
     /**
      * 检查是否可用
      */
     public boolean isAvailable() {
-        return ChannelModelState.ACTIVE.equals(state);
+        return State.ACTIVE.equals(state);
     }
 
     /**

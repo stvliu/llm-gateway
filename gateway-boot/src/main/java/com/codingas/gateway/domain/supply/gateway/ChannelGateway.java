@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 
 import java.util.List;
 import java.util.Optional;

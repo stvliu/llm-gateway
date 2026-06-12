@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.service;
 
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.exception.ChannelException;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
@@ -30,22 +29,20 @@ public class ChannelCredentialDomainService {
     }
 
     /**
-     * 启用凭证
+     * 启用凭证（凭证无状态管理，仅保持兼容）
      */
     public ChannelCredential enable(Long id) {
         ChannelCredential credential = credentialGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CREDENTIAL_NOT_FOUND", "凭证不存在: " + id));
-        credential.setState(CredentialState.ACTIVE);
         return credentialGateway.save(credential);
     }
 
     /**
-     * 禁用凭证
+     * 禁用凭证（凭证无状态管理，仅保持兼容）
      */
     public ChannelCredential disable(Long id) {
         ChannelCredential credential = credentialGateway.findById(id)
                 .orElseThrow(() -> new ChannelException("CREDENTIAL_NOT_FOUND", "凭证不存在: " + id));
-        credential.setState(CredentialState.INACTIVE);
         return credentialGateway.save(credential);
     }
 

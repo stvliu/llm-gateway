@@ -8,7 +8,6 @@ import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -49,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setQuotaLimit(request.getQuotaLimit());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
-        channel.setState(ChannelState.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
 
         Channel saved = channelGateway.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
@@ -122,8 +121,8 @@ public class ChannelServiceImpl implements ChannelService {
     public void setState(Long id, boolean enabled) {
         Channel channel = channelGateway.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        ChannelState oldState = channel.getState();
-        ChannelState newState = enabled ? ChannelState.ACTIVE : ChannelState.INACTIVE;
+        Channel.State oldState = channel.getState();
+        Channel.State newState = enabled ? Channel.State.ACTIVE : Channel.State.SUSPENDED;
         if (oldState == newState) {
             return;
         }

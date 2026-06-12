@@ -20,7 +20,6 @@ public class ProviderResponse {
     private String websiteUrl;
     private String apiDocUrl;
     private Integer priority;
-    private String state;
     private Instant createdAt;
     private Instant updatedAt;
 }

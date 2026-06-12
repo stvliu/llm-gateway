@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.supply.catalog.entity;
 
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -13,10 +12,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 class PlanCatalogTest {
 
     @Test
-    @DisplayName("默认 source 为 BUILTIN，state 为 ACTIVE")
+    @DisplayName("默认 source 为 BUILTIN")
     void defaultValues() {
         PlanCatalog catalog = new PlanCatalog();
-        assertThat(catalog.getState()).isEqualTo(CatalogState.ACTIVE);
     }
 
     @Test

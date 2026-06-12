@@ -2,7 +2,6 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -44,7 +43,6 @@ class CredentialResolverTest {
             defaultKey.setId(1L);
             defaultKey.setChannelId(10L);
             defaultKey.setApiKeyPlain("sk-default-key");
-            defaultKey.setState(CredentialState.ACTIVE);
 
             when(channelCredentialGateway.findDefaultByChannelId(10L))
                     .thenReturn(Optional.of(defaultKey));
@@ -57,34 +55,6 @@ class CredentialResolverTest {
         }
 
         @Test
-        @DisplayName("默认凭证不可用时回退到活跃凭证")
-        void resolve_defaultUnavailable_fallsBackToActive() {
-            // given
-            ChannelCredential defaultKey = new ChannelCredential();
-            defaultKey.setId(1L);
-            defaultKey.setChannelId(10L);
-            defaultKey.setApiKeyPlain("sk-default-key");
-            defaultKey.setState(CredentialState.INACTIVE);
-
-            ChannelCredential activeKey = new ChannelCredential();
-            activeKey.setId(2L);
-            activeKey.setChannelId(10L);
-            activeKey.setApiKeyPlain("sk-active-key");
-            activeKey.setState(CredentialState.ACTIVE);
-
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
-                    .thenReturn(Optional.of(defaultKey));
-            when(channelCredentialGateway.findActiveByChannelId(10L))
-                    .thenReturn(List.of(activeKey));
-
-            // when
-            String result = credentialResolver.resolve(10L);
-
-            // then
-            assertThat(result).isEqualTo("sk-active-key");
-        }
-
-        @Test
         @DisplayName("无默认凭证时使用活跃凭证")
         void resolve_noDefault_usesActiveCredential() {
             // given
@@ -92,7 +62,6 @@ class CredentialResolverTest {
             activeKey.setId(2L);
             activeKey.setChannelId(10L);
             activeKey.setApiKeyPlain("sk-active-key");
-            activeKey.setState(CredentialState.ACTIVE);
 
             when(channelCredentialGateway.findDefaultByChannelId(10L))
                     .thenReturn(Optional.empty());

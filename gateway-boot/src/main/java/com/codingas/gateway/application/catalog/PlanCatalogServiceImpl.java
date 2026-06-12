@@ -6,14 +6,11 @@ import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
 import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanModelCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.enums.ModelState;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
@@ -64,7 +61,7 @@ public class PlanCatalogServiceImpl implements PlanCatalogService {
         }
 
         return providers.stream()
-                .filter(p -> p.getState() == ProviderState.ACTIVE)
+                .filter(p -> true)
                 .map(p -> ProviderCatalogResponse.builder()
                         .code(p.getCode())
                         .name(p.getName())
@@ -84,7 +81,7 @@ public class PlanCatalogServiceImpl implements PlanCatalogService {
         }
 
         return catalogs.stream()
-                .filter(c -> c.getState() == CatalogState.ACTIVE)
+                .filter(c -> true)
                 .map(c -> PlanCatalogResponse.builder()
                         .planCode(c.getPlanCode())
                         .providerCode(c.getProviderCode())
@@ -156,7 +153,7 @@ public class PlanCatalogServiceImpl implements PlanCatalogService {
         }
 
         return models.stream()
-                .filter(m -> m.getState() == ModelState.ACTIVE)
+                .filter(Model::isAvailable)
                 .map(m -> {
                     // 从 Map<String, Boolean> 中提取能力名称列表
                     List<String> capList = extractCapabilityNames(m.getCapabilities());

@@ -3,10 +3,9 @@ package com.codingas.gateway.domain.supply.entity;
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.extern.slf4j.Slf4j;
+
 
 import java.time.Instant;
 
@@ -19,8 +18,36 @@ import java.time.Instant;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @DomainEntity
-@Slf4j
 public class Channel extends BaseEntity {
+
+    /**
+     * 渠道生命周期状态
+     */
+    public enum State {
+        PENDING,
+        ACTIVE,
+        SUSPENDED,
+        DEPRECATED,
+        RETIRED;
+
+        public boolean isRoutable() {
+            return this == ACTIVE || this == DEPRECATED;
+        }
+
+        public boolean isTerminal() {
+            return this == RETIRED;
+        }
+
+        public boolean canTransitionTo(State target) {
+            return switch (this) {
+                case PENDING    -> target == ACTIVE;
+                case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
+                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED || target == RETIRED;
+                case DEPRECATED -> target == RETIRED;
+                case RETIRED    -> false;
+            };
+        }
+    }
 
     private Long providerId;
 
@@ -36,7 +63,7 @@ public class Channel extends BaseEntity {
 
     private Integer maxRetries;
 
-    private ChannelState state = ChannelState.ACTIVE;
+    private State state = State.PENDING;
 
     @Override
     public Instant getCreatedAt() {
@@ -52,6 +79,6 @@ public class Channel extends BaseEntity {
      * 检查渠道是否可用
      */
     public boolean isAvailable() {
-        return ChannelState.ACTIVE.equals(state);
+        return State.ACTIVE.equals(state) || State.DEPRECATED.equals(state);
     }
 }

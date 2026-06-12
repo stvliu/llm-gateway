@@ -7,7 +7,6 @@ import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialR
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -110,7 +109,7 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                CHANNEL_ID, API_KEY_ID, 5, 10, null, "updated-description", null
+                CHANNEL_ID, API_KEY_ID, 5, 10, "updated-description", null
         );
         ChannelCredentialResponse response = service.update(request);
 
@@ -125,7 +124,7 @@ class ChannelCredentialServiceImplTest {
         when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
         ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
-                CHANNEL_ID, API_KEY_ID, null, null, null, "updated", null
+                CHANNEL_ID, API_KEY_ID, null, null, "updated", null
         );
         assertThrows(ResourceNotFoundException.class, () -> service.update(request));
     }
@@ -155,7 +154,6 @@ class ChannelCredentialServiceImplTest {
         apiKey.setName("test-key");
         apiKey.setWeight(1);
         apiKey.setPriority(1);
-        apiKey.setState(CredentialState.ACTIVE);
         return apiKey;
     }
 }

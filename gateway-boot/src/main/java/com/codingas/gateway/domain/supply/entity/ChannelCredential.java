@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.supply.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -45,15 +44,15 @@ public class ChannelCredential extends BaseEntity {
     private Integer priority;
 
     /** 凭证状态 */
-    private CredentialState state = CredentialState.ACTIVE;
+    
 
     /** 最后使用时间 */
     private Instant lastUsedAt;
 
     /**
-     * 检查凭证是否可用
+     * 检查凭证是否可用（凭证始终可用）
      */
     public boolean isAvailable() {
-        return CredentialState.ACTIVE.equals(state);
+        return true;
     }
 }

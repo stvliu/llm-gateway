@@ -5,7 +5,6 @@ import com.codingas.gateway.application.catalog.dto.BatchProvisionResult;
 import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
 import com.codingas.gateway.application.catalog.dto.ProvisionResult;
 import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
-import com.codingas.gateway.domain.supply.catalog.enums.CatalogState;
 import com.codingas.gateway.domain.supply.catalog.exception.CatalogException;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
 import com.codingas.gateway.domain.supply.catalog.gateway.PlanModelCatalogGateway;
@@ -15,12 +14,7 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Provider;
-import com.codingas.gateway.domain.supply.enums.ChannelModelState;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.ProviderState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -120,7 +114,7 @@ public class ChannelProvisionService {
         channel.setBillingMode(catalog.getBillingMode());
         channel.setTimeout(30);
         channel.setMaxRetries(3);
-        channel.setState(ChannelState.ACTIVE);
+        channel.setState(Channel.State.ACTIVE);
 
         Channel savedChannel = channelGateway.save(channel);
         log.info("开通套餐-创建渠道成功: planCode={}, channelId={}", planCode, savedChannel.getId());
@@ -151,7 +145,7 @@ public class ChannelProvisionService {
             modelInstance.setUpstreamModelName(resolved);
             modelInstance.setPriority(100);
             modelInstance.setWeight(100);
-            modelInstance.setState(ChannelModelState.ACTIVE);
+            modelInstance.setState(ModelInstance.State.ACTIVE);
             modelInstanceGateway.save(modelInstance);
         }
         log.info("开通套餐-创建模型实例成功: planCode={}, count={}", planCode, pricing.size());
@@ -172,7 +166,6 @@ public class ChannelProvisionService {
                 credential.setApiKeyPrefix(keyPrefix);
                 credential.setPriority(priority);
                 credential.setWeight(100);
-                credential.setState(CredentialState.ACTIVE);
 
                 // Gateway 内部处理加密存储
                 channelCredentialGateway.save(credential);
@@ -207,7 +200,6 @@ public class ChannelProvisionService {
             targetPlanCodes = request.getPlanCodes();
         } else {
             targetPlanCodes = allPlans.stream()
-                    .filter(p -> p.getState() == null || p.getState() == CatalogState.ACTIVE)
                     .map(PlanCatalog::getPlanCode)
                     .toList();
         }
@@ -268,7 +260,6 @@ public class ChannelProvisionService {
         Model model = new Model();
         model.setModelName(modelName);
         model.setDisplayName(modelName);
-        model.setState(ModelState.ACTIVE);
 
         Model saved = modelGateway.save(model);
         log.info("开通模型成功: modelName={}, id={}", modelName, saved.getId());
@@ -295,7 +286,6 @@ public class ChannelProvisionService {
         provider.setCode(providerCode);
         provider.setName(providerCode);
         provider.setPriority(100);
-        provider.setState(ProviderState.ACTIVE);
 
         Provider saved = providerGateway.save(provider);
         log.info("自动创建供应商: code={}, id={}", providerCode, saved.getId());
@@ -319,7 +309,6 @@ public class ChannelProvisionService {
         Model model = new Model();
         model.setModelName(modelName);
         model.setDisplayName(modelName);
-        model.setState(ModelState.ACTIVE);
 
         Model saved = modelGateway.save(model);
         log.info("级联创建模型: modelName={}, id={}", modelName, saved.getId());

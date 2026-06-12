@@ -75,7 +75,6 @@ public class ChannelCredentialController {
                 id,
                 request.priority(),
                 request.weight(),
-                request.state(),
                 request.description(),
                 request.apiKey()
         );

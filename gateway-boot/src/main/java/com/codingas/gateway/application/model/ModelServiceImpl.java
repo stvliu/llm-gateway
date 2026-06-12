@@ -5,7 +5,6 @@ import com.codingas.gateway.application.model.dto.ModelQueryRequest;
 import com.codingas.gateway.application.model.dto.ModelResponse;
 import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.supply.enums.ModelState;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
@@ -39,7 +38,6 @@ public class ModelServiceImpl implements ModelService {
         model.setDisplayName(request.getDisplayName());
         model.setContextWindow(request.getContextWindow());
         model.setCapabilities(request.getCapabilities());
-        model.setState(ModelState.ACTIVE);
 
         Model savedModel = modelGateway.save(model);
         return toResponse(savedModel);
@@ -68,12 +66,6 @@ public class ModelServiceImpl implements ModelService {
             models = models.stream()
                 .filter(m -> (m.getDisplayName() != null && m.getDisplayName().toLowerCase().contains(keyword))
                     || m.getModelName().toLowerCase().contains(keyword))
-                .collect(Collectors.toList());
-        }
-
-        if (request.getState() != null) {
-            models = models.stream()
-                .filter(m -> m.getState().equals(request.getState()))
                 .collect(Collectors.toList());
         }
 
@@ -113,9 +105,6 @@ public class ModelServiceImpl implements ModelService {
         if (request.getCapabilities() != null) {
             model.setCapabilities(request.getCapabilities());
         }
-        if (request.getState() != null) {
-            model.setState(request.getState());
-        }
 
         return toResponse(modelGateway.save(model));
     }
@@ -139,7 +128,11 @@ public class ModelServiceImpl implements ModelService {
     public ModelResponse setEnabled(Long id, boolean enabled) {
         Model model = modelGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        model.setState(enabled ? ModelState.ACTIVE : ModelState.INACTIVE);
+        if (enabled) {
+            model.setDeprecatedAt(null);
+        } else {
+            model.setDeprecatedAt(java.time.Instant.now());
+        }
         return toResponse(modelGateway.save(model));
     }
 
@@ -153,7 +146,8 @@ public class ModelServiceImpl implements ModelService {
         response.setDisplayName(model.getDisplayName());
         response.setContextWindow(model.getContextWindow());
         response.setCapabilities(model.getCapabilities());
-        response.setState(model.getState());
+        response.setDeprecatedAt(model.getDeprecatedAt());
+        response.setDeprecationMessage(model.getDeprecationMessage());
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
         return response;

@@ -11,6 +11,4 @@ import java.util.List;
 public interface ChannelCredentialRepository extends JpaRepository<ChannelCredentialDo, Long> {
 
     List<ChannelCredentialDo> findByChannelId(Long channelId);
-
-    List<ChannelCredentialDo> findByChannelIdAndState(Long channelId, String state);
 }

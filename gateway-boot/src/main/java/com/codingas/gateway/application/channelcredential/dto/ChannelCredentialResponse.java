@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.channelcredential.dto;
 
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 
 import java.time.Instant;
 
@@ -15,7 +14,6 @@ import java.time.Instant;
  * @param description 描述
  * @param weight 权重
  * @param priority 优先级
- * @param state 状态
  * @param createdAt 创建时间
  * @param updatedAt 更新时间
  */
@@ -28,7 +26,6 @@ public record ChannelCredentialResponse(
         String description,
         Integer weight,
         Integer priority,
-        CredentialState state,
         Instant createdAt,
         Instant updatedAt
 ) {

@@ -2,7 +2,6 @@ package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.CredentialState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelCredentialDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelCredentialRepository;
@@ -69,13 +68,13 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
 
     @Override
     public List<ChannelCredential> findActiveByChannelId(Long channelId) {
-        return credentialRepository.findByChannelIdAndState(channelId, CredentialState.ACTIVE.name())
+        return credentialRepository.findByChannelId(channelId)
                 .stream().map(this::toEntity).toList();
     }
 
     @Override
-    public List<ChannelCredential> findByChannelIdAndState(Long channelId, CredentialState state) {
-        return credentialRepository.findByChannelIdAndState(channelId, state.name())
+    public List<ChannelCredential> findByChannelIdAndState(Long channelId, String state) {
+        return credentialRepository.findByChannelId(channelId)
                 .stream().map(this::toEntity).toList();
     }
 
@@ -99,7 +98,7 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
 
     @Override
     public long countActiveByChannelId(Long channelId) {
-        return credentialRepository.findByChannelIdAndState(channelId, CredentialState.ACTIVE.name()).size();
+        return credentialRepository.findByChannelId(channelId).size();
     }
 
     private ChannelCredential toEntity(ChannelCredentialDo doObj) {
@@ -111,7 +110,6 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
         entity.setKeyAlias(doObj.getKeyAlias());
         entity.setWeight(doObj.getWeight());
         entity.setPriority(doObj.getPriority());
-        entity.setState(CredentialState.valueOf(doObj.getState()));
         entity.setLastUsedAt(doObj.getLastUsedAt());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
@@ -140,7 +138,6 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
         doObj.setKeyAlias(entity.getKeyAlias());
         doObj.setWeight(entity.getWeight());
         doObj.setPriority(entity.getPriority());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : CredentialState.ACTIVE.name());
         doObj.setLastUsedAt(entity.getLastUsedAt());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
