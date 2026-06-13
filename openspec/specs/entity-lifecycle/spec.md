@@ -1,4 +1,7 @@
-## ADDED Requirements
+# Entity Lifecycle
+## Summary
+
+## Requirements
 
 ### Requirement: 实体生命周期阶段定义
 

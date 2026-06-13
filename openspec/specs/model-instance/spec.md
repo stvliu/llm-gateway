@@ -1,4 +1,7 @@
-## ADDED Requirements
+# Model Instance
+## Summary
+
+## Requirements
 
 ### Requirement: ModelInstance 实体定义
 系统 SHALL 提供 ModelInstance 实体作为"模型在某渠道上的具体化身"，包含以下字段：channelId（关联 Channel）、modelId（关联 Model）、upstreamModelName（上游模型名映射）、capabilitiesOverride（实例级能力覆盖，Map<String,Boolean>）、contextWindowOverride（实例级上下文窗口覆盖）、priority（路由优先级）、weight（负载均衡权重）、quotaLimit（实例级配额）、state（ChannelModelState）。

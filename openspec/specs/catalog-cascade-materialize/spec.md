@@ -1,4 +1,7 @@
-## ADDED Requirements
+# Catalog Cascade Materialize
+## Summary
+
+## Requirements
 
 ### Requirement: Provider cascade materialization
 

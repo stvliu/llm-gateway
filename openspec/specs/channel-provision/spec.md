@@ -1,4 +1,7 @@
-## ADDED Requirements
+# Channel Provision
+## Summary
+
+## Requirements
 
 ### Requirement: 从套餐创建渠道
 系统 SHALL 提供 ChannelProvisionService，支持从 PlanCatalog 创建 Channel + ChannelEndpoint + ModelInstance。创建过程中自动级联创建缺失的 Provider 和 Model（使用最小信息）。
