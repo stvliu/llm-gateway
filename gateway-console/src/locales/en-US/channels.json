@@ -183,6 +183,8 @@
   "template.use": "Use This Template",
   "template.noTemplate": "No templates available",
   "connectivity.protocol": "Protocol",
+  "precheck.title": "Pre-check Tool",
+  "precheck.subtitle": "Test baseUrl + Key availability before creating a channel",
   "connectivity.baseUrl": "Base URL",
   "connectivity.baseUrlPlaceholder": "https://api.openai.com",
   "connectivity.apiKey": "API Key",

@@ -183,6 +183,8 @@
   "template.use": "使用此模板",
   "template.noTemplate": "暂无模板",
   "connectivity.protocol": "协议",
+  "precheck.title": "预检工具",
+  "precheck.subtitle": "用于在创建渠道前测试 baseUrl + Key 的可用性",
   "connectivity.baseUrl": "Base URL",
   "connectivity.baseUrlPlaceholder": "https://api.openai.com",
   "connectivity.apiKey": "API Key",

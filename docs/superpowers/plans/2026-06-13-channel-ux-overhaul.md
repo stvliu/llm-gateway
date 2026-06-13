@@ -1401,18 +1401,18 @@ useEffect(() => () => acRef.current?.abort(), []); // 卸载/关闭时中止
 
 ### 任务 9.7 ConnectivityTestPanel 改名为"预检工具"
 
-- [ ] **Step 1：写测试**
+- [x] **Step 1：写测试**
 
 ```tsx
 it('预检工具 UI 文案应明确"创建渠道前测试 baseUrl + Key 的可用性"', () => { /* ... */ });
 it('预检工具应使用 source=PRECHECK 调用 health-check API', async () => { /* ... */ });
 ```
 
-- [ ] **Step 2：把组件 title / heading 改为"预检工具"，加副标题"用于在创建渠道前测试 baseUrl + Key 的可用性"**
+- [x] **Step 2：把组件 title / heading 改为"预检工具"，加副标题"用于在创建渠道前测试 baseUrl + Key 的可用性"**
 
-- [ ] **Step 3：调用 `/api/channels/{id}/health-check` 时 `source: 'PRECHECK'`，注意此 API 形态需要已有 channelId——若预检工具尚无 channel，则改用 design doc 7 隐含的"独立测试调用"路径，仍透传 source=PRECHECK 让后端跳过持久化**
+- [x] **Step 3：调用 `/api/channels/{id}/health-check` 时 `source: 'PRECHECK'`，注意此 API 形态需要已有 channelId——若预检工具尚无 channel，则改用 design doc 7 隐含的"独立测试调用"路径，仍透传 source=PRECHECK 让后端跳过持久化**
 
-- [ ] **Step 4：测试 + 提交**
+- [x] **Step 4：测试 + 提交**
 
 ### 任务 9.8 useChannels 类型扩展
 
