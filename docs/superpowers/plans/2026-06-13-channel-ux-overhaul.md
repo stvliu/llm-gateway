@@ -1421,9 +1421,9 @@ it('预检工具应使用 source=PRECHECK 调用 health-check API', async () => 
 
 ### 任务 9.9 单测 + Playwright e2e
 
-- [ ] **Step 1：HealthDot 组件测试 ≥ 4 断言（4 状态色 + Popover）已在 9.2 完成**
+- [x] **Step 1：HealthDot 组件测试 ≥ 4 断言（4 状态色 + Popover）已在 9.2 完成**
 
-- [ ] **Step 2：写 `e2e/health-check-matrix.spec.ts` (S5)**
+- [x] **Step 2：写 `e2e/health-check-matrix.spec.ts` (S5)**
 
 ```ts
 test('卡片闪电图标 → 跳转抽屉 → 测试矩阵 → 关闭后卡片显示健康指示点', async ({ page }) => {
@@ -1440,7 +1440,7 @@ test('卡片闪电图标 → 跳转抽屉 → 测试矩阵 → 关闭后卡片�
 });
 ```
 
-- [ ] **Step 3：`pnpm test:e2e` 跑通 + 提交**
+- [x] **Step 3：`pnpm test:e2e` 跑通 + 提交**
 
 **验收标准（第 9 章）：**
 - ✅ 渠道卡片闪电图标不再就地弹 toast
