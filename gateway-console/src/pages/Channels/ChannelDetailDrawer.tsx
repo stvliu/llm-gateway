@@ -51,6 +51,8 @@ interface ChannelDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   initialTab?: string;
+  /** 任务 9.1：闪电图标进入时为 true，用于让 Credentials Tab 内"测试全部"按钮短暂高亮 */
+  highlightTestAll?: boolean;
 }
 
 /**
@@ -62,10 +64,13 @@ export function ChannelDetailDrawer({
   open,
   onClose,
   initialTab,
+  highlightTestAll = false,
 }: ChannelDetailDrawerProps) {
   const { t } = useTranslation('channels');
   const [activeTab, setActiveTab] = useState('overview');
   const [editProviderOpen, setEditProviderOpen] = useState(false);
+  // 任务 9.1：高亮"测试全部"按钮 800ms 后自清除
+  const [testAllHighlight, setTestAllHighlight] = useState(false);
   // 删除整个渠道（任务 8.7）：与其他危险操作统一为 useDangerConfirm
   const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
     useDangerConfirm();
@@ -75,6 +80,15 @@ export function ChannelDetailDrawer({
       setActiveTab(initialTab);
     }
   }, [open, initialTab]);
+
+  // 任务 9.1：抽屉打开且 highlightTestAll=true 时，对"测试全部"按钮做 800ms 高亮
+  useEffect(() => {
+    if (open && highlightTestAll) {
+      setTestAllHighlight(true);
+      const tid = window.setTimeout(() => setTestAllHighlight(false), 800);
+      return () => window.clearTimeout(tid);
+    }
+  }, [open, highlightTestAll]);
 
   const transitionChannelState = useTransitionChannelState();
   const transitionModelState = useTransitionChannelModelState();

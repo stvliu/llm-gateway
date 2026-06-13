@@ -1277,7 +1277,7 @@ git commit -am "feat(channels): 暂停操作增加 Popconfirm 二次确认"
 
 ### 任务 9.1 卡片闪电图标行为改造
 
-- [ ] **Step 1：写失败测试**
+- [x] **Step 1：写失败测试**
 
 ```tsx
 it('点击闪电图标应打开详情抽屉并跳到 Credentials Tab，"测试全部"按钮短暂高亮', async () => {
@@ -1285,9 +1285,9 @@ it('点击闪电图标应打开详情抽屉并跳到 Credentials Tab，"测试�
 });
 ```
 
-- [ ] **Step 2：实现：闪电图标点击 → `openDrawer(channelId, { tab: 'credentials', highlightTestAll: true })`，800ms 后 highlight 清除**
+- [x] **Step 2：实现：闪电图标点击 → `openDrawer(channelId, { tab: 'credentials', highlightTestAll: true })`，800ms 后 highlight 清除**
 
-- [ ] **Step 3：跑测试 + 提交**
+- [x] **Step 3：跑测试 + 提交**
 
 ### 任务 9.2 / 9.3 HealthDot 组件 + 嵌入卡片
 

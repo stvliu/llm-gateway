@@ -20,7 +20,8 @@ interface ChannelTableViewProps {
   onChannelClick: (channelId: number) => void;
   onToggleState: (id: number, enabled: boolean) => void;
   onDelete: (id: number) => void;
-  onTest: (channel: ChannelCard) => void;
+  /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
+  onTest: (channel: ChannelCard, intent?: { tab: 'credentials'; highlightTestAll: boolean }) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
@@ -184,7 +185,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
                 size="small"
                 icon={<ThunderboltOutlined />}
                 disabled={!isRoutable}
-                onClick={() => onTest(r)}
+                onClick={() => onTest(r, { tab: 'credentials', highlightTestAll: true })}
                 style={{ opacity: isRoutable ? 1 : 0.4 }}
               />
             </Tooltip>

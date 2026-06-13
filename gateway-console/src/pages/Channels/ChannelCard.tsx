@@ -13,12 +13,25 @@ import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard as ChannelCardType, ChannelState } from '@/types/channel';
 
+/**
+ * 卡片闪电图标的"测试意图"语义（任务 9.1）。
+ * <p>卡片不再就地弹 toast / 调用 testCredential，而是把意图透传给父级，
+ * 父级负责打开详情抽屉到 Credentials Tab 并对"测试全部"按钮做 800ms 高亮。</p>
+ */
+export interface ChannelTestIntent {
+  /** 期望抽屉打开后的 Tab key，目前固定为 'credentials' */
+  tab: 'credentials';
+  /** 是否对"测试全部"按钮做 800ms 高亮 */
+  highlightTestAll: boolean;
+}
+
 interface ChannelCardProps {
   channel: ChannelCardType;
   onClick: (channel: ChannelCardType) => void;
   onDelete: (id: number) => void;
   onToggleState: (id: number, enabled: boolean) => void;
-  onTest: (channel: ChannelCardType) => void;
+  /** 卡片闪电图标点击回调；intent 描述父级该如何打开抽屉（任务 9.1） */
+  onTest: (channel: ChannelCardType, intent?: ChannelTestIntent) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
@@ -92,10 +105,10 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
     onStateTransition?.(channel.id, targetState, '');
   };
 
-  /** 测试按钮点击 */
+  /** 测试按钮点击：透传"打开详情抽屉到凭据 Tab + 高亮测试全部"意图（任务 9.1） */
   const handleTestClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onTest(channel);
+    onTest(channel, { tab: 'credentials', highlightTestAll: true });
   };
 
   /** 详情按钮点击 */

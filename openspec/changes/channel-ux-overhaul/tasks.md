@@ -69,7 +69,7 @@
 
 ## 9. 前端：测试入口归一与健康指示
 
-- [ ] 9.1 渠道卡片闪电图标行为改造：打开详情抽屉 + 跳到 Credentials Tab + "测试全部" 800ms 高亮
+- [x] 9.1 渠道卡片闪电图标行为改造：打开详情抽屉 + 跳到 Credentials Tab + "测试全部" 800ms 高亮
 - [ ] 9.2 实现 HealthDot 组件（4 状态颜色 + UNKNOWN 空心 + Popover 显示 lastCheckAt + source）
 - [ ] 9.3 ChannelCard 在状态 Tag 右侧 6px 处嵌入 HealthDot
 - [ ] 9.4 ProviderGroupHeader 加"N/M 健康"小字聚合
