@@ -32,12 +32,10 @@ import { ChannelTableView } from './ChannelTableView';
 import { ConnectivityTestPanel } from './ConnectivityTestPanel';
 import BatchImportModal from './BatchImportModal';
 import { BatchExportButton } from './BatchExportButton';
-import { STATE_CONFIG } from '@/components/common/ChannelStateTag';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
-  ChannelState,
   ChannelCredential,
   ChannelModel,
 } from '@/types/channel';

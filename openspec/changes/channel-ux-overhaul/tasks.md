@@ -39,7 +39,7 @@
 
 - [x] 6.1 用 codegraph 列出 STATE_CONFIG / STATE_TRANSITION_LABELS 全部引用点
 - [x] 6.2 新建 src/domain/channel/lifecycle.ts，定义 CHANNEL_LIFECYCLE 与 selector helpers，新增中英文 i18n key（含 stateXxxDesc / tooltipRoutable / tooltipBilling / tooltipNext / tooltipTerminal）
-- [ ] 6.3 替换全部引用为新 SSOT，删除旧 STATE_CONFIG / STATE_TRANSITION_LABELS 导出（无别名）
+- [x] 6.3 替换全部引用为新 SSOT，删除旧 STATE_CONFIG / STATE_TRANSITION_LABELS 导出（无别名）
 - [ ] 6.4 ChannelStateTag 增加 Tooltip：内容由 buildStateTooltip 派生
 - [ ] 6.5 PENDING 黄色加深至 #d48806 保证 4.5:1 对比度
 - [ ] 6.6 RETIRED 卡片视觉重设：移除 opacity 0.5，渠道名 line-through + 灰调 #8c8c8c

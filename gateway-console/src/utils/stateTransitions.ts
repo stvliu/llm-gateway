@@ -40,17 +40,6 @@ export function isRoutableState(state: ChannelState): boolean {
 }
 
 /**
- * 状态转换标签映射
- */
-export const STATE_TRANSITION_LABELS: Record<string, string> = {
-  PENDING: '待激活',
-  ACTIVE: '运行中',
-  SUSPENDED: '已暂停',
-  DEPRECATED: '已下线',
-  RETIRED: '已废弃',
-};
-
-/**
  * 状态转换操作按钮文本映射
  */
 export const TRANSITION_ACTION_LABELS: Record<string, string> = {

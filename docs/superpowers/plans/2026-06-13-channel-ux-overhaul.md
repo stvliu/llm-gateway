@@ -987,7 +987,7 @@ describe('CHANNEL_LIFECYCLE', () => {
 
 ### 任务 6.3 替换全部引用并删除旧导出
 
-- [ ] **Step 1：批量替换**（按任务 6.1 列出的文件清单，一次性替换 → 编译确认）
+- [x] **Step 1：批量替换**（按任务 6.1 列出的文件清单，一次性替换 → 编译确认）
 
 ```ts
 // 旧
@@ -998,13 +998,13 @@ import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 const color = CHANNEL_LIFECYCLE[state].color;
 ```
 
-- [ ] **Step 2：从 `ChannelStateTag.tsx` 删除 `STATE_CONFIG` 导出；从 `stateTransitions.ts` 删除 `STATE_TRANSITION_LABELS` 导出**
+- [x] **Step 2：从 `ChannelStateTag.tsx` 删除 `STATE_CONFIG` 导出；从 `stateTransitions.ts` 删除 `STATE_TRANSITION_LABELS` 导出**
 
 ⚠️ **不保留向后兼容别名**——design doc §1 明确决策。如有遗漏引用，必须立即编译失败发现并修复。
 
-- [ ] **Step 3：`pnpm build` 确认无 TS 编译错误**
+- [x] **Step 3：`pnpm build` 确认无 TS 编译错误**（注：与本次 SSOT 重构相关的错误已归零；其它先于本任务存在的 TS 错误属于 task 4/5 范围，不在 6.3 修复范围）
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git commit -am "refactor(channels): 状态 SSOT 整合至 CHANNEL_LIFECYCLE"

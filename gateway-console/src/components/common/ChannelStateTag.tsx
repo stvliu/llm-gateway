@@ -1,34 +1,7 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { ChannelState } from '@/types/channel';
-
-/** 状态配置：颜色、图标、文字 */
-const STATE_CONFIG: Record<ChannelState, { color: string; bg: string; label: string }> = {
-  PENDING: {
-    color: '#faad14',
-    bg: '#fffbe6',
-    label: '待激活',
-  },
-  ACTIVE: {
-    color: '#52c41a',
-    bg: '#f6ffed',
-    label: '运行中',
-  },
-  SUSPENDED: {
-    color: '#d9d9d9',
-    bg: '#fafafa',
-    label: '已暂停',
-  },
-  DEPRECATED: {
-    color: '#fa8c16',
-    bg: '#fff7e6',
-    label: '已下线',
-  },
-  RETIRED: {
-    color: '#ff4d4f',
-    bg: '#fff2f0',
-    label: '已废弃',
-  },
-};
+import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 
 interface ChannelStateTagProps {
   state: ChannelState;
@@ -37,17 +10,18 @@ interface ChannelStateTagProps {
 /**
  * 渠道状态标签组件
  *
- * <p>根据状态展示不同配色 + 文字的 Tag。</p>
- * <ul>
- *   <li>PENDING：黄色「待激活」</li>
- *   <li>ACTIVE：绿色「运行中」</li>
- *   <li>SUSPENDED：灰色「已暂停」</li>
- *   <li>DEPRECATED：橙色「已下线」</li>
- *   <li>RETIRED：红色「已废弃」</li>
- * </ul>
+ * <p>从 SSOT `CHANNEL_LIFECYCLE` 派生颜色与文案；状态字段、文案、视觉风格
+ * 全部从 lifecycle 模块读取，禁止在本组件内重新定义状态映射。</p>
+ *
+ * <p>Tooltip 将在任务 6.4 中加入；本步骤仅完成 SSOT 替换，保持现有视觉。</p>
+ *
+ * @param state 渠道状态枚举
  */
 const ChannelStateTag: React.FC<ChannelStateTagProps> = ({ state }) => {
-  const config = STATE_CONFIG[state] ?? STATE_CONFIG.SUSPENDED;
+  const { t } = useTranslation('channels');
+  const meta = CHANNEL_LIFECYCLE[state] ?? CHANNEL_LIFECYCLE.SUSPENDED;
+  // 背景色：在主色基础上加 26 ≈ 15% 透明度（保持原视觉风格）
+  const bg = `${meta.color}1a`;
 
   return (
     <span
@@ -59,16 +33,15 @@ const ChannelStateTag: React.FC<ChannelStateTagProps> = ({ state }) => {
         fontSize: 12,
         lineHeight: '18px',
         borderRadius: 4,
-        color: config.color,
-        backgroundColor: config.bg,
-        border: `1px solid ${config.color}20`,
+        color: meta.color,
+        backgroundColor: bg,
+        border: `1px solid ${meta.color}33`,
         fontWeight: 500,
       }}
     >
-      {config.label}
+      {t(meta.label)}
     </span>
   );
 };
 
-export { STATE_CONFIG };
 export default ChannelStateTag;
