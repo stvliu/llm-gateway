@@ -44,7 +44,7 @@
 - [x] 6.5 PENDING 黄色加深至 #d48806 保证 4.5:1 对比度
 - [x] 6.6 RETIRED 卡片视觉重设：移除 opacity 0.5，渠道名 line-through + 灰调 #8c8c8c
 - [x] 6.7 DEPRECATED 卡片增加副标题小字"仍参与流量分配，但已标记为不推荐"
-- [ ] 6.8 lifecycle.test.ts 单元测试 + ChannelStateTag.test.tsx 组件测试
+- [x] 6.8 lifecycle.test.ts 单元测试 + ChannelStateTag.test.tsx 组件测试
 
 ## 7. 前端：保存反馈脉冲
 

@@ -1080,7 +1080,7 @@ it('DEPRECATED 卡片应显示副标题"仍参与流量分配"', () => {
 
 ### 任务 6.8 单元测试 + 组件测试汇总
 
-- [ ] 全章测试 `pnpm test src/domain/channel src/components/common src/pages/Channels/__tests__/ChannelCard` 全绿后提交。
+- [x] 全章测试 `pnpm test src/domain/channel src/components/common src/pages/Channels/__tests__/ChannelCard` 全绿后提交。
 
 **验收标准（第 6 章）：**
 - ✅ `STATE_CONFIG` 与 `STATE_TRANSITION_LABELS` 在仓库中已无任何引用
