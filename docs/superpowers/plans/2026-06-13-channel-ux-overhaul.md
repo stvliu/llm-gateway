@@ -1478,7 +1478,7 @@ it('校验：code 必填 + 与 expectedProviderCode 不一致时报错', () => {
 
 ### 任务 10.2 QuickOnboardMode 状态扁平化
 
-- [ ] **Step 1：把现有 step state 扩展为：**
+- [x] **Step 1：把现有 step state 扩展为：**
 
 ```ts
 interface QuickOnboardState {
@@ -1492,7 +1492,7 @@ interface QuickOnboardState {
 }
 ```
 
-- [ ] **Step 2：写不变量测试**
+- [x] **Step 2：写不变量测试**
 
 ```tsx
 describe('QuickOnboardMode 状态机', () => {
@@ -1503,17 +1503,17 @@ describe('QuickOnboardMode 状态机', () => {
 });
 ```
 
-- [ ] **Step 3：实现切换逻辑：用户切换分支时清空对方**
+- [x] **Step 3：实现切换逻辑：用户切换分支时清空对方**
 
-- [ ] **Step 4：测试 + 提交**
+- [x] **Step 4：测试 + 提交**
 
 ### 任务 10.3 / 10.4 / 10.5 Step 0 增"+ 新建供应商"链接
 
-- [ ] **Step 1：在 Step 0 的供应商下拉旁加 "+ 新建供应商" 链接，点击展开 Step 0.5（同 Drawer 内）渲染 `ProviderForm`，`expectedProviderCode={planCatalog.providerCode}`**
+- [x] **Step 1：在 Step 0 的供应商下拉旁加 "+ 新建供应商" 链接，点击展开 Step 0.5（同 Drawer 内）渲染 `ProviderForm`，`expectedProviderCode={planCatalog.providerCode}`**
 
-- [ ] **Step 2：Step 0 "下一步"校验：`selectedProviderCode != null` 或 (`inlineProviderExpanded && validate(inlineProvider) == ok`)**
+- [x] **Step 2：Step 0 "下一步"校验：`selectedProviderCode != null` 或 (`inlineProviderExpanded && validate(inlineProvider) == ok`)**
 
-- [ ] **Step 3：最终提交时 payload 含 `inlineProvider`（仅当走内联路径）**
+- [x] **Step 3：最终提交时 payload 含 `inlineProvider`（仅当走内联路径）**
 
 ```ts
 const payload: ProvisionFromPlanRequest = {
@@ -1524,7 +1524,7 @@ const payload: ProvisionFromPlanRequest = {
 await axios.post(`/api/v1/provision/from-plan/${planCode}`, payload);
 ```
 
-- [ ] **Step 4：测试 + 提交**
+- [x] **Step 4：测试 + 提交**
 
 ### 任务 10.6 主页面移除独立"+ 新增供应商"按钮
 

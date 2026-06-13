@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { planCatalogApi, provisionApi } from '@/services/api/catalog';
 import type { ProvisionRequest } from '@/types/catalog';
+import { ProviderForm, type ProviderFormValue } from './ProviderForm';
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -23,8 +24,22 @@ interface EditableEndpoint {
   checked: boolean;
 }
 
+/** 内联创建供应商的初始空值 */
+const EMPTY_INLINE_PROVIDER: ProviderFormValue = {
+  code: '',
+  name: '',
+};
+
 /**
  * 快速接入模式——四步完成渠道创建
+ *
+ * <p>任务 10.2 / 10.3-10.5：状态扁平化 + Step 0.5 内联创建供应商。
+ * 不变量：</p>
+ * <ul>
+ *   <li>selectedProviderCode != null ⇔ inlineProviderExpanded == false && inlineProvider == null</li>
+ *   <li>inlineProviderExpanded == true ⇔ selectedProviderCode == null</li>
+ *   <li>切换分支时 clear 对方</li>
+ * </ul>
  */
 export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName }: QuickOnboardModeProps) {
   const { t } = useTranslation('channels');
@@ -34,9 +49,14 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const [selectedProviderCode, setSelectedProviderCode] = useState<string>();
+  // Step 0：选已有 provider 路径
+  const [selectedProviderCode, setSelectedProviderCode] = useState<string | null>(null);
   const [selectedPlanCode, setSelectedPlanCode] = useState<string>();
   const [selectedPlanName, setSelectedPlanName] = useState<string>();
+  // Step 0.5：内联创建供应商路径（与 selectedProviderCode 互斥）
+  const [inlineProviderExpanded, setInlineProviderExpanded] = useState(false);
+  const [inlineProvider, setInlineProvider] = useState<ProviderFormValue | null>(null);
+
   const [endpoints, setEndpoints] = useState<EditableEndpoint[]>([]);
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [customModelInput, setCustomModelInput] = useState('');
@@ -49,7 +69,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
 
   const { data: plans, isLoading: plansLoading } = useQuery({
     queryKey: ['plan-catalog', 'list', selectedProviderCode],
-    queryFn: () => planCatalogApi.list({ providerCode: selectedProviderCode }),
+    queryFn: () => planCatalogApi.list({ providerCode: selectedProviderCode ?? undefined }),
     enabled: !!selectedProviderCode,
   });
 
@@ -92,6 +112,46 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
     }));
   }, [apiKeyInput, t]);
 
+  /**
+   * 内联表单是否通过基本校验：必须有 code（非空字符串）。
+   * 注：详细 pattern / 一致性校验由 ProviderForm 的 antd rules 渲染错误。
+   */
+  const inlineProviderValid = useMemo(() => {
+    if (!inlineProvider) return false;
+    return Boolean(inlineProvider.code?.trim()) && Boolean(inlineProvider.name?.trim());
+  }, [inlineProvider]);
+
+  /** Step 0 是否已通过：要么选了已有 provider 且选了 plan，要么走内联创建且内联表单有效 */
+  const step0Valid = useMemo(() => {
+    if (selectedProviderCode && selectedPlanCode) return true;
+    if (inlineProviderExpanded && inlineProviderValid) return true;
+    return false;
+  }, [selectedProviderCode, selectedPlanCode, inlineProviderExpanded, inlineProviderValid]);
+
+  /** 切换到"使用已有"分支：清空内联表单字段（互斥不变量） */
+  const switchToExisting = (providerCode: string) => {
+    setSelectedProviderCode(providerCode);
+    setSelectedPlanCode(undefined);
+    setSelectedPlanName(undefined);
+    setEndpoints([]);
+    setSelectedModels([]);
+    // 清空 inline 分支
+    setInlineProviderExpanded(false);
+    setInlineProvider(null);
+  };
+
+  /** 切换到"内联新建"分支：清空 selectedProviderCode（互斥不变量） */
+  const expandInlineProvider = () => {
+    setInlineProviderExpanded(true);
+    setInlineProvider({ ...EMPTY_INLINE_PROVIDER });
+    // 清空 existing 分支
+    setSelectedProviderCode(null);
+    setSelectedPlanCode(undefined);
+    setSelectedPlanName(undefined);
+    setEndpoints([]);
+    setSelectedModels([]);
+  };
+
   const handleAddEndpoint = () => {
     setEndpoints([...endpoints, { id: `ep-new-${Date.now()}`, protocol: 'openai', url: '', checked: true }]);
   };
@@ -117,9 +177,11 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
   };
 
   const handleNext = () => {
-    if (step === 0 && !selectedPlanCode) {
-      message.warning(t('onboard.selectPlanWarning'));
-      return;
+    if (step === 0) {
+      if (!step0Valid) {
+        message.warning(t('onboard.step0.eitherRequired'));
+        return;
+      }
     }
     if (step === 1) {
       if (endpoints.filter((ep) => ep.checked && ep.url.trim()).length === 0) {
@@ -135,6 +197,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
   };
 
   const handleFinish = async () => {
+    // 走"已有 provider"路径需要套餐已加载
     if (!selectedPlanCode || !planDetail) {
       message.error(t('onboard.selectPlanWarning'));
       return;
@@ -145,9 +208,19 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
     }
     try {
       setSubmitting(true);
+      // 构造 ProvisionRequest：仅当走内联路径时携带 inlineProvider
       const requestData: ProvisionRequest = {
         apiKeys: parsedApiKeys.map((k) => k.raw),
       };
+      if (inlineProviderExpanded && inlineProvider) {
+        requestData.inlineProvider = {
+          code: inlineProvider.code,
+          name: inlineProvider.name,
+          description: inlineProvider.description,
+          websiteUrl: inlineProvider.websiteUrl,
+          apiDocUrl: inlineProvider.apiDocUrl,
+        };
+      }
       await provisionApi.fromPlan(selectedPlanCode, requestData);
       message.success(t('onboard.createSuccess'));
       queryClient.invalidateQueries({ queryKey: ['channels'] });
@@ -175,39 +248,81 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
         {t('onboard.selectPlanHint')}
       </Text>
       <div style={{ marginBottom: 16 }}>
-        <Text strong>{t('onboard.providerLabel')}</Text>
+        <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+          <Text strong>{t('onboard.providerLabel')}</Text>
+          {/* 任务 10.3：Step 0 旁加"+ 新建供应商"链接 */}
+          <Button
+            type="link"
+            size="small"
+            icon={<PlusOutlined />}
+            onClick={expandInlineProvider}
+          >
+            {t('quickOnboard.inlineProvider.linkText')}
+          </Button>
+        </Space>
         <Select
           placeholder={t('onboard.providerRequired')}
           style={{ width: '100%', marginTop: 4 }}
-          value={selectedProviderCode}
-          onChange={(value) => {
-            setSelectedProviderCode(value);
-            setSelectedPlanCode(undefined);
-            setSelectedPlanName(undefined);
-            setEndpoints([]);
-            setSelectedModels([]);
-          }}
+          value={selectedProviderCode ?? undefined}
+          onChange={(value) => switchToExisting(value)}
           loading={providersLoading}
           showSearch
           optionFilterProp="label"
           options={providers?.map((p: { code: string; name: string }) => ({ label: p.name, value: p.code }))}
         />
       </div>
-      <div style={{ marginBottom: 16 }}>
-        <Text strong>{t('onboard.planLabel')}</Text>
-        <Select
-          placeholder={selectedProviderCode ? t('onboard.planPlaceholder') : t('onboard.planPlaceholderNoProvider')}
-          style={{ width: '100%', marginTop: 4 }}
-          value={selectedPlanCode}
-          onChange={handlePlanChange}
-          loading={plansLoading}
-          disabled={!selectedProviderCode}
-          showSearch
-          optionFilterProp="label"
-          options={plans?.map((p: { planCode: string; planName: string }) => ({ label: p.planName, value: p.planCode }))}
-        />
-      </div>
-      {planDetail && (
+
+      {/* 任务 10.3：Step 0.5 同 Drawer 内展开的内联创建供应商表单 */}
+      {inlineProviderExpanded && (
+        <div
+          style={{
+            marginBottom: 16,
+            padding: 12,
+            background: token.colorBgLayout,
+            borderRadius: 8,
+            border: `1px dashed ${token.colorBorder}`,
+          }}
+        >
+          <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text strong>{t('quickOnboard.inlineProvider.expandedTitle')}</Text>
+            <Button
+              type="text"
+              size="small"
+              onClick={() => {
+                setInlineProviderExpanded(false);
+                setInlineProvider(null);
+              }}
+            >
+              {t('onboard.btnPrev') /* 复用"上一步"——简化文案 */}
+            </Button>
+          </Space>
+          <ProviderForm
+            value={inlineProvider ?? EMPTY_INLINE_PROVIDER}
+            onChange={(next) => setInlineProvider(next)}
+            // 期望 code = 选中套餐的 providerCode；选套餐前不强制
+            expectedProviderCode={planDetail?.providerCode}
+          />
+        </div>
+      )}
+
+      {!inlineProviderExpanded && (
+        <div style={{ marginBottom: 16 }}>
+          <Text strong>{t('onboard.planLabel')}</Text>
+          <Select
+            placeholder={selectedProviderCode ? t('onboard.planPlaceholder') : t('onboard.planPlaceholderNoProvider')}
+            style={{ width: '100%', marginTop: 4 }}
+            value={selectedPlanCode}
+            onChange={handlePlanChange}
+            loading={plansLoading}
+            disabled={!selectedProviderCode}
+            showSearch
+            optionFilterProp="label"
+            options={plans?.map((p: { planCode: string; planName: string }) => ({ label: p.planName, value: p.planCode }))}
+          />
+        </div>
+      )}
+
+      {planDetail && !inlineProviderExpanded && (
         <div style={{ marginTop: 16, padding: 12, background: token.colorBgLayout, borderRadius: 8 }}>
           <Text strong style={{ display: 'block', marginBottom: 8 }}>{t('onboard.planPreview')}</Text>
           <Space direction="vertical" size="small">
@@ -320,7 +435,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
     <div>
       <Steps current={step} size="small" style={{ marginBottom: 24 }} items={stepItems} />
       {step === 0 && (
-        <div>{renderStep0()}<div style={{ marginTop: 24, textAlign: 'right' }}><Button disabled={!selectedPlanCode} type="primary" onClick={handleNext}>{t('onboard.btnNext')}</Button></div></div>
+        <div>{renderStep0()}<div style={{ marginTop: 24, textAlign: 'right' }}><Button disabled={!step0Valid} type="primary" onClick={handleNext}>{t('onboard.btnNext')}</Button></div></div>
       )}
       {step === 1 && (
         <div>{renderStep1()}<div style={{ marginTop: 24, textAlign: 'right' }}><Space><Button onClick={() => setStep(0)}>{t('onboard.btnPrev')}</Button><Button type="primary" onClick={handleNext}>{t('onboard.btnNext')}</Button></Space></div></div>
