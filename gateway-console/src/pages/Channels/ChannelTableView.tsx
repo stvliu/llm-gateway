@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard, ChannelState } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
@@ -39,6 +40,9 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
+  // 删除整个渠道（任务 8.7）：使用 useDangerConfirm 与其他危险操作对齐
+  const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
+    useDangerConfirm();
   const providerMap = useMemo(() => {
     return new Map(providers.map((p) => [p.id, p]));
   }, [providers]);
@@ -83,11 +87,12 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     onStateTransition?.(record.id, targetState, '');
   };
 
+  /** 删除整个渠道（任务 8.7）：使用 useDangerConfirm 与 RETIRED 文案对齐 */
   const handleDeleteClick = (record: ChannelCard) => {
-    modal.confirm({
-      title: t('card.deleteConfirmTitle'),
-      content: t('card.deleteConfirmContent', { name: record.name }),
-      okType: 'danger',
+    confirmDeleteChannel({
+      titleKey: 'channel.deleteDangerTitle',
+      descriptionKey: 'channel.deleteDangerDescription',
+      descriptionParams: { name: record.name },
       onOk: () => onDelete(record.id),
     });
   };
@@ -222,12 +227,16 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   ];
 
   return (
-    <Table
-      rowKey="id"
-      columns={columns}
-      dataSource={channels}
-      size="small"
-      pagination={false}
-    />
+    <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={channels}
+        size="small"
+        pagination={false}
+      />
+    </>
   );
 };

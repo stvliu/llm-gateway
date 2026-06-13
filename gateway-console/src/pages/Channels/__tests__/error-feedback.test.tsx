@@ -17,6 +17,16 @@ import i18n from '@/i18n';
 
 // jsdom 不实现 matchMedia，AntD Grid 在挂载时会调用，需要在挂载组件前补 stub
 beforeAll(() => {
+  // useDangerConfirm 在 onOk 抛错时会 re-throw 以阻止 modal 关闭，
+  // antd 内部把它转为 unhandled rejection。本套件只关心 errorSpy 被调，
+  // 故全局静默 axios 500 的 unhandled rejection，避免误判为退化。
+  const originalHandler = process.listeners('unhandledRejection').slice();
+  process.on('unhandledRejection', (reason: unknown) => {
+    const r = reason as { isAxiosError?: boolean };
+    if (r && r.isAxiosError) return; // 吃掉 axios 500
+    // 其它意外仍交回原 handler 链
+    for (const h of originalHandler) (h as (e: unknown) => void)(reason);
+  });
   if (!window.matchMedia) {
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
@@ -182,11 +192,20 @@ describe('CredentialSection 错误反馈', () => {
       />
     );
 
-    // InlineEditableList 的删除按钮 + Popconfirm 二次确认
+    // InlineEditableList 的删除按钮 + useDangerConfirm 二次确认
+    // useDangerConfirm OK 按钮文案为 common.actions.delete = "删除"（与"取消"区分）
     const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
     await user.click(deleteBtns[0]);
-    const confirmBtn = await screen.findByRole('button', { name: /确\s*定|OK/i });
-    await user.click(confirmBtn);
+    // Modal 弹出后，footer 的 OK 是 ant-btn-dangerous（红色），文案"删除"
+    const dangerOk = await screen.findByRole('button', {
+      name: (_, element) =>
+        Boolean(
+          element.className.includes('ant-btn-dangerous') &&
+            !element.className.includes('ant-btn-link') &&
+            element.closest('.ant-modal-confirm-btns')
+        ),
+    });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();
@@ -226,8 +245,16 @@ describe('ModelMappingSection 错误反馈', () => {
 
     const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
     await user.click(deleteBtns[0]);
-    const confirmBtn = await screen.findByRole('button', { name: /确\s*定|OK/i });
-    await user.click(confirmBtn);
+    // useDangerConfirm OK 按钮：ant-btn-dangerous（红色），文案"删除"
+    const dangerOk = await screen.findByRole('button', {
+      name: (_, element) =>
+        Boolean(
+          element.className.includes('ant-btn-dangerous') &&
+            !element.className.includes('ant-btn-link') &&
+            element.closest('.ant-modal-confirm-btns')
+        ),
+    });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();

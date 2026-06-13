@@ -8,11 +8,9 @@ import {
   message,
   Spin,
   Tabs,
-  Popconfirm,
   Dropdown,
   Alert,
   Modal,
-  Input,
 } from 'antd';
 import {
   GlobalOutlined,
@@ -27,6 +25,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard, ChannelState } from '@/types/channel';
 import {
   useChannel,
@@ -67,6 +66,9 @@ export function ChannelDetailDrawer({
   const { t } = useTranslation('channels');
   const [activeTab, setActiveTab] = useState('overview');
   const [editProviderOpen, setEditProviderOpen] = useState(false);
+  // 删除整个渠道（任务 8.7）：与其他危险操作统一为 useDangerConfirm
+  const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
+    useDangerConfirm();
 
   useEffect(() => {
     if (open && initialTab) {
@@ -264,6 +266,8 @@ export function ChannelDetailDrawer({
 
   return (
     <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
       <Drawer
         placement="right"
         width={720}
@@ -307,18 +311,21 @@ export function ChannelDetailDrawer({
               </Dropdown>
             )}
 
-            <Popconfirm
-              title={t('drawer.confirmDelete')}
-              description={t('drawer.confirmDeleteDesc', { name: channel.name })}
-              onConfirm={handleDelete}
-              okText={t('actions.delete', { ns: 'common' })}
-              cancelText={t('actions.cancel', { ns: 'common' })}
-              okButtonProps={{ danger: true }}
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={deleteChannel.isPending}
+              onClick={() =>
+                confirmDeleteChannel({
+                  titleKey: 'channel.deleteDangerTitle',
+                  descriptionKey: 'channel.deleteDangerDescription',
+                  descriptionParams: { name: channel.name },
+                  onOk: handleDelete,
+                })
+              }
             >
-              <Button danger icon={<DeleteOutlined />} loading={deleteChannel.isPending}>
-                {t('card.delete')}
-              </Button>
-            </Popconfirm>
+              {t('card.delete')}
+            </Button>
           </Space>
         }
       >

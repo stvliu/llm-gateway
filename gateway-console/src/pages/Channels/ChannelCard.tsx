@@ -10,6 +10,7 @@ import { theme } from 'antd';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
 import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard as ChannelCardType, ChannelState } from '@/types/channel';
 
 interface ChannelCardProps {
@@ -37,6 +38,9 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
+  // 删除整个渠道（任务 8.7）：与删除 API Key/端点/模型映射统一为 useDangerConfirm
+  const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
+    useDangerConfirm();
   const currentState = channel.state as ChannelState;
   const meta = CHANNEL_LIFECYCLE[currentState] ?? CHANNEL_LIFECYCLE.SUSPENDED;
   const availableTransitions = getAvailableTransitions(currentState);
@@ -100,13 +104,13 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
     onClick(channel);
   };
 
-  /** 删除按钮点击 */
+  /** 删除按钮点击：使用 useDangerConfirm 与 RETIRED 文案对齐（任务 8.7） */
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    modal.confirm({
-      title: t('card.deleteConfirmTitle'),
-      content: t('card.deleteConfirmContent', { name: channel.name }),
-      okType: 'danger',
+    confirmDeleteChannel({
+      titleKey: 'channel.deleteDangerTitle',
+      descriptionKey: 'channel.deleteDangerDescription',
+      descriptionParams: { name: channel.name },
       onOk: () => onDelete(channel.id),
     });
   };
@@ -124,15 +128,18 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   };
 
   return (
-    <Card
-      hoverable
-      onClick={() => onClick(channel)}
-      style={{
-        opacity: cardOpacity,
-        borderLeft: `3px solid ${meta.color}`,
-      }}
-      styles={{ body: { padding: '16px' } }}
-    >
+    <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
+      <Card
+        hoverable
+        onClick={() => onClick(channel)}
+        style={{
+          opacity: cardOpacity,
+          borderLeft: `3px solid ${meta.color}`,
+        }}
+        styles={{ body: { padding: '16px' } }}
+      >
       {/* 第一行：渠道名称 + 操作按钮 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
@@ -221,6 +228,7 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
         <span>·</span>
         <span>{channel.stats?.modelCount ?? 0} {t('card.models')}</span>
       </div>
-    </Card>
+      </Card>
+    </>
   );
 }

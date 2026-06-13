@@ -35,6 +35,8 @@
   "endpoint.deleteDescription": "After deleting this endpoint, traffic routed to {{baseUrl}} will fail immediately.",
   "modelMapping.deleteTitle": "Delete model mapping?",
   "modelMapping.deleteDescription": "After deletion, model ID {{modelId}} will no longer be routed to this channel.",
+  "channel.deleteDangerTitle": "Delete channel \"{{name}}\"?",
+  "channel.deleteDangerDescription": "After deletion, this channel will no longer participate in any traffic allocation, and the action is irreversible. Historical metrics are preserved.",
   "card.viewDetail": "View details",
   "card.disable": "Disable",
   "card.enable": "Enable",

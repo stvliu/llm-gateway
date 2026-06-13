@@ -35,6 +35,8 @@
   "endpoint.deleteDescription": "删除该端点后，路由到 {{baseUrl}} 的流量将立即失败",
   "modelMapping.deleteTitle": "删除模型映射？",
   "modelMapping.deleteDescription": "删除后，模型 ID {{modelId}} 不再被路由到此渠道",
+  "channel.deleteDangerTitle": "删除渠道「{{name}}」？",
+  "channel.deleteDangerDescription": "删除后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留",
   "card.viewDetail": "查看详情",
   "card.disable": "停用",
   "card.enable": "启用",
