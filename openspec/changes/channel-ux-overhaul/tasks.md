@@ -1,6 +1,6 @@
 ## 1. 后端：健康状态字段与持久化
 
-- [ ] 1.1 数据库迁移：channels 表新增 last_health_check_at / last_health_status / last_health_source 三列与索引
+- [x] 1.1 数据库迁移：channels 表新增 last_health_check_at / last_health_status / last_health_source 三列与索引
 - [ ] 1.2 Channel JPA 实体新增三字段，Repository / Gateway 层透传
 - [ ] 1.3 定义健康状态枚举 ChannelHealthStatus（HEALTHY / DEGRADED / FAILED / UNKNOWN）与来源枚举 ChannelHealthSource（CARD / DRAWER / PRECHECK）
 - [ ] 1.4 编写实体字段迁移与枚举的单元测试

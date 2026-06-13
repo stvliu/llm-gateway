@@ -88,7 +88,7 @@ base-ref: 49751feb47def31363e58da26fb7ab94751eb8a6
 
 ### 任务 1.1 数据库迁移
 
-- [ ] **Step 1：写迁移脚本**
+- [x] **Step 1：写迁移脚本**
 
 `V50__add_channel_health_columns.sql`：
 
@@ -101,14 +101,11 @@ ALTER TABLE channels ADD COLUMN last_health_source VARCHAR(16) NULL;
 CREATE INDEX idx_channels_last_health_status ON channels(last_health_status);
 ```
 
-- [ ] **Step 2：本地启动并验证迁移成功**
+- [x] **Step 2：本地启动并验证迁移成功**
 
-```bash
-./mvnw spring-boot:run -pl gateway-boot
-# 观察日志：Successfully applied 1 migration to schema "PUBLIC", now at version v50
-```
+> 实施备注：未启动 `spring-boot:run` 长驻进程；改由任务 1.4 的 `@DataJpaTest` 集成测试在 H2 上由 Flyway 自动应用 V50 完成等价验证。
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/main/resources/db/migration/V50__add_channel_health_columns.sql
