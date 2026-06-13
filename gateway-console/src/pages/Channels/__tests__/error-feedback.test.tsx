@@ -32,6 +32,15 @@ beforeAll(() => {
       }),
     });
   }
+  // jsdom 不实现 ResizeObserver，AntD InlineEditableList 等组件在挂载时使用
+  if (!(globalThis as { ResizeObserver?: unknown }).ResizeObserver) {
+    class ResizeObserverStub {
+      observe(): void {}
+      unobserve(): void {}
+      disconnect(): void {}
+    }
+    (globalThis as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+  }
 });
 
 // 在 import 被测组件之前 mock 掉底层 channelApi，
@@ -74,6 +83,7 @@ vi.mock('@/services/api/channel', () => {
 });
 
 import { EndpointSection } from '../EndpointSection';
+import { CredentialSection } from '../CredentialSection';
 
 /** 创建一个不重试的 QueryClient，避免错误路径被默认重试策略掩盖 */
 function makeQueryClient() {
@@ -138,5 +148,51 @@ describe('EndpointSection 错误反馈', () => {
     ).toBe(true);
   });
 });
+
+describe('CredentialSection 错误反馈', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-CN');
+    errorSpy = vi.spyOn(message, 'error').mockImplementation(() => ({} as never));
+  });
+
+  it('删除凭证失败时应弹出含具体后端原因的 message.error', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <CredentialSection
+        channelId={1}
+        credentials={[
+          {
+            id: 100,
+            channelId: 1,
+            apiKeyPrefix: 'sk-abcdef',
+            apiKeyPlain: 'sk-abcdefghijk',
+            name: '',
+            description: null,
+            weight: 50,
+            priority: 1,
+            state: 'ACTIVE',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          } as never,
+        ]}
+      />
+    );
+
+    // InlineEditableList 的删除按钮 + Popconfirm 二次确认
+    const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    await user.click(deleteBtns[0]);
+    const confirmBtn = await screen.findByRole('button', { name: /确\s*定|OK/i });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes('cred delete boom'))).toBe(true);
+  });
+});
+
 // 让该文件被识别为模块
 export {};

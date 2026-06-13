@@ -11,6 +11,7 @@ import {
   useDeleteChannelCredential,
   useTestChannelCredential,
 } from '@/services/query/useChannels';
+import { extractErrorMessage } from '@/utils/errorMessage';
 
 interface CredentialSectionProps {
   channelId: number;
@@ -121,8 +122,12 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
         });
         message.success(t('credential.updateSuccess'));
         onSave(result);
-      } catch (error) {
-        message.error(t('credential.updateFail'));
+      } catch (err) {
+        // 校验失败 → AntD 行内已显示，不重复弹 toast
+        const reason = extractErrorMessage(err);
+        if (reason) {
+          message.error(t('common:message.saveFailed', { reason }));
+        }
       } finally {
         setLoading(false);
       }
@@ -189,8 +194,12 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
           updatedAt: new Date().toISOString(),
           channelId,
         });
-      } catch (error) {
-        message.error(t('credential.addFail'));
+      } catch (err) {
+        // 校验失败 → AntD 行内已显示，不重复弹 toast
+        const reason = extractErrorMessage(err);
+        if (reason) {
+          message.error(t('common:message.saveFailed', { reason }));
+        }
       } finally {
         setLoading(false);
       }
@@ -241,8 +250,14 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
     try {
       await deleteCredential.mutateAsync({ channelId, id: credential.id });
       message.success(t('credential.deleteSuccess'));
-    } catch (error) {
-      message.error(t('credential.deleteFail'));
+    } catch (err) {
+      // 删除失败：把后端 / 网络原因带给用户；无原因时回退到既有兜底文案
+      const reason = extractErrorMessage(err);
+      message.error(
+        reason
+          ? t('common:message.saveFailed', { reason })
+          : t('credential.deleteFail')
+      );
     }
   };
 
