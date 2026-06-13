@@ -37,7 +37,7 @@
 
 ## 6. 前端：状态语义可视化与 SSOT 整合
 
-- [ ] 6.1 用 codegraph 列出 STATE_CONFIG / STATE_TRANSITION_LABELS 全部引用点
+- [x] 6.1 用 codegraph 列出 STATE_CONFIG / STATE_TRANSITION_LABELS 全部引用点
 - [ ] 6.2 新建 src/domain/channel/lifecycle.ts，定义 CHANNEL_LIFECYCLE 与 selector helpers，新增中英文 i18n key（含 stateXxxDesc / tooltipRoutable / tooltipBilling / tooltipNext / tooltipTerminal）
 - [ ] 6.3 替换全部引用为新 SSOT，删除旧 STATE_CONFIG / STATE_TRANSITION_LABELS 导出（无别名）
 - [ ] 6.4 ChannelStateTag 增加 Tooltip：内容由 buildStateTooltip 派生

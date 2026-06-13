@@ -924,13 +924,13 @@ git commit -m "fix(channels): EndpointSection 补齐错误反馈"
 
 ### 任务 6.1 codegraph 列出引用点
 
-- [ ] **Step 1：执行 codegraph_explore**
+- [x] **Step 1：执行 codegraph_explore**
 
 ```
 mcp__codegraph__codegraph_explore({ query: "STATE_CONFIG STATE_TRANSITION_LABELS ChannelStateTag stateTransitions" })
 ```
 
-- [ ] **Step 2：把所有引用文件列在 PR 描述里，准备一次性替换**
+- [x] **Step 2：把所有引用文件列在 PR 描述里，准备一次性替换**
 
 ### 任务 6.2 新建 lifecycle.ts + i18n key
 
