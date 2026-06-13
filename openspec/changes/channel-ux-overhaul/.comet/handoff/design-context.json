@@ -1,0 +1,16 @@
+{
+  "change": "channel-ux-overhaul",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "34ad811c705303460ec9d4e0d4c290b85f57ce0e981310f1a61af178c9696781",
+  "files": [
+    { "path": "openspec/changes/channel-ux-overhaul/proposal.md", "sha256": "d217e7e59deca9e5b1bbae2f86c5fa416d9edf17bb3069e3c5cff4be57317ad9" },
+    { "path": "openspec/changes/channel-ux-overhaul/design.md", "sha256": "ca3346412105be14df7b0178df23a25f361d9f29467be20e6a3cbc6e8ff2c9ae" },
+    { "path": "openspec/changes/channel-ux-overhaul/tasks.md", "sha256": "4d0d00f4994f2bf23026605d5f7d87bd70f872c896bbbd0be3ea763c417c4442" },
+    { "path": "openspec/changes/channel-ux-overhaul/specs/channel-console-ux/spec.md", "sha256": "c62a2dacfd6e19c5159a20c9de8208fb08949e60dda3a81a74ddc0548b10a898" },
+    { "path": "openspec/changes/channel-ux-overhaul/specs/channel-health-tracking/spec.md", "sha256": "cf2713ac57c6cea21ccd98c2aedaeb29c88b5c9fdfb76c925ebf863801d5b07d" },
+    { "path": "openspec/changes/channel-ux-overhaul/specs/channel-provision/spec.md", "sha256": "38558c0ca238c243ce5e9d243b06acc3c72b0dd523b97f289ba955323e50943a" }
+  ]
+}
