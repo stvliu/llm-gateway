@@ -1,0 +1,178 @@
+package com.codingas.gateway.application.catalog;
+
+import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
+import com.codingas.gateway.application.catalog.dto.ProvisionResult;
+import com.codingas.gateway.domain.supply.catalog.entity.PlanCatalog;
+import com.codingas.gateway.domain.supply.catalog.gateway.PlanCatalogGateway;
+import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
+import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
+import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+/**
+ * ChannelProvisionService 事务回滚集成测试
+ *
+ * <p>验证 inlineProvider 内联创建 Provider 与开通 Channel 处于同一事务边界：</p>
+ * <ul>
+ *     <li>下游写入失败时整体回滚，不留孤儿 Provider</li>
+ *     <li>providerCode 已存在时 inlineProvider 被忽略，正常路径仍能走通（不写入 Provider）</li>
+ * </ul>
+ *
+ * <p>关键技术点：</p>
+ * <ul>
+ *     <li>使用 {@link Propagation#NOT_SUPPORTED} 让外层不携带事务，service 内 {@code @Transactional} 真实生效</li>
+ *     <li>{@link MockBean} 替换 {@link ChannelEndpointGateway}，模拟下游写入失败</li>
+ *     <li>{@link DirtiesContext} 在每个测试后重置 Spring 上下文，避免被污染的 mock bean 影响其它套件</li>
+ * </ul>
+ */
+@SpringBootTest
+@ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@DisplayName("ChannelProvisionService 事务回滚 IT")
+class ChannelProvisionTransactionalIT {
+
+    @Autowired
+    private ChannelProvisionService service;
+
+    @Autowired
+    private ProviderGateway providerGateway;
+
+    @Autowired
+    private PlanCatalogGateway planCatalogGateway;
+
+    /** 模拟下游端点写入失败的关键 mock bean */
+    @MockBean
+    private ChannelEndpointGateway channelEndpointGateway;
+
+    private static final String NEW_PROVIDER_CODE = "brand-new-provider";
+    private static final String NEW_PLAN_CODE = "brand-new-plan-rollback";
+
+    private static final String EXISTING_PROVIDER_CODE = "existing-provider-it";
+    private static final String EXISTING_PLAN_CODE = "existing-plan-it";
+
+    /**
+     * 准备一条 PlanCatalog，便于在 service 中通过 planCode 查询
+     */
+    private PlanCatalog persistPlan(String planCode, String providerCode) {
+        PlanCatalog plan = new PlanCatalog();
+        plan.setPlanCode(planCode);
+        plan.setProviderCode(providerCode);
+        plan.setPlanName(planCode);
+        plan.setBillingMode(BillingMode.PAY_AS_YOU_GO);
+        // endpoints JSON 必须包含一条记录，确保 service 触发 channelEndpointGateway.save（mock 抛错路径）
+        plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://example.com/v1\"}]");
+        plan.setPricing(null);
+        return planCatalogGateway.save(plan);
+    }
+
+    @BeforeEach
+    void setUp() {
+        // 每个用例前清理可能残留的 provider/plan，确保独立性
+        cleanupArtifacts();
+    }
+
+    @AfterEach
+    void tearDown() {
+        cleanupArtifacts();
+    }
+
+    private void cleanupArtifacts() {
+        providerGateway.findByCode(NEW_PROVIDER_CODE)
+                .ifPresent(providerGateway::delete);
+        providerGateway.findByCode(EXISTING_PROVIDER_CODE)
+                .ifPresent(providerGateway::delete);
+    }
+
+    /**
+     * 关键场景：内联创建过程中端点保存失败 → 整体回滚，Provider 未持久化
+     */
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("内联创建过程中端点保存失败 → 整体回滚不留孤儿 Provider")
+    void 内联创建过程中端点保存失败_整体回滚不留孤儿_Provider() {
+        // 准备 PlanCatalog
+        persistPlan(NEW_PLAN_CODE, NEW_PROVIDER_CODE);
+        // 确保 Provider 此时不存在
+        assertThat(providerGateway.findByCode(NEW_PROVIDER_CODE)).isEmpty();
+
+        // mock 端点保存抛异常
+        when(channelEndpointGateway.save(any(ChannelEndpoint.class)))
+                .thenThrow(new RuntimeException("simulated endpoint save failure"));
+
+        ProvisionRequest request = new ProvisionRequest();
+        request.setInlineProvider(new ProvisionRequest.InlineProvider(
+                NEW_PROVIDER_CODE, "Brand New", "测试用", null, null));
+
+        // 行为：抛错
+        assertThatThrownBy(() -> service.provisionFromPlan(NEW_PLAN_CODE, request))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("simulated endpoint save failure");
+
+        // 关键断言：事务回滚后，Provider 不应被持久化
+        Optional<Provider> orphan = providerGateway.findByCode(NEW_PROVIDER_CODE);
+        assertThat(orphan)
+                .as("内联创建的 Provider 应随事务回滚而不被持久化")
+                .isEmpty();
+    }
+
+    /**
+     * 关键场景：providerCode 已存在 → inlineProvider 被忽略，正常路径走通（不抛错、不重复写 Provider）
+     *
+     * <p>本用例不让端点保存抛错（使用默认 mock 返回 null），确保走完 service 主流程到 channelEndpointGateway.save 之前。</p>
+     */
+    @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    @DisplayName("providerCode 已存在 → inlineProvider 被忽略，正常路径不写 Provider")
+    void providerCode已存在时inlineProvider被忽略_正常路径() {
+        // 预置一个已存在的 Provider
+        Provider preset = new Provider();
+        preset.setCode(EXISTING_PROVIDER_CODE);
+        preset.setName("Original Existing");
+        preset.setPriority(50);
+        Provider savedExisting = providerGateway.save(preset);
+        assertThat(savedExisting.getId()).isNotNull();
+
+        // 准备 PlanCatalog
+        persistPlan(EXISTING_PLAN_CODE, EXISTING_PROVIDER_CODE);
+
+        // mock 端点保存正常返回（避免 NPE）
+        when(channelEndpointGateway.save(any(ChannelEndpoint.class)))
+                .thenAnswer(inv -> {
+                    ChannelEndpoint ep = inv.getArgument(0);
+                    ep.setId(System.currentTimeMillis());
+                    return ep;
+                });
+
+        ProvisionRequest request = new ProvisionRequest();
+        request.setInlineProvider(new ProvisionRequest.InlineProvider(
+                EXISTING_PROVIDER_CODE, "Should-Be-Ignored Name", "应被忽略", null, null));
+
+        // 走通正常路径
+        ProvisionResult result = service.provisionFromPlan(EXISTING_PLAN_CODE, request);
+        assertThat(result.getStatus()).isEqualTo("CREATED");
+
+        // 关键断言：原有 Provider 的 name 未被 inline 覆盖（走的是已存在分支，没有 save 路径）
+        Provider after = providerGateway.findByCode(EXISTING_PROVIDER_CODE).orElseThrow();
+        assertThat(after.getName()).isEqualTo("Original Existing");
+        assertThat(after.getId()).isEqualTo(savedExisting.getId());
+    }
+}

@@ -629,7 +629,7 @@ git commit -am "feat(catalog): provisionFromPlan 支持 inlineProvider 入参"
 
 ### 任务 3.3 / 3.4 事务回滚集成测试
 
-- [ ] **Step 1：写失败的事务测试 `ChannelProvisionTransactionalIT`**
+- [x] **Step 1：写失败的事务测试 `ChannelProvisionTransactionalIT`**
 
 ```java
 @SpringBootTest
@@ -663,9 +663,9 @@ class ChannelProvisionTransactionalIT {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败 → 调整 `provisionFromPlan` 的 `@Transactional` 到方法级（含 `ensureProvider`）→ 再跑测试通过**
+- [x] **Step 2：跑测试确认失败 → 调整 `provisionFromPlan` 的 `@Transactional` 到方法级（含 `ensureProvider`）→ 再跑测试通过**
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git commit -am "test(catalog): 验证 inlineProvider 事务性回滚"
