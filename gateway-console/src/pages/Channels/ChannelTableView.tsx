@@ -48,14 +48,33 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     const actionLabel = getTransitionActionLabel(currentState, targetState);
 
     if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let title = actionLabel;
       let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
       if (targetState === 'RETIRED') {
-        content = t('card.confirmRetireContent', '此操作不可逆，确定要废弃此渠道？');
+        title = t('channel.action.retire.confirmTitle', '停用渠道？');
+        content = t(
+          'channel.action.retire.confirmDescription',
+          '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
+        );
       }
       modal.confirm({
-        title: actionLabel,
+        title,
         content,
         okType: 'danger',
+        onOk: () => onStateTransition?.(record.id, targetState, ''),
+      });
+      return;
+    }
+
+    // 暂停操作（→ SUSPENDED）：轻量二次确认
+    if (targetState === 'SUSPENDED') {
+      modal.confirm({
+        title: t('channel.action.suspend.confirmTitle', '暂停渠道？'),
+        content: t(
+          'channel.action.suspend.confirmDescription',
+          '暂停后该渠道不再分配流量，但保留配置'
+        ),
+        okType: 'default',
         onOk: () => onStateTransition?.(record.id, targetState, ''),
       });
       return;

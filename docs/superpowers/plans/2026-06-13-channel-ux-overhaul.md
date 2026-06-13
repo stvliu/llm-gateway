@@ -1233,9 +1233,9 @@ describe('useDangerConfirm', () => {
 
 ### 任务 8.3 暂停操作 Popconfirm
 
-- [ ] **Step 1：在所有"暂停"按钮（→ SUSPENDED）入口包 `<Popconfirm>`，文案：「暂停后该渠道不再分配流量，但保留配置」**
+- [x] **Step 1：在所有"暂停"按钮（→ SUSPENDED）入口包 `<Popconfirm>`，文案：「暂停后该渠道不再分配流量，但保留配置」**
 
-- [ ] **Step 2：测试 + 提交**
+- [x] **Step 2：测试 + 提交**
 
 ```bash
 git commit -am "feat(channels): 暂停操作增加 Popconfirm 二次确认"

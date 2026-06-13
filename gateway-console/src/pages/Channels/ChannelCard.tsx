@@ -50,14 +50,19 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   const handleTransition = (targetState: ChannelState) => {
     const actionLabel = getTransitionActionLabel(currentState, targetState);
 
-    // 高风险操作需要二次确认
+    // 高风险操作需要二次确认（DEPRECATED / RETIRED → 危险红色）
     if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let title = actionLabel;
       let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
       if (targetState === 'RETIRED') {
-        content = t('card.confirmRetireContent', '此操作不可逆，确定要废弃此渠道？');
+        title = t('channel.action.retire.confirmTitle', '停用渠道？');
+        content = t(
+          'channel.action.retire.confirmDescription',
+          '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
+        );
       }
       modal.confirm({
-        title: actionLabel,
+        title,
         content,
         okType: 'danger',
         onOk: () => onStateTransition?.(channel.id, targetState, ''),
@@ -65,7 +70,21 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
       return;
     }
 
-    // 低风险操作直接执行
+    // 暂停操作（→ SUSPENDED）：轻量二次确认（默认按钮，非红色）
+    if (targetState === 'SUSPENDED') {
+      modal.confirm({
+        title: t('channel.action.suspend.confirmTitle', '暂停渠道？'),
+        content: t(
+          'channel.action.suspend.confirmDescription',
+          '暂停后该渠道不再分配流量，但保留配置'
+        ),
+        okType: 'default',
+        onOk: () => onStateTransition?.(channel.id, targetState, ''),
+      });
+      return;
+    }
+
+    // 低风险操作直接执行（如 SUSPENDED→ACTIVE 恢复、PENDING→ACTIVE 激活）
     onStateTransition?.(channel.id, targetState, '');
   };
 
