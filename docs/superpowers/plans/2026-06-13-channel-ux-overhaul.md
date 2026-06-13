@@ -692,7 +692,7 @@ git commit -am "test(catalog): 验证 inlineProvider 事务性回滚"
 
 ### 任务 4.1 安装依赖
 
-- [ ] **Step 1：在 `gateway-console` 目录执行**
+- [x] **Step 1：在 `gateway-console` 目录执行**
 
 ```bash
 cd gateway-console
@@ -700,7 +700,7 @@ pnpm add -D vitest @testing-library/react @testing-library/user-event @testing-l
 pnpm exec playwright install --with-deps chromium
 ```
 
-- [ ] **Step 2：提交 lock 文件变更**
+- [x] **Step 2：提交 lock 文件变更**
 
 ```bash
 git add package.json pnpm-lock.yaml

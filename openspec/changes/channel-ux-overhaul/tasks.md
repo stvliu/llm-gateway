@@ -22,7 +22,7 @@
 
 ## 4. 前端：测试栈引入
 
-- [ ] 4.1 安装依赖：vitest / @testing-library/react / @testing-library/user-event / @testing-library/jest-dom / jsdom / @playwright/test
+- [x] 4.1 安装依赖：vitest / @testing-library/react / @testing-library/user-event / @testing-library/jest-dom / jsdom / @playwright/test
 - [ ] 4.2 配置 vite.config.ts 的 test 段、vitest.setup.ts、playwright.config.ts
 - [ ] 4.3 package.json 增加 test / test:watch / test:e2e scripts
 - [ ] 4.4 编写 1 个 smoke test（如对 ChannelStateTag 的快照测试）验证 RTL 工作
