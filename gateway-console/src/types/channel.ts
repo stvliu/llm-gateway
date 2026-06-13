@@ -19,6 +19,34 @@ export type ChannelHealthStatus = 'HEALTHY' | 'DEGRADED' | 'FAILED' | 'UNKNOWN';
 /** 渠道健康检查触发来源（任务 9.x；与后端 ChannelHealthSource 枚举一致） */
 export type ChannelHealthSource = 'CARD' | 'DRAWER' | 'PRECHECK';
 
+/** 健康检查矩阵单行（与后端 HealthCheckMatrixRow 一致） */
+export interface ChannelHealthMatrixRow {
+  /** 凭证 ID */
+  credentialId: number;
+  /** 脱敏后的 Key（如 sk-***wxyz） */
+  keyMasked: string;
+  /** 认证结果 */
+  auth: 'PASS' | 'FAIL';
+  /** 失败时的错误信息（如 401） */
+  authError?: string | null;
+  /** 可用模型清单（认证通过时返回） */
+  availableModels?: string[] | null;
+  /** 延迟毫秒；FAIL 时可能为 null */
+  latencyMs?: number | null;
+}
+
+/** 健康检查响应（与后端 ChannelHealthCheckResponse 一致） */
+export interface ChannelHealthCheckResponse {
+  /** 聚合状态 */
+  aggregateStatus: ChannelHealthStatus;
+  /** 矩阵详情：每个凭证一行 */
+  matrix: ChannelHealthMatrixRow[];
+  /** 最后一次检查时间 */
+  lastHealthCheckAt?: string | null;
+  /** 触发来源 */
+  source?: ChannelHealthSource;
+}
+
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
   id: number;

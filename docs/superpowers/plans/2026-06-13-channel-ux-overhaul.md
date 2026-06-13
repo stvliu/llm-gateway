@@ -1348,7 +1348,7 @@ describe('HealthDot', () => {
 
 ### 任务 9.5 / 9.6 详情抽屉矩阵 Table + AbortController
 
-- [ ] **Step 1：写失败测试**
+- [x] **Step 1：写失败测试**
 
 ```tsx
 it('点击"测试全部"应渲染矩阵 Table，行=Key 列=认证/可用模型/延迟/时间戳', async () => {
@@ -1374,7 +1374,7 @@ it('关闭抽屉应中止进行中的请求', async () => {
 });
 ```
 
-- [ ] **Step 2：实现矩阵 Table + AbortController：**
+- [x] **Step 2：实现矩阵 Table + AbortController：**
 
 ```tsx
 const acRef = useRef<AbortController | null>(null);
@@ -1397,7 +1397,7 @@ const triggerTest = async () => {
 useEffect(() => () => acRef.current?.abort(), []); // 卸载/关闭时中止
 ```
 
-- [ ] **Step 3：测试 + 提交**
+- [x] **Step 3：测试 + 提交**
 
 ### 任务 9.7 ConnectivityTestPanel 改名为"预检工具"
 
