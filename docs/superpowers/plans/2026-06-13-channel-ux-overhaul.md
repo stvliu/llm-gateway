@@ -768,7 +768,7 @@ export default defineConfig({
 
 ### 任务 4.3 / 4.4 / 4.5 Smoke 测试验证
 
-- [ ] **Step 1：写组件 smoke `ChannelStateTag.smoke.test.tsx`**
+- [x] **Step 1：写组件 smoke `ChannelStateTag.smoke.test.tsx`**
 
 ```tsx
 import { render, screen } from '@testing-library/react';
@@ -783,7 +783,7 @@ describe('ChannelStateTag smoke', () => {
 });
 ```
 
-- [ ] **Step 2：写 E2E smoke `e2e/smoke.spec.ts`**
+- [x] **Step 2：写 E2E smoke `e2e/smoke.spec.ts`**
 
 ```ts
 import { test, expect } from '@playwright/test';
@@ -794,7 +794,7 @@ test('渠道页面应能加载', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 3：跑两个 smoke 测试**
+- [x] **Step 3：跑两个 smoke 测试**
 
 ```bash
 pnpm test
@@ -802,7 +802,7 @@ pnpm test:e2e
 # Expected: 全绿（注意 E2E 需要后端在 baseURL 上可用）
 ```
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git add gateway-console/{vite.config.ts,vitest.setup.ts,playwright.config.ts,package.json}
