@@ -9,6 +9,7 @@ import {
   useDeleteChannelModel,
   useUpdateChannelModel,
 } from '@/services/query/useChannels';
+import { extractErrorMessage } from '@/utils/errorMessage';
 
 interface ModelMappingSectionProps {
   channelId: number;
@@ -69,8 +70,14 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
         });
         message.success(t('modelMapping.updateSuccess'));
         onSave({ ...mapping, upstreamModelName: editUpstreamName || null });
-      } catch {
-        message.error(t('modelMapping.updateFail'));
+      } catch (err) {
+        // 把后端 / 网络具体原因带给用户；无原因时回退到既有兜底文案
+        const reason = extractErrorMessage(err);
+        message.error(
+          reason
+            ? t('common:message.saveFailed', { reason })
+            : t('modelMapping.updateFail')
+        );
       } finally {
         setEditLoading(false);
       }
@@ -115,8 +122,13 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
         setAddMode(false);
         setNewModelId('');
         setNewUpstreamName('');
-      } catch {
-        message.error(t('modelMapping.addFail'));
+      } catch (err) {
+        const reason = extractErrorMessage(err);
+        message.error(
+          reason
+            ? t('common:message.saveFailed', { reason })
+            : t('modelMapping.addFail')
+        );
       } finally {
         setLoading(false);
       }
@@ -154,8 +166,13 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
     try {
       await deleteModel.mutateAsync({ channelId, modelId: mapping.id });
       message.success(t('modelMapping.deleteSuccess'));
-    } catch {
-      message.error(t('modelMapping.deleteFail'));
+    } catch (err) {
+      const reason = extractErrorMessage(err);
+      message.error(
+        reason
+          ? t('common:message.saveFailed', { reason })
+          : t('modelMapping.deleteFail')
+      );
     }
   };
 

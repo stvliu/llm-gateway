@@ -84,6 +84,7 @@ vi.mock('@/services/api/channel', () => {
 
 import { EndpointSection } from '../EndpointSection';
 import { CredentialSection } from '../CredentialSection';
+import { ModelMappingSection } from '../ModelMappingSection';
 
 /** 创建一个不重试的 QueryClient，避免错误路径被默认重试策略掩盖 */
 function makeQueryClient() {
@@ -191,6 +192,47 @@ describe('CredentialSection 错误反馈', () => {
     });
     const calls = errorSpy.mock.calls.map((c) => String(c[0]));
     expect(calls.some((m) => m.includes('cred delete boom'))).toBe(true);
+  });
+});
+
+describe('ModelMappingSection 错误反馈', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-CN');
+    errorSpy = vi.spyOn(message, 'error').mockImplementation(() => ({} as never));
+  });
+
+  it('删除模型映射失败时应弹出含具体后端原因的 message.error', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <ModelMappingSection
+        channelId={1}
+        channelModels={[
+          {
+            id: 200,
+            channelId: 1,
+            modelId: 1,
+            modelName: 'gpt-4o',
+            upstreamModelName: 'gpt-4o',
+            state: 'ACTIVE',
+            createdAt: '2026-01-01T00:00:00Z',
+            updatedAt: '2026-01-01T00:00:00Z',
+          } as never,
+        ]}
+      />
+    );
+
+    const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    await user.click(deleteBtns[0]);
+    const confirmBtn = await screen.findByRole('button', { name: /确\s*定|OK/i });
+    await user.click(confirmBtn);
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes('model delete boom'))).toBe(true);
   });
 });
 
