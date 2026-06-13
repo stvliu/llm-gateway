@@ -13,6 +13,7 @@ import {
 } from '@/services/query/useChannels';
 import { extractErrorMessage } from '@/utils/errorMessage';
 import type { PulseState } from '@/components/common/useSavePulse';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import '@/components/common/SavePulse.css';
 
 interface ModelMappingSectionProps {
@@ -49,6 +50,9 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
   const [newModelId, setNewModelId] = useState('');
   const [newUpstreamName, setNewUpstreamName] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // 危险删除确认（任务 8.6）：注意必须把 contextHolder 渲染到组件树
+  const { confirm: confirmDelete, contextHolder: dangerContextHolder } = useDangerConfirm();
 
   // Section 级 RowPulse 表（按 mapping.id 索引），自动归位定时器引用
   const [pulses, setPulses] = useState<Record<number, RowPulse>>({});
@@ -273,36 +277,55 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
     );
   };
 
-  /** 删除映射 */
-  const handleDelete = async (mapping: ChannelModel) => {
-    try {
-      await deleteModel.mutateAsync({ channelId, modelId: mapping.id });
-      message.success(t('modelMapping.deleteSuccess'));
-    } catch (err) {
-      const reason = extractErrorMessage(err);
-      message.error(
-        reason
-          ? t('common:message.saveFailed', { reason })
-          : t('modelMapping.deleteFail')
-      );
-    }
+  /**
+   * 删除映射：弹危险确认 Modal（任务 8.6）。
+   * description 含 modelId + "删除后，模型 ID xxx 不再被路由到此渠道"。
+   */
+  const handleDelete = (mapping: ChannelModel) => {
+    const modelIdLabel = mapping.modelName || String(mapping.modelId);
+    confirmDelete({
+      titleKey: 'modelMapping.deleteTitle',
+      descriptionKey: 'modelMapping.deleteDescription',
+      descriptionParams: { modelId: modelIdLabel },
+      onOk: async () => {
+        try {
+          await deleteModel.mutateAsync({ channelId, modelId: mapping.id });
+          message.success(t('modelMapping.deleteSuccess'));
+        } catch (err) {
+          const reason = extractErrorMessage(err);
+          message.error(
+            reason
+              ? t('common:message.saveFailed', { reason })
+              : t('modelMapping.deleteFail')
+          );
+          // 必须 throw，让 useDangerConfirm 阻止 modal 关闭
+          throw err;
+        }
+      },
+    });
   };
 
   if (channelModels.length === 0 && !addMode) {
     return (
-      <Empty
-        image={Empty.PRESENTED_IMAGE_SIMPLE}
-        description={t('modelMapping.empty')}
-      >
-        <Button type="dashed" onClick={() => setAddMode(true)} icon={<PlusOutlined />}>
-          {t('modelMapping.addMapping')}
-        </Button>
-      </Empty>
+      <>
+        {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+        {dangerContextHolder}
+        <Empty
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+          description={t('modelMapping.empty')}
+        >
+          <Button type="dashed" onClick={() => setAddMode(true)} icon={<PlusOutlined />}>
+            {t('modelMapping.addMapping')}
+          </Button>
+        </Empty>
+      </>
     );
   }
 
   return (
     <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
       <InlineEditableList
         items={displayModels}
         renderItem={renderItem}
