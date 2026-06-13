@@ -80,6 +80,8 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
               onBatchResume={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
               onTestConnectivity={onTestProviderConnectivity ? () => onTestProviderConnectivity(group.provider.id) : undefined}
               onExport={onExportProvider ? () => onExportProvider(group.provider.id) : undefined}
+              /* 任务 9.4：透传 channels 用于派生 N/M 健康聚合 */
+              channels={group.channels}
             />
 
             {/* 渠道卡片列表（折叠时隐藏） */}

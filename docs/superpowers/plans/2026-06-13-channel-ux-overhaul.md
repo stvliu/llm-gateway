@@ -1342,9 +1342,9 @@ describe('HealthDot', () => {
 
 ### 任务 9.4 ProviderGroupHeader N/M 健康聚合
 
-- [ ] **Step 1：写测试断言"3/5 健康"小字渲染**
-- [ ] **Step 2：实现：在分组下统计 `lastHealthStatus === 'HEALTHY'` 的数量 / 总数**
-- [ ] **Step 3：测试 + 提交**
+- [x] **Step 1：写测试断言"3/5 健康"小字渲染**
+- [x] **Step 2：实现：在分组下统计 `lastHealthStatus === 'HEALTHY'` 的数量 / 总数**
+- [x] **Step 3：测试 + 提交**
 
 ### 任务 9.5 / 9.6 详情抽屉矩阵 Table + AbortController
 

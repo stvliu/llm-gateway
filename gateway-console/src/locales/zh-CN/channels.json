@@ -70,6 +70,7 @@
   "group.confirmDisableContent": "停用供应商「{{name}}」将同时停用其下所有 {{count}} 个渠道，确定继续吗？",
   "group.confirmDisableOk": "确认停用",
   "group.channelCount": "{{count}} 个渠道",
+  "provider.healthSummary": "{{healthy}}/{{total}} 健康",
   "overview.connectivity": "连通状态",
   "overview.connected": "连通正常",
   "overview.disconnected": "连通异常",

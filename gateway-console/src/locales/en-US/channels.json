@@ -70,6 +70,7 @@
   "group.confirmDisableContent": "Disabling provider \"{{name}}\" will also disable all {{count}} channels under it. Continue?",
   "group.confirmDisableOk": "Confirm Disable",
   "group.channelCount": "{{count}} channels",
+  "provider.healthSummary": "{{healthy}}/{{total}} healthy",
   "overview.connectivity": "Connectivity",
   "overview.connected": "Connected",
   "overview.disconnected": "Disconnected",
