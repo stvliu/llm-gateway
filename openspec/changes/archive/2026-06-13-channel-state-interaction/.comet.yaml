@@ -1,0 +1,14 @@
+workflow: full
+phase: archive
+build_mode: subagent-driven-development
+isolation: branch
+verify_mode: full
+base_ref: f56330f91d93f750f4d5f144fbb722d0a1284485
+design_doc: null
+plan: null
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-06-13-channel-state-interaction-verify.md
+branch_status: handled
+created_at: 2026-06-12
+verified_at: 2026-06-13
+archived: false

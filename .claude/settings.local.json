@@ -68,7 +68,19 @@
       "Bash(cat .mvn/jvm.config)",
       "Bash(ls .mvn/)",
       "Read(//c/Users/liuye/.m2/repository/org/projectlombok/**)",
-      "Bash(gitee --version)"
+      "Bash(gitee --version)",
+      "Bash(../mvnw compile *)",
+      "Bash(../mvnw test *)",
+      "Bash(mvnw test *)",
+      "Bash(ls node_modules/.bin/vite)",
+      "Bash(./node_modules/.bin/vite build *)",
+      "Bash(yarn build *)",
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(ls vite.config.*)",
+      "Bash(ls vue.config.*)",
+      "Bash(ls webpack.config.*)",
+      "Bash(openspec sync *)",
+      "Bash(openspec --help)"
     ]
   },
   "outputStyle": "default"
