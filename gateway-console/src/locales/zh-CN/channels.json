@@ -323,5 +323,22 @@
   "apiKeyModal.updateFail": "API Key 更新失败",
   "statusToggle.enabled": "渠道已启用",
   "statusToggle.disabled": "渠道已停用",
-  "statusToggle.failed": "状态切换失败"
+  "statusToggle.failed": "状态切换失败",
+  "common.yes": "是",
+  "common.no": "否",
+  "channel.state.pending": "待激活",
+  "channel.state.pendingDesc": "渠道刚创建，尚未通过激活检查；不参与流量分配，不计费。",
+  "channel.state.active": "运行中",
+  "channel.state.activeDesc": "渠道运行正常，正在参与流量分配并计费。",
+  "channel.state.suspended": "已暂停",
+  "channel.state.suspendedDesc": "已手动暂停；保留配置但不参与流量，可随时恢复。",
+  "channel.state.deprecated": "已下线",
+  "channel.state.deprecatedDesc": "标记为不推荐使用，但仍参与流量分配与计费；建议尽快迁移到替代渠道。",
+  "channel.state.retired": "已废弃",
+  "channel.state.retiredDesc": "渠道已废弃，配置只读保留供审计；终态，不可恢复。",
+  "channel.state.tooltipRoutable": "参与流量",
+  "channel.state.tooltipBilling": "参与计费",
+  "channel.state.tooltipNext": "可转换至",
+  "channel.state.tooltipTerminal": "终态：不可再转换",
+  "channel.state.deprecatedSubtitle": "仍参与流量分配，但已标记为不推荐"
 }

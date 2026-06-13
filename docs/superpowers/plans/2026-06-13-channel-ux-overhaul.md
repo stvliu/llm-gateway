@@ -934,7 +934,7 @@ mcp__codegraph__codegraph_explore({ query: "STATE_CONFIG STATE_TRANSITION_LABELS
 
 ### 任务 6.2 新建 lifecycle.ts + i18n key
 
-- [ ] **Step 1：先写失败测试 `lifecycle.test.ts`**
+- [x] **Step 1：先写失败测试 `lifecycle.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -972,18 +972,18 @@ describe('CHANNEL_LIFECYCLE', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
-- [ ] **Step 3：实现 `lifecycle.ts`**（直接照搬 design doc §1 代码）
+- [x] **Step 3：实现 `lifecycle.ts`**（直接照搬 design doc §1 代码）
 
-- [ ] **Step 4：在 `locales/zh-CN/channels.json` 与 `en-US/channels.json` 增 key**
+- [x] **Step 4：在 `locales/zh-CN/channels.json` 与 `en-US/channels.json` 增 key**
 
 新增 key 列表：
 - `channel.state.pending` / `pendingDesc`、`active` / `activeDesc`、`suspended` / `suspendedDesc`、`deprecated` / `deprecatedDesc`、`retired` / `retiredDesc`
 - `channel.state.tooltipRoutable`、`tooltipBilling`、`tooltipNext`、`tooltipTerminal`
 - `channel.state.deprecatedSubtitle`（DEPRECATED 卡片副标题"仍参与流量分配，但已标记为不推荐"）
 
-- [ ] **Step 5：跑测试全绿**
+- [x] **Step 5：跑测试全绿**
 
 ### 任务 6.3 替换全部引用并删除旧导出
 

@@ -323,5 +323,22 @@
   "apiKeyModal.updateFail": "API Key update failed",
   "statusToggle.enabled": "Channel enabled",
   "statusToggle.disabled": "Channel disabled",
-  "statusToggle.failed": "State toggle failed"
+  "statusToggle.failed": "State toggle failed",
+  "common.yes": "Yes",
+  "common.no": "No",
+  "channel.state.pending": "Pending",
+  "channel.state.pendingDesc": "Channel just created and not yet activated; does not route traffic and is not billed.",
+  "channel.state.active": "Active",
+  "channel.state.activeDesc": "Channel is healthy, actively routing traffic and being billed.",
+  "channel.state.suspended": "Suspended",
+  "channel.state.suspendedDesc": "Manually suspended; configuration retained but no traffic, can be resumed any time.",
+  "channel.state.deprecated": "Deprecated",
+  "channel.state.deprecatedDesc": "Marked as deprecated but still routes traffic and is billed; please migrate to a replacement.",
+  "channel.state.retired": "Retired",
+  "channel.state.retiredDesc": "Channel retired, configuration read-only for audit; terminal state, cannot be restored.",
+  "channel.state.tooltipRoutable": "Routable",
+  "channel.state.tooltipBilling": "Billable",
+  "channel.state.tooltipNext": "Can transition to",
+  "channel.state.tooltipTerminal": "Terminal: no further transitions",
+  "channel.state.deprecatedSubtitle": "Still routing traffic, but marked as not recommended"
 }
