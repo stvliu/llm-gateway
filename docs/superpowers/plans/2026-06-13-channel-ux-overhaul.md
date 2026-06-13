@@ -247,7 +247,7 @@ git commit -m "feat(supply): 增加 Channel 健康状态字段与枚举"
 
 ### 任务 1.4 Repository / Gateway 透传
 
-- [ ] **Step 1：检查 Gateway 接口与实现是否需要新增方法**
+- [x] **Step 1：检查 Gateway 接口与实现是否需要新增方法**
 
 通常 `findById` / `save` 已能透传（JPA 反射映射）。如有自定义 RowMapper（如 MyBatis），需补字段映射。先用 codegraph 确认：
 
@@ -255,7 +255,7 @@ git commit -m "feat(supply): 增加 Channel 健康状态字段与枚举"
 mcp__codegraph__codegraph_explore({ query: "ChannelGateway ChannelGatewayImpl ChannelRepository save findById" })
 ```
 
-- [ ] **Step 2：写一个集成测试 `ChannelHealthRepositoryIT`**
+- [x] **Step 2：写一个集成测试 `ChannelHealthRepositoryIT`**
 
 ```java
 @DataJpaTest
@@ -280,14 +280,14 @@ class ChannelHealthRepositoryIT {
 }
 ```
 
-- [ ] **Step 3：跑测试**
+- [x] **Step 3：跑测试**
 
 ```bash
 ./mvnw test -pl gateway-boot -Dtest=ChannelHealthRepositoryIT
 # Expected: 通过
 ```
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git commit -am "test(supply): 健康字段 Repository 集成测试"
