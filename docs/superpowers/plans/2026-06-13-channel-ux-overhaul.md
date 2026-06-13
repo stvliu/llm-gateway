@@ -1254,7 +1254,7 @@ git commit -am "feat(channels): 暂停操作增加 Popconfirm 二次确认"
 
 ### 任务 8.8 hook 单测汇总
 
-- [ ] 全章 `pnpm test src/components/common/__tests__/useDangerConfirm` 全绿。
+- [x] 全章 `pnpm test src/components/common/__tests__/useDangerConfirm` 全绿。
 
 **验收标准（第 8 章）：**
 - ✅ 暂停操作有 Popconfirm（轻量）

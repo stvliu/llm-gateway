@@ -65,7 +65,7 @@
 - [x] 8.5 删除端点改用 useDangerConfirm（content 包含对路由的影响说明）
 - [x] 8.6 删除模型映射改用 useDangerConfirm（content 说明该模型 ID 不再被路由）
 - [x] 8.7 删除整个渠道 / 转 RETIRED 文案与上述对齐
-- [ ] 8.8 useDangerConfirm.test.tsx 单元测试
+- [x] 8.8 useDangerConfirm.test.tsx 单元测试
 
 ## 9. 前端：测试入口归一与健康指示
 
