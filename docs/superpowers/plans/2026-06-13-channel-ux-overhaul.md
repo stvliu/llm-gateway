@@ -1012,7 +1012,7 @@ git commit -am "refactor(channels): 状态 SSOT 整合至 CHANNEL_LIFECYCLE"
 
 ### 任务 6.4 / 6.5 ChannelStateTag 增 Tooltip + PENDING 加深
 
-- [ ] **Step 1：先写失败测试 `ChannelStateTag.test.tsx`**
+- [x] **Step 1：先写失败测试 `ChannelStateTag.test.tsx`**
 
 ```tsx
 describe('ChannelStateTag', () => {
@@ -1030,9 +1030,9 @@ describe('ChannelStateTag', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
-- [ ] **Step 3：在 `ChannelStateTag.tsx` 包一层 `<Tooltip>`，content 调用 `buildStateTooltip(state, t)`**
+- [x] **Step 3：在 `ChannelStateTag.tsx` 包一层 `<Tooltip>`，content 调用 `buildStateTooltip(state, t)`**
 
 ```tsx
 import { CHANNEL_LIFECYCLE, buildStateTooltip } from '@/domain/channel/lifecycle';
@@ -1048,7 +1048,7 @@ export function ChannelStateTag({ state }: { state: ChannelState }) {
 }
 ```
 
-- [ ] **Step 4：跑测试全绿，提交**
+- [x] **Step 4：跑测试全绿，提交**
 
 ### 任务 6.6 RETIRED 卡片视觉重设 + 6.7 DEPRECATED 副标题
 
