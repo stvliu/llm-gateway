@@ -709,7 +709,7 @@ git commit -m "chore(console): 引入 vitest + RTL + playwright 测试栈"
 
 ### 任务 4.2 配置 Vitest
 
-- [ ] **Step 1：修改 `vite.config.ts`**，添加 test 段：
+- [x] **Step 1：修改 `vite.config.ts`**，添加 test 段：
 
 ```ts
 /// <reference types="vitest" />
@@ -725,7 +725,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2：新建 `vitest.setup.ts`**
+- [x] **Step 2：新建 `vitest.setup.ts`**
 
 ```ts
 import '@testing-library/jest-dom/vitest';
@@ -735,7 +735,7 @@ import { cleanup } from '@testing-library/react';
 afterEach(() => cleanup());
 ```
 
-- [ ] **Step 3：新建 `playwright.config.ts`**
+- [x] **Step 3：新建 `playwright.config.ts`**
 
 ```ts
 import { defineConfig } from '@playwright/test';
@@ -754,7 +754,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 4：在 `package.json` 增加 scripts**
+- [x] **Step 4：在 `package.json` 增加 scripts**
 
 ```json
 {
