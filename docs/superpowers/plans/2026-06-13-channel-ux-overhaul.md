@@ -1197,7 +1197,7 @@ it('乐观更新失败应回滚到上一个值', async () => { /* mock 500 → �
 
 ### 任务 8.1 useDangerConfirm hook
 
-- [ ] **Step 1：先写失败测试**
+- [x] **Step 1：先写失败测试**
 
 ```tsx
 describe('useDangerConfirm', () => {
@@ -1219,11 +1219,11 @@ describe('useDangerConfirm', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试失败**
+- [x] **Step 2：跑测试失败**
 
-- [ ] **Step 3：实现 `useDangerConfirm.tsx`**（照搬 design doc §8 代码）
+- [x] **Step 3：实现 `useDangerConfirm.tsx`**（照搬 design doc §8 代码）
 
-- [ ] **Step 4：跑测试全绿，提交**
+- [x] **Step 4：跑测试全绿，提交**
 
 ### 任务 8.2 InlineEditableList 删除回调签名扩展
 
