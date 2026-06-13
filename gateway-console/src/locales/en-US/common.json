@@ -87,7 +87,8 @@
     "error": "Operation failed",
     "copied": "Copied to clipboard",
     "deleteSuccess": "Deleted successfully",
-    "deleteFailed": "Delete failed"
+    "deleteFailed": "Delete failed",
+    "saveFailed": "Save failed: {{reason}}"
   },
   "theme": {
     "system": "System",
