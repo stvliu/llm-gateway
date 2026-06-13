@@ -48,8 +48,8 @@
 
 ## 7. 前端：保存反馈脉冲
 
-- [ ] 7.1 实现 useSavePulse hook（src/components/common/useSavePulse.ts）：state 切换 + 3s 自动清除 success + 错误常驻 + cleanup
-- [ ] 7.2 实现 SavePulse.css：keyframes + reduced-motion 适配 + save-tip-ok / save-tip-err 样式
+- [x] 7.1 实现 useSavePulse hook（src/components/common/useSavePulse.ts）：state 切换 + 3s 自动清除 success + 错误常驻 + cleanup
+- [x] 7.2 实现 SavePulse.css：keyframes + reduced-motion 适配 + save-tip-ok / save-tip-err 样式
 - [ ] 7.3 EndpointSection 接入 useSavePulse + onMutate 乐观更新 + onError 回滚 + 行内反馈渲染
 - [ ] 7.4 CredentialSection 接入同上
 - [ ] 7.5 ModelMappingSection 接入同上

@@ -1,0 +1,58 @@
+/* SavePulse 反馈样式
+ * 配合 useSavePulse Hook 使用：
+ *   - .save-pulse-success：保存成功的高亮闪光（800ms）
+ *   - .save-pulse-error：保存失败的红框边框
+ *   - .save-tip-ok / .save-tip-err：行内文本反馈样式
+ *
+ * 适配 prefers-reduced-motion：禁用动画，仅保留软变色。
+ */
+
+@keyframes save-pulse-success {
+  0%   { background-color: rgba(82, 196, 26, 0); }
+  20%  { background-color: rgba(82, 196, 26, 0.20); }
+  100% { background-color: rgba(82, 196, 26, 0); }
+}
+
+@keyframes save-pulse-error {
+  0%   { background-color: rgba(255, 77, 79, 0); }
+  20%  { background-color: rgba(255, 77, 79, 0.18); }
+  100% { background-color: rgba(255, 77, 79, 0); }
+}
+
+.save-pulse-success {
+  animation: save-pulse-success 600ms ease-out;
+}
+
+.save-pulse-error {
+  animation: save-pulse-error 600ms ease-out;
+  border: 1px solid #ff4d4f;
+  border-radius: 4px;
+}
+
+/* 行内文本反馈 */
+.save-tip-ok {
+  color: #52c41a;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+.save-tip-err {
+  color: #ff4d4f;
+  margin-left: 8px;
+  font-size: 12px;
+}
+
+/* 减少动画偏好：禁用 keyframes，仅保留软变色 + 边框 */
+@media (prefers-reduced-motion: reduce) {
+  .save-pulse-success {
+    animation: none;
+    background-color: rgba(82, 196, 26, 0.10);
+    transition: background-color 600ms ease-out;
+  }
+  .save-pulse-error {
+    animation: none;
+    background-color: rgba(255, 77, 79, 0.10);
+    transition: background-color 600ms ease-out;
+    /* border 保留，作为可见状态指示 */
+  }
+}

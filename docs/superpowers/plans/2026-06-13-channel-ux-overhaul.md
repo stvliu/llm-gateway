@@ -1101,7 +1101,7 @@ it('DEPRECATED 卡片应显示副标题"仍参与流量分配"', () => {
 
 ### 任务 7.1 / 7.2 useSavePulse + CSS
 
-- [ ] **Step 1：先写失败测试 `useSavePulse.test.tsx`**
+- [x] **Step 1：先写失败测试 `useSavePulse.test.tsx`**
 
 ```tsx
 import { renderHook, act } from '@testing-library/react';
@@ -1140,13 +1140,13 @@ describe('useSavePulse', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试失败**
+- [x] **Step 2：跑测试失败**
 
-- [ ] **Step 3：实现 `useSavePulse.ts`**（照搬 design doc §2 代码骨架）
+- [x] **Step 3：实现 `useSavePulse.ts`**（照搬 design doc §2 代码骨架）
 
-- [ ] **Step 4：实现 `SavePulse.css`**（照搬 design doc §2 keyframes，含 `prefers-reduced-motion` 适配）
+- [x] **Step 4：实现 `SavePulse.css`**（照搬 design doc §2 keyframes，含 `prefers-reduced-motion` 适配）
 
-- [ ] **Step 5：跑测试全绿，提交**
+- [x] **Step 5：跑测试全绿，提交**
 
 ```bash
 git commit -am "feat(common): useSavePulse hook + CSS keyframes"
