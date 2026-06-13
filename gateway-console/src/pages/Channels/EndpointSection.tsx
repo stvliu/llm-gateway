@@ -7,6 +7,7 @@ import {
   useUpdateChannelEndpoint,
   useRemoveChannelEndpoint,
 } from '@/services/query/useChannels';
+import { extractErrorMessage } from '@/utils/errorMessage';
 
 interface EndpointSectionProps {
   channelId: number;
@@ -58,8 +59,14 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
       await updateEndpoint.mutateAsync({ channelId, endpointId, data });
       message.success(t('drawer.endpointUpdated'));
       setEditingId(null);
-    } catch {
-      // 校验失败或 API 错误
+    } catch (err) {
+      // 区分两类失败：
+      // 1) Form.validateFields() 校验失败 → extractErrorMessage 返回空串，AntD 已就地展示
+      // 2) API 错误（含 500 / 网络错误）→ 通过 message.error 携带具体原因反馈用户
+      const reason = extractErrorMessage(err);
+      if (reason) {
+        message.error(t('common:message.saveFailed', { reason }));
+      }
     }
   };
 
@@ -68,8 +75,14 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
     try {
       await removeEndpoint.mutateAsync({ channelId, endpointId: ep.id });
       message.success(t('drawer.endpointDeleted'));
-    } catch {
-      message.error(t('drawer.endpointDeleteFailed'));
+    } catch (err) {
+      // 删除失败：把后端 / 网络原因带给用户
+      const reason = extractErrorMessage(err);
+      message.error(
+        reason
+          ? t('common:message.saveFailed', { reason })
+          : t('drawer.endpointDeleteFailed')
+      );
     }
   };
 
@@ -85,8 +98,12 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
       message.success(t('drawer.endpointAdded'));
       addForm.resetFields();
       setIsAdding(false);
-    } catch {
-      // 校验失败
+    } catch (err) {
+      // 同上：校验失败静默（行内已显示），其它错误必须给用户反馈
+      const reason = extractErrorMessage(err);
+      if (reason) {
+        message.error(t('common:message.saveFailed', { reason }));
+      }
     }
   };
 
