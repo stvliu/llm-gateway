@@ -3,6 +3,7 @@ import { Descriptions, InputNumber, Input, Button, Space, Form, message } from '
 import { useTranslation } from 'react-i18next';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
+import { extractErrorMessage } from '@/utils/errorMessage';
 
 interface QuotaSettingsSectionProps {
   channel: Channel;
@@ -55,8 +56,13 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
       await updateChannel.mutateAsync({ id: channel.id, data });
       message.success(t('quota.updateSuccess'));
       setEditing(false);
-    } catch {
-      message.error(t('quota.updateFail'));
+    } catch (err) {
+      // 校验失败 → AntD 行内已显示，不再弹 toast；其它错误带后端原因输出
+      const reason = extractErrorMessage(err);
+      if (!reason) {
+        return;
+      }
+      message.error(t('common:message.saveFailed', { reason }));
     } finally {
       setLoading(false);
     }

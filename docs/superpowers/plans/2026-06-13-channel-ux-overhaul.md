@@ -841,7 +841,7 @@ grep -rn "catch" src/pages/Channels/ | grep -v "//.*catch" | head -50
 
 ### 任务 5.2 / 5.3 写失败测试 + 改造各 Section
 
-- [ ] **Step 1：写失败测试 `error-feedback.test.tsx`**
+- [x] **Step 1：写失败测试 `error-feedback.test.tsx`**
 
 ```tsx
 import { render, screen, waitFor } from '@testing-library/react';
@@ -866,9 +866,9 @@ describe('EndpointSection 错误反馈', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
-- [ ] **Step 3：改造 `EndpointSection.tsx` 等 4 个 Section**
+- [x] **Step 3：改造 `EndpointSection.tsx` 等 4 个 Section**
 
 把每个 catch 块从：
 
@@ -896,13 +896,13 @@ git commit -m "fix(channels): EndpointSection 补齐错误反馈"
 # ... 其余 3 个 Section 同样
 ```
 
-- [ ] **Step 4：跑测试全绿**
+- [x] **Step 4：跑测试全绿**
 
 ### 任务 5.4 单元测试覆盖
 
-- [ ] **Step 1：每个 Section 至少 1 个错误路径测试**
+- [x] **Step 1：每个 Section 至少 1 个错误路径测试**
 
-- [ ] **Step 2：`pnpm test` 全绿后提交**
+- [x] **Step 2：`pnpm test` 全绿后提交**
 
 **验收标准（第 5 章）：**
 - ✅ 所有 mutation catch 块都有 `message.error` 或行内反馈

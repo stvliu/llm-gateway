@@ -85,6 +85,7 @@ vi.mock('@/services/api/channel', () => {
 import { EndpointSection } from '../EndpointSection';
 import { CredentialSection } from '../CredentialSection';
 import { ModelMappingSection } from '../ModelMappingSection';
+import { QuotaSettingsSection } from '../QuotaSettingsSection';
 
 /** 创建一个不重试的 QueryClient，避免错误路径被默认重试策略掩盖 */
 function makeQueryClient() {
@@ -233,6 +234,45 @@ describe('ModelMappingSection 错误反馈', () => {
     });
     const calls = errorSpy.mock.calls.map((c) => String(c[0]));
     expect(calls.some((m) => m.includes('model delete boom'))).toBe(true);
+  });
+});
+
+describe('QuotaSettingsSection 错误反馈', () => {
+  let errorSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(async () => {
+    await i18n.changeLanguage('zh-CN');
+    errorSpy = vi.spyOn(message, 'error').mockImplementation(() => ({} as never));
+  });
+
+  it('保存配额设置失败时应弹出含具体后端原因的 message.error', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <QuotaSettingsSection
+        channel={{
+          id: 1,
+          providerId: 1,
+          name: 'demo channel',
+          state: 'ACTIVE',
+          quotaLimit: 1000,
+          timeout: 30000,
+          maxRetries: 2,
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-01T00:00:00Z',
+        } as never}
+      />
+    );
+
+    // 进入编辑模式
+    await user.click(screen.getByRole('button', { name: /编辑设置/ }));
+    // 触发保存
+    await user.click(screen.getByRole('button', { name: /保\s*存/ }));
+
+    await waitFor(() => {
+      expect(errorSpy).toHaveBeenCalled();
+    });
+    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
+    expect(calls.some((m) => m.includes('channel update boom'))).toBe(true);
   });
 });
 

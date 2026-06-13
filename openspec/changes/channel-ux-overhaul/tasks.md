@@ -32,8 +32,8 @@
 
 - [x] 5.1 审计 pages/Channels/ 全部 mutation catch 块，列出所有空 catch / 仅注释 catch 的位置
 - [x] 5.2 改造 EndpointSection.tsx 错误反馈，至少补齐 62-63 行与 89-90 行两处
-- [ ] 5.3 改造 CredentialSection / ModelMappingSection / QuotaSettingsSection 的 catch 块
-- [ ] 5.4 单元测试覆盖错误路径
+- [x] 5.3 改造 CredentialSection / ModelMappingSection / QuotaSettingsSection 的 catch 块
+- [x] 5.4 单元测试覆盖错误路径
 
 ## 6. 前端：状态语义可视化与 SSOT 整合
 
