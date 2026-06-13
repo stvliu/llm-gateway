@@ -62,7 +62,7 @@
 - [x] 8.2 InlineEditableList 删除回调签名扩展：调用方注入 confirm 配置
 - [x] 8.3 暂停操作（→ SUSPENDED）所有入口加 Popconfirm，文案"暂停后该渠道不再分配流量，但保留配置"
 - [x] 8.4 删除 API Key 改用 useDangerConfirm（content 含 keyMasked + "删除后无法恢复，使用此 Key 的请求将立即失败"）
-- [ ] 8.5 删除端点改用 useDangerConfirm（content 包含对路由的影响说明）
+- [x] 8.5 删除端点改用 useDangerConfirm（content 包含对路由的影响说明）
 - [ ] 8.6 删除模型映射改用 useDangerConfirm（content 说明该模型 ID 不再被路由）
 - [ ] 8.7 删除整个渠道 / 转 RETIRED 文案与上述对齐
 - [ ] 8.8 useDangerConfirm.test.tsx 单元测试

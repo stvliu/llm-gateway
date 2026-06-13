@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Tag, Select, Input, Button, Space, Form, message, Popconfirm } from 'antd';
+import { Tag, Select, Input, Button, Space, Form, message } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChannelEndpointResponse, CreateChannelEndpointRequest } from '@/types/channel';
@@ -11,6 +11,7 @@ import {
 } from '@/services/query/useChannels';
 import { extractErrorMessage } from '@/utils/errorMessage';
 import { useSavePulse } from '@/components/common/useSavePulse';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import '@/components/common/SavePulse.css';
 
 interface EndpointSectionProps {
@@ -132,17 +133,14 @@ function EndpointRow({
         <Button type="link" size="small" onClick={onStartEdit}>
           {t('drawer.edit')}
         </Button>
-        <Popconfirm
-          title={t('drawer.confirmDeleteEndpoint')}
-          onConfirm={() => onDelete(endpoint)}
-          okText={t('actions.delete', { ns: 'common' })}
-          cancelText={t('actions.cancel', { ns: 'common' })}
-          okButtonProps={{ danger: true }}
+        <Button
+          type="link"
+          size="small"
+          danger
+          onClick={() => onDelete(endpoint)}
         >
-          <Button type="link" size="small" danger>
-            {t('drawer.delete')}
-          </Button>
-        </Popconfirm>
+          {t('drawer.delete')}
+        </Button>
       </div>
     </div>
   );
@@ -163,6 +161,9 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
   const [isAdding, setIsAdding] = useState(false);
   const [editForm] = Form.useForm();
   const [addForm] = Form.useForm();
+
+  // 危险删除确认（任务 8.5）：注意必须把 contextHolder 渲染到组件树
+  const { confirm: confirmDelete, contextHolder: dangerContextHolder } = useDangerConfirm();
 
   const addEndpoint = useAddChannelEndpoint();
   const updateEndpoint = useUpdateChannelEndpoint();
@@ -236,20 +237,32 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
     }
   };
 
-  /** 删除端点 */
-  const handleDelete = async (ep: ChannelEndpointResponse) => {
-    try {
-      await removeEndpoint.mutateAsync({ channelId, endpointId: ep.id });
-      message.success(t('drawer.endpointDeleted'));
-    } catch (err) {
-      // 删除失败：把后端 / 网络原因带给用户
-      const reason = extractErrorMessage(err);
-      message.error(
-        reason
-          ? t('common:message.saveFailed', { reason })
-          : t('drawer.endpointDeleteFailed')
-      );
-    }
+  /**
+   * 删除端点：弹危险确认 Modal（任务 8.5）。
+   * description 含 baseUrl + "删除该端点后，路由到 baseUrl=… 的流量将立即失败"。
+   */
+  const handleDelete = (ep: ChannelEndpointResponse) => {
+    confirmDelete({
+      titleKey: 'endpoint.deleteTitle',
+      descriptionKey: 'endpoint.deleteDescription',
+      descriptionParams: { baseUrl: ep.endpointUrl },
+      onOk: async () => {
+        try {
+          await removeEndpoint.mutateAsync({ channelId, endpointId: ep.id });
+          message.success(t('drawer.endpointDeleted'));
+        } catch (err) {
+          // 兜底 toast：未挂 useSavePulse onError，由本处反馈
+          const reason = extractErrorMessage(err);
+          message.error(
+            reason
+              ? t('common:message.saveFailed', { reason })
+              : t('drawer.endpointDeleteFailed')
+          );
+          // 必须 throw，让 useDangerConfirm 阻止 modal 关闭
+          throw err;
+        }
+      },
+    });
   };
 
   /** 添加端点 */
@@ -275,6 +288,8 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
 
   return (
     <div>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
       {endpoints.map((ep) => (
         <div key={ep.id} style={{ marginBottom: 8 }}>
           <EndpointRow
