@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import {
   Drawer,
   Typography,
-  Tag,
   Button,
   Space,
   Divider,
@@ -10,6 +9,10 @@ import {
   Spin,
   Tabs,
   Popconfirm,
+  Dropdown,
+  Alert,
+  Modal,
+  Input,
 } from 'antd';
 import {
   GlobalOutlined,
@@ -18,14 +21,19 @@ import {
   SettingOutlined,
   BarChartOutlined,
   ApiOutlined,
+  DeleteOutlined,
+  DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import type { ChannelCard } from '@/types/channel';
+import ChannelStateTag from '@/components/common/ChannelStateTag';
+import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import type { ChannelCard, ChannelState } from '@/types/channel';
 import {
   useChannel,
   useChannelCredentials,
   useChannelModels,
-  useSetChannelState,
+  useTransitionChannelState,
+  useTransitionChannelModelState,
   useTestChannelCredential,
   useDeleteChannel,
 } from '@/services/query/useChannels';
@@ -48,7 +56,7 @@ interface ChannelDetailDrawerProps {
 
 /**
  * 渠道详情抽屉
- * 头部：供应商Logo+渠道名+快捷操作条 → 概览/端点/API Key/模型映射/配额与设置
+ * 头部：供应商Logo+渠道名+状态Tag+快捷操作条
  */
 export function ChannelDetailDrawer({
   channel,
@@ -66,7 +74,8 @@ export function ChannelDetailDrawer({
     }
   }, [open, initialTab]);
 
-  const setChannelState = useSetChannelState();
+  const transitionChannelState = useTransitionChannelState();
+  const transitionModelState = useTransitionChannelModelState();
   const deleteChannel = useDeleteChannel();
 
   const { data: channelDetail, isLoading: detailLoading } = useChannel(channel?.id || 0);
@@ -80,8 +89,9 @@ export function ChannelDetailDrawer({
   if (!channel) return null;
 
   const isLoading = detailLoading || credentialsLoading;
-  /** 使用详情查询结果驱动状态，确保启停后即时刷新 */
-  const currentState = channelDetail?.state ?? channel.state;
+  const currentState = (channelDetail?.state ?? channel.state) as ChannelState;
+  const availableTransitions = getAvailableTransitions(currentState);
+  const isDeprecated = currentState === 'DEPRECATED';
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
@@ -119,15 +129,25 @@ export function ChannelDetailDrawer({
     }
   };
 
-  /** 切换渠道状态 */
-  const handleToggleState = async () => {
-    const enabled = currentState !== 'ACTIVE';
-    try {
-      await setChannelState.mutateAsync({ id: channel.id, enabled });
-      message.success(enabled ? t('drawer.channelEnabled') : t('drawer.channelDisabled'));
-    } catch {
-      message.error(t('drawer.stateToggleFailed'));
+  /** 状态转换 */
+  const handleTransition = (targetState: ChannelState) => {
+    const actionLabel = getTransitionActionLabel(currentState, targetState);
+
+    if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let content = t('drawer.confirmDeprecate', '确定要将此渠道标记为下线？');
+      if (targetState === 'RETIRED') {
+        content = t('drawer.confirmRetire', '此操作不可逆，确定要废弃此渠道？');
+      }
+      Modal.confirm({
+        title: actionLabel,
+        content,
+        okType: 'danger',
+        onOk: () => transitionChannelState.mutateAsync({ id: channel.id, targetState }),
+      });
+      return;
     }
+
+    transitionChannelState.mutate({ id: channel.id, targetState });
   };
 
   /** 删除渠道 */
@@ -191,9 +211,7 @@ export function ChannelDetailDrawer({
           <span>{t('drawer.tabCredentials', { count: credentialCount })}</span>
         </Space>
       ),
-      children: (
-        <CredentialSection channelId={channel.id} credentials={credentials} />
-      ),
+      children: <CredentialSection channelId={channel.id} credentials={credentials} />,
     },
     {
       key: 'models',
@@ -203,7 +221,15 @@ export function ChannelDetailDrawer({
           <span>{t('drawer.tabModels', { count: modelCount })}</span>
         </Space>
       ),
-      children: <ModelMappingSection channelId={channel.id} channelModels={channelModels} />,
+      children: (
+        <ModelMappingSection
+          channelId={channel.id}
+          channelModels={channelModels}
+          onStateTransition={(modelId, targetState) =>
+            transitionModelState.mutate({ channelId: channel.id, modelId, targetState })
+          }
+        />
+      ),
     },
     {
       key: 'quota',
@@ -228,31 +254,40 @@ export function ChannelDetailDrawer({
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Text strong style={{ fontSize: 16 }}>{channel.name}</Text>
-            <Tag color={currentState === 'ACTIVE' ? 'green' : 'default'}>
-              {currentState === 'ACTIVE' ? t('status.active') : t('status.inactive')}
-            </Tag>
+            <ChannelStateTag state={currentState} />
           </div>
         }
         extra={
           <Space size={8}>
             <Button
-              type="primary"
               icon={<ApiOutlined />}
               onClick={handleTest}
               loading={testCredential.isPending}
             >
               {t('drawer.connectivityTest')}
             </Button>
-            <Popconfirm
-              title={currentState === 'ACTIVE' ? t('drawer.confirmDisable') : t('drawer.confirmEnable')}
-              onConfirm={handleToggleState}
-              okText={t('actions.confirm', { ns: 'common' })}
-              cancelText={t('actions.cancel', { ns: 'common' })}
-            >
-              <Button loading={setChannelState.isPending}>
-                {currentState === 'ACTIVE' ? t('drawer.disableChannel') : t('drawer.enableChannel')}
-              </Button>
-            </Popconfirm>
+
+            {/* 状态转换操作菜单 */}
+            {availableTransitions.length > 0 && (
+              <Dropdown
+                menu={{
+                  items: availableTransitions.map((target) => ({
+                    key: target,
+                    label: getTransitionActionLabel(currentState, target),
+                    danger: target === 'DEPRECATED' || target === 'RETIRED',
+                  })),
+                  onClick: ({ key }) => handleTransition(key as ChannelState),
+                }}
+              >
+                <Button loading={transitionChannelState.isPending}>
+                  <Space>
+                    {t('drawer.changeState')}
+                    <DownOutlined />
+                  </Space>
+                </Button>
+              </Dropdown>
+            )}
+
             <Popconfirm
               title={t('drawer.confirmDelete')}
               description={t('drawer.confirmDeleteDesc', { name: channel.name })}
@@ -261,7 +296,7 @@ export function ChannelDetailDrawer({
               cancelText={t('actions.cancel', { ns: 'common' })}
               okButtonProps={{ danger: true }}
             >
-              <Button danger loading={deleteChannel.isPending}>
+              <Button danger icon={<DeleteOutlined />} loading={deleteChannel.isPending}>
                 {t('card.delete')}
               </Button>
             </Popconfirm>
@@ -274,6 +309,16 @@ export function ChannelDetailDrawer({
           </div>
         ) : (
           <div>
+            {/* DEPRECATED 状态警告 */}
+            {isDeprecated && (
+              <Alert
+                message={t('drawer.deprecatedWarning', '此渠道已标记下线，将不再被路由选择。')}
+                type="warning"
+                showIcon
+                style={{ marginBottom: 12 }}
+              />
+            )}
+
             <div style={{ marginBottom: 12 }}>
               <Space split={<Divider type="vertical" />} size="small">
                 <Text type="secondary">
@@ -303,7 +348,6 @@ export function ChannelDetailDrawer({
         )}
       </Drawer>
 
-      {/* 供应商编辑弹窗 */}
       <ProviderEditModal
         open={editProviderOpen}
         provider={provider || null}

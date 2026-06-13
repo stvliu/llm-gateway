@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -81,20 +82,31 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
     }
 
     /**
-     * 启用/禁用模型实例
+     * 切换模型实例状态
+     * <p>由后端校验 canTransitionTo()。</p>
      */
     @Transactional
     @Override
-    public void setEnabled(Long channelId, Long id, boolean enabled) {
+    public void setEnabled(Long channelId, Long id, ModelInstanceStateTransitionRequest request) {
         ModelInstance instance = modelInstanceGateway.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ModelInstance", id));
         if (!instance.getChannelId().equals(channelId)) {
             log.warn("模型实例不属于该渠道, id={}, channelId={}, actualChannelId={}", id, channelId, instance.getChannelId());
             throw new GatewayRequestException("CHANNEL_MISMATCH", "模型实例不属于该渠道");
         }
-        instance.setState(enabled ? ModelInstance.State.ACTIVE : ModelInstance.State.SUSPENDED);
+
+        ModelInstance.State currentState = instance.getState();
+        ModelInstance.State targetState = ModelInstance.State.valueOf(request.getTargetState());
+
+        // 校验状态转换合法性
+        if (!currentState.canTransitionTo(targetState)) {
+            throw new GatewayRequestException("INVALID_STATE_TRANSITION",
+                String.format("不允许从 %s 转换为 %s", currentState, targetState));
+        }
+
+        instance.setState(targetState);
         modelInstanceGateway.save(instance);
-        log.info("模型实例状态更新成功, id={}, channelId={}, enabled={}", id, channelId, enabled);
+        log.info("模型实例状态转换成功, id={}, channelId={}, {}→{}", id, channelId, currentState, targetState);
     }
 
     /**

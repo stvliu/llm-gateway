@@ -10,6 +10,7 @@ export interface ChannelGroupedListProps {
   onChannelDelete: (id: number) => void;
   onChannelToggleState: (id: number, enabled: boolean) => void;
   onTestChannel: (channel: ChannelCardType) => void;
+  onStateTransition?: (id: number, targetState: string, reason?: string) => void;
   onEditProvider?: (providerId: number) => void;
   onToggleProviderEnabled?: (providerId: number) => void;
   onTestProviderConnectivity?: (providerId: number) => void;
@@ -26,6 +27,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
   onChannelDelete,
   onChannelToggleState,
   onTestChannel,
+  onStateTransition,
   onEditProvider,
   onToggleProviderEnabled,
   onTestProviderConnectivity,
@@ -66,7 +68,6 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
             <ProviderGroupHeader
               providerName={group.provider.providerName}
               providerCode={group.provider.providerId}
-              providerState={group.provider.state}
               channelCount={group.channels.length}
               endpointCount={totalEndpoints}
               credentialCount={totalCredentials}
@@ -74,7 +75,8 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
               collapsed={collapsed}
               onToggle={() => toggleCollapse(group.provider.id)}
               onEdit={onEditProvider ? () => onEditProvider(group.provider.id) : undefined}
-              onToggleEnabled={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
+              onBatchSuspend={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
+              onBatchResume={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
               onTestConnectivity={onTestProviderConnectivity ? () => onTestProviderConnectivity(group.provider.id) : undefined}
               onExport={onExportProvider ? () => onExportProvider(group.provider.id) : undefined}
             />
@@ -90,6 +92,7 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
                     onDelete={onChannelDelete}
                     onToggleState={onChannelToggleState}
                     onTest={onTestChannel}
+                    onStateTransition={onStateTransition}
                   />
                 ))}
               </div>

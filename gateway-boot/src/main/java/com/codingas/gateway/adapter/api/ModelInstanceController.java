@@ -2,6 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.channel.ModelInstanceService;
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,13 +43,13 @@ public class ModelInstanceController {
         modelInstanceService.delete(channelId, id);
     }
 
-    @PatchMapping("/{id}/state")
+    @PutMapping("/{id}/state")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void setEnabled(
             @PathVariable Long channelId,
             @PathVariable Long id,
-            @RequestParam boolean enabled) {
-        modelInstanceService.setEnabled(channelId, id, enabled);
+            @Valid @RequestBody ModelInstanceStateTransitionRequest request) {
+        modelInstanceService.setEnabled(channelId, id, request);
     }
 
     @PatchMapping("/{id}/upstream-model-name")

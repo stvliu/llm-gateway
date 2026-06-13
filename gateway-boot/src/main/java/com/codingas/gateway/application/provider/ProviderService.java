@@ -43,11 +43,6 @@ public interface ProviderService {
     void delete(Long id);
 
     /**
-     * 启用/禁用提供商
-     */
-    ProviderResponse setEnabled(Long id, boolean enabled);
-
-    /**
      * 获取所有供应商名称列表
      */
     List<String> getProviderNames();

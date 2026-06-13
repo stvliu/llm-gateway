@@ -1,4 +1,7 @@
-## ADDED Requirements
+# Intelligent Degradation
+## Summary
+
+## Requirements
 
 ### Requirement: 降级链配置
 

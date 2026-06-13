@@ -23,10 +23,6 @@ export const providerApi = {
   delete: (id: number) =>
     api.delete<void>(`/providers/${id}`),
 
-  /** 启用/禁用供应商 */
-  setEnabled: (id: number, enabled: boolean) =>
-    api.patch<Provider>(`/providers/${id}/state`, null, { params: { enabled } }),
-
   /** 获取 Provider 的 Key 信息 */
   getKeys: (id: number) =>
     api.get<ProviderKeyStats[]>(`/providers/${id}/keys`),

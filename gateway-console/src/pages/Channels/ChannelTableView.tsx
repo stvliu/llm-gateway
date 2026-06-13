@@ -1,18 +1,17 @@
 import { useMemo } from 'react';
-import { Table, Tag, Typography, Button, theme, App, Space, Tooltip } from 'antd';
+import { Table, Typography, Button, theme, App, Space, Tooltip, Dropdown } from 'antd';
 import {
-  PauseOutlined,
-  PlayCircleOutlined,
   ThunderboltOutlined,
   DeleteOutlined,
   EyeOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import type { ChannelCard } from '@/types/channel';
+import ChannelStateTag from '@/components/common/ChannelStateTag';
+import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import type { ChannelCard, ChannelState } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
-
-const { Text } = Typography;
 
 interface ChannelTableViewProps {
   channels: ChannelCard[];
@@ -21,11 +20,12 @@ interface ChannelTableViewProps {
   onToggleState: (id: number, enabled: boolean) => void;
   onDelete: (id: number) => void;
   onTest: (channel: ChannelCard) => void;
+  onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
 /**
  * 渠道列表视图
- * 紧凑表格模式，列为：供应商标签 / 渠道名 / 计费模式 / 优先级 / 端点数 / Key数 / 模型数 / 状态 / 操作
+ * Status 列使用 ChannelStateTag，Actions 列改为上下文操作按钮
  */
 export const ChannelTableView: FC<ChannelTableViewProps> = ({
   channels,
@@ -34,6 +34,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   onToggleState,
   onDelete,
   onTest,
+  onStateTransition,
 }) => {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
@@ -42,13 +43,25 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     return new Map(providers.map((p) => [p.id, p]));
   }, [providers]);
 
-  const handleToggleClick = (e: React.MouseEvent, record: ChannelCard) => {
-    e.stopPropagation();
-    const isActive = record.state === 'ACTIVE';
-    modal.confirm({
-      title: isActive ? t('card.confirmDisable') : t('card.confirmEnable'),
-      onOk: () => onToggleState(record.id, !isActive),
-    });
+  const handleTransition = (record: ChannelCard, targetState: ChannelState) => {
+    const currentState = record.state as ChannelState;
+    const actionLabel = getTransitionActionLabel(currentState, targetState);
+
+    if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
+      if (targetState === 'RETIRED') {
+        content = t('card.confirmRetireContent', '此操作不可逆，确定要废弃此渠道？');
+      }
+      modal.confirm({
+        title: actionLabel,
+        content,
+        okType: 'danger',
+        onOk: () => onStateTransition?.(record.id, targetState, ''),
+      });
+      return;
+    }
+
+    onStateTransition?.(record.id, targetState, '');
   };
 
   const handleDeleteClick = (record: ChannelCard) => {
@@ -76,7 +89,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       width: 100,
       render: (id: number) => {
         const p = providerMap.get(id);
-        return <Tag color="blue">{p?.providerName || '-'}</Tag>;
+        return <Typography.Text ellipsis style={{ maxWidth: 100 }}>{p?.providerName || '-'}</Typography.Text>;
       },
     },
     {
@@ -111,9 +124,9 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       key: 'credentials',
       width: 60,
       render: (_: unknown, r: ChannelCard) => (
-        <Text style={{ color: r.stats.credentialCount === 0 ? token.colorWarning : undefined }}>
+        <Typography.Text style={{ color: r.stats.credentialCount === 0 ? token.colorWarning : undefined }}>
           {r.stats.credentialCount}
-        </Text>
+        </Typography.Text>
       ),
     },
     {
@@ -125,11 +138,9 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     {
       title: t('table.status'),
       key: 'status',
-      width: 80,
+      width: 100,
       render: (_: unknown, r: ChannelCard) => (
-        <Tag color={r.state === 'ACTIVE' ? 'green' : 'orange'}>
-          {r.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
-        </Tag>
+        <ChannelStateTag state={r.state as ChannelState} />
       ),
     },
     {
@@ -137,25 +148,20 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       key: 'actions',
       width: 120,
       render: (_: unknown, r: ChannelCard) => {
-        const isActive = r.state === 'ACTIVE';
+        const currentState = r.state as ChannelState;
+        const transitions = getAvailableTransitions(currentState);
+        const isRoutable = currentState === 'ACTIVE' || currentState === 'DEPRECATED';
+
         return (
           <Space size={0} onClick={(e) => e.stopPropagation()}>
-            <Tooltip title={isActive ? t('card.disable') : t('card.enable')}>
-              <Button
-                type="text"
-                size="small"
-                icon={isActive ? <PauseOutlined /> : <PlayCircleOutlined />}
-                onClick={(e) => handleToggleClick(e, r)}
-              />
-            </Tooltip>
-            <Tooltip title={isActive ? t('card.testConnect') : t('card.testDisabled')}>
+            <Tooltip title={isRoutable ? t('card.testConnect') : t('card.testDisabled')}>
               <Button
                 type="text"
                 size="small"
                 icon={<ThunderboltOutlined />}
-                disabled={!isActive}
+                disabled={!isRoutable}
                 onClick={() => onTest(r)}
-                style={{ opacity: isActive ? 1 : 0.4 }}
+                style={{ opacity: isRoutable ? 1 : 0.4 }}
               />
             </Tooltip>
             <Tooltip title={t('card.viewDetail')}>
@@ -166,6 +172,21 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
                 onClick={() => onChannelClick(r.id)}
               />
             </Tooltip>
+            {transitions.length > 0 && (
+              <Dropdown
+                menu={{
+                  items: transitions.map((target) => ({
+                    key: target,
+                    label: getTransitionActionLabel(currentState, target),
+                    danger: target === 'RETIRED',
+                  })),
+                  onClick: ({ key }) => handleTransition(r, key as ChannelState),
+                }}
+                trigger={['click']}
+              >
+                <Button type="text" size="small" icon={<MoreOutlined />} />
+              </Dropdown>
+            )}
             <Tooltip title={t('card.delete')}>
               <Button
                 type="text"

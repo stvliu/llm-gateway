@@ -37,9 +37,9 @@ export const channelApi = {
   update: (id: number, data: UpdateChannelRequest) =>
     api.put<ChannelResponse>(`/channels/${id}`, data),
 
-  /** 切换渠道启用/停用状态 */
-  setState: (id: number, enabled: boolean) =>
-    api.patch<void>(`/channels/${id}/state`, null, { params: { enabled } }),
+  /** 渠道状态转换（由后端校验 canTransitionTo()） */
+  transitionState: (id: number, targetState: string, reason?: string) =>
+    api.put<void>(`/channels/${id}/state`, { targetState, reason }),
 
   /** 删除渠道 */
   delete: (id: number) =>
@@ -99,7 +99,7 @@ export const channelApi = {
   updateUpstreamModelName: (channelId: number, modelId: number, upstreamModelName: string) =>
     api.patch<void>(`/channels/${channelId}/models/${modelId}/upstream-model-name`, { upstreamModelName }),
 
-  /** 启用/停用模型映射 */
-  setModelEnabled: (channelId: number, modelId: number, enabled: boolean) =>
-    api.patch<void>(`/channels/${channelId}/models/${modelId}/state`, null, { params: { enabled } }),
+  /** 模型实例状态转换（由后端校验 canTransitionTo()） */
+  transitionModelState: (channelId: number, modelId: number, targetState: string) =>
+    api.put<void>(`/channels/${channelId}/models/${modelId}/state`, { targetState }),
 };

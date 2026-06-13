@@ -209,3 +209,6 @@ logging:
   level:
     root: INFO
     com.codingas.gateway: DEBUG
+    # Hibernate 通过 JDBC PooledConnection 接口读取连接池元数据时，
+    # HikariCP 不暴露这些信息，INFO 日志会显示 undefined/unknown，无实际影响
+    org.hibernate.orm.connections.pooling: WARN

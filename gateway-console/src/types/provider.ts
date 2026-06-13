@@ -1,6 +1,3 @@
-/** 提供商状态枚举 */
-export type ProviderState = 'ACTIVE' | 'INACTIVE';
-
 /** 供应商密钥统计 */
 export interface ProviderKeyStats {
   activeCount: number;
@@ -20,7 +17,6 @@ export interface Provider {
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
-  state: ProviderState;
   createdAt: string;
   updatedAt: string;
   keyStats?: ProviderKeyStats;
@@ -47,7 +43,6 @@ export interface UpdateProviderRequest {
   websiteUrl?: string;
   apiDocUrl?: string;
   priority?: number;
-  state?: ProviderState;
 }
 
 /** 连通性测试请求 */
