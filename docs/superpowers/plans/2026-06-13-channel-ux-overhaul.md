@@ -1052,7 +1052,7 @@ export function ChannelStateTag({ state }: { state: ChannelState }) {
 
 ### 任务 6.6 RETIRED 卡片视觉重设 + 6.7 DEPRECATED 副标题
 
-- [ ] **Step 1：写测试**
+- [x] **Step 1：写测试**
 
 ```tsx
 it('RETIRED 渠道卡片名应有 line-through 且无 opacity 整体降透', () => {
@@ -1069,14 +1069,14 @@ it('DEPRECATED 卡片应显示副标题"仍参与流量分配"', () => {
 });
 ```
 
-- [ ] **Step 2：跑测试失败**
+- [x] **Step 2：跑测试失败**
 
-- [ ] **Step 3：改造 `ChannelCard.tsx`**
+- [x] **Step 3：改造 `ChannelCard.tsx`**
 
 - 移除 `opacity: 0.5`，改用 `meta.visualStyle === 'strikethrough'` 时给名称加 `text-decoration: line-through; color: #8c8c8c`
 - DEPRECATED：在 channel name 下方加 `<small>{t('channel.state.deprecatedSubtitle')}</small>`
 
-- [ ] **Step 4：跑测试全绿，提交**
+- [x] **Step 4：跑测试全绿，提交**
 
 ### 任务 6.8 单元测试 + 组件测试汇总
 

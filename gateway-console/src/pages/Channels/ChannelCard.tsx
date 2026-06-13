@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Card, App, Tooltip, Dropdown, Button, Space } from 'antd';
 import {
   DeleteOutlined,
@@ -10,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 import type { ChannelCard as ChannelCardType, ChannelState } from '@/types/channel';
 
 interface ChannelCardProps {
@@ -21,36 +21,30 @@ interface ChannelCardProps {
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
-/** 状态边框颜色映射 */
-const STATE_BORDER_COLORS: Record<ChannelState, string> = {
-  PENDING: '#faad14',
-  ACTIVE: '#52c41a',
-  SUSPENDED: '#d9d9d9',
-  DEPRECATED: '#fa8c16',
-  RETIRED: '#ff4d4f',
-};
-
-/** 状态透明度映射 */
-const STATE_OPACITY: Record<ChannelState, number> = {
-  PENDING: 0.8,
-  ACTIVE: 1,
-  SUSPENDED: 0.6,
-  DEPRECATED: 0.8,
-  RETIRED: 0.5,
-};
-
 /**
  * 渠道卡片组件
- * 状态展示：5 色左边框 + 透明度 + ChannelStateTag
- * 操作：Toggle 改为上下文操作按钮
+ *
+ * <p>状态展示由 SSOT `CHANNEL_LIFECYCLE` 派生：</p>
+ * <ul>
+ *   <li>左边框颜色：meta.color</li>
+ *   <li>RETIRED：visualStyle='strikethrough'，渠道名加删除线 + 灰色 #8c8c8c，
+ *       卡片不再统一 opacity 0.5 降透（提高可读性）</li>
+ *   <li>DEPRECATED：在渠道名下方展示副标题"仍参与流量分配，但已标记为不推荐"</li>
+ *   <li>SUSPENDED：visualStyle='muted'，沿用轻度透明（0.85）作为低饱和提示</li>
+ * </ul>
  */
 export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransition }: ChannelCardProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
   const currentState = channel.state as ChannelState;
+  const meta = CHANNEL_LIFECYCLE[currentState] ?? CHANNEL_LIFECYCLE.SUSPENDED;
   const availableTransitions = getAvailableTransitions(currentState);
-  const isRoutable = currentState === 'ACTIVE' || currentState === 'DEPRECATED';
+  const isRoutable = meta.isRoutable;
+  // visualStyle 派生卡片整体透明度：muted 状态保留轻度低饱和，其它状态保持 1
+  // RETIRED 不再用 opacity 整体降透，改为渠道名 line-through + 灰色（见下方 nameStyle）
+  const cardOpacity = meta.visualStyle === 'muted' ? 0.85 : 1;
+  const isStrikethrough = meta.visualStyle === 'strikethrough';
 
   /** 状态转换点击 */
   const handleTransition = (targetState: ChannelState) => {
@@ -98,13 +92,25 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
     });
   };
 
+  /** 渠道名样式：RETIRED 加删除线 + 灰色 */
+  const nameStyle: React.CSSProperties = {
+    fontWeight: 600,
+    fontSize: token.fontSizeLG,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    ...(isStrikethrough
+      ? { textDecoration: 'line-through', color: '#8c8c8c' }
+      : {}),
+  };
+
   return (
     <Card
       hoverable
       onClick={() => onClick(channel)}
       style={{
-        opacity: STATE_OPACITY[currentState] ?? 0.6,
-        borderLeft: `3px solid ${STATE_BORDER_COLORS[currentState] ?? token.colorTextQuaternary}`,
+        opacity: cardOpacity,
+        borderLeft: `3px solid ${meta.color}`,
       }}
       styles={{ body: { padding: '16px' } }}
     >
@@ -112,15 +118,7 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
           <ChannelStateTag state={currentState} />
-          <span style={{
-            fontWeight: 600,
-            fontSize: token.fontSizeLG,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}>
-            {channel.name}
-          </span>
+          <span style={nameStyle}>{channel.name}</span>
         </div>
 
         <Space size={2} style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
@@ -175,6 +173,19 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
           </Tooltip>
         </Space>
       </div>
+
+      {/* DEPRECATED 副标题：仍参与流量分配，但已标记为不推荐 */}
+      {currentState === 'DEPRECATED' && (
+        <div
+          style={{
+            color: token.colorTextTertiary,
+            fontSize: token.fontSizeSM,
+            marginTop: 4,
+          }}
+        >
+          <small>{t('channel.state.deprecatedSubtitle')}</small>
+        </div>
+      )}
 
       {/* 第二行：统计信息 */}
       <div style={{
