@@ -71,6 +71,7 @@
   "group.confirmDisableOk": "确认停用",
   "group.channelCount": "{{count}} 个渠道",
   "provider.healthSummary": "{{healthy}}/{{total}} 健康",
+  "provider.codeMustMatch": "代码必须与 {{expected}} 一致",
   "overview.connectivity": "连通状态",
   "overview.connected": "连通正常",
   "overview.disconnected": "连通异常",

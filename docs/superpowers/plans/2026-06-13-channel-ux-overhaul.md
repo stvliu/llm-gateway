@@ -1463,18 +1463,18 @@ test('卡片闪电图标 → 跳转抽屉 → 测试矩阵 → 关闭后卡片�
 
 ### 任务 10.1 ProviderForm 拆分
 
-- [ ] **Step 1：先写测试 `ProviderForm.test.tsx`**
+- [x] **Step 1：先写测试 `ProviderForm.test.tsx`**
 
 ```tsx
 it('受控组件：value/onChange 双向绑定', () => { /* ... */ });
 it('校验：code 必填 + 与 expectedProviderCode 不一致时报错', () => { /* ... */ });
 ```
 
-- [ ] **Step 2：把 `ProviderCreateModal` 的表单部分抽到 `ProviderForm.tsx`，作为受控组件（接受 `value`、`onChange`、`onSubmit`、`expectedProviderCode?`）**
+- [x] **Step 2：把 `ProviderCreateModal` 的表单部分抽到 `ProviderForm.tsx`，作为受控组件（接受 `value`、`onChange`、`onSubmit`、`expectedProviderCode?`）**
 
-- [ ] **Step 3：`ProviderCreateModal.tsx` 改为简单包装 `<Modal><ProviderForm /></Modal>` 以保持原 API（仍被批量导入复用）**
+- [x] **Step 3：`ProviderCreateModal.tsx` 改为简单包装 `<Modal><ProviderForm /></Modal>` 以保持原 API（仍被批量导入复用）**
 
-- [ ] **Step 4：测试 + 提交**
+- [x] **Step 4：测试 + 提交**
 
 ### 任务 10.2 QuickOnboardMode 状态扁平化
 

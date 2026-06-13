@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
-import { Modal, Form, Input } from 'antd';
+import { useEffect, useState } from 'react';
+import { Modal } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useCreateProvider } from '@/services/query/useProviders';
+import { ProviderForm, type ProviderFormValue } from './ProviderForm';
 import type { FC } from 'react';
 
 interface ProviderCreateModalProps {
@@ -9,29 +10,41 @@ interface ProviderCreateModalProps {
   onClose: () => void;
 }
 
+const EMPTY_VALUE: ProviderFormValue = {
+  code: '',
+  name: '',
+};
+
 /**
  * 供应商创建弹窗
- * 创建纯供应商品牌信息，创建后需手动添加渠道
+ *
+ * <p>任务 10.1 重构后：仅作为 ProviderForm 的 Modal 包装，
+ * 用于批量导入等仍需独立创建供应商的入口；表单逻辑全部下沉到 ProviderForm。</p>
  */
 export const ProviderCreateModal: FC<ProviderCreateModalProps> = ({ open, onClose }) => {
   const { t } = useTranslation('channels');
-  const [form] = Form.useForm();
   const createProvider = useCreateProvider();
+  const [value, setValue] = useState<ProviderFormValue>(EMPTY_VALUE);
 
+  // Modal 打开时重置表单值
   useEffect(() => {
     if (open) {
-      form.resetFields();
+      setValue(EMPTY_VALUE);
     }
-  }, [open, form]);
+  }, [open]);
 
+  /** 触发提交：将 ProviderFormValue 映射回 useCreateProvider 所需的 CreateProviderRequest */
   const handleCreate = async () => {
-    const values = await form.validateFields();
+    if (!value.code || !value.name) {
+      // 简单兜底：必填项缺失（详细错误由表单 rules 渲染）
+      return;
+    }
     await createProvider.mutateAsync({
-      code: values.code,
-      providerName: values.providerName,
-      description: values.description,
-      websiteUrl: values.websiteUrl,
-      apiDocUrl: values.apiDocUrl,
+      code: value.code,
+      providerName: value.name,
+      description: value.description,
+      websiteUrl: value.websiteUrl,
+      apiDocUrl: value.apiDocUrl,
     });
     onClose();
   };
@@ -46,35 +59,7 @@ export const ProviderCreateModal: FC<ProviderCreateModalProps> = ({ open, onClos
       width={480}
       destroyOnClose
     >
-      <Form form={form} layout="vertical" style={{ marginTop: 16 }}>
-        <Form.Item
-          name="code"
-          label={t('providerCreate.code')}
-          rules={[
-            { required: true, message: t('providerCreate.codeRequired') },
-            { pattern: /^[a-z0-9_-]+$/, message: t('providerCreate.codePattern') },
-          ]}
-          extra={t('providerCreate.codeExtra')}
-        >
-          <Input placeholder={t('providerCreate.codePlaceholder')} />
-        </Form.Item>
-        <Form.Item
-          name="providerName"
-          label={t('providerCreate.name')}
-          rules={[{ required: true, message: t('providerCreate.nameRequired') }]}
-        >
-          <Input placeholder={t('providerCreate.namePlaceholder')} />
-        </Form.Item>
-        <Form.Item name="description" label={t('providerCreate.description')}>
-          <Input.TextArea rows={3} />
-        </Form.Item>
-        <Form.Item name="websiteUrl" label={t('providerCreate.websiteUrl')}>
-          <Input placeholder={t('providerCreate.websiteUrlPlaceholder')} />
-        </Form.Item>
-        <Form.Item name="apiDocUrl" label={t('providerCreate.apiDocUrl')}>
-          <Input placeholder={t('providerCreate.apiDocUrlPlaceholder')} />
-        </Form.Item>
-      </Form>
+      <ProviderForm value={value} onChange={setValue} />
     </Modal>
   );
 };

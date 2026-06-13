@@ -71,6 +71,7 @@
   "group.confirmDisableOk": "Confirm Disable",
   "group.channelCount": "{{count}} channels",
   "provider.healthSummary": "{{healthy}}/{{total}} healthy",
+  "provider.codeMustMatch": "Code must match {{expected}}",
   "overview.connectivity": "Connectivity",
   "overview.connected": "Connected",
   "overview.disconnected": "Disconnected",

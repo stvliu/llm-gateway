@@ -81,7 +81,7 @@
 
 ## 10. 前端：创建入口合并
 
-- [ ] 10.1 拆分 ProviderCreateModal 为可复用的 ProviderForm 组件（受控组件）
+- [x] 10.1 拆分 ProviderCreateModal 为可复用的 ProviderForm 组件（受控组件）
 - [ ] 10.2 QuickOnboardMode 状态扁平化：增加 inlineProviderExpanded / inlineProvider 字段，定义不变量
 - [ ] 10.3 Step 0 增加"+ 新建供应商"链接，点击展开 Step 0.5 内联 ProviderForm；切换分支时 clear 对方
 - [ ] 10.4 Step 0 校验逻辑：`selectedProviderCode != null` 或 (`inlineProviderExpanded && inlineProvider valid`)
