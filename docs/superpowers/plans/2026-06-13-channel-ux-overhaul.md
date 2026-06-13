@@ -1154,7 +1154,7 @@ git commit -am "feat(common): useSavePulse hook + CSS keyframes"
 
 ### 任务 7.3 / 7.4 / 7.5 接入 Endpoint / Credential / ModelMapping
 
-- [ ] **Step 1：写失败的组件测试 `EndpointSection.pulse.test.tsx`**
+- [x] **Step 1：写失败的组件测试 `EndpointSection.pulse.test.tsx`**
 
 ```tsx
 it('保存成功后行尾应出现 ✓ 已保存', async () => { /* mock 200 → 断言 save-tip-ok */ });
@@ -1162,23 +1162,23 @@ it('保存失败应出现 ✗ 错误且行加红框', async () => { /* mock 500 
 it('乐观更新失败应回滚到上一个值', async () => { /* mock 500 → 断言旧值仍在 */ });
 ```
 
-- [ ] **Step 2：在每个 Section 接入 `useSavePulse`**（参考 design doc §2 调用示例）：
+- [x] **Step 2：在每个 Section 接入 `useSavePulse`**（参考 design doc §2 调用示例）：
   - `onMutate` 备份 + 乐观更新
   - `onSuccess` 调 `pulse.triggerSuccess()`
   - `onError` 回滚 + `pulse.triggerError(extractMsg(err))`
   - JSX 在行内挂 `ref={pulse.ref} className={pulse.className}` + 后置反馈节点
 
-- [ ] **Step 3：每个 Section 单独提交**
+- [x] **Step 3：每个 Section 单独提交**
 
 ### 任务 7.6 QuotaSettingsSection 批量保存模式
 
-- [ ] **Step 1：在编辑模式提交按钮上挂 useSavePulse，成功后对编辑容器触发脉冲（不需要乐观更新）**
+- [x] **Step 1：在编辑模式提交按钮上挂 useSavePulse，成功后对编辑容器触发脉冲（不需要乐观更新）**
 
-- [ ] **Step 2：测试 + 提交**
+- [x] **Step 2：测试 + 提交**
 
 ### 任务 7.7 测试汇总
 
-- [ ] 全章 `pnpm test` 全绿。
+- [x] 全章 `pnpm test` 全绿。
 
 **验收标准（第 7 章）：**
 - ✅ 4 个 Section 成功路径都有可见脉冲 + ✓ 已保存
