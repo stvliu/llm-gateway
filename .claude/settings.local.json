@@ -80,7 +80,10 @@
       "Bash(ls vue.config.*)",
       "Bash(ls webpack.config.*)",
       "Bash(openspec sync *)",
-      "Bash(openspec --help)"
+      "Bash(openspec --help)",
+      "Bash(openspec validate *)",
+      "mcp__codegraph__codegraph_explore",
+      "mcp__codegraph__codegraph_node"
     ]
   },
   "outputStyle": "default"

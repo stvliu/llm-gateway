@@ -1,10 +1,19 @@
 import { useState } from 'react';
-import { Button, Popconfirm, Space, theme } from 'antd';
+import { Button, Space, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
 
 /**
  * 通用行内编辑列表组件
- * 支持查看、编辑、新增、删除操作
+ * 支持查看、编辑、新增、删除操作。
+ *
+ * <h3>删除回调约定（自第 8 章起）</h3>
+ * <p>本组件<strong>不再</strong>硬编码 Popconfirm 二次确认。<code>onDelete</code> 在
+ * 用户点击"删除"按钮后立即被调用，<strong>由调用方注入自己的确认逻辑</strong>，例如：</p>
+ * <ul>
+ *   <li>轻量场景：包一层 <code>Popconfirm</code> 或 <code>useDangerConfirm</code></li>
+ *   <li>危险场景：直接弹 <code>Modal.confirm</code> 含明确影响说明</li>
+ * </ul>
+ * <p>调用方可在 onDelete 内部访问完整 item 对象用于构造 description（keyMasked、baseUrl 等）。</p>
  */
 export interface InlineEditableListProps<T> {
   /** 数据项列表 */
@@ -17,7 +26,11 @@ export interface InlineEditableListProps<T> {
   renderAddForm: (onSave: (newItem: Partial<T>) => void, onCancel: () => void) => React.ReactNode;
   /** 点击添加按钮回调 */
   onAdd: () => void;
-  /** 删除项回调 */
+  /**
+   * 删除项回调。
+   * 自第 8 章起：调用方负责弹危险确认（Modal.confirm + okType=danger），
+   * 本组件不再硬编码二次确认；onDelete 接收完整 item 对象。
+   */
   onDelete?: (item: T) => void;
   /** 编辑保存回调 */
   onSave?: (item: T) => void;
@@ -126,16 +139,14 @@ export function InlineEditableList<T>({
                     {t('inlineList.edit')}
                   </Button>
                   {onDelete && (
-                    <Popconfirm
-                      title={t('inlineList.confirmDelete')}
-                      onConfirm={() => onDelete(item)}
-                      okText={t('inlineList.confirm')}
-                      cancelText={t('inlineList.cancel')}
+                    <Button
+                      type="link"
+                      size="small"
+                      danger
+                      onClick={() => onDelete(item)}
                     >
-                      <Button type="link" size="small" danger>
-                        {t('inlineList.delete')}
-                      </Button>
-                    </Popconfirm>
+                      {t('inlineList.delete')}
+                    </Button>
                   )}
                 </Space>
               </div>

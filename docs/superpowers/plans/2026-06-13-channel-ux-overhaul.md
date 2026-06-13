@@ -1227,9 +1227,9 @@ describe('useDangerConfirm', () => {
 
 ### 任务 8.2 InlineEditableList 删除回调签名扩展
 
-- [ ] **Step 1：把 `onDelete` 签名从 `(id) => void` 扩展为 `(id, ctx?) => void`，组件本身不再硬编码 Popconfirm；调用方注入 `useDangerConfirm`**
+- [x] **Step 1：把 `onDelete` 签名从 `(id) => void` 扩展为 `(id, ctx?) => void`，组件本身不再硬编码 Popconfirm；调用方注入 `useDangerConfirm`**
 
-- [ ] **Step 2：写测试 + 提交**
+- [x] **Step 2：写测试 + 提交**
 
 ### 任务 8.3 暂停操作 Popconfirm
 

@@ -59,7 +59,7 @@
 ## 8. 前端：危险操作确认升级
 
 - [x] 8.1 实现 useDangerConfirm hook（含 contextHolder + i18n + danger okType）
-- [ ] 8.2 InlineEditableList 删除回调签名扩展：调用方注入 confirm 配置
+- [x] 8.2 InlineEditableList 删除回调签名扩展：调用方注入 confirm 配置
 - [ ] 8.3 暂停操作（→ SUSPENDED）所有入口加 Popconfirm，文案"暂停后该渠道不再分配流量，但保留配置"
 - [ ] 8.4 删除 API Key 改用 useDangerConfirm（content 含 keyMasked + "删除后无法恢复，使用此 Key 的请求将立即失败"）
 - [ ] 8.5 删除端点改用 useDangerConfirm（content 包含对路由的影响说明）
