@@ -352,5 +352,10 @@
   "channel.state.tooltipBilling": "参与计费",
   "channel.state.tooltipNext": "可转换至",
   "channel.state.tooltipTerminal": "终态：不可再转换",
-  "channel.state.deprecatedSubtitle": "仍参与流量分配，但已标记为不推荐"
+  "channel.state.deprecatedSubtitle": "仍参与流量分配，但已标记为不推荐",
+  "health.lastCheckAt": "最后一次测试：{{time}}",
+  "health.unknown": "尚未测试",
+  "health.source.CARD": "卡片",
+  "health.source.DRAWER": "详情",
+  "health.source.PRECHECK": "预检"
 }

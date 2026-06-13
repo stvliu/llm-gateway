@@ -352,5 +352,10 @@
   "channel.state.tooltipBilling": "Billable",
   "channel.state.tooltipNext": "Can transition to",
   "channel.state.tooltipTerminal": "Terminal: no further transitions",
-  "channel.state.deprecatedSubtitle": "Still routing traffic, but marked as not recommended"
+  "channel.state.deprecatedSubtitle": "Still routing traffic, but marked as not recommended",
+  "health.lastCheckAt": "Last tested: {{time}}",
+  "health.unknown": "Not tested yet",
+  "health.source.CARD": "Card",
+  "health.source.DRAWER": "Detail",
+  "health.source.PRECHECK": "Pre-check"
 }
