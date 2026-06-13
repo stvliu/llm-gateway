@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Input, InputNumber, Button, Space, Form, message, theme } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import { InlineEditableList } from './InlineEditableList';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import { ApiKeyEditModal } from './ApiKeyEditModal';
@@ -10,8 +11,11 @@ import {
   useUpdateChannelCredential,
   useDeleteChannelCredential,
   useTestChannelCredential,
+  channelKeys,
 } from '@/services/query/useChannels';
 import { extractErrorMessage } from '@/utils/errorMessage';
+import type { PulseState } from '@/components/common/useSavePulse';
+import '@/components/common/SavePulse.css';
 
 interface CredentialSectionProps {
   channelId: number;
@@ -19,16 +23,139 @@ interface CredentialSectionProps {
 }
 
 /**
+ * 行级保存反馈状态。
+ * 不直接复用 useSavePulse hook，因为本组件 InlineEditableList 在编辑/展示态切换时会
+ * 卸载并重建 renderItem 子树，导致 hook 实例丢失。改用 Section 级 Map 管理。
+ */
+interface RowPulse {
+  state: PulseState;
+  errorMsg?: string;
+}
+
+const ROW_PULSE_IDLE: RowPulse = { state: 'idle' };
+
+/** 由 RowPulse 派生 className，与 useSavePulse 的派生规则一致 */
+function pulseClassName(p: RowPulse | undefined): string {
+  if (!p) return '';
+  if (p.state === 'success') return 'save-pulse-success';
+  if (p.state === 'error') return 'save-pulse-error';
+  return '';
+}
+
+/**
+ * 单个凭证行展示组件。
+ * 接受 Section 维护的 RowPulse，渲染 className + 行尾 ✓ / ✗ 反馈。
+ */
+function CredentialRowDisplay({
+  credential,
+  testingId,
+  pulse,
+  savedLabel,
+  onTest,
+  onEdit,
+}: {
+  credential: ChannelCredential;
+  testingId: number | null;
+  pulse: RowPulse | undefined;
+  savedLabel: string;
+  onTest: (credential: ChannelCredential) => Promise<void>;
+  onEdit: () => void;
+}) {
+  const { t } = useTranslation('channels');
+  const { token } = theme.useToken();
+
+  const getStateColor = (state: string) => (state === 'ACTIVE' ? 'green' : 'default');
+  const className = pulseClassName(pulse);
+
+  return (
+    <div
+      className={className}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        width: '100%',
+        padding: 4,
+        borderRadius: 4,
+      }}
+    >
+      <MaskedKeyDisplay
+        keyPlain={credential.apiKeyPlain}
+        mode="editable"
+        size="small"
+        onEdit={onEdit}
+      />
+      <Tag color="blue">P{credential.priority}</Tag>
+      <Tag color="purple">W{credential.weight}</Tag>
+      <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
+        {t('credential.lastUsed')}: {t('credential.noData')}
+      </span>
+      <Tag color={getStateColor(credential.state)}>
+        {credential.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
+      </Tag>
+      {pulse?.state === 'success' && (
+        <span className="save-tip-ok">✓ {savedLabel}</span>
+      )}
+      {pulse?.state === 'error' && (
+        <span className="save-tip-err">✗ {pulse.errorMsg}</span>
+      )}
+      <Button
+        type="link"
+        size="small"
+        loading={testingId === credential.id}
+        onClick={() => onTest(credential)}
+      >
+        {t('credential.test')}
+      </Button>
+    </div>
+  );
+}
+
+/**
  * API Key 区组件
- * 展示渠道的凭证列表，支持行内编辑和测试
+ * 展示渠道的凭证列表，支持行内编辑和测试。
+ * 编辑保存采用乐观更新 + 失败回滚 + 行内脉冲反馈策略。
  */
 export function CredentialSection({ channelId, credentials }: CredentialSectionProps) {
   const { t } = useTranslation('channels');
-  const { token } = theme.useToken();
+  const queryClient = useQueryClient();
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Section 级 RowPulse 表（按 credential.id 索引），自动归位定时器引用
+  const [pulses, setPulses] = useState<Record<number, RowPulse>>({});
+  const successTimers = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
+
+  /** 触发某行成功脉冲：3 秒后归位 idle */
+  const triggerRowSuccess = useCallback((id: number) => {
+    if (successTimers.current[id]) {
+      clearTimeout(successTimers.current[id]);
+    }
+    setPulses((prev) => ({ ...prev, [id]: { state: 'success' } }));
+    successTimers.current[id] = setTimeout(() => {
+      setPulses((prev) => ({ ...prev, [id]: ROW_PULSE_IDLE }));
+      delete successTimers.current[id];
+    }, 3000);
+  }, []);
+
+  /** 触发某行错误脉冲：常驻直至下次 trigger */
+  const triggerRowError = useCallback((id: number, msg: string) => {
+    if (successTimers.current[id]) {
+      clearTimeout(successTimers.current[id]);
+      delete successTimers.current[id];
+    }
+    setPulses((prev) => ({ ...prev, [id]: { state: 'error', errorMsg: msg } }));
+  }, []);
+
+  // 卸载时清理所有定时器
+  useEffect(() => {
+    const timers = successTimers.current;
+    return () => {
+      Object.values(timers).forEach((tid) => clearTimeout(tid));
+    };
+  }, []);
 
   // Mutations
   const createCredential = useCreateChannelCredential();
@@ -50,91 +177,137 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
     }
   }, [editingId, credentials, form]);
 
-  /** 状态点颜色 */
-  const getStateColor = (state: string) => {
-    return state === 'ACTIVE' ? 'green' : 'default';
-  };
+  /** 测试凭证连通性 */
+  const handleTestCredential = useCallback(
+    async (credential: ChannelCredential) => {
+      setTestingId(credential.id);
+      try {
+        const result = await testCredential.mutateAsync({
+          channelId,
+          id: credential.id,
+        });
+        if (result.success) {
+          message.success(t('credential.testSuccess', { latency: result.latency }));
+        } else {
+          message.error(
+            t('credential.testFail', {
+              msg: result.error?.message || t('credential.unknownError'),
+            })
+          );
+        }
+      } catch {
+        message.error(t('credential.testRequestFail'));
+      } finally {
+        setTestingId(null);
+      }
+    },
+    [channelId, testCredential, t]
+  );
+
+  const savedLabel = t('common:message.saved', { defaultValue: '已保存' });
 
   /** 渲染展示行 */
-  const renderItem = useCallback((credential: ChannelCredential) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%' }}>
-      <MaskedKeyDisplay
-        keyPlain={credential.apiKeyPlain}
-        mode="editable"
-        size="small"
+  const renderItem = useCallback(
+    (credential: ChannelCredential) => (
+      <CredentialRowDisplay
+        credential={credential}
+        testingId={testingId}
+        pulse={pulses[credential.id]}
+        savedLabel={savedLabel}
+        onTest={handleTestCredential}
         onEdit={() => setEditingId(credential.id)}
       />
-      <Tag color="blue">P{credential.priority}</Tag>
-      <Tag color="purple">W{credential.weight}</Tag>
-      <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
-        {t('credential.lastUsed')}: {t('credential.noData')}
-      </span>
-      <Tag color={getStateColor(credential.state)}>
-        {credential.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
-      </Tag>
-      <Button
-        type="link"
-        size="small"
-        loading={testingId === credential.id}
-        onClick={async () => {
-          setTestingId(credential.id);
-          try {
-            const result = await testCredential.mutateAsync({
-              channelId,
-              id: credential.id,
-            });
-            if (result.success) {
-              message.success(t('credential.testSuccess', { latency: result.latency }));
-            } else {
-              message.error(t('credential.testFail', { msg: result.error?.message || t('credential.unknownError') }));
-            }
-          } catch (error) {
-            message.error(t('credential.testRequestFail'));
-          } finally {
-            setTestingId(null);
-          }
-        }}
-      >
-        {t('credential.test')}
-      </Button>
-    </div>
-  ), [channelId, token.colorTextSecondary, testingId, testCredential, setEditingId, t]);
+    ),
+    [testingId, pulses, savedLabel, handleTestCredential]
+  );
 
-  /** 渲染编辑表单 */
+  /**
+   * 渲染编辑表单。
+   * 内嵌 EditFormBody 子组件在 mount 时把 credential 字段写入 form，
+   * 保证表单字段注册之后立即 setFieldsValue，避免 validateFields 时拿到 undefined。
+   */
   const renderEditForm = (
     credential: ChannelCredential,
     onSave: (updated: ChannelCredential) => void,
     onCancel: () => void
   ) => {
+    /** 编辑表单内嵌子组件：mount 时把 credential 字段写入 form */
+    const EditFormBody = () => {
+      useEffect(() => {
+        form.setFieldsValue({
+          priority: credential.priority,
+          weight: credential.weight,
+          description: credential.description || '',
+        });
+        // 仅在挂载时初始化一次
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, []);
+      return null;
+    };
+
     const handleSave = async () => {
+      let values: { priority: number; weight: number; description?: string };
       try {
         setLoading(true);
-        const values = await form.validateFields();
-        const data: UpdateChannelCredentialRequest = {
-          priority: values.priority,
-          weight: values.weight,
-          description: values.description,
-        };
+        values = await form.validateFields();
+      } catch (err) {
+        const reason = extractErrorMessage(err);
+        if (reason) {
+          message.error(t('common:message.saveFailed', { reason }));
+        }
+        setLoading(false);
+        return;
+      }
+      const data: UpdateChannelCredentialRequest = {
+        priority: values.priority,
+        weight: values.weight,
+        description: values.description,
+      };
+
+      // 乐观更新：备份并写缓存
+      const credKey = channelKeys.credentials(channelId);
+      await queryClient.cancelQueries({ queryKey: credKey });
+      const prev = queryClient.getQueryData<ChannelCredential[]>(credKey);
+      if (prev) {
+        queryClient.setQueryData<ChannelCredential[]>(
+          credKey,
+          prev.map((c) => (c.id === credential.id ? { ...c, ...data } : c))
+        );
+      }
+
+      try {
         const result = await updateCredential.mutateAsync({
           channelId,
           id: credential.id,
           data,
         });
+        triggerRowSuccess(credential.id);
         message.success(t('credential.updateSuccess'));
         onSave(result);
       } catch (err) {
-        // 校验失败 → AntD 行内已显示，不重复弹 toast
+        // 失败：回滚缓存 + 触发 error 脉冲 + 保留 toast
+        if (prev !== undefined) {
+          queryClient.setQueryData(credKey, prev);
+        }
         const reason = extractErrorMessage(err);
+        triggerRowError(
+          credential.id,
+          reason || t('common:message.saveFailed', { reason: '' })
+        );
         if (reason) {
           message.error(t('common:message.saveFailed', { reason }));
         }
+        // 失败后退出编辑态，让展示态显示回滚后的原值（同时显示红框 + ✗ 错误）
+        onCancel();
       } finally {
         setLoading(false);
+        queryClient.invalidateQueries({ queryKey: credKey });
       }
     };
 
     return (
       <Form form={form} layout="inline" style={{ gap: 12 }}>
+        <EditFormBody />
         <Form.Item
           name="priority"
           label={t('credential.priority')}
