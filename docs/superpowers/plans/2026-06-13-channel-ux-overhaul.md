@@ -1416,8 +1416,8 @@ it('预检工具应使用 source=PRECHECK 调用 health-check API', async () => 
 
 ### 任务 9.8 useChannels 类型扩展
 
-- [ ] **Step 1：在 `Channel` TS 类型 + `useChannels` 查询返回里增加 3 字段**
-- [ ] **Step 2：编译通过 + 提交**
+- [x] **Step 1：在 `Channel` TS 类型 + `useChannels` 查询返回里增加 3 字段**
+- [x] **Step 2：编译通过 + 提交**
 
 ### 任务 9.9 单测 + Playwright e2e
 

@@ -76,7 +76,7 @@
 - [x] 9.5 详情抽屉"连通性测试"重构为唯一执行入口，结果以矩阵 Table 展现（脱敏 Key × 列：认证/可用模型/延迟）
 - [x] 9.6 测试触发 POST /api/channels/{id}/health-check 写入健康状态；前端 AbortController 取消支持
 - [x] 9.7 ConnectivityTestPanel 改名为"预检工具"，UI 文案明确与已建渠道脱耦，发起请求 source=PRECHECK
-- [ ] 9.8 useChannels 数据层补充健康字段
+- [x] 9.8 useChannels 数据层补充健康字段
 - [ ] 9.9 HealthDot.test.tsx 组件测试 + Playwright e2e/health-check-matrix.spec.ts (S5)
 
 ## 10. 前端：创建入口合并

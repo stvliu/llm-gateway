@@ -45,7 +45,6 @@ import {
   useChannelModels,
   useTransitionChannelState,
   useTransitionChannelModelState,
-  useTestChannelCredential,
   useDeleteChannel,
   channelKeys,
 } from '@/services/query/useChannels';
@@ -143,7 +142,6 @@ export function ChannelDetailDrawer({
   );
   const { data: channelModels = [] } = useChannelModels(channel?.id || 0);
   const { data: provider } = useProvider(channel?.providerId || 0);
-  const testCredential = useTestChannelCredential();
 
   if (!channel) return null;
 
