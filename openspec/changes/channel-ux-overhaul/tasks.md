@@ -53,7 +53,7 @@
 - [x] 7.3 EndpointSection 接入 useSavePulse + onMutate 乐观更新 + onError 回滚 + 行内反馈渲染
 - [x] 7.4 CredentialSection 接入同上
 - [x] 7.5 ModelMappingSection 接入同上
-- [ ] 7.6 QuotaSettingsSection 编辑模式保存成功后对编辑区触发同款脉冲
+- [x] 7.6 QuotaSettingsSection 编辑模式保存成功后对编辑区触发同款脉冲
 - [ ] 7.7 useSavePulse.test.tsx 单元测试 + EndpointSection / CredentialSection 组件测试覆盖成功 / 失败两路径
 
 ## 8. 前端：危险操作确认升级
