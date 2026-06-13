@@ -1245,7 +1245,7 @@ git commit -am "feat(channels): 暂停操作增加 Popconfirm 二次确认"
 
 每个删除场景写一个组件测试，断言 Modal.confirm 出现并含正确 description；然后改造调用点：
 
-- [ ] **8.4 删除 API Key**：description = `t('credential.deleteDescription', { keyMasked })`，包含「删除后无法恢复，使用此 Key 的请求将立即失败」
+- [x] **8.4 删除 API Key**：description = `t('credential.deleteDescription', { keyMasked })`，包含「删除后无法恢复，使用此 Key 的请求将立即失败」
 - [ ] **8.5 删除端点**：description 包含「删除该端点后，路由到 baseUrl=… 的流量将立即失败」
 - [ ] **8.6 删除模型映射**：description 包含「删除后，模型 ID `{modelId}` 不再被路由到此渠道」
 - [ ] **8.7 删除整个渠道 / 转 RETIRED**：description 与上述风格对齐

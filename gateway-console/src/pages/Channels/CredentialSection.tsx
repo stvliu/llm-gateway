@@ -15,6 +15,7 @@ import {
 } from '@/services/query/useChannels';
 import { extractErrorMessage } from '@/utils/errorMessage';
 import type { PulseState } from '@/components/common/useSavePulse';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import '@/components/common/SavePulse.css';
 
 interface CredentialSectionProps {
@@ -123,6 +124,9 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
   const [loading, setLoading] = useState(false);
   const [testingId, setTestingId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // 危险删除确认（任务 8.4）：注意必须把 contextHolder 渲染到组件树
+  const { confirm: confirmDelete, contextHolder: dangerContextHolder } = useDangerConfirm();
 
   // Section 级 RowPulse 表（按 credential.id 索引），自动归位定时器引用
   const [pulses, setPulses] = useState<Record<number, RowPulse>>({});
@@ -418,24 +422,42 @@ export function CredentialSection({ channelId, credentials }: CredentialSectionP
     );
   };
 
-  /** 删除凭证 */
-  const handleDelete = async (credential: ChannelCredential) => {
-    try {
-      await deleteCredential.mutateAsync({ channelId, id: credential.id });
-      message.success(t('credential.deleteSuccess'));
-    } catch (err) {
-      // 删除失败：把后端 / 网络原因带给用户；无原因时回退到既有兜底文案
-      const reason = extractErrorMessage(err);
-      message.error(
-        reason
-          ? t('common:message.saveFailed', { reason })
-          : t('credential.deleteFail')
-      );
-    }
+  /**
+   * 删除凭证：弹危险确认 Modal（任务 8.4）。
+   * description 含 keyMasked + "删除后无法恢复，使用此 Key 的请求将立即失败"。
+   */
+  const handleDelete = (credential: ChannelCredential) => {
+    // keyMasked 取 prefix（已脱敏）+ 省略号；apiKeyPrefix 由后端脱敏返回
+    const keyMasked = credential.apiKeyPrefix
+      ? `${credential.apiKeyPrefix}…`
+      : `Key #${credential.id}`;
+    confirmDelete({
+      titleKey: 'credential.deleteTitle',
+      descriptionKey: 'credential.deleteDescription',
+      descriptionParams: { keyMasked },
+      onOk: async () => {
+        try {
+          await deleteCredential.mutateAsync({ channelId, id: credential.id });
+          message.success(t('credential.deleteSuccess'));
+        } catch (err) {
+          // 兜底 toast：useSavePulse 未覆盖此 mutation，由本处反馈
+          const reason = extractErrorMessage(err);
+          message.error(
+            reason
+              ? t('common:message.saveFailed', { reason })
+              : t('credential.deleteFail')
+          );
+          // 必须 throw，让 useDangerConfirm 阻止 modal 关闭，便于用户重试
+          throw err;
+        }
+      },
+    });
   };
 
   return (
     <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
       <InlineEditableList
         items={credentials}
         renderItem={renderItem}
