@@ -829,7 +829,7 @@ git commit -m "chore(console): 配置 vitest/playwright + 验证 smoke"
 
 ### 任务 5.1 审计
 
-- [ ] **Step 1：用 codegraph + grep 列出所有空 catch / 仅注释 catch**
+- [x] **Step 1：用 codegraph + grep 列出所有空 catch / 仅注释 catch**
 
 ```bash
 cd gateway-console
