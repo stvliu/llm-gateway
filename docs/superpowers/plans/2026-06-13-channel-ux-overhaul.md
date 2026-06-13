@@ -114,7 +114,7 @@ git commit -m "feat(supply): 增加 channel 健康状态字段迁移 V50"
 
 ### 任务 1.2 / 1.3 健康枚举 + 实体扩展
 
-- [ ] **Step 1：先写失败测试 `ChannelHealthFieldsTest`**
+- [x] **Step 1：先写失败测试 `ChannelHealthFieldsTest`**
 
 ```java
 package com.codingas.gateway.domain.supply.entity;
@@ -169,14 +169,14 @@ class ChannelHealthFieldsTest {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
 ```bash
 ./mvnw test -pl gateway-boot -Dtest=ChannelHealthFieldsTest
 # Expected: 编译错误（枚举与字段不存在）
 ```
 
-- [ ] **Step 3：实现枚举**
+- [x] **Step 3：实现枚举**
 
 `ChannelHealthStatus.java`：
 
@@ -206,7 +206,7 @@ package com.codingas.gateway.domain.supply.enums;
 public enum ChannelHealthSource { CARD, DRAWER, PRECHECK }
 ```
 
-- [ ] **Step 4：扩展 Channel 实体**
+- [x] **Step 4：扩展 Channel 实体**
 
 在 `Channel.java` 中追加 3 个字段：
 
@@ -226,14 +226,16 @@ private ChannelHealthStatus lastHealthStatus;
 private ChannelHealthSource lastHealthSource;
 ```
 
-- [ ] **Step 5：跑测试确认通过**
+> 实施备注：根据 CLAUDE.md "领域模型纯洁性"约束，`Channel` 是领域 POJO（继承 BaseEntity，无 JPA），JPA 注解应放在 `ChannelDo` 上。本任务仅在 `Channel` 加 3 个 POJO 字段；`@Column` 与 `toEntity/toDo` 透传统一在任务 1.4 处理。
+
+- [x] **Step 5：跑测试确认通过**
 
 ```bash
 ./mvnw test -pl gateway-boot -Dtest=ChannelHealthFieldsTest
 # Expected: 4 tests pass
 ```
 
-- [ ] **Step 6：提交**
+- [x] **Step 6：提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/supply/enums/ChannelHealthStatus.java \
