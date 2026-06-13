@@ -312,7 +312,7 @@ git commit -am "test(supply): 健康字段 Repository 集成测试"
 
 ### 任务 2.1 ChannelHealthService（聚合规则）
 
-- [ ] **Step 1：先写失败测试 `ChannelHealthServiceTest`（覆盖聚合 4 分支 + PRECHECK 不持久化 + 持久化失败兜底）**
+- [x] **Step 1：先写失败测试 `ChannelHealthServiceTest`（覆盖聚合 4 分支 + PRECHECK 不持久化 + 持久化失败兜底）**
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -364,9 +364,9 @@ class ChannelHealthServiceTest {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败（编译错误）**
+- [x] **Step 2：跑测试确认失败（编译错误）**
 
-- [ ] **Step 3：实现 `ChannelHealthService`**
+- [x] **Step 3：实现 `ChannelHealthService`**
 
 参考 design doc §3 的代码骨架，关键要点：
 - `@Transactional`，但 `persistHealth` 内部 try-catch 不让异常冒出
@@ -396,14 +396,14 @@ public record KeyMatrixRow(
 ) {}
 ```
 
-- [ ] **Step 4：跑测试确认全绿**
+- [x] **Step 4：跑测试确认全绿**
 
 ```bash
 ./mvnw test -pl gateway-boot -Dtest=ChannelHealthServiceTest
 # Expected: 7 tests pass
 ```
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git commit -am "feat(supply): 实现 ChannelHealthService 聚合规则与持久化"
