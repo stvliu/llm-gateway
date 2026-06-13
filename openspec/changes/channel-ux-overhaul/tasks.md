@@ -71,7 +71,7 @@
 
 - [x] 9.1 渠道卡片闪电图标行为改造：打开详情抽屉 + 跳到 Credentials Tab + "测试全部" 800ms 高亮
 - [x] 9.2 实现 HealthDot 组件（4 状态颜色 + UNKNOWN 空心 + Popover 显示 lastCheckAt + source）
-- [ ] 9.3 ChannelCard 在状态 Tag 右侧 6px 处嵌入 HealthDot
+- [x] 9.3 ChannelCard 在状态 Tag 右侧 6px 处嵌入 HealthDot
 - [ ] 9.4 ProviderGroupHeader 加"N/M 健康"小字聚合
 - [ ] 9.5 详情抽屉"连通性测试"重构为唯一执行入口，结果以矩阵 Table 展现（脱敏 Key × 列：认证/可用模型/延迟）
 - [ ] 9.6 测试触发 POST /api/channels/{id}/health-check 写入健康状态；前端 AbortController 取消支持

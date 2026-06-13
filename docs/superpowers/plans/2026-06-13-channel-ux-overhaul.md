@@ -1291,7 +1291,7 @@ it('点击闪电图标应打开详情抽屉并跳到 Credentials Tab，"测试�
 
 ### 任务 9.2 / 9.3 HealthDot 组件 + 嵌入卡片
 
-- [ ] **Step 1：先写失败测试 `HealthDot.test.tsx`**
+- [x] **Step 1：先写失败测试 `HealthDot.test.tsx`**
 
 ```tsx
 describe('HealthDot', () => {
@@ -1323,9 +1323,9 @@ describe('HealthDot', () => {
 });
 ```
 
-- [ ] **Step 2：实现 `HealthDot.tsx`**（照搬 design doc §4 代码）
+- [x] **Step 2：实现 `HealthDot.tsx`**（照搬 design doc §4 代码）
 
-- [ ] **Step 3：在 `ChannelCard.tsx` 状态 Tag 右侧 6px 处嵌入**
+- [x] **Step 3：在 `ChannelCard.tsx` 状态 Tag 右侧 6px 处嵌入**
 
 ```tsx
 <Space size={6}>
@@ -1338,7 +1338,7 @@ describe('HealthDot', () => {
 </Space>
 ```
 
-- [ ] **Step 4：跑测试 + 提交**
+- [x] **Step 4：跑测试 + 提交**
 
 ### 任务 9.4 ProviderGroupHeader N/M 健康聚合
 

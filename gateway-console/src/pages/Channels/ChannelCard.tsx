@@ -8,6 +8,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
+import { HealthDot } from '@/components/common/HealthDot';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
 import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
@@ -156,7 +157,15 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
       {/* 第一行：渠道名称 + 操作按钮 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0 }}>
-          <ChannelStateTag state={currentState} />
+          {/* 任务 9.3：状态 Tag 右侧 6px 处嵌入 HealthDot */}
+          <Space size={6}>
+            <ChannelStateTag state={currentState} />
+            <HealthDot
+              status={channel.lastHealthStatus ?? null}
+              lastCheckAt={channel.lastHealthCheckAt ?? null}
+              source={channel.lastHealthSource ?? null}
+            />
+          </Space>
           <span style={nameStyle}>{channel.name}</span>
         </div>
 

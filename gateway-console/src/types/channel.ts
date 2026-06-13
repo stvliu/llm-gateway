@@ -13,6 +13,12 @@ export interface ProtocolInfo {
 /** 渠道生命周期状态（与后端 Channel.State 枚举一致） */
 export type ChannelState = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DEPRECATED' | 'RETIRED';
 
+/** 渠道健康状态（任务 9.x；与后端 ChannelHealthStatus 枚举一致） */
+export type ChannelHealthStatus = 'HEALTHY' | 'DEGRADED' | 'FAILED' | 'UNKNOWN';
+
+/** 渠道健康检查触发来源（任务 9.x；与后端 ChannelHealthSource 枚举一致） */
+export type ChannelHealthSource = 'CARD' | 'DRAWER' | 'PRECHECK';
+
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
   id: number;
@@ -45,6 +51,12 @@ export interface Channel {
   endpoints: ChannelEndpointResponse[];
   createdAt: string;
   updatedAt: string;
+  /** 最后一次健康检查时间（ISO 字符串）。任务 9.x：后端 ChannelResponse 已透传 */
+  lastHealthCheckAt?: string | null;
+  /** 最后一次健康检查的聚合状态。任务 9.x */
+  lastHealthStatus?: ChannelHealthStatus | null;
+  /** 最后一次健康检查触发来源（CARD/DRAWER/PRECHECK）。任务 9.x */
+  lastHealthSource?: ChannelHealthSource | null;
 }
 
 /** 创建渠道请求（与后端 ChannelRequest 一致，仅基础属性） */
