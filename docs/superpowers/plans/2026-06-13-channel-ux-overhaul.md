@@ -411,7 +411,7 @@ git commit -am "feat(supply): 实现 ChannelHealthService 聚合规则与持久�
 
 ### 任务 2.2 健康检查 API 端点
 
-- [ ] **Step 1：写失败的端点集成测试 `ChannelHealthControllerIT`**
+- [x] **Step 1：写失败的端点集成测试 `ChannelHealthControllerIT`**
 
 ```java
 @SpringBootTest
@@ -456,9 +456,9 @@ class ChannelHealthControllerIT {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败（404 端点不存在）**
+- [x] **Step 2：跑测试确认失败（404 端点不存在）**
 
-- [ ] **Step 3：实现 Controller 端点**
+- [x] **Step 3：实现 Controller 端点**
 
 `ChannelController.java` 新增方法：
 
@@ -486,9 +486,9 @@ public record ChannelHealthCheckRequest(
 ) {}
 ```
 
-- [ ] **Step 4：跑测试确认全绿**
+- [x] **Step 4：跑测试确认全绿**
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git commit -am "feat(supply): POST /api/channels/{id}/health-check 端点"
