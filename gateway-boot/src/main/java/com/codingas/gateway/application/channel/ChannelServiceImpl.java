@@ -235,6 +235,10 @@ public class ChannelServiceImpl implements ChannelService {
         );
         response.setCreatedAt(channel.getCreatedAt());
         response.setUpdatedAt(channel.getUpdatedAt());
+        // 健康状态字段透传（last-write-wins，未测试过时为 null）
+        response.setLastHealthCheckAt(channel.getLastHealthCheckAt());
+        response.setLastHealthStatus(channel.getLastHealthStatus());
+        response.setLastHealthSource(channel.getLastHealthSource());
         return response;
     }
 

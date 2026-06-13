@@ -496,7 +496,7 @@ git commit -am "feat(supply): POST /api/channels/{id}/health-check 端点"
 
 ### 任务 2.3 列表 / 详情 DTO 增 3 字段（向后兼容）
 
-- [ ] **Step 1：写失败测试**
+- [x] **Step 1：写失败测试**
 
 `ChannelControllerListIT.java`：
 
@@ -511,9 +511,9 @@ void GET_channels_响应包含三个健康字段() throws Exception {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
-- [ ] **Step 3：在 `ChannelDTO`（或 `ChannelResponse`）追加 3 字段并在 Mapper 中映射**
+- [x] **Step 3：在 `ChannelDTO`（或 `ChannelResponse`）追加 3 字段并在 Mapper 中映射**
 
 ```java
 private Instant lastHealthCheckAt;
@@ -521,9 +521,9 @@ private ChannelHealthStatus lastHealthStatus;
 private ChannelHealthSource lastHealthSource;
 ```
 
-- [ ] **Step 4：跑测试确认通过**
+- [x] **Step 4：跑测试确认通过**
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git commit -am "feat(supply): channel 列表/详情响应附加健康字段"

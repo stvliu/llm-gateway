@@ -10,7 +10,7 @@
 - [x] 2.1 新建 ChannelHealthService（application 层），实现"测试矩阵 + 聚合规则 + last-write-wins 写入"
 - [x] 2.2 ChannelHealthService 单元测试：覆盖 HEALTHY / DEGRADED / FAILED / UNKNOWN 四种聚合分支与持久化失败兜底
 - [x] 2.3 新建 POST /api/channels/{id}/health-check 端点（adapter/api/），请求体含 source 字段，返回矩阵详情 + 聚合状态
-- [ ] 2.4 GET /api/channels 与 GET /api/channels/{id} 的响应 DTO 增加三个健康字段（向后兼容）
+- [x] 2.4 GET /api/channels 与 GET /api/channels/{id} 的响应 DTO 增加三个健康字段（向后兼容）
 - [x] 2.5 端点集成测试：覆盖三种 source、零 Key、并发触发场景
 
 ## 3. 后端：事务性 Provision 扩展
