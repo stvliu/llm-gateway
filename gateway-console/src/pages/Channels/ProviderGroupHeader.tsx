@@ -3,8 +3,8 @@ import {
   EditOutlined,
   ApiOutlined,
   ExportOutlined,
-  StopOutlined,
-  CheckCircleOutlined,
+  PauseCircleOutlined,
+  PlayCircleOutlined,
   DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -14,7 +14,6 @@ import { ProviderIcon } from '@/components/ui';
 export interface ProviderGroupHeaderProps {
   providerName: string;
   providerCode?: string;
-  providerState?: string;
   channelCount: number;
   endpointCount: number;
   credentialCount: number;
@@ -22,7 +21,8 @@ export interface ProviderGroupHeaderProps {
   collapsed: boolean;
   onToggle: () => void;
   onEdit?: () => void;
-  onToggleEnabled?: () => void;
+  onBatchSuspend?: () => void;
+  onBatchResume?: () => void;
   onTestConnectivity?: () => void;
   onExport?: () => void;
 }
@@ -30,11 +30,11 @@ export interface ProviderGroupHeaderProps {
 /**
  * 供应商分组头组件
  * 显示供应商信息 + 聚合统计 + 折叠箭头 + 操作菜单
+ * Provider 是纯组织分组实体，不展示状态
  */
 export function ProviderGroupHeader({
   providerName,
   providerCode,
-  providerState,
   channelCount,
   endpointCount,
   credentialCount,
@@ -42,13 +42,13 @@ export function ProviderGroupHeader({
   collapsed,
   onToggle,
   onEdit,
-  onToggleEnabled,
+  onBatchSuspend,
+  onBatchResume,
   onTestConnectivity,
   onExport,
 }: ProviderGroupHeaderProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
-  const isActive = providerState !== 'INACTIVE';
 
   const menuItems = [
     { key: 'edit', label: t('group.editProvider'), icon: <EditOutlined /> },
@@ -56,10 +56,14 @@ export function ProviderGroupHeader({
     { key: 'export', label: t('group.exportConfig'), icon: <ExportOutlined /> },
     { type: 'divider' as const },
     {
-      key: 'toggle',
-      label: isActive ? t('group.disableProvider') : t('group.enableProvider'),
-      icon: isActive ? <StopOutlined /> : <CheckCircleOutlined />,
-      danger: isActive,
+      key: 'batchSuspend',
+      label: t('group.batchSuspend', '全部暂停'),
+      icon: <PauseCircleOutlined />,
+    },
+    {
+      key: 'batchResume',
+      label: t('group.batchResume', '全部恢复'),
+      icon: <PlayCircleOutlined />,
     },
   ];
 
@@ -74,8 +78,11 @@ export function ProviderGroupHeader({
       case 'export':
         onExport?.();
         break;
-      case 'toggle':
-        onToggleEnabled?.();
+      case 'batchSuspend':
+        onBatchSuspend?.();
+        break;
+      case 'batchResume':
+        onBatchResume?.();
         break;
     }
   };
@@ -100,7 +107,6 @@ export function ProviderGroupHeader({
         borderRadius: token.borderRadiusLG,
         cursor: 'pointer',
         marginBottom: token.marginSM,
-        opacity: isActive ? 1 : 0.6,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: token.margin }}>

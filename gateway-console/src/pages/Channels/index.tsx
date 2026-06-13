@@ -20,8 +20,8 @@ import {
   DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAllChannels, useDeleteChannel, useSetChannelState, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
-import { useProviders, useSetEnabledProvider } from '@/services/query/useProviders';
+import { useAllChannels, useDeleteChannel, useTransitionChannelState, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
+import { useProviders } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
 import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
@@ -32,10 +32,12 @@ import { ChannelTableView } from './ChannelTableView';
 import { ConnectivityTestPanel } from './ConnectivityTestPanel';
 import BatchImportModal from './BatchImportModal';
 import { BatchExportButton } from './BatchExportButton';
+import { STATE_CONFIG } from '@/components/common/ChannelStateTag';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
+  ChannelState,
   ChannelCredential,
   ChannelModel,
 } from '@/types/channel';
@@ -75,7 +77,7 @@ export default function Channels() {
   // 状态管理
   const [searchText, setSearchText] = useState('');
   const [providerFilter, setProviderFilter] = useState<number | undefined>();
-  const [statusFilter, setStatusFilter] = useState<string | undefined>();
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<ChannelCard | null>(null);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [wizardVisible, setWizardVisible] = useState(false);
@@ -109,9 +111,8 @@ export default function Channels() {
   const { data: providersData, isLoading: providersLoading } = useProviders({ size: 100 });
   const { data: channels, isLoading: channelsLoading } = useAllChannels();
   const deleteChannel = useDeleteChannel();
-  const setChannelState = useSetChannelState();
+  const transitionChannelState = useTransitionChannelState();
   const testCredential = useTestChannelCredential();
-  const setEnabledProvider = useSetEnabledProvider();
 
   // 获取所有渠道的凭证（批量）
   const channelIds = useMemo(() => channels?.map((c) => c.id) || [], [channels]);
@@ -162,7 +163,6 @@ export default function Channels() {
             id: provider.id,
             providerId: provider.providerId,
             providerName: provider.providerName,
-            state: provider.state,
           },
           channels: channelList,
         });
@@ -181,11 +181,11 @@ export default function Channels() {
       result = result.filter((g) => g.provider.id === providerFilter);
     }
 
-    // 按状态筛选
-    if (statusFilter) {
+    // 按状态筛选（多选）
+    if (statusFilter.length > 0) {
       result = result.map((group) => ({
         ...group,
-        channels: group.channels.filter((ch) => ch.state === statusFilter),
+        channels: group.channels.filter((ch) => statusFilter.includes(ch.state)),
       })).filter((group) => group.channels.length > 0);
     }
 
@@ -301,12 +301,16 @@ export default function Channels() {
           <Select
             placeholder={t('statusFilter')}
             allowClear
-            style={{ width: 120 }}
+            mode="multiple"
+            style={{ width: 200 }}
             value={statusFilter}
-            onChange={setStatusFilter}
+            onChange={(values: string[]) => setStatusFilter(values ?? [])}
             options={[
-              { label: t('status.active'), value: 'ACTIVE' },
-              { label: t('status.inactive'), value: 'INACTIVE' },
+              { label: '待激活', value: 'PENDING' },
+              { label: '运行中', value: 'ACTIVE' },
+              { label: '已暂停', value: 'SUSPENDED' },
+              { label: '已下线', value: 'DEPRECATED' },
+              { label: '已废弃', value: 'RETIRED' },
             ]}
           />
         </Space>
@@ -348,8 +352,16 @@ export default function Channels() {
             onChannelDelete={handleDelete}
             onChannelToggleState={async (id, enabled) => {
               try {
-                await setChannelState.mutateAsync({ id, enabled });
+                await transitionChannelState.mutateAsync({ id, targetState: enabled ? 'ACTIVE' : 'SUSPENDED' });
                 message.success(enabled ? t('statusToggle.enabled') : t('statusToggle.disabled'));
+              } catch {
+                message.error(t('statusToggle.failed'));
+              }
+            }}
+            onStateTransition={async (id, targetState, reason) => {
+              try {
+                await transitionChannelState.mutateAsync({ id, targetState, reason });
+                message.success(t('statusToggle.enabled'));
               } catch {
                 message.error(t('statusToggle.failed'));
               }
@@ -365,7 +377,7 @@ export default function Channels() {
             onToggleProviderEnabled={(id) => {
               const p = providersData?.items?.find((p) => p.id === id);
               if (p) {
-                setEnabledProvider.mutate({ id, enabled: p.state !== 'ACTIVE' });
+                transitionChannelState.mutate({ id, targetState: 'SUSPENDED' });
               }
             }}
             onTestProviderConnectivity={(providerCode) => {
@@ -399,10 +411,10 @@ export default function Channels() {
             const ch = channelsWithStats.find((c) => c.id === id);
             if (ch) handleChannelClick(ch);
           }}
-          onToggleState={async (id, enabled) => {
+          onStateTransition={async (id, targetState, reason) => {
             try {
-              await setChannelState.mutateAsync({ id, enabled });
-              message.success(enabled ? t('statusToggle.enabled') : t('statusToggle.disabled'));
+              await transitionChannelState.mutateAsync({ id, targetState, reason });
+              message.success(t('statusToggle.enabled'));
             } catch {
               message.error(t('statusToggle.failed'));
             }

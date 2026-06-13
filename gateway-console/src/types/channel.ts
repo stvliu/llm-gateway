@@ -10,8 +10,8 @@ export interface ProtocolInfo {
   label: string;
 }
 
-/** 渠道状态 */
-export type ChannelState = 'ACTIVE' | 'INACTIVE';
+/** 渠道生命周期状态（与后端 Channel.State 枚举一致） */
+export type ChannelState = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DEPRECATED' | 'RETIRED';
 
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
@@ -87,11 +87,7 @@ export interface UpdateChannelRequest {
   weight?: number;
   timeout?: number | null;
   maxRetries?: number | null;
-  state?: ChannelState;
 }
-
-/** 渠道凭证状态 */
-export type ChannelCredentialState = 'ACTIVE' | 'INACTIVE';
 
 /** 渠道凭证（与后端 ChannelCredentialResponse 一致） */
 export interface ChannelCredential {
@@ -103,7 +99,6 @@ export interface ChannelCredential {
   description: string | null;
   weight: number;
   priority: number;
-  state: ChannelCredentialState;
   createdAt: string;
   updatedAt: string;
 }
@@ -128,7 +123,6 @@ export interface UpdateChannelCredentialRequest {
   priority?: number;
   weight?: number;
   description?: string;
-  state?: ChannelCredentialState;
 }
 
 /** API Key 测试响应 */
@@ -191,7 +185,6 @@ export interface ChannelGroup {
     id: number;
     providerId?: string;
     providerName: string;
-    state?: string;
   };
   channels: ChannelCard[];
 }

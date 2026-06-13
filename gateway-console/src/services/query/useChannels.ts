@@ -82,12 +82,12 @@ export function useUpdateChannel() {
   });
 }
 
-/** 切换渠道启用/停用状态 */
-export function useSetChannelState() {
+/** 渠道状态转换 */
+export function useTransitionChannelState() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, enabled }: { id: number; enabled: boolean }) =>
-      channelApi.setState(id, enabled),
+    mutationFn: ({ id, targetState, reason }: { id: number; targetState: string; reason?: string }) =>
+      channelApi.transitionState(id, targetState, reason),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: channelKeys.detail(id) });
       queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
@@ -283,12 +283,12 @@ export function useUpdateChannelModel() {
   });
 }
 
-/** 启用/停用模型映射 */
-export function useSetChannelModelEnabled() {
+/** 模型实例状态转换 */
+export function useTransitionChannelModelState() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ channelId, modelId, enabled }: { channelId: number; modelId: number; enabled: boolean }) =>
-      channelApi.setModelEnabled(channelId, modelId, enabled),
+    mutationFn: ({ channelId, modelId, targetState }: { channelId: number; modelId: number; targetState: string }) =>
+      channelApi.transitionModelState(channelId, modelId, targetState),
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
     },
