@@ -545,7 +545,7 @@ git commit -am "feat(supply): channel 列表/详情响应附加健康字段"
 
 ### 任务 3.1 / 3.2 入参扩展 + ensureProvider 三路径
 
-- [ ] **Step 1：先写失败的单元测试 `ChannelProvisionServiceInlineProviderTest`**
+- [x] **Step 1：先写失败的单元测试 `ChannelProvisionServiceInlineProviderTest`**
 
 ```java
 @ExtendWith(MockitoExtension.class)
@@ -578,9 +578,9 @@ class ChannelProvisionServiceInlineProviderTest {
 }
 ```
 
-- [ ] **Step 2：跑测试确认失败**
+- [x] **Step 2：跑测试确认失败**
 
-- [ ] **Step 3：扩展 `ProvisionRequest` 与 `ChannelProvisionService`**
+- [x] **Step 3：扩展 `ProvisionRequest` 与 `ChannelProvisionService`**
 
 `ProvisionRequest.java` 追加：
 
@@ -621,7 +621,7 @@ private Provider ensureProvider(String providerCode, ProvisionRequest.InlineProv
 
 `provisionFromPlan` 入口校验 code 一致性，详见 design doc。
 
-- [ ] **Step 4：跑测试全绿，提交**
+- [x] **Step 4：跑测试全绿，提交**
 
 ```bash
 git commit -am "feat(catalog): provisionFromPlan 支持 inlineProvider 入参"

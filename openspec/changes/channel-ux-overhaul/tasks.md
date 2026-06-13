@@ -15,8 +15,8 @@
 
 ## 3. 后端：事务性 Provision 扩展
 
-- [ ] 3.1 ChannelProvisionService.provisionFromPlan 入参新增可选 inlineProvider 字段
-- [ ] 3.2 实现"providerCode 不存在 + inlineProvider 非空 → 单事务创建 Provider + Channel"逻辑
+- [x] 3.1 ChannelProvisionService.provisionFromPlan 入参新增可选 inlineProvider 字段
+- [x] 3.2 实现"providerCode 不存在 + inlineProvider 非空 → 单事务创建 Provider + Channel"逻辑
 - [ ] 3.3 验证创建过程任意步骤失败均整体回滚（含级联 Provider / 级联 Model 失败用例）
 - [ ] 3.4 provision API 集成测试：覆盖正常路径、回滚路径、providerCode 已存在时忽略 inlineProvider
 
