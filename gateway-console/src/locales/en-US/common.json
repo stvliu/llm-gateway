@@ -88,7 +88,8 @@
     "copied": "Copied to clipboard",
     "deleteSuccess": "Deleted successfully",
     "deleteFailed": "Delete failed",
-    "saveFailed": "Save failed: {{reason}}"
+    "saveFailed": "Save failed: {{reason}}",
+    "saved": "Saved"
   },
   "theme": {
     "system": "System",

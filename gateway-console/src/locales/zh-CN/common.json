@@ -88,7 +88,8 @@
     "copied": "已复制到剪贴板",
     "deleteSuccess": "删除成功",
     "deleteFailed": "删除失败",
-    "saveFailed": "保存失败：{{reason}}"
+    "saveFailed": "保存失败：{{reason}}",
+    "saved": "已保存"
   },
   "theme": {
     "system": "跟随系统",
