@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -60,7 +61,7 @@ class ChannelServiceImplStateTransitionTest {
         );
     }
 
-    private Channel createChannel(Long id, Channel.State state) {
+    private Channel createChannel(Long id, ChannelState state) {
         Channel channel = new Channel();
         channel.setId(id);
         channel.setProviderId(1L);
@@ -88,7 +89,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("前置条件满足时成功激活并级联激活 PENDING ModelInstance")
         void activate_success_withCascade() {
-            Channel channel = createChannel(1L, Channel.State.PENDING);
+            Channel channel = createChannel(1L, ChannelState.PENDING);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             // 前置条件满足
@@ -105,7 +106,7 @@ class ChannelServiceImplStateTransitionTest {
             channelService.setState(1L, request("ACTIVE"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.ACTIVE);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.ACTIVE);
 
             // 验证级联激活：PENDING 实例变为 ACTIVE
             assertThat(pendingMi.getState()).isEqualTo(ModelInstance.State.ACTIVE);
@@ -118,7 +119,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("前置条件不满足（无端点）时抛出异常")
         void activate_fails_noEndpoint() {
-            Channel channel = createChannel(1L, Channel.State.PENDING);
+            Channel channel = createChannel(1L, ChannelState.PENDING);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             when(channelEndpointGateway.findByChannelId(1L)).thenReturn(List.of());
@@ -134,7 +135,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("前置条件不满足（无凭证）时抛出异常")
         void activate_fails_noCredential() {
-            Channel channel = createChannel(1L, Channel.State.PENDING);
+            Channel channel = createChannel(1L, ChannelState.PENDING);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             when(channelEndpointGateway.findByChannelId(1L))
@@ -152,7 +153,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("前置条件不满足（无模型实例）时抛出异常")
         void activate_fails_noModelInstance() {
-            Channel channel = createChannel(1L, Channel.State.PENDING);
+            Channel channel = createChannel(1L, ChannelState.PENDING);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             when(channelEndpointGateway.findByChannelId(1L))
@@ -177,13 +178,13 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("暂停渠道成功")
         void suspend_success() {
-            Channel channel = createChannel(1L, Channel.State.ACTIVE);
+            Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             channelService.setState(1L, request("SUSPENDED", "供应商维护"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.SUSPENDED);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.SUSPENDED);
         }
     }
 
@@ -194,13 +195,13 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("标记下线成功")
         void deprecate_success() {
-            Channel channel = createChannel(1L, Channel.State.ACTIVE);
+            Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             channelService.setState(1L, request("DEPRECATED", "模型升级"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.DEPRECATED);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.DEPRECATED);
         }
     }
 
@@ -211,7 +212,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("恢复激活成功（即使无端点也仅警告）")
         void reactivate_success_withWarning() {
-            Channel channel = createChannel(1L, Channel.State.SUSPENDED);
+            Channel channel = createChannel(1L, ChannelState.SUSPENDED);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             // 无端点 — 仅警告不阻塞
@@ -222,7 +223,7 @@ class ChannelServiceImplStateTransitionTest {
             channelService.setState(1L, request("ACTIVE"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.ACTIVE);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.ACTIVE);
         }
     }
 
@@ -233,13 +234,13 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("暂停后标记下线成功")
         void deprecate_success() {
-            Channel channel = createChannel(1L, Channel.State.SUSPENDED);
+            Channel channel = createChannel(1L, ChannelState.SUSPENDED);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             channelService.setState(1L, request("DEPRECATED"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.DEPRECATED);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.DEPRECATED);
         }
     }
 
@@ -250,13 +251,13 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("暂停后直接废弃成功（允许直达）")
         void retire_success() {
-            Channel channel = createChannel(1L, Channel.State.SUSPENDED);
+            Channel channel = createChannel(1L, ChannelState.SUSPENDED);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             channelService.setState(1L, request("RETIRED", "渠道下线"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.RETIRED);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.RETIRED);
         }
     }
 
@@ -267,13 +268,13 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("废弃后终态销毁成功")
         void retire_success() {
-            Channel channel = createChannel(1L, Channel.State.DEPRECATED);
+            Channel channel = createChannel(1L, ChannelState.DEPRECATED);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             channelService.setState(1L, request("RETIRED"));
 
             verify(channelGateway).save(channelCaptor.capture());
-            assertThat(channelCaptor.getValue().getState()).isEqualTo(Channel.State.RETIRED);
+            assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.RETIRED);
         }
     }
 
@@ -295,7 +296,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("ACTIVE→PENDING 非法转换被拒绝")
         void activeToPending_invalid() {
-            Channel channel = createChannel(1L, Channel.State.ACTIVE);
+            Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             assertThatThrownBy(() -> channelService.setState(1L, request("PENDING")))
@@ -307,7 +308,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("ACTIVE→RETIRED 非法转换被拒绝（必须经过 DEPRECATED）")
         void activeToRetired_invalid() {
-            Channel channel = createChannel(1L, Channel.State.ACTIVE);
+            Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             assertThatThrownBy(() -> channelService.setState(1L, request("RETIRED")))
@@ -319,7 +320,7 @@ class ChannelServiceImplStateTransitionTest {
         @Test
         @DisplayName("RETIRED→任何状态非法")
         void retiredToAny_invalid() {
-            Channel channel = createChannel(1L, Channel.State.RETIRED);
+            Channel channel = createChannel(1L, ChannelState.RETIRED);
             when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
 
             assertThatThrownBy(() -> channelService.setState(1L, request("ACTIVE")))

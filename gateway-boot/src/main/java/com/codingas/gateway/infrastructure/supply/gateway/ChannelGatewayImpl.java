@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.supply.gateway;
 
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
@@ -41,7 +42,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
 
     @Override
     public List<Channel> findAllActive() {
-        return channelRepository.findByState(Channel.State.ACTIVE.name()).stream().map(this::toEntity).toList();
+        return channelRepository.findByState(ChannelState.ACTIVE.name()).stream().map(this::toEntity).toList();
     }
 
     @Override
@@ -84,7 +85,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setQuotaLimit(doObj.getQuotaLimit());
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
-        entity.setState(Channel.State.valueOf(doObj.getState()));
+        entity.setState(ChannelState.valueOf(doObj.getState()));
         // 健康状态字段透传（last-write-wins）
         entity.setLastHealthCheckAt(doObj.getLastHealthCheckAt());
         entity.setLastHealthStatus(doObj.getLastHealthStatus());
@@ -105,7 +106,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setQuotaLimit(entity.getQuotaLimit());
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
-        doObj.setState(entity.getState() != null ? entity.getState().name() : Channel.State.ACTIVE.name());
+        doObj.setState(entity.getState() != null ? entity.getState().name() : ChannelState.ACTIVE.name());
         // 健康状态字段透传（last-write-wins）
         doObj.setLastHealthCheckAt(entity.getLastHealthCheckAt());
         doObj.setLastHealthStatus(entity.getLastHealthStatus());

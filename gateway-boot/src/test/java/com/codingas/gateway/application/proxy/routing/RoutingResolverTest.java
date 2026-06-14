@@ -5,6 +5,7 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
@@ -71,7 +72,7 @@ class RoutingResolverTest {
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("openai-main");
-            channel.setState(Channel.State.ACTIVE);
+            channel.setState(ChannelState.ACTIVE);
             channel.setTimeout(30);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
@@ -116,7 +117,7 @@ class RoutingResolverTest {
             Channel channel = new Channel();
             channel.setId(100L);
             channel.setName("anthropic-via-openai");
-            channel.setState(Channel.State.ACTIVE);
+            channel.setState(ChannelState.ACTIVE);
             channel.setTimeout(60);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();

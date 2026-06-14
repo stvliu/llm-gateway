@@ -14,6 +14,7 @@ import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
@@ -124,7 +125,7 @@ public class ChannelProvisionService {
         channel.setBillingMode(catalog.getBillingMode());
         channel.setTimeout(30);
         channel.setMaxRetries(3);
-        channel.setState(Channel.State.ACTIVE);
+        channel.setState(ChannelState.ACTIVE);
 
         Channel savedChannel = channelGateway.save(channel);
         log.info("开通套餐-创建渠道成功: planCode={}, channelId={}", planCode, savedChannel.getId());

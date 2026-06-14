@@ -5,6 +5,7 @@ import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthStatus;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -22,35 +23,6 @@ import java.time.Instant;
 @DomainEntity
 public class Channel extends BaseEntity {
 
-    /**
-     * 渠道生命周期状态
-     */
-    public enum State {
-        PENDING,
-        ACTIVE,
-        SUSPENDED,
-        DEPRECATED,
-        RETIRED;
-
-        public boolean isRoutable() {
-            return this == ACTIVE || this == DEPRECATED;
-        }
-
-        public boolean isTerminal() {
-            return this == RETIRED;
-        }
-
-        public boolean canTransitionTo(State target) {
-            return switch (this) {
-                case PENDING    -> target == ACTIVE;
-                case ACTIVE     -> target == SUSPENDED || target == DEPRECATED;
-                case SUSPENDED  -> target == ACTIVE    || target == DEPRECATED || target == RETIRED;
-                case DEPRECATED -> target == RETIRED;
-                case RETIRED    -> false;
-            };
-        }
-    }
-
     private Long providerId;
 
     private String name;
@@ -65,7 +37,7 @@ public class Channel extends BaseEntity {
 
     private Integer maxRetries;
 
-    private State state = State.PENDING;
+    private ChannelState state = ChannelState.PENDING;
 
     /** 最近一次连通性测试完成时间（last-write-wins，无版本锁） */
     private Instant lastHealthCheckAt;
@@ -90,6 +62,6 @@ public class Channel extends BaseEntity {
      * 检查渠道是否可用
      */
     public boolean isAvailable() {
-        return State.ACTIVE.equals(state) || State.DEPRECATED.equals(state);
+        return ChannelState.ACTIVE.equals(state) || ChannelState.DEPRECATED.equals(state);
     }
 }

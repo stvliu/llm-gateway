@@ -1,0 +1,14 @@
+{
+  "change": "channel-action-bar-redesign",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "2bb19ccb88f1f8bbecd65fe8066c1aafedc5e9edf6405aa46ef80a9918f8a78f",
+  "files": [
+    { "path": "openspec/changes/channel-action-bar-redesign/proposal.md", "sha256": "2668beaca060db62feb01d0d95bb50cdd6f74edb2bff43bfb419ef5f3a711ff5" },
+    { "path": "openspec/changes/channel-action-bar-redesign/design.md", "sha256": "4455448d9491b1c752274b127445fce7384f51ad9f71890ff2bf4659fe534647" },
+    { "path": "openspec/changes/channel-action-bar-redesign/tasks.md", "sha256": "24b88e286808d8a52a84b9fa66d2db92f60c4db835cca178da504929df1ab8e9" },
+    { "path": "openspec/changes/channel-action-bar-redesign/specs/channel-action-bar/spec.md", "sha256": "0353270a58bbb232041f6eea9a67e8a0ff4ca04fab4a394dfbafca960de34127" }
+  ]
+}

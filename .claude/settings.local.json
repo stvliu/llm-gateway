@@ -84,7 +84,8 @@
       "Bash(openspec validate *)",
       "mcp__codegraph__codegraph_explore",
       "mcp__codegraph__codegraph_node",
-      "Skill(fewer-permission-prompts)"
+      "Skill(fewer-permission-prompts)",
+      "mcp__codegraph__codegraph_search"
     ]
   },
   "outputStyle": "default"

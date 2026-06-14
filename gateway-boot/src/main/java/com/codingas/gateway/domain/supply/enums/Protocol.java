@@ -1,10 +1,13 @@
 package com.codingas.gateway.domain.supply.enums;
 
+import lombok.Getter;
+
 /**
  * 协议类型枚举
  *
  * <p>定义 API 端点支持的协议类型。</p>
  */
+@Getter
 public enum Protocol {
 
     /** OpenAI 原生/兼容协议 */
@@ -25,14 +28,6 @@ public enum Protocol {
     Protocol(String code, String displayName) {
         this.code = code;
         this.displayName = displayName;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     public static Protocol fromCode(String code) {

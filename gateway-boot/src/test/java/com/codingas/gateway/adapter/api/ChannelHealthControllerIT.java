@@ -10,6 +10,7 @@ import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthStatus;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelKeyProbe;
@@ -103,7 +104,7 @@ class ChannelHealthControllerIT {
         channel.setProviderId(savedProvider.getId());
         channel.setName("health-it-channel-" + System.nanoTime());
         channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
-        channel.setState(Channel.State.ACTIVE);
+        channel.setState(ChannelState.ACTIVE);
         Channel savedChannel = channelGateway.save(channel);
 
         for (int i = 0; i < credentialCount; i++) {
