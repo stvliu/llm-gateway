@@ -1610,7 +1610,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 mcp__codegraph__codegraph_explore({ query: "i18n locales channel.state channel.health" })
 ```
 
-- [ ] **Step 2：用 `grep -r "channel\\.state\\." gateway-console/src/` 比对 locales 文件，确认无未使用 key、无未翻译 key**
+- [x] **Step 2：用 `grep -r "channel\\.state\\." gateway-console/src/` 比对 locales 文件，确认无未使用 key、无未翻译 key**
 
 - [x] **Step 3：提交 i18n 整理**
 
