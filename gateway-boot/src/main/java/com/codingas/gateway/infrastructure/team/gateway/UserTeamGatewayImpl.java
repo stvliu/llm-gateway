@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.team.gateway;
 
 import com.codingas.gateway.domain.team.entity.UserTeam;
-import com.codingas.gateway.domain.team.enums.TeamRole;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.UserTeamDo;
 import com.codingas.gateway.infrastructure.team.gateway.database.repository.UserTeamRepository;
@@ -55,8 +54,8 @@ public class UserTeamGatewayImpl implements UserTeamGateway {
     }
 
     @Override
-    public void updateRole(Long userId, Long teamId, TeamRole role) {
-        userTeamRepository.updateRole(userId, teamId, role.getCode());
+    public void updateRole(Long userId, Long teamId, String role) {
+        userTeamRepository.updateRole(userId, teamId, role);
     }
 
     @Override
@@ -76,7 +75,7 @@ public class UserTeamGatewayImpl implements UserTeamGateway {
         UserTeam entity = new UserTeam();
         entity.setUserId(dataObject.getUserId());
         entity.setTeamId(dataObject.getTeamId());
-        entity.setRole(TeamRole.fromCode(dataObject.getRole()));
+        entity.setRole(dataObject.getRole());
         return entity;
     }
 
@@ -84,7 +83,7 @@ public class UserTeamGatewayImpl implements UserTeamGateway {
         UserTeamDo dataObject = new UserTeamDo();
         dataObject.setUserId(entity.getUserId());
         dataObject.setTeamId(entity.getTeamId());
-        dataObject.setRole(entity.getRole().getCode());
+        dataObject.setRole(entity.getRole());
         return dataObject;
     }
 }

@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.team.gateway;
 
 import com.codingas.gateway.domain.team.entity.UserTeam;
-import com.codingas.gateway.domain.team.enums.TeamRole;
 
 import java.util.List;
 
@@ -20,7 +19,7 @@ public interface UserTeamGateway {
 
     void removeMember(Long userId, Long teamId);
 
-    void updateRole(Long userId, Long teamId, TeamRole role);
+    void updateRole(Long userId, Long teamId, String role);
 
     /**
      * 统计团队成员数

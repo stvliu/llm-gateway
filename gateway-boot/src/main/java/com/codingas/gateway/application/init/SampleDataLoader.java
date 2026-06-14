@@ -8,8 +8,6 @@ import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.team.entity.Team;
 import com.codingas.gateway.domain.team.entity.TeamChannel;
 import com.codingas.gateway.domain.team.entity.UserTeam;
-import com.codingas.gateway.domain.team.enums.TeamRole;
-import com.codingas.gateway.domain.team.enums.TeamState;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
@@ -159,7 +157,7 @@ public class SampleDataLoader implements DataLoader {
                         UserTeam ut = new UserTeam();
                         ut.setUserId(saved.getId());
                         ut.setTeamId(team.getId());
-                        ut.setRole(TeamRole.valueOf(assignment.role()));
+                        ut.setRole(assignment.role());
                         userTeamGateway.save(ut);
                     }
                 }
@@ -192,7 +190,7 @@ public class SampleDataLoader implements DataLoader {
         Team team = new Team();
         team.setName(name);
         team.setDescription(description);
-        team.setState(TeamState.ACTIVE);
+        team.setState("ACTIVE");
         return teamGateway.save(team);
     }
 

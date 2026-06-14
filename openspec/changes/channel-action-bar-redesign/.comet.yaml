@@ -1,12 +1,12 @@
 workflow: full
-phase: build
+phase: verify
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
 subagent_dispatch: confirmed
 tdd_mode: direct
 isolation: branch
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: bb21c6d808022b9093dec3c9dc911efaa504bb78
 design_doc: docs/superpowers/specs/2026-06-15-channel-action-bar-design.md

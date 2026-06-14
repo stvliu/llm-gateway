@@ -15,7 +15,6 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.domain.team.entity.TeamChannel;
 import com.codingas.gateway.domain.team.entity.UserTeam;
-import com.codingas.gateway.domain.team.enums.TeamRole;
 import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import jakarta.validation.Valid;
@@ -72,7 +71,7 @@ public class TeamController {
     public void addMember(
             @PathVariable Long teamId,
             @Valid @RequestBody AddTeamMemberRequest request) {
-        teamService.addMember(teamId, request.getUserId(), TeamRole.fromCode(request.getRole()));
+        teamService.addMember(teamId, request.getUserId(), request.getRole());
     }
 
     @DeleteMapping("/{teamId}/members/{userId}")
@@ -88,7 +87,7 @@ public class TeamController {
             @PathVariable Long teamId,
             @PathVariable Long userId,
             @Valid @RequestBody UpdateMemberRoleRequest request) {
-        teamService.updateMemberRole(teamId, userId, TeamRole.fromCode(request.getRole()));
+        teamService.updateMemberRole(teamId, userId, request.getRole());
     }
 
     // ==================== UserApiKey 子资源 ====================
