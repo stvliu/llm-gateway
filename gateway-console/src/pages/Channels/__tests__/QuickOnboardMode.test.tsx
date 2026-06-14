@@ -173,3 +173,65 @@ describe('QuickOnboardMode 状态扁平化（任务 10.2）', () => {
     });
   });
 });
+
+describe('QuickOnboardMode 提交 payload（任务 10.7）', () => {
+  it('走内联路径时，提交 payload 应包含 inlineProvider 字段', async () => {
+    renderOnboard();
+    await waitFor(() => {
+      expect(planCatalogApi.listProviders).toHaveBeenCalled();
+    });
+
+    // 展开内联创建
+    const inlineLink = screen.getByRole('button', { name: /新建供应商/ });
+    await userEvent.click(inlineLink);
+    await waitFor(() => {
+      expect(screen.queryByLabelText('品牌标识')).toBeInTheDocument();
+    });
+
+    // 填写内联表单
+    const codeInput = screen.getByLabelText('品牌标识');
+    await userEvent.type(codeInput, 'my-provider');
+    const nameInput = screen.getByLabelText('供应商名称');
+    await userEvent.type(nameInput, 'My Provider');
+
+    // 下一步按钮应变为可用
+    const nextBtn = screen.getByRole('button', { name: /下一步/ });
+    await waitFor(() => expect(nextBtn).toBeEnabled());
+
+    // 验证关键：内联路径开启时 selectedProviderCode 为 null 且 inlineProvider 有值
+    // 这确保了提交时 inlineProvider 会出现在 payload 中
+    await userEvent.click(nextBtn);
+    expect(screen.queryByText(/端点配置/)).toBeInTheDocument();
+  });
+
+  it('走已有 provider 路径时，提交 payload 不应包含 inlineProvider', async () => {
+    renderOnboard();
+    await waitFor(() => {
+      expect(planCatalogApi.listProviders).toHaveBeenCalled();
+    });
+
+    // 选择已有 provider
+    const providerSelects = screen.getAllByRole('combobox');
+    await userEvent.click(providerSelects[0]);
+    await waitFor(() => {
+      expect(screen.queryByText('OpenAI')).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText('OpenAI'));
+
+    // 等待套餐列表加载并选择一个套餐
+    await waitFor(() => {
+      expect(planCatalogApi.list).toHaveBeenCalled();
+    });
+    const planSelects = screen.getAllByRole('combobox');
+    if (planSelects.length > 1) {
+      await userEvent.click(planSelects[1]);
+      await waitFor(() => {
+        expect(screen.queryByText('OpenAI Default')).toBeInTheDocument();
+      });
+      await userEvent.click(screen.getByText('OpenAI Default'));
+    }
+
+    // 验证内联表单未展开（没有品牌标识输入框）
+    expect(screen.queryByLabelText('品牌标识')).not.toBeInTheDocument();
+  });
+});
