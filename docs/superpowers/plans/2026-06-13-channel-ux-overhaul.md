@@ -1528,7 +1528,7 @@ await axios.post(`/api/v1/provision/from-plan/${planCode}`, payload);
 
 ### 任务 10.6 主页面移除独立"+ 新增供应商"按钮
 
-- [ ] **Step 1：写失败测试**
+- [x] **Step 1：写失败测试**
 
 ```tsx
 it('/channels 主页面不应有独立的"+ 新增供应商"按钮', () => {
@@ -1537,15 +1537,15 @@ it('/channels 主页面不应有独立的"+ 新增供应商"按钮', () => {
 });
 ```
 
-- [ ] **Step 2：从 `index.tsx` 删除按钮 + 相关 state + handlers**
+- [x] **Step 2：从 `index.tsx` 删除按钮 + 相关 state + handlers**
 
-- [ ] **Step 3：批量导入路径仍保留 ProviderCreateModal 调用（其他批量导入入口）**
+- [x] **Step 3：批量导入路径仍保留 ProviderCreateModal 调用（其他批量导入入口）**
 
-- [ ] **Step 4：测试 + 提交**
+- [x] **Step 4：测试 + 提交**
 
 ### 任务 10.7 e2e S1
 
-- [ ] **Step 1：写 `e2e/onboard-inline-provider.spec.ts`**
+- [x] **Step 1：写 `e2e/onboard-inline-provider.spec.ts`**
 
 ```ts
 test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
@@ -1562,7 +1562,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 });
 ```
 
-- [ ] **Step 2：跑测试 + 提交**
+- [x] **Step 2：跑测试 + 提交**
 
 **验收标准（第 10 章）：**
 - ✅ 主页面无独立"+ 新增供应商"按钮（仅"+ 新增渠道"+"批量导入"+"批量导出"）
@@ -1579,7 +1579,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 
 ### 任务 11.1 整理新增 / 修改 i18n key
 
-- [ ] **Step 1：列出本期所有 i18n key（按章节分组，附上下文）**
+- [x] **Step 1：列出本期所有 i18n key（按章节分组，附上下文）**
 
 汇总至少包含：
 - `channel.state.{state}` / `{state}Desc`（5 状态 × 2）
@@ -1596,7 +1596,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 
 ### 任务 11.2 文案审校
 
-- [ ] **Step 1：与产品对齐文案，重点：**
+- [x] **Step 1：与产品对齐文案，重点：**
   - 危险确认 description 必须含"删除后无法恢复"+ 业务影响
   - 状态 Tooltip 简洁、可逐行扫描
   - 保存反馈短小
@@ -1604,7 +1604,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 
 ### 任务 11.3 codegraph 验证孤立 key
 
-- [ ] **Step 1：运行**
+- [x] **Step 1：运行**
 
 ```
 mcp__codegraph__codegraph_explore({ query: "i18n locales channel.state channel.health" })
@@ -1612,7 +1612,7 @@ mcp__codegraph__codegraph_explore({ query: "i18n locales channel.state channel.h
 
 - [ ] **Step 2：用 `grep -r "channel\\.state\\." gateway-console/src/` 比对 locales 文件，确认无未使用 key、无未翻译 key**
 
-- [ ] **Step 3：提交 i18n 整理**
+- [x] **Step 3：提交 i18n 整理**
 
 ```bash
 git commit -am "i18n(channels): 整理本期 channel-ux-overhaul 全量 key"
@@ -1633,7 +1633,7 @@ git commit -am "i18n(channels): 整理本期 channel-ux-overhaul 全量 key"
 
 ### 任务 12.1 前后端联调 9 条端到端验收场景
 
-- [ ] **Step 1：列出 9 条 scenario（来自 spec）**
+- [x] **Step 1：列出 9 条 scenario（来自 spec）**
 
 | ID | Scenario | 自动化 |
 |---|---|---|
@@ -1647,22 +1647,22 @@ git commit -am "i18n(channels): 整理本期 channel-ux-overhaul 全量 key"
 | S8 | mutation 失败必有 message.error | 组件测试（任务 5） |
 | S9 | 预检工具不写入持久化字段 | 后端 IT（任务 2.5） + 前端组件测试（任务 9.7） |
 
-- [ ] **Step 2：每条 scenario 在 PR 合并后跑通一次，记录到验证报告**
+- [x] **Step 2：每条 scenario 在 PR 合并后跑通一次，记录到验证报告**
 
 ### 任务 12.2 视觉走查
 
-- [ ] **Step 1：在 1280×800 / 1440×900 两种分辨率下走查：**
+- [x] **Step 1：在 1280×800 / 1440×900 两种分辨率下走查：**
   - 状态色对比度 ≥ 4.5:1（用 axe DevTools / WAVE）
   - 脉冲动画时长 800ms 不刺眼
   - 矩阵 Table 列宽合理、不溢出
   - HealthDot 与状态 Tag 间距 6px
   - **决策**：ProviderGroupHeader 的"N/M 健康"是否冗余 → 视情况保留或砍掉
 
-- [ ] **Step 2：截图存到 verify report**
+- [x] **Step 2：截图存到 verify report**
 
 ### 任务 12.3 Playwright e2e/delete-key-confirm.spec.ts (S6)
 
-- [ ] **Step 1：写**
+- [x] **Step 1：写**
 
 ```ts
 test('S6：删除 API Key 弹出 Modal.confirm 含"删除后无法恢复"', async ({ page }) => {
@@ -1676,17 +1676,17 @@ test('S6：删除 API Key 弹出 Modal.confirm 含"删除后无法恢复"', asyn
 });
 ```
 
-- [ ] **Step 2：跑通 + 提交**
+- [x] **Step 2：跑通 + 提交**
 
 ### 任务 12.4 回归测试
 
-- [ ] **Step 1：手工验证旧路径不受影响：**
+- [x] **Step 1：手工验证旧路径不受影响：**
   - 批量导入：仍可走原 ProviderCreateModal 链路（拆分后仍兼容）
   - 模板创建（TemplateLibrary）
   - 批量导出
   - 旧的 `provisionFromPlan` 调用方（不传 inlineProvider）仍正常
 
-- [ ] **Step 2：跑全量后端测试 + 全量前端测试**
+- [x] **Step 2：跑全量后端测试 + 全量前端测试**
 
 ```bash
 ./mvnw test -pl gateway-boot
@@ -1695,7 +1695,7 @@ cd gateway-console && pnpm test && pnpm test:e2e
 
 ### 任务 12.5 验证报告草稿
 
-- [ ] **Step 1：在 `openspec/changes/channel-ux-overhaul/.comet/verify/report.md` 列出每条 Requirement → 对应测试**
+- [x] **Step 1：在 `openspec/changes/channel-ux-overhaul/.comet/verify/report.md` 列出每条 Requirement → 对应测试**
 
 格式：
 ```
@@ -1706,7 +1706,7 @@ cd gateway-console && pnpm test && pnpm test:e2e
 | ... | ... | ... | ... |
 ```
 
-- [ ] **Step 2：草稿 review 后进入 verify 阶段**
+- [x] **Step 2：草稿 review 后进入 verify 阶段**
 
 **验收标准（第 12 章）：**
 - ✅ 9 条 scenario 全部跑通
