@@ -10,6 +10,7 @@ import { theme } from 'antd';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { HealthDot } from '@/components/common/HealthDot';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getActionBarConfig } from '@/utils/channelActions';
 import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard as ChannelCardType, ChannelState } from '@/types/channel';
@@ -58,7 +59,7 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   const currentState = channel.state as ChannelState;
   const meta = CHANNEL_LIFECYCLE[currentState] ?? CHANNEL_LIFECYCLE.SUSPENDED;
   const availableTransitions = getAvailableTransitions(currentState);
-  const isRoutable = meta.isRoutable;
+  const { primaryAction, dropdownTransitions, deleteDisabled } = getActionBarConfig(currentState);
   // visualStyle 派生卡片整体透明度：muted 状态保留轻度低饱和，其它状态保持 1
   // RETIRED 不再用 opacity 整体降透，改为渠道名 line-through + 灰色（见下方 nameStyle）
   const cardOpacity = meta.visualStyle === 'muted' ? 0.85 : 1;
@@ -66,23 +67,27 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
 
   /** 状态转换点击 */
   const handleTransition = (targetState: ChannelState) => {
-    const actionLabel = getTransitionActionLabel(currentState, targetState);
+    const actionLabel = t(getTransitionActionLabel(currentState, targetState));
 
-    // 高风险操作需要二次确认（DEPRECATED / RETIRED → 危险红色）
-    if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
-      let title = actionLabel;
-      let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
-      if (targetState === 'RETIRED') {
-        title = t('channel.action.retire.confirmTitle', '停用渠道？');
-        content = t(
+    // RETIRED：高危操作，红色确认
+    if (targetState === 'RETIRED') {
+      modal.confirm({
+        title: t('channel.action.retire.confirmTitle', '停用渠道？'),
+        content: t(
           'channel.action.retire.confirmDescription',
           '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
-        );
-      }
-      modal.confirm({
-        title,
-        content,
+        ),
         okType: 'danger',
+        onOk: () => onStateTransition?.(channel.id, targetState, ''),
+      });
+      return;
+    }
+
+    // DEPRECATED：警告确认（非危险）
+    if (targetState === 'DEPRECATED') {
+      modal.confirm({
+        title: actionLabel,
+        content: t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？'),
         onOk: () => onStateTransition?.(channel.id, targetState, ''),
       });
       return;
@@ -119,8 +124,9 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   };
 
   /** 删除按钮点击：使用 useDangerConfirm 与 RETIRED 文案对齐（任务 8.7） */
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleDeleteClick = (e?: React.MouseEvent) => {
+    if (deleteDisabled) return;
+    e?.stopPropagation();
     confirmDeleteChannel({
       titleKey: 'channel.deleteDangerTitle',
       descriptionKey: 'channel.deleteDangerDescription',
@@ -128,6 +134,34 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
       onOk: () => onDelete(channel.id),
     });
   };
+
+  /** 构建 Dropdown 菜单项 */
+  function buildMenuItems(
+    state: ChannelState,
+    transitions: ChannelState[],
+    delDisabled: boolean,
+    tr: (key: string, fallback?: string) => string,
+  ) {
+    const items: any[] = transitions.map(target => ({
+      key: target,
+      label: tr(getTransitionActionLabel(state, target)),
+      danger: target === 'RETIRED',
+    }));
+
+    items.push({ type: 'divider' as const });
+
+    items.push({
+      key: 'delete',
+      label: delDisabled
+        ? <Tooltip title={tr('channel.action.deleteDisabledWhenActive')}>
+            <span style={{ color: 'rgba(0,0,0,0.25)', cursor: 'not-allowed' }}>{tr('card.delete')}</span>
+          </Tooltip>
+        : tr('card.delete'),
+      danger: true,
+    });
+
+    return items;
+  }
 
   /** 渠道名样式：RETIRED 加删除线 + 灰色 */
   const nameStyle: React.CSSProperties = {
@@ -170,15 +204,15 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
         </div>
 
         <Space size={2} style={{ flexShrink: 0 }} onClick={(e) => e.stopPropagation()}>
-          {/* 测试按钮 */}
-          <Tooltip title={isRoutable ? t('card.testConnect') : t('card.testDisabled')}>
+          {/* 测试按钮 — 所有非 RETIRED 可用 */}
+          <Tooltip title={currentState !== 'RETIRED' ? t('card.testConnect') : t('card.testDisabled')}>
             <Button
               type="text"
               size="small"
               icon={<ThunderboltOutlined />}
-              disabled={!isRoutable}
+              disabled={currentState === 'RETIRED'}
               onClick={handleTestClick}
-              style={{ opacity: isRoutable ? 1 : 0.4 }}
+              style={{ opacity: currentState === 'RETIRED' ? 0.4 : 1 }}
             />
           </Tooltip>
 
@@ -192,33 +226,26 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
             />
           </Tooltip>
 
-          {/* 状态转换操作菜单 */}
-          {availableTransitions.length > 0 && (
-            <Dropdown
-              menu={{
-                items: availableTransitions.map((target) => ({
-                  key: target,
-                  label: getTransitionActionLabel(currentState, target),
-                  danger: target === 'RETIRED',
-                })),
-                onClick: ({ key }) => handleTransition(key as ChannelState),
-              }}
-              trigger={['click']}
-            >
-              <Button type="text" size="small" icon={<MoreOutlined />} />
-            </Dropdown>
+          {/* Primary 按钮 */}
+          {primaryAction && (
+            <Button type="primary" size="small" onClick={() => handleTransition(primaryAction)}>
+              {t(getTransitionActionLabel(currentState, primaryAction))}
+            </Button>
           )}
 
-          {/* 删除按钮 */}
-          <Tooltip title={t('card.delete')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<DeleteOutlined />}
-              danger
-              onClick={handleDeleteClick}
-            />
-          </Tooltip>
+          {/* Dropdown — 剩余转换 + 删除 */}
+          <Dropdown
+            menu={{
+              items: buildMenuItems(currentState, dropdownTransitions, deleteDisabled, t),
+              onClick: ({ key }) => {
+                if (key === 'delete') handleDeleteClick();
+                else handleTransition(key as ChannelState);
+              },
+            }}
+            trigger={['click']}
+          >
+            <Button type="text" size="small" icon={<MoreOutlined />} />
+          </Dropdown>
         </Space>
       </div>
 

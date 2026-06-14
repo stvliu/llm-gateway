@@ -11,6 +11,7 @@ import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
@@ -55,7 +56,7 @@ public class ChannelServiceImpl implements ChannelService {
         channel.setQuotaLimit(request.getQuotaLimit());
         channel.setTimeout(request.getTimeout());
         channel.setMaxRetries(request.getMaxRetries());
-        channel.setState(Channel.State.ACTIVE);
+        channel.setState(ChannelState.ACTIVE);
 
         Channel saved = channelGateway.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
@@ -129,8 +130,8 @@ public class ChannelServiceImpl implements ChannelService {
         Channel channel = channelGateway.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
-        Channel.State currentState = channel.getState();
-        Channel.State targetState = Channel.State.valueOf(request.getTargetState());
+        ChannelState currentState = channel.getState();
+        ChannelState targetState = ChannelState.valueOf(request.getTargetState());
 
         // 校验状态转换合法性
         if (!currentState.canTransitionTo(targetState)) {
@@ -139,17 +140,17 @@ public class ChannelServiceImpl implements ChannelService {
         }
 
         // PENDING→ACTIVE：强制前置校验
-        if (currentState == Channel.State.PENDING && targetState == Channel.State.ACTIVE) {
+        if (currentState == ChannelState.PENDING && targetState == ChannelState.ACTIVE) {
             validateActivationPrerequisites(channel.getId());
         }
 
         // PENDING→ACTIVE：级联激活 PENDING 状态的 ModelInstance
-        if (currentState == Channel.State.PENDING && targetState == Channel.State.ACTIVE) {
+        if (currentState == ChannelState.PENDING && targetState == ChannelState.ACTIVE) {
             cascadeActivateModelInstances(channel.getId());
         }
 
         // SUSPENDED→ACTIVE：检查完整性（仅警告不阻塞）
-        if (currentState == Channel.State.SUSPENDED && targetState == Channel.State.ACTIVE) {
+        if (currentState == ChannelState.SUSPENDED && targetState == ChannelState.ACTIVE) {
             checkSuspendedActivationReadiness(channel.getId());
         }
 

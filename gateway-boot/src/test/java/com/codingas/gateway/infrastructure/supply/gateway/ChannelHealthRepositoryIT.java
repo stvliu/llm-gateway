@@ -5,6 +5,7 @@ import com.codingas.gateway.domain.supply.entity.Provider;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthStatus;
+import com.codingas.gateway.domain.supply.enums.ChannelState;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,7 @@ class ChannelHealthRepositoryIT {
         channel.setProviderId(savedProvider.getId());
         channel.setName("health-test-channel");
         channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
-        channel.setState(Channel.State.PENDING);
+        channel.setState(ChannelState.PENDING);
         Instant checkAt = Instant.parse("2026-06-13T10:00:00Z");
         channel.setLastHealthCheckAt(checkAt);
         channel.setLastHealthStatus(ChannelHealthStatus.DEGRADED);
@@ -74,7 +75,7 @@ class ChannelHealthRepositoryIT {
         channel.setProviderId(savedProvider.getId());
         channel.setName("null-health-channel");
         channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
-        channel.setState(Channel.State.PENDING);
+        channel.setState(ChannelState.PENDING);
 
         Channel persisted = channelGateway.save(channel);
         Channel reloaded = channelGateway.findById(persisted.getId()).orElseThrow();

@@ -1,5 +1,7 @@
 package com.codingas.gateway.domain.supply.enums;
 
+import lombok.Getter;
+
 /**
  * 计费模式枚举
  *
@@ -11,6 +13,7 @@ package com.codingas.gateway.domain.supply.enums;
  *   <li><b>PREPAID_PACKAGE</b>: 资源包，一次性购买固定额度的 Token 包</li>
  * </ul>
  */
+@Getter
 public enum BillingMode {
 
     /** 按量付费（Pay-as-you-go），按实际 Token 使用量计费 */
@@ -31,14 +34,6 @@ public enum BillingMode {
     BillingMode(String code, String displayName) {
         this.code = code;
         this.displayName = displayName;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getDisplayName() {
-        return displayName;
     }
 
     /**

@@ -65,3 +65,42 @@ export function extractErrorMessage(err: unknown): string {
 
   return '未知错误';
 }
+
+const ERROR_CODE_I18N_MAP: Record<string, string> = {
+  CHANNEL_NOT_FOUND: 'channel.error.CHANNEL_NOT_FOUND',
+  CHANNEL_NAME_DUPLICATE: 'channel.error.CHANNEL_NAME_DUPLICATE',
+  INVALID_STATE_TRANSITION: 'channel.error.INVALID_STATE_TRANSITION',
+  CHANNEL_NO_ENDPOINT: 'channel.error.CHANNEL_NO_ENDPOINT',
+  CHANNEL_NO_CREDENTIAL: 'channel.error.CHANNEL_NO_CREDENTIAL',
+  CHANNEL_NO_MODEL_INSTANCE: 'channel.error.CHANNEL_NO_MODEL_INSTANCE',
+};
+
+/**
+ * 从 AxiosError 响应中提取后端错误码
+ */
+export function extractErrorCode(err: unknown): string | null {
+  const maybeAxios = err as {
+    isAxiosError?: boolean;
+    response?: { data?: { error?: { code?: string } } };
+  };
+  if (maybeAxios.isAxiosError && maybeAxios.response?.data) {
+    const data = maybeAxios.response.data as { error?: { code?: string } };
+    if (data.error?.code) return data.error.code;
+  }
+  return null;
+}
+
+/**
+ * 使用 i18n 提取后端错误码对应的用户友好提示
+ * 无映射时回退到 extractErrorMessage
+ */
+export function extractErrorMessageI18n(
+  err: unknown,
+  t: (key: string, defaultValue?: string) => string,
+): string {
+  const code = extractErrorCode(err);
+  if (code && ERROR_CODE_I18N_MAP[code]) {
+    return t(ERROR_CODE_I18N_MAP[code]);
+  }
+  return extractErrorMessage(err);
+}

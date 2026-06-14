@@ -11,6 +11,8 @@ import {
   canTransitionTo,
   buildStateTooltip,
 } from '../lifecycle';
+import { getAvailableTransitions } from '@/utils/stateTransitions';
+import type { ChannelState } from '@/types/channel';
 
 describe('CHANNEL_LIFECYCLE', () => {
   it('五条状态记录的字段不变性', () => {
@@ -61,5 +63,12 @@ describe('CHANNEL_LIFECYCLE', () => {
     expect(tooltip).toContain('channel.state.tooltipTerminal');
     // 终态不再展示后续可转换，避免误导
     expect(tooltip).not.toContain('channel.state.tooltipNext');
+  });
+
+  it('allowedTransitions 与 stateTransitions getAvailableTransitions 一致（防漂移）', () => {
+    const states: ChannelState[] = ['PENDING', 'ACTIVE', 'SUSPENDED', 'DEPRECATED', 'RETIRED'];
+    for (const s of states) {
+      expect([...allowedTransitions(s)]).toEqual(getAvailableTransitions(s));
+    }
   });
 });
