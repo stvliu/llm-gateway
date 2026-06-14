@@ -1,6 +1,10 @@
 # Channel Provision
 ## Summary
 
+## Purpose
+
+Define the channel provisioning mechanism that supports creating channels from plan catalogs, with automatic cascade creation of missing providers and models, and inline provider creation support.
+
 ## Requirements
 
 ### Requirement: 从套餐创建渠道
