@@ -1,7 +1,10 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.adapter.api.dto.ChannelHealthCheckRequest;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.channel.dto.*;
+import com.codingas.gateway.application.supply.ChannelHealthService;
+import com.codingas.gateway.application.supply.dto.ChannelHealthResult;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import jakarta.validation.Valid;
@@ -20,6 +23,7 @@ import java.util.List;
 public class ChannelController {
 
     private final ChannelService channelService;
+    private final ChannelHealthService channelHealthService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -100,5 +104,23 @@ public class ChannelController {
             @PathVariable Long endpointId,
             @Valid @RequestBody ChannelEndpointRequest request) {
         return channelService.updateEndpoint(channelId, endpointId, request);
+    }
+
+    // ===== 健康检查 =====
+
+    /**
+     * 触发渠道连通性测试，按聚合规则写入健康状态。
+     *
+     * <p>仅 CARD / DRAWER 来源持久化健康字段（last-write-wins）；PRECHECK 来源不写库。</p>
+     *
+     * @param id      渠道 ID
+     * @param request 测试参数（含触发来源 source）
+     * @return 测试矩阵 + 聚合状态
+     */
+    @PostMapping("/{id}/health-check")
+    public ChannelHealthResult healthCheck(
+            @PathVariable Long id,
+            @Valid @RequestBody ChannelHealthCheckRequest request) {
+        return channelHealthService.check(id, request.source());
     }
 }

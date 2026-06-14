@@ -3,6 +3,9 @@ import { Descriptions, InputNumber, Input, Button, Space, Form, message } from '
 import { useTranslation } from 'react-i18next';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
+import { extractErrorMessage } from '@/utils/errorMessage';
+import { useSavePulse } from '@/components/common/useSavePulse';
+import '@/components/common/SavePulse.css';
 
 interface QuotaSettingsSectionProps {
   channel: Channel;
@@ -10,13 +13,17 @@ interface QuotaSettingsSectionProps {
 
 /**
  * 配额与设置区组件
- * 展示渠道的配额和配置信息，支持编辑
+ * 展示渠道的配额和配置信息，支持"编辑模式 + 批量提交"模式。
+ * 与 InlineEditable 三 Section 不同：本组件无乐观更新，只在保存成功 / 失败时
+ * 对编辑区容器触发同款脉冲反馈。
  */
 export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
   const { t } = useTranslation('channels');
   const [editing, setEditing] = useState(false);
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  // 编辑区脉冲——本组件实例在编辑/展示态切换时不会被卸载，可以直接复用 useSavePulse
+  const pulse = useSavePulse();
 
   const updateChannel = useUpdateChannel();
 
@@ -44,19 +51,36 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
 
   /** 保存编辑 */
   const handleSave = async () => {
+    let values: UpdateChannelRequest;
     try {
       setLoading(true);
-      const values = await form.validateFields();
-      const data: UpdateChannelRequest = {
-        quotaLimit: values.quotaLimit,
-        timeout: values.timeout,
-        maxRetries: values.maxRetries,
-      };
+      values = (await form.validateFields()) as UpdateChannelRequest;
+    } catch (err) {
+      // 校验失败 → AntD 行内已显示，不再弹 toast；其它错误带后端原因输出
+      const reason = extractErrorMessage(err);
+      if (reason) {
+        message.error(t('common:message.saveFailed', { reason }));
+      }
+      setLoading(false);
+      return;
+    }
+    const data: UpdateChannelRequest = {
+      quotaLimit: values.quotaLimit,
+      timeout: values.timeout,
+      maxRetries: values.maxRetries,
+    };
+    try {
       await updateChannel.mutateAsync({ id: channel.id, data });
+      pulse.triggerSuccess();
       message.success(t('quota.updateSuccess'));
       setEditing(false);
-    } catch {
-      message.error(t('quota.updateFail'));
+    } catch (err) {
+      const reason = extractErrorMessage(err);
+      // 触发编辑区错误脉冲（即使下方 toast 不显示，行内仍有可见反馈）
+      pulse.triggerError(reason || t('common:message.saveFailed', { reason: '' }));
+      if (reason) {
+        message.error(t('common:message.saveFailed', { reason }));
+      }
     } finally {
       setLoading(false);
     }
@@ -64,37 +88,47 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
 
   if (editing) {
     return (
-      <Form form={form} layout="vertical">
-        <Form.Item label={t('quota.rpm')} name="rpm">
-          <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
-        </Form.Item>
-        <Form.Item label={t('quota.tpm')} name="tpm">
-          <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
-        </Form.Item>
-        <Form.Item label={t('quota.quotaLimit')} name="quotaLimit">
-          <InputNumber min={0} style={{ width: '100%' }} placeholder={t('quota.unlimited')} />
-        </Form.Item>
-        <Form.Item label={t('quota.timeoutMs')} name="timeout">
-          <InputNumber min={1000} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
-        </Form.Item>
-        <Form.Item label={t('quota.maxRetries')} name="maxRetries">
-          <InputNumber min={0} max={5} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
-        </Form.Item>
-        <Form.Item label={t('quota.customHeader')}>
-          <Input style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
-        </Form.Item>
-        <Space>
-          <Button type="primary" onClick={handleSave} loading={loading}>
-            {t('drawer.save')}
-          </Button>
-          <Button onClick={handleCancel}>{t('drawer.cancel')}</Button>
-        </Space>
-      </Form>
+      <div className={pulse.className} style={{ padding: 4, borderRadius: 4 }}>
+        <Form form={form} layout="vertical">
+          <Form.Item label={t('quota.rpm')} name="rpm">
+            <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
+          </Form.Item>
+          <Form.Item label={t('quota.tpm')} name="tpm">
+            <InputNumber min={1} style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
+          </Form.Item>
+          <Form.Item label={t('quota.quotaLimit')} name="quotaLimit">
+            <InputNumber min={0} style={{ width: '100%' }} placeholder={t('quota.unlimited')} />
+          </Form.Item>
+          <Form.Item label={t('quota.timeoutMs')} name="timeout">
+            <InputNumber min={1000} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
+          </Form.Item>
+          <Form.Item label={t('quota.maxRetries')} name="maxRetries">
+            <InputNumber min={0} max={5} style={{ width: '100%' }} placeholder={t('quota.useDefault')} />
+          </Form.Item>
+          <Form.Item label={t('quota.customHeader')}>
+            <Input style={{ width: '100%' }} placeholder={t('quota.notSupported')} disabled />
+          </Form.Item>
+          <Space>
+            <Button type="primary" onClick={handleSave} loading={loading}>
+              {t('drawer.save')}
+            </Button>
+            <Button onClick={handleCancel}>{t('drawer.cancel')}</Button>
+            {pulse.state === 'success' && (
+              <span className="save-tip-ok">
+                ✓ {t('common:message.saved', { defaultValue: '已保存' })}
+              </span>
+            )}
+            {pulse.state === 'error' && (
+              <span className="save-tip-err">✗ {pulse.errorMsg}</span>
+            )}
+          </Space>
+        </Form>
+      </div>
     );
   }
 
   return (
-    <div>
+    <div className={pulse.className} style={{ padding: 4, borderRadius: 4 }}>
       <Descriptions column={1} size="small">
         <Descriptions.Item label={t('quota.rpm')}>
           {t('quota.notSupported')}
@@ -115,9 +149,19 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
           {t('quota.notSupported')}
         </Descriptions.Item>
       </Descriptions>
-      <Button type="link" style={{ padding: 0, marginTop: 12 }} onClick={handleStartEdit}>
-        {t('quota.editSettings')}
-      </Button>
+      <Space style={{ marginTop: 12 }}>
+        <Button type="link" style={{ padding: 0 }} onClick={handleStartEdit}>
+          {t('quota.editSettings')}
+        </Button>
+        {pulse.state === 'success' && (
+          <span className="save-tip-ok">
+            ✓ {t('common:message.saved', { defaultValue: '已保存' })}
+          </span>
+        )}
+        {pulse.state === 'error' && (
+          <span className="save-tip-err">✗ {pulse.errorMsg}</span>
+        )}
+      </Space>
     </div>
   );
 }

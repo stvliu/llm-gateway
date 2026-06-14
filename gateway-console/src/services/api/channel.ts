@@ -5,6 +5,8 @@ import type {
   ChannelEndpointResponse,
   ChannelCredential,
   ChannelModel,
+  ChannelHealthCheckResponse,
+  ChannelHealthSource,
   CreateChannelRequest,
   UpdateChannelRequest,
   CreateChannelEndpointRequest,
@@ -14,6 +16,7 @@ import type {
   UpdateChannelCredentialRequest,
   ApiKeyTestResponse,
 } from '@/types/channel';
+import type { AxiosRequestConfig } from 'axios';
 
 /** 渠道 API */
 export const channelApi = {
@@ -80,6 +83,19 @@ export const channelApi = {
   /** 测试渠道凭证 */
   testCredential: (channelId: number, credentialId: number) =>
     api.post<ApiKeyTestResponse>(`/channels/${channelId}/credentials/${credentialId}/test`),
+
+  /**
+   * 触发渠道健康检查（任务 9.5/9.6）。
+   * <p>POST /channels/{id}/health-check 请求体含 source 字段（CARD/DRAWER/PRECHECK），
+   * 返回矩阵 + 聚合状态。DRAWER/CARD 持久化健康字段；PRECHECK 不持久化。</p>
+   * <p>可传入 axios config（典型用法：传 signal 以便 AbortController 取消请求）。</p>
+   */
+  healthCheck: (
+    channelId: number,
+    source: ChannelHealthSource,
+    config?: AxiosRequestConfig,
+  ) =>
+    api.post<ChannelHealthCheckResponse>(`/channels/${channelId}/health-check`, { source }, config),
 
   /** ---- 渠道模型映射 ---- */
 

@@ -8,7 +8,6 @@ import {
   Spin,
   Segmented,
   Card,
-  Dropdown,
   message,
   Modal,
 } from 'antd';
@@ -17,7 +16,6 @@ import {
   AppstoreOutlined,
   UnorderedListOutlined,
   ImportOutlined,
-  DownOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAllChannels, useDeleteChannel, useTransitionChannelState, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
@@ -27,17 +25,14 @@ import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import { ChannelCreateWizard } from './ChannelCreateWizard';
 import { ProviderEditModal } from './ProviderEditModal';
-import { ProviderCreateModal } from './ProviderCreateModal';
 import { ChannelTableView } from './ChannelTableView';
 import { ConnectivityTestPanel } from './ConnectivityTestPanel';
 import BatchImportModal from './BatchImportModal';
 import { BatchExportButton } from './BatchExportButton';
-import { STATE_CONFIG } from '@/components/common/ChannelStateTag';
 import type {
   ChannelCard,
   ChannelGroup,
   Channel,
-  ChannelState,
   ChannelCredential,
   ChannelModel,
 } from '@/types/channel';
@@ -84,9 +79,10 @@ export default function Channels() {
   const [editProviderModalOpen, setEditProviderModalOpen] = useState(false);
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [batchImportOpen, setBatchImportOpen] = useState(false);
-  const [createProviderOpen, setCreateProviderOpen] = useState(false);
   const [connectivityProviderId, setConnectivityProviderId] = useState<number | null>(null);
   const [drawerInitialTab, setDrawerInitialTab] = useState<string | undefined>(undefined);
+  // 任务 9.1：闪电图标点击携带 highlightTestAll=true，由 ChannelDetailDrawer 接收并 800ms 自清除
+  const [drawerHighlightTestAll, setDrawerHighlightTestAll] = useState(false);
 
   // 视图切换（持久化到 localStorage）
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -227,8 +223,20 @@ export default function Channels() {
     deleteChannel.mutate({ id, providerId: ch?.providerId ?? 0 });
   };
 
-  /** 从卡片发起连通性测试 */
-  const handleTestChannel = async (channel: ChannelCard) => {
+  /** 从卡片发起连通性测试（任务 9.1：闪电图标改为打开抽屉到 Credentials Tab，并高亮"测试全部"） */
+  const handleTestChannel = async (
+    channel: ChannelCard,
+    intent?: { tab: 'credentials'; highlightTestAll: boolean },
+  ) => {
+    // 闪电图标新行为：透传 intent 时打开详情抽屉到指定 Tab + 高亮触发
+    if (intent) {
+      setSelectedChannel(channel);
+      setDrawerInitialTab(intent.tab);
+      setDrawerHighlightTestAll(intent.highlightTestAll);
+      setDrawerVisible(true);
+      return;
+    }
+    // 兼容兜底：保留旧的就地测试调用路径（其他来源仍可用 testCredential 直测）
     if (channel.state !== 'ACTIVE') return;
     const idx = channels?.findIndex(c => c.id === channel.id) ?? -1;
     const creds = credentialsData[idx];
@@ -324,16 +332,6 @@ export default function Channels() {
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateChannel}>
             {t('addChannel')}
           </Button>
-          <Dropdown menu={{
-            items: [
-              { key: 'provider', label: t('addProvider'), icon: <AppstoreOutlined /> },
-            ],
-            onClick: ({ key }) => {
-              if (key === 'provider') setCreateProviderOpen(true);
-            },
-          }}>
-            <Button icon={<DownOutlined />} />
-          </Dropdown>
         </Space>
       </div>
 
@@ -387,21 +385,6 @@ export default function Channels() {
               message.info(t('batch.exportHint'));
             }}
           />
-          {/* 底部新增渠道虚线卡片 */}
-          <Card
-            hoverable
-            style={{
-              border: `2px dashed ${token.colorBorder}`,
-              textAlign: 'center',
-              cursor: 'pointer',
-              marginTop: 16,
-            }}
-            styles={{ body: { padding: '24px' } }}
-            onClick={() => setCreateProviderOpen(true)}
-          >
-            <PlusOutlined style={{ fontSize: 24, color: token.colorPrimary, marginBottom: 8 }} />
-            <div style={{ color: token.colorPrimary, fontSize: 14 }}>{t('addProvider')}</div>
-          </Card>
         </>
       ) : (
         <ChannelTableView
@@ -433,8 +416,10 @@ export default function Channels() {
         onClose={() => {
           setDrawerVisible(false);
           setDrawerInitialTab(undefined);
+          setDrawerHighlightTestAll(false);
         }}
         initialTab={drawerInitialTab}
+        highlightTestAll={drawerHighlightTestAll}
       />
 
       {/* 创建向导 */}
@@ -457,12 +442,6 @@ export default function Channels() {
       <BatchImportModal
         open={batchImportOpen}
         onClose={() => setBatchImportOpen(false)}
-      />
-
-      {/* 供应商创建弹窗 */}
-      <ProviderCreateModal
-        open={createProviderOpen}
-        onClose={() => setCreateProviderOpen(false)}
       />
 
       {/* 供应商连通性测试弹窗 */}

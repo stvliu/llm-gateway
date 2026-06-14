@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useTestConnectivity } from '@/services/query/useProviders';
 import type { ConnectivityTestResult, ConnectivityTestLevelResult } from '@/types/provider';
 
-const { Text } = Typography;
+const { Text, Title } = Typography;
 
 interface ConnectivityTestPanelProps {
   providerCode: string;
@@ -13,8 +13,11 @@ interface ConnectivityTestPanelProps {
 }
 
 /**
- * 供应商连通性测试面板
- * 支持两级测试：认证检测 + 模型可用性
+ * 预检工具（任务 9.7：原 ConnectivityTestPanel 改名）。
+ *
+ * <p>用于在创建渠道前独立测试 baseUrl + Key 的可用性（与已有渠道解耦）。
+ * 调用 /providers/test-connectivity 端点（非 /channels/{id}/health-check），
+ * 后端按 PRECHECK 分支隐式跳过任何持久化。</p>
  */
 export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
   const { t } = useTranslation('channels');
@@ -24,6 +27,7 @@ export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: Connecti
 
   const handleTest = async () => {
     const values = await form.validateFields();
+    // PRECHECK 路径不持久化健康字段（后端 /providers/test-connectivity 端点不写 channels.last_*）
     testMutation.mutate(
       {
         protocolName: values.protocol,
@@ -34,7 +38,7 @@ export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: Connecti
       {
         onSuccess: (data) => setResult(data),
         onError: () => setResult(null),
-      }
+      },
     );
   };
 
@@ -66,6 +70,15 @@ export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: Connecti
 
   return (
     <div>
+      {/* 任务 9.7：标题 + 副标题，明确"创建渠道前"定位 */}
+      <div style={{ marginBottom: 16 }}>
+        <Title level={5} style={{ margin: 0 }}>
+          {t('precheck.title')}
+        </Title>
+        <Text type="secondary" style={{ fontSize: 12 }}>
+          {t('precheck.subtitle')}
+        </Text>
+      </div>
       <Form form={form} layout="vertical" initialValues={{ protocol: providerCode === 'anthropic' ? 'anthropic' : 'openai', baseUrl: defaultBaseUrl }}>
         <Form.Item name="protocol" label={t('connectivity.protocol')} rules={[{ required: true }]}>
           <Input disabled placeholder={providerCode === 'anthropic' ? 'Anthropic' : 'OpenAI'} />

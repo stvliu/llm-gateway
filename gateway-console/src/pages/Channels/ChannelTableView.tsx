@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard, ChannelState } from '@/types/channel';
 import type { Provider } from '@/types/provider';
 import type { FC } from 'react';
@@ -19,7 +20,8 @@ interface ChannelTableViewProps {
   onChannelClick: (channelId: number) => void;
   onToggleState: (id: number, enabled: boolean) => void;
   onDelete: (id: number) => void;
-  onTest: (channel: ChannelCard) => void;
+  /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
+  onTest: (channel: ChannelCard, intent?: { tab: 'credentials'; highlightTestAll: boolean }) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
 }
 
@@ -39,6 +41,9 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
   const { modal } = App.useApp();
+  // 删除整个渠道（任务 8.7）：使用 useDangerConfirm 与其他危险操作对齐
+  const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
+    useDangerConfirm();
   const providerMap = useMemo(() => {
     return new Map(providers.map((p) => [p.id, p]));
   }, [providers]);
@@ -48,14 +53,33 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     const actionLabel = getTransitionActionLabel(currentState, targetState);
 
     if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let title = actionLabel;
       let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
       if (targetState === 'RETIRED') {
-        content = t('card.confirmRetireContent', '此操作不可逆，确定要废弃此渠道？');
+        title = t('channel.action.retire.confirmTitle', '停用渠道？');
+        content = t(
+          'channel.action.retire.confirmDescription',
+          '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
+        );
       }
       modal.confirm({
-        title: actionLabel,
+        title,
         content,
         okType: 'danger',
+        onOk: () => onStateTransition?.(record.id, targetState, ''),
+      });
+      return;
+    }
+
+    // 暂停操作（→ SUSPENDED）：轻量二次确认
+    if (targetState === 'SUSPENDED') {
+      modal.confirm({
+        title: t('channel.action.suspend.confirmTitle', '暂停渠道？'),
+        content: t(
+          'channel.action.suspend.confirmDescription',
+          '暂停后该渠道不再分配流量，但保留配置'
+        ),
+        okType: 'default',
         onOk: () => onStateTransition?.(record.id, targetState, ''),
       });
       return;
@@ -64,11 +88,12 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     onStateTransition?.(record.id, targetState, '');
   };
 
+  /** 删除整个渠道（任务 8.7）：使用 useDangerConfirm 与 RETIRED 文案对齐 */
   const handleDeleteClick = (record: ChannelCard) => {
-    modal.confirm({
-      title: t('card.deleteConfirmTitle'),
-      content: t('card.deleteConfirmContent', { name: record.name }),
-      okType: 'danger',
+    confirmDeleteChannel({
+      titleKey: 'channel.deleteDangerTitle',
+      descriptionKey: 'channel.deleteDangerDescription',
+      descriptionParams: { name: record.name },
       onOk: () => onDelete(record.id),
     });
   };
@@ -160,7 +185,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
                 size="small"
                 icon={<ThunderboltOutlined />}
                 disabled={!isRoutable}
-                onClick={() => onTest(r)}
+                onClick={() => onTest(r, { tab: 'credentials', highlightTestAll: true })}
                 style={{ opacity: isRoutable ? 1 : 0.4 }}
               />
             </Tooltip>
@@ -203,12 +228,16 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   ];
 
   return (
-    <Table
-      rowKey="id"
-      columns={columns}
-      dataSource={channels}
-      size="small"
-      pagination={false}
-    />
+    <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
+      <Table
+        rowKey="id"
+        columns={columns}
+        dataSource={channels}
+        size="small"
+        pagination={false}
+      />
+    </>
   );
 };

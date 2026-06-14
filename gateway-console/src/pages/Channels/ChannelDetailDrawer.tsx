@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Drawer,
   Typography,
@@ -8,11 +8,12 @@ import {
   message,
   Spin,
   Tabs,
-  Popconfirm,
   Dropdown,
   Alert,
   Modal,
-  Input,
+  Table,
+  Tag,
+  Tooltip,
 } from 'antd';
 import {
   GlobalOutlined,
@@ -23,20 +24,31 @@ import {
   ApiOutlined,
   DeleteOutlined,
   DownOutlined,
+  CheckCircleFilled,
+  CloseCircleFilled,
 } from '@ant-design/icons';
+import axios from 'axios';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
-import type { ChannelCard, ChannelState } from '@/types/channel';
+import { useDangerConfirm } from '@/components/common/useDangerConfirm';
+import { extractErrorMessage } from '@/utils/errorMessage';
+import type {
+  ChannelCard,
+  ChannelState,
+  ChannelHealthMatrixRow,
+} from '@/types/channel';
 import {
   useChannel,
   useChannelCredentials,
   useChannelModels,
   useTransitionChannelState,
   useTransitionChannelModelState,
-  useTestChannelCredential,
   useDeleteChannel,
+  channelKeys,
 } from '@/services/query/useChannels';
+import { channelApi } from '@/services/api/channel';
 import { EndpointSection } from './EndpointSection';
 import { CredentialSection } from './CredentialSection';
 import { ModelMappingSection } from './ModelMappingSection';
@@ -52,6 +64,8 @@ interface ChannelDetailDrawerProps {
   open: boolean;
   onClose: () => void;
   initialTab?: string;
+  /** 任务 9.1：闪电图标进入时为 true，用于让 Credentials Tab 内"测试全部"按钮短暂高亮 */
+  highlightTestAll?: boolean;
 }
 
 /**
@@ -63,16 +77,60 @@ export function ChannelDetailDrawer({
   open,
   onClose,
   initialTab,
+  highlightTestAll = false,
 }: ChannelDetailDrawerProps) {
   const { t } = useTranslation('channels');
   const [activeTab, setActiveTab] = useState('overview');
   const [editProviderOpen, setEditProviderOpen] = useState(false);
+  // 任务 9.1：高亮"测试全部"按钮 800ms 后自清除
+  const [testAllHighlight, setTestAllHighlight] = useState(false);
+  // 任务 9.5/9.6：矩阵 Table 状态 + AbortController 引用
+  const [matrix, setMatrix] = useState<ChannelHealthMatrixRow[] | null>(null);
+  const [matrixLoading, setMatrixLoading] = useState(false);
+  /**
+   * AbortController 引用：每次 triggerTest 创建新的，便于关闭抽屉 / 卸载时调用 abort()
+   * 取消进行中的 axios 请求，避免越权 setState 警告。
+   */
+  const acRef = useRef<AbortController | null>(null);
+  const queryClient = useQueryClient();
+  // 删除整个渠道（任务 8.7）：与其他危险操作统一为 useDangerConfirm
+  const { confirm: confirmDeleteChannel, contextHolder: dangerContextHolder } =
+    useDangerConfirm();
 
   useEffect(() => {
     if (open && initialTab) {
       setActiveTab(initialTab);
     }
   }, [open, initialTab]);
+
+  // 任务 9.1：抽屉打开且 highlightTestAll=true 时，对"测试全部"按钮做 800ms 高亮
+  useEffect(() => {
+    if (open && highlightTestAll) {
+      setTestAllHighlight(true);
+      const tid = window.setTimeout(() => setTestAllHighlight(false), 800);
+      return () => window.clearTimeout(tid);
+    }
+  }, [open, highlightTestAll]);
+
+  /**
+   * 任务 9.5/9.6：抽屉关闭 / 卸载 / 当前 channel 切换时，中止正在进行的 healthCheck。
+   * 防止进入"组件已卸载但 setState 仍触发"的越权场景。
+   */
+  useEffect(() => {
+    if (!open) {
+      acRef.current?.abort();
+      acRef.current = null;
+      // 关闭抽屉清空旧矩阵，避免下次打开时残留
+      setMatrix(null);
+      setMatrixLoading(false);
+    }
+  }, [open]);
+  useEffect(() => {
+    return () => {
+      acRef.current?.abort();
+      acRef.current = null;
+    };
+  }, []);
 
   const transitionChannelState = useTransitionChannelState();
   const transitionModelState = useTransitionChannelModelState();
@@ -84,7 +142,6 @@ export function ChannelDetailDrawer({
   );
   const { data: channelModels = [] } = useChannelModels(channel?.id || 0);
   const { data: provider } = useProvider(channel?.providerId || 0);
-  const testCredential = useTestChannelCredential();
 
   if (!channel) return null;
 
@@ -102,46 +159,85 @@ export function ChannelDetailDrawer({
     return labels[mode] || t('billing.default', { mode });
   };
 
-  /** 测试所有凭证 */
-  const handleTest = async () => {
+  /**
+   * 任务 9.5/9.6：触发健康检查（详情抽屉是唯一执行入口）。
+   * - 通过 channelApi.healthCheck 调用 POST /channels/{id}/health-check，source='DRAWER'
+   * - 每次调用前 abort 上一次（防止并发态污染）
+   * - axios timeout 35s（覆盖后端 30s 超时再加 5s 缓冲）
+   * - 成功后 setMatrix + invalidate channels 列表（刷新 lastHealthStatus 等字段）
+   */
+  const triggerTest = async () => {
+    if (!channel) return;
     if (credentials.length === 0) {
       message.warning(t('drawer.noCredentials'));
       return;
     }
+    // 取消上一轮（如果有）
+    acRef.current?.abort();
+    acRef.current = new AbortController();
+    setMatrixLoading(true);
     try {
-      let successCount = 0;
-      let failCount = 0;
-      for (const cred of credentials) {
-        try {
-          await testCredential.mutateAsync({ channelId: channel.id, id: cred.id });
-          successCount++;
-        } catch {
-          failCount++;
-        }
+      const res = await channelApi.healthCheck(channel.id, 'DRAWER', {
+        signal: acRef.current.signal,
+        timeout: 35000,
+      });
+      // 防御：如果在 await 期间被 abort（如关闭抽屉），不再 setState
+      if (acRef.current?.signal.aborted) return;
+      setMatrix(res.matrix);
+      // 刷新列表：让卡片 HealthDot 重渲（lastHealthStatus / lastHealthCheckAt 已被后端持久化）
+      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
+      queryClient.invalidateQueries({ queryKey: channelKeys.lists() });
+    } catch (err) {
+      // axios.isCancel 兼容 AbortError（axios v1+）
+      if (axios.isCancel(err) || (err as Error)?.name === 'CanceledError' || (err as Error)?.name === 'AbortError') {
+        return;
       }
-      if (failCount === 0) {
-        message.success(t('drawer.testAllSuccess', { count: successCount }));
+      message.error(extractErrorMessage(err) || t('drawer.testFailed'));
+    } finally {
+      // 仅当当前 controller 还是这一次的，才清 loading（避免被新一轮 reset）
+      if (!acRef.current?.signal.aborted) {
+        setMatrixLoading(false);
       } else {
-        message.warning(t('drawer.testPartialSuccess', { success: successCount, fail: failCount }));
+        setMatrixLoading(false);
       }
-    } catch {
-      message.error(t('drawer.testFailed'));
     }
   };
+
+  /** 测试所有凭证（保留兼容兜底；当前 extra 按钮已切换到 triggerTest） */
+  const handleTest = triggerTest;
 
   /** 状态转换 */
   const handleTransition = (targetState: ChannelState) => {
     const actionLabel = getTransitionActionLabel(currentState, targetState);
 
     if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+      let title = actionLabel;
       let content = t('drawer.confirmDeprecate', '确定要将此渠道标记为下线？');
       if (targetState === 'RETIRED') {
-        content = t('drawer.confirmRetire', '此操作不可逆，确定要废弃此渠道？');
+        title = t('channel.action.retire.confirmTitle', '停用渠道？');
+        content = t(
+          'channel.action.retire.confirmDescription',
+          '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
+        );
       }
       Modal.confirm({
-        title: actionLabel,
+        title,
         content,
         okType: 'danger',
+        onOk: () => transitionChannelState.mutateAsync({ id: channel.id, targetState }),
+      });
+      return;
+    }
+
+    // 暂停操作（→ SUSPENDED）：轻量二次确认（非红色）
+    if (targetState === 'SUSPENDED') {
+      Modal.confirm({
+        title: t('channel.action.suspend.confirmTitle', '暂停渠道？'),
+        content: t(
+          'channel.action.suspend.confirmDescription',
+          '暂停后该渠道不再分配流量，但保留配置'
+        ),
+        okType: 'default',
         onOk: () => transitionChannelState.mutateAsync({ id: channel.id, targetState }),
       });
       return;
@@ -245,6 +341,8 @@ export function ChannelDetailDrawer({
 
   return (
     <>
+      {/* useDangerConfirm 的 contextHolder 必须挂载到组件树，否则 modal 不出现 */}
+      {dangerContextHolder}
       <Drawer
         placement="right"
         width={720}
@@ -262,7 +360,9 @@ export function ChannelDetailDrawer({
             <Button
               icon={<ApiOutlined />}
               onClick={handleTest}
-              loading={testCredential.isPending}
+              loading={matrixLoading}
+              type={testAllHighlight ? 'primary' : 'default'}
+              data-testid="drawer-connectivity-test-btn"
             >
               {t('drawer.connectivityTest')}
             </Button>
@@ -288,18 +388,21 @@ export function ChannelDetailDrawer({
               </Dropdown>
             )}
 
-            <Popconfirm
-              title={t('drawer.confirmDelete')}
-              description={t('drawer.confirmDeleteDesc', { name: channel.name })}
-              onConfirm={handleDelete}
-              okText={t('actions.delete', { ns: 'common' })}
-              cancelText={t('actions.cancel', { ns: 'common' })}
-              okButtonProps={{ danger: true }}
+            <Button
+              danger
+              icon={<DeleteOutlined />}
+              loading={deleteChannel.isPending}
+              onClick={() =>
+                confirmDeleteChannel({
+                  titleKey: 'channel.deleteDangerTitle',
+                  descriptionKey: 'channel.deleteDangerDescription',
+                  descriptionParams: { name: channel.name },
+                  onOk: handleDelete,
+                })
+              }
             >
-              <Button danger icon={<DeleteOutlined />} loading={deleteChannel.isPending}>
-                {t('card.delete')}
-              </Button>
-            </Popconfirm>
+              {t('card.delete')}
+            </Button>
           </Space>
         }
       >
@@ -338,6 +441,66 @@ export function ChannelDetailDrawer({
                 </Text>
               </Space>
             </div>
+
+            {/* 任务 9.5/9.6：连通性测试矩阵 Table —— 抽屉是唯一执行入口 */}
+            {(matrix !== null || matrixLoading) && (
+              <div style={{ marginBottom: 16 }} data-testid="health-matrix-section">
+                <div style={{ marginBottom: 8 }}>
+                  <Text strong>{t('drawer.healthMatrix.title', '连通性测试结果')}</Text>
+                </div>
+                <Table<ChannelHealthMatrixRow>
+                  size="small"
+                  rowKey="credentialId"
+                  loading={matrixLoading}
+                  dataSource={matrix ?? []}
+                  pagination={false}
+                  columns={[
+                    {
+                      title: t('drawer.healthMatrix.colKey', '脱敏 Key'),
+                      dataIndex: 'keyMasked',
+                      key: 'keyMasked',
+                    },
+                    {
+                      title: t('drawer.healthMatrix.colAuth', '认证'),
+                      dataIndex: 'auth',
+                      key: 'auth',
+                      render: (auth: 'PASS' | 'FAIL', row) =>
+                        auth === 'PASS' ? (
+                          <Tag icon={<CheckCircleFilled />} color="success">
+                            {t('drawer.healthMatrix.authPass', '通过')}
+                          </Tag>
+                        ) : (
+                          <Tooltip title={row.authError ?? ''}>
+                            <Tag icon={<CloseCircleFilled />} color="error">
+                              {row.authError ?? t('drawer.healthMatrix.authFail', '失败')}
+                            </Tag>
+                          </Tooltip>
+                        ),
+                    },
+                    {
+                      title: t('drawer.healthMatrix.colModels', '可用模型'),
+                      dataIndex: 'availableModels',
+                      key: 'availableModels',
+                      render: (models?: string[] | null) => {
+                        const list = models ?? [];
+                        if (list.length === 0) return <Text type="secondary">-</Text>;
+                        return (
+                          <Tooltip title={list.join(', ')}>
+                            <span>{t('drawer.healthMatrix.modelCount', { count: list.length })}</span>
+                          </Tooltip>
+                        );
+                      },
+                    },
+                    {
+                      title: t('drawer.healthMatrix.colLatency', '延迟'),
+                      dataIndex: 'latencyMs',
+                      key: 'latencyMs',
+                      render: (ms?: number | null) => (ms == null ? <Text type="secondary">-</Text> : <span>{ms}ms</span>),
+                    },
+                  ]}
+                />
+              </div>
+            )}
 
             <Tabs
               activeKey={activeTab}

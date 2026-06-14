@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -99,8 +100,17 @@ public class ChannelProvisionService {
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "套餐目录不存在: " + planCode));
 
-        // 自動创建 Provider（如果尚未存在）
-        Provider provider = ensureProvider(catalog.getProviderCode());
+        // 入口校验：若提供 inlineProvider，其 code 必须与套餐解析的 providerCode 一致
+        ProvisionRequest.InlineProvider inline = request != null ? request.getInlineProvider() : null;
+        if (inline != null && inline.code() != null
+                && !Objects.equals(inline.code(), catalog.getProviderCode())) {
+            throw new CatalogException("INLINE_PROVIDER_CODE_MISMATCH",
+                    "INLINE_PROVIDER_CODE_MISMATCH: inlineProvider.code 与套餐 providerCode 不一致, inline="
+                            + inline.code() + ", plan=" + catalog.getProviderCode());
+        }
+
+        // 自动创建 Provider（如果尚未存在）；inline 仅在新建路径生效
+        Provider provider = ensureProvider(catalog.getProviderCode(), inline);
 
         // 检查 Channel 是否已存在
         if (channelGateway.existsByProviderIdAndName(provider.getId(), planCode)) {
@@ -274,22 +284,46 @@ public class ChannelProvisionService {
     // ===== 辅助方法 =====
 
     /**
-     * 查找或创建 Provider
+     * 查找或创建 Provider（无 inline 入参的旧默认行为）
+     *
+     * <p>用于内部级联场景（如 provisionBatch），等价于 {@code ensureProvider(providerCode, null)}。</p>
      */
     private Provider ensureProvider(String providerCode) {
-        Optional<Provider> existing = providerGateway.findByCode(providerCode);
-        if (existing.isPresent()) {
-            return existing.get();
-        }
+        return ensureProvider(providerCode, null);
+    }
 
-        Provider provider = new Provider();
-        provider.setCode(providerCode);
-        provider.setName(providerCode);
-        provider.setPriority(100);
-
-        Provider saved = providerGateway.save(provider);
-        log.info("自动创建供应商: code={}, id={}", providerCode, saved.getId());
-        return saved;
+    /**
+     * 查找或创建 Provider，支持 inlineProvider 字段填充
+     *
+     * <p>三路径行为：</p>
+     * <ul>
+     *     <li>providerCode 已存在 → 直接返回，inline 被忽略，不触发 save</li>
+     *     <li>providerCode 不存在 + inline 非空 → 用 inline 字段填充 name/description/websiteUrl/apiDocUrl</li>
+     *     <li>providerCode 不存在 + inline 为空 → 走旧默认级联（name=providerCode）</li>
+     * </ul>
+     *
+     * @param providerCode 供应商程序标识
+     * @param inline       内联供应商参数；为空时走默认级联
+     * @return 现有或新建的 Provider
+     */
+    private Provider ensureProvider(String providerCode, ProvisionRequest.InlineProvider inline) {
+        return providerGateway.findByCode(providerCode).orElseGet(() -> {
+            Provider provider = new Provider();
+            provider.setCode(providerCode);
+            provider.setPriority(100);
+            if (inline != null) {
+                // inline.name 为空时回退 providerCode，避免 name 列为 null 违反约束
+                provider.setName(Optional.ofNullable(inline.name()).orElse(providerCode));
+                provider.setDescription(inline.description());
+                provider.setWebsiteUrl(inline.websiteUrl());
+                provider.setApiDocUrl(inline.apiDocUrl());
+            } else {
+                provider.setName(providerCode);
+            }
+            Provider saved = providerGateway.save(provider);
+            log.info("自动创建供应商: code={}, inline={}, id={}", providerCode, inline != null, saved.getId());
+            return saved;
+        });
     }
 
     /**

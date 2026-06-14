@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
@@ -46,5 +47,15 @@ export default defineConfig({
         entryFileNames: 'assets/[name]-[hash].js',
       },
     },
+  },
+  // 单元/组件测试配置（Vitest）
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts'],
+    css: true,
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    // 排除 e2e 目录，避免 Vitest 误抓取 Playwright 用例
+    exclude: ['node_modules/**', 'e2e/**', 'dist/**'],
   },
 });

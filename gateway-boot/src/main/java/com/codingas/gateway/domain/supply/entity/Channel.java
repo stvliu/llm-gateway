@@ -3,6 +3,8 @@ package com.codingas.gateway.domain.supply.entity;
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
+import com.codingas.gateway.domain.supply.enums.ChannelHealthStatus;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -64,6 +66,15 @@ public class Channel extends BaseEntity {
     private Integer maxRetries;
 
     private State state = State.PENDING;
+
+    /** 最近一次连通性测试完成时间（last-write-wins，无版本锁） */
+    private Instant lastHealthCheckAt;
+
+    /** 最近一次健康聚合状态 */
+    private ChannelHealthStatus lastHealthStatus;
+
+    /** 最近一次测试触发来源（仅 CARD / DRAWER 持久化） */
+    private ChannelHealthSource lastHealthSource;
 
     @Override
     public Instant getCreatedAt() {

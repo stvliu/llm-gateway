@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { ChannelGroup, ChannelCard as ChannelCardType } from '@/types/channel';
 import { ProviderGroupHeader } from './ProviderGroupHeader';
-import { ChannelCard } from './ChannelCard';
+import { ChannelCard, type ChannelTestIntent } from './ChannelCard';
 import type { FC } from 'react';
 
 export interface ChannelGroupedListProps {
@@ -9,7 +9,8 @@ export interface ChannelGroupedListProps {
   onChannelClick: (channel: ChannelCardType) => void;
   onChannelDelete: (id: number) => void;
   onChannelToggleState: (id: number, enabled: boolean) => void;
-  onTestChannel: (channel: ChannelCardType) => void;
+  /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
+  onTestChannel: (channel: ChannelCardType, intent?: ChannelTestIntent) => void;
   onStateTransition?: (id: number, targetState: string, reason?: string) => void;
   onEditProvider?: (providerId: number) => void;
   onToggleProviderEnabled?: (providerId: number) => void;
@@ -79,6 +80,8 @@ export const ChannelGroupedList: FC<ChannelGroupedListProps> = ({
               onBatchResume={onToggleProviderEnabled ? () => onToggleProviderEnabled(group.provider.id) : undefined}
               onTestConnectivity={onTestProviderConnectivity ? () => onTestProviderConnectivity(group.provider.id) : undefined}
               onExport={onExportProvider ? () => onExportProvider(group.provider.id) : undefined}
+              /* 任务 9.4：透传 channels 用于派生 N/M 健康聚合 */
+              channels={group.channels}
             />
 
             {/* 渠道卡片列表（折叠时隐藏） */}

@@ -87,9 +87,25 @@ export interface BatchProvisionResult {
   results: ProvisionResult[];
 }
 
+/** 内联创建供应商载荷（与后端 ProvisionRequest.InlineProvider 对齐） */
+export interface InlineProviderRequest {
+  /** 必须与套餐的 providerCode 一致 */
+  code: string;
+  /** 供应商名称 */
+  name: string;
+  /** 描述 */
+  description?: string;
+  /** 官网地址 */
+  websiteUrl?: string;
+  /** API 文档地址 */
+  apiDocUrl?: string;
+}
+
 /** 开通请求 */
 export interface ProvisionRequest {
   apiKeys?: string[];
+  /** 内联创建供应商：当 providerCode 不存在时一并创建 Provider */
+  inlineProvider?: InlineProviderRequest;
 }
 
 /** 批量开通请求 */

@@ -13,6 +13,40 @@ export interface ProtocolInfo {
 /** 渠道生命周期状态（与后端 Channel.State 枚举一致） */
 export type ChannelState = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DEPRECATED' | 'RETIRED';
 
+/** 渠道健康状态（任务 9.x；与后端 ChannelHealthStatus 枚举一致） */
+export type ChannelHealthStatus = 'HEALTHY' | 'DEGRADED' | 'FAILED' | 'UNKNOWN';
+
+/** 渠道健康检查触发来源（任务 9.x；与后端 ChannelHealthSource 枚举一致） */
+export type ChannelHealthSource = 'CARD' | 'DRAWER' | 'PRECHECK';
+
+/** 健康检查矩阵单行（与后端 HealthCheckMatrixRow 一致） */
+export interface ChannelHealthMatrixRow {
+  /** 凭证 ID */
+  credentialId: number;
+  /** 脱敏后的 Key（如 sk-***wxyz） */
+  keyMasked: string;
+  /** 认证结果 */
+  auth: 'PASS' | 'FAIL';
+  /** 失败时的错误信息（如 401） */
+  authError?: string | null;
+  /** 可用模型清单（认证通过时返回） */
+  availableModels?: string[] | null;
+  /** 延迟毫秒；FAIL 时可能为 null */
+  latencyMs?: number | null;
+}
+
+/** 健康检查响应（与后端 ChannelHealthCheckResponse 一致） */
+export interface ChannelHealthCheckResponse {
+  /** 聚合状态 */
+  aggregateStatus: ChannelHealthStatus;
+  /** 矩阵详情：每个凭证一行 */
+  matrix: ChannelHealthMatrixRow[];
+  /** 最后一次检查时间 */
+  lastHealthCheckAt?: string | null;
+  /** 触发来源 */
+  source?: ChannelHealthSource;
+}
+
 /** 渠道端点响应（与后端 ChannelEndpointResponse 一致） */
 export interface ChannelEndpointResponse {
   id: number;
@@ -45,6 +79,12 @@ export interface Channel {
   endpoints: ChannelEndpointResponse[];
   createdAt: string;
   updatedAt: string;
+  /** 最后一次健康检查时间（ISO 字符串）。任务 9.x：后端 ChannelResponse 已透传 */
+  lastHealthCheckAt?: string | null;
+  /** 最后一次健康检查的聚合状态。任务 9.x */
+  lastHealthStatus?: ChannelHealthStatus | null;
+  /** 最后一次健康检查触发来源（CARD/DRAWER/PRECHECK）。任务 9.x */
+  lastHealthSource?: ChannelHealthSource | null;
 }
 
 /** 创建渠道请求（与后端 ChannelRequest 一致，仅基础属性） */

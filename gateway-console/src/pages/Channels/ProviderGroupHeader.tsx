@@ -10,6 +10,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
 import { ProviderIcon } from '@/components/ui';
+import type { ChannelCard as ChannelCardType } from '@/types/channel';
 
 export interface ProviderGroupHeaderProps {
   providerName: string;
@@ -25,6 +26,11 @@ export interface ProviderGroupHeaderProps {
   onBatchResume?: () => void;
   onTestConnectivity?: () => void;
   onExport?: () => void;
+  /**
+   * 任务 9.4：渠道列表（用于派生"N/M 健康"小字）。
+   * <p>仅当传入且非空时渲染聚合；为空 / undefined 时不渲染。</p>
+   */
+  channels?: ChannelCardType[];
 }
 
 /**
@@ -46,9 +52,17 @@ export function ProviderGroupHeader({
   onBatchResume,
   onTestConnectivity,
   onExport,
+  channels,
 }: ProviderGroupHeaderProps) {
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
+
+  // 任务 9.4：派生 N/M 健康聚合（仅在 channels 非空时计算）
+  const healthSummary = (() => {
+    if (!channels || channels.length === 0) return null;
+    const healthy = channels.filter((c) => c.lastHealthStatus === 'HEALTHY').length;
+    return { healthy, total: channels.length };
+  })();
 
   const menuItems = [
     { key: 'edit', label: t('group.editProvider'), icon: <EditOutlined /> },
@@ -116,6 +130,18 @@ export function ProviderGroupHeader({
           <br />
           <span style={{ color: token.colorTextSecondary, fontSize: token.fontSizeSM }}>
             {t('group.channelCount', { count: channelCount })}
+            {/* 任务 9.4：N/M 健康聚合小字（仅在 channels 提供时） */}
+            {healthSummary && (
+              <>
+                {' · '}
+                <span data-testid="provider-health-summary">
+                  {t('provider.healthSummary', {
+                    healthy: healthSummary.healthy,
+                    total: healthSummary.total,
+                  })}
+                </span>
+              </>
+            )}
           </span>
         </div>
       </div>

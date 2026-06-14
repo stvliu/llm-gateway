@@ -85,6 +85,10 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setTimeout(doObj.getTimeout());
         entity.setMaxRetries(doObj.getMaxRetries());
         entity.setState(Channel.State.valueOf(doObj.getState()));
+        // 健康状态字段透传（last-write-wins）
+        entity.setLastHealthCheckAt(doObj.getLastHealthCheckAt());
+        entity.setLastHealthStatus(doObj.getLastHealthStatus());
+        entity.setLastHealthSource(doObj.getLastHealthSource());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -102,6 +106,10 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setTimeout(entity.getTimeout());
         doObj.setMaxRetries(entity.getMaxRetries());
         doObj.setState(entity.getState() != null ? entity.getState().name() : Channel.State.ACTIVE.name());
+        // 健康状态字段透传（last-write-wins）
+        doObj.setLastHealthCheckAt(entity.getLastHealthCheckAt());
+        doObj.setLastHealthStatus(entity.getLastHealthStatus());
+        doObj.setLastHealthSource(entity.getLastHealthSource());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;
