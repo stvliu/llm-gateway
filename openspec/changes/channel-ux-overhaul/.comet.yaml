@@ -1,12 +1,12 @@
 workflow: full
-phase: build
+phase: verify
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
 subagent_dispatch: confirmed
 tdd_mode: tdd
 isolation: branch
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: bd5ffd5dfc7d80d6ac89096649a48968b83d398d
 design_doc: docs/superpowers/specs/2026-06-13-channel-ux-overhaul-design.md
