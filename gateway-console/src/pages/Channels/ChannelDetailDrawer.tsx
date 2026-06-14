@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getActionBarConfig } from '@/utils/channelActions';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import { extractErrorMessage } from '@/utils/errorMessage';
 import type {
@@ -148,6 +149,7 @@ export function ChannelDetailDrawer({
   const isLoading = detailLoading || credentialsLoading;
   const currentState = (channelDetail?.state ?? channel.state) as ChannelState;
   const availableTransitions = getAvailableTransitions(currentState);
+  const { primaryAction, dropdownTransitions, deleteDisabled } = getActionBarConfig(currentState);
   const isDeprecated = currentState === 'DEPRECATED';
 
   const getBillingModeLabel = (mode: string) => {
@@ -208,9 +210,9 @@ export function ChannelDetailDrawer({
 
   /** 状态转换 */
   const handleTransition = (targetState: ChannelState) => {
-    const actionLabel = getTransitionActionLabel(currentState, targetState);
+    const actionLabel = t(getTransitionActionLabel(currentState, targetState));
 
-    if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
+    if (targetState === 'RETIRED') {
       let title = actionLabel;
       let content = t('drawer.confirmDeprecate', '确定要将此渠道标记为下线？');
       if (targetState === 'RETIRED') {
@@ -224,6 +226,16 @@ export function ChannelDetailDrawer({
         title,
         content,
         okType: 'danger',
+        onOk: () => transitionChannelState.mutateAsync({ id: channel.id, targetState }),
+      });
+      return;
+    }
+
+    // DEPRECATED：警告色确认（非危险）
+    if (targetState === 'DEPRECATED') {
+      Modal.confirm({
+        title: actionLabel,
+        content: t('drawer.confirmDeprecate', '确定要将此渠道标记为下线？'),
         onOk: () => transitionChannelState.mutateAsync({ id: channel.id, targetState }),
       });
       return;
@@ -256,6 +268,34 @@ export function ChannelDetailDrawer({
       message.error(t('drawer.deleteFailed'));
     }
   };
+
+  /** 构建抽屉 Dropdown 菜单项 */
+  function buildDrawerMenuItems(
+    state: ChannelState,
+    transitions: ChannelState[],
+    delDisabled: boolean,
+    tr: (key: string, fallback?: string) => string,
+  ) {
+    const items: any[] = transitions.map(target => ({
+      key: target,
+      label: tr(getTransitionActionLabel(state, target)),
+      danger: target === 'RETIRED',
+    }));
+
+    items.push({ type: 'divider' as const });
+
+    items.push({
+      key: 'delete',
+      label: delDisabled
+        ? <Tooltip title={tr('channel.action.deleteDisabledWhenActive')}>
+            <span style={{ color: 'rgba(0,0,0,0.25)', cursor: 'not-allowed' }}>{tr('card.delete')}</span>
+          </Tooltip>
+        : tr('card.delete'),
+      danger: true,
+    });
+
+    return items;
+  }
 
   /** 跳转到指定Tab */
   const handleTabChange = (tab: string) => {
@@ -367,42 +407,40 @@ export function ChannelDetailDrawer({
               {t('drawer.connectivityTest')}
             </Button>
 
-            {/* 状态转换操作菜单 */}
-            {availableTransitions.length > 0 && (
-              <Dropdown
-                menu={{
-                  items: availableTransitions.map((target) => ({
-                    key: target,
-                    label: getTransitionActionLabel(currentState, target),
-                    danger: target === 'DEPRECATED' || target === 'RETIRED',
-                  })),
-                  onClick: ({ key }) => handleTransition(key as ChannelState),
-                }}
+            {/* Primary 按钮 */}
+            {primaryAction && (
+              <Button type="primary" loading={transitionChannelState.isPending}
+                onClick={() => handleTransition(primaryAction)}
               >
-                <Button loading={transitionChannelState.isPending}>
-                  <Space>
-                    {t('drawer.changeState')}
-                    <DownOutlined />
-                  </Space>
-                </Button>
-              </Dropdown>
+                {t(getTransitionActionLabel(currentState, primaryAction))}
+              </Button>
             )}
 
-            <Button
-              danger
-              icon={<DeleteOutlined />}
-              loading={deleteChannel.isPending}
-              onClick={() =>
-                confirmDeleteChannel({
-                  titleKey: 'channel.deleteDangerTitle',
-                  descriptionKey: 'channel.deleteDangerDescription',
-                  descriptionParams: { name: channel.name },
-                  onOk: handleDelete,
-                })
-              }
+            {/* Dropdown — 剩余转换 + 删除 */}
+            <Dropdown
+              menu={{
+                items: buildDrawerMenuItems(currentState, dropdownTransitions, deleteDisabled, t),
+                onClick: ({ key }) => {
+                  if (key === 'delete') {
+                    if (!deleteDisabled) {
+                      confirmDeleteChannel({
+                        titleKey: 'channel.deleteDangerTitle',
+                        descriptionKey: 'channel.deleteDangerDescription',
+                        descriptionParams: { name: channel.name },
+                        onOk: handleDelete,
+                      });
+                    }
+                  } else handleTransition(key as ChannelState);
+                },
+              }}
             >
-              {t('card.delete')}
-            </Button>
+              <Button loading={transitionChannelState.isPending}>
+                <Space>
+                  {t('drawer.changeState')}
+                  <DownOutlined />
+                </Space>
+              </Button>
+            </Dropdown>
           </Space>
         }
       >

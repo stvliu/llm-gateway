@@ -21,6 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { useAllChannels, useDeleteChannel, useTransitionChannelState, useChannelModelsBatch, useTestChannelCredential } from '@/services/query/useChannels';
 import { useProviders } from '@/services/query/useProviders';
 import { useChannelCredentialsBatch } from '@/services/query/useChannels';
+import { extractErrorMessageI18n } from '@/utils/errorMessage';
 import { ChannelGroupedList } from './ChannelGroupedList';
 import { ChannelDetailDrawer } from './ChannelDetailDrawer';
 import { ChannelCreateWizard } from './ChannelCreateWizard';
@@ -360,8 +361,10 @@ export default function Channels() {
               try {
                 await transitionChannelState.mutateAsync({ id, targetState, reason });
                 message.success(t('statusToggle.enabled'));
-              } catch {
-                message.error(t('statusToggle.failed'));
+              } catch (err) {
+                const msg = extractErrorMessageI18n(err, t);
+                message.error(msg);
+              }
               }
             }}
             onTestChannel={handleTestChannel}

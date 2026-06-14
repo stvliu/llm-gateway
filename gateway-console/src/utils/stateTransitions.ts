@@ -28,28 +28,29 @@ export function isRoutableState(state: ChannelState): boolean {
 }
 
 /**
- * 状态转换操作按钮文本映射
+ * 状态转换操作按钮 i18n key 映射
+ *
+ * <p>调用方需用 t() 翻译。</p>
  */
-export const TRANSITION_ACTION_LABELS: Record<string, string> = {
-  PENDING: '',
-  ACTIVE: '',
-  SUSPENDED: '',
-  DEPRECATED: '',
-  RETIRED: '',
+const TRANSITION_ACTION_I18N_KEYS: Record<string, string> = {
+  PENDING_ACTIVE: 'channel.action.activate',
+  ACTIVE_SUSPENDED: 'channel.action.suspend',
+  ACTIVE_DEPRECATED: 'channel.action.deprecate',
+  SUSPENDED_ACTIVE: 'channel.action.enable',
+  SUSPENDED_DEPRECATED: 'channel.action.deprecate',
+  SUSPENDED_RETIRED: 'channel.action.retire',
+  DEPRECATED_RETIRED: 'channel.action.retire',
 };
 
-// 初始化操作按钮文本
-TRANSITION_ACTION_LABELS['PENDING_ACTIVE'] = '激活';
-TRANSITION_ACTION_LABELS['ACTIVE_SUSPENDED'] = '暂停';
-TRANSITION_ACTION_LABELS['ACTIVE_DEPRECATED'] = '标记下线';
-TRANSITION_ACTION_LABELS['SUSPENDED_ACTIVE'] = '恢复';
-TRANSITION_ACTION_LABELS['SUSPENDED_DEPRECATED'] = '标记下线';
-TRANSITION_ACTION_LABELS['SUSPENDED_RETIRED'] = '退役';
-TRANSITION_ACTION_LABELS['DEPRECATED_RETIRED'] = '退役';
-
 /**
- * 获取转换操作按钮文本
+ * 获取状态转换操作对应的 i18n key
+ *
+ * <p>调用方需用 t() 翻译。</p>
+ *
+ * @param from 当前状态
+ * @param to 目标状态
+ * @returns i18n key
  */
 export function getTransitionActionLabel(from: ChannelState, to: ChannelState): string {
-  return TRANSITION_ACTION_LABELS[`${from}_${to}`] ?? to;
+  return TRANSITION_ACTION_I18N_KEYS[`${from}_${to}`] ?? to;
 }

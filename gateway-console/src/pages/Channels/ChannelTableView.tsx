@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getActionBarConfig } from '@/utils/channelActions';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard, ChannelState } from '@/types/channel';
 import type { Provider } from '@/types/provider';
@@ -50,7 +51,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
 
   const handleTransition = (record: ChannelCard, targetState: ChannelState) => {
     const currentState = record.state as ChannelState;
-    const actionLabel = getTransitionActionLabel(currentState, targetState);
+    const actionLabel = t(getTransitionActionLabel(currentState, targetState));
 
     if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
       let title = actionLabel;
@@ -97,6 +98,34 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       onOk: () => onDelete(record.id),
     });
   };
+
+  /** 构建表格行 Dropdown 菜单项 */
+  function buildTableMenuItems(
+    state: ChannelState,
+    transitions: ChannelState[],
+    delDisabled: boolean,
+    tr: (key: string, fallback?: string) => string,
+  ) {
+    const items: any[] = transitions.map(target => ({
+      key: target,
+      label: tr(getTransitionActionLabel(state, target)),
+      danger: target === 'RETIRED',
+    }));
+
+    items.push({ type: 'divider' as const });
+
+    items.push({
+      key: 'delete',
+      label: delDisabled
+        ? <Tooltip title={tr('channel.action.deleteDisabledWhenActive')}>
+            <span style={{ color: 'rgba(0,0,0,0.25)', cursor: 'not-allowed' }}>{tr('card.delete')}</span>
+          </Tooltip>
+        : tr('card.delete'),
+      danger: true,
+    });
+
+    return items;
+  }
 
   const getBillingModeLabel = (mode: string) => {
     const labels: Record<string, string> = {
@@ -174,19 +203,18 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
       width: 120,
       render: (_: unknown, r: ChannelCard) => {
         const currentState = r.state as ChannelState;
-        const transitions = getAvailableTransitions(currentState);
-        const isRoutable = currentState === 'ACTIVE' || currentState === 'DEPRECATED';
+        const { primaryAction, dropdownTransitions, deleteDisabled } = getActionBarConfig(currentState);
 
         return (
           <Space size={0} onClick={(e) => e.stopPropagation()}>
-            <Tooltip title={isRoutable ? t('card.testConnect') : t('card.testDisabled')}>
+            <Tooltip title={currentState !== 'RETIRED' ? t('card.testConnect') : t('card.testDisabled')}>
               <Button
                 type="text"
                 size="small"
                 icon={<ThunderboltOutlined />}
-                disabled={!isRoutable}
+                disabled={currentState === 'RETIRED'}
                 onClick={() => onTest(r, { tab: 'credentials', highlightTestAll: true })}
-                style={{ opacity: isRoutable ? 1 : 0.4 }}
+                style={{ opacity: currentState === 'RETIRED' ? 0.4 : 1 }}
               />
             </Tooltip>
             <Tooltip title={t('card.viewDetail')}>
@@ -197,30 +225,24 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
                 onClick={() => onChannelClick(r.id)}
               />
             </Tooltip>
-            {transitions.length > 0 && (
-              <Dropdown
-                menu={{
-                  items: transitions.map((target) => ({
-                    key: target,
-                    label: getTransitionActionLabel(currentState, target),
-                    danger: target === 'RETIRED',
-                  })),
-                  onClick: ({ key }) => handleTransition(r, key as ChannelState),
-                }}
-                trigger={['click']}
-              >
-                <Button type="text" size="small" icon={<MoreOutlined />} />
-              </Dropdown>
+            {primaryAction && (
+              <Button type="primary" size="small" onClick={() => handleTransition(r, primaryAction)}>
+                {t(getTransitionActionLabel(currentState, primaryAction))}
+              </Button>
             )}
-            <Tooltip title={t('card.delete')}>
-              <Button
-                type="text"
-                size="small"
-                icon={<DeleteOutlined />}
-                danger
-                onClick={() => handleDeleteClick(r)}
-              />
-            </Tooltip>
+            <Dropdown
+              menu={{
+                items: buildTableMenuItems(currentState, dropdownTransitions, deleteDisabled, t),
+                onClick: ({ key }) => {
+                  if (key === 'delete') {
+                    if (!deleteDisabled) handleDeleteClick(r);
+                  } else handleTransition(r, key as ChannelState);
+                },
+              }}
+              trigger={['click']}
+            >
+              <Button type="text" size="small" icon={<MoreOutlined />} />
+            </Dropdown>
           </Space>
         );
       },
