@@ -2,6 +2,7 @@
 change: channel-ux-overhaul
 design-doc: docs/superpowers/specs/2026-06-13-channel-ux-overhaul-design.md
 base-ref: 49751feb47def31363e58da26fb7ab94751eb8a6
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 # 渠道控制台 UX 整修 实施计划
@@ -44,6 +45,7 @@ base-ref: 49751feb47def31363e58da26fb7ab94751eb8a6
 - ⚠️ **乐观更新回滚**：`onMutate` 必须返回 `{ prev }`，`onError` 才能正确还原；`onSettled` 不要主动 invalidate（否则脉冲被打断）
 - ⚠️ **i18n key 一致性**：Tooltip / 危险确认 / 错误反馈三处 key 必须最后统一审校，避免出现 `state.activeDesc` 与 `channel.state.activeDesc` 共存
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 文件结构总览
@@ -74,6 +76,7 @@ base-ref: 49751feb47def31363e58da26fb7ab94751eb8a6
 - 修改：`src/locales/{zh-CN,en-US}/channels.json`
 - 配置：`vite.config.ts`、新建 `vitest.setup.ts`、`playwright.config.ts`
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 1 章：后端——健康状态字段与持久化
@@ -299,6 +302,7 @@ git commit -am "test(supply): 健康字段 Repository 集成测试"
 - ✅ 枚举值集合完整且不可扩展（switch 默认抛 IllegalArgumentException 即可）
 - ✅ 至少 4 个单测 + 1 个 Repository IT 全绿
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 2 章：后端——连通性测试 API 与聚合
@@ -534,6 +538,7 @@ git commit -am "feat(supply): channel 列表/详情响应附加健康字段"
 - ✅ 聚合规则单测覆盖 4 分支 + 持久化跳过 / 失败兜底
 - ✅ GET /api/channels 响应字段向后兼容（旧字段未删）
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 3 章：后端——事务性 Provision 扩展
@@ -676,6 +681,7 @@ git commit -am "test(catalog): 验证 inlineProvider 事务性回滚"
 - ✅ 事务回滚 IT 验证孤儿 Provider 不会出现
 - ✅ providerCode 已存在时 inlineProvider 被忽略
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 4 章：前端——测试栈引入
@@ -816,6 +822,7 @@ git commit -m "chore(console): 配置 vitest/playwright + 验证 smoke"
 - ✅ `pnpm test:e2e` 跑通 1 个 playwright smoke
 - ✅ CI / 本地都可重复跑
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 5 章：前端——错误反馈兜底（最低风险批）
@@ -909,6 +916,7 @@ git commit -m "fix(channels): EndpointSection 补齐错误反馈"
 - ✅ 4 个 Section 各有至少 1 个失败路径测试
 - ✅ 不变量：`pages/Channels/` 下不存在仅注释或空的 catch 块
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 6 章：前端——状态语义可视化与 SSOT 整合
@@ -1089,6 +1097,7 @@ it('DEPRECATED 卡片应显示副标题"仍参与流量分配"', () => {
 - ✅ PENDING 颜色为 `#d48806`
 - ✅ lifecycle 单测 + ChannelStateTag 组件测试全绿
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 7 章：前端——保存反馈脉冲
@@ -1185,6 +1194,7 @@ it('乐观更新失败应回滚到上一个值', async () => { /* mock 500 → �
 - ✅ 4 个 Section 失败路径都有红框 + ✗ 错误 + 字段值回滚
 - ✅ `prefers-reduced-motion` 适配可见（CSS 退化为软变色）
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 8 章：前端——危险操作确认升级
@@ -1261,6 +1271,7 @@ git commit -am "feat(channels): 暂停操作增加 Popconfirm 二次确认"
 - ✅ 4 类删除操作均使用 Modal.confirm + okType=danger + description
 - ✅ description 文案明确包含"删除后无法恢复"+具体业务影响
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 9 章：前端——测试入口归一与健康指示
@@ -1449,6 +1460,7 @@ test('卡片闪电图标 → 跳转抽屉 → 测试矩阵 → 关闭后卡片�
 - ✅ 列表卡片显示 HealthDot
 - ✅ S5 e2e 跑通
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 10 章：前端——创建入口合并
@@ -1570,6 +1582,7 @@ test('S1：内联创建供应商 → 接续创建渠道', async ({ page }) => {
 - ✅ 提交时 payload 走 `provisionFromPlan` 含 inlineProvider 字段
 - ✅ S1 e2e 跑通
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 11 章：国际化与文案统一
@@ -1623,6 +1636,7 @@ git commit -am "i18n(channels): 整理本期 channel-ux-overhaul 全量 key"
 - ✅ 无孤立 key（grep 验证）
 - ✅ 文案与产品一致
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 第 12 章：联调与回归
@@ -1715,6 +1729,7 @@ cd gateway-console && pnpm test && pnpm test:e2e
 - ✅ 旧路径回归无破坏
 - ✅ 验证报告草稿已写入
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## Self-Review
@@ -1752,6 +1767,7 @@ cd gateway-console && pnpm test && pnpm test:e2e
 - ⚠️ 第 3 章 `@Transactional` 必须落在 `provisionFromPlan` 方法上，不要落在 `ensureProvider`（私有方法 self-invocation 不会触发代理）
 - ⚠️ 第 9 章 AbortController 取消后必须用 `if (signal.aborted) return` 防越权 setState
 
+archived-with: 2026-06-14-channel-ux-overhaul
 ---
 
 ## 执行交付

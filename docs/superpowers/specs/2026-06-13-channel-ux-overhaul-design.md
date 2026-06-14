@@ -2,6 +2,8 @@
 comet_change: channel-ux-overhaul
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-14-channel-ux-overhaul
+status: final
 ---
 
 # Design Doc: Channel UX Overhaul (Phase 1)
