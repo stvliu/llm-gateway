@@ -69,21 +69,25 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
   const handleTransition = (targetState: ChannelState) => {
     const actionLabel = t(getTransitionActionLabel(currentState, targetState));
 
-    // 高风险操作需要二次确认（DEPRECATED / RETIRED → 危险红色）
-    if (targetState === 'DEPRECATED' || targetState === 'RETIRED') {
-      let title = actionLabel;
-      let content = t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？');
-      if (targetState === 'RETIRED') {
-        title = t('channel.action.retire.confirmTitle', '停用渠道？');
-        content = t(
+    // RETIRED：高危操作，红色确认
+    if (targetState === 'RETIRED') {
+      modal.confirm({
+        title: t('channel.action.retire.confirmTitle', '停用渠道？'),
+        content: t(
           'channel.action.retire.confirmDescription',
           '停用后该渠道不再参与任何流量分配，且无法恢复，已建立的指标历史保留'
-        );
-      }
-      modal.confirm({
-        title,
-        content,
+        ),
         okType: 'danger',
+        onOk: () => onStateTransition?.(channel.id, targetState, ''),
+      });
+      return;
+    }
+
+    // DEPRECATED：警告确认（非危险）
+    if (targetState === 'DEPRECATED') {
+      modal.confirm({
+        title: actionLabel,
+        content: t('card.confirmDeprecateContent', '确定要将此渠道标记为下线？'),
         onOk: () => onStateTransition?.(channel.id, targetState, ''),
       });
       return;
@@ -234,7 +238,7 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
             menu={{
               items: buildMenuItems(currentState, dropdownTransitions, deleteDisabled, t),
               onClick: ({ key }) => {
-                if (key === 'delete') handleDeleteClick(e as unknown as React.MouseEvent);
+                if (key === 'delete') handleDeleteClick();
                 else handleTransition(key as ChannelState);
               },
             }}
