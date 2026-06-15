@@ -1,27 +1,36 @@
 package com.codingas.gateway.infrastructure.config;
 
+import cn.dev33.satoken.secure.SaSecureUtil;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
- * 安全配置
+ * 密码编码器
  *
- * <p>提供密码编码器等安全相关的 Bean。</p>
+ * <p>使用 Sa-Token 的 SHA-256 进行密码哈希。</p>
  */
 @Configuration
 public class SecurityConfig {
 
     /**
      * 密码编码器
-     *
-     * <p>使用 BCrypt 算法进行密码哈希。</p>
-     *
-     * @return PasswordEncoder 实例
      */
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+        return new PasswordEncoder();
+    }
+
+    /**
+     * 密码编码器（基于 Sa-Token SaDigestUtil）
+     */
+    public static class PasswordEncoder {
+
+        public String encode(CharSequence rawPassword) {
+            return SaSecureUtil.sha256(rawPassword.toString());
+        }
+
+        public boolean matches(CharSequence rawPassword, String encodedPassword) {
+            return encode(rawPassword).equals(encodedPassword);
+        }
     }
 }
