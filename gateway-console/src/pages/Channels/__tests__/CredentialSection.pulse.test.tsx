@@ -33,7 +33,7 @@ beforeAll(() => {
       unobserve(): void {}
       disconnect(): void {}
     }
-    (globalThis as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver =
+    (globalThis as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver =
       ResizeObserverStub;
   }
 });

@@ -7,7 +7,7 @@
 //
 // 测试目标：每个 Section 在 mutation 失败时必须经由 message.error 输出错误反馈，
 // 文案至少包含 "保存失败"（i18n: common.message.saveFailed）。
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -49,7 +49,7 @@ beforeAll(() => {
       unobserve(): void {}
       disconnect(): void {}
     }
-    (globalThis as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
+    (globalThis as unknown as { ResizeObserver: typeof ResizeObserverStub }).ResizeObserver = ResizeObserverStub;
   }
 });
 
@@ -154,9 +154,9 @@ describe('EndpointSection 错误反馈', () => {
       expect(errorSpy).toHaveBeenCalled();
     });
     // 断言文案包含"保存失败"或后端原因
-    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
+    const calls = errorSpy.mock.calls.map((c: unknown[]) => String(c[0]));
     expect(
-      calls.some((m) => m.includes('保存失败') && m.includes('endpoint update boom'))
+      calls.some((m: string) => m.includes('保存失败') && m.includes('endpoint update boom'))
     ).toBe(true);
   });
 });
@@ -210,8 +210,8 @@ describe('CredentialSection 错误反馈', () => {
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();
     });
-    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
-    expect(calls.some((m) => m.includes('cred delete boom'))).toBe(true);
+    const calls = errorSpy.mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(calls.some((m: string) => m.includes('cred delete boom'))).toBe(true);
   });
 });
 
@@ -259,8 +259,8 @@ describe('ModelMappingSection 错误反馈', () => {
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();
     });
-    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
-    expect(calls.some((m) => m.includes('model delete boom'))).toBe(true);
+    const calls = errorSpy.mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(calls.some((m: string) => m.includes('model delete boom'))).toBe(true);
   });
 });
 
@@ -298,8 +298,8 @@ describe('QuotaSettingsSection 错误反馈', () => {
     await waitFor(() => {
       expect(errorSpy).toHaveBeenCalled();
     });
-    const calls = errorSpy.mock.calls.map((c) => String(c[0]));
-    expect(calls.some((m) => m.includes('channel update boom'))).toBe(true);
+    const calls = errorSpy.mock.calls.map((c: unknown[]) => String(c[0]));
+    expect(calls.some((m: string) => m.includes('channel update boom'))).toBe(true);
   });
 });
 

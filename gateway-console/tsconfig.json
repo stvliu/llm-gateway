@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["@testing-library/jest-dom/vitest"],
+    "types": ["@testing-library/jest-dom/vitest", "node"],
     "target": "ES2022",
     "useDefineForClassFields": true,
     "lib": [

@@ -58,7 +58,7 @@ vi.mock('@/services/api/catalog', () => ({
 }));
 
 import { QuickOnboardMode } from '@/pages/Channels/QuickOnboardMode';
-import { planCatalogApi, provisionApi } from '@/services/api/catalog';
+import { planCatalogApi } from '@/services/api/catalog';
 
 beforeAll(async () => {
   if (!window.matchMedia) {
