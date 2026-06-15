@@ -104,20 +104,21 @@ describe('Channels 主页面 (任务 10.6)', () => {
     // 这样底部"新增供应商"虚线卡片若仍存在就会被渲染出来。
     const realUseChannels = await import('@/services/query/useChannels');
     vi.spyOn(realUseChannels, 'useAllChannels').mockReturnValue({
-      // @ts-expect-error 测试用桩
       data: [
         {
           id: 1,
           providerId: 1,
           providerName: 'OpenAI',
           name: 'mock-channel',
-          state: 'ACTIVE',
+          state: 'ACTIVE' as const,
           billingMode: 'pay_as_you_go',
           quotaLimit: null,
           priority: 1,
           weight: 1,
           timeout: null,
           maxRetries: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           endpoints: [],
           lastHealthStatus: 'UNKNOWN',
           lastHealthCheckAt: null,
@@ -125,13 +126,12 @@ describe('Channels 主页面 (任务 10.6)', () => {
         },
       ],
       isLoading: false,
-    });
+    } as never);
     const realUseProviders = await import('@/services/query/useProviders');
     vi.spyOn(realUseProviders, 'useProviders').mockReturnValue({
-      // @ts-expect-error 测试用桩
       data: { items: [{ id: 1, providerId: 'openai', providerName: 'OpenAI', state: 'ACTIVE' }], total: 1 },
       isLoading: false,
-    });
+    } as any);
 
     const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     const { container } = render(
