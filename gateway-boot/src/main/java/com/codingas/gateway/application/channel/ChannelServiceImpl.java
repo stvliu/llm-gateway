@@ -223,7 +223,7 @@ public class ChannelServiceImpl implements ChannelService {
         providerGateway.findById(channel.getProviderId())
             .ifPresent(p -> response.setProviderName(p.getName()));
         response.setName(channel.getName());
-        response.setBillingMode(channel.getBillingMode().getCode());
+        response.setBillingMode(channel.getBillingMode().name().toLowerCase());
         response.setQuotaLimit(channel.getQuotaLimit());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
@@ -271,7 +271,7 @@ public class ChannelServiceImpl implements ChannelService {
         ChannelEndpointResponse resp = new ChannelEndpointResponse();
         resp.setId(endpoint.getId());
         resp.setChannelId(endpoint.getChannelId());
-        resp.setProtocol(endpoint.getProtocol().getCode());
+        resp.setProtocol(endpoint.getProtocol().name().toLowerCase());
         resp.setEndpointUrl(endpoint.getEndpointUrl());
         resp.setCreatedAt(endpoint.getCreatedAt());
         resp.setUpdatedAt(endpoint.getUpdatedAt());

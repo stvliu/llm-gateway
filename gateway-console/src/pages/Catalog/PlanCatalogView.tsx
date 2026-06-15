@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card } from 'antd';
+import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card, Tooltip } from 'antd';
 import { PlusOutlined, SyncOutlined, CloudDownloadOutlined, ArrowRightOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { App } from 'antd';
@@ -101,28 +101,26 @@ export default function PlanCatalogView({
                 size="small"
                 hoverable
                 actions={[
-                  <Button
-                    key="provision"
-                    type="link"
-                    icon={<CloudDownloadOutlined />}
-                    disabled={provider.materialized}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (provider.materialized) return;
-                      handleProvisionProvider(provider.code);
-                    }}
-                  >
-                    {provider.materialized ? t('provider.materialized') : t('provision.provider')}
-                  </Button>,
-                  onSelectProvider && (
+                  <Tooltip key="provision" title={provider.materialized ? t('provider.materialized') : t('provision.provider')}>
                     <Button
-                      key="view"
-                      type="link"
-                      icon={<ArrowRightOutlined />}
-                      onClick={() => onSelectProvider(provider.code, provider.name)}
-                    >
-                      {t('tabs.plans')}
-                    </Button>
+                      type="text"
+                      icon={<CloudDownloadOutlined />}
+                      disabled={provider.materialized}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (provider.materialized) return;
+                        handleProvisionProvider(provider.code);
+                      }}
+                    />
+                  </Tooltip>,
+                  onSelectProvider && (
+                    <Tooltip key="view" title={t('tabs.plans')}>
+                      <Button
+                        type="text"
+                        icon={<ArrowRightOutlined />}
+                        onClick={() => onSelectProvider(provider.code, provider.name)}
+                      />
+                    </Tooltip>
                   ),
                 ]}
               >
@@ -185,26 +183,27 @@ export default function PlanCatalogView({
       render: (_: unknown, record: PlanCatalog) => (
         <Space size="small">
           {onQuickCreate && (
-            <Button
-              type="primary"
-              size="small"
-              icon={<PlusOutlined />}
-              onClick={(e) => {
-                e.stopPropagation();
-                onQuickCreate(record.planCode, record.planName);
-              }}
-            >
-              {t('quickCreate', { defaultValue: '创建渠道' })}
-            </Button>
+            <Tooltip title={t('quickCreate', { defaultValue: '创建渠道' })}>
+              <Button
+                type="primary"
+                size="small"
+                icon={<PlusOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuickCreate(record.planCode, record.planName);
+                }}
+              />
+            </Tooltip>
           )}
           {onSelectPlan && (
-            <Button
-              type="link"
-              size="small"
-              onClick={() => onSelectPlan(record.planCode, record.planName)}
-            >
-              {t('plan.detail')}
-            </Button>
+            <Tooltip title={t('plan.detail')}>
+              <Button
+                type="text"
+                size="small"
+                icon={<ArrowRightOutlined />}
+                onClick={() => onSelectPlan(record.planCode, record.planName)}
+              />
+            </Tooltip>
           )}
         </Space>
       ),
@@ -245,25 +244,25 @@ export default function PlanCatalogView({
             prefix={<SearchOutlined />}
           />
           {hasActiveFilters && (
-            <Button
-              icon={<CloseOutlined />}
-              onClick={() => {
-                setKeyword('');
-                setSearchKeyword('');
-              }}
-            >
-              {t('filter.all')}
-            </Button>
+            <Tooltip title={t('filter.all')}>
+              <Button
+                icon={<CloseOutlined />}
+                onClick={() => {
+                  setKeyword('');
+                  setSearchKeyword('');
+                }}
+              />
+            </Tooltip>
           )}
         </Space>
         {showProviders && (
-          <Button
-            icon={<SyncOutlined />}
-            onClick={handleSync}
-            loading={syncMutation.isPending}
-          >
-            {t('sync.builtin')}
-          </Button>
+          <Tooltip title={t('sync.builtin')}>
+            <Button
+              icon={<SyncOutlined />}
+              onClick={handleSync}
+              loading={syncMutation.isPending}
+            />
+          </Tooltip>
         )}
       </div>
 

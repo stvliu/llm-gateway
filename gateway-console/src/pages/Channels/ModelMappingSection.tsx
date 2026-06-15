@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Tag, Button, Input, message, theme, Empty } from 'antd';
-import { PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Tag, Button, Input, message, theme, Empty, Tooltip } from 'antd';
+import { PlusOutlined, ArrowRightOutlined, EyeOutlined, UpOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { InlineEditableList } from './InlineEditableList';
@@ -19,6 +19,8 @@ import '@/components/common/SavePulse.css';
 interface ModelMappingSectionProps {
   channelId: number;
   channelModels: ChannelModel[];
+  /** 状态转换回调，由父组件（如 ChannelDetailDrawer）注入 */
+  onStateTransition?: (modelId: number, targetState: string) => void;
 }
 
 /** 行级保存反馈状态（与 CredentialSection 保持同形态） */
@@ -338,25 +340,27 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
       />
 
       {!showAll && channelModels.length > 5 && (
-        <Button
-          type="link"
-          size="small"
-          style={{ marginTop: 8 }}
-          onClick={() => setShowAll(true)}
-        >
-          {t('modelMapping.viewAll', { count: channelModels.length })}
-        </Button>
+        <Tooltip title={t('modelMapping.viewAll', { count: channelModels.length })}>
+          <Button
+            type="text"
+            size="small"
+            icon={<EyeOutlined />}
+            style={{ marginTop: 8 }}
+            onClick={() => setShowAll(true)}
+          />
+        </Tooltip>
       )}
 
       {showAll && channelModels.length > 5 && (
-        <Button
-          type="link"
-          size="small"
-          style={{ marginTop: 8 }}
-          onClick={() => setShowAll(false)}
-        >
-          {t('modelMapping.collapse')}
-        </Button>
+        <Tooltip title={t('modelMapping.collapse')}>
+          <Button
+            type="text"
+            size="small"
+            icon={<UpOutlined />}
+            style={{ marginTop: 8 }}
+            onClick={() => setShowAll(false)}
+          />
+        </Tooltip>
       )}
     </>
   );

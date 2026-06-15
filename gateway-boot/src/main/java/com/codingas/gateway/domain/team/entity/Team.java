@@ -2,7 +2,6 @@ package com.codingas.gateway.domain.team.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.team.enums.TeamState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -24,13 +23,13 @@ public class Team extends BaseEntity {
     /** 团队描述 */
     private String description;
 
-    /** 团队状态 */
-    private TeamState state = TeamState.ACTIVE;
+    /** 团队状态（ACTIVE / INACTIVE） */
+    private String state = "ACTIVE";
 
     /**
      * 检查团队是否可用
      */
     public boolean isAvailable() {
-        return TeamState.ACTIVE.equals(state);
+        return "ACTIVE".equals(state);
     }
 }

@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.team.gateway;
 
 import com.codingas.gateway.domain.team.entity.Team;
-import com.codingas.gateway.domain.team.enums.TeamState;
 import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.infrastructure.team.gateway.database.dataobject.TeamDo;
 import com.codingas.gateway.infrastructure.team.gateway.database.repository.TeamRepository;
@@ -61,7 +60,7 @@ public class TeamGatewayImpl implements TeamGateway {
         entity.setId(dataObject.getId());
         entity.setName(dataObject.getName());
         entity.setDescription(dataObject.getDescription());
-        entity.setState(TeamState.fromCode(dataObject.getState()));
+        entity.setState(dataObject.getState());
         return entity;
     }
 
@@ -70,7 +69,7 @@ public class TeamGatewayImpl implements TeamGateway {
         dataObject.setId(entity.getId());
         dataObject.setName(entity.getName());
         dataObject.setDescription(entity.getDescription());
-        dataObject.setState(entity.getState().getCode());
+        dataObject.setState(entity.getState());
         return dataObject;
     }
 }

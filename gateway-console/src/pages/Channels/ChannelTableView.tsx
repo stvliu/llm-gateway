@@ -2,13 +2,14 @@ import { useMemo } from 'react';
 import { Table, Typography, Button, theme, App, Space, Tooltip, Dropdown } from 'antd';
 import {
   ThunderboltOutlined,
-  DeleteOutlined,
   EyeOutlined,
   MoreOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
-import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getTransitionActionLabel } from '@/utils/stateTransitions';
 import { getActionBarConfig } from '@/utils/channelActions';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import type { ChannelCard, ChannelState } from '@/types/channel';
@@ -19,7 +20,6 @@ interface ChannelTableViewProps {
   channels: ChannelCard[];
   providers: Provider[];
   onChannelClick: (channelId: number) => void;
-  onToggleState: (id: number, enabled: boolean) => void;
   onDelete: (id: number) => void;
   /** 任务 9.1：测试回调可携带"打开抽屉到 credentials Tab + 高亮测试全部"意图 */
   onTest: (channel: ChannelCard, intent?: { tab: 'credentials'; highlightTestAll: boolean }) => void;
@@ -34,7 +34,6 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
   channels,
   providers,
   onChannelClick,
-  onToggleState,
   onDelete,
   onTest,
   onStateTransition,
@@ -104,7 +103,7 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
     state: ChannelState,
     transitions: ChannelState[],
     delDisabled: boolean,
-    tr: (key: string, fallback?: string) => string,
+    tr: (key: string) => string,
   ) {
     const items: any[] = transitions.map(target => ({
       key: target,
@@ -226,9 +225,14 @@ export const ChannelTableView: FC<ChannelTableViewProps> = ({
               />
             </Tooltip>
             {primaryAction && (
-              <Button type="primary" size="small" onClick={() => handleTransition(r, primaryAction)}>
-                {t(getTransitionActionLabel(currentState, primaryAction))}
-              </Button>
+              <Tooltip title={t(getTransitionActionLabel(currentState, primaryAction))}>
+                <Button
+                  type="text"
+                  size="small"
+                  icon={primaryAction === 'SUSPENDED' ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  onClick={() => handleTransition(r, primaryAction)}
+                />
+              </Tooltip>
             )}
             <Dropdown
               menu={{

@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Row, Col, Card, Tag, Typography, Button, Timeline, message, theme } from 'antd';
+import { Row, Col, Card, Tag, Typography, Button, Timeline, message, theme, Tooltip } from 'antd';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   QuestionCircleOutlined,
-  RightOutlined,
+  ThunderboltOutlined,
+  EyeOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { Channel, ChannelEndpointResponse, ChannelCredential, ChannelModel } from '@/types/channel';
@@ -75,9 +76,9 @@ const ConnectivityCard: FC<{
           <div style={{ marginTop: 8 }}>
             <Text type="secondary">{t('overview.notTested')}</Text>
           </div>
-          <Button type="link" size="small" onClick={handleTest} loading={testing}>
-            {t('overview.testNow')}
-          </Button>
+          <Tooltip title={t('overview.testNow')}>
+            <Button type="text" size="small" icon={<ThunderboltOutlined />} onClick={handleTest} loading={testing} />
+          </Tooltip>
         </div>
       )}
     </Card>
@@ -119,7 +120,7 @@ const EndpointSummaryCard: FC<{
 }> = ({ endpoints, onViewDetail }) => {
   const { t } = useTranslation('channels');
   return (
-  <Card size="small" title={t('overview.endpoints')} extra={<Button type="link" size="small" onClick={onViewDetail}>{t('overview.viewDetail')} <RightOutlined /></Button>}>
+  <Card size="small" title={t('overview.endpoints')} extra={<Tooltip title={t('overview.viewDetail')}><Button type="text" size="small" icon={<EyeOutlined />} onClick={onViewDetail} /></Tooltip>}>
     <div style={{ marginBottom: 8 }}>
       <Text strong style={{ fontSize: 20 }}>{endpoints.length}</Text>
       <Text type="secondary" style={{ marginLeft: 8 }}>{t('overview.endpointCount', { count: endpoints.length })}</Text>
@@ -144,7 +145,7 @@ const CredentialSummaryCard: FC<{
 }> = ({ credentials, onViewDetail }) => {
   const { t } = useTranslation('channels');
   return (
-  <Card size="small" title={t('overview.credentials')} extra={<Button type="link" size="small" onClick={onViewDetail}>{t('overview.viewDetail')} <RightOutlined /></Button>}>
+  <Card size="small" title={t('overview.credentials')} extra={<Tooltip title={t('overview.viewDetail')}><Button type="text" size="small" icon={<EyeOutlined />} onClick={onViewDetail} /></Tooltip>}>
     <div style={{ marginBottom: 8 }}>
       <Text strong style={{ fontSize: 20 }}>{credentials.length}</Text>
       <Text type="secondary" style={{ marginLeft: 8 }}>{t('overview.credentialCount', { count: credentials.length })}</Text>
@@ -171,9 +172,7 @@ const ModelSummaryCard: FC<{
 }> = ({ channelModels, onViewDetail }) => {
   const { t } = useTranslation('channels');
   return (
-  <Card size="small" title={t('overview.modelMappings')} extra={<Button type="link" size="small" onClick={onViewDetail}>
-    {channelModels.length > 0 ? t('overview.viewAll', { count: channelModels.length }) : t('overview.viewDetail')} <RightOutlined />
-  </Button>}>
+  <Card size="small" title={t('overview.modelMappings')} extra={<Tooltip title={channelModels.length > 0 ? t('overview.viewAll', { count: channelModels.length }) : t('overview.viewDetail')}><Button type="text" size="small" icon={<EyeOutlined />} onClick={onViewDetail} /></Tooltip>}>
     <div style={{ marginBottom: 8 }}>
       <Text strong style={{ fontSize: 20 }}>{channelModels.length}</Text>
       <Text type="secondary" style={{ marginLeft: 8 }}>{t('overview.mappingCount', { count: channelModels.length })}</Text>
@@ -197,7 +196,7 @@ const QuotaSummaryCard: FC<{
 }> = ({ channel, onViewDetail }) => {
   const { t } = useTranslation('channels');
   return (
-  <Card size="small" title={t('overview.quotaSettings')} extra={<Button type="link" size="small" onClick={onViewDetail}>{t('overview.viewDetail')} <RightOutlined /></Button>}>
+  <Card size="small" title={t('overview.quotaSettings')} extra={<Tooltip title={t('overview.viewDetail')}><Button type="text" size="small" icon={<EyeOutlined />} onClick={onViewDetail} /></Tooltip>}>
     <div style={{ marginBottom: 4 }}>
       <Text type="secondary" style={{ fontSize: 12 }}>{t('overview.quotaLimit')}</Text>
       <Text style={{ fontSize: 12 }}>{channel.quotaLimit ?? t('overview.noLimit')}</Text>

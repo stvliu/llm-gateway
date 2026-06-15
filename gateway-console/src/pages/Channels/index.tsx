@@ -38,7 +38,6 @@ import type {
   ChannelModel,
 } from '@/types/channel';
 import type { Provider } from '@/types/provider';
-import { theme } from 'antd';
 
 const { Search } = Input;
 
@@ -69,7 +68,6 @@ const calculateChannelStats = (
  */
 export default function Channels() {
   const { t } = useTranslation('channels');
-  const { token } = theme.useToken();
   // 状态管理
   const [searchText, setSearchText] = useState('');
   const [providerFilter, setProviderFilter] = useState<number | undefined>();
@@ -362,9 +360,8 @@ export default function Channels() {
                 await transitionChannelState.mutateAsync({ id, targetState, reason });
                 message.success(t('statusToggle.enabled'));
               } catch (err) {
-                const msg = extractErrorMessageI18n(err, t);
+                const msg = extractErrorMessageI18n(err, t as (key: string) => string);
                 message.error(msg);
-              }
               }
             }}
             onTestChannel={handleTestChannel}

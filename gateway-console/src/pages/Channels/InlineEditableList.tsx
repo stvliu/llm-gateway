@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Button, Space, theme } from 'antd';
+import { Button, Space, theme, Tooltip } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 /**
@@ -131,22 +132,24 @@ export function InlineEditableList<T>({
               >
                 <div style={{ flex: 1 }}>{renderItem(item)}</div>
                 <Space size="small">
-                  <Button
-                    type="link"
-                    size="small"
-                    onClick={() => handleEdit(key)}
-                  >
-                    {t('inlineList.edit')}
-                  </Button>
-                  {onDelete && (
+                  <Tooltip title={t('inlineList.edit')}>
                     <Button
-                      type="link"
+                      type="text"
                       size="small"
-                      danger
-                      onClick={() => onDelete(item)}
-                    >
-                      {t('inlineList.delete')}
-                    </Button>
+                      icon={<EditOutlined />}
+                      onClick={() => handleEdit(key)}
+                    />
+                  </Tooltip>
+                  {onDelete && (
+                    <Tooltip title={t('inlineList.delete')}>
+                      <Button
+                        type="text"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => onDelete(item)}
+                      />
+                    </Tooltip>
                   )}
                 </Space>
               </div>
@@ -172,8 +175,8 @@ export function InlineEditableList<T>({
 
       {/* 添加按钮 */}
       {!isAdding && editingKey === null && (
-        <Button type="dashed" block onClick={handleStartAdd}>
-          + {addLabel || t('inlineList.add')}
+        <Button type="dashed" block icon={<PlusOutlined />} onClick={handleStartAdd}>
+          {addLabel || t('inlineList.add')}
         </Button>
       )}
     </div>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Table, Button, Space, message, Alert } from 'antd'
-import { CopyOutlined, DeleteOutlined } from '@ant-design/icons'
+import { Modal, Form, Input, Table, Button, Space, message, Alert, Tooltip } from 'antd'
+import { CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
 import { userApiKeyApi } from '@/services/api/userApiKey'
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys'
@@ -134,9 +134,9 @@ export default function UserApiKeyModal({
       width: 120,
       render: (_: unknown, record: UserApiKey) => (
         <Space>
-          <Button type="text" size="small" onClick={() => handleEdit(record)}>
-            {t('actions.edit', { ns: 'common' })}
-          </Button>
+          <Tooltip title={t('actions.edit', { ns: 'common' })}>
+            <Button type="text" size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
+          </Tooltip>
           <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={() => handleDelete(record.id)} />
         </Space>
       ),

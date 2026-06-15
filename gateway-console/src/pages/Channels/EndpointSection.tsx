@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Tag, Select, Input, Button, Space, Form, message } from 'antd';
+import { Tag, Select, Input, Button, Space, Form, message, Tooltip } from 'antd';
+import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ChannelEndpointResponse, CreateChannelEndpointRequest } from '@/types/channel';
@@ -130,17 +131,12 @@ function EndpointRow({
         <span className="save-tip-err">✗ {pulse.errorMsg}</span>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-        <Button type="link" size="small" onClick={onStartEdit}>
-          {t('drawer.edit')}
-        </Button>
-        <Button
-          type="link"
-          size="small"
-          danger
-          onClick={() => onDelete(endpoint)}
-        >
-          {t('drawer.delete')}
-        </Button>
+        <Tooltip title={t('drawer.edit')}>
+          <Button type="text" size="small" icon={<EditOutlined />} onClick={onStartEdit} />
+        </Tooltip>
+        <Tooltip title={t('drawer.delete')}>
+          <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => onDelete(endpoint)} />
+        </Tooltip>
       </div>
     </div>
   );
@@ -336,7 +332,7 @@ export function EndpointSection({ channelId, endpoints }: EndpointSectionProps) 
       )}
 
       {!isAdding && editingId === null && (
-        <Button type="dashed" block onClick={() => setIsAdding(true)} style={{ marginTop: 8 }}>
+        <Button type="dashed" block icon={<PlusOutlined />} onClick={() => setIsAdding(true)} style={{ marginTop: 8 }}>
           {t('drawer.addEndpoint')}
         </Button>
       )}

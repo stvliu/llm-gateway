@@ -1,38 +1,34 @@
 package com.codingas.gateway.domain.supply.enums;
 
-import lombok.Getter;
-
 /**
  * 协议类型枚举
  *
  * <p>定义 API 端点支持的协议类型。</p>
  */
-@Getter
 public enum Protocol {
 
     /** OpenAI 原生/兼容协议 */
-    OPENAI("openai", "OpenAI"),
+    OPENAI,
 
     /** Anthropic Messages API */
-    ANTHROPIC("anthropic", "Anthropic"),
+    ANTHROPIC,
 
     /** Google Gemini API */
-    GEMINI("gemini", "Gemini"),
+    GEMINI,
 
     /** 原生私有协议 */
-    NATIVE("native", "Native");
+    NATIVE;
 
-    private final String code;
-    private final String displayName;
-
-    Protocol(String code, String displayName) {
-        this.code = code;
-        this.displayName = displayName;
-    }
-
+    /**
+     * 根据代码获取协议枚举
+     *
+     * @param code 协议代码（不区分大小写）
+     * @return 对应的协议枚举
+     * @throws IllegalArgumentException 如果代码不存在
+     */
     public static Protocol fromCode(String code) {
         for (Protocol protocol : values()) {
-            if (protocol.code.equalsIgnoreCase(code)) {
+            if (protocol.name().equalsIgnoreCase(code)) {
                 return protocol;
             }
         }

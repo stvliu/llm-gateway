@@ -4,7 +4,9 @@ import {
   TeamOutlined,
   ApiOutlined,
   DashboardOutlined,
-  WarningOutlined,
+  NodeIndexOutlined,
+  CloudServerOutlined,
+  HistoryOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
@@ -19,6 +21,8 @@ export default function AdminView() {
   const { data: statsData, isLoading: statsLoading } = useStats();
 
   const stats = {
+    providerCount: statsData?.providerCount ?? 0,
+    channelCount: statsData?.channelCount ?? 0,
     modelCount: statsData?.modelCount ?? 0,
     userCount: statsData?.userCount ?? 0,
     todayRequests: statsData?.todayRequests ?? 0,
@@ -37,7 +41,7 @@ export default function AdminView() {
     { title: t('activity.action'), dataIndex: 'action', key: 'action', width: 120 },
     { title: t('activity.user'), dataIndex: 'user', key: 'user', width: 100 },
     { title: t('activity.target'), dataIndex: 'target', key: 'target' },
-    { title: t('activity.time'), dataIndex: 'time', key: 'time', width: 100 },
+    { title: t('activity.columnTime'), dataIndex: 'time', key: 'time', width: 100 },
     {
       title: t('activity.state'),
       dataIndex: 'status',
@@ -52,10 +56,12 @@ export default function AdminView() {
   ];
 
   const statCards = [
+    { key: 'providers', title: t('stats.providerCount'), value: stats.providerCount, icon: <CloudServerOutlined />, gradient: `linear-gradient(135deg, #13c2c2 0%, #08979c 100%)` },
+    { key: 'channels', title: t('stats.channelCount'), value: stats.channelCount, icon: <NodeIndexOutlined />, gradient: `linear-gradient(135deg, ${token.colorError} 0%, ${token.colorErrorActive} 100%)` },
     { key: 'models', title: t('stats.modelCount'), value: stats.modelCount, icon: <AppstoreOutlined />, gradient: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)` },
     { key: 'users', title: t('stats.userCount'), value: stats.userCount, icon: <TeamOutlined />, gradient: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccessActive} 100%)` },
-    { key: 'requests', title: t('stats.todayRequests'), value: stats.todayRequests, icon: <ApiOutlined />, gradient: `linear-gradient(135deg, ${token.colorInfo} 0%, ${token.colorInfoActive} 100%)` },
-    { key: 'tokens', title: t('stats.tokenUsage'), value: stats.tokenUsage, icon: <DashboardOutlined />, gradient: `linear-gradient(135deg, ${token.colorWarning} 0%, ${token.colorWarningActive} 100%)` },
+    { key: 'requests', title: t('stats.todayRequests'), value: stats.todayRequests, icon: <ApiOutlined />, gradient: `linear-gradient(135deg, ${token.colorWarning} 0%, ${token.colorWarningActive} 100%)` },
+    { key: 'tokens', title: t('stats.tokenUsage'), value: stats.tokenUsage, icon: <DashboardOutlined />, gradient: `linear-gradient(135deg, #722ed1 0%, #531dab 100%)` },
   ];
 
   return (
@@ -63,7 +69,7 @@ export default function AdminView() {
       <Spin spinning={statsLoading}>
         <Row gutter={16}>
           {statCards.map((card) => (
-            <Col span={6} key={card.key}>
+            <Col span={4} key={card.key}>
               <Card
                 styles={{ body: { padding: '20px 24px', position: 'relative' as const, overflow: 'hidden' } }}
                 style={{ height: '100%', border: 'none', boxShadow: token.boxShadow, transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: 'pointer' }}
@@ -98,7 +104,7 @@ export default function AdminView() {
 
       {hasPermission(P.USER_READ) && (
         <Card
-          title={<span><WarningOutlined style={{ marginRight: 8, color: token.colorWarning }} />{t('activity.title')}</span>}
+          title={<span><HistoryOutlined style={{ marginRight: 8, color: token.colorPrimary }} />{t('activity.title')}</span>}
           style={{ border: 'none', boxShadow: token.boxShadow }}
         >
           <Table dataSource={recentActivities} columns={columns} pagination={false} size="small" />

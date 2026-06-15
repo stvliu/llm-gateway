@@ -3,7 +3,7 @@ package com.codingas.gateway.application.init;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 /**

@@ -28,7 +28,7 @@ interface AggregateCredential {
   providerCode?: string;
   providerName: string;
   channelName: string;
-  state: string;
+  state: string | undefined;
   priority: number;
   weight: number;
 }
@@ -205,7 +205,7 @@ export default function UpstreamKeysTable() {
       dataIndex: 'state',
       key: 'state',
       width: 100,
-      render: (state: string) => {
+      render: (state: string | undefined) => {
         if (!state) return <Text type="secondary">-</Text>;
         const cfg = statusConfig[state] || { label: state, color: '#64748b', bg: '#f1f5f9' };
         return (

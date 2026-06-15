@@ -139,6 +139,8 @@ export interface ChannelCredential {
   description: string | null;
   weight: number;
   priority: number;
+  /** 凭证状态，后端返回（如 ACTIVE/INACTIVE） */
+  state?: string;
   createdAt: string;
   updatedAt: string;
 }

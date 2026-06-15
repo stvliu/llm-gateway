@@ -1,7 +1,6 @@
 package com.codingas.gateway.domain.team.entity;
 
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.team.enums.TeamRole;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +18,6 @@ public class UserTeam {
     /** 团队 ID */
     private Long teamId;
 
-    /** 团队角色 */
-    private TeamRole role = TeamRole.MEMBER;
+    /** 团队角色（ADMIN / MEMBER） */
+    private String role = "MEMBER";
 }

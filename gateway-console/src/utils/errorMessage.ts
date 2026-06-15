@@ -96,7 +96,7 @@ export function extractErrorCode(err: unknown): string | null {
  */
 export function extractErrorMessageI18n(
   err: unknown,
-  t: (key: string, defaultValue?: string) => string,
+  t: (key: string) => string,
 ): string {
   const code = extractErrorCode(err);
   if (code && ERROR_CODE_I18N_MAP[code]) {

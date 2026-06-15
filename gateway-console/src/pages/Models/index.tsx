@@ -9,8 +9,9 @@ import {
   Popconfirm,
   App,
   Switch,
+  Tooltip,
 } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { Card } from 'antd';
 import { useModels, useDeleteModel, useSetEnabledModel } from '@/services/query/useModels';
@@ -187,23 +188,24 @@ export default function Models() {
       width: 120,
       render: (_: unknown, record: Model) => (
         <Space>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => {
-              setEditingModel(record);
-              setEditOpen(true);
-            }}
-          >
-            {t('edit', { defaultValue: '编辑' })}
-          </Button>
+          <Tooltip title={t('edit', { defaultValue: '编辑' })}>
+            <Button
+              type="text"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => {
+                setEditingModel(record);
+                setEditOpen(true);
+              }}
+            />
+          </Tooltip>
           <Popconfirm
             title={t('confirmDelete', { defaultValue: '确定要删除此模型吗？' })}
             onConfirm={() => handleDelete(record.id)}
           >
-            <Button type="link" size="small" danger icon={<DeleteOutlined />}>
-              {t('delete', { defaultValue: '删除' })}
-            </Button>
+            <Tooltip title={t('delete', { defaultValue: '删除' })}>
+              <Button type="text" size="small" danger icon={<DeleteOutlined />} />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),

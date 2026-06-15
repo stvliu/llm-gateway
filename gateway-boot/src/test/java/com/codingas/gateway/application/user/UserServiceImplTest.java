@@ -7,6 +7,7 @@ import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class UserServiceImplTest {
     private UserGateway userGateway;
 
     @Mock
-    private org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserServiceImpl service;

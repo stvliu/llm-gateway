@@ -1,6 +1,8 @@
 {
   "title": "Home",
   "stats": {
+    "providerCount": "Providers",
+    "channelCount": "Channels",
     "modelCount": "Models",
     "userCount": "Users",
     "todayRequests": "Today's Requests",
@@ -23,7 +25,7 @@
     "action": "Action",
     "user": "User",
     "target": "Target",
-    "time": "Time",
+    "columnTime": "Time",
     "state": "Status",
     "actions": {
       "createUser": "Create User",

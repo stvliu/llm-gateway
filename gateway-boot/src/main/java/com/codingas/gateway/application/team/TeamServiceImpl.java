@@ -4,7 +4,6 @@ import com.codingas.gateway.application.team.dto.TeamRequest;
 import com.codingas.gateway.application.team.dto.TeamResponse;
 import com.codingas.gateway.domain.team.entity.Team;
 import com.codingas.gateway.domain.team.entity.UserTeam;
-import com.codingas.gateway.domain.team.enums.TeamRole;
 import com.codingas.gateway.domain.team.exception.TeamNotFoundException;
 import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
@@ -76,7 +75,7 @@ public class TeamServiceImpl implements TeamService {
             .map(ut -> {
                 TeamResponse.MemberResponse mr = new TeamResponse.MemberResponse();
                 mr.setUserId(ut.getUserId());
-                mr.setRole(ut.getRole().getCode());
+                mr.setRole(ut.getRole());
                 return mr;
             })
             .toList());
@@ -100,7 +99,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional
-    public void addMember(Long teamId, Long userId, TeamRole role) {
+    public void addMember(Long teamId, Long userId, String role) {
         if (userTeamGateway.isMember(userId, teamId)) {
             throw new IllegalArgumentException("用户已是团队成员");
         }
@@ -123,7 +122,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     @Transactional
-    public void updateMemberRole(Long teamId, Long userId, TeamRole role) {
+    public void updateMemberRole(Long teamId, Long userId, String role) {
         userTeamGateway.updateRole(userId, teamId, role);
         log.info("Updated member role: userId={}, teamId={}, role={}", userId, teamId, role);
     }
@@ -133,7 +132,7 @@ public class TeamServiceImpl implements TeamService {
         response.setId(team.getId());
         response.setName(team.getName());
         response.setDescription(team.getDescription());
-        response.setState(team.getState().getCode());
+        response.setState(team.getState());
         response.setMemberCount((int) userTeamGateway.countByTeamId(team.getId()));
         return response;
     }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Tag, Input, InputNumber, Button, Space, Form, message, theme } from 'antd';
+import { Tag, Input, InputNumber, Button, Space, Form, message, theme, Tooltip } from 'antd';
+import { ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { InlineEditableList } from './InlineEditableList';
@@ -65,7 +66,6 @@ function CredentialRowDisplay({
   const { t } = useTranslation('channels');
   const { token } = theme.useToken();
 
-  const getStateColor = (state: string) => (state === 'ACTIVE' ? 'green' : 'default');
   const className = pulseClassName(pulse);
 
   return (
@@ -91,7 +91,7 @@ function CredentialRowDisplay({
       <span style={{ color: token.colorTextSecondary, fontSize: 12 }}>
         {t('credential.lastUsed')}: {t('credential.noData')}
       </span>
-      <Tag color={getStateColor(credential.state)}>
+      <Tag color={credential.state === 'ACTIVE' ? 'green' : 'default'}>
         {credential.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
       </Tag>
       {pulse?.state === 'success' && (
@@ -100,14 +100,15 @@ function CredentialRowDisplay({
       {pulse?.state === 'error' && (
         <span className="save-tip-err">✗ {pulse.errorMsg}</span>
       )}
-      <Button
-        type="link"
-        size="small"
-        loading={testingId === credential.id}
-        onClick={() => onTest(credential)}
-      >
-        {t('credential.test')}
-      </Button>
+      <Tooltip title={t('credential.test')}>
+        <Button
+          type="text"
+          size="small"
+          icon={<ThunderboltOutlined />}
+          loading={testingId === credential.id}
+          onClick={() => onTest(credential)}
+        />
+      </Tooltip>
     </div>
   );
 }

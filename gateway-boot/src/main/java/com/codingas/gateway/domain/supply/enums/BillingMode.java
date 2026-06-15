@@ -1,7 +1,5 @@
 package com.codingas.gateway.domain.supply.enums;
 
-import lombok.Getter;
-
 /**
  * 计费模式枚举
  *
@@ -13,39 +11,30 @@ import lombok.Getter;
  *   <li><b>PREPAID_PACKAGE</b>: 资源包，一次性购买固定额度的 Token 包</li>
  * </ul>
  */
-@Getter
 public enum BillingMode {
 
     /** 按量付费（Pay-as-you-go），按实际 Token 使用量计费 */
-    PAY_AS_YOU_GO("pay_as_you_go", "按量计费"),
+    PAY_AS_YOU_GO,
 
     /** 订阅制（Subscription），固定月费含一定额度 */
-    SUBSCRIPTION("subscription", "订阅制"),
+    SUBSCRIPTION,
 
     /** 混合计费（Hybrid），基础费 + 超出部分按量 */
-    HYBRID("hybrid", "混合计费"),
+    HYBRID,
 
     /** 资源包（Prepaid Package），预购 Token 包 */
-    PREPAID_PACKAGE("prepaid_package", "资源包");
-
-    private final String code;
-    private final String displayName;
-
-    BillingMode(String code, String displayName) {
-        this.code = code;
-        this.displayName = displayName;
-    }
+    PREPAID_PACKAGE;
 
     /**
      * 根据代码获取计费模式
      *
-     * @param code 计费模式代码
+     * @param code 计费模式代码（不区分大小写）
      * @return 对应的计费模式枚举
      * @throws IllegalArgumentException 如果代码不存在
      */
     public static BillingMode fromCode(String code) {
         for (BillingMode mode : values()) {
-            if (mode.code.equals(code)) {
+            if (mode.name().equalsIgnoreCase(code)) {
                 return mode;
             }
         }
@@ -65,9 +54,9 @@ public enum BillingMode {
         if (value == null) {
             return PAY_AS_YOU_GO;
         }
-        // 先尝试按新枚举名或 code 直接匹配
+        // 先尝试按枚举名匹配（不区分大小写）
         for (BillingMode mode : values()) {
-            if (mode.name().equals(value) || mode.code.equals(value)) {
+            if (mode.name().equalsIgnoreCase(value)) {
                 return mode;
             }
         }
