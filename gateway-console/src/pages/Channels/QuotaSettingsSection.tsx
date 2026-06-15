@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Descriptions, InputNumber, Input, Button, Space, Form, message } from 'antd';
+import { Descriptions, InputNumber, Input, Button, Space, Form, message, Tooltip } from 'antd';
+import { EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import type { Channel, UpdateChannelRequest } from '@/types/channel';
 import { useUpdateChannel } from '@/services/query/useChannels';
@@ -150,9 +151,9 @@ export function QuotaSettingsSection({ channel }: QuotaSettingsSectionProps) {
         </Descriptions.Item>
       </Descriptions>
       <Space style={{ marginTop: 12 }}>
-        <Button type="link" style={{ padding: 0 }} onClick={handleStartEdit}>
-          {t('quota.editSettings')}
-        </Button>
+        <Tooltip title={t('quota.editSettings')}>
+          <Button type="text" icon={<EditOutlined />} onClick={handleStartEdit} />
+        </Tooltip>
         {pulse.state === 'success' && (
           <span className="save-tip-ok">
             ✓ {t('common:message.saved', { defaultValue: '已保存' })}

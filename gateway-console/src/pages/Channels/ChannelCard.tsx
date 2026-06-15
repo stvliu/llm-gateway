@@ -1,15 +1,16 @@
 import { Card, App, Tooltip, Dropdown, Button, Space } from 'antd';
 import {
-  DeleteOutlined,
   ThunderboltOutlined,
   EyeOutlined,
   MoreOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { theme } from 'antd';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
 import { HealthDot } from '@/components/common/HealthDot';
-import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getTransitionActionLabel } from '@/utils/stateTransitions';
 import { getActionBarConfig } from '@/utils/channelActions';
 import { CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
@@ -58,7 +59,6 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
     useDangerConfirm();
   const currentState = channel.state as ChannelState;
   const meta = CHANNEL_LIFECYCLE[currentState] ?? CHANNEL_LIFECYCLE.SUSPENDED;
-  const availableTransitions = getAvailableTransitions(currentState);
   const { primaryAction, dropdownTransitions, deleteDisabled } = getActionBarConfig(currentState);
   // visualStyle 派生卡片整体透明度：muted 状态保留轻度低饱和，其它状态保持 1
   // RETIRED 不再用 opacity 整体降透，改为渠道名 line-through + 灰色（见下方 nameStyle）
@@ -140,7 +140,7 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
     state: ChannelState,
     transitions: ChannelState[],
     delDisabled: boolean,
-    tr: (key: string, fallback?: string) => string,
+    tr: (key: string) => string,
   ) {
     const items: any[] = transitions.map(target => ({
       key: target,
@@ -226,11 +226,16 @@ export function ChannelCard({ channel, onClick, onDelete, onTest, onStateTransit
             />
           </Tooltip>
 
-          {/* Primary 按钮 */}
+          {/* Primary 按钮 — 图标 + Tooltip，使用 text 类型与其他操作按钮风格统一 */}
           {primaryAction && (
-            <Button type="primary" size="small" onClick={() => handleTransition(primaryAction)}>
-              {t(getTransitionActionLabel(currentState, primaryAction))}
-            </Button>
+            <Tooltip title={t(getTransitionActionLabel(currentState, primaryAction))}>
+              <Button
+                type="text"
+                size="small"
+                icon={primaryAction === 'SUSPENDED' ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                onClick={() => handleTransition(primaryAction)}
+              />
+            </Tooltip>
           )}
 
           {/* Dropdown — 剩余转换 + 删除 */}

@@ -26,7 +26,6 @@ export function BatchExportButton() {
         code: p.providerId || p.providerName.toLowerCase(),
         websiteUrl: p.websiteUrl || undefined,
         apiDocUrl: p.apiDocUrl || undefined,
-        state: p.state || undefined,
         description: p.description || undefined,
       })),
     };
@@ -36,7 +35,6 @@ export function BatchExportButton() {
         const fields = [`  - name: "${p.name}"`, `    code: "${p.code}"`];
         if (p.websiteUrl) fields.push(`    websiteUrl: "${p.websiteUrl}"`);
         if (p.apiDocUrl) fields.push(`    apiDocUrl: "${p.apiDocUrl}"`);
-        if (p.state) fields.push(`    state: ${p.state}`);
         if (p.description) fields.push(`    description: "${p.description}"`);
         return fields.join('\n');
       })

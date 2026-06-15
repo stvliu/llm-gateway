@@ -2,6 +2,8 @@
 comet_change: channel-action-bar-redesign
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-15-channel-action-bar-redesign
+status: final
 ---
 
 # 渠道操作区布局重构 — Design Doc

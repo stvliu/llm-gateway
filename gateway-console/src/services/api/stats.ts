@@ -2,6 +2,7 @@ import { api } from './client';
 
 export interface StatsResponse {
   providerCount: number;
+  channelCount: number;
   modelCount: number;
   userCount: number;
   todayRequests: number;

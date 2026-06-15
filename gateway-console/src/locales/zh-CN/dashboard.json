@@ -1,6 +1,8 @@
 {
   "title": "首页",
   "stats": {
+    "providerCount": "供应商数量",
+    "channelCount": "渠道数量",
     "modelCount": "模型数量",
     "userCount": "用户数量",
     "todayRequests": "今日请求",
@@ -23,7 +25,7 @@
     "action": "操作",
     "user": "操作人",
     "target": "对象",
-    "time": "时间",
+    "columnTime": "时间",
     "state": "状态",
     "actions": {
       "createUser": "创建用户",

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Drawer, Button, Space, Tabs, theme } from 'antd';
+import { Drawer, Button, Space, Tabs, theme, Tooltip } from 'antd';
 import {
   LeftOutlined,
   RightOutlined,
@@ -142,9 +142,9 @@ export function EntityDrawer<T>({
   const extra = (
     <Space>
       {mode === 'view' && onModeChange && (
-        <Button icon={<EditOutlined />} onClick={() => onModeChange('edit')}>
-          {t('actions.edit')}
-        </Button>
+        <Tooltip title={t('actions.edit')}>
+          <Button type="text" icon={<EditOutlined />} onClick={() => onModeChange('edit')} />
+        </Tooltip>
       )}
       {mode === 'edit' && onSave && entity && (
         <Button type="primary" onClick={handleSave} loading={saving}>
@@ -152,9 +152,9 @@ export function EntityDrawer<T>({
         </Button>
       )}
       {onDelete && entity && (
-        <Button danger icon={<DeleteOutlined />} onClick={() => onDelete(entity)}>
-          {t('actions.delete')}
-        </Button>
+        <Tooltip title={t('actions.delete')}>
+          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => onDelete(entity)} />
+        </Tooltip>
       )}
     </Space>
   );

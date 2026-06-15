@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Table, Button, Space, Dropdown, Checkbox, theme } from 'antd';
+import { Table, Button, Space, Dropdown, Checkbox, theme, Tooltip } from 'antd';
 import type { TableProps, MenuProps } from 'antd';
 import { SettingOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ReactNode } from 'react';
@@ -232,15 +232,15 @@ export function EntityTable<T extends object>({
       {(showColumnConfig || showRefresh) && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 8 }}>
           {showRefresh && (
-            <Button type="text" icon={<ReloadOutlined />} onClick={onRefresh}>
-              {t('actions.refresh')}
-            </Button>
+            <Tooltip title={t('actions.refresh')}>
+              <Button type="text" icon={<ReloadOutlined />} onClick={onRefresh} />
+            </Tooltip>
           )}
           {showColumnConfig && (
             <Dropdown menu={columnConfigMenu} trigger={['click']}>
-              <Button type="text" icon={<SettingOutlined />}>
-                {t('table.columnConfig')}
-              </Button>
+              <Tooltip title={t('table.columnConfig')}>
+                <Button type="text" icon={<SettingOutlined />} />
+              </Tooltip>
             </Dropdown>
           )}
         </div>

@@ -5,6 +5,7 @@ package com.codingas.gateway.application.stats.dto;
  */
 public record StatsResponse(
     long providerCount,
+    long channelCount,
     long modelCount,
     long userCount,
     long todayRequests,

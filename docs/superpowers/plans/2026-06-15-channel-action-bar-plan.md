@@ -1,3 +1,7 @@
+---
+archived-with: 2026-06-15-channel-action-bar-redesign
+status: final
+---
 # 渠道操作区布局重构 — 实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.

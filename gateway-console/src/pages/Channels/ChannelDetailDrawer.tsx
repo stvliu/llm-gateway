@@ -22,8 +22,9 @@ import {
   SettingOutlined,
   BarChartOutlined,
   ApiOutlined,
-  DeleteOutlined,
-  DownOutlined,
+  MoreOutlined,
+  PlayCircleOutlined,
+  PauseCircleOutlined,
   CheckCircleFilled,
   CloseCircleFilled,
 } from '@ant-design/icons';
@@ -31,7 +32,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import ChannelStateTag from '@/components/common/ChannelStateTag';
-import { getAvailableTransitions, getTransitionActionLabel } from '@/utils/stateTransitions';
+import { getTransitionActionLabel } from '@/utils/stateTransitions';
 import { getActionBarConfig } from '@/utils/channelActions';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
 import { extractErrorMessage } from '@/utils/errorMessage';
@@ -148,7 +149,6 @@ export function ChannelDetailDrawer({
 
   const isLoading = detailLoading || credentialsLoading;
   const currentState = (channelDetail?.state ?? channel.state) as ChannelState;
-  const availableTransitions = getAvailableTransitions(currentState);
   const { primaryAction, dropdownTransitions, deleteDisabled } = getActionBarConfig(currentState);
   const isDeprecated = currentState === 'DEPRECATED';
 
@@ -274,7 +274,7 @@ export function ChannelDetailDrawer({
     state: ChannelState,
     transitions: ChannelState[],
     delDisabled: boolean,
-    tr: (key: string, fallback?: string) => string,
+    tr: (key: string) => string,
   ) {
     const items: any[] = transitions.map(target => ({
       key: target,
@@ -397,23 +397,27 @@ export function ChannelDetailDrawer({
         }
         extra={
           <Space size={8}>
-            <Button
-              icon={<ApiOutlined />}
-              onClick={handleTest}
-              loading={matrixLoading}
-              type={testAllHighlight ? 'primary' : 'default'}
-              data-testid="drawer-connectivity-test-btn"
-            >
-              {t('drawer.connectivityTest')}
-            </Button>
+            {/* 连通性测试 — 图标 + Tooltip */}
+            <Tooltip title={t('drawer.connectivityTest')}>
+              <Button
+                icon={<ApiOutlined />}
+                onClick={handleTest}
+                loading={matrixLoading}
+                type={testAllHighlight ? 'primary' : 'default'}
+                data-testid="drawer-connectivity-test-btn"
+              />
+            </Tooltip>
 
-            {/* Primary 按钮 */}
+            {/* Primary 按钮 — 图标 + Tooltip */}
             {primaryAction && (
-              <Button type="primary" loading={transitionChannelState.isPending}
-                onClick={() => handleTransition(primaryAction)}
-              >
-                {t(getTransitionActionLabel(currentState, primaryAction))}
-              </Button>
+              <Tooltip title={t(getTransitionActionLabel(currentState, primaryAction))}>
+                <Button
+                  type="text"
+                  loading={transitionChannelState.isPending}
+                  icon={primaryAction === 'SUSPENDED' ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+                  onClick={() => handleTransition(primaryAction)}
+                />
+              </Tooltip>
             )}
 
             {/* Dropdown — 剩余转换 + 删除 */}
@@ -434,12 +438,9 @@ export function ChannelDetailDrawer({
                 },
               }}
             >
-              <Button loading={transitionChannelState.isPending}>
-                <Space>
-                  {t('drawer.changeState')}
-                  <DownOutlined />
-                </Space>
-              </Button>
+              <Tooltip title={t('drawer.changeState')}>
+                <Button loading={transitionChannelState.isPending} icon={<MoreOutlined />} />
+              </Tooltip>
             </Dropdown>
           </Space>
         }

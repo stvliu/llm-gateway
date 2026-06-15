@@ -16,6 +16,6 @@ verification_report: docs/superpowers/reports/2026-06-15-channel-action-bar-rede
 branch_status: handled
 created_at: 2026-06-14
 verified_at: 2026-06-14
-archived: false
+archived: true
 handoff_context: openspec/changes/channel-action-bar-redesign/.comet/handoff/design-context.json
 handoff_hash: 2bb19ccb88f1f8bbecd65fe8066c1aafedc5e9edf6405aa46ef80a9918f8a78f

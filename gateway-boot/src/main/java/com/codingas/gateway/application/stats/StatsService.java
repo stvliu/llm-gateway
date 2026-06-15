@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.stats;
 
 import com.codingas.gateway.application.stats.dto.StatsResponse;
+import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ModelRepository;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ProviderRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserRepository;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StatsService {
 
     private final ProviderRepository providerRepository;
+    private final ChannelRepository channelRepository;
     private final ModelRepository modelRepository;
     private final UserRepository userRepository;
 
@@ -25,6 +27,7 @@ public class StatsService {
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
         long providerCount = providerRepository.count();
+        long channelCount = channelRepository.count();
         long modelCount = modelRepository.count();
         long userCount = userRepository.count();
 
@@ -35,6 +38,7 @@ public class StatsService {
 
         return new StatsResponse(
             providerCount,
+            channelCount,
             modelCount,
             userCount,
             todayRequests,
