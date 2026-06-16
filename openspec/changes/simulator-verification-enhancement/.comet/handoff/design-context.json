@@ -1,0 +1,13 @@
+{
+  "change": "simulator-verification-enhancement",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "5bac77c0cd28674a8c994d21f87a926074d74d2e628d85c1fd3e804aa38d48ea",
+  "files": [
+    { "path": "openspec/changes/simulator-verification-enhancement/proposal.md", "sha256": "5bcfbd3a7a89d3ce03fc6681ee80439254f49e94321cfb7ba4fbbdfc8f9ec4c5" },
+    { "path": "openspec/changes/simulator-verification-enhancement/design.md", "sha256": "68fb246c34ec942c2866325eb86e8e40efb4af66c3ac85c1de2599bad6a404bc" },
+    { "path": "openspec/changes/simulator-verification-enhancement/tasks.md", "sha256": "4f8fcf7d155e4ff57fa97caa831f56aa7dcb3de153b10f6b41cf147e63cb527d" }
+  ]
+}
