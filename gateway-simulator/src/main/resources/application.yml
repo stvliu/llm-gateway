@@ -1,0 +1,6 @@
+simulator:
+  mode: normal
+  request-log-capacity: 100
+
+server:
+  port: 9090

@@ -1,5 +1,8 @@
 package com.codingas.simulator.service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,6 +14,7 @@ import java.util.List;
  * 支持三种模式：NORMAL（正常响应）、RATE_LIMITED（限流响应）、FAULT（故障响应）。
  * 请求记录使用环形缓冲区，超出容量时自动丢弃最旧记录。
  */
+@Component
 public class SimulatorModeService {
 
     /**
@@ -38,12 +42,14 @@ public class SimulatorModeService {
     private int writeIndex;
 
     /**
-     * 构造方法，根据配置初始化模式和缓冲区容量。
+     * Spring 构造方法，通过 @Value 注入配置初始化模式和缓冲区容量。
      *
-     * @param modeConfig  模式配置字符串（normal / rate_limited / fault）
-     * @param logCapacity 请求记录缓冲区容量
+     * @param modeConfig  模式配置字符串（normal / rate_limited / fault），默认 normal
+     * @param logCapacity 请求记录缓冲区容量，默认 100
      */
-    public SimulatorModeService(String modeConfig, int logCapacity) {
+    public SimulatorModeService(
+            @Value("${simulator.mode:normal}") String modeConfig,
+            @Value("${simulator.request-log-capacity:100}") int logCapacity) {
         this.mode = parseMode(modeConfig);
         this.logCapacity = logCapacity;
         this.requestLog = new ArrayList<>(logCapacity);
