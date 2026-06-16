@@ -52,7 +52,7 @@ base-ref: 03271624544114b9cbda6115114fbf24aa0e6434
 **Files:**
 - 创建: `gateway-boot/src/test/java/com/codingas/gateway/support/ResponseTemplates.java`
 
-- [ ] **Step 1: 创建 ResponseTemplates 类**
+- [x] **Step 1: 创建 ResponseTemplates 类**
 
 ```java
 package com.codingas.gateway.support;
@@ -188,12 +188,12 @@ public final class ResponseTemplates {
 }
 ```
 
-- [ ] **Step 2: 验证编译通过**
+- [x] **Step 2: 验证编译通过**
 
 运行: `./mvnw compile -pl gateway-boot -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/support/ResponseTemplates.java
@@ -209,7 +209,7 @@ git commit -m "test(simulator): 添加 ResponseTemplates 响应模板工厂"
 
 **前置:** Task 1（ResponseTemplates）已完成
 
-- [ ] **Step 1: 创建 ProviderSimulator 类**
+- [x] **Step 1: 创建 ProviderSimulator 类**
 
 ```java
 package com.codingas.gateway.support;
@@ -360,12 +360,12 @@ public class ProviderSimulator implements AutoCloseable {
 }
 ```
 
-- [ ] **Step 2: 验证编译通过**
+- [x] **Step 2: 验证编译通过**
 
 运行: `./mvnw compile -pl gateway-boot -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/support/ProviderSimulator.java
@@ -381,7 +381,7 @@ git commit -m "test(simulator): 添加 ProviderSimulator MockWebServer 封装"
 
 **前置:** Task 1 和 Task 2 已完成
 
-- [ ] **Step 1: 创建测试类（8 场景）**
+- [x] **Step 1: 创建测试类（8 场景）**
 
 ```java
 package com.codingas.gateway.infrastructure.supply.upstream;
@@ -582,12 +582,12 @@ class OpenAIUpstreamClientTest {
 }
 ```
 
-- [ ] **Step 2: 运行测试验证通过**
+- [x] **Step 2: 运行测试验证通过**
 
 运行: `./mvnw test -pl gateway-boot -Dtest="OpenAIUpstreamClientTest" -pl gateway-boot`
 预期: 8 tests passed, 0 failed
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/upstream/OpenAIUpstreamClientTest.java
@@ -603,7 +603,7 @@ git commit -m "test(simulator): 添加 OpenAIUpstreamClient 8 场景测试"
 
 **前置:** Task 1 和 Task 2 已完成
 
-- [ ] **Step 1: 创建测试类（8 场景）**
+- [x] **Step 1: 创建测试类（8 场景）**
 
 ```java
 package com.codingas.gateway.infrastructure.supply.upstream;
@@ -802,12 +802,12 @@ class AnthropicUpstreamClientTest {
 }
 ```
 
-- [ ] **Step 2: 运行测试验证通过**
+- [x] **Step 2: 运行测试验证通过**
 
 运行: `./mvnw test -pl gateway-boot -Dtest="AnthropicUpstreamClientTest" -pl gateway-boot`
 预期: 8 tests passed, 0 failed
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/upstream/AnthropicUpstreamClientTest.java
@@ -820,17 +820,17 @@ git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
 
 **前置:** Task 1 ~ Task 4 已完成
 
-- [ ] **Step 1: 运行第一阶段全部测试**
+- [x] **Step 1: 运行第一阶段全部测试**
 
 运行: `./mvnw test -pl gateway-boot -Dtest="OpenAIUpstreamClientTest,AnthropicUpstreamClientTest"`
 预期: 16 tests passed, 0 failed
 
-- [ ] **Step 2: 运行 gateway-boot 全量单元测试确认无回归**
+- [x] **Step 2: 运行 gateway-boot 全量单元测试确认无回归**
 
 运行: `./mvnw test -pl gateway-boot`
 预期: BUILD SUCCESS，所有既有测试通过
 
-- [ ] **Step 3: 提交（如有修复）**
+- [x] **Step 3: 提交（如有修复）**
 
 仅在需要修复时提交。
 
@@ -844,7 +844,7 @@ git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
 - 创建: `gateway-simulator/pom.xml`
 - 修改: `pom.xml`（父 POM 添加模块）
 
-- [ ] **Step 1: 创建 gateway-simulator/pom.xml**
+- [x] **Step 1: 创建 gateway-simulator/pom.xml**
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -910,7 +910,7 @@ git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
 </project>
 ```
 
-- [ ] **Step 2: 修改父 POM 添加模块**
+- [x] **Step 2: 修改父 POM 添加模块**
 
 在 `pom.xml` 的 `<modules>` 中添加 `<module>gateway-simulator</module>`：
 
@@ -922,12 +922,12 @@ git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
     </modules>
 ```
 
-- [ ] **Step 3: 验证模块解析**
+- [x] **Step 3: 验证模块解析**
 
 运行: `./mvnw help:effective-pom -pl gateway-simulator -q > /dev/null`
 预期: BUILD SUCCESS
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add gateway-simulator/pom.xml pom.xml
@@ -943,7 +943,7 @@ git commit -m "feat(simulator): 创建 gateway-simulator Maven 模块骨架"
 - 创建: `gateway-simulator/src/main/java/com/codingas/simulator/service/RequestRecord.java`
 - 创建: `gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java`
 
-- [ ] **Step 1: 创建 SimulatorResponseTemplates**
+- [x] **Step 1: 创建 SimulatorResponseTemplates**
 
 ```java
 package com.codingas.simulator.template;
@@ -1101,7 +1101,7 @@ public final class SimulatorResponseTemplates {
 }
 ```
 
-- [ ] **Step 2: 创建 RequestRecord**
+- [x] **Step 2: 创建 RequestRecord**
 
 ```java
 package com.codingas.simulator.service;
@@ -1119,7 +1119,7 @@ public record RequestRecord(String method, String path, Instant timestamp) {
 }
 ```
 
-- [ ] **Step 3: 创建 SimulatorModeService**
+- [x] **Step 3: 创建 SimulatorModeService**
 
 ```java
 package com.codingas.simulator.service;
@@ -1220,12 +1220,12 @@ public class SimulatorModeService {
 }
 ```
 
-- [ ] **Step 4: 验证编译通过**
+- [x] **Step 4: 验证编译通过**
 
 运行: `./mvnw compile -pl gateway-simulator -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/template/SimulatorResponseTemplates.java \
@@ -1243,7 +1243,7 @@ git commit -m "feat(simulator): 添加响应模板和模式管理服务"
 
 **前置:** Task 7 已完成
 
-- [ ] **Step 1: 创建 SimulatorController**
+- [x] **Step 1: 创建 SimulatorController**
 
 ```java
 package com.codingas.simulator.controller;
@@ -1388,12 +1388,12 @@ public class SimulatorController {
 }
 ```
 
-- [ ] **Step 2: 验证编译通过**
+- [x] **Step 2: 验证编译通过**
 
 运行: `./mvnw compile -pl gateway-simulator -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorController.java
@@ -1409,7 +1409,7 @@ git commit -m "feat(simulator): 实现模拟端点 Controller"
 
 **前置:** Task 7 已完成
 
-- [ ] **Step 1: 创建 SimulatorAdminController**
+- [x] **Step 1: 创建 SimulatorAdminController**
 
 ```java
 package com.codingas.simulator.controller;
@@ -1487,12 +1487,12 @@ public class SimulatorAdminController {
 }
 ```
 
-- [ ] **Step 2: 验证编译通过**
+- [x] **Step 2: 验证编译通过**
 
 运行: `./mvnw compile -pl gateway-simulator -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorAdminController.java
@@ -1509,7 +1509,7 @@ git commit -m "feat(simulator): 实现管理 API Controller"
 
 **前置:** Task 7 ~ Task 9 已完成
 
-- [ ] **Step 1: 创建启动类**
+- [x] **Step 1: 创建启动类**
 
 ```java
 package com.codingas.simulator;
@@ -1532,7 +1532,7 @@ public class LLMProviderSimulatorApplication {
 }
 ```
 
-- [ ] **Step 2: 创建配置文件**
+- [x] **Step 2: 创建配置文件**
 
 ```yaml
 simulator:
@@ -1543,12 +1543,12 @@ server:
   port: 9090
 ```
 
-- [ ] **Step 3: 验证模块编译和启动**
+- [x] **Step 3: 验证模块编译和启动**
 
 运行: `./mvnw compile -pl gateway-simulator -q`
 预期: BUILD SUCCESS
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/LLMProviderSimulatorApplication.java \
@@ -1565,7 +1565,7 @@ git commit -m "feat(simulator): 添加 Spring Boot 启动类和配置文件"
 
 **前置:** Task 7 已完成
 
-- [ ] **Step 1: 创建 SimulatorModeServiceTest**
+- [x] **Step 1: 创建 SimulatorModeServiceTest**
 
 ```java
 package com.codingas.simulator;
@@ -1686,12 +1686,12 @@ class SimulatorModeServiceTest {
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 ```
 
-- [ ] **Step 2: 运行测试验证**
+- [x] **Step 2: 运行测试验证**
 
 运行: `./mvnw test -pl gateway-simulator -Dtest="SimulatorModeServiceTest"`
 预期: 8 tests passed, 0 failed
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorModeServiceTest.java
@@ -1707,7 +1707,7 @@ git commit -m "test(simulator): 添加 SimulatorModeService 单元测试"
 
 **前置:** Task 10 已完成
 
-- [ ] **Step 1: 创建 SimulatorIntegrationTest**
+- [x] **Step 1: 创建 SimulatorIntegrationTest**
 
 ```java
 package com.codingas.simulator;
@@ -1891,7 +1891,7 @@ class SimulatorIntegrationTest {
 }
 ```
 
-- [ ] **Step 2: 运行集成测试**
+- [x] **Step 2: 运行集成测试**
 
 运行: `./mvnw test -pl gateway-simulator -Dtest="SimulatorIntegrationTest"`
 预期: 7 tests passed, 0 failed
@@ -1902,7 +1902,7 @@ class SimulatorIntegrationTest {
 
 如果 TestRestTemplate 在 Surefire 下也能运行（取决于项目 surefire 配置），则直接用 test 命令即可。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorIntegrationTest.java
@@ -1915,12 +1915,12 @@ git commit -m "test(simulator): 添加模拟服务集成测试"
 
 **前置:** 所有 Task 已完成
 
-- [ ] **Step 1: 运行全模块测试**
+- [x] **Step 1: 运行全模块测试**
 
 运行: `./mvnw clean test`
 预期: BUILD SUCCESS，所有模块测试通过
 
-- [ ] **Step 2: 最终提交（如有修复）**
+- [x] **Step 2: 最终提交（如有修复）**
 
 仅在需要修复时提交。
 
