@@ -2,6 +2,7 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.channel.ModelInstanceService;
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceUpdateRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 import jakarta.validation.Valid;
@@ -60,5 +61,19 @@ public class ModelInstanceController {
             @RequestBody Map<String, String> body) {
         String upstreamModelName = body.get("upstreamModelName");
         modelInstanceService.updateUpstreamModelName(channelId, id, upstreamModelName);
+    }
+
+    /**
+     * 更新模型实例（支持修改 modelId 和 upstreamModelName）
+     *
+     * <p>字段为 null 表示不更新该字段。</p>
+     */
+    @PutMapping("/{id}")
+    public ModelInstanceResponse update(
+            @PathVariable Long channelId,
+            @PathVariable Long id,
+            @Valid @RequestBody ModelInstanceUpdateRequest request) {
+        request.setChannelId(channelId);
+        return modelInstanceService.update(channelId, id, request);
     }
 }

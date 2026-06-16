@@ -14,6 +14,7 @@ import type {
   CreateChannelCredentialResponse,
   CreateChannelModelRequest,
   UpdateChannelCredentialRequest,
+  UpdateChannelModelRequest,
   ApiKeyTestResponse,
 } from '@/types/channel';
 import type { AxiosRequestConfig } from 'axios';
@@ -118,4 +119,8 @@ export const channelApi = {
   /** 模型实例状态转换（由后端校验 canTransitionTo()） */
   transitionModelState: (channelId: number, modelId: number, targetState: string) =>
     api.put<void>(`/channels/${channelId}/models/${modelId}/state`, { targetState }),
+
+  /** 更新模型映射（支持修改 modelId 和 upstreamModelName） */
+  updateModel: (channelId: number, modelId: number, data: UpdateChannelModelRequest) =>
+    api.put<ChannelModel>(`/channels/${channelId}/models/${modelId}`, data),
 };

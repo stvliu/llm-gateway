@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceUpdateRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
@@ -146,5 +147,41 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         instance.setUpstreamModelName(upstreamModelName);
         modelInstanceGateway.save(instance);
         log.info("模型实例上游模型名更新成功, id={}, channelId={}, upstreamModelName={}", id, channelId, upstreamModelName);
+    }
+
+    /**
+     * 更新模型实例（支持修改 modelId 和 upstreamModelName）
+     *
+     * <p>字段为 null 表示不更新该字段。修改 modelId 时检查是否与渠道下其他实例冲突。</p>
+     */
+    @Transactional
+    @Override
+    public ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request) {
+        ModelInstance instance = modelInstanceGateway.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ModelInstance", id));
+        if (!instance.getChannelId().equals(channelId)) {
+            log.warn("模型实例不属于该渠道, id={}, channelId={}, actualChannelId={}", id, channelId, instance.getChannelId());
+            throw new GatewayRequestException("CHANNEL_MISMATCH", "模型实例不属于该渠道");
+        }
+
+        // 更新 modelId
+        if (request.getModelId() != null && !request.getModelId().equals(instance.getModelId())) {
+            // 检查新 modelId 是否已关联到该渠道
+            boolean exists = modelInstanceGateway.existsByChannelIdAndModelId(channelId, request.getModelId());
+            if (exists) {
+                log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, request.getModelId());
+                throw new DuplicateResourceException("ModelInstance", "modelId");
+            }
+            instance.setModelId(request.getModelId());
+        }
+
+        // 更新 upstreamModelName（null 表示不更新，空字符串表示清除）
+        if (request.getUpstreamModelName() != null) {
+            instance.setUpstreamModelName(request.getUpstreamModelName());
+        }
+
+        instance = modelInstanceGateway.save(instance);
+        log.info("模型实例更新成功, id={}, channelId={}, modelId={}", id, channelId, instance.getModelId());
+        return toResponse(instance);
     }
 }

@@ -204,6 +204,19 @@ export interface CreateChannelModelRequest {
   upstreamModelName?: string;
 }
 
+/** 更新渠道模型映射请求体（与后端 ModelInstanceUpdateRequest 一致） */
+export interface UpdateChannelModelRequest {
+  /** 新模型 ID，不传表示不更新 */
+  modelId?: number;
+  /**
+   * 新上游模型名
+   * - 不传（undefined）：不更新该字段
+   * - null：清除上游模型名，走默认值
+   * - 字符串：设置新值
+   */
+  upstreamModelName?: string | null;
+}
+
 /** 渠道聚合统计（前端计算） */
 export interface ChannelStats {
   /** 端点数量 */

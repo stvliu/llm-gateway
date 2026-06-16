@@ -1,6 +1,7 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
+import com.codingas.gateway.application.channel.dto.ModelInstanceUpdateRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
 import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
 
@@ -38,4 +39,11 @@ public interface ModelInstanceService {
      * @param upstreamModelName 新的上游模型名，null 表示走默认（= Model.modelName）
      */
     void updateUpstreamModelName(Long channelId, Long id, String upstreamModelName);
+
+    /**
+     * 更新模型实例（支持修改 modelId 和 upstreamModelName）
+     *
+     * <p>字段为 null 表示不更新该字段。</p>
+     */
+    ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request);
 }
