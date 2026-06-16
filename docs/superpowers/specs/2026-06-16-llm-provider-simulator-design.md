@@ -2,6 +2,8 @@
 comet_change: llm-provider-simulator
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-16-llm-provider-simulator
+status: final
 ---
 
 # LLM Provider Simulator 技术设计

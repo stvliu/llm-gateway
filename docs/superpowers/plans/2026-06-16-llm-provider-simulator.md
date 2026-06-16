@@ -2,6 +2,7 @@
 change: llm-provider-simulator
 design-doc: docs/superpowers/specs/2026-06-16-llm-provider-simulator-design.md
 base-ref: 03271624544114b9cbda6115114fbf24aa0e6434
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 # LLM Provider Simulator 实施计划
@@ -14,6 +15,7 @@ base-ref: 03271624544114b9cbda6115114fbf24aa0e6434
 
 **Tech Stack:** Java 21, OkHttp MockWebServer 4.12.0（项目已有依赖）, JUnit 5, AssertJ, Spring Boot 3.5.x, SseEmitter
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ## 文件结构总览
@@ -43,6 +45,7 @@ base-ref: 03271624544114b9cbda6115114fbf24aa0e6434
 | 创建 | `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorModeServiceTest.java` | 模式服务单元测试 |
 | 创建 | `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorIntegrationTest.java` | Spring Boot 集成测试 |
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ## 第一阶段：测试工具包
@@ -200,6 +203,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/support/ResponseTemplate
 git commit -m "test(simulator): 添加 ResponseTemplates 响应模板工厂"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 2: 创建 ProviderSimulator MockWebServer 封装
@@ -372,6 +376,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/support/ProviderSimulato
 git commit -m "test(simulator): 添加 ProviderSimulator MockWebServer 封装"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 3: 创建 OpenAIUpstreamClientTest 测试类
@@ -594,6 +599,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/up
 git commit -m "test(simulator): 添加 OpenAIUpstreamClient 8 场景测试"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 4: 创建 AnthropicUpstreamClientTest 测试类
@@ -814,6 +820,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/up
 git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 5: 第一阶段全量测试验证
@@ -834,6 +841,7 @@ git commit -m "test(simulator): 添加 AnthropicUpstreamClient 8 场景测试"
 
 仅在需要修复时提交。
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ## 第二阶段：独立模拟服务
@@ -934,6 +942,7 @@ git add gateway-simulator/pom.xml pom.xml
 git commit -m "feat(simulator): 创建 gateway-simulator Maven 模块骨架"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 7: 实现响应模板和模式服务
@@ -1234,6 +1243,7 @@ git add gateway-simulator/src/main/java/com/codingas/simulator/template/Simulato
 git commit -m "feat(simulator): 添加响应模板和模式管理服务"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 8: 实现模拟端点 Controller
@@ -1400,6 +1410,7 @@ git add gateway-simulator/src/main/java/com/codingas/simulator/controller/Simula
 git commit -m "feat(simulator): 实现模拟端点 Controller"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 9: 实现管理 API Controller
@@ -1499,6 +1510,7 @@ git add gateway-simulator/src/main/java/com/codingas/simulator/controller/Simula
 git commit -m "feat(simulator): 实现管理 API Controller"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 10: 创建 Spring Boot 启动类和配置
@@ -1556,6 +1568,7 @@ git add gateway-simulator/src/main/java/com/codingas/simulator/LLMProviderSimula
 git commit -m "feat(simulator): 添加 Spring Boot 启动类和配置文件"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 11: 编写 SimulatorModeService 单元测试
@@ -1698,6 +1711,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorModeServ
 git commit -m "test(simulator): 添加 SimulatorModeService 单元测试"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 12: 编写 SimulatorIntegrationTest 集成测试
@@ -1909,6 +1923,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorIntegrat
 git commit -m "test(simulator): 添加模拟服务集成测试"
 ```
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ### Task 13: 全量回归测试
@@ -1924,6 +1939,7 @@ git commit -m "test(simulator): 添加模拟服务集成测试"
 
 仅在需要修复时提交。
 
+archived-with: 2026-06-16-llm-provider-simulator
 ---
 
 ## 自审检查清单
