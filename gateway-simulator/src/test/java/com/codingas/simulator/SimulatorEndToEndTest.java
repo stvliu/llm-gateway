@@ -180,14 +180,8 @@ class SimulatorEndToEndTest {
                 entity,
                 new ParameterizedTypeReference<>() {});
 
-        // 当前实现中 parseMode 会将未知模式 fallback 到 NORMAL，
-        // 所以实际返回的是 200 + mode=NORMAL。
-        // 待加入模式校验后，此断言应改为：
-        // assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        // 当前先验证 fallback 行为：
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().get("mode")).isEqualTo("NORMAL");
+        // 无效模式应返回 400 Bad Request
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
     // ==================== 辅助方法 ====================

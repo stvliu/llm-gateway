@@ -42,14 +42,24 @@ public class SimulatorAdminController {
      * 切换模拟模式。
      *
      * @param body 包含 mode 字段的请求体，值为 normal / rate_limited / fault
-     * @return 切换后的模式
+     * @return 切换后的模式；如果模式无效返回 400
      */
     @PostMapping("/mode")
     public ResponseEntity<Map<String, String>> setMode(@RequestBody Map<String, String> body) {
-        String modeStr = body.getOrDefault("mode", "normal");
-        SimulatorModeService.SimulatorMode mode = parseMode(modeStr);
-        modeService.setMode(mode);
-        return ResponseEntity.ok(Map.of("mode", mode.name()));
+        String modeStr = body.get("mode");
+        if (modeStr == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "缺少 mode 参数"));
+        }
+
+        try {
+            SimulatorModeService.SimulatorMode mode = parseMode(modeStr);
+            modeService.setMode(mode);
+            return ResponseEntity.ok(Map.of("mode", mode.name()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**
@@ -65,14 +75,16 @@ public class SimulatorAdminController {
     /**
      * 将模式字符串解析为 SimulatorMode 枚举。
      *
-     * @param modeStr 模式字符串
+     * @param modeStr 模式字符串（normal / rate_limited / fault）
      * @return 对应的 SimulatorMode 枚举值
+     * @throws IllegalArgumentException 如果模式字符串无效
      */
     private SimulatorModeService.SimulatorMode parseMode(String modeStr) {
         return switch (modeStr.toLowerCase()) {
+            case "normal" -> SimulatorModeService.SimulatorMode.NORMAL;
             case "rate_limited" -> SimulatorModeService.SimulatorMode.RATE_LIMITED;
             case "fault" -> SimulatorModeService.SimulatorMode.FAULT;
-            default -> SimulatorModeService.SimulatorMode.NORMAL;
+            default -> throw new IllegalArgumentException("不支持的模式: " + modeStr);
         };
     }
 }

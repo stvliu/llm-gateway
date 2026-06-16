@@ -13,6 +13,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 模拟端点 Controller，模拟 OpenAI 和 Anthropic 的 API 行为。
@@ -30,8 +31,12 @@ public class SimulatorController {
 
     private final SimulatorModeService modeService;
 
-    /** 用于异步发送 SSE 事件的线程池 */
-    private final ExecutorService sseExecutor = Executors.newCachedThreadPool();
+    /** 用于异步发送 SSE 事件的线程池（daemon 线程，应用关闭时自动退出） */
+    private final ExecutorService sseExecutor = Executors.newCachedThreadPool(r -> {
+        Thread t = new Thread(r);
+        t.setDaemon(true);
+        return t;
+    });
 
     public SimulatorController(SimulatorModeService modeService) {
         this.modeService = modeService;
@@ -185,11 +190,14 @@ public class SimulatorController {
 
     /**
      * 检测请求体是否包含 stream=true。
+     * <p>
+     * 使用精确匹配避免误判（如 content 中含 "true" 字符串）。
      *
      * @param body 请求体 JSON 字符串
      * @return 如果包含 stream:true 则返回 true
      */
     private boolean isStreamRequest(String body) {
-        return body != null && body.contains("\"stream\"") && body.contains("true");
+        return body != null
+                && (body.contains("\"stream\":true") || body.contains("\"stream\": true"));
     }
 }
