@@ -2,23 +2,23 @@
 
 ## 第一阶段：测试工具包
 
-- [ ] T1: 创建 `ResponseTemplates` 响应模板工厂
+- [x] T1: 创建 `ResponseTemplates` 响应模板工厂
   - 路径：`gateway-boot/src/test/java/com/codingas/gateway/support/ResponseTemplates.java`
   - 内容：OpenAI 非流式/流式/错误模板 + Anthropic 非流式/流式/错误模板
 
-- [ ] T2: 创建 `ProviderSimulator` MockWebServer 封装
+- [x] T2: 创建 `ProviderSimulator` MockWebServer 封装
   - 路径：`gateway-boot/src/test/java/com/codingas/gateway/support/ProviderSimulator.java`
   - 内容：start/close、enqueueSuccess/enqueueError/enqueueStream、takeRequest
 
-- [ ] T3: 创建 `OpenAIUpstreamClientTest` 测试类
+- [x] T3: 创建 `OpenAIUpstreamClientTest` 测试类
   - 路径：`gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/upstream/OpenAIUpstreamClientTest.java`
   - 覆盖：非流式调用（请求验证+响应反序列化）、流式调用（SSE 解析+DONE 标记）、429/401/500 错误分类、超时、连通性测试
 
-- [ ] T4: 创建 `AnthropicUpstreamClientTest` 测试类
+- [x] T4: 创建 `AnthropicUpstreamClientTest` 测试类
   - 路径：`gateway-boot/src/test/java/com/codingas/gateway/infrastructure/supply/upstream/AnthropicUpstreamClientTest.java`
   - 覆盖：非流式调用（请求验证+响应反序列化）、流式调用（SSE 解析+message_stop 标记）、429/401/500 错误分类、超时、连通性测试
 
-- [ ] T5: 运行全部测试验证通过
+- [x] T5: 运行全部测试验证通过
   - 执行：`./mvnw test -pl gateway-boot -Dtest="*OpenAIUpstreamClientTest,*AnthropicUpstreamClientTest"`
 
 ## 第二阶段：独立运行模拟服务
