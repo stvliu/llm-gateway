@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Tag, Button, Input, message, theme, Empty, Tooltip } from 'antd';
+import { Tag, Button, Input, message, theme, Empty, Tooltip, Select, Spin } from 'antd';
 import { PlusOutlined, ArrowRightOutlined, EyeOutlined, UpOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
@@ -8,9 +8,10 @@ import type { ChannelModel, CreateChannelModelRequest } from '@/types/channel';
 import {
   useCreateChannelModel,
   useDeleteChannelModel,
-  useUpdateChannelModel,
+  useUpdateChannelModelFull,
   channelKeys,
 } from '@/services/query/useChannels';
+import { useModels } from '@/services/query/useModels';
 import { extractErrorMessage } from '@/utils/errorMessage';
 import type { PulseState } from '@/components/common/useSavePulse';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
@@ -48,8 +49,12 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
   const { token } = theme.useToken();
   const queryClient = useQueryClient();
   const [showAll, setShowAll] = useState(false);
+  // 模型列表（用于添加表单的选择器）
+  const { data: modelsPage, isLoading: modelsLoading } = useModels({ limit: 200 });
+  const availableModels = modelsPage?.items ?? [];
+
   const [addMode, setAddMode] = useState(false);
-  const [newModelId, setNewModelId] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState<number | undefined>(undefined);
   const [newUpstreamName, setNewUpstreamName] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -91,7 +96,7 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
 
   const createModel = useCreateChannelModel();
   const deleteModel = useDeleteChannelModel();
-  const updateUpstreamName = useUpdateChannelModel();
+  const updateModelFull = useUpdateChannelModelFull();
 
   const displayModels = showAll ? channelModels : channelModels.slice(0, 5);
 
@@ -145,10 +150,16 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
      * 引发 InlineEditableList 渲染分支变化时的 "Rendered more hooks" 错误。
      */
     const EditForm = () => {
+      const [editModelId, setEditModelId] = useState<number>(mapping.modelId);
       const [editUpstreamName, setEditUpstreamName] = useState(
         mapping.upstreamModelName || ''
       );
       const [editLoading, setEditLoading] = useState(false);
+
+      // 已关联的模型 ID 集合（排除自身）
+      const mappedModelIds = new Set(
+        channelModels.filter((m) => m.id !== mapping.id).map((m) => m.modelId)
+      );
 
       const handleSave = async () => {
         setEditLoading(true);
@@ -161,20 +172,29 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
           queryClient.setQueryData<ChannelModel[]>(
             modelsKey,
             prev.map((m) =>
-              m.id === mapping.id ? { ...m, upstreamModelName: editUpstreamName || null } : m
+              m.id === mapping.id
+                ? {
+                    ...m,
+                    modelId: editModelId,
+                    upstreamModelName: editUpstreamName || null,
+                  }
+                : m
             )
           );
         }
 
         try {
-          await updateUpstreamName.mutateAsync({
+          await updateModelFull.mutateAsync({
             channelId,
             modelId: mapping.id,
-            upstreamModelName: editUpstreamName || '',
+            data: {
+              modelId: editModelId !== mapping.modelId ? editModelId : undefined,
+              upstreamModelName: editUpstreamName || null,
+            },
           });
           triggerRowSuccess(mapping.id);
           message.success(t('modelMapping.updateSuccess'));
-          onSave({ ...mapping, upstreamModelName: editUpstreamName || null });
+          onSave({ ...mapping, modelId: editModelId, upstreamModelName: editUpstreamName || null });
         } catch (err) {
           // 失败：回滚缓存 + 触发 error 脉冲 + 保留 toast
           if (prev !== undefined) {
@@ -200,7 +220,24 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
 
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Tag color="blue">{mapping.modelName || String(mapping.modelId)}</Tag>
+          <Select
+            size="small"
+            showSearch
+            value={editModelId}
+            loading={modelsLoading}
+            notFoundContent={modelsLoading ? <Spin size="small" /> : null}
+            style={{ width: 220 }}
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+            onChange={(value) => setEditModelId(value)}
+            options={availableModels
+              .filter((m) => !mappedModelIds.has(m.id) || m.id === mapping.modelId)
+              .map((m) => ({
+                value: m.id,
+                label: `${m.modelName}${m.displayName ? ` (${m.displayName})` : ''}`,
+              }))}
+          />
           <ArrowRightOutlined style={{ color: token.colorTextSecondary }} />
           <Input
             size="small"
@@ -228,17 +265,21 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
     onCancel: () => void
   ) => {
     const handleSave = async () => {
+      if (selectedModelId === undefined) {
+        message.warning(t('modelMapping.selectModelHint'));
+        return;
+      }
       try {
         setLoading(true);
         const data: CreateChannelModelRequest = {
-          modelId: Number(newModelId),
+          modelId: selectedModelId,
           upstreamModelName: newUpstreamName || undefined,
         };
         const result = await createModel.mutateAsync({ channelId, data });
         message.success(t('modelMapping.addSuccess'));
         onSave(result);
         setAddMode(false);
-        setNewModelId('');
+        setSelectedModelId(undefined);
         setNewUpstreamName('');
       } catch (err) {
         const reason = extractErrorMessage(err);
@@ -252,14 +293,29 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
       }
     };
 
+    // 已关联的模型 ID 集合，用于过滤不可选的选项
+    const mappedModelIds = new Set(channelModels.map((m) => m.modelId));
+
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Input
+        <Select
           size="small"
-          value={newModelId}
-          onChange={(e) => setNewModelId(e.target.value)}
-          placeholder={t('modelMapping.modelIdPlaceholder')}
-          style={{ width: 150 }}
+          showSearch
+          value={selectedModelId}
+          placeholder={t('modelMapping.selectModelPlaceholder')}
+          loading={modelsLoading}
+          notFoundContent={modelsLoading ? <Spin size="small" /> : null}
+          style={{ width: 220 }}
+          filterOption={(input, option) =>
+            (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+          }
+          onChange={(value) => setSelectedModelId(value)}
+          options={availableModels
+            .filter((m) => !mappedModelIds.has(m.id))
+            .map((m) => ({
+              value: m.id,
+              label: `${m.modelName}${m.displayName ? ` (${m.displayName})` : ''}`,
+            }))}
         />
         <ArrowRightOutlined style={{ color: token.colorTextSecondary }} />
         <Input

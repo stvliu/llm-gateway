@@ -7,6 +7,7 @@ import type {
   CreateChannelCredentialRequest,
   UpdateChannelCredentialRequest,
   CreateChannelModelRequest,
+  UpdateChannelModelRequest,
 } from '@/types/channel';
 
 export const channelKeys = {
@@ -277,6 +278,18 @@ export function useUpdateChannelModel() {
   return useMutation({
     mutationFn: ({ channelId, modelId, upstreamModelName }: { channelId: number; modelId: number; upstreamModelName: string }) =>
       channelApi.updateUpstreamModelName(channelId, modelId, upstreamModelName),
+    onSuccess: (_, { channelId }) => {
+      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
+    },
+  });
+}
+
+/** 更新模型映射（支持修改 modelId 和 upstreamModelName） */
+export function useUpdateChannelModelFull() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ channelId, modelId, data }: { channelId: number; modelId: number; data: UpdateChannelModelRequest }) =>
+      channelApi.updateModel(channelId, modelId, data),
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
     },

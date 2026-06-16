@@ -1,5 +1,5 @@
 workflow: full
-phase: design
+phase: build
 context_compression: off
 build_mode: null
 build_pause: null
@@ -9,8 +9,8 @@ isolation: null
 verify_mode: null
 auto_transition: true
 base_ref: 7b673dc9bd4434e0099c11261da3b499b98e4f70
-design_doc: null
-plan: null
+design_doc: docs/superpowers/specs/2026-06-16-llm-provider-simulator-design.md
+plan: docs/superpowers/plans/2026-06-16-llm-provider-simulator.md
 verify_result: pending
 verification_report: null
 branch_status: pending
