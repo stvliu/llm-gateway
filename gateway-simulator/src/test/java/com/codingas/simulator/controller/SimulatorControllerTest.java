@@ -17,7 +17,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * SimulatorController 集成测试。
  * <p>
- * 验证模拟端点在 NORMAL / RATE_LIMITED / FAULT 模式下的响应行为。
+ * 验证模拟端点在 NORMAL / RATE_LIMITED / UPSTREAM_ERROR / AUTH_ERROR 等模式下的响应行为。
  */
 @WebMvcTest(SimulatorController.class)
 @Import(SimulatorModeService.class)
@@ -74,15 +74,51 @@ class SimulatorControllerTest {
         }
 
         @Test
-        @DisplayName("FAULT 模式下返回 500")
-        void faultMode_returns500() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.FAULT);
+        @DisplayName("UPSTREAM_ERROR 模式下返回 500")
+        void upstreamErrorMode_returns500() throws Exception {
+            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content("{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.error.type").value("server_error"));
+        }
+
+        @Test
+        @DisplayName("AUTH_ERROR 模式下返回 401")
+        void authErrorMode_returns401() throws Exception {
+            modeService.setMode(SimulatorModeService.SimulatorMode.AUTH_ERROR);
+
+            mockMvc.perform(post("/v1/chat/completions")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.type").value("authentication_error"));
+        }
+
+        @Test
+        @DisplayName("QUOTA_EXCEEDED 模式下返回 429")
+        void quotaExceededMode_returns429() throws Exception {
+            modeService.setMode(SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED);
+
+            mockMvc.perform(post("/v1/chat/completions")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                    .andExpect(status().isTooManyRequests())
+                    .andExpect(jsonPath("$.error.type").value("insufficient_quota"));
+        }
+
+        @Test
+        @DisplayName("TIMEOUT 模式下返回 408")
+        void timeoutMode_returns408() throws Exception {
+            modeService.setMode(SimulatorModeService.SimulatorMode.TIMEOUT);
+
+            mockMvc.perform(post("/v1/chat/completions")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"model\":\"gpt-4o\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                    .andExpect(status().isRequestTimeout())
+                    .andExpect(jsonPath("$.error.type").value("timeout"));
         }
     }
 
@@ -119,9 +155,9 @@ class SimulatorControllerTest {
         }
 
         @Test
-        @DisplayName("FAULT 模式下返回 500")
+        @DisplayName("UPSTREAM_ERROR 模式下返回 500")
         void faultMode_returns500() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.FAULT);
+            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/v1/messages")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -129,6 +165,19 @@ class SimulatorControllerTest {
                             .content("{\"model\":\"claude-sonnet-4-20250514\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
                     .andExpect(status().isInternalServerError())
                     .andExpect(jsonPath("$.error.type").value("api_error"));
+        }
+
+        @Test
+        @DisplayName("AUTH_ERROR 模式下返回 401")
+        void authErrorMode_returns401() throws Exception {
+            modeService.setMode(SimulatorModeService.SimulatorMode.AUTH_ERROR);
+
+            mockMvc.perform(post("/v1/messages")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("anthropic-version", "2023-06-01")
+                            .content("{\"model\":\"claude-sonnet-4-20250514\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}]}"))
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(jsonPath("$.error.type").value("authentication_error"));
         }
     }
 }

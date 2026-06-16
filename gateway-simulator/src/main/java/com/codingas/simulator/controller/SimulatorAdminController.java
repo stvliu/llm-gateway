@@ -75,7 +75,7 @@ public class SimulatorAdminController {
     /**
      * 将模式字符串解析为 SimulatorMode 枚举。
      *
-     * @param modeStr 模式字符串（normal / rate_limited / fault）
+     * @param modeStr 模式字符串
      * @return 对应的 SimulatorMode 枚举值
      * @throws IllegalArgumentException 如果模式字符串无效
      */
@@ -83,7 +83,13 @@ public class SimulatorAdminController {
         return switch (modeStr.toLowerCase()) {
             case "normal" -> SimulatorModeService.SimulatorMode.NORMAL;
             case "rate_limited" -> SimulatorModeService.SimulatorMode.RATE_LIMITED;
-            case "fault" -> SimulatorModeService.SimulatorMode.FAULT;
+            case "fault", "upstream_error" -> SimulatorModeService.SimulatorMode.UPSTREAM_ERROR;
+            case "auth_error" -> SimulatorModeService.SimulatorMode.AUTH_ERROR;
+            case "quota_exceeded" -> SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED;
+            case "invalid_request" -> SimulatorModeService.SimulatorMode.INVALID_REQUEST;
+            case "service_down" -> SimulatorModeService.SimulatorMode.SERVICE_DOWN;
+            case "timeout" -> SimulatorModeService.SimulatorMode.TIMEOUT;
+            case "intermittent" -> SimulatorModeService.SimulatorMode.INTERMITTENT;
             default -> throw new IllegalArgumentException("不支持的模式: " + modeStr);
         };
     }

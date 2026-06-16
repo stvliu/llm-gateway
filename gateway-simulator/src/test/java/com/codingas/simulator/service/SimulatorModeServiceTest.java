@@ -36,10 +36,31 @@ class SimulatorModeServiceTest {
     }
 
     @Test
-    @DisplayName("可以切换模式为 FAULT")
-    void setMode_fault() {
-        service.setMode(SimulatorModeService.SimulatorMode.FAULT);
-        assertEquals(SimulatorModeService.SimulatorMode.FAULT, service.getMode());
+    @DisplayName("可以切换模式为 UPSTREAM_ERROR")
+    void setMode_upstreamError() {
+        service.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
+        assertEquals(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR, service.getMode());
+    }
+
+    @Test
+    @DisplayName("可以切换模式为 AUTH_ERROR")
+    void setMode_authError() {
+        service.setMode(SimulatorModeService.SimulatorMode.AUTH_ERROR);
+        assertEquals(SimulatorModeService.SimulatorMode.AUTH_ERROR, service.getMode());
+    }
+
+    @Test
+    @DisplayName("可以切换模式为 QUOTA_EXCEEDED")
+    void setMode_quotaExceeded() {
+        service.setMode(SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED);
+        assertEquals(SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED, service.getMode());
+    }
+
+    @Test
+    @DisplayName("可以切换模式为 TIMEOUT")
+    void setMode_timeout() {
+        service.setMode(SimulatorModeService.SimulatorMode.TIMEOUT);
+        assertEquals(SimulatorModeService.SimulatorMode.TIMEOUT, service.getMode());
     }
 
     @Test
@@ -86,7 +107,13 @@ class SimulatorModeServiceTest {
         SimulatorModeService rateLimitedService = new SimulatorModeService("rate_limited", 100);
         assertEquals(SimulatorModeService.SimulatorMode.RATE_LIMITED, rateLimitedService.getMode());
 
-        SimulatorModeService faultService = new SimulatorModeService("fault", 100);
-        assertEquals(SimulatorModeService.SimulatorMode.FAULT, faultService.getMode());
+        SimulatorModeService upstreamErrorService = new SimulatorModeService("fault", 100);
+        assertEquals(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR, upstreamErrorService.getMode());
+
+        SimulatorModeService authErrorService = new SimulatorModeService("auth_error", 100);
+        assertEquals(SimulatorModeService.SimulatorMode.AUTH_ERROR, authErrorService.getMode());
+
+        SimulatorModeService timeoutService = new SimulatorModeService("timeout", 100);
+        assertEquals(SimulatorModeService.SimulatorMode.TIMEOUT, timeoutService.getMode());
     }
 }

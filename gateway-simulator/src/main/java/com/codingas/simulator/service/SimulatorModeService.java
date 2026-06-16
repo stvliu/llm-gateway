@@ -23,10 +23,22 @@ public class SimulatorModeService {
     public enum SimulatorMode {
         /** 正常模式，返回成功响应 */
         NORMAL,
-        /** 限流模式，返回 429 错误 */
+        /** 认证错误，返回 401 */
+        AUTH_ERROR,
+        /** 限流模式，返回 429 rate_limit_error */
         RATE_LIMITED,
-        /** 故障模式，返回 500 错误 */
-        FAULT
+        /** 配额超限，返回 429 insufficient_quota */
+        QUOTA_EXCEEDED,
+        /** 非法请求，返回 400 */
+        INVALID_REQUEST,
+        /** 上游错误，返回 500 */
+        UPSTREAM_ERROR,
+        /** 服务不可用，返回 503 */
+        SERVICE_DOWN,
+        /** 超时，返回 408 */
+        TIMEOUT,
+        /** 行为序列模式，委托给 BehaviorSequence */
+        INTERMITTENT
     }
 
     /** 当前模式，volatile 保证线程可见性 */
@@ -40,6 +52,18 @@ public class SimulatorModeService {
 
     /** 下一条记录的写入位置（环形指针） */
     private int writeIndex;
+
+    /** 行为序列（可选，非空时优先于全局模式） */
+    private BehaviorSequence behaviorSequence;
+
+    /** 延迟配置 */
+    private final DelayConfig delayConfig = new DelayConfig();
+
+    /** 流控制配置 */
+    private final StreamConfig streamConfig = new StreamConfig();
+
+    /** API Key 覆盖配置 */
+    private final ApiKeyOverrideConfig apiKeyOverrideConfig = new ApiKeyOverrideConfig();
 
     /**
      * Spring 构造方法，通过 @Value 注入配置初始化模式和缓冲区容量。
@@ -124,8 +148,71 @@ public class SimulatorModeService {
     private SimulatorMode parseMode(String modeConfig) {
         return switch (modeConfig.toLowerCase()) {
             case "rate_limited" -> SimulatorMode.RATE_LIMITED;
-            case "fault" -> SimulatorMode.FAULT;
+            case "fault", "upstream_error" -> SimulatorMode.UPSTREAM_ERROR;
+            case "auth_error" -> SimulatorMode.AUTH_ERROR;
+            case "quota_exceeded" -> SimulatorMode.QUOTA_EXCEEDED;
+            case "invalid_request" -> SimulatorMode.INVALID_REQUEST;
+            case "service_down" -> SimulatorMode.SERVICE_DOWN;
+            case "timeout" -> SimulatorMode.TIMEOUT;
+            case "intermittent" -> SimulatorMode.INTERMITTENT;
             default -> SimulatorMode.NORMAL;
         };
+    }
+
+    // ==================== BehaviorSequence 方法 ====================
+
+    /**
+     * 设置行为序列。
+     *
+     * @param steps HTTP 状态码序列
+     * @param loop  是否循环
+     */
+    public synchronized void setBehaviorSequence(List<Integer> steps, boolean loop) {
+        this.behaviorSequence = new BehaviorSequence(steps, loop);
+    }
+
+    /**
+     * 获取当前行为序列。
+     *
+     * @return 行为序列，可能为 null
+     */
+    public synchronized BehaviorSequence getBehaviorSequence() {
+        return behaviorSequence;
+    }
+
+    /**
+     * 清除行为序列。
+     */
+    public synchronized void clearBehaviorSequence() {
+        this.behaviorSequence = null;
+    }
+
+    // ==================== 配置类 getters ====================
+
+    /**
+     * 获取延迟配置。
+     *
+     * @return 延迟配置
+     */
+    public DelayConfig getDelayConfig() {
+        return delayConfig;
+    }
+
+    /**
+     * 获取流控制配置。
+     *
+     * @return 流控制配置
+     */
+    public StreamConfig getStreamConfig() {
+        return streamConfig;
+    }
+
+    /**
+     * 获取 API Key 覆盖配置。
+     *
+     * @return API Key 覆盖配置
+     */
+    public ApiKeyOverrideConfig getApiKeyOverrideConfig() {
+        return apiKeyOverrideConfig;
     }
 }

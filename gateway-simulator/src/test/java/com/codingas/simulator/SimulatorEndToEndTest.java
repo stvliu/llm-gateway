@@ -80,13 +80,13 @@ class SimulatorEndToEndTest {
         assertThat(response.getBody()).contains("rate_limit_error");
     }
 
-    // ==================== 场景 3: OpenAI 故障模式 ====================
+    // ==================== 场景 3: OpenAI 上游错误模式 ====================
 
     @Test
-    @DisplayName("OpenAI 故障模式返回 500")
-    void openaiFaultMode_returns500() {
-        // 切换到故障模式
-        switchMode("fault");
+    @DisplayName("OpenAI 上游错误模式返回 500")
+    void openaiUpstreamErrorMode_returns500() {
+        // 切换到上游错误模式
+        switchMode("upstream_error");
 
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "/v1/chat/completions",

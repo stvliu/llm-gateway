@@ -181,4 +181,158 @@ public final class SimulatorResponseTemplates {
                   }
                 }""";
     }
+
+    // ==================== 新增 OpenAI 错误模板 ====================
+
+    /**
+     * 返回 OpenAI 401 认证错误响应模板。
+     *
+     * @return 包含 authentication_error 类型的 JSON 字符串
+     */
+    public static String openaiAuthError() {
+        return """
+                {
+                  "error": {
+                    "type": "authentication_error",
+                    "message": "Simulated authentication error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 OpenAI 429 配额超限错误响应模板。
+     *
+     * @return 包含 insufficient_quota 类型的 JSON 字符串
+     */
+    public static String openaiQuotaExceeded() {
+        return """
+                {
+                  "error": {
+                    "type": "insufficient_quota",
+                    "message": "Simulated quota exceeded error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 OpenAI 400 非法请求错误响应模板。
+     *
+     * @return 包含 invalid_request_error 类型的 JSON 字符串
+     */
+    public static String openaiInvalidRequest() {
+        return """
+                {
+                  "error": {
+                    "type": "invalid_request_error",
+                    "message": "Simulated invalid request error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 OpenAI 503 服务不可用错误响应模板。
+     *
+     * @return 包含 service_unavailable 类型的 JSON 字符串
+     */
+    public static String openaiServiceDown() {
+        return """
+                {
+                  "error": {
+                    "type": "service_unavailable",
+                    "message": "Simulated service unavailable error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 OpenAI 408 超时错误响应模板。
+     *
+     * @return 包含 timeout 类型的 JSON 字符串
+     */
+    public static String openaiTimeoutError() {
+        return """
+                {
+                  "error": {
+                    "type": "timeout",
+                    "message": "Simulated timeout error"
+                  }
+                }""";
+    }
+
+    // ==================== 新增 Anthropic 错误模板 ====================
+
+    /**
+     * 返回 Anthropic 401 认证错误响应模板。
+     *
+     * @return 包含 authentication_error 类型的 JSON 字符串
+     */
+    public static String anthropicAuthError() {
+        return """
+                {
+                  "error": {
+                    "type": "authentication_error",
+                    "message": "Simulated authentication error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 Anthropic 429 配额超限错误响应模板。
+     *
+     * @return 包含 insufficient_quota 类型的 JSON 字符串
+     */
+    public static String anthropicQuotaExceeded() {
+        return """
+                {
+                  "error": {
+                    "type": "insufficient_quota",
+                    "message": "Simulated quota exceeded error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 Anthropic 400 非法请求错误响应模板。
+     *
+     * @return 包含 invalid_request_error 类型的 JSON 字符串
+     */
+    public static String anthropicInvalidRequest() {
+        return """
+                {
+                  "error": {
+                    "type": "invalid_request_error",
+                    "message": "Simulated invalid request error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 Anthropic 503 服务不可用错误响应模板。
+     *
+     * @return 包含 service_unavailable 类型的 JSON 字符串
+     */
+    public static String anthropicServiceDown() {
+        return """
+                {
+                  "error": {
+                    "type": "service_unavailable",
+                    "message": "Simulated service unavailable error"
+                  }
+                }""";
+    }
+
+    /**
+     * 返回 Anthropic 408 超时错误响应模板。
+     *
+     * @return 包含 timeout 类型的 JSON 字符串
+     */
+    public static String anthropicTimeoutError() {
+        return """
+                {
+                  "error": {
+                    "type": "timeout",
+                    "message": "Simulated timeout error"
+                  }
+                }""";
+    }
 }

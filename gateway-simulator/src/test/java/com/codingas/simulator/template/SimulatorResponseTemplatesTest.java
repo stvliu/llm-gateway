@@ -141,4 +141,118 @@ class SimulatorResponseTemplatesTest {
             );
         }
     }
+
+    // ==================== 新增 OpenAI 错误模板测试 ====================
+
+    @Nested
+    @DisplayName("OpenAI 新增错误模板")
+    class OpenAINewErrorTemplates {
+
+        @Test
+        @DisplayName("openaiAuthError 返回 401 错误 JSON")
+        void openaiAuthError_returns401Error() {
+            String error = SimulatorResponseTemplates.openaiAuthError();
+            assertAll(
+                    () -> assertTrue(error.contains("\"authentication_error\""), "应包含 authentication_error"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("openaiQuotaExceeded 返回 429 quota 错误 JSON")
+        void openaiQuotaExceeded_returns429QuotaError() {
+            String error = SimulatorResponseTemplates.openaiQuotaExceeded();
+            assertAll(
+                    () -> assertTrue(error.contains("\"insufficient_quota\""), "应包含 insufficient_quota"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("openaiInvalidRequest 返回 400 错误 JSON")
+        void openaiInvalidRequest_returns400Error() {
+            String error = SimulatorResponseTemplates.openaiInvalidRequest();
+            assertAll(
+                    () -> assertTrue(error.contains("\"invalid_request_error\""), "应包含 invalid_request_error"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("openaiServiceDown 返回 503 错误 JSON")
+        void openaiServiceDown_returns503Error() {
+            String error = SimulatorResponseTemplates.openaiServiceDown();
+            assertAll(
+                    () -> assertTrue(error.contains("\"service_unavailable\""), "应包含 service_unavailable"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("openaiTimeoutError 返回 408 错误 JSON")
+        void openaiTimeoutError_returns408Error() {
+            String error = SimulatorResponseTemplates.openaiTimeoutError();
+            assertAll(
+                    () -> assertTrue(error.contains("\"timeout\""), "应包含 timeout"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+    }
+
+    // ==================== 新增 Anthropic 错误模板测试 ====================
+
+    @Nested
+    @DisplayName("Anthropic 新增错误模板")
+    class AnthropicNewErrorTemplates {
+
+        @Test
+        @DisplayName("anthropicAuthError 返回 401 错误 JSON")
+        void anthropicAuthError_returns401Error() {
+            String error = SimulatorResponseTemplates.anthropicAuthError();
+            assertAll(
+                    () -> assertTrue(error.contains("\"authentication_error\""), "应包含 authentication_error"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("anthropicQuotaExceeded 返回 429 quota 错误 JSON")
+        void anthropicQuotaExceeded_returns429QuotaError() {
+            String error = SimulatorResponseTemplates.anthropicQuotaExceeded();
+            assertAll(
+                    () -> assertTrue(error.contains("\"insufficient_quota\""), "应包含 insufficient_quota"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("anthropicInvalidRequest 返回 400 错误 JSON")
+        void anthropicInvalidRequest_returns400Error() {
+            String error = SimulatorResponseTemplates.anthropicInvalidRequest();
+            assertAll(
+                    () -> assertTrue(error.contains("\"invalid_request_error\""), "应包含 invalid_request_error"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("anthropicServiceDown 返回 503 错误 JSON")
+        void anthropicServiceDown_returns503Error() {
+            String error = SimulatorResponseTemplates.anthropicServiceDown();
+            assertAll(
+                    () -> assertTrue(error.contains("\"service_unavailable\""), "应包含 service_unavailable"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+
+        @Test
+        @DisplayName("anthropicTimeoutError 返回 408 错误 JSON")
+        void anthropicTimeoutError_returns408Error() {
+            String error = SimulatorResponseTemplates.anthropicTimeoutError();
+            assertAll(
+                    () -> assertTrue(error.contains("\"timeout\""), "应包含 timeout"),
+                    () -> assertTrue(error.contains("\"error\""), "应包含 error 对象")
+            );
+        }
+    }
 }

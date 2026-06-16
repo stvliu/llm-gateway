@@ -1,19 +1,18 @@
 package com.codingas.simulator.controller;
 
+import com.codingas.simulator.service.BehaviorSequence;
 import com.codingas.simulator.service.SimulatorModeService;
 import com.codingas.simulator.template.SimulatorResponseTemplates;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * 模拟端点 Controller，模拟 OpenAI 和 Anthropic 的 API 行为。
@@ -21,8 +20,14 @@ import java.util.concurrent.TimeUnit;
  * 根据当前模式返回不同类型的响应：
  * <ul>
  *   <li>NORMAL — 返回成功响应</li>
+ *   <li>AUTH_ERROR — 返回 401 认证错误</li>
  *   <li>RATE_LIMITED — 返回 429 限流错误</li>
- *   <li>FAULT — 返回 500 服务器错误</li>
+ *   <li>QUOTA_EXCEEDED — 返回 429 配额超限错误</li>
+ *   <li>INVALID_REQUEST — 返回 400 非法请求错误</li>
+ *   <li>UPSTREAM_ERROR — 返回 500 服务器错误</li>
+ *   <li>SERVICE_DOWN — 返回 503 服务不可用</li>
+ *   <li>TIMEOUT — 返回 408 超时错误</li>
+ *   <li>INTERMITTENT — 委托给 BehaviorSequence</li>
  * </ul>
  * 支持 stream=true 时的 SSE 流式响应。
  */
@@ -45,50 +50,96 @@ public class SimulatorController {
     /**
      * 模拟 OpenAI Chat Completion 端点。
      * <p>
-     * 支持 stream=true 时的 SSE 流式响应，发送 3 个 chunk + [DONE] 结束标记。
+     * 支持 stream=true 时的 SSE 流式响应，根据 streamConfig 控制发送行为。
      *
-     * @param body 请求体 JSON 字符串
-     * @return 根据模式返回正常、限流或故障响应
+     * @param body       请求体 JSON 字符串
+     * @param authHeader Authorization 请求头（可选，用于 API Key 覆盖）
+     * @return 根据模式返回正常、错误或流式响应
      */
     @PostMapping("/v1/chat/completions")
-    public ResponseEntity<?> openaiChatCompletions(@RequestBody String body) {
+    public ResponseEntity<?> openaiChatCompletions(@RequestBody String body,
+                                                    @RequestHeader(value = "Authorization", required = false) String authHeader) {
         modeService.recordRequest("POST", "/v1/chat/completions");
+        SimulatorModeService.SimulatorMode mode = resolveMode(authHeader);
+        modeService.getDelayConfig().applyDelay();
 
-        return switch (modeService.getMode()) {
+        return switch (mode) {
             case RATE_LIMITED -> ResponseEntity
                     .status(HttpStatus.TOO_MANY_REQUESTS)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(SimulatorResponseTemplates.openaiRateLimitError());
-            case FAULT -> ResponseEntity
+            case UPSTREAM_ERROR -> ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(SimulatorResponseTemplates.openaiServerError());
-            case NORMAL -> handleOpenAINormal(body);
+            case AUTH_ERROR -> ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.openaiAuthError());
+            case QUOTA_EXCEEDED -> ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.openaiQuotaExceeded());
+            case INVALID_REQUEST -> ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.openaiInvalidRequest());
+            case SERVICE_DOWN -> ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.openaiServiceDown());
+            case TIMEOUT -> ResponseEntity
+                    .status(HttpStatus.REQUEST_TIMEOUT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.openaiTimeoutError());
+            default -> handleOpenAINormal(body);
         };
     }
 
     /**
      * 模拟 Anthropic Messages 端点。
-     * <p>
-     * 支持 stream=true 时的 SSE 流式响应，发送 3 个 delta + message_stop 结束标记。
      *
-     * @param body 请求体 JSON 字符串
-     * @return 根据模式返回正常、限流或故障响应
+     * @param body       请求体 JSON 字符串
+     * @param authHeader Authorization 请求头（可选）
+     * @return 根据模式返回正常或错误响应
      */
     @PostMapping("/v1/messages")
-    public ResponseEntity<?> anthropicMessages(@RequestBody String body) {
+    public ResponseEntity<?> anthropicMessages(@RequestBody String body,
+                                                @RequestHeader(value = "Authorization", required = false) String authHeader) {
         modeService.recordRequest("POST", "/v1/messages");
+        SimulatorModeService.SimulatorMode mode = resolveMode(authHeader);
+        modeService.getDelayConfig().applyDelay();
 
-        return switch (modeService.getMode()) {
+        return switch (mode) {
             case RATE_LIMITED -> ResponseEntity
                     .status(HttpStatus.TOO_MANY_REQUESTS)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(SimulatorResponseTemplates.anthropicRateLimitError());
-            case FAULT -> ResponseEntity
+            case UPSTREAM_ERROR -> ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(SimulatorResponseTemplates.anthropicServerError());
-            case NORMAL -> handleAnthropicNormal(body);
+            case AUTH_ERROR -> ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.anthropicAuthError());
+            case QUOTA_EXCEEDED -> ResponseEntity
+                    .status(HttpStatus.TOO_MANY_REQUESTS)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.anthropicQuotaExceeded());
+            case INVALID_REQUEST -> ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.anthropicInvalidRequest());
+            case SERVICE_DOWN -> ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.anthropicServiceDown());
+            case TIMEOUT -> ResponseEntity
+                    .status(HttpStatus.REQUEST_TIMEOUT)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(SimulatorResponseTemplates.anthropicTimeoutError());
+            default -> handleAnthropicNormal(body);
         };
     }
 
@@ -130,6 +181,38 @@ public class SimulatorController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(SimulatorResponseTemplates.anthropicMessages());
+    }
+
+    /**
+     * 根据优先级解析当前模式：行为序列 > API Key 覆盖 > 全局模式。
+     *
+     * @param authHeader Authorization 请求头
+     * @return 解析后的 SimulatorMode
+     */
+    private SimulatorModeService.SimulatorMode resolveMode(String authHeader) {
+        // 1. 行为序列优先
+        BehaviorSequence seq = modeService.getBehaviorSequence();
+        if (seq != null && seq.isActive()) {
+            Optional<SimulatorModeService.SimulatorMode> seqMode = seq.consume();
+            if (seqMode.isPresent()) {
+                return seqMode.get();
+            }
+        }
+        // 2. API Key 覆盖
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String apiKey = authHeader.substring(7);
+            Optional<SimulatorModeService.SimulatorMode> overrideMode =
+                    modeService.getApiKeyOverrideConfig().matchOverride(apiKey);
+            if (overrideMode.isPresent()) {
+                return overrideMode.get();
+            }
+        }
+        // 3. 全局模式
+        SimulatorModeService.SimulatorMode globalMode = modeService.getMode();
+        if (globalMode == SimulatorModeService.SimulatorMode.INTERMITTENT) {
+            return SimulatorModeService.SimulatorMode.NORMAL;
+        }
+        return globalMode;
     }
 
     /**

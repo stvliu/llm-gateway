@@ -73,19 +73,29 @@ class SimulatorAdminControllerTest {
         }
 
         @Test
-        @DisplayName("切换到 fault 模式")
-        void switchToFault() throws Exception {
+        @DisplayName("切换到 upstream_error 模式")
+        void switchToUpstreamError() throws Exception {
             mockMvc.perform(post("/simulator/mode")
                             .contentType(MediaType.APPLICATION_JSON)
-                            .content("{\"mode\":\"fault\"}"))
+                            .content("{\"mode\":\"upstream_error\"}"))
                     .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.mode").value("FAULT"));
+                    .andExpect(jsonPath("$.mode").value("UPSTREAM_ERROR"));
+        }
+
+        @Test
+        @DisplayName("切换到 auth_error 模式")
+        void switchToAuthError() throws Exception {
+            mockMvc.perform(post("/simulator/mode")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"mode\":\"auth_error\"}"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.mode").value("AUTH_ERROR"));
         }
 
         @Test
         @DisplayName("切换回 normal 模式")
         void switchToNormal() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.FAULT);
+            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/simulator/mode")
                             .contentType(MediaType.APPLICATION_JSON)
