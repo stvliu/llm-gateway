@@ -36,10 +36,15 @@ public class ModelServiceImpl implements ModelService {
         Model model = new Model();
         model.setModelName(request.getModelName());
         model.setDisplayName(request.getDisplayName());
+        model.setModelFamily(request.getModelFamily());
         model.setContextWindow(request.getContextWindow());
+        model.setMaxInputTokens(request.getMaxInputTokens());
+        model.setMaxOutputTokens(request.getMaxOutputTokens());
         model.setCapabilities(request.getCapabilities());
+        model.setModalities(request.getModalities());
 
         Model savedModel = modelGateway.save(model);
+        log.info("模型创建成功, id={}, modelName={}", savedModel.getId(), savedModel.getModelName());
         return toResponse(savedModel);
     }
 
@@ -96,17 +101,34 @@ public class ModelServiceImpl implements ModelService {
         Model model = modelGateway.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
+        if (request.getModelName() != null) {
+            model.setModelName(request.getModelName());
+        }
         if (request.getDisplayName() != null) {
             model.setDisplayName(request.getDisplayName());
+        }
+        if (request.getModelFamily() != null) {
+            model.setModelFamily(request.getModelFamily());
         }
         if (request.getContextWindow() != null) {
             model.setContextWindow(request.getContextWindow());
         }
+        if (request.getMaxInputTokens() != null) {
+            model.setMaxInputTokens(request.getMaxInputTokens());
+        }
+        if (request.getMaxOutputTokens() != null) {
+            model.setMaxOutputTokens(request.getMaxOutputTokens());
+        }
         if (request.getCapabilities() != null) {
             model.setCapabilities(request.getCapabilities());
         }
+        if (request.getModalities() != null) {
+            model.setModalities(request.getModalities());
+        }
 
-        return toResponse(modelGateway.save(model));
+        Model saved = modelGateway.save(model);
+        log.info("模型更新成功, id={}, modelName={}", id, saved.getModelName());
+        return toResponse(saved);
     }
 
     /**
@@ -144,8 +166,12 @@ public class ModelServiceImpl implements ModelService {
         response.setId(model.getId());
         response.setModelName(model.getModelName());
         response.setDisplayName(model.getDisplayName());
+        response.setModelFamily(model.getModelFamily());
         response.setContextWindow(model.getContextWindow());
+        response.setMaxInputTokens(model.getMaxInputTokens());
+        response.setMaxOutputTokens(model.getMaxOutputTokens());
         response.setCapabilities(model.getCapabilities());
+        response.setModalities(model.getModalities());
         response.setDeprecatedAt(model.getDeprecatedAt());
         response.setDeprecationMessage(model.getDeprecationMessage());
         response.setCreatedAt(model.getCreatedAt());

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Button, Input, message, theme, Empty, Tooltip, Select, Spin } from 'antd';
-import { PlusOutlined, ArrowRightOutlined, EyeOutlined, UpOutlined } from '@ant-design/icons';
+import { PlusOutlined, ArrowRightOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { InlineEditableList } from './InlineEditableList';
@@ -400,7 +400,7 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
           <Button
             type="text"
             size="small"
-            icon={<EyeOutlined />}
+            icon={<DownOutlined />}
             style={{ marginTop: 8 }}
             onClick={() => setShowAll(true)}
           />
