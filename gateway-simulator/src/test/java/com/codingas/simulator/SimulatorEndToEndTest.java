@@ -184,6 +184,86 @@ class SimulatorEndToEndTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    // ==================== 场景 8: 行为序列测试 ====================
+
+    @Test
+    @DisplayName("行为序列 — 设置序列后 3 次请求按序返回 500/401/200，第 4 次恢复全局模式")
+    void testBehaviorSequence_consumesStepsViaHttp() {
+        // 先设全局为 NORMAL（确保基线）
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置行为序列：[500, 401, 200]
+        restTemplate.exchange(
+                "/simulator/behavior",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "steps", List.of(500, 401, 200),
+                        "loop", false
+                ), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 第 1 次请求 → 500
+        ResponseEntity<String> r1 = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        assertThat(r1.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+
+        // 第 2 次请求 → 401
+        ResponseEntity<String> r2 = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        assertThat(r2.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+
+        // 第 3 次请求 → 200
+        ResponseEntity<String> r3 = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        assertThat(r3.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+        // 第 4 次请求 → 恢复全局 NORMAL 模式
+        ResponseEntity<String> r4 = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        assertThat(r4.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(r4.getBody()).contains("\"id\"");
+        assertThat(r4.getBody()).contains("\"choices\"");
+    }
+
+    @Test
+    @DisplayName("行为序列 — 循环序列 [200,500] 交替返回，6 次请求交替 200/500")
+    void testBehaviorSequence_loop_resetsOnEnd() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置循环行为序列：[200, 500]
+        restTemplate.exchange(
+                "/simulator/behavior",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "steps", List.of(200, 500),
+                        "loop", true
+                ), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 6 次请求交替 200/500
+        for (int i = 0; i < 3; i++) {
+            ResponseEntity<String> r1 = restTemplate.postForEntity(
+                    "/v1/chat/completions",
+                    new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                    String.class);
+            assertThat(r1.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+            ResponseEntity<String> r2 = restTemplate.postForEntity(
+                    "/v1/chat/completions",
+                    new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                    String.class);
+            assertThat(r2.getStatusCode()).isEqualTo(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     // ==================== 辅助方法 ====================
 
     /**
