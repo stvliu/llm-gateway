@@ -85,7 +85,10 @@
       "mcp__codegraph__codegraph_explore",
       "mcp__codegraph__codegraph_node",
       "Skill(fewer-permission-prompts)",
-      "mcp__codegraph__codegraph_search"
+      "mcp__codegraph__codegraph_search",
+      "Bash(pip list *)",
+      "Bash(cargo install *)",
+      "Bash(comet status *)"
     ]
   },
   "outputStyle": "default"
