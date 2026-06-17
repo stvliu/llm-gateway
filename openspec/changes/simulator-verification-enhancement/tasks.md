@@ -2,16 +2,16 @@
 
 ## Phase 1：Simulator 增强
 
-- [ ] 1.1 扩展 SimulatorMode 枚举（新增 AUTH_ERROR / QUOTA_EXCEEDED / INVALID_REQUEST / UPSTREAM_ERROR / SERVICE_DOWN / TIMEOUT / INTERMITTENT）
-- [ ] 1.2 实现 BehaviorSequence 机制（支持一次性/循环序列，步进消费）
-- [ ] 1.3 新增错误响应模板（AUTH_ERROR / QUOTA_EXCEEDED / INVALID_REQUEST / SERVICE_DOWN / TIMEOUT）
-- [ ] 1.4 实现 SimulatorController 对新增模式的响应分发
-- [ ] 1.5 实现管理 API：POST/GET/DELETE /simulator/behavior
-- [ ] 1.6 实现延迟配置：POST/DELETE /simulator/delay
-- [ ] 1.7 实现流控制：POST /simulator/stream（中断/非法数据）
-- [ ] 1.8 实现按 API Key 区分响应：POST/DELETE /simulator/apikey-override
-- [ ] 1.9 更新 SimulatorAdminController.parseMode 支持新枚举
-- [ ] 1.10 编写新增功能的单元测试和 Controller 测试
+- [x] 1.1 扩展 SimulatorMode 枚举（新增 AUTH_ERROR / QUOTA_EXCEEDED / INVALID_REQUEST / UPSTREAM_ERROR / SERVICE_DOWN / TIMEOUT / INTERMITTENT）
+- [x] 1.2 实现 BehaviorSequence 机制（支持一次性/循环序列，步进消费）
+- [x] 1.3 新增错误响应模板（AUTH_ERROR / QUOTA_EXCEEDED / INVALID_REQUEST / SERVICE_DOWN / TIMEOUT）
+- [x] 1.4 实现 SimulatorController 对新增模式的响应分发
+- [x] 1.5 实现管理 API：POST/GET/DELETE /simulator/behavior
+- [x] 1.6 实现延迟配置：POST/DELETE /simulator/delay
+- [x] 1.7 实现流控制：POST /simulator/stream（中断/非法数据）
+- [x] 1.8 实现按 API Key 区分响应：POST/DELETE /simulator/apikey-override
+- [x] 1.9 更新 SimulatorAdminController.parseMode 支持新枚举
+- [x] 1.10 编写新增功能的单元测试和 Controller 测试（56 个测试全部通过）
 
 ## Phase 2：Gateway 集成测试
 
