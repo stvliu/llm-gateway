@@ -28,6 +28,6 @@
 
 ## 验证与收尾
 
-- [ ] 3.1 运行全部测试，确认无回归
-- [ ] 3.2 更新 docs/simulator-gateway-verification.md 标记完成项
-- [ ] 3.3 整理提交历史
+- [x] 3.1 运行全部测试，确认无回归（Simulator 56 测试 + Gateway 10 测试全部通过）
+- [x] 3.2 更新 docs/simulator-gateway-verification.md 标记完成项
+- [x] 3.3 整理提交历史
