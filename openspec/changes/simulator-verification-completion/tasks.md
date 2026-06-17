@@ -18,10 +18,10 @@
 - [x] 2.6 实现熔断器+行为序列测试（CLOSED→OPEN→HALF_OPEN→CLOSED）
 - [x] 2.7 实现间歇故障恢复测试（交替 200/500）
 - [x] 2.8 实现超时和流中断测试
-- [ ] 2.9 运行全部测试确认无回归
+- [x] 2.9 运行全部测试确认无回归
 
 ## 验证与收尾
 
-- [ ] 3.1 全量构建通过
-- [ ] 3.2 更新 docs/simulator-gateway-verification.md 标记完成项
-- [ ] 3.3 整理提交历史
+- [x] 3.1 全量构建通过
+- [x] 3.2 更新 docs/simulator-gateway-verification.md 标记完成项
+- [x] 3.3 整理提交历史
