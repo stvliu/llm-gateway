@@ -6,7 +6,7 @@ base-ref: ae59252454e90c73efc831c116db43d16b911b03
 
 # Simulator 验证增强 — 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **目标:** 增强 gateway-simulator 模拟能力（新增 6 种错误模式 + 行为序列 + 延迟/流控制/API Key 覆盖），并基于增强后的 Simulator 编写 Gateway 全链路集成测试。
 
@@ -45,7 +45,7 @@ base-ref: ae59252454e90c73efc831c116db43d16b911b03
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java`
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/template/SimulatorResponseTemplates.java`
 
-- [ ] **Step 1: 扩展 SimulatorMode 枚举**
+- [x] **Step 1: 扩展 SimulatorMode 枚举**
 
 在 `SimulatorModeService.java` 中将 `SimulatorMode` 枚举从 3 个值扩展到 9 个值：
 
@@ -80,7 +80,7 @@ private SimulatorMode parseMode(String modeConfig) {
 }
 ```
 
-- [ ] **Step 2: 新增 OpenAI 错误响应模板**
+- [x] **Step 2: 新增 OpenAI 错误响应模板**
 
 在 `SimulatorResponseTemplates.java` 中新增模板方法：
 
@@ -141,7 +141,7 @@ public static String openaiTimeoutError() {
 }
 ```
 
-- [ ] **Step 3: 新增 Anthropic 错误响应模板**
+- [x] **Step 3: 新增 Anthropic 错误响应模板**
 
 ```java
 // Anthropic 401
@@ -200,7 +200,7 @@ public static String anthropicTimeoutError() {
 }
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java gateway-simulator/src/main/java/com/codingas/simulator/template/SimulatorResponseTemplates.java
@@ -219,7 +219,7 @@ git commit -m "feat(simulator): 扩展 SimulatorMode 枚举至 9 种并新增错
 - Create: `gateway-simulator/src/main/java/com/codingas/simulator/service/BehaviorSequence.java`
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java`
 
-- [ ] **Step 1: 创建 BehaviorSequence 类**
+- [x] **Step 1: 创建 BehaviorSequence 类**
 
 ```java
 package com.codingas.simulator.service;
@@ -304,7 +304,7 @@ public class BehaviorSequence {
 }
 ```
 
-- [ ] **Step 2: 在 SimulatorModeService 中集成 BehaviorSequence**
+- [x] **Step 2: 在 SimulatorModeService 中集成 BehaviorSequence**
 
 新增字段和方法：
 
@@ -328,7 +328,7 @@ public synchronized void clearBehaviorSequence() {
 }
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/service/BehaviorSequence.java gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java
@@ -349,7 +349,7 @@ git commit -m "feat(simulator): 实现 BehaviorSequence 行为序列机制
 - Create: `gateway-simulator/src/main/java/com/codingas/simulator/service/ApiKeyOverrideConfig.java`
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java`
 
-- [ ] **Step 1: 创建 DelayConfig**
+- [x] **Step 1: 创建 DelayConfig**
 
 ```java
 package com.codingas.simulator.service;
@@ -395,7 +395,7 @@ public class DelayConfig {
 }
 ```
 
-- [ ] **Step 2: 创建 StreamConfig**
+- [x] **Step 2: 创建 StreamConfig**
 
 ```java
 package com.codingas.simulator.service;
@@ -437,7 +437,7 @@ public class StreamConfig {
 }
 ```
 
-- [ ] **Step 3: 创建 ApiKeyOverrideConfig**
+- [x] **Step 3: 创建 ApiKeyOverrideConfig**
 
 ```java
 package com.codingas.simulator.service;
@@ -488,7 +488,7 @@ public class ApiKeyOverrideConfig {
 }
 ```
 
-- [ ] **Step 4: 在 SimulatorModeService 中集成新增配置类**
+- [x] **Step 4: 在 SimulatorModeService 中集成新增配置类**
 
 ```java
 // 新增字段
@@ -502,7 +502,7 @@ public StreamConfig getStreamConfig() { return streamConfig; }
 public ApiKeyOverrideConfig getApiKeyOverrideConfig() { return apiKeyOverrideConfig; }
 ```
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/service/DelayConfig.java gateway-simulator/src/main/java/com/codingas/simulator/service/StreamConfig.java gateway-simulator/src/main/java/com/codingas/simulator/service/ApiKeyOverrideConfig.java gateway-simulator/src/main/java/com/codingas/simulator/service/SimulatorModeService.java
@@ -520,7 +520,7 @@ git commit -m "feat(simulator): 实现延迟配置、流控制和 API Key 覆盖
 **Files:**
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorController.java`
 
-- [ ] **Step 1: 重构 SimulatorController 响应逻辑**
+- [x] **Step 1: 重构 SimulatorController 响应逻辑**
 
 核心变更：
 1. 新增 `resolveMode()` 方法实现行为序列 > API Key 覆盖 > 全局模式的优先级
@@ -596,7 +596,7 @@ public ResponseEntity<?> openaiChatCompletions(@RequestBody String body,
 
 同理重构 `anthropicMessages` 方法。
 
-- [ ] **Step 2: 重写流式发送方法支持 StreamConfig**
+- [x] **Step 2: 重写流式发送方法支持 StreamConfig**
 
 重构 `sendOpenAIStream` 方法：
 
@@ -662,7 +662,7 @@ private void sendOpenAIStream(SseEmitter emitter) {
 
 同理重构 `sendAnthropicStream` 方法。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorController.java
@@ -680,7 +680,7 @@ git commit -m "feat(simulator): 重构控制器支持新模式分发和流控制
 **Files:**
 - Modify: `gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorAdminController.java`
 
-- [ ] **Step 1: 新增行为序列管理端点**
+- [x] **Step 1: 新增行为序列管理端点**
 
 ```java
 @PostMapping("/behavior")
@@ -721,7 +721,7 @@ public ResponseEntity<Map<String, String>> clearBehavior() {
 }
 ```
 
-- [ ] **Step 2: 新增延迟管理端点**
+- [x] **Step 2: 新增延迟管理端点**
 
 ```java
 @PostMapping("/delay")
@@ -750,7 +750,7 @@ public ResponseEntity<Map<String, Object>> getDelay() {
 }
 ```
 
-- [ ] **Step 3: 新增流控制端点**
+- [x] **Step 3: 新增流控制端点**
 
 ```java
 @PostMapping("/stream")
@@ -765,7 +765,7 @@ public ResponseEntity<Map<String, Object>> setStreamConfig(@RequestBody Map<Stri
 }
 ```
 
-- [ ] **Step 4: 新增 API Key 覆盖端点**
+- [x] **Step 4: 新增 API Key 覆盖端点**
 
 ```java
 @PostMapping("/apikey-override")
@@ -801,7 +801,7 @@ public ResponseEntity<Map<String, String>> getApiKeyOverrides() {
 }
 ```
 
-- [ ] **Step 5: 更新 parseMode 支持新枚举值**
+- [x] **Step 5: 更新 parseMode 支持新枚举值**
 
 ```java
 private SimulatorModeService.SimulatorMode parseMode(String modeStr) {
@@ -820,7 +820,7 @@ private SimulatorModeService.SimulatorMode parseMode(String modeStr) {
 }
 ```
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add gateway-simulator/src/main/java/com/codingas/simulator/controller/SimulatorAdminController.java
@@ -844,7 +844,7 @@ git commit -m "feat(simulator): 实现管理 API 端点（behavior/delay/stream/
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/controller/SimulatorControllerTest.java`
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java`
 
-- [ ] **Step 1: 更新 SimulatorModeServiceTest**
+- [x] **Step 1: 更新 SimulatorModeServiceTest**
 
 新增测试：新模式枚举值测试、parseMode 测试（包括新枚举值）、BehaviorSequence 集成测试、DelayConfig 测试、ApiKeyOverrideConfig 测试。
 
@@ -862,7 +862,7 @@ git commit -m "feat(simulator): 实现管理 API 端点（behavior/delay/stream/
 - `apiKeyOverride_matchOverride_returnsCorrectMode()`
 - `apiKeyOverride_noMatch_returnsEmpty()`
 
-- [ ] **Step 2: 更新 SimulatorResponseTemplatesTest**
+- [x] **Step 2: 更新 SimulatorResponseTemplatesTest**
 
 新增测试：所有新增模板方法的响应体验证。
 
@@ -874,19 +874,19 @@ git commit -m "feat(simulator): 实现管理 API 端点（behavior/delay/stream/
 - `openaiTimeoutError_containsTimeout()`
 - 同上对应 Anthropic 的 5 个测试
 
-- [ ] **Step 3: 更新 SimulatorAdminControllerTest**
+- [x] **Step 3: 更新 SimulatorAdminControllerTest**
 
 新增测试：behavior/delay/stream/apikey-override 管理端点的正确性验证。
 
-- [ ] **Step 4: 更新 SimulatorControllerTest**
+- [x] **Step 4: 更新 SimulatorControllerTest**
 
 新增测试：AUTH_ERROR/QUOTA_EXCEEDED/INVALID_REQUEST/UPSTREAM_ERROR/SERVICE_DOWN/TIMEOUT 模式的状态码和响应体验证。
 
-- [ ] **Step 5: 更新 SimulatorEndToEndTest**
+- [x] **Step 5: 更新 SimulatorEndToEndTest**
 
 新增端到端测试：新模式 E2E、行为序列 E2E、延迟 E2E、API Key 覆盖 E2E。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add gateway-simulator/src/test/
@@ -907,7 +907,7 @@ git commit -m "test(simulator): 新增 Simulator 增强的单元测试和 E2E �
 - Modify: `gateway-boot/pom.xml`
 - Create: `gateway-boot/src/test/java/com/codingas/gateway/integration/SimulatorGatewayIntegrationTest.java`
 
-- [ ] **Step 1: gateway-boot pom.xml 添加 gateway-simulator 依赖**
+- [x] **Step 1: gateway-boot pom.xml 添加 gateway-simulator 依赖**
 
 ```xml
 <dependency>
@@ -918,7 +918,7 @@ git commit -m "test(simulator): 新增 Simulator 增强的单元测试和 E2E �
 </dependency>
 ```
 
-- [ ] **Step 2: 创建集成测试基类**
+- [x] **Step 2: 创建集成测试基类**
 
 ```java
 package com.codingas.gateway.integration;
@@ -982,7 +982,7 @@ public abstract class SimulatorGatewayIntegrationTestBase {
 }
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/pom.xml gateway-boot/src/test/java/com/codingas/gateway/integration/SimulatorGatewayIntegrationTest.java
@@ -1000,7 +1000,7 @@ git commit -m "feat(test): 添加 gateway-simulator 依赖和集成测试基类
 **Files:**
 - Modify: `gateway-boot/src/test/java/com/codingas/gateway/integration/SimulatorGatewayIntegrationTest.java`
 
-- [ ] **Step 1: 实现正常路径和异常场景测试**
+- [x] **Step 1: 实现正常路径和异常场景测试**
 
 ```java
 package com.codingas.gateway.integration;
@@ -1038,7 +1038,7 @@ class SimulatorGatewayIntegrationTest extends SimulatorGatewayIntegrationTestBas
 
 注意：由于 Simulator 端口是随机的，需要在测试中获取 Simulator 的端口并配置 Gateway 的 Provider endpoint。可以在 `@BeforeEach` 中通过 `TestRestTemplate` 调用 Simulator 的 admin 端点获取端口。
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/
@@ -1055,7 +1055,7 @@ git commit -m "test(gateway): 实现集成测试 — 正常路径和异常场景
 **Files:**
 - Modify: `gateway-boot/src/test/java/com/codingas/gateway/integration/SimulatorGatewayIntegrationTest.java`
 
-- [ ] **Step 1: 实现熔断器生命周期测试**
+- [x] **Step 1: 实现熔断器生命周期测试**
 
 ```java
 @Test
@@ -1081,7 +1081,7 @@ void testCircuitBreaker_open() {
 }
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/
@@ -1099,7 +1099,7 @@ git commit -m "test(gateway): 实现集成测试 — 熔断器/Key故障转移/�
 **Files:**
 - Modify: `gateway-boot/src/test/java/com/codingas/gateway/integration/SimulatorGatewayIntegrationTest.java`
 
-- [ ] **Step 1: 实现跨协议转换、超时和流中断测试
+- [x] **Step 1: 实现跨协议转换、超时和流中断测试
 
 ```java
 @Test
@@ -1141,7 +1141,7 @@ void testStreamInterrupted() {
 }
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/
@@ -1159,7 +1159,7 @@ git commit -m "test(gateway): 实现集成测试 — 跨协议/超时/流中断
 **Files:**
 - Modify: `openspec/changes/simulator-verification-enhancement/tasks.md`
 
-- [ ] **Step 1: 运行 Simulator 全部测试**
+- [x] **Step 1: 运行 Simulator 全部测试**
 
 ```bash
 cd gateway-simulator && ../mvnw test
@@ -1167,7 +1167,7 @@ cd gateway-simulator && ../mvnw test
 
 预期：全部测试通过（原有 28 个测试 + 新增约 20 个测试 ≈ 48 个测试全部通过）
 
-- [ ] **Step 2: 运行 Gateway-boot 测试**
+- [x] **Step 2: 运行 Gateway-boot 测试**
 
 ```bash
 cd gateway-boot && ../mvnw test -DskipTests=false
@@ -1175,7 +1175,7 @@ cd gateway-boot && ../mvnw test -DskipTests=false
 
 预期：全部测试通过
 
-- [ ] **Step 3: 运行全量构建**
+- [x] **Step 3: 运行全量构建**
 
 ```bash
 ./mvnw clean install -DskipTests=false
@@ -1183,11 +1183,11 @@ cd gateway-boot && ../mvnw test -DskipTests=false
 
 预期：构建成功，全部测试通过
 
-- [ ] **Step 4: 更新 tasks.md 勾选完成的任务**
+- [x] **Step 4: 更新 tasks.md 勾选完成的任务**
 
-将 `openspec/changes/simulator-verification-enhancement/tasks.md` 中所有 `- [ ]` 改为 `- [x]`
+将 `openspec/changes/simulator-verification-enhancement/tasks.md` 中所有 `- [x]` 改为 `- [x]`
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add .
