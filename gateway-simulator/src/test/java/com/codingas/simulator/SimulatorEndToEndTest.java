@@ -264,6 +264,63 @@ class SimulatorEndToEndTest {
         }
     }
 
+    // ==================== 场景 9: 延迟配置测试 ====================
+
+    @Test
+    @DisplayName("延迟配置 — 设置 100ms 延迟后测量响应时间 ≥ 100ms")
+    void testDelayConfig_appliesDelay() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置 100ms 延迟
+        restTemplate.exchange(
+                "/simulator/delay",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("delayMs", 100), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 发送请求并计时
+        long start = System.currentTimeMillis();
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(elapsed).isGreaterThanOrEqualTo(100);
+    }
+
+    @Test
+    @DisplayName("延迟配置 — 删除后延迟不再生效")
+    void testDelayConfig_deleteResets() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 先设置延迟
+        restTemplate.exchange(
+                "/simulator/delay",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("delayMs", 200), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 删除延迟配置
+        restTemplate.exchange(
+                "/simulator/delay",
+                HttpMethod.DELETE,
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 确认不再延迟
+        long start = System.currentTimeMillis();
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>(OPENAI_REQUEST_BODY, jsonHeaders()),
+                String.class);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(elapsed).isLessThan(200);
+    }
+
     // ==================== 辅助方法 ====================
 
     /**
