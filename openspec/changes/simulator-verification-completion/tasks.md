@@ -10,8 +10,8 @@
 
 ## Phase 2：Gateway 全链路集成测试
 
-- [ ] 2.1 创建 FullContextIntegrationTestBase（Mock 认证+路由）
-- [ ] 2.2 创建集成测试配置（application-integration-test.yml）
+- [x] 2.1 创建 FullContextIntegrationTestBase（Mock 认证+路由）
+- [x] 2.2 创建集成测试配置（application-integration-test.yml）
 - [ ] 2.3 实现 Key 故障转移测试（2 个 Key、全部失败、熔断跳过）
 - [ ] 2.4 实现模型降级测试（主模型失败、降级链耗尽）
 - [ ] 2.5 实现跨协议转换测试（OpenAI→Anthropic / Anthropic→OpenAI）
