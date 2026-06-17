@@ -172,9 +172,13 @@ public class SimulatorAdminController {
      */
     @PostMapping("/delay")
     public ResponseEntity<Map<String, Object>> setDelay(@RequestBody Map<String, Object> body) {
-        long delayMs = body.containsKey("delayMs") ? ((Number) body.get("delayMs")).longValue() : 0;
-        modeService.getDelayConfig().setDelay(delayMs);
-        return ResponseEntity.ok(Map.of("status", "ok", "delayMs", delayMs));
+        try {
+            long delayMs = asLong(body, "delayMs", 0);
+            modeService.getDelayConfig().setDelay(delayMs);
+            return ResponseEntity.ok(Map.of("status", "ok", "delayMs", delayMs));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**
@@ -211,13 +215,23 @@ public class SimulatorAdminController {
      */
     @PostMapping("/stream")
     public ResponseEntity<Map<String, Object>> setStream(@RequestBody Map<String, Object> body) {
-        String action = (String) body.getOrDefault("action", "normal");
-        int chunkCount = body.containsKey("chunkCount") ? ((Number) body.get("chunkCount")).intValue() : 3;
-        int chunkIntervalMs = body.containsKey("chunkIntervalMs") ? ((Number) body.get("chunkIntervalMs")).intValue() : 50;
-        int interruptAfter = body.containsKey("interruptAfter") ? ((Number) body.get("interruptAfter")).intValue() : 0;
-        String invalidChunk = (String) body.getOrDefault("invalidChunk", "");
-        modeService.getStreamConfig().configure(action, chunkCount, chunkIntervalMs, interruptAfter, invalidChunk);
-        return ResponseEntity.ok(Map.of("status", "ok"));
+        try {
+            String action = asString(body, "action");
+            if (action == null) {
+                action = "normal";
+            }
+            int chunkCount = asInt(body, "chunkCount", 3);
+            int chunkIntervalMs = asInt(body, "chunkIntervalMs", 50);
+            int interruptAfter = asInt(body, "interruptAfter", 0);
+            String invalidChunk = asString(body, "invalidChunk");
+            if (invalidChunk == null) {
+                invalidChunk = "";
+            }
+            modeService.getStreamConfig().configure(action, chunkCount, chunkIntervalMs, interruptAfter, invalidChunk);
+            return ResponseEntity.ok(Map.of("status", "ok"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**
@@ -256,14 +270,18 @@ public class SimulatorAdminController {
      */
     @PostMapping("/apikey-override")
     public ResponseEntity<Map<String, Object>> setApiKeyOverride(@RequestBody Map<String, Object> body) {
-        String keyPrefix = (String) body.get("keyPrefix");
+        String keyPrefix = asString(body, "keyPrefix");
         if (keyPrefix == null || keyPrefix.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of("error", "缺少 keyPrefix"));
         }
-        int status = body.containsKey("status") ? ((Number) body.get("status")).intValue() : 401;
-        SimulatorModeService.SimulatorMode mode = httpStatusToMode(status);
-        modeService.getApiKeyOverrideConfig().setOverride(keyPrefix, mode);
-        return ResponseEntity.ok(Map.of("status", "ok", "keyPrefix", keyPrefix, "mode", mode.name()));
+        try {
+            int status = asInt(body, "status", 401);
+            SimulatorModeService.SimulatorMode mode = httpStatusToMode(status);
+            modeService.getApiKeyOverrideConfig().setOverride(keyPrefix, mode);
+            return ResponseEntity.ok(Map.of("status", "ok", "keyPrefix", keyPrefix, "mode", mode.name()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     /**
@@ -273,10 +291,12 @@ public class SimulatorAdminController {
      * @return 操作结果
      */
     @DeleteMapping("/apikey-override")
-    public ResponseEntity<Map<String, Object>> removeApiKeyOverride(@RequestBody Map<String, Object> body) {
-        String keyPrefix = (String) body.get("keyPrefix");
-        if (keyPrefix != null) {
-            modeService.getApiKeyOverrideConfig().removeOverride(keyPrefix);
+    public ResponseEntity<Map<String, Object>> removeApiKeyOverride(@RequestBody(required = false) Map<String, Object> body) {
+        if (body != null) {
+            String keyPrefix = asString(body, "keyPrefix");
+            if (keyPrefix != null) {
+                modeService.getApiKeyOverrideConfig().removeOverride(keyPrefix);
+            }
         }
         return ResponseEntity.ok(Map.of("status", "ok"));
     }
@@ -308,5 +328,75 @@ public class SimulatorAdminController {
             case 408 -> SimulatorModeService.SimulatorMode.TIMEOUT;
             default -> throw new IllegalArgumentException("不支持的状态码: " + statusCode);
         };
+    }
+
+    // ==================== 请求体字段安全转换辅助方法 ====================
+
+    /**
+     * 安全地将 body 中的值转为 long，类型不匹配时抛 IllegalArgumentException。
+     * <p>
+     * 用于替代直接强转 {@code ((Number) body.get(...))}，避免传入 null 或错误类型时
+     * 抛出 NPE/ClassCastException 导致响应 500 而非 400。
+     *
+     * @param body         请求体
+     * @param key          字段名
+     * @param defaultValue 默认值（字段缺失或为 null 时返回）
+     * @return long 值
+     * @throws IllegalArgumentException 当字段值存在但不是数字时
+     */
+    private static long asLong(Map<String, Object> body, String key, long defaultValue) {
+        if (!body.containsKey(key) || body.get(key) == null) {
+            return defaultValue;
+        }
+        Object v = body.get(key);
+        if (v instanceof Number) {
+            return ((Number) v).longValue();
+        }
+        throw new IllegalArgumentException("字段 " + key + " 必须是数字");
+    }
+
+    /**
+     * 安全地将 body 中的值转为 int，类型不匹配时抛 IllegalArgumentException。
+     * <p>
+     * 用于替代直接强转 {@code ((Number) body.get(...))}，避免传入 null 或错误类型时
+     * 抛出 NPE/ClassCastException 导致响应 500 而非 400。
+     *
+     * @param body         请求体
+     * @param key          字段名
+     * @param defaultValue 默认值（字段缺失或为 null 时返回）
+     * @return int 值
+     * @throws IllegalArgumentException 当字段值存在但不是数字时
+     */
+    private static int asInt(Map<String, Object> body, String key, int defaultValue) {
+        if (!body.containsKey(key) || body.get(key) == null) {
+            return defaultValue;
+        }
+        Object v = body.get(key);
+        if (v instanceof Number) {
+            return ((Number) v).intValue();
+        }
+        throw new IllegalArgumentException("字段 " + key + " 必须是数字");
+    }
+
+    /**
+     * 安全地将 body 中的值转为 String，类型不匹配时抛 IllegalArgumentException。
+     * <p>
+     * 用于替代直接强转 {@code (String) body.get(...)}，避免传入错误类型时
+     * 抛出 ClassCastException 导致响应 500 而非 400。
+     *
+     * @param body 请求体
+     * @param key  字段名
+     * @return 字符串值；字段缺失或为 null 时返回 null
+     * @throws IllegalArgumentException 当字段值存在但不是字符串时
+     */
+    private static String asString(Map<String, Object> body, String key) {
+        Object v = body.get(key);
+        if (v == null) {
+            return null;
+        }
+        if (v instanceof String) {
+            return (String) v;
+        }
+        throw new IllegalArgumentException("字段 " + key + " 必须是字符串");
     }
 }

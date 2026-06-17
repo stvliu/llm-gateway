@@ -39,11 +39,20 @@ class SimulatorEndToEndTest {
             {"model":"claude-sonnet-4-20250514","messages":[{"role":"user","content":"hi"}]}""";
 
     /**
-     * 每个测试前重置模式为 NORMAL，避免测试间状态泄漏。
+     * 每个测试前重置模式为 NORMAL 并清理所有配置，避免测试间状态泄漏。
+     * <p>
+     * 仅重置 mode 为 NORMAL 不足以保证隔离：行为序列（尤其是 loop=true）、
+     * 延迟配置、流控制、API Key 覆盖等会泄漏到后续测试，导致偶发失败。
+     * 此处统一清理全部正交配置。
      */
     @BeforeEach
     void resetMode() {
         modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        // 清理所有配置，避免测试间状态泄漏
+        modeService.clearBehaviorSequence();
+        modeService.getDelayConfig().clearDelay();
+        modeService.getStreamConfig().reset();
+        modeService.getApiKeyOverrideConfig().clearAll();
     }
 
     // ==================== 场景 1: OpenAI 非流式 NORMAL 模式 ====================
