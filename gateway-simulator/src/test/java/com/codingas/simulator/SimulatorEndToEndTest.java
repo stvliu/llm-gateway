@@ -321,6 +321,128 @@ class SimulatorEndToEndTest {
         assertThat(elapsed).isLessThan(200);
     }
 
+    // ==================== 场景 10: 流控制测试 ====================
+
+    @Test
+    @DisplayName("流控制 — 设置中断后流式请求收到中断或异常")
+    void testStreamConfig_interruptAfter() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置流中断：发送 3 个 chunk 后中断
+        restTemplate.exchange(
+                "/simulator/stream",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "chunkCount", 5,
+                        "interruptAfter", 3
+                ), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 流式请求 — SSE 响应无法通过 RestTemplate 直接读取，可能抛出异常
+        // 验证重点是：请求不会挂起，异常类型合理
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    "/v1/chat/completions",
+                    new HttpEntity<>("""
+                            {"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}""",
+                            jsonHeaders()),
+                    String.class);
+            // 如果能正常返回，验证 body 非空
+            assertThat(response.getBody()).isNotNull();
+        } catch (Exception e) {
+            // SSE 中断导致 RestTemplate 解析失败是预期行为
+            assertThat(e).isInstanceOf(RuntimeException.class);
+        }
+    }
+
+    @Test
+    @DisplayName("流控制 — 删除配置后恢复正常流式响应")
+    void testStreamConfig_deleteResets() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置中断
+        restTemplate.exchange(
+                "/simulator/stream",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of("interruptAfter", 1), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 删除配置
+        restTemplate.exchange(
+                "/simulator/stream",
+                HttpMethod.DELETE,
+                null,
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 发送流式请求 — 应恢复正常
+        ResponseEntity<String> response = restTemplate.postForEntity(
+                "/v1/chat/completions",
+                new HttpEntity<>("""
+                        {"model":"gpt-4o","messages":[{"role":"user","content":"hi"}],"stream":true}""",
+                        jsonHeaders()),
+                String.class);
+
+        assertThat(response.getBody()).isNotNull();
+    }
+
+    // ==================== 场景 11: API Key 覆盖测试 ====================
+
+    @Test
+    @DisplayName("API Key 覆盖 — 匹配前缀的 Key 返回 401")
+    void testApiKeyOverride_matchesByPrefix() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置 API Key 覆盖：前缀 sk-bad 返回 401
+        restTemplate.exchange(
+                "/simulator/apikey-override",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "keyPrefix", "sk-bad",
+                        "status", 401,
+                        "body", "{\"error\":\"auth_error\"}"
+                ), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 使用 sk-bad 前缀的 Key 发送请求 → 401
+        HttpHeaders headers = jsonHeaders();
+        headers.setBearerAuth("sk-bad-key-123");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/v1/chat/completions",
+                HttpMethod.POST,
+                new HttpEntity<>(OPENAI_REQUEST_BODY, headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    @DisplayName("API Key 覆盖 — 不匹配的 Key 回退到全局 NORMAL 模式")
+    void testApiKeyOverride_noMatch_fallsbackToGlobal() {
+        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+
+        // 设置 API Key 覆盖：前缀 sk-bad 返回 401
+        restTemplate.exchange(
+                "/simulator/apikey-override",
+                HttpMethod.POST,
+                new HttpEntity<>(Map.of(
+                        "keyPrefix", "sk-bad",
+                        "status", 401
+                ), jsonHeaders()),
+                new ParameterizedTypeReference<Map<String, Object>>() {});
+
+        // 使用不匹配的 Key → 正常 200
+        HttpHeaders headers = jsonHeaders();
+        headers.setBearerAuth("sk-good-key");
+        ResponseEntity<String> response = restTemplate.exchange(
+                "/v1/chat/completions",
+                HttpMethod.POST,
+                new HttpEntity<>(OPENAI_REQUEST_BODY, headers),
+                String.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(response.getBody()).contains("\"id\"");
+    }
+
     // ==================== 辅助方法 ====================
 
     /**

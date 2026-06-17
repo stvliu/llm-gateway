@@ -228,16 +228,27 @@ public class SimulatorController {
     /**
      * 异步发送 OpenAI 流式响应。
      * <p>
-     * 发送 3 个 data chunk + data: [DONE] 结束标记。
+     * 根据 streamConfig 控制发送行为：支持中断（interruptAfter）、自定义 chunk 数量等。
      */
     private void sendOpenAIStream(SseEmitter emitter) {
         try {
-            // 发送 3 个内容 chunk
-            String[] contents = {"Hello", " from", " simulator"};
-            for (String content : contents) {
+            var config = modeService.getStreamConfig();
+            int chunkCount = config.getChunkCount();
+            int interruptAfter = config.getInterruptAfter();
+            long intervalMs = config.getChunkIntervalMs();
+            String action = config.getAction();
+
+            // 发送内容 chunk
+            for (int i = 0; i < chunkCount; i++) {
                 emitter.send(SseEmitter.event()
-                        .data(SimulatorResponseTemplates.openaiStreamChunk(content)));
-                Thread.sleep(50);
+                        .data(SimulatorResponseTemplates.openaiStreamChunk("chunk-" + i)));
+                Thread.sleep(intervalMs);
+
+                // 检查是否需要中断
+                if (interruptAfter > 0 && i >= interruptAfter - 1) {
+                    emitter.completeWithError(new RuntimeException("simulator interrupt"));
+                    return;
+                }
             }
             // 发送结束标记
             emitter.send(SseEmitter.event()
@@ -251,16 +262,26 @@ public class SimulatorController {
     /**
      * 异步发送 Anthropic 流式响应。
      * <p>
-     * 发送 3 个 content_block_delta 事件 + message_stop 结束事件。
+     * 根据 streamConfig 控制发送行为：支持中断（interruptAfter）、自定义 chunk 数量等。
      */
     private void sendAnthropicStream(SseEmitter emitter) {
         try {
-            // 发送 3 个 delta 事件
-            String[] texts = {"Hello", " from", " simulator"};
-            for (String text : texts) {
+            var config = modeService.getStreamConfig();
+            int chunkCount = config.getChunkCount();
+            int interruptAfter = config.getInterruptAfter();
+            long intervalMs = config.getChunkIntervalMs();
+
+            // 发送 delta 事件
+            for (int i = 0; i < chunkCount; i++) {
                 emitter.send(SseEmitter.event()
-                        .data(SimulatorResponseTemplates.anthropicStreamDelta(text)));
-                Thread.sleep(50);
+                        .data(SimulatorResponseTemplates.anthropicStreamDelta("chunk-" + i)));
+                Thread.sleep(intervalMs);
+
+                // 检查是否需要中断
+                if (interruptAfter > 0 && i >= interruptAfter - 1) {
+                    emitter.completeWithError(new RuntimeException("simulator interrupt"));
+                    return;
+                }
             }
             // 发送结束事件
             emitter.send(SseEmitter.event()
