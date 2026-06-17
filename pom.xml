@@ -212,7 +212,29 @@
                             <include>**/*IntegrationTest.java</include>
                             <include>**/*E2ETest.java</include>
                         </includes>
+                        <!-- 显式将主应用编译输出目录加入 failsafe fork 类路径。
+                             背景：spring-boot:repackage 在 package 阶段把主 artifact 替换为
+                             fat jar（应用类位于 BOOT-INF/classes/，无法按根路径加载）。
+                             failsafe 在 integration-test 阶段（package 之后）运行时，
+                             其 fork 类路径会使用该 fat jar 作为主类源（取代 target/classes），
+                             导致应用类 NoClassDefFoundError、JUnit 测试发现失败。
+                             补充 target/classes 确保应用类可被加载，且不改变构建产物
+                             （主 jar 仍为可执行 fat jar）。 -->
+                        <additionalClasspathElements>
+                            <additionalClasspathElement>${project.build.outputDirectory}</additionalClasspathElement>
+                        </additionalClasspathElements>
                     </configuration>
+                    <!-- 绑定 integration-test 与 verify goal 到对应生命周期阶段。
+                         failsafe 的 goal 不在 Maven 默认生命周期绑定中，
+                         必须显式声明 executions 才能在 mvn install/verify 时触发。 -->
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
                 </plugin>
 
                 <!-- JAR 打包插件 -->
