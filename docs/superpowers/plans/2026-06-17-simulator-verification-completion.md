@@ -28,7 +28,7 @@ base-ref: 6da5278e657baba83a36965aad2dc04015cbf845
 2. 循环序列到达末尾后重置
 3. 序列消费完后恢复全局模式
 
-- [ ] **Step 1：在 SimulatorEndToEndTest 中新增 testBehaviorSequence_consumesStepsViaHttp**
+- [x] **Step 1：在 SimulatorEndToEndTest 中新增 testBehaviorSequence_consumesStepsViaHttp**
 
 ```java
 @Test
@@ -84,12 +84,12 @@ void testBehaviorSequence_consumesStepsViaHttp() {
 }
 ```
 
-- [ ] **Step 2：运行测试验证失败**
+- [x] **Step 2：运行测试验证失败**
 
 Run: `cd gateway-simulator && ../mvnw test -Dtest=SimulatorEndToEndTest#testBehaviorSequence_consumesStepsViaHttp -DfailIfNoTests=false`
 Expected: 编译错误或测试失败（方法未存在）
 
-- [ ] **Step 3：新增 testBehaviorSequence_loop_resetsOnEnd**
+- [x] **Step 3：新增 testBehaviorSequence_loop_resetsOnEnd**
 
 ```java
 @Test
@@ -127,12 +127,12 @@ void testBehaviorSequence_loop_resetsOnEnd() {
 }
 ```
 
-- [ ] **Step 4：运行所有已实现的行为序列测试确认通过**
+- [x] **Step 4：运行所有已实现的行为序列测试确认通过**
 
 Run: `cd gateway-simulator && ../mvnw test -Dtest=SimulatorEndToEndTest#testBehaviorSequence_consumesStepsViaHttp+testBehaviorSequence_loop_resetsOnEnd -DfailIfNoTests=false`
 Expected: PASS
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java
@@ -146,7 +146,7 @@ git commit -m "test(simulator): 新增行为序列 E2E 测试 — 按序消费�
 **Files:**
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java`
 
-- [ ] **Step 1：新增 testDelayConfig_appliesDelay**
+- [x] **Step 1：新增 testDelayConfig_appliesDelay**
 
 ```java
 @Test
@@ -174,7 +174,7 @@ void testDelayConfig_appliesDelay() {
 }
 ```
 
-- [ ] **Step 2：新增 testDelayConfig_deleteResets**
+- [x] **Step 2：新增 testDelayConfig_deleteResets**
 
 ```java
 @Test
@@ -209,12 +209,12 @@ void testDelayConfig_deleteResets() {
 }
 ```
 
-- [ ] **Step 3：运行延迟测试确认通过**
+- [x] **Step 3：运行延迟测试确认通过**
 
 Run: `cd gateway-simulator && ../mvnw test -Dtest=SimulatorEndToEndTest#testDelayConfig_appliesDelay+testDelayConfig_deleteResets -DfailIfNoTests=false`
 Expected: PASS
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java
@@ -228,7 +228,7 @@ git commit -m "test(simulator): 新增延迟配置 E2E 测试 — 设置/删除�
 **Files:**
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java`
 
-- [ ] **Step 1：新增 testStreamConfig_interruptAfter**
+- [x] **Step 1：新增 testStreamConfig_interruptAfter**
 
 ```java
 @Test
@@ -258,7 +258,7 @@ void testStreamConfig_interruptAfter() {
 }
 ```
 
-- [ ] **Step 2：新增 testStreamConfig_deleteResets**
+- [x] **Step 2：新增 testStreamConfig_deleteResets**
 
 ```java
 @Test
@@ -292,12 +292,12 @@ void testStreamConfig_deleteResets() {
 }
 ```
 
-- [ ] **Step 3：运行流控制测试确认通过**
+- [x] **Step 3：运行流控制测试确认通过**
 
 Run: `cd gateway-simulator && ../mvnw test -Dtest=SimulatorEndToEndTest#testStreamConfig_interruptAfter+testStreamConfig_deleteResets -DfailIfNoTests=false`
 Expected: PASS
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java
@@ -311,7 +311,7 @@ git commit -m "test(simulator): 新增流控制 E2E 测试 — 中断和重置"
 **Files:**
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java`
 
-- [ ] **Step 1：新增 testApiKeyOverride_matchesByPrefix**
+- [x] **Step 1：新增 testApiKeyOverride_matchesByPrefix**
 
 ```java
 @Test
@@ -343,7 +343,7 @@ void testApiKeyOverride_matchesByPrefix() {
 }
 ```
 
-- [ ] **Step 2：新增 testApiKeyOverride_noMatch_fallsbackToGlobal**
+- [x] **Step 2：新增 testApiKeyOverride_noMatch_fallsbackToGlobal**
 
 ```java
 @Test
@@ -376,12 +376,12 @@ void testApiKeyOverride_noMatch_fallsbackToGlobal() {
 }
 ```
 
-- [ ] **Step 3：运行 API Key 覆盖测试确认通过**
+- [x] **Step 3：运行 API Key 覆盖测试确认通过**
 
 Run: `cd gateway-simulator && ../mvnw test -Dtest=SimulatorEndToEndTest#testApiKeyOverride_matchesByPrefix+testApiKeyOverride_noMatch_fallsbackToGlobal -DfailIfNoTests=false`
 Expected: PASS
 
-- [ ] **Step 4：提交**
+- [x] **Step 4：提交**
 
 ```bash
 git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java
@@ -395,16 +395,16 @@ git commit -m "test(simulator): 新增 API Key 覆盖 E2E 测试 — 匹配和�
 **Files:**
 - Modify: `gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEndTest.java`（如有问题修复）
 
-- [ ] **Step 1：运行 Simulator 模块全部测试**
+- [x] **Step 1：运行 Simulator 模块全部测试**
 
 Run: `cd gateway-simulator && ../mvnw test`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 2：更新 tasks.md 标记 Phase 1 完成**
+- [x] **Step 2：更新 tasks.md 标记 Phase 1 完成**
 
 在 `openspec/changes/simulator-verification-completion/tasks.md` 中将 Phase 1 的 5 个任务标记为 `[x]`
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-simulator/ openspec/changes/simulator-verification-completion/tasks.md
@@ -421,7 +421,7 @@ git commit -m "test(simulator): Phase 1 完成 — 全部 Simulator 管理 API E
 - Create: `gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTestBase.java`
 - Create: `gateway-boot/src/test/resources/application-integration-test.yml`
 
-- [ ] **Step 1：创建 application-integration-test.yml**
+- [x] **Step 1：创建 application-integration-test.yml**
 
 ```yaml
 spring:
@@ -454,7 +454,7 @@ logging:
     com.codingas.gateway: DEBUG
 ```
 
-- [ ] **Step 2：创建 FullContextIntegrationTestBase**
+- [x] **Step 2：创建 FullContextIntegrationTestBase**
 
 ```java
 package com.codingas.gateway.integration;
@@ -578,7 +578,7 @@ public abstract class FullContextIntegrationTestBase implements AutoCloseable {
 
 注意：这个基类引用了 `OpenAIChatRequest`、`RoutingContext` 等类，需要确认这些类的实际包路径。根据现有代码模式调整 import。
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTestBase.java \
@@ -593,7 +593,7 @@ git commit -m "test(gateway): 创建 FullContextIntegrationTestBase — Mock 认
 **Files:**
 - Create: `gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java`
 
-- [ ] **Step 1：创建 FullContextIntegrationTest 并实现 Key 故障转移测试
+- [x] **Step 1：创建 FullContextIntegrationTest 并实现 Key 故障转移测试
 
 ```java
 package com.codingas.gateway.integration;
@@ -662,12 +662,12 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 }
 ```
 
-- [ ] **Step 2：编译确认**
+- [x] **Step 2：编译确认**
 
 Run: `cd gateway-boot && ../mvnw compile test-compile -DskipTests`
 Expected: BUILD SUCCESS（可能需要调整 import 和 API）
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java
@@ -678,7 +678,7 @@ git commit -m "test(gateway): 实现 Key 故障转移测试 — 自动切换和�
 
 ### Task 2.3：实现模型降级测试
 
-- [ ] **Step 1：在 FullContextIntegrationTest 中新增模型降级测试**
+- [x] **Step 1：在 FullContextIntegrationTest 中新增模型降级测试**
 
 ```java
 @Nested
@@ -718,12 +718,12 @@ class DegradationTests {
 
 注意：需要注入 `@MockBean DegradationService degradationService` 到测试基类。
 
-- [ ] **Step 2：编译确认**
+- [x] **Step 2：编译确认**
 
 Run: `cd gateway-boot && ../mvnw compile test-compile -DskipTests`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java
@@ -734,7 +734,7 @@ git commit -m "test(gateway): 实现模型降级测试 — 主模型失败和降
 
 ### Task 2.4：实现跨协议转换测试
 
-- [ ] **Step 1：在 FullContextIntegrationTest 中新增跨协议转换测试**
+- [x] **Step 1：在 FullContextIntegrationTest 中新增跨协议转换测试**
 
 ```java
 @Nested
@@ -778,12 +778,12 @@ class ProtocolConversionTests {
 }
 ```
 
-- [ ] **Step 2：编译确认**
+- [x] **Step 2：编译确认**
 
 Run: `cd gateway-boot && ../mvnw compile test-compile -DskipTests`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java
@@ -794,7 +794,7 @@ git commit -m "test(gateway): 实现跨协议转换测试 — OpenAI↔Anthropic
 
 ### Task 2.5：实现熔断器+行为序列测试
 
-- [ ] **Step 1：在 FullContextIntegrationTest 中新增熔断器测试**
+- [x] **Step 1：在 FullContextIntegrationTest 中新增熔断器测试**
 
 ```java
 @Nested
@@ -839,12 +839,12 @@ class CircuitBreakerWithBehaviorTests {
 
 注意：需要 `ProviderSimulator` 支持 `enqueueBehaviorSequence` 方法。如果尚未实现，需要在 Simulator 端补充或在测试中使用 `enqueueError` + `enqueueOpenAISuccess` 组合。
 
-- [ ] **Step 2：编译确认**
+- [x] **Step 2：编译确认**
 
 Run: `cd gateway-boot && ../mvnw compile test-compile -DskipTests`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java
@@ -855,7 +855,7 @@ git commit -m "test(gateway): 实现熔断器+行为序列测试 — CLOSED→OP
 
 ### Task 2.6：实现超时和流中断测试
 
-- [ ] **Step 1：在 FullContextIntegrationTest 中新增超时和流中断测试**
+- [x] **Step 1：在 FullContextIntegrationTest 中新增超时和流中断测试**
 
 ```java
 @Nested
@@ -895,12 +895,12 @@ class TimeoutAndStreamTests {
 
 注意：需要 `ProviderSimulator` 支持 `enqueueStreamInterrupt` 方法。
 
-- [ ] **Step 2：编译确认**
+- [x] **Step 2：编译确认**
 
 Run: `cd gateway-boot && ../mvnw compile test-compile -DskipTests`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 3：提交**
+- [x] **Step 3：提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextIntegrationTest.java
@@ -911,24 +911,24 @@ git commit -m "test(gateway): 实现超时和流中断测试"
 
 ### Task 2.7：运行全部测试确认无回归
 
-- [ ] **Step 1：运行 Gateway Boot 全部测试**
+- [x] **Step 1：运行 Gateway Boot 全部测试**
 
 Run: `cd gateway-boot && ../mvnw test`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 2：运行 Simulator 全部测试**
+- [x] **Step 2：运行 Simulator 全部测试**
 
 Run: `cd gateway-simulator && ../mvnw test`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 3：运行全量构建**
+- [x] **Step 3：运行全量构建**
 
 Run: `cd .. && ./mvnw clean install -DskipTests`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 4：更新 tasks.md 标记 Phase 2 完成**
+- [x] **Step 4：更新 tasks.md 标记 Phase 2 完成**
 
-- [ ] **Step 5：提交**
+- [x] **Step 5：提交**
 
 ```bash
 git add gateway-boot/ gateway-simulator/ openspec/changes/simulator-verification-completion/tasks.md
@@ -941,22 +941,22 @@ git commit -m "test(gateway): Phase 2 完成 — 全链路集成测试全部通�
 
 ### Task 3.1：全量构建通过
 
-- [ ] **Step 1：运行全量构建+测试**
+- [x] **Step 1：运行全量构建+测试**
 
 Run: `./mvnw clean install`
 Expected: BUILD SUCCESS
 
-- [ ] **Step 2：如果测试失败，使用 systematic-debugging 修复**
+- [x] **Step 2：如果测试失败，使用 systematic-debugging 修复**
 
 ### Task 3.2：更新验证文档
 
-- [ ] **Step 1：更新 `docs/simulator-gateway-verification.md` 标记完成项**
+- [x] **Step 1：更新 `docs/simulator-gateway-verification.md` 标记完成项**
 
 ### Task 3.3：整理提交历史
 
-- [ ] **Step 1：确认所有提交 message 符合规范**
+- [x] **Step 1：确认所有提交 message 符合规范**
 
-- [ ] **Step 2：更新 tasks.md 标记所有任务完成**
+- [x] **Step 2：更新 tasks.md 标记所有任务完成**
 
 ---
 
