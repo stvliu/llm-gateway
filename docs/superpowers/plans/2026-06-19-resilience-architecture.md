@@ -113,13 +113,13 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 **Interfaces:**
 - Produces: `Application` 实体，字段 `Long id; String code; String name; String description; ApplicationState state; Long resilienceProfileId; Long quotaBudgetId; Long dashboardId; Long createdBy; Instant createdAt; Long updatedBy; Instant updatedAt;`，构造器 + Getter/Setter（领域模型纯洁，无业务逻辑）。
 
-- [ ] **Step 1: 写实体与枚举**
+- [x] **Step 1: 写实体与枚举**
 
 创建 `domain/application/entity/ApplicationState.java` 枚举：`ACTIVE, INACTIVE`，带 `isRoutable()` 返回 `this == ACTIVE`。
 
 创建 `Application.java`：Lombok `@Getter @Setter`，无参构造器，全参构造器（不含 id/审计字段）。中文 Javadoc 说明「应用聚合根：权限+行为双聚合，承载 Key 归属、渠道可见性、容灾画像，预留配额/看板字段」。
 
-- [ ] **Step 2: 写 Flyway 迁移**
+- [x] **Step 2: 写 Flyway 迁移**
 
 `V37__add_application_tables.sql`：
 
@@ -141,16 +141,16 @@ CREATE TABLE applications (
 CREATE INDEX idx_applications_code ON applications(code);
 ```
 
-- [ ] **Step 3: 写测试**
+- [x] **Step 3: 写测试**
 
 `ApplicationTest.java`：验证 `ApplicationState.ACTIVE.isRoutable()` 为 true，`INACTIVE` 为 false；验证实体字段可读写。
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ApplicationTest`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/application/ \
