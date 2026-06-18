@@ -17,3 +17,17 @@ CREATE TABLE applications (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_applications_code ON applications(code);
+
+-- 应用-渠道授权关联表：决定应用可见的渠道集合
+-- (application_id, channel_id) 组合唯一，防止重复授权
+CREATE TABLE application_channels (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    application_id BIGINT NOT NULL,
+    channel_id BIGINT NOT NULL,
+    created_by BIGINT,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_by BIGINT,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_app_channel (application_id, channel_id)
+);
+CREATE INDEX idx_app_channels_app ON application_channels(application_id);
