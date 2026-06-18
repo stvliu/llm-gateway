@@ -1,0 +1,131 @@
+package com.codingas.gateway.infrastructure.application.gateway;
+
+import com.codingas.gateway.domain.application.entity.ApplicationChannel;
+import com.codingas.gateway.infrastructure.application.gateway.database.dataobject.ApplicationChannelDo;
+import com.codingas.gateway.infrastructure.application.gateway.database.repository.ApplicationChannelRepository;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+import java.util.Set;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+/**
+ * ApplicationChannelGatewayImpl 单元测试
+ *
+ * <p>验证应用-渠道授权关联网关行为：渠道 ID 集合查询、关联列表查询、
+ * 批量保存与存在性判定。</p>
+ */
+@ExtendWith(MockitoExtension.class)
+@DisplayName("ApplicationChannelGatewayImpl 测试")
+class ApplicationChannelGatewayImplTest {
+
+    @Mock
+    private ApplicationChannelRepository repository;
+
+    @InjectMocks
+    private ApplicationChannelGatewayImpl gateway;
+
+    @Nested
+    @DisplayName("findChannelIdsByApplicationId 方法测试")
+    class FindChannelIdsTests {
+
+        @Test
+        @DisplayName("返回去重后的渠道 ID 集合")
+        void findChannelIds_returnsDeduplicatedSet() {
+            when(repository.findChannelIdsByApplicationId(1L)).thenReturn(List.of(10L, 20L, 10L));
+
+            Set<Long> result = gateway.findChannelIdsByApplicationId(1L);
+
+            assertThat(result).containsExactlyInAnyOrder(10L, 20L);
+            assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("无关联时返回空集合")
+        void findChannelIds_empty_returnsEmptySet() {
+            when(repository.findChannelIdsByApplicationId(2L)).thenReturn(List.of());
+
+            Set<Long> result = gateway.findChannelIdsByApplicationId(2L);
+
+            assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("findByApplicationId 方法测试")
+    class FindByApplicationIdTests {
+
+        @Test
+        @DisplayName("返回应用下的关联列表")
+        void findByApplicationId_returnsList() {
+            ApplicationChannelDo d1 = new ApplicationChannelDo();
+            d1.setId(1L);
+            d1.setApplicationId(1L);
+            d1.setChannelId(10L);
+            ApplicationChannelDo d2 = new ApplicationChannelDo();
+            d2.setId(2L);
+            d2.setApplicationId(1L);
+            d2.setChannelId(20L);
+            when(repository.findByApplicationId(1L)).thenReturn(List.of(d1, d2));
+
+            List<ApplicationChannel> result = gateway.findByApplicationId(1L);
+
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(ApplicationChannel::getChannelId)
+                    .containsExactly(10L, 20L);
+        }
+    }
+
+    @Nested
+    @DisplayName("saveAll 方法测试")
+    class SaveAllTests {
+
+        @Test
+        @DisplayName("批量保存关联")
+        void saveAll_persistsAll() {
+            List<ApplicationChannel> rels = List.of(
+                    new ApplicationChannel(1L, 10L),
+                    new ApplicationChannel(1L, 20L));
+            when(repository.saveAll(anyList())).thenReturn(List.of());
+
+            gateway.saveAll(rels);
+
+            verify(repository).saveAll(anyList());
+        }
+    }
+
+    @Nested
+    @DisplayName("existsByApplicationIdAndChannelId 方法测试")
+    class ExistsTests {
+
+        @Test
+        @DisplayName("存在关联返回 true")
+        void exists_returnsTrue() {
+            when(repository.existsByApplicationIdAndChannelId(1L, 10L)).thenReturn(true);
+
+            boolean result = gateway.existsByApplicationIdAndChannelId(1L, 10L);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        @DisplayName("不存在关联返回 false")
+        void exists_returnsFalse() {
+            when(repository.existsByApplicationIdAndChannelId(1L, 99L)).thenReturn(false);
+
+            boolean result = gateway.existsByApplicationIdAndChannelId(1L, 99L);
+
+            assertThat(result).isFalse();
+        }
+    }
+}

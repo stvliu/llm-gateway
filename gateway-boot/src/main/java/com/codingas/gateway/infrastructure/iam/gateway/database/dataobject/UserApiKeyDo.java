@@ -18,6 +18,10 @@ public class UserApiKeyDo {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    /** 权限锚点：归属的应用 ID（外键关联 applications.id） */
+    @Column(name = "application_id")
+    private Long applicationId;
+
     @Column(name = "key_prefix", nullable = false, length = 16, unique = true)
     private String keyPrefix;
 
@@ -48,6 +52,8 @@ public class UserApiKeyDo {
     public void setId(Long id) { this.id = id; }
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
+    public Long getApplicationId() { return applicationId; }
+    public void setApplicationId(Long applicationId) { this.applicationId = applicationId; }
     public String getKeyPrefix() { return keyPrefix; }
     public void setKeyPrefix(String keyPrefix) { this.keyPrefix = keyPrefix; }
     public String getKeyHash() { return keyHash; }

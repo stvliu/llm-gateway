@@ -96,6 +96,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         UserApiKey entity = new UserApiKey();
         entity.setId(dataObject.getId());
         entity.setUserId(dataObject.getUserId());
+        entity.setApplicationId(dataObject.getApplicationId());
         entity.setKeyHash(dataObject.getKeyHash());
         entity.setKeyPrefix(dataObject.getKeyPrefix());
         entity.setName(dataObject.getName());
@@ -120,6 +121,7 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
         UserApiKeyDo dataObject = new UserApiKeyDo();
         dataObject.setId(entity.getId());
         dataObject.setUserId(entity.getUserId());
+        dataObject.setApplicationId(entity.getApplicationId());
         dataObject.setKeyPrefix(entity.getKeyPrefix());
         dataObject.setName(entity.getName());
         dataObject.setDeleted(entity.isDeleted());

@@ -31,3 +31,7 @@ CREATE TABLE application_channels (
     UNIQUE KEY uk_app_channel (application_id, channel_id)
 );
 CREATE INDEX idx_app_channels_app ON application_channels(application_id);
+
+-- Task 1.3: UserApiKey 权限锚点由团队改为应用，挂 application_id
+ALTER TABLE user_api_keys ADD COLUMN application_id BIGINT;
+CREATE INDEX idx_user_api_keys_app ON user_api_keys(application_id);
