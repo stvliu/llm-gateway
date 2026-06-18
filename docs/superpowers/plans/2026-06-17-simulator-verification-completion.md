@@ -2,6 +2,7 @@
 change: simulator-verification-completion
 design-doc: docs/superpowers/specs/2026-06-17-simulator-verification-completion-design.md
 base-ref: 6da5278e657baba83a36965aad2dc04015cbf845
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 # Simulator 验证补全 — 实施计划
@@ -14,6 +15,7 @@ base-ref: 6da5278e657baba83a36965aad2dc04015cbf845
 
 **Tech Stack:** Java 21, JUnit 5, AssertJ, MockWebServer (OkHttp), Spring Boot Test (MockBean/SpringBootTest)
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ## Phase 1：Simulator 管理 API E2E 测试
@@ -139,6 +141,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEnd
 git commit -m "test(simulator): 新增行为序列 E2E 测试 — 按序消费和循环重置"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 1.2：新增延迟配置 E2E 测试
@@ -221,6 +224,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEnd
 git commit -m "test(simulator): 新增延迟配置 E2E 测试 — 设置/删除延迟"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 1.3：新增流控制 E2E 测试
@@ -304,6 +308,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEnd
 git commit -m "test(simulator): 新增流控制 E2E 测试 — 中断和重置"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 1.4：新增 API Key 覆盖 E2E 测试
@@ -388,6 +393,7 @@ git add gateway-simulator/src/test/java/com/codingas/simulator/SimulatorEndToEnd
 git commit -m "test(simulator): 新增 API Key 覆盖 E2E 测试 — 匹配和不匹配场景"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 1.5：运行 Simulator 全部测试确认通过
@@ -411,6 +417,7 @@ git add gateway-simulator/ openspec/changes/simulator-verification-completion/ta
 git commit -m "test(simulator): Phase 1 完成 — 全部 Simulator 管理 API E2E 测试通过"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ## Phase 2：Gateway 全链路集成测试
@@ -586,6 +593,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 创建 FullContextIntegrationTestBase — Mock 认证+路由的全链路测试基类"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.2：实现 Key 故障转移测试
@@ -674,6 +682,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 实现 Key 故障转移测试 — 自动切换和全部失败"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.3：实现模型降级测试
@@ -730,6 +739,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 实现模型降级测试 — 主模型失败和降级链耗尽"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.4：实现跨协议转换测试
@@ -790,6 +800,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 实现跨协议转换测试 — OpenAI↔Anthropic 双向"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.5：实现熔断器+行为序列测试
@@ -851,6 +862,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 实现熔断器+行为序列测试 — CLOSED→OPEN 和间歇故障"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.6：实现超时和流中断测试
@@ -907,6 +919,7 @@ git add gateway-boot/src/test/java/com/codingas/gateway/integration/FullContextI
 git commit -m "test(gateway): 实现超时和流中断测试"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ### Task 2.7：运行全部测试确认无回归
@@ -935,6 +948,7 @@ git add gateway-boot/ gateway-simulator/ openspec/changes/simulator-verification
 git commit -m "test(gateway): Phase 2 完成 — 全链路集成测试全部通过"
 ```
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ## Phase 3：验证与收尾
@@ -958,6 +972,7 @@ Expected: BUILD SUCCESS
 
 - [x] **Step 2：更新 tasks.md 标记所有任务完成**
 
+archived-with: 2026-06-18-simulator-verification-completion
 ---
 
 ## 自检清单

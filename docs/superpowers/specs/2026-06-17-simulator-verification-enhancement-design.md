@@ -2,6 +2,8 @@
 comet_change: simulator-verification-enhancement
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-06-17-simulator-verification-enhancement
+status: final
 ---
 
 # Simulator 验证增强 — 技术设计文档

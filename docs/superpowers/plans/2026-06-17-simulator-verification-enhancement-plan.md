@@ -2,6 +2,7 @@
 change: simulator-verification-enhancement
 design-doc: docs/superpowers/specs/2026-06-17-simulator-verification-enhancement-design.md
 base-ref: ae59252454e90c73efc831c116db43d16b911b03
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 # Simulator 验证增强 — 实施计划
@@ -14,6 +15,7 @@ base-ref: ae59252454e90c73efc831c116db43d16b911b03
 
 **Tech Stack:** Java 21, Spring Boot 3.5.x, JUnit 5, AssertJ, Awaitility
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ## 文件结构
@@ -37,6 +39,7 @@ base-ref: ae59252454e90c73efc831c116db43d16b911b03
 - `gateway-simulator/src/test/java/.../SimulatorEndToEndTest.java` — 新增模式 E2E 测试
 - `gateway-boot/pom.xml` — 添加 gateway-simulator test dependency
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 1: 扩展 SimulatorMode 枚举 + 新增响应模板
@@ -211,6 +214,7 @@ git commit -m "feat(simulator): 扩展 SimulatorMode 枚举至 9 种并新增错
 - parseMode 支持所有新枚举值"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 2: 实现 BehaviorSequence 机制
@@ -339,6 +343,7 @@ git commit -m "feat(simulator): 实现 BehaviorSequence 行为序列机制
 - SimulatorModeService 集成行为序列的 set/get/clear"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 3: 实现延迟配置 + 流控制 + API Key 覆盖配置类
@@ -513,6 +518,7 @@ git commit -m "feat(simulator): 实现延迟配置、流控制和 API Key 覆盖
 - ApiKeyOverrideConfig: 前缀匹配的 API Key 覆盖规则"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 4: 实现 SimulatorController 新模式分发 + 延迟 + 流控制
@@ -673,6 +679,7 @@ git commit -m "feat(simulator): 重构控制器支持新模式分发和流控制
 - 流式响应支持 StreamConfig（中断/非法数据/重复DONE等）"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 5: 实现管理 API 端点
@@ -833,6 +840,7 @@ git commit -m "feat(simulator): 实现管理 API 端点（behavior/delay/stream/
 - parseMode 支持所有新枚举值"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 6: 编写 Simulator 单元测试
@@ -899,6 +907,7 @@ git commit -m "test(simulator): 新增 Simulator 增强的单元测试和 E2E �
 - 覆盖 Admin API 新端点"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 7: Gateway 集成测试 — 依赖配置 + 基础框架
@@ -993,6 +1002,7 @@ git commit -m "feat(test): 添加 gateway-simulator 依赖和集成测试基类
 - 配置 Gateway 使用内存数据库，禁用 Flyway"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 8: 实现 Gateway 集成测试 — 正常路径 + 异常场景
@@ -1048,6 +1058,7 @@ git commit -m "test(gateway): 实现集成测试 — 正常路径和异常场景
 - testRateLimit_retried/testAuthError_notRetried/testUpstreamError_retried 异常场景"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 9: 实现 Gateway 集成测试 — 熔断器 + Key 故障转移 + 降级
@@ -1092,6 +1103,7 @@ git commit -m "test(gateway): 实现集成测试 — 熔断器/Key故障转移/�
 - testDegradation 模型降级"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 10: 实现 Gateway 集成测试 — 跨协议 + 超时 + 流中断
@@ -1152,6 +1164,7 @@ git commit -m "test(gateway): 实现集成测试 — 跨协议/超时/流中断
 - testStreamInterrupted 流中断场景"
 ```
 
+archived-with: 2026-06-17-simulator-verification-enhancement
 ---
 
 ### Task 11: 验证全部测试通过
