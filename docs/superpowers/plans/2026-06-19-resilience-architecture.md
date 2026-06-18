@@ -169,11 +169,11 @@ git commit -m "feat(application): 新增 Application 聚合根实体与 applicat
 **Interfaces:**
 - Produces: `ApplicationChannel` 字段 `Long id; Long applicationId; Long channelId; Instant createdAt; Long createdBy;`。
 
-- [ ] **Step 1: 写实体**
+- [x] **Step 1: 写实体**
 
 `ApplicationChannel.java`：`@Getter @Setter`，中文 Javadoc「应用-渠道授权关联：决定应用可见的渠道集合」。
 
-- [ ] **Step 2: 追加迁移**
+- [x] **Step 2: 追加迁移**
 
 V37 末尾追加：
 
@@ -191,11 +191,11 @@ CREATE TABLE application_channels (
 CREATE INDEX idx_app_channels_app ON application_channels(application_id);
 ```
 
-- [ ] **Step 3: 写测试并跑绿**
+- [x] **Step 3: 写测试并跑绿**
 
 `ApplicationChannelTest.java` 验证字段读写。Run: `./mvnw -pl gateway-boot -am test -Dtest=ApplicationChannelTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(application): 新增 ApplicationChannel 实体与 application_channels 表"
