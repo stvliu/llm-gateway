@@ -88,7 +88,10 @@
       "mcp__codegraph__codegraph_search",
       "Bash(pip list *)",
       "Bash(cargo install *)",
-      "Bash(comet status *)"
+      "Bash(comet status *)",
+      "Bash(awk -F'[, ]+' '{r+=$4; f+=$6; e+=$8} END {print \"Total run:\"r\" failures:\"f\" errors:\"e}')",
+      "Bash(xargs -I{} basename {} .txt)",
+      "Bash(git branch *)"
     ]
   },
   "outputStyle": "default"

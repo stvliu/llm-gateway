@@ -66,7 +66,7 @@ class ChannelControllerListIT {
 
     @Test
     @DisplayName("GET /api/v1/channels 响应应包含三个健康字段")
-    void GET_channels_响应包含三个健康字段() throws Exception {
+    void getChannels_responseContainsHealthFields() throws Exception {
         when(channelService.getAll()).thenReturn(List.of(stubResponseWithHealth()));
 
         mockMvc.perform(get("/api/v1/channels"))
@@ -78,7 +78,7 @@ class ChannelControllerListIT {
 
     @Test
     @DisplayName("GET /api/v1/channels/{id} 响应应包含三个健康字段")
-    void GET_channel_详情包含三个健康字段() throws Exception {
+    void getChannelById_responseContainsHealthFields() throws Exception {
         when(channelService.getById(1L)).thenReturn(stubResponseWithHealth());
 
         mockMvc.perform(get("/api/v1/channels/{id}", 1L))
@@ -90,7 +90,7 @@ class ChannelControllerListIT {
 
     @Test
     @DisplayName("健康字段未赋值时序列化为 null（向后兼容，旧字段一个不删）")
-    void 健康字段为_null_时仍是合法响应() throws Exception {
+    void healthFieldsNull_stillValidResponse() throws Exception {
         ChannelResponse resp = new ChannelResponse();
         resp.setId(2L);
         resp.setName("ch-2");
