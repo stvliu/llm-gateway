@@ -24,7 +24,8 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 - 不重写上游客户端与重试/熔断算法本身（复用 `ResilientUpstreamClient`/`CircuitBreaker`）。
 - 所有可变参数走 `@ConfigurationProperties`，禁止魔法数字。
 - 构建命令：`./mvnw -pl gateway-boot -am test`（测试）；`./mvnw -pl gateway-boot -am clean install -DskipTests`（仅构建）。
-- Flyway 版本号续接现有最大 V36，本计划从 V37 起。
+- Flyway 版本号续接现有最大 V50，本计划从 V51 起（Task 1.1 已用 V51）。后续：1.2 追加表入 V51 或新建、1.6 迁移 V52、1.7 删表 V53、4.1 画像 V54、4.2 Cluster V55、4.4 seed V56。实现时以仓库实际最大版本号 +1 为准。
+- **实体风格铁律**：所有领域实体继承 `common/entity/BaseEntity`（已封装 id + createdBy/createdAt/updatedBy/updatedAt 审计字段），使用 `@Data + @EqualsAndHashCode(callSuper=true) + @DomainEntity`，参照 `domain/supply/entity/Channel.java`。实体类不得自包含重复声明审计字段。brief 中若列出审计字段仅作字段语义说明，实现时审计字段来自 BaseEntity 继承，业务字段单独声明。
 - 涉及业务逻辑的任务遵循 TDD：先写失败测试，再实现。
 - D8 决策：**不建 `ApplicationModel`/`application_models` 表**。模型可见性由渠道上挂哪些 ModelInstance 隐式决定。proposal 第105行的 `application_models` 项已被 design D8 覆盖作废，本计划不实现。
 

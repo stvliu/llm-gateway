@@ -1,9 +1,10 @@
 package com.codingas.gateway.domain.application.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-
-import java.time.Instant;
+import com.codingas.gateway.common.entity.BaseEntity;
+import com.codingas.gateway.common.entity.DomainEntity;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 /**
  * 应用聚合根实体
@@ -23,15 +24,14 @@ import java.time.Instant;
  *   <li>resilienceProfileId — 容灾画像 ID（预留，后续任务填充）</li>
  *   <li>quotaBudgetId — 配额预算 ID（预留，后续任务填充）</li>
  *   <li>dashboardId — 看板 ID（预留，后续任务填充）</li>
- *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段</li>
+ *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
  * </ul>
  */
-@Getter
-@Setter
-public class Application {
-
-    /** 主键 */
-    private Long id;
+@Data
+@NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+@DomainEntity
+public class Application extends BaseEntity {
 
     /** 应用编码，全局唯一 */
     private String code;
@@ -54,31 +54,11 @@ public class Application {
     /** 看板 ID（预留） */
     private Long dashboardId;
 
-    /** 创建人 ID */
-    private Long createdBy;
-
-    /** 创建时间 */
-    private Instant createdAt;
-
-    /** 更新人 ID */
-    private Long updatedBy;
-
-    /** 更新时间 */
-    private Instant updatedAt;
-
     /**
-     * 无参构造器
-     *
-     * <p>用于框架反序列化与单元测试构造，所有字段初始为 null。</p>
-     */
-    public Application() {
-    }
-
-    /**
-     * 全参构造器（不含 id 与审计字段）
+     * 全参构造器（仅业务字段）
      *
      * <p>仅初始化业务字段，主键 id 与审计字段（createdBy/createdAt/updatedBy/updatedAt）
-     * 由基础设施层在持久化时填充。</p>
+     * 继承自 {@link BaseEntity}，由基础设施层在持久化时填充。</p>
      *
      * @param code                应用编码
      * @param name                应用名称
