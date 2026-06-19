@@ -297,6 +297,71 @@ class TeamToApplicationMigrationTest {
                 .isEqualTo(Set.of(100L, 200L, 300L, 400L));
     }
 
+    /**
+     * 回归测试：多个多 Team 用户的 team 共享同一 channel_id 时，V52 第 5a 步不得因唯一约束违例崩溃。
+     *
+     * <p>修复前缺陷：V52 第 5a 步单条 INSERT 的 SELECT 未对 (migration-default, channel_id) 去重。
+     * 当两个多 Team 用户的 team 共享同一 channel_id（或单个多 Team 用户的两个 team 共享同一
+     * channel_id）时，JOIN 产出重复行 (migration-default, &lt;channel&gt;)，NOT EXISTS 仅校验插入前
+     * 已存在行、不去重语句内重复行，触发 application_channels(application_id, channel_id) 唯一
+     * 约束违例 → 迁移抛异常中断。修复：5a 步 SELECT 改用 SELECT DISTINCT 去重。</p>
+     *
+     * <p>本测试在默认 seed 之外植入两个多 Team 用户 X / Y，其团队渠道集<b>相交</b>（共享 channel 500）：</p>
+     * <ul>
+     *   <li>X: teams TX1{500} + TX2{600} → 多 Team → Key 归 migration-default</li>
+     *   <li>Y: teams TY1{500} + TY2{700} → 多 Team → Key 归 migration-default（与 X 共享 500）</li>
+     * </ul>
+     * <p>断言：迁移不崩溃；migration-default 渠道集 = X{500,600} ∪ Y{500,700} = {500,600,700}
+     *（500 仅出现一次）；X、Y 的 Key 均归 migration-default。修复前本测试因唯一约束违例崩溃（RED），
+     * 加 SELECT DISTINCT 后通过（GREEN）。</p>
+     */
+    @Test
+    @DisplayName("多 Team 用户共享 channel_id 时迁移不崩溃（V52 第5a步 DISTINCT 去重回归）")
+    void migrationDefault_sharedChannelAcrossMultiTeamUsers_doesNotCrash() {
+        // 移除默认 seed 中 u2 的多 Team 归属，使 X/Y 成为仅有的两个多 Team 用户，
+        // 让 migration-default 渠道集恰好等于 X{500,600} ∪ Y{500,700} = {500,600,700}。
+        jdbc.update("DELETE FROM user_teams WHERE user_id = 2");
+
+        // 植入两个多 Team 用户 X / Y，其团队渠道集相交（共享 channel 500）
+        jdbc.update("INSERT INTO users (id, username, state) VALUES (4, 'multi-team-user-x', 'ACTIVE')");
+        jdbc.update("INSERT INTO users (id, username, state) VALUES (5, 'multi-team-user-y', 'ACTIVE')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (40, '团队TX1', '描述TX1', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (50, '团队TX2', '描述TX2', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (60, '团队TY1', '描述TY1', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (70, '团队TY2', '描述TY2', 'active')");
+        // user_teams：X 归属 TX1/TX2，Y 归属 TY1/TY2（均为多 Team）
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (4, 40, 'owner')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (4, 50, 'member')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (5, 60, 'owner')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (5, 70, 'member')");
+        // team_channels：X 团队渠道 {500,600}，Y 团队渠道 {500,700}（共享 channel 500）
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (40, 500)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (50, 600)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (60, 500)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (70, 700)");
+        // user_api_keys：X、Y 各一把 Key（application_id 初始为 NULL）
+        jdbc.update("INSERT INTO user_api_keys (id, user_id, key_hash, key_prefix, name, deleted) VALUES (1004, 4, 'hash-k4', 'sk-k4-', '多团队KeyX', FALSE)");
+        jdbc.update("INSERT INTO user_api_keys (id, user_id, key_hash, key_prefix, name, deleted) VALUES (1005, 5, 'hash-k5', 'sk-k5-', '多团队KeyY', FALSE)");
+
+        // 修复前：第 5a 步 INSERT 对 (migration-default, 500) 产出两行 → 唯一约束违例 → 抛异常
+        // 修复后：SELECT DISTINCT 去重，迁移正常完成
+        runV52();
+
+        // X 与 Y 的 Key 均归 migration-default（多 Team 用户统一兜底）
+        Long kXApp = jdbc.queryForObject(
+                "SELECT application_id FROM user_api_keys WHERE id = 1004", Long.class);
+        Long kYApp = jdbc.queryForObject(
+                "SELECT application_id FROM user_api_keys WHERE id = 1005", Long.class);
+        assertThat(kXApp).as("X 的 Key 应归 migration-default").isEqualTo(appIdByCode("migration-default"));
+        assertThat(kYApp).as("Y 的 Key 应归 migration-default").isEqualTo(appIdByCode("migration-default"));
+
+        // migration-default 渠道集 = X{500,600} ∪ Y{500,700} = {500,600,700}
+        //（500 虽被 X/Y 两个用户共享，但 DISTINCT 去重后仅出现一次，不违反唯一约束）
+        assertThat(channelsOfApp("migration-default"))
+                .as("migration-default 渠道集为 X/Y 共享渠道并集（500 去重仅一次）")
+                .isEqualTo(Set.of(500L, 600L, 700L));
+    }
+
     @Test
     @DisplayName("无 Team 用户 Key 归 migration-default")
     void noTeamUserKeyToMigrationDefault() {

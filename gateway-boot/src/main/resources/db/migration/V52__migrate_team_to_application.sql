@@ -75,7 +75,7 @@ WHERE k.application_id IS NULL
 --     披露测试：TeamToApplicationMigrationTest#
 --       migrationDefault_accumulatesMultiTeamUsersChannels_isKnownWidening
 INSERT INTO application_channels (application_id, channel_id)
-SELECT a.id, tc.channel_id
+SELECT DISTINCT a.id, tc.channel_id
 FROM applications a
 JOIN team_channels tc ON tc.team_id IN (
     SELECT ut.team_id
