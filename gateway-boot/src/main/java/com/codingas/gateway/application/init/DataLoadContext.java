@@ -1,8 +1,8 @@
 package com.codingas.gateway.application.init;
 
+import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.team.entity.Team;
 import lombok.Getter;
 
 import java.util.HashMap;
@@ -18,7 +18,7 @@ import java.util.Optional;
  * <p>内置三种索引类型用于传递实体映射：</p>
  * <ul>
  *   <li>{@link ChannelIndex} — 渠道 key → Channel</li>
- *   <li>{@link TeamIndex} — 团队名 → Team</li>
+ *   <li>{@link ApplicationIndex} — 应用编码 → Application</li>
  *   <li>{@link UserIndex} — 用户名 → User</li>
  * </ul>
  */
@@ -63,11 +63,11 @@ public class DataLoadContext {
         public ChannelIndex(Map<String, Channel> map) { this.map = Map.copyOf(map); }
     }
 
-    /** 团队名 → Team 映射 */
+    /** 应用编码 → Application 映射 */
     @Getter
-    public static final class TeamIndex {
-        private final Map<String, Team> map;
-        public TeamIndex(Map<String, Team> map) { this.map = Map.copyOf(map); }
+    public static final class ApplicationIndex {
+        private final Map<String, Application> map;
+        public ApplicationIndex(Map<String, Application> map) { this.map = Map.copyOf(map); }
     }
 
     /** 用户名 → User 映射 */

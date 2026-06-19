@@ -1,12 +1,12 @@
 [
   {
     "name": "default",
-    "description": "默认团队",
+    "description": "默认应用",
     "channels": ["openai-default", "anthropic-default"]
   },
   {
     "name": "dev",
-    "description": "开发团队",
+    "description": "开发应用",
     "channels": [
       "openai-default", "openai-batch",
       "anthropic-default", "anthropic-batch",
@@ -33,7 +33,7 @@
   },
   {
     "name": "product",
-    "description": "产品团队",
+    "description": "产品应用",
     "channels": [
       "openai-batch",
       "anthropic-batch",
@@ -43,7 +43,7 @@
   },
   {
     "name": "openclaw",
-    "description": "OpenClaw 团队",
+    "description": "OpenClaw 应用",
     "channels": [
       "deepseek-default",
       "zhipu-default", "zhipu-resource-package",
@@ -52,17 +52,17 @@
   },
   {
     "name": "volc-ai",
-    "description": "AI Agent 团队 — 使用 TokenPlan 价格计划",
+    "description": "AI Agent 应用 — 使用 TokenPlan 价格计划",
     "channels": ["volcengine-agent-plan"]
   },
   {
     "name": "volc-coding",
-    "description": "编码辅助团队 — 使用 CodingPlan 价格计划",
+    "description": "编码辅助应用 — 使用 CodingPlan 价格计划",
     "channels": ["volcengine-coding-plan"]
   },
   {
     "name": "volc-bi",
-    "description": "BI 报表团队 — 使用默认价格计划",
+    "description": "BI 报表应用 — 使用默认价格计划",
     "channels": ["volcengine-default"]
   }
 ]

@@ -1,13 +1,11 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
-import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
+import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
-import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
-import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -19,22 +17,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
  * ModelDiscoveryService 单元测试
+ *
+ * <p>D8：废弃团队模型可见性机制后，模型可见性由应用授权的渠道挂哪些 ModelInstance 隐式决定。
+ * 本测试验证新契约：以应用 ID（权限锚点）查询应用授权渠道，再发现其上的活跃模型。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ModelDiscoveryService 单元测试")
 class ModelDiscoveryServiceTest {
 
     @Mock
-    private UserTeamGateway userTeamGateway;
-    @Mock
-    private TeamChannelGateway teamChannelGateway;
+    private ApplicationChannelGateway applicationChannelGateway;
     @Mock
     private ModelInstanceGateway modelInstanceGateway;
     @Mock
@@ -42,12 +41,11 @@ class ModelDiscoveryServiceTest {
 
     private ModelDiscoveryService service;
 
-    private static final Long USER_ID = 1L;
-    private static final Long TEAM_ID = 100L;
+    private static final Long APPLICATION_ID = 100L;
 
     @BeforeEach
     void setUp() {
-        service = new ModelDiscoveryService(userTeamGateway, teamChannelGateway, modelInstanceGateway, modelGateway);
+        service = new ModelDiscoveryService(applicationChannelGateway, modelInstanceGateway, modelGateway);
     }
 
     @Nested
@@ -55,11 +53,11 @@ class ModelDiscoveryServiceTest {
     class GetVisibleModelsTests {
 
         @Test
-        @DisplayName("返回用户团队渠道关联的所有活跃模型")
-        void shouldReturnModelsVisibleToUser() {
+        @DisplayName("返回应用授权渠道关联的所有活跃模型")
+        void shouldReturnModelsVisibleToApplication() {
             // Arrange
-            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
-            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(10L, 20L));
+            when(applicationChannelGateway.findChannelIdsByApplicationId(APPLICATION_ID))
+                    .thenReturn(Set.of(10L, 20L));
 
             ModelInstance mi1 = new ModelInstance();
             mi1.setModelId(100L);
@@ -84,42 +82,40 @@ class ModelDiscoveryServiceTest {
             when(modelGateway.findById(200L)).thenReturn(Optional.of(model2));
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
+            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
 
-            // Assert
+            // Assert（渠道来自 Set，顺序不保证，按任意序断言）
             assertThat(response.getObject()).isEqualTo("list");
             assertThat(response.getData()).hasSize(2);
-            assertThat(response.getData().get(0).getId()).isEqualTo("gpt-4");
-            assertThat(response.getData().get(1).getId()).isEqualTo("gpt-3.5-turbo");
+            assertThat(response.getData()).extracting(ModelDiscoveryResponse.ModelItem::getId)
+                    .containsExactlyInAnyOrder("gpt-4", "gpt-3.5-turbo");
         }
 
         @Test
-        @DisplayName("用户未关联团队时返回空列表")
-        void shouldReturnEmptyListWhenNoTeam() {
-            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(null);
-
-            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
+        @DisplayName("应用 ID 为 null（无权限锚点）时返回空列表")
+        void shouldReturnEmptyListWhenApplicationIdIsNull() {
+            ModelDiscoveryResponse response = service.getVisibleModels(null);
 
             assertThat(response.getData()).isEmpty();
         }
 
         @Test
-        @DisplayName("团队未关联渠道时返回空列表")
+        @DisplayName("应用未授权任何渠道时返回空列表")
         void shouldReturnEmptyListWhenNoChannels() {
-            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
-            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of());
+            when(applicationChannelGateway.findChannelIdsByApplicationId(APPLICATION_ID))
+                    .thenReturn(Set.of());
 
-            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
+            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
 
             assertThat(response.getData()).isEmpty();
         }
 
         @Test
-        @DisplayName("仅返回状态为 ACTIVE 的模型，过滤掉已废弃的模型")
-        void shouldFilterInactiveModels() {
+        @DisplayName("仅返回状态为可用（isAvailable）的模型，过滤掉已废弃的模型")
+        void shouldFilterUnavailableModels() {
             // Arrange
-            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
-            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(30L));
+            when(applicationChannelGateway.findChannelIdsByApplicationId(APPLICATION_ID))
+                    .thenReturn(Set.of(30L));
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(300L);
@@ -134,7 +130,7 @@ class ModelDiscoveryServiceTest {
             when(modelGateway.findById(300L)).thenReturn(Optional.of(inactiveModel));
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
+            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
 
             // Assert
             assertThat(response.getData()).isEmpty();
@@ -144,8 +140,8 @@ class ModelDiscoveryServiceTest {
         @DisplayName("模型不存在时（findById 返回空）直接跳过")
         void shouldSkipWhenModelNotFound() {
             // Arrange
-            when(userTeamGateway.findTeamIdByUserId(USER_ID)).thenReturn(TEAM_ID);
-            when(teamChannelGateway.findChannelIdsByTeamId(TEAM_ID)).thenReturn(List.of(40L));
+            when(applicationChannelGateway.findChannelIdsByApplicationId(APPLICATION_ID))
+                    .thenReturn(Set.of(40L));
 
             ModelInstance mi = new ModelInstance();
             mi.setModelId(999L);
@@ -155,7 +151,7 @@ class ModelDiscoveryServiceTest {
             when(modelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(USER_ID);
+            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
 
             // Assert
             assertThat(response.getData()).isEmpty();

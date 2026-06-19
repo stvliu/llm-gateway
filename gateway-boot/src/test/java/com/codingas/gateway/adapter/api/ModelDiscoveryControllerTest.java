@@ -38,12 +38,14 @@ class ModelDiscoveryControllerTest {
     @InjectMocks
     private ModelDiscoveryController controller;
 
+    private static final Long APPLICATION_ID = 100L;
+
     private Identity identity;
     private ModelDiscoveryResponse sampleResponse;
 
     @BeforeEach
     void setUp() {
-        identity = Identity.of(1L, "user", 100L, null);
+        identity = Identity.of(1L, "user", 1L, APPLICATION_ID);
         sampleResponse = new ModelDiscoveryResponse("list", List.of(
                 new ModelDiscoveryResponse.ModelItem("gpt-4", "model", 1700000000L, "system"),
                 new ModelDiscoveryResponse.ModelItem("gpt-3.5-turbo", "model", 1700000001L, "system")
@@ -59,7 +61,7 @@ class ModelDiscoveryControllerTest {
         void listModels_withValidIdentity_returnsModels() {
             // given
             when(request.getAttribute("identity")).thenReturn(identity);
-            when(modelDiscoveryService.getVisibleModels(1L)).thenReturn(sampleResponse);
+            when(modelDiscoveryService.getVisibleModels(APPLICATION_ID)).thenReturn(sampleResponse);
 
             // when
             ModelDiscoveryResponse result = controller.listModels(request);
@@ -83,11 +85,11 @@ class ModelDiscoveryControllerTest {
         }
 
         @Test
-        @DisplayName("userId 为 null 时抛出异常")
-        void listModels_withNullUserId_throwsException() {
+        @DisplayName("applicationId 为 null 时抛出异常")
+        void listModels_withNullApplicationId_throwsException() {
             // given
-            Identity identityWithoutUserId = new Identity(null, "user", 100L, null);
-            when(request.getAttribute("identity")).thenReturn(identityWithoutUserId);
+            Identity identityWithoutApp = new Identity(1L, "user", 1L, null);
+            when(request.getAttribute("identity")).thenReturn(identityWithoutApp);
 
             // when & then
             assertThatThrownBy(() -> controller.listModels(request))
