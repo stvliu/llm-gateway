@@ -259,11 +259,11 @@ git add -A && git commit -m "feat(application): UserApiKey 挂 application_id �
 - Consumes: `ApplicationChannelGateway.findChannelIdsByApplicationId(Long)`、`RoutingRequest.getApplicationId()`
 - Produces: `PermissionRouter.filter` 不再有 ADMIN 分支；`RoutingRequest` 增加 `applicationId` 字段与构造器。
 
-- [ ] **Step 1: RoutingRequest 增 applicationId**
+- [x] **Step 1: RoutingRequest 增 applicationId**
 
 在 `RoutingRequest.java` 增加 `private final Long applicationId;`，新增构造器 `RoutingRequest(Long modelId, Long applicationId, Long userId, String role, RoutingStrategy strategy)`，保留旧构造器（设 applicationId=null 并标 `@Deprecated`）。加 Getter。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `PermissionRouterTest.java`：
 - `normalApplication_filtersByApplicationChannel`：给定 applicationId=1，ApplicationChannel 返回 {ch1,ch2}，候选含 ch1/ch3，断言只剩 ch1。
@@ -271,19 +271,19 @@ git add -A && git commit -m "feat(application): UserApiKey 挂 application_id �
 - `admin_doesNotSkip`：role=ADMIN 且 applicationId=1，断言仍按 ApplicationChannel 过滤（无跳过）。
 - `inactiveChannel_filtered`：channel state 非 routable 被过滤。
 
-- [ ] **Step 3: 跑红**
+- [x] **Step 3: 跑红**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=PermissionRouterTest` → FAIL（仍走旧 UserTeam 逻辑）
 
-- [ ] **Step 4: 重写 PermissionRouter**
+- [x] **Step 4: 重写 PermissionRouter**
 
 注入 `ApplicationChannelGateway` 替换 `UserTeamGateway/TeamChannelGateway`。`getPermittedChannelIds` 改为：若 applicationId 为 null 返回空；否则 `applicationChannelGateway.findChannelIdsByApplicationId(applicationId)`。删除 ADMIN 分支。保留活跃 Channel 过滤。@Order(100) 不变。
 
-- [ ] **Step 5: 跑绿**
+- [x] **Step 5: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=PermissionRouterTest` → PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && git commit -m "feat(routing): PermissionRouter 改 ApplicationChannel 过滤并移除 ADMIN 跳过"
