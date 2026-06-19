@@ -61,7 +61,19 @@ WHERE k.application_id IS NULL
   );
 
 -- 5a. 多 Team 用户原 Team 渠道集并集 → 授权给 migration-default
---     仅收集多 Team 用户实际所属 team 的渠道，不引入全局渠道（D9：不放大）
+--     仅收集多 Team 用户实际所属 team 的渠道，不引入与多 Team 用户无关的全局渠道
+--
+--     【已知取舍披露：跨用户渠道放大】
+--     由于所有多 Team 用户的 Key 共用同一个 migration-default 兜底应用，本并集会跨所有
+--     多 Team 用户累加到该单一应用上。当多个多 Team 用户的团队渠道集互不相交时（例如
+--     用户 X 团队渠道 {100,200} 与用户 Y 团队渠道 {300,400}），其渠道会在 migration-default
+--     上取并集 {100,200,300,400}，导致 X 的 Key 经由 migration-default 获得 Y 的 300/400
+--     渠道访问权，Y 亦获得 X 的 100/200 —— 即跨用户授权放大。
+--     这是单兜底应用设计下的已知取舍：单一应用内"取并集必放大、取交集必丢失"，本迁移
+--     选择并集以避免丢失授权（D7 不丢失优先于 D9 不放大）。migration-default 仅为迁移期
+--     临时容器，运维须在迁移后按用户拆分应用以恢复按用户渠道隔离，避免长期放大。
+--     披露测试：TeamToApplicationMigrationTest#
+--       migrationDefault_accumulatesMultiTeamUsersChannels_isKnownWidening
 INSERT INTO application_channels (application_id, channel_id)
 SELECT a.id, tc.channel_id
 FROM applications a

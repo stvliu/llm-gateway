@@ -223,6 +223,80 @@ class TeamToApplicationMigrationTest {
         assertThat(channelsOfApp("migration-default")).isEqualTo(Set.of(200L, 300L));
     }
 
+    /**
+     * 披露 migration-default 跨多 Team 用户累积渠道的已知放大取舍。
+     *
+     * <p>本测试为<b>既有行为的披露性测试</b>（非驱动新代码），用于将单兜底应用设计下
+     * 不可避免的跨用户授权放大显式化、可审计。在默认 seed 之外额外植入两个团队渠道集
+     * 互不相交的多 Team 用户：</p>
+     * <ul>
+     *   <li>X: teams TX1{100} + TX2{200} → 多 Team → Key 归 migration-default</li>
+     *   <li>Y: teams TY1{300} + TY2{400} → 多 Team → Key 归 migration-default</li>
+     * </ul>
+     * <p>断言 migration-default 渠道集为全体多 Team 用户团队渠道的并集 {100,200,300,400}：
+     * X 的 Key 经由 migration-default 获得了 Y 的 300/400 渠道访问权，Y 亦获得 X 的 100/200，
+     * 即跨用户授权放大。这是单兜底应用设计的已知取舍（单一应用内"取并集必放大、取交集必
+     * 丢失"，D7 不丢失优先于 D9 不放大）。migration-default 仅为迁移期临时容器，运维须在
+     * 迁移后按用户拆分应用以恢复按用户渠道隔离，避免长期放大。该测试防止未来出现"为何
+     * migration-default 渠道如此之多"的困惑。</p>
+     */
+    @Test
+    @DisplayName("migration-default 跨多 Team 用户累积渠道集（披露已知跨用户放大取舍）")
+    void migrationDefault_accumulatesMultiTeamUsersChannels_isKnownWidening() {
+        // 本测试聚焦 X / Y 两个多 Team 用户的跨用户放大披露。默认 seed 中 u2(t20{200},t30{300})
+        // 亦为多 Team 用户，此处移除其 user_teams 归属使 X/Y 成为仅有的两个多 Team 用户，
+        // 让 migration-default 渠道集恰好等于 X{100,200} ∪ Y{300,400} = {100,200,300,400}。
+        //
+        // 【V52 已知缺陷披露（非本测试断言对象，记录备查）】
+        // 若保留 u2 的多 Team 归属，由于 u2 的 t20/t30 渠道(200/300) 与 X 的 TX2(200)/Y 的 TY1(300)
+        // 重合，V52 第 5a 步单条 INSERT 会对 (migration-default,200) 与 (migration-default,300)
+        // 各产生两行（来自不同 team），而 NOT EXISTS 仅校验插入前已存在行、不去重语句内重复行，
+        // 触发 application_channels(application_id, channel_id) 唯一约束违例 → 迁移抛异常中断。
+        // 该缺陷在任何"多个多 Team 用户的 team 共享同一 channel_id"（或单个多 Team 用户的两个 team
+        // 共享同一 channel_id）的生产数据上都会复现，需单独修复（建议 5a 改用 SELECT DISTINCT）。
+        // 本测试不修复 V52（超出披露范围），仅隔离场景以完成跨用户放大披露。
+        jdbc.update("DELETE FROM user_teams WHERE user_id = 2");
+
+        // 植入两个多 Team 用户 X / Y，其团队渠道集互不相交
+        jdbc.update("INSERT INTO users (id, username, state) VALUES (4, 'multi-team-user-x', 'ACTIVE')");
+        jdbc.update("INSERT INTO users (id, username, state) VALUES (5, 'multi-team-user-y', 'ACTIVE')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (40, '团队TX1', '描述TX1', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (50, '团队TX2', '描述TX2', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (60, '团队TY1', '描述TY1', 'active')");
+        jdbc.update("INSERT INTO teams (id, name, description, state) VALUES (70, '团队TY2', '描述TY2', 'active')");
+        // user_teams：X 归属 TX1/TX2，Y 归属 TY1/TY2（均为多 Team）
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (4, 40, 'owner')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (4, 50, 'member')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (5, 60, 'owner')");
+        jdbc.update("INSERT INTO user_teams (user_id, team_id, role) VALUES (5, 70, 'member')");
+        // team_channels：X 团队渠道 {100,200}，Y 团队渠道 {300,400}（互不相交）
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (40, 100)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (50, 200)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (60, 300)");
+        jdbc.update("INSERT INTO team_channels (team_id, channel_id) VALUES (70, 400)");
+        // user_api_keys：X、Y 各一把 Key（application_id 初始为 NULL）
+        jdbc.update("INSERT INTO user_api_keys (id, user_id, key_hash, key_prefix, name, deleted) VALUES (1004, 4, 'hash-k4', 'sk-k4-', '多团队KeyX', FALSE)");
+        jdbc.update("INSERT INTO user_api_keys (id, user_id, key_hash, key_prefix, name, deleted) VALUES (1005, 5, 'hash-k5', 'sk-k5-', '多团队KeyY', FALSE)");
+
+        runV52();
+
+        // X 与 Y 的 Key 均归 migration-default（多 Team 用户统一兜底）
+        Long kXApp = jdbc.queryForObject(
+                "SELECT application_id FROM user_api_keys WHERE id = 1004", Long.class);
+        Long kYApp = jdbc.queryForObject(
+                "SELECT application_id FROM user_api_keys WHERE id = 1005", Long.class);
+        assertThat(kXApp).as("X 的 Key 应归 migration-default").isEqualTo(appIdByCode("migration-default"));
+        assertThat(kYApp).as("Y 的 Key 应归 migration-default").isEqualTo(appIdByCode("migration-default"));
+
+        // migration-default 渠道集 = X 与 Y（仅有的两个多 Team 用户）团队渠道的并集
+        //   X {100,200} ∪ Y {300,400} = {100,200,300,400}
+        // 此处显式记录跨用户放大：X 的 Key 经由 migration-default 获得 Y 的 300/400 渠道访问权，
+        // Y 亦获得 X 的 100/200 —— 单兜底应用设计的已知取舍，运维须迁移后拆分应用恢复隔离。
+        assertThat(channelsOfApp("migration-default"))
+                .as("migration-default 累积 X/Y 多 Team 用户渠道并集（已知跨用户放大）")
+                .isEqualTo(Set.of(100L, 200L, 300L, 400L));
+    }
+
     @Test
     @DisplayName("无 Team 用户 Key 归 migration-default")
     void noTeamUserKeyToMigrationDefault() {
