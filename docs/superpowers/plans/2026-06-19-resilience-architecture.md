@@ -338,7 +338,7 @@ git add -A && git commit -m "feat(auth): 权限锚点从 userId 切换为 applic
 4. 归属不明 Key（多 Team 用户或无 Team）归 `migration-default` 应用，按原 Team 渠道集授权（取并集，非全局）。
 5. 可重跑幂等：用 `INSERT ... SELECT ... WHERE NOT EXISTS`。
 
-- [ ] **Step 1: 写迁移 SQL**
+- [x] **Step 1: 写迁移 SQL**
 
 `V38__migrate_team_to_application.sql`：
 
@@ -395,18 +395,18 @@ WHERE k.application_id IS NULL;
 
 > 注：实际字段名以 teams 表为准，实现前先 Read 一个 V*__*.sql 确认 teams/user_teams 字段。若 teams 无 code 列则用 id 生成 code。
 
-- [ ] **Step 2: 写测试**
+- [x] **Step 2: 写测试**
 
 `ApplicationMigrationTest.java`：用 H2 建初始 teams/user_teams/team_channels/user_api_keys 数据，跑 V37+V38，断言：
 - 每个 Team 对应一个 Application，TeamChannel 平移到 ApplicationChannel，授权集合相等。
 - 多 Team 用户的 Key 归 migration-default，其渠道集为原 Team 渠道并集。
 - 重跑 V38 不产生重复（幂等）。
 
-- [ ] **Step 3: 跑绿**
+- [x] **Step 3: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ApplicationMigrationTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(migration): Team→Application 1:1 平移迁移脚本与 migration-default 兜底"

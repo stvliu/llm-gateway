@@ -10,7 +10,7 @@
 - [x] 1.3 `UserApiKey` 增加 `application_id`（权限锚点），Application/ApplicationChannel Gateway 与基础设施实现
 - [x] 1.4 重写 `PermissionRouter`：过滤依据从 `UserTeam → TeamChannel` 改为 `Application → ApplicationChannel`；**移除 ADMIN 跳过分支**（数据面无特权，D9）
 - [x] 1.5 `RoutingRequest`/拦截器：权限锚点从 userId 改为 applicationId
-- [ ] 1.6 数据迁移脚本：1 Team → 1 默认 Application，TeamChannel → ApplicationChannel 1:1 平移；归属不明 Key 归 `migration-default`（按原 Team 渠道集授权，非全局）；可重跑、幂等、迁移前后授权集合比对校验（D7/D9）
+- [x] 1.6 数据迁移脚本：1 Team → 1 默认 Application，TeamChannel → ApplicationChannel 1:1 平移；归属不明 Key 归 `migration-default`（按原 Team 渠道集授权，非全局）；可重跑、幂等、迁移前后授权集合比对校验（D7/D9）
 - [ ] 1.7 移除 `Team`/`UserTeam`/`TeamChannel` 实体及相关 Gateway/Controller/服务；废弃团队模型可见性机制（`listAllowedModels`）（D8）
 - [ ] 1.8 P-r 单元与集成测试（ApplicationChannel 过滤、权限锚点切换、无 ADMIN 跳过、迁移正确性）
 - [ ] 1.9 前端：Teams 页改造为 Applications 页（建/编辑应用、绑 Key、渠道授权平移）；移除成员管理 Modal；移除模型可见性 Modal（D8）；路由 `teams`→`applications`、菜单、权限常量新增 `APPLICATION_READ/WRITE`、清理 team.ts/useTeams.ts
