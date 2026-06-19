@@ -4,7 +4,6 @@ import {
   AppstoreOutlined,
   DatabaseOutlined,
   KeyOutlined,
-  TeamOutlined,
   UserSwitchOutlined,
   BarChartOutlined,
   FileSearchOutlined,
@@ -77,10 +76,10 @@ export const menuGroups: MenuGroupConfig[] = [
         permission: 'key:read',
       },
       {
-        key: '/teams',
-        icon: <TeamOutlined />,
-        label: 'menu.teams',
-        permission: 'user:read',
+        key: '/applications',
+        icon: <AppstoreOutlined />,
+        label: 'menu.applications',
+        permission: 'application:read',
       },
       {
         key: '/users',

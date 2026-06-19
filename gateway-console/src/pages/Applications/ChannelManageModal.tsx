@@ -4,29 +4,30 @@ import { useEffect, useState } from 'react';
 import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { channelApi } from '@/services/api/channel';
-import { teamApi } from '@/services/api/team';
+import { applicationApi } from '@/services/api/application';
 import type { Channel } from '@/types/channel';
 
 const { Text } = Typography;
 
 interface ChannelManageModalProps {
   open: boolean;
-  teamId: number;
-  teamName: string;
+  applicationId: number;
+  applicationName: string;
   onCancel: () => void;
 }
 
 /**
- * 团队渠道管理弹窗
- * 配置团队可访问的渠道，团队成员的 API Key 将继承这些渠道权限
+ * 应用渠道授权弹窗
+ *
+ * 配置应用可访问的渠道，应用下的 API Key 将继承这些渠道权限。
  */
 export default function ChannelManageModal({
   open,
-  teamId,
-  teamName,
+  applicationId,
+  applicationName,
   onCancel,
 }: ChannelManageModalProps) {
-  const { t } = useTranslation('teams');
+  const { t } = useTranslation('applications');
   const { message } = App.useApp();
 
   // 所有渠道列表
@@ -46,25 +47,22 @@ export default function ChannelManageModal({
       try {
         // 独立加载，避免某个 API 失败导致全部数据丢失
         const allChannels = await channelApi.list();
-        console.log('[ChannelManageModal] channelApi.list() 返回:', allChannels, 'type:', typeof allChannels, 'isArray:', Array.isArray(allChannels));
         setChannels(allChannels);
 
-        const teamChannelIds = await teamApi.listChannels(teamId).catch((err) => {
-          console.log('[ChannelManageModal] teamApi.listChannels 失败:', err);
-          // 非管理员可能无权查询团队渠道，此时默认为空
+        const appChannelIds = await applicationApi.listChannels(applicationId).catch(() => {
+          // 非管理员可能无权查询应用渠道，此时默认为空
           return [] as number[];
         });
-        console.log('[ChannelManageModal] teamChannelIds:', teamChannelIds);
-        setSelectedChannelIds(new Set(teamChannelIds));
+        setSelectedChannelIds(new Set(appChannelIds));
       } catch {
-        message.error(t('channelPermission.loadError', { defaultValue: '加载渠道数据失败' }));
+        message.error(t('channelAuthorization.loadError'));
       } finally {
         setLoading(false);
       }
     };
 
     loadData();
-  }, [open, teamId, message, t]);
+  }, [open, applicationId, message, t]);
 
   /**
    * 切换渠道选中状态
@@ -98,11 +96,11 @@ export default function ChannelManageModal({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await teamApi.updateChannels(teamId, Array.from(selectedChannelIds));
-      message.success(t('channelPermission.saveSuccess', { defaultValue: '渠道配置已保存' }));
+      await applicationApi.updateChannels(applicationId, Array.from(selectedChannelIds));
+      message.success(t('channelAuthorization.saveSuccess'));
       onCancel();
     } catch {
-      message.error(t('channelPermission.saveError', { defaultValue: '保存失败' }));
+      message.error(t('channelAuthorization.saveError'));
     } finally {
       setSaving(false);
     }
@@ -110,7 +108,7 @@ export default function ChannelManageModal({
 
   const columns = [
     {
-      title: t('channelPermission.channelName', { defaultValue: '渠道名称' }),
+      title: t('channelAuthorization.channelName'),
       dataIndex: 'name',
       key: 'name',
       render: (name: string, record: Channel) => (
@@ -121,28 +119,28 @@ export default function ChannelManageModal({
       ),
     },
     {
-      title: t('channelPermission.billingMode', { defaultValue: '计费模式' }),
+      title: t('channelAuthorization.billingMode'),
       dataIndex: 'billingMode',
       key: 'billingMode',
       width: 120,
       render: (mode: string) => {
         const modeMap: Record<string, { label: string; color: string }> = {
-          pay_as_you_go: { label: t('channelPermission.payAsYouGo', { defaultValue: '按量付费' }), color: 'green' },
-          subscription: { label: t('channelPermission.subscription', { defaultValue: '订阅' }), color: 'blue' },
-          package: { label: t('channelPermission.package', { defaultValue: '套餐' }), color: 'orange' },
+          pay_as_you_go: { label: t('channelAuthorization.payAsYouGo'), color: 'green' },
+          subscription: { label: t('channelAuthorization.subscription'), color: 'blue' },
+          package: { label: t('channelAuthorization.package'), color: 'orange' },
         };
         const info = modeMap[mode] || { label: mode, color: 'default' };
         return <Tag color={info.color}>{info.label}</Tag>;
       },
     },
     {
-      title: t('channelPermission.state', { defaultValue: '状态' }),
+      title: t('channelAuthorization.state'),
       dataIndex: 'state',
       key: 'state',
       width: 80,
       render: (state: string) => (
         <Tag color={state === 'ACTIVE' ? 'green' : 'default'}>
-          {state === 'ACTIVE' ? t('channelPermission.active', { defaultValue: '启用' }) : t('channelPermission.inactive', { defaultValue: '禁用' })}
+          {state === 'ACTIVE' ? t('channelAuthorization.active') : t('channelAuthorization.inactive')}
         </Tag>
       ),
     },
@@ -158,7 +156,7 @@ export default function ChannelManageModal({
             }
             onChange={(e) => handleSelectAll(e.target.checked)}
           />
-          {t('channelPermission.accessible', { defaultValue: '可访问' })}
+          {t('channelAuthorization.accessible')}
         </Space>
       ),
       key: 'accessible',
@@ -177,27 +175,26 @@ export default function ChannelManageModal({
 
   return (
     <Modal
-      title={`${teamName} - ${t('channelPermission.title', { defaultValue: '渠道管理' })}`}
+      title={`${applicationName} - ${t('channelAuthorization.title')}`}
       open={open}
       onCancel={onCancel}
       onOk={handleSave}
       confirmLoading={saving}
       width={800}
       destroyOnHidden
-      okText={t('channelPermission.save', { defaultValue: '保存' })}
-      cancelText={t('channelPermission.cancel', { defaultValue: '取消' })}
+      okText={t('channelAuthorization.save')}
+      cancelText={t('channelAuthorization.cancel')}
     >
       <div style={{ marginBottom: 16 }}>
         <Alert
           type="info"
-          message={t('channelPermission.permissionHint', { defaultValue: '配置该团队可访问的渠道，团队成员的 API Key 将继承这些渠道权限' })}
+          message={t('channelAuthorization.permissionHint')}
           style={{ marginBottom: 12 }}
           showIcon
         />
         <div style={{ marginTop: 8 }}>
           <Text>
-            {t('channelPermission.selectedCount', {
-              defaultValue: `已选择 ${selectedCount}/${totalCount} 个渠道`,
+            {t('channelAuthorization.selectedCount', {
               selectedCount,
               totalCount,
             })}

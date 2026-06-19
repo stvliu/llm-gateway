@@ -16,6 +16,8 @@ export const P = {
   KEY_WRITE: 'key:write',
   CHANNEL_READ: 'channel:read',
   CHANNEL_WRITE: 'channel:write',
+  APPLICATION_READ: 'application:read',
+  APPLICATION_WRITE: 'application:write',
   QUICKSTART: 'quickstart:access',
   AUDIT_READ: 'audit:read',
 } as const;

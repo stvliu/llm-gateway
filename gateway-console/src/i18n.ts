@@ -11,7 +11,7 @@ import zhCNDashboard from './locales/zh-CN/dashboard.json';
 import zhCNProviders from './locales/zh-CN/providers.json';
 import zhCNChat from './locales/zh-CN/chat.json';
 import zhCNExperience from './locales/zh-CN/experience.json';
-import zhCNTeams from './locales/zh-CN/teams.json';
+import zhCNApplications from './locales/zh-CN/applications.json';
 import zhCNCatalog from './locales/zh-CN/catalog.json';
 import zhCNChannels from './locales/zh-CN/channels.json';
 import zhCNQuickstart from './locales/zh-CN/quickstart.json';
@@ -25,7 +25,7 @@ import enUSDashboard from './locales/en-US/dashboard.json';
 import enUSProviders from './locales/en-US/providers.json';
 import enUSChat from './locales/en-US/chat.json';
 import enUSExperience from './locales/en-US/experience.json';
-import enUSTeams from './locales/en-US/teams.json';
+import enUSApplications from './locales/en-US/applications.json';
 import enUSCatalog from './locales/en-US/catalog.json';
 import enUSChannels from './locales/en-US/channels.json';
 import enUSQuickstart from './locales/en-US/quickstart.json';
@@ -45,7 +45,7 @@ i18n
         providers: zhCNProviders,
         chat: zhCNChat,
         experience: zhCNExperience,
-        teams: zhCNTeams,
+        applications: zhCNApplications,
         catalog: zhCNCatalog,
         channels: zhCNChannels,
         quickstart: zhCNQuickstart,
@@ -60,7 +60,7 @@ i18n
         providers: enUSProviders,
         chat: enUSChat,
         experience: enUSExperience,
-        teams: enUSTeams,
+        applications: enUSApplications,
         catalog: enUSCatalog,
         channels: enUSChannels,
         quickstart: enUSQuickstart,

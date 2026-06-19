@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Modal, Form, Input, Table, Button, Space, message, Alert, Tooltip } from 'antd'
 import { CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
-import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/team'
+import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/userApiKey'
 import { userApiKeyApi } from '@/services/api/userApiKey'
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys'
 import { useConfirm } from '@/hooks/useConfirm'
