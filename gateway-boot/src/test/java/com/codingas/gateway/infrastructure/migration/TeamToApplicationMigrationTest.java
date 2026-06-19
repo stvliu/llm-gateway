@@ -60,9 +60,12 @@ class TeamToApplicationMigrationTest {
         //    UNIQUE/NOW()），自然建立 applications/application_channels 表与 user_api_keys.application_id
         //    列；V52 亦由 Flyway 在空库上先执行一次（仅创建 migration-default 兜底应用），
         //    本测试随后通过 runV52() 在植入源数据后再次执行以验证迁移语义与幂等性。
+        //    限定到 V52（迁移完成后、V53 删表前），以便测试植入 team 源数据并验证 V52 迁移语义；
+        //    V53 删表由独立测试或生产升级路径覆盖。
         Flyway.configure()
                 .dataSource(ds)
                 .locations("classpath:db/migration")
+                .target("52")
                 .load()
                 .migrate();
 
