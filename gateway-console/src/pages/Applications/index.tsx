@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card } from 'antd';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
@@ -17,6 +17,7 @@ import type { Application } from '@/types/application';
  */
 export default function ApplicationsPage() {
   const { t } = useTranslation('applications');
+  const { message } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.APPLICATION_WRITE);
 
@@ -39,6 +40,17 @@ export default function ApplicationsPage() {
   const handleEdit = (application: Application) => {
     setEditingApplication(application);
     setFormVisible(true);
+  };
+
+  // 删除应用：吞掉 mutateAsync 的 rejection 避免未捕获 promise 拒绝，
+  // 成功/失败均给出用户反馈（与 Models/UpstreamKeysTable 页风格一致）
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteMutation.mutateAsync(id);
+      message.success(t('application.deleteSuccess', { defaultValue: '应用已删除' }));
+    } catch {
+      message.error(t('application.deleteFailed', { defaultValue: '删除失败' }));
+    }
   };
 
   // 筛选后的应用列表
@@ -110,7 +122,7 @@ export default function ApplicationsPage() {
                 title={t('application.deleteApplication')}
                 description={t('application.deleteConfirm', { name: record.name })}
                 okType="danger"
-                onConfirm={() => deleteMutation.mutateAsync(record.id)}
+                onConfirm={() => handleDelete(record.id)}
               >
                 <Tooltip title={t('application.delete')}>
                   <Button type="text" size="small" danger icon={<DeleteOutlined />} />

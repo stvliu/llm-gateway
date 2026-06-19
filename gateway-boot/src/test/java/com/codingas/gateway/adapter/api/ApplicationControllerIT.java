@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
 import com.codingas.gateway.application.application.ApplicationService;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
@@ -43,7 +44,10 @@ class ApplicationControllerIT {
     @BeforeEach
     void setUp() {
         ApplicationController controller = new ApplicationController(applicationService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        // 装配 GlobalExceptionHandler 以便校验失败被转为 400（与生产 Web 上下文一致）
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
     }
 
     /**
@@ -145,5 +149,55 @@ class ApplicationControllerIT {
                         .content("{\"channelIds\":[10,20]}"))
                 .andExpect(status().isNoContent());
         verify(applicationService).updateChannels(eq(1L), eq(List.of(10L, 20L)));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/channels 空列表表示清空授权返回 204")
+    void updateChannels_emptyList_returns204() throws Exception {
+        mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channelIds\":[]}"))
+                .andExpect(status().isNoContent());
+        verify(applicationService).updateChannels(eq(1L), eq(List.of()));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含 null 元素返回 400 且不调用 service")
+    void updateChannels_nullElement_returns400() throws Exception {
+        mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channelIds\":[null]}"))
+                .andExpect(status().isBadRequest());
+        verify(applicationService, never()).updateChannels(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含负数元素返回 400 且不调用 service")
+    void updateChannels_negativeElement_returns400() throws Exception {
+        mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channelIds\":[-1]}"))
+                .andExpect(status().isBadRequest());
+        verify(applicationService, never()).updateChannels(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含 0 元素返回 400 且不调用 service")
+    void updateChannels_zeroElement_returns400() throws Exception {
+        mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"channelIds\":[0]}"))
+                .andExpect(status().isBadRequest());
+        verify(applicationService, never()).updateChannels(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/channels channelIds 为 null 返回 400")
+    void updateChannels_nullList_returns400() throws Exception {
+        mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+        verify(applicationService, never()).updateChannels(any(), any());
     }
 }
