@@ -48,6 +48,11 @@ public class ApplicationGatewayImpl implements ApplicationGateway {
         return toEntity(saved);
     }
 
+    @Override
+    public void deleteById(Long id) {
+        repository.deleteById(id);
+    }
+
     private Application toEntity(ApplicationDo d) {
         Application entity = new Application();
         entity.setId(d.getId());

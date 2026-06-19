@@ -42,4 +42,11 @@ public interface ApplicationGateway {
      * @return 保存后的应用实体（含生成的 ID 与审计字段）
      */
     Application save(Application app);
+
+    /**
+     * 删除应用
+     *
+     * @param id 应用 ID
+     */
+    void deleteById(Long id);
 }

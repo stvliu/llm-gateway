@@ -50,6 +50,12 @@ public class ApplicationChannelGatewayImpl implements ApplicationChannelGateway 
         return repository.existsByApplicationIdAndChannelId(appId, chId);
     }
 
+    @Override
+    @Transactional
+    public void deleteByApplicationId(Long appId) {
+        repository.deleteByApplicationId(appId);
+    }
+
     private ApplicationChannel toEntity(ApplicationChannelDo d) {
         ApplicationChannel entity = new ApplicationChannel();
         entity.setId(d.getId());

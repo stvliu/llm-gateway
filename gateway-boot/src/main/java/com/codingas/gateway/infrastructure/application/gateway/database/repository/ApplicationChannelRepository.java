@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.application.gateway.database.reposit
 
 import com.codingas.gateway.infrastructure.application.gateway.database.dataobject.ApplicationChannelDo;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -37,4 +38,13 @@ public interface ApplicationChannelRepository extends JpaRepository<ApplicationC
      * @return 存在返回 true
      */
     boolean existsByApplicationIdAndChannelId(Long applicationId, Long channelId);
+
+    /**
+     * 删除应用下的全部授权关联
+     *
+     * @param applicationId 应用 ID
+     */
+    @Modifying
+    @Query("DELETE FROM ApplicationChannelDo ac WHERE ac.applicationId = :applicationId")
+    void deleteByApplicationId(@Param("applicationId") Long applicationId);
 }

@@ -20,7 +20,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 /**
  * ApplicationGatewayImpl 单元测试
  *
@@ -133,6 +132,19 @@ class ApplicationGatewayImplTest {
             verify(repository).save(captor.capture());
             assertThat(captor.getValue().getCode()).isEqualTo("APP-001");
             assertThat(captor.getValue().getState()).isEqualTo("ACTIVE");
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteById 方法测试")
+    class DeleteByIdTests {
+
+        @Test
+        @DisplayName("按主键删除应用，委派至 Repository")
+        void deleteById_delegatesToRepository() {
+            gateway.deleteById(1L);
+
+            verify(repository).deleteById(1L);
         }
     }
 

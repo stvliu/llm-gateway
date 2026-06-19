@@ -44,4 +44,13 @@ public interface ApplicationChannelGateway {
      * @return 存在返回 true，否则 false
      */
     boolean existsByApplicationIdAndChannelId(Long appId, Long chId);
+
+    /**
+     * 删除应用下的全部授权关联
+     *
+     * <p>用于更新渠道授权时先清空旧关联，再批量保存新关联。</p>
+     *
+     * @param appId 应用 ID
+     */
+    void deleteByApplicationId(Long appId);
 }

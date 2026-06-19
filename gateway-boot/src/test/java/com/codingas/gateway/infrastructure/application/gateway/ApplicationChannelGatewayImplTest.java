@@ -128,4 +128,17 @@ class ApplicationChannelGatewayImplTest {
             assertThat(result).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("deleteByApplicationId 方法测试")
+    class DeleteByApplicationIdTests {
+
+        @Test
+        @DisplayName("按应用 ID 删除全部授权关联，委派至 Repository")
+        void deleteByApplicationId_delegatesToRepository() {
+            gateway.deleteByApplicationId(1L);
+
+            verify(repository).deleteByApplicationId(1L);
+        }
+    }
 }
