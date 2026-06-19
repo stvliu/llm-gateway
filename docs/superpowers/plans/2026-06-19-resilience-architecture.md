@@ -423,19 +423,19 @@ git add -A && git commit -m "feat(migration): Team→Application 1:1 平移迁�
 - Create: `db/migration/V39__drop_team_tables.sql`
 - Test: 全量编译通过
 
-- [ ] **Step 1: grep 所有 Team 引用**
+- [x] **Step 1: grep 所有 Team 引用**
 
 Run: `grep -rn "domain.team\|UserTeamGateway\|TeamChannelGateway\|TeamGateway\|listAllowedModels" gateway-boot/src/main` 列出所有引用点。
 
-- [ ] **Step 2: 删除 Team 包与实现**
+- [x] **Step 2: 删除 Team 包与实现**
 
 删除 `domain/team/`、`infrastructure/team/`、Team Controller。逐个修复 grep 出的引用点（改为 Application 等价物或移除）。
 
-- [ ] **Step 3: 移除模型可见性机制**
+- [x] **Step 3: 移除模型可见性机制**
 
 删除 `listAllowedModels` 方法及调用点（前端 ModelVisibilityModal 在 Task 1.9 删）。
 
-- [ ] **Step 4: 删表迁移**
+- [x] **Step 4: 删表迁移**
 
 `V39__drop_team_tables.sql`：
 
@@ -445,11 +445,11 @@ DROP TABLE IF EXISTS user_teams;
 DROP TABLE IF EXISTS teams;
 ```
 
-- [ ] **Step 5: 全量编译+测试**
+- [x] **Step 5: 全量编译+测试**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿（修复残余引用）
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && git commit -m "refactor(team): 移除 Team 体系实体/Gateway/Controller 并废弃团队模型可见性"
