@@ -54,6 +54,8 @@ class AuthenticationDomainServiceTest {
             assertThat(result.userId()).isEqualTo(50L);
             assertThat(result.credentialId()).isEqualTo(100L);
             assertThat(result.role()).isEqualTo("user");
+            // 权限锚点 applicationId 必须从 UserApiKey 透传到 Identity
+            assertThat(result.applicationId()).isEqualTo(7L);
         }
 
         @Test
@@ -105,6 +107,7 @@ class AuthenticationDomainServiceTest {
         UserApiKey apiKey = new UserApiKey();
         apiKey.setId(100L);
         apiKey.setUserId(50L);
+        apiKey.setApplicationId(7L);
         apiKey.setKeyHash("hash123");
         apiKey.setKeyPrefix("sk-abc1x");
         return apiKey;

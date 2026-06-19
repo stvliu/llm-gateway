@@ -53,7 +53,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     public ProtocolResponse dispatch(ProtocolRequest request, Identity identity, RoutingStrategy strategy) {
         String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
-        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.userId(), identity.role(), strategy);
+        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.applicationId(), identity.userId(), identity.role(), strategy);
 
         log.info("Dispatch request: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);
@@ -74,7 +74,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
 
             // 阶段 5：Invoker 链调用（熔断 + 重试 + Key 故障转移 + 降级）
             ProtocolResponse response = degradationInvoker.invoke(
-                    ctx, outboundReq, inboundProtocol, identity.userId(), identity.role(), strategy);
+                    ctx, outboundReq, inboundProtocol, identity.applicationId(), identity.userId(), identity.role(), strategy);
 
             // 阶段 6：响应转换（仅跨协议时执行）
             if (ctx.needsProtocolAdaptation()) {
@@ -102,7 +102,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                                StreamCallback callback) {
         String traceId = UUID.randomUUID().toString();
         Protocol inboundProtocol = getInboundProtocol(request);
-        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.userId(), identity.role(), strategy);
+        RoutingContext ctx = routingResolver.resolve(request.getModel(), inboundProtocol, identity.applicationId(), identity.userId(), identity.role(), strategy);
 
         log.info("Stream dispatch: model={}, channelId={}, upstreamProtocol={}, endpointUrl={}, traceId={}",
                 request.getModel(), ctx.channelId(), ctx.upstreamProtocol(), ctx.endpointUrl(), traceId);
@@ -174,7 +174,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 }
             };
             degradationInvoker.invokeStream(ctx, outboundReq, convertingCallback,
-                    inboundProtocol, identity.userId(), identity.role(), strategy);
+                    inboundProtocol, identity.applicationId(), identity.userId(), identity.role(), strategy);
         } else {
             // 非跨协议：注入协议对应的结束标记
             StreamCallback protocolCallback = new StreamCallback() {
@@ -197,7 +197,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 }
             };
             degradationInvoker.invokeStream(ctx, outboundReq, protocolCallback,
-                    inboundProtocol, identity.userId(), identity.role(), strategy);
+                    inboundProtocol, identity.applicationId(), identity.userId(), identity.role(), strategy);
         }
     }
 

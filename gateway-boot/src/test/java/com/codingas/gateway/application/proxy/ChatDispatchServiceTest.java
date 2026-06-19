@@ -62,7 +62,7 @@ class ChatDispatchServiceTest {
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner,
                 protocolConverter, auditGateway, eventPublisher, degradationInvoker);
 
-        testIdentity = Identity.of(1L, "USER", 1L);
+        testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
@@ -84,10 +84,10 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
+            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
             lenient().when(degradationInvoker.invoke(any(RoutingContext.class), any(ProtocolRequest.class),
-                    any(Protocol.class), anyLong(), anyString(), any(RoutingStrategy.class)))
+                    any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class)))
                     .thenReturn(response);
 
             // when
@@ -122,11 +122,11 @@ class ChatDispatchServiceTest {
 
             OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
-            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(anthropicContext);
+            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(anthropicContext);
             lenient().when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
             lenient().when(degradationInvoker.invoke(any(RoutingContext.class), any(ProtocolRequest.class),
-                    any(Protocol.class), anyLong(), anyString(), any(RoutingStrategy.class)))
+                    any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class)))
                     .thenReturn(upstreamResponse);
             lenient().when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(finalResponse);
 
@@ -165,7 +165,7 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
+            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             StreamCallback callback = mock(StreamCallback.class);
@@ -175,7 +175,7 @@ class ChatDispatchServiceTest {
 
             // then
             verify(degradationInvoker).invokeStream(any(RoutingContext.class), any(ProtocolRequest.class),
-                    any(StreamCallback.class), any(Protocol.class), anyLong(), anyString(), any(RoutingStrategy.class));
+                    any(StreamCallback.class), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class));
             verify(protocolConverter, never()).convertStreamChunk(anyString(), anyString(), anyString());
         }
 
@@ -188,12 +188,12 @@ class ChatDispatchServiceTest {
                     .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                     .build();
 
-            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
+            lenient().when(routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(openAIContext);
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
 
             doThrow(new RuntimeException("上游调用失败"))
                     .when(degradationInvoker).invokeStream(any(RoutingContext.class), any(ProtocolRequest.class),
-                            any(StreamCallback.class), any(Protocol.class), anyLong(), anyString(), any(RoutingStrategy.class));
+                            any(StreamCallback.class), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class));
 
             StreamCallback callback = mock(StreamCallback.class);
 

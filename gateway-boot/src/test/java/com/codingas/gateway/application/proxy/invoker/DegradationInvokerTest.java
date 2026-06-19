@@ -59,7 +59,7 @@ class DegradationInvokerTest {
         ProtocolResponse expectedResponse = mock(ProtocolResponse.class);
         when(keyFailoverInvoker.invoke(ctx, request)).thenReturn(expectedResponse);
 
-        ProtocolResponse result = invoker.invoke(ctx, request, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+        ProtocolResponse result = invoker.invoke(ctx, request, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
         assertThat(result).isSameAs(expectedResponse);
         verify(degradationService, never()).degrade(anyString(), any());
@@ -75,13 +75,13 @@ class DegradationInvokerTest {
         RoutingContext fallbackCtx = new RoutingContext(11L, 21L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-fallback", 60, false, "gpt-3.5-turbo", null);
 
-        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                 .thenReturn(fallbackCtx);
 
         ProtocolResponse expectedResponse = mock(ProtocolResponse.class);
         when(keyFailoverInvoker.invoke(fallbackCtx, request)).thenReturn(expectedResponse);
 
-        ProtocolResponse result = invoker.invoke(ctx, request, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+        ProtocolResponse result = invoker.invoke(ctx, request, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
         assertThat(result).isSameAs(expectedResponse);
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR);
@@ -94,7 +94,7 @@ class DegradationInvokerTest {
         when(keyFailoverInvoker.invoke(ctx, request)).thenThrow(ex);
         when(degradationService.degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR)).thenReturn(null);
 
-        assertThatThrownBy(() -> invoker.invoke(ctx, request, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+        assertThatThrownBy(() -> invoker.invoke(ctx, request, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                 .isSameAs(ex);
     }
 
@@ -103,7 +103,7 @@ class DegradationInvokerTest {
     void invokeStream_succeeds() {
         StreamCallback callback = mock(StreamCallback.class);
 
-        invoker.invokeStream(ctx, request, callback, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+        invoker.invokeStream(ctx, request, callback, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
         verify(keyFailoverInvoker).invokeStream(ctx, request, callback);
         verify(degradationService, never()).degrade(anyString(), any());
@@ -120,12 +120,12 @@ class DegradationInvokerTest {
         RoutingContext fallbackCtx = new RoutingContext(11L, 21L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-fallback", 60, false, "gpt-3.5-turbo", null);
 
-        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                 .thenReturn(fallbackCtx);
 
         StreamCallback callback = mock(StreamCallback.class);
 
-        invoker.invokeStream(ctx, request, callback, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+        invoker.invokeStream(ctx, request, callback, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR);
         verify(keyFailoverInvoker).invokeStream(fallbackCtx, request, callback);

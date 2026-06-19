@@ -110,12 +110,12 @@ class DegradationIntegrationTest {
                 .thenReturn("gpt-3.5-turbo");
 
         // 重新路由解析返回备选上下文
-        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+        when(routingResolver.resolve("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                 .thenReturn(fallbackCtx);
 
         // 执行降级调用
         ProtocolResponse result = degradationInvoker.invoke(
-                primaryCtx, request, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+                primaryCtx, request, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
         // 验证返回成功响应（非 null）
         assertThat(result).isNotNull();
@@ -126,7 +126,7 @@ class DegradationIntegrationTest {
 
         // 验证降级链路调用轨迹
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.UPSTREAM_ERROR);
-        verify(routingResolver).resolve("gpt-3.5-turbo", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+        verify(routingResolver).resolve("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
         // KeyFailoverInvoker 被调用两次：第一次失败，第二次成功
         verify(keyFailoverInvoker, times(2)).invoke(any(RoutingContext.class), any(ProtocolRequest.class));
     }
@@ -154,7 +154,7 @@ class DegradationIntegrationTest {
 
         // 验证抛出原异常（同一引用）
         assertThatThrownBy(() -> degradationInvoker.invoke(
-                primaryCtx, request, Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+                primaryCtx, request, Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                 .isSameAs(upstreamError)
                 .isInstanceOf(ProviderException.class);
 
@@ -163,6 +163,6 @@ class DegradationIntegrationTest {
 
         // 降级链耗尽时不应重新路由
         verify(routingResolver, org.mockito.Mockito.never())
-                .resolve(any(), any(), any(), any(), any());
+                .resolve(any(), any(), any(), any(), any(), any());
     }
 }

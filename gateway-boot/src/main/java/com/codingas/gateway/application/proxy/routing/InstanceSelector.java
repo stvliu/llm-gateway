@@ -22,22 +22,23 @@ public class InstanceSelector {
     /**
      * 根据 modelId 和用户身份选择模型实例
      *
-     * @param modelId  模型 ID
-     * @param userId   用户 ID
-     * @param role     用户角色
-     * @param strategy 路由策略
+     * @param modelId       模型 ID
+     * @param applicationId 应用 ID（权限锚点；透传至 RoutingRequest 供 PermissionRouter 判定可见渠道）
+     * @param userId        用户 ID
+     * @param role          用户角色
+     * @param strategy      路由策略
      * @return 选中的 ModelInstance
      * @throws ResourceNotFoundException 无可用实例
      */
-    public ModelInstance select(Long modelId, Long userId, String role, RoutingStrategy strategy) {
+    public ModelInstance select(Long modelId, Long applicationId, Long userId, String role, RoutingStrategy strategy) {
         // 获取所有活跃实例（按 priority 升序）
         List<ModelInstance> allInstances = modelInstanceGateway.findActiveByModelIdOrderByPriority(modelId);
         if (allInstances.isEmpty()) {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
 
-        // 委托 RouterChain 执行过滤链
-        RoutingRequest request = new RoutingRequest(modelId, userId, role, strategy);
+        // 委托 RouterChain 执行过滤链（applicationId 作为权限锚点透传至 RoutingRequest）
+        RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy);
         List<ModelInstance> result = routerChain.filter(allInstances, request);
 
         if (result.isEmpty()) {

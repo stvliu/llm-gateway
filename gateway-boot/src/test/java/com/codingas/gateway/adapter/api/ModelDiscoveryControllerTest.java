@@ -43,7 +43,7 @@ class ModelDiscoveryControllerTest {
 
     @BeforeEach
     void setUp() {
-        identity = Identity.of(1L, "user", 100L);
+        identity = Identity.of(1L, "user", 100L, null);
         sampleResponse = new ModelDiscoveryResponse("list", List.of(
                 new ModelDiscoveryResponse.ModelItem("gpt-4", "model", 1700000000L, "system"),
                 new ModelDiscoveryResponse.ModelItem("gpt-3.5-turbo", "model", 1700000001L, "system")
@@ -86,7 +86,7 @@ class ModelDiscoveryControllerTest {
         @DisplayName("userId 为 null 时抛出异常")
         void listModels_withNullUserId_throwsException() {
             // given
-            Identity identityWithoutUserId = new Identity(null, "user", 100L);
+            Identity identityWithoutUserId = new Identity(null, "user", 100L, null);
             when(request.getAttribute("identity")).thenReturn(identityWithoutUserId);
 
             // when & then

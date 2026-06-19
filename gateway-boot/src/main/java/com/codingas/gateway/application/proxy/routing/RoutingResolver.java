@@ -28,19 +28,20 @@ public class RoutingResolver {
     /**
      * 根据模型名称解析完整的路由上下文
      *
-     * @param modelName 模型名称
-     * @param protocol  入站协议
-     * @param userId    用户 ID
-     * @param role      用户角色（ADMIN 跳过团队渠道过滤）
-     * @param strategy  路由策略
+     * @param modelName     模型名称
+     * @param protocol      入站协议
+     * @param applicationId 应用 ID（数据面权限锚点，透传至 InstanceSelector/RoutingRequest）
+     * @param userId        用户 ID
+     * @param role          用户角色（保留字段；数据面权限基于 applicationId 判定可见渠道）
+     * @param strategy      路由策略
      * @return 路由上下文
      */
-    public RoutingContext resolve(String modelName, Protocol protocol, Long userId, String role, RoutingStrategy strategy) {
+    public RoutingContext resolve(String modelName, Protocol protocol, Long applicationId, Long userId, String role, RoutingStrategy strategy) {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
-        // 2. 实例选择（委托 RouterChain）
-        ModelInstance modelInstance = instanceSelector.select(model.getId(), userId, role, strategy);
+        // 2. 实例选择（委托 RouterChain，传入 applicationId 作为权限锚点）
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), applicationId, userId, role, strategy);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());

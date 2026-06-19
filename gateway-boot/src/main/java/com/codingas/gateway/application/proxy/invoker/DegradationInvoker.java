@@ -38,9 +38,18 @@ public class DegradationInvoker {
 
     /**
      * 非流式调用 — 带降级保护
+     *
+     * @param ctx             路由上下文
+     * @param request         协议请求
+     * @param inboundProtocol 入站协议
+     * @param applicationId   应用 ID（权限锚点；降级重新路由时透传）
+     * @param userId          用户 ID
+     * @param role            用户角色
+     * @param strategy        路由策略
+     * @return 上游响应
      */
     public ProtocolResponse invoke(RoutingContext ctx, ProtocolRequest request,
-                                    Protocol inboundProtocol, Long userId, String role,
+                                    Protocol inboundProtocol, Long applicationId, Long userId, String role,
                                     RoutingStrategy strategy) {
         try {
             return keyFailoverInvoker.invoke(ctx, request);
@@ -50,8 +59,8 @@ public class DegradationInvoker {
                 log.info("模型 {} 降级为 {}，重新调度", request.getModel(), fallbackModel);
                 request.setModel(fallbackModel);
                 RoutingContext newCtx = routingResolver.resolve(
-                        fallbackModel, inboundProtocol, userId, role, strategy);
-                return invoke(newCtx, request, inboundProtocol, userId, role, strategy);
+                        fallbackModel, inboundProtocol, applicationId, userId, role, strategy);
+                return invoke(newCtx, request, inboundProtocol, applicationId, userId, role, strategy);
             }
             throw e;
         }
@@ -59,9 +68,18 @@ public class DegradationInvoker {
 
     /**
      * 流式调用 — 带降级保护
+     *
+     * @param ctx             路由上下文
+     * @param request         协议请求
+     * @param callback        流式回调
+     * @param inboundProtocol 入站协议
+     * @param applicationId   应用 ID（权限锚点；降级重新路由时透传）
+     * @param userId          用户 ID
+     * @param role            用户角色
+     * @param strategy        路由策略
      */
     public void invokeStream(RoutingContext ctx, ProtocolRequest request, StreamCallback callback,
-                              Protocol inboundProtocol, Long userId, String role,
+                              Protocol inboundProtocol, Long applicationId, Long userId, String role,
                               RoutingStrategy strategy) {
         try {
             keyFailoverInvoker.invokeStream(ctx, request, callback);
@@ -71,8 +89,8 @@ public class DegradationInvoker {
                 log.info("流式调用：模型 {} 降级为 {}，重新调度", request.getModel(), fallbackModel);
                 request.setModel(fallbackModel);
                 RoutingContext newCtx = routingResolver.resolve(
-                        fallbackModel, inboundProtocol, userId, role, strategy);
-                invokeStream(newCtx, request, callback, inboundProtocol, userId, role, strategy);
+                        fallbackModel, inboundProtocol, applicationId, userId, role, strategy);
+                invokeStream(newCtx, request, callback, inboundProtocol, applicationId, userId, role, strategy);
                 return;
             }
             throw e;
