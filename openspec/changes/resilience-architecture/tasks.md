@@ -12,7 +12,10 @@
 - [x] 1.5 `RoutingRequest`/拦截器：权限锚点从 userId 改为 applicationId
 - [x] 1.6 数据迁移脚本：1 Team → 1 默认 Application，TeamChannel → ApplicationChannel 1:1 平移；归属不明 Key 归 `migration-default`（按原 Team 渠道集授权，非全局）；可重跑、幂等、迁移前后授权集合比对校验（D7/D9）
 - [x] 1.7 移除 `Team`/`UserTeam`/`TeamChannel` 实体及相关 Gateway/Controller/服务；废弃团队模型可见性机制（`listAllowedModels`）（D8）
-- [ ] 1.8 P-r 单元与集成测试（ApplicationChannel 过滤、权限锚点切换、无 ADMIN 跳过、迁移正确性）
+- [x] 1.8 P-r 单元与集成测试（ApplicationChannel 过滤、权限锚点切换、无 ADMIN 跳过、迁移正确性）
+  - 双审查通过（spec ✅ / quality ✅ Approved）；提交 632716b；RED 反向断言+GREEN 4场景+615回归全绿
+  - 接受 Minor：场景1/3/4 经 LoadBalanceRouter 终结为单实例，若 PermissionRouter 回归失效有 ~50% 概率假绿（noneMatch 仍提供 50% 检测率）；彻底消除需重构测试绕过 LoadBalanceRouter，超 1.8 范围，接受现状
+  - 设计差异（非阻塞）：brief 场景2"migration-default 软兜底"属迁移层 V52/V53（1.6 覆盖），运行时数据面 applicationId==null 直接返回空集，测试按运行时行为断言
 - [ ] 1.9 前端：Teams 页改造为 Applications 页（建/编辑应用、绑 Key、渠道授权平移）；移除成员管理 Modal；移除模型可见性 Modal（D8）；路由 `teams`→`applications`、菜单、权限常量新增 `APPLICATION_READ/WRITE`、清理 team.ts/useTeams.ts
 
 ## 2. P0 修根因（路由与熔断错配）

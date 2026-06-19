@@ -461,22 +461,22 @@ git add -A && git commit -m "refactor(team): 移除 Team 体系实体/Gateway/Co
 - Test: `integration/PermissionRefactorIntegrationTest.java`（端到端权限锚点切换）
 - 补充 `PermissionRouterTest` 无 ADMIN 跳过、迁移正确性已在 1.6 覆盖。
 
-- [ ] **Step 1: 写集成测试**
+- [x] **Step 1: 写集成测试**
 
 `PermissionRefactorIntegrationTest.java`：
 - 应用 A 授权 ch1，应用 B 授权 ch2；用应用 A 的 Key 请求模型 M（ch1+ch2 都挂 M），断言只能路由到 ch1。
 - 无 application_id 的 Key（模拟遗漏）走 migration-default 软兜底 + 告警日志。
 - ADMIN Key 数据面不跳过，仍按 ApplicationChannel 过滤。
 
-- [ ] **Step 2: 跑绿**
+- [x] **Step 2: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=PermissionRefactorIntegrationTest` → PASS
 
-- [ ] **Step 3: P-r 全段回归**
+- [x] **Step 3: P-r 全段回归**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "test(permission): P-r 权限重构集成测试与端到端验证"

@@ -5,35 +5,26 @@
 
 ## 当前 Task
 
-**Plan task:** Task 1.6: 数据迁移脚本（Team→Application 1:1 平移 + migration-default 兜底）
-**OpenSpec task:** 1.6 数据迁移脚本：1 Team → 1 默认 Application，TeamChannel → ApplicationChannel 1:1 平移；归属不明 Key 归 migration-default（按原 Team 渠道集授权）；可重跑、幂等、迁移前后授权集合比对校验（D7/D9）
-**阶段:** fix（V51 方言修复 + Task 1.6 披露测试待补）
-**BASE:** 4842c4a
-**当前 HEAD:** b01d8d3
-**审查-修复轮次:** 2/3
-**风险:** R1 数据迁移风险（高）、R2 权限锚点切换兼容性（高）
-
-## 审查结果
-
-- Task 1.6 审查: Spec ✅ + Approved（无 Critical）
-- Important #1: 多 Team 跨用户渠道并集放大（D9 边界）—— **plan 单一 migration-default 设计固有约束，范围内无法行为级修复**，需补披露测试 + V52 注释。待 V51 修复后补
-- Important #2: V51 方言 bug 测试保真度缺口 —— **已派发 V51 修复 agent（a13aeb22）**，修后迁移测试改回真实跑 V51+V52
+**Plan task:** Task 1.8: P-r 单元与集成测试
+**OpenSpec task:** 1.8 P-r 单元与集成测试（ApplicationChannel 过滤、权限锚点切换、无 ADMIN 跳过、迁移正确性）
+**阶段:** quality-review
+**BASE:** d1caee9
+**实现提交:** 632716b6f3621662469ebd6b2fb887effafa25c3（1 file, +159, PermissionRefactorIntegrationTest.java）
+**RED:** 反向断言"应用A能路由到ch2"失败（PermissionRouter filtered 2→1，日志证明真实过滤）
+**GREEN:** 4 场景通过；全段回归 615 测试全绿无回归
+**审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [完成] Task 1.6 implementer（DONE_WITH_CONCERNS, b01d8d3）
-- [完成] Task 1.6 reviewer（Approved, 2 Important 非阻断）
-- [派发中] V51 方言修复 agent（sonnet, a13aeb22）— V51 改 BIGSERIAL/CONSTRAINT UNIQUE + 迁移测试去 workaround
-- [待办] Task 1.6 披露测试（多 Team 跨用户放大场景 + V52 注释）
-
-## 已知设计取舍（待记入 tasks.md）
-
-- 单一 migration-default 兜底应用下，多个不相交多 Team 用户的 Key 共享该应用时，渠道集为各用户原 team 渠道并集，存在跨用户放大。属 D7"不丢失授权"与 D9"不放大"在单一共享应用下的固有张力，兜底场景可接受，运维后续细分应用即消除。
+- [派发中] Task 1.8 implementer（后台, sonnet, general-purpose）— P-r 端到端集成测试（重新派发：上次派发未产出提交即中断，工作树无 Task 1.8 实现代码）
+  - brief: .git/sdd/task-1.8-brief.md
+  - 参照 FullContextIntegrationTestBase 模式（注意：该基类 @MockBean 了 RoutingResolver/CredentialResolver/AuthenticationDomainService，直接继承不触发真实 PermissionRouter，已要求 implementer 先调查路由链触发路径）
+  - 场景：应用 A 授权 ch1/应用 B 授权 ch2 路由隔离、无 application_id（运行时 null→空集，区分迁移层 migration-default）、ADMIN 数据面不跳过
+  - 协调者已提示 2 个风险：①基类 mock 路由入口致假绿 ②场景2"软兜底"属迁移层非运行时
+  - TDD：要求 RED（反向断言验证灵敏度）+ GREEN 证据
 
 ## 已完成 Task
 
-- Task 1.1: complete (b576854..7578212, Approved, 2 Minor)
-- Task 1.2: complete (7578212..6563eb3, Approved, 2 Minor)
-- Task 1.3: complete (6563eb3..443da5a, Approved, 3 Minor)
-- Task 1.4: complete (6a7fc50..85103f7, Approved, 2 Minor — D9 verified)
-- Task 1.5: complete (3f04d2b..c2d14ba, Approved, 3 Minor — applicationId threading verified)
+- Task 1.1-1.6: complete (Approved)
+- Task 1.7: complete (d1caee9, Approved, 1 Important deferred: teamId 残留)
+  - DEFERRED: AuditEvent/TokenUsedEvent/UsageLogDo.teamId + usage_logs.team_id 列待清理
