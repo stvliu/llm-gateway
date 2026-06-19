@@ -221,7 +221,7 @@ git add -A && git commit -m "feat(application): 新增 ApplicationChannel 实体
 
 **Consumes:** 现有 `ChannelGateway` 模式作为参照（见 `domain/supply/gateway/ChannelGateway.java` 及其 Impl）。
 
-- [ ] **Step 1: UserApiKey 增字段**
+- [x] **Step 1: UserApiKey 增字段**
 
 在 `UserApiKey.java` 增加 `private Long applicationId;` + Getter/Setter，更新 Javadoc 说明权限锚点改为应用。迁移追加：
 
@@ -230,19 +230,19 @@ ALTER TABLE user_api_keys ADD COLUMN application_id BIGINT;
 CREATE INDEX idx_user_api_keys_app ON user_api_keys(application_id);
 ```
 
-- [ ] **Step 2: 写 Gateway 接口**
+- [x] **Step 2: 写 Gateway 接口**
 
 按上面 Produces 签名写两个接口，中文 Javadoc。
 
-- [ ] **Step 3: 写 JPA Repository + PO + GatewayImpl**
+- [x] **Step 3: 写 JPA Repository + PO + GatewayImpl**
 
 参照现有 `infrastructure/supply/gateway/ChannelGatewayImpl.java` 模式（先 Read 该文件确认 PO/Repository 用法）。`ApplicationGatewayImpl` 实现接口，PO↔Entity 转换。
 
-- [ ] **Step 4: 写测试并跑绿**
+- [x] **Step 4: 写测试并跑绿**
 
 测试 GatewayImpl 的 `findById/findByCode/findChannelIdsByApplicationId`（用 H2 内存库或 Mockito Repository）。Run: `./mvnw -pl gateway-boot -am test -Dtest=ApplicationGatewayImplTest,ApplicationChannelGatewayImplTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat(application): UserApiKey 挂 application_id 并实现 Application/ApplicationChannel Gateway"
