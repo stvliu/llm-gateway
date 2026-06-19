@@ -1,23 +1,26 @@
 package com.codingas.gateway.application.proxy.routing;
 
+import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
-import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 权限路由器 — 按用户团队权限过滤模型实例
+ * 权限路由器 — 按应用-渠道授权（ApplicationChannel）过滤模型实例
  *
- * <p>ADMIN 角色跳过团队渠道过滤，可以访问所有活跃渠道。</p>
+ * <p>数据面权限锚点为 {@link RoutingRequest#getApplicationId()}：
+ * 通过 {@link ApplicationChannelGateway#findChannelIdsByApplicationId(Long)} 查询应用可见的渠道集合，
+ * 仅保留该集合内的实例，再过滤出活跃（{@code state.isRoutable()}）渠道。</p>
+ *
+ * <p>D9 约束：ADMIN 退管理面，数据面权限路由无特权旁路 —— 任何角色都按应用授权过滤，
+ * 不再保留 ADMIN 跳过分支。{@code applicationId} 为 null（无权限锚点）时直接返回空集。</p>
  */
 @Component
 @Order(100)
@@ -25,19 +28,18 @@ import java.util.stream.Collectors;
 public class PermissionRouter implements Router {
 
     private final ChannelGateway channelGateway;
-    private final UserTeamGateway userTeamGateway;
-    private final TeamChannelGateway teamChannelGateway;
+    private final ApplicationChannelGateway applicationChannelGateway;
 
     @Override
     public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
-        // 获取用户有权限的渠道 ID 集合
+        // 获取应用可见的渠道 ID 集合（权限锚点）
         Set<Long> permittedChannelIds = getPermittedChannelIds(request);
 
         if (permittedChannelIds.isEmpty()) {
             return List.of();
         }
 
-        // 过滤：只保留有权限的渠道内的实例
+        // 过滤：只保留应用授权渠道内的实例
         List<ModelInstance> permitted = instances.stream()
                 .filter(mi -> permittedChannelIds.contains(mi.getChannelId()))
                 .toList();
@@ -46,7 +48,7 @@ public class PermissionRouter implements Router {
             return List.of();
         }
 
-        // 再过滤活跃 Channel
+        // 再过滤活跃 Channel（state.isRoutable()）
         List<Long> channelIds = permitted.stream().map(ModelInstance::getChannelId).toList();
         List<Channel> activeChannels = channelGateway.findByIds(channelIds).stream()
                 .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
@@ -61,18 +63,21 @@ public class PermissionRouter implements Router {
     @Override
     public boolean isForce() { return true; }
 
+    /**
+     * 计算应用可见的渠道 ID 集合
+     *
+     * <p>无权限锚点（applicationId 为 null）时返回空集；
+     * 否则查询应用-渠道授权关联。ADMIN 角色不再跳过此过滤。</p>
+     *
+     * @param request 路由请求上下文
+     * @return 应用可见的渠道 ID 集合
+     */
     private Set<Long> getPermittedChannelIds(RoutingRequest request) {
-        if ("ADMIN".equals(request.getRole())) {
-            return channelGateway.findAll().stream()
-                    .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
-                    .map(Channel::getId)
-                    .collect(Collectors.toSet());
-        }
-
-        Long teamId = userTeamGateway.findTeamIdByUserId(request.getUserId());
-        if (teamId == null) {
+        Long applicationId = request.getApplicationId();
+        if (applicationId == null) {
+            // 无权限锚点：不允许访问任何渠道
             return Set.of();
         }
-        return new HashSet<>(teamChannelGateway.findChannelIdsByTeamId(teamId));
+        return applicationChannelGateway.findChannelIdsByApplicationId(applicationId);
     }
 }
