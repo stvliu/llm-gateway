@@ -302,19 +302,19 @@ git add -A && git commit -m "feat(routing): PermissionRouter 改 ApplicationChan
 - Consumes: `UserApiKey.applicationId`（Task 1.3）
 - Produces: `Identity` 携带 `applicationId`；`RoutingRequest` 构造用 applicationId。
 
-- [ ] **Step 1: Identity 增 applicationId**
+- [x] **Step 1: Identity 增 applicationId**
 
 Read `domain/iam/valueobject/Identity.java`，增加 `applicationId` 字段与构造器参数。`AuthenticationDomainService.authenticateUser` 返回的 Identity 填充 `userApiKey.getApplicationId()`。
 
-- [ ] **Step 2: 适配 RoutingResolver/InstanceSelector/ChatDispatchService**
+- [x] **Step 2: 适配 RoutingResolver/InstanceSelector/ChatDispatchService**
 
 将所有 `new RoutingRequest(modelId, userId, role, strategy)` 改为 `new RoutingRequest(modelId, identity.getApplicationId(), userId, role, strategy)`。`InstanceSelector.select` 签名增 `applicationId` 参数（或从 RoutingRequest 取）。先 grep 所有 `new RoutingRequest(` 调用点确认覆盖。
 
-- [ ] **Step 3: 写/改测试并跑绿**
+- [x] **Step 3: 写/改测试并跑绿**
 
 适配 `ChatDispatchServiceTest` 等。Run: `./mvnw -pl gateway-boot -am test -Dtest=ChatDispatchServiceTest,ApiKeyAuthInterceptorTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(auth): 权限锚点从 userId 切换为 applicationId 贯穿拦截器与调度"
