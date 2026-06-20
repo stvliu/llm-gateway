@@ -891,19 +891,19 @@ git add -A && git commit -m "test(failover): P1 L1 转移与错误分流端到�
 **Interfaces:**
 - Produces: `ResilienceProfile` 字段：`Long id; String code; String name; String mode; boolean enableL2ModelDegradation; int degradationMaxDepth; boolean enableSessionAffinity; int sessionAffinityTtlMinutes; boolean enablePinnedModel; Long pinnedModelId; int timeout; ...审计字段`。Gateway: `findById/findByCode/findAll/save`。
 
-- [ ] **Step 1: 实体 + 迁移**
+- [x] **Step 1: 实体 + 迁移**
 
 建实体（@Getter @Setter）+ V40 表（含审计字段）。
 
-- [ ] **Step 2: Gateway 接口 + 实现**
+- [x] **Step 2: Gateway 接口 + 实现**
 
 参照 ChannelGateway 模式。
 
-- [ ] **Step 3: 测试 + 跑绿**
+- [x] **Step 3: 测试 + 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ResilienceProfileGatewayImplTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): ResilienceProfile 实体与 resilience_profiles 表及 Gateway"

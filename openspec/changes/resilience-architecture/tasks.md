@@ -92,7 +92,12 @@
 
 ## 4. P2 应用级容灾画像 + Cluster 故障域分组（原 P2/P3 合并，D10）
 
-- [ ] 4.1 新增 `ResilienceProfile` 实体 + `resilience_profiles` 表 + Gateway 实现
+- [x] 4.1 新增 `ResilienceProfile` 实体 + `resilience_profiles` 表 + Gateway 实现
+  - 提交 4325833（8 新建文件 562行：ResilienceMode枚举+ResilienceProfile实体+Gateway接口/实现+Repository+DO+V54迁移+Test）；双审查通过（spec ✅ / quality ✅ Approved）；675 全绿（独立复现，+7）
+  - 字段齐全：code/name/mode/enableL2ModelDegradation/degradationMaxDepth/enableSessionAffinity/sessionAffinityTtlMinutes/enablePinnedModel/pinnedModelId/timeout + 审计（继承 BaseEntity）
+  - mode 建枚举 ResilienceMode(STANDARD/STRICT/AGGRESSIVE)，类型安全增强（design doc D5 一致），DO 存 String，与 ApplicationState 模式一致
+  - 迁移 V54（plan 已标注，V40-V53 被占用），H2/PostgreSQL 兼容，code UNIQUE
+  - 接受 Minor：toDataObject mode null 未兜底 STANDARD（业务上总设 mode，4.4 seed 写入，当前不触发）
 - [ ] 4.2 新增 `Cluster` 实体 + `clusters` 表；`Channel.cluster_id` FK（直接建实体，不经软字段，D10）
 - [ ] 4.3 `Application` 挂 `resilience_profile_id`；解析链 Application → Global
 - [ ] 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据

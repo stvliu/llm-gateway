@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.7: P1 单元与集成测试（ChannelFailoverIntegrationTest）
-**OpenSpec task:** 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）
-**阶段:** review（spec+quality 合并审查，纯测试任务）
-**BASE:** fda3f2d
-**实现提交:** f71fe0a（1 新建文件 ChannelFailoverIntegrationTest 296行，7测试 6有效+1@Disabled）
-**RED/GREEN:** 纯测试任务，真实 ErrorClassifier 分流表驱动；668全绿（独立复现，+6）
+**Plan task:** Task 4.1: ResilienceProfile 实体 + 表 + Gateway（P2 首个）
+**OpenSpec task:** 4.1 ResilienceProfile 实体 + 表 + Gateway
+**阶段:** review（spec+quality 合并审查）
+**BASE:** 5df0761
+**实现提交:** 4325833（8 新建文件：ResilienceMode枚举+ResilienceProfile实体+Gateway接口/实现+Repository+DO+V54迁移+Test，562行）
+**RED/GREEN:** 8编译错误(类不存在)→675全绿（独立复现，+7）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 3.7 双审查 agent（后台, sonnet）— 核验 5 类场景覆盖+真实分流表驱动+两对照可行性+与单元测试差异化+范围
+- [派发中] Task 4.1 双审查 agent（后台, sonnet）— 核验字段齐全+mode枚举决策+V54迁移(非V40)+纯洁性+模式一致性+范围
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 
