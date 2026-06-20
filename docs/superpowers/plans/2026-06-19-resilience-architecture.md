@@ -492,23 +492,23 @@ git add -A && git commit -m "test(permission): P-r 权限重构集成测试与�
 
 > 前端任务较大，可作为 P-r 末尾的独立子段，依赖后端 Application CRUD API。若后端 Controller 尚未建，先补建 `adapter/api/ApplicationController.java` + DTO（建/编辑/列表/绑 Key/渠道授权）。
 
-- [ ] **Step 1: 补建后端 ApplicationController + DTO**（若未建）
+- [x] **Step 1: 补建后端 ApplicationController + DTO**（若未建）
 
 参照现有 Controller 模式（Read 一个如 `ChannelController.java`），实现 Application CRUD + 渠道授权绑定 API。
 
-- [ ] **Step 2: 前端页面平移**
+- [x] **Step 2: 前端页面平移**
 
 `teams` 目录重命名为 `applications`，复用现有 `ChannelManageModal`/`UserApiKeyManageModal`，删除 `MemberManageModal`/`ModelVisibilityModal`。
 
-- [ ] **Step 3: 路由/菜单/权限常量**
+- [x] **Step 3: 路由/菜单/权限常量**
 
 更新 `services/api/team.ts`→`application.ts`、`useTeams.ts`→`useApplications.ts`；权限常量增 `APPLICATION_READ/WRITE`。
 
-- [ ] **Step 4: 前端构建验证**
+- [x] **Step 4: 前端构建验证**
 
 Run: `cd gateway-console && npm run build`（或项目实际命令）→ 通过
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat(console): Teams 页改造为 Applications 页并移除成员管理/模型可见性"

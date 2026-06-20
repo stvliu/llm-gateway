@@ -16,7 +16,12 @@
   - 双审查通过（spec ✅ / quality ✅ Approved）；提交 632716b；RED 反向断言+GREEN 4场景+615回归全绿
   - 接受 Minor：场景1/3/4 经 LoadBalanceRouter 终结为单实例，若 PermissionRouter 回归失效有 ~50% 概率假绿（noneMatch 仍提供 50% 检测率）；彻底消除需重构测试绕过 LoadBalanceRouter，超 1.8 范围，接受现状
   - 设计差异（非阻塞）：brief 场景2"migration-default 软兜底"属迁移层 V52/V53（1.6 覆盖），运行时数据面 applicationId==null 直接返回空集，测试按运行时行为断言
-- [ ] 1.9 前端：Teams 页改造为 Applications 页（建/编辑应用、绑 Key、渠道授权平移）；移除成员管理 Modal；移除模型可见性 Modal（D8）；路由 `teams`→`applications`、菜单、权限常量新增 `APPLICATION_READ/WRITE`、清理 team.ts/useTeams.ts
+- [x] 1.9 前端：Teams 页改造为 Applications 页（建/编辑应用、绑 Key、渠道授权平移）；移除成员管理 Modal；移除模型可见性 Modal（D8）；路由 `teams`→`applications`、菜单、权限常量新增 `APPLICATION_READ/WRITE`、清理 team.ts/useTeams.ts
+  - 提交：c73c445（后端 ApplicationController+Service+DTO 7端点，15文件）+ 462a6e3（前端 35文件）+ c94ed1d（修复2 Important）+ b928df0（i18n 补全）
+  - 双审查通过（spec ✅ / quality ✅ Approved）+ 修复复审 ✅；后端 630 全绿（含 ControllerIT 12例），前端 pnpm build 通过（17428模块）
+  - 修复 2 Important：I-1 ApplicationChannelRequest 元素加 @NotNull @Positive 校验（5 RED→GREEN 测试）；I-2 删除改 try/catch+message.success/error 反馈
+  - 接受 Minor：23 个 Channels vitest 失败经 stash 验证为 pre-existing；UserApiKeyManageModal 保留未接入（与原 Teams 页一致）
+  - 越权事件已处理：修复 agent 越权提交用户文档 5189115 并 push，已 rebase 移除+force-with-lease 回退 origin，两文档恢复 untracked 无损
 
 ## 2. P0 修根因（路由与熔断错配）
 
