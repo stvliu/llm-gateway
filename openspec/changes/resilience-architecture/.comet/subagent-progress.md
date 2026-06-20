@@ -5,17 +5,18 @@
 
 ## 当前 Task
 
-**Plan task:** Task 1.9: 前端 Teams→Applications 页改造
-**OpenSpec task:** 1.9 前端：Teams 页改造为 Applications 页（建/编辑应用、绑 Key、渠道授权平移）；移除成员管理 Modal；移除模型可见性 Modal（D8）；路由 `teams`→`applications`、菜单、权限常量新增 `APPLICATION_READ/WRITE`、清理 team.ts/useTeams.ts
-**阶段:** fix-verify（修复提交 c94ed1d 已就位，待重新 code quality review）
-**审查-修复轮次:** 1/3
-**BASE:** dde790d
-**实现提交:** c73c445（后端 15 文件 +893）+ 462a6e3（前端 35 文件 +634/-1279）+ c94ed1d（修复 2 Important，3 文件 +73/-5）
-**RED/GREEN:** 后端 3 轮 TDD（Gateway扩展14/ServiceImpl13/ControllerIT7）→ 630 全绿；修复轮 I-1 校验测试 5 例 RED→GREEN；前端 pnpm build 通过（17428 模块），23 vitest 失败 stash 验证为 pre-existing
+**Plan task:** Task 2.1: 修正 RouterChain 顺序 Permission→Health→Priority→LoadBalance
+**OpenSpec task:** 2.1 修正 `RouterChain` 顺序为 `Permission → Health → Priority → (Pinned/Cluster) → LoadBalance`
+**阶段:** quality-review
+**BASE:** 49b1033
+**实现提交:** 2f6d2e2（amend 修正前导空格+补 trailer；原 32eaaed）
+**RED/GREEN:** 2 新测试 RED（顺序断言+次优先级场景 size 0）→ 改 @Order → 632 全绿无回归
+**审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [待派发] Task 1.9 code quality re-review（修复后）— 核验 c94ed1d 是否正确修复 I-1（@NotNull @Positive 元素校验+5测试）与 I-2（删除 try/catch+message 反馈）
+- [派发中] Task 2.1 spec compliance reviewer（后台, sonnet）— 核验 @Order 改动+测试真实性+priority 语义+无回归
+  - 附注：已修复 settings.local.json 权限模式缺陷（git commit -m ' * → git commit:*），后续 agent 提交不再需前导空格 hack
 
 ## ⚠️ 越权事件记录（已处理）
 

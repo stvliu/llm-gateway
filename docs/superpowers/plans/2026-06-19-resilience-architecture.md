@@ -529,23 +529,23 @@ git add -A && git commit -m "feat(console): Teams 页改造为 Applications 页�
 
 **语义**：当前 Permission(100)→Priority(200)→Health(300)→LoadBalance(9999)。改为 Permission(100)→Health(200)→Priority(300)→LoadBalance(9999)。Pinned/Cluster Router 在 P2 加（@Order 250/350 区间）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `RouterChainTest.java` 增 `routers_executedInOrder`：用 mock Router 带 @Order，断言执行顺序为 Permission→Health→Priority→LoadBalance。验证「次优先级健康渠道被选」场景：两渠道 ch1(priority=1,熔断)、ch2(priority=2,健康)，Health 先过滤掉 ch1，Priority 在剩余 ch2 上选，断言选 ch2。
 
-- [ ] **Step 2: 跑红**
+- [x] **Step 2: 跑红**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=RouterChainTest` → FAIL
 
-- [ ] **Step 3: 调整 @Order**
+- [x] **Step 3: 调整 @Order**
 
 `HealthRouter` @Order(200)，`PriorityRouter` @Order(300)。
 
-- [ ] **Step 4: 跑绿**
+- [x] **Step 4: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=RouterChainTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "fix(routing): RouterChain 顺序改为 Permission→Health→Priority 使次优先级健康渠道可被选"

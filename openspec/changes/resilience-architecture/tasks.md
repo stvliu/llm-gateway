@@ -25,7 +25,11 @@
 
 ## 2. P0 修根因（路由与熔断错配）
 
-- [ ] 2.1 修正 `RouterChain` 顺序为 `Permission → Health → Priority → (Pinned/Cluster) → LoadBalance`
+- [x] 2.1 修正 `RouterChain` 顺序为 `Permission → Health → Priority → (Pinned/Cluster) → LoadBalance`
+  - 提交 2f6d2e2；HealthRouter @Order 300→200、PriorityRouter @Order 200→300，Javadoc 补顺序语义
+  - 双审查通过（spec ✅ / quality ✅ Approved）；RED 2新测试失败→改@Order→632全绿（独立复现 RouterChainTest 6绿）
+  - 测试：顺序断言（反射读 routers 字段，真实 Router 驱动）+ 次优先级健康渠道场景（ch1熔断→选ch2）
+  - 接受 Minor：反射读私有 routers 字段为合理测试内省权衡（审查建议保持现状）
 - [ ] 2.2 统一熔断 key 为 endpointId，`HealthRouter` 改用端点级熔断，与 `KeyFailoverInvoker` 共享熔断器
 - [ ] 2.3 `ProviderHealthTracker` 职责收窄为供应商级粗粒度信号（仅 L2 备选模型可用性）
 - [ ] 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
