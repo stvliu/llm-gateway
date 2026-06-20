@@ -5,24 +5,19 @@
 
 ## 当前 Task
 
-**Plan task:** Task 2.1: 修正 RouterChain 顺序 Permission→Health→Priority→LoadBalance
-**OpenSpec task:** 2.1 修正 `RouterChain` 顺序为 `Permission → Health → Priority → (Pinned/Cluster) → LoadBalance`
-**阶段:** quality-review
-**BASE:** 49b1033
-**实现提交:** 2f6d2e2（amend 修正前导空格+补 trailer；原 32eaaed）
-**RED/GREEN:** 2 新测试 RED（顺序断言+次优先级场景 size 0）→ 改 @Order → 632 全绿无回归
+**Plan task:** Task 2.2: 统一熔断 key 为 endpointId（D11 派生方案）
+**OpenSpec task:** 2.2 统一熔断 key 为 endpointId，`HealthRouter` 改用端点级熔断，与 `KeyFailoverInvoker` 共享熔断器
+**阶段:** quality-review（spec ✅ 通过，协调者独立复现 635 全绿）
+**BASE:** 2c93cea（D11 spec 变更后）
+**实现提交:** 014d8f5（9 文件：4 生产 RoutingRequest/InstanceSelector/RoutingResolver/HealthRouter + 5 测试）
+**RED/GREEN:** 编译失败→PotentialStubbingProblem(channelId 100L vs endpointId 50/60L)→目标24绿+集成4绿+全量635绿
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [阻塞] Task 2.2 设计歧义调查完成，需用户决策（见下方）
-  - 现状：HealthRouter.filter 用 mi.getChannelId() 查熔断；KeyFailoverInvoker 用 ctx.channelEndpointId() 查熔断（已 endpoint 级）
-  - ChannelEndpointCircuitBreakerManager.isAvailable(Long endpointId) 本身已按 endpointId 工作
-  - 冲突：ModelInstance 实体无 endpointId 字段（只有 channelId），model_instances 表无 endpoint_id 列
-  - 冲突：InstanceSelector.select(modelId,applicationId,userId,role,strategy) 不接收 protocol；RouterChain 在 ModelInstance(channel)粒度过滤，无 endpointId 可用
-  - 冲突：endpoint=channel×protocol，一个 channel 多 endpoint；ModelInstance 是 channel 粒度，无法 1:1 对应 endpoint
-  - design doc 目标"HealthRouter(endpointId 熔断)"但未解决数据模型映射
-  - 候选方案：①RoutingRequest 透传 protocol，HealthRouter 用 channelId+protocol 经 EndpointResolver 派生 endpointId 查熔断 ②ModelInstance 加 endpointId 字段+迁移（数据模型不自洽风险）③HealthRouter 暂用 channelId 粒度熔断，注释说明与 endpoint 级差异（部分实现）
+- [派发中] Task 2.2 spec compliance reviewer（后台, sonnet）— 核验 D11 派生方案落地+endpoint派生失败处理+调用点同步+无越权(ModelInstance未加字段/迁移未动)+无回归
+  - D11 决策已记入 design doc（提交 2c93cea），plan Step 已更新为派生方案
+  - 禁止 git add -A、禁止 push、commit 用双引号
 
 ## ⚠️ 越权事件记录（已处理）
 

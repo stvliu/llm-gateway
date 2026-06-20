@@ -564,25 +564,25 @@ git add -A && git commit -m "fix(routing): RouterChain 顺序改为 Permission�
 
 > 现状 `HealthRouter` 用 `mi.getChannelId()`，`KeyFailoverInvoker` 用 `ctx.channelEndpointId()`。**采用 D11 派生方案**（不动 DB/实体）：`RoutingRequest` 透传入站 `protocol`，`HealthRouter` 用 `mi.getChannelId() + protocol` 经 `EndpointResolver` 派生 `endpointId` 后查 `ChannelEndpointCircuitBreakerManager`。不向 ModelInstance/model_instances 加 endpointId 字段（channel 粒度与 endpoint channel×protocol 粒度 1:1 不自洽）。`EndpointResolver.resolve(channelId, protocol)` 已存在（`findByChannelIdAndProtocol`）。protocol 由 `InstanceSelector` 从入站请求透传至 `RoutingRequest`（需确认 InstanceSelector.select 调用方能提供 protocol，或在 RoutingRequest 构造时传入）。
 
-- [ ] **Step 1: 确认 endpointId 来源与 protocol 透传路径**
+- [x] **Step 1: 确认 endpointId 来源与 protocol 透传路径**
 
 Run: codegraph explore `ModelInstance channelEndpointId RoutingContext channelEndpointId EndpointResolver InstanceSelector` 确认：ModelInstance 无 endpointId（只有 channelId）；EndpointResolver.resolve(channelId, protocol) 存在；InstanceSelector.select 签名是否含 protocol（若无，需向上追溯到调用方确认 protocol 来源并透传）。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `HealthRouterTest.java`：同一 channel 的两个 endpoint（不同 protocol），ep1(openai)熔断 ep2(anthropic)健康，断言 HealthRouter 按 endpointId 过滤掉 ep1 实例保留 ep2。验证 HealthRouter 与 KeyFailoverInvoker 用同一 `circuitBreakerManager` bean（共享熔断器实例，可通过 Spring 上下文或构造注入同一实例验证）。
 
-- [ ] **Step 3: 跑红** → FAIL
+- [x] **Step 3: 跑红** → FAIL
 
-- [ ] **Step 4: 改 HealthRouter**
+- [x] **Step 4: 改 HealthRouter**
 
 `RoutingRequest` 增 `protocol` 字段（+构造器/getter）；`HealthRouter` 注入 `EndpointResolver`，`filter` 内对每个 ModelInstance 用 `endpointResolver.resolve(mi.getChannelId(), protocol)` 派生 endpointId，再 `circuitBreakerManager.isAvailable(endpointId)` 过滤（endpoint 不存在或派生失败时按可用处理或跳过，需决策并注释）。`InstanceSelector` 透传 protocol 至 RoutingRequest。
 
-- [ ] **Step 5: 跑绿**
+- [x] **Step 5: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=HealthRouterTest,KeyFailoverInvokerTest` → PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && git commit -m "fix(resilience): 熔断 key 统一为 endpointId，HealthRouter 与 KeyFailoverInvoker 共享熔断器"

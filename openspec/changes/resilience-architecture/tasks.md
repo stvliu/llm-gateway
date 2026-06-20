@@ -30,7 +30,11 @@
   - 双审查通过（spec ✅ / quality ✅ Approved）；RED 2新测试失败→改@Order→632全绿（独立复现 RouterChainTest 6绿）
   - 测试：顺序断言（反射读 routers 字段，真实 Router 驱动）+ 次优先级健康渠道场景（ch1熔断→选ch2）
   - 接受 Minor：反射读私有 routers 字段为合理测试内省权衡（审查建议保持现状）
-- [ ] 2.2 统一熔断 key 为 endpointId，`HealthRouter` 改用端点级熔断，与 `KeyFailoverInvoker` 共享熔断器
+- [x] 2.2 统一熔断 key 为 endpointId，`HealthRouter` 改用端点级熔断，与 `KeyFailoverInvoker` 共享熔断器
+  - 提交 014d8f5（9文件）+ 2c93cea（D11 spec 变更）；D11 派生方案：RoutingRequest 增 protocol，HealthRouter 注入 EndpointResolver 从 channelId+protocol 派生 endpointId 查熔断，不动 DB/实体
+  - 双审查通过（spec ✅ / quality ✅ Approved）；RED PotentialStubbingProblem(channelId vs endpointId)→635全绿（独立复现）
+  - endpoint 派生失败(protocol null/resolve抛异常)保守过滤，Javadoc 详尽
+  - 接受 Minor：每候选实例一次 resolve 查库属 D11 固有代价（非本Task缺陷），后续可加缓存；测试命名/回退路径覆盖为增强建议
 - [ ] 2.3 `ProviderHealthTracker` 职责收窄为供应商级粗粒度信号（仅 L2 备选模型可用性）
 - [ ] 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
 
