@@ -40,7 +40,11 @@
   - grep 确认路由侧（application/proxy/routing/）已无 ProviderHealthTracker 残留调用（Task 2.1/2.2 已改端点级熔断）
   - 保留调用：DegradationServiceImpl(L2 getCachedStatus) + ProviderRegistryHealthIndicator(actuator getAllStatuses)
   - 观察项（非本Task范围）：recordRequestResult/hasHealthyProvider/getStatus 生产无调用（被动推断链路未接入上报），属后续技术债
-- [ ] 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
+- [x] 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
+  - 提交 04bdd8b（HealthRouterTest +18 行 protocol=null 边界测试）；双审查通过（spec ✅ / quality ✅ Approved）；636 全绿（独立复现）
+  - 三点覆盖复核完整：路由顺序(RouterChainTest 反射验证排序)、次优先级渠道被选(secondaryPriorityHealthyChannel)、熔断key一致(HealthRouter/RoutingResolver/KeyFailoverInvoker 同源 endpointResolver.resolve + 三组测试)
+  - 熔断key一致性不补交叉测试（属集成测试范畴，当前同源调用+单例bean结构性保证）
+  - P0 段全部完成（2.1-2.4）
 
 ## 3. P1 L1 Channel 级转移回路（核心）
 

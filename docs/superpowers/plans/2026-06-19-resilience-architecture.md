@@ -620,15 +620,15 @@ git add -A && git commit -m "refactor(resilience): ProviderHealthTracker 收窄�
 **Files:**
 - 补充 `RouterChainTest`（顺序）、`HealthRouterTest`（熔断 key 一致）、次优先级渠道被选场景。
 
-- [ ] **Step 1: 补全 P0 测试**
+- [x] **Step 1: 补全 P0 测试**
 
 确保 2.1/2.2 测试覆盖：路由顺序、次优先级渠道被选、熔断 key 一致。
 
-- [ ] **Step 2: P0 全段回归**
+- [x] **Step 2: P0 全段回归**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "test(resilience): P0 路由顺序与熔断 key 统一单元测试"
