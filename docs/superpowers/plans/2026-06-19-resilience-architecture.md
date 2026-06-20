@@ -729,7 +729,7 @@ git add -A && git commit -m "feat(routing): RoutingResolver 适配候选列表�
 5. NONE：直接抛。
 6. INVALID_REQUEST：绝不转移，直接抛。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `ChannelFailoverInvokerTest.java`：
 - `l1_failoverToNextCandidate`：ch1 抛 AUTH（共因），ch2 成功，断言调 ch2。
@@ -737,17 +737,17 @@ git add -A && git commit -m "feat(routing): RoutingResolver 适配候选列表�
 - `invalidRequest_noFailover`：ch1 抛 INVALID_REQUEST，断言直接抛不试 ch2。
 - `streamOnlyBeforeFirstByte`：流式首字节后失败不换渠道。
 
-- [ ] **Step 2: 跑红** → FAIL（类不存在）
+- [x] **Step 2: 跑红** → FAIL（类不存在）
 
-- [ ] **Step 3: 实现 ChannelFailoverInvoker**
+- [x] **Step 3: 实现 ChannelFailoverInvoker**
 
 按上面语义实现，依赖 Task 3.4 ErrorClassifier。若 3.4 未完成，先建 ErrorClassifier 骨架。
 
-- [ ] **Step 4: 跑绿**
+- [x] **Step 4: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverInvokerTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat(failover): 新增 ChannelFailoverInvoker 实现 L1 候选内逐个试与 L2 降级分流"

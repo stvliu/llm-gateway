@@ -5,17 +5,18 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.4: 错误分流表实现（ErrorClassifier + FailoverDecision）— 调整为先于 3.3 执行，因 3.3 依赖 3.4
-**OpenSpec task:** 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
-**阶段:** review（spec+quality 合并审查）
-**BASE:** 2e8d450
-**实现提交:** 9c8fb88（3 新建文件：FailoverDecision + ErrorClassifier + ErrorClassifierTest）
-**RED/GREEN:** 编译失败→651全绿（独立复现，+10 测试）
+**Plan task:** Task 3.3: 新增 ChannelFailoverInvoker（候选内逐个试，L1/L2/NONE 分流）— P1 核心
+**OpenSpec task:** 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
+**阶段:** fix（quality review 需修复 I2+M1+M2，I1 deferred 到 3.6）
+**审查-修复轮次:** 1/3
+**BASE:** b0988a9
+**实现提交:** acc96f1（2 新建文件 ChannelFailoverInvoker 229行 + Test 260行）
+**RED/GREEN:** 编译失败→661全绿（独立复现，+10 测试）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 3.4 双审查 agent（后台, sonnet）— 核验分流表逐枚举映射准确性+null 处理+测试覆盖+范围+分层
+- [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 
 - [派发中] Task 2.2 spec compliance reviewer（后台, sonnet）— 核验 D11 派生方案落地+endpoint派生失败处理+调用点同步+无越权(ModelInstance未加字段/迁移未动)+无回归
   - D11 决策已记入 design doc（提交 2c93cea），plan Step 已更新为派生方案

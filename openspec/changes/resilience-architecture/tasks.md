@@ -59,7 +59,13 @@
   - 新增 resolveCandidates 返回 List<RoutingContext>（逐个候选解析组装，按 priority 升序）；resolve 重构委托 resolveCandidates.getFirst() 消除 3.1 临时重复
   - RoutingContext 结构不改（plan 选定方案）；调用点暂不切换（3.3 ChannelFailoverInvoker 引入时切换）
   - 接受 Minor：eager 全量解析 N 次查询（候选数小可接受，3.3 需完整列表）
-- [ ] 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
+- [x] 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
+  - 提交 acc96f1（实现 2文件 489行）+ 70b9137（修复 I2+M1+M2）；双审查通过（spec ✅ / quality ✅ Approved 复审）；662 全绿（独立复现，+11 测试）
+  - L1 候选内逐个试（KeyFailoverInvoker 内部 L0 跳过熔断 endpoint）→ProviderException→ErrorClassifier.classify→L1换下一候选/L2全耗尽后进/NONE(含INVALID_REQUEST)直接抛
+  - L2 降级：degrade 返回 fallback→抛携带 fallback 的 ProviderException（L2_DEGRADATION_PREFIX 常量）让上层重路由；ResilienceProfile 用 boolean enableL2ModelDegradation 占位（P2 替换）
+  - 修复 I2：tryL2Degradation try-catch 防御 DegradationServiceImpl.degrade 违背契约抛异常（保留 lastException 上下文）
+  - I1 deferred 到 3.6：L2 隐式契约脆弱，3.6 替换为显式 L2DegradationRequiredException（已 javadoc 标注技术债 + 前缀常量化）
+  - 技术债（非本Task）：DegradationServiceImpl.degrade 违背接口契约（抛 ALL_MODELS_DEGRADED 而非返回 null），待后续修正根因后可移除 3.3 防御 try-catch
 - [x] 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
   - 提交 9c8fb88（3 新建文件 FailoverDecision + ErrorClassifier + ErrorClassifierTest）；双审查通过（spec ✅ / quality ✅ Approved）；651 全绿（独立复现，+10 测试）
   - 分流表：INVALID_REQUEST→NONE，7 共因(AUTHENTICATION_ERROR/RATE_LIMIT_ERROR/QUOTA_EXCEEDED/TIMEOUT_ERROR/UPSTREAM_ERROR/SERVICE_UNAVAILABLE/NETWORK_ERROR)→L1，UNKNOWN_ERROR→L2
