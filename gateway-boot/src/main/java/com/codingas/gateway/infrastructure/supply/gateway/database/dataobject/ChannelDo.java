@@ -53,4 +53,8 @@ public class ChannelDo extends BaseDo {
     @Enumerated(EnumType.STRING)
     @Column(name = "last_health_source", length = 16)
     private ChannelHealthSource lastHealthSource;
+
+    /** 所属故障域 ID（物理 ID，可空，无 FK 约束；关联 clusters.id） */
+    @Column(name = "cluster_id")
+    private Long clusterId;
 }
