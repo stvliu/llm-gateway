@@ -597,19 +597,19 @@ git add -A && git commit -m "fix(resilience): 熔断 key 统一为 endpointId，
 
 **语义（D3）**：`ProviderHealthTracker` 不再驱动 L1 路由（L1 由 endpoint 级熔断驱动）。仅保留供应商级 DOWN 信号，供 L2 备选模型可用性判断。grep 其调用点，移除路由侧使用。
 
-- [ ] **Step 1: grep 调用点**
+- [x] **Step 1: grep 调用点**
 
 Run: `grep -rn "ProviderHealthTracker\|providerHealthTracker" gateway-boot/src/main`
 
-- [ ] **Step 2: 移除路由侧调用，更新 Javadoc**
+- [x] **Step 2: 移除路由侧调用，更新 Javadoc**
 
 Javadoc 改为「供应商级粗粒度健康信号，仅供 L2 备选模型可用性判断，不驱动 L1 路由」。
 
-- [ ] **Step 3: 测试 + 跑绿**
+- [x] **Step 3: 测试 + 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "refactor(resilience): ProviderHealthTracker 收窄为供应商级粗粒度信号，不再驱动 L1 路由"

@@ -35,7 +35,11 @@
   - 双审查通过（spec ✅ / quality ✅ Approved）；RED PotentialStubbingProblem(channelId vs endpointId)→635全绿（独立复现）
   - endpoint 派生失败(protocol null/resolve抛异常)保守过滤，Javadoc 详尽
   - 接受 Minor：每候选实例一次 resolve 查库属 D11 固有代价（非本Task缺陷），后续可加缓存；测试命名/回退路径覆盖为增强建议
-- [ ] 2.3 `ProviderHealthTracker` 职责收窄为供应商级粗粒度信号（仅 L2 备选模型可用性）
+- [x] 2.3 `ProviderHealthTracker` 职责收窄为供应商级粗粒度信号（仅 L2 备选模型可用性）
+  - 提交 936ffab（仅 Javadoc +10/-1，方法逻辑零改动）；双审查通过（spec ✅ / quality ✅ Approved）；635 全绿
+  - grep 确认路由侧（application/proxy/routing/）已无 ProviderHealthTracker 残留调用（Task 2.1/2.2 已改端点级熔断）
+  - 保留调用：DegradationServiceImpl(L2 getCachedStatus) + ProviderRegistryHealthIndicator(actuator getAllStatuses)
+  - 观察项（非本Task范围）：recordRequestResult/hasHealthyProvider/getStatus 生产无调用（被动推断链路未接入上报），属后续技术债
 - [ ] 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
 
 ## 3. P1 L1 Channel 级转移回路（核心）
