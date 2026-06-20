@@ -40,8 +40,8 @@ public class RoutingResolver {
         // 1. 模型匹配
         Model model = modelMatcher.match(modelName);
 
-        // 2. 实例选择（委托 RouterChain，传入 applicationId 作为权限锚点）
-        ModelInstance modelInstance = instanceSelector.select(model.getId(), applicationId, userId, role, strategy);
+        // 2. 实例选择（委托 RouterChain，传入 applicationId 作为权限锚点、protocol 供 HealthRouter 派生 endpointId）
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), applicationId, userId, role, strategy, protocol);
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());

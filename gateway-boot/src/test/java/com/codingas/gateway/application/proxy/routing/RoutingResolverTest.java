@@ -82,7 +82,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -127,7 +127,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.ANTHROPIC);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(modelInstance);
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
@@ -171,7 +171,7 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(modelInstance);
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());

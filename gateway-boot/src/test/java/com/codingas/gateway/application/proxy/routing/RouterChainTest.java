@@ -1,6 +1,8 @@
 package com.codingas.gateway.application.proxy.routing;
 
+import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +31,9 @@ class RouterChainTest {
 
     @Mock
     private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+
+    @Mock
+    private EndpointResolver endpointResolver;
 
     @BeforeEach
     void setUp() {
@@ -137,7 +142,7 @@ class RouterChainTest {
             }
         }
 
-        HealthRouter health = new HealthRouter(circuitBreakerManager);
+        HealthRouter health = new HealthRouter(circuitBreakerManager, endpointResolver);
         PriorityRouter priority = new PriorityRouter();
         // 故意乱序传入，验证 RouterChain 按 @Order 升序排序
         RouterChain chain = new RouterChain(List.of(
@@ -163,20 +168,31 @@ class RouterChainTest {
         ch2.setChannelId(200L);
         ch2.setPriority(2);
 
-        when(circuitBreakerManager.isAvailable(100L)).thenReturn(false);
-        when(circuitBreakerManager.isAvailable(200L)).thenReturn(true);
+        // 按入站协议 OPENAI 派生 endpointId：channel 100→endpoint 150（熔断）；channel 200→endpoint 250（健康）
+        ChannelEndpoint ep1 = new ChannelEndpoint();
+        ep1.setId(150L);
+        ep1.setChannelId(100L);
+        ep1.setProtocol(Protocol.OPENAI);
+        ChannelEndpoint ep2 = new ChannelEndpoint();
+        ep2.setId(250L);
+        ep2.setChannelId(200L);
+        ep2.setProtocol(Protocol.OPENAI);
+        when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(ep1);
+        when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(ep2);
+        when(circuitBreakerManager.isAvailable(150L)).thenReturn(false);
+        when(circuitBreakerManager.isAvailable(250L)).thenReturn(true);
 
         // 真实 Health + Priority + LoadBalance（负载均衡桩：返回唯一候选）
         LoadBalance selectSingle = instances -> instances.isEmpty() ? null : instances.getFirst();
         LoadBalanceRouter loadBalance = new LoadBalanceRouter(
                 Map.of("weightedRandomLoadBalance", selectSingle));
         RouterChain chain = new RouterChain(List.of(
-                new HealthRouter(circuitBreakerManager),
+                new HealthRouter(circuitBreakerManager, endpointResolver),
                 new PriorityRouter(),
                 loadBalance));
 
         List<ModelInstance> result = chain.filter(List.of(ch1, ch2),
-                new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED));
+                new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI));
 
         // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；LoadBalance 选 ch2
         assertThat(result).hasSize(1);

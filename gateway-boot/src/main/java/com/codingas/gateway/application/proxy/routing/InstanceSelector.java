@@ -2,6 +2,7 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import lombok.RequiredArgsConstructor;
@@ -27,18 +28,20 @@ public class InstanceSelector {
      * @param userId        用户 ID
      * @param role          用户角色
      * @param strategy      路由策略
+     * @param protocol      入站协议（透传至 RoutingRequest 供 HealthRouter 按 channelId 派生 endpointId）
      * @return 选中的 ModelInstance
      * @throws ResourceNotFoundException 无可用实例
      */
-    public ModelInstance select(Long modelId, Long applicationId, Long userId, String role, RoutingStrategy strategy) {
+    public ModelInstance select(Long modelId, Long applicationId, Long userId, String role,
+                                RoutingStrategy strategy, Protocol protocol) {
         // 获取所有活跃实例（按 priority 升序）
         List<ModelInstance> allInstances = modelInstanceGateway.findActiveByModelIdOrderByPriority(modelId);
         if (allInstances.isEmpty()) {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
 
-        // 委托 RouterChain 执行过滤链（applicationId 作为权限锚点透传至 RoutingRequest）
-        RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy);
+        // 委托 RouterChain 执行过滤链（applicationId 作为权限锚点、protocol 供 HealthRouter 派生 endpointId）
+        RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy, protocol);
         List<ModelInstance> result = routerChain.filter(allInstances, request);
 
         if (result.isEmpty()) {

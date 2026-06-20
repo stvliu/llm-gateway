@@ -4,10 +4,13 @@ import com.codingas.gateway.application.proxy.routing.RouterChain;
 import com.codingas.gateway.application.proxy.routing.RoutingRequest;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.ChannelState;
+import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.infrastructure.application.gateway.database.dataobject.ApplicationChannelDo;
 import com.codingas.gateway.infrastructure.application.gateway.database.repository.ApplicationChannelRepository;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelDo;
+import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelEndpointDo;
+import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelEndpointRepository;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -55,6 +58,9 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     @Autowired
     private ChannelRepository channelRepository;
 
+    @Autowired
+    private ChannelEndpointRepository channelEndpointRepository;
+
     private Long ch1Id;
     private Long ch2Id;
     private ModelInstance miCh1;
@@ -64,6 +70,7 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     void setupPermissionData() {
         // 清理上一测试方法残留（H2 内存库跨方法持久）
         applicationChannelRepository.deleteAll();
+        channelEndpointRepository.deleteAll();
         channelRepository.deleteAll();
 
         // ch1 + ch2 均为 ACTIVE，都挂模型 M
@@ -80,6 +87,19 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
         ch2.setState(ChannelState.ACTIVE.name());
         ch2.setTimeout(30);
         ch2Id = channelRepository.save(ch2).getId();
+
+        // 为 ch1/ch2 各建一个 OPENAI 端点，供真实 HealthRouter 派生 endpointId（新鲜熔断器视为可用）
+        ChannelEndpointDo ep1 = new ChannelEndpointDo();
+        ep1.setChannelId(ch1Id);
+        ep1.setProtocol(Protocol.OPENAI);
+        ep1.setEndpointUrl("https://ch1.example.com/v1");
+        channelEndpointRepository.save(ep1);
+
+        ChannelEndpointDo ep2 = new ChannelEndpointDo();
+        ep2.setChannelId(ch2Id);
+        ep2.setProtocol(Protocol.OPENAI);
+        ep2.setEndpointUrl("https://ch2.example.com/v1");
+        channelEndpointRepository.save(ep2);
 
         // 应用 A 授权 ch1；应用 B 授权 ch2（权限锚点切换的核心数据）
         ApplicationChannelDo appACh1 = new ApplicationChannelDo();
@@ -113,7 +133,7 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     @Test
     @DisplayName("场景1：应用 A 授权 ch1，请求模型 M（ch1+ch2 都挂 M），只能路由到 ch1")
     void appA_routesOnlyToCh1() {
-        RoutingRequest request = new RoutingRequest(MODEL_M, APP_A, USER_ID, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(MODEL_M, APP_A, USER_ID, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = routerChain.filter(List.of(miCh1, miCh2), request);
 
         // 权限锚点 applicationId=APP_A → ApplicationChannel 查询仅返回 ch1 → ch2 被过滤
@@ -127,7 +147,7 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     void noApplicationId_returnsEmpty() {
         // 运行时数据面 PermissionRouter 对 applicationId==null 直接返回空集。
         // brief 场景2所述"migration-default 软兜底"属迁移层（V52/V53），本测试针对运行时数据面断言。
-        RoutingRequest request = new RoutingRequest(MODEL_M, null, USER_ID, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(MODEL_M, null, USER_ID, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = routerChain.filter(List.of(miCh1, miCh2), request);
 
         assertThat(result).isEmpty();
@@ -137,7 +157,7 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     @DisplayName("场景3：ADMIN Key 数据面不跳过，仍按 ApplicationChannel 过滤（D9 无特权旁路）")
     void admin_doesNotSkipFiltering() {
         // role=ADMIN + applicationId=APP_A：PermissionRouter 不因 ADMIN 跳过，仍按 ApplicationChannel 过滤
-        RoutingRequest request = new RoutingRequest(MODEL_M, APP_A, USER_ID, "ADMIN", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(MODEL_M, APP_A, USER_ID, "ADMIN", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = routerChain.filter(List.of(miCh1, miCh2), request);
 
         assertThat(result).isNotEmpty();
@@ -149,7 +169,7 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     @Test
     @DisplayName("场景4：应用 B 授权 ch2，请求模型 M，只能路由到 ch2（对照组，验证锚点切换对称性）")
     void appB_routesOnlyToCh2() {
-        RoutingRequest request = new RoutingRequest(MODEL_M, APP_B, USER_ID, "USER", RoutingStrategy.WEIGHTED);
+        RoutingRequest request = new RoutingRequest(MODEL_M, APP_B, USER_ID, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = routerChain.filter(List.of(miCh1, miCh2), request);
 
         assertThat(result).isNotEmpty();
