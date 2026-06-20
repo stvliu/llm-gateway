@@ -105,7 +105,12 @@
   - 迁移 V55（plan V41 已被占用），clusters 表 + ALTER channels ADD cluster_id，物理 ID 无 FK，H2/PostgreSQL 兼容
   - 模式与 Task 4.1 ResilienceProfile 一致
   - 接受 Minor：code UNIQUE + 额外索引冗余（与 V54 一致）；toEntity healthStatus null 防御分支未覆盖（DO nullable=false 不触发）
-- [ ] 4.3 `Application` 挂 `resilience_profile_id`；解析链 Application → Global
+- [x] 4.3 `Application` 挂 `resilience_profile_id`；解析链 Application → Global
+  - 提交 8488d7b（2 新建文件 ResilienceResolver + Test，234行）；双审查通过（spec ✅ / quality ✅ Approved）；688 全绿（独立复现，+5）
+  - ResilienceResolver.resolve(applicationId)→ResilienceProfile：Application 画像优先，无则回退 default(code='default') 全局画像
+  - Application.resilienceProfileId 已在 Task 1.1 预留（未改实体）
+  - 3 边界处理：Application 不存在 fail-fast / 画像被删回退 default / default 不存在 fail-fast
+  - 接受 Minor：异常 code 字面量未抽常量（与项目既有风格一致）；双重故障未单测（代码汇合单点等价覆盖）
 - [ ] 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
 - [ ] 4.5 容灾模式档位 → Profile 字段自动推导
 - [ ] 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）

@@ -946,17 +946,17 @@ git add -A && git commit -m "feat(resilience): Cluster 故障域实体与 Channe
 - Consumes: `ApplicationGateway.findById`、`ResilienceProfileGateway.findById/findByCode`
 - Produces: `ResilienceResolver.resolve(Long applicationId) → ResilienceProfile`（Application 画像为主，无则回退全局 `default` 画像）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `ResilienceResolverTest.java`：
 - `applicationHasProfile_returnsAppProfile`：Application 挂 profile=5，返回 profile 5。
 - `applicationNoProfile_returnsGlobalDefault`：Application 无画像，返回 code='default' 全局画像。
 
-- [ ] **Step 2: 跑红 → 实现 → 跑绿**
+- [x] **Step 2: 跑红 → 实现 → 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ResilienceResolverTest` → PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): ResilienceResolver 解析链 Application→Global"
