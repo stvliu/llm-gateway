@@ -111,7 +111,13 @@
   - Application.resilienceProfileId 已在 Task 1.1 预留（未改实体）
   - 3 边界处理：Application 不存在 fail-fast / 画像被删回退 default / default 不存在 fail-fast
   - 接受 Minor：异常 code 字面量未抽常量（与项目既有风格一致）；双重故障未单测（代码汇合单点等价覆盖）
-- [ ] 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
+- [x] 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
+  - 提交 f9f9788（1 迁移文件 V56__seed_resilience_profiles.sql，112行）；双审查通过（spec ✅ / quality ✅ Approved）；688 全绿（独立复现，V56 seed 迁移成功不重复）
+  - 纯 SQL 迁移（非 DataLoader，保证生产也有 default 画像）；4 档位 default/strict/aggressive/batch
+  - 字段值三方权威源交叉核验：ResilienceMode Javadoc + 容灾管理范式第四节 + 容灾方案设计第六节
+  - default code='default'（ResilienceResolver 回退依赖）；幂等 INSERT...WHERE NOT EXISTS（V52 约定）
+  - aggressive 深度 3（非 plan 的 5，以代码 Javadoc 为权威，plan 有误）
+  - 接受 Minor：审计字段 created_by=0（V52 用 NULL，V56 显式 0 有文档）；strict pinned_model 未预填（依赖部署 model id，管理员配置）
 - [ ] 4.5 容灾模式档位 → Profile 字段自动推导
 - [ ] 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
 - [ ] 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；`ClusterAffinityRouter`（就近/按域锁定）

@@ -970,15 +970,15 @@ git add -A && git commit -m "feat(resilience): ResilienceResolver 解析链 Appl
 
 **档位（D5）**：default/strict/aggressive/batch。
 
-- [ ] **Step 1: 写 seed SQL**
+- [x] **Step 1: 写 seed SQL**
 
 V42 插入四个预设档位，字段值按 design D5 推导（STANDARD/STRICT/AGGRESSIVE + BATCH 为 STANDARD 的 QUEUED 变体）。
 
-- [ ] **Step 2: 测试 seed 幂等**
+- [x] **Step 2: 测试 seed 幂等**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿（seed 不重复）
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): 预设容灾档位 default/strict/aggressive/batch 初始化数据"

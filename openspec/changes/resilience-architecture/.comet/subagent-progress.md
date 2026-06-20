@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.3: ResilienceResolver 解析链 Application→Global
-**OpenSpec task:** 4.3 `Application` 挂 `resilience_profile_id`；解析链 Application → Global
+**Plan task:** Task 4.4: 预设档位初始化数据（default/strict/aggressive/batch）
+**OpenSpec task:** 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
 **阶段:** review（spec+quality 合并审查）
-**BASE:** 38e8405
-**实现提交:** 8488d7b（2 新建文件 ResilienceResolver 81行 + Test 153行）
-**RED/GREEN:** 编译错误(类不存在)→688全绿（独立复现，+5）
+**BASE:** daf54ba
+**实现提交:** f9f9788（1 迁移文件 V56__seed_resilience_profiles.sql，112行）
+**RED/GREEN:** seed 迁移成功不重复；688全绿（独立复现，V56 执行成功）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 4.3 双审查 agent（后台, sonnet）— 核验解析链+3边界处理合理性+依赖+测试+范围
+- [派发中] Task 4.4 双审查 agent（后台, sonnet）— 核验 4档位+default code+字段推导(ResilienceMode Javadoc权威)+V56+幂等+范围
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 
