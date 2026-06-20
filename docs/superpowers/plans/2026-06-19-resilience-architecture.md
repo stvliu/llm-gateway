@@ -770,25 +770,25 @@ git add -A && git commit -m "feat(failover): 新增 ChannelFailoverInvoker 实�
 - 其余 → L2（模型能力问题，换模型）
 > 具体 ProviderErrorType 枚举值以 `domain/supply/enums/ProviderErrorType.java` 为准，实现前 Read 确认。
 
-- [ ] **Step 1: 确认 ProviderErrorType 枚举值**
+- [x] **Step 1: 确认 ProviderErrorType 枚举值**
 
 Run: codegraph explore `ProviderErrorType enum`。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `ErrorClassifierTest.java`：逐个 ProviderErrorType 断言分流结果（INVALID_REQUEST→NONE，AUTH→L1 等）。
 
-- [ ] **Step 3: 跑红** → FAIL
+- [x] **Step 3: 跑红** → FAIL
 
-- [ ] **Step 4: 实现**
+- [x] **Step 4: 实现**
 
 `ErrorClassifier` 用 switch/Map 映射，中文注释分流理由。
 
-- [ ] **Step 5: 跑绿**
+- [x] **Step 5: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ErrorClassifierTest` → PASS
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add -A && git commit -m "feat(failover): 错误分流表实现 ProviderErrorType→L1/L2/NONE"

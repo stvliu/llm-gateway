@@ -60,7 +60,11 @@
   - RoutingContext 结构不改（plan 选定方案）；调用点暂不切换（3.3 ChannelFailoverInvoker 引入时切换）
   - 接受 Minor：eager 全量解析 N 次查询（候选数小可接受，3.3 需完整列表）
 - [ ] 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
-- [ ] 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
+- [x] 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
+  - 提交 9c8fb88（3 新建文件 FailoverDecision + ErrorClassifier + ErrorClassifierTest）；双审查通过（spec ✅ / quality ✅ Approved）；651 全绿（独立复现，+10 测试）
+  - 分流表：INVALID_REQUEST→NONE，7 共因(AUTHENTICATION_ERROR/RATE_LIMIT_ERROR/QUOTA_EXCEEDED/TIMEOUT_ERROR/UPSTREAM_ERROR/SERVICE_UNAVAILABLE/NETWORK_ERROR)→L1，UNKNOWN_ERROR→L2
+  - null→NONE（不掩盖编程错误），EnumMap.getOrDefault 兜底 L2（防御新增枚举）
+  - 接受 Minor：测试类 Javadoc 简写(SERVER_ERROR)与实际枚举名不一致，仅文档瑕疵不影响逻辑
 - [ ] 3.5 流式转移边界：只在首字节前转移
 - [ ] 3.6 `DegradationInvoker` 退场或降级为内部组件
 - [ ] 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）

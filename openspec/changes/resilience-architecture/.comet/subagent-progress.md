@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.2: RoutingResolver 适配候选列表（新增 resolveCandidates 返回 List<RoutingContext>）
-**OpenSpec task:** 3.2 `InstanceSelector.select` 改为返回候选列表；`RoutingResolver` 适配
+**Plan task:** Task 3.4: 错误分流表实现（ErrorClassifier + FailoverDecision）— 调整为先于 3.3 执行，因 3.3 依赖 3.4
+**OpenSpec task:** 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
 **阶段:** review（spec+quality 合并审查）
-**BASE:** e20a743
-**实现提交:** ef4b2f2（2 文件 RoutingResolver + RoutingResolverTest）
-**RED/GREEN:** 编译失败找不到 resolveCandidates→641全绿（独立复现，+3 测试）
+**BASE:** 2e8d450
+**实现提交:** 9c8fb88（3 新建文件：FailoverDecision + ErrorClassifier + ErrorClassifierTest）
+**RED/GREEN:** 编译失败→651全绿（独立复现，+10 测试）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 3.2 双审查 agent（后台, sonnet）— 核验 resolveCandidates 实现+resolve 重构委托+RoutingContext 未改+调用点未切换合理性+测试+范围
+- [派发中] Task 3.4 双审查 agent（后台, sonnet）— 核验分流表逐枚举映射准确性+null 处理+测试覆盖+范围+分层
 
 - [派发中] Task 2.2 spec compliance reviewer（后台, sonnet）— 核验 D11 派生方案落地+endpoint派生失败处理+调用点同步+无越权(ModelInstance未加字段/迁移未动)+无回归
   - D11 决策已记入 design doc（提交 2c93cea），plan Step 已更新为派生方案
