@@ -40,6 +40,7 @@ canonical_spec: openspec
 - **D8**: 模型从属渠道，砍模型可见性。废弃现有团队模型可见性机制。
 - **D9**: ADMIN 退管理面，数据面 PermissionRouter 无跳过。
 - **D10**: 合并 P2/P3，直接建 Cluster 实体，不经软字段。
+- **D11**: 熔断 key 统一为 endpointId 采用「运行时派生」方案，不动 DB/实体。RouterChain 在 ModelInstance（channel 粒度）过滤时未绑定 endpoint，故 `RoutingRequest` 透传入站 `protocol`，`HealthRouter` 用 `channelId + protocol` 经 `EndpointResolver` 派生 `endpointId` 后查 `ChannelEndpointCircuitBreakerManager`，与 `KeyFailoverInvoker`（用 `RoutingContext.channelEndpointId()`）共享同一 manager bean。不向 `ModelInstance`/`model_instances` 表加 endpointId 字段（channel 粒度与 channel×protocol 端点粒度 1:1 不自洽）。
 
 ## Risks / Trade-offs
 

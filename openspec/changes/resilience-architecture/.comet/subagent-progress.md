@@ -15,8 +15,14 @@
 
 ## 派发记录
 
-- [派发中] Task 2.1 spec compliance reviewer（后台, sonnet）— 核验 @Order 改动+测试真实性+priority 语义+无回归
-  - 附注：已修复 settings.local.json 权限模式缺陷（git commit -m ' * → git commit:*），后续 agent 提交不再需前导空格 hack
+- [阻塞] Task 2.2 设计歧义调查完成，需用户决策（见下方）
+  - 现状：HealthRouter.filter 用 mi.getChannelId() 查熔断；KeyFailoverInvoker 用 ctx.channelEndpointId() 查熔断（已 endpoint 级）
+  - ChannelEndpointCircuitBreakerManager.isAvailable(Long endpointId) 本身已按 endpointId 工作
+  - 冲突：ModelInstance 实体无 endpointId 字段（只有 channelId），model_instances 表无 endpoint_id 列
+  - 冲突：InstanceSelector.select(modelId,applicationId,userId,role,strategy) 不接收 protocol；RouterChain 在 ModelInstance(channel)粒度过滤，无 endpointId 可用
+  - 冲突：endpoint=channel×protocol，一个 channel 多 endpoint；ModelInstance 是 channel 粒度，无法 1:1 对应 endpoint
+  - design doc 目标"HealthRouter(endpointId 熔断)"但未解决数据模型映射
+  - 候选方案：①RoutingRequest 透传 protocol，HealthRouter 用 channelId+protocol 经 EndpointResolver 派生 endpointId 查熔断 ②ModelInstance 加 endpointId 字段+迁移（数据模型不自洽风险）③HealthRouter 暂用 channelId 粒度熔断，注释说明与 endpoint 级差异（部分实现）
 
 ## ⚠️ 越权事件记录（已处理）
 
