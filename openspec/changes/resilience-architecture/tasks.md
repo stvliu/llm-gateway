@@ -131,7 +131,14 @@
   - 审查修复 Important：RedisSessionAffinityStore @ConditionalOnProperty 原只判 session.affinity.enabled（matchIfMissing=true），引入 redis starter 后 StringRedisTemplate 无条件注册致开发/测试误装配 Redis 而非 InMemory（测试全绿因绕过 Spring 上下文掩盖偏差）；改为判 spring.data.redis.enabled=true（去 matchIfMissing），InMemory @ConditionalOnMissingBean 兜底不变
   - 集成测试 ChannelHealthRepositoryIT（完整上下文）2 过验证 Redis 未启用时装配 InMemory 不崩；回归 ResilienceProfileApplierTest 6 过
   - 接受 Minor：isMillis 标记位构造器可读性差（建议静态工厂，非阻塞）
-- [ ] 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；`ClusterAffinityRouter`（就近/按域锁定）
+- [x] 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；`ClusterAffinityRouter`（就近/按域锁定）
+  - 提交（2 新建实现 + 2 新建测试）；双审查通过（spec ✅ / quality ✅，executing-plans 主会话自审——后台 subagent 系统性损坏，已切 build_mode=executing-plans）
+  - ClusterHealthAggregator：域内 endpoint 熔断状态聚合，全熔断→DOWN/全可用→HEALTHY/部分→DEGRADED/任一 HALF_OPEN→解除 DOWN；只读查 CircuitBreaker.getState() 避免 isAvailable 的 OPEN→HALF_OPEN 副作用；纯计算不写库
+  - ClusterAffinityRouter(@Order 250)：DOWN 域实例过滤触发跨域转移，DEGRADED 保留；ChannelGateway.findByIds 批量取 clusterId 分组；isForce=false 保留兜底
+  - RED: 编译失败（类不存在）→ GREEN: 13 测试（Aggregator 6 + Router 7）全过
+  - 集成测试 ChannelHealthRepositoryIT 确认 5 Router 顺序 Permission100→Health200→ClusterAffinity250→Priority300→LoadBalance9999；RouterChainTest 6 过
+  - 设计决策：plan "Modify Cluster 实体 healthStatus 更新逻辑" 判定为聚合器纯计算不写库（避免每次路由查库写库），Cluster.healthStatus 字段已有 setter 供上层持久化；就近路由待 4.9（RoutingRequest 无 region）
+  - 接受 Minor：同域多实例多次 endpointResolver.resolve 属 D11 固有代价（与 HealthRouter 同模式），后续可加缓存
 - [ ] 4.8 `DegradationService.degrade(reason)` 按 reason 分流，L2 受画像门禁
 - [ ] 4.9 `RoutingRequest` 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
 - [ ] 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）

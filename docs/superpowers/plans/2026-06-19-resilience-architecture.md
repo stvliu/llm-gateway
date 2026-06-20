@@ -1050,15 +1050,15 @@ git add -A && git commit -m "feat(resilience): SessionAffinityStore Redis/InMemo
 
 **语义**：域内所有渠道熔断 → Cluster DOWN，路由跳过整域；域内任一渠道 half-open 成功 → 解除 DOWN。ClusterAffinityRouter 就近/按域锁定。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `ClusterHealthAggregatorTest.java`：域内全熔断→DOWN；任一 half-open 成功→解除。
 
-- [ ] **Step 2: 跑红 → 实现 → 跑绿**
+- [x] **Step 2: 跑红 → 实现 → 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ClusterHealthAggregatorTest,ClusterAffinityRouterTest` → PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): Cluster 域级健康聚合与亲和路由"

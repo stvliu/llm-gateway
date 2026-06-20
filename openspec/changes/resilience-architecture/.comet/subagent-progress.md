@@ -5,19 +5,25 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.6: 会话亲和 SessionAffinityStore（Redis/InMemory 双实现）— 派发中
-**OpenSpec task:** 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
-**阶段:** fix（审查后修复轮次 1/3）
-**BASE:** 67ba94b
-**实现提交:** 2038aac（6 文件 +456 行）
-**RED:** expiredTtl_returnsNull 失败（构造参数单位分钟vs秒不匹配）→ 加包级毫秒构造器
-**GREEN:** SessionAffinityStoreTest 11 全过；回归 test-compile SUCCESS + ResilienceProfileApplierTest 6 过
-**审查方式:** 后台 spec reviewer 三连损坏退出（ae31f0ca9821d9dc7/afa24b394ab3f9fd3/a7928fe49f9c0e93 均异常返回乱码），用户授权主会话代行 spec+quality 双审查
-**审查结论:** NEEDS_FIX（1 Important + Minor 接受）
-  - Important：RedisSessionAffinityStore @ConditionalOnProperty 只判 session.affinity.enabled，未判 spring.data.redis.enabled；引入 redis starter 后 StringRedisTemplate 无条件注册，开发/测试(redis.enabled=false)仍装配 Redis 而非 InMemory，违背 spec。测试全绿仅因直接 new InMemory 绕过 Spring 上下文，掩盖偏差
-  - Minor 接受：isMillis 标记位构造器可读性差（建议静态工厂，非阻塞）；@Component+@ConditionalOnMissingBean 双入口逻辑依赖注册顺序
-**审查-修复轮次:** 1/3
-**修复 agent agentId:** ae31806ab632cd55e（后台 sonnet，2026-06-21 派发）— 改 Redis @ConditionalOnProperty 判 spring.data.redis.enabled=true（去 matchIfMissing），InMemory 兜底不变；须跑集成测试验证 Redis 未启用时上下文装配 InMemory 不崩
+**Plan task:** Task 4.7: Cluster 级健康聚合 + ClusterAffinityRouter — implementer 派发中
+**OpenSpec task:** 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；ClusterAffinityRouter（就近/按域锁定）
+**阶段:** implementing
+**BASE:** 4df308c（Task 4.6 勾选提交）
+**审查-修复轮次:** 0/3
+**implementer agentId:** a22067a86225804bb（后台 sonnet，2026-06-21 派发）
+**关键设计嘱托:**
+- ClusterHealthAggregator(application/proxy/routing)：按域内 endpoint 熔断状态聚合 HEALTHY/DEGRADED/DOWN（全熔断→DOWN/全可用→HEALTHY/部分→DEGRADED，任一 half-open 成功→解除 DOWN）；纯计算不写库
+- ClusterAffinityRouter(@Order 250，Health200 后 Priority300 前)：DOWN 域实例过滤，DEGRADED 保留
+- ModelInstance 无 clusterId，通过 channelId 查 Channel.clusterId（已确认 Channel 有 clusterId 字段）
+- 实体纯洁：Cluster 不加业务逻辑，聚合放 application 层
+- 路由顺序接入后跑 RouterChainTest 确认 Permission100→Health200→ClusterAffinity250→Priority300→LoadBalance9999
+
+## 已完成 Task
+
+- Task 4.6: complete (2038aac 实现 + 8e5c199 修复, 4df308c 勾选, 双审查通过——主会话代行)
+  - 审查修复 Important：Redis 装配条件改判 spring.data.redis.enabled，开发/测试走 InMemory
+  - 后台 reviewer 三连损坏退出，主会话代行 spec+quality 双审查（用户授权）
+  - Minor 接受：isMillis 标记位构造器可读性差
 
 ## 派发记录
 
