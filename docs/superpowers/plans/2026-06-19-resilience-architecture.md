@@ -993,15 +993,15 @@ git add -A && git commit -m "feat(resilience): 预设容灾档位 default/strict
 **Interfaces:**
 - Produces: `ResilienceProfileApplier.apply(ResilienceProfile base, String mode) → ResilienceProfile`（按档位覆盖专家字段）。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `ResilienceProfileApplierTest.java`：mode=STRICT 断言 enableL2ModelDegradation=false 等；STANDARD 断言宽松值。
 
-- [ ] **Step 2: 跑红 → 实现 → 跑绿**
+- [x] **Step 2: 跑红 → 实现 → 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ResilienceProfileApplierTest` → PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): 容灾模式档位自动推导画像专家字段"

@@ -5,17 +5,21 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.4: 预设档位初始化数据（default/strict/aggressive/batch）
-**OpenSpec task:** 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
-**阶段:** review（spec+quality 合并审查）
-**BASE:** daf54ba
-**实现提交:** f9f9788（1 迁移文件 V56__seed_resilience_profiles.sql，112行）
-**RED/GREEN:** seed 迁移成功不重复；688全绿（独立复现，V56 执行成功）
+**Plan task:** Task 4.5: 容灾模式档位 → Profile 字段自动推导（ResilienceProfileApplier）
+**OpenSpec task:** 4.5 容灾模式档位 → Profile 字段自动推导
+**阶段:** implementing
+**BASE:** ea62f4e
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 4.4 双审查 agent（后台, sonnet）— 核验 4档位+default code+字段推导(ResilienceMode Javadoc权威)+V56+幂等+范围
+- [派发中] Task 4.5 implementer（后台, sonnet）— ResilienceProfileApplier 档位推导
+  - ResilienceProfileApplier.apply(ResilienceProfile base, ResilienceMode mode) → ResilienceProfile（按档位覆盖专家字段）
+  - mode 参数优先用 ResilienceMode 枚举（4.1 已建，plan 写 String 过时）
+  - 字段推导与 4.4 seed 一致（ResilienceMode Javadoc + 范式文档）：STANDARD 浅降级/STRICT L2关闭/AGGRESSIVE 深降级
+  - 与 4.4 区别：4.4 是初始化 seed，4.5 是运行时按 mode 应用档位（管理员选档位自动填充）
+  - TDD：mode=STRICT 断言 enableL2=false 等；STANDARD 断言宽松值；RED→实现→GREEN+全量回归
+  - 禁止 git add -A、禁止 push、commit 用双引号
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 

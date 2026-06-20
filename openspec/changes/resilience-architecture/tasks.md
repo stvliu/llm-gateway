@@ -118,7 +118,12 @@
   - default code='default'（ResilienceResolver 回退依赖）；幂等 INSERT...WHERE NOT EXISTS（V52 约定）
   - aggressive 深度 3（非 plan 的 5，以代码 Javadoc 为权威，plan 有误）
   - 接受 Minor：审计字段 created_by=0（V52 用 NULL，V56 显式 0 有文档）；strict pinned_model 未预填（依赖部署 model id，管理员配置）
-- [ ] 4.5 容灾模式档位 → Profile 字段自动推导
+- [x] 4.5 容灾模式档位 → Profile 字段自动推导
+  - 提交（2 新建文件 ResilienceProfileApplier + Test，272行）；双审查通过（spec ✅ / quality ✅ Approved，因 API 配额受限由协调者代审）；694 全绿（独立复现，+6）
+  - ResilienceProfileApplier.apply(base, ResilienceMode)→ResilienceProfile：按档位覆盖专家字段(mode/enableL2/depth/timeout)，保留 base 非专家字段，不可变(copyBase 新对象)
+  - 推导与 V56 seed + ResilienceMode Javadoc 一致：STANDARD 浅降级depth2/STRICT L2关闭depth0timeout60/AGGRESSIVE 深降级depth3timeout15
+  - mode 用 ResilienceMode 枚举（4.1 已建，类型安全）；常量化、Javadoc 详尽
+  - 测试 6 个：3 档位推导 + base 保留 + 不可变(doesNotMutateBase/returnsNewInstance)
 - [ ] 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
 - [ ] 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；`ClusterAffinityRouter`（就近/按域锁定）
 - [ ] 4.8 `DegradationService.degrade(reason)` 按 reason 分流，L2 受画像门禁
