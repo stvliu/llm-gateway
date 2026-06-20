@@ -856,7 +856,7 @@ git add -A && git commit -m "refactor(failover): DegradationInvoker 退场，Cha
 **Files:**
 - Test: `integration/ChannelFailoverIntegrationTest.java`
 
-- [ ] **Step 1: 写集成测试**
+- [x] **Step 1: 写集成测试**
 
 场景：
 - L1 转移：ch1 共因故障→ch2 成功。
@@ -865,11 +865,11 @@ git add -A && git commit -m "refactor(failover): DegradationInvoker 退场，Cha
 - 跨 Cluster 不越权（P2 Cluster 落地后补，此处先占位）。
 - 两对照场景：Claude Code 禁降级（profile 关 L2）/ 客服全开。
 
-- [ ] **Step 2: P1 全段回归**
+- [x] **Step 2: P1 全段回归**
 
 Run: `./mvnw -pl gateway-boot -am test` → 全绿
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "test(failover): P1 L1 转移与错误分流端到端集成测试"

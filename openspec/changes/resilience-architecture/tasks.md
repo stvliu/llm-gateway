@@ -83,7 +83,12 @@
   - 防递归双保险：degradedModels 集合去重 + MAX_DEGRADATION_DEPTH=5 深度上限（修复原 DegradationInvoker 递归栈溢出隐患）
   - DegradationInvoker 完全删除（职责被 ChannelFailoverInvoker + ChatDispatchServiceImpl 覆盖）
   - 技术债（P2 处理）：I1 invoke/invokeStream L2 重路由重复逻辑待 P2 抽取通用模板；enableL2ModelDegradation=true 硬编码 + MAX_DEGRADATION_DEPTH=5 待 P2 ResilienceProfile 配置化；callLog 审计精度偏差（既有行为非回归）
-- [ ] 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）
+- [x] 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）
+  - 提交 f71fe0a（1 新建文件 ChannelFailoverIntegrationTest 296行，7测试 6有效+1@Disabled）；双审查通过（spec ✅ / quality ✅ Approved）；668 全绿（独立复现，+6）
+  - 5 类场景全覆盖：L1转移/错误分流/流式首字节前后/两对照(enableL2 false禁降级/true客服全开)/跨Cluster@Disabled占位
+  - 差异化价值：真实 ErrorClassifier 分流表驱动（vs 单元测试 mock 决策），捕获分流表改错类回归
+  - 两对照直接测 ChannelFailoverInvoker boolean 参数（绕过 ChatDispatchServiceImpl 硬编码 true 的 P2 依赖）
+  - P1 段全部完成（3.1-3.7）
 
 ## 4. P2 应用级容灾画像 + Cluster 故障域分组（原 P2/P3 合并，D10）
 
