@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -153,6 +154,23 @@ class HealthRouterTest {
         List<ModelInstance> result = router.filter(List.of(mi), request);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("入站协议为 null 时保守过滤实例，不向熔断器注入未知 key")
+    void protocolNull_filtersInstance_withoutCircuitBreakerQuery() {
+        // 协议透传链路断裂等场景下 protocol 可能为 null
+        ModelInstance mi = new ModelInstance();
+        mi.setId(1L);
+        mi.setChannelId(100L);
+
+        // 入站协议为 null：无法派生 endpointId，保守过滤实例
+        RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null);
+        List<ModelInstance> result = router.filter(List.of(mi), request);
+
+        assertThat(result).isEmpty();
+        // 短路保护：既不调用 endpointResolver（无法派生），也不查询熔断器（避免注入未知 key）
+        verifyNoInteractions(endpointResolver, circuitBreakerManager);
     }
 
     /** 构造测试用 ChannelEndpoint */
