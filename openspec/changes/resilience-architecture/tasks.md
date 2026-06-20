@@ -124,7 +124,13 @@
   - 推导与 V56 seed + ResilienceMode Javadoc 一致：STANDARD 浅降级depth2/STRICT L2关闭depth0timeout60/AGGRESSIVE 深降级depth3timeout15
   - mode 用 ResilienceMode 枚举（4.1 已建，类型安全）；常量化、Javadoc 详尽
   - 测试 6 个：3 档位推导 + base 保留 + 不可变(doesNotMutateBase/returnsNewInstance)
-- [ ] 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
+- [x] 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
+  - 提交 2038aac（6 新建文件 456行：接口+InMemory+Redis+Config+Test+pom redis依赖）+ 8e5c199（修复 Redis 装配条件）；双审查通过（spec ✅ / quality ✅，主会话代行——后台 reviewer 三连损坏退出）
+  - 接口 get/put/evict，TTL 30min（session.affinity.ttl-minutes=30）；InMemory ConcurrentHashMap+惰性过期（包级毫秒构造器供测试）；Redis StringRedisTemplate+expire
+  - RED: expiredTtl_returnsNull 失败（构造参数单位分钟vs秒不匹配）→ 加包级毫秒构造器；GREEN: 11 测试全过
+  - 审查修复 Important：RedisSessionAffinityStore @ConditionalOnProperty 原只判 session.affinity.enabled（matchIfMissing=true），引入 redis starter 后 StringRedisTemplate 无条件注册致开发/测试误装配 Redis 而非 InMemory（测试全绿因绕过 Spring 上下文掩盖偏差）；改为判 spring.data.redis.enabled=true（去 matchIfMissing），InMemory @ConditionalOnMissingBean 兜底不变
+  - 集成测试 ChannelHealthRepositoryIT（完整上下文）2 过验证 Redis 未启用时装配 InMemory 不崩；回归 ResilienceProfileApplierTest 6 过
+  - 接受 Minor：isMillis 标记位构造器可读性差（建议静态工厂，非阻塞）
 - [ ] 4.7 Cluster 级健康聚合（域内全熔断→DOWN，任一 half-open 成功→解除）；`ClusterAffinityRouter`（就近/按域锁定）
 - [ ] 4.8 `DegradationService.degrade(reason)` 按 reason 分流，L2 受画像门禁
 - [ ] 4.9 `RoutingRequest` 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter

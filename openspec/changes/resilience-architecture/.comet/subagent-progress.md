@@ -5,20 +5,30 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.5: 容灾模式档位 → Profile 字段自动推导（ResilienceProfileApplier）
-**OpenSpec task:** 4.5 容灾模式档位 → Profile 字段自动推导
-**阶段:** implementing
-**BASE:** ea62f4e
-**审查-修复轮次:** 0/3
+**Plan task:** Task 4.6: 会话亲和 SessionAffinityStore（Redis/InMemory 双实现）— 派发中
+**OpenSpec task:** 4.6 会话亲和：SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现；X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和（D6/深化点6）
+**阶段:** fix（审查后修复轮次 1/3）
+**BASE:** 67ba94b
+**实现提交:** 2038aac（6 文件 +456 行）
+**RED:** expiredTtl_returnsNull 失败（构造参数单位分钟vs秒不匹配）→ 加包级毫秒构造器
+**GREEN:** SessionAffinityStoreTest 11 全过；回归 test-compile SUCCESS + ResilienceProfileApplierTest 6 过
+**审查方式:** 后台 spec reviewer 三连损坏退出（ae31f0ca9821d9dc7/afa24b394ab3f9fd3/a7928fe49f9c0e93 均异常返回乱码），用户授权主会话代行 spec+quality 双审查
+**审查结论:** NEEDS_FIX（1 Important + Minor 接受）
+  - Important：RedisSessionAffinityStore @ConditionalOnProperty 只判 session.affinity.enabled，未判 spring.data.redis.enabled；引入 redis starter 后 StringRedisTemplate 无条件注册，开发/测试(redis.enabled=false)仍装配 Redis 而非 InMemory，违背 spec。测试全绿仅因直接 new InMemory 绕过 Spring 上下文，掩盖偏差
+  - Minor 接受：isMillis 标记位构造器可读性差（建议静态工厂，非阻塞）；@Component+@ConditionalOnMissingBean 双入口逻辑依赖注册顺序
+**审查-修复轮次:** 1/3
+**修复 agent agentId:** ae31806ab632cd55e（后台 sonnet，2026-06-21 派发）— 改 Redis @ConditionalOnProperty 判 spring.data.redis.enabled=true（去 matchIfMissing），InMemory 兜底不变；须跑集成测试验证 Redis 未启用时上下文装配 InMemory 不崩
 
 ## 派发记录
 
-- [派发中] Task 4.5 implementer（后台, sonnet）— ResilienceProfileApplier 档位推导
-  - ResilienceProfileApplier.apply(ResilienceProfile base, ResilienceMode mode) → ResilienceProfile（按档位覆盖专家字段）
-  - mode 参数优先用 ResilienceMode 枚举（4.1 已建，plan 写 String 过时）
-  - 字段推导与 4.4 seed 一致（ResilienceMode Javadoc + 范式文档）：STANDARD 浅降级/STRICT L2关闭/AGGRESSIVE 深降级
-  - 与 4.4 区别：4.4 是初始化 seed，4.5 是运行时按 mode 应用档位（管理员选档位自动填充）
-  - TDD：mode=STRICT 断言 enableL2=false 等；STANDARD 断言宽松值；RED→实现→GREEN+全量回归
+- [派发中] Task 4.6 implementer（后台, sonnet）— SessionAffinityStore Redis/InMemory 双实现
+  - 协调者已确认：项目无 spring-boot-starter-data-redis 依赖（pom 仅 spring-boot-starter-cache），但 CLAUDE.md 技术栈含 Redis + application.yml 已有 Redis 配置占位（spring.data.redis.enabled=false Lettuce）。引入 spring-boot-starter-data-redis 是落地 plan 必要步骤
+  - 接口 SessionAffinityStore: get/put/evict，TTL 30min（session.affinity.ttl-minutes=30 / session.affinity.enabled）
+  - InMemory: ConcurrentHashMap + 过期（惰性判断或 ScheduledExecutor）；Redis: StringRedisTemplate + expire
+  - SessionAffinityConfig: @ConditionalOnProperty 选实现（redis enabled→Redis，否则 InMemory），测试环境必走 InMemory
+  - 语义（D6）：X-Session-Id→channelId，亲和优先非强制（熔断则转移并更新），标识缺失不亲和
+  - 测试针对 InMemory（put/get/evict/TTL 过期/标识缺失返回 null）
+  - Redis autoconfig 风险已嘱：引入依赖后须确认既有 @SpringBootTest 上下文不崩溃；回归跑 test-compile + ResilienceProfileApplierTest
   - 禁止 git add -A、禁止 push、commit 用双引号
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围

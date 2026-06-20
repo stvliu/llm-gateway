@@ -1022,19 +1022,19 @@ git add -A && git commit -m "feat(resilience): 容灾模式档位自动推导画
 
 **语义（D6/深化点6）**：X-Session-Id→channelId，TTL 30min，亲和优先非强制（熔断则转移并更新），标识缺失不亲和。
 
-- [ ] **Step 1: 接口 + 两个实现 + 配置**
+- [x] **Step 1: 接口 + 两个实现 + 配置**
 
 InMemory 用 ConcurrentHashMap + ScheduledExecutor 过期；Redis 用 StringRedisTemplate + expire。Config 用 `@ConditionalOnProperty` 选实现（生产 Redis，开发 InMemory）。
 
-- [ ] **Step 2: 写测试**
+- [x] **Step 2: 写测试**
 
 `SessionAffinityStoreTest.java`（针对 InMemory）：put/get/evict、TTL 过期、标识缺失返回 null。
 
-- [ ] **Step 3: 跑绿**
+- [x] **Step 3: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=SessionAffinityStoreTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): SessionAffinityStore Redis/InMemory 双实现，TTL 30min 亲和优先非强制"
