@@ -54,7 +54,11 @@
   - LoadBalanceRouter 降级为透传（isForce=false + filter 返回输入列表），未使用字段保留为 fallback 中间态并补 TODO(后续任务)标注
   - RoutingResolver 临时 .getFirst() 适配（3.2 完善返回候选列表），InstanceSelector 空列表抛 ResourceNotFoundException 兜底
   - 接受 Minor：isForce 注释表述、RouterChainTest 死桩、测试 mock 数据真实性（注释改进建议）
-- [ ] 3.2 `InstanceSelector.select` 改为返回候选列表；`RoutingResolver` 适配
+- [x] 3.2 `InstanceSelector.select` 改为返回候选列表；`RoutingResolver` 适配
+  - 提交 ef4b2f2（2文件 RoutingResolver + RoutingResolverTest）；双审查通过（spec ✅ / quality ✅ Approved）；641 全绿（独立复现，+3 测试）
+  - 新增 resolveCandidates 返回 List<RoutingContext>（逐个候选解析组装，按 priority 升序）；resolve 重构委托 resolveCandidates.getFirst() 消除 3.1 临时重复
+  - RoutingContext 结构不改（plan 选定方案）；调用点暂不切换（3.3 ChannelFailoverInvoker 引入时切换）
+  - 接受 Minor：eager 全量解析 N 次查询（候选数小可接受，3.3 需完整列表）
 - [ ] 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
 - [ ] 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）
 - [ ] 3.5 流式转移边界：只在首字节前转移

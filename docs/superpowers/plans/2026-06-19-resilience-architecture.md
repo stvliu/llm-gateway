@@ -687,23 +687,23 @@ git add -A && git commit -m "feat(routing): InstanceSelector.select 改返回候
 
 > 现 `RoutingContext` 是单 channel 上下文。L1 需候选列表。方案：`RoutingContext` 增 `List<RoutingContext> candidates`，或 `RoutingResolver.resolveCandidates` 返回 `List<RoutingContext>`。选后者更清晰。Read `RoutingContext.java` 确认结构。
 
-- [ ] **Step 1: 确认 RoutingContext 结构**
+- [x] **Step 1: 确认 RoutingContext 结构**
 
 Run: codegraph explore `RoutingContext record resolve`。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `RoutingResolverTest.java`：`resolveCandidates` 返回按 priority 排序的多个 RoutingContext。
 
-- [ ] **Step 3: 实现 resolveCandidates**
+- [x] **Step 3: 实现 resolveCandidates**
 
 `RoutingResolver` 委托 `InstanceSelector.select` 拿候选列表，逐个转 RoutingContext。
 
-- [ ] **Step 4: 跑绿**
+- [x] **Step 4: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=RoutingResolverTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat(routing): RoutingResolver 适配候选列表输出"

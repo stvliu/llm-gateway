@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.1: RouterChain 联合产出候选列表（InstanceSelector.select 返回 List）
-**OpenSpec task:** 3.1 RouterChain（Permission+Health+Priority）联合产出「应用可见+健康+按 cluster/priority 排序」候选列表；LoadBalanceRouter 改返回排序列表或退场
-**阶段:** quality-review（spec ✅ 通过）
-**BASE:** 903cd9a
-**实现提交:** 2555ce1（6 文件：InstanceSelector/LoadBalanceRouter/RoutingResolver + 3 测试）
-**RED/GREEN:** 编译失败(ModelInstance无法转List)→638全绿（独立复现）
+**Plan task:** Task 3.2: RoutingResolver 适配候选列表（新增 resolveCandidates 返回 List<RoutingContext>）
+**OpenSpec task:** 3.2 `InstanceSelector.select` 改为返回候选列表；`RoutingResolver` 适配
+**阶段:** review（spec+quality 合并审查）
+**BASE:** e20a743
+**实现提交:** ef4b2f2（2 文件 RoutingResolver + RoutingResolverTest）
+**RED/GREEN:** 编译失败找不到 resolveCandidates→641全绿（独立复现，+3 测试）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 3.1 spec compliance reviewer（后台, sonnet）— 核验 select 返回 List+LoadBalanceRouter 降级合理性(未使用字段)+RoutingResolver 临时适配标注+priority 排序保证+无越权
+- [派发中] Task 3.2 双审查 agent（后台, sonnet）— 核验 resolveCandidates 实现+resolve 重构委托+RoutingContext 未改+调用点未切换合理性+测试+范围
 
 - [派发中] Task 2.2 spec compliance reviewer（后台, sonnet）— 核验 D11 派生方案落地+endpoint派生失败处理+调用点同步+无越权(ModelInstance未加字段/迁移未动)+无回归
   - D11 决策已记入 design doc（提交 2c93cea），plan Step 已更新为派生方案
