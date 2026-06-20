@@ -76,7 +76,13 @@
   - 包装 callback 用 AtomicBoolean firstByteSent 追踪 onChunk 首次调用；首字节前同步启动失败按 L1/L2/NONE 分流换候选，首字节后不换直接抛
   - 已知架构限制（非缺陷）：chatStream 是 OkHttp enqueue 异步，invokeStream return 即 enqueue 成功，首字节前异步失败时 ChannelFailoverInvoker 已退出调用栈无法换候选（能换窗口仅限同步启动失败）。继承 KeyFailoverInvoker"传输开始后不切换"约束。真正修复需同步等待机制（Future+首字节Promise），属重大变更超 3.5 范围，Javadoc 如实记录
   - 接受 Minor：firstByteSent 检查在生产异步路径属防御性（覆盖未来同步实现）；测试模拟同步抛场景
-- [ ] 3.6 `DegradationInvoker` 退场或降级为内部组件
+- [x] 3.6 `DegradationInvoker` 退场或降级为内部组件
+  - 提交 8bc9509（9 文件：1 新建 L2DegradationRequiredException + 4 修改 + 3 删除 DegradationInvoker/Test/IntegrationTest + 1 连带 FullContextIntegrationTestBase）；双审查通过（spec ✅ / quality ✅ Approved）；662 全绿（独立复现）
+  - L2 显式化兑现（3.3 技术债）：新建 L2DegradationRequiredException（RuntimeException，携带 fallbackModel/originalModel/lastErrorType/cause），移除 L2_DEGRADATION_PREFIX 隐式契约
+  - ChatDispatchServiceImpl 切换 ChannelFailoverInvoker + L2 重路由循环（invokeWithL2Failover/invokeStreamWithL2Failover）
+  - 防递归双保险：degradedModels 集合去重 + MAX_DEGRADATION_DEPTH=5 深度上限（修复原 DegradationInvoker 递归栈溢出隐患）
+  - DegradationInvoker 完全删除（职责被 ChannelFailoverInvoker + ChatDispatchServiceImpl 覆盖）
+  - 技术债（P2 处理）：I1 invoke/invokeStream L2 重路由重复逻辑待 P2 抽取通用模板；enableL2ModelDegradation=true 硬编码 + MAX_DEGRADATION_DEPTH=5 待 P2 ResilienceProfile 配置化；callLog 审计精度偏差（既有行为非回归）
 - [ ] 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）
 
 ## 4. P2 应用级容灾画像 + Cluster 故障域分组（原 P2/P3 合并，D10）

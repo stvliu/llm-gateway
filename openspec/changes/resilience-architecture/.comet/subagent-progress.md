@@ -5,17 +5,18 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.5: 流式转移边界（首字节前）详化
-**OpenSpec task:** 3.5 流式转移边界：只在首字节前转移
-**阶段:** review（spec+quality 合并审查）
-**BASE:** b50a8a1
-**实现提交:** b2e12ab（2 文件 ChannelFailoverInvoker + Test，+69/-7）
-**RED/GREEN:** stream_afterFirstByte_noFailover 改前失败(3.3不检查firstByteSent换ch2无异常)→663全绿（独立复现，+1 测试）
+**Plan task:** Task 3.6: DegradationInvoker 退场，ChatDispatchService 改用 ChannelFailoverInvoker（P1 收官）
+**OpenSpec task:** 3.6 `DegradationInvoker` 退场或降级为内部组件
+**阶段:** quality-review（spec ✅ 全通过，无 Critical/Important）
+**BASE:** e672881
+**实现提交:** 8bc9509（9 文件：1 新建 L2DegradationRequiredException + 4 修改 + 3 删除 DegradationInvoker/Test/IntegrationTest + 1 连带 FullContextIntegrationTestBase）
+**RED/GREEN:** 编译失败(ChatDispatchServiceTest 传 ChannelFailoverInvoker 不匹配 DegradationInvoker 构造)→662全绿（独立复现）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 3.5 双审查 agent（后台, sonnet）— 核验首字节追踪+首字节前/后分流语义+架构限制(首字节前异步失败不可转移)合理性+测试+范围
+- [派发中] Task 3.6 spec compliance reviewer（后台, sonnet）— 核验 L2 显式化(I1兑现)+ChatDispatchService 切换+防递归+DegradationInvoker 退场完整性+流式L2安全性+范围
+  - SECURITY WARNING 标记已核验为 classifier 误判，提交内容为标准重构无安全问题
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 

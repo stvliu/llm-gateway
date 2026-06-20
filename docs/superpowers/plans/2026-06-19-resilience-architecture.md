@@ -829,23 +829,23 @@ git add -A && git commit -m "feat(failover): 流式转移边界限定首字节�
 
 **语义**：`DegradationInvoker` 被 `ChannelFailoverInvoker` 取代（L2 降级在 ChannelFailoverInvoker 内部）。`DegradationInvoker` 删除或降级为内部 Helper。`ChatDispatchServiceImpl` 的 12 处 DegradationInvoker 调用改 ChannelFailoverInvoker。
 
-- [ ] **Step 1: grep DegradationInvoker 调用点**
+- [x] **Step 1: grep DegradationInvoker 调用点**
 
 Run: `grep -rn "DegradationInvoker" gateway-boot/src/main`
 
-- [ ] **Step 2: ChatDispatchServiceImpl 改用 ChannelFailoverInvoker**
+- [x] **Step 2: ChatDispatchServiceImpl 改用 ChannelFailoverInvoker**
 
 替换调用，构造候选列表传入。
 
-- [ ] **Step 3: DegradationInvoker 退场**
+- [x] **Step 3: DegradationInvoker 退场**
 
 删除类（若 ChannelFailoverInvoker 完全覆盖）或改为 package-private Helper。删除对应测试或迁移逻辑。
 
-- [ ] **Step 4: 测试 + 跑绿**
+- [x] **Step 4: 测试 + 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChatDispatchServiceTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "refactor(failover): DegradationInvoker 退场，ChatDispatchService 改用 ChannelFailoverInvoker"
