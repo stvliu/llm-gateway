@@ -98,7 +98,13 @@
   - mode 建枚举 ResilienceMode(STANDARD/STRICT/AGGRESSIVE)，类型安全增强（design doc D5 一致），DO 存 String，与 ApplicationState 模式一致
   - 迁移 V54（plan 已标注，V40-V53 被占用），H2/PostgreSQL 兼容，code UNIQUE
   - 接受 Minor：toDataObject mode null 未兜底 STANDARD（业务上总设 mode，4.4 seed 写入，当前不触发）
-- [ ] 4.2 新增 `Cluster` 实体 + `clusters` 表；`Channel.cluster_id` FK（直接建实体，不经软字段，D10）
+- [x] 4.2 新增 `Cluster` 实体 + `clusters` 表；`Channel.cluster_id` FK（直接建实体，不经软字段，D10）
+  - 提交 e0b37cc（11 文件：8 新建 Cluster 体系 + 3 修改 Channel/ChannelDo/ChannelGatewayImpl，537行）；双审查通过（spec ✅ / quality ✅ Approved）；683 全绿（独立复现，+8）
+  - Cluster 字段：code/name/providerId/region/priority/healthStatus + 审计；ClusterHealthStatus 枚举 HEALTHY/DEGRADED/DOWN（design doc D10 域级健康聚合）
+  - Channel+ChannelDo+ChannelGatewayImpl 增 clusterId 透传（唯一转换点完整无遗漏）
+  - 迁移 V55（plan V41 已被占用），clusters 表 + ALTER channels ADD cluster_id，物理 ID 无 FK，H2/PostgreSQL 兼容
+  - 模式与 Task 4.1 ResilienceProfile 一致
+  - 接受 Minor：code UNIQUE + 额外索引冗余（与 V54 一致）；toEntity healthStatus null 防御分支未覆盖（DO nullable=false 不触发）
 - [ ] 4.3 `Application` 挂 `resilience_profile_id`；解析链 Application → Global
 - [ ] 4.4 `ResilienceResolver` 实现；预设档位（default/strict/aggressive/batch）初始化数据
 - [ ] 4.5 容灾模式档位 → Profile 字段自动推导

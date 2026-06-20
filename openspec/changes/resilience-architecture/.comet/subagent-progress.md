@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.1: ResilienceProfile 实体 + 表 + Gateway（P2 首个）
-**OpenSpec task:** 4.1 ResilienceProfile 实体 + 表 + Gateway
+**Plan task:** Task 4.2: Cluster 实体 + 表 + Channel.cluster_id FK
+**OpenSpec task:** 4.2 新增 `Cluster` 实体 + `clusters` 表；`Channel.cluster_id` FK（直接建实体，不经软字段，D10）
 **阶段:** review（spec+quality 合并审查）
-**BASE:** 5df0761
-**实现提交:** 4325833（8 新建文件：ResilienceMode枚举+ResilienceProfile实体+Gateway接口/实现+Repository+DO+V54迁移+Test，562行）
-**RED/GREEN:** 8编译错误(类不存在)→675全绿（独立复现，+7）
+**BASE:** 9322de7
+**实现提交:** e0b37cc（11 文件：8 新建 Cluster 体系 + 3 修改 Channel/ChannelDo/ChannelGatewayImpl，537行）
+**RED/GREEN:** 8编译错误(类不存在)→683全绿（独立复现，+8）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 4.1 双审查 agent（后台, sonnet）— 核验字段齐全+mode枚举决策+V54迁移(非V40)+纯洁性+模式一致性+范围
+- [派发中] Task 4.2 双审查 agent（后台, sonnet）— 核验 Cluster 字段+healthStatus枚举+Channel clusterId透传完整性+V55迁移+模式一致性+范围
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 

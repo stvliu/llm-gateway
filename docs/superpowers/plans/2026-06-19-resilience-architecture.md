@@ -921,15 +921,15 @@ git add -A && git commit -m "feat(resilience): ResilienceProfile 实体与 resil
 **Interfaces:**
 - Produces: `Cluster` 字段 `Long id; String code; String name; Long providerId; String region; int priority; ClusterHealthStatus healthStatus; 审计`。`Channel.clusterId`。Gateway: `findById/findByCode/findAll/save`。
 
-- [ ] **Step 1: 实体 + Channel 加字段 + 迁移**
+- [x] **Step 1: 实体 + Channel 加字段 + 迁移**
 
 V41 建 clusters 表 + `ALTER TABLE channels ADD COLUMN cluster_id BIGINT`。
 
-- [ ] **Step 2: Gateway + 实现 + 测试**
+- [x] **Step 2: Gateway + 实现 + 测试**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ClusterGatewayImplTest` → PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(resilience): Cluster 故障域实体与 Channel.cluster_id 关联"
