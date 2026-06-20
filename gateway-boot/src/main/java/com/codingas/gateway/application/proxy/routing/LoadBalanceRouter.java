@@ -15,11 +15,15 @@ import java.util.Map;
  * Task 3.1 起 RouterChain 改为产出候选列表供 L1 故障转移逐个尝试，
  * 本路由器 filter 直接透传输入列表，isForce 降为 false。
  * LoadBalance 依赖与策略映射字段保留供向后兼容构造，降级后不再使用。</p>
+ *
+ * <p>TODO(后续任务): LoadBalance 体系整体退场时清理本类字段与依赖
+ * （LoadBalance 接口 + WeightedRandom/RoundRobin/LeastActive 等实现 bean）。</p>
  */
 @Component
 @Order(9999)
 public class LoadBalanceRouter implements Router {
 
+    // TODO(后续任务): LoadBalance 体系退场时清理，降级后不再使用
     private static final String DEFAULT_LOAD_BALANCE = "weightedRandomLoadBalance";
 
     private final Map<String, LoadBalance> loadBalanceMap;

@@ -5,17 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 2.4: P0 单元测试（覆盖核验+补缺+全段回归）
-**OpenSpec task:** 2.4 P0 单元测试（路由顺序、次优先级渠道被选、熔断 key 一致）
-**阶段:** review（spec+quality 合并审查，纯测试任务）
-**BASE:** 98bfa77
-**实现提交:** 04bdd8b（1 文件 HealthRouterTest.java +18 行，protocol=null 边界测试）
-**RED/GREEN:** 三点覆盖复核完整，补 protocol=null 边界；全量回归 636 全绿（独立复现）
+**Plan task:** Task 3.1: RouterChain 联合产出候选列表（InstanceSelector.select 返回 List）
+**OpenSpec task:** 3.1 RouterChain（Permission+Health+Priority）联合产出「应用可见+健康+按 cluster/priority 排序」候选列表；LoadBalanceRouter 改返回排序列表或退场
+**阶段:** quality-review（spec ✅ 通过）
+**BASE:** 903cd9a
+**实现提交:** 2555ce1（6 文件：InstanceSelector/LoadBalanceRouter/RoutingResolver + 3 测试）
+**RED/GREEN:** 编译失败(ModelInstance无法转List)→638全绿（独立复现）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
 
-- [派发中] Task 2.4 双审查 agent（后台, sonnet）— 合并 spec+quality：核验三点覆盖完整性+熔断key一致性判断合理性+补缺价值+范围
+- [派发中] Task 3.1 spec compliance reviewer（后台, sonnet）— 核验 select 返回 List+LoadBalanceRouter 降级合理性(未使用字段)+RoutingResolver 临时适配标注+priority 排序保证+无越权
 
 - [派发中] Task 2.2 spec compliance reviewer（后台, sonnet）— 核验 D11 派生方案落地+endpoint派生失败处理+调用点同步+无越权(ModelInstance未加字段/迁移未动)+无回归
   - D11 决策已记入 design doc（提交 2c93cea），plan Step 已更新为派生方案

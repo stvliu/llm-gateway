@@ -48,7 +48,12 @@
 
 ## 3. P1 L1 Channel 级转移回路（核心）
 
-- [ ] 3.1 RouterChain（Permission+Health+Priority）联合产出「应用可见+健康+按 cluster/priority 排序」候选列表；LoadBalanceRouter 改返回排序列表或退场（D5/深化点5）
+- [x] 3.1 RouterChain（Permission+Health+Priority）联合产出「应用可见+健康+按 cluster/priority 排序」候选列表；LoadBalanceRouter 改返回排序列表或退场（D5/深化点5）
+  - 提交 2555ce1（6文件）；双审查通过（spec ✅ / quality ✅ Approved）；638 全绿（独立复现）
+  - InstanceSelector.select 返回 List<ModelInstance>（按 priority 升序，PriorityRouter 保证），去掉 getFirst()
+  - LoadBalanceRouter 降级为透传（isForce=false + filter 返回输入列表），未使用字段保留为 fallback 中间态并补 TODO(后续任务)标注
+  - RoutingResolver 临时 .getFirst() 适配（3.2 完善返回候选列表），InstanceSelector 空列表抛 ResourceNotFoundException 兜底
+  - 接受 Minor：isForce 注释表述、RouterChainTest 死桩、测试 mock 数据真实性（注释改进建议）
 - [ ] 3.2 `InstanceSelector.select` 改为返回候选列表；`RoutingResolver` 适配
 - [ ] 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
 - [ ] 3.4 错误分流表实现（INVALID_REQUEST 不转移，其余按 ProviderErrorType 映射 L1/L2/NONE）

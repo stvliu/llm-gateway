@@ -652,23 +652,23 @@ git add -A && git commit -m "test(resilience): P0 路由顺序与熔断 key 统�
 
 > D5/深化点5：RouterChain(Permission+Health+Priority) 产出候选列表；LoadBalanceRouter 改返回排序列表或退场。候选已按 priority 排序；cluster 排序在 P2 加。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `InstanceSelectorTest.java`：
 - `select_returnsCandidateList`：多实例，断言返回 List 且按 priority 升序。
 - `select_empty_throws`：无实例抛 ResourceNotFoundException。
 
-- [ ] **Step 2: 跑红** → FAIL（select 返回单个）
+- [x] **Step 2: 跑红** → FAIL（select 返回单个）
 
-- [ ] **Step 3: 改 InstanceSelector**
+- [x] **Step 3: 改 InstanceSelector**
 
 `select` 返回 `List<ModelInstance>`，去掉 `getFirst()`。LoadBalanceRouter 降级：@Order 仍 9999 但 `isForce()` 改 false，且 filter 直接返回输入列表（不再收敛）；或直接从 RouterChain 移除（grep 注入点）。
 
-- [ ] **Step 4: 跑绿**
+- [x] **Step 4: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=InstanceSelectorTest` → PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "feat(routing): InstanceSelector.select 改返回候选列表供 L1 逐个试"
