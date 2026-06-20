@@ -17,13 +17,13 @@ import java.util.concurrent.TimeUnit;
  * key 形如 {@code session:affinity:{sessionId}}，value 为 channelId 字符串，
  * 写入时设置 TTL（默认 30 分钟）。</p>
  *
- * <p>通过 {@code @ConditionalOnProperty} 控制仅在 Redis 启用时激活，
- * 测试/开发环境自动走 {@link InMemorySessionAffinityStore}。</p>
+ * <p>仅生产环境显式启用 Redis 时装配（{@code spring.data.redis.enabled=true}），
+ * 开发/测试环境（Redis 未启用）自动走 {@link InMemorySessionAffinityStore}。</p>
  */
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(name = "session.affinity.enabled", havingValue = "true", matchIfMissing = true)
+@ConditionalOnProperty(name = "spring.data.redis.enabled", havingValue = "true")
 public class RedisSessionAffinityStore implements SessionAffinityStore {
 
     /** Redis key 前缀 */
