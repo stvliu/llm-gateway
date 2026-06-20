@@ -121,8 +121,8 @@ class ChannelFailoverInvokerTest {
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
                 request, Protocol.OPENAI, 7L, true))
-                .isInstanceOf(ProviderException.class)
-                .extracting(e -> ((ProviderException) e).getModel())
+                .isInstanceOf(L2DegradationRequiredException.class)
+                .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
 
         // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
@@ -282,8 +282,8 @@ class ChannelFailoverInvokerTest {
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
                 request, Protocol.OPENAI, 7L, true, callback))
-                .isInstanceOf(ProviderException.class)
-                .extracting(e -> ((ProviderException) e).getModel())
+                .isInstanceOf(L2DegradationRequiredException.class)
+                .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
 
         // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）

@@ -35,16 +35,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 才进入 L2 模型降级。</p>
  *
  * <p><b>L2 降级实现决策</b>：L1 耗尽后，若画像门禁 {@code enableL2ModelDegradation} 开启，
- * 调用 {@link DegradationService#degrade} 获取备选模型名。拿到 fallback 后，抛出携带
- * fallback 模型名的 {@link ProviderException}（model 字段设为 fallback），由上层调用方
+ * 调用 {@link DegradationService#degrade} 获取备选模型名。拿到 fallback 后，抛出显式
+ * {@link L2DegradationRequiredException}（携带 fallbackModel + 原始失败 cause），由上层调用方
  * 重新路由。本 Invoker 签名不含路由参数（无 userId/role/strategy），且按 plan 约定
  * "不自己调 resolveCandidates"，故无法在内部完成跨模型重路由，交由上层
- * （ChatDispatchService）识别异常 model 字段后重新解析候选并再次调用本 Invoker。</p>
+ * （ChatDispatchService）捕获异常后重新解析候选并再次调用本 Invoker。</p>
  *
- * <p><b>L2 隐式契约（临时技术债，3.6 替换）</b>：当前 L2 降级信号通过 ProviderException 的
- * model 字段（=fallback）+ message 的 {@link #L2_DEGRADATION_PREFIX} 前缀向上层传递，
- * 上层靠字符串前缀识别，较脆弱。此为临时隐式实现，Task 3.6 将替换为显式
- * {@code L2DegradationRequiredException} 异常类，届时移除前缀常量与字符串拼接。
+ * <p><b>L2 显式信号（Task 3.6 兑现）</b>：L2 降级信号通过显式 {@link L2DegradationRequiredException}
+ * 异常向上层传递（携带 fallbackModel + 原始失败 cause），由 {@code ChatDispatchServiceImpl} 捕获并
+ * 用 fallback 模型重新 resolveCandidates + 调用本 Invoker。替代了 3.3 的隐式契约
+ * （ProviderException.model 字段 + 字符串前缀），消除字符串识别脆弱性。
  * 另：tryL2Degradation 对 {@code DegradationService.degrade} 做了异常防御（该实现违背
  * 接口契约"无可用备选返回 null"实际抛异常），详见方法 javadoc。</p>
  *
@@ -56,17 +56,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ChannelFailoverInvoker {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelFailoverInvoker.class);
-
-    /**
-     * L2 降级信号前缀：携带 fallback 模型名的 ProviderException 的 message 以此前缀开头。
-     *
-     * <p><b>临时隐式契约（技术债）</b>：当前通过 ProviderException 的 model 字段（=fallback）+
-     * message 的 {@value #L2_DEGRADATION_PREFIX} 前缀向上层（ChatDispatchService）传递 L2 降级信号。
-     * 此隐式契约较脆弱（上层靠字符串前缀识别），Task 3.6 将替换为显式
-     * {@code L2DegradationRequiredException} 异常类，届时移除本前缀常量及 tryL2Degradation
-     * 中的字符串拼接。</p>
-     */
-    public static final String L2_DEGRADATION_PREFIX = "L2_DEGRADATION_REQUIRED:";
 
     private final KeyFailoverInvoker keyFailoverInvoker;
     private final ErrorClassifier errorClassifier;
@@ -93,8 +82,8 @@ public class ChannelFailoverInvoker {
      * <p>遍历 candidates（已按 priority 升序），对每个候选调 {@link KeyFailoverInvoker#invoke}：
      * 成功返回；失败按 {@link ErrorClassifier#classify} 分类——NONE 直接抛，
      * L1/L2 换下一候选。全部候选耗尽后，若 enableL2ModelDegradation 开启，调
-     * {@link DegradationService#degrade} 获取 fallback 模型；拿到则抛携带 fallback
-     * 模型名的 ProviderException 让上层重路由，否则抛最后捕获的异常。</p>
+     * {@link DegradationService#degrade} 获取 fallback 模型；拿到则抛 {@link L2DegradationRequiredException}
+     * （携带 fallbackModel + 原始失败 cause）让上层重路由，否则抛最后捕获的异常。</p>
      *
      * @param primaryCtx               主路由上下文（候选列表首项，用于日志/审计锚点）
      * @param candidates               按 priority 升序的候选路由上下文列表（由调用方传入）
@@ -103,9 +92,9 @@ public class ChannelFailoverInvoker {
      * @param applicationId            应用 ID（权限锚点）
      * @param enableL2ModelDegradation L2 模型降级门禁（ResilienceProfile 占位，P2 替换）
      * @return 上游响应
-     * @throws ProviderException INVALID_REQUEST 等请求级错误直接抛出；
-     *                           L2 降级成功时抛出携带 fallback 模型名（getModel()）的异常由上层重路由；
-     *                           所有候选失败且无法降级时抛出最后捕获的异常
+     * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
+     *                                         所有候选失败且无法降级时抛出最后捕获的异常
+     * @throws L2DegradationRequiredException  L2 降级成功时抛出（携带 fallbackModel），由上层重路由
      */
     public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                     ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
@@ -133,10 +122,10 @@ public class ChannelFailoverInvoker {
             }
         }
 
-        // L1 候选全部耗尽，进入 L2 模型降级
-        ProviderException l2Exception = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation);
-        if (l2Exception != null) {
-            throw l2Exception;
+        // L1 候选全部耗尽，进入 L2 模型降级（抛 L2DegradationRequiredException 由上层重路由）
+        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation, lastException);
+        if (l2Signal != null) {
+            throw l2Signal;
         }
 
         // L2 未触发或 degrade 返回 null：抛最后捕获的异常
@@ -161,7 +150,7 @@ public class ChannelFailoverInvoker {
      * "传输开始后不切换"约束）。</p>
      *
      * <p>全部候选启动失败后，若 enableL2ModelDegradation 开启，调 degrade 获取 fallback，
-     * 拿到则抛携带 fallback 的异常让上层重路由，否则抛最后异常。</p>
+     * 拿到则抛 {@link L2DegradationRequiredException} 让上层重路由，否则抛最后异常。</p>
      *
      * @param primaryCtx               主路由上下文
      * @param candidates               按 priority 升序的候选列表
@@ -170,9 +159,9 @@ public class ChannelFailoverInvoker {
      * @param applicationId            应用 ID
      * @param enableL2ModelDegradation L2 门禁（ResilienceProfile 占位）
      * @param callback                 流式回调
-     * @throws ProviderException INVALID_REQUEST 等请求级错误直接抛出；
-     *                           L2 降级成功时抛出携带 fallback 模型名的异常由上层重路由；
-     *                           所有候选启动失败且无法降级时抛出最后捕获的异常
+     * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
+     *                                         所有候选启动失败且无法降级时抛出最后捕获的异常
+     * @throws L2DegradationRequiredException  L2 降级成功时抛出（携带 fallbackModel），由上层重路由
      */
     public void invokeStream(RoutingContext primaryCtx, List<RoutingContext> candidates,
                               ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
@@ -233,10 +222,10 @@ public class ChannelFailoverInvoker {
             }
         }
 
-        // L1 候选全部启动失败，进入 L2 模型降级
-        ProviderException l2Exception = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation);
-        if (l2Exception != null) {
-            throw l2Exception;
+        // L1 候选全部启动失败，进入 L2 模型降级（抛 L2DegradationRequiredException 由上层重路由）
+        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation, lastException);
+        if (l2Signal != null) {
+            throw l2Signal;
         }
 
         // L2 未触发或 degrade 返回 null：抛最后捕获的异常
@@ -251,7 +240,8 @@ public class ChannelFailoverInvoker {
      * 尝试 L2 模型降级
      *
      * <p>L1 候选全部耗尽后调用。若门禁开启且存在失败原因，调用 degrade 获取 fallback 模型。
-     * 拿到 fallback 则构造携带 fallback 模型名的 ProviderException（由上层重路由）；
+     * 拿到 fallback 则构造 {@link L2DegradationRequiredException}（携带 fallbackModel +
+     * 原始 lastException 作为 cause）返回，由调用方抛出供上层重路由；
      * 否则返回 null（由调用方抛最后异常）。</p>
      *
      * <p><b>degrade 契约防御</b>：{@link DegradationService#degrade} 接口 javadoc 声明
@@ -263,10 +253,11 @@ public class ChannelFailoverInvoker {
      * @param request                  协议请求（用于读取原模型名）
      * @param lastErrorType            最后一次失败的错误类型（degrade 的 reason 参数）
      * @param enableL2ModelDegradation L2 门禁
-     * @return 携带 fallback 模型名的降级异常（上层重路由）；未降级或 degrade 抛异常时返回 null
+     * @param lastException            最后一次捕获的上游异常（作为 L2 信号 cause 保留上下文，可为 null）
+     * @return 携带 fallback 模型名的 L2 降级信号异常（上层重路由）；未降级或 degrade 抛异常时返回 null
      */
-    private ProviderException tryL2Degradation(ProtocolRequest request, ProviderErrorType lastErrorType,
-                                                boolean enableL2ModelDegradation) {
+    private L2DegradationRequiredException tryL2Degradation(ProtocolRequest request, ProviderErrorType lastErrorType,
+                                                            boolean enableL2ModelDegradation, ProviderException lastException) {
         if (!enableL2ModelDegradation || lastErrorType == null) {
             return null;
         }
@@ -286,13 +277,10 @@ public class ChannelFailoverInvoker {
             log.warn("L2 降级失败：模型 {} 无可用备选，将抛出最后异常", originalModel);
             return null;
         }
-        log.info("L1 候选全部耗尽，模型 {} 降级为 {}，抛出降级异常由上层重路由",
+        log.info("L1 候选全部耗尽，模型 {} 降级为 {}，抛出 L2 降级信号由上层重路由",
                 originalModel, fallbackModel);
-        // 抛出携带 fallback 模型名的异常（model 字段），由上层识别并用 fallback 重新路由。
-        // message 前缀 L2_DEGRADATION_PREFIX 为临时隐式契约，3.6 替换为显式异常类。
-        return new ProviderException(lastErrorType,
-                L2_DEGRADATION_PREFIX + " 模型 " + originalModel + " 降级为 " + fallbackModel
-                        + "，请上层用 fallback 模型重新路由",
-                null, fallbackModel, null, null, null);
+        // 抛出显式 L2 降级信号异常（携带 fallbackModel + 原始失败 cause），由上层 ChatDispatchService
+        // 捕获并用 fallback 模型重新 resolveCandidates + 调用本 Invoker。替代 3.3 隐式字符串前缀契约。
+        return new L2DegradationRequiredException(fallbackModel, originalModel, lastErrorType, lastException);
     }
 }

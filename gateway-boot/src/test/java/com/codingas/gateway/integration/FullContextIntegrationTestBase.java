@@ -1,7 +1,7 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.application.proxy.ChatDispatchService;
-import com.codingas.gateway.application.proxy.invoker.DegradationInvoker;
+import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
@@ -51,7 +51,7 @@ public abstract class FullContextIntegrationTestBase {
     protected CredentialResolver credentialResolver;
 
     @MockBean
-    protected DegradationInvoker degradationInvoker;
+    protected ChannelFailoverInvoker channelFailoverInvoker;
 
     @MockBean
     protected KeyFailoverInvoker keyFailoverInvoker;
