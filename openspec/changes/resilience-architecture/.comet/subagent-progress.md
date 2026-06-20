@@ -5,16 +5,17 @@
 
 ## 当前 Task
 
-**Plan task:** Task 3.3: 新增 ChannelFailoverInvoker（候选内逐个试，L1/L2/NONE 分流）— P1 核心
-**OpenSpec task:** 3.3 新增 `ChannelFailoverInvoker`：在候选列表内逐个试（实时查熔断跳过），按错误分流表决定 L1/L2/NONE，L0 在内部跑，L1 全耗尽才进 L2
-**阶段:** fix（quality review 需修复 I2+M1+M2，I1 deferred 到 3.6）
-**审查-修复轮次:** 1/3
-**BASE:** b0988a9
-**实现提交:** acc96f1（2 新建文件 ChannelFailoverInvoker 229行 + Test 260行）
-**RED/GREEN:** 编译失败→661全绿（独立复现，+10 测试）
+**Plan task:** Task 3.5: 流式转移边界（首字节前）详化
+**OpenSpec task:** 3.5 流式转移边界：只在首字节前转移
+**阶段:** review（spec+quality 合并审查）
+**BASE:** b50a8a1
+**实现提交:** b2e12ab（2 文件 ChannelFailoverInvoker + Test，+69/-7）
+**RED/GREEN:** stream_afterFirstByte_noFailover 改前失败(3.3不检查firstByteSent换ch2无异常)→663全绿（独立复现，+1 测试）
 **审查-修复轮次:** 0/3
 
 ## 派发记录
+
+- [派发中] Task 3.5 双审查 agent（后台, sonnet）— 核验首字节追踪+首字节前/后分流语义+架构限制(首字节前异步失败不可转移)合理性+测试+范围
 
 - [派发中] Task 3.3 spec compliance reviewer（后台, sonnet）— 核验 6 点分流语义+L1全耗尽才进L2+L2衔接隐式契约(ProviderException model携带fallback)风险+流式首字节边界+实时熔断跳过+ResilienceProfile占位+范围
 

@@ -802,19 +802,19 @@ git add -A && git commit -m "feat(failover): 错误分流表实现 ProviderError
 
 **语义**：流式只在首字节前转移。首字节后失败不换渠道（继承 KeyFailoverInvoker 现有约束）。需 StreamCallback 标记首字节是否已发送。
 
-- [ ] **Step 1: 确认 StreamCallback 结构**
+- [x] **Step 1: 确认 StreamCallback 结构**
 
 Run: codegraph explore `StreamCallback onFirstByte onChunk`。
 
-- [ ] **Step 2: 写失败测试**
+- [x] **Step 2: 写失败测试**
 
 `ChannelFailoverInvokerTest` 增 `stream_afterFirstByte_noFailover`：首字节已发送后 ch1 失败，断言不试 ch2，直接抛/结束。
 
-- [ ] **Step 3: 实现 + 跑绿**
+- [x] **Step 3: 实现 + 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverInvokerTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(failover): 流式转移边界限定首字节前"

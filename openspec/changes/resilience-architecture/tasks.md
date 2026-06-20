@@ -71,7 +71,11 @@
   - 分流表：INVALID_REQUEST→NONE，7 共因(AUTHENTICATION_ERROR/RATE_LIMIT_ERROR/QUOTA_EXCEEDED/TIMEOUT_ERROR/UPSTREAM_ERROR/SERVICE_UNAVAILABLE/NETWORK_ERROR)→L1，UNKNOWN_ERROR→L2
   - null→NONE（不掩盖编程错误），EnumMap.getOrDefault 兜底 L2（防御新增枚举）
   - 接受 Minor：测试类 Javadoc 简写(SERVER_ERROR)与实际枚举名不一致，仅文档瑕疵不影响逻辑
-- [ ] 3.5 流式转移边界：只在首字节前转移
+- [x] 3.5 流式转移边界：只在首字节前转移
+  - 提交 b2e12ab（2 文件 ChannelFailoverInvoker + Test，+69/-7）；双审查通过（spec ✅ / quality ✅ Approved）；663 全绿（独立复现，+1 测试）
+  - 包装 callback 用 AtomicBoolean firstByteSent 追踪 onChunk 首次调用；首字节前同步启动失败按 L1/L2/NONE 分流换候选，首字节后不换直接抛
+  - 已知架构限制（非缺陷）：chatStream 是 OkHttp enqueue 异步，invokeStream return 即 enqueue 成功，首字节前异步失败时 ChannelFailoverInvoker 已退出调用栈无法换候选（能换窗口仅限同步启动失败）。继承 KeyFailoverInvoker"传输开始后不切换"约束。真正修复需同步等待机制（Future+首字节Promise），属重大变更超 3.5 范围，Javadoc 如实记录
+  - 接受 Minor：firstByteSent 检查在生产异步路径属防御性（覆盖未来同步实现）；测试模拟同步抛场景
 - [ ] 3.6 `DegradationInvoker` 退场或降级为内部组件
 - [ ] 3.7 P1 单元与集成测试（L1 转移、错误分流、流式边界、跨 Cluster 不越权、两对照场景端到端）
 
