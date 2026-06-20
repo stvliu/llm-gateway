@@ -124,6 +124,9 @@ class ChannelFailoverInvokerTest {
                 .extracting(e -> ((ProviderException) e).getModel())
                 .isEqualTo("gpt-3.5-turbo");
 
+        // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
+        verify(keyFailoverInvoker).invoke(ctx1, request);
+        verify(keyFailoverInvoker).invoke(ctx2, request);
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
     }
 
@@ -176,6 +179,33 @@ class ChannelFailoverInvokerTest {
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
                 request, Protocol.OPENAI, 7L, true))
                 .isSameAs(authEx);
+    }
+
+    @Test
+    @DisplayName("L2 degrade 抛异常时防御捕获，抛回 lastException 保留上下文（非 degrade 异常）")
+    void l2_degradeThrowsException_throwsLast() {
+        // DegradationServiceImpl 违背 DegradationService.degrade 接口契约（"无可用备选返回 null"），
+        // 实际在"有链但所有备选不可用"时抛 ProviderException。tryL2Degradation 应防御捕获，
+        // 让调用方抛 lastException 保留原始失败上下文，而非让 degrade 异常传播。
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        ProviderException degradeEx = new ProviderException(
+                ProviderErrorType.UPSTREAM_ERROR, "ALL_MODELS_DEGRADED: 所有备选均不可用");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+        when(degradationService.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenThrow(degradeEx);
+
+        // 防御后应抛 lastException（authEx），而非 degrade 抛出的 degradeEx
+        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, true))
+                .isSameAs(authEx);
+
+        verify(keyFailoverInvoker).invoke(ctx1, request);
+        verify(keyFailoverInvoker).invoke(ctx2, request);
+        verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
     }
 
     @Test
@@ -255,6 +285,9 @@ class ChannelFailoverInvokerTest {
                 .extracting(e -> ((ProviderException) e).getModel())
                 .isEqualTo("gpt-3.5-turbo");
 
+        // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
+        verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
+        verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
     }
 }

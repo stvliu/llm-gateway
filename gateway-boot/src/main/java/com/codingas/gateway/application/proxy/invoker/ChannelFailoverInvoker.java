@@ -40,6 +40,13 @@ import java.util.List;
  * "不自己调 resolveCandidates"，故无法在内部完成跨模型重路由，交由上层
  * （ChatDispatchService）识别异常 model 字段后重新解析候选并再次调用本 Invoker。</p>
  *
+ * <p><b>L2 隐式契约（临时技术债，3.6 替换）</b>：当前 L2 降级信号通过 ProviderException 的
+ * model 字段（=fallback）+ message 的 {@link #L2_DEGRADATION_PREFIX} 前缀向上层传递，
+ * 上层靠字符串前缀识别，较脆弱。此为临时隐式实现，Task 3.6 将替换为显式
+ * {@code L2DegradationRequiredException} 异常类，届时移除前缀常量与字符串拼接。
+ * 另：tryL2Degradation 对 {@code DegradationService.degrade} 做了异常防御（该实现违背
+ * 接口契约"无可用备选返回 null"实际抛异常），详见方法 javadoc。</p>
+ *
  * <p><b>签名说明</b>：plan 原签名含 {@code ResilienceProfile profile}，因 ResilienceProfile
  * 类 P2 才建（当前不存在），3.3 暂用 {@code boolean enableL2ModelDegradation} 占位，
  * P2 建画像后改为 ResilienceProfile。</p>
@@ -48,6 +55,17 @@ import java.util.List;
 public class ChannelFailoverInvoker {
 
     private static final Logger log = LoggerFactory.getLogger(ChannelFailoverInvoker.class);
+
+    /**
+     * L2 降级信号前缀：携带 fallback 模型名的 ProviderException 的 message 以此前缀开头。
+     *
+     * <p><b>临时隐式契约（技术债）</b>：当前通过 ProviderException 的 model 字段（=fallback）+
+     * message 的 {@value #L2_DEGRADATION_PREFIX} 前缀向上层（ChatDispatchService）传递 L2 降级信号。
+     * 此隐式契约较脆弱（上层靠字符串前缀识别），Task 3.6 将替换为显式
+     * {@code L2DegradationRequiredException} 异常类，届时移除本前缀常量及 tryL2Degradation
+     * 中的字符串拼接。</p>
+     */
+    public static final String L2_DEGRADATION_PREFIX = "L2_DEGRADATION_REQUIRED:";
 
     private final KeyFailoverInvoker keyFailoverInvoker;
     private final ErrorClassifier errorClassifier;
@@ -202,10 +220,16 @@ public class ChannelFailoverInvoker {
      * 拿到 fallback 则构造携带 fallback 模型名的 ProviderException（由上层重路由）；
      * 否则返回 null（由调用方抛最后异常）。</p>
      *
+     * <p><b>degrade 契约防御</b>：{@link DegradationService#degrade} 接口 javadoc 声明
+     * "无可用备选返回 null"，但 {@code DegradationServiceImpl} 在"有链但所有备选不可用"时
+     * 违背契约抛出 {@code ProviderException("ALL_MODELS_DEGRADED:...")}（既有问题，非本任务范围）。
+     * 本方法 try-catch 包裹 degrade 调用，捕获后返回 null，让调用方抛 lastException 保留
+     * 原始失败上下文，避免 degrade 异常传播丢失上下文。</p>
+     *
      * @param request                  协议请求（用于读取原模型名）
      * @param lastErrorType            最后一次失败的错误类型（degrade 的 reason 参数）
      * @param enableL2ModelDegradation L2 门禁
-     * @return 携带 fallback 模型名的降级异常（上层重路由）；未降级时返回 null
+     * @return 携带 fallback 模型名的降级异常（上层重路由）；未降级或 degrade 抛异常时返回 null
      */
     private ProviderException tryL2Degradation(ProtocolRequest request, ProviderErrorType lastErrorType,
                                                 boolean enableL2ModelDegradation) {
@@ -213,16 +237,27 @@ public class ChannelFailoverInvoker {
             return null;
         }
         String originalModel = request.getModel();
-        String fallbackModel = degradationService.degrade(originalModel, lastErrorType);
+        String fallbackModel;
+        try {
+            // 防御 DegradationServiceImpl 违背 DegradationService.degrade 接口契约
+            // （"无可用备选返回 null" vs 实际抛 ProviderException），捕获后返回 null
+            // 让调用方抛 lastException 保留原始失败上下文
+            fallbackModel = degradationService.degrade(originalModel, lastErrorType);
+        } catch (ProviderException e) {
+            log.warn("DegradationService.degrade 违背接口契约抛异常（忽略），回退到 lastException: model={} reason={} msg={}",
+                    originalModel, lastErrorType, e.getMessage());
+            return null;
+        }
         if (fallbackModel == null) {
             log.warn("L2 降级失败：模型 {} 无可用备选，将抛出最后异常", originalModel);
             return null;
         }
         log.info("L1 候选全部耗尽，模型 {} 降级为 {}，抛出降级异常由上层重路由",
                 originalModel, fallbackModel);
-        // 抛出携带 fallback 模型名的异常（model 字段），由上层识别并用 fallback 重新路由
+        // 抛出携带 fallback 模型名的异常（model 字段），由上层识别并用 fallback 重新路由。
+        // message 前缀 L2_DEGRADATION_PREFIX 为临时隐式契约，3.6 替换为显式异常类。
         return new ProviderException(lastErrorType,
-                "L2_DEGRADATION_REQUIRED: 模型 " + originalModel + " 降级为 " + fallbackModel
+                L2_DEGRADATION_PREFIX + " 模型 " + originalModel + " 降级为 " + fallbackModel
                         + "，请上层用 fallback 模型重新路由",
                 null, fallbackModel, null, null, null);
     }
