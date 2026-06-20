@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 渠道级故障转移 Invoker（L1 候选内逐个试 + L2 模型降级）
@@ -151,10 +152,13 @@ public class ChannelFailoverInvoker {
      * 流式调用 — L1 候选内逐个试（首字节前可转移，首字节后不换渠道）
      *
      * <p>遍历 candidates，对每个候选调 {@link KeyFailoverInvoker#invokeStream}。
-     * 首字节前（invokeStream 抛 ProviderException，即流启动失败）按分类转移：
-     * NONE 直接抛，L1/L2 换下一候选。一旦某候选流式启动成功（invokeStream 正常 return，
-     * 表示流已建立/首字节已发），ChannelFailoverInvoker 即返回，后续流式错误通过
-     * {@link StreamCallback#onError} 回调处理，不再换渠道。</p>
+     * 包装传入的 callback 追踪首字节是否已发送（首次 {@link StreamCallback#onChunk} 标记）。
+     * 首字节前同步启动失败（invokeStream 抛 ProviderException 且 onChunk 未触发）按分类转移：
+     * NONE 直接抛，L1/L2 换下一候选。若 onChunk 已触发（首字节已发给客户端），catch 块检查
+     * firstByteSent 后直接抛出不换候选（避免重复首字节）。一旦 invokeStream 正常 return 表示
+     * 流已建立，ChannelFailoverInvoker 即返回；后续首字节前异步失败或首字节后失败均通过
+     * wrappedCallback 转发原 callback 的 onError，不再换渠道（继承 KeyFailoverInvoker
+     * "传输开始后不切换"约束）。</p>
      *
      * <p>全部候选启动失败后，若 enableL2ModelDegradation 开启，调 degrade 获取 fallback，
      * 拿到则抛携带 fallback 的异常让上层重路由，否则抛最后异常。</p>
@@ -177,12 +181,42 @@ public class ChannelFailoverInvoker {
         ProviderErrorType lastErrorType = null;
 
         for (RoutingContext candidate : candidates) {
+            // 首字节追踪标志：包装 callback 标记首字节是否已发送
+            // 首字节前同步启动失败可换候选；首字节后失败不换候选（继承 KeyFailoverInvoker 约束）
+            AtomicBoolean firstByteSent = new AtomicBoolean(false);
+            StreamCallback wrappedCallback = new StreamCallback() {
+                @Override
+                public void onChunk(String data) {
+                    // 首次 onChunk 标记首字节已发送
+                    firstByteSent.set(true);
+                    callback.onChunk(data);
+                }
+
+                @Override
+                public void onComplete() {
+                    callback.onComplete();
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    callback.onError(t);
+                }
+            };
+
             try {
-                // KeyFailoverInvoker.invokeStream 正常 return 表示流已建立（首字节已发或即将发）
-                // 一旦建立，后续失败通过 callback.onError 处理，ChannelFailoverInvoker 不再换候选
-                keyFailoverInvoker.invokeStream(candidate, request, callback);
+                // KeyFailoverInvoker.invokeStream 正常 return 表示流已建立（enqueue 成功）
+                // 首字节前的异步失败（onError 在 onChunk 前）和首字节后失败均通过 wrappedCallback
+                // 转发原 callback，ChannelFailoverInvoker 已返回不再换候选
+                keyFailoverInvoker.invokeStream(candidate, request, wrappedCallback);
                 return;
             } catch (ProviderException e) {
+                // 首字节已发送：不换候选，直接抛传播给调用方（首字节后转移边界）
+                // 客户端已收到首字节，换候选重发会导致重复首字节，故直接终止
+                if (firstByteSent.get()) {
+                    throw e;
+                }
+
+                // 首字节前同步启动失败：按 L1/L2/NONE 分流换候选
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
                 log.warn("流式候选渠道 channelId={} endpointId={} 启动失败: {} (决策:{}), 尝试下一候选",
                         candidate.channelId(), candidate.channelEndpointId(),

@@ -24,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -289,5 +290,32 @@ class ChannelFailoverInvokerTest {
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
         verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
+    }
+
+    @Test
+    @DisplayName("流式：首字节已发送后失败不换候选（首字节后转移边界）")
+    void stream_afterFirstByte_noFailover() {
+        // 场景：ch1 首字节已发送后同步失败（doAnswer 模拟先 onChunk 再抛异常）
+        // 语义：首字节后失败不换渠道，直接抛传播给调用方，不试 ch2
+        ProviderException afterFirstByteEx = new ProviderException(
+                ProviderErrorType.UPSTREAM_ERROR, "首字节后失败");
+        doAnswer(invocation -> {
+            StreamCallback wrappedCallback = invocation.getArgument(2, StreamCallback.class);
+            wrappedCallback.onChunk("first-byte-data");  // 首字节已发
+            throw afterFirstByteEx;  // 首字节后同步失败
+        }).when(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
+
+        StreamCallback callback = mock(StreamCallback.class);
+
+        // 断言：不试 ch2，直接抛 afterFirstByteEx（首字节后转移边界）
+        assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, true, callback))
+                .isSameAs(afterFirstByteEx);
+
+        verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
+        verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
+        verify(degradationService, never()).degrade(anyString(), any());
+        // 首字节已转发给原 callback（包装 callback 透传）
+        verify(callback).onChunk("first-byte-data");
     }
 }
