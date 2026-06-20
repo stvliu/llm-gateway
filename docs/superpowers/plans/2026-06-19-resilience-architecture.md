@@ -1073,15 +1073,15 @@ git add -A && git commit -m "feat(resilience): Cluster 域级健康聚合与亲�
 
 **语义（proposal Modified Capabilities）**：degrade(model, errorType) → 按 errorType 分流；L2 受 `enableL2ModelDegradation`/`degradationMaxDepth` 门禁。
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 `DegradationServiceTest.java`：profile 关 L2 时 degrade 返回 null；开时返回 fallback；maxDepth 控制。
 
-- [ ] **Step 2: 跑红 → 实现 → 跑绿**
+- [x] **Step 2: 跑红 → 实现 → 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=DegradationServiceTest` → PASS
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "feat(degradation): degrade 按 reason 分流且 L2 受画像门禁"

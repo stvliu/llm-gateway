@@ -139,7 +139,14 @@
   - 集成测试 ChannelHealthRepositoryIT 确认 5 Router 顺序 Permission100→Health200→ClusterAffinity250→Priority300→LoadBalance9999；RouterChainTest 6 过
   - 设计决策：plan "Modify Cluster 实体 healthStatus 更新逻辑" 判定为聚合器纯计算不写库（避免每次路由查库写库），Cluster.healthStatus 字段已有 setter 供上层持久化；就近路由待 4.9（RoutingRequest 无 region）
   - 接受 Minor：同域多实例多次 endpointResolver.resolve 属 D11 固有代价（与 HealthRouter 同模式），后续可加缓存
-- [ ] 4.8 `DegradationService.degrade(reason)` 按 reason 分流，L2 受画像门禁
+- [x] 4.8 `DegradationService.degrade(reason)` 按 reason 分流，L2 受画像门禁
+  - 提交 58b8d11（3 文件 +197/-13）；双审查通过（spec ✅ / quality ✅，executing-plans 主会话自审）
+  - DegradationService 增 degrade(model, reason, ResilienceProfile) 重载：画像门禁（enableL2ModelDegradation=false 或 maxDepth=0 返回 null）+ 按 errorType 分流（ErrorClassifier 判非 L2 不降级）+ maxDepth 覆盖深度
+  - 旧签名委托新重载（profile=null 回退无门禁旧逻辑，向后兼容）；DegradationServiceImpl 注入 ErrorClassifier
+  - RED: 编译失败（构造器/重载不存在）→ GREEN: 16 测试（新增 ProfileGatedDegradeTests 7）
+  - 回归 ChannelFailoverIntegrationTest 7 过；Spring 上下文装配 DegradationService+ErrorClassifier 正常
+  - 设计决策：maxDepth 限制下备选耗尽仍抛 ALL_MODELS_DEGRADED（既有契约，3.6 技术债，Invoker 已 try-catch 防御），测试如实断言
+  - ChannelFailoverInvoker 占位 boolean 门禁留 4.9 贯穿 profile 时统一替换（避免越界改 RoutingRequest/ChatDispatchServiceImpl）
 - [ ] 4.9 `RoutingRequest` 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
 - [ ] 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
 - [ ] 4.11 前端：画像模板页（CRUD，专家字段折叠）+ Applications 页容灾模式选择 + 降级兜底开关；容灾总览页（故障域拓扑 + 实时转移事件流 + 耗尽告警）；Channels 页一键熔断/恢复/紧切域
