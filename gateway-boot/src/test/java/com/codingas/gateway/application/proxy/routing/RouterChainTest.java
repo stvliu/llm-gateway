@@ -182,7 +182,7 @@ class RouterChainTest {
         when(circuitBreakerManager.isAvailable(150L)).thenReturn(false);
         when(circuitBreakerManager.isAvailable(250L)).thenReturn(true);
 
-        // 真实 Health + Priority + LoadBalance（负载均衡桩：返回唯一候选）
+        // 真实 Health + Priority + LoadBalance（Task 3.1 已降级为透传，返回候选列表）
         LoadBalance selectSingle = instances -> instances.isEmpty() ? null : instances.getFirst();
         LoadBalanceRouter loadBalance = new LoadBalanceRouter(
                 Map.of("weightedRandomLoadBalance", selectSingle));
@@ -194,7 +194,7 @@ class RouterChainTest {
         List<ModelInstance> result = chain.filter(List.of(ch1, ch2),
                 new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI));
 
-        // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；LoadBalance 选 ch2
+        // Health 先过滤掉熔断的 ch1 → [ch2]；Priority 在剩余 ch2 上选 → [ch2]；LoadBalance 透传 [ch2]
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo(2L);
     }

@@ -17,15 +17,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * InstanceSelector 单元测试
  *
- * <p>验证权限锚点 {@code applicationId} 与入站协议 {@code protocol} 从
- * {@link InstanceSelector#select} 透传至 {@link RoutingRequest}，供下游
- * {@code PermissionRouter} 判定可见渠道、{@code HealthRouter} 派生 endpointId。</p>
+ * <p>验证 {@link InstanceSelector#select} 返回候选 {@link ModelInstance} 列表（顺序由
+ * {@link PriorityRouter} 保证按 priority 升序），并将 {@code applicationId} 与 {@code protocol}
+ * 透传至 {@link RoutingRequest}，供下游 {@code PermissionRouter}/{@code HealthRouter} 使用。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InstanceSelector 单元测试")
@@ -44,10 +46,48 @@ class InstanceSelectorTest {
 
     @BeforeEach
     void setUp() {
-        instance = new ModelInstance();
-        instance.setId(10L);
-        instance.setChannelId(100L);
-        instance.setModelId(1L);
+        instance = buildInstance(10L, 100L, 1);
+    }
+
+    @Test
+    @DisplayName("select 返回候选列表（多实例，按 priority 升序透传 RouterChain 结果）")
+    void select_returnsCandidateList() {
+        // given — 三个实例 priority 分别 1/2/3；PriorityRouter 已按 priority 升序，filter 返回升序列表
+        ModelInstance mi1 = buildInstance(11L, 100L, 1);
+        ModelInstance mi2 = buildInstance(12L, 200L, 2);
+        ModelInstance mi3 = buildInstance(13L, 300L, 3);
+        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(mi1, mi2, mi3));
+        when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(mi1, mi2, mi3));
+
+        // when
+        List<ModelInstance> result = instanceSelector.select(
+                1L, 7L, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
+
+        // then — 返回 List 且顺序与 RouterChain 输出一致（即 priority 升序，由 PriorityRouter 保证）
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(ModelInstance::getPriority).containsExactly(1, 2, 3);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(11L, 12L, 13L);
+    }
+
+    @Test
+    @DisplayName("无活跃实例时抛出 ResourceNotFoundException")
+    void select_empty_throws() {
+        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of());
+
+        assertThatThrownBy(() -> instanceSelector.select(
+                1L, 7L, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("RouterChain 过滤后无候选时抛出 ResourceNotFoundException")
+    void select_filterReturnsEmpty_throws() {
+        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
+        when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of());
+
+        assertThatThrownBy(() -> instanceSelector.select(
+                1L, 7L, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
@@ -62,7 +102,7 @@ class InstanceSelectorTest {
 
         // then — 捕获透传给 RouterChain 的 RoutingRequest，断言 applicationId 与 protocol 已透传
         ArgumentCaptor<RoutingRequest> captor = ArgumentCaptor.forClass(RoutingRequest.class);
-        org.mockito.Mockito.verify(routerChain).filter(any(), captor.capture());
+        verify(routerChain).filter(any(), captor.capture());
         RoutingRequest captured = captor.getValue();
         assertThat(captured.getApplicationId()).isEqualTo(7L);
         assertThat(captured.getModelId()).isEqualTo(1L);
@@ -71,13 +111,13 @@ class InstanceSelectorTest {
         assertThat(captured.getProtocol()).isEqualTo(Protocol.OPENAI);
     }
 
-    @Test
-    @DisplayName("无活跃实例时抛出 ResourceNotFoundException")
-    void select_noInstances_throws() {
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of());
-
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                        instanceSelector.select(1L, 7L, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
-                .isInstanceOf(ResourceNotFoundException.class);
+    /** 构造测试用 ModelInstance */
+    private ModelInstance buildInstance(Long id, Long channelId, int priority) {
+        ModelInstance mi = new ModelInstance();
+        mi.setId(id);
+        mi.setChannelId(channelId);
+        mi.setModelId(1L);
+        mi.setPriority(priority);
+        return mi;
     }
 }

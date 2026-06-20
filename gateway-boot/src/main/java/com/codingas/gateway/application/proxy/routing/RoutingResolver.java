@@ -41,7 +41,9 @@ public class RoutingResolver {
         Model model = modelMatcher.match(modelName);
 
         // 2. 实例选择（委托 RouterChain，传入 applicationId 作为权限锚点、protocol 供 HealthRouter 派生 endpointId）
-        ModelInstance modelInstance = instanceSelector.select(model.getId(), applicationId, userId, role, strategy, protocol);
+        // 临时适配（Task 3.1）：InstanceSelector.select 已改为返回候选列表，此处取最高优先级候选；
+        // Task 3.2 将完善 RoutingResolver 返回候选列表供 L1 故障转移逐个尝试
+        ModelInstance modelInstance = instanceSelector.select(model.getId(), applicationId, userId, role, strategy, protocol).getFirst();
 
         // 3. 凭证解析
         String apiKey = credentialResolver.resolve(modelInstance.getChannelId());

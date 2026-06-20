@@ -9,16 +9,12 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 负载均衡路由器 — 链终结者，内部调用 LoadBalance.select() 选一个实例
+ * 负载均衡路由器 — Task 3.1 降级为透传（候选列表产出后不再收敛到单实例）
  *
- * <p>根据 RoutingStrategy 映射到对应的 LoadBalance 实现：</p>
- * <ul>
- *   <li>WEIGHTED → weightedRandomLoadBalance（默认）</li>
- *   <li>RANDOM → weightedRandomLoadBalance</li>
- *   <li>FAILOVER → weightedRandomLoadBalance</li>
- *   <li>COST_OPTIMIZED → weightedRandomLoadBalance</li>
- *   <li>LATENCY_OPTIMIZED → weightedRandomLoadBalance</li>
- * </ul>
+ * <p>历史职责：作为链终结者调用 LoadBalance.select() 选一个实例。
+ * Task 3.1 起 RouterChain 改为产出候选列表供 L1 故障转移逐个尝试，
+ * 本路由器 filter 直接透传输入列表，isForce 降为 false。
+ * LoadBalance 依赖与策略映射字段保留供向后兼容构造，降级后不再使用。</p>
  */
 @Component
 @Order(9999)
@@ -42,23 +38,14 @@ public class LoadBalanceRouter implements Router {
 
     @Override
     public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
-        if (instances.isEmpty()) {
-            return List.of();
-        }
-
-        String beanName = STRATEGY_MAPPING.getOrDefault(request.getStrategy(), DEFAULT_LOAD_BALANCE);
-        LoadBalance loadBalance = loadBalanceMap.get(beanName);
-
-        if (loadBalance == null) {
-            loadBalance = loadBalanceMap.get(DEFAULT_LOAD_BALANCE);
-        }
-
-        ModelInstance selected = loadBalance != null ? loadBalance.select(instances) : instances.getFirst();
-        return selected != null ? List.of(selected) : List.of();
+        // Task 3.1 降级：RouterChain 改为产出候选列表，LoadBalanceRouter 不再收敛到单实例，
+        // 直接透传候选列表供 L1 故障转移逐个尝试（负载均衡收敛职责已移除）
+        return instances;
     }
 
     @Override
     public boolean isForce() {
-        return true;
+        // 降级为非强制：透传语义下不会因空列表终止链（空输入返回空，等价于无候选）
+        return false;
     }
 }
