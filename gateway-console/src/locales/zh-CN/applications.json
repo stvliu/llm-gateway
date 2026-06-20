@@ -16,7 +16,9 @@
     "delete": "删除",
     "searchPlaceholder": "搜索应用名称或编码",
     "codeRequired": "请输入应用编码",
-    "nameRequired": "请输入应用名称"
+    "nameRequired": "请输入应用名称",
+    "deleteSuccess": "应用已删除",
+    "deleteFailed": "删除失败"
   },
   "channelAuthorization": {
     "title": "渠道授权",

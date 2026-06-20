@@ -16,7 +16,9 @@
     "delete": "Delete",
     "searchPlaceholder": "Search application name or code",
     "codeRequired": "Please enter application code",
-    "nameRequired": "Please enter application name"
+    "nameRequired": "Please enter application name",
+    "deleteSuccess": "Application deleted",
+    "deleteFailed": "Failed to delete"
   },
   "channelAuthorization": {
     "title": "Channel Authorization",
