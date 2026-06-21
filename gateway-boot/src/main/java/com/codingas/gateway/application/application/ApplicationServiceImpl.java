@@ -8,6 +8,7 @@ import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
+import com.codingas.gateway.domain.resilience.gateway.ResilienceProfileGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationGateway applicationGateway;
     private final ApplicationChannelGateway applicationChannelGateway;
+    private final ResilienceProfileGateway resilienceProfileGateway;
 
     @Override
     @Transactional
@@ -44,6 +46,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setCode(request.getCode());
         app.setName(request.getName());
         app.setDescription(request.getDescription());
+        // 透传容灾画像 ID（可空，创建时不强制绑定）
+        app.setResilienceProfileId(request.getResilienceProfileId());
         // 创建时状态默认 ACTIVE
         app.setState(ApplicationState.ACTIVE);
 
@@ -71,6 +75,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setCode(request.getCode());
         app.setName(request.getName());
         app.setDescription(request.getDescription());
+        // 透传容灾画像 ID（含 null 清空绑定，与独立绑定端点语义一致）
+        app.setResilienceProfileId(request.getResilienceProfileId());
 
         Application saved = applicationGateway.save(app);
         log.info("Updated application: id={}", saved.getId());
@@ -126,6 +132,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         log.info("Updated application channels: appId={}, count={}", id,
                 channelIds != null ? channelIds.size() : 0);
+    }
+
+    @Override
+    @Transactional
+    public ApplicationResponse bindResilienceProfile(Long applicationId, Long resilienceProfileId) {
+        // 校验应用存在
+        Application app = applicationGateway.findById(applicationId);
+        if (app == null) {
+            throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + applicationId);
+        }
+
+        // resilienceProfileId 为 null 表示解绑，允许；非空时校验画像存在
+        if (resilienceProfileId != null
+                && resilienceProfileGateway.findById(resilienceProfileId) == null) {
+            throw new GatewayRequestException("RESILIENCE_PROFILE_NOT_FOUND",
+                    "容灾画像不存在: " + resilienceProfileId);
+        }
+
+        app.setResilienceProfileId(resilienceProfileId);
+        Application saved = applicationGateway.save(app);
+        log.info("Bound resilience profile: appId={}, profileId={}", applicationId, resilienceProfileId);
+        return toResponse(saved);
     }
 
     /**

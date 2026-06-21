@@ -7,6 +7,8 @@ import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
+import com.codingas.gateway.domain.resilience.gateway.ResilienceProfileGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,9 @@ class ApplicationServiceImplTest {
     @Mock
     private ApplicationChannelGateway applicationChannelGateway;
 
+    @Mock
+    private ResilienceProfileGateway resilienceProfileGateway;
+
     @InjectMocks
     private ApplicationServiceImpl applicationService;
 
@@ -68,6 +73,26 @@ class ApplicationServiceImplTest {
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
             verify(applicationGateway).save(captor.capture());
             assertThat(captor.getValue().getState()).isEqualTo(ApplicationState.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("create 透传 resilienceProfileId 到实体")
+        void create_passesResilienceProfileIdToEntity() {
+            ApplicationRequest request = new ApplicationRequest();
+            request.setCode("APP-001");
+            request.setName("测试应用");
+            request.setResilienceProfileId(7L);
+            when(applicationGateway.findByCode("APP-001")).thenReturn(null);
+            Application saved = buildSavedApplication(1L, "APP-001", "测试应用");
+            saved.setResilienceProfileId(7L);
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.create(request);
+
+            assertThat(result.getResilienceProfileId()).isEqualTo(7L);
+            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+            verify(applicationGateway).save(captor.capture());
+            assertThat(captor.getValue().getResilienceProfileId()).isEqualTo(7L);
         }
 
         @Test
@@ -135,6 +160,121 @@ class ApplicationServiceImplTest {
             assertThatThrownBy(() -> applicationService.update(1L, request))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-002");
+        }
+
+        @Test
+        @DisplayName("update 透传 resilienceProfileId（非空时绑定）")
+        void update_passesResilienceProfileIdToEntity() {
+            ApplicationRequest request = new ApplicationRequest();
+            request.setCode("APP-001");
+            request.setName("名称");
+            request.setResilienceProfileId(7L);
+            Application existing = buildSavedApplication(1L, "APP-001", "旧名称");
+            when(applicationGateway.findById(1L)).thenReturn(existing);
+            Application saved = buildSavedApplication(1L, "APP-001", "名称");
+            saved.setResilienceProfileId(7L);
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.update(1L, request);
+
+            assertThat(result.getResilienceProfileId()).isEqualTo(7L);
+            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+            verify(applicationGateway).save(captor.capture());
+            assertThat(captor.getValue().getResilienceProfileId()).isEqualTo(7L);
+        }
+
+        @Test
+        @DisplayName("update 传 null resilienceProfileId 时清空绑定（透传 null）")
+        void update_nullResilienceProfileId_clearsBinding() {
+            ApplicationRequest request = new ApplicationRequest();
+            request.setCode("APP-001");
+            request.setName("名称");
+            // request 未 set resilienceProfileId，即 null
+            Application existing = buildSavedApplication(1L, "APP-001", "旧名称");
+            existing.setResilienceProfileId(7L); // 原已绑定
+            when(applicationGateway.findById(1L)).thenReturn(existing);
+            Application saved = buildSavedApplication(1L, "APP-001", "名称");
+            // 保存后返回的实体 resilienceProfileId 应为 null（透传 request 的 null）
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.update(1L, request);
+
+            assertThat(result.getResilienceProfileId()).isNull();
+            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+            verify(applicationGateway).save(captor.capture());
+            assertThat(captor.getValue().getResilienceProfileId()).isNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("bindResilienceProfile 方法测试")
+    class BindResilienceProfileTests {
+
+        @Test
+        @DisplayName("正常绑定：application 与 profile 均存在，返回含画像 ID 的响应")
+        void bindResilienceProfile_valid_bindsAndReturns() {
+            Application existing = buildSavedApplication(1L, "APP-001", "应用");
+            when(applicationGateway.findById(1L)).thenReturn(existing);
+            ResilienceProfile profile = new ResilienceProfile();
+            profile.setId(7L);
+            when(resilienceProfileGateway.findById(7L)).thenReturn(profile);
+            Application saved = buildSavedApplication(1L, "APP-001", "应用");
+            saved.setResilienceProfileId(7L);
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.bindResilienceProfile(1L, 7L);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getResilienceProfileId()).isEqualTo(7L);
+            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+            verify(applicationGateway).save(captor.capture());
+            assertThat(captor.getValue().getResilienceProfileId()).isEqualTo(7L);
+        }
+
+        @Test
+        @DisplayName("解绑：resilienceProfileId 为 null 时清空绑定并允许")
+        void bindResilienceProfile_nullId_unbinds() {
+            Application existing = buildSavedApplication(1L, "APP-001", "应用");
+            existing.setResilienceProfileId(7L);
+            when(applicationGateway.findById(1L)).thenReturn(existing);
+            Application saved = buildSavedApplication(1L, "APP-001", "应用");
+            // 保存后 resilienceProfileId 为 null
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.bindResilienceProfile(1L, null);
+
+            assertThat(result.getResilienceProfileId()).isNull();
+            ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
+            verify(applicationGateway).save(captor.capture());
+            assertThat(captor.getValue().getResilienceProfileId()).isNull();
+            // 解绑不应校验画像存在性
+            verify(resilienceProfileGateway, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("application 不存在时抛 APPLICATION_NOT_FOUND")
+        void bindResilienceProfile_applicationNotFound_throws() {
+            when(applicationGateway.findById(999L)).thenReturn(null);
+
+            assertThatThrownBy(() -> applicationService.bindResilienceProfile(999L, 7L))
+                    .isInstanceOf(GatewayRequestException.class)
+                    .extracting("code")
+                    .isEqualTo("APPLICATION_NOT_FOUND");
+            verify(applicationGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("resilienceProfileId 非空但画像不存在时抛 RESILIENCE_PROFILE_NOT_FOUND")
+        void bindResilienceProfile_profileNotFound_throws() {
+            Application existing = buildSavedApplication(1L, "APP-001", "应用");
+            when(applicationGateway.findById(1L)).thenReturn(existing);
+            when(resilienceProfileGateway.findById(7L)).thenReturn(null);
+
+            assertThatThrownBy(() -> applicationService.bindResilienceProfile(1L, 7L))
+                    .isInstanceOf(GatewayRequestException.class)
+                    .extracting("code")
+                    .isEqualTo("RESILIENCE_PROFILE_NOT_FOUND");
+            verify(applicationGateway, never()).save(any());
         }
     }
 

@@ -4,6 +4,7 @@ import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
 import com.codingas.gateway.application.application.ApplicationService;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -199,5 +201,46 @@ class ApplicationControllerIT {
                         .content("{}"))
                 .andExpect(status().isBadRequest());
         verify(applicationService, never()).updateChannels(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/resilience 绑定画像成功返回 200 与 resilienceProfileId")
+    void bindResilience_valid_returns200WithProfileId() throws Exception {
+        ApplicationResponse resp = stubResponse();
+        resp.setResilienceProfileId(7L);
+        when(applicationService.bindResilienceProfile(eq(1L), eq(7L))).thenReturn(resp);
+
+        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"resilienceProfileId\":7}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.resilienceProfileId").value(7));
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/resilience 传 null 解绑成功返回 200")
+    void bindResilience_nullId_unbinds() throws Exception {
+        ApplicationResponse resp = stubResponse();
+        resp.setResilienceProfileId(null);
+        when(applicationService.bindResilienceProfile(eq(1L), isNull())).thenReturn(resp);
+
+        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"resilienceProfileId\":null}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.resilienceProfileId").doesNotExist());
+    }
+
+    @Test
+    @DisplayName("PUT /api/v1/applications/{id}/resilience 画像不存在时 service 抛异常返回 400")
+    void bindResilience_profileNotFound_returns400() throws Exception {
+        when(applicationService.bindResilienceProfile(eq(1L), eq(999L)))
+                .thenThrow(new GatewayRequestException("RESILIENCE_PROFILE_NOT_FOUND", "容灾画像不存在: 999"));
+
+        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"resilienceProfileId\":999}"))
+                .andExpect(status().isBadRequest());
     }
 }
