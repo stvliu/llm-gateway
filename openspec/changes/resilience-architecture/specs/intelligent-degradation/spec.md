@@ -2,9 +2,9 @@
 
 ## MODIFIED Requirements
 
-### Requirement: 降级触发（按 reason 分流 + 画像门禁）
+### Requirement: 降级触发
 
-`DegradationService.degrade(reason)` SHALL 由「不分流的全局主容灾手段」改为「按错误类型分流 + L2 应用可选兜底」。降级定位由全局主容灾降级为 L2 应用可选兜底，受画像门禁约束。
+`DegradationService.degrade(reason)` SHALL 由「不分流的全局主容灾手段」改为「按错误类型分流 + L2 应用可选兜底」。降级定位由全局主容灾降级为 L2 应用可选兜底，受画像门禁约束。本条修订既有「降级触发」Requirement：在保留原触发条件表的基础上，叠加按 `ProviderErrorType` 分流与画像门禁两层约束。
 
 **变更要点**:
 - 原 `degrade(originalModel, reason)` 不分流——任一降级触发条件均切换备选模型
@@ -57,6 +57,8 @@
 - **WHEN** 降级链中所有模型均不可用
 - **THEN** 抛出 `ProviderException("ALL_MODELS_DEGRADED")`
 
+## ADDED Requirements
+
 ### Requirement: L2 降级信号由上层重路由
 
 `ChannelFailoverInvoker` 在 L1 候选全耗尽且 L2 降级成功时，SHALL 抛出 `L2DegradationRequiredException`（携带 `fallbackModel` + 原始失败 cause），由上层 `ChatDispatchService` 捕获并用 fallback 模型重新 `resolveCandidates` + 调用 Invoker。替代原隐式字符串前缀契约。
@@ -71,9 +73,3 @@
 
 - **WHEN** L1 候选全部耗尽，`degrade` 返回 null（无可用备选或门禁未通过）
 - **THEN** `ChannelFailoverInvoker` SHALL 抛出最后捕获的 `ProviderException`
-
-## REMOVED Requirements
-
-### Requirement: 降级作为全局主容灾路径
-
-移除「降级作为全局主容灾手段」的定位。降级不再是无条件的全局主路径，而是 L1 Channel 级转移全耗尽后的 L2 应用可选兜底，受画像门禁与错误分流约束。

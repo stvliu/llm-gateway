@@ -1,6 +1,6 @@
 # Channel Health Tracking Delta Spec
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 熔断 key 统一为 endpointId
 

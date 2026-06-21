@@ -1,6 +1,6 @@
 # Upstream Exception Classification Delta Spec
 
-## MODIFIED Requirements
+## ADDED Requirements
 
 ### Requirement: 错误分类接入错误分流表驱动转移决策
 
@@ -17,7 +17,7 @@
 - `null` 输入 → `NONE`（编程错误或未分类，直接抛出不转移）
 - 未在表中显式映射的新增枚举值 → `L2`（兜底防御性降级）
 
-**ProviderErrorType 分类来源**（保留既有 HTTP 状态码映射）:
+**ProviderErrorType 分类来源**（修正既有 HTTP 状态码映射，503 由 UPSTREAM_ERROR 改为 SERVICE_UNAVAILABLE）:
 
 | HTTP 状态码 | ProviderErrorType | 分流决策 |
 |------------|------------------|---------|

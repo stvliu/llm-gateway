@@ -14,7 +14,7 @@
 
 **调用入口**:
 - `invoke(RoutingContext primary, List<RoutingContext> candidates, ProtocolRequest request, Protocol inboundProtocol, Long applicationId, ResilienceProfile profile)` — 非流式
-- `invokeStream(...)` — 流式
+- `invokeStream(RoutingContext primary, List<RoutingContext> candidates, ProtocolRequest request, Protocol inboundProtocol, Long applicationId, ResilienceProfile profile, StreamCallback callback)` — 流式
 
 #### Scenario: L1 候选内逐个尝试
 
@@ -106,6 +106,7 @@
 
 **规则**:
 - 发布与持久化通过事件解耦：监听器捕获异常仅记日志，不阻断调用链
+- 「同步处理」含义：项目未配置 `@EnableAsync`，Spring 事件发布在同一线程内立即调用监听器完成持久化，而非投递到异步线程池；故发布即持久化，调用链在持久化完成后才继续
 - 可靠性边界：发布后持久化前进程崩溃则事件丢失（可观测性数据可接受，非计费/审计关键路径）
 - 事件字段含 `traceId`（串联同请求多次转移）、`fromChannelId/fromEndpointId`、`toChannelId/toEndpointId`、`errorType`、`decision`、`exhausted`、`occurredAt`
 
