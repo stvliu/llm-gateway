@@ -120,3 +120,67 @@ describe('resilienceApi.switchCluster 紧切域', () => {
     expect(api.put).toHaveBeenCalledWith('/channels/10/cluster', { clusterId: 99 });
   });
 });
+
+describe('resilienceApi.events 转移事件流', () => {
+  it('list 无参数时调用 GET /resilience/events 不带 query', async () => {
+    (api.get as any).mockResolvedValue([]);
+    await resilienceApi.events.list();
+    expect(api.get).toHaveBeenCalledWith('/resilience/events', { params: {} });
+  });
+
+  it('list 透传 since/applicationId/clusterId/limit 到 params', async () => {
+    (api.get as any).mockResolvedValue([]);
+    const sinceIso = '2026-06-22T00:00:00Z';
+    await resilienceApi.events.list({
+      since: sinceIso,
+      applicationId: 7,
+      clusterId: 3,
+      limit: 50,
+    });
+    expect(api.get).toHaveBeenCalledWith('/resilience/events', {
+      params: {
+        since: sinceIso,
+        applicationId: 7,
+        clusterId: 3,
+        limit: 50,
+      },
+    });
+  });
+
+  it('list 省略未传字段不污染 params', async () => {
+    (api.get as any).mockResolvedValue([]);
+    await resilienceApi.events.list({ limit: 25 });
+    expect(api.get).toHaveBeenCalledWith('/resilience/events', {
+      params: { limit: 25 },
+    });
+  });
+
+  it('list 返回事件响应数组', async () => {
+    const events = [{ id: 1, traceId: 't1', exhausted: false, decision: 'L1' }];
+    (api.get as any).mockResolvedValue(events);
+    const res = await resilienceApi.events.list();
+    expect(res).toEqual(events);
+  });
+
+  it('exhausted 无参数时调用 GET /resilience/events/exhausted 空 params', async () => {
+    (api.get as any).mockResolvedValue([]);
+    await resilienceApi.events.exhausted();
+    expect(api.get).toHaveBeenCalledWith('/resilience/events/exhausted', { params: {} });
+  });
+
+  it('exhausted 透传 since/limit 到 params', async () => {
+    (api.get as any).mockResolvedValue([]);
+    const sinceIso = '2026-06-22T08:00:00Z';
+    await resilienceApi.events.exhausted({ since: sinceIso, limit: 20 });
+    expect(api.get).toHaveBeenCalledWith('/resilience/events/exhausted', {
+      params: { since: sinceIso, limit: 20 },
+    });
+  });
+
+  it('exhausted 返回耗尽事件数组', async () => {
+    const events = [{ id: 9, exhausted: true, decision: 'L2' }];
+    (api.get as any).mockResolvedValue(events);
+    const res = await resilienceApi.events.exhausted();
+    expect(res).toEqual(events);
+  });
+});

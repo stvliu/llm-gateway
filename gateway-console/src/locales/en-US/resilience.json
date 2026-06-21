@@ -53,6 +53,7 @@
     "exhaustionAlert": "Exhaustion Alert",
     "exhaustionAlertHelp": "Highlight when all channels/L1 candidates of a model are exhausted",
     "eventStream": "Failover Event Stream",
+    "eventStreamHelp": "Recent failover events (10s auto-refresh), desc by time",
     "eventStreamPlaceholder": "Event stream pending (Task 4.11c)",
     "noClusters": "No clusters",
     "members": "Member channels",
@@ -61,7 +62,21 @@
       "DEGRADED": "Degraded",
       "DOWN": "Down"
     },
-    "noExhaustion": "No exhaustion alert"
+    "noExhaustion": "No exhaustion alert",
+    "noEvents": "No failover events",
+    "exhaustedNoTarget": "Exhausted (no target)",
+    "refresh": "Refresh",
+    "eventColumns": {
+      "time": "Time",
+      "route": "Route",
+      "reason": "Reason",
+      "decision": "Decision",
+      "trace": "Trace"
+    },
+    "decisions": {
+      "L1": "L1 Channel",
+      "L2": "L2 Model"
+    }
   },
   "cluster": {
     "title": "Cluster",

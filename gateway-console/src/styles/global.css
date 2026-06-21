@@ -132,3 +132,16 @@ body {
 .provider-group-header:hover {
   background: var(--ant-color-fill-tertiary, #f0f0f0) !important;
 }
+
+/* ============================================
+   容灾总览 - 转移事件流 exhausted 行高亮
+   ============================================ */
+
+/* 候选全部耗尽的转移事件行：红色背景提示 */
+.failover-event-exhausted > td {
+  background-color: var(--ant-color-error-bg, #fff2f0) !important;
+}
+
+.failover-event-exhausted:hover > td {
+  background-color: var(--ant-color-error-bg-hover, #ffe7e3) !important;
+}

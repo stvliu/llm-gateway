@@ -19,6 +19,9 @@ import type {
   Cluster,
   ClusterRequest,
   CircuitBreakerStateResponse,
+  FailoverEvent,
+  FailoverEventQuery,
+  ExhaustedEventQuery,
 } from '@/types/resilience';
 
 /** 容灾管理 API */
@@ -82,4 +85,45 @@ export const resilienceApi = {
   /** 紧急切换渠道到目标故障域（紧切域） */
   switchCluster: (channelId: number, clusterId: number) =>
     api.put<void>(`/channels/${channelId}/cluster`, { clusterId }),
+
+  /** 转移事件流（对接 4.11c 后端 ResilienceEventController） */
+  events: {
+    /**
+     * 查询转移事件流（按 occurredAt 倒序）
+     *
+     * <p>未传字段不放入 params，避免后端收到 undefined 字符串。</p>
+     */
+    list: (params?: FailoverEventQuery) => {
+      const query = pickDefined(params);
+      return api.get<FailoverEvent[]>('/resilience/events', { params: query });
+    },
+
+    /**
+     * 查询耗尽告警事件（exhausted=true，按 occurredAt 倒序）
+     *
+     * <p>since 不传时由后端 Service 层补默认窗口（最近 1 小时）。</p>
+     */
+    exhausted: (params?: ExhaustedEventQuery) => {
+      const query = pickDefined(params);
+      return api.get<FailoverEvent[]>('/resilience/events/exhausted', {
+        params: query,
+      });
+    },
+  },
 };
+
+/**
+ * 从可选 params 对象中剔除 undefined 字段，仅保留已传字段
+ *
+ * <p>避免 axios 把 { since: undefined } 序列化成 since=undefined 污染请求。</p>
+ */
+function pickDefined<T extends object>(params?: T): Partial<T> {
+  if (!params) return {};
+  const result: Partial<T> = {};
+  for (const key of Object.keys(params) as (keyof T)[]) {
+    if (params[key] !== undefined) {
+      result[key] = params[key];
+    }
+  }
+  return result;
+}

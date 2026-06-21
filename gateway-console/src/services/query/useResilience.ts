@@ -10,6 +10,8 @@ import { channelKeys } from '@/services/query/useChannels';
 import type {
   ResilienceProfileRequest,
   ClusterRequest,
+  FailoverEventQuery,
+  ExhaustedEventQuery,
 } from '@/types/resilience';
 
 /** 容灾画像 Query Keys */
@@ -27,6 +29,20 @@ export const clusterKeys = {
   details: () => [...clusterKeys.all, 'detail'] as const,
   detail: (id: number) => [...clusterKeys.details(), id] as const,
 };
+
+/** 转移事件流 Query Keys */
+export const failoverEventKeys = {
+  all: ['resilience-events'] as const,
+  /** 事件流列表（按查询参数区分缓存） */
+  list: (params?: FailoverEventQuery) =>
+    [...failoverEventKeys.all, 'list', params ?? {}] as const,
+  /** 耗尽告警列表（按查询参数区分缓存） */
+  exhausted: (params?: ExhaustedEventQuery) =>
+    [...failoverEventKeys.all, 'exhausted', params ?? {}] as const,
+};
+
+/** 转移事件流 10s 轮询间隔（容灾可观测性，回答「现在稳不稳」） */
+const FAILOVER_EVENT_REFETCH_INTERVAL = 10_000;
 
 // ============ 容灾画像 ============
 
@@ -159,5 +175,48 @@ export function useSwitchCluster() {
       qc.invalidateQueries({ queryKey: channelKeys.allChannels() });
       qc.invalidateQueries({ queryKey: clusterKeys.lists() });
     },
+  });
+}
+
+// ============ 转移事件流（容灾可观测性，10s 轮询） ============
+
+/**
+ * 转移事件流查询 hook
+ *
+ * <p>容灾总览页轮询渲染转移事件流，10s 自动刷新，回答「最近发生了什么转移」。
+ * enabled=false 时暂停轮询（如切到其他 Tab）。</p>
+ *
+ * @param params 查询参数（since/applicationId/clusterId/limit），可不传
+ * @param options.enabled 是否启用查询（默认 true）
+ */
+export function useFailoverEvents(
+  params?: FailoverEventQuery,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: failoverEventKeys.list(params),
+    queryFn: () => resilienceApi.events.list(params),
+    refetchInterval: FAILOVER_EVENT_REFETCH_INTERVAL,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+/**
+ * 耗尽告警查询 hook
+ *
+ * <p>独立轮询 exhausted=true 事件，10s 自动刷新。空列表表示「无耗尽告警」绿色提示。</p>
+ *
+ * @param params 查询参数（since/limit），可不传
+ * @param options.enabled 是否启用查询（默认 true）
+ */
+export function useExhaustedEvents(
+  params?: ExhaustedEventQuery,
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: failoverEventKeys.exhausted(params),
+    queryFn: () => resilienceApi.events.exhausted(params),
+    refetchInterval: FAILOVER_EVENT_REFETCH_INTERVAL,
+    enabled: options?.enabled ?? true,
   });
 }

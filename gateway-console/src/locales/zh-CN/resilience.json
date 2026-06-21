@@ -53,6 +53,7 @@
     "exhaustionAlert": "耗尽告警",
     "exhaustionAlertHelp": "某模型所有渠道/L1 候选耗尽时高亮，提示该补供给侧",
     "eventStream": "转移事件流",
+    "eventStreamHelp": "最近转移事件（10s 自动刷新），按时间倒序",
     "eventStreamPlaceholder": "转移事件流待接入（Task 4.11c）",
     "noClusters": "暂无故障域",
     "members": "成员渠道",
@@ -61,7 +62,21 @@
       "DEGRADED": "降级",
       "DOWN": "故障"
     },
-    "noExhaustion": "暂无耗尽告警"
+    "noExhaustion": "暂无耗尽告警",
+    "noEvents": "暂无转移事件",
+    "exhaustedNoTarget": "耗尽无目标",
+    "refresh": "刷新",
+    "eventColumns": {
+      "time": "时间",
+      "route": "转移路径",
+      "reason": "原因",
+      "decision": "决策",
+      "trace": "Trace"
+    },
+    "decisions": {
+      "L1": "L1 渠道",
+      "L2": "L2 模型"
+    }
   },
   "cluster": {
     "title": "故障域",
