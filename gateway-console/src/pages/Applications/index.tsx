@@ -1,13 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useApplications, useDeleteApplication } from '@/services/query/useApplications';
+import { useResilienceProfiles } from '@/services/query/useResilience';
+import { modeLabel, modeColor } from '@/pages/resilience/mode';
 import ApplicationFormModal from './ApplicationFormModal';
 import ChannelManageModal from './ChannelManageModal';
 import type { Application } from '@/types/application';
+import type { ResilienceProfile } from '@/types/resilience';
 
 /**
  * 应用管理页
@@ -20,9 +24,17 @@ export default function ApplicationsPage() {
   const { message } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.APPLICATION_WRITE);
+  const navigate = useNavigate();
 
   const { data: applications, isLoading } = useApplications();
   const deleteMutation = useDeleteApplication();
+  // 容灾画像列表：用于反查 Application.resilienceProfileId 对应的画像名与档位
+  const { data: profiles } = useResilienceProfiles();
+  const profileMap = useMemo(() => {
+    const m = new Map<number, ResilienceProfile>();
+    (profiles ?? []).forEach((p) => m.set(p.id, p));
+    return m;
+  }, [profiles]);
 
   const [formVisible, setFormVisible] = useState(false);
   const [editingApplication, setEditingApplication] = useState<Application | undefined>();
@@ -105,6 +117,29 @@ export default function ApplicationsPage() {
       ),
     },
     {
+      // 容灾画像列：只读展示当前绑定的画像档位。
+      // 后端 ApplicationRequest 暂未接收 resilienceProfileId 写入，
+      // 此列为展示侧；绑定写入能力待后端补端点（见 resilience.configureHint）。
+      title: t('resilience.column'),
+      key: 'resilience',
+      width: 140,
+      render: (_: unknown, record: Application) => {
+        const profile = record.resilienceProfileId
+          ? profileMap.get(record.resilienceProfileId)
+          : undefined;
+        if (!profile) {
+          return <Tag>{t('resilience.default')}</Tag>;
+        }
+        return (
+          <Tooltip title={t('resilience.configureHint')}>
+            <Tag color={modeColor(profile.mode)}>
+              {profile.name} · {modeLabel(profile.mode)}
+            </Tag>
+          </Tooltip>
+        );
+      },
+    },
+    {
       title: t('application.actions'),
       key: 'actions',
       width: 140,
@@ -112,6 +147,14 @@ export default function ApplicationsPage() {
         <Space size="small">
           <Tooltip title={t('channelAuthorization.title')}>
             <Button type="text" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageApplication(record)} />
+          </Tooltip>
+          <Tooltip title={t('resilience.configure')}>
+            <Button
+              type="text"
+              size="small"
+              icon={<ThunderboltOutlined />}
+              onClick={() => navigate('/resilience/profiles')}
+            />
           </Tooltip>
           {canWrite && (
             <>

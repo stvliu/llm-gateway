@@ -18,6 +18,8 @@ export const P = {
   CHANNEL_WRITE: 'channel:write',
   APPLICATION_READ: 'application:read',
   APPLICATION_WRITE: 'application:write',
+  RESILIENCE_READ: 'resilience:read',
+  RESILIENCE_WRITE: 'resilience:write',
   QUICKSTART: 'quickstart:access',
   AUDIT_READ: 'audit:read',
 } as const;

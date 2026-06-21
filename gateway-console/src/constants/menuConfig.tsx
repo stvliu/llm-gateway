@@ -7,6 +7,7 @@ import {
   UserSwitchOutlined,
   BarChartOutlined,
   FileSearchOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -93,6 +94,12 @@ export const menuGroups: MenuGroupConfig[] = [
     key: 'operations',
     label: 'menu.group.operations',
     items: [
+      {
+        key: '/resilience/overview',
+        icon: <SafetyOutlined />,
+        label: 'menu.resilience',
+        permission: 'resilience:read',
+      },
       {
         key: '/stats',
         icon: <BarChartOutlined />,

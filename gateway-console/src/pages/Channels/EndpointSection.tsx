@@ -13,6 +13,7 @@ import {
 import { extractErrorMessage } from '@/utils/errorMessage';
 import { useSavePulse } from '@/components/common/useSavePulse';
 import { useDangerConfirm } from '@/components/common/useDangerConfirm';
+import { CircuitBreakerButton } from './CircuitBreakerButton';
 import '@/components/common/SavePulse.css';
 
 interface EndpointSectionProps {
@@ -131,6 +132,8 @@ function EndpointRow({
         <span className="save-tip-err">✗ {pulse.errorMsg}</span>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+        {/* 容灾应急：端点熔断器状态 + 一键熔断/恢复（任务 4.11b） */}
+        <CircuitBreakerButton channelId={channelId} endpointId={endpoint.id} />
         <Tooltip title={t('drawer.edit')}>
           <Button type="text" size="small" icon={<EditOutlined />} onClick={onStartEdit} />
         </Tooltip>

@@ -1,0 +1,104 @@
+{
+  "title": "Resilience",
+  "menu": {
+    "resilience": "Resilience",
+    "overview": "Overview",
+    "profiles": "Profiles"
+  },
+  "mode": {
+    "STANDARD": "Standard",
+    "STRICT": "Strict",
+    "AGGRESSIVE": "Aggressive",
+    "label": "Resilience Mode",
+    "description": {
+      "STANDARD": "L1 on + L2 shallow degradation (depth 2). Balanced default.",
+      "STRICT": "L1 on + L2 off. No degradation; fail rather than switch model.",
+      "AGGRESSIVE": "L1 on + L2 deep degradation (depth 3) + short timeout. Availability first."
+    }
+  },
+  "fallback": {
+    "label": "Degradation Fallback",
+    "enabled": "Enable L2 model degradation",
+    "maxDepth": "Max degradation depth",
+    "maxDepthHelp": "1-5, preset by mode, adjustable. 0 when disabled."
+  },
+  "profiles": {
+    "title": "Resilience Profile Templates",
+    "subtitle": "Manage preset profiles; clone and tweak instead of configuring from scratch",
+    "add": "New Profile",
+    "edit": "Edit",
+    "code": "Code",
+    "name": "Name",
+    "mode": "Mode",
+    "advanced": "Advanced",
+    "advancedHelp": "Expert fields: session affinity, pinned model, timeout. Collapsed by default.",
+    "enableSessionAffinity": "Session Affinity",
+    "sessionAffinityTtl": "Session Affinity TTL (minutes)",
+    "enablePinnedModel": "Pinned Model",
+    "pinnedModelId": "Pinned Model ID",
+    "timeout": "Timeout seconds (0=channel default)",
+    "codeRequired": "Profile code is required",
+    "nameRequired": "Profile name is required",
+    "createSuccess": "Profile created",
+    "updateSuccess": "Profile updated",
+    "createFailed": "Failed to create profile",
+    "updateFailed": "Failed to update profile",
+    "deleteForbidden": "Profile deletion is not supported (default is system fallback)"
+  },
+  "overview": {
+    "title": "Resilience Overview",
+    "subtitle": "Answers 'is it stable now', read-only",
+    "clusterTopology": "Cluster Topology",
+    "clusterTopologyHelp": "Cluster cards with member channels and health lights",
+    "exhaustionAlert": "Exhaustion Alert",
+    "exhaustionAlertHelp": "Highlight when all channels/L1 candidates of a model are exhausted",
+    "eventStream": "Failover Event Stream",
+    "eventStreamPlaceholder": "Event stream pending (Task 4.11c)",
+    "noClusters": "No clusters",
+    "members": "Member channels",
+    "healthStatus": {
+      "HEALTHY": "Healthy",
+      "DEGRADED": "Degraded",
+      "DOWN": "Down"
+    },
+    "noExhaustion": "No exhaustion alert"
+  },
+  "cluster": {
+    "title": "Cluster",
+    "code": "Code",
+    "name": "Name",
+    "providerId": "Provider ID",
+    "region": "Region",
+    "priority": "Priority",
+    "healthStatus": "Health Status",
+    "add": "New Cluster",
+    "edit": "Edit",
+    "codeRequired": "Cluster code is required",
+    "nameRequired": "Cluster name is required",
+    "providerIdRequired": "Provider ID is required",
+    "createSuccess": "Cluster created",
+    "updateSuccess": "Cluster updated",
+    "createFailed": "Failed to create cluster",
+    "updateFailed": "Failed to update cluster"
+  },
+  "channels": {
+    "circuitBreaker": "Circuit Breaker",
+    "forceOpen": "Force Open",
+    "forceClose": "Force Close",
+    "forceOpenConfirm": "Force open this endpoint? Traffic will be cut immediately.",
+    "forceCloseConfirm": "Force close this endpoint? Traffic will resume.",
+    "forceOpenSuccess": "Endpoint force-opened",
+    "forceCloseSuccess": "Endpoint force-closed",
+    "operationFailed": "Operation failed",
+    "currentState": "Current state",
+    "switchCluster": "Switch Cluster",
+    "switchClusterConfirm": "Switch this channel to the target cluster? Traffic will be pinned to it.",
+    "switchClusterSuccess": "Cluster switched",
+    "selectCluster": "Select target cluster",
+    "state": {
+      "CLOSED": "Closed",
+      "OPEN": "Open",
+      "HALF_OPEN": "Half-open"
+    }
+  }
+}

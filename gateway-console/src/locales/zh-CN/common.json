@@ -11,6 +11,7 @@
     "users": "用户管理",
     "stats": "统计",
     "auditLogs": "审计日志",
+    "resilience": "容灾管理",
     "catalog": "目录",
     "changePassword": "修改密码",
     "group": {

@@ -1,0 +1,122 @@
+// 容灾 API 封装层单元测试
+//
+// 任务 4.11b：验证 resilienceApi 封装层对后端 4.11a 端点的调用契约：
+// - profiles CRUD：GET/POST /resilience/profiles、GET/PUT /resilience/profiles/{id}
+// - clusters CRUD：GET/POST /resilience/clusters、GET/PUT /resilience/clusters/{id}
+// - 熔断应急：force-open / force-close / state
+// - 紧切域：PUT /channels/{id}/cluster
+//
+// 策略：mock @/services/api/client 的 api 对象，断言调用的 url/method/body 与后端契约一致。
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { resilienceApi } from '../api';
+
+// mock api client，捕获调用参数
+vi.mock('@/services/api/client', () => {
+  const api = {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+    patch: vi.fn(),
+  };
+  return { api };
+});
+
+import { api } from '@/services/api/client';
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('resilienceApi.profiles', () => {
+  it('list 调用 GET /resilience/profiles', async () => {
+    (api.get as any).mockResolvedValue([]);
+    await resilienceApi.profiles.list();
+    expect(api.get).toHaveBeenCalledWith('/resilience/profiles');
+  });
+
+  it('getById 调用 GET /resilience/profiles/{id}', async () => {
+    (api.get as any).mockResolvedValue({});
+    await resilienceApi.profiles.getById(7);
+    expect(api.get).toHaveBeenCalledWith('/resilience/profiles/7');
+  });
+
+  it('create 调用 POST /resilience/profiles 带请求体', async () => {
+    (api.post as any).mockResolvedValue({});
+    const body = { code: 'default', name: '默认', mode: 'STANDARD' } as any;
+    await resilienceApi.profiles.create(body);
+    expect(api.post).toHaveBeenCalledWith('/resilience/profiles', body);
+  });
+
+  it('update 调用 PUT /resilience/profiles/{id} 带请求体', async () => {
+    (api.put as any).mockResolvedValue({});
+    const body = { code: 'strict', name: '严格', mode: 'STRICT' } as any;
+    await resilienceApi.profiles.update(3, body);
+    expect(api.put).toHaveBeenCalledWith('/resilience/profiles/3', body);
+  });
+});
+
+describe('resilienceApi.clusters', () => {
+  it('list 调用 GET /resilience/clusters', async () => {
+    (api.get as any).mockResolvedValue([]);
+    await resilienceApi.clusters.list();
+    expect(api.get).toHaveBeenCalledWith('/resilience/clusters');
+  });
+
+  it('getById 调用 GET /resilience/clusters/{id}', async () => {
+    (api.get as any).mockResolvedValue({});
+    await resilienceApi.clusters.getById(9);
+    expect(api.get).toHaveBeenCalledWith('/resilience/clusters/9');
+  });
+
+  it('create 调用 POST /resilience/clusters 带请求体', async () => {
+    (api.post as any).mockResolvedValue({});
+    const body = { code: 'openai-us', name: 'OpenAI美西', providerId: 1, priority: 1 };
+    await resilienceApi.clusters.create(body);
+    expect(api.post).toHaveBeenCalledWith('/resilience/clusters', body);
+  });
+
+  it('update 调用 PUT /resilience/clusters/{id} 带请求体', async () => {
+    (api.put as any).mockResolvedValue({});
+    const body = { code: 'openai-sg', name: 'OpenAI新加坡', providerId: 1, priority: 2 };
+    await resilienceApi.clusters.update(5, body);
+    expect(api.put).toHaveBeenCalledWith('/resilience/clusters/5', body);
+  });
+});
+
+describe('resilienceApi.circuitBreaker 应急操作', () => {
+  it('forceOpen 调用 POST .../circuit-breaker/force-open 返回状态响应', async () => {
+    (api.post as any).mockResolvedValue({ state: 'OPEN' });
+    const res = await resilienceApi.circuitBreaker.forceOpen(1, 2);
+    expect(api.post).toHaveBeenCalledWith(
+      '/channels/1/endpoints/2/circuit-breaker/force-open',
+    );
+    expect(res).toEqual({ state: 'OPEN' });
+  });
+
+  it('forceClose 调用 POST .../circuit-breaker/force-close 返回状态响应', async () => {
+    (api.post as any).mockResolvedValue({ state: 'CLOSED' });
+    const res = await resilienceApi.circuitBreaker.forceClose(1, 2);
+    expect(api.post).toHaveBeenCalledWith(
+      '/channels/1/endpoints/2/circuit-breaker/force-close',
+    );
+    expect(res).toEqual({ state: 'CLOSED' });
+  });
+
+  it('getState 调用 GET .../circuit-breaker/state 返回状态响应', async () => {
+    (api.get as any).mockResolvedValue({ state: 'HALF_OPEN' });
+    const res = await resilienceApi.circuitBreaker.getState(1, 2);
+    expect(api.get).toHaveBeenCalledWith(
+      '/channels/1/endpoints/2/circuit-breaker/state',
+    );
+    expect(res).toEqual({ state: 'HALF_OPEN' });
+  });
+});
+
+describe('resilienceApi.switchCluster 紧切域', () => {
+  it('switchCluster 调用 PUT /channels/{id}/cluster 带 {clusterId}', async () => {
+    (api.put as any).mockResolvedValue(undefined);
+    await resilienceApi.switchCluster(10, 99);
+    expect(api.put).toHaveBeenCalledWith('/channels/10/cluster', { clusterId: 99 });
+  });
+});

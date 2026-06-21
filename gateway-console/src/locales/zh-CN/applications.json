@@ -20,6 +20,12 @@
     "deleteSuccess": "应用已删除",
     "deleteFailed": "删除失败"
   },
+  "resilience": {
+    "column": "容灾画像",
+    "default": "默认",
+    "configure": "配置",
+    "configureHint": "后端 ApplicationRequest 暂未接收容灾字段，绑定能力待后端补端点"
+  },
   "channelAuthorization": {
     "title": "渠道授权",
     "permissionHint": "配置该应用可访问的渠道，应用下的 API Key 将继承这些渠道权限",

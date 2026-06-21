@@ -1,0 +1,85 @@
+/**
+ * 容灾管理 API 封装
+ *
+ * <p>对接后端 4.11a 交付的端点：
+ * <ul>
+ *   <li>容灾画像 CRUD：/api/v1/resilience/profiles</li>
+ *   <li>故障域 CRUD：/api/v1/resilience/clusters</li>
+ *   <li>渠道端点熔断应急：/api/v1/channels/{cid}/endpoints/{eid}/circuit-breaker/*</li>
+ *   <li>紧切域：PUT /api/v1/channels/{id}/cluster</li>
+ * </ul>
+ * </p>
+ *
+ * <p>遵循 applicationApi 既有模式：基于 ./client 的 api 对象，每方法中文注释。</p>
+ */
+import { api } from '@/services/api/client';
+import type {
+  ResilienceProfile,
+  ResilienceProfileRequest,
+  Cluster,
+  ClusterRequest,
+  CircuitBreakerStateResponse,
+} from '@/types/resilience';
+
+/** 容灾管理 API */
+export const resilienceApi = {
+  /** 容灾画像 */
+  profiles: {
+    /** 获取容灾画像列表 */
+    list: () => api.get<ResilienceProfile[]>('/resilience/profiles'),
+
+    /** 获取容灾画像详情 */
+    getById: (id: number) =>
+      api.get<ResilienceProfile>(`/resilience/profiles/${id}`),
+
+    /** 创建容灾画像 */
+    create: (data: ResilienceProfileRequest) =>
+      api.post<ResilienceProfile>('/resilience/profiles', data),
+
+    /** 更新容灾画像 */
+    update: (id: number, data: ResilienceProfileRequest) =>
+      api.put<ResilienceProfile>(`/resilience/profiles/${id}`, data),
+  },
+
+  /** 故障域 */
+  clusters: {
+    /** 获取故障域列表 */
+    list: () => api.get<Cluster[]>('/resilience/clusters'),
+
+    /** 获取故障域详情 */
+    getById: (id: number) => api.get<Cluster>(`/resilience/clusters/${id}`),
+
+    /** 创建故障域 */
+    create: (data: ClusterRequest) =>
+      api.post<Cluster>('/resilience/clusters', data),
+
+    /** 更新故障域 */
+    update: (id: number, data: ClusterRequest) =>
+      api.put<Cluster>(`/resilience/clusters/${id}`, data),
+  },
+
+  /** 渠道端点熔断器应急操作 */
+  circuitBreaker: {
+    /** 一键强制熔断端点（摘流量） */
+    forceOpen: (channelId: number, endpointId: number) =>
+      api.post<CircuitBreakerStateResponse>(
+        `/channels/${channelId}/endpoints/${endpointId}/circuit-breaker/force-open`,
+      ),
+
+    /** 一键强制恢复端点（解除手动熔断） */
+    forceClose: (channelId: number, endpointId: number) =>
+      api.post<CircuitBreakerStateResponse>(
+        `/channels/${channelId}/endpoints/${endpointId}/circuit-breaker/force-close`,
+      ),
+
+    /** 查询端点熔断器当前状态 */
+    getState: (channelId: number, endpointId: number) =>
+      api.get<CircuitBreakerStateResponse>(
+        `/channels/${channelId}/endpoints/${endpointId}/circuit-breaker/state`,
+      ),
+  },
+
+  /** 紧急切换渠道到目标故障域（紧切域） */
+  switchCluster: (channelId: number, clusterId: number) =>
+    api.put<void>(`/channels/${channelId}/cluster`, { clusterId }),
+};

@@ -20,6 +20,12 @@
     "deleteSuccess": "Application deleted",
     "deleteFailed": "Failed to delete"
   },
+  "resilience": {
+    "column": "Resilience Profile",
+    "default": "Default",
+    "configure": "Configure",
+    "configureHint": "Backend ApplicationRequest does not accept resilience fields yet; binding awaits backend endpoint"
+  },
   "channelAuthorization": {
     "title": "Channel Authorization",
     "permissionHint": "Configure channels accessible to this application. API Keys under this application will inherit these channel permissions.",
