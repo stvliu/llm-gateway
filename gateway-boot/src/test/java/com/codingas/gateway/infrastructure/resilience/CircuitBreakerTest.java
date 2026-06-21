@@ -192,6 +192,59 @@ class CircuitBreakerTest {
     }
 
     @Nested
+    @DisplayName("应急强制操作")
+    class ForceOperations {
+
+        @Test
+        @DisplayName("forceOpen 直接将熔断器置为 OPEN，无需触发失败")
+        void forceOpen_transitionsToOpenImmediately() {
+            // 初始 CLOSED，无任何 recordFailure
+            assertThat(breaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+
+            breaker.forceOpen();
+
+            assertThat(breaker.getState()).isEqualTo(CircuitBreakerState.OPEN);
+            // OPEN 状态下拒绝请求
+            assertThat(breaker.allowRequest()).isFalse();
+        }
+
+        @Test
+        @DisplayName("forceClose 将熔断器置为 CLOSED 并重置统计窗口")
+        void forceClose_transitionsToClosedAndResetsWindow() throws InterruptedException {
+            // 先触发 OPEN
+            for (int i = 0; i < 5; i++) {
+                breaker.recordFailure();
+            }
+            assertThat(breaker.getState()).isEqualTo(CircuitBreakerState.OPEN);
+
+            breaker.forceClose();
+
+            assertThat(breaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+            // 恢复后允许请求通过
+            assertThat(breaker.allowRequest()).isTrue();
+            // 重置后窗口清空，单次失败不应触发再次熔断（窗口未满）
+            breaker.recordFailure();
+            assertThat(breaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+        }
+
+        @Test
+        @DisplayName("forceClose 在 HALF_OPEN 状态下也能恢复为 CLOSED")
+        void forceClose_fromHalfOpen_resetsToClosed() throws InterruptedException {
+            CircuitBreaker halfOpenBreaker = new CircuitBreaker(0.5, 5, 100, 3);
+            for (int i = 0; i < 5; i++) {
+                halfOpenBreaker.recordFailure();
+            }
+            Thread.sleep(150);
+            halfOpenBreaker.allowRequest(); // 触发 HALF_OPEN
+            assertThat(halfOpenBreaker.getState()).isEqualTo(CircuitBreakerState.HALF_OPEN);
+
+            halfOpenBreaker.forceClose();
+
+            assertThat(halfOpenBreaker.getState()).isEqualTo(CircuitBreakerState.CLOSED);
+        }
+    }
+
+    @Nested
     @DisplayName("并发安全")
     class Concurrency {
 

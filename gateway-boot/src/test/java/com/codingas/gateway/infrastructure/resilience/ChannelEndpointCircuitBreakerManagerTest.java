@@ -46,4 +46,34 @@ class ChannelEndpointCircuitBreakerManagerTest {
             assertThat(manager.isAvailable(1L)).isTrue();
         }
     }
+
+    @Nested
+    @DisplayName("应急强制操作转发")
+    class ForceOperationTests {
+
+        @Test
+        @DisplayName("forceOpen 将端点熔断器置为 OPEN")
+        void forceOpen_transitionsEndpointBreakerToOpen() {
+            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            assertThat(manager.getState(1L)).isEqualTo(CircuitBreakerState.CLOSED);
+
+            manager.forceOpen(1L);
+
+            assertThat(manager.getState(1L)).isEqualTo(CircuitBreakerState.OPEN);
+            assertThat(manager.isAvailable(1L)).isFalse();
+        }
+
+        @Test
+        @DisplayName("forceClose 将端点熔断器置为 CLOSED 并恢复可用")
+        void forceClose_transitionsEndpointBreakerToClosed() {
+            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            manager.forceOpen(1L);
+            assertThat(manager.isAvailable(1L)).isFalse();
+
+            manager.forceClose(1L);
+
+            assertThat(manager.getState(1L)).isEqualTo(CircuitBreakerState.CLOSED);
+            assertThat(manager.isAvailable(1L)).isTrue();
+        }
+    }
 }

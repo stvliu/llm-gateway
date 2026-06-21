@@ -35,4 +35,38 @@ public class ChannelEndpointCircuitBreakerManager {
     public boolean isAvailable(Long endpointId) {
         return getBreaker(endpointId).allowRequest();
     }
+
+    /**
+     * 查询端点熔断器当前状态
+     *
+     * @param endpointId 端点 ID
+     * @return 熔断器状态（CLOSED/OPEN/HALF_OPEN）
+     */
+    public CircuitBreakerState getState(Long endpointId) {
+        return getBreaker(endpointId).getState();
+    }
+
+    /**
+     * 应急强制熔断端点
+     *
+     * <p>运维一键熔断：直接将端点熔断器置为 OPEN，立即切断该端点流量。
+     * 用于故障应急时快速隔离问题端点。</p>
+     *
+     * @param endpointId 端点 ID
+     */
+    public void forceOpen(Long endpointId) {
+        getBreaker(endpointId).forceOpen();
+    }
+
+    /**
+     * 应急强制恢复端点
+     *
+     * <p>运维一键恢复：将端点熔断器置为 CLOSED 并重置统计窗口，
+     * 用于故障修复后立即恢复端点流量。</p>
+     *
+     * @param endpointId 端点 ID
+     */
+    public void forceClose(Long endpointId) {
+        getBreaker(endpointId).forceClose();
+    }
 }
