@@ -15,7 +15,8 @@ import java.util.List;
  * <ul>
  *   <li>{@link #findRecent} — 按 occurredAt 倒序返回转移事件流，支持 since/applicationId/clusterId
  *       可选过滤。clusterId 过滤基于冗余 fromClusterId/toClusterId 字段匹配（任一命中即返回）；
- *       当前 RoutingContext 未携带 clusterId，字段暂为 null，过滤暂不生效（未来填充后生效）</li>
+ *       Invoker 通过 {@code ChannelGateway.findById} 反查 channelId→clusterId 填充冗余字段，
+ *       clusterId 过滤已生效</li>
  *   <li>{@link #findExhausted} — 返回 exhausted=true 的耗尽告警事件，按 occurredAt 倒序</li>
  * </ul>
  */

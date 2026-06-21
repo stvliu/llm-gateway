@@ -10,7 +10,7 @@ import java.time.Instant;
  *
  * <p>由 {@code ChannelFailoverInvoker} 在 catch 块判定 {@link FailoverDecision} 非 NONE
  * （L1/L2 换候选）时，换下一候选前发布。由 {@code FailoverEventListener}
- * （{@code @TransactionalEventListener(AFTER_COMMIT)}）异步接收并调
+ * （{@code @EventListener}，非事务监听）接收并调
  * {@code FailoverEventGateway.save} 持久化为 {@code FailoverEvent} 实体。</p>
  *
  * <p><b>命名说明</b>：事件类命名为 {@code FailoverOccurredEvent}（转移发生事件），
@@ -26,8 +26,8 @@ import java.time.Instant;
  * @param fromEndpointId   失败候选的端点 ID
  * @param toChannelId      转移目标候选的渠道 ID（exhausted 时为 null）
  * @param toEndpointId     转移目标候选的端点 ID（exhausted 时为 null）
- * @param fromClusterId    冗余：失败候选所属故障域 ID（可空，当前 RoutingContext 未携带 clusterId 故为 null）
- * @param toClusterId      冗余：转移目标所属故障域 ID（可空，同上）
+ * @param fromClusterId    冗余：失败候选所属故障域 ID（Invoker 经 ChannelGateway.findById 反查填充，渠道不存在或未关联 cluster 时为 null）
+ * @param toClusterId      冗余：转移目标所属故障域 ID（同上，无目标时为 null）
  * @param errorType        触发转移的上游错误类型
  * @param decision         转移决策（L1/L2）
  * @param exhausted        是否候选全部耗尽（to 为 null 时为 true）

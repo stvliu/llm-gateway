@@ -30,8 +30,8 @@ import java.time.Instant;
  *   <li>toChannelId / toEndpointId — 转移目标候选的渠道 ID 与端点 ID；
  *       已是最后一个候选（exhausted=true）时为 null</li>
  *   <li>fromClusterId / toClusterId — 冗余故障域 ID（可空，便于 findRecent 的 clusterId 过滤直接匹配，
- *       避免 join channels 表）。当前 {@code RoutingContext} 未携带 clusterId，Invoker 发布时暂填 null；
- *       未来 RoutingContext 扩展 clusterId 后可平滑填充，clusterId 过滤随之生效</li>
+ *       避免 join channels 表）。Invoker 经 {@code ChannelGateway.findById} 反查 channelId→clusterId 填充，
+ *       渠道不存在或未关联 cluster 时为 null；clusterId 过滤已生效</li>
  *   <li>errorType — 触发转移的上游错误类型</li>
  *   <li>decision — 转移决策（L1 换渠道共因故障 / L2 换模型降级）</li>
  *   <li>exhausted — 是否候选全部耗尽（to 为 null 时为 true）</li>

@@ -58,7 +58,7 @@ public class ResilienceEventController {
     /**
      * 查询耗尽告警事件（exhausted=true，按 occurredAt 倒序）
      *
-     * @param since 起始时间过滤（可选，ISO-8601 Instant；不传时由 Service 层决定默认窗口）
+     * @param since 起始时间过滤（可选，ISO-8601 Instant；不传时由 Service 层补默认窗口最近 1 小时）
      * @param limit 返回条数（默认 50）
      * @return 耗尽事件响应列表
      */

@@ -5,9 +5,8 @@ import com.codingas.gateway.domain.resilience.entity.FailoverEvent;
 import com.codingas.gateway.domain.resilience.gateway.FailoverEventGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.event.TransactionPhase;
-import org.springframework.transaction.event.TransactionalEventListener;
 
 /**
  * 转移事件监听器
@@ -15,10 +14,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
  * <p>接收 {@link FailoverOccurredEvent}，构造 {@link FailoverEvent} 实体并委托
  * {@link FailoverEventGateway#save} 持久化。</p>
  *
- * <p><b>AFTER_COMMIT 语义</b>：使用 {@link TransactionalEventListener} 监听
- * {@link TransactionPhase#AFTER_COMMIT}，确保仅在调用链所在事务提交成功后才持久化转移事件，
- * 避免事务回滚后仍写入孤儿事件。发布与持久化解耦，不阻塞 10k QPS 调用链
- * （设计见 design doc D12）。</p>
+ * <p><b>非事务监听</b>：使用 {@link EventListener}（而非 {@code @TransactionalEventListener}）。
+ * 调用链 {@code ChatDispatchServiceImpl.dispatch} 无 {@code @Transactional}，整个请求处理不开启事务，
+ * 原 {@code @TransactionalEventListener(AFTER_COMMIT)} 在无事务上下文时静默丢弃事件
+ * （fallbackExecution 默认 false），导致转移事件全部丢失、可观测性功能失效。改为 {@link EventListener}
+ * 后无事务上下文下事件仍被同步处理。</p>
+ *
+ * <p><b>异步说明</b>：未加 {@code @Async}——项目未配置 {@code @EnableAsync}，加了也是死注解。
+ * 当前同步执行（发布即持久化），可观测性持久化开销在毫秒级，对 10k QPS 调用链影响可接受
+ * （参照既有 {@code AuditEventListener} 范式，设计见 design doc D12）。</p>
  *
  * <p><b>可靠性边界</b>：发布后持久化前进程崩溃则事件丢失（可观测性数据可接受，
  * 非计费/审计关键路径）。</p>
@@ -41,7 +45,7 @@ public class FailoverEventListener {
      *
      * @param event 转移发生事件
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @EventListener
     public void onFailoverOccurred(FailoverOccurredEvent event) {
         try {
             FailoverEvent entity = toEntity(event);

@@ -8,7 +8,8 @@
 -- 不复用 CallLog（调用结果语义与转移动作语义不同维度，混表职责模糊）。
 --
 -- 冗余 from_cluster_id/to_cluster_id：便于 findRecent 的 clusterId 过滤直接匹配，避免 join channels 表。
--- 当前 RoutingContext 未携带 clusterId，Invoker 发布时暂填 null；未来 RoutingContext 扩展后可平滑填充。
+-- Invoker 经 ChannelGateway.findById 反查 channelId→clusterId 填充，渠道不存在或未关联 cluster 时为 null；
+-- clusterId 过滤已生效。索引见 V58。
 --
 -- 方言：遵循 V55 项目约定，使用 H2（PostgreSQL 兼容模式）/ PostgreSQL 语法：
 --       BIGSERIAL 主键、NOW() 时间默认。

@@ -24,8 +24,8 @@ import static org.mockito.Mockito.when;
  *
  * <p>验证监听器接收 {@link FailoverOccurredEvent} 后，构造 {@link FailoverEvent} 实体
  * 并委托 {@link FailoverEventGateway#save} 持久化。事件字段到实体字段的映射完整，
- * 不阻塞调用链（监听器本身是同步方法，但由 Spring @TransactionalEventListener AFTER_COMMIT
- * 异步触发，此处测持久化逻辑正确性）。</p>
+ * 不阻塞调用链（监听器用 {@code @EventListener} 同步处理，调用链无事务故不能用事务监听；
+ * 事务语义差异由 {@link FailoverEventListenerPublishTest} 覆盖，此处测持久化逻辑正确性）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("FailoverEventListener 测试")
