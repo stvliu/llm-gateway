@@ -164,7 +164,13 @@
   - 扩展 ChannelFailoverIntegrationTest：会话亲和端到端（4）+ Cluster 健康聚合共因隔离（4）+ 亲和路由串联（2）
   - RED 探针（标识缺失错误断言亲和）→ GREEN 修正；P2 全段回归 753 全绿
   - 技术债（quality reviewer 非阻断建议）：档位集成测试与单元测试重复（保留作 Spring 装配回归锚点）、forceOpen/forceCircuitOpen 重复辅助方法待合并、forceHalfOpen 反射待补约束说明注释、apply_preservesBaseNonExpertFields base 待设非默认专家字段值
-- [ ] 4.11 前端：画像模板页（CRUD，专家字段折叠）+ Applications 页容灾模式选择 + 降级兜底开关；容灾总览页（故障域拓扑 + 实时转移事件流 + 耗尽告警）；Channels 页一键熔断/恢复/紧切域
+- [x] 4.11 前端：画像模板页（CRUD，专家字段折叠）+ Applications 页容灾模式选择 + 降级兜底开关；容灾总览页（故障域拓扑 + 实时转移事件流 + 耗尽告警）；Channels 页一键熔断/恢复/紧切域
+  - 拆为 4.11a/4.11b/4.11c 三子任务（用户决策，跨 Java/React 两技术栈 + 转移事件流新 domain），各段双审查通过
+  - 4.11a 后端 Controller（3055019+fd68ef8）：ResilienceProfileController/ClusterController CRUD + Channel 应急操作（forceOpen/forceClose/紧切域/state）+ CircuitBreaker forceOpen/forceClose 扩展 + NPE/非法 mode 修复
+  - 4.11b 前端三屏（790b226+3305e93+3ab9848+1ca0362）：画像模板页 + 总览页（拓扑+成员渠道）+ Channels 应急操作 + Applications 写入式画像绑定（含后端绑定端点 + ChannelResponse 透传 clusterId）+ 构建产物解跟踪
+  - 4.11c 转移事件流（2fe2ed3 design D12 + 6b447f4 + 423600a + 489044f + 012115d）：FailoverEvent domain + Invoker 经 DomainEventPublisher 发布 + @EventListener 异步持久化 + clusterId 反查填充 + ResilienceEventController + 生产可用性修复（@Profile prod/非事务监听/索引）+ 总览页接入（10s 轮询事件流 + 耗尽告警）
+  - 后端全量回归 821 全绿；前端 build 通过；vitest 无新回归（既有 23 antd v6 基线）
+  - 技术债：refetchInterval 轮询测试 gap、4 处 i18n 硬编码、eventStreamPlaceholder 死 key、4.11c-后端 clusterId 端到端 H2 测试（M1 已补）
 
 ## 5. 收尾
 

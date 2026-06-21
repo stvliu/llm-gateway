@@ -1135,6 +1135,11 @@ git add -A && git commit -m "test(resilience): P2 画像/Cluster/会话亲和端
 
 ### Task 4.11: 前端画像模板页 + 容灾总览页 + Channels 应急操作
 
+> **执行拆分**（用户决策，build 阶段范围决策点）：本 task 体量大且跨 Java 后端 + React 前端两大技术栈，拆为三个子任务依次派发：
+> - **4.11a 后端 Controller** ✅：ResilienceProfileController（CRUD）+ ClusterController（CRUD）+ Channel 应急操作端点（熔断/恢复/紧切域）+ 后端测试。提交 3055019 + 修复 fd68ef8，双审查通过。
+> - **4.11b 前端三屏** ✅：画像模板页（CRUD，专家字段折叠）+ 容灾总览页（故障域拓扑 + 耗尽告警占位，转移事件流待 4.11c）+ Channels 应急操作 + Applications 页容灾画像写入式绑定（含后端绑定端点 3305e93 + 前端补全 3ab9848）+ 前端构建验证。双审查通过。
+> - **4.11c 转移事件流**：容灾事件 domain 建模（FailoverEvent 实体 + Gateway + 存储 + Invoker 转移时发布事件）+ ResilienceEventController（转移事件流 + 耗尽告警查询）+ design doc 补设计（D12，已提交 2fe2ed3）+ 前端总览页接入事件流。
+
 **Files:**
 - Create: `gateway-console/src/pages/resilience/profiles/*`（模板 CRUD，专家字段折叠）
 - Modify: Applications 页加容灾模式档位选择 + 降级兜底开关
@@ -1142,21 +1147,37 @@ git add -A && git commit -m "test(resilience): P2 画像/Cluster/会话亲和端
 - Modify: Channels 页一键熔断/恢复/紧切域
 - 依赖：后端 ResilienceProfile/Cluster/容灾事件 Controller（P2 内补建）
 
-- [ ] **Step 1: 补建后端 Controller**
+- [x] **Step 1: 补建后端 Controller（4.11a）** ✅
 
-ResilienceProfileController（CRUD）、ClusterController、ResilienceEventController（转移事件流）、Channel 应急操作端点。
+ResilienceProfileController（CRUD）、ClusterController、ResilienceEventController（转移事件流，拆至 4.11c）、Channel 应急操作端点。
 
-- [ ] **Step 2: 前端三屏实现**
+- [x] **Step 2: 前端三屏实现（4.11b）** ✅
 
-- [ ] **Step 3: 前端构建验证**
+- [x] **Step 3: 前端构建验证（4.11b）** ✅
 
 Run: `cd gateway-console && npm run build` → 通过
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: 转移事件流后端 domain + 发布（4.11c-后端）** ✅
 
-```bash
-git add -A && git commit -m "feat(console): 容灾画像模板页/总览页/Channels 应急操作"
-```
+设计见 design doc D12（提交 2fe2ed3）。TDD 实现：
+- `domain/resilience/event/FailoverEvent` 实体（traceId/applicationId/fromChannelId/fromEndpointId/toChannelId/toEndpointId/errorType(ProviderErrorType)/decision(FailoverDecision L1/L2)/exhausted/occurredAt + 继承 BaseEntity）
+- `common/event/FailoverEvent`（DomainEvent 实现，与 AuditEvent 同级）—— 若与实体同名冲突，事件类命名 `FailoverOccurredEvent`
+- `domain/resilience/gateway/FailoverEventGateway`（save/findRecent(since,applicationId,clusterId,limit)/findExhausted(since,limit)）+ infrastructure 实现（DO/Repository）
+- V57 迁移建 `failover_events` 表（BIGSERIAL + 字段 + 审计 + 索引 idx_occurred_at/idx_application_id/idx_trace_id）
+- `ChannelFailoverInvoker` 注入 DomainEventPublisher，catch 块 decision≠NONE 换候选时发布事件（from=当前失败候选，to=下一候选或 null+exhausted）；流式 invokeStream 同理；同步更新所有 new ChannelFailoverInvoker 调用点（构造器加参数）
+- `FailoverEventListener` @TransactionalEventListener(AFTER_COMMIT) 调 gateway.save 异步持久化
+- ResilienceEventController（GET /api/v1/resilience/events 分页+过滤、GET /exhausted 耗尽告警）+ FailoverEventResponse DTO
+- 测试：FailoverEventGatewayImplTest、FailoverEventListenerTest、ResilienceEventControllerIT、ChannelFailoverInvokerTest 补发布断言、ChannelFailoverIntegrationTest 适配构造器
+
+- [x] **Step 5: 前端总览页接入事件流（4.11c-前端）** ✅
+
+- resilienceApi.listFailoverEvents(params) + listExhaustedEvents() 封装
+- useFailoverEvents hook（React Query，10s refetchInterval 轮询）
+- 总览页替换「转移事件流待接入」占位 Alert → 事件流列表（时间 + from→to 渠道 + 原因 Tag + exhausted 高亮）+ 耗尽告警区（红色高亮）
+- types/resilience.ts 加 FailoverEvent 类型
+- Run: `cd gateway-console && npm run build` → 通过
+
+- [x] **Step 6: Commit** ✅
 
 ---
 
