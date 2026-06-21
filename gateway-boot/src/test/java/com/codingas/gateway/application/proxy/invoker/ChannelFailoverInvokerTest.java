@@ -2,6 +2,7 @@ package com.codingas.gateway.application.proxy.invoker;
 
 import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
@@ -42,6 +43,9 @@ import static org.mockito.Mockito.when;
 @DisplayName("ChannelFailoverInvoker 单元测试")
 class ChannelFailoverInvokerTest {
 
+    /** 测试用画像：启用 L2 降级（替换原硬编码 true 占位，Task 4.9 profile 贯穿） */
+    private static final ResilienceProfile L2_PROFILE = profile(true);
+
     @Mock
     private KeyFailoverInvoker keyFailoverInvoker;
 
@@ -77,11 +81,11 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(expectedResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true);
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
 
         assertThat(result).isSameAs(expectedResponse);
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -98,29 +102,30 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true);
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
 
         assertThat(result).isSameAs(successResponse);
         verify(keyFailoverInvoker).invoke(ctx1, request);
         verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
-    @DisplayName("L1 候选全部 AUTH 耗尽后进入 L2 降级")
+    @DisplayName("L1 候选全部 UNKNOWN_ERROR 耗尽后进入 L2 降级")
     void l1_exhausted_thenL2() {
-        // 所有候选 AUTH 耗尽，degrade 返回 fallback，抛出携带 fallback 模型名的异常
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+        // 所有候选 UNKNOWN_ERROR（L2 类，模型能力问题）耗尽，degrade 返回 fallback，
+        // 抛出携带 fallback 模型名的异常。reason 用 UNKNOWN_ERROR 符合 4.8 分流表（L2 类才触发模型降级）
+        ProviderException modelEx = new ProviderException(
+                ProviderErrorType.UNKNOWN_ERROR, "model fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
+        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
+                .thenReturn(FailoverDecision.L2);
+        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
                 .thenReturn("gpt-3.5-turbo");
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true))
+                request, Protocol.OPENAI, 7L, L2_PROFILE))
                 .isInstanceOf(L2DegradationRequiredException.class)
                 .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
@@ -128,7 +133,7 @@ class ChannelFailoverInvokerTest {
         // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
         verify(keyFailoverInvoker).invoke(ctx1, request);
         verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
+        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -141,11 +146,11 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.NONE);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true))
+                request, Protocol.OPENAI, 7L, L2_PROFILE))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -158,28 +163,29 @@ class ChannelFailoverInvokerTest {
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
                 .thenReturn(FailoverDecision.L1);
 
+        // 画像关闭 L2 门禁（enableL2ModelDegradation=false），L1 耗尽不进 L2
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, false))
+                request, Protocol.OPENAI, 7L, profile(false)))
                 .isSameAs(authEx);
 
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
     @DisplayName("L2 degrade 返回 null 时抛最后捕获的异常")
     void l2_degradeReturnsNull_throwsLast() {
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+        ProviderException modelEx = new ProviderException(
+                ProviderErrorType.UNKNOWN_ERROR, "model fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
+        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
+                .thenReturn(FailoverDecision.L2);
+        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
                 .thenReturn(null);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true))
-                .isSameAs(authEx);
+                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                .isSameAs(modelEx);
     }
 
     @Test
@@ -188,25 +194,25 @@ class ChannelFailoverInvokerTest {
         // DegradationServiceImpl 违背 DegradationService.degrade 接口契约（"无可用备选返回 null"），
         // 实际在"有链但所有备选不可用"时抛 ProviderException。tryL2Degradation 应防御捕获，
         // 让调用方抛 lastException 保留原始失败上下文，而非让 degrade 异常传播。
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        ProviderException modelEx = new ProviderException(
+                ProviderErrorType.UNKNOWN_ERROR, "model fail");
         ProviderException degradeEx = new ProviderException(
                 ProviderErrorType.UPSTREAM_ERROR, "ALL_MODELS_DEGRADED: 所有备选均不可用");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
+        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
+                .thenReturn(FailoverDecision.L2);
+        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
                 .thenThrow(degradeEx);
 
-        // 防御后应抛 lastException（authEx），而非 degrade 抛出的 degradeEx
+        // 防御后应抛 lastException（modelEx），而非 degrade 抛出的 degradeEx
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true))
-                .isSameAs(authEx);
+                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                .isSameAs(modelEx);
 
         verify(keyFailoverInvoker).invoke(ctx1, request);
         verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
+        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -215,11 +221,11 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true, callback);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -237,11 +243,11 @@ class ChannelFailoverInvokerTest {
 
         // ch2 启动成功（invokeStream 默认 doNothing），流建立后 return，不再换候选
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true, callback);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -257,31 +263,31 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
     @DisplayName("流式：L1 候选全部启动失败后进入 L2 降级")
     void stream_l1Exhausted_thenL2() {
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        doThrow(authEx).when(keyFailoverInvoker)
+        ProviderException modelEx = new ProviderException(
+                ProviderErrorType.UNKNOWN_ERROR, "model fail");
+        doThrow(modelEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
-        doThrow(authEx).when(keyFailoverInvoker)
+        doThrow(modelEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
+                .thenReturn(FailoverDecision.L2);
+        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
                 .thenReturn("gpt-3.5-turbo");
 
         StreamCallback callback = mock(StreamCallback.class);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
                 .isInstanceOf(L2DegradationRequiredException.class)
                 .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
@@ -289,7 +295,7 @@ class ChannelFailoverInvokerTest {
         // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
+        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -309,13 +315,21 @@ class ChannelFailoverInvokerTest {
 
         // 断言：不试 ch2，直接抛 afterFirstByteEx（首字节后转移边界）
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, true, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
                 .isSameAs(afterFirstByteEx);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any());
+        verify(degradationService, never()).degrade(anyString(), any(), any());
         // 首字节已转发给原 callback（包装 callback 透传）
         verify(callback).onChunk("first-byte-data");
+    }
+
+    /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */
+    private static ResilienceProfile profile(boolean enableL2) {
+        ResilienceProfile p = new ResilienceProfile();
+        p.setEnableL2ModelDegradation(enableL2);
+        p.setDegradationMaxDepth(5);
+        return p;
     }
 }

@@ -3,8 +3,10 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.L2DegradationRequiredException;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
+import com.codingas.gateway.application.resilience.ResilienceResolver;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
@@ -26,7 +28,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -62,6 +63,9 @@ class ChatDispatchServiceTest {
     @Mock
     private ChannelFailoverInvoker channelFailoverInvoker;
 
+    @Mock
+    private ResilienceResolver resilienceResolver;
+
     private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
@@ -70,13 +74,23 @@ class ChatDispatchServiceTest {
     @BeforeEach
     void setUp() {
         dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner,
-                protocolConverter, auditGateway, eventPublisher, channelFailoverInvoker);
+                protocolConverter, auditGateway, eventPublisher, channelFailoverInvoker, resilienceResolver);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
+        // 容灾画像解析返回启用 L2 的测试画像（Task 4.9 profile 贯穿 Invoker 链）
+        lenient().when(resilienceResolver.resolve(any())).thenReturn(testProfile());
+    }
+
+    /** 构造启用 L2 降级的测试画像（供 Invoker 链门禁） */
+    private ResilienceProfile testProfile() {
+        ResilienceProfile p = new ResilienceProfile();
+        p.setEnableL2ModelDegradation(true);
+        p.setDegradationMaxDepth(5);
+        return p;
     }
 
     @Nested
@@ -98,7 +112,7 @@ class ChatDispatchServiceTest {
                     .thenReturn(List.of(openAIContext));
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
             lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenReturn(response);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenReturn(response);
 
             // when
             ProtocolResponse result = dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
@@ -108,7 +122,7 @@ class ChatDispatchServiceTest {
             verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
             verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesResponse.class));
             verify(channelFailoverInvoker).invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean());
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class));
         }
 
         @Test
@@ -139,7 +153,7 @@ class ChatDispatchServiceTest {
             lenient().when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
             lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
             lenient().when(channelFailoverInvoker.invoke(eq(anthropicContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenReturn(upstreamResponse);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenReturn(upstreamResponse);
             lenient().when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(finalResponse);
 
             // when
@@ -188,9 +202,9 @@ class ChatDispatchServiceTest {
             L2DegradationRequiredException l2Ex = new L2DegradationRequiredException(
                     "gpt-3.5-turbo", "gpt-4o", ProviderErrorType.UPSTREAM_ERROR, originalEx);
             when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenThrow(l2Ex);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenThrow(l2Ex);
             when(channelFailoverInvoker.invoke(eq(fallbackCtx), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenReturn(fallbackResponse);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenReturn(fallbackResponse);
 
             // when
             ProtocolResponse result = dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
@@ -202,7 +216,7 @@ class ChatDispatchServiceTest {
             verify(routingResolver).resolveCandidates("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
             // ChannelFailoverInvoker.invoke 调两次
             verify(channelFailoverInvoker, times(2)).invoke(any(RoutingContext.class), anyList(),
-                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), anyBoolean());
+                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class));
         }
 
         @Test
@@ -223,7 +237,7 @@ class ChatDispatchServiceTest {
                     .thenReturn(List.of(openAIContext));
             when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
             when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenThrow(l2Ex);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenThrow(l2Ex);
 
             // when & then
             assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
@@ -233,7 +247,7 @@ class ChatDispatchServiceTest {
             verify(routingResolver, times(1))
                     .resolveCandidates(anyString(), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class));
             verify(channelFailoverInvoker, times(1)).invoke(any(RoutingContext.class), anyList(),
-                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), anyBoolean());
+                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class));
         }
 
         @Test
@@ -249,7 +263,7 @@ class ChatDispatchServiceTest {
             // 用 thenAnswer 生成递增 fallback，确保不触发去重守卫
             int[] counter = {0};
             when(channelFailoverInvoker.invoke(any(RoutingContext.class), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean())).thenAnswer(inv -> {
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class))).thenAnswer(inv -> {
                 throw new L2DegradationRequiredException(
                         "fb-" + (counter[0]++), "gpt-4o", ProviderErrorType.UPSTREAM_ERROR, originalEx);
             });
@@ -264,7 +278,7 @@ class ChatDispatchServiceTest {
 
             // 验证多次降级尝试（深度上限兜底生效，非无限循环）
             verify(channelFailoverInvoker, atLeast(2)).invoke(any(RoutingContext.class), anyList(),
-                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), anyBoolean());
+                    any(ProtocolRequest.class), eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class));
         }
     }
 
@@ -292,7 +306,7 @@ class ChatDispatchServiceTest {
 
             // then
             verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean(), any(StreamCallback.class));
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), any(StreamCallback.class));
             verify(protocolConverter, never()).convertStreamChunk(anyString(), anyString(), anyString());
         }
 
@@ -311,7 +325,7 @@ class ChatDispatchServiceTest {
 
             doThrow(new RuntimeException("上游调用失败"))
                     .when(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                            eq(Protocol.OPENAI), eq(7L), anyBoolean(), any(StreamCallback.class));
+                            eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), any(StreamCallback.class));
 
             StreamCallback callback = mock(StreamCallback.class);
 
@@ -344,7 +358,7 @@ class ChatDispatchServiceTest {
             L2DegradationRequiredException l2Ex = new L2DegradationRequiredException(
                     "gpt-3.5-turbo", "gpt-4o", ProviderErrorType.UPSTREAM_ERROR, originalEx);
             doThrow(l2Ex).when(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean(), any(StreamCallback.class));
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), any(StreamCallback.class));
 
             StreamCallback callback = mock(StreamCallback.class);
 
@@ -353,9 +367,9 @@ class ChatDispatchServiceTest {
 
             // then — 两次 invokeStream：主模型 + fallback
             verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean(), any(StreamCallback.class));
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), any(StreamCallback.class));
             verify(channelFailoverInvoker).invokeStream(eq(fallbackCtx), anyList(), any(ProtocolRequest.class),
-                    eq(Protocol.OPENAI), eq(7L), anyBoolean(), any(StreamCallback.class));
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), any(StreamCallback.class));
         }
     }
 }

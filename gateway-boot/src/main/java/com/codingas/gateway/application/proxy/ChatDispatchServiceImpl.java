@@ -3,9 +3,11 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.L2DegradationRequiredException;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
+import com.codingas.gateway.application.resilience.ResilienceResolver;
 import com.codingas.gateway.domain.audit.entity.CallLog;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -49,19 +51,23 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final AuditGateway auditGateway;
     private final DomainEventPublisher eventPublisher;
     private final ChannelFailoverInvoker channelFailoverInvoker;
+    /** 容灾画像解析器（Task 4.9：贯穿 Invoker 链做 L2 门禁） */
+    private final ResilienceResolver resilienceResolver;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
                                    OutboundTuner outboundTuner,
                                    ProtocolConverter protocolConverter,
                                    AuditGateway auditGateway,
                                    DomainEventPublisher eventPublisher,
-                                   ChannelFailoverInvoker channelFailoverInvoker) {
+                                   ChannelFailoverInvoker channelFailoverInvoker,
+                                   ResilienceResolver resilienceResolver) {
         this.routingResolver = routingResolver;
         this.outboundTuner = outboundTuner;
         this.protocolConverter = protocolConverter;
         this.auditGateway = auditGateway;
         this.eventPublisher = eventPublisher;
         this.channelFailoverInvoker = channelFailoverInvoker;
+        this.resilienceResolver = resilienceResolver;
     }
 
     @Override
@@ -91,8 +97,10 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             outboundReq = outboundTuner.tune(outboundReq, primaryCtx);
 
             // 阶段 5：Invoker 链调用（熔断 + 重试 + Key 故障转移 + L1 候选转移 + L2 模型降级重路由）
+            // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
+            ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
             ProtocolResponse response = invokeWithL2Failover(primaryCtx, candidates, outboundReq,
-                    inboundProtocol, identity, strategy);
+                    inboundProtocol, identity, strategy, profile);
 
             // 阶段 6：响应转换（仅跨协议时执行）
             if (primaryCtx.needsProtocolAdaptation()) {
@@ -220,8 +228,10 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         }
 
         // 阶段 5：Invoker 链调用（L1 候选转移 + L2 模型降级重路由，首字节前启动失败可重路由）
+        // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
+        ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
         invokeStreamWithL2Failover(primaryCtx, candidates, outboundReq, delegateCallback,
-                inboundProtocol, identity, strategy);
+                inboundProtocol, identity, strategy, profile);
     }
 
     /**
@@ -245,17 +255,20 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
      */
     private ProtocolResponse invokeWithL2Failover(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                                   ProtocolRequest request, Protocol inboundProtocol,
-                                                  Identity identity, RoutingStrategy strategy) {
+                                                  Identity identity, RoutingStrategy strategy,
+                                                  ResilienceProfile profile) {
         Set<String> degradedModels = new HashSet<>();
         degradedModels.add(request.getModel());
         List<RoutingContext> currentCandidates = candidates;
         RoutingContext currentPrimaryCtx = primaryCtx;
         L2DegradationRequiredException lastL2Signal = null;
+        // 重路由深度上限：画像 degradationMaxDepth 优先，无画像回退默认 MAX_DEGRADATION_DEPTH
+        int maxDepth = resolveMaxDepth(profile);
 
-        for (int depth = 0; depth <= MAX_DEGRADATION_DEPTH; depth++) {
+        for (int depth = 0; depth <= maxDepth; depth++) {
             try {
                 return channelFailoverInvoker.invoke(currentPrimaryCtx, currentCandidates, request,
-                        inboundProtocol, identity.applicationId(), true);
+                        inboundProtocol, identity.applicationId(), profile);
             } catch (L2DegradationRequiredException e) {
                 lastL2Signal = e;
                 String fallbackModel = e.getFallbackModel();
@@ -277,7 +290,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 currentPrimaryCtx = currentCandidates.get(0);
             }
         }
-        log.warn("L2 降级深度超限 (max={})，抛出原始上游异常", MAX_DEGRADATION_DEPTH);
+        log.warn("L2 降级深度超限 (max={})，抛出原始上游异常", maxDepth);
         throw unwrapL2Cause(lastL2Signal);
     }
 
@@ -295,20 +308,24 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
      * @param inboundProtocol 入站协议
      * @param identity        调用方身份
      * @param strategy        路由策略
+     * @param profile         容灾画像（L2 门禁贯穿 Invoker 链）
      */
     private void invokeStreamWithL2Failover(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                             ProtocolRequest request, StreamCallback callback,
-                                            Protocol inboundProtocol, Identity identity, RoutingStrategy strategy) {
+                                            Protocol inboundProtocol, Identity identity, RoutingStrategy strategy,
+                                            ResilienceProfile profile) {
         Set<String> degradedModels = new HashSet<>();
         degradedModels.add(request.getModel());
         List<RoutingContext> currentCandidates = candidates;
         RoutingContext currentPrimaryCtx = primaryCtx;
         L2DegradationRequiredException lastL2Signal = null;
+        // 重路由深度上限：画像 degradationMaxDepth 优先，无画像回退默认 MAX_DEGRADATION_DEPTH
+        int maxDepth = resolveMaxDepth(profile);
 
-        for (int depth = 0; depth <= MAX_DEGRADATION_DEPTH; depth++) {
+        for (int depth = 0; depth <= maxDepth; depth++) {
             try {
                 channelFailoverInvoker.invokeStream(currentPrimaryCtx, currentCandidates, request,
-                        inboundProtocol, identity.applicationId(), true, callback);
+                        inboundProtocol, identity.applicationId(), profile, callback);
                 return;
             } catch (L2DegradationRequiredException e) {
                 lastL2Signal = e;
@@ -329,8 +346,47 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 currentPrimaryCtx = currentCandidates.get(0);
             }
         }
-        log.warn("流式 L2 降级深度超限 (max={})，抛出原始上游异常", MAX_DEGRADATION_DEPTH);
+        log.warn("流式 L2 降级深度超限 (max={})，抛出原始上游异常", maxDepth);
         throw unwrapL2Cause(lastL2Signal);
+    }
+
+    /**
+     * 解析容灾画像（fail-open，Task 4.9）
+     *
+     * <p>applicationId 为 null 或画像解析抛异常时返回 null，避免画像解析失败阻断主调度链。
+     * 与 {@link InstanceSelector#resolveProfileSafely} 同语义，调度层与路由层各自 fail-open 解析。</p>
+     *
+     * @param applicationId 应用 ID
+     * @return 容灾画像；解析失败或无应用 ID 时返回 null
+     */
+    private ResilienceProfile resolveProfileSafely(Long applicationId) {
+        if (applicationId == null) {
+            return null;
+        }
+        try {
+            return resilienceResolver.resolve(applicationId);
+        } catch (Exception e) {
+            log.debug("容灾画像解析失败，降级为 null profile（fail-open）: applicationId={}, reason={}",
+                    applicationId, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 解析 L2 重路由深度上限（Task 4.9）
+     *
+     * <p>画像 degradationMaxDepth 优先（>0 时取画像值）；无画像或画像值为 0/负时回退默认
+     * {@link #MAX_DEGRADATION_DEPTH}。与 {@code DegradationService.degrade} 的备选遍历深度
+     * 语义一致：画像门禁生效，无画像回退既有默认。</p>
+     *
+     * @param profile 容灾画像
+     * @return L2 重路由深度上限
+     */
+    private int resolveMaxDepth(ResilienceProfile profile) {
+        if (profile != null && profile.getDegradationMaxDepth() > 0) {
+            return profile.getDegradationMaxDepth();
+        }
+        return MAX_DEGRADATION_DEPTH;
     }
 
     /**

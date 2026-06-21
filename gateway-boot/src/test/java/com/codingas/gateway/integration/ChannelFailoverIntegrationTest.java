@@ -8,6 +8,7 @@ import com.codingas.gateway.application.proxy.invoker.L2DegradationRequiredExcep
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
@@ -129,14 +130,14 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
 
             ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, true);
+                    request, Protocol.OPENAI, 7L, profile(true));
 
             // 断言：转移成功，返回 ch2 的响应
             assertThat(result).isSameAs(successResponse);
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover).invoke(ctx2, request);
             // L1 转移成功不应触发 L2 降级
-            verify(degradation, never()).degrade(anyString(), any());
+            verify(degradation, never()).degrade(anyString(), any(), any());
         }
 
         @Test
@@ -153,12 +154,12 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：直接抛出原始 INVALID_REQUEST 异常，不试 ch2，不降级
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, true))
+                    request, Protocol.OPENAI, 7L, profile(true)))
                     .isSameAs(invalidEx);
 
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover, never()).invoke(ctx2, request);
-            verify(degradation, never()).degrade(anyString(), any());
+            verify(degradation, never()).degrade(anyString(), any(), any());
         }
     }
 
@@ -185,12 +186,12 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 执行：ch1 启动失败 → 换 ch2 建立流
             invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, true, callback);
+                    request, Protocol.OPENAI, 7L, profile(true), callback);
 
             // 断言：两个候选都被试过（ch1 失败后转移到 ch2）
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
             verify(keyFailover).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-            verify(degradation, never()).degrade(anyString(), any());
+            verify(degradation, never()).degrade(anyString(), any(), any());
         }
 
         @Test
@@ -214,12 +215,12 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：首字节已发，不换 ch2，直接抛 afterFirstByteEx
             assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, true, callback))
+                    request, Protocol.OPENAI, 7L, profile(true), callback))
                     .isSameAs(afterFirstByteEx);
 
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
             verify(keyFailover, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-            verify(degradation, never()).degrade(anyString(), any());
+            verify(degradation, never()).degrade(anyString(), any(), any());
             // 首字节已透传给原 callback（包装 callback 透传语义）
             verify(callback).onChunk("first-byte-data");
         }
@@ -246,11 +247,11 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：禁降级场景抛最后捕获的 authEx，不触发 L2 降级信号
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, false))
+                    request, Protocol.OPENAI, 7L, profile(false)))
                     .isSameAs(authEx);
 
             // 显式验证门禁关闭时不调 degrade
-            verify(degradation, never()).degrade(anyString(), any());
+            verify(degradation, never()).degrade(anyString(), any(), any());
         }
 
         @Test
@@ -264,14 +265,14 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             when(keyFailover.invoke(ctx2, request)).thenThrow(authEx);
 
             DegradationService degradation = mockDegradation();
-            when(degradation.degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR))
+            when(degradation.degrade(eq("gpt-4o"), eq(ProviderErrorType.AUTHENTICATION_ERROR), any(ResilienceProfile.class)))
                     .thenReturn("gpt-3.5-turbo");
 
             ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
 
             // 断言：全开场景触发 L2 降级信号，携带 fallback 模型名
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, true))
+                    request, Protocol.OPENAI, 7L, profile(true)))
                     .isInstanceOf(L2DegradationRequiredException.class)
                     .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                     .isEqualTo("gpt-3.5-turbo");
@@ -279,8 +280,18 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             // 显式验证两候选都被试过（L1 全耗尽才进 L2）且 degrade 被调用
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover).invoke(ctx2, request);
-            verify(degradation).degrade("gpt-4o", ProviderErrorType.AUTHENTICATION_ERROR);
+            verify(degradation).degrade(eq("gpt-4o"), eq(ProviderErrorType.AUTHENTICATION_ERROR), any(ResilienceProfile.class));
         }
+    }
+
+    /**
+     * 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿 Invoker 链）
+     */
+    private static ResilienceProfile profile(boolean enableL2) {
+        ResilienceProfile p = new ResilienceProfile();
+        p.setEnableL2ModelDegradation(enableL2);
+        p.setDegradationMaxDepth(5);
+        return p;
     }
 
     // ==================== 跨 Cluster 不越权（P2 占位） ====================

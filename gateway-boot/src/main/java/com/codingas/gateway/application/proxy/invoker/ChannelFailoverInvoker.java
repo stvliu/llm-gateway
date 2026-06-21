@@ -90,7 +90,7 @@ public class ChannelFailoverInvoker {
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID（权限锚点）
-     * @param enableL2ModelDegradation L2 模型降级门禁（ResilienceProfile 占位，P2 替换）
+     * @param profile                  容灾画像（L2 门禁；为 null 或未启用 enableL2ModelDegradation 时不降级）
      * @return 上游响应
      * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
      *                                         所有候选失败且无法降级时抛出最后捕获的异常
@@ -98,7 +98,7 @@ public class ChannelFailoverInvoker {
      */
     public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                     ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
-                                    boolean enableL2ModelDegradation) {
+                                    com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile) {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
@@ -123,7 +123,7 @@ public class ChannelFailoverInvoker {
         }
 
         // L1 候选全部耗尽，进入 L2 模型降级（抛 L2DegradationRequiredException 由上层重路由）
-        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation, lastException);
+        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, profile, lastException);
         if (l2Signal != null) {
             throw l2Signal;
         }
@@ -157,7 +157,7 @@ public class ChannelFailoverInvoker {
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID
-     * @param enableL2ModelDegradation L2 门禁（ResilienceProfile 占位）
+     * @param profile                  容灾画像（L2 门禁；为 null 或未启用 enableL2ModelDegradation 时不降级）
      * @param callback                 流式回调
      * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
      *                                         所有候选启动失败且无法降级时抛出最后捕获的异常
@@ -165,7 +165,7 @@ public class ChannelFailoverInvoker {
      */
     public void invokeStream(RoutingContext primaryCtx, List<RoutingContext> candidates,
                               ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
-                              boolean enableL2ModelDegradation, StreamCallback callback) {
+                              com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile, StreamCallback callback) {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
@@ -223,7 +223,7 @@ public class ChannelFailoverInvoker {
         }
 
         // L1 候选全部启动失败，进入 L2 模型降级（抛 L2DegradationRequiredException 由上层重路由）
-        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, enableL2ModelDegradation, lastException);
+        L2DegradationRequiredException l2Signal = tryL2Degradation(request, lastErrorType, profile, lastException);
         if (l2Signal != null) {
             throw l2Signal;
         }
@@ -252,13 +252,15 @@ public class ChannelFailoverInvoker {
      *
      * @param request                  协议请求（用于读取原模型名）
      * @param lastErrorType            最后一次失败的错误类型（degrade 的 reason 参数）
-     * @param enableL2ModelDegradation L2 门禁
+     * @param profile                  容灾画像（L2 门禁；为 null 或未启用 enableL2ModelDegradation 时不降级）
      * @param lastException            最后一次捕获的上游异常（作为 L2 信号 cause 保留上下文，可为 null）
      * @return 携带 fallback 模型名的 L2 降级信号异常（上层重路由）；未降级或 degrade 抛异常时返回 null
      */
     private L2DegradationRequiredException tryL2Degradation(ProtocolRequest request, ProviderErrorType lastErrorType,
-                                                            boolean enableL2ModelDegradation, ProviderException lastException) {
-        if (!enableL2ModelDegradation || lastErrorType == null) {
+                                                            com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile,
+                                                            ProviderException lastException) {
+        // L2 门禁：画像为 null 或未启用 enableL2ModelDegradation 时不降级
+        if (profile == null || !profile.isEnableL2ModelDegradation() || lastErrorType == null) {
             return null;
         }
         String originalModel = request.getModel();
@@ -266,8 +268,9 @@ public class ChannelFailoverInvoker {
         try {
             // 防御 DegradationServiceImpl 违背 DegradationService.degrade 接口契约
             // （"无可用备选返回 null" vs 实际抛 ProviderException），捕获后返回 null
-            // 让调用方抛 lastException 保留原始失败上下文
-            fallbackModel = degradationService.degrade(originalModel, lastErrorType);
+            // 让调用方抛 lastException 保留原始失败上下文。
+            // 透传 profile：让 4.8 画像门禁（enableL2/maxDepth/errorType 分流）在 L2 触发时生效
+            fallbackModel = degradationService.degrade(originalModel, lastErrorType, profile);
         } catch (ProviderException e) {
             log.warn("DegradationService.degrade 违背接口契约抛异常（忽略），回退到 lastException: model={} reason={} msg={}",
                     originalModel, lastErrorType, e.getMessage());
