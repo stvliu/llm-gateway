@@ -101,8 +101,9 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                                   DegradationService degradationService) {
         // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
+        // ChannelGateway 用 no-op mock（集成测试不验证 clusterId 反查，由 ChannelFailoverInvokerTest 覆盖）
         return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier, degradationService,
-                mock(DomainEventPublisher.class));
+                mock(DomainEventPublisher.class), mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class));
     }
 
     /**

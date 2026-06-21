@@ -8,10 +8,12 @@ import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +24,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -61,6 +64,9 @@ class ChannelFailoverInvokerTest {
     @Mock
     private DomainEventPublisher eventPublisher;
 
+    @Mock
+    private ChannelGateway channelGateway;
+
     private ChannelFailoverInvoker invoker;
 
     private RoutingContext ctx1;
@@ -69,7 +75,8 @@ class ChannelFailoverInvokerTest {
 
     @BeforeEach
     void setUp() {
-        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService, eventPublisher);
+        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
@@ -329,6 +336,107 @@ class ChannelFailoverInvokerTest {
         verify(degradationService, never()).degrade(anyString(), any(), any());
         // 首字节已转发给原 callback（包装 callback 透传）
         verify(callback).onChunk("first-byte-data");
+    }
+
+    // ==================== clusterId 过滤生效（Task 4.11c 修复） ====================
+
+    @Test
+    @DisplayName("转移事件 clusterId 反查填充：L1 转移发布事件的 fromClusterId/toClusterId 由 ChannelGateway 反查填充（非 null）")
+    void failover_eventClusterId_populatedFromChannelGateway() {
+        // 场景：ch1(channelId=10, clusterId=100) AUTH 共因失败 → L1 → 换 ch2(channelId=11, clusterId=200) 成功
+        // 修复前：publishFailoverEvent 硬编码 fromClusterId/toClusterId = null → clusterId 过滤失效
+        // 修复后：Invoker 通过 ChannelGateway.findById 反查 channelId→clusterId 填充事件字段
+        Channel ch1 = channelWithCluster(10L, 100L);
+        Channel ch2 = channelWithCluster(11L, 200L);
+        when(channelGateway.findById(10L)).thenReturn(Optional.of(ch1));
+        when(channelGateway.findById(11L)).thenReturn(Optional.of(ch2));
+
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+        ProtocolResponse successResponse = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
+
+        invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
+
+        // 断言：事件 fromClusterId/toClusterId 由 ChannelGateway 反查填充，非 null
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        FailoverOccurredEvent event = captor.getValue();
+        assertThat(event.fromClusterId())
+                .as("fromClusterId 应由 ChannelGateway 反查填充（clusterId=100），修复前恒为 null 导致过滤失效")
+                .isEqualTo(100L);
+        assertThat(event.toClusterId())
+                .as("toClusterId 应由 ChannelGateway 反查填充（clusterId=200）")
+                .isEqualTo(200L);
+    }
+
+    @Test
+    @DisplayName("转移事件 clusterId 反查填充：耗尽场景 toChannelId 为 null 时 toClusterId 也为 null")
+    void failover_exhaustedEvent_toClusterIdNullWhenNoTarget() {
+        // 场景：ch1(channelId=10, clusterId=100) 失败 → L1 → 无下一候选（exhausted=true, toChannelId=null）
+        // 期望：fromClusterId=100（反查填充），toClusterId=null（无目标渠道，不反查）
+        Channel ch1 = channelWithCluster(10L, 100L);
+        when(channelGateway.findById(10L)).thenReturn(Optional.of(ch1));
+
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        // 单候选耗尽 → exhausted=true, toChannelId=null
+        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1),
+                request, Protocol.OPENAI, 7L, profile(false)))
+                .isSameAs(authEx);
+
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        FailoverOccurredEvent event = captor.getValue();
+        assertThat(event.fromClusterId()).isEqualTo(100L);
+        assertThat(event.toChannelId()).isNull();
+        assertThat(event.toClusterId())
+                .as("无目标渠道时 toClusterId 应为 null，不触发反查")
+                .isNull();
+        assertThat(event.exhausted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("转移事件 clusterId 容错：channelId 查不到 channel 时 clusterId 填 null（不阻塞发布）")
+    void failover_channelNotFound_clusterIdNull_doesNotBlock() {
+        // 场景：ch1(channelId=10) 失败 → L1 → 换 ch2 成功，但 ChannelGateway.findById 返回空（channel 不存在）
+        // 期望：clusterId 填 null（容错），事件仍正常发布
+        when(channelGateway.findById(10L)).thenReturn(Optional.empty());
+        when(channelGateway.findById(11L)).thenReturn(Optional.empty());
+
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+        ProtocolResponse successResponse = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
+
+        invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
+
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        FailoverOccurredEvent event = captor.getValue();
+        // 容错：查不到 channel 时 clusterId 填 null，事件仍发布
+        assertThat(event.fromClusterId()).isNull();
+        assertThat(event.toClusterId()).isNull();
+    }
+
+    /** 构造测试用 Channel（带 clusterId） */
+    private Channel channelWithCluster(Long channelId, Long clusterId) {
+        Channel ch = new Channel();
+        ch.setId(channelId);
+        ch.setClusterId(clusterId);
+        return ch;
     }
 
     // ==================== 转移事件发布（Task 4.11c） ====================

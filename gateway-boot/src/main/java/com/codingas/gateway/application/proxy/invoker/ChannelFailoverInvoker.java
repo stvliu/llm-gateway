@@ -11,6 +11,7 @@ import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -64,6 +66,7 @@ public class ChannelFailoverInvoker {
     private final ErrorClassifier errorClassifier;
     private final DegradationService degradationService;
     private final DomainEventPublisher eventPublisher;
+    private final ChannelGateway channelGateway;
 
     /**
      * 构造渠道级故障转移 Invoker
@@ -72,15 +75,18 @@ public class ChannelFailoverInvoker {
      * @param errorClassifier     错误分流器（L1/L2/NONE 决策）
      * @param degradationService  智能降级服务（L2 换模型）
      * @param eventPublisher      领域事件发布器（发布转移事件，供异步持久化与可观测性）
+     * @param channelGateway      渠道网关（反查 channelId→clusterId 填充转移事件，使 clusterId 过滤生效）
      */
     public ChannelFailoverInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                    ErrorClassifier errorClassifier,
                                    DegradationService degradationService,
-                                   DomainEventPublisher eventPublisher) {
+                                   DomainEventPublisher eventPublisher,
+                                   ChannelGateway channelGateway) {
         this.keyFailoverInvoker = keyFailoverInvoker;
         this.errorClassifier = errorClassifier;
         this.degradationService = degradationService;
         this.eventPublisher = eventPublisher;
+        this.channelGateway = channelGateway;
     }
 
     /**
@@ -327,6 +333,12 @@ public class ChannelFailoverInvoker {
         Long toEndpointId = hasTo ? candidates.get(nextIndex).channelEndpointId() : null;
         boolean exhausted = !hasTo;
 
+        // 反查 channelId→clusterId 填充冗余字段，使转移事件流 clusterId 过滤生效
+        // （RoutingContext 不携带 clusterId，需经 ChannelGateway 回查；单次转移仅涉及 1-2 个渠道，
+        //   单次 findById 即可，转移是失败路径非每次请求都转移，额外查询开销可接受）
+        Long fromClusterId = resolveClusterId(candidate.channelId());
+        Long toClusterId = hasTo ? resolveClusterId(toChannelId) : null;
+
         FailoverOccurredEvent event = new FailoverOccurredEvent(
                 null,                       // traceId：调用链暂未透传，后续 OpenTelemetry 接入后填充
                 applicationId,
@@ -334,13 +346,31 @@ public class ChannelFailoverInvoker {
                 candidate.channelEndpointId(),
                 toChannelId,
                 toEndpointId,
-                null,                       // fromClusterId：RoutingContext 未携带 clusterId，暂置空
-                null,                       // toClusterId：同上
+                fromClusterId,              // 冗余：失败候选所属故障域（反查填充，查不到为 null）
+                toClusterId,                // 冗余：转移目标所属故障域（同上，无目标时为 null）
                 errorType,
                 decision,
                 exhausted,
                 Instant.now()
         );
         eventPublisher.publish(event);
+    }
+
+    /**
+     * 反查 channelId 对应的 clusterId（用于填充转移事件冗余字段，使 clusterId 过滤生效）
+     *
+     * <p>容错：channelId 查不到（渠道已删除或不存在）时返回 null，不阻塞事件发布。
+     * 转移是失败路径，每次转移多一次 channel 查询；ChannelGateway 通常带缓存或单次查询，开销可接受。</p>
+     *
+     * @param channelId 渠道 ID
+     * @return 故障域 ID；渠道不存在或未关联 cluster 时返回 null
+     */
+    private Long resolveClusterId(Long channelId) {
+        if (channelId == null) {
+            return null;
+        }
+        return channelGateway.findById(channelId)
+                .map(com.codingas.gateway.domain.supply.entity.Channel::getClusterId)
+                .orElse(null);
     }
 }
