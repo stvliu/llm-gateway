@@ -1,19 +1,31 @@
 # Subagent 执行进度检查点 — resilience-architecture
 
 > 协调者恢复地图。仅保存协调状态，不替代 plan/tasks.md checkbox。
-> 当前 build_mode: executing-plans（后台 subagent 系统性损坏后切换，主会话直接 TDD 执行）, tdd_mode: tdd, isolation: branch(feature/20260619/resilience-architecture)
+> 当前 build_mode: subagent-driven-development（用户决策恢复；协调者仅调度，不在主窗口执行）, tdd_mode: tdd, isolation: branch(feature/20260619/resilience-architecture)
+> 历史注记: 4.6-4.9 因后台 subagent 系统性损坏曾临时切 executing-plans 主会话自审；用户已决策恢复 subagent-driven-development，后续 task 恢复后台派发 + 双审查
 
 ## 当前 Task
 
-**Plan task:** Task 4.9: RoutingRequest 增 resilienceProfile 贯穿 + PinnedModelRouter — 待实现
-**OpenSpec task:** 4.9 RoutingRequest 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
-**阶段:** pending（即将开始主会话 TDD 实现）
-**BASE:** 078b5bf（Task 4.8 勾选提交）
-**审查方式:** executing-plans 主会话自审（spec+quality）
-**4.9 范围提醒:** RoutingRequest 增 profile 字段 + PinnedModelRouter(@Order 350，profile.enablePinnedModel 时只留 pinnedModelId 实例)；RouterChain 各 Router 取 profile；并替换 ChannelFailoverInvoker/ChatDispatchServiceImpl 占位 boolean 为 profile（4.8 留的尾巴）
+**Plan task:** Task 4.10: P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
+**OpenSpec task:** 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
+**阶段:** quality-review（spec compliance ✅ 通过，已派发 code quality reviewer）
+**BASE:** f0a5de4（Task 4.9 勾选提交）
+**实现提交:** 0aa289c（test(resilience): P2 集成测试，2 文件 +652 行，未碰生产代码）
+**RED:** ./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverIntegrationTest → redProbe_nullSessionId_wronglyAssertsAffinity 失败（get(null)=null 真实不亲和，错误断言期望非 null）
+**GREEN:** 同命令 + ResilienceProfileIntegrationTest 全过；全段回归 753 全绿
+**spec review 结论:** ✅ Spec compliant（7 覆盖点全覆盖/RED-GREEN 真实/RED 探针合规删除/范围仅测试文件/无过建；两边界点判定合规非欠建）
+**审查方式:** subagent-driven-development 后台双审查（spec reviewer + code quality reviewer，各全新 agent）
+**审查-修复轮次:** 1/3（quality review 进行中）
+**implementer 顾虑:** (1) 会话亲和熔断转移更新为协议级验证（Invoker 未接线 SessionAffinityStore，手动执行 evict+put 协议，属当前阶段边界非缺陷）；(2) forceHalfOpen 反射重置 CircuitBreaker.openSince（测试专用状态控制）
+**4.10 范围提醒:** 纯测试 task。新增集成测试 ResilienceProfileIntegrationTest + 扩展 ClusterFailoverIntegrationTest，端到端串联：解析链(Application→Global) / 档位推导(mode→专家字段) / 会话亲和(标识缺失不亲和、熔断转移更新) / 画像继承 / Cluster 健康聚合(共因隔离) / 亲和路由；两对照场景(Claude Code 禁降级 / 客服全开)。继承 FullContextIntegrationTestBase，@Autowired 真实 bean + mock 边界。既有单元测试已覆盖单组件，本 task 只补端到端集成层。
+**派发约束:** 禁止 git add -A、禁止 push（历史越权事件教训）；commit 仅 add 具体测试文件，message 用双引号
 
 ## 已完成 Task
 
+- Task 4.9: complete (269588f 实现 + f0a5de4 勾选, 双审查通过——executing-plans 主会话自审)
+  - RoutingRequest 增 resilienceProfile 字段（7 参构造器，旧 6 参委托兼容）；PinnedModelRouter(@Order 350)
+  - ChannelFailoverInvoker/ChatDispatchServiceImpl boolean 占位→ResilienceProfile；6 Router 顺序确认
+  - RED 编译失败→GREEN 50 测试；回归 PermissionRefactorIntegrationTest 4 过
 - Task 4.8: complete (58b8d11 实现 + 078b5bf 勾选, 双审查通过——executing-plans 主会话自审)
   - degrade 增重载(model,reason,ResilienceProfile)：画像门禁 + 按 errorType 分流 + maxDepth 控制；旧签名委托
   - RED 编译失败→GREEN 16 测试；ChannelFailoverIntegrationTest 7 过无回归

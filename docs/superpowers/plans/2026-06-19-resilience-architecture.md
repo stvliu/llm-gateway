@@ -1119,15 +1119,15 @@ git add -A && git commit -m "feat(routing): RoutingRequest 贯穿画像并新增
 **Files:**
 - Test: `integration/ResilienceProfileIntegrationTest.java`、`integration/ClusterFailoverIntegrationTest.java`
 
-- [ ] **Step 1: 写集成测试**
+- [x] **Step 1: 写集成测试**
 
 覆盖：解析链、档位推导、会话亲和（标识缺失不亲和、熔断转移更新）、画像继承、Cluster 健康聚合（共因隔离）、亲和路由。两对照场景端到端（Claude Code 禁降级 / 客服全开）。
 
-- [ ] **Step 2: P2 全段回归**
+- [x] **Step 2: P2 全段回归**
 
-Run: `./mvnw -pl gateway-boot -am test` → 全绿
+Run: `./mvnw -pl gateway-boot -am test` → 全绿（753 测试全绿）
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add -A && git commit -m "test(resilience): P2 画像/Cluster/会话亲和端到端集成测试"

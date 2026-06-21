@@ -158,7 +158,12 @@
   - RED 编译失败→GREEN 50 测试（PinnedModelRouterTest 6 + Invoker/ChatDispatch/集成测试 profile 化适配）
   - 设计决策：InvokerTest L2 场景 reason AUTH→UNKNOWN_ERROR（符合 4.8 严格分流：仅 L2 类触发模型降级）；集成测试两对照保留 AUTH（mock degrade 不真实分流，验证门禁+信号机制）
   - 回归 PermissionRefactorIntegrationTest 4 过（真实 H2+Application+ResilienceResolver fail-open）
-- [ ] 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
+- [x] 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
+  - 提交 0aa289c（2 测试文件 +652 行，未碰生产代码）；双审查通过（spec ✅ / quality ✅，subagent-driven 后台双审查）
+  - 新增 ResilienceProfileIntegrationTest：解析链 Application→Global（5）+ 档位推导（3）+ 画像继承（2）+ 两对照场景端到端（2）
+  - 扩展 ChannelFailoverIntegrationTest：会话亲和端到端（4）+ Cluster 健康聚合共因隔离（4）+ 亲和路由串联（2）
+  - RED 探针（标识缺失错误断言亲和）→ GREEN 修正；P2 全段回归 753 全绿
+  - 技术债（quality reviewer 非阻断建议）：档位集成测试与单元测试重复（保留作 Spring 装配回归锚点）、forceOpen/forceCircuitOpen 重复辅助方法待合并、forceHalfOpen 反射待补约束说明注释、apply_preservesBaseNonExpertFields base 待设非默认专家字段值
 - [ ] 4.11 前端：画像模板页（CRUD，专家字段折叠）+ Applications 页容灾模式选择 + 降级兜底开关；容灾总览页（故障域拓扑 + 实时转移事件流 + 耗尽告警）；Channels 页一键熔断/恢复/紧切域
 
 ## 5. 收尾
