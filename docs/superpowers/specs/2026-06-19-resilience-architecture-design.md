@@ -41,6 +41,7 @@ canonical_spec: openspec
 - **D9**: ADMIN 退管理面，数据面 PermissionRouter 无跳过。
 - **D10**: 合并 P2/P3，直接建 Cluster 实体，不经软字段。
 - **D11**: 熔断 key 统一为 endpointId 采用「运行时派生」方案，不动 DB/实体。RouterChain 在 ModelInstance（channel 粒度）过滤时未绑定 endpoint，故 `RoutingRequest` 透传入站 `protocol`，`HealthRouter` 用 `channelId + protocol` 经 `EndpointResolver` 派生 `endpointId` 后查 `ChannelEndpointCircuitBreakerManager`，与 `KeyFailoverInvoker`（用 `RoutingContext.channelEndpointId()`）共享同一 manager bean。不向 `ModelInstance`/`model_instances` 表加 endpointId 字段（channel 粒度与 channel×protocol 端点粒度 1:1 不自洽）。
+- **D12**: 转移事件流（容灾可观测性，读侧重）。新建独立 `FailoverEvent` domain 记录每次候选转移（from 渠道/端点 → to 渠道/端点、errorType、decision L1/L2、exhausted、traceId 串联同请求多次转移、occurredAt）。`ChannelFailoverInvoker` 在 catch 块 decision != NONE 换候选时经既有 `DomainEventPublisher` 发布 `FailoverEvent`（DomainEvent），由 `@TransactionalEventListener`(AFTER_COMMIT) 异步调 `FailoverEventGateway.save` 持久化——发布与持久化解耦，不阻塞 10k QPS 调用链。可靠性边界：发布后持久化前进程崩溃则事件丢失（可观测性数据可接受，非计费/审计关键路径）。`ResilienceEventController` 提供轮询查询端点（`GET /resilience/events` 分页 + since/applicationId/clusterId 过滤、`GET /resilience/events/exhausted` 耗尽告警），前端总览页 10s 轮询渲染。不复用 CallLog（调用结果语义与转移动作语义不同维度，混表职责模糊、查询复杂）。
 
 ## Risks / Trade-offs
 
@@ -59,6 +60,7 @@ canonical_spec: openspec
 - **ChannelFailoverInvoker** L1 转移回路 + 错误分流表
 - **Cluster** 实体 + ClusterAffinityRouter + 域级健康聚合
 - **SessionAffinityStore** Redis/InMemory 双实现
+- **FailoverEvent** 转移事件 domain + FailoverEventGateway + FailoverEventListener（@TransactionalEventListener 异步持久化）+ ResilienceEventController（轮询查询）
 - RouterChain 改造（顺序修正 + 候选列表产出）
 
 ## Data Flow
@@ -70,8 +72,11 @@ canonical_spec: openspec
   → 产出「应用可见+健康+按 cluster/priority 排序」候选列表
   → ChannelFailoverInvoker(候选内逐个试,实时查熔断)
      ├─ L0 KeyFailoverInvoker(同渠道换 Key)
-     ├─ L1 换渠道(共因故障)
-     └─ L2 degrade(reason)(模型降级,受画像门禁)
+     ├─ L1 换渠道(共因故障) ──每次换候选经 DomainEventPublisher 发布 FailoverEvent──┐
+     └─ L2 degrade(reason)(模型降级,受画像门禁)                                │
+  → (调用链外) FailoverEventListener @TransactionalEventListener(AFTER_COMMIT) ←─┘
+     └─ FailoverEventGateway.save → failover_events 表
+  → 容灾总览页 GET /resilience/events 10s 轮询 → 渲染转移事件流 + 耗尽告警
 ```
 
 ## Testing
