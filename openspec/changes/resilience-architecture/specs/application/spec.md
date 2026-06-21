@@ -58,7 +58,7 @@ Application SHALL 通过 `resilienceProfileId` 挂载容灾画像，作为应用
 
 ### Requirement: Application 为权限锚点而非人/团队
 
-Application 取代 Team 成为权限锚点。权限链重写为 `UserApiKey → Application → ApplicationChannel → Channel`，不再经过 `User → Team → TeamChannel`。
+Application SHALL 取代 Team 成为权限锚点。权限链 MUST 重写为 `UserApiKey → Application → ApplicationChannel → Channel`，不再经过 `User → Team → TeamChannel`。
 
 **规则**:
 - `UserApiKey` 增加 `applicationId` 字段，作为权限锚点
