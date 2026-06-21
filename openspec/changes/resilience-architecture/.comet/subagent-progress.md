@@ -5,14 +5,19 @@
 
 ## 当前 Task
 
-**Plan task:** Task 4.8: DegradationService.degrade(reason) 按 reason 分流，L2 受画像门禁 — 待实现
-**OpenSpec task:** 4.8 DegradationService.degrade(reason) 按 reason 分流，L2 受画像门禁
+**Plan task:** Task 4.9: RoutingRequest 增 resilienceProfile 贯穿 + PinnedModelRouter — 待实现
+**OpenSpec task:** 4.9 RoutingRequest 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
 **阶段:** pending（即将开始主会话 TDD 实现）
-**BASE:** d8fc862（Task 4.7 勾选提交）
+**BASE:** 078b5bf（Task 4.8 勾选提交）
 **审查方式:** executing-plans 主会话自审（spec+quality）
+**4.9 范围提醒:** RoutingRequest 增 profile 字段 + PinnedModelRouter(@Order 350，profile.enablePinnedModel 时只留 pinnedModelId 实例)；RouterChain 各 Router 取 profile；并替换 ChannelFailoverInvoker/ChatDispatchServiceImpl 占位 boolean 为 profile（4.8 留的尾巴）
 
 ## 已完成 Task
 
+- Task 4.8: complete (58b8d11 实现 + 078b5bf 勾选, 双审查通过——executing-plans 主会话自审)
+  - degrade 增重载(model,reason,ResilienceProfile)：画像门禁 + 按 errorType 分流 + maxDepth 控制；旧签名委托
+  - RED 编译失败→GREEN 16 测试；ChannelFailoverIntegrationTest 7 过无回归
+  - ChannelFailoverInvoker 占位 boolean 留 4.9 替换
 - Task 4.7: complete (实现提交 + d8fc862 勾选, 双审查通过——executing-plans 主会话自审)
   - ClusterHealthAggregator 域级聚合 + ClusterAffinityRouter(@Order 250) DOWN 域过滤
   - RED 编译失败→GREEN 13 测试；集成测试确认 5 Router 顺序 Permission100→Health200→ClusterAffinity250→Priority300→LoadBalance9999

@@ -1098,17 +1098,17 @@ git add -A && git commit -m "feat(degradation): degrade 按 reason 分流且 L2 
 **Interfaces:**
 - Produces: `RoutingRequest.getResilienceProfile()`；`PinnedModelRouter` 按画像 pinnedModelId 锁定。
 
-- [ ] **Step 1: RoutingRequest 增 profile 字段**
+- [x] **Step 1: RoutingRequest 增 profile 字段**
 
-- [ ] **Step 2: 写 PinnedModelRouter 测试 + 实现**
+- [x] **Step 2: 写 PinnedModelRouter 测试 + 实现**
 
 profile.enablePinnedModel 时只保留 pinnedModelId 实例。
 
-- [ ] **Step 3: 跑绿**
+- [x] **Step 3: 跑绿**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=PinnedModelRouterTest` → PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add -A && git commit -m "feat(routing): RoutingRequest 贯穿画像并新增 PinnedModelRouter"

@@ -147,7 +147,17 @@
   - 回归 ChannelFailoverIntegrationTest 7 过；Spring 上下文装配 DegradationService+ErrorClassifier 正常
   - 设计决策：maxDepth 限制下备选耗尽仍抛 ALL_MODELS_DEGRADED（既有契约，3.6 技术债，Invoker 已 try-catch 防御），测试如实断言
   - ChannelFailoverInvoker 占位 boolean 门禁留 4.9 贯穿 profile 时统一替换（避免越界改 RoutingRequest/ChatDispatchServiceImpl）
-- [ ] 4.9 `RoutingRequest` 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
+- [x] 4.9 `RoutingRequest` 增加 resilienceProfile 贯穿 RouterChain 与 Invoker 链；新增 PinnedModelRouter
+  - 提交（9 文件 +459/-113）；双审查通过（spec ✅ / quality ✅，executing-plans 主会话自审）
+  - RoutingRequest 增 resilienceProfile 字段（7 参构造器，旧 6 参委托 profile=null 兼容 25 处既有调用）
+  - PinnedModelRouter(@Order 350)：profile.enablePinnedModel 时只留 pinnedModelId 实例；6 测试
+  - InstanceSelector 注入 ResilienceResolver fail-open 解析 profile 贯穿路由链
+  - ChannelFailoverInvoker boolean 门禁占位→ResilienceProfile，tryL2Degradation 调 degrade(model,reason,profile) 让 4.8 门禁生效（兑现 3.6 技术债）
+  - ChatDispatchServiceImpl 注入 ResilienceResolver，dispatch 入口解析 profile 透传 Invoker 链；MAX_DEGRADATION_DEPTH 改用 profile.degradationMaxDepth
+  - 6 Router 顺序 Permission100→Health200→ClusterAffinity250→Priority300→PinnedModel350→LoadBalance9999（集成测试确认）
+  - RED 编译失败→GREEN 50 测试（PinnedModelRouterTest 6 + Invoker/ChatDispatch/集成测试 profile 化适配）
+  - 设计决策：InvokerTest L2 场景 reason AUTH→UNKNOWN_ERROR（符合 4.8 严格分流：仅 L2 类触发模型降级）；集成测试两对照保留 AUTH（mock degrade 不真实分流，验证门禁+信号机制）
+  - 回归 PermissionRefactorIntegrationTest 4 过（真实 H2+Application+ResilienceResolver fail-open）
 - [ ] 4.10 P2 单元与集成测试（解析链、档位推导、会话亲和、画像继承、Cluster 健康聚合、共因隔离、亲和路由）
 - [ ] 4.11 前端：画像模板页（CRUD，专家字段折叠）+ Applications 页容灾模式选择 + 降级兜底开关；容灾总览页（故障域拓扑 + 实时转移事件流 + 耗尽告警）；Channels 页一键熔断/恢复/紧切域
 
