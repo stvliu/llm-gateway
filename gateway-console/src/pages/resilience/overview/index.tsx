@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Card, Row, Col, Tag, Empty, Spin, Alert, Typography, Tooltip } from 'antd';
 import {
   CheckCircleFilled,
@@ -7,7 +8,10 @@ import {
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useClusters } from '@/services/query/useResilience';
+import { useAllChannels } from '@/services/query/useChannels';
+import { groupChannelsByCluster } from './grouping';
 import type { Cluster, ClusterHealthStatus } from '@/types/resilience';
+import type { Channel } from '@/types/channel';
 
 const { Text } = Typography;
 
@@ -46,10 +50,18 @@ function healthMeta(status: ClusterHealthStatus, t: (k: string) => string) {
 /**
  * 故障域拓扑卡片
  *
- * <p>展示单个 Cluster 的健康灯与基本信息。成员渠道映射待后端 ChannelResponse
- * 透传 clusterId 后接入（当前 ChannelResponse 不含 clusterId）。</p>
+ * <p>展示单个 Cluster 的健康灯、基本信息与成员渠道列表。
+ * 成员渠道来自 ChannelResponse 透传的 clusterId 按 cluster 分组映射。</p>
  */
-function ClusterCard({ cluster, t }: { cluster: Cluster; t: (k: string) => string }) {
+function ClusterCard({
+  cluster,
+  members,
+  t,
+}: {
+  cluster: Cluster;
+  members: Channel[];
+  t: (k: string) => string;
+}) {
   const meta = healthMeta(cluster.healthStatus, t);
   return (
     <Card
@@ -74,11 +86,27 @@ function ClusterCard({ cluster, t }: { cluster: Cluster; t: (k: string) => strin
           {t('cluster.providerId')}: {cluster.providerId}
         </div>
       </div>
-      {/* 成员渠道：待后端 ChannelResponse 透传 clusterId 后接入 */}
-      <div style={{ marginTop: 8, fontSize: 12, color: 'rgba(0,0,0,0.35)' }}>
-        <Tooltip title={t('overview.clusterTopologyHelp')}>
-          {t('overview.members')}: —
-        </Tooltip>
+      {/* 成员渠道：按 clusterId 分组映射到本 Cluster */}
+      <div style={{ marginTop: 8, fontSize: 12 }}>
+        <div style={{ marginBottom: 4, color: 'rgba(0,0,0,0.45)' }}>
+          {t('overview.members')}（{members.length}）
+        </div>
+        {members.length === 0 ? (
+          <div style={{ color: 'rgba(0,0,0,0.35)' }}>—</div>
+        ) : (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {members.map((ch) => (
+              <Tooltip key={ch.id} title={ch.name}>
+                <Tag style={{ margin: 0 }}>
+                  <Text code style={{ fontSize: 11 }}>
+                    {ch.id}
+                  </Text>{' '}
+                  {ch.name}
+                </Tag>
+              </Tooltip>
+            ))}
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -98,6 +126,12 @@ function ClusterCard({ cluster, t }: { cluster: Cluster; t: (k: string) => strin
 export default function OverviewPage() {
   const { t } = useTranslation('resilience');
   const { data: clusters, isLoading } = useClusters();
+  // 拉取全部渠道，按 clusterId 分组映射到 Cluster 卡片（后端 ChannelResponse 已透传 clusterId）
+  const { data: channels } = useAllChannels();
+  const channelsByCluster = useMemo(
+    () => groupChannelsByCluster(channels ?? []),
+    [channels],
+  );
 
   // 耗尽告警：healthStatus=DOWN 的故障域
   const downClusters = (clusters ?? []).filter((c) => c.healthStatus === 'DOWN');
@@ -158,7 +192,11 @@ export default function OverviewPage() {
           <Row gutter={[16, 16]}>
             {clusters.map((cluster) => (
               <Col key={cluster.id} xs={24} sm={12} md={8} lg={6}>
-                <ClusterCard cluster={cluster} t={t} />
+                <ClusterCard
+                  cluster={cluster}
+                  members={channelsByCluster.get(cluster.id) ?? []}
+                  t={t}
+                />
               </Col>
             ))}
           </Row>

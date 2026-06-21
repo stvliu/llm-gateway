@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
-import { useApplications, useDeleteApplication } from '@/services/query/useApplications';
+import { useApplications, useDeleteApplication, useBindResilienceProfile } from '@/services/query/useApplications';
 import { useResilienceProfiles } from '@/services/query/useResilience';
 import { modeLabel, modeColor } from '@/pages/resilience/mode';
 import ApplicationFormModal from './ApplicationFormModal';
@@ -28,13 +28,26 @@ export default function ApplicationsPage() {
 
   const { data: applications, isLoading } = useApplications();
   const deleteMutation = useDeleteApplication();
-  // 容灾画像列表：用于反查 Application.resilienceProfileId 对应的画像名与档位
+  // 容灾画像绑定 mutation：成功后 invalidate 应用列表，画像列自动刷新
+  const bindProfileMutation = useBindResilienceProfile();
+  // 容灾画像列表：用于反查 Application.resilienceProfileId 对应的画像名与档位，并提供下拉选项
   const { data: profiles } = useResilienceProfiles();
   const profileMap = useMemo(() => {
     const m = new Map<number, ResilienceProfile>();
     (profiles ?? []).forEach((p) => m.set(p.id, p));
     return m;
   }, [profiles]);
+  // 下拉选项：默认（解绑）+ 全部画像
+  const profileOptions = useMemo(
+    () => [
+      { value: 0, label: t('resilience.default') },
+      ...(profiles ?? []).map((p) => ({
+        value: p.id,
+        label: `${p.name} · ${modeLabel(p.mode)}`,
+      })),
+    ],
+    [profiles, t],
+  );
 
   const [formVisible, setFormVisible] = useState(false);
   const [editingApplication, setEditingApplication] = useState<Application | undefined>();
@@ -62,6 +75,17 @@ export default function ApplicationsPage() {
       message.success(t('application.deleteSuccess', { defaultValue: '应用已删除' }));
     } catch {
       message.error(t('application.deleteFailed', { defaultValue: '删除失败' }));
+    }
+  };
+
+  // 绑定/解绑容灾画像：value=0 表示解绑（传 null）。成功后 invalidate 列表自动刷新画像列。
+  const handleBindProfile = async (application: Application, value: number) => {
+    const profileId = value === 0 ? null : value;
+    try {
+      await bindProfileMutation.mutateAsync({ id: application.id, resilienceProfileId: profileId });
+      message.success(t('resilience.bindSuccess', { defaultValue: '容灾画像已更新' }));
+    } catch {
+      message.error(t('resilience.bindFailed', { defaultValue: '容灾画像更新失败' }));
     }
   };
 
@@ -117,25 +141,36 @@ export default function ApplicationsPage() {
       ),
     },
     {
-      // 容灾画像列：只读展示当前绑定的画像档位。
-      // 后端 ApplicationRequest 暂未接收 resilienceProfileId 写入，
-      // 此列为展示侧；绑定写入能力待后端补端点（见 resilience.configureHint）。
+      // 容灾画像列：「选而非填」范式——管理员给应用选容灾画像模板，非逐字段配。
+      // canWrite 时为行内 Select（含「默认=解绑」选项），只读时降级为档位 Tag。
       title: t('resilience.column'),
       key: 'resilience',
-      width: 140,
+      width: 200,
       render: (_: unknown, record: Application) => {
         const profile = record.resilienceProfileId
           ? profileMap.get(record.resilienceProfileId)
           : undefined;
-        if (!profile) {
-          return <Tag>{t('resilience.default')}</Tag>;
-        }
-        return (
-          <Tooltip title={t('resilience.configureHint')}>
+        // 只读：档位 Tag
+        if (!canWrite) {
+          if (!profile) {
+            return <Tag>{t('resilience.default')}</Tag>;
+          }
+          return (
             <Tag color={modeColor(profile.mode)}>
               {profile.name} · {modeLabel(profile.mode)}
             </Tag>
-          </Tooltip>
+          );
+        }
+        // 可写：行内 Select 绑定（0=默认/解绑）
+        return (
+          <Select
+            size="small"
+            style={{ width: '100%' }}
+            value={record.resilienceProfileId ?? 0}
+            loading={bindProfileMutation.isPending}
+            options={profileOptions}
+            onChange={(value: number) => handleBindProfile(record, value)}
+          />
         );
       },
     },

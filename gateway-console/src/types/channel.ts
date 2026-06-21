@@ -79,6 +79,8 @@ export interface Channel {
   endpoints: ChannelEndpointResponse[];
   createdAt: string;
   updatedAt: string;
+  /** 归属故障域 ID。后端 ChannelResponse 已透传（4.11b 补全 2 用于总览页成员渠道分组） */
+  clusterId?: number | null;
   /** 最后一次健康检查时间（ISO 字符串）。任务 9.x：后端 ChannelResponse 已透传 */
   lastHealthCheckAt?: string | null;
   /** 最后一次健康检查的聚合状态。任务 9.x */
@@ -115,6 +117,8 @@ export interface ChannelResponse {
   endpoints: ChannelEndpointResponse[];
   createdAt: string;
   updatedAt: string;
+  /** 归属故障域 ID。后端 ChannelResponse 已透传 */
+  clusterId?: number | null;
 }
 
 /** 更新渠道请求（与后端 ChannelRequest 一致，PUT 使用同一请求体） */

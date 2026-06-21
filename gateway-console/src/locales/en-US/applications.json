@@ -23,8 +23,10 @@
   "resilience": {
     "column": "Resilience Profile",
     "default": "Default",
-    "configure": "Configure",
-    "configureHint": "Backend ApplicationRequest does not accept resilience fields yet; binding awaits backend endpoint"
+    "configure": "Manage Profile Templates",
+    "configureHint": "Select a resilience profile template to bind; choose 'Default' to unbind. Manage templates on the Profiles page",
+    "bindSuccess": "Resilience profile updated",
+    "bindFailed": "Failed to update resilience profile"
   },
   "channelAuthorization": {
     "title": "Channel Authorization",

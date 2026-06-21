@@ -55,3 +55,20 @@ export function useDeleteApplication() {
     },
   });
 }
+
+/**
+ * 绑定（或解绑）应用的容灾画像
+ *
+ * <p>调用 PUT /applications/{id}/resilience；resilienceProfileId=null 解绑。
+ * 成功后刷新应用列表使画像列展示最新绑定。</p>
+ */
+export function useBindResilienceProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, resilienceProfileId }: { id: number; resilienceProfileId: number | null }) =>
+      applicationApi.bindResilienceProfile(id, resilienceProfileId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: applicationKeys.lists() });
+    },
+  });
+}
