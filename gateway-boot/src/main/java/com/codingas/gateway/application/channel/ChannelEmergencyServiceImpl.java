@@ -84,6 +84,12 @@ public class ChannelEmergencyServiceImpl implements ChannelEmergencyService {
 
     /**
      * 校验端点存在且属于指定渠道
+     *
+     * <p>使用 {@code channelId.equals(endpoint.getChannelId())} 而非反向调用，
+     * 因为 channelId 来自 {@code @PathVariable} 永非 null，可避免端点 channelId
+     * 为 null（脏数据/旧数据）时触发 NPE 被 {@code handleGenericException}
+     * 误映射为 HTTP 500。channelId 与 null 比较为 false，落入既有
+     * {@code ENDPOINT_NOT_BELONG_TO_CHANNEL} 业务异常分支，由全局异常处理器映射为 400。</p>
      */
     private void validateEndpointBelongsToChannel(Long channelId, Long endpointId) {
         Optional<ChannelEndpoint> endpointOpt = channelEndpointGateway.findById(endpointId);
@@ -91,7 +97,7 @@ public class ChannelEmergencyServiceImpl implements ChannelEmergencyService {
             throw new GatewayRequestException("ENDPOINT_NOT_FOUND", "端点不存在: " + endpointId);
         }
         ChannelEndpoint endpoint = endpointOpt.get();
-        if (!endpoint.getChannelId().equals(channelId)) {
+        if (!channelId.equals(endpoint.getChannelId())) {
             throw new GatewayRequestException("ENDPOINT_NOT_BELONG_TO_CHANNEL",
                     String.format("端点 %d 不属于渠道 %d", endpointId, channelId));
         }

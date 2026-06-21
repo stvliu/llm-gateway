@@ -69,12 +69,13 @@ class ResilienceProfileServiceImplTest {
         }
 
         @Test
-        @DisplayName("非法 mode 抛出异常")
+        @DisplayName("非法 mode 抛出 GatewayRequestException 并含合法值提示")
         void create_invalidMode_throwsException() {
             ResilienceProfileRequest request = buildRequest("p1", "画像", "INVALID_MODE");
 
             assertThatThrownBy(() -> resilienceProfileService.create(request))
-                    .isInstanceOf(IllegalArgumentException.class);
+                    .isInstanceOf(GatewayRequestException.class)
+                    .hasMessageContaining("INVALID_MODE");
             verify(resilienceProfileGateway, never()).save(any());
         }
     }

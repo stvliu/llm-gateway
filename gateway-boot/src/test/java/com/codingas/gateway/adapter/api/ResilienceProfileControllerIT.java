@@ -4,6 +4,7 @@ import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
 import com.codingas.gateway.application.resilience.ResilienceProfileService;
 import com.codingas.gateway.application.resilience.dto.ResilienceProfileRequest;
 import com.codingas.gateway.application.resilience.dto.ResilienceProfileResponse;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -105,6 +106,23 @@ class ResilienceProfileControllerIT {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
         verify(resilienceProfileService, never()).create(any());
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/resilience/profiles 非法 mode 返回 400 而非 500")
+    void create_invalidMode_returns400() throws Exception {
+        // Service 层将非法 mode 包装为 GatewayRequestException，
+        // GlobalExceptionHandler.handleGatewayRequestException 应映射为 400（而非 500）
+        ResilienceProfileRequest request = buildRequest("p1", "画像", "FOO");
+        when(resilienceProfileService.create(any()))
+                .thenThrow(new GatewayRequestException("RESILIENCE_MODE_INVALID",
+                        "非法容灾模式: FOO，合法值: [STANDARD, STRICT, AGGRESSIVE]"));
+
+        mockMvc.perform(post("/api/v1/resilience/profiles")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error.code").value("RESILIENCE_MODE_INVALID"));
     }
 
     @Test

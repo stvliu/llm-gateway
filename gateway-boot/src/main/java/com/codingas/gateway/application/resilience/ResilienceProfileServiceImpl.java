@@ -11,7 +11,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 容灾画像应用服务实现
@@ -89,11 +91,18 @@ public class ResilienceProfileServiceImpl implements ResilienceProfileService {
 
     /**
      * 将请求 DTO 字段应用到实体（mode 字符串还原为枚举）
+     *
+     * <p>非法 mode（如 "FOO"）会被 {@link ResilienceMode#valueOf} 抛
+     * {@link IllegalArgumentException}，若不处理将被
+     * {@code GlobalExceptionHandler.handleGenericException} 误映射为 HTTP 500。
+     * 此处捕获并包装为 {@link GatewayRequestException}（错误码
+     * {@code RESILIENCE_MODE_INVALID}），由 {@code handleGatewayRequestException}
+     * 正确映射为 HTTP 400，消息含合法值提示。</p>
      */
     private void applyRequestToEntity(ResilienceProfile profile, ResilienceProfileRequest request) {
         profile.setCode(request.getCode());
         profile.setName(request.getName());
-        profile.setMode(ResilienceMode.valueOf(request.getMode()));
+        profile.setMode(parseMode(request.getMode()));
         profile.setEnableL2ModelDegradation(request.isEnableL2ModelDegradation());
         profile.setDegradationMaxDepth(request.getDegradationMaxDepth());
         profile.setEnableSessionAffinity(request.isEnableSessionAffinity());
@@ -101,6 +110,21 @@ public class ResilienceProfileServiceImpl implements ResilienceProfileService {
         profile.setEnablePinnedModel(request.isEnablePinnedModel());
         profile.setPinnedModelId(request.getPinnedModelId());
         profile.setTimeout(request.getTimeout());
+    }
+
+    /**
+     * 将 mode 字符串解析为 {@link ResilienceMode}，非法值抛业务异常
+     */
+    private ResilienceMode parseMode(String mode) {
+        try {
+            return ResilienceMode.valueOf(mode);
+        } catch (IllegalArgumentException e) {
+            String legalValues = Arrays.stream(ResilienceMode.values())
+                    .map(Enum::name)
+                    .collect(Collectors.joining(", "));
+            throw new GatewayRequestException("RESILIENCE_MODE_INVALID",
+                    "非法容灾模式: " + mode + "，合法值: [" + legalValues + "]", e);
+        }
     }
 
     /**

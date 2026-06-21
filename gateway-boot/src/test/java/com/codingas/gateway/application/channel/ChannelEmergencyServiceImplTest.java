@@ -85,6 +85,19 @@ class ChannelEmergencyServiceImplTest {
                     .isInstanceOf(GatewayRequestException.class);
             verify(circuitBreakerManager, never()).forceOpen(any());
         }
+
+        @Test
+        @DisplayName("端点 channelId 为脏数据 null 时抛业务异常而非 NPE")
+        void forceOpen_endpointChannelIdNull_throwsBusinessException() {
+            // 脏数据/旧数据场景：ChannelEndpoint.channelId 为 null
+            ChannelEndpoint endpoint = buildEndpoint(10L, null);
+            when(channelEndpointGateway.findById(10L)).thenReturn(Optional.of(endpoint));
+
+            assertThatThrownBy(() -> channelEmergencyService.forceOpen(1L, 10L))
+                    .isInstanceOf(GatewayRequestException.class)
+                    .hasMessageContaining("不属于");
+            verify(circuitBreakerManager, never()).forceOpen(any());
+        }
     }
 
     @Nested
