@@ -2,6 +2,8 @@ package com.codingas.gateway.application.proxy.invoker;
 
 import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
+import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
@@ -15,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -55,6 +58,9 @@ class ChannelFailoverInvokerTest {
     @Mock
     private DegradationService degradationService;
 
+    @Mock
+    private DomainEventPublisher eventPublisher;
+
     private ChannelFailoverInvoker invoker;
 
     private RoutingContext ctx1;
@@ -63,7 +69,7 @@ class ChannelFailoverInvokerTest {
 
     @BeforeEach
     void setUp() {
-        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService);
+        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService, eventPublisher);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
@@ -323,6 +329,121 @@ class ChannelFailoverInvokerTest {
         verify(degradationService, never()).degrade(anyString(), any(), any());
         // 首字节已转发给原 callback（包装 callback 透传）
         verify(callback).onChunk("first-byte-data");
+    }
+
+    // ==================== 转移事件发布（Task 4.11c） ====================
+
+    @Test
+    @DisplayName("转移事件发布：L1 换候选时发布 FailoverOccurredEvent（from=失败候选, to=下一候选）")
+    void failover_l1Decision_publishesFailoverEvent() {
+        // ch1 AUTH 共因失败 → L1 决策 → 换 ch2 成功 → 应发布 1 条转移事件
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+        ProtocolResponse successResponse = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
+
+        invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
+
+        // 断言：发布 1 条转移事件，from=ctx1, to=ctx2, decision=L1, exhausted=false
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        FailoverOccurredEvent event = captor.getValue();
+        assertThat(event.fromChannelId()).isEqualTo(10L);
+        assertThat(event.fromEndpointId()).isEqualTo(20L);
+        assertThat(event.toChannelId()).isEqualTo(11L);
+        assertThat(event.toEndpointId()).isEqualTo(21L);
+        assertThat(event.errorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
+        assertThat(event.decision()).isEqualTo(FailoverDecision.L1);
+        assertThat(event.exhausted()).isFalse();
+        assertThat(event.applicationId()).isEqualTo(7L);
+        assertThat(event.occurredOn()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("转移事件发布：NONE 决策不发布事件（请求级错误不转移）")
+    void failover_noneDecision_doesNotPublishEvent() {
+        // ch1 INVALID_REQUEST → NONE 决策 → 直接抛不转移 → 不应发布事件
+        ProviderException invalidEx = new ProviderException(
+                ProviderErrorType.INVALID_REQUEST, "bad request");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(invalidEx);
+        when(errorClassifier.classify(ProviderErrorType.INVALID_REQUEST))
+                .thenReturn(FailoverDecision.NONE);
+
+        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                .isSameAs(invalidEx);
+
+        // 断言：NONE 不发布任何转移事件
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("转移事件发布：首候选成功不发布事件（无转移发生）")
+    void failover_firstCandidateSuccess_doesNotPublishEvent() {
+        // ch1 首选成功 → 无转移 → 不应发布事件
+        ProtocolResponse successResponse = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(successResponse);
+
+        invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE);
+
+        verify(eventPublisher, never()).publish(any());
+    }
+
+    @Test
+    @DisplayName("转移事件发布：全部候选耗尽且未降级时发布 exhausted=true 事件（to 为 null）")
+    void failover_allExhaustedNoL2_publishesExhaustedEvent() {
+        // 两候选均 AUTH 失败耗尽，L2 门禁关闭 → 抛最后异常，应发布 exhausted 事件（to=null）
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, profile(false)))
+                .isSameAs(authEx);
+
+        // 断言：发布 2 条事件（ctx1→ctx2 转移 + ctx2 耗尽），最后一条 exhausted=true, to=null
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher, org.mockito.Mockito.times(2)).publish(captor.capture());
+        java.util.List<FailoverOccurredEvent> events = captor.getAllValues();
+        // 第 1 条：ctx1 → ctx2 转移
+        assertThat(events.get(0).fromChannelId()).isEqualTo(10L);
+        assertThat(events.get(0).toChannelId()).isEqualTo(11L);
+        assertThat(events.get(0).exhausted()).isFalse();
+        // 第 2 条：ctx2 耗尽（已是最后候选），to=null
+        assertThat(events.get(1).fromChannelId()).isEqualTo(11L);
+        assertThat(events.get(1).toChannelId()).isNull();
+        assertThat(events.get(1).toEndpointId()).isNull();
+        assertThat(events.get(1).exhausted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("转移事件发布：流式首字节前转移发布事件")
+    void failover_streamBeforeFirstByte_publishesEvent() {
+        // ch1 流式启动失败（首字节前）→ L1 决策 → 换 ch2 成功 → 应发布 1 条事件
+        ProviderException startupEx = new ProviderException(
+                ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        doThrow(startupEx).when(keyFailoverInvoker)
+                .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
+        when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        StreamCallback callback = mock(StreamCallback.class);
+        invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
+
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        assertThat(captor.getValue().fromChannelId()).isEqualTo(10L);
+        assertThat(captor.getValue().toChannelId()).isEqualTo(11L);
+        assertThat(captor.getValue().decision()).isEqualTo(FailoverDecision.L1);
     }
 
     /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */

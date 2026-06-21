@@ -8,6 +8,7 @@ import com.codingas.gateway.application.proxy.invoker.L2DegradationRequiredExcep
 import com.codingas.gateway.application.proxy.routing.ClusterAffinityRouter;
 import com.codingas.gateway.application.proxy.routing.EndpointResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingRequest;
+import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
@@ -91,7 +92,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     }
 
     /**
-     * 构造真实 ChannelFailoverInvoker，注入真实 ErrorClassifier + mock 上游/降级边界
+     * 构造真实 ChannelFailoverInvoker，注入真实 ErrorClassifier + mock 上游/降级/事件发布边界
      *
      * @param keyFailoverInvoker   mock 的 Key 级 Invoker（控制候选成功/失败）
      * @param degradationService   mock 的降级服务（控制 degrade 返回）
@@ -99,7 +100,9 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
      */
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                                   DegradationService degradationService) {
-        return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier, degradationService);
+        // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
+        return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier, degradationService,
+                mock(DomainEventPublisher.class));
     }
 
     /**

@@ -2,6 +2,8 @@ package com.codingas.gateway.application.proxy.invoker;
 
 import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
+import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
@@ -14,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -60,6 +63,7 @@ public class ChannelFailoverInvoker {
     private final KeyFailoverInvoker keyFailoverInvoker;
     private final ErrorClassifier errorClassifier;
     private final DegradationService degradationService;
+    private final DomainEventPublisher eventPublisher;
 
     /**
      * 构造渠道级故障转移 Invoker
@@ -67,13 +71,16 @@ public class ChannelFailoverInvoker {
      * @param keyFailoverInvoker  Key 级故障转移 Invoker（L0，对每个候选内部跑）
      * @param errorClassifier     错误分流器（L1/L2/NONE 决策）
      * @param degradationService  智能降级服务（L2 换模型）
+     * @param eventPublisher      领域事件发布器（发布转移事件，供异步持久化与可观测性）
      */
     public ChannelFailoverInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                    ErrorClassifier errorClassifier,
-                                   DegradationService degradationService) {
+                                   DegradationService degradationService,
+                                   DomainEventPublisher eventPublisher) {
         this.keyFailoverInvoker = keyFailoverInvoker;
         this.errorClassifier = errorClassifier;
         this.degradationService = degradationService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -102,7 +109,8 @@ public class ChannelFailoverInvoker {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
-        for (RoutingContext candidate : candidates) {
+        for (int i = 0; i < candidates.size(); i++) {
+            RoutingContext candidate = candidates.get(i);
             try {
                 return keyFailoverInvoker.invoke(candidate, request);
             } catch (ProviderException e) {
@@ -116,7 +124,8 @@ public class ChannelFailoverInvoker {
                     throw e;
                 }
 
-                // L1/L2：记录失败，继续试下一候选（L1 全耗尽才进 L2）
+                // L1/L2：发布转移事件（换下一候选前），再记录失败继续试下一候选
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision);
                 lastException = e;
                 lastErrorType = e.getErrorType();
             }
@@ -169,7 +178,8 @@ public class ChannelFailoverInvoker {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
-        for (RoutingContext candidate : candidates) {
+        for (int i = 0; i < candidates.size(); i++) {
+            RoutingContext candidate = candidates.get(i);
             // 首字节追踪标志：包装 callback 标记首字节是否已发送
             // 首字节前同步启动失败可换候选；首字节后失败不换候选（继承 KeyFailoverInvoker 约束）
             AtomicBoolean firstByteSent = new AtomicBoolean(false);
@@ -216,7 +226,8 @@ public class ChannelFailoverInvoker {
                     throw e;
                 }
 
-                // L1/L2：记录失败，继续试下一候选（首字节前失败可转移）
+                // L1/L2：发布转移事件（换下一候选前），再记录失败继续试下一候选（首字节前失败可转移）
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision);
                 lastException = e;
                 lastErrorType = e.getErrorType();
             }
@@ -285,5 +296,51 @@ public class ChannelFailoverInvoker {
         // 抛出显式 L2 降级信号异常（携带 fallbackModel + 原始失败 cause），由上层 ChatDispatchService
         // 捕获并用 fallback 模型重新 resolveCandidates + 调用本 Invoker。替代 3.3 隐式字符串前缀契约。
         return new L2DegradationRequiredException(fallbackModel, originalModel, lastErrorType, lastException);
+    }
+
+    /**
+     * 发布转移事件（Task 4.11c 容灾可观测性，design doc D12）
+     *
+     * <p>当 decision 非 NONE（L1/L2 换候选）时，换下一候选前发布 {@link FailoverOccurredEvent}：
+     * from=当前失败候选（candidate），to=下一候选（若已是最后候选则为 null 且 exhausted=true）。
+     * 事件由 {@code FailoverEventListener} 异步持久化为 {@code FailoverEvent} 实体，
+     * 不阻塞调用链（发布与持久化解耦）。</p>
+     *
+     * <p>traceId / fromClusterId / toClusterId 当前置空：调用链未透传 traceId（后续 task 接入
+     * OpenTelemetry 后填充），{@link RoutingContext} 未携带 clusterId（未来扩展后填充）。
+     * 这些字段置空不影响核心可观测性（from/to 渠道端点、errorType、decision、exhausted 已足够）。</p>
+     *
+     * @param candidate     当前失败的候选上下文（from）
+     * @param candidates    候选列表
+     * @param currentIndex  当前候选索引
+     * @param applicationId 应用 ID
+     * @param errorType     触发转移的上游错误类型
+     * @param decision      转移决策（L1/L2）
+     */
+    private void publishFailoverEvent(RoutingContext candidate, List<RoutingContext> candidates,
+                                       int currentIndex, Long applicationId,
+                                       ProviderErrorType errorType, FailoverDecision decision) {
+        // 判断是否有下一候选：有则 to=下一候选，无则 to=null + exhausted=true
+        int nextIndex = currentIndex + 1;
+        boolean hasTo = nextIndex < candidates.size();
+        Long toChannelId = hasTo ? candidates.get(nextIndex).channelId() : null;
+        Long toEndpointId = hasTo ? candidates.get(nextIndex).channelEndpointId() : null;
+        boolean exhausted = !hasTo;
+
+        FailoverOccurredEvent event = new FailoverOccurredEvent(
+                null,                       // traceId：调用链暂未透传，后续 OpenTelemetry 接入后填充
+                applicationId,
+                candidate.channelId(),
+                candidate.channelEndpointId(),
+                toChannelId,
+                toEndpointId,
+                null,                       // fromClusterId：RoutingContext 未携带 clusterId，暂置空
+                null,                       // toClusterId：同上
+                errorType,
+                decision,
+                exhausted,
+                Instant.now()
+        );
+        eventPublisher.publish(event);
     }
 }
