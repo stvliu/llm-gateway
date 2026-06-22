@@ -1,5 +1,7 @@
 # Upstream Exception Classification
-## Summary
+## Purpose
+
+上游异常分类能力——按 HTTP 状态码与错误特征将上游异常分类为 ProviderErrorType，驱动错误分流表的 L1/L2/NONE 转移决策。
 
 ## Requirements
 

@@ -1,5 +1,7 @@
 # Model Instance
-## Summary
+## Purpose
+
+模型实例能力——ModelInstance 为 Channel×Model 的运行实例，承载路由优先级与候选列表产出，供 L1 转移逐个尝试。
 
 ## Requirements
 
