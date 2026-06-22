@@ -100,7 +100,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
             ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
             ProtocolResponse response = invokeWithL2Failover(primaryCtx, candidates, outboundReq,
-                    inboundProtocol, identity, strategy, profile);
+                    inboundProtocol, identity, strategy, profile, traceId);
 
             // 阶段 6：响应转换（仅跨协议时执行）
             if (primaryCtx.needsProtocolAdaptation()) {
@@ -231,7 +231,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
         ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
         invokeStreamWithL2Failover(primaryCtx, candidates, outboundReq, delegateCallback,
-                inboundProtocol, identity, strategy, profile);
+                inboundProtocol, identity, strategy, profile, traceId);
     }
 
     /**
@@ -251,12 +251,14 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
      * @param inboundProtocol 入站协议
      * @param identity        调用方身份（含 applicationId/userId/role，重路由透传）
      * @param strategy        路由策略
+     * @param profile         容灾画像（L2 门禁贯穿 Invoker 链）
+     * @param traceId         调用链 Trace ID，透传到 ChannelFailoverInvoker 转移事件
      * @return 上游响应
      */
     private ProtocolResponse invokeWithL2Failover(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                                   ProtocolRequest request, Protocol inboundProtocol,
                                                   Identity identity, RoutingStrategy strategy,
-                                                  ResilienceProfile profile) {
+                                                  ResilienceProfile profile, String traceId) {
         Set<String> degradedModels = new HashSet<>();
         degradedModels.add(request.getModel());
         List<RoutingContext> currentCandidates = candidates;
@@ -268,7 +270,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         for (int depth = 0; depth <= maxDepth; depth++) {
             try {
                 return channelFailoverInvoker.invoke(currentPrimaryCtx, currentCandidates, request,
-                        inboundProtocol, identity.applicationId(), profile);
+                        inboundProtocol, identity.applicationId(), profile, traceId);
             } catch (L2DegradationRequiredException e) {
                 lastL2Signal = e;
                 String fallbackModel = e.getFallbackModel();
@@ -309,11 +311,12 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
      * @param identity        调用方身份
      * @param strategy        路由策略
      * @param profile         容灾画像（L2 门禁贯穿 Invoker 链）
+     * @param traceId         调用链 Trace ID，透传到 ChannelFailoverInvoker 转移事件
      */
     private void invokeStreamWithL2Failover(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                             ProtocolRequest request, StreamCallback callback,
                                             Protocol inboundProtocol, Identity identity, RoutingStrategy strategy,
-                                            ResilienceProfile profile) {
+                                            ResilienceProfile profile, String traceId) {
         Set<String> degradedModels = new HashSet<>();
         degradedModels.add(request.getModel());
         List<RoutingContext> currentCandidates = candidates;
@@ -325,7 +328,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         for (int depth = 0; depth <= maxDepth; depth++) {
             try {
                 channelFailoverInvoker.invokeStream(currentPrimaryCtx, currentCandidates, request,
-                        inboundProtocol, identity.applicationId(), profile, callback);
+                        inboundProtocol, identity.applicationId(), profile, traceId, callback);
                 return;
             } catch (L2DegradationRequiredException e) {
                 lastL2Signal = e;

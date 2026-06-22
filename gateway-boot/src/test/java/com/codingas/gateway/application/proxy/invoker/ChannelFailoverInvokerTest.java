@@ -94,7 +94,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(expectedResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         assertThat(result).isSameAs(expectedResponse);
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
@@ -115,7 +115,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         assertThat(result).isSameAs(successResponse);
         verify(keyFailoverInvoker).invoke(ctx1, request);
@@ -138,7 +138,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn("gpt-3.5-turbo");
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
                 .isInstanceOf(L2DegradationRequiredException.class)
                 .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
@@ -159,7 +159,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.NONE);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
@@ -178,7 +178,7 @@ class ChannelFailoverInvokerTest {
 
         // 画像关闭 L2 门禁（enableL2ModelDegradation=false），L1 耗尽不进 L2
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, profile(false)))
+                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
                 .isSameAs(authEx);
 
         verify(degradationService, never()).degrade(anyString(), any(), any());
@@ -197,7 +197,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(null);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
                 .isSameAs(modelEx);
     }
 
@@ -220,7 +220,7 @@ class ChannelFailoverInvokerTest {
 
         // 防御后应抛 lastException（modelEx），而非 degrade 抛出的 degradeEx
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
                 .isSameAs(modelEx);
 
         verify(keyFailoverInvoker).invoke(ctx1, request);
@@ -234,7 +234,7 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
@@ -256,7 +256,7 @@ class ChannelFailoverInvokerTest {
 
         // ch2 启动成功（invokeStream 默认 doNothing），流建立后 return，不再换候选
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
@@ -276,7 +276,7 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
@@ -300,7 +300,7 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
                 .isInstanceOf(L2DegradationRequiredException.class)
                 .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                 .isEqualTo("gpt-3.5-turbo");
@@ -328,7 +328,7 @@ class ChannelFailoverInvokerTest {
 
         // 断言：不试 ch2，直接抛 afterFirstByteEx（首字节后转移边界）
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
                 .isSameAs(afterFirstByteEx);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -360,7 +360,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         // 断言：事件 fromClusterId/toClusterId 由 ChannelGateway 反查填充，非 null
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -390,7 +390,7 @@ class ChannelFailoverInvokerTest {
 
         // 单候选耗尽 → exhausted=true, toChannelId=null
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1),
-                request, Protocol.OPENAI, 7L, profile(false)))
+                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
                 .isSameAs(authEx);
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -421,7 +421,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
@@ -454,7 +454,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         // 断言：发布 1 条转移事件，from=ctx1, to=ctx2, decision=L1, exhausted=false
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -482,7 +482,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.NONE);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE))
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
                 .isSameAs(invalidEx);
 
         // 断言：NONE 不发布任何转移事件
@@ -497,7 +497,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
 
         verify(eventPublisher, never()).publish(any());
     }
@@ -514,7 +514,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.L1);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, profile(false)))
+                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
                 .isSameAs(authEx);
 
         // 断言：发布 2 条事件（ctx1→ctx2 转移 + ctx2 耗尽），最后一条 exhausted=true, to=null
@@ -545,13 +545,60 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, callback);
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
         assertThat(captor.getValue().fromChannelId()).isEqualTo(10L);
         assertThat(captor.getValue().toChannelId()).isEqualTo(11L);
         assertThat(captor.getValue().decision()).isEqualTo(FailoverDecision.L1);
+    }
+
+    // ==================== traceId 透传（4.11c 技术债偿还） ====================
+
+    @Test
+    @DisplayName("转移事件 traceId 透传：invoke 传入的 traceId 填充到发布的事件（修复前恒为 null）")
+    void failover_eventTraceId_propagatedFromInvoke() {
+        // 修复前：publishFailoverEvent 硬编码 traceId=null（调用链暂未透传），事件 traceId 恒为 null
+        // 修复后：invoke 接收 traceId 参数并透传给 publishFailoverEvent → 事件 traceId 等于传入值
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+        ProtocolResponse successResponse = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
+
+        invoker.invoke(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "trace-id-from-dispatch");
+
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        assertThat(captor.getValue().traceId())
+                .as("traceId 应由 invoke 参数透传，修复前恒为 null 导致调用链关联断裂")
+                .isEqualTo("trace-id-from-dispatch");
+    }
+
+    @Test
+    @DisplayName("转移事件 traceId 透传：流式 invokeStream 传入的 traceId 同样填充到事件")
+    void failover_eventTraceId_propagatedFromInvokeStream() {
+        // ch1 流式启动失败（首字节前）→ L1 决策 → 换 ch2 成功 → 发布 1 条事件，traceId 应透传
+        ProviderException startupEx = new ProviderException(
+                ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        doThrow(startupEx).when(keyFailoverInvoker)
+                .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
+        when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        StreamCallback callback = mock(StreamCallback.class);
+        invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
+                request, Protocol.OPENAI, 7L, L2_PROFILE, "stream-trace-id", callback);
+
+        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
+        verify(eventPublisher).publish(captor.capture());
+        assertThat(captor.getValue().traceId())
+                .as("流式调用链 traceId 应同样透传到事件")
+                .isEqualTo("stream-trace-id");
     }
 
     /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */
