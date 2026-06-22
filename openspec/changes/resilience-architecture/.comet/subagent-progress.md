@@ -128,8 +128,41 @@ Task 4.11 体量大（4 后端 Controller + 3 新前端页 + 修改 2 页）跨 
 **BASE:** 489044f（4.11c-后端 CRITICAL 修复提交）
 **实现提交:** 012115d（feat(console): 总览页接入转移事件流与耗尽告警，11 文件 +821/-20）
 **RED:** api/hooks/eventDisplay 各模块不存在失败 → GREEN 23 新测试全过；build 通过；vitest 无新回归（既有 23 antd v6 基线）
-**审查方式:** subagent-driven-development 后台双审查（合并审查 agent，前端补丁性质）
-**审查-修复轮次:** 1/3（审查进行中）
+**审查结论:** ✅ Approved（Spec 6/6 + Quality 良好；无 CRITICAL；1 Important refetchInterval 测试 gap + 4 Minor i18n/死 key/css，均非阻断记技术债）
+**协调者补跑确认:** npm run build → 17441 modules built 27.87s 通过
+**4.11 整体闭环:** 4.11a + 4.11b + 4.11c 三段双审查全通过；design doc D12；后端回归 821 全绿；前端 build 通过
+**勾选提交:** d97abf1（plan 4.11 Step 1-6 全 [x] + tasks.md 4.11 [x]，task-checkoff PASS）
+
+## 4.11 完成小结
+
+- 4.11 拆 4.11a/4.11b/4.11c 三子任务（用户决策），各段双审查通过
+- 4.11a 后端 Controller；4.11b 前端三屏 + 后端绑定端点 + 构建产物解跟踪；4.11c 转移事件流 domain + 发布 + Controller + 前端接入 + 生产可用性修复
+- 后端 821 全绿，前端 build 通过，vitest 无新回归
+- 技术债：refetchInterval 测试 gap、4 处 i18n 硬编码、eventStreamPlaceholder 死 key、4.10 遗留技术债
+
+## 当前 Task（5.1 delta spec 更新）
+
+**Plan task:** Task 5.1: 移除 team-channel-management spec，新增 application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console spec
+**阶段:** implementing（已派发后台 spec agent；5.1 是 OpenSpec delta spec 文档工作，非代码 TDD）
+**BASE:** d97abf1（4.11 勾选提交）
+**5.1 范围:** 在 openspec/changes/resilience-architecture/specs/ 下补写 delta spec：
+- ADDED: application / application-access-control / channel-failover / resilience-profile / cluster-failover / resilience-console（6 个，proposal New Capabilities）
+- MODIFIED: intelligent-degradation / model-instance / channel-health-tracking / upstream-exception-classification（4 个，proposal Modified Capabilities，plan 未列但归档需同步）
+- REMOVED: team-channel-management（1 个）
+- 格式：ADDED/MODIFIED Requirements + Scenario（参照 archive/2026-05-29-catalog-cascade-materialize 范式）
+**阶段:** review（spec implementer DONE，已派发合并 spec准确性+格式 审查 agent）
+**BASE:** d97abf1（4.11 勾选提交）
+**实现提交:** 0e80c9d（docs(spec): delta spec，11 文件 +992）
+**实现内容:** 6 ADDED（application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console）+ 4 MODIFIED（intelligent-degradation/model-instance/channel-health-tracking/upstream-exception-classification）+ 1 REMOVED（team-channel-management）
+**agent 自审亮点:** 发现 design doc 写 @TransactionalEventListener 但实现实际用 @EventListener（4.11c CRITICAL 修复后），spec 据实描述实现偏差
+**审查结论:** ⚠️ 附条件 Approved（准确性全通过无 CRITICAL；1 Important 格式合规 + 1 Important 措辞 + 3 Minor）
+**Important（需修复）:**
+1. MODIFIED Requirement 名称与既有 spec 不匹配（OpenSpec MODIFIED 语义要求名对应既有同名条目，否则 archive 合并误当新增）。4 个 MODIFIED 文件多数 Requirement 名在既有 spec 不存在：model-instance/channel-health-tracking/upstream-exception-classification/intelligent-degradation。修法：改用既有 Requirement 原名（限定词移正文）或改为 ADDED
+2. upstream-exception-classification "保留既有 HTTP 状态码映射"措辞与实际修正 503 映射矛盾，改"修正"
+**Minor:** team-channel-management 缺文件级标题 / invokeStream 省略号不对称 / @EventListener 同步语义可补充说明
+**审查方式:** subagent-driven-development 后台双审查
+**审查-修复轮次:** 2/3（格式修复 agent 进行中）
+**剩余任务:** 5.1 spec / 5.2 全链路回归 / 5.3 文档对齐
 **实现内容:** types FailoverEvent + resilienceApi.events.list/exhausted(pickDefined 剔 undefined) + useFailoverEvents/useExhaustedEvents(10s refetchInterval) + eventDisplay 纯函数(errorTypeMeta着色/formatRoute/decisionMeta) + 总览页替换占位(耗尽告警区双维度 + 事件流表格 exhausted 红色高亮 + 手动刷新) + i18n
 **4.11c-前端 范围（详见 plan Step 5）:**
 - 消费 4.11c-后端端点：GET /api/v1/resilience/events（分页+过滤）、GET /exhausted（耗尽告警）

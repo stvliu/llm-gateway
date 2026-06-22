@@ -174,6 +174,11 @@
 
 ## 5. 收尾
 
-- [ ] 5.1 移除 team-channel-management spec，新增 application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console spec
+- [x] 5.1 移除 team-channel-management spec，新增 application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console spec
+  - 提交 0e80c9d（11 delta spec：6 ADDED + 4 MODIFIED + 1 REMOVED）+ 5ddb9e6（MODIFIED 命名对齐+措辞）+ 1ff1605（SHALL/MUST）；双审查通过（准确性 ✅ + 格式合规 ✅）
+  - 6 ADDED：application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console
+  - 4 MODIFIED（命名对齐既有 spec）：intelligent-degradation/model-instance；channel-health-tracking/upstream-exception-classification 改 ADDED（既有无对应条目）
+  - 1 REMOVED：team-channel-management（含 Reason + Migration）
+  - openspec validate 0 错误；准确性经对照实现代码核验（API/字段/分流表/RouterChain/档位/@EventListener 偏差据实描述）
 - [ ] 5.2 全链路回归测试（权限重构 + 容灾双线端到端）
 - [ ] 5.3 文档更新（容灾方案设计/管理范式与实现对齐）

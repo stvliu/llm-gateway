@@ -1188,9 +1188,9 @@ Run: `cd gateway-console && npm run build` → 通过
 **Files:**
 - Modify: `openspec/specs/`（移除 team-channel-management spec，新增 application/application-access-control/channel-failover/resilience-profile/cluster-failover/resilience-console spec delta）
 
-- [ ] **Step 1: 编辑 delta spec**
+- [x] **Step 1: 编辑 delta spec** ✅
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit** ✅
 
 ```bash
 git add -A && git commit -m "docs(spec): 更新 capability spec（移除 team-channel-management，新增容灾相关）"
