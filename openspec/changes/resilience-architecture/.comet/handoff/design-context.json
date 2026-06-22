@@ -1,0 +1,13 @@
+{
+  "change": "resilience-architecture",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "c7e386d13636555034f47a02e04c13ed158648a6bb8bb6f6a1d32533fed0defe",
+  "files": [
+    { "path": "openspec/changes/resilience-architecture/proposal.md", "sha256": "e3fa6e238469d264878932aeb0d0371bc0665149072a48cda037f893550f52fe" },
+    { "path": "openspec/changes/resilience-architecture/design.md", "sha256": "0e94e6cf3870b7c5bb9b02ef04afa6ccdb3484090aab7c4ec66892137cc588df" },
+    { "path": "openspec/changes/resilience-architecture/tasks.md", "sha256": "024d23cc78cbd01bc9d4b000f1633e6a13333872e1c961bbfab6b907f3ae76d6" }
+  ]
+}

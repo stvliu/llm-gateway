@@ -4,7 +4,7 @@ import { CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useCreateUserApiKey } from '@/services/query/useUserApiKeys';
 import { useAuthStore } from '@/stores/authStore';
-import type { CreateUserApiKeyResponse } from '@/types/team';
+import type { CreateUserApiKeyResponse } from '@/types/userApiKey';
 
 const { Paragraph } = Typography;
 

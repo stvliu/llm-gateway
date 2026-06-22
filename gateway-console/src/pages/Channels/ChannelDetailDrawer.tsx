@@ -57,6 +57,7 @@ import { ModelMappingSection } from './ModelMappingSection';
 import { QuotaSettingsSection } from './QuotaSettingsSection';
 import { ChannelOverviewTab } from './ChannelOverviewTab';
 import { ProviderEditModal } from './ProviderEditModal';
+import { SwitchClusterButton } from './SwitchClusterButton';
 import { useProvider } from '@/services/query/useProviders';
 
 const { Text } = Typography;
@@ -407,6 +408,9 @@ export function ChannelDetailDrawer({
                 data-testid="drawer-connectivity-test-btn"
               />
             </Tooltip>
+
+            {/* 容灾应急：紧切域（任务 4.11b） */}
+            <SwitchClusterButton channelId={channel.id} />
 
             {/* Primary 按钮 — 图标 + Tooltip */}
             {primaryAction && (

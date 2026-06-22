@@ -1,7 +1,7 @@
 package com.codingas.gateway.application.init;
 
+import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +25,7 @@ class DataInitializerDisabledTest {
     private UserGateway userGateway;
 
     @Autowired
-    private TeamGateway teamGateway;
+    private ApplicationGateway applicationGateway;
 
     @Autowired
     private DataInitializer dataInitializer;
@@ -45,9 +45,9 @@ class DataInitializerDisabledTest {
     }
 
     @Test
-    @DisplayName("不应创建演示团队")
-    void shouldNotCreateDemoTeams() {
+    @DisplayName("不应创建演示应用")
+    void shouldNotCreateDemoApplications() {
         dataInitializer.run();
-        assertFalse(teamGateway.existsByName("dev"));
+        assertNull(applicationGateway.findByCode("dev"));
     }
 }

@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAllUserApiKeys, useDeleteUserApiKey, useCreateUserApiKey } from '@/services/query/useUserApiKeys';
 import { useUsers } from '@/services/query/useUsers';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
-import type { UserApiKey } from '@/types/team';
+import type { UserApiKey } from '@/types/userApiKey';
 import type { User } from '@/types/user';
 
 const { Text } = Typography;

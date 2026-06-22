@@ -9,9 +9,13 @@ import java.util.List;
 
 /**
  * 优先级路由器 — 按 priority 分组，只保留 priority 最小的组
+ *
+ * <p>顺序语义：排在 {@link HealthRouter} 之后（@Order 300 > 200），
+ * 仅在健康候选（已剔除熔断渠道）中按优先级择优，
+ * 避免先选定高优先级渠道、再被健康路由过滤导致链终止返回空。</p>
  */
 @Component
-@Order(200)
+@Order(300)
 public class PriorityRouter implements Router {
 
     @Override

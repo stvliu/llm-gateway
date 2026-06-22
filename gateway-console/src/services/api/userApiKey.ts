@@ -5,7 +5,7 @@ import type {
   CreateUserApiKeyRequest,
   CreateUserApiKeyResponse,
   UpdateUserApiKeyRequest,
-} from '@/types/team';
+} from '@/types/userApiKey';
 
 /**
  * 用户 API Key 管理接口（用户维度）

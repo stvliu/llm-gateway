@@ -1,0 +1,119 @@
+{
+  "title": "容灾管理",
+  "menu": {
+    "resilience": "容灾管理",
+    "overview": "容灾总览",
+    "profiles": "画像模板"
+  },
+  "mode": {
+    "STANDARD": "标准",
+    "STRICT": "严格",
+    "AGGRESSIVE": "激进",
+    "label": "容灾模式",
+    "description": {
+      "STANDARD": "L1 全开 + L2 浅降级（深度 2）。通用默认，平衡可用性与质量。",
+      "STRICT": "L1 全开 + L2 关闭。不可降级场景，宁可报错不可换模型。",
+      "AGGRESSIVE": "L1 全开 + L2 深降级（深度 3）+ 短超时。可用性优先，质量次之。"
+    }
+  },
+  "fallback": {
+    "label": "降级兜底",
+    "enabled": "启用 L2 模型降级",
+    "maxDepth": "降级最大深度",
+    "maxDepthHelp": "1-5，由档位预填，可微调。关闭降级时为 0。"
+  },
+  "profiles": {
+    "title": "容灾画像模板",
+    "subtitle": "管理预设容灾画像，管理员克隆微调而非从零填",
+    "add": "新建画像",
+    "edit": "编辑",
+    "code": "编码",
+    "name": "名称",
+    "mode": "容灾模式",
+    "advanced": "高级配置",
+    "advancedHelp": "专家字段：会话亲和、模型锁定、超时。默认折叠，仅在需要时展开。",
+    "enableSessionAffinity": "会话亲和",
+    "sessionAffinityTtl": "会话亲和 TTL（分钟）",
+    "enablePinnedModel": "模型锁定",
+    "pinnedModelId": "锁定模型 ID",
+    "timeout": "超时秒数（0=用渠道默认）",
+    "codeRequired": "请输入画像编码",
+    "nameRequired": "请输入画像名称",
+    "createSuccess": "画像创建成功",
+    "updateSuccess": "画像更新成功",
+    "createFailed": "画像创建失败",
+    "updateFailed": "画像更新失败",
+    "deleteForbidden": "容灾画像不支持删除（default 为系统兜底）"
+  },
+  "overview": {
+    "title": "容灾总览",
+    "subtitle": "回答「现在稳不稳」，只读不配置",
+    "clusterTopology": "故障域拓扑",
+    "clusterTopologyHelp": "Cluster 卡片视图，每卡显示成员渠道与健康灯",
+    "exhaustionAlert": "耗尽告警",
+    "exhaustionAlertHelp": "某模型所有渠道/L1 候选耗尽时高亮，提示该补供给侧",
+    "eventStream": "转移事件流",
+    "eventStreamHelp": "最近转移事件（10s 自动刷新），按时间倒序",
+    "eventStreamPlaceholder": "转移事件流待接入（Task 4.11c）",
+    "noClusters": "暂无故障域",
+    "members": "成员渠道",
+    "healthStatus": {
+      "HEALTHY": "健康",
+      "DEGRADED": "降级",
+      "DOWN": "故障"
+    },
+    "noExhaustion": "暂无耗尽告警",
+    "noEvents": "暂无转移事件",
+    "exhaustedNoTarget": "耗尽无目标",
+    "refresh": "刷新",
+    "eventColumns": {
+      "time": "时间",
+      "route": "转移路径",
+      "reason": "原因",
+      "decision": "决策",
+      "trace": "Trace"
+    },
+    "decisions": {
+      "L1": "L1 渠道",
+      "L2": "L2 模型"
+    }
+  },
+  "cluster": {
+    "title": "故障域",
+    "code": "编码",
+    "name": "名称",
+    "providerId": "归属供应商 ID",
+    "region": "区域",
+    "priority": "优先级",
+    "healthStatus": "健康状态",
+    "add": "新建故障域",
+    "edit": "编辑",
+    "codeRequired": "请输入故障域编码",
+    "nameRequired": "请输入故障域名称",
+    "providerIdRequired": "请输入归属供应商 ID",
+    "createSuccess": "故障域创建成功",
+    "updateSuccess": "故障域更新成功",
+    "createFailed": "故障域创建失败",
+    "updateFailed": "故障域更新失败"
+  },
+  "channels": {
+    "circuitBreaker": "熔断器",
+    "forceOpen": "一键熔断",
+    "forceClose": "一键恢复",
+    "forceOpenConfirm": "确定要强制熔断该端点？熔断后该端点流量立即被切断。",
+    "forceCloseConfirm": "确定要强制恢复该端点？恢复后该端点重新接入流量。",
+    "forceOpenSuccess": "端点已强制熔断",
+    "forceCloseSuccess": "端点已强制恢复",
+    "operationFailed": "操作失败",
+    "currentState": "当前状态",
+    "switchCluster": "紧切域",
+    "switchClusterConfirm": "确定要将该渠道紧急切换到目标故障域？切换后流量将钉到目标域。",
+    "switchClusterSuccess": "紧切域成功",
+    "selectCluster": "选择目标故障域",
+    "state": {
+      "CLOSED": "正常放行",
+      "OPEN": "熔断开启",
+      "HALF_OPEN": "试探放行"
+    }
+  }
+}

@@ -1,7 +1,7 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.application.proxy.ChatDispatchService;
-import com.codingas.gateway.application.proxy.invoker.DegradationInvoker;
+import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
@@ -51,7 +51,7 @@ public abstract class FullContextIntegrationTestBase {
     protected CredentialResolver credentialResolver;
 
     @MockBean
-    protected DegradationInvoker degradationInvoker;
+    protected ChannelFailoverInvoker channelFailoverInvoker;
 
     @MockBean
     protected KeyFailoverInvoker keyFailoverInvoker;
@@ -80,12 +80,12 @@ public abstract class FullContextIntegrationTestBase {
      */
     @BeforeEach
     protected void setupDefaultMocks() {
-        // 认证成功：返回一个默认 Identity
+        // 认证成功：返回一个默认 Identity（含 applicationId 权限锚点）
         when(authenticationDomainService.authenticateUser(anyString()))
-                .thenReturn(Identity.of(1L, "user", 100L));
+                .thenReturn(Identity.of(1L, "user", 100L, 7L));
 
         // 路由解析：返回一个默认 RoutingContext
-        when(routingResolver.resolve(anyString(), any(Protocol.class), anyLong(), anyString(), any(RoutingStrategy.class)))
+        when(routingResolver.resolve(anyString(), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class)))
                 .thenReturn(new RoutingContext(
                         1L,
                         1L,

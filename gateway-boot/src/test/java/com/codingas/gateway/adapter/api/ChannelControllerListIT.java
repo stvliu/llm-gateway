@@ -1,5 +1,6 @@
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
 import com.codingas.gateway.application.supply.ChannelHealthService;
@@ -39,11 +40,14 @@ class ChannelControllerListIT {
     @Mock
     private ChannelHealthService channelHealthService;
 
+    @Mock
+    private ChannelEmergencyService channelEmergencyService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelService, channelHealthService);
+        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

@@ -5,6 +5,6 @@ export { modelApi } from './model';
 export { userApi } from './user';
 export { tokenLimitApi } from './tokenLimit';
 export { channelApi } from './channel';
-export { teamApi } from './team';
+export { applicationApi } from './application';
 export { userApiKeyApi } from './userApiKey';
 export { planCatalogApi, provisionApi } from './catalog';

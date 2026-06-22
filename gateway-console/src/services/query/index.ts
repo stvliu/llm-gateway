@@ -4,5 +4,5 @@ export * from './useUsers';
 export * from './useTokenLimits';
 export * from './useStats';
 export * from './useChannels';
-export * from './useTeams';
+export * from './useApplications';
 export * from './useUserApiKeys';

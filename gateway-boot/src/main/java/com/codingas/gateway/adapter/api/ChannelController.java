@@ -1,6 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.adapter.api.dto.ChannelHealthCheckRequest;
+import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.channel.dto.*;
 import com.codingas.gateway.application.supply.ChannelHealthService;
@@ -8,6 +9,9 @@ import com.codingas.gateway.application.supply.dto.ChannelHealthResult;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +28,7 @@ public class ChannelController {
 
     private final ChannelService channelService;
     private final ChannelHealthService channelHealthService;
+    private final ChannelEmergencyService channelEmergencyService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -122,5 +127,92 @@ public class ChannelController {
             @PathVariable Long id,
             @Valid @RequestBody ChannelHealthCheckRequest request) {
         return channelHealthService.check(id, request.source());
+    }
+
+    // ===== 应急操作 =====
+
+    /**
+     * 一键熔断端点
+     *
+     * <p>运维应急：强制端点熔断器进入 OPEN，立即切断该端点流量。
+     * 用于故障应急时快速隔离问题端点。</p>
+     *
+     * @param channelId   渠道 ID
+     * @param endpointId  端点 ID（须属于该渠道）
+     * @return 熔断后的状态
+     */
+    @PostMapping("/{channelId}/endpoints/{endpointId}/circuit-breaker/force-open")
+    public CircuitBreakerStateResponse forceOpen(
+            @PathVariable Long channelId,
+            @PathVariable Long endpointId) {
+        return new CircuitBreakerStateResponse(channelEmergencyService.forceOpen(channelId, endpointId));
+    }
+
+    /**
+     * 一键恢复端点
+     *
+     * <p>运维应急：强制端点熔断器回到 CLOSED 并重置窗口，立即恢复流量。
+     * 用于故障修复后快速恢复端点。</p>
+     *
+     * @param channelId   渠道 ID
+     * @param endpointId  端点 ID（须属于该渠道）
+     * @return 恢复后的状态
+     */
+    @PostMapping("/{channelId}/endpoints/{endpointId}/circuit-breaker/force-close")
+    public CircuitBreakerStateResponse forceClose(
+            @PathVariable Long channelId,
+            @PathVariable Long endpointId) {
+        return new CircuitBreakerStateResponse(channelEmergencyService.forceClose(channelId, endpointId));
+    }
+
+    /**
+     * 查询端点熔断器状态
+     *
+     * @param channelId   渠道 ID
+     * @param endpointId  端点 ID（须属于该渠道）
+     * @return 当前熔断器状态
+     */
+    @GetMapping("/{channelId}/endpoints/{endpointId}/circuit-breaker/state")
+    public CircuitBreakerStateResponse getCircuitBreakerState(
+            @PathVariable Long channelId,
+            @PathVariable Long endpointId) {
+        return new CircuitBreakerStateResponse(channelEmergencyService.getState(channelId, endpointId));
+    }
+
+    /**
+     * 紧急切换渠道到目标故障域
+     *
+     * <p>运维应急：将 channel.clusterId 改为目标故障域 ID，用于跨域转移。
+     * 校验目标故障域存在；不校验目标域健康（运维决策）。</p>
+     *
+     * @param id      渠道 ID
+     * @param request 切换请求（含目标 clusterId）
+     */
+    @PutMapping("/{id}/cluster")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void switchCluster(
+            @PathVariable Long id,
+            @Valid @RequestBody SwitchClusterRequest request) {
+        channelEmergencyService.switchCluster(id, request.getClusterId());
+    }
+
+    /**
+     * 熔断器状态响应 DTO
+     */
+    @Data
+    @AllArgsConstructor
+    public static class CircuitBreakerStateResponse {
+        /** 熔断器状态名（CLOSED/OPEN/HALF_OPEN） */
+        private String state;
+    }
+
+    /**
+     * 紧切域请求 DTO
+     */
+    @Data
+    public static class SwitchClusterRequest {
+        /** 目标故障域 ID */
+        @NotNull(message = "目标故障域 ID 不能为空")
+        private Long clusterId;
     }
 }

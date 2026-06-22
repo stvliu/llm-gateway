@@ -82,13 +82,13 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
             // then
             assertThat(result).isNotNull();
@@ -127,13 +127,13 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.ANTHROPIC);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
 
             // when — 入站协议是 OPENAI，端点协议是 ANTHROPIC
-            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED);
+            RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
 
             // then
             assertThat(result.needsProtocolAdaptation()).isTrue();
@@ -148,7 +148,7 @@ class RoutingResolverTest {
                     .thenThrow(new ResourceNotFoundException("Model", "non-existent"));
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+            assertThatThrownBy(() -> routingResolver.resolve("non-existent", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Model");
         }
@@ -171,15 +171,158 @@ class RoutingResolverTest {
             endpoint.setProtocol(Protocol.OPENAI);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
-            when(instanceSelector.select(model.getId(), 1L, "USER", RoutingStrategy.WEIGHTED)).thenReturn(modelInstance);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
             when(channelGateway.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 1L, "USER", RoutingStrategy.WEIGHTED))
+            assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("Channel");
+        }
+    }
+
+    @Nested
+    @DisplayName("resolveCandidates 候选列表解析")
+    class ResolveCandidatesTests {
+
+        @Test
+        @DisplayName("多候选时返回按 priority 排序的多个 RoutingContext")
+        void resolveCandidates_multipleInstances_returnsContextsByPriority() {
+            // given — 两个候选实例（InstanceSelector 已按 priority 升序返回）
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            // 候选1：channel 100（priority 低，先返回）
+            ModelInstance instance1 = new ModelInstance();
+            instance1.setId(10L);
+            instance1.setChannelId(100L);
+            instance1.setModelId(1L);
+            instance1.setUpstreamModelName("gpt-4o-upstream-1");
+
+            // 候选2：channel 200（priority 高，后返回）
+            ModelInstance instance2 = new ModelInstance();
+            instance2.setId(20L);
+            instance2.setChannelId(200L);
+            instance2.setModelId(1L);
+            instance2.setUpstreamModelName("gpt-4o-upstream-2");
+
+            Channel channel1 = new Channel();
+            channel1.setId(100L);
+            channel1.setTimeout(30);
+
+            Channel channel2 = new Channel();
+            channel2.setId(200L);
+            channel2.setTimeout(60);
+
+            ChannelEndpoint endpoint1 = new ChannelEndpoint();
+            endpoint1.setId(50L);
+            endpoint1.setChannelId(100L);
+            endpoint1.setEndpointUrl("https://api1.openai.com/v1");
+            endpoint1.setProtocol(Protocol.OPENAI);
+
+            ChannelEndpoint endpoint2 = new ChannelEndpoint();
+            endpoint2.setId(60L);
+            endpoint2.setChannelId(200L);
+            endpoint2.setEndpointUrl("https://api2.openai.com/v1");
+            endpoint2.setProtocol(Protocol.OPENAI);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance1, instance2));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key-1");
+            when(credentialResolver.resolve(200L)).thenReturn("sk-key-2");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint1);
+            when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(endpoint2);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel1));
+            when(channelGateway.findById(200L)).thenReturn(Optional.of(channel2));
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 返回数量与候选数一致，顺序保持 InstanceSelector 的 priority 升序
+            assertThat(results).hasSize(2);
+            // 第一个候选对应 instance1（channel 100）
+            assertThat(results.get(0).channelId()).isEqualTo(100L);
+            assertThat(results.get(0).channelEndpointId()).isEqualTo(50L);
+            assertThat(results.get(0).endpointUrl()).isEqualTo("https://api1.openai.com/v1");
+            assertThat(results.get(0).upstreamProtocol()).isEqualTo(Protocol.OPENAI);
+            assertThat(results.get(0).providerApiKey()).isEqualTo("sk-key-1");
+            assertThat(results.get(0).timeout()).isEqualTo(30);
+            assertThat(results.get(0).needsProtocolAdaptation()).isFalse();
+            assertThat(results.get(0).modelName()).isEqualTo("gpt-4o");
+            assertThat(results.get(0).upstreamModelName()).isEqualTo("gpt-4o-upstream-1");
+            // 第二个候选对应 instance2（channel 200）
+            assertThat(results.get(1).channelId()).isEqualTo(200L);
+            assertThat(results.get(1).channelEndpointId()).isEqualTo(60L);
+            assertThat(results.get(1).endpointUrl()).isEqualTo("https://api2.openai.com/v1");
+            assertThat(results.get(1).providerApiKey()).isEqualTo("sk-key-2");
+            assertThat(results.get(1).timeout()).isEqualTo(60);
+            assertThat(results.get(1).upstreamModelName()).isEqualTo("gpt-4o-upstream-2");
+        }
+
+        @Test
+        @DisplayName("单候选时返回单元素列表")
+        void resolveCandidates_singleInstance_returnsSingleContext() {
+            // given
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+            instance.setUpstreamModelName("gpt-4o-upstream");
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setEndpointUrl("https://api.openai.com/v1");
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then
+            assertThat(results).hasSize(1);
+            assertThat(results.get(0).channelId()).isEqualTo(100L);
+            assertThat(results.get(0).providerApiKey()).isEqualTo("sk-test-key");
+            assertThat(results.get(0).upstreamModelName()).isEqualTo("gpt-4o-upstream");
+        }
+
+        @Test
+        @DisplayName("无可用实例时抛出 ResourceNotFoundException（由 InstanceSelector 透传）")
+        void resolveCandidates_noInstance_throwsException() {
+            // given — InstanceSelector 在无候选时抛 ResourceNotFoundException
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenThrow(new ResourceNotFoundException("ModelInstance", model.getId()));
+
+            // when & then — resolveCandidates 应透传异常
+            assertThatThrownBy(() -> routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessageContaining("ModelInstance");
         }
     }
 }

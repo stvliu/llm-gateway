@@ -1,0 +1,50 @@
+{
+  "title": "Applications",
+  "application": {
+    "code": "Application Code",
+    "name": "Application Name",
+    "description": "Description",
+    "state": "State",
+    "stateActive": "Active",
+    "stateInactive": "Inactive",
+    "actions": "Actions",
+    "addApplication": "New Application",
+    "editApplication": "Edit Application",
+    "deleteApplication": "Delete Application",
+    "deleteConfirm": "Are you sure you want to delete application \"{{name}}\"? This cannot be undone.",
+    "edit": "Edit",
+    "delete": "Delete",
+    "searchPlaceholder": "Search application name or code",
+    "codeRequired": "Please enter application code",
+    "nameRequired": "Please enter application name",
+    "deleteSuccess": "Application deleted",
+    "deleteFailed": "Failed to delete"
+  },
+  "resilience": {
+    "column": "Resilience Profile",
+    "default": "Default",
+    "configure": "Manage Profile Templates",
+    "configureHint": "Select a resilience profile template to bind; choose 'Default' to unbind. Manage templates on the Profiles page",
+    "bindSuccess": "Resilience profile updated",
+    "bindFailed": "Failed to update resilience profile"
+  },
+  "channelAuthorization": {
+    "title": "Channel Authorization",
+    "permissionHint": "Configure channels accessible to this application. API Keys under this application will inherit these channel permissions.",
+    "selectedCount": "Selected {{selectedCount}}/{{totalCount}} channels",
+    "channelName": "Channel Name",
+    "billingMode": "Billing Mode",
+    "payAsYouGo": "Pay As You Go",
+    "subscription": "Subscription",
+    "package": "Package",
+    "state": "State",
+    "active": "Active",
+    "inactive": "Inactive",
+    "accessible": "Accessible",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveSuccess": "Channel configuration saved",
+    "saveError": "Failed to save",
+    "loadError": "Failed to load channel data"
+  }
+}

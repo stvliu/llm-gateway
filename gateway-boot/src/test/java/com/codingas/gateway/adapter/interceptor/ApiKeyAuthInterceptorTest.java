@@ -43,7 +43,7 @@ class ApiKeyAuthInterceptorTest {
     void validApiKey_bearerToken_passes() throws Exception {
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        Identity identity = Identity.of(1L, "user", 1L);
+        Identity identity = Identity.of(1L, "user", 1L, null);
         when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
 
         boolean result = interceptor.preHandle(request, response);
@@ -58,7 +58,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("x-api-key")).thenReturn("sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        Identity identity = Identity.of(1L, "user", 1L);
+        Identity identity = Identity.of(1L, "user", 1L, null);
         when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
 
         boolean result = interceptor.preHandle(request, response);
