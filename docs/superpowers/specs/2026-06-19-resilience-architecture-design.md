@@ -92,4 +92,4 @@ canonical_spec: openspec
 
 - **D12 转移事件流监听机制**：D12 原设想 `@TransactionalEventListener(AFTER_COMMIT)` 异步持久化。实现中改为 `@EventListener` 同步持久化。原因：调用链 `ChatDispatchServiceImpl.dispatch` 无 `@Transactional`，整个请求处理不开启事务，`@TransactionalEventListener(AFTER_COMMIT)` 在无事务上下文时（`fallbackExecution` 默认 false）会静默丢弃事件，导致转移事件全部丢失。改为 `@EventListener` 后无事务上下文下事件仍被处理。项目未配置 `@EnableAsync`，故 `@EventListener` 在同一线程内同步调用监听器完成持久化（发布即持久化），参照既有 `AuditEventListener` 范式。可靠性边界不变（发布后持久化前进程崩溃则事件丢失，可观测性数据可接受）。
 - **D12 clusterId 过滤填充**：D12 未明确 clusterId 过滤的数据来源。实现中因 `RoutingContext` 无 clusterId 字段（扩展波及 14 处构造点超范围），采用 `ChannelFailoverInvoker` 注入 `ChannelGateway` 反查 `channelId → clusterId` 填充冗余 `fromClusterId/toClusterId` 字段，使 `GET /resilience/events?clusterId=` 过滤真正生效。
-- **D12 traceId**：D12 设想 traceId 串联同请求多次转移。当前调用链未透传 OpenTelemetry traceId，事件 traceId 暂填 null，后续 OpenTelemetry 接入后填充。
+- **D12 traceId**：D12 设想 traceId 串联同请求多次转移。实现中复用 `ChatDispatchServiceImpl` 已有的 `traceId`（`UUID.randomUUID().toString()`），透传给 `ChannelFailoverInvoker` → `FailoverOccurredEvent`，串联同请求多次转移。无需等待 OpenTelemetry 接入（verify 阶段技术债偿还，提交 7880c4c）。
