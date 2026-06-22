@@ -1217,9 +1217,9 @@ Claude Code 禁降级 / 客服全开 两个 profile 端到端跑通（Resilience
 **Files:**
 - Modify: `doc/容灾方案设计.md`、`doc/容灾管理范式.md`（与实现对齐）
 
-- [ ] **Step 1: 文档对齐**
+- [x] **Step 1: 文档对齐** ✅
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit** ✅
 
 ```bash
 git add -A && git commit -m "docs: 容灾方案与管理范式文档与实现对齐"

@@ -167,9 +167,20 @@ Task 4.11 体量大（4 后端 Controller + 3 新前端页 + 修改 2 页）跨 
 ## 当前 Task（5.2 全链路回归）
 
 **Plan task:** Task 5.2: 全链路回归测试（权限重构 + 容灾双线端到端）
-**阶段:** 验证中（5.2 是验证任务：全量测试 + 前端构建 + 两对照场景端到端，非代码实现）
-**BASE:** 13325a3（5.1 勾选提交）
-**剩余任务:** 5.2 全链路回归 / 5.3 文档对齐
+**阶段:** 验证中（5.2 闭环：821 后端 + 前端 build + 两对照端到端 2 全过；勾选 e2a109f，task-checkoff PASS）
+
+## 当前 Task（5.3 文档对齐）
+
+**Plan task:** Task 5.3: 文档更新（容灾方案设计/管理范式与实现对齐）
+**阶段:** implementing（即将派发后台文档 agent；5.3 是文档对齐工作，非代码 TDD）
+**BASE:** e2a109f（5.2 勾选提交）
+**5.3 范围:** docs/容灾方案设计.md + docs/容灾管理范式.md 与实现对齐
+**注:** plan 写 doc/（单数）路径有误，实际文档在 docs/（复数，832c830 提交）
+**关键对齐点:**
+- 转移事件流 domain（D12 新增，原设计文档无）：FailoverEvent + Invoker 发布 + @EventListener（非 @TransactionalEventListener）+ ResilienceEventController
+- Cluster/画像/Channel 应急操作实际实现细节
+- 容灾总览页实际接入（转移事件流 + 耗尽告警）
+**剩余任务:** 5.3 文档对齐（最后一个 task）
 **实现内容:** types FailoverEvent + resilienceApi.events.list/exhausted(pickDefined 剔 undefined) + useFailoverEvents/useExhaustedEvents(10s refetchInterval) + eventDisplay 纯函数(errorTypeMeta着色/formatRoute/decisionMeta) + 总览页替换占位(耗尽告警区双维度 + 事件流表格 exhausted 红色高亮 + 手动刷新) + i18n
 **4.11c-前端 范围（详见 plan Step 5）:**
 - 消费 4.11c-后端端点：GET /api/v1/resilience/events（分页+过滤）、GET /exhausted（耗尽告警）
