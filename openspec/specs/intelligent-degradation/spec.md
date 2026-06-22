@@ -1,5 +1,7 @@
 # Intelligent Degradation
-## Summary
+## Purpose
+
+智能降级能力——主模型不可用时按降级链切换备选模型，受错误分流与画像门禁约束，定位为 L2 应用可选兜底。
 
 ## Requirements
 
@@ -93,6 +95,8 @@ DegradationEvent {
 - **THEN** 发布 `DegradationRecoveredEvent`，包含 `model` 和 `downtime` 字段
 
 ### Requirement: Metrics 埋点
+
+系统 SHALL 上报以下降级相关 Micrometer 指标，用于监控降级触发、恢复与当前降级状态：
 
 | 指标名 | 类型 | 标签 | 触发点 |
 |--------|------|------|--------|
