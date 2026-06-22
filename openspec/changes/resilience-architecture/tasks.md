@@ -180,5 +180,7 @@
   - 4 MODIFIED（命名对齐既有 spec）：intelligent-degradation/model-instance；channel-health-tracking/upstream-exception-classification 改 ADDED（既有无对应条目）
   - 1 REMOVED：team-channel-management（含 Reason + Migration）
   - openspec validate 0 错误；准确性经对照实现代码核验（API/字段/分流表/RouterChain/档位/@EventListener 偏差据实描述）
-- [ ] 5.2 全链路回归测试（权限重构 + 容灾双线端到端）
+- [x] 5.2 全链路回归测试（权限重构 + 容灾双线端到端）
+  - 后端全量 821 全绿；前端 build 通过（17441 modules）；两对照场景端到端 2 全过（Claude Code 禁降级 STRICT / 客服全开 AGGRESSIVE）
+  - 验证任务无代码产出，无需双审查；无回归无需修复
 - [ ] 5.3 文档更新（容灾方案设计/管理范式与实现对齐）

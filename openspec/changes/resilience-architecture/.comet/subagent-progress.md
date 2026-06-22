@@ -161,8 +161,15 @@ Task 4.11 体量大（4 后端 Controller + 3 新前端页 + 修改 2 页）跨 
 2. upstream-exception-classification "保留既有 HTTP 状态码映射"措辞与实际修正 503 映射矛盾，改"修正"
 **Minor:** team-channel-management 缺文件级标题 / invokeStream 省略号不对称 / @EventListener 同步语义可补充说明
 **审查方式:** subagent-driven-development 后台双审查
-**审查-修复轮次:** 2/3（格式修复 agent 进行中）
-**剩余任务:** 5.1 spec / 5.2 全链路回归 / 5.3 文档对齐
+**审查-修复轮次:** 2/3（5.1 闭环）
+**5.1 闭环:** 0e80c9d + 5ddb9e6 + 1ff1605，双审查通过（准确性 ✅ + 格式合规 ✅，openspec validate 0 错误）；勾选 13325a3，task-checkoff PASS
+
+## 当前 Task（5.2 全链路回归）
+
+**Plan task:** Task 5.2: 全链路回归测试（权限重构 + 容灾双线端到端）
+**阶段:** 验证中（5.2 是验证任务：全量测试 + 前端构建 + 两对照场景端到端，非代码实现）
+**BASE:** 13325a3（5.1 勾选提交）
+**剩余任务:** 5.2 全链路回归 / 5.3 文档对齐
 **实现内容:** types FailoverEvent + resilienceApi.events.list/exhausted(pickDefined 剔 undefined) + useFailoverEvents/useExhaustedEvents(10s refetchInterval) + eventDisplay 纯函数(errorTypeMeta着色/formatRoute/decisionMeta) + 总览页替换占位(耗尽告警区双维度 + 事件流表格 exhausted 红色高亮 + 手动刷新) + i18n
 **4.11c-前端 范围（详见 plan Step 5）:**
 - 消费 4.11c-后端端点：GET /api/v1/resilience/events（分页+过滤）、GET /exhausted（耗尽告警）

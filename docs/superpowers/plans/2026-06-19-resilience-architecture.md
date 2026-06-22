@@ -1198,19 +1198,19 @@ git add -A && git commit -m "docs(spec): 更新 capability spec（移除 team-ch
 
 ### Task 5.2: 全链路回归测试
 
-- [ ] **Step 1: 全量测试**
+- [x] **Step 1: 全量测试** ✅
 
-Run: `./mvnw -pl gateway-boot -am test` → 全绿
+Run: `./mvnw -pl gateway-boot -am test` → 全绿（821 测试）
 
-- [ ] **Step 2: 前端构建**
+- [x] **Step 2: 前端构建** ✅
 
-Run: `cd gateway-console && npm run build` → 通过
+Run: `cd gateway-console && npm run build` → 通过（17441 modules）
 
-- [ ] **Step 3: 两对照场景端到端确认**
+- [x] **Step 3: 两对照场景端到端确认** ✅
 
-Claude Code 禁降级 / 客服全开 两个 profile 端到端跑通。
+Claude Code 禁降级 / 客服全开 两个 profile 端到端跑通（ResilienceProfileIntegrationTest$TwoContrastScenariosTests 2 全过）。
 
-- [ ] **Step 4: Commit（如有修复）**
+- [x] **Step 4: Commit（如有修复）** ✅ 无需修复（全绿无回归）
 
 ### Task 5.3: 文档更新
 
