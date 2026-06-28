@@ -181,6 +181,22 @@ Task 4.11 体量大（4 后端 Controller + 3 新前端页 + 修改 2 页）跨 
 - Cluster/画像/Channel 应急操作实际实现细节
 - 容灾总览页实际接入（转移事件流 + 耗尽告警）
 **剩余任务:** 5.3 文档对齐（最后一个 task）
+
+## 技术债偿还（verify-fail 回退 build，用户决策）
+
+verify 通过后用户要求偿还技术债。决策：traceId 透传 + i18n/refetchInterval 在当前 change 修（verify-fail 回退 build），antd v6 开新 change。
+- verify-fail 已执行：phase=build, verify_result=fail
+- 验证已通过（821 后端 + 前端 build + validate 0 错误），技术债为 SUGGESTION 级，修完后重新 verify
+
+### 当前 Task（技术债偿还-后端 traceId 透传）
+**阶段:** implementing（派发后台 implementer，与前端债并行）
+**改点:** ChatDispatchServiceImpl 行 270 invoke 调用加传 traceId；ChannelFailoverInvoker invoke/invokeStream 签名加 traceId 参数；publishFailoverEvent 行 343 null→traceId；同步所有 new 调用点；TDD
+**审查方式:** subagent-driven-development 后台双审查
+
+### 当前 Task（技术债偿还-前端 i18n + refetchInterval）
+**阶段:** implementing（派发后台 implementer，与后端债并行）
+**改点:** overview/index.tsx 行 218/223-224 等 4 处硬编码中文走 i18n；useResilienceEvents.test.tsx 补 refetchInterval fake timer 测试（vi.useFakeTimers + advanceTimersByTime 验证二次请求）；TDD
+**审查方式:** subagent-driven-development 后台双审查
 **实现内容:** types FailoverEvent + resilienceApi.events.list/exhausted(pickDefined 剔 undefined) + useFailoverEvents/useExhaustedEvents(10s refetchInterval) + eventDisplay 纯函数(errorTypeMeta着色/formatRoute/decisionMeta) + 总览页替换占位(耗尽告警区双维度 + 事件流表格 exhausted 红色高亮 + 手动刷新) + i18n
 **4.11c-前端 范围（详见 plan Step 5）:**
 - 消费 4.11c-后端端点：GET /api/v1/resilience/events（分页+过滤）、GET /exhausted（耗尽告警）

@@ -104,6 +104,8 @@ public class ChannelFailoverInvoker {
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID（权限锚点）
      * @param profile                  容灾画像（L2 门禁；为 null 或未启用 enableL2ModelDegradation 时不降级）
+     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchServiceImpl 生成），透传到转移事件
+     *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @return 上游响应
      * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
      *                                         所有候选失败且无法降级时抛出最后捕获的异常
@@ -111,7 +113,8 @@ public class ChannelFailoverInvoker {
      */
     public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                     ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
-                                    com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile) {
+                                    com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile,
+                                    String traceId) {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
@@ -131,7 +134,7 @@ public class ChannelFailoverInvoker {
                 }
 
                 // L1/L2：发布转移事件（换下一候选前），再记录失败继续试下一候选
-                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision);
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
                 lastException = e;
                 lastErrorType = e.getErrorType();
             }
@@ -173,6 +176,8 @@ public class ChannelFailoverInvoker {
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID
      * @param profile                  容灾画像（L2 门禁；为 null 或未启用 enableL2ModelDegradation 时不降级）
+     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchServiceImpl 生成），透传到转移事件
+     *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @param callback                 流式回调
      * @throws ProviderException               INVALID_REQUEST 等请求级错误直接抛出；
      *                                         所有候选启动失败且无法降级时抛出最后捕获的异常
@@ -180,7 +185,8 @@ public class ChannelFailoverInvoker {
      */
     public void invokeStream(RoutingContext primaryCtx, List<RoutingContext> candidates,
                               ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
-                              com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile, StreamCallback callback) {
+                              com.codingas.gateway.domain.resilience.entity.ResilienceProfile profile,
+                              String traceId, StreamCallback callback) {
         ProviderException lastException = null;
         ProviderErrorType lastErrorType = null;
 
@@ -233,7 +239,7 @@ public class ChannelFailoverInvoker {
                 }
 
                 // L1/L2：发布转移事件（换下一候选前），再记录失败继续试下一候选（首字节前失败可转移）
-                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision);
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
                 lastException = e;
                 lastErrorType = e.getErrorType();
             }
@@ -322,10 +328,12 @@ public class ChannelFailoverInvoker {
      * @param applicationId 应用 ID
      * @param errorType     触发转移的上游错误类型
      * @param decision      转移决策（L1/L2）
+     * @param traceId       调用链 Trace ID，透传到事件串联同请求多次转移；为 null 时事件字段为 null
      */
     private void publishFailoverEvent(RoutingContext candidate, List<RoutingContext> candidates,
                                        int currentIndex, Long applicationId,
-                                       ProviderErrorType errorType, FailoverDecision decision) {
+                                       ProviderErrorType errorType, FailoverDecision decision,
+                                       String traceId) {
         // 判断是否有下一候选：有则 to=下一候选，无则 to=null + exhausted=true
         int nextIndex = currentIndex + 1;
         boolean hasTo = nextIndex < candidates.size();
@@ -340,7 +348,7 @@ public class ChannelFailoverInvoker {
         Long toClusterId = hasTo ? resolveClusterId(toChannelId) : null;
 
         FailoverOccurredEvent event = new FailoverOccurredEvent(
-                null,                       // traceId：调用链暂未透传，后续 OpenTelemetry 接入后填充
+                traceId,                    // traceId：由上层 ChatDispatchServiceImpl 生成并透传，串联同请求多次转移
                 applicationId,
                 candidate.channelId(),
                 candidate.channelEndpointId(),

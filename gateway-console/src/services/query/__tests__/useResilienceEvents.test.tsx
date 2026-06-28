@@ -8,8 +8,8 @@
 //
 // 策略：mock @/pages/resilience/api 的 resilienceApi，用 QueryClientProvider wrapper
 // 包裹 renderHook，断言 mock 被调用及返回数据。
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactNode } from 'react';
 
@@ -123,5 +123,40 @@ describe('useExhaustedEvents', () => {
     await waitFor(() =>
       expect(resilienceApi.events.exhausted).toHaveBeenCalledWith(params),
     );
+  });
+});
+
+describe('useFailoverEvents 10s 轮询（refetchInterval）', () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('10s 后应触发第二次拉取（初始 + 轮询共 2 次）', async () => {
+    (resilienceApi.events.list as any).mockResolvedValue([]);
+
+    const { result } = renderHook(() => useFailoverEvents(), {
+      wrapper: createWrapper(),
+    });
+
+    // 等待初始查询完成（queryFn 是异步的，需 flush 微任务）
+    await act(async () => {
+      await vi.waitFor(() => expect(result.current.isSuccess).toBe(true));
+    });
+    // 初始拉取一次
+    expect(resilienceApi.events.list).toHaveBeenCalledTimes(1);
+
+    // 推进 fake timer 10s+1ms，触发 refetchInterval 轮询
+    await act(async () => {
+      vi.advanceTimersByTime(10_001);
+    });
+    await act(async () => {
+      await vi.waitFor(() =>
+        expect(resilienceApi.events.list).toHaveBeenCalledTimes(2),
+      );
+    });
   });
 });

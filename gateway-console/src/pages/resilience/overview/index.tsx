@@ -196,7 +196,7 @@ export default function OverviewPage() {
             type="error"
             showIcon
             style={{ marginBottom: 8 }}
-            message={`${downClusters.length} 个故障域处于 DOWN 状态`}
+            message={t('overview.downClusterAlert', { count: downClusters.length })}
             description={
               <ul style={{ margin: 0, paddingLeft: 20 }}>
                 {downClusters.map((c) => (
@@ -215,19 +215,27 @@ export default function OverviewPage() {
           <Alert
             type="error"
             showIcon
-            message={`最近 ${exhaustedEvents.length} 起候选耗尽事件`}
+            message={t('overview.exhaustedEventsAlert', { count: exhaustedEvents.length })}
             description={
               <ul style={{ margin: 0, paddingLeft: 20 }}>
                 {exhaustedEvents.slice(0, 5).map((e) => (
                   <li key={e.id}>
-                    <Text code>{formatEventTime(e)}</Text> — 渠道{' '}
-                    <Text code>{e.fromChannelId ?? '?'}</Text> 候选耗尽
-                    {e.traceId ? `（Trace: ${e.traceId.slice(0, 8)}…）` : ''}
+                    <Text code>{formatEventTime(e)}</Text> —{' '}
+                    {e.traceId
+                      ? t('overview.exhaustedEventItemWithTrace', {
+                          channelId: e.fromChannelId ?? '?',
+                          trace: e.traceId.slice(0, 8),
+                        })
+                      : t('overview.exhaustedEventItem', {
+                          channelId: e.fromChannelId ?? '?',
+                        })}
                   </li>
                 ))}
                 {exhaustedEvents.length > 5 && (
                   <li style={{ color: 'rgba(0,0,0,0.45)' }}>
-                    …另有 {exhaustedEvents.length - 5} 起，见下方转移事件流
+                    {t('overview.moreExhaustedEvents', {
+                      count: exhaustedEvents.length - 5,
+                    })}
                   </li>
                 )}
               </ul>
@@ -268,7 +276,7 @@ export default function OverviewPage() {
           <Space>
             <span>{t('overview.eventStream')}</span>
             <Tag color="processing" style={{ fontSize: 11 }}>
-              10s
+              {t('overview.pollingInterval')}
             </Tag>
           </Space>
         }

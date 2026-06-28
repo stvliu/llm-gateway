@@ -138,7 +138,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
 
             ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true));
+                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id");
 
             // 断言：转移成功，返回 ch2 的响应
             assertThat(result).isSameAs(successResponse);
@@ -162,7 +162,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：直接抛出原始 INVALID_REQUEST 异常，不试 ch2，不降级
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true)))
+                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id"))
                     .isSameAs(invalidEx);
 
             verify(keyFailover).invoke(ctx1, request);
@@ -194,7 +194,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 执行：ch1 启动失败 → 换 ch2 建立流
             invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), callback);
+                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id", callback);
 
             // 断言：两个候选都被试过（ch1 失败后转移到 ch2）
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -223,7 +223,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：首字节已发，不换 ch2，直接抛 afterFirstByteEx
             assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), callback))
+                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id", callback))
                     .isSameAs(afterFirstByteEx);
 
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -255,7 +255,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：禁降级场景抛最后捕获的 authEx，不触发 L2 降级信号
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(false)))
+                    request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
                     .isSameAs(authEx);
 
             // 显式验证门禁关闭时不调 degrade
@@ -280,7 +280,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             // 断言：全开场景触发 L2 降级信号，携带 fallback 模型名
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true)))
+                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id"))
                     .isInstanceOf(L2DegradationRequiredException.class)
                     .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
                     .isEqualTo("gpt-3.5-turbo");

@@ -66,6 +66,12 @@
     "noEvents": "暂无转移事件",
     "exhaustedNoTarget": "耗尽无目标",
     "refresh": "刷新",
+    "downClusterAlert": "{{count}} 个故障域处于 DOWN 状态",
+    "exhaustedEventsAlert": "最近 {{count}} 起候选耗尽事件",
+    "exhaustedEventItem": "渠道 {{channelId}} 候选耗尽",
+    "exhaustedEventItemWithTrace": "渠道 {{channelId}} 候选耗尽（Trace: {{trace}}…）",
+    "moreExhaustedEvents": "…另有 {{count}} 起，见下方转移事件流",
+    "pollingInterval": "10s",
     "eventColumns": {
       "time": "时间",
       "route": "转移路径",

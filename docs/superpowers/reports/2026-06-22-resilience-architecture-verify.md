@@ -54,9 +54,14 @@
 
 ### SUGGESTION（技术债，不阻断归档）
 - 4.10：档位集成测试与单元测试重复（保留作 Spring 装配回归锚点）、forceOpen/forceCircuitOpen 重复辅助方法待合并、forceHalfOpen 反射待补约束注释
-- 4.11c-前端：refetchInterval 轮询测试 gap、4 处 i18n 硬编码、eventStreamPlaceholder 死 key
-- 既有 23 个 antd v6 前端测试基线失败（与本 change 无关，独立 task 修复）
-- D12 traceId 暂空（待 OpenTelemetry 接入）
+- 4.11c-前端：eventStreamPlaceholder 死 key
+- 既有 23 个 antd v6 前端测试基线失败（与本 change 无关，**开新 change 修复**，不归当前 change）
+
+### 已偿还技术债（verify-fail 回退 build 修复，2026-06-22）
+用户决策偿还当前 change 相关技术债，verify-fail 回退 build 修复后重新验证：
+- **D12 traceId 透传**（提交 7880c4c，双审查 ✅）：ChatDispatchServiceImpl 已有 traceId（UUID）原未透传，现贯穿 ChannelFailoverInvoker → FailoverOccurredEvent。原"待 OpenTelemetry 接入"技术债标记清除。后端 823 全绿（+2 测试）。
+- **前端 i18n + refetchInterval**（提交 ca6d3b8，双审查 ✅）：overview/index.tsx 5 处硬编码中文走 i18n（6 key 双语）；补 refetchInterval fake timer 测试（验证 10s 轮询二次请求）。前端 build 通过、vitest 无新回归（+10 测试）。
+- antd v6 基线失败：开新 change 处理（不归当前 change）。
 
 ## 最终评估
 

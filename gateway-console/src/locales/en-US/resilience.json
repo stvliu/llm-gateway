@@ -66,6 +66,12 @@
     "noEvents": "No failover events",
     "exhaustedNoTarget": "Exhausted (no target)",
     "refresh": "Refresh",
+    "downClusterAlert": "{{count}} cluster(s) in DOWN state",
+    "exhaustedEventsAlert": "Recent {{count}} candidate-exhausted event(s)",
+    "exhaustedEventItem": "Channel {{channelId}} candidates exhausted",
+    "exhaustedEventItemWithTrace": "Channel {{channelId}} candidates exhausted (Trace: {{trace}}…)",
+    "moreExhaustedEvents": "…{{count}} more, see failover event stream below",
+    "pollingInterval": "10s",
     "eventColumns": {
       "time": "Time",
       "route": "Route",
