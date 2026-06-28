@@ -1,7 +1,7 @@
 // ChannelCard 暂停操作二次确认测试（任务 8.3）
 //
 // 验证目标：
-// 1) 用户从 Dropdown 菜单选择 "暂停" → 应弹出二次确认（含描述："暂停后该渠道不再分配流量，但保留配置"）
+// 1) 用户点击"暂停"主按钮（primaryAction=SUSPENDED，图标 PauseCircleOutlined）→ 应弹出二次确认（含描述："暂停后该渠道不再分配流量，但保留配置"）
 // 2) 确认前不应直接调用 onStateTransition；点击确认按钮后才调用 targetState=SUSPENDED
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -76,17 +76,15 @@ describe('ChannelCard 暂停操作二次确认', () => {
 
     const user = userEvent.setup();
 
-    // 点开 More Dropdown（trigger=click）。Dropdown 触发按钮无名称，根据 .ant-dropdown-trigger 定位
-    // 这里用 MoreOutlined 图标按钮（最后一个 size=small 的 type=text 按钮）
-    const moreBtns = screen.getAllByRole('button');
-    // 找到含有 anticon-more 子节点的按钮
-    const dropdownTrigger = moreBtns.find((b) => b.querySelector('.anticon-more'));
-    expect(dropdownTrigger).toBeDefined();
-    await user.click(dropdownTrigger!);
-
-    // 等待菜单展开后选 "暂停"
-    const suspendItem = await screen.findByText('暂停');
-    await user.click(suspendItem);
+    // ACTIVE 状态下"暂停(SUSPENDED)"为 primaryAction 主按钮（图标 PauseCircleOutlined + Tooltip），
+    // 不在 More Dropdown 菜单内（Dropdown 仅含"标记下线"=DEPRECATED 与"删除"）。
+    // v6 下 Tooltip title 不再渲染进 DOM，findByText('暂停') 失效；改用图标 class 定位主按钮
+    // （与原 .anticon-more 定位 Dropdown 触发按钮的既定模式一致）。
+    const suspendBtn = screen.getAllByRole('button').find(
+      (b) => b.querySelector('.anticon-pause-circle'),
+    );
+    expect(suspendBtn).toBeDefined();
+    await user.click(suspendBtn!);
 
     // 应弹出二次确认（描述含"暂停后该渠道不再分配流量"）
     await waitFor(() => {
@@ -96,10 +94,9 @@ describe('ChannelCard 暂停操作二次确认', () => {
     // 此时 onStateTransition 还未被调用
     expect(onStateTransition).not.toHaveBeenCalled();
 
-    // 点击确认按钮（OK）
-    const confirmBtns = screen.getAllByRole('button', { name: /^确定$|^OK$|^确认$/ });
-    expect(confirmBtns.length).toBeGreaterThan(0);
-    await user.click(confirmBtns[confirmBtns.length - 1]);
+    // 点击确认按钮（OK）——放宽 name 正则以兼容 v6 Modal 按钮文本渲染
+    const confirmBtn = await screen.findByRole('button', { name: /确\s*定|OK|确\s*认/i });
+    await user.click(confirmBtn);
 
     await waitFor(() => {
       expect(onStateTransition).toHaveBeenCalledWith(1, 'SUSPENDED', '');
