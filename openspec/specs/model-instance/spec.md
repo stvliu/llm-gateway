@@ -2,9 +2,7 @@
 ## Purpose
 
 模型实例能力——ModelInstance 为 Channel×Model 的运行实例，承载路由优先级与候选列表产出，供 L1 转移逐个尝试。
-
 ## Requirements
-
 ### Requirement: ModelInstance 实体定义
 系统 SHALL 提供 ModelInstance 实体作为"模型在某渠道上的具体化身"，包含以下字段：channelId（关联 Channel）、modelId（关联 Model）、upstreamModelName（上游模型名映射）、capabilitiesOverride（实例级能力覆盖，Map<String,Boolean>）、contextWindowOverride（实例级上下文窗口覆盖）、priority（路由优先级）、weight（负载均衡权重）、quotaLimit（实例级配额）、state（ChannelModelState）。
 
@@ -39,15 +37,30 @@ ModelInstance 的 contextWindowOverride 字段 SHALL 支持覆盖 Model.contextW
 - **THEN** 该实例的有效上下文窗口与 Model.contextWindow 一致
 
 ### Requirement: 路由优先级在 ModelInstance 级别
-路由决策 SHALL 基于 ModelInstance.priority 和 ModelInstance.weight，而非 Channel 级别。系统 SHALL 支持"同一渠道的不同模型实例有不同的优先级/权重"。
 
-#### Scenario: 同渠道不同模型实例不同优先级
-- **WHEN** 渠道 A 的 ModelInstance(gpt-4o).priority = 10，渠道 A 的 ModelInstance(claude-opus).priority = 50
-- **THEN** 路由选择 gpt-4o 实例时优先级更高
+`ModelInstance.priority` 语义 SHALL 由「全局路由优先级」重定义为「cluster 内排序」。本条修订既有「路由优先级在 ModelInstance 级别」Requirement：priority 仍承载于 ModelInstance 级别，但其排序语义从全局收敛为 cluster 内排序，cluster 间顺序由 `Cluster.priority` 决定。
 
-#### Scenario: 按 priority 排序选择实例
-- **WHEN** 用户请求某模型，存在多个 ModelInstance
-- **THEN** 系统按 priority 升序排序，优先选择 priority 最小的实例
+**变更要点**:
+- 原 `priority` 为全局路由优先级，`PriorityRouter` 按全局 priority 升序分组
+- 现 `priority` 为 cluster 内排序，cluster 间由 `Cluster.priority` 决定跨域转移顺序
+- `PriorityRouter`（`@Order(300)`）仍按 `priority` 升序排序候选，但语义收敛到域内
+
+**规则**:
+- 同一 cluster 内：按 `ModelInstance.priority` 升序选择
+- 跨 cluster：按 `Cluster.priority` 决定域优先级（数值越小越优先）
+- 故障域内优先 → 整域故障才跨域
+
+#### Scenario: 同 cluster 内按 priority 排序
+
+- **WHEN** 同一 cluster 内有多个 `ModelInstance`
+- **THEN** 系统 SHALL 按 `ModelInstance.priority` 升序排序
+- **THEN** 优先选择 priority 最小的实例
+
+#### Scenario: 跨 cluster 按 Cluster.priority 排序
+
+- **WHEN** 候选跨多个 cluster
+- **THEN** 系统 SHALL 按 `Cluster.priority` 决定域间优先级
+- **THEN** 故障域内优先，整域故障才跨域
 
 ### Requirement: ModelInstance 不承载定价字段
 ModelInstance 实体 SHALL NOT 包含任何定价字段（inputPrice、outputPrice、reasoningPrice、cacheReadPrice、cacheWritePrice、inputAudioPrice、outputAudioPrice）。定价数据唯一来源为 PlanCatalog.pricing (JSON)。
@@ -69,3 +82,36 @@ Channel 实体 SHALL NOT 包含 priority 和 weight 字段。路由优先级和�
 #### Scenario: 按优先级排序查询活跃实例
 - **WHEN** 调用 findActiveByModelIdOrderByPriority(modelId)
 - **THEN** 返回该模型所有活跃的 ModelInstance，按 priority 升序排序
+
+### Requirement: InstanceSelector.select 返回排序候选列表
+
+`InstanceSelector.select` SHALL 返回按 (cluster, priority) 排序的候选列表，供 L1 故障转移逐个尝试。
+
+**要点**:
+- `select` 返回 `List<ModelInstance>`，按 `priority` 升序排序，不收敛到单实例
+- `LoadBalanceRouter`（`@Order(9999)`）降级为透传，不执行负载均衡选择
+- 候选列表经 `RouterChain` 过滤链产出：`Permission(@100) → Health(@200) → ClusterAffinity(@250) → Priority(@300) → PinnedModel(@350) → LoadBalance(@9999)`
+
+**方法签名**:
+```
+List<ModelInstance> select(Long modelId, Long applicationId, Long userId, String role,
+                           RoutingStrategy strategy, Protocol protocol)
+```
+
+**规则**:
+- 候选按 `priority` 升序排序（由 `PriorityRouter` 保证）
+- 无可用实例时抛 `ResourceNotFoundException`
+- 解析容灾画像贯穿 `RoutingRequest`（fail-open：解析异常降级 null profile）
+
+#### Scenario: 返回排序候选列表供 L1 逐个尝试
+
+- **WHEN** `InstanceSelector.select(modelId, applicationId, userId, role, strategy, protocol)` 被调用
+- **THEN** 系统 SHALL 返回按 `priority` 升序的候选 `ModelInstance` 列表
+- **THEN** 列表 SHALL 供 `ChannelFailoverInvoker` 逐个尝试
+- **THEN** 系统 SHALL NOT 收敛到单实例
+
+#### Scenario: 无可用实例抛 ResourceNotFoundException
+
+- **WHEN** 路由链过滤后候选列表为空
+- **THEN** 系统 SHALL 抛出 `ResourceNotFoundException`
+

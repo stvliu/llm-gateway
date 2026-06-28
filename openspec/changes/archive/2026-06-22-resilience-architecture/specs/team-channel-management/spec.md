@@ -18,6 +18,4 @@
 **Reason**: 本项原已移除 API Key 级 `channelIds`，改由团队继承。现 Team 体系整体移除，渠道权限归 Application。原「API Key 渠道权限移除」的语义被「权限锚点改为 applicationId」取代。
 **Migration**: `UserApiKey` 不再持有独立 `channelIds`，渠道可见性完全由 `applicationId → ApplicationChannel` 决定。原 `user_api_key_channels` 表已在前序 change 移除，本 change 不再涉及。
 
-### Requirement: 团队模型可见性（隐性能力）
-**Reason**: 移除 Team 后无「团队模型可见性」概念。模型可见性不独立配置——由「渠道上挂哪些 ModelInstance」隐式决定。要某模型就授权挂该模型的渠道，无法「授权渠道但限模型」。
-**Migration**: 废弃现有「团队模型可见性」机制（`listAllowedModels` + 前端 `ModelVisibilityModal`）。过滤链单层 `ApplicationChannel`。若确需应用级模型隔离，建不同渠道挂不同模型（记录为已知取舍）。
+> 注：「团队模型可见性」为隐性能力，既有 spec 未显式列为 Requirement，故无对应 REMOVED 条目。其移除语义（模型可见性不独立配置，由渠道上挂的 ModelInstance 隐式决定）已在 `application-access-control` capability 的 Requirements 中体现。
