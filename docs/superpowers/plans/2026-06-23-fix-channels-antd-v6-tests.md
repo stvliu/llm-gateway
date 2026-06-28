@@ -70,14 +70,14 @@ base-ref: 4d6161430db8af04d84fe29807081d7678118fa6
 
 **失败根因（实测）：** 测试用 `allBtns.find((b) => b.querySelector('.anticon-delete'))` 找行内删除按钮，但生产代码 `ChannelCard.tsx` 的删除入口在 Dropdown 菜单内（`buildMenuItems` 推入 `key:'delete'` 菜单项，label 是中文"删除"文本），DOM 中不存在含 `.anticon-delete` 的按钮。需改用 Dropdown 流程：点开 More Dropdown → 点"删除"菜单项 → 弹 Modal.confirm → 点 OK。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.delete.test.tsx
 ```
 预期：FAIL，`AssertionError: expected undefined to be defined`（第 84 行 `expect(deleteBtn).toBeDefined()`）
 
-- [ ] **Step 2: 适配删除入口为 Dropdown 流程**
+- [x] **Step 2: 适配删除入口为 Dropdown 流程**
 
 把第 81-85 行（找 `.anticon-delete` 按钮并点击）替换为点开 Dropdown + 点"删除"菜单项：
 
@@ -94,7 +94,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.de
     await user.click(deleteItem);
 ```
 
-- [ ] **Step 3: 适配 Modal.confirm OK 按钮（用中文文案 name 替代 className matcher）**
+- [x] **Step 3: 适配 Modal.confirm OK 按钮（用中文文案 name 替代 className matcher）**
 
 把第 96-105 行（className matcher 找 dangerOk）替换为用 OK 按钮中文文案定位。`useDangerConfirm` 的 `okText = t('actions.delete', { ns: 'common' })` = 中文"删除"：
 
@@ -107,14 +107,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.de
 
 > 注：菜单项"删除"是 `menuitem` role，Modal OK"删除"是 `button` role，两者不冲突。`findByRole('button', { name: /^删\s*除$/ })` 只匹配 Modal OK 按钮。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.delete.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/ChannelCard.delete.test.tsx
