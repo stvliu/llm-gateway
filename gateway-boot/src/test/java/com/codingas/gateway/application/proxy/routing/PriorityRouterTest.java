@@ -18,8 +18,8 @@ class PriorityRouterTest {
     private final PriorityRouter router = new PriorityRouter();
 
     @Test
-    @DisplayName("只保留 priority 最小的组")
-    void keepsMinPriorityGroup() {
+    @DisplayName("按 priority 升序输出完整列表不收敛")
+    void keepsAllInstances_sortedByPriorityAscending() {
         ModelInstance mi1 = new ModelInstance();
         mi1.setId(1L);
         mi1.setPriority(100);
@@ -33,8 +33,27 @@ class PriorityRouterTest {
         RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2, mi3), request);
 
+        // 不收敛：保留全部 3 个；按 priority 升序：100,100,200 → [mi1, mi3, mi2]
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(1L, 3L, 2L);
+    }
+
+    @Test
+    @DisplayName("主备 priority 不同时输出完整列表 [主,备] 不丢备")
+    void primaryAndBackup_differentPriority_keepsFullList() {
+        ModelInstance primary = new ModelInstance();
+        primary.setId(1L);
+        primary.setPriority(1);
+        ModelInstance backup = new ModelInstance();
+        backup.setId(2L);
+        backup.setPriority(2);
+
+        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+        List<ModelInstance> result = router.filter(List.of(primary, backup), request);
+
+        // 主备不丢：返回 [主,备]，priority 升序（L1 故障转移前提）
         assertThat(result).hasSize(2);
-        assertThat(result).extracting(ModelInstance::getId).containsExactlyInAnyOrder(1L, 3L);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(1L, 2L);
     }
 
     @Test
@@ -54,7 +73,7 @@ class PriorityRouterTest {
     }
 
     @Test
-    @DisplayName("priority 为 null 时使用默认值 100")
+    @DisplayName("priority 为 null 时使用默认值 100 并参与完整排序")
     void nullPriority_usesDefault() {
         ModelInstance mi1 = new ModelInstance();
         mi1.setId(1L);
@@ -66,8 +85,9 @@ class PriorityRouterTest {
         RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
-        assertThat(result).hasSize(1);
-        assertThat(result.getFirst().getId()).isEqualTo(1L);
+        // null 回退 100，与 priority=200 一起完整排序，不收敛 → [mi1(100), mi2(200)]
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(1L, 2L);
     }
 
     @Test
