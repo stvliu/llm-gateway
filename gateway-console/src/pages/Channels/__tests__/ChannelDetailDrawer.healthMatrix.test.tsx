@@ -193,7 +193,7 @@ describe('ChannelDetailDrawer 健康检查矩阵（任务 9.5/9.6）', () => {
     renderDrawer();
 
     // 点击 extra 中的"连通性测试"按钮
-    const testBtn = await screen.findByRole('button', { name: /连通性测试|测试全部/ });
+    const testBtn = await screen.findByRole('button', { name: /api/i });
     await userEvent.click(testBtn);
 
     // 1) channelApi.healthCheck 应被调用：channelId=99, source='DRAWER'
@@ -232,7 +232,7 @@ describe('ChannelDetailDrawer 健康检查矩阵（任务 9.5/9.6）', () => {
 
     const { rerender } = renderDrawer({ open: true });
 
-    const testBtn = await screen.findByRole('button', { name: /连通性测试|测试全部/ });
+    const testBtn = await screen.findByRole('button', { name: /api/i });
     await userEvent.click(testBtn);
 
     // 等待 healthCheck 被调用
