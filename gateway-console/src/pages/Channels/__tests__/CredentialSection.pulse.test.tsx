@@ -113,7 +113,7 @@ describe('CredentialSection 保存反馈脉冲', () => {
     );
 
     // 进入编辑模式（InlineEditableList 提供的"编辑"按钮位于 MaskedKeyDisplay 编辑图标之后）
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     // 触发保存
     const saveBtns = screen.getAllByRole('button', { name: /保\s*存/ });
@@ -137,7 +137,7 @@ describe('CredentialSection 保存反馈脉冲', () => {
       <CredentialSection channelId={1} credentials={[sampleCredential as never]} />
     );
 
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     const saveBtns = screen.getAllByRole('button', { name: /保\s*存/ });
     await user.click(saveBtns[0]);
@@ -161,7 +161,7 @@ describe('CredentialSection 保存反馈脉冲', () => {
       <CredentialSection channelId={1} credentials={[sampleCredential as never]} />
     );
 
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     // 修改 priority 输入
     const priorityInput = container.querySelector(
