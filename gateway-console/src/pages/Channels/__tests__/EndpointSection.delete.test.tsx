@@ -95,7 +95,8 @@ describe('EndpointSection 删除危险确认（任务 8.5）', () => {
       <EndpointSection channelId={1} endpoints={[sampleEndpoint as never]} />
     );
 
-    const delBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    // antd v6：行内删除按钮为 icon-only（DeleteOutlined），accessible name 来自图标 aria-label="delete"（英文）
+    const delBtns = screen.getAllByRole('button', { name: /delete/i });
     await user.click(delBtns[delBtns.length - 1]);
 
     // 弹出 Modal.confirm，包含 baseUrl + 流量将立即失败
@@ -107,15 +108,9 @@ describe('EndpointSection 删除危险确认（任务 8.5）', () => {
     // 此时尚未调用删除接口
     expect(removeEndpointMock).not.toHaveBeenCalled();
 
-    // 点击 modal footer 中的 dangerous OK 按钮
-    const allButtons = screen.getAllByRole('button');
-    const dangerOk = allButtons.find(
-      (b) =>
-        b.className.includes('ant-btn-dangerous') &&
-        !b.className.includes('ant-btn-link')
-    );
-    expect(dangerOk).toBeDefined();
-    await user.click(dangerOk!);
+    // 点击 modal footer 中的 OK 按钮（okText="删除"为中文，与行内英文 delete 不冲突）
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(removeEndpointMock).toHaveBeenCalled();

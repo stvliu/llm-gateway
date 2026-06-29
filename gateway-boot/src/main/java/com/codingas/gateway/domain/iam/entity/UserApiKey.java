@@ -8,7 +8,8 @@ import java.time.Instant;
 /**
  * 用户 API Key 领域实体
  * <p>
- * 一个 Key 归属一个用户，通过用户所属团队继承渠道访问权限。
+ * 一个 Key 归属一个用户，并挂载到具体应用（applicationId）作为权限锚点——
+ * 通过应用-渠道授权关系（ApplicationChannel）继承渠道访问权限。
  * keyHash 用于认证验证，keyPlain 用于创建时传入和详情展示（由基础设施层加解密）。
  * </p>
  */
@@ -18,6 +19,8 @@ public class UserApiKey {
 
     private Long id;
     private Long userId;
+    /** 权限锚点：归属的应用 ID（外键关联 applications.id） */
+    private Long applicationId;
     /**
      * -- GETTER --
      * Key 哈希（SHA-256），用于认证验证，由基础设施层在 save 时计算

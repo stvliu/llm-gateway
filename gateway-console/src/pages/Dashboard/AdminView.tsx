@@ -1,7 +1,7 @@
 import { Row, Col, Card, Statistic, Table, Tag, Spin, theme } from 'antd';
 import {
   AppstoreOutlined,
-  TeamOutlined,
+  UserOutlined,
   ApiOutlined,
   DashboardOutlined,
   NodeIndexOutlined,
@@ -59,7 +59,7 @@ export default function AdminView() {
     { key: 'providers', title: t('stats.providerCount'), value: stats.providerCount, icon: <CloudServerOutlined />, gradient: `linear-gradient(135deg, #13c2c2 0%, #08979c 100%)` },
     { key: 'channels', title: t('stats.channelCount'), value: stats.channelCount, icon: <NodeIndexOutlined />, gradient: `linear-gradient(135deg, ${token.colorError} 0%, ${token.colorErrorActive} 100%)` },
     { key: 'models', title: t('stats.modelCount'), value: stats.modelCount, icon: <AppstoreOutlined />, gradient: `linear-gradient(135deg, ${token.colorPrimary} 0%, ${token.colorPrimaryActive} 100%)` },
-    { key: 'users', title: t('stats.userCount'), value: stats.userCount, icon: <TeamOutlined />, gradient: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccessActive} 100%)` },
+    { key: 'users', title: t('stats.userCount'), value: stats.userCount, icon: <UserOutlined />, gradient: `linear-gradient(135deg, ${token.colorSuccess} 0%, ${token.colorSuccessActive} 100%)` },
     { key: 'requests', title: t('stats.todayRequests'), value: stats.todayRequests, icon: <ApiOutlined />, gradient: `linear-gradient(135deg, ${token.colorWarning} 0%, ${token.colorWarningActive} 100%)` },
     { key: 'tokens', title: t('stats.tokenUsage'), value: stats.tokenUsage, icon: <DashboardOutlined />, gradient: `linear-gradient(135deg, #722ed1 0%, #531dab 100%)` },
   ];

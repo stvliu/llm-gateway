@@ -67,7 +67,8 @@ public class AuthenticationDomainService {
         return Identity.of(
                 userApiKey.getUserId(),
                 "user",
-                userApiKey.getId()
+                userApiKey.getId(),
+                userApiKey.getApplicationId()
         );
     }
 

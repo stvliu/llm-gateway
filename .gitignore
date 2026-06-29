@@ -74,3 +74,8 @@ data/
 /.specify/
 /gateway-console/test-results/.last-run.json
 /.superpowers/
+
+# 前端构建产物（vite outDir 输出到后端 static，源在 gateway-console/public 与 index.html）
+/gateway-boot/src/main/resources/static/
+# TypeScript 增量编译缓存
+/gateway-console/tsconfig.tsbuildinfo

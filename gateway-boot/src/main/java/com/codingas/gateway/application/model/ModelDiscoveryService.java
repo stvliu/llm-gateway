@@ -1,51 +1,55 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
+import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.supply.entity.Model;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
 import com.codingas.gateway.domain.supply.gateway.ModelGateway;
-import com.codingas.gateway.domain.team.gateway.TeamChannelGateway;
-import com.codingas.gateway.domain.team.gateway.UserTeamGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * 模型发现服务
  *
- * <p>根据用户所属团队的渠道，返回可用的模型列表。</p>
+ * <p>D8：废弃团队模型可见性机制后，模型可见性由应用授权的渠道挂哪些 ModelInstance 隐式决定。
+ * 本服务以应用 ID（数据面权限锚点）查询应用授权的渠道集合，再发现其上的活跃模型，
+ * 不再依赖任何独立的模型可见性配置或团队维度过滤。</p>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ModelDiscoveryService {
 
-    private final UserTeamGateway userTeamGateway;
-    private final TeamChannelGateway teamChannelGateway;
+    private final ApplicationChannelGateway applicationChannelGateway;
     private final ModelInstanceGateway modelInstanceGateway;
     private final ModelGateway modelGateway;
 
     /**
-     * 获取用户可见的模型列表
+     * 获取应用可见的模型列表
      *
-     * @param userId 用户 ID（已认证的身份）
+     * <p>通过应用-渠道授权关联（{@link ApplicationChannelGateway}）查询应用可见的渠道集合，
+     * 再汇聚这些渠道上活跃的 {@link ModelInstance}，映射为兼容 OpenAI 格式的模型列表。
+     * 应用 ID 为 null（无权限锚点）时返回空列表。</p>
+     *
+     * @param applicationId 应用 ID（数据面权限锚点，已认证身份携带）
      * @return 兼容 OpenAI 格式的模型列表
      */
-    public ModelDiscoveryResponse getVisibleModels(Long userId) {
-        // 通过用户查找所属团队
-        Long teamId = userTeamGateway.findTeamIdByUserId(userId);
-        if (teamId == null) {
-            log.debug("用户未关联任何团队: userId={}", userId);
+    public ModelDiscoveryResponse getVisibleModels(Long applicationId) {
+        // 无权限锚点：不返回任何模型
+        if (applicationId == null) {
+            log.debug("应用 ID 为空，无可见模型");
             return new ModelDiscoveryResponse("list", List.of());
         }
 
-        // 通过团队查找可访问的渠道
-        List<Long> channelIds = teamChannelGateway.findChannelIdsByTeamId(teamId);
+        // 通过应用查找授权的渠道集合
+        Set<Long> channelIds = applicationChannelGateway.findChannelIdsByApplicationId(applicationId);
         if (channelIds.isEmpty()) {
-            log.debug("团队未关联任何渠道: teamId={}", teamId);
+            log.debug("应用未授权任何渠道: applicationId={}", applicationId);
             return new ModelDiscoveryResponse("list", List.of());
         }
 
@@ -54,7 +58,7 @@ public class ModelDiscoveryService {
                 .flatMap(channelId -> modelInstanceGateway.findActiveByChannelId(channelId).stream())
                 .map(mi -> modelGateway.findById(mi.getModelId()))
                 .flatMap(opt -> opt.stream())
-                .filter(m -> m.isAvailable())
+                .filter(Model::isAvailable)
                 .map(m -> new ModelDiscoveryResponse.ModelItem(
                         m.getModelName(),
                         "model",
@@ -64,7 +68,7 @@ public class ModelDiscoveryService {
                 .distinct()
                 .toList();
 
-        log.debug("模型发现: userId={}, teamId={}, visibleModels={}", userId, teamId, items.size());
+        log.debug("模型发现: applicationId={}, visibleModels={}", applicationId, items.size());
         return new ModelDiscoveryResponse("list", items);
     }
 }

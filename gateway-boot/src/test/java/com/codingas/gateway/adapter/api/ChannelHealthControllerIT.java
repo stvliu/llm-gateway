@@ -1,6 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.adapter.api.dto.ChannelHealthCheckRequest;
+import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.supply.ChannelHealthService;
 import com.codingas.gateway.application.supply.dto.KeyTestResult;
@@ -72,6 +73,9 @@ class ChannelHealthControllerIT {
     private ChannelService channelService;
 
     @Autowired
+    private ChannelEmergencyService channelEmergencyService;
+
+    @Autowired
     private GlobalExceptionHandler globalExceptionHandler;
 
     @MockBean
@@ -85,7 +89,7 @@ class ChannelHealthControllerIT {
     void setUp() {
         // standaloneSetup 跳过 SecurityInterceptorChain 等业务拦截器，
         // 仅装配本次端点所需的 Controller + 全局异常处理
-        ChannelController controller = new ChannelController(channelService, channelHealthService);
+        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(globalExceptionHandler)
                 .build();

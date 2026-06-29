@@ -228,6 +228,8 @@ public class ChannelServiceImpl implements ChannelService {
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
         response.setState(channel.getState().name());
+        // 透传所属故障域 ID（可空，供容灾总览页成员渠道映射）
+        response.setClusterId(channel.getClusterId());
         // 查询端点列表
         response.setEndpoints(
             channelEndpointGateway.findByChannelId(channel.getId()).stream()

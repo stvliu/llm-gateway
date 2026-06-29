@@ -73,7 +73,7 @@ describe('InlineEditableList 删除回调', () => {
     const onDelete = vi.fn();
     renderList(onDelete);
 
-    const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    const deleteBtns = screen.getAllByRole('button', { name: /delete/i });
     expect(deleteBtns.length).toBeGreaterThanOrEqual(2);
 
     const user = userEvent.setup();

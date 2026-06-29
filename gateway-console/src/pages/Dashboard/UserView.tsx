@@ -1,17 +1,17 @@
 import { Row, Col, Card, Statistic } from 'antd';
 import {
-  TeamOutlined,
+  AppstoreOutlined,
   CloudServerOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useProviders } from '@/services/query/useProviders';
-import { useTeams } from '@/services/query/useTeams';
+import { useApplications } from '@/services/query/useApplications';
 
 /** 用户仪表盘 */
 export default function UserView() {
   const { t } = useTranslation('dashboard');
   const { data: providersData } = useProviders();
-  const { data: teams } = useTeams();
+  const { data: applications } = useApplications();
 
   return (
     <Row gutter={[16, 16]}>
@@ -27,9 +27,9 @@ export default function UserView() {
       <Col xs={24} sm={12}>
         <Card>
           <Statistic
-            title={t('stats.teams', { defaultValue: '我的团队' })}
-            value={teams?.length ?? 0}
-            prefix={<TeamOutlined />}
+            title={t('stats.applications', { defaultValue: '我的应用' })}
+            value={applications?.length ?? 0}
+            prefix={<AppstoreOutlined />}
           />
         </Card>
       </Col>

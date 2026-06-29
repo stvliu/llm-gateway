@@ -105,7 +105,8 @@ describe('CredentialSection 删除危险确认（任务 8.4）', () => {
     );
 
     // 点击行尾的"删除"按钮（InlineEditableList 的 type=link danger 按钮）
-    const delBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    // v6: 图标按钮 accessible name 由中文"删除"变为英文 "delete"
+    const delBtns = screen.getAllByRole('button', { name: /delete/i });
     // 取最后一个；前面可能有 MaskedKeyDisplay 之类的图标按钮
     await user.click(delBtns[delBtns.length - 1]);
 
@@ -118,17 +119,11 @@ describe('CredentialSection 删除危险确认（任务 8.4）', () => {
     // 此时尚未调用删除接口
     expect(deleteCredentialMock).not.toHaveBeenCalled();
 
-    // 点击 OK 按钮（modal footer 中带 ant-btn-dangerous 样式的按钮）
-    // 由于行尾的 InlineEditableList 删除按钮也是 type=link danger（含 ant-btn-dangerous），
-    // 这里筛选出非 type=link（即 modal footer 上的实体按钮）
-    const allButtons = screen.getAllByRole('button');
-    const dangerOk = allButtons.find(
-      (b) =>
-        b.className.includes('ant-btn-dangerous') &&
-        !b.className.includes('ant-btn-link')
-    );
-    expect(dangerOk).toBeDefined();
-    await user.click(dangerOk!);
+    // 点击 OK 按钮（Modal footer 的 danger OK 按钮，文案为中文"删除"）
+    // v6: 行内删除按钮 accessible name 为英文 "delete"，与 Modal OK 中文"删除"不冲突；
+    // className/容器结构在 v6 下已变，改用文案 name 定位
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(deleteCredentialMock).toHaveBeenCalled();

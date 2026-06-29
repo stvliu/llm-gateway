@@ -67,6 +67,36 @@ public class CircuitBreaker {
 
     public CircuitBreakerState getState() { return state; }
 
+    /**
+     * 应急强制熔断
+     *
+     * <p>运维一键熔断：无视滑动窗口统计直接将状态置为 OPEN，用于故障应急时
+     * 立即切断端点流量。与 {@link #recordFailure()} 的被动熔断不同，
+     * forceOpen 是管理员主动操作，不依赖失败率阈值。</p>
+     */
+    public void forceOpen() {
+        synchronized (this) {
+            tripOpen();
+        }
+    }
+
+    /**
+     * 应急强制恢复
+     *
+     * <p>运维一键恢复：将状态置为 CLOSED 并重置滑动窗口与失败计数，
+     * 用于故障修复后立即恢复端点流量。重置窗口避免历史失败记录
+     * 导致恢复后立即再次熔断。</p>
+     */
+    public void forceClose() {
+        synchronized (this) {
+            state = CircuitBreakerState.CLOSED;
+            slidingWindow.clear();
+            failureCount.set(0);
+            halfOpenAttempts.set(0);
+            openSince = 0;
+        }
+    }
+
     private void recordAndEvaluate(boolean success) {
         record(success);
         synchronized (this) {

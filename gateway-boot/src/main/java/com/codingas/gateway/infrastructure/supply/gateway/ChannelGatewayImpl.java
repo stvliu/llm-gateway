@@ -90,6 +90,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         entity.setLastHealthCheckAt(doObj.getLastHealthCheckAt());
         entity.setLastHealthStatus(doObj.getLastHealthStatus());
         entity.setLastHealthSource(doObj.getLastHealthSource());
+        entity.setClusterId(doObj.getClusterId());
         entity.setCreatedBy(doObj.getCreatedBy());
         entity.setUpdatedBy(doObj.getUpdatedBy());
         entity.setCreatedAt(doObj.getCreatedAt());
@@ -111,6 +112,7 @@ public class ChannelGatewayImpl implements ChannelGateway {
         doObj.setLastHealthCheckAt(entity.getLastHealthCheckAt());
         doObj.setLastHealthStatus(entity.getLastHealthStatus());
         doObj.setLastHealthSource(entity.getLastHealthSource());
+        doObj.setClusterId(entity.getClusterId());
         doObj.setCreatedBy(entity.getCreatedBy());
         doObj.setUpdatedBy(entity.getUpdatedBy());
         return doObj;

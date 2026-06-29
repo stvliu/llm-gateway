@@ -34,7 +34,7 @@ class AuthServiceTest {
         void authenticate_validApiKey_returnsAuthResult() {
             String apiKey = "sk-test-12345";
             String clientIp = "192.168.1.100";
-            Identity expectedResult = Identity.of(1L, "user", 100L);
+            Identity expectedResult = Identity.of(1L, "user", 100L, null);
             when(authenticationService.authenticateUser(apiKey)).thenReturn(expectedResult);
 
             Identity result = authService.authenticate(apiKey, clientIp);

@@ -1,7 +1,10 @@
 package com.codingas.gateway.application.degradation;
 
 import com.codingas.gateway.application.degradation.DegradationProperties.DegradationChain;
+import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
+import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.infrastructure.actuator.ProviderHealthTracker;
@@ -38,6 +41,8 @@ public class DegradationServiceImpl implements DegradationService {
     private final ProviderHealthTracker healthTracker;
     private final MeterRegistry meterRegistry;
     private final DomainEventPublisher eventPublisher;
+    /** 错误分流器（Task 4.8）：按 errorType 判定是否触发 L2 模型降级 */
+    private final ErrorClassifier errorClassifier;
 
     /** 已降级的模型 → 降级状态 */
     private final ConcurrentMap<String, DegradedModel> degradedModels = new ConcurrentHashMap<>();
@@ -48,11 +53,13 @@ public class DegradationServiceImpl implements DegradationService {
     public DegradationServiceImpl(DegradationProperties properties,
                                    ProviderHealthTracker healthTracker,
                                    MeterRegistry meterRegistry,
-                                   DomainEventPublisher eventPublisher) {
+                                   DomainEventPublisher eventPublisher,
+                                   ErrorClassifier errorClassifier) {
         this.properties = properties;
         this.healthTracker = healthTracker;
         this.meterRegistry = meterRegistry;
         this.eventPublisher = eventPublisher;
+        this.errorClassifier = errorClassifier;
         this.chainIndex = properties.getChains().stream()
                 .collect(Collectors.toMap(DegradationChain::getPrimary, c -> c));
         validateChains();
@@ -86,8 +93,36 @@ public class DegradationServiceImpl implements DegradationService {
 
     @Override
     public String degrade(String originalModel, ProviderErrorType reason) {
+        // 无画像门禁：回退旧逻辑（不按 errorType 分流，深度取配置 maxChainDepth）
+        return degrade(originalModel, reason, null);
+    }
+
+    @Override
+    public String degrade(String originalModel, ProviderErrorType reason, ResilienceProfile profile) {
         if (!properties.isEnabled()) {
             return null;
+        }
+
+        // 画像门禁（profile != null 时启用）：关闭 L2 或深度 0 不降级
+        boolean profileGated = profile != null;
+        if (profileGated) {
+            if (!profile.isEnableL2ModelDegradation()) {
+                log.debug("模型 {} 画像关闭 L2 降级（enableL2ModelDegradation=false），不降级", originalModel);
+                return null;
+            }
+            if (profile.getDegradationMaxDepth() <= 0) {
+                log.debug("模型 {} 画像 degradationMaxDepth={}（0 禁用降级），不降级",
+                        originalModel, profile.getDegradationMaxDepth());
+                return null;
+            }
+            // 按 errorType 分流：仅 L2 类错误（模型能力问题）触发模型降级，
+            // L1（共因故障换渠道）/NONE（请求级错误）不换模型
+            FailoverDecision decision = errorClassifier.classify(reason);
+            if (decision != FailoverDecision.L2) {
+                log.debug("模型 {} 错误 {} 经分流为 {}（非 L2），不触发模型降级",
+                        originalModel, reason, decision);
+                return null;
+            }
         }
 
         DegradationChain chain = chainIndex.get(originalModel);
@@ -95,7 +130,10 @@ public class DegradationServiceImpl implements DegradationService {
             return null;
         }
 
-        for (int i = 0; i < chain.getFallbacks().size() && i < properties.getMaxChainDepth(); i++) {
+        // 深度上限：画像门禁时取 profile.degradationMaxDepth，否则取配置 maxChainDepth
+        int maxDepth = profileGated ? profile.getDegradationMaxDepth() : properties.getMaxChainDepth();
+
+        for (int i = 0; i < chain.getFallbacks().size() && i < maxDepth; i++) {
             String fallback = chain.getFallbacks().get(i);
             if (isAvailable(fallback)) {
                 degradedModels.put(originalModel, new DegradedModel(originalModel, fallback, reason,
@@ -109,7 +147,8 @@ public class DegradationServiceImpl implements DegradationService {
                 eventPublisher.publish(new DegradationEvent(
                         null, null, originalModel, fallback, reason, i + 1, Instant.now()));
 
-                log.info("模型 {} 降级 → {} (原因: {}, 步骤: {})", originalModel, fallback, reason, i + 1);
+                log.info("模型 {} 降级 → {} (原因: {}, 步骤: {}, 门禁: {})", originalModel, fallback, reason,
+                        i + 1, profileGated ? "profile" : "ungated");
                 return fallback;
             }
         }

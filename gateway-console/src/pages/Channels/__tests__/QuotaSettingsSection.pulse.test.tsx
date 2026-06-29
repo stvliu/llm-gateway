@@ -106,7 +106,7 @@ describe('QuotaSettingsSection 保存反馈脉冲', () => {
     );
 
     // 进入编辑模式
-    await user.click(screen.getByRole('button', { name: /编辑设置/ }));
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     // 触发保存
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
@@ -128,7 +128,7 @@ describe('QuotaSettingsSection 保存反馈脉冲', () => {
       <QuotaSettingsSection channel={sampleChannel as never} />
     );
 
-    await user.click(screen.getByRole('button', { name: /编辑设置/ }));
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
     await waitFor(() => {

@@ -9,7 +9,8 @@ import Quickstart from '@/pages/Quickstart';
 import Channels from '@/pages/Channels';
 import Catalog from '@/pages/Catalog';
 import Users from '@/pages/Users';
-import TeamsPage from '@/pages/Teams';
+import ApplicationsPage from '@/pages/Applications';
+import ResilienceLayout from '@/pages/resilience/ResilienceLayout';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -59,8 +60,16 @@ export const router = createBrowserRouter([
         element: <PermissionGuard permission={P.USER_READ}><Users /></PermissionGuard>,
       },
       {
-        path: 'teams',
-        element: <PermissionGuard permission={P.USER_READ}><TeamsPage /></PermissionGuard>,
+        path: 'applications',
+        element: <PermissionGuard permission={P.APPLICATION_READ}><ApplicationsPage /></PermissionGuard>,
+      },
+      {
+        path: 'resilience',
+        element: <PermissionGuard permission={P.RESILIENCE_READ}><ResilienceLayout /></PermissionGuard>,
+      },
+      {
+        path: 'resilience/:tab',
+        element: <PermissionGuard permission={P.RESILIENCE_READ}><ResilienceLayout /></PermissionGuard>,
       },
     ],
   },

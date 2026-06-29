@@ -1,9 +1,9 @@
 package com.codingas.gateway.application.init;
 
+import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
-import com.codingas.gateway.domain.team.gateway.TeamGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ class DataInitializerTest {
     private ProviderGateway providerGateway;
 
     @Autowired
-    private TeamGateway teamGateway;
+    private ApplicationGateway applicationGateway;
 
     @Autowired
     private DataInitializer dataInitializer;
@@ -80,13 +80,13 @@ class DataInitializerTest {
     }
 
     @Test
-    @DisplayName("应创建 4 个演示团队（default, dev, product, openclaw）")
-    void shouldCreateFourDemoTeams() {
+    @DisplayName("应创建 4 个演示应用（default, dev, product, openclaw）")
+    void shouldCreateFourDemoApplications() {
         dataInitializer.run();
-        assertTrue(teamGateway.existsByName("default"));
-        assertTrue(teamGateway.existsByName("dev"));
-        assertTrue(teamGateway.existsByName("product"));
-        assertTrue(teamGateway.existsByName("openclaw"));
+        assertNotNull(applicationGateway.findByCode("default"));
+        assertNotNull(applicationGateway.findByCode("dev"));
+        assertNotNull(applicationGateway.findByCode("product"));
+        assertNotNull(applicationGateway.findByCode("openclaw"));
     }
 
     @Test
@@ -128,12 +128,12 @@ class DataInitializerTest {
         }
 
         @Test
-        @DisplayName("重复调用不应创建重复的团队")
-        void repeatedRunShouldNotDuplicateTeams() {
+        @DisplayName("重复调用不应创建重复的应用")
+        void repeatedRunShouldNotDuplicateApplications() {
             dataInitializer.run();
-            long count1 = teamGateway.findAllActive().size();
+            long count1 = applicationGateway.findAll().size();
             dataInitializer.run();
-            long count2 = teamGateway.findAllActive().size();
+            long count2 = applicationGateway.findAll().size();
             assertEquals(count1, count2);
         }
     }

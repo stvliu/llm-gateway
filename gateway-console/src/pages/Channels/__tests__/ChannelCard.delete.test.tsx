@@ -68,7 +68,7 @@ describe('ChannelCard 删除整个渠道危险确认（任务 8.7）', () => {
     render(
       <AntApp>
         <ChannelCard
-          channel={buildMockChannel('ACTIVE')}
+          channel={buildMockChannel('SUSPENDED')}
           onClick={vi.fn()}
           onDelete={onDelete}
           onToggleState={vi.fn()}
@@ -78,11 +78,13 @@ describe('ChannelCard 删除整个渠道危险确认（任务 8.7）', () => {
       </AntApp>
     );
 
-    // 行内删除按钮：DeleteOutlined 图标按钮（type=text，size=small，danger）
+    // 删除入口在 Dropdown 菜单内：点开 MoreOutlined 触发器 → 点"删除"菜单项
     const allBtns = screen.getAllByRole('button');
-    const deleteBtn = allBtns.find((b) => b.querySelector('.anticon-delete'));
-    expect(deleteBtn).toBeDefined();
-    await user.click(deleteBtn!);
+    const dropdownTrigger = allBtns.find((b) => b.querySelector('.anticon-more'));
+    expect(dropdownTrigger).toBeDefined();
+    await user.click(dropdownTrigger!);
+    const deleteItem = await screen.findByRole('menuitem', { name: /删\s*除/ });
+    await user.click(deleteItem);
 
     // 弹出 Modal.confirm：description 应包含与 RETIRED 对齐的业务影响文案
     // 关键短语："不再参与任何流量分配" 或 "无法恢复"
@@ -93,16 +95,9 @@ describe('ChannelCard 删除整个渠道危险确认（任务 8.7）', () => {
     // 确认前 onDelete 不被调用
     expect(onDelete).not.toHaveBeenCalled();
 
-    // 点击 modal footer 中 dangerous OK 按钮
-    const allButtons = screen.getAllByRole('button');
-    const dangerOk = allButtons.find(
-      (b) =>
-        b.className.includes('ant-btn-dangerous') &&
-        !b.className.includes('ant-btn-link') &&
-        b.closest('.ant-modal-confirm-btns')
-    );
-    expect(dangerOk).toBeDefined();
-    await user.click(dangerOk!);
+    // 点击 modal footer 中 dangerous OK 按钮（useDangerConfirm okText = "删除"）
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(onDelete).toHaveBeenCalledWith(1);

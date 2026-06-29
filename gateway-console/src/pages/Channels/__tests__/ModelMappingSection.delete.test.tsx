@@ -100,7 +100,8 @@ describe('ModelMappingSection 删除危险确认（任务 8.6）', () => {
       <ModelMappingSection channelId={1} channelModels={[sampleMapping as never]} />
     );
 
-    const delBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    // antd v6：行内删除按钮仅含 DeleteOutlined 图标，accessible name 来自其 aria-label="delete"
+    const delBtns = screen.getAllByRole('button', { name: /delete/i });
     await user.click(delBtns[delBtns.length - 1]);
 
     // 弹出 Modal.confirm，包含 modelId + 不再被路由
@@ -115,14 +116,9 @@ describe('ModelMappingSection 删除危险确认（任务 8.6）', () => {
     expect(deleteModelMock).not.toHaveBeenCalled();
 
     // 点击 modal footer 中的 dangerous OK 按钮
-    const allButtons = screen.getAllByRole('button');
-    const dangerOk = allButtons.find(
-      (b) =>
-        b.className.includes('ant-btn-dangerous') &&
-        !b.className.includes('ant-btn-link')
-    );
-    expect(dangerOk).toBeDefined();
-    await user.click(dangerOk!);
+    // antd v6：OK 按钮文本为 i18n "删除"（okText: actions.delete），用精确正则匹配
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
+    await user.click(dangerOk);
 
     await waitFor(() => {
       expect(deleteModelMock).toHaveBeenCalled();

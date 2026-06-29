@@ -1,0 +1,13 @@
+{
+  "change": "fix-channels-antd-v6-tests",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "d0797f2463a2dc8020168c97cb3b4b0492e06ca5a5e0a7aacd2487eba4c616b4",
+  "files": [
+    { "path": "openspec/changes/fix-channels-antd-v6-tests/proposal.md", "sha256": "b8aa42da20c00249055957d32c58d8f89fb2184e56f140ef946d9513a6afbca7" },
+    { "path": "openspec/changes/fix-channels-antd-v6-tests/design.md", "sha256": "747e4299e3afe686f8bb2051572bc512fc73b83ed69ffff3854a532504f396c5" },
+    { "path": "openspec/changes/fix-channels-antd-v6-tests/tasks.md", "sha256": "05f1623b2662239f6227db3103ad967c78c4ef6382f16ce030543f70373acb67" }
+  ]
+}
