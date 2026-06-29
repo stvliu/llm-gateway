@@ -55,6 +55,9 @@ vi.mock('@/services/api/channel', () => {
       createModel: vi.fn(() => Promise.resolve()),
       deleteModel: vi.fn(() => Promise.resolve()),
       updateUpstreamModelName: (...args: unknown[]) => updateUpstreamMock(...args),
+      // 生产代码经 useUpdateChannelModelFull 调用 updateModel（commit a9e54f1 后），
+      // 绑定到同一 mock 以保持"保存被调用"断言语义不变
+      updateModel: (...args: unknown[]) => updateUpstreamMock(...args),
       list: vi.fn(() => Promise.resolve([])),
       get: vi.fn(() => Promise.resolve({})),
       listCredentials: vi.fn(() => Promise.resolve([])),
@@ -112,7 +115,7 @@ describe('ModelMappingSection 保存反馈脉冲', () => {
     );
 
     // 进入编辑模式
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     // 修改 upstream name 输入
     const inputs = container.querySelectorAll('input');
@@ -141,7 +144,7 @@ describe('ModelMappingSection 保存反馈脉冲', () => {
       <ModelMappingSection channelId={1} channelModels={[sampleMapping as never]} />
     );
 
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     const inputs = container.querySelectorAll('input');
     const upstreamInput = inputs[inputs.length - 1] as HTMLInputElement;
@@ -169,7 +172,7 @@ describe('ModelMappingSection 保存反馈脉冲', () => {
       <ModelMappingSection channelId={1} channelModels={[sampleMapping as never]} />
     );
 
-    const editBtns = screen.getAllByRole('button', { name: /编\s*辑/ });
+    const editBtns = screen.getAllByRole('button', { name: /edit/i });
     await user.click(editBtns[editBtns.length - 1]);
     const inputs = container.querySelectorAll('input');
     const upstreamInput = inputs[inputs.length - 1] as HTMLInputElement;
