@@ -130,14 +130,14 @@ git commit -m "test(channels): 适配 ChannelCard.delete 至 v6 Dropdown 流程�
 
 **失败根因（实测）：** `await screen.findByText('暂停')` 找不到菜单项文本，Dropdown 菜单未展开（失败信息显示 DOM 中无菜单项）。v6 下 Dropdown click 触发后菜单渲染时机/方式变化，`findByText` 在菜单项上不可靠。改用 `findByRole('menuitem', { name: /暂停/ })`（findBy 系列自带重试，且 menuitem role 更精确）。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.suspend.test.tsx
 ```
 预期：FAIL，`TestingLibraryElementError: Unable to find an element with the text: 暂停`（第 88 行）
 
-- [ ] **Step 2: 适配菜单项定位为 menuitem role**
+- [x] **Step 2: 适配菜单项定位为 menuitem role**
 
 把第 87-89 行（`findByText('暂停')` + click）替换为：
 
@@ -147,7 +147,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.su
     await user.click(suspendItem);
 ```
 
-- [ ] **Step 3: 适配 Modal 确认按钮定位（放宽 name 正则）**
+- [x] **Step 3: 适配 Modal 确认按钮定位（放宽 name 正则）**
 
 把第 99-102 行（`getAllByRole('button', { name: /^确定$|^OK$|^确认$/ })` 取最后一个）替换为按 menuitem 之后弹出的 Modal footer 内 OK 按钮定位。`modal.confirm`（App.useApp）默认 OK 文案为中文"确定"：
 
@@ -159,14 +159,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.su
 
 > 注：若 Step 2 运行后仍报"找不到 menuitem 暂停"，说明 v6 Dropdown 在 jsdom 下 click 未触发菜单展开。改用 `pointerDown` 触发：在 `await user.click(dropdownTrigger!)` 后追加 `await user.pointer({ target: dropdownTrigger!, keys: '[MouseLeft]' })`。若菜单项 label 非"暂停"，查 `getTransitionActionLabel(ACTIVE, SUSPENDED)` 对应 i18n 值。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ChannelCard.suspend.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/ChannelCard.suspend.test.tsx
