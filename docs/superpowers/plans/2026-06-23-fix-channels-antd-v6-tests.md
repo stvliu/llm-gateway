@@ -182,14 +182,14 @@ git commit -m "test(channels): 适配 ChannelCard.suspend 至 v6 Dropdown menuit
 
 **失败根因：** 行内删除按钮是 InlineEditableList 的图标按钮，v6 accessible name 由"删除"变"delete"，`getAllByRole('button', { name: /删\s*除/ })` 返回空数组。Modal OK 按钮用 className matcher，v6 下 className/容器可能变化。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSection.delete.test.tsx
 ```
 预期：FAIL，`Unable to find an accessible element with the role "button" and name /删\s*除/`
 
-- [ ] **Step 2: 适配行内删除按钮选择器（中文→英文）**
+- [x] **Step 2: 适配行内删除按钮选择器（中文→英文）**
 
 把第 108 行（行内删除按钮定位）：
 
@@ -204,7 +204,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSect
     const delBtns = screen.getAllByRole('button', { name: /delete/i });
 ```
 
-- [ ] **Step 3: 适配 Modal OK 按钮（className matcher → 中文文案 name）**
+- [x] **Step 3: 适配 Modal OK 按钮（className matcher → 中文文案 name）**
 
 把第 121-131 行（className matcher 找 dangerOk）替换为：
 
@@ -216,14 +216,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSect
 
 > 注：行内删除按钮 v6 name="delete"（英文），Modal OK 文案"删除"（中文），`/^删\s*除$/` 只匹配 Modal OK，不冲突。Modal content 文案断言（`getByText(/删除后无法恢复/)`、`getByText(/sk-abc123/)`）保持不变。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSection.delete.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/CredentialSection.delete.test.tsx
