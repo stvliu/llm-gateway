@@ -115,7 +115,7 @@ describe('EndpointSection 保存反馈脉冲', () => {
       <EndpointSection channelId={1} endpoints={[sampleEndpoint as never]} />
     );
 
-    await user.click(screen.getByRole('button', { name: /编\s*辑/ }));
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
     await waitFor(() => {
@@ -138,7 +138,7 @@ describe('EndpointSection 保存反馈脉冲', () => {
       <EndpointSection channelId={1} endpoints={[sampleEndpoint as never]} />
     );
 
-    await user.click(screen.getByRole('button', { name: /编\s*辑/ }));
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
     await waitFor(() => {
@@ -163,7 +163,7 @@ describe('EndpointSection 保存反馈脉冲', () => {
       <EndpointSection channelId={1} endpoints={[sampleEndpoint as never]} />
     );
 
-    await user.click(screen.getByRole('button', { name: /编\s*辑/ }));
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     // 输入新的 URL
     const input = container.querySelector('input[id$="endpointUrl"]') as HTMLInputElement;
     expect(input).not.toBeNull();
