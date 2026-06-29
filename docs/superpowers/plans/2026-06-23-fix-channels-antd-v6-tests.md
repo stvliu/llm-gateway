@@ -446,14 +446,14 @@ git commit -m "test(channels): 适配 EndpointSection.pulse 编辑按钮至 v6 �
 
 **失败根因：** 同 Task 6。3 个用例用 `getAllByRole('button', { name: /编\s*辑/ })`，v6 name="edit"。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSection.pulse.test.tsx
 ```
 预期：FAIL，3 个用例均报 `Unable to find an accessible element with the role "button" and name /编\s*辑/`
 
-- [ ] **Step 2: 适配 3 个用例的编辑按钮选择器**
+- [x] **Step 2: 适配 3 个用例的编辑按钮选择器**
 
 `getAllByRole('button', { name: /编\s*辑/ })` 出现 3 次（第 115、144、172 行），全部替换：
 
@@ -469,14 +469,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSe
 
 > 用 `replace_all` 一次性替换 3 处。保存按钮保持不变。
 
-- [ ] **Step 3: 运行测试确认通过**
+- [x] **Step 3: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSection.pulse.test.tsx
 ```
 预期：PASS（3 个用例全过）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/ModelMappingSection.pulse.test.tsx
@@ -686,6 +686,19 @@ git commit -m "test(channels): 适配 InlineEditableList 删除按钮至 v6 英�
 
 ---
 
+## Task 11.5: ChannelDetailDrawer.healthMatrix.test.tsx —— 连通性测试按钮（plan 遗漏补修）
+
+> plan 原遗漏：原 23 失败清单含此文件 2 个失败，但 14 task 未覆盖。Step 4 小改补修。
+
+**Files:** Modify `gateway-console/src/pages/Channels/__tests__/ChannelDetailDrawer.healthMatrix.test.tsx`
+
+**失败根因（实测）：** "连通性测试"按钮是 `ApiOutlined` 图标按钮（外层 Tooltip，无文字），v6 accessible name 来自图标 `aria-label="api"`（Tooltip title 不再注入 aria-label）。`getByRole('button', { name: /连通性测试|测试全部/ })` 失配。
+
+- [x] **Step 1: 适配选择器** ✅：`/连通性测试|测试全部/` → `/api/i`（与 Channels 其他 v6 图标按钮适配一致）。生产代码已有 `data-testid="drawer-connectivity-test-btn"`，testid 更稳定但为一致性用 role+name。
+- [x] **Step 2: 运行测试确认通过** ✅：2 用例 GREEN
+
+---
+
 ## Task 12: 全量 vitest 回归
 
 **Files:**
@@ -693,14 +706,14 @@ git commit -m "test(channels): 适配 InlineEditableList 删除按钮至 v6 英�
 
 **目标：** 确认 23 个失败测试全过 + 0 回归。
 
-- [ ] **Step 1: 运行 Channels 页全量测试**
+- [x] **Step 1: 运行 Channels 页全量测试**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/
 ```
 预期：所有测试 PASS，0 失败 0 回归。失败数应从 23 降为 0。
 
-- [ ] **Step 2: 运行前端全量测试（确认无跨页回归）**
+- [x] **Step 2: 运行前端全量测试（确认无跨页回归）**
 
 ```bash
 cd gateway-console && npx vitest run
@@ -709,7 +722,7 @@ cd gateway-console && npx vitest run
 
 > 若出现非 Channels 页的失败，先确认是否本次改动引入（本次仅改测试文件，不应影响其他页）。若失败与本次无关，记录但不算回归；若相关，回退排查。
 
-- [ ] **Step 3: Commit（如有回归修复）**
+- [x] **Step 3: Commit（如有回归修复）**
 
 若 Step 1-2 全过，无需额外 commit。若修复了额外回归：
 
@@ -725,7 +738,7 @@ git commit -m "test(channels): 修复 v6 测试选择器适配回归"
 **Files:**
 - 无文件改动（验证任务）
 
-- [ ] **Step 1: 运行前端构建**
+- [x] **Step 1: 运行前端构建**
 
 ```bash
 cd gateway-console && npm run build
@@ -743,14 +756,14 @@ cd gateway-console && npm run build
 
 **目标：** 确认未改动任何生产代码（Design Doc Non-Goal）。
 
-- [ ] **Step 1: 检查 git diff 文件范围**
+- [x] **Step 1: 检查 git diff 文件范围**
 
 ```bash
 git diff --name-only 4d6161430db8af04d84fe29807081d7678118fa6 HEAD
 ```
 预期：所有变更文件均位于 `gateway-console/src/pages/Channels/__tests__/` 下，无生产代码文件（`.tsx` 非 `__tests__` 路径、`useDangerConfirm.tsx`、`InlineEditableList.tsx` 等）。
 
-- [ ] **Step 2: 若发现生产代码改动，回退**
+- [x] **Step 2: 若发现生产代码改动，回退**
 
 若 Step 1 输出含非测试文件：
 
