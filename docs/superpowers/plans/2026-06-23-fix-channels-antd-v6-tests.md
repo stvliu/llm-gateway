@@ -239,14 +239,14 @@ git commit -m "test(channels): 适配 CredentialSection.delete 至 v6 图标按�
 
 **失败根因：** 同 Task 3。行内删除按钮 v6 name="delete"；Modal OK 用 className matcher。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSection.delete.test.tsx
 ```
 预期：FAIL，`Unable to find an accessible element with the role "button" and name /删\s*除/`
 
-- [ ] **Step 2: 适配行内删除按钮选择器**
+- [x] **Step 2: 适配行内删除按钮选择器**
 
 把第 98 行：
 
@@ -260,7 +260,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSectio
     const delBtns = screen.getAllByRole('button', { name: /delete/i });
 ```
 
-- [ ] **Step 3: 适配 Modal OK 按钮**
+- [x] **Step 3: 适配 Modal OK 按钮**
 
 把第 110-118 行（className matcher）替换为：
 
@@ -272,14 +272,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSectio
 
 > Modal content 文案断言（`getByText(/流量将立即失败/)`、`getAllByText(/api\.example\.com/)`）保持不变。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSection.delete.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/EndpointSection.delete.test.tsx
@@ -295,14 +295,14 @@ git commit -m "test(channels): 适配 EndpointSection.delete 至 v6 图标按钮
 
 **失败根因：** 同 Task 3。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSection.delete.test.tsx
 ```
 预期：FAIL，`Unable to find an accessible element with the role "button" and name /删\s*除/`
 
-- [ ] **Step 2: 适配行内删除按钮选择器**
+- [x] **Step 2: 适配行内删除按钮选择器**
 
 把第 103 行：
 
@@ -316,7 +316,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSe
     const delBtns = screen.getAllByRole('button', { name: /delete/i });
 ```
 
-- [ ] **Step 3: 适配 Modal OK 按钮**
+- [x] **Step 3: 适配 Modal OK 按钮**
 
 把第 117-125 行（className matcher）替换为：
 
@@ -328,14 +328,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSe
 
 > Modal content 文案断言（`getByText(/不再被路由到此渠道/)`、`getAllByText(/gpt-4o/)`）保持不变。
 
-- [ ] **Step 4: 运行测试确认通过**
+- [x] **Step 4: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/ModelMappingSection.delete.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/ModelMappingSection.delete.test.tsx
@@ -351,14 +351,14 @@ git commit -m "test(channels): 适配 ModelMappingSection.delete 至 v6 图标�
 
 **失败根因：** 3 个用例都用 `getAllByRole('button', { name: /编\s*辑/ })` 找 InlineEditableList 的编辑图标按钮，v6 name="edit"。保存按钮是文字按钮（v6 不变）。脉冲 DOM 选择器（`.save-tip-ok`/`.save-tip-err`/`.save-pulse-error`）和 input querySelector 不受 v6 影响。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSection.pulse.test.tsx
 ```
 预期：FAIL，3 个用例均报 `Unable to find an accessible element with the role "button" and name /编\s*辑/`
 
-- [ ] **Step 2: 适配 3 个用例的编辑按钮选择器**
+- [x] **Step 2: 适配 3 个用例的编辑按钮选择器**
 
 文件中 `getAllByRole('button', { name: /编\s*辑/ })` 出现 3 次（第 116、140、164 行），全部替换：
 
@@ -375,7 +375,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSect
 
 > 用 `replace_all` 一次性替换 3 处。保存按钮 `getAllByRole('button', { name: /保\s*存/ })` 保持不变（文字按钮）。
 
-- [ ] **Step 3: 运行测试确认通过**
+- [x] **Step 3: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSection.pulse.test.tsx
@@ -384,7 +384,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/CredentialSect
 
 > 若"乐观更新失败应回滚"用例仍失败，先确认是选择器问题还是 v6 form 行为变化（Design Doc D3）。若 `priorityInput` 的 `user.clear` + `user.type` 后值未变，属 v6 form 行为变化，按 BLOCKED 上报，不得改生产代码。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/CredentialSection.pulse.test.tsx
@@ -400,14 +400,14 @@ git commit -m "test(channels): 适配 CredentialSection.pulse 编辑按钮至 v6
 
 **失败根因：** 3 个用例用 `screen.getByRole('button', { name: /编\s*辑/ })` 找 EndpointSection 的编辑图标按钮（`Tooltip title=t('drawer.edit')` + `EditOutlined`），v6 name="edit"。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSection.pulse.test.tsx
 ```
 预期：FAIL，3 个用例均报 `Unable to find an accessible element with the role "button" and name /编\s*辑/`
 
-- [ ] **Step 2: 适配 3 个用例的编辑按钮选择器**
+- [x] **Step 2: 适配 3 个用例的编辑按钮选择器**
 
 `getByRole('button', { name: /编\s*辑/ })` 出现 3 次（第 118、141、166 行），全部替换：
 
@@ -423,14 +423,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSectio
 
 > 用 `replace_all` 一次性替换 3 处。保存按钮 `getByRole('button', { name: /保\s*存/ })` 保持不变。
 
-- [ ] **Step 3: 运行测试确认通过**
+- [x] **Step 3: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/EndpointSection.pulse.test.tsx
 ```
 预期：PASS（3 个用例全过）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/EndpointSection.pulse.test.tsx
@@ -492,14 +492,14 @@ git commit -m "test(channels): 适配 ModelMappingSection.pulse 编辑按钮至 
 
 **失败根因：** 2 个用例用 `screen.getByRole('button', { name: /编辑设置/ })` 找 QuotaSettingsSection 的编辑图标按钮（`Tooltip title=t('quota.editSettings')` + `EditOutlined`），v6 name="edit"（不是"edit settings"）。保存按钮是文字按钮（`{t('drawer.save')}` = "保存"），v6 不变。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/QuotaSettingsSection.pulse.test.tsx
 ```
 预期：FAIL，2 个用例均报 `Unable to find an accessible element with the role "button" and name /编辑设置/`
 
-- [ ] **Step 2: 适配 2 个用例的编辑设置按钮选择器**
+- [x] **Step 2: 适配 2 个用例的编辑设置按钮选择器**
 
 `getByRole('button', { name: /编辑设置/ })` 出现 2 次（第 109、131 行），全部替换：
 
@@ -516,14 +516,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/QuotaSettingsS
 
 > 用 `replace_all` 一次性替换 2 处。保存按钮 `getByRole('button', { name: /保\s*存/ })` 保持不变。
 
-- [ ] **Step 3: 运行测试确认通过**
+- [x] **Step 3: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/QuotaSettingsSection.pulse.test.tsx
 ```
 预期：PASS（2 个用例全过）
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/QuotaSettingsSection.pulse.test.tsx
@@ -539,14 +539,14 @@ git commit -m "test(channels): 适配 QuotaSettingsSection.pulse 编辑设置按
 
 **失败根因（实测）：** 4 个用例的失败根因是**图标按钮选择器**（编辑/删除/编辑设置），不是 message.error DOM。`message.error` 用 `vi.spyOn(message, 'error')` 监听单例（Section 组件也 import 单例 `message`），spy 有效，断言保持不变。实测失败信息：`Unable to find an accessible element with the role "button" and name /编\s*辑/`，v6 name="edit"。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/error-feedback.test.tsx
 ```
 预期：FAIL，4 个用例均报找不到 `/编\s*辑/` 或 `/删\s*除/` 或 `/编辑设置/`
 
-- [ ] **Step 2: 适配 EndpointSection 用例的编辑按钮（第 149 行）**
+- [x] **Step 2: 适配 EndpointSection 用例的编辑按钮（第 149 行）**
 
 ```tsx
     // 旧
@@ -560,7 +560,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/error-feedback
 
 > 该用例第 151 行保存按钮 `getByRole('button', { name: /保\s*存/ })` 保持不变。message.error spy 断言（第 153-161 行）保持不变。
 
-- [ ] **Step 3: 适配 CredentialSection 用例的删除按钮 + Modal OK（第 197-208 行）**
+- [x] **Step 3: 适配 CredentialSection 用例的删除按钮 + Modal OK（第 197-208 行）**
 
 行内删除按钮（第 197 行）：
 
@@ -584,7 +584,7 @@ Modal OK 按钮（第 199-207 行 className matcher）改为：
 
 > message.error spy 断言（第 210-214 行）保持不变。
 
-- [ ] **Step 4: 适配 ModelMappingSection 用例的删除按钮 + Modal OK（第 246-257 行）**
+- [x] **Step 4: 适配 ModelMappingSection 用例的删除按钮 + Modal OK（第 246-257 行）**
 
 行内删除按钮（第 246 行）：
 
@@ -607,7 +607,7 @@ Modal OK 按钮（第 249-256 行 className matcher）改为：
 
 > message.error spy 断言（第 259-263 行）保持不变。
 
-- [ ] **Step 5: 适配 QuotaSettingsSection 用例的编辑设置按钮（第 294 行）**
+- [x] **Step 5: 适配 QuotaSettingsSection 用例的编辑设置按钮（第 294 行）**
 
 ```tsx
     // 旧
@@ -621,7 +621,7 @@ Modal OK 按钮（第 249-256 行 className matcher）改为：
 
 > 该用例第 296 行保存按钮保持不变。message.error spy 断言（第 298-302 行）保持不变。
 
-- [ ] **Step 6: 运行测试确认通过**
+- [x] **Step 6: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/error-feedback.test.tsx
@@ -630,7 +630,7 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/error-feedback
 
 > 若某用例 message.error spy 未被调用（`expect(errorSpy).toHaveBeenCalled()` 超时），确认 Section 组件 import 的是单例 `message`（已核实：CredentialSection/EndpointSection/ModelMappingSection/QuotaSettingsSection 均 `import { ... message ... } from 'antd'`，与 spy 同一单例）。若仍失败，按 BLOCKED 上报。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/error-feedback.test.tsx
@@ -646,14 +646,14 @@ git commit -m "test(channels): 适配 error-feedback 图标按钮至 v6 英文 n
 
 **失败根因（实测）：** `getAllByRole('button', { name: /删\s*除/ })` 找 InlineEditableList 删除图标按钮，v6 name="delete"。实测失败信息确认 v6 按钮 name 为 `delete`。
 
-- [ ] **Step 1: 运行测试确认失败**
+- [x] **Step 1: 运行测试确认失败**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/InlineEditableList.test.tsx
 ```
 预期：FAIL，`Unable to find an accessible element with the role "button" and name /删\s*除/`
 
-- [ ] **Step 2: 适配删除按钮选择器（中文→英文）**
+- [x] **Step 2: 适配删除按钮选择器（中文→英文）**
 
 把第 76 行：
 
@@ -670,14 +670,14 @@ cd gateway-console && npx vitest run src/pages/Channels/__tests__/InlineEditable
 
 > Popconfirm 断言（第 87-88 行 `queryByRole('button', { name: /^确认$/ })`）保持不变——它验证无 Popconfirm 二次确认，v6 下 Popconfirm 未插入，断言仍为 null。
 
-- [ ] **Step 3: 运行测试确认通过**
+- [x] **Step 3: 运行测试确认通过**
 
 ```bash
 cd gateway-console && npx vitest run src/pages/Channels/__tests__/InlineEditableList.test.tsx
 ```
 预期：PASS
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add gateway-console/src/pages/Channels/__tests__/InlineEditableList.test.tsx
