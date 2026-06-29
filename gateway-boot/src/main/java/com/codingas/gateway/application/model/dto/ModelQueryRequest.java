@@ -14,4 +14,9 @@ public class ModelQueryRequest extends PageRequest {
     private String keyword;
 
     private Long providerId;
+
+    /**
+     * 状态过滤：ACTIVE（启用）/ INACTIVE（禁用），为空则不过滤
+     */
+    private String state;
 }

@@ -67,7 +67,7 @@ public class ModelController {
     /**
      * 启用/禁用模型
      */
-    @PatchMapping("/{id}/enabled")
+    @PatchMapping("/{id}/state")
     public ModelResponse setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {

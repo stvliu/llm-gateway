@@ -74,6 +74,14 @@ public class ModelServiceImpl implements ModelService {
                 .collect(Collectors.toList());
         }
 
+        // 状态过滤：ACTIVE=未废弃（deprecatedAt 为空），INACTIVE=已废弃（deprecatedAt 非空）
+        if (request.getState() != null && !request.getState().isBlank()) {
+            String state = request.getState().toUpperCase();
+            models = models.stream()
+                .filter(m -> "ACTIVE".equals(state) ? m.isAvailable() : !m.isAvailable())
+                .collect(Collectors.toList());
+        }
+
         // 统计
         long total = models.size();
 
@@ -174,6 +182,8 @@ public class ModelServiceImpl implements ModelService {
         response.setModalities(model.getModalities());
         response.setDeprecatedAt(model.getDeprecatedAt());
         response.setDeprecationMessage(model.getDeprecationMessage());
+        // 状态：未废弃为 ACTIVE，已废弃为 INACTIVE
+        response.setState(model.isAvailable() ? "ACTIVE" : "INACTIVE");
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
         return response;

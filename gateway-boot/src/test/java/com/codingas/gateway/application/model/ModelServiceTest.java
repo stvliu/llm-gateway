@@ -111,6 +111,8 @@ class ModelServiceTest {
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
+            // 默认（未废弃）模型状态应为 ACTIVE
+            assertThat(response.getState()).isEqualTo("ACTIVE");
 
             verify(modelGateway).findById(1L);
         }
@@ -236,6 +238,51 @@ class ModelServiceTest {
 
             // then：providerId 过滤暂不生效，返回所有模型
             assertThat(response.getItems()).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("状态过滤 - ACTIVE 仅返回未废弃模型")
+        void query_withStateActive_returnsOnlyActiveModels() {
+            // given：一个启用、一个禁用
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model disabledModel = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
+
+            when(modelGateway.findAll()).thenReturn(List.of(testModel, disabledModel));
+
+            ModelQueryRequest request = new ModelQueryRequest();
+            request.setState("ACTIVE");
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<ModelResponse> response = modelService.query(request);
+
+            // then：仅返回启用的模型
+            assertThat(response.getItems()).hasSize(1);
+            assertThat(response.getItems().get(0).getState()).isEqualTo("ACTIVE");
+            assertThat(response.getPagination().getTotal()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("状态过滤 - INACTIVE 仅返回已废弃模型")
+        void query_withStateInactive_returnsOnlyDeprecatedModels() {
+            // given：一个启用、一个禁用
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model disabledModel = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", false);
+
+            when(modelGateway.findAll()).thenReturn(List.of(testModel, disabledModel));
+
+            ModelQueryRequest request = new ModelQueryRequest();
+            request.setState("INACTIVE");
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<ModelResponse> response = modelService.query(request);
+
+            // then：仅返回禁用的模型
+            assertThat(response.getItems()).hasSize(1);
+            assertThat(response.getItems().get(0).getState()).isEqualTo("INACTIVE");
         }
 
         @Test
@@ -371,16 +418,19 @@ class ModelServiceTest {
         @Test
         @DisplayName("启用模型成功")
         void setEnabled_true_activatesModel() {
-            // given
-            when(modelGateway.findById(1L)).thenReturn(Optional.of(testModel));
+            // given：先构造一个已废弃的模型
+            Model deprecatedModel = createTestModel(1L, "gpt-4", testProvider, "GPT-4", false);
+            when(modelGateway.findById(1L)).thenReturn(Optional.of(deprecatedModel));
             when(modelGateway.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
             ModelResponse response = modelService.setEnabled(1L, true);
 
-            // then
+            // then：deprecatedAt 被清空，状态为 ACTIVE
             assertThat(response).isNotNull();
-            verify(modelGateway).save(testModel);
+            assertThat(deprecatedModel.getDeprecatedAt()).isNull();
+            assertThat(response.getState()).isEqualTo("ACTIVE");
+            verify(modelGateway).save(deprecatedModel);
         }
 
         @Test
@@ -393,8 +443,10 @@ class ModelServiceTest {
             // when
             ModelResponse response = modelService.setEnabled(1L, false);
 
-            // then
+            // then：deprecatedAt 被设置，状态为 INACTIVE
             assertThat(response).isNotNull();
+            assertThat(testModel.getDeprecatedAt()).isNotNull();
+            assertThat(response.getState()).isEqualTo("INACTIVE");
             verify(modelGateway).save(testModel);
         }
 
@@ -428,6 +480,10 @@ class ModelServiceTest {
         model.setDisplayName(displayName);
         model.setContextWindow(8000);
         model.setCapabilities(Map.of("vision", false, "function_calling", true));
+        // available=false 表示已废弃（deprecatedAt 非空），对应状态 INACTIVE
+        if (available != null && !available) {
+            model.setDeprecatedAt(Instant.now());
+        }
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
         return model;

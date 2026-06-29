@@ -23,6 +23,10 @@ public class ModelResponse {
     private List<String> modalities;
     private Instant deprecatedAt;
     private String deprecationMessage;
+    /**
+     * 模型状态：ACTIVE（启用，deprecatedAt 为空）/ INACTIVE（禁用，deprecatedAt 非空）
+     */
+    private String state;
 
     private Instant createdAt;
     private Instant updatedAt;
