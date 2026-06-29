@@ -145,8 +145,8 @@ describe('EndpointSection 错误反馈', () => {
       />
     );
 
-    // 进入编辑模式（AntD 中文模式下两字按钮文本被插入空格，故用宽松匹配）
-    await user.click(screen.getByRole('button', { name: /编\s*辑/ }));
+    // 进入编辑模式（antd v6 图标按钮 aria-label 为英文 edit）
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     // 触发保存（表单已有合法 url，提交将走到 mutateAsync 并被 mock 拒绝）
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
@@ -193,18 +193,11 @@ describe('CredentialSection 错误反馈', () => {
     );
 
     // InlineEditableList 的删除按钮 + useDangerConfirm 二次确认
-    // useDangerConfirm OK 按钮文案为 common.actions.delete = "删除"（与"取消"区分）
-    const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    // antd v6 行内图标按钮 aria-label 为英文 delete；Modal OK 文案为中文"删除"
+    const deleteBtns = screen.getAllByRole('button', { name: /delete/i });
     await user.click(deleteBtns[0]);
-    // Modal 弹出后，footer 的 OK 是 ant-btn-dangerous（红色），文案"删除"
-    const dangerOk = await screen.findByRole('button', {
-      name: (_, element) =>
-        Boolean(
-          element.className.includes('ant-btn-dangerous') &&
-            !element.className.includes('ant-btn-link') &&
-            element.closest('.ant-modal-confirm-btns')
-        ),
-    });
+    // Modal 弹出后，footer 的 OK 按钮文案为 common.actions.delete = "删除"
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
     await user.click(dangerOk);
 
     await waitFor(() => {
@@ -243,17 +236,11 @@ describe('ModelMappingSection 错误反馈', () => {
       />
     );
 
-    const deleteBtns = screen.getAllByRole('button', { name: /删\s*除/ });
+    // antd v6 行内图标按钮 aria-label 为英文 delete；Modal OK 文案为中文"删除"
+    const deleteBtns = screen.getAllByRole('button', { name: /delete/i });
     await user.click(deleteBtns[0]);
-    // useDangerConfirm OK 按钮：ant-btn-dangerous（红色），文案"删除"
-    const dangerOk = await screen.findByRole('button', {
-      name: (_, element) =>
-        Boolean(
-          element.className.includes('ant-btn-dangerous') &&
-            !element.className.includes('ant-btn-link') &&
-            element.closest('.ant-modal-confirm-btns')
-        ),
-    });
+    // useDangerConfirm OK 按钮文案为 common.actions.delete = "删除"
+    const dangerOk = await screen.findByRole('button', { name: /^删\s*除$/ });
     await user.click(dangerOk);
 
     await waitFor(() => {
@@ -290,8 +277,8 @@ describe('QuotaSettingsSection 错误反馈', () => {
       />
     );
 
-    // 进入编辑模式
-    await user.click(screen.getByRole('button', { name: /编辑设置/ }));
+    // 进入编辑模式（antd v6 图标按钮 aria-label 为英文 edit）
+    await user.click(screen.getByRole('button', { name: /edit/i }));
     // 触发保存
     await user.click(screen.getByRole('button', { name: /保\s*存/ }));
 
