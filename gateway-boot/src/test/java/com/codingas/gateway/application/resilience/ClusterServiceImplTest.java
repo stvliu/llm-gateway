@@ -4,7 +4,6 @@ import com.codingas.gateway.application.resilience.dto.ClusterRequest;
 import com.codingas.gateway.application.resilience.dto.ClusterResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.resilience.entity.Cluster;
-import com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus;
 import com.codingas.gateway.domain.resilience.gateway.ClusterGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -25,6 +24,9 @@ import static org.mockito.Mockito.*;
  * ClusterServiceImpl 单元测试
  *
  * <p>Mock {@link ClusterGateway}，验证应用服务的业务校验与转换逻辑。</p>
+ *
+ * <p>Task 6 变更：Cluster 字段瘦身为 code/name/description/providerId + 审计，
+ * 删除 region/priority/healthStatus；create 不再设置默认 healthStatus。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("故障域应用服务测试")
@@ -41,7 +43,7 @@ class ClusterServiceImplTest {
     class CreateTests {
 
         @Test
-        @DisplayName("创建故障域成功，健康状态默认 HEALTHY")
+        @DisplayName("创建故障域成功，description 透传到响应")
         void create_validRequest_returnsResponse() {
             ClusterRequest request = buildRequest("openai-us", "OpenAI 美东", 10L);
             when(clusterGateway.findByCode("openai-us")).thenReturn(null);
@@ -52,7 +54,7 @@ class ClusterServiceImplTest {
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
             assertThat(result.getCode()).isEqualTo("openai-us");
-            assertThat(result.getHealthStatus()).isEqualTo("HEALTHY");
+            assertThat(result.getDescription()).isEqualTo("OpenAI 美东共因特征说明");
         }
 
         @Test
@@ -164,8 +166,7 @@ class ClusterServiceImplTest {
         request.setCode(code);
         request.setName(name);
         request.setProviderId(providerId);
-        request.setRegion("us-east");
-        request.setPriority(1);
+        request.setDescription("OpenAI 美东共因特征说明");
         return request;
     }
 
@@ -175,9 +176,7 @@ class ClusterServiceImplTest {
         cluster.setCode(code);
         cluster.setName(name);
         cluster.setProviderId(10L);
-        cluster.setRegion("us-east");
-        cluster.setPriority(1);
-        cluster.setHealthStatus(ClusterHealthStatus.HEALTHY);
+        cluster.setDescription("OpenAI 美东共因特征说明");
         return cluster;
     }
 }

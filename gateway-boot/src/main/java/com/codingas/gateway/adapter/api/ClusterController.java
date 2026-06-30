@@ -16,9 +16,9 @@ import java.util.List;
  * <p>提供 Cluster 故障域聚合根的 create/update/get/list API。
  * 不提供 delete：Cluster 关联 Channel 的 clusterId，删除需级联清理；且 Gateway 无 delete 方法。</p>
  *
- * <p>Cluster 是 Channel 的故障域分组，同组 Channel 共享共因特征
- * （同供应商/同账号/同区域/同专线）。容灾转移规则：故障域内优先→整域故障才跨域
- * （design.md D10）。</p>
+ * <p>Cluster 是 Channel 的<b>跨供应商故障独立性分组</b>，同组 Channel 共享共因特征
+ * （同供应商/同账号/同专线等），整组故障才跨组转移。Cluster 与 providerId 共存正交
+ * （spec cluster-failover）。API 路径 {@code /api/v1/resilience/clusters} 保持不变。</p>
  */
 @RestController
 @RequestMapping("/api/v1/resilience/clusters")

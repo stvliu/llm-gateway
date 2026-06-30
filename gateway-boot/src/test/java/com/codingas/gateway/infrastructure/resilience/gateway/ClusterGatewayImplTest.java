@@ -1,7 +1,6 @@
 package com.codingas.gateway.infrastructure.resilience.gateway;
 
 import com.codingas.gateway.domain.resilience.entity.Cluster;
-import com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus;
 import com.codingas.gateway.infrastructure.resilience.gateway.database.dataobject.ClusterDo;
 import com.codingas.gateway.infrastructure.resilience.gateway.database.repository.ClusterRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -25,9 +24,10 @@ import static org.mockito.Mockito.when;
  * ClusterGatewayImpl 单元测试
  *
  * <p>验证 Cluster 故障域实体的持久化网关行为：findById/findByCode/findAll/save
- * 的 DO↔Entity 转换（含 healthStatus 枚举↔字符串互转）与委派逻辑。</p>
+ * 的 DO↔Entity 转换（含 description 透传）与委派逻辑。</p>
  *
- * <p>测试覆盖 Task 4.2 要求的 Cluster 字段：code/name/providerId/region/priority/healthStatus。</p>
+ * <p>Task 6 变更：Cluster 语义改造为「跨供应商故障独立性分组」并瘦身字段，
+ * 删除 region/priority/healthStatus，保留 code/name/providerId + 新增 description。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ClusterGatewayImpl 测试")
@@ -44,7 +44,7 @@ class ClusterGatewayImplTest {
     class FindByIdTests {
 
         @Test
-        @DisplayName("存在时返回 Cluster 实体（含 healthStatus 枚举还原）")
+        @DisplayName("存在时返回 Cluster 实体（含 description 透传）")
         void findById_existingId_returnsEntity() {
             ClusterDo doEntity = createTestDo();
             when(repository.findById(1L)).thenReturn(Optional.of(doEntity));
@@ -56,9 +56,7 @@ class ClusterGatewayImplTest {
             assertThat(result.getCode()).isEqualTo("openai-us");
             assertThat(result.getName()).isEqualTo("OpenAI 美东故障域");
             assertThat(result.getProviderId()).isEqualTo(10L);
-            assertThat(result.getRegion()).isEqualTo("us-east");
-            assertThat(result.getPriority()).isEqualTo(100);
-            assertThat(result.getHealthStatus()).isEqualTo(ClusterHealthStatus.HEALTHY);
+            assertThat(result.getDescription()).isEqualTo("OpenAI 美东共因特征说明");
         }
 
         @Test
@@ -86,7 +84,7 @@ class ClusterGatewayImplTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("openai-us");
-            assertThat(result.getHealthStatus()).isEqualTo(ClusterHealthStatus.HEALTHY);
+            assertThat(result.getDescription()).isEqualTo("OpenAI 美东共因特征说明");
         }
 
         @Test
@@ -105,23 +103,23 @@ class ClusterGatewayImplTest {
     class FindAllTests {
 
         @Test
-        @DisplayName("返回全部 Cluster（含多 healthStatus 还原）")
+        @DisplayName("返回全部 Cluster（含 description 透传）")
         void findAll_returnsAll() {
             ClusterDo d1 = createTestDo();
             ClusterDo d2 = createTestDo();
             d2.setId(2L);
-            d2.setCode("openai-sg");
-            d2.setName("OpenAI 新加坡故障域");
-            d2.setHealthStatus("DOWN");
+            d2.setCode("claude-bedrock");
+            d2.setName("Claude Bedrock 故障域");
+            d2.setDescription("Claude Bedrock 跨供应商共因特征说明");
             when(repository.findAll()).thenReturn(List.of(d1, d2));
 
             List<Cluster> result = gateway.findAll();
 
             assertThat(result).hasSize(2);
             assertThat(result).extracting(Cluster::getCode)
-                    .containsExactly("openai-us", "openai-sg");
-            assertThat(result).extracting(Cluster::getHealthStatus)
-                    .containsExactly(ClusterHealthStatus.HEALTHY, ClusterHealthStatus.DOWN);
+                    .containsExactly("openai-us", "claude-bedrock");
+            assertThat(result).extracting(Cluster::getDescription)
+                    .containsExactly("OpenAI 美东共因特征说明", "Claude Bedrock 跨供应商共因特征说明");
         }
     }
 
@@ -130,7 +128,7 @@ class ClusterGatewayImplTest {
     class SaveTests {
 
         @Test
-        @DisplayName("保存 Cluster 并回写转换结果（healthStatus 枚举→字符串）")
+        @DisplayName("保存 Cluster 并回写转换结果（description 透传）")
         void save_validEntity_returnsSaved() {
             Cluster entity = createTestEntity();
             ClusterDo savedDo = createTestDo();
@@ -140,16 +138,14 @@ class ClusterGatewayImplTest {
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getHealthStatus()).isEqualTo(ClusterHealthStatus.HEALTHY);
+            assertThat(result.getDescription()).isEqualTo("OpenAI 美东共因特征说明");
             ArgumentCaptor<ClusterDo> captor = ArgumentCaptor.forClass(ClusterDo.class);
             verify(repository).save(captor.capture());
             ClusterDo captured = captor.getValue();
             assertThat(captured.getCode()).isEqualTo("openai-us");
             assertThat(captured.getName()).isEqualTo("OpenAI 美东故障域");
             assertThat(captured.getProviderId()).isEqualTo(10L);
-            assertThat(captured.getRegion()).isEqualTo("us-east");
-            assertThat(captured.getPriority()).isEqualTo(100);
-            assertThat(captured.getHealthStatus()).isEqualTo("HEALTHY");
+            assertThat(captured.getDescription()).isEqualTo("OpenAI 美东共因特征说明");
         }
 
         @Test
@@ -170,20 +166,20 @@ class ClusterGatewayImplTest {
         }
 
         @Test
-        @DisplayName("save 支持 DEGRADED 健康状态转换")
-        void save_degradedStatus_convertsCorrectly() {
+        @DisplayName("description 为 null 时 DO 与实体均透传 null")
+        void save_nullDescription_preservesNull() {
             Cluster entity = createTestEntity();
-            entity.setHealthStatus(ClusterHealthStatus.DEGRADED);
+            entity.setDescription(null);
             ClusterDo savedDo = createTestDo();
-            savedDo.setHealthStatus("DEGRADED");
+            savedDo.setDescription(null);
             when(repository.save(any())).thenReturn(savedDo);
 
             Cluster result = gateway.save(entity);
 
             ArgumentCaptor<ClusterDo> captor = ArgumentCaptor.forClass(ClusterDo.class);
             verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getHealthStatus()).isEqualTo("DEGRADED");
-            assertThat(result.getHealthStatus()).isEqualTo(ClusterHealthStatus.DEGRADED);
+            assertThat(captor.getValue().getDescription()).isNull();
+            assertThat(result.getDescription()).isNull();
         }
     }
 
@@ -195,9 +191,7 @@ class ClusterGatewayImplTest {
         d.setCode("openai-us");
         d.setName("OpenAI 美东故障域");
         d.setProviderId(10L);
-        d.setRegion("us-east");
-        d.setPriority(100);
-        d.setHealthStatus("HEALTHY");
+        d.setDescription("OpenAI 美东共因特征说明");
         return d;
     }
 
@@ -207,9 +201,7 @@ class ClusterGatewayImplTest {
         entity.setCode("openai-us");
         entity.setName("OpenAI 美东故障域");
         entity.setProviderId(10L);
-        entity.setRegion("us-east");
-        entity.setPriority(100);
-        entity.setHealthStatus(ClusterHealthStatus.HEALTHY);
+        entity.setDescription("OpenAI 美东共因特征说明");
         return entity;
     }
 }

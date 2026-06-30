@@ -13,8 +13,8 @@ import lombok.EqualsAndHashCode;
  * <p>对应 clusters 表；主键与审计字段（created_by/created_at/updated_by/updated_at）
  * 继承自 {@link BaseDo}，由 AuditingEntityListener 自动填充。</p>
  *
- * <p>health_status 字段以字符串存储（HEALTHY/DEGRADED/DOWN），由 Gateway 实现层
- * 在 DO↔Entity 转换时还原为 {@link com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus} 枚举。</p>
+ * <p><b>Task 6 变更</b>：删除 region/priority/health_status 列，新增 description 列
+ * （共因特征说明），与 Cluster 实体字段瘦身保持一致。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -30,19 +30,11 @@ public class ClusterDo extends BaseDo {
     @Column(name = "name", nullable = false, length = 128)
     private String name;
 
+    /** 共因特征说明（可空） */
+    @Column(name = "description", length = 512)
+    private String description;
+
     /** 归属供应商 ID（物理 ID） */
     @Column(name = "provider_id")
     private Long providerId;
-
-    /** 区域标识 */
-    @Column(name = "region", length = 32)
-    private String region;
-
-    /** 优先级（数值越小越优先） */
-    @Column(name = "priority", nullable = false)
-    private int priority;
-
-    /** 域级健康聚合状态（HEALTHY/DEGRADED/DOWN） */
-    @Column(name = "health_status", nullable = false, length = 16)
-    private String healthStatus;
 }
