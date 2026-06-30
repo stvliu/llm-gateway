@@ -86,16 +86,16 @@ class FailoverEventGatewayImplTest {
         }
 
         @Test
-        @DisplayName("save exhausted=true 与 L2 决策正确转换")
-        void save_exhaustedL2_convertsCorrectly() {
+        @DisplayName("save exhausted=true 与 L1 决策正确转换")
+        void save_exhaustedL1_convertsCorrectly() {
             FailoverEvent entity = createTestEntity();
-            entity.setDecision(FailoverDecision.L2);
+            entity.setDecision(FailoverDecision.L1);
             entity.setExhausted(true);
             entity.setToChannelId(null);
             entity.setToEndpointId(null);
 
             FailoverEventDo savedDo = createTestDo();
-            savedDo.setDecision("L2");
+            savedDo.setDecision("L1");
             savedDo.setExhausted(true);
             savedDo.setToChannelId(null);
             savedDo.setToEndpointId(null);
@@ -105,9 +105,9 @@ class FailoverEventGatewayImplTest {
 
             ArgumentCaptor<FailoverEventDo> captor = ArgumentCaptor.forClass(FailoverEventDo.class);
             verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getDecision()).isEqualTo("L2");
+            assertThat(captor.getValue().getDecision()).isEqualTo("L1");
             assertThat(captor.getValue().isExhausted()).isTrue();
-            assertThat(result.getDecision()).isEqualTo(FailoverDecision.L2);
+            assertThat(result.getDecision()).isEqualTo(FailoverDecision.L1);
             assertThat(result.isExhausted()).isTrue();
         }
     }

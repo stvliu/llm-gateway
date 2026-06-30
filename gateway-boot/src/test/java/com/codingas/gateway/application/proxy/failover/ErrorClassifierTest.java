@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <ul>
  *   <li>INVALID_REQUEST → NONE（请求级错误，换哪都无效）</li>
  *   <li>共因故障（AUTH/QUOTA/RATE_LIMIT/NETWORK/UPSTREAM_ERROR/TIMEOUT/SERVER_ERROR）→ L1（换渠道）</li>
- *   <li>UNKNOWN_ERROR → L2（模型能力问题，换模型）</li>
+ *   <li>UNKNOWN_ERROR → NONE（L2 模型降级层已删除，未知错误不再触发换模型，归为不转移）</li>
  *   <li>null → NONE（编程错误，不转移直接抛出原异常）</li>
  * </ul>
  */
@@ -64,16 +64,16 @@ class ErrorClassifierTest {
     }
 
     @Nested
-    @DisplayName("模型能力问题 → L2（换模型）")
+    @DisplayName("未知错误 → NONE（L2 降级层已删除，不再换模型）")
     class ModelCapabilityTests {
 
         @Test
-        @DisplayName("UNKNOWN_ERROR → L2")
-        void classify_unknownError_returnsL2() {
+        @DisplayName("UNKNOWN_ERROR → NONE")
+        void classify_unknownError_returnsNone() {
             // when
             FailoverDecision decision = errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR);
             // then
-            assertThat(decision).isEqualTo(FailoverDecision.L2);
+            assertThat(decision).isEqualTo(FailoverDecision.NONE);
         }
     }
 

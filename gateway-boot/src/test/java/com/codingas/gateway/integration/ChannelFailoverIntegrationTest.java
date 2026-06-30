@@ -1,11 +1,9 @@
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
-import com.codingas.gateway.application.proxy.invoker.L2DegradationRequiredException;
 import com.codingas.gateway.application.proxy.routing.ClusterAffinityRouter;
 import com.codingas.gateway.application.proxy.routing.EndpointResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingRequest;
@@ -14,7 +12,6 @@ import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
-import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
@@ -32,7 +29,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -46,9 +42,9 @@ import static org.mockito.Mockito.when;
  * 渠道级故障转移端到端集成测试（Task 3.7）
  *
  * <p>验证 {@link ChannelFailoverInvoker} 在真实 Spring 上下文装配下的 L1 转移、错误分流、
- * 流式首字节边界与 L2 降级门禁两对照场景。与 {@code ChannelFailoverInvokerTest}（单元测试）的区别：</p>
+ * 流式首字节边界场景。与 {@code ChannelFailoverInvokerTest}（单元测试）的区别：</p>
  * <ul>
- *   <li>单元测试 mock {@link ErrorClassifier} 手动注入决策（L1/L2/NONE），聚焦 Invoker 内部分支逻辑；</li>
+ *   <li>单元测试 mock {@link ErrorClassifier} 手动注入决策（L1/NONE），聚焦 Invoker 内部分支逻辑；</li>
  *   <li>本集成测试 {@link Autowired} 真实 {@link ErrorClassifier} bean（Spring 装配的静态分流表），
  *       验证"AUTHENTICATION_ERROR 真实被分到 L1 触发转移、INVALID_REQUEST 真实被分到 NONE 不转移"
  *       这类端到端分流语义，而非手动注入决策。</li>
@@ -60,9 +56,11 @@ import static org.mockito.Mockito.when;
  * {@code new ChannelFailoverInvoker(...)}，注入：</p>
  * <ul>
  *   <li>真实 {@link ErrorClassifier}（{@link Autowired}，验证真实分流表装配）；</li>
- *   <li>mock {@link KeyFailoverInvoker}（上游 HTTP 边界，控制成功/失败/流式行为）；</li>
- *   <li>mock {@link DegradationService}（L2 降级边界，控制 degrade 返回值）。</li>
+ *   <li>mock {@link KeyFailoverInvoker}（上游 HTTP 边界，控制成功/失败/流式行为）。</li>
  * </ul>
+ *
+ * <p>Task 4 适配：L2 模型降级层已删除，invoke/invokeStream 签名移除 profile 参数，候选耗尽直接抛
+ * 最后异常，不再进入 L2 降级。</p>
  *
  * <p>参考 {@link FullContextIntegrationTest} 的 KeyFailoverTests 模式：继承基类借用上下文，
  * 测试内手动构造真实 invoker。</p>
@@ -96,14 +94,12 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     }
 
     /**
-     * 构造真实 ChannelFailoverInvoker，注入真实 ErrorClassifier + mock 上游/降级/事件发布边界
+     * 构造真实 ChannelFailoverInvoker，注入真实 ErrorClassifier + mock 上游/事件发布边界
      *
      * @param keyFailoverInvoker   mock 的 Key 级 Invoker（控制候选成功/失败）
-     * @param degradationService   mock 的降级服务（控制 degrade 返回）
      * @return 真实 ChannelFailoverInvoker 实例（使用 Spring 装配的真实分流表）
      */
-    private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker,
-                                                  DegradationService degradationService) {
+    private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker) {
         // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
         // ChannelGateway 用 no-op mock（集成测试不验证 clusterId 反查，由 ChannelFailoverInvokerTest 覆盖）
         // OutboundTuner 用 mock + returnsFirstArg（调谐下沉后每候选 tune，集成测试聚焦真实分流表非调谐）
@@ -111,18 +107,9 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         OutboundTuner tuner = mock(OutboundTuner.class);
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(org.mockito.AdditionalAnswers.returnsFirstArg());
-        return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier, degradationService,
+        return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier,
                 mock(DomainEventPublisher.class), mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class),
                 tuner, mock(ProtocolConverter.class));
-    }
-
-    /**
-     * 构造 mock DegradationService（L2 门禁关闭场景默认不期望被调用）
-     *
-     * @return mock DegradationService
-     */
-    private DegradationService mockDegradation() {
-        return mock(DegradationService.class);
     }
 
     // ==================== L1 转移与错误分流（非流式） ====================
@@ -144,18 +131,15 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             ProtocolResponse successResponse = mock(ProtocolResponse.class);
             when(keyFailover.invoke(ctx2, request)).thenReturn(successResponse);
 
-            DegradationService degradation = mockDegradation();
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
+            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
 
             ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id");
+                    request, Protocol.OPENAI, 7L, "test-trace-id");
 
             // 断言：转移成功，返回 ch2 的响应
             assertThat(result).isSameAs(successResponse);
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover).invoke(ctx2, request);
-            // L1 转移成功不应触发 L2 降级
-            verify(degradation, never()).degrade(anyString(), any(), any());
         }
 
         @Test
@@ -167,17 +151,15 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             when(keyFailover.invoke(ctx1, request)).thenThrow(invalidEx);
 
-            DegradationService degradation = mockDegradation();
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
+            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
 
-            // 断言：直接抛出原始 INVALID_REQUEST 异常，不试 ch2，不降级
+            // 断言：直接抛出原始 INVALID_REQUEST 异常，不试 ch2
             assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id"))
+                    request, Protocol.OPENAI, 7L, "test-trace-id"))
                     .isSameAs(invalidEx);
 
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover, never()).invoke(ctx2, request);
-            verify(degradation, never()).degrade(anyString(), any(), any());
         }
     }
 
@@ -198,18 +180,16 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
                     .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
             // ch2 启动成功（invokeStream 默认 doNothing，表示流建立后 return）
 
-            DegradationService degradation = mockDegradation();
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
+            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
             StreamCallback callback = mock(StreamCallback.class);
 
             // 执行：ch1 启动失败 → 换 ch2 建立流
             invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id", callback);
+                    request, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
             // 断言：两个候选都被试过（ch1 失败后转移到 ch2）
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
             verify(keyFailover).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-            verify(degradation, never()).degrade(anyString(), any(), any());
         }
 
         @Test
@@ -227,89 +207,19 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
                 throw afterFirstByteEx;  // 首字节后同步失败
             }).when(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
 
-            DegradationService degradation = mockDegradation();
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
+            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
             StreamCallback callback = mock(StreamCallback.class);
 
             // 断言：首字节已发，不换 ch2，直接抛 afterFirstByteEx
             assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id", callback))
+                    request, Protocol.OPENAI, 7L, "test-trace-id", callback))
                     .isSameAs(afterFirstByteEx);
 
             verify(keyFailover).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
             verify(keyFailover, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-            verify(degradation, never()).degrade(anyString(), any(), any());
             // 首字节已透传给原 callback（包装 callback 透传语义）
             verify(callback).onChunk("first-byte-data");
         }
-    }
-
-    // ==================== L2 降级门禁两对照场景 ====================
-
-    @Nested
-    @DisplayName("L2 降级门禁两对照（Claude Code 禁降级 / 客服全开）")
-    class L2GateProfileTests {
-
-        @Test
-        @DisplayName("Claude Code 禁降级（enableL2=false）：L1 耗尽直接抛最后异常，不调 degrade")
-        void claudeCodeProfile_l2Disabled_throwsOriginal() {
-            // 两候选均 AUTH 共因失败耗尽；L2 门禁关闭 → tryL2Degradation 直接返回 null，抛 lastException
-            ProviderException authEx = new ProviderException(
-                    ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-            KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
-            when(keyFailover.invoke(ctx1, request)).thenThrow(authEx);
-            when(keyFailover.invoke(ctx2, request)).thenThrow(authEx);
-
-            DegradationService degradation = mockDegradation();
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
-
-            // 断言：禁降级场景抛最后捕获的 authEx，不触发 L2 降级信号
-            assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
-                    .isSameAs(authEx);
-
-            // 显式验证门禁关闭时不调 degrade
-            verify(degradation, never()).degrade(anyString(), any(), any());
-        }
-
-        @Test
-        @DisplayName("客服全开（enableL2=true）：L1 耗尽后 degrade 返回 fallback → 抛 L2 降级信号")
-        void customerServiceProfile_l2Enabled_degrades() {
-            // 两候选均 AUTH 共因失败耗尽；L2 门禁开启 → degrade 返回 fallback → 抛 L2DegradationRequiredException
-            ProviderException authEx = new ProviderException(
-                    ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-            KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
-            when(keyFailover.invoke(ctx1, request)).thenThrow(authEx);
-            when(keyFailover.invoke(ctx2, request)).thenThrow(authEx);
-
-            DegradationService degradation = mockDegradation();
-            when(degradation.degrade(eq("gpt-4o"), eq(ProviderErrorType.AUTHENTICATION_ERROR), any(ResilienceProfile.class)))
-                    .thenReturn("gpt-3.5-turbo");
-
-            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover, degradation);
-
-            // 断言：全开场景触发 L2 降级信号，携带 fallback 模型名
-            assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                    request, Protocol.OPENAI, 7L, profile(true), "test-trace-id"))
-                    .isInstanceOf(L2DegradationRequiredException.class)
-                    .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
-                    .isEqualTo("gpt-3.5-turbo");
-
-            // 显式验证两候选都被试过（L1 全耗尽才进 L2）且 degrade 被调用
-            verify(keyFailover).invoke(ctx1, request);
-            verify(keyFailover).invoke(ctx2, request);
-            verify(degradation).degrade(eq("gpt-4o"), eq(ProviderErrorType.AUTHENTICATION_ERROR), any(ResilienceProfile.class));
-        }
-    }
-
-    /**
-     * 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿 Invoker 链）
-     */
-    private static ResilienceProfile profile(boolean enableL2) {
-        ResilienceProfile p = new ResilienceProfile();
-        p.setEnableL2ModelDegradation(enableL2);
-        p.setDegradationMaxDepth(5);
-        return p;
     }
 
     // ==================== 跨 Cluster 不越权（P2 占位） ====================

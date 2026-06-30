@@ -113,7 +113,7 @@ class ResilienceEventServiceImplTest {
         assertThat(resp.getId()).isEqualTo(1L);
         assertThat(resp.isExhausted()).isTrue();
         assertThat(resp.getErrorType()).isEqualTo("AUTHENTICATION_ERROR");
-        assertThat(resp.getDecision()).isEqualTo("L2");
+        assertThat(resp.getDecision()).isEqualTo("L1");
     }
 
     private FailoverEvent buildExhaustedEvent() {
@@ -126,7 +126,7 @@ class ResilienceEventServiceImplTest {
         entity.setToChannelId(null);
         entity.setToEndpointId(null);
         entity.setErrorType(ProviderErrorType.AUTHENTICATION_ERROR);
-        entity.setDecision(FailoverDecision.L2);
+        entity.setDecision(FailoverDecision.L1);
         entity.setExhausted(true);
         entity.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
         return entity;

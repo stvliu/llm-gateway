@@ -1,11 +1,9 @@
 package com.codingas.gateway.application.proxy.invoker;
 
-import com.codingas.gateway.application.degradation.DegradationService;
 import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
-import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
@@ -36,7 +34,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
@@ -49,24 +46,21 @@ import static org.mockito.Mockito.when;
 /**
  * ChannelFailoverInvoker 单元测试
  *
- * <p>覆盖 L1 候选内逐个试、L2 模型降级分流、NONE/INVALID_REQUEST 不转移、
+ * <p>覆盖 L1 候选内逐个试、NONE/INVALID_REQUEST 不转移、候选耗尽抛最后异常、
  * 流式首字节前转移等核心语义（D3/D5/深化点5）。</p>
+ *
+ * <p><b>Task 4 适配</b>：L2 模型降级层已删除，invoke/invokeStream 签名移除 profile 参数，
+ * 候选耗尽直接抛 lastException，不再进入 L2 降级。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelFailoverInvoker 单元测试")
 class ChannelFailoverInvokerTest {
-
-    /** 测试用画像：启用 L2 降级（替换原硬编码 true 占位，Task 4.9 profile 贯穿） */
-    private static final ResilienceProfile L2_PROFILE = profile(true);
 
     @Mock
     private KeyFailoverInvoker keyFailoverInvoker;
 
     @Mock
     private ErrorClassifier errorClassifier;
-
-    @Mock
-    private DegradationService degradationService;
 
     @Mock
     private DomainEventPublisher eventPublisher;
@@ -88,7 +82,7 @@ class ChannelFailoverInvokerTest {
 
     @BeforeEach
     void setUp() {
-        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService,
+        invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, outboundTuner, protocolConverter);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
@@ -112,11 +106,10 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(expectedResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         assertThat(result).isSameAs(expectedResponse);
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -133,38 +126,11 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         assertThat(result).isSameAs(successResponse);
         verify(keyFailoverInvoker).invoke(ctx1, request);
         verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any(), any());
-    }
-
-    @Test
-    @DisplayName("L1 候选全部 UNKNOWN_ERROR 耗尽后进入 L2 降级")
-    void l1_exhausted_thenL2() {
-        // 所有候选 UNKNOWN_ERROR（L2 类，模型能力问题）耗尽，degrade 返回 fallback，
-        // 抛出携带 fallback 模型名的异常。reason 用 UNKNOWN_ERROR 符合 4.8 分流表（L2 类才触发模型降级）
-        ProviderException modelEx = new ProviderException(
-                ProviderErrorType.UNKNOWN_ERROR, "model fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
-        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
-                .thenReturn(FailoverDecision.L2);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
-                .thenReturn("gpt-3.5-turbo");
-
-        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
-                .isInstanceOf(L2DegradationRequiredException.class)
-                .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
-                .isEqualTo("gpt-3.5-turbo");
-
-        // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
-        verify(keyFailoverInvoker).invoke(ctx1, request);
-        verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -177,16 +143,16 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.NONE);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
+                request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
-    @DisplayName("L2 门禁关闭时 L1 耗尽直接抛最后异常，不调 degrade")
-    void l2GateDisabled_throwsOriginal() {
+    @DisplayName("候选全部耗尽时直接抛最后捕获的异常（L2 降级层已删除，不再换模型）")
+    void candidatesExhausted_throwsLastException() {
+        // 两候选均 AUTH 共因失败耗尽 → 直接抛最后捕获的 authEx（不再进入 L2 降级）
         ProviderException authEx = new ProviderException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
@@ -194,56 +160,12 @@ class ChannelFailoverInvokerTest {
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
                 .thenReturn(FailoverDecision.L1);
 
-        // 画像关闭 L2 门禁（enableL2ModelDegradation=false），L1 耗尽不进 L2
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
+                request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(authEx);
-
-        verify(degradationService, never()).degrade(anyString(), any(), any());
-    }
-
-    @Test
-    @DisplayName("L2 degrade 返回 null 时抛最后捕获的异常")
-    void l2_degradeReturnsNull_throwsLast() {
-        ProviderException modelEx = new ProviderException(
-                ProviderErrorType.UNKNOWN_ERROR, "model fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
-        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
-                .thenReturn(FailoverDecision.L2);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
-                .thenReturn(null);
-
-        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
-                .isSameAs(modelEx);
-    }
-
-    @Test
-    @DisplayName("L2 degrade 抛异常时防御捕获，抛回 lastException 保留上下文（非 degrade 异常）")
-    void l2_degradeThrowsException_throwsLast() {
-        // DegradationServiceImpl 违背 DegradationService.degrade 接口契约（"无可用备选返回 null"），
-        // 实际在"有链但所有备选不可用"时抛 ProviderException。tryL2Degradation 应防御捕获，
-        // 让调用方抛 lastException 保留原始失败上下文，而非让 degrade 异常传播。
-        ProviderException modelEx = new ProviderException(
-                ProviderErrorType.UNKNOWN_ERROR, "model fail");
-        ProviderException degradeEx = new ProviderException(
-                ProviderErrorType.UPSTREAM_ERROR, "ALL_MODELS_DEGRADED: 所有备选均不可用");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(modelEx);
-        when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(modelEx);
-        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
-                .thenReturn(FailoverDecision.L2);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
-                .thenThrow(degradeEx);
-
-        // 防御后应抛 lastException（modelEx），而非 degrade 抛出的 degradeEx
-        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
-                .isSameAs(modelEx);
 
         verify(keyFailoverInvoker).invoke(ctx1, request);
         verify(keyFailoverInvoker).invoke(ctx2, request);
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -252,11 +174,10 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                request, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -274,11 +195,10 @@ class ChannelFailoverInvokerTest {
 
         // ch2 启动成功（invokeStream 默认 doNothing），流建立后 return，不再换候选
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                request, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any(), any());
     }
 
     @Test
@@ -294,39 +214,10 @@ class ChannelFailoverInvokerTest {
         StreamCallback callback = mock(StreamCallback.class);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
+                request, Protocol.OPENAI, 7L, "test-trace-id", callback))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any(), any());
-    }
-
-    @Test
-    @DisplayName("流式：L1 候选全部启动失败后进入 L2 降级")
-    void stream_l1Exhausted_thenL2() {
-        ProviderException modelEx = new ProviderException(
-                ProviderErrorType.UNKNOWN_ERROR, "model fail");
-        doThrow(modelEx).when(keyFailoverInvoker)
-                .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
-        doThrow(modelEx).when(keyFailoverInvoker)
-                .invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        when(errorClassifier.classify(ProviderErrorType.UNKNOWN_ERROR))
-                .thenReturn(FailoverDecision.L2);
-        when(degradationService.degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE))
-                .thenReturn("gpt-3.5-turbo");
-
-        StreamCallback callback = mock(StreamCallback.class);
-
-        assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
-                .isInstanceOf(L2DegradationRequiredException.class)
-                .extracting(e -> ((L2DegradationRequiredException) e).getFallbackModel())
-                .isEqualTo("gpt-3.5-turbo");
-
-        // 显式证明 ctx2 被试过（L1 全耗尽才进 L2）
-        verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
-        verify(keyFailoverInvoker).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService).degrade("gpt-4o", ProviderErrorType.UNKNOWN_ERROR, L2_PROFILE);
     }
 
     @Test
@@ -346,12 +237,11 @@ class ChannelFailoverInvokerTest {
 
         // 断言：不试 ch2，直接抛 afterFirstByteEx（首字节后转移边界）
         assertThatThrownBy(() -> invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback))
+                request, Protocol.OPENAI, 7L, "test-trace-id", callback))
                 .isSameAs(afterFirstByteEx);
 
         verify(keyFailoverInvoker).invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
-        verify(degradationService, never()).degrade(anyString(), any(), any());
         // 首字节已转发给原 callback（包装 callback 透传）
         verify(callback).onChunk("first-byte-data");
     }
@@ -378,7 +268,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         // 断言：事件 fromClusterId/toClusterId 由 ChannelGateway 反查填充，非 null
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -406,9 +296,9 @@ class ChannelFailoverInvokerTest {
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
                 .thenReturn(FailoverDecision.L1);
 
-        // 单候选耗尽 → exhausted=true, toChannelId=null
+        // 单候选耗尽 → exhausted=true, toChannelId=null，直接抛最后异常
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1),
-                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
+                request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(authEx);
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -439,7 +329,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
@@ -472,7 +362,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         // 断言：发布 1 条转移事件，from=ctx1, to=ctx2, decision=L1, exhausted=false
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
@@ -500,7 +390,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.NONE);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id"))
+                request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(invalidEx);
 
         // 断言：NONE 不发布任何转移事件
@@ -515,15 +405,15 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                request, Protocol.OPENAI, 7L, "test-trace-id");
 
         verify(eventPublisher, never()).publish(any());
     }
 
     @Test
-    @DisplayName("转移事件发布：全部候选耗尽且未降级时发布 exhausted=true 事件（to 为 null）")
-    void failover_allExhaustedNoL2_publishesExhaustedEvent() {
-        // 两候选均 AUTH 失败耗尽，L2 门禁关闭 → 抛最后异常，应发布 exhausted 事件（to=null）
+    @DisplayName("转移事件发布：全部候选耗尽时发布 exhausted=true 事件（to 为 null，直接抛最后异常）")
+    void failover_allExhausted_publishesExhaustedEvent() {
+        // 两候选均 AUTH 失败耗尽 → 抛最后异常，应发布 exhausted 事件（to=null）
         ProviderException authEx = new ProviderException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
@@ -532,7 +422,7 @@ class ChannelFailoverInvokerTest {
                 .thenReturn(FailoverDecision.L1);
 
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, profile(false), "test-trace-id"))
+                request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(authEx);
 
         // 断言：发布 2 条事件（ctx1→ctx2 转移 + ctx2 耗尽），最后一条 exhausted=true, to=null
@@ -563,7 +453,7 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                request, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
@@ -588,7 +478,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(ctx2, request)).thenReturn(successResponse);
 
         invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "trace-id-from-dispatch");
+                request, Protocol.OPENAI, 7L, "trace-id-from-dispatch");
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
@@ -610,7 +500,7 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invoker.invokeStream(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, L2_PROFILE, "stream-trace-id", callback);
+                request, Protocol.OPENAI, 7L, "stream-trace-id", callback);
 
         ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
         verify(eventPublisher).publish(captor.capture());
@@ -684,7 +574,7 @@ class ChannelFailoverInvokerTest {
         // 真实 OutboundTuner（无协议调谐器，仅做模型名替换）验证真实调谐行为
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerWithRealTuner = new ChannelFailoverInvoker(
-                keyFailoverInvoker, errorClassifier, degradationService,
+                keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, realTuner, protocolConverter);
 
         // 两候选 upstreamModelName 不同；主候选失败，备候选成功（同协议，聚焦模型名替换）
@@ -709,7 +599,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(eq(backupCtx), any(ProtocolRequest.class))).thenReturn(success);
 
         invokerWithRealTuner.invoke(primaryCtx, List.of(primaryCtx, backupCtx),
-                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                original, Protocol.OPENAI, 7L, "test-trace-id");
 
         // 断言：备候选收到的 request.model==备候选 upstreamModelName（每候选独立调谐）
         ArgumentCaptor<ProtocolRequest> captor = ArgumentCaptor.forClass(ProtocolRequest.class);
@@ -732,7 +622,7 @@ class ChannelFailoverInvokerTest {
         ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
-                keyFailoverInvoker, errorClassifier, degradationService,
+                keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
@@ -762,7 +652,7 @@ class ChannelFailoverInvokerTest {
         when(keyFailoverInvoker.invoke(eq(anthropicCtx), any(ProtocolRequest.class))).thenReturn(upstreamResponse);
 
         ProtocolResponse result = invokerReal.invoke(openaiCtx, List.of(openaiCtx, anthropicCtx),
-                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+                original, Protocol.OPENAI, 7L, "test-trace-id");
 
         // 断言：备候选 Anthropic 响应被转换为入站 OpenAI 格式（choices 非空，含 message.content）
         // 修复前 invoker 不做响应转换，返回原始 AnthropicMessagesResponse（content blocks，无 choices）
@@ -783,7 +673,7 @@ class ChannelFailoverInvokerTest {
         ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
-                keyFailoverInvoker, errorClassifier, degradationService,
+                keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, realTuner, realConverter);
 
         // inbound=OPENAI；候选为 Anthropic 上游（跨协议）
@@ -805,7 +695,7 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invokerReal.invokeStream(anthropicCtx, List.of(anthropicCtx),
-                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                original, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         // 断言：Anthropic 上游 chunk 被转换为 OpenAI 格式（含 chat.completion.chunk）
         // 修复前 invoker 不做 chunk 转换，callback 收到原始 Anthropic chunk（含 content_block_delta）
@@ -823,7 +713,7 @@ class ChannelFailoverInvokerTest {
         ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
-                keyFailoverInvoker, errorClassifier, degradationService,
+                keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 Anthropic 上游（跨协议）失败，备候选 OpenAI 上游（同协议）成功
@@ -834,7 +724,7 @@ class ChannelFailoverInvokerTest {
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
-                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
                 .build();
 
         // 主候选(Anthropic)启动失败（首字节前）→ L1 → 换备候选(OpenAI)
@@ -854,7 +744,7 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invokerReal.invokeStream(anthropicCtx, List.of(anthropicCtx, openaiCtx),
-                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                original, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         // 断言：备候选 OpenAI 上游==inbound（同协议），chunk 透传不转换
         // 若错误按主候选(Anthropic)方向转换，会把 OpenAI chunk 当 Anthropic 解析 → 返回 null → chunk 丢失
@@ -868,7 +758,7 @@ class ChannelFailoverInvokerTest {
         ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
-                keyFailoverInvoker, errorClassifier, degradationService,
+                keyFailoverInvoker, errorClassifier,
                 eventPublisher, channelGateway, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
@@ -899,7 +789,7 @@ class ChannelFailoverInvokerTest {
 
         StreamCallback callback = mock(StreamCallback.class);
         invokerReal.invokeStream(openaiCtx, List.of(openaiCtx, anthropicCtx),
-                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+                original, Protocol.OPENAI, 7L, "test-trace-id", callback);
 
         // 断言：备候选 Anthropic chunk 被转换为入站 OpenAI 格式（含 chat.completion.chunk）
         // 与 2.5b 对称：2.5b 是主跨协议失败→备同协议成功（chunk 透传）；
@@ -910,13 +800,5 @@ class ChannelFailoverInvokerTest {
                 .as("主同协议失败→备跨协议成功，chunk 应按成功候选(Anthropic)→inbound(OpenAI) 转换")
                 .contains("chat.completion.chunk")
                 .doesNotContain("content_block_delta");
-    }
-
-    /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */
-    private static ResilienceProfile profile(boolean enableL2) {
-        ResilienceProfile p = new ResilienceProfile();
-        p.setEnableL2ModelDegradation(enableL2);
-        p.setDegradationMaxDepth(5);
-        return p;
     }
 }

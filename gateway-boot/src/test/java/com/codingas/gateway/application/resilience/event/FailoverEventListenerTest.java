@@ -88,7 +88,7 @@ class FailoverEventListenerTest {
                 null, null,
                 null, null,
                 ProviderErrorType.UNKNOWN_ERROR,
-                FailoverDecision.L2,
+                FailoverDecision.L1,
                 true,
                 occurredOn
         );
@@ -103,6 +103,6 @@ class FailoverEventListenerTest {
         assertThat(captured.getToChannelId()).isNull();
         assertThat(captured.getToEndpointId()).isNull();
         assertThat(captured.isExhausted()).isTrue();
-        assertThat(captured.getDecision()).isEqualTo(FailoverDecision.L2);
+        assertThat(captured.getDecision()).isEqualTo(FailoverDecision.L1);
     }
 }

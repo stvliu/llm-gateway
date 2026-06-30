@@ -126,7 +126,7 @@ class FailoverEventRepositoryTest {
         exhausted.setExhausted(true);
         exhausted.setToChannelId(null);
         exhausted.setToEndpointId(null);
-        exhausted.setDecision(FailoverDecision.L2);
+        exhausted.setDecision(FailoverDecision.L1);
         FailoverEvent normal = buildEvent("trace-norm", 10L, 20L, 100L);
         normal.setExhausted(false);
         failoverEventGateway.save(exhausted);
