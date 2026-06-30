@@ -1,13 +1,17 @@
 package com.codingas.gateway.application.proxy.invoker;
 
 import com.codingas.gateway.application.degradation.DegradationService;
+import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
@@ -19,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.AdditionalAnswers;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -67,6 +72,12 @@ class ChannelFailoverInvokerTest {
     @Mock
     private ChannelGateway channelGateway;
 
+    @Mock
+    private OutboundTuner outboundTuner;
+
+    @Mock
+    private ProtocolConverter protocolConverter;
+
     private ChannelFailoverInvoker invoker;
 
     private RoutingContext ctx1;
@@ -76,7 +87,7 @@ class ChannelFailoverInvokerTest {
     @BeforeEach
     void setUp() {
         invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier, degradationService,
-                eventPublisher, channelGateway);
+                eventPublisher, channelGateway, outboundTuner, protocolConverter);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
@@ -85,6 +96,11 @@ class ChannelFailoverInvokerTest {
 
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");
+        // 调谐下沉：invoker 每候选对原始 request 副本做 convert+tune。
+        // 单元测试聚焦转移决策，copy/tune 用「返回自身」桩保持 invoke(ctx, request) 匹配既有断言。
+        lenient().when(request.copy()).thenReturn(request);
+        lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
+                .thenAnswer(AdditionalAnswers.returnsFirstArg());
     }
 
     @Test
@@ -599,6 +615,197 @@ class ChannelFailoverInvokerTest {
         assertThat(captor.getValue().traceId())
                 .as("流式调用链 traceId 应同样透传到事件")
                 .isEqualTo("stream-trace-id");
+    }
+
+    // ==================== 调谐下沉：copy 隔离（Task 2.2） ====================
+
+    @Test
+    @DisplayName("OpenAIChatRequest.copy 返回等值独立副本（手写字段拷贝）")
+    void openaiRequest_copy_returnsIndependentCopy() {
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .maxTokens(128)
+                .temperature(0.7)
+                .stop(List.of("END"))
+                .tools(List.of(java.util.Map.of("function", java.util.Map.of("name", "fn"))))
+                .toolChoice("auto")
+                .stream(true)
+                .build();
+
+        OpenAIChatRequest copy = original.copy();
+
+        assertThat(copy).isNotNull();
+        assertThat(copy).isNotSameAs(original);
+        assertThat(copy.getModel()).isEqualTo("gpt-4o");
+        assertThat(copy.getMaxTokens()).isEqualTo(128);
+        assertThat(copy.getTemperature()).isEqualTo(0.7);
+        assertThat(copy.getStop()).containsExactly("END");
+        assertThat(copy.getToolChoice()).isEqualTo("auto");
+        assertThat(copy.isStream()).isTrue();
+        // 副本独立：修改 copy 的 model 不影响 original
+        copy.setModel("claude-3");
+        assertThat(original.getModel()).isEqualTo("gpt-4o");
+    }
+
+    @Test
+    @DisplayName("AnthropicMessagesRequest.copy 返回等值独立副本（手写字段拷贝）")
+    void anthropicRequest_copy_returnsIndependentCopy() {
+        AnthropicMessagesRequest original = AnthropicMessagesRequest.builder()
+                .model("claude-3-5-sonnet")
+                .messages(List.of(AnthropicMessagesRequest.Message.builder().role("user").content("hi").build()))
+                .maxTokens(256)
+                .system("sys")
+                .temperature(0.5)
+                .stopSequences(List.of("X"))
+                .stream(true)
+                .build();
+
+        AnthropicMessagesRequest copy = original.copy();
+
+        assertThat(copy).isNotNull();
+        assertThat(copy).isNotSameAs(original);
+        assertThat(copy.getModel()).isEqualTo("claude-3-5-sonnet");
+        assertThat(copy.getMaxTokens()).isEqualTo(256);
+        assertThat(copy.getSystem()).isEqualTo("sys");
+        assertThat(copy.getStopSequences()).containsExactly("X");
+        assertThat(copy.isStream()).isTrue();
+        copy.setModel("gpt-4o");
+        assertThat(original.getModel()).isEqualTo("claude-3-5-sonnet");
+    }
+
+    // ==================== 调谐下沉：每候选独立 convert+tune（Task 2.1 / 2.3） ====================
+
+    @Test
+    @DisplayName("L1 换渠道后每候选独立调谐：备候选收到 request.model==备候选 upstreamModelName，原始请求不污染")
+    void l1Failover_eachCandidateTunedIndependently() {
+        // 真实 OutboundTuner（无协议调谐器，仅做模型名替换）验证真实调谐行为
+        OutboundTuner realTuner = new OutboundTuner(List.of());
+        ChannelFailoverInvoker invokerWithRealTuner = new ChannelFailoverInvoker(
+                keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway, realTuner, protocolConverter);
+
+        // 两候选 upstreamModelName 不同；主候选失败，备候选成功（同协议，聚焦模型名替换）
+        RoutingContext primaryCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-upstream-model");
+        RoutingContext backupCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-upstream-model");
+
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .build();
+
+        // 主候选 AUTH 共因失败 → L1 → 换备候选
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(eq(primaryCtx), any(ProtocolRequest.class))).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        ProtocolResponse success = mock(ProtocolResponse.class);
+        when(keyFailoverInvoker.invoke(eq(backupCtx), any(ProtocolRequest.class))).thenReturn(success);
+
+        invokerWithRealTuner.invoke(primaryCtx, List.of(primaryCtx, backupCtx),
+                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+
+        // 断言：备候选收到的 request.model==备候选 upstreamModelName（每候选独立调谐）
+        ArgumentCaptor<ProtocolRequest> captor = ArgumentCaptor.forClass(ProtocolRequest.class);
+        verify(keyFailoverInvoker).invoke(eq(backupCtx), captor.capture());
+        assertThat(captor.getValue().getModel())
+                .as("L1 换渠道后应基于备候选 upstreamModelName 独立调谐，修复前恒为首候选调谐结果导致 model 错误")
+                .isEqualTo("ch2-upstream-model");
+        // 原始请求未被污染（copy 隔离）
+        assertThat(original.getModel())
+                .as("调谐应基于原始请求副本，原始请求 model 不被候选调谐覆盖")
+                .isEqualTo("gpt-4o");
+    }
+
+    // ==================== 调谐下沉：流式 chunk 转换方向重建（Task 2.5） ====================
+
+    @Test
+    @DisplayName("流式跨协议候选：基于实际候选 upstreamProtocol 转换 chunk（修复前 invoker 不转换）")
+    void stream_crossProtocolCandidate_convertsChunkPerCandidate() {
+        // 真实 ProtocolConverter（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
+        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        OutboundTuner realTuner = new OutboundTuner(List.of());
+        ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
+                keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway, realTuner, realConverter);
+
+        // inbound=OPENAI；候选为 Anthropic 上游（跨协议）
+        RoutingContext anthropicCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
+                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model");
+
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .build();
+
+        // 候选成功：发一个 Anthropic 格式 chunk（content_block_delta）
+        String anthropicChunk = "{\"type\":\"content_block_delta\",\"delta\":{\"text\":\"hi\"}}";
+        doAnswer(inv -> {
+            StreamCallback cb = inv.getArgument(2, StreamCallback.class);
+            cb.onChunk(anthropicChunk);
+            return null;
+        }).when(keyFailoverInvoker).invokeStream(eq(anthropicCtx), any(ProtocolRequest.class), any(StreamCallback.class));
+
+        StreamCallback callback = mock(StreamCallback.class);
+        invokerReal.invokeStream(anthropicCtx, List.of(anthropicCtx),
+                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+
+        // 断言：Anthropic 上游 chunk 被转换为 OpenAI 格式（含 chat.completion.chunk）
+        // 修复前 invoker 不做 chunk 转换，callback 收到原始 Anthropic chunk（含 content_block_delta）
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(callback).onChunk(captor.capture());
+        assertThat(captor.getValue())
+                .as("跨协议候选应基于候选 upstreamProtocol(anthropic)→inbound(openai) 转换 chunk")
+                .contains("chat.completion.chunk")
+                .doesNotContain("content_block_delta");
+    }
+
+    @Test
+    @DisplayName("流式跨协议换候选：基于实际成功候选(非主候选) upstreamProtocol 重建转换方向")
+    void stream_failoverDifferentProtocol_usesSuccessfulCandidateDirection() {
+        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        OutboundTuner realTuner = new OutboundTuner(List.of());
+        ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
+                keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway, realTuner, realConverter);
+
+        // inbound=OPENAI；主候选 Anthropic 上游（跨协议）失败，备候选 OpenAI 上游（同协议）成功
+        RoutingContext anthropicCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
+                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model");
+        RoutingContext openaiCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-model");
+
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .build();
+
+        // 主候选(Anthropic)启动失败（首字节前）→ L1 → 换备候选(OpenAI)
+        ProviderException startupEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        doThrow(startupEx).when(keyFailoverInvoker)
+                .invokeStream(eq(anthropicCtx), any(ProtocolRequest.class), any(StreamCallback.class));
+        when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        // 备候选(OpenAI 上游 == inbound)成功：发 OpenAI 格式 chunk（同协议，不应转换）
+        String openaiChunk = "{\"choices\":[{\"delta\":{\"content\":\"hi\"}}]}";
+        doAnswer(inv -> {
+            StreamCallback cb = inv.getArgument(2, StreamCallback.class);
+            cb.onChunk(openaiChunk);
+            return null;
+        }).when(keyFailoverInvoker).invokeStream(eq(openaiCtx), any(ProtocolRequest.class), any(StreamCallback.class));
+
+        StreamCallback callback = mock(StreamCallback.class);
+        invokerReal.invokeStream(anthropicCtx, List.of(anthropicCtx, openaiCtx),
+                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+
+        // 断言：备候选 OpenAI 上游==inbound（同协议），chunk 透传不转换
+        // 若错误按主候选(Anthropic)方向转换，会把 OpenAI chunk 当 Anthropic 解析 → 返回 null → chunk 丢失
+        verify(callback).onChunk(openaiChunk);
     }
 
     /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */

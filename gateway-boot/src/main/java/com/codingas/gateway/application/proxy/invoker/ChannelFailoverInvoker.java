@@ -1,12 +1,17 @@
 package com.codingas.gateway.application.proxy.invoker;
 
 import com.codingas.gateway.application.degradation.DegradationService;
+import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -67,6 +72,10 @@ public class ChannelFailoverInvoker {
     private final DegradationService degradationService;
     private final DomainEventPublisher eventPublisher;
     private final ChannelGateway channelGateway;
+    /** 出站调谐编排器（调谐下沉：每候选独立 convert+tune） */
+    private final OutboundTuner outboundTuner;
+    /** 跨协议转换器（调谐下沉：每候选独立请求转换 + 流式 chunk 转换方向重建） */
+    private final ProtocolConverter protocolConverter;
 
     /**
      * 构造渠道级故障转移 Invoker
@@ -76,17 +85,23 @@ public class ChannelFailoverInvoker {
      * @param degradationService  智能降级服务（L2 换模型）
      * @param eventPublisher      领域事件发布器（发布转移事件，供异步持久化与可观测性）
      * @param channelGateway      渠道网关（反查 channelId→clusterId 填充转移事件，使 clusterId 过滤生效）
+     * @param outboundTuner       出站调谐编排器（每候选独立 tune：协议级默认值补全 + 模型名替换）
+     * @param protocolConverter   跨协议转换器（每候选独立 convertRequest + 流式 chunk 转换方向重建）
      */
     public ChannelFailoverInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                    ErrorClassifier errorClassifier,
                                    DegradationService degradationService,
                                    DomainEventPublisher eventPublisher,
-                                   ChannelGateway channelGateway) {
+                                   ChannelGateway channelGateway,
+                                   OutboundTuner outboundTuner,
+                                   ProtocolConverter protocolConverter) {
         this.keyFailoverInvoker = keyFailoverInvoker;
         this.errorClassifier = errorClassifier;
         this.degradationService = degradationService;
         this.eventPublisher = eventPublisher;
         this.channelGateway = channelGateway;
+        this.outboundTuner = outboundTuner;
+        this.protocolConverter = protocolConverter;
     }
 
     /**
@@ -121,7 +136,9 @@ public class ChannelFailoverInvoker {
         for (int i = 0; i < candidates.size(); i++) {
             RoutingContext candidate = candidates.get(i);
             try {
-                return keyFailoverInvoker.invoke(candidate, request);
+                // 调谐下沉：每候选基于原始 request 副本独立 convert+tune（修复 L1 换渠道后 model 错误）
+                ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
+                return keyFailoverInvoker.invoke(candidate, candidateReq);
             } catch (ProviderException e) {
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
                 log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}), 尝试下一候选",
@@ -195,30 +212,36 @@ public class ChannelFailoverInvoker {
             // 首字节追踪标志：包装 callback 标记首字节是否已发送
             // 首字节前同步启动失败可换候选；首字节后失败不换候选（继承 KeyFailoverInvoker 约束）
             AtomicBoolean firstByteSent = new AtomicBoolean(false);
+            // 流式 chunk 转换方向基于实际候选 upstreamProtocol 重建（非主候选）：
+            // 换候选仅发生在首字节前（callback 未触发），故可安全按成功候选协议构造转换方向，
+            // 修复跨协议换候选时 delegateCallback 按主候选协议转换方向错误的问题。
+            StreamCallback candidateCallback = buildStreamCallback(candidate, inboundProtocol, callback);
             StreamCallback wrappedCallback = new StreamCallback() {
                 @Override
                 public void onChunk(String data) {
                     // 首次 onChunk 标记首字节已发送
                     firstByteSent.set(true);
-                    callback.onChunk(data);
+                    candidateCallback.onChunk(data);
                 }
 
                 @Override
                 public void onComplete() {
-                    callback.onComplete();
+                    candidateCallback.onComplete();
                 }
 
                 @Override
                 public void onError(Throwable t) {
-                    callback.onError(t);
+                    candidateCallback.onError(t);
                 }
             };
 
             try {
+                // 调谐下沉：每候选基于原始 request 副本独立 convert+tune
+                ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
                 // KeyFailoverInvoker.invokeStream 正常 return 表示流已建立（enqueue 成功）
                 // 首字节前的异步失败（onError 在 onChunk 前）和首字节后失败均通过 wrappedCallback
                 // 转发原 callback，ChannelFailoverInvoker 已返回不再换候选
-                keyFailoverInvoker.invokeStream(candidate, request, wrappedCallback);
+                keyFailoverInvoker.invokeStream(candidate, candidateReq, wrappedCallback);
                 return;
             } catch (ProviderException e) {
                 // 首字节已发送：不换候选，直接抛传播给调用方（首字节后转移边界）
@@ -257,6 +280,117 @@ public class ChannelFailoverInvoker {
         }
         throw new ProviderException(ProviderErrorType.UNKNOWN_ERROR,
                 "流式候选列表处理完成但无结果：candidates=" + (candidates == null ? 0 : candidates.size()));
+    }
+
+    /**
+     * 调谐下沉：基于原始请求副本为单个候选执行 convert+tune
+     *
+     * <p>每候选独立处理，避免候选间相互污染（如模型名替换覆盖原始请求）：</p>
+     * <ol>
+     *   <li>{@code original.copy()} 生成同类型副本（手写字段拷贝）</li>
+     *   <li>若候选需跨协议适配（{@link RoutingContext#needsProtocolAdaptation()}），
+     *       调 {@link ProtocolConverter} 转换请求协议</li>
+     *   <li>{@link OutboundTuner#tune} 执行协议级默认值补全 + 模型名替换（候选 upstreamModelName）</li>
+     * </ol>
+     *
+     * @param original  原始入站请求（不变，仅读取）
+     * @param candidate 当前候选路由上下文
+     * @return 该候选的出站请求（副本，已 convert+tune）
+     */
+    private ProtocolRequest adaptRequestForCandidate(ProtocolRequest original, RoutingContext candidate) {
+        ProtocolRequest candidateReq = original.copy();
+        if (candidate.needsProtocolAdaptation()) {
+            candidateReq = convertRequest(candidateReq, candidate);
+        }
+        return outboundTuner.tune(candidateReq, candidate);
+    }
+
+    /**
+     * 跨协议请求转换（下沉自 ChatDispatchServiceImpl，每候选独立执行）
+     *
+     * @param request 协议请求（已 copy）
+     * @param ctx     路由上下文（提供目标上游协议）
+     * @return 转换后的请求；无需转换时返回原请求
+     */
+    private ProtocolRequest convertRequest(ProtocolRequest request, RoutingContext ctx) {
+        if (request instanceof OpenAIChatRequest openai && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
+            return protocolConverter.toAnthropic(openai);
+        }
+        if (request instanceof AnthropicMessagesRequest anthropic && ctx.upstreamProtocol() == Protocol.OPENAI) {
+            return protocolConverter.toOpenAI(anthropic);
+        }
+        return request;
+    }
+
+    /**
+     * 构造流式回调：基于实际候选 upstreamProtocol 重建 chunk 转换方向
+     *
+     * <p>下沉自 {@code ChatDispatchServiceImpl.dispatchStream} 的 delegateCallback 构造，关键差异：
+     * 转换方向基于<b>当前候选</b>的 upstreamProtocol（非主候选），确保跨协议换候选后
+     * chunk 转换方向正确。换候选仅发生在首字节前（callback 未触发），故按成功候选协议
+     * 构造转换方向是安全的。</p>
+     *
+     * <ul>
+     *   <li>跨协议候选：chunk 经 {@link ProtocolConverter#convertStreamChunk} 转换，
+     *       onComplete 经 {@link ProtocolConverter#convertStreamDone} 转换结束标记</li>
+     *   <li>同协议候选：chunk 透传，OpenAI 入站时 onComplete 注入 [DONE] 结束标记</li>
+     * </ul>
+     *
+     * @param candidate       当前候选路由上下文
+     * @param inboundProtocol 入站协议
+     * @param downstream      下游回调（dispatchStream 的 auditingCallback）
+     * @return 基于候选协议的流式回调
+     */
+    private StreamCallback buildStreamCallback(RoutingContext candidate, Protocol inboundProtocol,
+                                               StreamCallback downstream) {
+        String fromProtocol = candidate.upstreamProtocol().name().toLowerCase();
+        String toProtocol = inboundProtocol.name().toLowerCase();
+        if (candidate.needsProtocolAdaptation()) {
+            // 跨协议：chunk + 结束标记转换（方向：候选 upstreamProtocol → inbound）
+            return new StreamCallback() {
+                @Override
+                public void onChunk(String data) {
+                    StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
+                    if (result != null) {
+                        downstream.onChunk(result.data());
+                    }
+                }
+
+                @Override
+                public void onComplete() {
+                    StreamChunkResult done = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
+                    if (done != null) {
+                        downstream.onChunk(done.data());
+                    }
+                    downstream.onComplete();
+                }
+
+                @Override
+                public void onError(Throwable t) {
+                    downstream.onError(t);
+                }
+            };
+        }
+        // 同协议：chunk 透传，OpenAI 入站注入 [DONE] 结束标记
+        return new StreamCallback() {
+            @Override
+            public void onChunk(String data) {
+                downstream.onChunk(data);
+            }
+
+            @Override
+            public void onComplete() {
+                if (inboundProtocol == Protocol.OPENAI) {
+                    downstream.onChunk("[DONE]");
+                }
+                downstream.onComplete();
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                downstream.onError(t);
+            }
+        };
     }
 
     /**

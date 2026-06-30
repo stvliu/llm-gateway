@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -59,6 +60,26 @@ public class OpenAIChatRequest implements ProtocolRequest {
     @Override
     public void setStream(boolean stream) {
         this.stream = stream;
+    }
+
+    @Override
+    public OpenAIChatRequest copy() {
+        // 手写字段拷贝：避免 Jackson 深拷贝的性能开销与循环引用风险
+        // 集合字段拷贝容器（浅拷贝元素），调谐只改 model，不修改集合元素内部
+        OpenAIChatRequest c = new OpenAIChatRequest();
+        c.model = this.model;
+        c.messages = this.messages != null ? new ArrayList<>(this.messages) : null;
+        c.maxTokens = this.maxTokens;
+        c.temperature = this.temperature;
+        c.stop = this.stop != null ? new ArrayList<>(this.stop) : null;
+        c.frequencyPenalty = this.frequencyPenalty;
+        c.presencePenalty = this.presencePenalty;
+        c.responseFormat = this.responseFormat;
+        c.seed = this.seed;
+        c.tools = this.tools != null ? new ArrayList<>(this.tools) : null;
+        c.toolChoice = this.toolChoice;
+        c.stream = this.stream;
+        return c;
     }
 
     @Data

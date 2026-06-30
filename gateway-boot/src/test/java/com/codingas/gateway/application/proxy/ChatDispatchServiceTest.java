@@ -49,9 +49,6 @@ class ChatDispatchServiceTest {
     private RoutingResolver routingResolver;
 
     @Mock
-    private OutboundTuner outboundTuner;
-
-    @Mock
     private ProtocolConverter protocolConverter;
 
     @Mock
@@ -73,7 +70,7 @@ class ChatDispatchServiceTest {
 
     @BeforeEach
     void setUp() {
-        dispatchService = new ChatDispatchServiceImpl(routingResolver, outboundTuner,
+        dispatchService = new ChatDispatchServiceImpl(routingResolver,
                 protocolConverter, auditGateway, eventPublisher, channelFailoverInvoker, resilienceResolver);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
@@ -110,7 +107,6 @@ class ChatDispatchServiceTest {
 
             lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(openAIContext));
-            lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
             lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenReturn(response);
 
@@ -119,6 +115,7 @@ class ChatDispatchServiceTest {
 
             // then
             assertThat(result).isInstanceOf(OpenAIChatResponse.class);
+            // 阶段3/4 下沉 Invoker：dispatch 不再做请求转换/调谐，protocolConverter 不被 dispatch 调用
             verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
             verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesResponse.class));
             verify(channelFailoverInvoker).invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
@@ -126,7 +123,7 @@ class ChatDispatchServiceTest {
         }
 
         @Test
-        @DisplayName("跨协议调度：OpenAI→Anthropic")
+        @DisplayName("跨协议调度：请求转换+调谐下沉 Invoker，dispatch 传原始 request 并转换响应")
         void dispatch_crossProtocol_withConversion() {
             // given
             OpenAIChatRequest request = OpenAIChatRequest.builder()
@@ -137,12 +134,6 @@ class ChatDispatchServiceTest {
             RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
                     Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null);
 
-            AnthropicMessagesRequest convertedRequest = AnthropicMessagesRequest.builder()
-                    .model("claude-3-5-sonnet-20241022")
-                    .messages(List.of(AnthropicMessagesRequest.Message.builder().role("user").content("hello").build()))
-                    .maxTokens(1024)
-                    .build();
-
             AnthropicMessagesResponse upstreamResponse = AnthropicMessagesResponse.builder()
                     .id("msg-123").model("claude-3-5-sonnet-20241022").build();
 
@@ -150,10 +141,10 @@ class ChatDispatchServiceTest {
 
             lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(anthropicContext));
-            lenient().when(protocolConverter.toAnthropic(any(OpenAIChatRequest.class))).thenReturn(convertedRequest);
-            lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(convertedRequest);
-            lenient().when(channelFailoverInvoker.invoke(eq(anthropicContext), anyList(), any(ProtocolRequest.class),
+            // 阶段3/4 下沉后 dispatch 传原始 request 给 Invoker（Invoker 内部按候选独立 convert+tune）
+            lenient().when(channelFailoverInvoker.invoke(eq(anthropicContext), anyList(), eq(request),
                     eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenReturn(upstreamResponse);
+            // 阶段6 响应转换仍由 dispatch 执行（基于主候选协议）
             lenient().when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(finalResponse);
 
             // when
@@ -161,7 +152,11 @@ class ChatDispatchServiceTest {
 
             // then
             assertThat(result).isInstanceOf(OpenAIChatResponse.class);
-            verify(protocolConverter).toAnthropic(any(OpenAIChatRequest.class));
+            // dispatch 传原始 request（非转换后请求）给 Invoker
+            verify(channelFailoverInvoker).invoke(eq(anthropicContext), anyList(), eq(request),
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString());
+            // 请求转换(toAnthropic)已下沉 Invoker，dispatch 不再调用；响应转换(toOpenAI)仍由 dispatch 执行
+            verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
             verify(protocolConverter).toOpenAI(any(AnthropicMessagesResponse.class));
         }
 
@@ -195,8 +190,6 @@ class ChatDispatchServiceTest {
                     .thenReturn(List.of(openAIContext));
             when(routingResolver.resolveCandidates("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(fallbackCtx));
-            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-
             // 首次 invoke(primaryCtx) 抛 L2 降级信号（fallback=gpt-3.5-turbo），第二次 invoke(fallbackCtx) 返回成功
             ProviderException originalEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "上游错误");
             L2DegradationRequiredException l2Ex = new L2DegradationRequiredException(
@@ -234,9 +227,7 @@ class ChatDispatchServiceTest {
                     "gpt-4o", "gpt-4o", ProviderErrorType.UPSTREAM_ERROR, originalEx);
 
             when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
-                    .thenReturn(List.of(openAIContext));
-            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-            when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    .thenReturn(List.of(openAIContext));            when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenThrow(l2Ex);
 
             // when & then
@@ -270,8 +261,6 @@ class ChatDispatchServiceTest {
             // 任意 fallback 均返回非空候选列表，避免因候选空提前终止
             when(routingResolver.resolveCandidates(anyString(), eq(Protocol.OPENAI), eq(7L), eq(1L), eq("USER"), eq(RoutingStrategy.WEIGHTED)))
                     .thenReturn(List.of(openAIContext));
-            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-
             // when & then — 深度超限后抛出异常（保留原始失败上下文 cause）
             assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ProviderException.class);
@@ -297,8 +286,6 @@ class ChatDispatchServiceTest {
 
             lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(openAIContext));
-            lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-
             StreamCallback callback = mock(StreamCallback.class);
 
             // when
@@ -321,8 +308,6 @@ class ChatDispatchServiceTest {
 
             lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(openAIContext));
-            lenient().when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-
             doThrow(new RuntimeException("上游调用失败"))
                     .when(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                             eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString(), any(StreamCallback.class));
@@ -351,8 +336,6 @@ class ChatDispatchServiceTest {
                     .thenReturn(List.of(openAIContext));
             when(routingResolver.resolveCandidates("gpt-3.5-turbo", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(fallbackCtx));
-            when(outboundTuner.tune(any(ProtocolRequest.class), any(RoutingContext.class))).thenReturn(request);
-
             // 首次 invokeStream(openAIContext) 抛 L2 降级信号，第二次 invokeStream(fallbackCtx) 正常返回（doNothing）
             ProviderException originalEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "上游错误");
             L2DegradationRequiredException l2Ex = new L2DegradationRequiredException(

@@ -1,6 +1,7 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.application.degradation.DegradationService;
+import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
@@ -12,6 +13,7 @@ import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -89,6 +91,8 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");
+        // 调谐下沉：invoker 每候选对原始 request 副本做 convert+tune，copy 桩返回自身保持既有匹配
+        lenient().when(request.copy()).thenReturn(request);
     }
 
     /**
@@ -102,8 +106,14 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
                                                   DegradationService degradationService) {
         // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
         // ChannelGateway 用 no-op mock（集成测试不验证 clusterId 反查，由 ChannelFailoverInvokerTest 覆盖）
+        // OutboundTuner 用 mock + returnsFirstArg（调谐下沉后每候选 tune，集成测试聚焦真实分流表非调谐）
+        // ProtocolConverter 用 no-op mock（集成测试候选均为同协议，不触发跨协议转换）
+        OutboundTuner tuner = mock(OutboundTuner.class);
+        lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
+                .thenAnswer(org.mockito.AdditionalAnswers.returnsFirstArg());
         return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier, degradationService,
-                mock(DomainEventPublisher.class), mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class));
+                mock(DomainEventPublisher.class), mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class),
+                tuner, mock(ProtocolConverter.class));
     }
 
     /**

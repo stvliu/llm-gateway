@@ -46,7 +46,6 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private static final int MAX_DEGRADATION_DEPTH = 5;
 
     private final RoutingResolver routingResolver;
-    private final OutboundTuner outboundTuner;
     private final ProtocolConverter protocolConverter;
     private final AuditGateway auditGateway;
     private final DomainEventPublisher eventPublisher;
@@ -55,14 +54,12 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private final ResilienceResolver resilienceResolver;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
-                                   OutboundTuner outboundTuner,
                                    ProtocolConverter protocolConverter,
                                    AuditGateway auditGateway,
                                    DomainEventPublisher eventPublisher,
                                    ChannelFailoverInvoker channelFailoverInvoker,
                                    ResilienceResolver resilienceResolver) {
         this.routingResolver = routingResolver;
-        this.outboundTuner = outboundTuner;
         this.protocolConverter = protocolConverter;
         this.auditGateway = auditGateway;
         this.eventPublisher = eventPublisher;
@@ -86,23 +83,17 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         long startTime = System.currentTimeMillis();
 
         try {
-            ProtocolRequest outboundReq = request;
-
-            // 阶段 3：请求转换（仅跨协议时执行）
-            if (primaryCtx.needsProtocolAdaptation()) {
-                outboundReq = convertRequest(request, primaryCtx);
-            }
-
-            // 阶段 4：出站调谐
-            outboundReq = outboundTuner.tune(outboundReq, primaryCtx);
+            // 阶段 3/4（请求转换 + 出站调谐）已下沉到 ChannelFailoverInvoker：
+            // 每候选基于原始 request 副本独立 convert+tune，修复 L1 换渠道后请求 model 错误。
+            // 此处直接传原始入站 request，由 Invoker 链内部按候选独立调谐。
 
             // 阶段 5：Invoker 链调用（熔断 + 重试 + Key 故障转移 + L1 候选转移 + L2 模型降级重路由）
             // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
             ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
-            ProtocolResponse response = invokeWithL2Failover(primaryCtx, candidates, outboundReq,
+            ProtocolResponse response = invokeWithL2Failover(primaryCtx, candidates, request,
                     inboundProtocol, identity, strategy, profile, traceId);
 
-            // 阶段 6：响应转换（仅跨协议时执行）
+            // 阶段 6：响应转换（仅跨协议时执行，基于主候选协议）
             if (primaryCtx.needsProtocolAdaptation()) {
                 response = convertResponse(response, primaryCtx, inboundProtocol);
             }
@@ -139,11 +130,10 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         CallLog callLog = createCallLog(identity, request, primaryCtx, inboundProtocol, traceId);
         long startTime = System.currentTimeMillis();
 
-        ProtocolRequest outboundReq = request;
-        if (primaryCtx.needsProtocolAdaptation()) {
-            outboundReq = convertRequest(request, primaryCtx);
-        }
-        outboundReq = outboundTuner.tune(outboundReq, primaryCtx);
+        // 阶段 3/4（请求转换 + 出站调谐）已下沉到 ChannelFailoverInvoker：每候选独立 convert+tune。
+        // 流式 chunk 协议转换方向也由 Invoker 基于实际成功候选 upstreamProtocol 重建（非主候选），
+        // 修复跨协议换候选时按主候选协议转换方向错误的问题。
+        // 此处构造 auditingCallback（审计 + 用户回调），chunk 转换交给 Invoker 内部按候选重建。
 
         StreamCallback auditingCallback = new StreamCallback() {
             @Override
@@ -175,62 +165,10 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             }
         };
 
-        // 根据是否跨协议选择 delegate callback（L2 降级重路由时复用，流未建立前 callback 未触发）
-        StreamCallback delegateCallback;
-        if (primaryCtx.needsProtocolAdaptation()) {
-            // 跨协议：在 callback 中做协议转换
-            String fromProtocol = primaryCtx.upstreamProtocol().name().toLowerCase();
-            String toProtocol = inboundProtocol.name().toLowerCase();
-            delegateCallback = new StreamCallback() {
-                @Override
-                public void onChunk(String data) {
-                    StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
-                    if (result != null) {
-                        auditingCallback.onChunk(result.data());
-                    }
-                }
-
-                @Override
-                public void onComplete() {
-                    StreamChunkResult doneResult = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
-                    if (doneResult != null) {
-                        auditingCallback.onChunk(doneResult.data());
-                    }
-                    auditingCallback.onComplete();
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    auditingCallback.onError(t);
-                }
-            };
-        } else {
-            // 非跨协议：注入协议对应的结束标记
-            delegateCallback = new StreamCallback() {
-                @Override
-                public void onChunk(String data) {
-                    auditingCallback.onChunk(data);
-                }
-
-                @Override
-                public void onComplete() {
-                    if (inboundProtocol == Protocol.OPENAI) {
-                        auditingCallback.onChunk("[DONE]");
-                    }
-                    auditingCallback.onComplete();
-                }
-
-                @Override
-                public void onError(Throwable t) {
-                    auditingCallback.onError(t);
-                }
-            };
-        }
-
         // 阶段 5：Invoker 链调用（L1 候选转移 + L2 模型降级重路由，首字节前启动失败可重路由）
         // 解析容灾画像贯穿 Invoker 链（L2 门禁），fail-open：解析异常降级 null profile
         ResilienceProfile profile = resolveProfileSafely(identity.applicationId());
-        invokeStreamWithL2Failover(primaryCtx, candidates, outboundReq, delegateCallback,
+        invokeStreamWithL2Failover(primaryCtx, candidates, request, auditingCallback,
                 inboundProtocol, identity, strategy, profile, traceId);
     }
 
@@ -464,16 +402,6 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         if ("openai".equals(protocol)) return Protocol.OPENAI;
         if ("anthropic".equals(protocol)) return Protocol.ANTHROPIC;
         throw new IllegalArgumentException("不支持的协议类型: " + protocol);
-    }
-
-    private ProtocolRequest convertRequest(ProtocolRequest request, RoutingContext ctx) {
-        if (request instanceof OpenAIChatRequest openai && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
-            return protocolConverter.toAnthropic(openai);
-        }
-        if (request instanceof AnthropicMessagesRequest anthropic && ctx.upstreamProtocol() == Protocol.OPENAI) {
-            return protocolConverter.toOpenAI(anthropic);
-        }
-        return request;
     }
 
     private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx, Protocol inboundProtocol) {
