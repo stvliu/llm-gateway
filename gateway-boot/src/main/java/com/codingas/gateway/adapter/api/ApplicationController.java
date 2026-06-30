@@ -105,31 +105,4 @@ public class ApplicationController {
             @Valid @RequestBody ApplicationChannelRequest request) {
         applicationService.updateChannels(id, request.channelIds());
     }
-
-    /**
-     * 绑定（或解绑）应用的容灾画像
-     *
-     * <p>独立绑定端点，REST 语义：PUT /api/v1/applications/{id}/resilience。
-     * body 为 {@link ResilienceBindingRequest}，resilienceProfileId 为 null 时解绑。</p>
-     *
-     * @param id      应用 ID
-     * @param request 绑定请求（resilienceProfileId，可空）
-     * @return 绑定/解绑后的应用响应
-     */
-    @PutMapping("/{id}/resilience")
-    public ApplicationResponse bindResilienceProfile(
-            @PathVariable Long id,
-            @RequestBody ResilienceBindingRequest request) {
-        return applicationService.bindResilienceProfile(id, request.resilienceProfileId());
-    }
-
-    /**
-     * 容灾画像绑定请求 DTO（内部 record）
-     *
-     * <p>resilienceProfileId 为 null 时表示解绑应用与容灾画像的关联。</p>
-     *
-     * @param resilienceProfileId 容灾画像 ID（可空）
-     */
-    record ResilienceBindingRequest(Long resilienceProfileId) {
-    }
 }

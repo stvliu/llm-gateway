@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * ResilienceEventController HTTP 契约测试
  *
  * <p>使用 standalone setup + Mock {@link ResilienceEventService}，验证转移事件流查询端点路由、
- * HTTP 状态码与响应序列化契约，不连数据库。参照 {@link ResilienceProfileControllerIT} 范式。</p>
+ * HTTP 状态码与响应序列化契约，不连数据库。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ResilienceEventController 端点契约")

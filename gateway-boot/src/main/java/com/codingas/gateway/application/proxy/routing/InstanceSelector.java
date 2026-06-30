@@ -1,10 +1,8 @@
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.application.resilience.ResilienceResolver;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
-import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
@@ -21,13 +19,12 @@ import java.util.Map;
 /**
  * 模型实例选择器 — 委托给 RouterChain 执行权限过滤 + 健康过滤 + 优先级分组，返回候选列表
  *
- * <p>Task 4.9：解析应用容灾画像（{@link ResilienceResolver}）并贯穿至 {@link RoutingRequest}，
- * 供 PinnedModelRouter/ClusterAffinityRouter/Invoker 链做画像化决策。画像解析失败（应用不存在、
- * default 画像缺失等）时降级为 null profile，不阻断路由（fail-open），仅在 DEBUG 日志记录。</p>
- *
  * <p>Task 3：查 {@link ApplicationChannelGateway#findByApplicationId(Long)} 取该应用所有授权渠道
  * 的 priority，构建 {@code channelPriorityMap} 填入 {@link RoutingRequest}，供 {@link PriorityRouter}
  * 按应用级 priority 升序排序（同一渠道对不同应用可有不同转移顺序）。applicationId 为 null 时传空映射。</p>
+ *
+ * <p>Task 8：移除容灾画像解析（{@code ResilienceResolver} 退场）。timeout 已下沉到
+ * {@code Application.timeout}，不再在路由链解析画像。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -37,8 +34,6 @@ public class InstanceSelector {
 
     private final ModelInstanceGateway modelInstanceGateway;
     private final RouterChain routerChain;
-    /** 容灾画像解析器（Task 4.9 贯穿） */
-    private final ResilienceResolver resilienceResolver;
     /** 应用-渠道授权网关（Task 3 取应用级渠道 priority） */
     private final ApplicationChannelGateway applicationChannelGateway;
 
@@ -65,16 +60,13 @@ public class InstanceSelector {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
 
-        // 解析容灾画像贯穿路由链（fail-open：解析异常降级 null profile，不阻断路由）
-        ResilienceProfile profile = resolveProfileSafely(applicationId);
-
         // 构建应用级渠道优先级映射（Task 3）：同一渠道对不同应用可有不同转移顺序
         Map<Long, Integer> channelPriorityMap = buildChannelPriorityMap(applicationId);
 
-        // 委托 RouterChain 执行过滤链（applicationId 权限锚点、protocol 派生 endpointId、profile 画像化决策、
+        // 委托 RouterChain 执行过滤链（applicationId 权限锚点、protocol 派生 endpointId、
         // channelPriorityMap 应用级转移顺序）
         RoutingRequest request = new RoutingRequest(modelId, applicationId, userId, role, strategy, protocol,
-                profile, channelPriorityMap);
+                channelPriorityMap);
         List<ModelInstance> result = routerChain.filter(allInstances, request);
 
         if (result.isEmpty()) {
@@ -83,28 +75,6 @@ public class InstanceSelector {
 
         // 返回候选列表（已按应用级 priority 升序，供 L1 故障转移逐个尝试；不再收敛到单实例）
         return result;
-    }
-
-    /**
-     * 解析容灾画像（fail-open）
-     *
-     * <p>applicationId 为 null 或画像解析抛异常时返回 null，避免画像解析失败阻断主路由链。
-     * 画像缺失仅影响画像化决策（锁定/门禁），不影响基础路由。</p>
-     *
-     * @param applicationId 应用 ID
-     * @return 容灾画像；解析失败或无应用 ID 时返回 null
-     */
-    private ResilienceProfile resolveProfileSafely(Long applicationId) {
-        if (applicationId == null) {
-            return null;
-        }
-        try {
-            return resilienceResolver.resolve(applicationId);
-        } catch (Exception e) {
-            log.debug("容灾画像解析失败，降级为 null profile（fail-open）: applicationId={}, reason={}",
-                    applicationId, e.getMessage());
-            return null;
-        }
     }
 
     /**

@@ -41,8 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * </ul>
  *
  * <p><b>Task 4 变更</b>：L2 模型降级层已删除。候选全部耗尽后直接抛最后捕获的上游异常，
- * 不再进入 L2 模型降级（降级决策交还给应用层）。invoke/invokeStream 签名移除
- * {@code ResilienceProfile profile} 参数。容灾栈从四层（L0/L1/L2/L3）收敛为三层（L0/L1/L3）。</p>
+ * 不再进入 L2 模型降级（降级决策交还给应用层）。容灾栈从四层（L0/L1/L2/L3）收敛为三层（L0/L1/L3）。</p>
  */
 @Component
 public class ChannelFailoverInvoker {

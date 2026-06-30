@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  *   <li>{@link Application} 实体全部字段可读写</li>
  *   <li>全参构造器（不含 id 与审计字段）正确赋值业务字段</li>
  * </ul>
+ *
+ * <p>Task 8：{@code resilienceProfileId} 退场，新增 {@code timeout}（承接原 ResilienceProfile.timeout，
+ * 0 表示用渠道默认）。</p>
  */
 @DisplayName("Application 聚合根实体测试")
 class ApplicationTest {
@@ -56,13 +59,13 @@ class ApplicationTest {
             Application app = new Application(
                     "app-001", "测试应用", "描述",
                     ApplicationState.ACTIVE,
-                    100L, 200L, 300L);
+                    30, 200L, 300L);
 
             assertThat(app.getCode()).isEqualTo("app-001");
             assertThat(app.getName()).isEqualTo("测试应用");
             assertThat(app.getDescription()).isEqualTo("描述");
             assertThat(app.getState()).isEqualTo(ApplicationState.ACTIVE);
-            assertThat(app.getResilienceProfileId()).isEqualTo(100L);
+            assertThat(app.getTimeout()).isEqualTo(30);
             assertThat(app.getQuotaBudgetId()).isEqualTo(200L);
             assertThat(app.getDashboardId()).isEqualTo(300L);
         }
@@ -78,7 +81,7 @@ class ApplicationTest {
             app.setName("网关应用");
             app.setDescription("权限+行为双聚合");
             app.setState(ApplicationState.INACTIVE);
-            app.setResilienceProfileId(10L);
+            app.setTimeout(60);
             app.setQuotaBudgetId(20L);
             app.setDashboardId(30L);
             app.setCreatedBy(999L);
@@ -91,7 +94,7 @@ class ApplicationTest {
             assertThat(app.getName()).isEqualTo("网关应用");
             assertThat(app.getDescription()).isEqualTo("权限+行为双聚合");
             assertThat(app.getState()).isEqualTo(ApplicationState.INACTIVE);
-            assertThat(app.getResilienceProfileId()).isEqualTo(10L);
+            assertThat(app.getTimeout()).isEqualTo(60);
             assertThat(app.getQuotaBudgetId()).isEqualTo(20L);
             assertThat(app.getDashboardId()).isEqualTo(30L);
             assertThat(app.getCreatedBy()).isEqualTo(999L);
@@ -101,8 +104,8 @@ class ApplicationTest {
         }
 
         @Test
-        @DisplayName("无参构造器初始状态所有字段为 null")
-        void noArgsConstructor_allFieldsNullByDefault() {
+        @DisplayName("无参构造器初始状态：引用字段为 null，timeout 原始值 0")
+        void noArgsConstructor_defaults() {
             Application app = new Application();
 
             assertThat(app.getId()).isNull();
@@ -110,7 +113,8 @@ class ApplicationTest {
             assertThat(app.getName()).isNull();
             assertThat(app.getDescription()).isNull();
             assertThat(app.getState()).isNull();
-            assertThat(app.getResilienceProfileId()).isNull();
+            // timeout 为原始 int，默认 0（表示用渠道默认）
+            assertThat(app.getTimeout()).isEqualTo(0);
             assertThat(app.getQuotaBudgetId()).isNull();
             assertThat(app.getDashboardId()).isNull();
             assertThat(app.getCreatedBy()).isNull();

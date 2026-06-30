@@ -7,7 +7,9 @@ import java.time.Instant;
 /**
  * 应用响应 DTO
  *
- * <p>返回应用聚合根的完整字段，含预留的容灾画像/配额预算/看板 ID。</p>
+ * <p>返回应用聚合根的完整字段，含应用级 timeout 与预留的配额预算/看板 ID。</p>
+ *
+ * <p>Task 8：{@code resilienceProfileId} 退场，改为 {@code timeout}（承接原 ResilienceProfile.timeout）。</p>
  */
 @Data
 public class ApplicationResponse {
@@ -27,8 +29,8 @@ public class ApplicationResponse {
     /** 应用生命周期状态（ACTIVE/INACTIVE） */
     private String state;
 
-    /** 容灾画像 ID（预留） */
-    private Long resilienceProfileId;
+    /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
+    private int timeout;
 
     /** 配额预算 ID（预留） */
     private Long quotaBudgetId;

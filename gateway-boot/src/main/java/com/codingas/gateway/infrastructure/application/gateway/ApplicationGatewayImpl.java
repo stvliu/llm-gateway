@@ -61,7 +61,7 @@ public class ApplicationGatewayImpl implements ApplicationGateway {
         entity.setDescription(d.getDescription());
         // 状态以字符串存储，读取时还原为枚举
         entity.setState(d.getState() != null ? ApplicationState.valueOf(d.getState()) : null);
-        entity.setResilienceProfileId(d.getResilienceProfileId());
+        entity.setTimeout(d.getTimeout());
         entity.setQuotaBudgetId(d.getQuotaBudgetId());
         entity.setDashboardId(d.getDashboardId());
         entity.setCreatedBy(d.getCreatedBy());
@@ -79,7 +79,7 @@ public class ApplicationGatewayImpl implements ApplicationGateway {
         d.setDescription(entity.getDescription());
         // 状态缺省 ACTIVE，保证 NOT NULL 约束
         d.setState(entity.getState() != null ? entity.getState().name() : ApplicationState.ACTIVE.name());
-        d.setResilienceProfileId(entity.getResilienceProfileId());
+        d.setTimeout(entity.getTimeout());
         d.setQuotaBudgetId(entity.getQuotaBudgetId());
         d.setDashboardId(entity.getDashboardId());
         d.setCreatedBy(entity.getCreatedBy());

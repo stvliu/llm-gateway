@@ -67,18 +67,4 @@ public interface ApplicationService {
      * @param channelIds 渠道 ID 列表
      */
     void updateChannels(Long id, List<Long> channelIds);
-
-    /**
-     * 绑定（或解绑）应用的容灾画像
-     *
-     * <p>独立绑定端点，REST 语义清晰：PUT /api/v1/applications/{id}/resilience。
-     * resilienceProfileId 为 null 时表示解绑（清空绑定），允许；
-     * 非空时校验对应 ResilienceProfile 存在，不存在抛
-     * {@code GatewayRequestException("RESILIENCE_PROFILE_NOT_FOUND")}。</p>
-     *
-     * @param applicationId       应用 ID
-     * @param resilienceProfileId 容灾画像 ID（null 表示解绑）
-     * @return 绑定/解绑后的应用响应
-     */
-    ApplicationResponse bindResilienceProfile(Long applicationId, Long resilienceProfileId);
 }

@@ -34,7 +34,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(10L, 100, 20L, 200, 30L, 100);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2, mi3), request);
 
         // 不收敛：保留全部 3 个；按应用级 priority 升序：100,100,200 → [mi1, mi3, mi2]
@@ -55,7 +55,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(10L, 1, 20L, 2);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
         List<ModelInstance> result = router.filter(List.of(primary, backup), request);
 
         // 主备不丢：返回 [主,备]，应用级 priority 升序（L1 故障转移前提）
@@ -75,7 +75,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(10L, 100, 20L, 100);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
         assertThat(result).hasSize(2);
@@ -93,7 +93,7 @@ class PriorityRouterTest {
         mi2.setChannelId(20L);
 
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, Map.of());
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, Map.of());
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
         // 映射为空，全部回退 100，稳定排序保持原序 → [mi1, mi2]
@@ -105,7 +105,7 @@ class PriorityRouterTest {
     @DisplayName("空列表返回空")
     void emptyInput_returnsEmpty() {
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, Map.of());
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, Map.of());
         List<ModelInstance> result = router.filter(List.of(), request);
 
         assertThat(result).isEmpty();
@@ -137,7 +137,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(10L, 200, 20L, 1, 30L, 100);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
 
         List<ModelInstance> result = router.filter(List.of(mi1, mi2, mi3), request);
 
@@ -160,7 +160,7 @@ class PriorityRouterTest {
         mi2.setPriority(2);
 
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, Map.of());
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, Map.of());
 
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
@@ -182,7 +182,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(10L, 200);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
 
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
 
@@ -204,14 +204,14 @@ class PriorityRouterTest {
         // 应用 A：渠道 10 优先（priority 1 < 2）→ [miA1, miA2]
         Map<Long, Integer> appAMap = Map.of(10L, 1, 20L, 2);
         RoutingRequest requestA = new RoutingRequest(
-                1L, 100L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, appAMap);
+                1L, 100L, 1L, "USER", RoutingStrategy.WEIGHTED, null, appAMap);
         List<ModelInstance> resultA = router.filter(List.of(miA1, miA2), requestA);
         assertThat(resultA).extracting(ModelInstance::getId).containsExactly(1L, 2L);
 
         // 应用 B：渠道 20 优先（priority 1 < 2）→ [miA2, miA1]
         Map<Long, Integer> appBMap = Map.of(10L, 2, 20L, 1);
         RoutingRequest requestB = new RoutingRequest(
-                1L, 200L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, appBMap);
+                1L, 200L, 1L, "USER", RoutingStrategy.WEIGHTED, null, appBMap);
         List<ModelInstance> resultB = router.filter(List.of(miA1, miA2), requestB);
         assertThat(resultB).extracting(ModelInstance::getId).containsExactly(2L, 1L);
     }
@@ -229,7 +229,7 @@ class PriorityRouterTest {
 
         Map<Long, Integer> channelPriorityMap = Map.of(20L, 200);
         RoutingRequest request = new RoutingRequest(
-                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, null, channelPriorityMap);
+                1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, null, channelPriorityMap);
 
         // mi1 channelId=null 回退 100，mi2=200；升序 [mi1(100), mi2(200)]，不抛 NPE
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);

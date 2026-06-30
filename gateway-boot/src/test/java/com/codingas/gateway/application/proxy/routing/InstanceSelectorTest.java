@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.application.resilience.ResilienceResolver;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
@@ -37,6 +36,8 @@ import static org.mockito.Mockito.when;
  * <p>Task 3：验证 select 在构造 RoutingRequest 前查
  * {@link ApplicationChannelGateway#findByApplicationId(Long)} 取该应用授权渠道 priority，
  * 构建 {@code channelPriorityMap} 填入 RoutingRequest。</p>
+ *
+ * <p>Task 8：移除容灾画像解析（ResilienceResolver 退场），select 不再解析 profile。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("InstanceSelector 单元测试")
@@ -50,9 +51,6 @@ class InstanceSelectorTest {
 
     @Mock
     private ApplicationChannelGateway applicationChannelGateway;
-
-    @Mock
-    private ResilienceResolver resilienceResolver;
 
     @InjectMocks
     private InstanceSelector instanceSelector;

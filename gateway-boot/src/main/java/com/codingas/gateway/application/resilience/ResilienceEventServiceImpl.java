@@ -22,7 +22,7 @@ import java.util.List;
  * 导致前端总览页告警区被陈旧数据淹没。{@code findRecent} 不补默认窗口（转移事件流需支持
  * 回溯历史，since 为 null 时按 limit 截断全量倒序）。</p>
  *
- * <p>参照 {@link ResilienceProfileServiceImpl} 的 Service→Gateway 分层范式。</p>
+ * <p>参照 ResilienceProfileServiceImpl 的 Service→Gateway 分层范式。</p>
  */
 @Service
 @RequiredArgsConstructor
