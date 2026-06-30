@@ -83,9 +83,9 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     void setUpFailoverFixture() {
         // 构造两个候选渠道上下文（按 priority 升序，ctx1 优先）
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, null);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, null);
 
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
@@ -102,14 +102,13 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
      */
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker) {
         // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
-        // ChannelGateway 用 no-op mock（集成测试不验证 clusterId 反查，由 ChannelFailoverInvokerTest 覆盖）
         // OutboundTuner 用 mock + returnsFirstArg（调谐下沉后每候选 tune，集成测试聚焦真实分流表非调谐）
         // ProtocolConverter 用 no-op mock（集成测试候选均为同协议，不触发跨协议转换）
         OutboundTuner tuner = mock(OutboundTuner.class);
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(org.mockito.AdditionalAnswers.returnsFirstArg());
         return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier,
-                mock(DomainEventPublisher.class), mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class),
+                mock(DomainEventPublisher.class),
                 tuner, mock(ProtocolConverter.class));
     }
 
@@ -161,6 +160,39 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
 
             verify(keyFailover).invoke(ctx1, request);
             verify(keyFailover, never()).invoke(ctx2, request);
+        }
+
+        @Test
+        @DisplayName("9.7 端到端：故障域级共因故障 → L1 跳过同域 → 跨域转移成功")
+        void e2e_commonCauseFailure_skipsSameCluster_transfersAcrossCluster() {
+            // 构造：ch1(cluster=100) + ch2(cluster=100, 同域) + ch3(cluster=200, 异域)
+            RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
+                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
+            RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
+                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
+            RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
+                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
+
+            // ch1 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 标记 cluster=100
+            ProviderException authEx = new ProviderException(
+                    ProviderErrorType.AUTHENTICATION_ERROR, "ch1 认证失败");
+            KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
+            when(keyFailover.invoke(ch1, request)).thenThrow(authEx);
+            // ch2 同 cluster=100 → 被跳过（keyFailover.invoke 不应被调用）
+            // ch3 cluster=200 异域 → 被试，成功
+            ProtocolResponse successResponse = mock(ProtocolResponse.class);
+            when(keyFailover.invoke(ch3, request)).thenReturn(successResponse);
+
+            ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
+
+            ProtocolResponse result = invoker.invoke(ch1, List.of(ch1, ch2, ch3),
+                    request, Protocol.OPENAI, 7L, "test-trace-id");
+
+            // 断言：跨域转移成功，返回 ch3 的响应
+            assertThat(result).isSameAs(successResponse);
+            verify(keyFailover).invoke(ch1, request);
+            verify(keyFailover, never()).invoke(ch2, request);  // 同域共因跳过
+            verify(keyFailover).invoke(ch3, request);  // 异域候选被试
         }
     }
 
