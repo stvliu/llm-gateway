@@ -35,24 +35,24 @@
 
 ## 4. 删除 L2 模型降级层（独立）
 
-- [ ] 4.1 整删 `application/degradation/` 包（DegradationService/Impl/Properties/Event/RecoveredEvent + `@Scheduled recoveryCheck`）
-- [ ] 4.2 整删 `L2DegradationRequiredException`
-- [ ] 4.3 `ChannelFailoverInvoker` 删 `tryL2Degradation`/`degradationService` 字段/构造参数，候选耗尽直接抛 lastException，签名去 profile
-- [ ] 4.4 `ChatDispatchServiceImpl` 删 `invokeWithL2Failover`/`invokeStreamWithL2Failover`/`resolveMaxDepth`/`unwrapL2Cause`/`MAX_DEGRADATION_DEPTH`/`resolveProfileSafely`/`resilienceResolver` 依赖，直接调 invoker
-- [ ] 4.5 `FailoverDecision` 删 L2 枚举值
-- [ ] 4.6 `ErrorClassifier` UNKNOWN→NONE，getOrDefault 兜底改 NONE
-- [ ] 4.7 删 `DegradationServiceTest`，适配 `ChannelFailoverInvokerTest`/`ChatDispatchServiceTest`/`ChannelFailoverIntegrationTest`
-- [ ] 4.8 跑绿 + 回归
-- [ ] 4.9 commit
+- [x] 4.1 整删 `application/degradation/` 包（DegradationService/Impl/Properties/Event/RecoveredEvent + `@Scheduled recoveryCheck`）
+- [x] 4.2 整删 `L2DegradationRequiredException`
+- [x] 4.3 `ChannelFailoverInvoker` 删 `tryL2Degradation`/`degradationService` 字段/构造参数，候选耗尽直接抛 lastException，签名去 profile
+- [x] 4.4 `ChatDispatchServiceImpl` 删 `invokeWithL2Failover`/`invokeStreamWithL2Failover`/`resolveMaxDepth`/`unwrapL2Cause`/`MAX_DEGRADATION_DEPTH`/`resolveProfileSafely`/`resilienceResolver` 依赖，直接调 invoker
+- [x] 4.5 `FailoverDecision` 删 L2 枚举值
+- [x] 4.6 `ErrorClassifier` UNKNOWN→NONE，getOrDefault 兜底改 NONE
+- [x] 4.7 删 `DegradationServiceTest`，适配 `ChannelFailoverInvokerTest`/`ChatDispatchServiceTest`/`ChannelFailoverIntegrationTest`
+- [x] 4.8 跑绿 + 回归
+- [x] 4.9 commit
 
 ## 5. 删除 DomainHealth 路由器（独立，与 6 无强依赖）
 
-- [ ] 5.1 整删 `ClusterHealthAggregator`
-- [ ] 5.2 整删 `ClusterAffinityRouter`，RouterChain 顺序变为 Permission→EndpointHealth→Priority→LoadBalance
-- [ ] 5.3 删 `ClusterHealthStatus` 枚举（若 Cluster 不再用）
-- [ ] 5.4 适配 `RouterChainTest`/`HealthRouterTest`
-- [ ] 5.5 跑绿 + 回归
-- [ ] 5.6 commit
+- [x] 5.1 整删 `ClusterHealthAggregator`
+- [x] 5.2 整删 `ClusterAffinityRouter`，RouterChain 顺序变为 Permission→EndpointHealth→Priority→LoadBalance
+- [x] 5.3 删 `ClusterHealthStatus` 枚举（若 Cluster 不再用）
+- [x] 5.4 适配 `RouterChainTest`/`HealthRouterTest`
+- [x] 5.5 跑绿 + 回归
+- [x] 5.6 commit
 
 ## 6. Cluster 语义改造 + 瘦身字段（独立，保留实体名）
 
@@ -69,14 +69,14 @@
 
 ## 7. 删除 PinnedModel 与会话亲和（独立）
 
-- [ ] 7.1 整删 `PinnedModelRouter`
-- [ ] 7.2 删 `ResilienceProfile.enablePinnedModel`/`pinnedModelId`（若 8 未先删实体）
-- [ ] 7.3 整删 `SessionAffinityStore`（Redis/InMemory 双实现）+ `SessionAffinityConfig`
-- [ ] 7.4 删 `ResilienceProfile.enableSessionAffinity`/`sessionAffinityTtlMinutes`
-- [ ] 7.5 RouterChain 去除 PinnedModel（已在 5.2 处理，此处确认）
-- [ ] 7.6 适配测试
-- [ ] 7.7 跑绿 + 回归
-- [ ] 7.8 commit
+- [x] 7.1 整删 `PinnedModelRouter`
+- [x] 7.2 删 `ResilienceProfile.enablePinnedModel`/`pinnedModelId`（若 8 未先删实体）
+- [x] 7.3 整删 `SessionAffinityStore`（Redis/InMemory 双实现）+ `SessionAffinityConfig`
+- [x] 7.4 删 `ResilienceProfile.enableSessionAffinity`/`sessionAffinityTtlMinutes`
+- [x] 7.5 RouterChain 去除 PinnedModel（已在 5.2 处理，此处确认）
+- [x] 7.6 适配测试
+- [x] 7.7 跑绿 + 回归
+- [x] 7.8 commit
 
 ## 8. ResilienceProfile 实体降级（依赖 4/7）
 

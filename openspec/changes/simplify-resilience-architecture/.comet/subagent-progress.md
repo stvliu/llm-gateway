@@ -7,16 +7,15 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 7 — 删除 PinnedModel 与会话亲和（独立）
-- 映射 OpenSpec tasks: 7.1-7.8
+- 当前 plan task: Task 6 — Cluster 语义改造 + 瘦身字段（依赖 Task 1）
+- 映射 OpenSpec tasks: 6.1-6.10
 - 阶段: implementing
-- Task 7 BASE commit: a1f387b
+- Task 6 BASE commit: a8cefaf
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
-- 已通过审查阶段: 批次 A Approved
-- 审查-修复轮次: 0（批次 B 进行中：Task 4+5 完成，待 Task 7）
-- 批次 B（Task 4+5+7）审查: Task 7 完成后合并审查
-- 待批次 B reviewer 重点核查: Task 4 顾虑 1（FailoverEventGatewayImpl:76 valueOf 还原 FailoverDecision，删 L2 后读历史 'L2' 记录抛 IllegalArgumentException——生产运行时风险，需 Task 6 处理历史值映射或数据迁移）
-- Task 5 顾虑: PinnedModelRouter 仍活跃（@Order 350）——按 plan Task 7 删除（非 implementer 推断的 Task 8），Task 5 保留是预期；surefire 顶层 @Test 不发现的项目怪癖已记录
+- 已通过审查阶段: 批次 A Approved + 批次 B Approved
+- 审查-修复轮次: 0（批次 C 开始：Task 6→8→9）
+- 批次 C（Task 6+8+9）审查: Task 6+8+9 完成后合并审查
+- **Task 6 强制项（reviewer 要求）**: FailoverEventGatewayImpl.java:76 valueOf 还原 FailoverDecision 需容错——读历史 decision='L2' 行会抛 IllegalArgumentException 破坏管理后台容灾查询。Task 6 触及 FailoverEvent/DO，必须加 try-catch 容错（L2/未知值→NONE + log warn）或配套数据迁移 UPDATE failover_events SET decision='NONE' WHERE decision='L2'。不可遗漏。
 - 待最终审查 triage 的 Minor: (A-2)Task3 TDD RED 不纯粹 (A-4)copy default 脆弱 (A-7)InstanceSelector 每请求 DB 查询 (A-顾虑1)ChatDispatchServiceImpl protocolConverter dead code 待清理
 - 待批次 A reviewer 重点核查: Task 2 顾虑 2（响应转换残留——跨协议换候选时 convertResponse 基于 primaryCtx 可能返回协议错误，design ID3 未覆盖的对称缺陷）
 
@@ -38,10 +37,10 @@
 | 1 | 修复 PriorityRouter 选择器→排序器 | ✅ 批次 A 通过 ec68a15 |
 | 2 | 调谐下沉 invoker，每候选独立 | ✅ 批次 A 通过 337d54c+96f4f2a（含响应转换下沉修复） |
 | 3 | 应用级 ApplicationChannel.priority | ✅ 批次 A 通过 d83201e |
-| 4 | 删除 L2 模型降级层 | 待派发 |
-| 5 | 删除 DomainHealth 路由器 | 待派发 |
-| 6 | Cluster 语义改造 + 瘦身字段 | 待派发 |
-| 7 | 删除 PinnedModel 与会话亲和 | 待派发 |
+| 4 | 删除 L2 模型降级层 | ✅ 批次 B 通过 d8f6372 |
+| 5 | 删除 DomainHealth 路由器 | ✅ 批次 B 通过 a1f387b |
+| 6 | Cluster 语义改造 + 瘦身字段 | 进行中 |
+| 7 | 删除 PinnedModel 与会话亲和 | ✅ 批次 B 通过 a8cefaf |
 | 8 | ResilienceProfile 实体降级 | 待派发 |
 | 9 | L1 clusterId 共因跳过 | 待派发 |
 | 10 | 前端适配 | 待派发 |
