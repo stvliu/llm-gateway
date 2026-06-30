@@ -6,7 +6,9 @@ import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
@@ -138,7 +140,10 @@ public class ChannelFailoverInvoker {
             try {
                 // 调谐下沉：每候选基于原始 request 副本独立 convert+tune（修复 L1 换渠道后 model 错误）
                 ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
-                return keyFailoverInvoker.invoke(candidate, candidateReq);
+                ProtocolResponse response = keyFailoverInvoker.invoke(candidate, candidateReq);
+                // 响应转换下沉：基于实际成功候选(非主候选) 转换响应为入站协议格式（与流式 buildStreamCallback 对称）
+                // 修复跨协议换候选时按主候选协议转换方向错误/跳过转换，返回错误协议响应的问题
+                return adaptResponseForCandidate(response, candidate);
             } catch (ProviderException e) {
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
                 log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}), 尝试下一候选",
@@ -320,6 +325,46 @@ public class ChannelFailoverInvoker {
             return protocolConverter.toOpenAI(anthropic);
         }
         return request;
+    }
+
+    /**
+     * 响应转换下沉：基于实际成功候选将上游响应转换为入站协议格式
+     *
+     * <p>与 {@link #adaptRequestForCandidate} 对称，下沉自 {@code ChatDispatchServiceImpl.convertResponse}。
+     * 关键差异：基于<b>实际成功候选</b>（非主候选）的 upstreamProtocol 决定转换方向，确保 L1 换到
+     * 跨协议备候选时响应被正确转换为入站协议格式。修复前响应转换留在 dispatch 阶段6 且基于主候选：
+     * 当主候选同协议(needsAdaptation=false)而实际成功的是跨协议备候选时，阶段6 跳过转换，
+     * 返回错误协议响应，违反双 API 兼容铁律。</p>
+     *
+     * <p>同协议候选(needsProtocolAdaptation=false)不转换，原样返回。</p>
+     *
+     * @param response  上游响应
+     * @param candidate 实际成功候选路由上下文
+     * @return 入站协议格式的响应；同协议候选原样返回
+     */
+    private ProtocolResponse adaptResponseForCandidate(ProtocolResponse response, RoutingContext candidate) {
+        if (!candidate.needsProtocolAdaptation()) {
+            return response;
+        }
+        return convertResponse(response, candidate);
+    }
+
+    /**
+     * 跨协议响应转换（下沉自 ChatDispatchServiceImpl，每候选独立执行）
+     *
+     * @param response 上游响应
+     * @param ctx      路由上下文（提供上游协议，决定转换方向）
+     * @return 转换后的响应；无法匹配时原样返回并告警
+     */
+    private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx) {
+        if (response instanceof AnthropicMessagesResponse anthropic && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
+            return protocolConverter.toOpenAI(anthropic);
+        }
+        if (response instanceof OpenAIChatResponse openai && ctx.upstreamProtocol() == Protocol.OPENAI) {
+            return protocolConverter.toAnthropic(openai);
+        }
+        log.warn("无法转换响应: upstreamProtocol={}, 原样返回", ctx.upstreamProtocol());
+        return response;
     }
 
     /**

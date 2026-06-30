@@ -93,10 +93,9 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             ProtocolResponse response = invokeWithL2Failover(primaryCtx, candidates, request,
                     inboundProtocol, identity, strategy, profile, traceId);
 
-            // 阶段 6：响应转换（仅跨协议时执行，基于主候选协议）
-            if (primaryCtx.needsProtocolAdaptation()) {
-                response = convertResponse(response, primaryCtx, inboundProtocol);
-            }
+            // 阶段 6：响应转换已下沉 ChannelFailoverInvoker（基于实际成功候选，与流式 buildStreamCallback 对称）
+            // 修复前基于主候选协议：主候选同协议(needsAdaptation=false)而实际成功的是跨协议备候选时，
+            // 阶段6 跳过转换，返回错误协议响应，违反双 API 兼容铁律。
 
             // 阶段 7：后置处理 — 审计终点 + Token 计量
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
@@ -402,17 +401,6 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
         if ("openai".equals(protocol)) return Protocol.OPENAI;
         if ("anthropic".equals(protocol)) return Protocol.ANTHROPIC;
         throw new IllegalArgumentException("不支持的协议类型: " + protocol);
-    }
-
-    private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx, Protocol inboundProtocol) {
-        if (response instanceof AnthropicMessagesResponse anthropic && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
-            return protocolConverter.toOpenAI(anthropic);
-        }
-        if (response instanceof OpenAIChatResponse openai && ctx.upstreamProtocol() == Protocol.OPENAI) {
-            return protocolConverter.toAnthropic(openai);
-        }
-        log.warn("无法转换响应: {} → {},返回原始响应", ctx.upstreamProtocol(), inboundProtocol);
-        return response;
     }
 
     }

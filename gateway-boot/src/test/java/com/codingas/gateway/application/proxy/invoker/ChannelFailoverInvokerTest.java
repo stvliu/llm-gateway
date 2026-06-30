@@ -7,7 +7,9 @@ import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
@@ -721,6 +723,57 @@ class ChannelFailoverInvokerTest {
                 .isEqualTo("gpt-4o");
     }
 
+    // ==================== 调谐下沉：非流式响应转换（与流式 buildStreamCallback 对称） ====================
+
+    @Test
+    @DisplayName("非流式跨协议换候选：基于实际成功候选(非主候选) 转换响应为入站协议格式")
+    void nonStream_failoverCrossProtocol_convertsResponsePerSuccessfulCandidate() {
+        // 真实 ProtocolConverter（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
+        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        OutboundTuner realTuner = new OutboundTuner(List.of());
+        ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
+                keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway, realTuner, realConverter);
+
+        // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model");
+        RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
+                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model");
+
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .build();
+
+        // 主候选(OpenAI 同协议) AUTH 共因失败 → L1 → 换备候选(Anthropic 跨协议)
+        ProviderException authEx = new ProviderException(
+                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
+        when(keyFailoverInvoker.invoke(eq(openaiCtx), any(ProtocolRequest.class))).thenThrow(authEx);
+        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        // 备候选(Anthropic 上游)成功：返回 Anthropic 格式响应（content blocks）
+        AnthropicMessagesResponse upstreamResponse = AnthropicMessagesResponse.builder()
+                .id("msg-123").model("claude-3-5-sonnet")
+                .content(List.of(AnthropicMessagesResponse.ContentBlock.builder()
+                        .type("text").text("hi").build()))
+                .build();
+        when(keyFailoverInvoker.invoke(eq(anthropicCtx), any(ProtocolRequest.class))).thenReturn(upstreamResponse);
+
+        ProtocolResponse result = invokerReal.invoke(openaiCtx, List.of(openaiCtx, anthropicCtx),
+                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id");
+
+        // 断言：备候选 Anthropic 响应被转换为入站 OpenAI 格式（choices 非空，含 message.content）
+        // 修复前 invoker 不做响应转换，返回原始 AnthropicMessagesResponse（content blocks，无 choices）
+        assertThat(result)
+                .as("跨协议换候选应基于成功候选(Anthropic)→inbound(OpenAI) 转换响应，修复前返回未转换的 Anthropic 响应")
+                .isInstanceOf(OpenAIChatResponse.class);
+        OpenAIChatResponse openaiResult = (OpenAIChatResponse) result;
+        assertThat(openaiResult.getChoices()).isNotNull().isNotEmpty();
+        assertThat(openaiResult.getChoices().get(0).getMessage().getContent()).isEqualTo("hi");
+    }
+
     // ==================== 调谐下沉：流式 chunk 转换方向重建（Task 2.5） ====================
 
     @Test
@@ -806,6 +859,57 @@ class ChannelFailoverInvokerTest {
         // 断言：备候选 OpenAI 上游==inbound（同协议），chunk 透传不转换
         // 若错误按主候选(Anthropic)方向转换，会把 OpenAI chunk 当 Anthropic 解析 → 返回 null → chunk 丢失
         verify(callback).onChunk(openaiChunk);
+    }
+
+    @Test
+    @DisplayName("流式跨协议换候选：主同协议失败→备跨协议成功，chunk 被转换为入站协议格式（与 2.5b 对称方向）")
+    void stream_failoverFromSameToCrossProtocol_convertsChunkToInbound() {
+        // 真实 ProtocolConverter + 真实 OutboundTuner
+        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        OutboundTuner realTuner = new OutboundTuner(List.of());
+        ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
+                keyFailoverInvoker, errorClassifier, degradationService,
+                eventPublisher, channelGateway, realTuner, realConverter);
+
+        // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model");
+        RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
+                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model");
+
+        OpenAIChatRequest original = OpenAIChatRequest.builder()
+                .model("gpt-4o")
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hi").build()))
+                .build();
+
+        // 主候选(OpenAI 同协议)启动失败（首字节前）→ L1 → 换备候选(Anthropic 跨协议)
+        ProviderException startupEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        doThrow(startupEx).when(keyFailoverInvoker)
+                .invokeStream(eq(openaiCtx), any(ProtocolRequest.class), any(StreamCallback.class));
+        when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
+                .thenReturn(FailoverDecision.L1);
+
+        // 备候选(Anthropic 上游)成功：发 Anthropic 格式 chunk（content_block_delta）
+        String anthropicChunk = "{\"type\":\"content_block_delta\",\"delta\":{\"text\":\"hi\"}}";
+        doAnswer(inv -> {
+            StreamCallback cb = inv.getArgument(2, StreamCallback.class);
+            cb.onChunk(anthropicChunk);
+            return null;
+        }).when(keyFailoverInvoker).invokeStream(eq(anthropicCtx), any(ProtocolRequest.class), any(StreamCallback.class));
+
+        StreamCallback callback = mock(StreamCallback.class);
+        invokerReal.invokeStream(openaiCtx, List.of(openaiCtx, anthropicCtx),
+                original, Protocol.OPENAI, 7L, L2_PROFILE, "test-trace-id", callback);
+
+        // 断言：备候选 Anthropic chunk 被转换为入站 OpenAI 格式（含 chat.completion.chunk）
+        // 与 2.5b 对称：2.5b 是主跨协议失败→备同协议成功（chunk 透传）；
+        // 本测试是主同协议失败→备跨协议成功（chunk 转换为入站协议）
+        ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(callback).onChunk(captor.capture());
+        assertThat(captor.getValue())
+                .as("主同协议失败→备跨协议成功，chunk 应按成功候选(Anthropic)→inbound(OpenAI) 转换")
+                .contains("chat.completion.chunk")
+                .doesNotContain("content_block_delta");
     }
 
     /** 构造测试用画像：enableL2 控制是否启用 L2 模型降级门禁（Task 4.9 profile 贯穿） */

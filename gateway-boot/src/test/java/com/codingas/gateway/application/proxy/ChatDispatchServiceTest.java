@@ -123,7 +123,7 @@ class ChatDispatchServiceTest {
         }
 
         @Test
-        @DisplayName("跨协议调度：请求转换+调谐下沉 Invoker，dispatch 传原始 request 并转换响应")
+        @DisplayName("跨协议调度：请求/响应转换+调谐均下沉 Invoker，dispatch 传原始 request 并透传响应")
         void dispatch_crossProtocol_withConversion() {
             // given
             OpenAIChatRequest request = OpenAIChatRequest.builder()
@@ -134,30 +134,27 @@ class ChatDispatchServiceTest {
             RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
                     Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null);
 
-            AnthropicMessagesResponse upstreamResponse = AnthropicMessagesResponse.builder()
+            // Invoker 已下沉响应转换，返回入站协议格式的最终响应；dispatch 应透传不转换
+            AnthropicMessagesResponse invokerResponse = AnthropicMessagesResponse.builder()
                     .id("msg-123").model("claude-3-5-sonnet-20241022").build();
-
-            OpenAIChatResponse finalResponse = OpenAIChatResponse.builder().id("chatcmpl-123").model("gpt-4o").build();
 
             lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .thenReturn(List.of(anthropicContext));
-            // 阶段3/4 下沉后 dispatch 传原始 request 给 Invoker（Invoker 内部按候选独立 convert+tune）
+            // 阶段3/4/6 均下沉 Invoker：dispatch 传原始 request，Invoker 内部按候选独立 convert+tune+响应转换
             lenient().when(channelFailoverInvoker.invoke(eq(anthropicContext), anyList(), eq(request),
-                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenReturn(upstreamResponse);
-            // 阶段6 响应转换仍由 dispatch 执行（基于主候选协议）
-            lenient().when(protocolConverter.toOpenAI(any(AnthropicMessagesResponse.class))).thenReturn(finalResponse);
+                    eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenReturn(invokerResponse);
 
             // when
             ProtocolResponse result = dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
 
             // then
-            assertThat(result).isInstanceOf(OpenAIChatResponse.class);
+            assertThat(result).isSameAs(invokerResponse);
             // dispatch 传原始 request（非转换后请求）给 Invoker
             verify(channelFailoverInvoker).invoke(eq(anthropicContext), anyList(), eq(request),
                     eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString());
-            // 请求转换(toAnthropic)已下沉 Invoker，dispatch 不再调用；响应转换(toOpenAI)仍由 dispatch 执行
+            // 请求转换(toAnthropic) + 响应转换(toOpenAI) 均下沉 Invoker，dispatch 不再调用 protocolConverter
             verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
-            verify(protocolConverter).toOpenAI(any(AnthropicMessagesResponse.class));
+            verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesResponse.class));
         }
 
         @Test
@@ -227,7 +224,8 @@ class ChatDispatchServiceTest {
                     "gpt-4o", "gpt-4o", ProviderErrorType.UPSTREAM_ERROR, originalEx);
 
             when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
-                    .thenReturn(List.of(openAIContext));            when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    .thenReturn(List.of(openAIContext));
+            when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), any(ResilienceProfile.class), anyString())).thenThrow(l2Ex);
 
             // when & then

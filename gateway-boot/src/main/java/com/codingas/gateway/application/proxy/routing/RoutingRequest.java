@@ -153,7 +153,7 @@ public class RoutingRequest {
     /**
      * 返回应用级渠道转移优先级映射（key=channelId, value=priority，数值越小越优先）
      *
-     * @return 不可变映射；为空表示无应用级映射，{@link PriorityRouter} 回退默认值 100
+     * @return 渠道优先级映射（不应被调用方修改）；为空表示无应用级映射，{@link PriorityRouter} 回退默认值 100
      */
     public Map<Long, Integer> getChannelPriorityMap() { return channelPriorityMap; }
 }
