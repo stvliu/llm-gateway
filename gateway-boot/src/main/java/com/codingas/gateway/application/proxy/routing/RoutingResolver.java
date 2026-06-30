@@ -1,6 +1,8 @@
 package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.application.entity.Application;
+import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
@@ -10,6 +12,7 @@ import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -18,6 +21,7 @@ import java.util.List;
  * 路由解析门面 — 编排四个子组件，组装 RoutingContext
  */
 @Component
+@Slf4j
 @RequiredArgsConstructor
 public class RoutingResolver {
 
@@ -26,6 +30,7 @@ public class RoutingResolver {
     private final CredentialResolver credentialResolver;
     private final EndpointResolver endpointResolver;
     private final ChannelGateway channelGateway;
+    private final ApplicationGateway applicationGateway;
 
     /**
      * 根据模型名称解析完整的路由上下文（取最高优先级候选）
@@ -70,24 +75,55 @@ public class RoutingResolver {
         // 2. 实例选择 — 返回按 priority 升序的候选列表（applicationId 作为权限锚点、protocol 供 HealthRouter 派生 endpointId）
         List<ModelInstance> candidates = instanceSelector.select(model.getId(), applicationId, userId, role, strategy, protocol);
 
-        // 3. 逐个候选转 RoutingContext（顺序保持 InstanceSelector 的 priority 升序，供 L1 故障转移逐个尝试）
+        // 3. 应用级超时解析 — applicationId 非 null 时查 Application 取 timeout（0 表示用渠道默认）
+        Integer applicationTimeout = resolveApplicationTimeout(applicationId);
+
+        // 4. 逐个候选转 RoutingContext（顺序保持 InstanceSelector 的 priority 升序，供 L1 故障转移逐个尝试）
         return candidates.stream()
-                .map(instance -> buildContext(instance, model, protocol))
+                .map(instance -> buildContext(instance, model, protocol, applicationTimeout))
                 .toList();
+    }
+
+    /**
+     * 解析应用级超时秒数
+     *
+     * <p>从 {@link Application#getTimeout()} 读取应用级超时，承接原 ResilienceProfile.timeout 语义。
+     * 超时不应阻断路由，故下列情况返回 null（回退渠道默认）：</p>
+     * <ul>
+     *   <li>applicationId 为 null（无应用锚点）</li>
+     *   <li>Application 查不到（findById 返回 null，仅告警不抛异常）</li>
+     * </ul>
+     *
+     * @param applicationId 应用 ID（可能为 null）
+     * @return 应用级超时秒数；null 表示用渠道默认
+     */
+    private Integer resolveApplicationTimeout(Long applicationId) {
+        if (applicationId == null) {
+            return null;
+        }
+        Application app = applicationGateway.findById(applicationId);
+        if (app == null) {
+            log.warn("Application 未找到，超时回退渠道默认。applicationId={}", applicationId);
+            return null;
+        }
+        return app.getTimeout();
     }
 
     /**
      * 组装单个候选实例的 RoutingContext
      *
-     * <p>对单个候选实例执行凭证解析 + 端点解析 + 通道查询，并组装为 {@link RoutingContext}。</p>
+     * <p>对单个候选实例执行凭证解析 + 端点解析 + 通道查询，并组装为 {@link RoutingContext}。
+     * 有效超时 effectiveTimeout：Application.timeout 非 0 覆盖渠道默认，为 null/0 时用渠道默认
+     * （保留渠道 timeout 为 null 的语义，交由 Invoker 兜底默认值）。</p>
      *
-     * @param instance 候选实例
-     * @param model    所属模型
-     * @param protocol 入站协议
+     * @param instance           候选实例
+     * @param model              所属模型
+     * @param protocol           入站协议
+     * @param applicationTimeout 应用级超时秒数（null 表示用渠道默认）
      * @return 路由上下文
      * @throws ResourceNotFoundException 通道不存在
      */
-    private RoutingContext buildContext(ModelInstance instance, Model model, Protocol protocol) {
+    private RoutingContext buildContext(ModelInstance instance, Model model, Protocol protocol, Integer applicationTimeout) {
         // 凭证解析
         String apiKey = credentialResolver.resolve(instance.getChannelId());
 
@@ -97,6 +133,10 @@ public class RoutingResolver {
         // 通道信息
         Channel channel = channelGateway.findById(instance.getChannelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Channel", instance.getChannelId()));
+
+        // 有效超时：Application.timeout 非 0 覆盖渠道默认；null/0 时用渠道默认
+        Integer effectiveTimeout = (applicationTimeout != null && applicationTimeout != 0)
+                ? applicationTimeout : channel.getTimeout();
 
         // 判断是否需要协议适配
         boolean needsAdaptation = endpoint.getProtocol() != protocol;
@@ -108,7 +148,7 @@ public class RoutingResolver {
                 endpoint.getEndpointUrl(),
                 endpoint.getProtocol(),
                 apiKey,
-                channel.getTimeout(),
+                effectiveTimeout,
                 needsAdaptation,
                 model.getModelName(),
                 instance.getUpstreamModelName()
