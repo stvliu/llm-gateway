@@ -5,33 +5,33 @@
 
 ## 1. 修复 PriorityRouter 选择器→排序器（已存缺陷，L1 前置）
 
-- [ ] 1.1 grep 确认 `ModelInstance.priority` 的所有用途（负载均衡/监控/前端展示），记录是否可删
-- [ ] 1.2 写失败测试：主备 priority 不同时，PriorityRouter 输出完整列表 [主,备] 不丢备（补当前单元测试绕过路由链的缺口）
-- [ ] 1.3 写失败测试：RouterChain 经 PriorityRouter 后候选列表含全部 priority 组
-- [ ] 1.4 改 `PriorityRouter.filter` 为排序器：按 priority 升序输出完整列表，不收敛；调整 `isForce` 语义
-- [ ] 1.5 跑绿 + 回归 `./mvnw -pl gateway-boot -am test`
-- [ ] 1.6 commit
+- [x] 1.1 grep 确认 `ModelInstance.priority` 的所有用途（负载均衡/监控/前端展示），记录是否可删
+- [x] 1.2 写失败测试：主备 priority 不同时，PriorityRouter 输出完整列表 [主,备] 不丢备（补当前单元测试绕过路由链的缺口）
+- [x] 1.3 写失败测试：RouterChain 经 PriorityRouter 后候选列表含全部 priority 组
+- [x] 1.4 改 `PriorityRouter.filter` 为排序器：按 priority 升序输出完整列表，不收敛；调整 `isForce` 语义
+- [x] 1.5 跑绿 + 回归 `./mvnw -pl gateway-boot -am test`
+- [x] 1.6 commit
 
 ## 2. 修复调谐下沉 invoker，每候选独立（已存缺陷，L1 前置）
 
-- [ ] 2.1 写失败测试：候选不同 upstreamModelName 时，L1 换渠道后请求 model 正确（当前只对首项调谐导致换渠道后 model 错）
-- [ ] 2.2 `ChannelFailoverInvoker` 注入 `OutboundTuner`，invoke/invokeStream 内每候选试之前基于原始 request 派生副本调谐
-- [ ] 2.3 `ChatDispatchServiceImpl` 删阶段4对外调谐，改为传原始 request 给 invoker
-- [ ] 2.4 评估 `convertRequest`（跨协议转换）是否需每候选独立，按需改造
-- [ ] 2.5 跑绿 + 回归
-- [ ] 2.6 commit
+- [x] 2.1 写失败测试：候选不同 upstreamModelName 时，L1 换渠道后请求 model 正确（当前只对首项调谐导致换渠道后 model 错）
+- [x] 2.2 `ChannelFailoverInvoker` 注入 `OutboundTuner`，invoke/invokeStream 内每候选试之前基于原始 request 派生副本调谐
+- [x] 2.3 `ChatDispatchServiceImpl` 删阶段4对外调谐，改为传原始 request 给 invoker
+- [x] 2.4 评估 `convertRequest`（跨协议转换）是否需每候选独立，按需改造
+- [x] 2.5 跑绿 + 回归
+- [x] 2.6 commit
 
 ## 3. 应用级 ApplicationChannel.priority 取代全局（依赖 1）
 
-- [ ] 3.1 `ApplicationChannel` 实体加 `priority` 字段 + Getter/Setter
-- [ ] 3.2 Flyway 迁移：`application_channels` 加 `priority` 列
-- [ ] 3.3 `ApplicationChannelGateway`/Impl/DO/Repository 适配 priority
-- [ ] 3.4 `PermissionRouter` 过滤时把 ApplicationChannel.priority 附着到候选（或 RoutingRequest 携带映射）——定注入点
-- [ ] 3.5 `PriorityRouter` 排序键改 ApplicationChannel.priority（无则回退默认）
-- [ ] 3.6 `InstanceSelector.findActiveByModelIdOrderByPriority` 适配应用级排序
-- [ ] 3.7 写测试：同渠道对不同应用不同 priority，各自转移顺序独立
-- [ ] 3.8 跑绿 + 回归
-- [ ] 3.9 commit
+- [x] 3.1 `ApplicationChannel` 实体加 `priority` 字段 + Getter/Setter
+- [x] 3.2 Flyway 迁移：`application_channels` 加 `priority` 列
+- [x] 3.3 `ApplicationChannelGateway`/Impl/DO/Repository 适配 priority
+- [x] 3.4 `PermissionRouter` 过滤时把 ApplicationChannel.priority 附着到候选（或 RoutingRequest 携带映射）——定注入点
+- [x] 3.5 `PriorityRouter` 排序键改 ApplicationChannel.priority（无则回退默认）
+- [x] 3.6 `InstanceSelector.findActiveByModelIdOrderByPriority` 适配应用级排序
+- [x] 3.7 写测试：同渠道对不同应用不同 priority，各自转移顺序独立
+- [x] 3.8 跑绿 + 回归
+- [x] 3.9 commit
 
 ## 4. 删除 L2 模型降级层（独立）
 

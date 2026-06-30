@@ -7,23 +7,35 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 3 — 应用级 ApplicationChannel.priority（依赖 Task 1）
-- 映射 OpenSpec tasks: 3.1-3.9
+- 当前 plan task: Task 4 — 删除 L2 模型降级层（独立）
+- 映射 OpenSpec tasks: 4.1-4.9
 - 阶段: implementing
-- Task 3 BASE commit: 337d54c6707507d2d733ac182f898e3b0ccca548
+- Task 4 BASE commit: 96f4f2a223a9aea4df4579fdb8c0023df9059ab5
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
-- 已通过审查阶段: 无（Task 1+2 待批次 A 审查）
-- 审查-修复轮次: 0
-- 批次 A（Task 1+2+3）审查: Task 3 完成后派发
+- 已通过审查阶段: 批次 A（Task 1+2+3）Approved（含响应转换下沉修复 96f4f2a）
+- 审查-修复轮次: 0（批次 B 开始）
+- 批次 B（Task 4+5+7）审查: 删除类高风险，Task 4+5+7 完成后合并审查
+- 待最终审查 triage 的 Minor: (A-2)Task3 TDD RED 不纯粹 (A-4)copy default 脆弱 (A-7)InstanceSelector 每请求 DB 查询 (A-顾虑1)ChatDispatchServiceImpl protocolConverter dead code 待清理
 - 待批次 A reviewer 重点核查: Task 2 顾虑 2（响应转换残留——跨协议换候选时 convertResponse 基于 primaryCtx 可能返回协议错误，design ID3 未覆盖的对称缺陷）
+
+## 批次 A 审查结果（review_mode: thorough，第 1 轮）
+
+- 审查范围: Task 1+2+3，BASE 2594941..HEAD 978b039，reviewer opus
+- Spec: Task 1 ✅ / Task 2 ⚠️ / Task 3 ✅
+- Critical: 无
+- Important 1（必修）: 非流式响应转换残留——ChatDispatchServiceImpl 阶段6 convertResponse 基于 primaryCtx，主同协议+备跨协议成功时跳过转换返回错误协议响应，违反双 API 兼容铁律。reviewer 核验 RoutingResolver.buildContext 逐候选判 needsAdaptation + EndpointResolver 回退任意端点 → 路径真实可达。修复方案: 响应转换下沉 invoker（与流式 buildStreamCallback 对称），ChatDispatchServiceImpl 阶段6 删除。
+- Minor: (2)Task3 TDD RED 不纯粹 (3)流式缺主同→备跨对称测试 (4)copy default 脆弱 (5)RoutingRequest Javadoc 称不可变但实为可变 LinkedHashMap (6)ChatDispatchServiceTest 两语句挤一行 (7)InstanceSelector 每请求多一次 DB 查询
+- 裁定: 派发 fix subagent 修 Important 1 + Minor 3/5/6（同文件低成本）；Minor 2/4/7 记录待最终审查 triage
+- 审查-修复轮次: 1/2（thorough 批次最多 2 轮）
+- fix BASE: 978b039
 
 ## 派发单元（12 个 plan task）
 
 | Task | 标题 | 状态 |
 |------|------|------|
-| 1 | 修复 PriorityRouter 选择器→排序器 | 实现完成 ec68a15（待批次 A 审查） |
-| 2 | 调谐下沉 invoker，每候选独立 | 实现完成 337d54c（待批次 A 审查） |
-| 3 | 应用级 ApplicationChannel.priority | 进行中 |
+| 1 | 修复 PriorityRouter 选择器→排序器 | ✅ 批次 A 通过 ec68a15 |
+| 2 | 调谐下沉 invoker，每候选独立 | ✅ 批次 A 通过 337d54c+96f4f2a（含响应转换下沉修复） |
+| 3 | 应用级 ApplicationChannel.priority | ✅ 批次 A 通过 d83201e |
 | 4 | 删除 L2 模型降级层 | 待派发 |
 | 5 | 删除 DomainHealth 路由器 | 待派发 |
 | 6 | Cluster 语义改造 + 瘦身字段 | 待派发 |
