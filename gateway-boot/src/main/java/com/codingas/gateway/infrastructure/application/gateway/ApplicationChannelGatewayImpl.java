@@ -61,6 +61,7 @@ public class ApplicationChannelGatewayImpl implements ApplicationChannelGateway 
         entity.setId(d.getId());
         entity.setApplicationId(d.getApplicationId());
         entity.setChannelId(d.getChannelId());
+        entity.setPriority(d.getPriority());
         entity.setCreatedBy(d.getCreatedBy());
         entity.setCreatedAt(d.getCreatedAt());
         entity.setUpdatedBy(d.getUpdatedBy());
@@ -73,6 +74,7 @@ public class ApplicationChannelGatewayImpl implements ApplicationChannelGateway 
         d.setId(entity.getId());
         d.setApplicationId(entity.getApplicationId());
         d.setChannelId(entity.getChannelId());
+        d.setPriority(entity.getPriority());
         d.setCreatedBy(entity.getCreatedBy());
         d.setUpdatedBy(entity.getUpdatedBy());
         return d;

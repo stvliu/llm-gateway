@@ -6,16 +6,18 @@ import org.springframework.stereotype.Component;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
- * 优先级路由器 — 按 priority 升序排序器，输出完整候选列表不收敛
+ * 优先级路由器 — 按应用级 priority 升序排序器，输出完整候选列表不收敛
  *
  * <p>顺序语义：排在 {@link HealthRouter} 之后（@Order 300 > 200），
  * 仅在健康候选（已剔除熔断渠道）中按优先级升序排序，输出全部候选，
  * 供 L1 故障转移逐个尝试，避免收敛到最小组导致备渠道丢失。</p>
  *
- * <p>排序键：{@link ModelInstance#getPriority()}，null 回退默认值 100（数值越小越优先）。
- * 注：当前按实例级 priority 排序，应用级渠道 priority 映射将在后续 Task 切换。</p>
+ * <p>排序键（Task 3）：{@link RoutingRequest#getChannelPriorityMap()} 中
+ * {@code map.get(mi.getChannelId())}，null 回退默认值 100（数值越小越优先）。
+ * 同一渠道在不同应用可有不同 priority，实现应用级转移顺序；映射为空时全部回退 100。</p>
  */
 @Component
 @Order(300)
@@ -30,20 +32,29 @@ public class PriorityRouter implements Router {
             return List.of();
         }
 
-        // 按 priority 升序输出完整列表（不收敛到最小组），数值越小越优先；null 回退默认值 100
+        // 取应用级渠道优先级映射；按 map.get(channelId) 升序输出完整列表（不收敛），null 回退默认值 100
+        Map<Long, Integer> channelPriorityMap = request.getChannelPriorityMap();
         return instances.stream()
-                .sorted(Comparator.comparingInt(this::effectivePriority))
+                .sorted(Comparator.comparingInt(mi -> effectivePriority(mi, channelPriorityMap)))
                 .toList();
     }
 
     /**
-     * 解析有效 priority：null 回退默认值 100
+     * 解析有效 priority：从应用级映射按 channelId 取值，null 回退默认值 100
      *
-     * @param mi 模型实例
+     * <p>channelId 为 null 时直接回退默认值（不可变 Map 不允许 null key，避免 NPE）。</p>
+     *
+     * @param mi                 模型实例
+     * @param channelPriorityMap 应用级渠道优先级映射（key=channelId, value=priority）
      * @return 有效 priority
      */
-    private int effectivePriority(ModelInstance mi) {
-        return mi.getPriority() != null ? mi.getPriority() : DEFAULT_PRIORITY;
+    private int effectivePriority(ModelInstance mi, Map<Long, Integer> channelPriorityMap) {
+        Long channelId = mi.getChannelId();
+        if (channelId == null) {
+            return DEFAULT_PRIORITY;
+        }
+        Integer priority = channelPriorityMap.get(channelId);
+        return priority != null ? priority : DEFAULT_PRIORITY;
     }
 
     @Override
