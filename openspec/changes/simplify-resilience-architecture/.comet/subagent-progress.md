@@ -7,14 +7,15 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 4 — 删除 L2 模型降级层（独立）
-- 映射 OpenSpec tasks: 4.1-4.9
+- 当前 plan task: Task 5 — 删除 DomainHealth 路由器（独立）
+- 映射 OpenSpec tasks: 5.1-5.6
 - 阶段: implementing
-- Task 4 BASE commit: 96f4f2a223a9aea4df4579fdb8c0023df9059ab5
+- Task 5 BASE commit: d8f6372
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
-- 已通过审查阶段: 批次 A（Task 1+2+3）Approved（含响应转换下沉修复 96f4f2a）
-- 审查-修复轮次: 0（批次 B 开始）
+- 已通过审查阶段: 批次 A Approved
+- 审查-修复轮次: 0（批次 B 进行中：Task 4 完成，待 Task 5+7）
 - 批次 B（Task 4+5+7）审查: 删除类高风险，Task 4+5+7 完成后合并审查
+- 待批次 B reviewer 重点核查: Task 4 顾虑 1（FailoverEventGatewayImpl:76 valueOf 还原 FailoverDecision，删 L2 后读历史 'L2' 记录抛 IllegalArgumentException——生产运行时风险，需 Task 6 处理历史值映射或数据迁移）
 - 待最终审查 triage 的 Minor: (A-2)Task3 TDD RED 不纯粹 (A-4)copy default 脆弱 (A-7)InstanceSelector 每请求 DB 查询 (A-顾虑1)ChatDispatchServiceImpl protocolConverter dead code 待清理
 - 待批次 A reviewer 重点核查: Task 2 顾虑 2（响应转换残留——跨协议换候选时 convertResponse 基于 primaryCtx 可能返回协议错误，design ID3 未覆盖的对称缺陷）
 
