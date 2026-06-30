@@ -7,15 +7,16 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 5 — 删除 DomainHealth 路由器（独立）
-- 映射 OpenSpec tasks: 5.1-5.6
+- 当前 plan task: Task 7 — 删除 PinnedModel 与会话亲和（独立）
+- 映射 OpenSpec tasks: 7.1-7.8
 - 阶段: implementing
-- Task 5 BASE commit: d8f6372
+- Task 7 BASE commit: a1f387b
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
 - 已通过审查阶段: 批次 A Approved
-- 审查-修复轮次: 0（批次 B 进行中：Task 4 完成，待 Task 5+7）
-- 批次 B（Task 4+5+7）审查: 删除类高风险，Task 4+5+7 完成后合并审查
+- 审查-修复轮次: 0（批次 B 进行中：Task 4+5 完成，待 Task 7）
+- 批次 B（Task 4+5+7）审查: Task 7 完成后合并审查
 - 待批次 B reviewer 重点核查: Task 4 顾虑 1（FailoverEventGatewayImpl:76 valueOf 还原 FailoverDecision，删 L2 后读历史 'L2' 记录抛 IllegalArgumentException——生产运行时风险，需 Task 6 处理历史值映射或数据迁移）
+- Task 5 顾虑: PinnedModelRouter 仍活跃（@Order 350）——按 plan Task 7 删除（非 implementer 推断的 Task 8），Task 5 保留是预期；surefire 顶层 @Test 不发现的项目怪癖已记录
 - 待最终审查 triage 的 Minor: (A-2)Task3 TDD RED 不纯粹 (A-4)copy default 脆弱 (A-7)InstanceSelector 每请求 DB 查询 (A-顾虑1)ChatDispatchServiceImpl protocolConverter dead code 待清理
 - 待批次 A reviewer 重点核查: Task 2 顾虑 2（响应转换残留——跨协议换候选时 convertResponse 基于 primaryCtx 可能返回协议错误，design ID3 未覆盖的对称缺陷）
 
