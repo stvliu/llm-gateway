@@ -61,9 +61,6 @@ class ResilienceProfileControllerIT {
         resp.setMode("STANDARD");
         resp.setEnableL2ModelDegradation(true);
         resp.setDegradationMaxDepth(2);
-        resp.setEnableSessionAffinity(false);
-        resp.setSessionAffinityTtlMinutes(30);
-        resp.setEnablePinnedModel(false);
         resp.setTimeout(0);
         resp.setCreatedAt(Instant.parse("2026-06-19T10:00:00Z"));
         resp.setUpdatedAt(Instant.parse("2026-06-19T10:00:00Z"));

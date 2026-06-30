@@ -60,10 +60,6 @@ public class ResilienceProfileGatewayImpl implements ResilienceProfileGateway {
         entity.setMode(d.getMode() != null ? ResilienceMode.valueOf(d.getMode()) : null);
         entity.setEnableL2ModelDegradation(d.isEnableL2ModelDegradation());
         entity.setDegradationMaxDepth(d.getDegradationMaxDepth());
-        entity.setEnableSessionAffinity(d.isEnableSessionAffinity());
-        entity.setSessionAffinityTtlMinutes(d.getSessionAffinityTtlMinutes());
-        entity.setEnablePinnedModel(d.isEnablePinnedModel());
-        entity.setPinnedModelId(d.getPinnedModelId());
         entity.setTimeout(d.getTimeout());
         entity.setCreatedBy(d.getCreatedBy());
         entity.setCreatedAt(d.getCreatedAt());
@@ -81,10 +77,6 @@ public class ResilienceProfileGatewayImpl implements ResilienceProfileGateway {
         d.setMode(entity.getMode() != null ? entity.getMode().name() : null);
         d.setEnableL2ModelDegradation(entity.isEnableL2ModelDegradation());
         d.setDegradationMaxDepth(entity.getDegradationMaxDepth());
-        d.setEnableSessionAffinity(entity.isEnableSessionAffinity());
-        d.setSessionAffinityTtlMinutes(entity.getSessionAffinityTtlMinutes());
-        d.setEnablePinnedModel(entity.isEnablePinnedModel());
-        d.setPinnedModelId(entity.getPinnedModelId());
         d.setTimeout(entity.getTimeout());
         d.setCreatedBy(entity.getCreatedBy());
         d.setUpdatedBy(entity.getUpdatedBy());

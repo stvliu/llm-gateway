@@ -24,10 +24,6 @@ import lombok.NoArgsConstructor;
  *   <li>mode — 容灾模式档位（STANDARD/STRICT/AGGRESSIVE），管理员面向字段</li>
  *   <li>enableL2ModelDegradation — 是否启用 L2 模型级降级兜底</li>
  *   <li>degradationMaxDepth — L2 降级最大深度（0 表示禁用降级）</li>
- *   <li>enableSessionAffinity — 是否启用会话亲和（同会话粘滞同渠道）</li>
- *   <li>sessionAffinityTtlMinutes — 会话亲和 TTL（分钟），默认 30</li>
- *   <li>enablePinnedModel — 是否启用模型锁定（候选仅含锁定模型渠道）</li>
- *   <li>pinnedModelId — 锁定模型 ID，可空（enablePinnedModel=false 时忽略）</li>
  *   <li>timeout — 请求超时秒数（0 表示用渠道默认）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
  * </ul>
@@ -52,18 +48,6 @@ public class ResilienceProfile extends BaseEntity {
 
     /** L2 降级最大深度（0 表示禁用降级） */
     private int degradationMaxDepth;
-
-    /** 是否启用会话亲和 */
-    private boolean enableSessionAffinity;
-
-    /** 会话亲和 TTL（分钟） */
-    private int sessionAffinityTtlMinutes;
-
-    /** 是否启用模型锁定 */
-    private boolean enablePinnedModel;
-
-    /** 锁定模型 ID（可空） */
-    private Long pinnedModelId;
 
     /** 请求超时秒数（0 表示用渠道默认） */
     private int timeout;

@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>实现容灾模式档位 → 画像专家字段的自动推导（见 design.md D5）：
  * 管理员选档位时，按档位覆盖专家字段（mode/enableL2/degradationMaxDepth/timeout），
- * 其余字段（code/name/sessionAffinity/pinnedModel 等）保留 base 画像原值。</p>
+ * 其余字段（code/name 等）保留 base 画像原值。</p>
  *
  * <p>字段值与 V56 seed（{@code V56__seed_resilience_profiles.sql}）及
  * {@link ResilienceMode} 枚举 Javadoc 保持一致：
@@ -46,14 +46,14 @@ public class ResilienceProfileApplier {
      * 按容灾模式档位推导画像专家字段
      *
      * <p>覆盖专家字段（mode/enableL2ModelDegradation/degradationMaxDepth/timeout），
-     * 保留 base 的标识与会话亲和/锁定模型等非专家字段。不修改 base，返回新对象。</p>
+     * 保留 base 的标识等非专家字段。不修改 base，返回新对象。</p>
      *
      * @param base 基础画像（提供 code/name 等保留字段）
      * @param mode 容灾模式档位（STANDARD/STRICT/AGGRESSIVE）
      * @return 按档位推导专家字段后的新画像
      */
     public ResilienceProfile apply(ResilienceProfile base, ResilienceMode mode) {
-        // 复制 base 全部字段，保留标识与会话亲和/锁定模型等非专家字段
+        // 复制 base 全部字段，保留标识等非专家字段
         ResilienceProfile result = copyBase(base);
         // 按档位覆盖专家字段
         result.setMode(mode);
@@ -87,7 +87,7 @@ public class ResilienceProfileApplier {
     /**
      * 复制 base 画像全部字段到新对象
      *
-     * <p>浅拷贝 base 的标识/审计/会话亲和/锁定模型及专家字段（专家字段随后被档位覆盖）。
+     * <p>浅拷贝 base 的标识/审计及专家字段（专家字段随后被档位覆盖）。
      * 审计字段（createdBy/createdAt/updatedBy/updatedAt）透传，由调用方决定是否重置。</p>
      *
      * @param base 基础画像
@@ -101,10 +101,6 @@ public class ResilienceProfileApplier {
         copy.setMode(base.getMode());
         copy.setEnableL2ModelDegradation(base.isEnableL2ModelDegradation());
         copy.setDegradationMaxDepth(base.getDegradationMaxDepth());
-        copy.setEnableSessionAffinity(base.isEnableSessionAffinity());
-        copy.setSessionAffinityTtlMinutes(base.getSessionAffinityTtlMinutes());
-        copy.setEnablePinnedModel(base.isEnablePinnedModel());
-        copy.setPinnedModelId(base.getPinnedModelId());
         copy.setTimeout(base.getTimeout());
         copy.setCreatedBy(base.getCreatedBy());
         copy.setCreatedAt(base.getCreatedAt());

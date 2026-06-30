@@ -42,22 +42,6 @@ public class ResilienceProfileDo extends BaseDo {
     @Column(name = "degradation_max_depth", nullable = false)
     private int degradationMaxDepth;
 
-    /** 是否启用会话亲和 */
-    @Column(name = "enable_session_affinity", nullable = false)
-    private boolean enableSessionAffinity;
-
-    /** 会话亲和 TTL（分钟） */
-    @Column(name = "session_affinity_ttl_minutes", nullable = false)
-    private int sessionAffinityTtlMinutes;
-
-    /** 是否启用模型锁定 */
-    @Column(name = "enable_pinned_model", nullable = false)
-    private boolean enablePinnedModel;
-
-    /** 锁定模型 ID（可空） */
-    @Column(name = "pinned_model_id")
-    private Long pinnedModelId;
-
     /** 请求超时秒数（0 表示用渠道默认） */
     @Column(name = "timeout", nullable = false)
     private int timeout;

@@ -178,10 +178,6 @@ class ResilienceProfileServiceImplTest {
         request.setMode(mode);
         request.setEnableL2ModelDegradation(true);
         request.setDegradationMaxDepth(2);
-        request.setEnableSessionAffinity(false);
-        request.setSessionAffinityTtlMinutes(30);
-        request.setEnablePinnedModel(false);
-        request.setPinnedModelId(null);
         request.setTimeout(0);
         return request;
     }
@@ -198,9 +194,6 @@ class ResilienceProfileServiceImplTest {
         profile.setMode(mode);
         profile.setEnableL2ModelDegradation(true);
         profile.setDegradationMaxDepth(2);
-        profile.setEnableSessionAffinity(false);
-        profile.setSessionAffinityTtlMinutes(30);
-        profile.setEnablePinnedModel(false);
         profile.setTimeout(0);
         return profile;
     }

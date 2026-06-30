@@ -56,10 +56,6 @@ class ResilienceProfileGatewayImplTest {
             assertThat(result.getMode()).isEqualTo(ResilienceMode.STANDARD);
             assertThat(result.isEnableL2ModelDegradation()).isTrue();
             assertThat(result.getDegradationMaxDepth()).isEqualTo(2);
-            assertThat(result.isEnableSessionAffinity()).isFalse();
-            assertThat(result.getSessionAffinityTtlMinutes()).isEqualTo(30);
-            assertThat(result.isEnablePinnedModel()).isFalse();
-            assertThat(result.getPinnedModelId()).isEqualTo(99L);
             assertThat(result.getTimeout()).isEqualTo(0);
         }
 
@@ -150,10 +146,6 @@ class ResilienceProfileGatewayImplTest {
             assertThat(captured.getMode()).isEqualTo("STANDARD");
             assertThat(captured.isEnableL2ModelDegradation()).isTrue();
             assertThat(captured.getDegradationMaxDepth()).isEqualTo(2);
-            assertThat(captured.isEnableSessionAffinity()).isFalse();
-            assertThat(captured.getSessionAffinityTtlMinutes()).isEqualTo(30);
-            assertThat(captured.isEnablePinnedModel()).isFalse();
-            assertThat(captured.getPinnedModelId()).isEqualTo(99L);
             assertThat(captured.getTimeout()).isEqualTo(0);
         }
 
@@ -185,10 +177,6 @@ class ResilienceProfileGatewayImplTest {
         d.setMode("STANDARD");
         d.setEnableL2ModelDegradation(true);
         d.setDegradationMaxDepth(2);
-        d.setEnableSessionAffinity(false);
-        d.setSessionAffinityTtlMinutes(30);
-        d.setEnablePinnedModel(false);
-        d.setPinnedModelId(99L);
         d.setTimeout(0);
         return d;
     }
@@ -201,10 +189,6 @@ class ResilienceProfileGatewayImplTest {
         entity.setMode(ResilienceMode.STANDARD);
         entity.setEnableL2ModelDegradation(true);
         entity.setDegradationMaxDepth(2);
-        entity.setEnableSessionAffinity(false);
-        entity.setSessionAffinityTtlMinutes(30);
-        entity.setEnablePinnedModel(false);
-        entity.setPinnedModelId(99L);
         entity.setTimeout(0);
         return entity;
     }

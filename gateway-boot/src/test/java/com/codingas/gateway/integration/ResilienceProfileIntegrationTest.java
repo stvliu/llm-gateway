@@ -189,14 +189,10 @@ class ResilienceProfileIntegrationTest extends FullContextIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("画像继承：apply 保留 base 非专家字段（code/name/sessionAffinity/pinnedModel）")
+        @DisplayName("画像继承：apply 保留 base 非专家字段（code/name）")
         void apply_preservesBaseNonExpertFields() {
-            // base 画像携带非专家字段：会话亲和 + 锁定模型
+            // base 画像携带非专家字段
             ResilienceProfile base = buildProfile(1L, "claude-code", ResilienceMode.STANDARD);
-            base.setEnableSessionAffinity(true);
-            base.setSessionAffinityTtlMinutes(45);
-            base.setEnablePinnedModel(true);
-            base.setPinnedModelId(777L);
 
             ResilienceProfile result = realApplier.apply(base, ResilienceMode.STRICT);
 
@@ -205,10 +201,6 @@ class ResilienceProfileIntegrationTest extends FullContextIntegrationTestBase {
             assertThat(result.getDegradationMaxDepth()).isEqualTo(0);
             // 非专家字段保留 base 原值
             assertThat(result.getCode()).isEqualTo("claude-code");
-            assertThat(result.isEnableSessionAffinity()).isTrue();
-            assertThat(result.getSessionAffinityTtlMinutes()).isEqualTo(45);
-            assertThat(result.isEnablePinnedModel()).isTrue();
-            assertThat(result.getPinnedModelId()).isEqualTo(777L);
         }
 
         @Test

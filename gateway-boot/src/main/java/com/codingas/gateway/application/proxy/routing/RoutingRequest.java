@@ -30,8 +30,7 @@ public class RoutingRequest {
     private final Protocol protocol;
     /**
      * 容灾画像（Task 4.9 贯穿）：贯穿 RouterChain 与 Invoker 链，供
-     * {@link PinnedModelRouter} 模型锁定、{@code ChannelFailoverInvoker} L2 门禁、
-     * 会话亲和/就近等画像化决策。为 null 表示无画像（回退默认行为）。
+     * {@code ChannelFailoverInvoker} L2 门禁等画像化决策。为 null 表示无画像（回退默认行为）。
      *
      * <p>注：Task 8 将移除该字段，本任务保留以维持兼容。</p>
      */

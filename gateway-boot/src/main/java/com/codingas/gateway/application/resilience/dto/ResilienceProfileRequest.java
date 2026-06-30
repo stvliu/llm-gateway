@@ -36,19 +36,6 @@ public class ResilienceProfileRequest {
     @Min(value = 0, message = "降级深度不能为负数")
     private int degradationMaxDepth;
 
-    /** 是否启用会话亲和 */
-    private boolean enableSessionAffinity;
-
-    /** 会话亲和 TTL（分钟） */
-    @Min(value = 0, message = "会话亲和 TTL 不能为负数")
-    private int sessionAffinityTtlMinutes;
-
-    /** 是否启用模型锁定 */
-    private boolean enablePinnedModel;
-
-    /** 锁定模型 ID（可空） */
-    private Long pinnedModelId;
-
     /** 请求超时秒数（0 表示用渠道默认） */
     @Min(value = 0, message = "超时秒数不能为负数")
     private int timeout;

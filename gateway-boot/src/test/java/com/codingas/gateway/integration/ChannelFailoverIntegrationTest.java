@@ -234,66 +234,6 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         // 当前 P1 阶段无 Cluster 概念，无法验证此场景，先占位。
     }
 
-    // ==================== 会话亲和端到端（Task 4.10） ====================
-
-    // 真实会话亲和存储 bean（integration-test profile 下 SessionAffinityConfig 装配 InMemory 实现）
-    @Autowired
-    private com.codingas.gateway.domain.resilience.gateway.SessionAffinityStore realSessionAffinityStore;
-
-    @Nested
-    @DisplayName("会话亲和端到端：标识缺失不亲和、亲和粘滞、熔断转移更新")
-    class SessionAffinityTests {
-
-        @Test
-        @DisplayName("标识缺失（null sessionId）不亲和：get 返回 null，put 不存储")
-        void nullSessionId_noAffinity() {
-            // 标识缺失时 get 返回 null（不亲和路径）
-            assertThat(realSessionAffinityStore.get(null)).isNull();
-            // put(null) 不存储：即便后续 get 仍是 null
-            realSessionAffinityStore.put(null, 10L);
-            assertThat(realSessionAffinityStore.get(null)).isNull();
-        }
-
-        @Test
-        @DisplayName("亲和粘滞：put 绑定后 get 返回同渠道，粘滞同会话")
-        void affinityPutThenGet_stickySameChannel() {
-            // 亲和命中：put 绑定 sessionId→channelId，get 返回同 channelId
-            realSessionAffinityStore.put("session-001", 10L);
-            assertThat(realSessionAffinityStore.get("session-001")).isEqualTo(10L);
-            // 清理：避免污染其他测试
-            realSessionAffinityStore.evict("session-001");
-        }
-
-        @Test
-        @DisplayName("熔断转移更新：亲和渠道熔断后 evict 旧绑定 + put 新绑定，亲和转移到新渠道")
-        void circuitBreakerFailover_evictOldPutNew_updatesAffinity() {
-            // 场景：会话亲和绑定 ch1（channelId=10），ch1 熔断后 L1 转移到 ch2（channelId=11）
-            // 转移成功后 Invoker 应执行：evict 旧绑定 + put 新绑定（亲和转移更新协议）
-            // 注：当前调度链未接线会话亲和（后续 task 接入），此处验证存储契约：
-            //     手动执行转移更新协议序列，确认存储在真实 Spring 装配下行为正确
-            String sessionId = "session-failover";
-            realSessionAffinityStore.put(sessionId, 10L);
-            assertThat(realSessionAffinityStore.get(sessionId)).isEqualTo(10L);
-
-            // ch1 熔断 → L1 转移到 ch2 成功 → 转移更新协议
-            realSessionAffinityStore.evict(sessionId);
-            realSessionAffinityStore.put(sessionId, 11L);
-
-            // 断言：亲和已转移到新渠道 ch2
-            assertThat(realSessionAffinityStore.get(sessionId)).isEqualTo(11L);
-            // 清理
-            realSessionAffinityStore.evict(sessionId);
-        }
-
-        @Test
-        @DisplayName("evict 不存在的 sessionId 不抛异常（幂等清除）")
-        void evictNonExistent_noException() {
-            // 幂等语义：不存在的 sessionId evict 不抛异常
-            realSessionAffinityStore.evict("non-existent-session");
-            assertThat(realSessionAffinityStore.get("non-existent-session")).isNull();
-        }
-    }
-
     // ==================== RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5） ====================
 
     /** 真实路由器责任链 bean（Spring 装配，按 @Order 自动收集所有 Router） */

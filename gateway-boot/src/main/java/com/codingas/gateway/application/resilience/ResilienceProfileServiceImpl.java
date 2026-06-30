@@ -105,10 +105,6 @@ public class ResilienceProfileServiceImpl implements ResilienceProfileService {
         profile.setMode(parseMode(request.getMode()));
         profile.setEnableL2ModelDegradation(request.isEnableL2ModelDegradation());
         profile.setDegradationMaxDepth(request.getDegradationMaxDepth());
-        profile.setEnableSessionAffinity(request.isEnableSessionAffinity());
-        profile.setSessionAffinityTtlMinutes(request.getSessionAffinityTtlMinutes());
-        profile.setEnablePinnedModel(request.isEnablePinnedModel());
-        profile.setPinnedModelId(request.getPinnedModelId());
         profile.setTimeout(request.getTimeout());
     }
 
@@ -138,10 +134,6 @@ public class ResilienceProfileServiceImpl implements ResilienceProfileService {
         response.setMode(profile.getMode() != null ? profile.getMode().name() : null);
         response.setEnableL2ModelDegradation(profile.isEnableL2ModelDegradation());
         response.setDegradationMaxDepth(profile.getDegradationMaxDepth());
-        response.setEnableSessionAffinity(profile.isEnableSessionAffinity());
-        response.setSessionAffinityTtlMinutes(profile.getSessionAffinityTtlMinutes());
-        response.setEnablePinnedModel(profile.isEnablePinnedModel());
-        response.setPinnedModelId(profile.getPinnedModelId());
         response.setTimeout(profile.getTimeout());
         response.setCreatedAt(profile.getCreatedAt());
         response.setUpdatedAt(profile.getUpdatedAt());

@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>验证容灾模式档位 → 画像专家字段自动推导语义（见 design.md D5 与 V56 seed）：
  * 管理员选档位时，按档位覆盖专家字段（mode/enableL2/degradationMaxDepth/timeout），
- * 其余字段（code/name/sessionAffinity/pinnedModel 等）保留 base 画像原值。</p>
+ * 其余字段（code/name 等）保留 base 画像原值。</p>
  *
  * <p>字段值与 V56 seed 一致：
  * <ul>
@@ -78,7 +78,7 @@ class ResilienceProfileApplierTest {
     class PreserveBaseFieldsTests {
 
         @Test
-        @DisplayName("档位推导后保留 base 的标识与会话亲和/锁定模型等非专家字段")
+        @DisplayName("档位推导后保留 base 的标识等非专家字段")
         void apply_preservesBaseNonExpertFields() {
             ResilienceProfile base = buildBaseProfile();
 
@@ -88,12 +88,6 @@ class ResilienceProfileApplierTest {
             assertThat(result.getId()).isEqualTo(10L);
             assertThat(result.getCode()).isEqualTo("custom-app");
             assertThat(result.getName()).isEqualTo("自定义应用画像");
-            // 会话亲和字段保留 base（V56 seed 中不随档位变化）
-            assertThat(result.isEnableSessionAffinity()).isTrue();
-            assertThat(result.getSessionAffinityTtlMinutes()).isEqualTo(45);
-            // 锁定模型字段保留 base
-            assertThat(result.isEnablePinnedModel()).isTrue();
-            assertThat(result.getPinnedModelId()).isEqualTo(7L);
         }
     }
 
@@ -134,7 +128,7 @@ class ResilienceProfileApplierTest {
     // ===== Helper methods =====
 
     /**
-     * 构造 base 画像：标识/会话亲和/锁定模型用特定值，专家字段用占位值
+     * 构造 base 画像：标识用特定值，专家字段用占位值
      * （便于验证被档位覆盖且 base 不被修改）。
      */
     private ResilienceProfile buildBaseProfile() {
@@ -147,11 +141,6 @@ class ResilienceProfileApplierTest {
         base.setEnableL2ModelDegradation(false);
         base.setDegradationMaxDepth(0);
         base.setTimeout(999);
-        // 非专家字段（应保留 base）
-        base.setEnableSessionAffinity(true);
-        base.setSessionAffinityTtlMinutes(45);
-        base.setEnablePinnedModel(true);
-        base.setPinnedModelId(7L);
         return base;
     }
 }
