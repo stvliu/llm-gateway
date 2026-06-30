@@ -7,22 +7,23 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 2 — 调谐下沉 invoker，每候选独立（已存缺陷，L1 前置）
-- 映射 OpenSpec tasks: 2.1-2.7
+- 当前 plan task: Task 3 — 应用级 ApplicationChannel.priority（依赖 Task 1）
+- 映射 OpenSpec tasks: 3.1-3.9
 - 阶段: implementing
-- Task 2 BASE commit: ec68a151fbe65c15a0ac79a6424489946a4423c3
+- Task 3 BASE commit: 337d54c6707507d2d733ac182f898e3b0ccca548
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
-- 已通过审查阶段: 无（Task 1 待批次 A 审查）
+- 已通过审查阶段: 无（Task 1+2 待批次 A 审查）
 - 审查-修复轮次: 0
-- 批次 A（Task 1+2+3）审查: 待 Task 3 完成后派发
+- 批次 A（Task 1+2+3）审查: Task 3 完成后派发
+- 待批次 A reviewer 重点核查: Task 2 顾虑 2（响应转换残留——跨协议换候选时 convertResponse 基于 primaryCtx 可能返回协议错误，design ID3 未覆盖的对称缺陷）
 
 ## 派发单元（12 个 plan task）
 
 | Task | 标题 | 状态 |
 |------|------|------|
 | 1 | 修复 PriorityRouter 选择器→排序器 | 实现完成 ec68a15（待批次 A 审查） |
-| 2 | 调谐下沉 invoker，每候选独立 | 进行中 |
-| 3 | 应用级 ApplicationChannel.priority | 待派发 |
+| 2 | 调谐下沉 invoker，每候选独立 | 实现完成 337d54c（待批次 A 审查） |
+| 3 | 应用级 ApplicationChannel.priority | 进行中 |
 | 4 | 删除 L2 模型降级层 | 待派发 |
 | 5 | 删除 DomainHealth 路由器 | 待派发 |
 | 6 | Cluster 语义改造 + 瘦身字段 | 待派发 |
@@ -53,3 +54,16 @@
 - GREEN: 全量 `./mvnw -pl gateway-boot -am test` BUILD SUCCESS，PriorityRouterTest 6/0/0、RouterChainTest 7/0/0，全 surefire 无失败
 - 顾虑: (1) 定向组合命令未在 settings 授权，改用全量回归（更严格，可接受）；(2) Task 3 切换应用级映射时需回归本任务测试（已 Javadoc 标注）
 - 裁定: 顾虑为观察性，不阻塞，进入批次 A 审查队列
+
+### Task 2 — 调谐下沉 invoker，每候选独立
+- 状态: 实现完成 DONE_WITH_CONCERNS（待批次 A 审查）
+- commit: 337d54c `fix(resilience): 调谐下沉 invoker，每候选独立 convert+tune`（8 文件 +438/-119）
+- BASE: ec68a15..337d54c
+- RED: 4 个新测试按预期失败（copy 返回 null、2.1 model 未调谐、2.5a 未转换 chunk）
+- GREEN: 全量 `./mvnw -pl gateway-boot -am test` → Tests run: 832, Failures: 0, BUILD SUCCESS；27 个 invoker 测试全过
+- 顾虑:
+  1. 流式转换方向：依裁定3 把 chunk 转换下沉 invoker.buildStreamCallback，基于实际成功候选重建方向（保留 delegateCallback 会留 bug）。2.5a/2.5b 测试覆盖。✓ 可接受
+  2. **响应转换残留（out of scope，待批次 A reviewer 核查）**：阶段6 convertResponse 仍基于 primaryCtx，主候选同协议+备候选跨协议成功时响应原样返回协议错误。请求侧修复使该路径暴露。
+  3. copy() 用 default(throw) 非 abstract：避免强制改 4 个测试匿名实现。✓ 可接受
+  4. 修改了非授权的 ChatDispatchServiceTest（必要同步，删阶段3/4 必然破坏），并移除 ChatDispatchServiceImpl 的 outboundTuner 构造参数。✓ 可接受
+- 裁定: 顾虑 2 记为待核查项交批次 A reviewer，其余可接受
