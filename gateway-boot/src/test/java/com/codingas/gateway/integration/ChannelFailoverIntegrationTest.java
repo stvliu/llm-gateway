@@ -4,9 +4,7 @@ import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
-import com.codingas.gateway.application.proxy.routing.ClusterAffinityRouter;
-import com.codingas.gateway.application.proxy.routing.EndpointResolver;
-import com.codingas.gateway.application.proxy.routing.RoutingRequest;
+import com.codingas.gateway.application.proxy.routing.RouterChain;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
@@ -14,7 +12,6 @@ import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,6 +58,10 @@ import static org.mockito.Mockito.when;
  *
  * <p>Task 4 适配：L2 模型降级层已删除，invoke/invokeStream 签名移除 profile 参数，候选耗尽直接抛
  * 最后异常，不再进入 L2 降级。</p>
+ *
+ * <p>Task 5 适配：DomainHealth 域级聚合路由器（ClusterHealthAggregator + ClusterAffinityRouter）
+ * 已删除，RouterChain 收敛为端点级健康过滤。本测试移除域级聚合/亲和路由端到端用例，
+ * 新增 RouterChain 组成断言验证域级聚合路由器已不在责任链中。</p>
  *
  * <p>参考 {@link FullContextIntegrationTest} 的 KeyFailoverTests 模式：继承基类借用上下文，
  * 测试内手动构造真实 invoker。</p>
@@ -293,286 +294,36 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         }
     }
 
-    // ==================== Cluster 健康聚合 + 共因隔离 + 亲和路由端到端（Task 4.10） ====================
+    // ==================== RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5） ====================
 
-    // 真实 Cluster 健康聚合器 bean（Spring 装配，读真实熔断器状态，纯计算不写库）
+    /** 真实路由器责任链 bean（Spring 装配，按 @Order 自动收集所有 Router） */
     @Autowired
-    private com.codingas.gateway.application.proxy.routing.ClusterHealthAggregator realClusterHealthAggregator;
-
-    // 真实端点熔断器管理器 bean（Spring 装配，每 endpointId 独立熔断器）
-    @Autowired
-    private com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager realCircuitBreakerManager;
-
-    // 真实 Cluster 亲和路由器 bean（Spring 装配，@Order 250，DOWN 域过滤）
-    @Autowired
-    private com.codingas.gateway.application.proxy.routing.ClusterAffinityRouter realClusterAffinityRouter;
-
-    // 真实端点解析器 bean（Spring 装配）
-    @Autowired
-    private com.codingas.gateway.application.proxy.routing.EndpointResolver realEndpointResolver;
+    private RouterChain realRouterChain;
 
     @Nested
-    @DisplayName("Cluster 健康聚合 + 共因隔离端到端：真实熔断器状态聚合")
-    class ClusterHealthAggregationTests {
+    @DisplayName("RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5）")
+    class RouterChainCompositionTests {
 
         @Test
-        @DisplayName("域内全部端点 CLOSED → HEALTHY（正常承接流量）")
-        void allClosed_returnsHealthy() {
-            // 全新 endpoint 熔断器默认 CLOSED
-            long ep = 9001L;
-            // 确保初始 CLOSED（新熔断器默认 CLOSED）
-            assertThat(realCircuitBreakerManager.getBreaker(ep).getState())
-                    .isEqualTo(com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.CLOSED);
+        @DisplayName("RouterChain 不含域级聚合路由器 ClusterAffinityRouter（DomainHealth 已移除）")
+        void routerChain_excludesDomainHealthAggregator() throws Exception {
+            // 读取 RouterChain 已按 @Order 排序的责任链路由器类名
+            List<String> routerNames = readRouterClassNames(realRouterChain);
 
-            com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus status =
-                    realClusterHealthAggregator.aggregate(java.util.List.of(ep));
-
-            assertThat(status)
-                    .isEqualTo(com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus.HEALTHY);
-        }
-
-        @Test
-        @DisplayName("域内全部端点 OPEN → DOWN（共因故障，整域不可用，触发跨域转移）")
-        void allOpen_returnsDown_commonCauseIsolated() {
-            // 构造两个端点均 OPEN：通过 recordFailure 触发熔断（窗口 10，连续 10 次失败快速熔断）
-            long ep1 = 9101L;
-            long ep2 = 9102L;
-            forceOpen(ep1);
-            forceOpen(ep2);
-            assertThat(realCircuitBreakerManager.getBreaker(ep1).getState())
-                    .isEqualTo(com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.OPEN);
-            assertThat(realCircuitBreakerManager.getBreaker(ep2).getState())
-                    .isEqualTo(com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.OPEN);
-
-            com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus status =
-                    realClusterHealthAggregator.aggregate(java.util.List.of(ep1, ep2));
-
-            // 共因隔离：全 OPEN → DOWN，触发跨域转移
-            assertThat(status)
-                    .isEqualTo(com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus.DOWN);
-        }
-
-        @Test
-        @DisplayName("域内部分端点 OPEN → DEGRADED（容量受损但仍可用，不跨域转移）")
-        void partialOpen_returnsDegraded() {
-            // 一个端点 OPEN，一个 CLOSED → DEGRADED
-            long epOpen = 9201L;
-            long epClosed = 9202L;
-            forceOpen(epOpen);
-            // epClosed 默认 CLOSED
-
-            com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus status =
-                    realClusterHealthAggregator.aggregate(java.util.List.of(epOpen, epClosed));
-
-            assertThat(status)
-                    .isEqualTo(com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus.DEGRADED);
-        }
-
-        @Test
-        @DisplayName("域内任一端点 HALF_OPEN → 不判 DOWN（正在试探恢复，解除 DOWN 语义）")
-        void anyHalfOpen_notDown() {
-            // 一个 OPEN，一个 HALF_OPEN → 不应判 DOWN（恢复机制：任一 half-open → 解除 DOWN）
-            long epOpen = 9301L;
-            long epHalfOpen = 9302L;
-            forceOpen(epOpen);
-            forceHalfOpen(epHalfOpen);
-
-            com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus status =
-                    realClusterHealthAggregator.aggregate(java.util.List.of(epOpen, epHalfOpen));
-
-            // 任一 HALF_OPEN 且仍有 OPEN → DEGRADED（不判 DOWN）
-            assertThat(status)
-                    .isEqualTo(com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus.DEGRADED);
-        }
-
-        /**
-         * 强制端点熔断器进入 OPEN 状态
-         *
-         * <p>默认熔断器窗口 10、失败率阈值 0.5；窗口未满但连续全部失败时快速熔断
-         * （{@code failures >= slidingWindowSize}）。连续 recordFailure 10 次即可触发 OPEN。</p>
-         *
-         * @param endpointId 端点 ID
-         */
-        private void forceOpen(long endpointId) {
-            com.codingas.gateway.infrastructure.resilience.CircuitBreaker breaker =
-                    realCircuitBreakerManager.getBreaker(endpointId);
-            // 连续失败直到 OPEN（窗口 10，连续 10 次失败快速熔断）
-            for (int i = 0; i < 10; i++) {
-                breaker.recordFailure();
-                if (breaker.getState() == com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.OPEN) {
-                    return;
-                }
-            }
-        }
-
-        /**
-         * 强制端点熔断器进入 HALF_OPEN 状态
-         *
-         * <p>先 forceOpen，再通过反射重置 openSince 为过去时间，调用 allowRequest 触发 OPEN→HALF_OPEN 迁移。
-         * allowRequest 在 OPEN 且超时后迁移到 HALF_OPEN 并返回 true。</p>
-         *
-         * @param endpointId 端点 ID
-         */
-        private void forceHalfOpen(long endpointId) {
-            forceOpen(endpointId);
-            com.codingas.gateway.infrastructure.resilience.CircuitBreaker breaker =
-                    realCircuitBreakerManager.getBreaker(endpointId);
-            // 反射重置 openSince 为 0（远古时间），使 allowRequest 判定已超时 → 迁移 HALF_OPEN
-            try {
-                java.lang.reflect.Field openSinceField =
-                        com.codingas.gateway.infrastructure.resilience.CircuitBreaker.class
-                                .getDeclaredField("openSince");
-                openSinceField.setAccessible(true);
-                openSinceField.setLong(breaker, 0L);
-                // 调用 allowRequest 触发 OPEN→HALF_OPEN 迁移
-                breaker.allowRequest();
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalStateException("反射重置 CircuitBreaker.openSince 失败", e);
-            }
-            assertThat(breaker.getState())
-                    .isEqualTo(com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.HALF_OPEN);
+            // DomainHealth 域级聚合路由器已删除，责任链不应再包含它
+            assertThat(routerNames).doesNotContain("ClusterAffinityRouter");
+            // 保留路由器按 @Order 升序保持：Permission → EndpointHealth(Health) → Priority → LoadBalance
+            assertThat(routerNames)
+                    .containsSubsequence("PermissionRouter", "HealthRouter", "PriorityRouter", "LoadBalanceRouter");
         }
     }
 
-    // ==================== 亲和路由串联端到端（Task 4.10） ====================
-
-    @Nested
-    @DisplayName("亲和路由串联：熔断器 OPEN → 聚合器判 DOWN → 路由器过滤整域触发跨域转移")
-    class ClusterAffinityRoutingChainTests {
-
-        /**
-         * 端到端串联：真实熔断器（OPEN）→ 真实聚合器（判 DOWN）→ 真实路由器（过滤整域实例）
-         *
-         * <p>与 {@code ClusterAffinityRouterTest}（单元测试，mock {@link ClusterHealthAggregator}）的区别：
-         * 本测试 {@link Autowired} 真实 {@link ClusterHealthAggregator} 与真实
-         * {@link ChannelEndpointCircuitBreakerManager}，仅 mock 边界 Gateway
-         * （{@link ChannelGateway} / {@link EndpointResolver}，控制 Channel 与 Endpoint 返回），
-         * 验证「熔断器状态 → 聚合判断 → 路由过滤」完整串联在真实 Spring 装配下的端到端语义。</p>
-         *
-         * <p>手动 {@code new ClusterAffinityRouter(...)} 注入真实聚合器 + mock 边界 Gateway，
-         * 避免对 Spring 上下文注入额外 {@code @MockBean} 造成上下文重建（参考 ChannelFailover
-         * 集成测试手动 new Invoker 的既有模式）。</p>
-         */
-        @Test
-        @DisplayName("域内全部端点熔断 OPEN → 路由器过滤整域实例，保留健康域实例（跨域转移）")
-        void downClusterFiltered_healthyClusterKept_endToEnd() {
-            // 构造两域候选：
-            //   clusterA(10) channel=100 endpoint=9401（全熔断 → DOWN）
-            //   clusterB(20) channel=200 endpoint=9402（健康 → 保留）
-            com.codingas.gateway.domain.supply.entity.ModelInstance miA =
-                    instance(1L, 100L);
-            com.codingas.gateway.domain.supply.entity.ModelInstance miB =
-                    instance(2L, 200L);
-
-            // mock 边界：ChannelGateway 返回 channel→cluster 映射
-            com.codingas.gateway.domain.supply.gateway.ChannelGateway mockChannelGateway =
-                    mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class);
-            com.codingas.gateway.domain.supply.entity.Channel chA = channel(100L, 10L);
-            com.codingas.gateway.domain.supply.entity.Channel chB = channel(200L, 20L);
-            when(mockChannelGateway.findByIds(java.util.List.of(100L, 200L)))
-                    .thenReturn(java.util.List.of(chA, chB));
-
-            // mock 边界：EndpointResolver 返回 channel→endpoint 映射
-            EndpointResolver mockEndpointResolver = mock(EndpointResolver.class);
-            com.codingas.gateway.domain.supply.entity.ChannelEndpoint epA =
-                    endpoint(9401L, 100L);
-            com.codingas.gateway.domain.supply.entity.ChannelEndpoint epB =
-                    endpoint(9402L, 200L);
-            when(mockEndpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(epA);
-            when(mockEndpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(epB);
-
-            // 真实熔断器：clusterA 域端点 9401 全熔断 OPEN；clusterB 域端点 9402 健康 CLOSED
-            forceCircuitOpen(9401L);
-
-            // 手动构造真实路由器：注入真实聚合器（读真实熔断器）+ mock 边界 Gateway
-            ClusterAffinityRouter router = new ClusterAffinityRouter(
-                    mockChannelGateway, realClusterHealthAggregator, mockEndpointResolver);
-
-            RoutingRequest request = new RoutingRequest(
-                    1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
-            java.util.List<com.codingas.gateway.domain.supply.entity.ModelInstance> result =
-                    router.filter(java.util.List.of(miA, miB), request);
-
-            // 断言：DOWN 域（clusterA）实例被过滤，HEALTHY 域（clusterB）实例保留 → 触发跨域转移
-            assertThat(result).hasSize(1);
-            assertThat(result.getFirst().getId()).isEqualTo(2L);
-        }
-
-        @Test
-        @DisplayName("域内部分端点熔断 → DEGRADED 域实例保留（容量受损但不跨域转移）")
-        void degradedClusterKept_endToEnd() {
-            // 构造同域两实例：clusterA(10) channel=100/101 endpoint=9501/9502
-            //   endpoint 9501 OPEN，endpoint 9502 CLOSED → DEGRADED → 保留整域
-            com.codingas.gateway.domain.supply.entity.ModelInstance mi1 =
-                    instance(1L, 100L);
-            com.codingas.gateway.domain.supply.entity.ModelInstance mi2 =
-                    instance(2L, 101L);
-
-            com.codingas.gateway.domain.supply.gateway.ChannelGateway mockChannelGateway =
-                    mock(com.codingas.gateway.domain.supply.gateway.ChannelGateway.class);
-            when(mockChannelGateway.findByIds(java.util.List.of(100L, 101L)))
-                    .thenReturn(java.util.List.of(channel(100L, 10L), channel(101L, 10L)));
-
-            EndpointResolver mockEndpointResolver = mock(EndpointResolver.class);
-            when(mockEndpointResolver.resolve(100L, Protocol.OPENAI))
-                    .thenReturn(endpoint(9501L, 100L));
-            when(mockEndpointResolver.resolve(101L, Protocol.OPENAI))
-                    .thenReturn(endpoint(9502L, 101L));
-
-            // 真实熔断器：9501 OPEN，9502 CLOSED → DEGRADED
-            forceCircuitOpen(9501L);
-
-            ClusterAffinityRouter router = new ClusterAffinityRouter(
-                    mockChannelGateway, realClusterHealthAggregator, mockEndpointResolver);
-
-            RoutingRequest request = new RoutingRequest(
-                    1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI, null);
-            java.util.List<com.codingas.gateway.domain.supply.entity.ModelInstance> result =
-                    router.filter(java.util.List.of(mi1, mi2), request);
-
-            // 断言：DEGRADED 域实例全部保留（不跨域转移）
-            assertThat(result).hasSize(2);
-        }
-
-        /** 构造测试用 ModelInstance */
-        private com.codingas.gateway.domain.supply.entity.ModelInstance instance(
-                long id, long channelId) {
-            com.codingas.gateway.domain.supply.entity.ModelInstance mi =
-                    new com.codingas.gateway.domain.supply.entity.ModelInstance();
-            mi.setId(id);
-            mi.setChannelId(channelId);
-            return mi;
-        }
-
-        /** 构造测试用 Channel */
-        private com.codingas.gateway.domain.supply.entity.Channel channel(long id, Long clusterId) {
-            com.codingas.gateway.domain.supply.entity.Channel ch =
-                    new com.codingas.gateway.domain.supply.entity.Channel();
-            ch.setId(id);
-            ch.setClusterId(clusterId);
-            return ch;
-        }
-
-        /** 构造测试用 ChannelEndpoint */
-        private com.codingas.gateway.domain.supply.entity.ChannelEndpoint endpoint(
-                long id, long channelId) {
-            com.codingas.gateway.domain.supply.entity.ChannelEndpoint ep =
-                    new com.codingas.gateway.domain.supply.entity.ChannelEndpoint();
-            ep.setId(id);
-            ep.setChannelId(channelId);
-            return ep;
-        }
-
-        /** 强制端点熔断器进入 OPEN 状态（连续 10 次失败快速熔断） */
-        private void forceCircuitOpen(long endpointId) {
-            com.codingas.gateway.infrastructure.resilience.CircuitBreaker breaker =
-                    realCircuitBreakerManager.getBreaker(endpointId);
-            for (int i = 0; i < 10; i++) {
-                breaker.recordFailure();
-                if (breaker.getState() == com.codingas.gateway.infrastructure.resilience.CircuitBreakerState.OPEN) {
-                    return;
-                }
-            }
-        }
+    /** 读取 RouterChain 私有 routers 字段（已按 @Order 排序）的类名列表 */
+    @SuppressWarnings("unchecked")
+    private List<String> readRouterClassNames(RouterChain chain) throws Exception {
+        java.lang.reflect.Field field = RouterChain.class.getDeclaredField("routers");
+        field.setAccessible(true);
+        List<?> routers = (List<?>) field.get(chain);
+        return routers.stream().map(r -> r.getClass().getSimpleName()).toList();
     }
 }
