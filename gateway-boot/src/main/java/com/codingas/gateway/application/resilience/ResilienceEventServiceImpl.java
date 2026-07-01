@@ -67,6 +67,7 @@ public class ResilienceEventServiceImpl implements ResilienceEventService {
         response.setErrorType(event.getErrorType() != null ? event.getErrorType().name() : null);
         response.setDecision(event.getDecision() != null ? event.getDecision().name() : null);
         response.setExhausted(event.isExhausted());
+        response.setCommonCauseSkip(event.isCommonCauseSkip());
         response.setOccurredAt(event.getOccurredAt());
         return response;
     }

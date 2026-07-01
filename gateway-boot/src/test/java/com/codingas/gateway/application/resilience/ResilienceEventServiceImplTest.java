@@ -116,6 +116,23 @@ class ResilienceEventServiceImplTest {
         assertThat(resp.getDecision()).isEqualTo("L1");
     }
 
+    @Test
+    @DisplayName("toResponse 透传 commonCauseSkip（共因跳过标记闭环到前端展示）")
+    void toResponse_mapsCommonCauseSkip() {
+        // spec L119：转移事件字段含 commonCauseSkip，需闭环到 Response DTO 供前端容灾总览页展示
+        FailoverEvent entity = buildExhaustedEvent();
+        entity.setCommonCauseSkip(true);
+        when(failoverEventGateway.findExhausted(any(), anyInt()))
+                .thenReturn(List.of(entity));
+
+        List<FailoverEventResponse> result = service.findExhausted(null, 50);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).isCommonCauseSkip())
+                .as("commonCauseSkip 应从实体透传到响应 DTO（前端容灾总览页共因跳过列）")
+                .isTrue();
+    }
+
     private FailoverEvent buildExhaustedEvent() {
         FailoverEvent entity = new FailoverEvent();
         entity.setId(1L);
