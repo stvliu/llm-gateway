@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Application,
+  ApplicationChannelItem,
   CreateApplicationRequest,
   UpdateApplicationRequest,
 } from '@/types/application';
@@ -31,11 +32,11 @@ export const applicationApi = {
   delete: (id: number) =>
     api.delete<void>(`/applications/${id}`),
 
-  /** 查询应用授权的渠道 ID 列表 */
+  /** 查询应用授权的渠道及其应用级转移优先级 */
   listChannels: (id: number) =>
-    api.get<number[]>(`/applications/${id}/channels`),
+    api.get<ApplicationChannelItem[]>(`/applications/${id}/channels`),
 
-  /** 更新应用渠道授权 */
-  updateChannels: (id: number, channelIds: number[]) =>
-    api.put<void>(`/applications/${id}/channels`, { channelIds }),
+  /** 更新应用渠道授权（含 priority） */
+  updateChannels: (id: number, channels: ApplicationChannelItem[]) =>
+    api.put<void>(`/applications/${id}/channels`, { channels }),
 };

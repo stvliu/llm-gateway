@@ -1,6 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.application.application.ApplicationService;
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
 import jakarta.validation.Valid;
@@ -82,27 +83,27 @@ public class ApplicationController {
     }
 
     /**
-     * 查询应用授权的渠道 ID 列表
+     * 查询应用授权的渠道及其应用级转移优先级
      *
      * @param id 应用 ID
-     * @return 渠道 ID 列表
+     * @return 渠道授权项列表（channelId + priority）
      */
     @GetMapping("/{id}/channels")
-    public List<Long> listChannels(@PathVariable Long id) {
-        return applicationService.listChannelIds(id);
+    public List<ApplicationChannelItem> listChannels(@PathVariable Long id) {
+        return applicationService.listChannels(id);
     }
 
     /**
-     * 更新应用渠道授权（先清空旧关联，再批量保存新关联）
+     * 更新应用渠道授权（先清空旧关联，再批量保存含 priority 的新关联）
      *
      * @param id      应用 ID
-     * @param request 渠道授权请求（channelIds）
+     * @param request 渠道授权请求（channels，每项含 channelId 与 priority）
      */
     @PutMapping("/{id}/channels")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateChannels(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationChannelRequest request) {
-        applicationService.updateChannels(id, request.channelIds());
+        applicationService.updateChannels(id, request.channels());
     }
 }

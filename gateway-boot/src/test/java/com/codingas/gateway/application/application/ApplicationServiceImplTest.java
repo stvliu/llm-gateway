@@ -1,9 +1,11 @@
 package com.codingas.gateway.application.application;
 
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.application.entity.Application;
+import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
@@ -17,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -246,35 +247,61 @@ class ApplicationServiceImplTest {
     class ChannelAuthorizationTests {
 
         @Test
-        @DisplayName("listChannelIds 返回应用授权的渠道 ID 列表")
-        void listChannelIds_returnsChannelIds() {
-            when(applicationChannelGateway.findChannelIdsByApplicationId(1L))
-                    .thenReturn(Set.of(10L, 20L));
+        @DisplayName("listChannels 返回应用授权的渠道及其 priority")
+        void listChannels_returnsChannelsWithPriority() {
+            // 模拟 gateway 返回含 priority 的关联列表
+            ApplicationChannel rel1 = new ApplicationChannel(1L, 10L, 1);
+            ApplicationChannel rel2 = new ApplicationChannel(1L, 20L, null);
+            when(applicationChannelGateway.findByApplicationId(1L))
+                    .thenReturn(List.of(rel1, rel2));
 
-            List<Long> result = applicationService.listChannelIds(1L);
+            List<ApplicationChannelItem> result = applicationService.listChannels(1L);
 
-            assertThat(result).containsExactlyInAnyOrder(10L, 20L);
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(ApplicationChannelItem::channelId)
+                    .containsExactlyInAnyOrder(10L, 20L);
+            // priority 原样透传（null 表示未配置）
+            assertThat(result).filteredOn(i -> i.channelId().equals(10L))
+                    .singleElement()
+                    .extracting(ApplicationChannelItem::priority)
+                    .isEqualTo(1);
+            assertThat(result).filteredOn(i -> i.channelId().equals(20L))
+                    .singleElement()
+                    .extracting(ApplicationChannelItem::priority)
+                    .isNull();
         }
 
         @Test
-        @DisplayName("updateChannels 先删旧关联再批量保存新关联")
-        void updateChannels_replacesAuthorizations() {
+        @DisplayName("updateChannels 用三参构造器保存含 priority 的关联")
+        void updateChannels_savesAuthorizationsWithPriority() {
             when(applicationGateway.findById(1L))
                     .thenReturn(buildSavedApplication(1L, "APP-001", "应用"));
 
-            applicationService.updateChannels(1L, List.of(10L, 20L));
+            // channel 10 配 priority=1，channel 20 不配（null）
+            applicationService.updateChannels(1L, List.of(
+                    new ApplicationChannelItem(10L, 1),
+                    new ApplicationChannelItem(20L, null)));
 
             // 先删后建
             verify(applicationChannelGateway).deleteByApplicationId(1L);
-            ArgumentCaptor<List<com.codingas.gateway.domain.application.entity.ApplicationChannel>> captor =
+            ArgumentCaptor<List<ApplicationChannel>> captor =
                     ArgumentCaptor.forClass(List.class);
             verify(applicationChannelGateway).saveAll(captor.capture());
             assertThat(captor.getValue()).hasSize(2);
             assertThat(captor.getValue())
-                    .extracting(com.codingas.gateway.domain.application.entity.ApplicationChannel::getChannelId)
+                    .extracting(ApplicationChannel::getChannelId)
                     .containsExactlyInAnyOrder(10L, 20L);
             assertThat(captor.getValue())
                     .allMatch(rel -> rel.getApplicationId().equals(1L));
+            // 验证 priority 透传到实体
+            assertThat(captor.getValue()).filteredOn(r -> r.getChannelId().equals(10L))
+                    .singleElement()
+                    .extracting(ApplicationChannel::getPriority)
+                    .isEqualTo(1);
+            assertThat(captor.getValue()).filteredOn(r -> r.getChannelId().equals(20L))
+                    .singleElement()
+                    .extracting(ApplicationChannel::getPriority)
+                    .isNull();
         }
 
         @Test
@@ -282,7 +309,8 @@ class ApplicationServiceImplTest {
         void updateChannels_notFound_throwsException() {
             when(applicationGateway.findById(999L)).thenReturn(null);
 
-            assertThatThrownBy(() -> applicationService.updateChannels(999L, List.of(10L)))
+            assertThatThrownBy(() -> applicationService.updateChannels(999L,
+                    List.of(new ApplicationChannelItem(10L, 1))))
                     .isInstanceOf(GatewayRequestException.class);
         }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert, Spin } from 'antd';
+import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert, Spin, InputNumber } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { channelApi } from '@/services/api/channel';
 import { applicationApi } from '@/services/api/application';
@@ -19,7 +19,9 @@ interface ChannelManageModalProps {
 /**
  * 应用渠道授权弹窗
  *
- * 配置应用可访问的渠道，应用下的 API Key 将继承这些渠道权限。
+ * 配置应用可访问的渠道及其应用级转移优先级，应用下的 API Key 将继承这些渠道权限。
+ *
+ * Task gap2：priority 由渠道级只读展示改为应用级可编辑，保存到 ApplicationChannel.priority。
  */
 export default function ChannelManageModal({
   open,
@@ -32,8 +34,8 @@ export default function ChannelManageModal({
 
   // 所有渠道列表
   const [channels, setChannels] = useState<Channel[]>([]);
-  // 已选中的渠道 ID 集合
-  const [selectedChannelIds, setSelectedChannelIds] = useState<Set<number>>(new Set());
+  // 已选中的渠道：key=channelId，value=应用级转移优先级（null 表示未配置，回退默认 100）
+  const [selected, setSelected] = useState<Map<number, number | null>>(new Map());
   // 加载状态
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -49,11 +51,16 @@ export default function ChannelManageModal({
         const allChannels = await channelApi.list();
         setChannels(allChannels);
 
-        const appChannelIds = await applicationApi.listChannels(applicationId).catch(() => {
+        const appChannels = await applicationApi.listChannels(applicationId).catch(() => {
           // 非管理员可能无权查询应用渠道，此时默认为空
-          return [] as number[];
+          return [] as { channelId: number; priority: number | null }[];
         });
-        setSelectedChannelIds(new Set(appChannelIds));
+        // 用应用级 priority 初始化选中渠道
+        const next = new Map<number, number | null>();
+        for (const item of appChannels) {
+          next.set(item.channelId, item.priority);
+        }
+        setSelected(next);
       } catch {
         message.error(t('channelAuthorization.loadError'));
       } finally {
@@ -66,15 +73,31 @@ export default function ChannelManageModal({
 
   /**
    * 切换渠道选中状态
+   *
+   * 勾选时 priority 默认 null（回退 100）；取消勾选时从 map 移除。
    */
   const handleToggle = (channelId: number, checked: boolean) => {
-    setSelectedChannelIds((prev) => {
-      const next = new Set(prev);
+    setSelected((prev) => {
+      const next = new Map(prev);
       if (checked) {
-        next.add(channelId);
+        next.set(channelId, prev.has(channelId) ? prev.get(channelId)! : null);
       } else {
         next.delete(channelId);
       }
+      return next;
+    });
+  };
+
+  /**
+   * 修改某渠道的应用级 priority
+   */
+  const handlePriorityChange = (channelId: number, value: number | null) => {
+    setSelected((prev) => {
+      // 仅当选中时才记录 priority
+      if (!prev.has(channelId)) return prev;
+      const next = new Map(prev);
+      // InputNumber 清空返回 null；非负整数校验由控件 min/step 保证
+      next.set(channelId, value == null ? null : Math.floor(value));
       return next;
     });
   };
@@ -84,19 +107,29 @@ export default function ChannelManageModal({
    */
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedChannelIds(new Set(channels.map((c) => c.id)));
+      const next = new Map<number, number | null>();
+      for (const c of channels) {
+        next.set(c.id, null);
+      }
+      setSelected(next);
     } else {
-      setSelectedChannelIds(new Set());
+      setSelected(new Map());
     }
   };
 
   /**
    * 保存配置
+   *
+   * 将选中的渠道及其应用级 priority 提交后端，null 表示未配置（后端回退默认值 100）。
    */
   const handleSave = async () => {
     setSaving(true);
     try {
-      await applicationApi.updateChannels(applicationId, Array.from(selectedChannelIds));
+      const items = Array.from(selected.entries()).map(([channelId, priority]) => ({
+        channelId,
+        priority,
+      }));
+      await applicationApi.updateChannels(applicationId, items);
       message.success(t('channelAuthorization.saveSuccess'));
       onCancel();
     } catch {
@@ -104,6 +137,28 @@ export default function ChannelManageModal({
     } finally {
       setSaving(false);
     }
+  };
+
+  /**
+   * 渲染应用级 priority 编辑控件
+   *
+   * 未选中渠道时禁用编辑；选中时允许输入非负整数，留空表示默认（100）。
+   */
+  const renderPriority = (record: Channel) => {
+    const isSelected = selected.has(record.id);
+    const priority = selected.get(record.id) ?? null;
+    return (
+      <InputNumber
+        size="small"
+        min={0}
+        step={1}
+        value={priority}
+        disabled={!isSelected}
+        placeholder={t('channelAuthorization.priorityPlaceholder')}
+        style={{ width: 80 }}
+        onChange={(value) => handlePriorityChange(record.id, value)}
+      />
+    );
   };
 
   const columns = [
@@ -119,12 +174,18 @@ export default function ChannelManageModal({
       ),
     },
     {
-      // 渠道转移优先级（数值越小越优先），按此列升序展示先后次序
-      title: t('channelAuthorization.priority'),
-      dataIndex: 'priority',
+      // 应用级转移优先级（数值越小越优先），可编辑；留空表示默认（100）
+      title: (
+        <Space direction="vertical" size={0}>
+          <span>{t('channelAuthorization.priority')}</span>
+          <Text type="secondary" style={{ fontSize: 11 }}>
+            {t('channelAuthorization.priorityHint')}
+          </Text>
+        </Space>
+      ),
       key: 'priority',
-      width: 90,
-      render: (priority: number) => <Tag color="blue">P{priority}</Tag>,
+      width: 110,
+      render: (_: unknown, record: Channel) => renderPriority(record),
     },
     {
       title: t('channelAuthorization.billingMode'),
@@ -156,11 +217,11 @@ export default function ChannelManageModal({
       title: (
         <Space>
           <Checkbox
-            checked={channels.length > 0 && channels.every((c) => selectedChannelIds.has(c.id))}
+            checked={channels.length > 0 && channels.every((c) => selected.has(c.id))}
             indeterminate={
               channels.length > 0 &&
-              selectedChannelIds.size > 0 &&
-              selectedChannelIds.size < channels.length
+              selected.size > 0 &&
+              selected.size < channels.length
             }
             onChange={(e) => handleSelectAll(e.target.checked)}
           />
@@ -171,20 +232,23 @@ export default function ChannelManageModal({
       width: 100,
       render: (_: unknown, record: Channel) => (
         <Checkbox
-          checked={selectedChannelIds.has(record.id)}
+          checked={selected.has(record.id)}
           onChange={(e) => handleToggle(record.id, e.target.checked)}
         />
       ),
     },
   ];
 
-  // 按 priority 升序排序展示（数值越小越优先，定义 L1 转移先后次序）
-  const sortedChannels = useMemo(
-    () => [...channels].sort((a, b) => a.priority - b.priority),
-    [channels],
-  );
+  // 按应用级 priority 升序排序展示（数值越小越优先，null 视为默认值 100）
+  const sortedChannels = useMemo(() => {
+    const priorityOf = (channelId: number): number => {
+      const p = selected.get(channelId);
+      return p == null ? 100 : p;
+    };
+    return [...channels].sort((a, b) => priorityOf(a.id) - priorityOf(b.id));
+  }, [channels, selected]);
 
-  const selectedCount = selectedChannelIds.size;
+  const selectedCount = selected.size;
   const totalCount = channels.length;
 
   return (

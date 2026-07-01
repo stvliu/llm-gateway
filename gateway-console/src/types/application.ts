@@ -37,3 +37,17 @@ export interface CreateApplicationRequest {
 
 /** 更新应用请求 */
 export type UpdateApplicationRequest = CreateApplicationRequest;
+
+/**
+ * 应用-渠道授权项（与后端 ApplicationChannelItem 一致）
+ *
+ * Task gap2：转移顺序由应用级 ApplicationChannel.priority 决定，
+ * 管理端通过本类型读写渠道授权及其 priority。
+ *
+ * - channelId：渠道 ID
+ * - priority：转移优先级（数值越小越优先；null 表示未配置，后端回退默认值 100）
+ */
+export interface ApplicationChannelItem {
+  channelId: number;
+  priority: number | null;
+}

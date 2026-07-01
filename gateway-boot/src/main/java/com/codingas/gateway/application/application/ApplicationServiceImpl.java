@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.application;
 
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -13,9 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 应用应用服务实现
@@ -110,29 +109,31 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<Long> listChannelIds(Long id) {
-        Set<Long> channelIds = applicationChannelGateway.findChannelIdsByApplicationId(id);
-        return new ArrayList<>(channelIds);
+    public List<ApplicationChannelItem> listChannels(Long id) {
+        // 经 gateway 取含 priority 的关联列表，转换为响应 DTO（priority 原样透传，null 表示未配置）
+        return applicationChannelGateway.findByApplicationId(id).stream()
+                .map(rel -> new ApplicationChannelItem(rel.getChannelId(), rel.getPriority()))
+                .toList();
     }
 
     @Override
     @Transactional
-    public void updateChannels(Long id, List<Long> channelIds) {
+    public void updateChannels(Long id, List<ApplicationChannelItem> channels) {
         Application app = applicationGateway.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
 
-        // 先删后建：清空旧关联，再批量保存新关联
+        // 先删后建：清空旧关联，再用三参构造器透传 priority 批量保存新关联
         applicationChannelGateway.deleteByApplicationId(id);
-        if (channelIds != null && !channelIds.isEmpty()) {
-            List<ApplicationChannel> rels = channelIds.stream()
-                    .map(chId -> new ApplicationChannel(id, chId))
+        if (channels != null && !channels.isEmpty()) {
+            List<ApplicationChannel> rels = channels.stream()
+                    .map(item -> new ApplicationChannel(id, item.channelId(), item.priority()))
                     .toList();
             applicationChannelGateway.saveAll(rels);
         }
         log.info("Updated application channels: appId={}, count={}", id,
-                channelIds != null ? channelIds.size() : 0);
+                channels != null ? channels.size() : 0);
     }
 
     /**

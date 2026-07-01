@@ -29,6 +29,8 @@
     "selectedCount": "Selected {{selectedCount}}/{{totalCount}} channels",
     "channelName": "Channel Name",
     "priority": "Failover Priority",
+    "priorityHint": "Smaller is higher priority, empty means default (100)",
+    "priorityPlaceholder": "Default",
     "billingMode": "Billing Mode",
     "payAsYouGo": "Pay As You Go",
     "subscription": "Subscription",

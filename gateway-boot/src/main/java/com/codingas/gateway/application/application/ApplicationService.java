@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.application;
 
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
 
@@ -53,18 +54,24 @@ public interface ApplicationService {
     void delete(Long id);
 
     /**
-     * 查询应用授权的渠道 ID 列表
+     * 查询应用授权的渠道及其应用级转移优先级
+     *
+     * <p>Task gap2：转移顺序由应用级 {@code ApplicationChannel.priority} 决定，
+     * 管理端需读取 priority 配置。返回列表每项含 channelId 与 priority。</p>
      *
      * @param id 应用 ID
-     * @return 渠道 ID 列表
+     * @return 渠道授权项列表（channelId + priority）
      */
-    List<Long> listChannelIds(Long id);
+    List<ApplicationChannelItem> listChannels(Long id);
 
     /**
-     * 更新应用渠道授权（先清空旧关联，再批量保存新关联）
+     * 更新应用渠道授权（先清空旧关联，再批量保存含 priority 的新关联）
      *
-     * @param id         应用 ID
-     * @param channelIds 渠道 ID 列表
+     * <p>Task gap2：用三参构造器 {@code ApplicationChannel(appId, channelId, priority)}
+     * 保存，使 priority 写入应用-渠道关联实体。</p>
+     *
+     * @param id       应用 ID
+     * @param channels 渠道授权项列表（channelId + priority；空列表表示清空全部授权）
      */
-    void updateChannels(Long id, List<Long> channelIds);
+    void updateChannels(Long id, List<ApplicationChannelItem> channels);
 }
