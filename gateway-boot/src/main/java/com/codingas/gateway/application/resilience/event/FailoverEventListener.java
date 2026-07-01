@@ -76,6 +76,7 @@ public class FailoverEventListener {
         entity.setErrorType(event.errorType());
         entity.setDecision(event.decision());
         entity.setExhausted(event.exhausted());
+        entity.setCommonCauseSkip(event.commonCauseSkip());
         entity.setOccurredAt(event.occurredOn());
         return entity;
     }

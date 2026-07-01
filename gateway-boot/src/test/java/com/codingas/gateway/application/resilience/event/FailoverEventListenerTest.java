@@ -105,4 +105,33 @@ class FailoverEventListenerTest {
         assertThat(captured.isExhausted()).isTrue();
         assertThat(captured.getDecision()).isEqualTo(FailoverDecision.L1);
     }
+
+    @Test
+    @DisplayName("commonCauseSkip=true 的共因跳过事件正确透传到实体")
+    void handleFailoverOccurredEvent_commonCauseSkipTrue_persistedToEntity() {
+        Instant occurredOn = Instant.parse("2026-06-22T12:00:00Z");
+        // 使用 13 参数规范构造器，显式传 commonCauseSkip=true
+        FailoverOccurredEvent event = new FailoverOccurredEvent(
+                "trace-skip-789",
+                9L,
+                10L, 20L,
+                11L, 21L,
+                null, null,
+                ProviderErrorType.AUTHENTICATION_ERROR,
+                FailoverDecision.L1,
+                false,
+                true,
+                occurredOn
+        );
+        when(failoverEventGateway.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
+                .thenReturn(new FailoverEvent());
+
+        listener.onFailoverOccurred(event);
+
+        ArgumentCaptor<FailoverEvent> captor = ArgumentCaptor.forClass(FailoverEvent.class);
+        verify(failoverEventGateway).save(captor.capture());
+        FailoverEvent captured = captor.getValue();
+        // 验证共因跳过标记从事件透传到实体（spec: common_cause_skip 列）
+        assertThat(captured.isCommonCauseSkip()).isTrue();
+    }
 }

@@ -31,7 +31,7 @@ import java.time.Instant;
  * @param fromEndpointId   失败候选的端点 ID
  * @param toChannelId      转移目标候选的渠道 ID（exhausted 时为 null）
  * @param toEndpointId     转移目标候选的端点 ID（exhausted 时为 null）
- * @param fromClusterId    冗余：失败候选所属故障域 ID（Invoker 经 ChannelGateway.findById 反查填充，渠道不存在或未关联 cluster 时为 null）
+ * @param fromClusterId    冗余：失败候选所属故障域 ID（从 RoutingContext.clusterId 直取，渠道未关联 cluster 时为 null）
  * @param toClusterId      冗余：转移目标所属故障域 ID（同上，无目标时为 null）
  * @param errorType        触发转移的上游错误类型
  * @param decision         转移决策（L1）
