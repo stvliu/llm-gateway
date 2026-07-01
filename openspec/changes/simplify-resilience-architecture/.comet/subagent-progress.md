@@ -7,13 +7,22 @@
 
 ## 协调状态
 
-- 当前 plan task: Task 6 — Cluster 语义改造 + 瘦身字段（依赖 Task 1）
+- 当前 plan task: Task 9 — L1 clusterId 共因跳过（依赖 Task 1+6，均已完成）
+- Task 9 BASE commit: e22ba3de（HEAD）
+- Task 9 现状: RoutingContext record 无 clusterId；ChannelFailoverInvoker.invoke/invokeStream 无共因跳过；publishFailoverEvent L412 用 resolveClusterId 反查 + 12 参数次级构造器（commonCauseSkip=false）。Task 9 加 RoutingContext.clusterId、RoutingResolver.buildContext 填充、Invoker 共因跳过局部 Set、publishFailoverEvent 改 13 参数规范构造器 + RoutingContext.clusterId 直取（删 resolveClusterId）
 - 映射 OpenSpec tasks: 6.1-6.10
-- 阶段: implementing
-- Task 6 BASE commit: a8cefaf
+- 阶段: 批次 C 审查中（Task 6+8+9 全部实现并回归通过，已派发合并 reviewer，第 1 轮）
+- Task 6 BASE commit: 4d4c7a4；实现提交 e7ecf9d（amend 含 orphan 删除）
+- 字段澄清（spec cluster-failover/spec.md L17-33 权威）: Cluster 保留 code/name/providerId + 新增 description + 审计；删 region/priority/healthStatus。plan 6.1 漏写 providerId，spec L30「Cluster 与 providerId 共存正交」补全
+- Task 6 实现摘要: Cluster 瘦身+description 新增；FailoverOccurredEvent/FailoverEvent/DO 加 commonCauseSkip；FailoverEventGatewayImpl L75/L76 valueOf 容错（L2/未知→NONE/null+warn）；V60 删列+加 description 列，V64 加 common_cause_skip 列
+- Task 6 顾虑: implementer 环境无 mvn 权限，RED/GREEN 由协调者执行回归验证；FailoverOccurredEvent 新增 12 参数次级构造器（commonCauseSkip=false）避免触碰 ChannelFailoverInvoker（plan 6.6 保留），Task 9 改 13 参数规范构造器时可移除；FailoverEventListener.toEntity 未透传 commonCauseSkip（不在允许范围，默认 false 语义一致，Task 9 接入）
+- Task 8 实现提交: 90584fb（39 files +151/-2335，删 19 类含 13 主码+6 测试，回归后台 bgj2qrhpp）
+- Task 8 范围决策（用户已确认）:
+  - V63（删 model_instances.priority）: **拆为独立后续任务**（Task 8 不做 V63）。ModelInstance.priority 仍活跃，删除连带 ~13 supply 域文件。本 change 结束后单独开 change 处理 supply 域 priority 清理。plan 8.2 的 V63 标记为不在本任务范围
+  - timeout 运行时接入: **本轮接入运行时**（spec 合规修复）。派发修复 agent acf6111797c038ec3：RoutingResolver 注入 ApplicationGateway，resolveCandidates 查 Application.timeout，buildContext 中 `applicationTimeout!=0 ? applicationTimeout : channel.getTimeout()`。RoutingContext 不改。修复轮完成后 Task 8 进入待批次 C 审查
 - review_mode: thorough（按批次/风险边界合并审查，每批最多 3 task 或跨模块边界；最终一次完整审查；各最多 2 轮审查-修复）
 - 已通过审查阶段: 批次 A Approved + 批次 B Approved
-- 审查-修复轮次: 0（批次 C 开始：Task 6→8→9）
+- 批次 C 审查第 1 轮: NEEDS_FIX。Critical C1（FailoverEventListener.toEntity 漏透传 commonCauseSkip，DB 恒 false，spec L119 偏离）+ Important I1（FailoverOccurredEvent.java:34/FailoverEvent.java:33 Javadoc 仍提 ChannelGateway 反查）。已派发修复 agent，第 2 轮
 - 批次 C（Task 6+8+9）审查: Task 6+8+9 完成后合并审查
 - **Task 6 强制项（reviewer 要求）**: FailoverEventGatewayImpl.java:76 valueOf 还原 FailoverDecision 需容错——读历史 decision='L2' 行会抛 IllegalArgumentException 破坏管理后台容灾查询。Task 6 触及 FailoverEvent/DO，必须加 try-catch 容错（L2/未知值→NONE + log warn）或配套数据迁移 UPDATE failover_events SET decision='NONE' WHERE decision='L2'。不可遗漏。
 - 待最终审查 triage 的 Minor: (A-2)Task3 TDD RED 不纯粹 (A-4)copy default 脆弱 (A-7)InstanceSelector 每请求 DB 查询 (A-顾虑1)ChatDispatchServiceImpl protocolConverter dead code 待清理
@@ -39,10 +48,10 @@
 | 3 | 应用级 ApplicationChannel.priority | ✅ 批次 A 通过 d83201e |
 | 4 | 删除 L2 模型降级层 | ✅ 批次 B 通过 d8f6372 |
 | 5 | 删除 DomainHealth 路由器 | ✅ 批次 B 通过 a1f387b |
-| 6 | Cluster 语义改造 + 瘦身字段 | 进行中 |
+| 6 | Cluster 语义改造 + 瘦身字段 | 实现完成 e7ecf9d（待回归验证 + 批次 C 审查） |
 | 7 | 删除 PinnedModel 与会话亲和 | ✅ 批次 B 通过 a8cefaf |
-| 8 | ResilienceProfile 实体降级 | 待派发 |
-| 9 | L1 clusterId 共因跳过 | 待派发 |
+| 8 | ResilienceProfile 实体降级 | ✅ 实现完成 90584fb + timeout 接入 e22ba3de（736 tests pass，待批次 C 审查） |
+| 9 | L1 clusterId 共因跳过 | ✅ 实现完成 c1f43615（744 tests pass 自报，协调者独立回归验证中 bnl2skzdq，待批次 C 审查） |
 | 10 | 前端适配 | 待派发 |
 | 11 | spec 同步与文档 | 待派发 |
 | 12 | 全链路回归 | 待派发 |

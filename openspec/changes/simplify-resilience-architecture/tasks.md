@@ -56,16 +56,16 @@
 
 ## 6. Cluster 语义改造 + 瘦身字段（独立，保留实体名）
 
-- [ ] 6.1 `Cluster` 实体删 region/priority/healthStatus 字段，保留 code/name/description + 审计；更新 Javadoc 语义为「跨供应商故障独立性分组」
-- [ ] 6.2 `Channel.clusterId` 字段名保留不变
-- [ ] 6.3 `ClusterGateway`/Impl/DO/Repository 删 region/priority/healthStatus 适配
-- [ ] 6.4 Flyway 迁移：clusters 表删 region/priority/health_status 列
-- [ ] 6.5 `ClusterController` 适配（字段瘦身，API 路径 `/api/v1/resilience/clusters` 保留）
-- [ ] 6.6 `ChannelFailoverInvoker.publishFailoverEvent` 的 clusterId 反查逻辑保留（语义不变）
-- [ ] 6.7 `FailoverOccurredEvent`/`FailoverEvent`/DO 的 clusterId 字段保留，新增 `commonCauseSkip` 标记
-- [ ] 6.8 适配所有 Cluster 引用测试（删 region/priority/healthStatus 相关断言）
-- [ ] 6.9 跑绿 + 回归
-- [ ] 6.10 commit
+- [x] 6.1 `Cluster` 实体删 region/priority/healthStatus 字段，保留 code/name/description + 审计；更新 Javadoc 语义为「跨供应商故障独立性分组」
+- [x] 6.2 `Channel.clusterId` 字段名保留不变
+- [x] 6.3 `ClusterGateway`/Impl/DO/Repository 删 region/priority/healthStatus 适配
+- [x] 6.4 Flyway 迁移：clusters 表删 region/priority/health_status 列
+- [x] 6.5 `ClusterController` 适配（字段瘦身，API 路径 `/api/v1/resilience/clusters` 保留）
+- [x] 6.6 `ChannelFailoverInvoker.publishFailoverEvent` 的 clusterId 反查逻辑保留（语义不变）
+- [x] 6.7 `FailoverOccurredEvent`/`FailoverEvent`/DO 的 clusterId 字段保留，新增 `commonCauseSkip` 标记
+- [x] 6.8 适配所有 Cluster 引用测试（删 region/priority/healthStatus 相关断言）
+- [x] 6.9 跑绿 + 回归
+- [x] 6.10 commit
 
 ## 7. 删除 PinnedModel 与会话亲和（独立）
 
@@ -80,26 +80,26 @@
 
 ## 8. ResilienceProfile 实体降级（依赖 4/7）
 
-- [ ] 8.1 `Application` 实体加 `timeout` 字段，删 `resilienceProfileId`
-- [ ] 8.2 Flyway：applications 表加 timeout 列、删 resilience_profile_id 列、删 resilience_profiles 表、删 V56 seed
-- [ ] 8.3 整删 `ResilienceProfile` 实体、`ResilienceProfileGateway`/Impl、`ResilienceResolver`、`ResilienceProfileApplier`
-- [ ] 8.4 整删 `ResilienceProfileController` + DTO
-- [ ] 8.5 `ChatDispatchServiceImpl`/`InstanceSelector` 的 profile 解析改为直接读 Application.timeout
-- [ ] 8.6 `ApplicationServiceImpl`/Controller 适配 timeout CRUD，移除 `/applications/{id}/resilience` 端点
-- [ ] 8.7 适配 `ResilienceProfileIntegrationTest` 等测试（重写或删除两对照场景）
-- [ ] 8.8 跑绿 + 回归
-- [ ] 8.9 commit
+- [x] 8.1 `Application` 实体加 `timeout` 字段，删 `resilienceProfileId`
+- [x] 8.2 Flyway：applications 表加 timeout 列、删 resilience_profile_id 列、删 resilience_profiles 表、删 V56 seed
+- [x] 8.3 整删 `ResilienceProfile` 实体、`ResilienceProfileGateway`/Impl、`ResilienceResolver`、`ResilienceProfileApplier`
+- [x] 8.4 整删 `ResilienceProfileController` + DTO
+- [x] 8.5 `ChatDispatchServiceImpl`/`InstanceSelector` 的 profile 解析改为直接读 Application.timeout
+- [x] 8.6 `ApplicationServiceImpl`/Controller 适配 timeout CRUD，移除 `/applications/{id}/resilience` 端点
+- [x] 8.7 适配 `ResilienceProfileIntegrationTest` 等测试（重写或删除两对照场景）
+- [x] 8.8 跑绿 + 回归
+- [x] 8.9 commit
 
 ## 9. L1 clusterId 共因跳过（依赖 1+6）
 
-- [ ] 9.1 写失败测试：同 clusterId 共因失败时，L1 跳过同域候选试异域
-- [ ] 9.2 写测试：共因跳过标记仅本次请求有效，下次请求不继承
-- [ ] 9.3 写测试：非共因失败（NONE）不触发共因跳过
-- [ ] 9.4 `ChannelFailoverInvoker` invoke/invokeStream 内实现共因跳过逻辑：当前候选共因失败→标记 clusterId→跳过同域后续候选→试异域
-- [ ] 9.5 `publishFailoverEvent` 新增「是否共因跳过」标记
-- [ ] 9.6 端到端集成测试：故障域级共因故障→L1 跳过同域→跨域转移成功
-- [ ] 9.7 跑绿 + 回归
-- [ ] 9.8 commit
+- [x] 9.1 写失败测试：同 clusterId 共因失败时，L1 跳过同域候选试异域
+- [x] 9.2 写测试：共因跳过标记仅本次请求有效，下次请求不继承
+- [x] 9.3 写测试：非共因失败（NONE）不触发共因跳过
+- [x] 9.4 `ChannelFailoverInvoker` invoke/invokeStream 内实现共因跳过逻辑：当前候选共因失败→标记 clusterId→跳过同域后续候选→试异域
+- [x] 9.5 `publishFailoverEvent` 新增「是否共因跳过」标记
+- [x] 9.6 端到端集成测试：故障域级共因故障→L1 跳过同域→跨域转移成功
+- [x] 9.7 跑绿 + 回归
+- [x] 9.8 commit
 
 ## 10. 前端适配（gateway-console）
 

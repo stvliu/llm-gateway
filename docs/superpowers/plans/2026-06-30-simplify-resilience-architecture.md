@@ -216,16 +216,16 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - `Cluster` 仅留 code/name/description + 审计；Javadoc 改「跨供应商故障独立性分组」
 - `FailoverOccurredEvent`/`FailoverEvent`/DO 的 clusterId 保留，新增 `commonCauseSkip` 标记（Task 9 使用）
 
-- [ ] **6.1 `Cluster` 实体删 region/priority/healthStatus 字段**，保留 code/name/description + 审计；更新 Javadoc 语义为「跨供应商故障独立性分组」。
-- [ ] **6.2 `Channel.clusterId` 字段名保留不变**（仅确认，不改）。
-- [ ] **6.3 `ClusterGateway`/Impl/DO/Repository 删 region/priority/healthStatus 适配**。
-- [ ] **6.4 Flyway V60**：`ALTER TABLE clusters DROP COLUMN region, DROP COLUMN priority, DROP COLUMN health_status;`（确认列存在后再删，H2/PG 兼容）。
-- [ ] **6.5 `ClusterController` 适配**（字段瘦身，API 路径 `/api/v1/resilience/clusters` 保留）。
-- [ ] **6.6 `ChannelFailoverInvoker.publishFailoverEvent` 的 clusterId 反查逻辑保留**（Task 9 改为从 RoutingContext 直取，本任务先保留语义不变）。
-- [ ] **6.7 `FailoverOccurredEvent`/`FailoverEvent`/DO 的 clusterId 字段保留**，新增 `commonCauseSkip` 标记字段（boolean，默认 false）+ Flyway V64 列。本任务先加字段，Task 9 填充逻辑。
-- [ ] **6.8 适配所有 Cluster 引用测试**（删 region/priority/healthStatus 相关断言）。
-- [ ] **6.9 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **6.10 commit**：`refactor(resilience): Cluster 语义改造为跨供应商故障独立性分组并瘦身字段`
+- [x] **6.1 `Cluster` 实体删 region/priority/healthStatus 字段**，保留 code/name/description + 审计；更新 Javadoc 语义为「跨供应商故障独立性分组」。
+- [x] **6.2 `Channel.clusterId` 字段名保留不变**（仅确认，不改）。
+- [x] **6.3 `ClusterGateway`/Impl/DO/Repository 删 region/priority/healthStatus 适配**。
+- [x] **6.4 Flyway V60**：`ALTER TABLE clusters DROP COLUMN region, DROP COLUMN priority, DROP COLUMN health_status;`（确认列存在后再删，H2/PG 兼容）。
+- [x] **6.5 `ClusterController` 适配**（字段瘦身，API 路径 `/api/v1/resilience/clusters` 保留）。
+- [x] **6.6 `ChannelFailoverInvoker.publishFailoverEvent` 的 clusterId 反查逻辑保留**（Task 9 改为从 RoutingContext 直取，本任务先保留语义不变）。
+- [x] **6.7 `FailoverOccurredEvent`/`FailoverEvent`/DO 的 clusterId 字段保留**，新增 `commonCauseSkip` 标记字段（boolean，默认 false）+ Flyway V64 列。本任务先加字段，Task 9 填充逻辑。
+- [x] **6.8 适配所有 Cluster 引用测试**（删 region/priority/healthStatus 相关断言）。
+- [x] **6.9 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **6.10 commit**：`refactor(resilience): Cluster 语义改造为跨供应商故障独立性分组并瘦身字段`
 
 ---
 
@@ -260,15 +260,15 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - `Application` 加 `timeout` 字段，删 `resilienceProfileId`
 - profile 解析改为直接读 `Application.timeout`；`RoutingRequest` 彻底删 `resilienceProfile` 字段及构造参数
 
-- [ ] **8.1 `Application` 实体加 `timeout` 字段**，删 `resilienceProfileId`。
-- [ ] **8.2 Flyway V61**：applications 加 timeout 列、删 resilience_profile_id 列。**V62**：删 resilience_profiles 表 + 删 V56 seed 数据（V61 先于 V62，外键约束）。**V63**：model_instances 删 priority 列（依赖 V59 priority 改应用级）。
-- [ ] **8.3 整删 `ResilienceProfile` 实体、`ResilienceProfileGateway`/Impl、`ResilienceResolver`、`ResilienceProfileApplier`**。
-- [ ] **8.4 整删 `ResilienceProfileController` + DTO**。
-- [ ] **8.5 `ChatDispatchServiceImpl`/`InstanceSelector` 的 profile 解析改为直接读 Application.timeout**；`RoutingRequest` 删 `resilienceProfile` 字段及所有构造参数。
-- [ ] **8.6 `ApplicationServiceImpl`/Controller 适配 timeout CRUD**，移除 `/applications/{id}/resilience` 端点。
-- [ ] **8.7 适配 `ResilienceProfileIntegrationTest` 等测试**（重写为 timeout 读取场景或删除两对照场景）。
-- [ ] **8.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **8.9 commit**：`refactor(resilience): ResilienceProfile 退场，timeout 下沉到 Application`
+- [x] **8.1 `Application` 实体加 `timeout` 字段**，删 `resilienceProfileId`。
+- [x] **8.2 Flyway V61**：applications 加 timeout 列、删 resilience_profile_id 列。**V62**：删 resilience_profiles 表 + 删 V56 seed 数据（V61 先于 V62，外键约束）。**V63**：model_instances 删 priority 列（依赖 V59 priority 改应用级）。
+- [x] **8.3 整删 `ResilienceProfile` 实体、`ResilienceProfileGateway`/Impl、`ResilienceResolver`、`ResilienceProfileApplier`**。
+- [x] **8.4 整删 `ResilienceProfileController` + DTO**。
+- [x] **8.5 `ChatDispatchServiceImpl`/`InstanceSelector` 的 profile 解析改为直接读 Application.timeout**；`RoutingRequest` 删 `resilienceProfile` 字段及所有构造参数。
+- [x] **8.6 `ApplicationServiceImpl`/Controller 适配 timeout CRUD**，移除 `/applications/{id}/resilience` 端点。
+- [x] **8.7 适配 `ResilienceProfileIntegrationTest` 等测试**（重写为 timeout 读取场景或删除两对照场景）。
+- [x] **8.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **8.9 commit**：`refactor(resilience): ResilienceProfile 退场，timeout 下沉到 Application`
 
 ---
 
@@ -284,15 +284,15 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - `RoutingContext` 新增 `Long clusterId` 字段
 - `ChannelFailoverInvoker` 局部 `Set<Long> commonCauseFailedClusters`：共因失败标记 clusterId → 跳过同域候选
 
-- [ ] **9.1 写失败测试：同 clusterId 共因失败时，L1 跳过同域候选试异域**。构造同 clusterId 两候选 + 异域一候选，主候选共因失败，断言同域第二候选被跳过、异域候选被试。
-- [ ] **9.2 写测试：共因跳过标记仅本次请求有效，下次请求不继承**（验证局部 Set，无持久化）。
-- [ ] **9.3 写测试：非共因失败（NONE）不触发共因跳过**（INVALID_REQUEST 直接抛，不标记）。
-- [ ] **9.4 `RoutingContext` record 加 `clusterId` 字段**；`RoutingResolver` 构造时从 `Channel.clusterId` 填充。
-- [ ] **9.5 `ChannelFailoverInvoker.invoke/invokeStream` 实现共因跳过**：试候选前若 `commonCauseFailedClusters.contains(candidate.clusterId())` 跳过并发转移事件（`commonCauseSkip=true`），不计入 lastException；候选共因失败（`FailoverDecision=L1`）时 `add(candidate.clusterId())` 发事件（`commonCauseSkip=false`）记录 lastException；全耗尽抛 lastException。
-- [ ] **9.6 `publishFailoverEvent` 新增「是否共因跳过」标记**，clusterId 从 RoutingContext 直取（删 `resolveClusterId`/ChannelGateway 反查）。
-- [ ] **9.7 端到端集成测试：故障域级共因故障→L1 跳过同域→跨域转移成功**。
-- [ ] **9.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **9.9 commit**：`feat(resilience): L1 clusterId 共因跳过跨域转移`
+- [x] **9.1 写失败测试：同 clusterId 共因失败时，L1 跳过同域候选试异域**。构造同 clusterId 两候选 + 异域一候选，主候选共因失败，断言同域第二候选被跳过、异域候选被试。
+- [x] **9.2 写测试：共因跳过标记仅本次请求有效，下次请求不继承**（验证局部 Set，无持久化）。
+- [x] **9.3 写测试：非共因失败（NONE）不触发共因跳过**（INVALID_REQUEST 直接抛，不标记）。
+- [x] **9.4 `RoutingContext` record 加 `clusterId` 字段**；`RoutingResolver` 构造时从 `Channel.clusterId` 填充。
+- [x] **9.5 `ChannelFailoverInvoker.invoke/invokeStream` 实现共因跳过**：试候选前若 `commonCauseFailedClusters.contains(candidate.clusterId())` 跳过并发转移事件（`commonCauseSkip=true`），不计入 lastException；候选共因失败（`FailoverDecision=L1`）时 `add(candidate.clusterId())` 发事件（`commonCauseSkip=false`）记录 lastException；全耗尽抛 lastException。
+- [x] **9.6 `publishFailoverEvent` 新增「是否共因跳过」标记**，clusterId 从 RoutingContext 直取（删 `resolveClusterId`/ChannelGateway 反查）。
+- [x] **9.7 端到端集成测试：故障域级共因故障→L1 跳过同域→跨域转移成功**。
+- [x] **9.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **9.9 commit**：`feat(resilience): L1 clusterId 共因跳过跨域转移`
 
 ---
 
