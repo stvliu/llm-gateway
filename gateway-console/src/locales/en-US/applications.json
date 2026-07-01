@@ -7,6 +7,9 @@
     "state": "State",
     "stateActive": "Active",
     "stateInactive": "Inactive",
+    "timeout": "Timeout (seconds)",
+    "timeoutHelp": "0 means use channel default (succeeds former resilience profile timeout)",
+    "timeoutChannelDefault": "Channel default",
     "actions": "Actions",
     "addApplication": "New Application",
     "editApplication": "Edit Application",
@@ -20,19 +23,12 @@
     "deleteSuccess": "Application deleted",
     "deleteFailed": "Failed to delete"
   },
-  "resilience": {
-    "column": "Resilience Profile",
-    "default": "Default",
-    "configure": "Manage Profile Templates",
-    "configureHint": "Select a resilience profile template to bind; choose 'Default' to unbind. Manage templates on the Profiles page",
-    "bindSuccess": "Resilience profile updated",
-    "bindFailed": "Failed to update resilience profile"
-  },
   "channelAuthorization": {
     "title": "Channel Authorization",
     "permissionHint": "Configure channels accessible to this application. API Keys under this application will inherit these channel permissions.",
     "selectedCount": "Selected {{selectedCount}}/{{totalCount}} channels",
     "channelName": "Channel Name",
+    "priority": "Failover Priority",
     "billingMode": "Billing Mode",
     "payAsYouGo": "Pay As You Go",
     "subscription": "Subscription",

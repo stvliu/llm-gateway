@@ -1,12 +1,18 @@
 /**
  * 容灾管理 API 封装
  *
- * <p>对接后端 4.11a 交付的端点：
+ * <p>对接后端 simplify-resilience-architecture 变更后的端点：
  * <ul>
- *   <li>容灾画像 CRUD：/api/v1/resilience/profiles</li>
- *   <li>故障域 CRUD：/api/v1/resilience/clusters</li>
+ *   <li>故障域 CRUD：/api/v1/resilience/clusters（Cluster 瘦身，字段 code/name/providerId/description）</li>
  *   <li>渠道端点熔断应急：/api/v1/channels/{cid}/endpoints/{eid}/circuit-breaker/*</li>
- *   <li>紧切域：PUT /api/v1/channels/{id}/cluster</li>
+ *   <li>转移事件流：/api/v1/resilience/events、/api/v1/resilience/events/exhausted</li>
+ * </ul>
+ * </p>
+ *
+ * <p>已退场端点（本 change 删除）：
+ * <ul>
+ *   <li>容灾画像 CRUD（/resilience/profiles）—— ResilienceProfile 实体退场</li>
+ *   <li>紧切域（PUT /channels/{id}/cluster）—— 域级亲和路由（ClusterAffinityRouter）删除</li>
  * </ul>
  * </p>
  *
@@ -14,8 +20,6 @@
  */
 import { api } from '@/services/api/client';
 import type {
-  ResilienceProfile,
-  ResilienceProfileRequest,
   Cluster,
   ClusterRequest,
   CircuitBreakerStateResponse,
@@ -26,24 +30,6 @@ import type {
 
 /** 容灾管理 API */
 export const resilienceApi = {
-  /** 容灾画像 */
-  profiles: {
-    /** 获取容灾画像列表 */
-    list: () => api.get<ResilienceProfile[]>('/resilience/profiles'),
-
-    /** 获取容灾画像详情 */
-    getById: (id: number) =>
-      api.get<ResilienceProfile>(`/resilience/profiles/${id}`),
-
-    /** 创建容灾画像 */
-    create: (data: ResilienceProfileRequest) =>
-      api.post<ResilienceProfile>('/resilience/profiles', data),
-
-    /** 更新容灾画像 */
-    update: (id: number, data: ResilienceProfileRequest) =>
-      api.put<ResilienceProfile>(`/resilience/profiles/${id}`, data),
-  },
-
   /** 故障域 */
   clusters: {
     /** 获取故障域列表 */
@@ -82,11 +68,7 @@ export const resilienceApi = {
       ),
   },
 
-  /** 紧急切换渠道到目标故障域（紧切域） */
-  switchCluster: (channelId: number, clusterId: number) =>
-    api.put<void>(`/channels/${channelId}/cluster`, { clusterId }),
-
-  /** 转移事件流（对接 4.11c 后端 ResilienceEventController） */
+  /** 转移事件流（对接后端 ResilienceEventController） */
   events: {
     /**
      * 查询转移事件流（按 occurredAt 倒序）

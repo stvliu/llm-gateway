@@ -1,7 +1,6 @@
 // 任务 4.11c 技术债偿还：总览页 i18n 硬编码回归测试
 //
 // 验证目标：耗尽告警区域的硬编码中文应改走 i18n：
-// - 域级 DOWN 告警 message 应来自 i18n key（含插值 count）
 // - 事件级 exhausted 告警 message 应来自 i18n key（含插值 count）
 // - 事件项文案「渠道」「候选耗尽」应走 i18n
 // - 「…另有 N 起」提示应走 i18n
@@ -36,9 +35,7 @@ vi.mock('@/services/query/useResilience', () => ({
         code: 'C1',
         name: '域一',
         providerId: 1,
-        region: 'cn',
-        priority: 1,
-        healthStatus: 'DOWN',
+        description: '共因特征说明',
       } as Cluster,
     ],
     isLoading: false,
@@ -108,19 +105,6 @@ beforeAll(() => {
 });
 
 describe('OverviewPage 耗尽告警 i18n（技术债偿还）', () => {
-  it('域级 DOWN 告警 message 应走 i18n key（含 count 插值）', () => {
-    render(
-      <AntApp>
-        <OverviewPage />
-      </AntApp>,
-    );
-    // 期望 t('overview.downClusterAlert', { count: 1 }) 被调用
-    // mock t 返回 'i18n:overview.downClusterAlert[count=1]'
-    expect(
-      screen.getByText('i18n:overview.downClusterAlert[count=1]'),
-    ).toBeInTheDocument();
-  });
-
   it('事件级 exhausted 告警 message 应走 i18n key（含 count 插值）', () => {
     render(
       <AntApp>

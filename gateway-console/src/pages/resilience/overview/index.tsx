@@ -14,11 +14,9 @@ import {
   Space,
 } from 'antd';
 import {
-  CheckCircleFilled,
   ExclamationCircleFilled,
-  CloseCircleFilled,
-  InfoCircleOutlined,
   ReloadOutlined,
+  WarningOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import {
@@ -34,48 +32,19 @@ import {
   decisionMeta,
   type TagColor,
 } from './eventDisplay';
-import type { Cluster, ClusterHealthStatus, FailoverEvent } from '@/types/resilience';
+import type { Cluster, FailoverEvent } from '@/types/resilience';
 import type { Channel } from '@/types/channel';
 
 const { Text } = Typography;
 
 /**
- * 健康状态 → 颜色/图标/文案 映射
- */
-function healthMeta(status: ClusterHealthStatus, t: (k: string) => string) {
-  switch (status) {
-    case 'HEALTHY':
-      return {
-        color: 'green' as const,
-        icon: <CheckCircleFilled style={{ color: '#52c41a' }} />,
-        label: t('overview.healthStatus.HEALTHY'),
-      };
-    case 'DEGRADED':
-      return {
-        color: 'orange' as const,
-        icon: <ExclamationCircleFilled style={{ color: '#faad14' }} />,
-        label: t('overview.healthStatus.DEGRADED'),
-      };
-    case 'DOWN':
-      return {
-        color: 'red' as const,
-        icon: <CloseCircleFilled style={{ color: '#ff4d4f' }} />,
-        label: t('overview.healthStatus.DOWN'),
-      };
-    default:
-      return {
-        color: 'default' as const,
-        icon: <InfoCircleOutlined />,
-        label: status,
-      };
-  }
-}
-
-/**
  * 故障域拓扑卡片
  *
- * <p>展示单个 Cluster 的健康灯、基本信息与成员渠道列表。
+ * <p>展示单个 Cluster 的基本信息（code/name/description/providerId）与成员渠道列表。
  * 成员渠道来自 ChannelResponse 透传的 clusterId 按 cluster 分组映射。</p>
+ *
+ * <p>Task 10：Cluster 语义改造为跨供应商故障独立性分组，域级健康聚合已删，
+ * 不再展示健康灯 / region / priority。</p>
  */
 function ClusterCard({
   cluster,
@@ -86,26 +55,16 @@ function ClusterCard({
   members: Channel[];
   t: (k: string) => string;
 }) {
-  const meta = healthMeta(cluster.healthStatus, t);
   return (
     <Card
       size="small"
-      title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {meta.icon}
-          <span style={{ fontFamily: 'monospace' }}>{cluster.code}</span>
-        </div>
-      }
-      extra={<Tag color={meta.color}>{meta.label}</Tag>}
+      title={<span style={{ fontFamily: 'monospace' }}>{cluster.code}</span>}
     >
       <div style={{ marginBottom: 4 }}>
         <Text strong>{cluster.name}</Text>
       </div>
       <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', lineHeight: 1.8 }}>
-        <div>
-          {t('cluster.region')}: {cluster.region || '-'}
-          {t('cluster.priority')}: P{cluster.priority}
-        </div>
+        {cluster.description && <div>{cluster.description}</div>}
         <div>
           {t('cluster.providerId')}: {cluster.providerId}
         </div>
@@ -141,11 +100,14 @@ function ClusterCard({
  *
  * <p>「选而非填」范式屏1：回答「现在稳不稳」，只读不配置。
  * <ul>
- *   <li>耗尽告警：healthStatus=DOWN 的域 + 最近 exhausted=true 转移事件双维度高亮</li>
- *   <li>故障域拓扑：Cluster 卡片视图，每卡显示健康灯（绿/黄/红）</li>
- *   <li>转移事件流：10s 轮询渲染最近转移事件，exhausted 行红色高亮</li>
+ *   <li>耗尽告警：最近 exhausted=true 转移事件高亮（域级健康聚合已删，仅事件级告警）</li>
+ *   <li>故障域拓扑：Cluster 卡片视图，渠道按 clusterId 归域（跨供应商故障独立性分组）</li>
+ *   <li>转移事件流：10s 轮询渲染最近转移事件，exhausted 行红色高亮，共因跳过事件标记</li>
  * </ul>
  * </p>
+ *
+ * <p>Task 10：移除降级/会话亲和/PinnedModel 展示；域级 DOWN 告警随 healthStatus 删除；
+ * 转移事件流新增「是否共因跳过」标记。</p>
  */
 export default function OverviewPage() {
   const { t } = useTranslation('resilience');
@@ -161,8 +123,6 @@ export default function OverviewPage() {
   const failoverQuery = useFailoverEvents();
   const exhaustedQuery = useExhaustedEvents();
 
-  // 耗尽告警 - 域级：healthStatus=DOWN 的故障域
-  const downClusters = (clusters ?? []).filter((c) => c.healthStatus === 'DOWN');
   // 耗尽告警 - 事件级：最近 exhausted=true 转移事件
   const exhaustedEvents = exhaustedQuery.data ?? [];
   const failoverEvents = failoverQuery.data ?? [];
@@ -175,12 +135,12 @@ export default function OverviewPage() {
         </div>
       </Card>
 
-      {/* 耗尽告警（域级 DOWN + 事件级 exhausted 双维度） */}
+      {/* 耗尽告警（事件级 exhausted） */}
       <Card
         title={
           <span>
             <ExclamationCircleFilled
-              style={{ color: downClusters.length > 0 || exhaustedEvents.length > 0 ? '#ff4d4f' : '#52c41a' }}
+              style={{ color: exhaustedEvents.length > 0 ? '#ff4d4f' : '#52c41a' }}
             />{' '}
             {t('overview.exhaustionAlert')}
           </span>
@@ -190,24 +150,6 @@ export default function OverviewPage() {
         <div style={{ marginBottom: 8, color: 'rgba(0,0,0,0.45)', fontSize: 13 }}>
           {t('overview.exhaustionAlertHelp')}
         </div>
-        {/* 域级 DOWN 告警 */}
-        {downClusters.length > 0 && (
-          <Alert
-            type="error"
-            showIcon
-            style={{ marginBottom: 8 }}
-            message={t('overview.downClusterAlert', { count: downClusters.length })}
-            description={
-              <ul style={{ margin: 0, paddingLeft: 20 }}>
-                {downClusters.map((c) => (
-                  <li key={c.id}>
-                    <Text code>{c.code}</Text> ({c.name})
-                  </li>
-                ))}
-              </ul>
-            }
-          />
-        )}
         {/* 事件级 exhausted 告警 */}
         {exhaustedEvents.length === 0 ? (
           <Alert type="success" message={t('overview.noExhaustion')} showIcon />
@@ -324,8 +266,8 @@ function formatEventTime(ev: FailoverEvent): string {
 /**
  * 转移事件流表格
  *
- * <p>列：时间 / 转移路径（from→to 渠道）/ 原因（errorType Tag）/ 决策（L1/L2 Tag）/ Trace。
- * exhausted 行红色背景高亮。</p>
+ * <p>列：时间 / 转移路径（from→to 渠道）/ 原因（errorType Tag）/ 决策（L1 Tag）/
+ * 是否共因跳过 / Trace。exhausted 行红色背景高亮，共因跳过行橙色 Tag 标记。</p>
  */
 function FailoverEventTable({
   events,
@@ -399,6 +341,22 @@ function FailoverEventTable({
               </Tag>
             );
           },
+        },
+        {
+          // 是否共因跳过（Task 9 新增）：true 表示同域共因跳过转移
+          title: t('overview.eventColumns.commonCauseSkip'),
+          dataIndex: 'commonCauseSkip',
+          width: 110,
+          render: (commonCauseSkip?: boolean) =>
+            commonCauseSkip ? (
+              <Tooltip title={t('overview.commonCauseSkipHelp')}>
+                <Tag color="orange" style={{ margin: 0 }} icon={<WarningOutlined />}>
+                  {t('overview.commonCauseSkip')}
+                </Tag>
+              </Tooltip>
+            ) : (
+              <Text type="secondary">-</Text>
+            ),
         },
         {
           title: t('overview.eventColumns.trace'),

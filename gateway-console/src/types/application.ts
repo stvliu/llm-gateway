@@ -2,6 +2,9 @@
  * 应用信息（与后端 ApplicationResponse 一致）
  *
  * Application 是权限+行为双聚合根，承载 Key 归属与渠道可见性。
+ *
+ * <p>Task 8：resilienceProfileId 退场（ResilienceProfile 实体删除），
+ * 改为应用级 timeout（承接原 ResilienceProfile.timeout，0 表示用渠道默认）。</p>
  */
 export interface Application {
   id: number;
@@ -13,8 +16,8 @@ export interface Application {
   description: string;
   /** 应用生命周期状态（ACTIVE/INACTIVE） */
   state: string;
-  /** 容灾画像 ID（预留） */
-  resilienceProfileId?: number | null;
+  /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
+  timeout: number;
   /** 配额预算 ID（预留） */
   quotaBudgetId?: number | null;
   /** 看板 ID（预留） */
@@ -28,6 +31,8 @@ export interface CreateApplicationRequest {
   code: string;
   name: string;
   description?: string;
+  /** 请求超时秒数（0 表示用渠道默认） */
+  timeout?: number;
 }
 
 /** 更新应用请求 */

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal, Table, Checkbox, Space, Tag, Typography, App, Alert, Spin } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { channelApi } from '@/services/api/channel';
@@ -119,6 +119,14 @@ export default function ChannelManageModal({
       ),
     },
     {
+      // 渠道转移优先级（数值越小越优先），按此列升序展示先后次序
+      title: t('channelAuthorization.priority'),
+      dataIndex: 'priority',
+      key: 'priority',
+      width: 90,
+      render: (priority: number) => <Tag color="blue">P{priority}</Tag>,
+    },
+    {
       title: t('channelAuthorization.billingMode'),
       dataIndex: 'billingMode',
       key: 'billingMode',
@@ -170,6 +178,12 @@ export default function ChannelManageModal({
     },
   ];
 
+  // 按 priority 升序排序展示（数值越小越优先，定义 L1 转移先后次序）
+  const sortedChannels = useMemo(
+    () => [...channels].sort((a, b) => a.priority - b.priority),
+    [channels],
+  );
+
   const selectedCount = selectedChannelIds.size;
   const totalCount = channels.length;
 
@@ -208,7 +222,7 @@ export default function ChannelManageModal({
         </div>
       ) : (
         <Table
-          dataSource={channels}
+          dataSource={sortedChannels}
           columns={columns}
           rowKey="id"
           pagination={false}

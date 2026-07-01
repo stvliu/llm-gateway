@@ -7,6 +7,9 @@
     "state": "状态",
     "stateActive": "启用",
     "stateInactive": "停用",
+    "timeout": "请求超时（秒）",
+    "timeoutHelp": "0 表示用渠道默认（承接原容灾画像超时配置）",
+    "timeoutChannelDefault": "渠道默认",
     "actions": "操作",
     "addApplication": "新建应用",
     "editApplication": "编辑应用",
@@ -20,19 +23,12 @@
     "deleteSuccess": "应用已删除",
     "deleteFailed": "删除失败"
   },
-  "resilience": {
-    "column": "容灾画像",
-    "default": "默认",
-    "configure": "管理画像模板",
-    "configureHint": "下拉选择容灾画像模板绑定；选「默认」解绑。模板管理见画像模板页",
-    "bindSuccess": "容灾画像已更新",
-    "bindFailed": "容灾画像更新失败"
-  },
   "channelAuthorization": {
     "title": "渠道授权",
     "permissionHint": "配置该应用可访问的渠道，应用下的 API Key 将继承这些渠道权限",
     "selectedCount": "已选择 {{selectedCount}}/{{totalCount}} 个渠道",
     "channelName": "渠道名称",
+    "priority": "转移优先级",
     "billingMode": "计费模式",
     "payAsYouGo": "按量付费",
     "subscription": "订阅",

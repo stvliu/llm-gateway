@@ -38,16 +38,4 @@ export const applicationApi = {
   /** 更新应用渠道授权 */
   updateChannels: (id: number, channelIds: number[]) =>
     api.put<void>(`/applications/${id}/channels`, { channelIds }),
-
-  /**
-   * 绑定（或解绑）应用的容灾画像
-   *
-   * <p>对应后端 PUT /api/v1/applications/{id}/resilience。
-   * resilienceProfileId 为 null 时表示解绑。返回更新后的应用响应。</p>
-   *
-   * @param id                  应用 ID
-   * @param resilienceProfileId 容灾画像 ID（null 表示解绑）
-   */
-  bindResilienceProfile: (id: number, resilienceProfileId: number | null) =>
-    api.put<Application>(`/applications/${id}/resilience`, { resilienceProfileId }),
 };
