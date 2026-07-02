@@ -327,10 +327,10 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 
 ## Task 12: 全链路回归
 
-- [ ] **12.1 `./mvnw -pl gateway-boot -am test` 全绿**。
-- [ ] **12.2 `cd gateway-console && npm run build` 通过**。
-- [ ] **12.3 端到端验证**：主备 priority L1 转移、共因跳过跨域转移、调谐每候选独立、INVALID_REQUEST 不转移。
-- [ ] **12.4 commit**（如有修复）。
+- [x] **12.1 `./mvnw -pl gateway-boot -am test` 全绿**。
+- [x] **12.2 `cd gateway-console && npm run build` 通过**。
+- [x] **12.3 端到端验证**：主备 priority L1 转移、共因跳过跨域转移、调谐每候选独立、INVALID_REQUEST 不转移。
+- [x] **12.4 commit**（如有修复）。
 
 ---
 
