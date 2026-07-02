@@ -108,12 +108,12 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 
 **背景**：当前 `PriorityRouter.filter` 在 `isForce=true` 时收敛到最优 priority 组，导致 L1 换不到备渠道。需改为排序器：输出完整列表按 priority 升序。
 
-- [ ] **1.1 grep 确认 `ModelInstance.priority` 的所有用途**（负载均衡/监控/前端展示），记录是否可删。Run: `grep -rn "getPriority\|\.priority" gateway-boot/src/main/java/com/codingas/gateway/domain/model gateway-boot/src/main/java/com/codingas/gateway/application`。结论记录到本 plan 的 Implementation Divergence 或 commit body。
-- [ ] **1.2 写失败测试：主备 priority 不同时输出完整列表 [主,备] 不丢备**。在 `PriorityRouterTest`（或 `RouterChainTest`）新增：构造 priority=1(主)、priority=2(备) 两个 ModelInstance，断言 `filter` 返回 size==2 且顺序为 [主,备]。当前实现会收敛到 [主]，测试应 FAIL。
-- [ ] **1.3 写失败测试：RouterChain 经 PriorityRouter 后候选列表含全部 priority 组**。在 `RouterChainTest` 新增经完整链路的断言。
-- [ ] **1.4 改 `PriorityRouter.filter` 为排序器**：按 priority 升序输出完整列表，不收敛；调整 `isForce` 语义（force 时仍排序不收敛）。移除「收敛到最优组」分支。
-- [ ] **1.5 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test -Dtest=PriorityRouterTest,RouterChainTest`，再 `./mvnw -pl gateway-boot -am test`。
-- [ ] **1.6 commit**：`fix(resilience): PriorityRouter 改为排序器，主备 priority 不丢备`
+- [x] **1.1 grep 确认 `ModelInstance.priority` 的所有用途**（负载均衡/监控/前端展示），记录是否可删。Run: `grep -rn "getPriority\|\.priority" gateway-boot/src/main/java/com/codingas/gateway/domain/model gateway-boot/src/main/java/com/codingas/gateway/application`。结论记录到本 plan 的 Implementation Divergence 或 commit body。
+- [x] **1.2 写失败测试：主备 priority 不同时输出完整列表 [主,备] 不丢备**。在 `PriorityRouterTest`（或 `RouterChainTest`）新增：构造 priority=1(主)、priority=2(备) 两个 ModelInstance，断言 `filter` 返回 size==2 且顺序为 [主,备]。当前实现会收敛到 [主]，测试应 FAIL。
+- [x] **1.3 写失败测试：RouterChain 经 PriorityRouter 后候选列表含全部 priority 组**。在 `RouterChainTest` 新增经完整链路的断言。
+- [x] **1.4 改 `PriorityRouter.filter` 为排序器**：按 priority 升序输出完整列表，不收敛；调整 `isForce` 语义（force 时仍排序不收敛）。移除「收敛到最优组」分支。
+- [x] **1.5 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test -Dtest=PriorityRouterTest,RouterChainTest`，再 `./mvnw -pl gateway-boot -am test`。
+- [x] **1.6 commit**：`fix(resilience): PriorityRouter 改为排序器，主备 priority 不丢备`
 
 ---
 
@@ -128,13 +128,13 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 **Interfaces:**
 - Produces: `ProtocolRequest.copy()` → 同类型副本（手写字段拷贝）；`ChannelFailoverInvoker.invoke/invokeStream` 每候选基于 `originalRequest.copy()` → `convertRequest`(若跨协议) → `tune` → `keyFailoverInvoker.invoke`
 
-- [ ] **2.1 写失败测试：候选不同 upstreamModelName 时，L1 换渠道后请求 model 正确**。构造两候选 upstreamModelName 不同，主候选失败，断言备候选收到的 request.getModel()==备候选的 upstreamModelName。当前只对首项调谐，测试应 FAIL。
-- [ ] **2.2 `ProtocolRequest` 接口加 `copy()`**，`OpenAIChatRequest`/`AnthropicMessagesRequest` 各自实现手写字段拷贝（不用 Jackson 深拷贝）。
-- [ ] **2.3 `ChannelFailoverInvoker` 注入 `OutboundTuner` + `ProtocolConverter`**，`invoke`/`invokeStream` 内每候选试之前：`candidateReq = originalRequest.copy()` → 若 `needsProtocolAdaptation()` 则 `convertRequest(candidateReq, candidate)` → `outboundTuner.tune(candidateReq, candidate)` → `keyFailoverInvoker.invoke(candidate, candidateReq)`。
-- [ ] **2.4 `ChatDispatchServiceImpl` 删阶段3(convertRequest)与阶段4(tune)**，传**原始入站 request** 给 invoker（dispatch 与 dispatchStream 同步改）。
-- [ ] **2.5 评估 `convertRequest` 跨协议转换是否需每候选独立**：本任务已下沉，确认流式 `invokeStream` 的 delegateCallback 协议转换逻辑不受影响（首字节后转换仍由 callback 完成）。
-- [ ] **2.6 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **2.7 commit**：`fix(resilience): 调谐下沉 invoker，每候选独立 convert+tune`
+- [x] **2.1 写失败测试：候选不同 upstreamModelName 时，L1 换渠道后请求 model 正确**。构造两候选 upstreamModelName 不同，主候选失败，断言备候选收到的 request.getModel()==备候选的 upstreamModelName。当前只对首项调谐，测试应 FAIL。
+- [x] **2.2 `ProtocolRequest` 接口加 `copy()`**，`OpenAIChatRequest`/`AnthropicMessagesRequest` 各自实现手写字段拷贝（不用 Jackson 深拷贝）。
+- [x] **2.3 `ChannelFailoverInvoker` 注入 `OutboundTuner` + `ProtocolConverter`**，`invoke`/`invokeStream` 内每候选试之前：`candidateReq = originalRequest.copy()` → 若 `needsProtocolAdaptation()` 则 `convertRequest(candidateReq, candidate)` → `outboundTuner.tune(candidateReq, candidate)` → `keyFailoverInvoker.invoke(candidate, candidateReq)`。
+- [x] **2.4 `ChatDispatchServiceImpl` 删阶段3(convertRequest)与阶段4(tune)**，传**原始入站 request** 给 invoker（dispatch 与 dispatchStream 同步改）。
+- [x] **2.5 评估 `convertRequest` 跨协议转换是否需每候选独立**：本任务已下沉，确认流式 `invokeStream` 的 delegateCallback 协议转换逻辑不受影响（首字节后转换仍由 callback 完成）。
+- [x] **2.6 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **2.7 commit**：`fix(resilience): 调谐下沉 invoker，每候选独立 convert+tune`
 
 ---
 
@@ -152,15 +152,15 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - `ApplicationChannelGateway.findByApplicationId(Long)` → `List<ApplicationChannel>`（含 priority）
 - `PriorityRouter` 排序键改 `map.get(mi.getChannelId())`，null 回退默认值 100
 
-- [ ] **3.1 `ApplicationChannel` 实体加 `priority` 字段**（Integer，可空）+ Getter/Setter。
-- [ ] **3.2 Flyway V59**：`ALTER TABLE application_channels ADD COLUMN priority INT NULL;`
-- [ ] **3.3 `ApplicationChannelGateway`/Impl/DO/Repository 适配 priority**（查询/持久化映射）。
-- [ ] **3.4 `InstanceSelector.select` 构造 RoutingRequest 前**查 `ApplicationChannelGateway.findByApplicationId(applicationId)` 取该应用所有授权渠道 priority，构建 `Map<channelId, priority>` 填入 RoutingRequest。`PermissionRouter` 不变（仍按 channelId 过滤）。
-- [ ] **3.5 `PriorityRouter` 排序键改 ApplicationChannel.priority**：从 `request.getChannelPriorityMap()` 取映射，按 `map.get(mi.getChannelId())` 升序排序，null 回退 100。
-- [ ] **3.6 `InstanceSelector.findActiveByModelIdOrderByPriority` 适配应用级排序**（不再依赖 ModelInstance.priority）。
-- [ ] **3.7 写测试：同渠道对不同应用不同 priority，各自转移顺序独立**。
-- [ ] **3.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **3.9 commit**：`feat(resilience): 转移顺序改应用级 ApplicationChannel.priority`
+- [x] **3.1 `ApplicationChannel` 实体加 `priority` 字段**（Integer，可空）+ Getter/Setter。
+- [x] **3.2 Flyway V59**：`ALTER TABLE application_channels ADD COLUMN priority INT NULL;`
+- [x] **3.3 `ApplicationChannelGateway`/Impl/DO/Repository 适配 priority**（查询/持久化映射）。
+- [x] **3.4 `InstanceSelector.select` 构造 RoutingRequest 前**查 `ApplicationChannelGateway.findByApplicationId(applicationId)` 取该应用所有授权渠道 priority，构建 `Map<channelId, priority>` 填入 RoutingRequest。`PermissionRouter` 不变（仍按 channelId 过滤）。
+- [x] **3.5 `PriorityRouter` 排序键改 ApplicationChannel.priority**：从 `request.getChannelPriorityMap()` 取映射，按 `map.get(mi.getChannelId())` 升序排序，null 回退 100。
+- [x] **3.6 `InstanceSelector.findActiveByModelIdOrderByPriority` 适配应用级排序**（不再依赖 ModelInstance.priority）。
+- [x] **3.7 写测试：同渠道对不同应用不同 priority，各自转移顺序独立**。
+- [x] **3.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **3.9 commit**：`feat(resilience): 转移顺序改应用级 ApplicationChannel.priority`
 
 ---
 
@@ -176,15 +176,15 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - `ErrorClassifier.classify(UNKNOWN_ERROR)` → NONE；`getOrDefault` 兜底改 NONE
 - `ChannelFailoverInvoker` 候选耗尽直接抛 lastException，签名去 profile 参数
 
-- [ ] **4.1 整删 `application/degradation/` 包**（DegradationService/Impl/Properties/Event/RecoveredEvent + `@Scheduled recoveryCheck`）。
-- [ ] **4.2 整删 `L2DegradationRequiredException`**。
-- [ ] **4.3 `ChannelFailoverInvoker` 删 `tryL2Degradation`/`degradationService` 字段/构造参数**，候选耗尽直接抛 lastException；`invoke`/`invokeStream` 签名去 `profile` 参数。
-- [ ] **4.4 `ChatDispatchServiceImpl` 删** `invokeWithL2Failover`/`invokeStreamWithL2Failover`/`resolveMaxDepth`/`unwrapL2Cause`/`MAX_DEGRADATION_DEPTH`/`resolveProfileSafely`/`resilienceResolver` 依赖，直接调 invoker。
-- [ ] **4.5 `FailoverDecision` 删 L2 枚举值**。
-- [ ] **4.6 `ErrorClassifier` UNKNOWN→NONE**，`getOrDefault` 兜底改 NONE（删 L2 映射）。
-- [ ] **4.7 删 `DegradationServiceTest`**，适配 `ChannelFailoverInvokerTest`/`ChatDispatchServiceTest`/`ChannelFailoverIntegrationTest`（删 L2 场景）。
-- [ ] **4.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **4.9 commit**：`refactor(resilience): 删除 L2 模型降级层，降级决策还给应用`
+- [x] **4.1 整删 `application/degradation/` 包**（DegradationService/Impl/Properties/Event/RecoveredEvent + `@Scheduled recoveryCheck`）。
+- [x] **4.2 整删 `L2DegradationRequiredException`**。
+- [x] **4.3 `ChannelFailoverInvoker` 删 `tryL2Degradation`/`degradationService` 字段/构造参数**，候选耗尽直接抛 lastException；`invoke`/`invokeStream` 签名去 `profile` 参数。
+- [x] **4.4 `ChatDispatchServiceImpl` 删** `invokeWithL2Failover`/`invokeStreamWithL2Failover`/`resolveMaxDepth`/`unwrapL2Cause`/`MAX_DEGRADATION_DEPTH`/`resolveProfileSafely`/`resilienceResolver` 依赖，直接调 invoker。
+- [x] **4.5 `FailoverDecision` 删 L2 枚举值**。
+- [x] **4.6 `ErrorClassifier` UNKNOWN→NONE**，`getOrDefault` 兜底改 NONE（删 L2 映射）。
+- [x] **4.7 删 `DegradationServiceTest`**，适配 `ChannelFailoverInvokerTest`/`ChatDispatchServiceTest`/`ChannelFailoverIntegrationTest`（删 L2 场景）。
+- [x] **4.8 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **4.9 commit**：`refactor(resilience): 删除 L2 模型降级层，降级决策还给应用`
 
 ---
 
@@ -195,12 +195,12 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - Modify: `application/proxy/routing/RouterChain.java`
 - Test: `RouterChainTest`、`HealthRouterTest`
 
-- [ ] **5.1 整删 `ClusterHealthAggregator`**。
-- [ ] **5.2 整删 `ClusterAffinityRouter`**，RouterChain 顺序变为 `Permission→EndpointHealth→Priority→LoadBalance`。
-- [ ] **5.3 删 `ClusterHealthStatus` 枚举**（确认 Cluster 实体已不引用，与 Task 6 协调；若 6 未删 healthStatus 字段则保留到 6）。
-- [ ] **5.4 适配 `RouterChainTest`/`HealthRouterTest`**（删域级聚合断言）。
-- [ ] **5.5 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **5.6 commit**：`refactor(resilience): 删除 DomainHealth 域级聚合路由器`
+- [x] **5.1 整删 `ClusterHealthAggregator`**。
+- [x] **5.2 整删 `ClusterAffinityRouter`**，RouterChain 顺序变为 `Permission→EndpointHealth→Priority→LoadBalance`。
+- [x] **5.3 删 `ClusterHealthStatus` 枚举**（确认 Cluster 实体已不引用，与 Task 6 协调；若 6 未删 healthStatus 字段则保留到 6）。
+- [x] **5.4 适配 `RouterChainTest`/`HealthRouterTest`**（删域级聚合断言）。
+- [x] **5.5 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **5.6 commit**：`refactor(resilience): 删除 DomainHealth 域级聚合路由器`
 
 ---
 
@@ -236,14 +236,14 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - Modify: `domain/resilience/entity/ResilienceProfile.java`（删 enablePinnedModel/pinnedModelId/enableSessionAffinity/sessionAffinityTtlMinutes，若 Task 8 未先删实体）
 - Test: 适配测试，删 `SessionAffinityStoreTest`
 
-- [ ] **7.1 整删 `PinnedModelRouter`**。
-- [ ] **7.2 删 `ResilienceProfile.enablePinnedModel`/`pinnedModelId`**（若 8 未先删实体）。
-- [ ] **7.3 整删 `SessionAffinityStore`**（Redis/InMemory 双实现）+ `SessionAffinityConfig`。
-- [ ] **7.4 删 `ResilienceProfile.enableSessionAffinity`/`sessionAffinityTtlMinutes`**。
-- [ ] **7.5 RouterChain 去除 PinnedModel**（已在 5.2 处理，此处 grep 确认无残留）。
-- [ ] **7.6 适配测试**，删 `SessionAffinityStoreTest`。
-- [ ] **7.7 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
-- [ ] **7.8 commit**：`refactor(resilience): 删除 PinnedModel 与会话亲和`
+- [x] **7.1 整删 `PinnedModelRouter`**。
+- [x] **7.2 删 `ResilienceProfile.enablePinnedModel`/`pinnedModelId`**（若 8 未先删实体）。
+- [x] **7.3 整删 `SessionAffinityStore`**（Redis/InMemory 双实现）+ `SessionAffinityConfig`。
+- [x] **7.4 删 `ResilienceProfile.enableSessionAffinity`/`sessionAffinityTtlMinutes`**。
+- [x] **7.5 RouterChain 去除 PinnedModel**（已在 5.2 处理，此处 grep 确认无残留）。
+- [x] **7.6 适配测试**，删 `SessionAffinityStoreTest`。
+- [x] **7.7 跑绿 + 回归**：`./mvnw -pl gateway-boot -am test`
+- [x] **7.8 commit**：`refactor(resilience): 删除 PinnedModel 与会话亲和`
 
 ---
 
