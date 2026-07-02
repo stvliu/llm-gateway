@@ -22,6 +22,7 @@
 - `code` — 故障域编码，全局唯一（如 `openai-primary` / `azure-openai-shared` / `overseas-line`）
 - `name` — 故障域名称
 - `description` — 共因特征说明（如 "Azure-OpenAI 底层依赖 OpenAI 模型，共因"）
+- `providerId` — 供应商标识（保留，客观管理面/计费/统计用，不作共因依据；与 clusterId 正交，见下）
 - 审计字段继承自 `BaseEntity`
 - **删除** `region`（就近路由未实现）、`priority`（转移顺序归 ApplicationChannel.priority）、`healthStatus`（不持久化，域级聚合已删）
 
