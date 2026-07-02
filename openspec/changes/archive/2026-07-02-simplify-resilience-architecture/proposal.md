@@ -37,7 +37,7 @@
 ## Impact
 
 - **后端代码**：`application/proxy`（routing/invoker）、`application/degradation`（整删）、`application/resilience`、`domain/resilience`、`domain/application`、`domain/supply`、`infrastructure/resilience`、`adapter/api`、`adapter/protocol`
-- **DB schema**：clusters 表删 region/priority/health_status 列、application_channels 加 priority 列、删 model_instances.priority、删 resilience_profiles 表、failover_events 表 cluster_id 列保留
+- **DB schema**：clusters 表删 region/priority/health_status 列、application_channels 加 priority 列、删 resilience_profiles 表、failover_events 表 cluster_id 列保留、failover_events 加 common_cause_skip 列。**注**：`model_instances.priority` 列的物理删除（V63）由用户决策拆为独立后续 change，本 change 未执行——运行时转移顺序已完全由 `ApplicationChannel.priority` 驱动，`ModelInstance.priority` 仅作 DB 粗排兜底
 - **前端**：gateway-console 容灾总览页、画像模板页（随 ResilienceProfile 退场）、Applications 页（priority 配置）、Channels 页
 - **API**：`/api/v1/resilience/profiles` 随 ResilienceProfile 退场调整；`/api/v1/resilience/clusters` 保留（Cluster 实体名不变，字段瘦身）；转移事件查询响应字段调整
 - **依赖**：复用 `ResilientUpstreamClient`/`CircuitBreaker`/`KeyFailoverInvoker`，不重写上游客户端与重试/熔断算法

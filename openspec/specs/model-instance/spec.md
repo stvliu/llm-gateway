@@ -36,32 +36,6 @@ ModelInstance 的 contextWindowOverride 字段 SHALL 支持覆盖 Model.contextW
 - **WHEN** ModelInstance.contextWindowOverride 为 null
 - **THEN** 该实例的有效上下文窗口与 Model.contextWindow 一致
 
-### Requirement: 路由优先级在 ModelInstance 级别
-
-`ModelInstance.priority` 语义 SHALL 由「全局路由优先级」重定义为「cluster 内排序」。本条修订既有「路由优先级在 ModelInstance 级别」Requirement：priority 仍承载于 ModelInstance 级别，但其排序语义从全局收敛为 cluster 内排序，cluster 间顺序由 `Cluster.priority` 决定。
-
-**变更要点**:
-- 原 `priority` 为全局路由优先级，`PriorityRouter` 按全局 priority 升序分组
-- 现 `priority` 为 cluster 内排序，cluster 间由 `Cluster.priority` 决定跨域转移顺序
-- `PriorityRouter`（`@Order(300)`）仍按 `priority` 升序排序候选，但语义收敛到域内
-
-**规则**:
-- 同一 cluster 内：按 `ModelInstance.priority` 升序选择
-- 跨 cluster：按 `Cluster.priority` 决定域优先级（数值越小越优先）
-- 故障域内优先 → 整域故障才跨域
-
-#### Scenario: 同 cluster 内按 priority 排序
-
-- **WHEN** 同一 cluster 内有多个 `ModelInstance`
-- **THEN** 系统 SHALL 按 `ModelInstance.priority` 升序排序
-- **THEN** 优先选择 priority 最小的实例
-
-#### Scenario: 跨 cluster 按 Cluster.priority 排序
-
-- **WHEN** 候选跨多个 cluster
-- **THEN** 系统 SHALL 按 `Cluster.priority` 决定域间优先级
-- **THEN** 故障域内优先，整域故障才跨域
-
 ### Requirement: ModelInstance 不承载定价字段
 ModelInstance 实体 SHALL NOT 包含任何定价字段（inputPrice、outputPrice、reasoningPrice、cacheReadPrice、cacheWritePrice、inputAudioPrice、outputAudioPrice）。定价数据唯一来源为 PlanCatalog.pricing (JSON)。
 

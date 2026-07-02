@@ -1,3 +1,7 @@
+---
+archived-with: 2026-07-02-simplify-resilience-architecture
+status: final
+---
 # 容灾架构简化实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

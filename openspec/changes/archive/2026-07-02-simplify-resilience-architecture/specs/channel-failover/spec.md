@@ -130,8 +130,6 @@
 - **THEN** 监听器 SHALL 仅记录日志，不向上抛出
 - **THEN** 调用链 SHALL 继续执行转移
 
-## ADDED Requirements
-
 ### Requirement: L1 共因跳过
 
 `ChannelFailoverInvoker` SHALL 在 L1 转移时，当当前候选共因失败（`FailoverDecision=L1`），跳过候选列表中同 `clusterId` 的后续候选，直接尝试异 `clusterId` 候选。

@@ -37,9 +37,3 @@
 - **WHEN** 管理员调用 `DELETE /api/v1/applications/{id}` 删除应用
 - **THEN** 系统 SHALL 级联清理该应用的 `ApplicationChannel` 关联
 - **THEN** 系统 SHALL 返回 HTTP 204
-
-## REMOVED Requirements
-
-### Requirement: Application 承载容灾画像绑定
-**Reason**: ResilienceProfile 实体退场（删 L2/PinnedModel/会话亲和后只剩 timeout，不配独立实体）。`Application.resilienceProfileId` 关联移除，timeout 直接挂 Application 字段。
-**Migration**: `PUT /api/v1/applications/{id}/resilience` 端点移除。timeout 通过应用 CRUD 端点（创建/更新）直接配置。容灾画像解析链（Application→Global）退场，timeout 由 `Application.timeout` 直接提供。

@@ -2,6 +2,8 @@
 comet_change: simplify-resilience-architecture
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-07-02-simplify-resilience-architecture
+status: final
 ---
 
 # Simplify Resilience Architecture — 容灾架构简化设计

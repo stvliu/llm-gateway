@@ -2,16 +2,6 @@
 
 > Capability 语义改造：`Cluster` 实体名保留，语义从「供应商内分组（region/priority/healthStatus 膨胀）」改为「跨供应商故障独立性分组」，瘦身字段。`Channel.clusterId` 字段名保留不变。
 
-## REMOVED Requirements
-
-### Requirement: 域级健康聚合
-**Reason**: 域级健康聚合（`ClusterHealthAggregator`）在整域端点全 OPEN 时与端点级 HealthRouter 输出等价，价值有限。整域故障靠端点级熔断自然收敛 + L1 转移阶段 clusterId 共因跳过处理。Cluster 仅用于转移阶段共因跳过，不配域级聚合路由器。
-**Migration**: `ClusterHealthAggregator` 整删。`ClusterHealthStatus` 枚举随 `Cluster.healthStatus` 字段移除而退场。
-
-### Requirement: ClusterAffinityRouter 故障域亲和路由
-**Reason**: `ClusterAffinityRouter` 的域级预判与端点级 HealthRouter 等价，且 `isForce=false` 的「DOWN 域过滤后让链继续」语义在删除域级聚合后无意义。RouterChain 不再含此路由器。
-**Migration**: `ClusterAffinityRouter` 整删。RouterChain 顺序变为 `Permission → EndpointHealth → Priority → LoadBalance`。
-
 ## MODIFIED Requirements
 
 ### Requirement: Cluster 故障域实体

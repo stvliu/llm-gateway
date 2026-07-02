@@ -30,7 +30,3 @@
 - **THEN** `HealthRouter` SHALL 先过滤掉熔断渠道
 - **THEN** `PriorityRouter` SHALL 在存活渠道里按 priority 排序输出完整列表
 - **THEN** 次优先级健康渠道 SHALL 保留在候选列表中成为转移候选
-
-## REMOVED Requirements
-
-> 注：原 `ProviderHealthTracker 收窄为供应商级粗粒度信号` Requirement 不变（仍收窄为 L2 备选参考，但 L2 已删，仅供参考），本 delta 不修改它。域级健康聚合与亲和路由的删除在 cluster-failover delta 中处理（`ClusterHealthAggregator`/`ClusterAffinityRouter` 属 cluster-failover capability）。
