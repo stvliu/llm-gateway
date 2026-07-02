@@ -2,9 +2,9 @@ package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
 import com.codingas.gateway.application.application.ApplicationService;
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
-import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,8 +20,8 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -133,24 +133,31 @@ class ApplicationControllerIT {
     }
 
     @Test
-    @DisplayName("GET /api/v1/applications/{id}/channels 返回渠道 ID 列表")
-    void listChannels_returnsChannelIds() throws Exception {
-        when(applicationService.listChannelIds(1L)).thenReturn(List.of(10L, 20L));
+    @DisplayName("GET /api/v1/applications/{id}/channels 返回渠道授权项列表（含 priority）")
+    void listChannels_returnsChannelItems() throws Exception {
+        when(applicationService.listChannels(1L)).thenReturn(List.of(
+                new ApplicationChannelItem(10L, 1),
+                new ApplicationChannelItem(20L, null)));
 
         mockMvc.perform(get("/api/v1/applications/{id}/channels", 1L))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0]").value(10))
-                .andExpect(jsonPath("$[1]").value(20));
+                .andExpect(jsonPath("$[0].channelId").value(10))
+                .andExpect(jsonPath("$[0].priority").value(1))
+                .andExpect(jsonPath("$[1].channelId").value(20))
+                .andExpect(jsonPath("$[1].priority").doesNotExist());
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/channels 更新渠道授权返回 204")
+    @DisplayName("PUT /api/v1/applications/{id}/channels 更新渠道授权（含 priority）返回 204")
     void updateChannels_returns204() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channelIds\":[10,20]}"))
+                        .content("{\"channels\":[{\"channelId\":10,\"priority\":1},{\"channelId\":20}]}"))
                 .andExpect(status().isNoContent());
-        verify(applicationService).updateChannels(eq(1L), eq(List.of(10L, 20L)));
+        verify(applicationService).updateChannels(eq(1L), argThat(items ->
+                items != null && items.size() == 2
+                        && items.get(0).channelId().equals(10L) && items.get(0).priority().equals(1)
+                        && items.get(1).channelId().equals(20L) && items.get(1).priority() == null));
     }
 
     @Test
@@ -158,43 +165,43 @@ class ApplicationControllerIT {
     void updateChannels_emptyList_returns204() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channelIds\":[]}"))
+                        .content("{\"channels\":[]}"))
                 .andExpect(status().isNoContent());
         verify(applicationService).updateChannels(eq(1L), eq(List.of()));
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/channels 含 null 元素返回 400 且不调用 service")
-    void updateChannels_nullElement_returns400() throws Exception {
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含 null channelId 元素返回 400 且不调用 service")
+    void updateChannels_nullChannelId_returns400() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channelIds\":[null]}"))
+                        .content("{\"channels\":[{\"channelId\":null}]}"))
                 .andExpect(status().isBadRequest());
         verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/channels 含负数元素返回 400 且不调用 service")
-    void updateChannels_negativeElement_returns400() throws Exception {
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含负数 channelId 返回 400 且不调用 service")
+    void updateChannels_negativeChannelId_returns400() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channelIds\":[-1]}"))
+                        .content("{\"channels\":[{\"channelId\":-1}]}"))
                 .andExpect(status().isBadRequest());
         verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/channels 含 0 元素返回 400 且不调用 service")
-    void updateChannels_zeroElement_returns400() throws Exception {
+    @DisplayName("PUT /api/v1/applications/{id}/channels 含 0 channelId 返回 400 且不调用 service")
+    void updateChannels_zeroChannelId_returns400() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"channelIds\":[0]}"))
+                        .content("{\"channels\":[{\"channelId\":0}]}"))
                 .andExpect(status().isBadRequest());
         verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/channels channelIds 为 null 返回 400")
+    @DisplayName("PUT /api/v1/applications/{id}/channels channels 为 null 返回 400")
     void updateChannels_nullList_returns400() throws Exception {
         mockMvc.perform(put("/api/v1/applications/{id}/channels", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -204,43 +211,22 @@ class ApplicationControllerIT {
     }
 
     @Test
-    @DisplayName("PUT /api/v1/applications/{id}/resilience 绑定画像成功返回 200 与 resilienceProfileId")
-    void bindResilience_valid_returns200WithProfileId() throws Exception {
-        ApplicationResponse resp = stubResponse();
-        resp.setResilienceProfileId(7L);
-        when(applicationService.bindResilienceProfile(eq(1L), eq(7L))).thenReturn(resp);
+    @DisplayName("POST /api/v1/applications 携带 timeout 创建成功返回 201")
+    void create_withTimeout_returns201() throws Exception {
+        when(applicationService.create(any())).thenReturn(stubResponse());
 
-        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
+        ApplicationRequest request = new ApplicationRequest();
+        request.setCode("APP-001");
+        request.setName("测试应用");
+        request.setDescription("描述");
+        request.setTimeout(60);
+
+        mockMvc.perform(post("/api/v1/applications")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"resilienceProfileId\":7}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.resilienceProfileId").value(7));
-    }
-
-    @Test
-    @DisplayName("PUT /api/v1/applications/{id}/resilience 传 null 解绑成功返回 200")
-    void bindResilience_nullId_unbinds() throws Exception {
-        ApplicationResponse resp = stubResponse();
-        resp.setResilienceProfileId(null);
-        when(applicationService.bindResilienceProfile(eq(1L), isNull())).thenReturn(resp);
-
-        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"resilienceProfileId\":null}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.resilienceProfileId").doesNotExist());
-    }
-
-    @Test
-    @DisplayName("PUT /api/v1/applications/{id}/resilience 画像不存在时 service 抛异常返回 400")
-    void bindResilience_profileNotFound_returns400() throws Exception {
-        when(applicationService.bindResilienceProfile(eq(1L), eq(999L)))
-                .thenThrow(new GatewayRequestException("RESILIENCE_PROFILE_NOT_FOUND", "容灾画像不存在: 999"));
-
-        mockMvc.perform(put("/api/v1/applications/{id}/resilience", 1L)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"resilienceProfileId\":999}"))
-                .andExpect(status().isBadRequest());
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(1));
+        // Task 8：timeout 随 ApplicationRequest 透传至 service（端点契约）
+        verify(applicationService).create(any());
     }
 }

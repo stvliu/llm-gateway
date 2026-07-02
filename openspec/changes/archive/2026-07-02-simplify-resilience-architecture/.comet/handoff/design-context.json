@@ -1,0 +1,23 @@
+{
+  "change": "simplify-resilience-architecture",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "5eb434a30a3eeef8369dfe03ab73e57a10f9b81eb4d88326638d0d2afdf859ce",
+  "files": [
+    { "path": "openspec/changes/simplify-resilience-architecture/proposal.md", "sha256": "d3b26f4de8bab3f4968230bc34a9cb0692bdf1da11ba3dcc9f054a5455bf0635" },
+    { "path": "openspec/changes/simplify-resilience-architecture/design.md", "sha256": "ca450e9a9b825a7b953a0915754132c43a4278aa669bcbef821bb67ab7ce7159" },
+    { "path": "openspec/changes/simplify-resilience-architecture/tasks.md", "sha256": "720683d7cf341a19c577f2c8cdacf6792c91abe6b27f6780d5a8481c7b5df173" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/application-access-control/spec.md", "sha256": "5e000fffcd1e9f9f5a228a32c347a70881bb7db38afc011d55ace8fbed039664" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/application/spec.md", "sha256": "acdcb687c5cfc4c310930c4846be151823b422f2da76edea9e7e2d1f0636e2d8" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/channel-failover/spec.md", "sha256": "43958512e6bb85e645b8ac08dd3aa9c260d9530df881af6dc6d128a22f56dfc7" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/channel-health-tracking/spec.md", "sha256": "9f9c9285173bc31e271caedf4d80a78c697bb81acd453ec510f783a9aeb847bb" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/cluster-failover/spec.md", "sha256": "f281ab6528d57896c301e5f7ad89166d638c4773bd34e551e4ef428424b536db" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/intelligent-degradation/spec.md", "sha256": "c2a5491f19e4ecf61a3c4f4404ad2f9f63b6a9144a4adb06d155e1b054de3a39" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/model-instance/spec.md", "sha256": "1374acde517ff5440040f5dcce55511990a732f9a0d2c49defce356639b755c1" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/resilience-console/spec.md", "sha256": "a1a8e8639d8920bf70cc7f823e34f89530eac3ddb77d9c3dd3461511a2e928bb" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/resilience-profile/spec.md", "sha256": "1bbdfc019dbc42bef74a9804dc1ee150b54cd9cd284b16a0699ca85e7f244eb7" },
+    { "path": "openspec/changes/simplify-resilience-architecture/specs/upstream-exception-classification/spec.md", "sha256": "001a13c3a8c521d9fabac08f2cf9edb308bc1a5d468f2c82996eac3b8e3fc64d" }
+  ]
+}

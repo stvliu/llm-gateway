@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -23,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * ChannelController 应急操作端点契约测试
  *
- * <p>使用 standalone setup + Mock 各 Service，验证一键熔断/恢复/状态查询/紧切域
+ * <p>使用 standalone setup + Mock 各 Service，验证一键熔断/恢复/状态查询
  * 端点的路由、HTTP 状态码与响应契约，不连数据库。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -81,25 +80,5 @@ class ChannelEmergencyControllerIT {
         mockMvc.perform(get("/api/v1/channels/1/endpoints/10/circuit-breaker/state"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.state").value("HALF_OPEN"));
-    }
-
-    @Test
-    @DisplayName("PUT /channels/{id}/cluster 紧切域返回 204")
-    void switchCluster_returns204() throws Exception {
-        mockMvc.perform(put("/api/v1/channels/1/cluster")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"clusterId\":200}"))
-                .andExpect(status().isNoContent());
-        verify(channelEmergencyService).switchCluster(1L, 200L);
-    }
-
-    @Test
-    @DisplayName("PUT /channels/{id}/cluster clusterId 为空返回 400")
-    void switchCluster_nullClusterId_returns400() throws Exception {
-        mockMvc.perform(put("/api/v1/channels/1/cluster")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{}"))
-                .andExpect(status().isBadRequest());
-        verify(channelEmergencyService, never()).switchCluster(any(), any());
     }
 }

@@ -61,7 +61,7 @@ class KeyFailoverInvokerTest {
                 resilientClientFactory, circuitBreakerManager, meterRegistry);
 
         ctx = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
-                Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
+                Protocol.OPENAI, "sk-test", 60, false, "test-model", null, null);
 
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");

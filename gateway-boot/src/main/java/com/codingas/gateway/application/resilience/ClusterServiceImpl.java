@@ -4,7 +4,6 @@ import com.codingas.gateway.application.resilience.dto.ClusterRequest;
 import com.codingas.gateway.application.resilience.dto.ClusterResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.resilience.entity.Cluster;
-import com.codingas.gateway.domain.resilience.entity.ClusterHealthStatus;
 import com.codingas.gateway.domain.resilience.gateway.ClusterGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,8 +16,11 @@ import java.util.List;
  * 故障域应用服务实现
  *
  * <p>管理 Cluster 故障域聚合根的 create/update/get/list。
- * 委托 {@link ClusterGateway}，code 全局唯一校验；创建时健康状态默认 HEALTHY
- * （域级健康聚合状态由 ClusterHealthAggregator 维护，CRUD 不修改）。</p>
+ * 委托 {@link ClusterGateway}，code 全局唯一校验。</p>
+ *
+ * <p><b>Task 6 变更</b>：Cluster 字段瘦身为 code/name/description/providerId + 审计，
+ * 删除 region/priority/healthStatus 处理；create 不再设置默认 healthStatus
+ * （域级健康聚合随 DomainHealth 路由器在 Task 5 移除）。</p>
  *
  * <p>不提供 delete：Cluster 关联 Channel 的 clusterId，删除需级联清理；
  * 且 {@code ClusterGateway} 无 delete 方法，遵循既有模式不新增。</p>
@@ -41,8 +43,6 @@ public class ClusterServiceImpl implements ClusterService {
 
         Cluster cluster = new Cluster();
         applyRequestToEntity(cluster, request);
-        // 创建时健康状态默认 HEALTHY
-        cluster.setHealthStatus(ClusterHealthStatus.HEALTHY);
 
         Cluster saved = clusterGateway.save(cluster);
         log.info("Created cluster: id={}, code={}", saved.getId(), saved.getCode());
@@ -67,7 +67,6 @@ public class ClusterServiceImpl implements ClusterService {
         }
 
         applyRequestToEntity(cluster, request);
-        // healthStatus 由 ClusterHealthAggregator 维护，update 不修改
 
         Cluster saved = clusterGateway.save(cluster);
         log.info("Updated cluster: id={}", saved.getId());
@@ -98,8 +97,7 @@ public class ClusterServiceImpl implements ClusterService {
         cluster.setCode(request.getCode());
         cluster.setName(request.getName());
         cluster.setProviderId(request.getProviderId());
-        cluster.setRegion(request.getRegion());
-        cluster.setPriority(request.getPriority());
+        cluster.setDescription(request.getDescription());
     }
 
     /**
@@ -111,9 +109,7 @@ public class ClusterServiceImpl implements ClusterService {
         response.setCode(cluster.getCode());
         response.setName(cluster.getName());
         response.setProviderId(cluster.getProviderId());
-        response.setRegion(cluster.getRegion());
-        response.setPriority(cluster.getPriority());
-        response.setHealthStatus(cluster.getHealthStatus() != null ? cluster.getHealthStatus().name() : null);
+        response.setDescription(cluster.getDescription());
         response.setCreatedAt(cluster.getCreatedAt());
         response.setUpdatedAt(cluster.getUpdatedAt());
         return response;

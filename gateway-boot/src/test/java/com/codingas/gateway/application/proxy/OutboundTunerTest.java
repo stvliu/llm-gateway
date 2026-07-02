@@ -36,7 +36,7 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", "gpt-4o-upstream"
+                    "gpt-4o", "gpt-4o-upstream", null
             );
 
             // when
@@ -57,7 +57,7 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", null
+                    "gpt-4o", null, null
             );
 
             // when
@@ -78,7 +78,7 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", "   "
+                    "gpt-4o", "   ", null
             );
 
             // when

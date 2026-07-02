@@ -1,6 +1,7 @@
 import { api } from './client';
 import type {
   Application,
+  ApplicationChannelItem,
   CreateApplicationRequest,
   UpdateApplicationRequest,
 } from '@/types/application';
@@ -31,23 +32,11 @@ export const applicationApi = {
   delete: (id: number) =>
     api.delete<void>(`/applications/${id}`),
 
-  /** 查询应用授权的渠道 ID 列表 */
+  /** 查询应用授权的渠道及其应用级转移优先级 */
   listChannels: (id: number) =>
-    api.get<number[]>(`/applications/${id}/channels`),
+    api.get<ApplicationChannelItem[]>(`/applications/${id}/channels`),
 
-  /** 更新应用渠道授权 */
-  updateChannels: (id: number, channelIds: number[]) =>
-    api.put<void>(`/applications/${id}/channels`, { channelIds }),
-
-  /**
-   * 绑定（或解绑）应用的容灾画像
-   *
-   * <p>对应后端 PUT /api/v1/applications/{id}/resilience。
-   * resilienceProfileId 为 null 时表示解绑。返回更新后的应用响应。</p>
-   *
-   * @param id                  应用 ID
-   * @param resilienceProfileId 容灾画像 ID（null 表示解绑）
-   */
-  bindResilienceProfile: (id: number, resilienceProfileId: number | null) =>
-    api.put<Application>(`/applications/${id}/resilience`, { resilienceProfileId }),
+  /** 更新应用渠道授权（含 priority） */
+  updateChannels: (id: number, channels: ApplicationChannelItem[]) =>
+    api.put<void>(`/applications/${id}/channels`, { channels }),
 };

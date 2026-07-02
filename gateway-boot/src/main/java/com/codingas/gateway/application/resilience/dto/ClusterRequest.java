@@ -1,6 +1,5 @@
 package com.codingas.gateway.application.resilience.dto;
 
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -9,7 +8,10 @@ import lombok.Data;
  * 故障域创建/更新请求 DTO
  *
  * <p>承载故障域聚合根可编辑字段。code 全局唯一；providerId 为归属供应商 ID（物理 ID）；
- * priority 数值越小越优先，用于跨域转移排序。</p>
+ * description 为共因特征说明（可空）。</p>
+ *
+ * <p><b>Task 6 变更</b>：删除 region/priority 字段，新增 description 字段
+ * （Cluster 语义改造为跨供应商故障独立性分组并瘦身字段）。</p>
  *
  * <p>不提供 delete：Cluster 故障域关联 Channel，删除需级联清理 clusterId，
  * 且 {@code ClusterGateway} 无 delete 方法，遵循既有模式不新增。</p>
@@ -29,10 +31,6 @@ public class ClusterRequest {
     @NotNull(message = "归属供应商 ID 不能为空")
     private Long providerId;
 
-    /** 区域标识（如 'us-east' / 'sg'） */
-    private String region;
-
-    /** 优先级（数值越小越优先） */
-    @Min(value = 0, message = "优先级不能为负数")
-    private int priority;
+    /** 共因特征说明（可空，描述同组 Channel 共享的共因特征） */
+    private String description;
 }

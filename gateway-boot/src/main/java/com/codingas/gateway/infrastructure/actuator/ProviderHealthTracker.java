@@ -13,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * Provider 健康状态追踪器 —— 供应商级粗粒度健康信号
  *
  * <p><b>职责边界（D3/D11）</b>：本追踪器仅提供供应商级粗粒度 DOWN 信号，
- * 供 L2 备选模型可用性判断（{@link com.codingas.gateway.application.degradation.DegradationServiceImpl}）使用，
- * <b>不驱动 L1 路由</b>；L1 路由决策由端点级熔断
+ * 供 actuator 健康检查（{@link ProviderRegistryHealthIndicator}）暴露供应商级健康信号，
+ * <b>不参与路由决策</b>；路由决策由端点级熔断
  * {@link com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager} 驱动，
  * 与本追踪器无关。</p>
  *
@@ -53,8 +53,7 @@ public class ProviderHealthTracker {
     /**
      * 获取指定 Provider 的缓存状态（不触发重新评估）
      *
-     * <p>主要供 L2 备选模型可用性判断（{@link com.codingas.gateway.application.degradation.DegradationServiceImpl}）使用，
-     * 不用于 L1 路由决策。</p>
+     * <p>供 actuator 健康检查聚合（{@link #getAllStatuses}）使用，不参与路由决策。</p>
      */
     public ProviderHealthState getCachedStatus(String providerCode) {
         return states.getOrDefault(providerCode, ProviderHealthState.initial(providerCode));

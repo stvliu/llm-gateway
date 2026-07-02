@@ -18,10 +18,13 @@ import lombok.NoArgsConstructor;
  * <ul>
  *   <li>applicationId — 应用 ID，外键关联 applications.id</li>
  *   <li>channelId — 渠道 ID，外键关联 channels.id</li>
+ *   <li>priority — 该应用下该渠道的转移优先级（数值越小越优先，null 回退默认值 100）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
  * </ul>
  *
  * <p>唯一约束：(application_id, channel_id) 组合唯一，见 V51 迁移 uk_app_channel。</p>
+ *
+ * <p>Task 3：转移顺序由全局 ModelInstance.priority 改为应用级 priority，同一渠道对不同应用可有不同转移顺序。</p>
  */
 @Data
 @NoArgsConstructor
@@ -36,6 +39,14 @@ public class ApplicationChannel extends BaseEntity {
     private Long channelId;
 
     /**
+     * 该应用下该渠道的转移优先级（数值越小越优先）
+     *
+     * <p>为 null 表示未配置，{@code PriorityRouter} 回退默认值 100。
+     * 同一渠道在不同应用下可有不同 priority，实现应用级转移顺序。</p>
+     */
+    private Integer priority;
+
+    /**
      * 业务构造器（仅业务字段）
      *
      * <p>仅初始化业务字段，主键 id 与审计字段（createdBy/createdAt/updatedBy/updatedAt）
@@ -47,5 +58,18 @@ public class ApplicationChannel extends BaseEntity {
     public ApplicationChannel(Long applicationId, Long channelId) {
         this.applicationId = applicationId;
         this.channelId = channelId;
+    }
+
+    /**
+     * 业务构造器（含转移优先级）
+     *
+     * @param applicationId 应用 ID
+     * @param channelId     渠道 ID
+     * @param priority      转移优先级（数值越小越优先；null 回退默认值 100）
+     */
+    public ApplicationChannel(Long applicationId, Long channelId, Integer priority) {
+        this.applicationId = applicationId;
+        this.channelId = channelId;
+        this.priority = priority;
     }
 }

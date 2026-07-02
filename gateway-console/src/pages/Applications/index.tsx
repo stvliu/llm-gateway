@@ -1,53 +1,30 @@
 import { useState, useMemo } from 'react';
 import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
-import { useApplications, useDeleteApplication, useBindResilienceProfile } from '@/services/query/useApplications';
-import { useResilienceProfiles } from '@/services/query/useResilience';
-import { modeLabel, modeColor } from '@/pages/resilience/mode';
+import { useApplications, useDeleteApplication } from '@/services/query/useApplications';
 import ApplicationFormModal from './ApplicationFormModal';
 import ChannelManageModal from './ChannelManageModal';
 import type { Application } from '@/types/application';
-import type { ResilienceProfile } from '@/types/resilience';
 
 /**
  * 应用管理页
  *
  * Application 是权限+行为双聚合根，管理应用 CRUD 与渠道授权。
- * 原 Teams 页的成员管理、模型可见性机制已随 Team 体系废弃移除。
+ *
+ * <p>Task 10：移除容灾画像绑定（ResilienceProfile 退场），改为应用级 timeout 配置展示。
+ * timeout=0 表示用渠道默认。</p>
  */
 export default function ApplicationsPage() {
   const { t } = useTranslation('applications');
   const { message } = App.useApp();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.APPLICATION_WRITE);
-  const navigate = useNavigate();
 
   const { data: applications, isLoading } = useApplications();
   const deleteMutation = useDeleteApplication();
-  // 容灾画像绑定 mutation：成功后 invalidate 应用列表，画像列自动刷新
-  const bindProfileMutation = useBindResilienceProfile();
-  // 容灾画像列表：用于反查 Application.resilienceProfileId 对应的画像名与档位，并提供下拉选项
-  const { data: profiles } = useResilienceProfiles();
-  const profileMap = useMemo(() => {
-    const m = new Map<number, ResilienceProfile>();
-    (profiles ?? []).forEach((p) => m.set(p.id, p));
-    return m;
-  }, [profiles]);
-  // 下拉选项：默认（解绑）+ 全部画像
-  const profileOptions = useMemo(
-    () => [
-      { value: 0, label: t('resilience.default') },
-      ...(profiles ?? []).map((p) => ({
-        value: p.id,
-        label: `${p.name} · ${modeLabel(p.mode)}`,
-      })),
-    ],
-    [profiles, t],
-  );
 
   const [formVisible, setFormVisible] = useState(false);
   const [editingApplication, setEditingApplication] = useState<Application | undefined>();
@@ -75,17 +52,6 @@ export default function ApplicationsPage() {
       message.success(t('application.deleteSuccess', { defaultValue: '应用已删除' }));
     } catch {
       message.error(t('application.deleteFailed', { defaultValue: '删除失败' }));
-    }
-  };
-
-  // 绑定/解绑容灾画像：value=0 表示解绑（传 null）。成功后 invalidate 列表自动刷新画像列。
-  const handleBindProfile = async (application: Application, value: number) => {
-    const profileId = value === 0 ? null : value;
-    try {
-      await bindProfileMutation.mutateAsync({ id: application.id, resilienceProfileId: profileId });
-      message.success(t('resilience.bindSuccess', { defaultValue: '容灾画像已更新' }));
-    } catch {
-      message.error(t('resilience.bindFailed', { defaultValue: '容灾画像更新失败' }));
     }
   };
 
@@ -141,55 +107,26 @@ export default function ApplicationsPage() {
       ),
     },
     {
-      // 容灾画像列：「选而非填」范式——管理员给应用选容灾画像模板，非逐字段配。
-      // canWrite 时为行内 Select（含「默认=解绑」选项），只读时降级为档位 Tag。
-      title: t('resilience.column'),
-      key: 'resilience',
-      width: 200,
-      render: (_: unknown, record: Application) => {
-        const profile = record.resilienceProfileId
-          ? profileMap.get(record.resilienceProfileId)
-          : undefined;
-        // 只读：档位 Tag
-        if (!canWrite) {
-          if (!profile) {
-            return <Tag>{t('resilience.default')}</Tag>;
-          }
-          return (
-            <Tag color={modeColor(profile.mode)}>
-              {profile.name} · {modeLabel(profile.mode)}
-            </Tag>
-          );
-        }
-        // 可写：行内 Select 绑定（0=默认/解绑）
-        return (
-          <Select
-            size="small"
-            style={{ width: '100%' }}
-            value={record.resilienceProfileId ?? 0}
-            loading={bindProfileMutation.isPending}
-            options={profileOptions}
-            onChange={(value: number) => handleBindProfile(record, value)}
-          />
-        );
-      },
+      // 应用级超时配置（承接原 ResilienceProfile.timeout，0 表示用渠道默认）
+      title: t('application.timeout'),
+      dataIndex: 'timeout',
+      key: 'timeout',
+      width: 120,
+      render: (timeout: number) =>
+        timeout > 0 ? (
+          <span>{timeout}s</span>
+        ) : (
+          <Tag>{t('application.timeoutChannelDefault')}</Tag>
+        ),
     },
     {
       title: t('application.actions'),
       key: 'actions',
-      width: 140,
+      width: 120,
       render: (_: unknown, record: Application) => (
         <Space size="small">
           <Tooltip title={t('channelAuthorization.title')}>
             <Button type="text" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageApplication(record)} />
-          </Tooltip>
-          <Tooltip title={t('resilience.configure')}>
-            <Button
-              type="text"
-              size="small"
-              icon={<ThunderboltOutlined />}
-              onClick={() => navigate('/resilience/profiles')}
-            />
           </Tooltip>
           {canWrite && (
             <>

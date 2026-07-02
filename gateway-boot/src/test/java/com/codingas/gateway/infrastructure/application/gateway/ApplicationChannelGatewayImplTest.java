@@ -66,16 +66,18 @@ class ApplicationChannelGatewayImplTest {
     class FindByApplicationIdTests {
 
         @Test
-        @DisplayName("返回应用下的关联列表")
+        @DisplayName("返回应用下的关联列表（含 priority 映射）")
         void findByApplicationId_returnsList() {
             ApplicationChannelDo d1 = new ApplicationChannelDo();
             d1.setId(1L);
             d1.setApplicationId(1L);
             d1.setChannelId(10L);
+            d1.setPriority(1);
             ApplicationChannelDo d2 = new ApplicationChannelDo();
             d2.setId(2L);
             d2.setApplicationId(1L);
             d2.setChannelId(20L);
+            d2.setPriority(2);
             when(repository.findByApplicationId(1L)).thenReturn(List.of(d1, d2));
 
             List<ApplicationChannel> result = gateway.findByApplicationId(1L);
@@ -83,6 +85,9 @@ class ApplicationChannelGatewayImplTest {
             assertThat(result).hasSize(2);
             assertThat(result).extracting(ApplicationChannel::getChannelId)
                     .containsExactly(10L, 20L);
+            // priority 应从 DO 映射到实体
+            assertThat(result).extracting(ApplicationChannel::getPriority)
+                    .containsExactly(1, 2);
         }
     }
 
@@ -94,8 +99,8 @@ class ApplicationChannelGatewayImplTest {
         @DisplayName("批量保存关联")
         void saveAll_persistsAll() {
             List<ApplicationChannel> rels = List.of(
-                    new ApplicationChannel(1L, 10L),
-                    new ApplicationChannel(1L, 20L));
+                    new ApplicationChannel(1L, 10L, 1),
+                    new ApplicationChannel(1L, 20L, 2));
             when(repository.saveAll(anyList())).thenReturn(List.of());
 
             gateway.saveAll(rels);

@@ -69,6 +69,7 @@ class FailoverEventGatewayImplTest {
             assertThat(result.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
             assertThat(result.getDecision()).isEqualTo(FailoverDecision.L1);
             assertThat(result.isExhausted()).isFalse();
+            assertThat(result.isCommonCauseSkip()).isFalse();
             assertThat(result.getOccurredAt()).isEqualTo(Instant.parse("2026-06-22T10:00:00Z"));
 
             // 验证 DO 转换：枚举转字符串、布尔透传、审计字段透传
@@ -82,20 +83,21 @@ class FailoverEventGatewayImplTest {
             assertThat(captured.getErrorType()).isEqualTo("AUTHENTICATION_ERROR");
             assertThat(captured.getDecision()).isEqualTo("L1");
             assertThat(captured.isExhausted()).isFalse();
+            assertThat(captured.isCommonCauseSkip()).isFalse();
             assertThat(captured.getOccurredAt()).isEqualTo(Instant.parse("2026-06-22T10:00:00Z"));
         }
 
         @Test
-        @DisplayName("save exhausted=true 与 L2 决策正确转换")
-        void save_exhaustedL2_convertsCorrectly() {
+        @DisplayName("save exhausted=true 与 L1 决策正确转换")
+        void save_exhaustedL1_convertsCorrectly() {
             FailoverEvent entity = createTestEntity();
-            entity.setDecision(FailoverDecision.L2);
+            entity.setDecision(FailoverDecision.L1);
             entity.setExhausted(true);
             entity.setToChannelId(null);
             entity.setToEndpointId(null);
 
             FailoverEventDo savedDo = createTestDo();
-            savedDo.setDecision("L2");
+            savedDo.setDecision("L1");
             savedDo.setExhausted(true);
             savedDo.setToChannelId(null);
             savedDo.setToEndpointId(null);
@@ -105,10 +107,57 @@ class FailoverEventGatewayImplTest {
 
             ArgumentCaptor<FailoverEventDo> captor = ArgumentCaptor.forClass(FailoverEventDo.class);
             verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getDecision()).isEqualTo("L2");
+            assertThat(captor.getValue().getDecision()).isEqualTo("L1");
             assertThat(captor.getValue().isExhausted()).isTrue();
-            assertThat(result.getDecision()).isEqualTo(FailoverDecision.L2);
+            assertThat(result.getDecision()).isEqualTo(FailoverDecision.L1);
             assertThat(result.isExhausted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("读取历史 decision=L2 容错为 NONE 不抛异常（Task 4 已删 L2 枚举值）")
+        void save_legacyL2Decision_fallsBackToNone() {
+            FailoverEvent entity = createTestEntity();
+            FailoverEventDo savedDo = createTestDo();
+            // 模拟数据库历史行残留 decision='L2'（Task 4 已从枚举移除）
+            savedDo.setDecision("L2");
+            when(repository.save(any())).thenReturn(savedDo);
+
+            FailoverEvent result = gateway.save(entity);
+
+            // 历史未知值 L2 容错为 NONE，不抛 IllegalArgumentException
+            assertThat(result.getDecision()).isEqualTo(FailoverDecision.NONE);
+        }
+
+        @Test
+        @DisplayName("读取未知 errorType 容错为 null 不抛异常")
+        void save_unknownErrorType_fallsBackToNull() {
+            FailoverEvent entity = createTestEntity();
+            FailoverEventDo savedDo = createTestDo();
+            // 模拟数据库历史行残留未知 errorType
+            savedDo.setErrorType("BOGUS_TYPE");
+            when(repository.save(any())).thenReturn(savedDo);
+
+            FailoverEvent result = gateway.save(entity);
+
+            // 未知 errorType 容错为 null，不抛 IllegalArgumentException
+            assertThat(result.getErrorType()).isNull();
+        }
+
+        @Test
+        @DisplayName("commonCauseSkip=true 正确回写 DO 并还原")
+        void save_commonCauseSkipTrue_convertsCorrectly() {
+            FailoverEvent entity = createTestEntity();
+            entity.setCommonCauseSkip(true);
+            FailoverEventDo savedDo = createTestDo();
+            savedDo.setCommonCauseSkip(true);
+            when(repository.save(any())).thenReturn(savedDo);
+
+            FailoverEvent result = gateway.save(entity);
+
+            ArgumentCaptor<FailoverEventDo> captor = ArgumentCaptor.forClass(FailoverEventDo.class);
+            verify(repository).save(captor.capture());
+            assertThat(captor.getValue().isCommonCauseSkip()).isTrue();
+            assertThat(result.isCommonCauseSkip()).isTrue();
         }
     }
 
@@ -242,6 +291,7 @@ class FailoverEventGatewayImplTest {
         d.setErrorType("AUTHENTICATION_ERROR");
         d.setDecision("L1");
         d.setExhausted(false);
+        d.setCommonCauseSkip(false);
         d.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
         return d;
     }
@@ -260,6 +310,7 @@ class FailoverEventGatewayImplTest {
         entity.setErrorType(ProviderErrorType.AUTHENTICATION_ERROR);
         entity.setDecision(FailoverDecision.L1);
         entity.setExhausted(false);
+        entity.setCommonCauseSkip(false);
         entity.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
         return entity;
     }

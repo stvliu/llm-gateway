@@ -110,7 +110,26 @@
       "Bash(./mvnw -pl gateway-boot -am test -Dtest=ApplicationControllerIT -q)",
       "Bash(./mvnw -pl gateway-boot -am test -Dtest=ApplicationControllerIT)",
       "Bash(./mvnw -pl gateway-boot -am test)",
-      "Bash(./mvnw -pl gateway-boot -am test -Dtest=RouterChainTest)"
+      "Bash(./mvnw -pl gateway-boot -am test -Dtest=RouterChainTest)",
+      "Bash(./mvnw -pl gateway-boot -am test -Dtest=*)",
+      "Bash(./mvnw -pl gateway-boot -am test -Dtest=* -q)",
+      "Bash(npx vitest *)",
+      "Bash(sed -n '/### Requirement: Application 聚合根实体/,/^### Requirement: Application 承载容灾画像绑定/p' openspec/specs/application/spec.md)",
+      "Bash(sed -n '/### Requirement: Application 承载容灾画像绑定/,/^### Requirement: Application 为权限锚点/p' openspec/specs/application/spec.md)",
+      "Bash(sort -t_ -k1 -V)",
+      "Bash(git rm *)",
+      "Bash(grep -E \"^\\\\[INFO\\\\] Tests run: [0-9]+, Failures: 0, Errors: 0, Skipped: 0$\" \"C:\\\\Users\\\\liuye\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--workspace-llm-gateway\\\\608005b7-4f43-4ae2-bcb1-21f30cb822cb\\\\tasks\\\\butvg1hfg.output\")",
+      "Bash(grep -aE \"BUILD \\(SUCCESS|FAILURE\\)|Tests run: [0-9]+, Failures: [0-9]+, Errors: [0-9]+, Skipped: [0-9]+$\" \"C:\\\\Users\\\\liuye\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\E--workspace-llm-gateway\\\\608005b7-4f43-4ae2-bcb1-21f30cb822cb\\\\tasks\\\\bnl2skzdq.output\")",
+      "Bash(perl -i -pe 's/^\\(\\\\s*\\)- \\\\[ \\\\] \\(\\\\*\\\\*\\(6|8|9\\)\\\\.\\\\d+\\\\*\\\\*\\)/$1- [x] $2/' docs/superpowers/plans/2026-06-30-simplify-resilience-architecture.md)",
+      "Bash(python -c ' *)",
+      "Bash(npm --version)",
+      "Bash(python -c \"import json;d=json.load\\(open\\('package.json'\\)\\);print\\('name:',d.get\\('name'\\)\\);print\\('scripts:',d.get\\('scripts'\\)\\)\")",
+      "Bash(npm run *)",
+      "Bash(awk '/^## ADDED Requirements/{flag=1;next}/^## /{flag=0}flag' openspec/changes/simplify-resilience-architecture/specs/channel-failover/spec.md)",
+      "Bash(awk '/^## REMOVED Requirements/{flag=1;next}/^## /{flag=0}flag && /^### Requirement:/{c++}END{print c}' openspec/changes/simplify-resilience-architecture/specs/resilience-profile/spec.md)",
+      "Bash(awk '/^## REMOVED Requirements/{flag=1;next}/^## /{flag=0}flag' openspec/changes/simplify-resilience-architecture/specs/resilience-console/spec.md)",
+      "Bash(awk '/^## REMOVED Requirements/{print NR; flag=1; next} flag && /^## /{print NR; exit}' openspec/changes/simplify-resilience-architecture/specs/resilience-console/spec.md)",
+      "Bash(awk '/^## REMOVED Requirements/{flag=1;next}/^## /{flag=0}flag' openspec/changes/simplify-resilience-architecture/specs/channel-health-tracking/spec.md)"
     ]
   },
   "outputStyle": "default"

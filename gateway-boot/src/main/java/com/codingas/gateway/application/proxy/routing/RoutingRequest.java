@@ -1,8 +1,9 @@
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.resilience.entity.ResilienceProfile;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+
+import java.util.Map;
 
 /**
  * 路由请求上下文 — 携带 RouterChain 各环节所需的信息
@@ -13,6 +14,13 @@ import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
  *
  * <p>{@code protocol} 为入站协议，供 {@link HealthRouter} 按协议从 channelId 派生 endpointId，
  * 统一熔断 key 为 endpoint 粒度（与 {@code KeyFailoverInvoker} 共享同一熔断器 bean）。</p>
+ *
+ * <p>Task 3：{@code channelPriorityMap} 携带应用级渠道转移优先级（key=channelId, value=priority），
+ * 供 {@link PriorityRouter} 按应用级 priority 升序排序，实现同一渠道对不同应用不同转移顺序。
+ * 为空表示无应用级映射（{@code PriorityRouter} 回退默认值 100）。</p>
+ *
+ * <p>Task 8：移除 {@code resilienceProfile} 字段及构造参数（ResilienceProfile 实体退场，
+ * timeout 下沉到 Application，不再贯穿路由链）。</p>
  */
 public class RoutingRequest {
 
@@ -23,11 +31,12 @@ public class RoutingRequest {
     private final RoutingStrategy strategy;
     private final Protocol protocol;
     /**
-     * 容灾画像（Task 4.9 贯穿）：贯穿 RouterChain 与 Invoker 链，供
-     * {@link PinnedModelRouter} 模型锁定、{@code ChannelFailoverInvoker} L2 门禁、
-     * 会话亲和/就近等画像化决策。为 null 表示无画像（回退默认行为）。
+     * 应用级渠道转移优先级映射（key=channelId, value=priority，数值越小越优先）
+     *
+     * <p>由 {@link InstanceSelector} 查 {@code ApplicationChannelGateway.findByApplicationId}
+     * 构建；为空（如 applicationId 为 null）时 {@link PriorityRouter} 回退默认值 100。</p>
      */
-    private final ResilienceProfile resilienceProfile;
+    private final Map<Long, Integer> channelPriorityMap;
 
     /**
      * @deprecated 请改用 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol)}。
@@ -57,10 +66,10 @@ public class RoutingRequest {
     }
 
     /**
-     * 构造路由请求上下文（无画像，向后兼容）
+     * 构造路由请求上下文（无应用级渠道优先级映射，向后兼容）
      *
-     * <p>委托 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol, ResilienceProfile)}
-     * 传 null profile。</p>
+     * <p>委托 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol, Map)}
+     * 传空 channelPriorityMap（{@link PriorityRouter} 回退默认值 100）。</p>
      *
      * @param modelId       模型 ID
      * @param applicationId 应用 ID（权限锚点；为 null 时权限路由返回空集）
@@ -71,29 +80,30 @@ public class RoutingRequest {
      */
     public RoutingRequest(Long modelId, Long applicationId, Long userId, String role,
                           RoutingStrategy strategy, Protocol protocol) {
-        this(modelId, applicationId, userId, role, strategy, protocol, null);
+        this(modelId, applicationId, userId, role, strategy, protocol, Map.of());
     }
 
     /**
-     * 构造路由请求上下文（携带容灾画像，Task 4.9）
+     * 构造路由请求上下文（携带应用级渠道优先级映射，Task 3）
      *
-     * @param modelId          模型 ID
-     * @param applicationId    应用 ID（权限锚点；为 null 时权限路由返回空集）
-     * @param userId           用户 ID
-     * @param role             用户角色
-     * @param strategy         路由策略
-     * @param protocol         入站协议（供 HealthRouter 按 channelId 派生 endpointId，统一熔断 key）
-     * @param resilienceProfile 容灾画像（贯穿 RouterChain/Invoker 链；为 null 表示无画像回退默认行为）
+     * @param modelId            模型 ID
+     * @param applicationId      应用 ID（权限锚点；为 null 时权限路由返回空集）
+     * @param userId             用户 ID
+     * @param role               用户角色
+     * @param strategy           路由策略
+     * @param protocol           入站协议（供 HealthRouter 按 channelId 派生 endpointId，统一熔断 key）
+     * @param channelPriorityMap 应用级渠道转移优先级映射（key=channelId, value=priority；为空回退默认值 100）
      */
     public RoutingRequest(Long modelId, Long applicationId, Long userId, String role,
-                          RoutingStrategy strategy, Protocol protocol, ResilienceProfile resilienceProfile) {
+                          RoutingStrategy strategy, Protocol protocol,
+                          Map<Long, Integer> channelPriorityMap) {
         this.modelId = modelId;
         this.applicationId = applicationId;
         this.userId = userId;
         this.role = role;
         this.strategy = strategy;
         this.protocol = protocol;
-        this.resilienceProfile = resilienceProfile;
+        this.channelPriorityMap = channelPriorityMap != null ? channelPriorityMap : Map.of();
     }
 
     public Long getModelId() { return modelId; }
@@ -109,7 +119,9 @@ public class RoutingRequest {
     public Protocol getProtocol() { return protocol; }
 
     /**
-     * @return 容灾画像；为 null 表示无画像（回退默认行为）
+     * 返回应用级渠道转移优先级映射（key=channelId, value=priority，数值越小越优先）
+     *
+     * @return 渠道优先级映射（不应被调用方修改）；为空表示无应用级映射，{@link PriorityRouter} 回退默认值 100
      */
-    public ResilienceProfile getResilienceProfile() { return resilienceProfile; }
+    public Map<Long, Integer> getChannelPriorityMap() { return channelPriorityMap; }
 }

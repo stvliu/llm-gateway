@@ -11,7 +11,7 @@ import java.util.Map;
  * 错误分流表 (D3)
  *
  * <p>按 {@link ProviderErrorType} 映射到 {@link FailoverDecision}，
- * 指导故障转移层级选择（换渠道 L1 / 换模型 L2 / 不转移 NONE）。</p>
+ * 指导故障转移层级选择（换渠道 L1 / 不转移 NONE）。</p>
  *
  * <p>分流规则：</p>
  * <ul>
@@ -22,12 +22,14 @@ import java.util.Map;
  *       {@link ProviderErrorType#UPSTREAM_ERROR}/{@link ProviderErrorType#SERVICE_UNAVAILABLE}/
  *       {@link ProviderErrorType#NETWORK_ERROR}）→ {@link FailoverDecision#L1}
  *       （换渠道：同一 Provider 下换 Key/Endpoint）</li>
- *   <li>{@link ProviderErrorType#UNKNOWN_ERROR} → {@link FailoverDecision#L2}
- *       （模型能力问题，换模型降级）</li>
+ *   <li>{@link ProviderErrorType#UNKNOWN_ERROR} → {@link FailoverDecision#NONE}
+ *       （L2 模型降级层已删除，未知错误不再触发换模型，归为不转移直接抛出）</li>
  * </ul>
  *
  * <p>null 输入处理：返回 {@link FailoverDecision#NONE}。null 表示调用方编程错误或未分类错误，
  * 此时无法判定故障归因，直接抛出原异常避免掩盖问题。</p>
+ * <p>兜底处理：未知枚举值（未来新增未及时更新分流表）返回 {@link FailoverDecision#NONE}，
+ * 不再降级换模型（L2 层已删除）。</p>
  */
 @Component
 public class ErrorClassifier {
@@ -48,22 +50,22 @@ public class ErrorClassifier {
         DECISION_TABLE.put(ProviderErrorType.SERVICE_UNAVAILABLE, FailoverDecision.L1);
         DECISION_TABLE.put(ProviderErrorType.NETWORK_ERROR, FailoverDecision.L1);
 
-        // 模型能力问题：换模型降级
-        DECISION_TABLE.put(ProviderErrorType.UNKNOWN_ERROR, FailoverDecision.L2);
+        // 未知错误：L2 模型降级层已删除，归为不转移（直接抛出原异常）
+        DECISION_TABLE.put(ProviderErrorType.UNKNOWN_ERROR, FailoverDecision.NONE);
     }
 
     /**
      * 按供应商错误类型分类故障转移决策
      *
      * @param type 供应商错误类型；为 null 时返回 {@link FailoverDecision#NONE}
-     * @return 故障转移决策（L1/L2/NONE）
+     * @return 故障转移决策（L1/NONE）
      */
     public FailoverDecision classify(ProviderErrorType type) {
         if (type == null) {
             // null 表示编程错误或未分类错误，无法判定故障归因，直接抛出不转移
             return FailoverDecision.NONE;
         }
-        // 兜底返回 L2：防御性处理未来新增枚举值未及时更新分流表的情况，按模型能力问题降级
-        return DECISION_TABLE.getOrDefault(type, FailoverDecision.L2);
+        // 兜底返回 NONE：L2 模型降级层已删除，未来新增枚举值未及时更新分流表时不再降级换模型
+        return DECISION_TABLE.getOrDefault(type, FailoverDecision.NONE);
     }
 }

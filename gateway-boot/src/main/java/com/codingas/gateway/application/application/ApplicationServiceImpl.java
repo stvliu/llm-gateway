@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.application;
 
+import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -8,21 +9,21 @@ import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
-import com.codingas.gateway.domain.resilience.gateway.ResilienceProfileGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * 应用应用服务实现
  *
  * <p>管理应用聚合根的 CRUD 与渠道授权绑定。</p>
  * <p>code 全局唯一校验；创建时状态默认 ACTIVE；删除时级联清理渠道授权关联。</p>
+ *
+ * <p>Task 8：移除 {@code bindResilienceProfile} 与 ResilienceProfileGateway 依赖；
+ * {@code timeout} 通过 create/update 直接透传（承接原 ResilienceProfile.timeout）。</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -31,7 +32,6 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationGateway applicationGateway;
     private final ApplicationChannelGateway applicationChannelGateway;
-    private final ResilienceProfileGateway resilienceProfileGateway;
 
     @Override
     @Transactional
@@ -46,8 +46,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setCode(request.getCode());
         app.setName(request.getName());
         app.setDescription(request.getDescription());
-        // 透传容灾画像 ID（可空，创建时不强制绑定）
-        app.setResilienceProfileId(request.getResilienceProfileId());
+        // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
+        app.setTimeout(request.getTimeout());
         // 创建时状态默认 ACTIVE
         app.setState(ApplicationState.ACTIVE);
 
@@ -75,8 +75,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setCode(request.getCode());
         app.setName(request.getName());
         app.setDescription(request.getDescription());
-        // 透传容灾画像 ID（含 null 清空绑定，与独立绑定端点语义一致）
-        app.setResilienceProfileId(request.getResilienceProfileId());
+        // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
+        app.setTimeout(request.getTimeout());
 
         Application saved = applicationGateway.save(app);
         log.info("Updated application: id={}", saved.getId());
@@ -109,51 +109,31 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<Long> listChannelIds(Long id) {
-        Set<Long> channelIds = applicationChannelGateway.findChannelIdsByApplicationId(id);
-        return new ArrayList<>(channelIds);
+    public List<ApplicationChannelItem> listChannels(Long id) {
+        // 经 gateway 取含 priority 的关联列表，转换为响应 DTO（priority 原样透传，null 表示未配置）
+        return applicationChannelGateway.findByApplicationId(id).stream()
+                .map(rel -> new ApplicationChannelItem(rel.getChannelId(), rel.getPriority()))
+                .toList();
     }
 
     @Override
     @Transactional
-    public void updateChannels(Long id, List<Long> channelIds) {
+    public void updateChannels(Long id, List<ApplicationChannelItem> channels) {
         Application app = applicationGateway.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
 
-        // 先删后建：清空旧关联，再批量保存新关联
+        // 先删后建：清空旧关联，再用三参构造器透传 priority 批量保存新关联
         applicationChannelGateway.deleteByApplicationId(id);
-        if (channelIds != null && !channelIds.isEmpty()) {
-            List<ApplicationChannel> rels = channelIds.stream()
-                    .map(chId -> new ApplicationChannel(id, chId))
+        if (channels != null && !channels.isEmpty()) {
+            List<ApplicationChannel> rels = channels.stream()
+                    .map(item -> new ApplicationChannel(id, item.channelId(), item.priority()))
                     .toList();
             applicationChannelGateway.saveAll(rels);
         }
         log.info("Updated application channels: appId={}, count={}", id,
-                channelIds != null ? channelIds.size() : 0);
-    }
-
-    @Override
-    @Transactional
-    public ApplicationResponse bindResilienceProfile(Long applicationId, Long resilienceProfileId) {
-        // 校验应用存在
-        Application app = applicationGateway.findById(applicationId);
-        if (app == null) {
-            throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + applicationId);
-        }
-
-        // resilienceProfileId 为 null 表示解绑，允许；非空时校验画像存在
-        if (resilienceProfileId != null
-                && resilienceProfileGateway.findById(resilienceProfileId) == null) {
-            throw new GatewayRequestException("RESILIENCE_PROFILE_NOT_FOUND",
-                    "容灾画像不存在: " + resilienceProfileId);
-        }
-
-        app.setResilienceProfileId(resilienceProfileId);
-        Application saved = applicationGateway.save(app);
-        log.info("Bound resilience profile: appId={}, profileId={}", applicationId, resilienceProfileId);
-        return toResponse(saved);
+                channels != null ? channels.size() : 0);
     }
 
     /**
@@ -166,7 +146,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         response.setName(app.getName());
         response.setDescription(app.getDescription());
         response.setState(app.getState() != null ? app.getState().name() : null);
-        response.setResilienceProfileId(app.getResilienceProfileId());
+        response.setTimeout(app.getTimeout());
         response.setQuotaBudgetId(app.getQuotaBudgetId());
         response.setDashboardId(app.getDashboardId());
         response.setCreatedAt(app.getCreatedAt());

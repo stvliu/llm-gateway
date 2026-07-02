@@ -9,11 +9,14 @@ import lombok.NoArgsConstructor;
 /**
  * 应用聚合根实体
  *
- * <p>应用聚合根：权限+行为双聚合，承载 Key 归属、渠道可见性、容灾画像，
+ * <p>应用聚合根：权限+行为双聚合，承载 Key 归属、渠道可见性、应用级超时，
  * 预留配额/看板字段。</p>
  *
  * <p>领域模型纯洁：仅含 Getter/Setter，不含业务逻辑；
  * 路由判定下沉至 {@link ApplicationState#isRoutable()}。</p>
+ *
+ * <p>Task 8：{@code resilienceProfileId} 退场（ResilienceProfile 实体删除），
+ * {@code timeout} 直接挂 Application 字段，承接原 ResilienceProfile.timeout 语义。</p>
  *
  * <p>字段说明：</p>
  * <ul>
@@ -21,7 +24,7 @@ import lombok.NoArgsConstructor;
  *   <li>name — 应用名称</li>
  *   <li>description — 应用描述</li>
  *   <li>state — 应用生命周期状态，控制是否可路由</li>
- *   <li>resilienceProfileId — 容灾画像 ID（预留，后续任务填充）</li>
+ *   <li>timeout — 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout）</li>
  *   <li>quotaBudgetId — 配额预算 ID（预留，后续任务填充）</li>
  *   <li>dashboardId — 看板 ID（预留，后续任务填充）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
@@ -45,8 +48,8 @@ public class Application extends BaseEntity {
     /** 应用生命周期状态 */
     private ApplicationState state;
 
-    /** 容灾画像 ID（预留） */
-    private Long resilienceProfileId;
+    /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
+    private int timeout;
 
     /** 配额预算 ID（预留） */
     private Long quotaBudgetId;
@@ -60,21 +63,21 @@ public class Application extends BaseEntity {
      * <p>仅初始化业务字段，主键 id 与审计字段（createdBy/createdAt/updatedBy/updatedAt）
      * 继承自 {@link BaseEntity}，由基础设施层在持久化时填充。</p>
      *
-     * @param code                应用编码
-     * @param name                应用名称
-     * @param description         应用描述
-     * @param state               应用生命周期状态
-     * @param resilienceProfileId 容灾画像 ID
-     * @param quotaBudgetId       配额预算 ID
-     * @param dashboardId         看板 ID
+     * @param code          应用编码
+     * @param name          应用名称
+     * @param description   应用描述
+     * @param state         应用生命周期状态
+     * @param timeout       请求超时秒数（0 表示用渠道默认）
+     * @param quotaBudgetId 配额预算 ID
+     * @param dashboardId   看板 ID
      */
     public Application(String code, String name, String description, ApplicationState state,
-                       Long resilienceProfileId, Long quotaBudgetId, Long dashboardId) {
+                       int timeout, Long quotaBudgetId, Long dashboardId) {
         this.code = code;
         this.name = name;
         this.description = description;
         this.state = state;
-        this.resilienceProfileId = resilienceProfileId;
+        this.timeout = timeout;
         this.quotaBudgetId = quotaBudgetId;
         this.dashboardId = dashboardId;
     }

@@ -44,11 +44,14 @@ public class FailoverEventResponse {
     /** 触发转移的上游错误类型（枚举名） */
     private String errorType;
 
-    /** 转移决策（L1/L2 枚举名） */
+    /** 转移决策（L1/NONE 枚举名） */
     private String decision;
 
     /** 是否候选全部耗尽 */
     private boolean exhausted;
+
+    /** 是否共因跳过（true=同域候选被跳过，false=真实失败转移） */
+    private boolean commonCauseSkip;
 
     /** 转移发生时间 */
     private Instant occurredAt;

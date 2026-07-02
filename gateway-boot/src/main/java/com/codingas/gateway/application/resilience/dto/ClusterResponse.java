@@ -8,6 +8,9 @@ import java.time.Instant;
  * 故障域响应 DTO
  *
  * <p>返回故障域聚合根的完整字段，含主键与审计字段。</p>
+ *
+ * <p><b>Task 6 变更</b>：删除 region/priority/healthStatus 字段，新增 description 字段
+ * （Cluster 语义改造为跨供应商故障独立性分组并瘦身字段）。</p>
  */
 @Data
 public class ClusterResponse {
@@ -24,14 +27,8 @@ public class ClusterResponse {
     /** 归属供应商 ID（物理 ID） */
     private Long providerId;
 
-    /** 区域标识 */
-    private String region;
-
-    /** 优先级（数值越小越优先） */
-    private int priority;
-
-    /** 域级健康聚合状态（HEALTHY/DEGRADED/DOWN） */
-    private String healthStatus;
+    /** 共因特征说明（可空） */
+    private String description;
 
     /** 创建时间 */
     private Instant createdAt;

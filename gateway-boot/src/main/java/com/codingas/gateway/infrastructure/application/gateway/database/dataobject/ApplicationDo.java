@@ -35,9 +35,9 @@ public class ApplicationDo extends BaseDo {
     @Column(name = "state", nullable = false, length = 16)
     private String state;
 
-    /** 容灾画像 ID（预留） */
-    @Column(name = "resilience_profile_id")
-    private Long resilienceProfileId;
+    /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
+    @Column(name = "timeout", nullable = false)
+    private int timeout;
 
     /** 配额预算 ID（预留） */
     @Column(name = "quota_budget_id")

@@ -199,6 +199,26 @@ class RouterChainTest {
         assertThat(result.getFirst().getId()).isEqualTo(2L);
     }
 
+    @Test
+    @DisplayName("PriorityRouter 经路由链后保留全部 priority 组（不收敛）")
+    void priorityRouter_keepsAllPriorityGroups_throughChain() {
+        ModelInstance primary = new ModelInstance();
+        primary.setId(1L);
+        primary.setPriority(1);
+        ModelInstance backup = new ModelInstance();
+        backup.setId(2L);
+        backup.setPriority(2);
+
+        RouterChain chain = new RouterChain(List.of(new PriorityRouter()));
+        RoutingRequest request = new RoutingRequest(1L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+        List<ModelInstance> result = chain.filter(List.of(primary, backup), request);
+
+        // 不收敛：经 PriorityRouter 后仍含全部 priority 组，按升序 [主,备]，供 L1 故障转移逐个尝试
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(ModelInstance::getId).containsExactly(1L, 2L);
+    }
+
     /** 读取 RouterChain 私有 routers 字段（已按 @Order 排序的责任链） */
     @SuppressWarnings("unchecked")
     private List<Router> readRouters(RouterChain chain) throws Exception {

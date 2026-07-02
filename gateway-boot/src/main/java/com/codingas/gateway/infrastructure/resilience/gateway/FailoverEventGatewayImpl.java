@@ -24,11 +24,17 @@ import java.util.List;
  * AuditingEntityListener 自动填充，转换时仅需透传。</p>
  *
  * <p>errorType / decision 字段以字符串存储于 DO（枚举名），读取时还原为
- * {@link ProviderErrorType} / {@link FailoverDecision} 枚举，写入时取枚举名转字符串
- * （参照 ClusterGatewayImpl 的 healthStatus 字段处理模式）。</p>
+ * {@link ProviderErrorType} / {@link FailoverDecision} 枚举，写入时取枚举名转字符串。</p>
  *
  * <p>查询委派 Repository：{@code int limit} 转为 {@link Pageable}（{@code PageRequest.of(0, limit)}），
  * 排序由 Repository @Query 的 ORDER BY e.occurredAt DESC 保证。</p>
+ *
+ * <p><b>Task 6 容错</b>：errorType / decision 读取历史残留值（如 Task 4 已删除的 {@code L2}，
+ * 或未知 errorType）时不再抛 {@link IllegalArgumentException}，而是回退为安全值
+ * （decision→{@link FailoverDecision#NONE}，errorType→{@code null}）并 {@code log.warn} 记录原值，
+ * 避免破坏管理后台容灾查询。</p>
+ *
+ * <p><b>Task 6 新增字段</b>：{@code commonCauseSkip} 透传（本任务仅加字段，Task 9 填充逻辑）。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -71,10 +77,11 @@ public class FailoverEventGatewayImpl implements FailoverEventGateway {
         entity.setToEndpointId(d.getToEndpointId());
         entity.setFromClusterId(d.getFromClusterId());
         entity.setToClusterId(d.getToClusterId());
-        // 枚举以字符串存储，读取时还原
-        entity.setErrorType(d.getErrorType() != null ? ProviderErrorType.valueOf(d.getErrorType()) : null);
-        entity.setDecision(d.getDecision() != null ? FailoverDecision.valueOf(d.getDecision()) : null);
+        // 枚举以字符串存储，读取时还原；历史残留未知值容错（L2/未知 errorType 不抛异常）
+        entity.setErrorType(parseErrorType(d.getErrorType()));
+        entity.setDecision(parseDecision(d.getDecision()));
         entity.setExhausted(d.isExhausted());
+        entity.setCommonCauseSkip(d.isCommonCauseSkip());
         entity.setOccurredAt(d.getOccurredAt());
         entity.setCreatedBy(d.getCreatedBy());
         entity.setCreatedAt(d.getCreatedAt());
@@ -98,9 +105,55 @@ public class FailoverEventGatewayImpl implements FailoverEventGateway {
         d.setErrorType(entity.getErrorType() != null ? entity.getErrorType().name() : null);
         d.setDecision(entity.getDecision() != null ? entity.getDecision().name() : null);
         d.setExhausted(entity.isExhausted());
+        d.setCommonCauseSkip(entity.isCommonCauseSkip());
         d.setOccurredAt(entity.getOccurredAt());
         d.setCreatedBy(entity.getCreatedBy());
         d.setUpdatedBy(entity.getUpdatedBy());
         return d;
+    }
+
+    /**
+     * 将 errorType 字符串还原为枚举，未知值容错为 null
+     *
+     * <p>数据库历史行可能残留枚举已删除或未知的 errorType 值，
+     * {@link ProviderErrorType#valueOf} 会抛 {@link IllegalArgumentException} 破坏查询。
+     * 捕获后回退为 null 并告警，保证管理后台容灾查询可用。</p>
+     *
+     * @param raw DO 中存储的 errorType 字符串（可空）
+     * @return 还原后的枚举；入参为 null 或未知值时返回 null
+     */
+    private ProviderErrorType parseErrorType(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return ProviderErrorType.valueOf(raw);
+        } catch (IllegalArgumentException e) {
+            log.warn("转移事件 errorType 历史残留未知值，容错为 null: raw={}", raw);
+            return null;
+        }
+    }
+
+    /**
+     * 将 decision 字符串还原为枚举，未知值容错为 NONE
+     *
+     * <p>Task 4 已删除 {@code FailoverDecision.L2} 枚举值，数据库 {@code failover_events}
+     * 历史行可能存在 {@code decision='L2'}，{@link FailoverDecision#valueOf("L2")} 会抛
+     * {@link IllegalArgumentException} 破坏管理后台容灾查询。捕获后回退为
+     * {@link FailoverDecision#NONE} 并告警，记录原值。</p>
+     *
+     * @param raw DO 中存储的 decision 字符串（可空）
+     * @return 还原后的枚举；入参为 null 时返回 null，未知值（如 L2）时返回 NONE
+     */
+    private FailoverDecision parseDecision(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        try {
+            return FailoverDecision.valueOf(raw);
+        } catch (IllegalArgumentException e) {
+            log.warn("转移事件 decision 历史残留未知值，容错为 NONE: raw={}", raw);
+            return FailoverDecision.NONE;
+        }
     }
 }

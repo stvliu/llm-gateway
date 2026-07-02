@@ -1,6 +1,8 @@
 package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.domain.application.entity.Application;
+import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.entity.ModelInstance;
@@ -23,6 +25,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -47,6 +51,9 @@ class RoutingResolverTest {
 
     @Mock
     private ChannelGateway channelGateway;
+
+    @Mock
+    private ApplicationGateway applicationGateway;
 
     @InjectMocks
     private RoutingResolver routingResolver;
@@ -74,6 +81,7 @@ class RoutingResolverTest {
             channel.setName("openai-main");
             channel.setState(ChannelState.ACTIVE);
             channel.setTimeout(30);
+            channel.setClusterId(500L);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
             endpoint.setId(50L);
@@ -99,6 +107,9 @@ class RoutingResolverTest {
             assertThat(result.providerApiKey()).isEqualTo("sk-test-key");
             assertThat(result.timeout()).isEqualTo(30);
             assertThat(result.needsProtocolAdaptation()).isFalse();
+            assertThat(result.clusterId())
+                    .as("clusterId 应由 Channel.clusterId 填充（Task 9）")
+                    .isEqualTo(500L);
         }
 
         @Test
@@ -323,6 +334,171 @@ class RoutingResolverTest {
                     "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("ModelInstance");
+        }
+    }
+
+    @Nested
+    @DisplayName("Application.timeout 接入运行时")
+    class ApplicationTimeoutTests {
+
+        @Test
+        @DisplayName("Application.timeout 非 0 时覆盖渠道默认超时")
+        void resolveCandidates_applicationTimeoutNonZero_overridesChannelDefault() {
+            // given — 渠道默认 30s，应用级 60s 应覆盖
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            Application app = new Application();
+            app.setId(7L);
+            app.setTimeout(60);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 应用级 60 覆盖渠道默认 30
+            assertThat(results.get(0).timeout()).isEqualTo(60);
+        }
+
+        @Test
+        @DisplayName("Application.timeout 为 0 时回退渠道默认超时")
+        void resolveCandidates_applicationTimeoutZero_fallsBackToChannelDefault() {
+            // given — 应用级 0 表示用渠道默认
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            Application app = new Application();
+            app.setId(7L);
+            app.setTimeout(0);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 0 回退渠道默认 30
+            assertThat(results.get(0).timeout()).isEqualTo(30);
+        }
+
+        @Test
+        @DisplayName("applicationId 为 null 时不查 ApplicationGateway，用渠道默认超时")
+        void resolveCandidates_applicationIdNull_usesChannelDefault() {
+            // given — 无应用锚点，应直接用渠道默认
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), null, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, null, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 用渠道默认 30，且未查 ApplicationGateway
+            assertThat(results.get(0).timeout()).isEqualTo(30);
+            verifyNoInteractions(applicationGateway);
+        }
+
+        @Test
+        @DisplayName("Application 查不到时回退渠道默认超时，不抛异常")
+        void resolveCandidates_applicationNotFound_fallsBackToChannelDefault() {
+            // given — Application 查不到（findById 返回 null）
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationGateway.findById(7L)).thenReturn(null);
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 回退渠道默认 30，不抛异常
+            assertThat(results.get(0).timeout()).isEqualTo(30);
         }
     }
 }

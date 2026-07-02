@@ -77,9 +77,11 @@ GET /api/channels 响应 DTO SHALL 在不破坏现有契约的前提下，附加
 - 与 `KeyFailoverInvoker`（用 `RoutingContext.channelEndpointId()`）共享同一 manager bean
 - 不向 `ModelInstance`/`model_instances` 表加 `endpointId` 字段（channel 粒度与 channel×protocol 端点粒度 1:1 不自洽，采用运行时派生方案）
 
-**RouterChain 顺序修正**:
-- 原 `Permission(@100) → Priority(@200) → Health(@300) → LoadBalance(@9999)`（Priority 先于 Health 且 force，导致次优先级渠道永不被选）
-- 现 `Permission(@100) → Health(@200) → ClusterAffinity(@250) → Priority(@300) → PinnedModel(@350) → LoadBalance(@9999)`（Health 先于 Priority，次优先级健康渠道能成为转移候选）
+**RouterChain 顺序修正**（删除 ClusterAffinity 与 PinnedModel）:
+- 原 `Permission(@100) → Health(@200) → ClusterAffinity(@250) → Priority(@300) → PinnedModel(@350) → LoadBalance(@9999)`
+- 现 `Permission(@100) → EndpointHealth(@200) → Priority(@300) → LoadBalance(@9999)`
+- Health 先于 Priority（次优先级健康渠道能成为转移候选）
+- Priority 为排序器（输出完整候选列表，不收敛），非选择器
 
 #### Scenario: 路由侧与调用侧共享熔断器
 
@@ -91,8 +93,8 @@ GET /api/channels 响应 DTO SHALL 在不破坏现有契约的前提下，附加
 
 - **WHEN** 主优先级渠道熔断，次优先级渠道健康
 - **THEN** `HealthRouter` SHALL 先过滤掉熔断渠道
-- **THEN** `PriorityRouter` SHALL 在存活渠道里按 priority 分组
-- **THEN** 次优先级健康渠道 SHALL 成为转移候选
+- **THEN** `PriorityRouter` SHALL 在存活渠道里按 priority 排序输出完整列表
+- **THEN** 次优先级健康渠道 SHALL 保留在候选列表中成为转移候选
 
 ### Requirement: ProviderHealthTracker 收窄为供应商级粗粒度信号
 

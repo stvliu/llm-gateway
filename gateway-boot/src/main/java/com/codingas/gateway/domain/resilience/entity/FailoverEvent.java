@@ -14,7 +14,7 @@ import java.time.Instant;
  * 转移事件聚合根实体
  *
  * <p>记录每次候选转移（容灾可观测性，读侧重）。当 {@code ChannelFailoverInvoker} 在 catch 块
- * 判定 {@link FailoverDecision} 非 NONE（L1/L2 换候选）时，换下一候选前发布
+ * 判定 {@link FailoverDecision} 非 NONE（L1 换候选）时，换下一候选前发布
  * {@code FailoverOccurredEvent}，由 {@code FailoverEventListener} 异步持久化本实体。</p>
  *
  * <p>设计见 design doc D12：独立 FailoverEvent domain，不复用 CallLog（调用结果语义与转移动作
@@ -30,11 +30,11 @@ import java.time.Instant;
  *   <li>toChannelId / toEndpointId — 转移目标候选的渠道 ID 与端点 ID；
  *       已是最后一个候选（exhausted=true）时为 null</li>
  *   <li>fromClusterId / toClusterId — 冗余故障域 ID（可空，便于 findRecent 的 clusterId 过滤直接匹配，
- *       避免 join channels 表）。Invoker 经 {@code ChannelGateway.findById} 反查 channelId→clusterId 填充，
- *       渠道不存在或未关联 cluster 时为 null；clusterId 过滤已生效</li>
+ *       避免 join channels 表）。从 RoutingContext.clusterId 直取，渠道未关联 cluster 时为 null；clusterId 过滤已生效</li>
  *   <li>errorType — 触发转移的上游错误类型</li>
- *   <li>decision — 转移决策（L1 换渠道共因故障 / L2 换模型降级）</li>
+ *   <li>decision — 转移决策（L1 换渠道共因故障）</li>
  *   <li>exhausted — 是否候选全部耗尽（to 为 null 时为 true）</li>
+ *   <li>commonCauseSkip — 是否共因跳过标记（默认 false，Task 9 填充判定逻辑）</li>
  *   <li>occurredAt — 转移发生时间（查询排序键，倒序）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
  * </ul>
@@ -72,11 +72,14 @@ public class FailoverEvent extends BaseEntity {
     /** 触发转移的上游错误类型 */
     private ProviderErrorType errorType;
 
-    /** 转移决策（L1/L2） */
+    /** 转移决策（L1） */
     private FailoverDecision decision;
 
     /** 是否候选全部耗尽（to 为 null 时为 true） */
     private boolean exhausted;
+
+    /** 是否共因跳过标记（默认 false，Task 9 填充判定逻辑） */
+    private boolean commonCauseSkip;
 
     /** 转移发生时间（查询排序键，倒序） */
     private Instant occurredAt;

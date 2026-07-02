@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -48,6 +49,23 @@ public class AnthropicMessagesRequest implements ProtocolRequest {
     @Override
     public void setStream(boolean stream) {
         this.stream = stream;
+    }
+
+    @Override
+    public AnthropicMessagesRequest copy() {
+        // 手写字段拷贝：避免 Jackson 深拷贝的性能开销与循环引用风险
+        // 集合字段拷贝容器（浅拷贝元素），调谐只改 model，不修改集合元素内部
+        return AnthropicMessagesRequest.builder()
+                .model(this.model)
+                .messages(this.messages != null ? new ArrayList<>(this.messages) : null)
+                .maxTokens(this.maxTokens)
+                .system(this.system)
+                .temperature(this.temperature)
+                .stopSequences(this.stopSequences != null ? new ArrayList<>(this.stopSequences) : null)
+                .tools(this.tools != null ? new ArrayList<>(this.tools) : null)
+                .toolChoice(this.toolChoice)
+                .stream(this.stream)
+                .build();
     }
 
     @Data

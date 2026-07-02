@@ -58,9 +58,7 @@ class ClusterControllerIT {
         resp.setCode("openai-us");
         resp.setName("OpenAI 美东");
         resp.setProviderId(10L);
-        resp.setRegion("us-east");
-        resp.setPriority(1);
-        resp.setHealthStatus("HEALTHY");
+        resp.setDescription("OpenAI 美东共因特征说明");
         resp.setCreatedAt(Instant.parse("2026-06-19T10:00:00Z"));
         resp.setUpdatedAt(Instant.parse("2026-06-19T10:00:00Z"));
         return resp;
@@ -71,8 +69,7 @@ class ClusterControllerIT {
         request.setCode(code);
         request.setName(name);
         request.setProviderId(providerId);
-        request.setRegion("us-east");
-        request.setPriority(1);
+        request.setDescription("OpenAI 美东共因特征说明");
         return request;
     }
 
@@ -89,7 +86,7 @@ class ClusterControllerIT {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.code").value("openai-us"))
-                .andExpect(jsonPath("$.healthStatus").value("HEALTHY"));
+                .andExpect(jsonPath("$.description").value("OpenAI 美东共因特征说明"));
     }
 
     @Test

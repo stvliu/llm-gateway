@@ -95,6 +95,7 @@ public abstract class FullContextIntegrationTestBase {
                         30,
                         false,
                         "gpt-4",
+                        null,
                         null
                 ));
 
