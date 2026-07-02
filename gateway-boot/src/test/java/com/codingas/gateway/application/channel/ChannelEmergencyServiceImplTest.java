@@ -1,12 +1,8 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.resilience.entity.Cluster;
-import com.codingas.gateway.domain.resilience.gateway.ClusterGateway;
-import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
 import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.infrastructure.resilience.CircuitBreakerState;
 import org.junit.jupiter.api.DisplayName;
@@ -39,12 +35,6 @@ class ChannelEmergencyServiceImplTest {
 
     @Mock
     private ChannelEndpointGateway channelEndpointGateway;
-
-    @Mock
-    private ChannelGateway channelGateway;
-
-    @Mock
-    private ClusterGateway clusterGateway;
 
     @InjectMocks
     private ChannelEmergencyServiceImpl channelEmergencyService;
@@ -135,47 +125,6 @@ class ChannelEmergencyServiceImplTest {
         }
     }
 
-    @Nested
-    @DisplayName("switchCluster 紧切域")
-    class SwitchClusterTests {
-
-        @Test
-        @DisplayName("渠道与目标域存在时切换 clusterId 并保存")
-        void switchCluster_valid_returnsSuccess() {
-            Channel channel = buildChannel(1L, 100L);
-            when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
-            Cluster target = buildCluster(200L, "claude-sg");
-            when(clusterGateway.findById(200L)).thenReturn(target);
-
-            channelEmergencyService.switchCluster(1L, 200L);
-
-            assertThat(channel.getClusterId()).isEqualTo(200L);
-            verify(channelGateway).save(channel);
-        }
-
-        @Test
-        @DisplayName("渠道不存在时抛出异常")
-        void switchCluster_channelNotFound_throwsException() {
-            when(channelGateway.findById(999L)).thenReturn(Optional.empty());
-
-            assertThatThrownBy(() -> channelEmergencyService.switchCluster(999L, 200L))
-                    .isInstanceOf(GatewayRequestException.class);
-            verify(channelGateway, never()).save(any());
-        }
-
-        @Test
-        @DisplayName("目标故障域不存在时抛出异常")
-        void switchCluster_clusterNotFound_throwsException() {
-            Channel channel = buildChannel(1L, 100L);
-            when(channelGateway.findById(1L)).thenReturn(Optional.of(channel));
-            when(clusterGateway.findById(200L)).thenReturn(null);
-
-            assertThatThrownBy(() -> channelEmergencyService.switchCluster(1L, 200L))
-                    .isInstanceOf(GatewayRequestException.class);
-            verify(channelGateway, never()).save(any());
-        }
-    }
-
     // ===== Helper methods =====
 
     private void stubEndpointBelongsToChannel(Long channelId, Long endpointId) {
@@ -188,19 +137,5 @@ class ChannelEmergencyServiceImplTest {
         endpoint.setId(id);
         endpoint.setChannelId(channelId);
         return endpoint;
-    }
-
-    private Channel buildChannel(Long id, Long clusterId) {
-        Channel channel = new Channel();
-        channel.setId(id);
-        channel.setClusterId(clusterId);
-        return channel;
-    }
-
-    private Cluster buildCluster(Long id, String code) {
-        Cluster cluster = new Cluster();
-        cluster.setId(id);
-        cluster.setCode(code);
-        return cluster;
     }
 }

@@ -75,17 +75,15 @@ TBD - created by archiving change resilience-architecture. Update Purpose after 
 
 ### Requirement: Channels 一键应急操作
 
-控制台 SHALL 在 Channels 页提供一键手动熔断/恢复/紧切域应急操作，复用既有熔断器，无新状态机。
+控制台 SHALL 在 Channels 页提供一键手动熔断/恢复应急操作，复用既有熔断器，无新状态机。
 
 **API**:
 - `POST /api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-open` — 一键熔断端点（强制熔断器 OPEN，立即切断流量）
 - `POST /api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/force-close` — 一键恢复端点（强制熔断器 CLOSED 并重置窗口，立即恢复流量）
 - `GET /api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/state` — 查询端点熔断器状态（返回 `CLOSED`/`OPEN`/`HALF_OPEN`）
-- `PUT /api/v1/channels/{id}/cluster` — 紧切域（将 `channel.clusterId` 改为目标故障域 ID，用于跨域转移）
 
 **规则**:
 - 一键熔断/恢复委托 `ChannelEndpointCircuitBreakerManager`，复用既有熔断器实例
-- 紧切域校验目标故障域存在；不校验目标域健康（运维决策）
 - 应急操作返回 `CircuitBreakerStateResponse`（含状态名）
 
 #### Scenario: 一键熔断端点
@@ -106,12 +104,4 @@ TBD - created by archiving change resilience-architecture. Update Purpose after 
 
 - **WHEN** 运维调用 `GET /api/v1/channels/{channelId}/endpoints/{endpointId}/circuit-breaker/state`
 - **THEN** 系统 SHALL 返回当前熔断器状态名（`CLOSED`/`OPEN`/`HALF_OPEN`）
-
-#### Scenario: 紧切域
-
-- **WHEN** 运维调用 `PUT /api/v1/channels/{id}/cluster` 传入目标 `clusterId`
-- **THEN** 系统 SHALL 校验目标故障域存在
-- **THEN** 系统 SHALL 将 `channel.clusterId` 更新为目标故障域 ID
-- **THEN** 系统 SHALL NOT 校验目标域健康（运维决策）
-- **THEN** 系统 SHALL 返回 HTTP 204
 

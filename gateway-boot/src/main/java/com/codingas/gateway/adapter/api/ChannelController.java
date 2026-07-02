@@ -9,7 +9,6 @@ import com.codingas.gateway.application.supply.dto.ChannelHealthResult;
 import com.codingas.gateway.domain.supply.enums.BillingMode;
 import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -180,23 +179,6 @@ public class ChannelController {
     }
 
     /**
-     * 紧急切换渠道到目标故障域
-     *
-     * <p>运维应急：将 channel.clusterId 改为目标故障域 ID，用于跨域转移。
-     * 校验目标故障域存在；不校验目标域健康（运维决策）。</p>
-     *
-     * @param id      渠道 ID
-     * @param request 切换请求（含目标 clusterId）
-     */
-    @PutMapping("/{id}/cluster")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void switchCluster(
-            @PathVariable Long id,
-            @Valid @RequestBody SwitchClusterRequest request) {
-        channelEmergencyService.switchCluster(id, request.getClusterId());
-    }
-
-    /**
      * 熔断器状态响应 DTO
      */
     @Data
@@ -204,15 +186,5 @@ public class ChannelController {
     public static class CircuitBreakerStateResponse {
         /** 熔断器状态名（CLOSED/OPEN/HALF_OPEN） */
         private String state;
-    }
-
-    /**
-     * 紧切域请求 DTO
-     */
-    @Data
-    public static class SwitchClusterRequest {
-        /** 目标故障域 ID */
-        @NotNull(message = "目标故障域 ID 不能为空")
-        private Long clusterId;
     }
 }

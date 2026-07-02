@@ -106,15 +106,17 @@ export default function ChannelManageModal({
    * 全选/取消全选
    */
   const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      const next = new Map<number, number | null>();
-      for (const c of channels) {
-        next.set(c.id, null);
+    setSelected((prev) => {
+      if (checked) {
+        const next = new Map<number, number | null>();
+        for (const c of channels) {
+          next.set(c.id, prev.get(c.id) ?? null);
+        }
+        return next;
+      } else {
+        return new Map();
       }
-      setSelected(next);
-    } else {
-      setSelected(new Map());
-    }
+    });
   };
 
   /**
