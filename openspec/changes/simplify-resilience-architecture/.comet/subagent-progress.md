@@ -9,9 +9,13 @@
 
 - 当前 plan task: Task 9 — L1 clusterId 共因跳过（依赖 Task 1+6，均已完成）
 - Task 9 BASE commit: e22ba3de（HEAD）
-- Task 9 现状: RoutingContext record 无 clusterId；ChannelFailoverInvoker.invoke/invokeStream 无共因跳过；publishFailoverEvent L412 用 resolveClusterId 反查 + 12 参数次级构造器（commonCauseSkip=false）。Task 9 加 RoutingContext.clusterId、RoutingResolver.buildContext 填充、Invoker 共因跳过局部 Set、publishFailoverEvent 改 13 参数规范构造器 + RoutingContext.clusterId 直取（删 resolveClusterId）
+- Task 10 实现提交: e35ba30e（25 files 7删18改，build + vitest 117 tests pass）。2 项后端 gap 待用户决策:
+  - gap1（Task 9 遗漏）✅ 已修复 635798a6: FailoverEventResponse 加 commonCauseSkip + toResponse L70 透传 + decision 注释改 L1/NONE + 测试，回归 BUILD SUCCESS
+  - gap2（Task 3 遗漏 + plan 缺任务）: spec application-access-control L37 + resilience-console L45 要求前端保存 ApplicationChannel.priority，但后端 PUT /applications/{id}/channels 仅接 channelIds 无 priority，listChannels 返回 number[] 无 priority。Task 3 plan 3.1-3.9 只做运行时注入无保存端点。plan 与 spec 有 gap。用户决策本 change 补后端端点。探查发现后端 Gateway 层已支持 priority 读写（findByApplicationId 返回含 priority List、saveAll 接 List<ApplicationChannel> 含 priority），只缺 Controller/Service/DTO/前端 暴露层
+  - gap2（Task 3 遗漏 + plan 缺任务）: spec application-access-control L37 + resilience-console L45 要求前端保存 ApplicationChannel.priority，但后端 PUT /applications/{id}/channels 仅接 channelIds 无 priority，listChannels 返回 number[] 无 priority。Task 3 plan 3.1-3.9 只做运行时注入无保存端点。plan 与 spec 有 gap
 - 映射 OpenSpec tasks: 6.1-6.10
-- 阶段: 批次 C 审查中（Task 6+8+9 全部实现并回归通过，已派发合并 reviewer，第 1 轮）
+- 批次 D 审查第 1 轮: NEEDS_FIX。Important I-1（switchCluster 后端残留：接口+Impl L68+Controller PUT /channels/{id}/cluster+SwitchClusterRequest DTO+5 测试，spec resilience-console L54-56 REMOVED 紧切域但实现未跟上，clusterGateway 仅 switchCluster 用可一并删）。Minor M-1（ProviderHealthTracker L16/56 真实 {@link} 断链 DegradationServiceImpl + 过时 L2 描述，实际消费者 ProviderRegistryHealthIndicator）、M-4（ChannelManageModal handleSelectAll 全选丢已配 priority）。已派发修复 agent 第 2 轮处理 I-1+M-1+M-4
+- Task 11 提交 961b8f64: delta specs 全一致 + 设计文档重写 + grep 无代码逻辑残留。发现待审查项: ChannelEmergencyService.switchCluster 后端残留（接口+Impl L68+Controller PUT /channels/{id}/cluster+3 测试，前端已删 SwitchClusterButton 但后端死端点未删，属 Task 5/7 清理遗漏）；3 处 stale Javadoc {@link} 断链（ProviderHealthTracker L16/56 指 DegradationServiceImpl、ChannelEmergencyServiceImpl L29 指 ClusterHealthAggregator、ResilienceEventServiceImpl L25 指 ResilienceProfileServiceImpl）
 - Task 6 BASE commit: 4d4c7a4；实现提交 e7ecf9d（amend 含 orphan 删除）
 - 字段澄清（spec cluster-failover/spec.md L17-33 权威）: Cluster 保留 code/name/providerId + 新增 description + 审计；删 region/priority/healthStatus。plan 6.1 漏写 providerId，spec L30「Cluster 与 providerId 共存正交」补全
 - Task 6 实现摘要: Cluster 瘦身+description 新增；FailoverOccurredEvent/FailoverEvent/DO 加 commonCauseSkip；FailoverEventGatewayImpl L75/L76 valueOf 容错（L2/未知→NONE/null+warn）；V60 删列+加 description 列，V64 加 common_cause_skip 列
@@ -52,8 +56,8 @@
 | 7 | 删除 PinnedModel 与会话亲和 | ✅ 批次 B 通过 a8cefaf |
 | 8 | ResilienceProfile 实体降级 | ✅ 实现完成 90584fb + timeout 接入 e22ba3de（736 tests pass，待批次 C 审查） |
 | 9 | L1 clusterId 共因跳过 | ✅ 实现完成 c1f43615（744 tests pass 自报，协调者独立回归验证中 bnl2skzdq，待批次 C 审查） |
-| 10 | 前端适配 | 待派发 |
-| 11 | spec 同步与文档 | 待派发 |
+| 10 | 前端适配 + gap1 + gap2 | ✅ e35ba30e（前端适配）+ 635798a6（gap1 Response 透传）+ 50446d91（gap2 priority 保存端点+前端配置）。后端 746 tests + 前端 build + vitest 117 pass，待批次 D 审查 |
+| 11 | spec 同步与文档 | ✅ 实现完成 961b8f64（delta specs 一致 + 设计文档重写，待批次 D 审查） |
 | 12 | 全链路回归 | 待派发 |
 
 ## 批次审查计划（thorough）

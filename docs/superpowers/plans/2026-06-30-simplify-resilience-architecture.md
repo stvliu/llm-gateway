@@ -302,13 +302,13 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - Modify: 容灾总览页、Applications 页、Channels 页、types/services/locales
 - Delete: 画像模板页
 
-- [ ] **10.1 容灾总览页**：clusterId 字段保留（语义随 Cluster 改造），新增共因跳过展示，移除降级/会话亲和/PinnedModel。
-- [ ] **10.2 画像模板页整删**（随 ResilienceProfile 退场）。
-- [ ] **10.3 Applications 页**：移除容灾画像绑定，加 timeout 配置 + 渠道 priority 排序。
-- [ ] **10.4 Channels 页**：clusters→clusters，移除「紧切域」（依赖已删域级路由）。
-- [ ] **10.5 types/services/locales 适配**：Cluster 字段瘦身（删 region/priority/healthStatus，删 L2/Pinned/会话亲和相关）。
-- [ ] **10.6 `cd gateway-console && npm run build` 通过**（必要时 `npx vitest run` 跑前端测试）。
-- [ ] **10.7 commit**：`feat(console): 适配容灾架构简化（Cluster 瘦身/共因跳过/删画像）`
+- [x] **10.1 容灾总览页**：clusterId 字段保留（语义随 Cluster 改造），新增共因跳过展示，移除降级/会话亲和/PinnedModel。
+- [x] **10.2 画像模板页整删**（随 ResilienceProfile 退场）。
+- [x] **10.3 Applications 页**：移除容灾画像绑定，加 timeout 配置 + 渠道 priority 排序。
+- [x] **10.4 Channels 页**：clusters→clusters，移除「紧切域」（依赖已删域级路由）。
+- [x] **10.5 types/services/locales 适配**：Cluster 字段瘦身（删 region/priority/healthStatus，删 L2/Pinned/会话亲和相关）。
+- [x] **10.6 `cd gateway-console && npm run build` 通过**（必要时 `npx vitest run` 跑前端测试）。
+- [x] **10.7 commit**：`feat(console): 适配容灾架构简化（Cluster 瘦身/共因跳过/删画像）`
 
 ---
 
@@ -318,10 +318,10 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 - Modify: `openspec/changes/simplify-resilience-architecture/specs/*/spec.md`（delta）
 - Modify: `doc/容灾方案设计.md`、`doc/容灾管理范式.md`
 
-- [ ] **11.1 确认 delta specs 与实现一致**（本 change 已创建 10 个 delta specs，逐个核对）。
-- [ ] **11.2 更新 `doc/容灾方案设计.md` / `doc/容灾管理范式.md`**：四层→三层，Cluster 语义改造+瘦身字段，删 L2/DomainHealth/PinnedModel/会话亲和。
-- [ ] **11.3 grep 确认无残留**：`L2/DegradationService/PinnedModel/SessionAffinity/ResilienceProfile/ClusterHealthAggregator/ClusterAffinityRouter/ModelInstance.priority` 相关引用清除。
-- [ ] **11.4 commit**：`docs(resilience): 同步容灾架构简化 spec 与设计文档`
+- [x] **11.1 确认 delta specs 与实现一致**（本 change 已创建 10 个 delta specs，逐个核对）。
+- [x] **11.2 更新 `doc/容灾方案设计.md` / `doc/容灾管理范式.md`**：四层→三层，Cluster 语义改造+瘦身字段，删 L2/DomainHealth/PinnedModel/会话亲和。
+- [x] **11.3 grep 确认无残留**：`L2/DegradationService/PinnedModel/SessionAffinity/ResilienceProfile/ClusterHealthAggregator/ClusterAffinityRouter/ModelInstance.priority` 相关引用清除。
+- [x] **11.4 commit**：`docs(resilience): 同步容灾架构简化 spec 与设计文档`
 
 ---
 
