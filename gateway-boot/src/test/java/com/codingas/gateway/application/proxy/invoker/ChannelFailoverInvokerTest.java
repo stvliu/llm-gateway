@@ -37,8 +37,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -794,100 +792,7 @@ class ChannelFailoverInvokerTest {
                 .doesNotContain("content_block_delta");
     }
 
-    // ==================== L1 clusterId 共因跳过（Task 9） ====================
-
-    @Test
-    @DisplayName("9.1 共因跳过：同 clusterId 共因失败时跳过同域候选试异域候选")
-    void commonCauseSkip_sameCluster_skipsSameClusterCandidate() {
-        // 构造：ctx1(cluster=100) + ctx2(cluster=100, 同域) + ctx3(cluster=200, 异域)
-        RoutingContext ctx1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx3 = new RoutingContext(12L, 22L, "https://ch3/v1",
-                Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
-
-        // ctx1 AUTH 共因失败 → L1 → 标记 cluster=100
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "ch1 auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-
-        // ctx2 同 cluster=100 → 应被跳过（keyFailoverInvoker.invoke 不应被调用，不设桩）
-        // RED 阶段共因跳过未实现时 ctx2 会被调用返回 null → result=null≠successResponse 断言失败
-        // GREEN 阶段 ctx2 被共因跳过，不调用（不设桩避免 Mockito strict stubs 误报 UnnecessaryStubbing）
-
-        // ctx3 cluster=200 异域 → 应被试，返回成功
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ctx3, request)).thenReturn(successResponse);
-
-        ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2, ctx3),
-                request, Protocol.OPENAI, 7L, "test-trace-id");
-
-        // 断言：返回异域候选 ctx3 的响应（共因跳过同域 ctx2）
-        assertThat(result).isSameAs(successResponse);
-        // ctx1 被试（真实失败）
-        verify(keyFailoverInvoker).invoke(ctx1, request);
-        // ctx2 被跳过（同 cluster 共因，不调用）
-        verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        // ctx3 被试（异域候选）
-        verify(keyFailoverInvoker).invoke(ctx3, request);
-
-        // 断言转移事件：ctx1→ctx2 真实失败(commonCauseSkip=false) + ctx2→ctx3 共因跳过(commonCauseSkip=true)
-        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
-        verify(eventPublisher, times(2)).publish(captor.capture());
-        java.util.List<FailoverOccurredEvent> events = captor.getAllValues();
-        // 第1条：ctx1 真实 L1 失败 → 转移到 ctx2
-        assertThat(events.get(0).fromChannelId()).isEqualTo(10L);
-        assertThat(events.get(0).toChannelId()).isEqualTo(11L);
-        assertThat(events.get(0).fromClusterId()).isEqualTo(100L);
-        assertThat(events.get(0).toClusterId()).isEqualTo(100L);
-        assertThat(events.get(0).commonCauseSkip()).isFalse();
-        // 第2条：ctx2 共因跳过 → 转移到 ctx3
-        assertThat(events.get(1).fromChannelId()).isEqualTo(11L);
-        assertThat(events.get(1).toChannelId()).isEqualTo(12L);
-        assertThat(events.get(1).fromClusterId()).isEqualTo(100L);
-        assertThat(events.get(1).toClusterId()).isEqualTo(200L);
-        assertThat(events.get(1).commonCauseSkip()).isTrue();
-    }
-
-    @Test
-    @DisplayName("9.2 共因跳过标记仅本次请求有效：下次请求同 cluster 候选不被跳过（局部 Set 无持久化）")
-    void commonCauseSkip_notInheritedAcrossRequests() {
-        // ctx1(cluster=100) + ctx2(cluster=100, 同域)
-        RoutingContext ctx1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
-
-        // 第一次请求：ctx1(cluster=100) AUTH 失败 → L1 → 标记 cluster=100 → ctx2(cluster=100) 跳过 → 耗尽抛
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "ch1 auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-
-        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, "trace-1"))
-                .isSameAs(authEx);
-        // 第一次：ctx2 被跳过（同 cluster 共因）
-        verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-
-        // 第二次请求（同一 invoker 实例）：共因标记不应继承
-        // ctx1(cluster=100) 这次成功 —— 若标记继承，ctx1 会被跳过（试 ctx2 未 mock 成功→失败）
-        // 若标记不继承（新 Set），ctx1 被试并成功返回
-        reset(keyFailoverInvoker);
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(successResponse);
-
-        ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, "trace-2");
-
-        // 断言：ctx1 被试并成功（共因标记未继承，第二次是新 Set）
-        assertThat(result).isSameAs(successResponse);
-        verify(keyFailoverInvoker).invoke(ctx1, request);
-    }
+    // ==================== NONE 决策不转移 ====================
 
     @Test
     @DisplayName("9.3 非共因失败(NONE)不触发共因跳过：INVALID_REQUEST 直接抛不标记不发事件")

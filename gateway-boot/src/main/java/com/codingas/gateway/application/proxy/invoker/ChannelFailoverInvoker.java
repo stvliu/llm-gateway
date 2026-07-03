@@ -23,9 +23,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -43,10 +41,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p><b>Task 4 变更</b>：L2 模型降级层已删除。候选全部耗尽后直接抛最后捕获的上游异常，
  * 不再进入 L2 模型降级（降级决策交还给应用层）。容灾栈从四层（L0/L1/L2/L3）收敛为三层（L0/L1/L3）。</p>
  *
- * <p><b>Task 9 变更</b>：L1 共因跳过。候选共因失败（FailoverDecision=L1）时标记其 clusterId，
- * 后续同 clusterId 候选直接跳过（共因故障换同域渠道无用），试异域候选。共因跳过发转移事件
- * （commonCauseSkip=true）但不计入 lastException；clusterId 从 {@link RoutingContext} 直取
- * （不再经 ChannelGateway 反查）。共因跳过标记为方法局部 Set，仅本次请求有效。</p>
+ * <p><b>Task 2 变更</b>：删除 L1 共因跳过行为。不再维护 commonCauseFailedClusters 局部 Set
+ * 跳过同域候选，所有候选按 priority 顺序逐个尝试，全部耗尽抛最后捕获的异常。
+ * publishFailoverEvent 的 commonCauseSkip 参数暂保留并统一传 false（字段清理由 Task 3 完成）。</p>
  */
 @Component
 public class ChannelFailoverInvoker {
@@ -105,23 +102,9 @@ public class ChannelFailoverInvoker {
                                     ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
                                     String traceId) {
         ProviderException lastException = null;
-        // Task 9：共因跳过标记（局部 Set，仅本次请求有效，不跨请求继承）
-        Set<Long> commonCauseFailedClusters = new HashSet<>();
 
         for (int i = 0; i < candidates.size(); i++) {
             RoutingContext candidate = candidates.get(i);
-
-            // Task 9：共因跳过 — 同 clusterId 已共因失败，换同域渠道无用，跳过试异域候选
-            if (candidate.clusterId() != null && commonCauseFailedClusters.contains(candidate.clusterId())) {
-                log.info("候选渠道 channelId={} clusterId={} 共因跳过（同域已共因失败），试异域候选",
-                        candidate.channelId(), candidate.clusterId());
-                // 发转移事件（commonCauseSkip=true），不计入 lastException（共因跳过非真实失败）
-                publishFailoverEvent(candidate, candidates, i, applicationId,
-                        lastException != null ? lastException.getErrorType() : ProviderErrorType.UNKNOWN_ERROR,
-                        FailoverDecision.L1, traceId, true);
-                continue;
-            }
-
             try {
                 // 调谐下沉：每候选基于原始 request 副本独立 convert+tune（修复 L1 换渠道后 model 错误）
                 ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
@@ -135,16 +118,13 @@ public class ChannelFailoverInvoker {
                         candidate.channelId(), candidate.channelEndpointId(),
                         e.getErrorType(), decision);
 
-                // NONE：请求级错误（如 INVALID_REQUEST），换哪都无效，直接抛出不转移（不标记共因）
+                // NONE：请求级错误（如 INVALID_REQUEST），换哪都无效，直接抛出不转移
                 if (decision == FailoverDecision.NONE) {
                     throw e;
                 }
-
-                // L1 共因失败：标记 clusterId（供后续同域候选跳过），发转移事件，记录 lastException
-                if (candidate.clusterId() != null) {
-                    commonCauseFailedClusters.add(candidate.clusterId());
-                }
-                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId, false);
+                // L1 失败：发转移事件（commonCauseSkip 暂传 false，Task 3 删字段），记录 lastException
+                publishFailoverEvent(candidate, candidates, i, applicationId,
+                        e.getErrorType(), decision, traceId, false);
                 lastException = e;
             }
         }
@@ -187,21 +167,9 @@ public class ChannelFailoverInvoker {
                               ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
                               String traceId, StreamCallback callback) {
         ProviderException lastException = null;
-        // Task 9：共因跳过标记（局部 Set，仅本次请求有效）
-        Set<Long> commonCauseFailedClusters = new HashSet<>();
 
         for (int i = 0; i < candidates.size(); i++) {
             RoutingContext candidate = candidates.get(i);
-
-            // Task 9：共因跳过 — 同 clusterId 已共因失败，跳过试异域候选（候选未启动，安全跳过）
-            if (candidate.clusterId() != null && commonCauseFailedClusters.contains(candidate.clusterId())) {
-                log.info("流式候选渠道 channelId={} clusterId={} 共因跳过（同域已共因失败），试异域候选",
-                        candidate.channelId(), candidate.clusterId());
-                publishFailoverEvent(candidate, candidates, i, applicationId,
-                        lastException != null ? lastException.getErrorType() : ProviderErrorType.UNKNOWN_ERROR,
-                        FailoverDecision.L1, traceId, true);
-                continue;
-            }
 
             // 首字节追踪标志：包装 callback 标记首字节是否已发送
             // 首字节前同步启动失败可换候选；首字节后失败不换候选（继承 KeyFailoverInvoker 约束）
@@ -250,15 +218,12 @@ public class ChannelFailoverInvoker {
                         candidate.channelId(), candidate.channelEndpointId(),
                         e.getErrorType(), decision);
 
-                // NONE：请求级错误，直接抛出不转移（不标记共因）
+                // NONE：请求级错误，直接抛出不转移
                 if (decision == FailoverDecision.NONE) {
                     throw e;
                 }
 
-                // L1 共因失败：标记 clusterId，发转移事件，记录 lastException（首字节前失败可转移）
-                if (candidate.clusterId() != null) {
-                    commonCauseFailedClusters.add(candidate.clusterId());
-                }
+                // L1 失败：发转移事件（commonCauseSkip 暂传 false，Task 3 删字段），记录 lastException（首字节前失败可转移）
                 publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId, false);
                 lastException = e;
             }

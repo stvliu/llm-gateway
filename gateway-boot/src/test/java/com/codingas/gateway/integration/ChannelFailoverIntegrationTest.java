@@ -163,9 +163,10 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("9.7 端到端：故障域级共因故障 → L1 跳过同域 → 跨域转移成功")
-        void e2e_commonCauseFailure_skipsSameCluster_transfersAcrossCluster() {
+        @DisplayName("9.7 端到端：共因故障不再跳过同域 → 按顺序试所有候选 → 全部耗尽抛最后异常")
+        void e2e_commonCauseFailure_triesAllCandidatesInOrder_exhaustsAndThrowsLast() {
             // 构造：ch1(cluster=100) + ch2(cluster=100, 同域) + ch3(cluster=200, 异域)
+            // Task 2 变更：删除共因跳过，所有候选按 priority 顺序逐个试，全部耗尽抛最后异常
             RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                     Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
             RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
@@ -173,26 +174,29 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
                     Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
 
-            // ch1 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 标记 cluster=100
-            ProviderException authEx = new ProviderException(
+            // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
+            ProviderException ch1Ex = new ProviderException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch1 认证失败");
+            ProviderException ch2Ex = new ProviderException(
+                    ProviderErrorType.AUTHENTICATION_ERROR, "ch2 认证失败");
+            ProviderException ch3Ex = new ProviderException(
+                    ProviderErrorType.AUTHENTICATION_ERROR, "ch3 认证失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
-            when(keyFailover.invoke(ch1, request)).thenThrow(authEx);
-            // ch2 同 cluster=100 → 被跳过（keyFailover.invoke 不应被调用）
-            // ch3 cluster=200 异域 → 被试，成功
-            ProtocolResponse successResponse = mock(ProtocolResponse.class);
-            when(keyFailover.invoke(ch3, request)).thenReturn(successResponse);
+            when(keyFailover.invoke(ch1, request)).thenThrow(ch1Ex);
+            when(keyFailover.invoke(ch2, request)).thenThrow(ch2Ex);
+            when(keyFailover.invoke(ch3, request)).thenThrow(ch3Ex);
 
             ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
 
-            ProtocolResponse result = invoker.invoke(ch1, List.of(ch1, ch2, ch3),
-                    request, Protocol.OPENAI, 7L, "test-trace-id");
+            // 断言：所有候选按顺序逐个试，全部耗尽后抛最后捕获的异常（ch3 的异常）
+            assertThatThrownBy(() -> invoker.invoke(ch1, List.of(ch1, ch2, ch3),
+                    request, Protocol.OPENAI, 7L, "test-trace-id"))
+                    .isSameAs(ch3Ex);
 
-            // 断言：跨域转移成功，返回 ch3 的响应
-            assertThat(result).isSameAs(successResponse);
+            // 断言：三个候选都被试过（Task 2 删除共因跳过，同域候选 ch2 也被试）
             verify(keyFailover).invoke(ch1, request);
-            verify(keyFailover, never()).invoke(ch2, request);  // 同域共因跳过
-            verify(keyFailover).invoke(ch3, request);  // 异域候选被试
+            verify(keyFailover).invoke(ch2, request);  // 同域候选不再跳过
+            verify(keyFailover).invoke(ch3, request);  // 异域候选也被试
         }
     }
 
