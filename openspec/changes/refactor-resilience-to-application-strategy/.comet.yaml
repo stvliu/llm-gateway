@@ -1,5 +1,5 @@
 workflow: full
-phase: open
+phase: build
 context_compression: off
 build_mode: null
 build_pause: null
@@ -10,7 +10,7 @@ isolation: null
 verify_mode: null
 auto_transition: true
 base_ref: 8cc1ef32104741346a1f280e1092e720cd78ad8c
-design_doc: null
+design_doc: docs/superpowers/specs/2026-07-02-refactor-resilience-to-application-strategy-design.md
 plan: null
 verify_result: pending
 verification_report: null
@@ -18,3 +18,5 @@ branch_status: pending
 created_at: 2026-07-03
 verified_at: null
 archived: false
+handoff_context: openspec/changes/refactor-resilience-to-application-strategy/.comet/handoff/design-context.json
+handoff_hash: ce67dd0f49338e76959ba6260f956b3a8ec68b6642211f7d0f64c90275f41603

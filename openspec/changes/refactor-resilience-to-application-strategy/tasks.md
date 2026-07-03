@@ -1,7 +1,8 @@
 # 实施任务清单
 
 > change: refactor-resilience-to-application-strategy
-> 本 change 含减法（删 Cluster）+ 加法（应用级策略+模板+前端），关键设计决策（共因替代方案、策略数据模型、维度筛选）在 design 阶段 brainstorming 定稿后，本任务清单可能调整。
+> 范围：删 Cluster + 共因跳过（减法）+ 引入应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY）+ 补管理员容灾管理前端功能。
+> 命名统一：FAIL_FAST（快速失败）/ FAIL_OVER（失败转移）/ FAIL_RETRY（失败重试），三选一互斥，默认 FAIL_RETRY。
 
 ## 1. 删除 Cluster 与共因跳过（减法，后端）
 
@@ -9,88 +10,81 @@
 - [ ] 1.2 删除 Channel.clusterId 字段 + ChannelDo/Repository 适配
 - [ ] 1.3 删除 RoutingContext.clusterId 字段 + 所有构造点适配
 - [ ] 1.4 删除 RoutingResolver.buildContext 的 clusterId 填充
-- [ ] 1.5 删除 ChannelFailoverInvoker 共因跳过逻辑（commonCauseFailedClusters + 跳过判定），保留 L1 按序转移
+- [ ] 1.5 删除 ChannelFailoverInvoker 共因跳过逻辑（commonCauseFailedClusters + 跳过判定）
 - [ ] 1.6 删除 FailoverOccurredEvent/FailoverEvent/FailoverEventDo/FailoverEventResponse 的 commonCauseSkip + fromClusterId/toClusterId 字段
 - [ ] 1.7 删除 FailoverEventGatewayImpl.toEntity/toDataObject 相关字段透传 + findRecent 的 clusterId 过滤参数
 - [ ] 1.8 删除 FailoverEventListener.toEntity 的 commonCauseSkip 透传
-- [ ] 1.9 删除 publishFailoverEvent 的 commonCauseSkip 参数与 13 参数构造器改回（保留 FailoverDecision.valueOf 容错）
+- [ ] 1.9 删除 publishFailoverEvent 的 commonCauseSkip 参数（保留 FailoverDecision.valueOf 容错）
 - [ ] 1.10 适配 ResilienceEventController/Service 的查询 API（删 clusterId 过滤）
 - [ ] 1.11 grep 确认无 Cluster/clusterId/commonCauseSkip 代码残留
 
-## 2. Flyway 迁移（删表/列）
+## 2. 应用级失败处理策略（加法，后端）
 
-- [ ] 2.1 Flyway V65：DROP TABLE clusters
-- [ ] 2.2 Flyway V66：ALTER TABLE channels DROP COLUMN cluster_id
-- [ ] 2.3 Flyway V67：ALTER TABLE failover_events DROP COLUMN from_cluster_id, to_cluster_id, common_cause_skip
-- [ ] 2.4 确认 H2/PG 兼容（IF EXISTS），测试 profile 适配
+- [ ] 2.1 创建 FailureStrategy 枚举（FAIL_FAST/FAIL_OVER/FAIL_RETRY）
+- [ ] 2.2 Application 实体加 failureStrategy 字段 + ApplicationDo 适配
+- [ ] 2.3 ApplicationRequest/ApplicationResponse 加 failureStrategy 字段
+- [ ] 2.4 ApplicationServiceImpl create/update/toResponse 透传 failureStrategy（默认 FAIL_RETRY）
+- [ ] 2.5 ChannelFailoverInvoker 按应用 failureStrategy 控制 L0/L1 行为：
+  - FAIL_FAST：候选首个 Key 失败立即抛错（不调 KeyFailoverInvoker 换 Key、不换渠道）
+  - FAIL_RETRY：L0 跑（KeyFailoverInvoker 换 Key），L1 不跑（不换渠道），同渠道 Key 耗尽抛错
+  - FAIL_OVER：L0 跑 + L1 跑（按 priority 换渠道），全耗尽抛错
+- [ ] 2.6 Invoker 需获取应用 failureStrategy（经 ApplicationGateway 或 RoutingRequest 透传）
+- [ ] 2.7 TDD：FAIL_FAST 首个 Key 失败立即抛错
+- [ ] 2.8 TDD：FAIL_RETRY 同渠道换 Key 不换渠道
+- [ ] 2.9 TDD：FAIL_OVER 换渠道全耗尽抛错
+- [ ] 2.10 TDD：默认策略 FAIL_RETRY（未指定时）
 
-## 3. 应用级容灾策略数据模型（加法，后端，design 定稿后细化）
+## 3. Flyway 迁移
 
-- [ ] 3.1 design brainstorming 定稿：策略挂载方式（Application 内嵌字段组 vs 轻量子实体）
-- [ ] 3.2 design brainstorming 定稿：共因替代方案（方向甲 providerId+开关 vs 方向乙纯熔断）
-- [ ] 3.3 design brainstorming 定稿：策略维度筛选（共因开关/耗尽行为/成本控制/转移触发条件 最终集）
-- [ ] 3.4 创建策略领域模型（实体/值对象，挂 Application）
-- [ ] 3.5 Application 实体挂载策略字段 + ApplicationDo 适配
-- [ ] 3.6 Flyway：applications 表加策略字段（或新建策略表，按 design）
-- [ ] 3.7 策略 Gateway/Service（如有独立持久化）
+- [ ] 3.1 Flyway V65：DROP TABLE clusters
+- [ ] 3.2 Flyway V66：ALTER TABLE channels DROP COLUMN cluster_id
+- [ ] 3.3 Flyway V67：ALTER TABLE failover_events DROP COLUMN from_cluster_id, to_cluster_id, common_cause_skip
+- [ ] 3.4 Flyway V68：ALTER TABLE applications ADD COLUMN failure_strategy VARCHAR NOT NULL DEFAULT 'FAIL_RETRY'
+- [ ] 3.5 Flyway V68：数据迁移 UPDATE applications SET failure_strategy='FAIL_OVER'（现有应用保持原行为）
+- [ ] 3.6 确认 H2/PG 兼容（IF EXISTS），测试 profile 适配
 
-## 4. 共因跳过基于 providerId 重实现（若 design 选方向甲）
+## 4. 端点熔断应急 UI（前端）
 
-- [ ] 4.1 ChannelFailoverInvoker 共因跳过改为基于 providerId + 应用策略开关
-- [ ] 4.2 候选共因失败时，按策略开关决定是否跳过同 providerId 后续候选
-- [ ] 4.3 TDD：应用开启共因跳过时跳过同 providerId 候选
-- [ ] 4.4 TDD：应用关闭共因跳过时纯按 priority 顺序
+- [ ] 4.1 前端 Channels 页端点维度：forceOpen/forceClose 按钮 + 状态展示
+- [ ] 4.2 前端 types/services：熔断应急 API 接 UI（resilienceApi.circuitBreaker 已封装）
+- [ ] 4.3 前端 locales 适配（熔断操作文案）
 
-## 5. 候选耗尽行为（降级兜底）
+## 5. 应用失败处理策略配置 UI（前端）
 
-- [ ] 5.1 候选耗尽时按策略处置（抛错或降级到应用预配兜底模型）
-- [ ] 5.2 TDD：耗尽行为=抛错时抛最后异常
-- [ ] 5.3 TDD：耗尽行为=降级时转移到兜底模型候选（非 L2 自动降级链）
+- [ ] 5.1 前端 types/application.ts 加 failureStrategy 类型
+- [ ] 5.2 前端 ApplicationFormModal 加策略选择（FAIL_FAST/FAIL_OVER/FAIL_RETRY 下拉）
+- [ ] 5.3 前端 applicationApi 请求体含 failureStrategy
+- [ ] 5.4 前端 locales 适配（三策略文案）
 
-## 6. 场景模板
+## 6. 容灾总览页重组（前端）
 
-- [ ] 6.1 定义四场景模板推荐值（研发自动化/流程自动化/AGI/BI）
-- [ ] 6.2 模板套用 API/Service
-- [ ] 6.3 TDD：套用模板后策略设为推荐值
+- [ ] 6.1 删除 Cluster 拓扑卡片 + grouping.ts
+- [ ] 6.2 删除转移事件流表格的共因跳过列 + clusterId 展示
+- [ ] 6.3 新增端点熔断状态大盘区块（各端点熔断器状态 + 应急操作入口）
+- [ ] 6.4 总览页重组：转移事件流 + 耗尽告警 + 端点熔断状态大盘
 
-## 7. 应用策略 API 与前端配置
+## 7. 前端 Cluster 相关清除
 
-- [ ] 7.1 ApplicationController 策略配置端点（创建/更新/查询含策略）
-- [ ] 7.2 前端 types/services：应用策略类型与 API
-- [ ] 7.3 前端应用策略配置页（共因开关/耗尽行为/模板选择）
-- [ ] 7.4 前端 ApplicationFormModal 集成策略配置
-- [ ] 7.5 前端 locales 适配
+- [ ] 7.1 删除 types/resilience.ts 中 Cluster/ClusterRequest 定义
+- [ ] 7.2 删除 resilienceApi.clusters CRUD
+- [ ] 7.3 删除 useClusters hook
+- [ ] 7.4 grep 确认前端无 Cluster 残留
 
-## 8. 端点熔断应急 UI
+## 8. 确保现有配置 UI 完整
 
-- [ ] 8.1 前端 Channels 页端点维度：forceOpen/forceClose 按钮 + 状态展示
-- [ ] 8.2 前端容灾总览页：端点熔断状态大盘区块
-- [ ] 8.3 前端 types/services：熔断应急 API（已封装，接 UI）
-- [ ] 8.4 前端 locales 适配
+- [ ] 8.1 验证 Application 渠道 priority 配置（ChannelManageModal）功能完整
+- [ ] 8.2 验证 Application timeout 配置功能完整
+- [ ] 8.3 验证渠道健康状态展示完整
 
-## 9. 容灾总览页重组
+## 9. spec 同步与文档
 
-- [ ] 9.1 删除 Cluster 拓扑卡片 + grouping.ts
-- [ ] 9.2 删除转移事件流表格的共因跳过列 + clusterId 展示
-- [ ] 9.3 总览页重组：转移事件流 + 耗尽告警 + 端点熔断状态大盘
-- [ ] 9.4 前端 types/services/locales 清除 Cluster 相关
+- [ ] 9.1 cluster-failover capability 主 spec 整体退场（归档时删目录）
+- [ ] 9.2 更新 docs/容灾方案设计.md / docs/容灾管理范式.md：删 Cluster/共因跳过，加应用级失败处理策略，容灾由策略+priority+熔断器承担
+- [ ] 9.3 grep 确认无残留：Cluster/clusterId/commonCauseSkip/ClusterHealthAggregator/ClusterAffinityRouter
 
-## 10. 前端 Cluster 相关清除
+## 10. 全链路回归
 
-- [ ] 10.1 删除 types/resilience.ts 中 Cluster/ClusterRequest 定义
-- [ ] 10.2 删除 resilienceApi.clusters CRUD
-- [ ] 10.3 删除 useClusters hook
-- [ ] 10.4 grep 确认前端无 Cluster 残留
-
-## 11. spec 同步与文档
-
-- [ ] 11.1 cluster-failover capability 主 spec 整体退场（归档时删目录）
-- [ ] 11.2 更新 docs/容灾方案设计.md / docs/容灾管理范式.md：删 Cluster、加应用级策略与场景模板
-- [ ] 11.3 grep 确认无残留：Cluster/clusterId/commonCauseSkip/ClusterHealthAggregator/ClusterAffinityRouter
-
-## 12. 全链路回归
-
-- [ ] 12.1 `./mvnw -pl gateway-boot -am test` 全绿
-- [ ] 12.2 `cd gateway-console && npm run build` 通过
-- [ ] 12.3 `npx vitest run` 通过
-- [ ] 12.4 端到端验证：四场景策略配置 + 共因跳过（开/关）+ 耗尽行为 + 熔断应急 + 跨供应商转移
+- [ ] 10.1 `./mvnw -pl gateway-boot -am test` 全绿
+- [ ] 10.2 `cd gateway-console && npm run build` 通过
+- [ ] 10.3 `npx vitest run` 通过
+- [ ] 10.4 端到端验证：三策略行为 + 端点熔断应急 + priority 顺序转移 + 跨供应商转移
