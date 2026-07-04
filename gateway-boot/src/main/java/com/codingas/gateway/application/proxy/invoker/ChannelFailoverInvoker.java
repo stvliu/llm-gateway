@@ -4,6 +4,7 @@ import com.codingas.gateway.application.proxy.OutboundTuner;
 import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
@@ -35,7 +36,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * <ul>
  *   <li>NONE（请求级错误如 INVALID_REQUEST）：直接抛出，不试下一候选</li>
- *   <li>L1（共因故障如 AUTH/RATE_LIMIT/NETWORK）：换下一候选，全部耗尽后抛最后捕获的异常</li>
+ *   <li>L1（可转移故障如 AUTH/RATE_LIMIT/NETWORK）：按应用级 {@link FailureStrategy} 分流</li>
+ * </ul>
+ *
+ * <p><b>Task 7 策略分流</b>：从 {@code primaryCtx.failureStrategy()} 读取策略（所有候选同应用同策略），
+ * null 回退 {@link FailureStrategy#FAIL_RETRY}：</p>
+ * <ul>
+ *   <li>{@link FailureStrategy#FAIL_FAST}：调 {@link KeyFailoverInvoker#invokeSingleKey} 只试首个 Key，
+ *       失败立即抛（不跑 L0 不跑 L1）</li>
+ *   <li>{@link FailureStrategy#FAIL_RETRY}（默认）：调 {@link KeyFailoverInvoker#invoke} 试完同渠道所有 Key，
+ *       Key 耗尽后 break 不换渠道（跑 L0 不跑 L1）</li>
+ *   <li>{@link FailureStrategy#FAIL_OVER}：调 {@link KeyFailoverInvoker#invoke} 试完同渠道 Key 后 continue
+ *       换下一候选渠道（跑 L0 跑 L1）</li>
  * </ul>
  *
  * <p><b>Task 4 变更</b>：L2 模型降级层已删除。候选全部耗尽后直接抛最后捕获的上游异常，
@@ -78,14 +90,23 @@ public class ChannelFailoverInvoker {
     }
 
     /**
-     * 非流式调用 — L1 候选内逐个试，耗尽抛最后异常
+     * 非流式调用 — L1 候选内逐个试，按应用级 failureStrategy 分流，耗尽抛最后异常
      *
-     * <p>遍历 candidates（已按 priority 升序），对每个候选调 {@link KeyFailoverInvoker#invoke}：
-     * 成功返回；失败按 {@link ErrorClassifier#classify} 分类——NONE 直接抛，
-     * L1 换下一候选。全部候选耗尽后直接抛最后捕获的上游异常（L2 模型降级层已删除，
-     * 不再换模型，降级决策交还给应用层）。</p>
+     * <p>遍历 candidates（已按 priority 升序），对每个候选按策略分流调用 KeyFailoverInvoker：
+     * FAIL_FAST 调 {@link KeyFailoverInvoker#invokeSingleKey} 只试首个 Key；FAIL_RETRY/FAIL_OVER
+     * 调 {@link KeyFailoverInvoker#invoke} 试完同渠道所有 Key。失败按 {@link ErrorClassifier#classify}
+     * 分类——NONE 直接抛；L1 可转移故障按策略分流：</p>
+     * <ul>
+     *   <li>FAIL_FAST：首个 Key 失败立即抛，不换 Key 不换渠道</li>
+     *   <li>FAIL_RETRY：同渠道 Key 耗尽后 break 不换渠道（默认）</li>
+     *   <li>FAIL_OVER：试完同渠道 Key 后 continue 换下一候选</li>
+     * </ul>
      *
-     * @param primaryCtx               主路由上下文（候选列表首项，用于日志/审计锚点）
+     * <p>策略从 {@code primaryCtx.failureStrategy()} 读取（所有候选同应用同策略），null 回退
+     * {@link FailureStrategy#FAIL_RETRY}。全部候选耗尽后直接抛最后捕获的上游异常
+     * （L2 模型降级层已删除，不再换模型，降级决策交还给应用层）。</p>
+     *
+     * @param primaryCtx               主路由上下文（候选列表首项，用于日志/审计锚点 + 读取 failureStrategy）
      * @param candidates               按 priority 升序的候选路由上下文列表（由调用方传入）
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
@@ -99,6 +120,9 @@ public class ChannelFailoverInvoker {
     public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> candidates,
                                     ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
                                     String traceId) {
+        // 策略读取：所有候选同应用同策略，从主候选读取；null 回退 FAIL_RETRY（默认）
+        FailureStrategy strategy = primaryCtx.failureStrategy() != null
+                ? primaryCtx.failureStrategy() : FailureStrategy.FAIL_RETRY;
         ProviderException lastException = null;
 
         for (int i = 0; i < candidates.size(); i++) {
@@ -106,28 +130,41 @@ public class ChannelFailoverInvoker {
             try {
                 // 调谐下沉：每候选基于原始 request 副本独立 convert+tune（修复 L1 换渠道后 model 错误）
                 ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
-                ProtocolResponse response = keyFailoverInvoker.invoke(candidate, candidateReq);
+                // 策略分流：FAIL_FAST 只试首个 Key（invokeSingleKey）；FAIL_RETRY/FAIL_OVER 试完同渠道所有 Key（invoke）
+                ProtocolResponse response = strategy == FailureStrategy.FAIL_FAST
+                        ? keyFailoverInvoker.invokeSingleKey(candidate, candidateReq)
+                        : keyFailoverInvoker.invoke(candidate, candidateReq);
                 // 响应转换下沉：基于实际成功候选(非主候选) 转换响应为入站协议格式（与流式 buildStreamCallback 对称）
                 // 修复跨协议换候选时按主候选协议转换方向错误/跳过转换，返回错误协议响应的问题
                 return adaptResponseForCandidate(response, candidate);
             } catch (ProviderException e) {
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
-                log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}), 尝试下一候选",
+                log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}, 策略:{})",
                         candidate.channelId(), candidate.channelEndpointId(),
-                        e.getErrorType(), decision);
+                        e.getErrorType(), decision, strategy);
 
                 // NONE：请求级错误（如 INVALID_REQUEST），换哪都无效，直接抛出不转移
                 if (decision == FailoverDecision.NONE) {
                     throw e;
                 }
-                // L1 失败：发转移事件，记录 lastException
+                // FAIL_FAST：首个 Key 失败立即抛错，不换 Key 不换渠道（不跑 L0 不跑 L1）
+                if (strategy == FailureStrategy.FAIL_FAST) {
+                    throw e;
+                }
+                // L1 可转移故障：发转移事件，记录 lastException
                 publishFailoverEvent(candidate, candidates, i, applicationId,
                         e.getErrorType(), decision, traceId);
                 lastException = e;
+                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环，不跑 L1）
+                if (strategy == FailureStrategy.FAIL_RETRY) {
+                    break;
+                }
+                // FAIL_OVER：继续换下一候选（循环 continue，跑 L1）
             }
         }
 
-        // L1 候选全部耗尽：直接抛最后捕获的上游异常（L2 模型降级层已删除，不再换模型）
+        // L1 候选全部耗尽（FAIL_OVER 全试完 / FAIL_RETRY break）：直接抛最后捕获的上游异常
+        // L2 模型降级层已删除，不再换模型，降级决策交还给应用层
         if (lastException != null) {
             throw lastException;
         }
@@ -137,20 +174,24 @@ public class ChannelFailoverInvoker {
     }
 
     /**
-     * 流式调用 — L1 候选内逐个试（首字节前可转移，首字节后不换渠道），耗尽抛最后异常
+     * 流式调用 — L1 候选内逐个试（首字节前可按策略转移，首字节后不换渠道），耗尽抛最后异常
      *
-     * <p>遍历 candidates，对每个候选调 {@link KeyFailoverInvoker#invokeStream}。
+     * <p>遍历 candidates，对每个候选按策略分流调用 KeyFailoverInvoker：
+     * FAIL_FAST 调 {@link KeyFailoverInvoker#invokeSingleKeyStream} 只试首个 Key；
+     * FAIL_RETRY/FAIL_OVER 调 {@link KeyFailoverInvoker#invokeStream} 试完同渠道所有 Key。
      * 包装传入的 callback 追踪首字节是否已发送（首次 {@link StreamCallback#onChunk} 标记）。
-     * 首字节前同步启动失败（invokeStream 抛 ProviderException 且 onChunk 未触发）按分类转移：
-     * NONE 直接抛，L1 换下一候选。若 onChunk 已触发（首字节已发给客户端），catch 块检查
-     * firstByteSent 后直接抛出不换候选（避免重复首字节）。一旦 invokeStream 正常 return 表示
-     * 流已建立，ChannelFailoverInvoker 即返回；后续首字节前异步失败或首字节后失败均通过
-     * wrappedCallback 转发原 callback 的 onError，不再换渠道（继承 KeyFailoverInvoker
-     * "传输开始后不切换"约束）。</p>
+     * 首字节前同步启动失败按分类 + 策略分流：NONE 直接抛；L1 可转移故障按策略
+     * （FAIL_FAST 抛 / FAIL_RETRY break 不换渠道 / FAIL_OVER 换下一候选）。
+     * 若 onChunk 已触发（首字节已发给客户端），catch 块检查 firstByteSent 后直接抛出不换候选
+     * （避免重复首字节）。一旦 invokeStream 正常 return 表示流已建立，ChannelFailoverInvoker 即返回；
+     * 后续首字节前异步失败或首字节后失败均通过 wrappedCallback 转发原 callback 的 onError，
+     * 不再换渠道（继承 KeyFailoverInvoker "传输开始后不切换"约束）。</p>
      *
-     * <p>全部候选启动失败后直接抛最后捕获的上游异常（L2 模型降级层已删除，不再换模型）。</p>
+     * <p>策略从 {@code primaryCtx.failureStrategy()} 读取（所有候选同应用同策略），null 回退
+     * {@link FailureStrategy#FAIL_RETRY}。全部候选启动失败后直接抛最后捕获的上游异常
+     * （L2 模型降级层已删除，不再换模型）。</p>
      *
-     * @param primaryCtx               主路由上下文
+     * @param primaryCtx               主路由上下文（读取 failureStrategy）
      * @param candidates               按 priority 升序的候选列表
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
@@ -164,6 +205,9 @@ public class ChannelFailoverInvoker {
     public void invokeStream(RoutingContext primaryCtx, List<RoutingContext> candidates,
                               ProtocolRequest request, Protocol inboundProtocol, Long applicationId,
                               String traceId, StreamCallback callback) {
+        // 策略读取：所有候选同应用同策略，从主候选读取；null 回退 FAIL_RETRY（默认）
+        FailureStrategy strategy = primaryCtx.failureStrategy() != null
+                ? primaryCtx.failureStrategy() : FailureStrategy.FAIL_RETRY;
         ProviderException lastException = null;
 
         for (int i = 0; i < candidates.size(); i++) {
@@ -198,10 +242,14 @@ public class ChannelFailoverInvoker {
             try {
                 // 调谐下沉：每候选基于原始 request 副本独立 convert+tune
                 ProtocolRequest candidateReq = adaptRequestForCandidate(request, candidate);
-                // KeyFailoverInvoker.invokeStream 正常 return 表示流已建立（enqueue 成功）
-                // 首字节前的异步失败（onError 在 onChunk 前）和首字节后失败均通过 wrappedCallback
-                // 转发原 callback，ChannelFailoverInvoker 已返回不再换候选
-                keyFailoverInvoker.invokeStream(candidate, candidateReq, wrappedCallback);
+                // 策略分流：FAIL_FAST 只试首个 Key（invokeSingleKeyStream）；FAIL_RETRY/FAIL_OVER 试完同渠道所有 Key（invokeStream）
+                // 正常 return 表示流已建立（enqueue 成功）；首字节前异步失败和首字节后失败均通过
+                // wrappedCallback 转发原 callback，ChannelFailoverInvoker 已返回不再换候选
+                if (strategy == FailureStrategy.FAIL_FAST) {
+                    keyFailoverInvoker.invokeSingleKeyStream(candidate, candidateReq, wrappedCallback);
+                } else {
+                    keyFailoverInvoker.invokeStream(candidate, candidateReq, wrappedCallback);
+                }
                 return;
             } catch (ProviderException e) {
                 // 首字节已发送：不换候选，直接抛传播给调用方（首字节后转移边界）
@@ -210,24 +258,34 @@ public class ChannelFailoverInvoker {
                     throw e;
                 }
 
-                // 首字节前同步启动失败：按 L1/NONE 分流换候选
+                // 首字节前同步启动失败：按 L1/NONE + 策略分流
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
-                log.warn("流式候选渠道 channelId={} endpointId={} 启动失败: {} (决策:{}), 尝试下一候选",
+                log.warn("流式候选渠道 channelId={} endpointId={} 启动失败: {} (决策:{}, 策略:{})",
                         candidate.channelId(), candidate.channelEndpointId(),
-                        e.getErrorType(), decision);
+                        e.getErrorType(), decision, strategy);
 
                 // NONE：请求级错误，直接抛出不转移
                 if (decision == FailoverDecision.NONE) {
                     throw e;
                 }
+                // FAIL_FAST：首个 Key 流式启动失败立即抛，不换 Key 不换渠道
+                if (strategy == FailureStrategy.FAIL_FAST) {
+                    throw e;
+                }
 
-                // L1 失败：发转移事件，记录 lastException（首字节前失败可转移）
+                // L1 可转移故障：发转移事件，记录 lastException（首字节前失败可转移）
                 publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
                 lastException = e;
+                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环）
+                if (strategy == FailureStrategy.FAIL_RETRY) {
+                    break;
+                }
+                // FAIL_OVER：继续换下一候选（循环 continue）
             }
         }
 
-        // L1 候选全部启动失败：直接抛最后捕获的上游异常（L2 模型降级层已删除，不再换模型）
+        // L1 候选全部启动失败（FAIL_OVER 全试完 / FAIL_RETRY break）：直接抛最后捕获的上游异常
+        // L2 模型降级层已删除，不再换模型
         if (lastException != null) {
             throw lastException;
         }

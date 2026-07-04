@@ -81,12 +81,13 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     @BeforeEach
     void setUpFailoverFixture() {
         // 构造两个候选渠道上下文（按 priority 升序，ctx1 优先）
+        // Task 7：期望换渠道的场景用 FAIL_OVER（FAIL_RETRY 不换渠道；NONE 决策在三种策略下都直接抛）
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
                 Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
@@ -168,15 +169,16 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         void e2e_commonCauseFailure_triesAllCandidatesInOrder_exhaustsAndThrowsLast() {
             // 构造：ch1 + ch2 + ch3 三个候选
             // Task 2 变更：删除共因跳过，所有候选按 priority 顺序逐个试，全部耗尽抛最后异常
+            // Task 7：期望逐个试所有候选，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道只试首候选）
             RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                     Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
-                    FailureStrategy.FAIL_RETRY);
+                    FailureStrategy.FAIL_OVER);
             RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
                     Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
-                    FailureStrategy.FAIL_RETRY);
+                    FailureStrategy.FAIL_OVER);
             RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
                     Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null,
-                    FailureStrategy.FAIL_RETRY);
+                    FailureStrategy.FAIL_OVER);
 
             // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
             ProviderException ch1Ex = new ProviderException(

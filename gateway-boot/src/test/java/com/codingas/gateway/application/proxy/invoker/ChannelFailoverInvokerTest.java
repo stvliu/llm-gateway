@@ -82,10 +82,10 @@ class ChannelFailoverInvokerTest {
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
                 Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");
@@ -474,12 +474,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, protocolConverter);
 
         // 两候选 upstreamModelName 不同；主候选失败，备候选成功（同协议，聚焦模型名替换）
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext primaryCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-upstream-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         RoutingContext backupCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
                 Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-upstream-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -524,12 +525,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
                 Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -618,12 +620,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 Anthropic 上游（跨协议）失败，备候选 OpenAI 上游（同协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext anthropicCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
                 Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         RoutingContext openaiCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
                 Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -665,12 +668,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
         RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
                 Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model",
-                FailureStrategy.FAIL_RETRY);
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
