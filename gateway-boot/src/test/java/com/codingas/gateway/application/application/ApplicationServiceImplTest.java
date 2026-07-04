@@ -7,6 +7,7 @@ import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +24,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -107,6 +109,43 @@ class ApplicationServiceImplTest {
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-001");
             verify(applicationGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("create 未传 failureStrategy 时默认 FAIL_RETRY")
+        void create_withoutFailureStrategy_defaultsToFailRetry() {
+            ApplicationRequest request = new ApplicationRequest();
+            request.setCode("APP-TEST");
+            request.setName("测试应用");
+            request.setTimeout(0);
+            // 不设置 failureStrategy，验证后端默认 FAIL_RETRY
+            when(applicationGateway.findByCode("APP-TEST")).thenReturn(null);
+            Application saved = buildSavedApplication(1L, "APP-TEST", "测试应用");
+            saved.setFailureStrategy(FailureStrategy.FAIL_RETRY);
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.create(request);
+
+            assertThat(result.getFailureStrategy()).isEqualTo("FAIL_RETRY");
+            // 验证传入 save 的实体 failureStrategy 被设为默认 FAIL_RETRY
+            verify(applicationGateway).save(argThat(a -> a.getFailureStrategy() == FailureStrategy.FAIL_RETRY));
+        }
+
+        @Test
+        @DisplayName("create 透传指定的 failureStrategy")
+        void create_withFailFast_propagatesStrategy() {
+            ApplicationRequest request = new ApplicationRequest();
+            request.setCode("APP-FF");
+            request.setName("快速失败应用");
+            request.setFailureStrategy(FailureStrategy.FAIL_FAST);
+            when(applicationGateway.findByCode("APP-FF")).thenReturn(null);
+            Application saved = buildSavedApplication(1L, "APP-FF", "快速失败应用");
+            saved.setFailureStrategy(FailureStrategy.FAIL_FAST);
+            when(applicationGateway.save(any())).thenReturn(saved);
+
+            ApplicationResponse result = applicationService.create(request);
+
+            assertThat(result.getFailureStrategy()).isEqualTo("FAIL_FAST");
         }
     }
 

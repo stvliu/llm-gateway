@@ -7,6 +7,7 @@ import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,8 @@ import java.util.List;
  *
  * <p>Task 8：移除 {@code bindResilienceProfile} 与 ResilienceProfileGateway 依赖；
  * {@code timeout} 通过 create/update 直接透传（承接原 ResilienceProfile.timeout）。</p>
+ *
+ * <p>Task 5：{@code failureStrategy} 通过 create/update 直接透传，未传时默认 FAIL_RETRY。</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -48,6 +51,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setDescription(request.getDescription());
         // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
         app.setTimeout(request.getTimeout());
+        // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
+        app.setFailureStrategy(request.getFailureStrategy() != null
+                ? request.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
         // 创建时状态默认 ACTIVE
         app.setState(ApplicationState.ACTIVE);
 
@@ -77,6 +83,9 @@ public class ApplicationServiceImpl implements ApplicationService {
         app.setDescription(request.getDescription());
         // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
         app.setTimeout(request.getTimeout());
+        // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
+        app.setFailureStrategy(request.getFailureStrategy() != null
+                ? request.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
 
         Application saved = applicationGateway.save(app);
         log.info("Updated application: id={}", saved.getId());
@@ -147,6 +156,8 @@ public class ApplicationServiceImpl implements ApplicationService {
         response.setDescription(app.getDescription());
         response.setState(app.getState() != null ? app.getState().name() : null);
         response.setTimeout(app.getTimeout());
+        response.setFailureStrategy(app.getFailureStrategy() != null
+                ? app.getFailureStrategy().name() : null);
         response.setQuotaBudgetId(app.getQuotaBudgetId());
         response.setDashboardId(app.getDashboardId());
         response.setCreatedAt(app.getCreatedAt());

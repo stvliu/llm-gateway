@@ -1,8 +1,11 @@
 package com.codingas.gateway.infrastructure.application.gateway.database.dataobject;
 
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -38,6 +41,11 @@ public class ApplicationDo extends BaseDo {
     /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
     @Column(name = "timeout", nullable = false)
     private int timeout;
+
+    /** 应用级失败处理策略（枚举名存储：FAIL_FAST/FAIL_RETRY/FAIL_OVER） */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "failure_strategy", nullable = false, length = 16)
+    private FailureStrategy failureStrategy;
 
     /** 配额预算 ID（预留） */
     @Column(name = "quota_budget_id")
