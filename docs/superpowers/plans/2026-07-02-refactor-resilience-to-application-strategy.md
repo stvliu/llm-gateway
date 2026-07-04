@@ -906,21 +906,21 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** H2 与 PostgreSQL 均支持 `DROP TABLE IF EXISTS` / `DROP COLUMN IF EXISTS`。V68 先加列默认 FAIL_RETRY，再 UPDATE 现有应用为 FAIL_OVER（保持原 L0+L1 行为）。
 
-- [ ] **Step 1: V65 — 删 clusters 表**
+- [x] **Step 1: V65 — 删 clusters 表**
 
 ```sql
 -- V65: 删除 Cluster 故障域表（Cluster 聚合根退场）
 DROP TABLE IF EXISTS clusters;
 ```
 
-- [ ] **Step 2: V66 — 删 channels.cluster_id 列**
+- [x] **Step 2: V66 — 删 channels.cluster_id 列**
 
 ```sql
 -- V66: 删除 channels.cluster_id 列（共因跳过机制退场）
 ALTER TABLE channels DROP COLUMN IF EXISTS cluster_id;
 ```
 
-- [ ] **Step 3: V67 — 删 failover_events 冗余列**
+- [x] **Step 3: V67 — 删 failover_events 冗余列**
 
 ```sql
 -- V67: 删除 failover_events 的 from_cluster_id/to_cluster_id/common_cause_skip 列
@@ -929,7 +929,7 @@ ALTER TABLE failover_events DROP COLUMN IF EXISTS to_cluster_id;
 ALTER TABLE failover_events DROP COLUMN IF EXISTS common_cause_skip;
 ```
 
-- [ ] **Step 4: V68 — applications 加 failure_strategy 列 + 数据迁移**
+- [x] **Step 4: V68 — applications 加 failure_strategy 列 + 数据迁移**
 
 ```sql
 -- V68: applications 新增 failure_strategy 列（默认 FAIL_RETRY）
@@ -939,12 +939,12 @@ ALTER TABLE applications ADD COLUMN IF NOT EXISTS failure_strategy VARCHAR(16) N
 UPDATE applications SET failure_strategy = 'FAIL_OVER';
 ```
 
-- [ ] **Step 5: 启动应用验证迁移（H2 测试 profile）**
+- [x] **Step 5: 启动应用验证迁移（H2 测试 profile）**
 
 Run: `./mvnw -pl gateway-boot spring-boot:run`（或运行集成测试）
 Expected: 应用正常启动，Flyway 迁移无报错。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add gateway-boot/src/main/resources/db/migration
@@ -969,41 +969,41 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-console/src/pages/resilience/api.ts`
 - Modify: `gateway-console/src/services/query/useResilience.ts`
 
-- [ ] **Step 1: types/resilience.ts 删 Cluster/ClusterRequest，FailoverEvent 瘦身**
+- [x] **Step 1: types/resilience.ts 删 Cluster/ClusterRequest，FailoverEvent 瘦身**
 
 - 删除 `Cluster` 和 `ClusterRequest` interface（整段）
 - `FailoverEvent` interface 删除 `fromClusterId`/`toClusterId`/`commonCauseSkip` 字段
 - `FailoverEventQuery` 删除 `clusterId` 字段
 - 更新文件头注释，移除 Cluster 相关说明
 
-- [ ] **Step 2: types/channel.ts 删 clusterId**
+- [x] **Step 2: types/channel.ts 删 clusterId**
 
 - `Channel` interface 删 `clusterId?: number | null;`
 - `ChannelResponse` interface 删 `clusterId?: number | null;`
 
-- [ ] **Step 3: pages/resilience/api.ts 删 clusters CRUD**
+- [x] **Step 3: pages/resilience/api.ts 删 clusters CRUD**
 
 删除 `clusters: { list/getById/create/update }` 整段。移除 `Cluster`/`ClusterRequest` 的 import。保留 `circuitBreaker` 和 `events`。
 
-- [ ] **Step 4: services/query/useResilience.ts 删 Cluster hooks**
+- [x] **Step 4: services/query/useResilience.ts 删 Cluster hooks**
 
 - 删除 `clusterKeys` 和 `useClusters`/`useCluster`/`useCreateCluster`/`useUpdateCluster`
 - 移除 `ClusterRequest` 的 import
 - 保留 `failoverEventKeys`/`useFailoverEvents`/`useExhaustedEvents`/熔断 hooks
 
-- [ ] **Step 5: 删除 grouping.ts 及测试**
+- [x] **Step 5: 删除 grouping.ts 及测试**
 
 ```bash
 rm gateway-console/src/pages/resilience/overview/grouping.ts
 rm gateway-console/src/pages/resilience/overview/__tests__/grouping.test.ts
 ```
 
-- [ ] **Step 6: 类型检查与构建**
+- [x] **Step 6: 类型检查与构建**
 
 Run: `cd gateway-console && npx tsc --noEmit`
 Expected: 无类型错误。若有残留引用，逐个清理。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add gateway-console

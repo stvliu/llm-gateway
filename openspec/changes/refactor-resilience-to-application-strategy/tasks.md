@@ -36,12 +36,12 @@
 
 ## 3. Flyway 迁移
 
-- [ ] 3.1 Flyway V65：DROP TABLE clusters
-- [ ] 3.2 Flyway V66：ALTER TABLE channels DROP COLUMN cluster_id
-- [ ] 3.3 Flyway V67：ALTER TABLE failover_events DROP COLUMN from_cluster_id, to_cluster_id, common_cause_skip
-- [ ] 3.4 Flyway V68：ALTER TABLE applications ADD COLUMN failure_strategy VARCHAR NOT NULL DEFAULT 'FAIL_RETRY'
-- [ ] 3.5 Flyway V68：数据迁移 UPDATE applications SET failure_strategy='FAIL_OVER'（现有应用保持原行为）
-- [ ] 3.6 确认 H2/PG 兼容（IF EXISTS），测试 profile 适配
+- [x] 3.1 Flyway V65：DROP TABLE clusters
+- [x] 3.2 Flyway V66：ALTER TABLE channels DROP COLUMN cluster_id
+- [x] 3.3 Flyway V67：ALTER TABLE failover_events DROP COLUMN from_cluster_id, to_cluster_id, common_cause_skip
+- [x] 3.4 Flyway V68：ALTER TABLE applications ADD COLUMN failure_strategy VARCHAR NOT NULL DEFAULT 'FAIL_RETRY'
+- [x] 3.5 Flyway V68：数据迁移 UPDATE applications SET failure_strategy='FAIL_OVER'（现有应用保持原行为）
+- [x] 3.6 确认 H2/PG 兼容（IF EXISTS），测试 profile 适配
 
 ## 4. 端点熔断应急 UI（前端）
 
@@ -65,10 +65,10 @@
 
 ## 7. 前端 Cluster 相关清除
 
-- [ ] 7.1 删除 types/resilience.ts 中 Cluster/ClusterRequest 定义
-- [ ] 7.2 删除 resilienceApi.clusters CRUD
-- [ ] 7.3 删除 useClusters hook
-- [ ] 7.4 grep 确认前端无 Cluster 残留
+- [x] 7.1 删除 types/resilience.ts 中 Cluster/ClusterRequest 定义
+- [x] 7.2 删除 resilienceApi.clusters CRUD
+- [x] 7.3 删除 useClusters hook
+- [x] 7.4 grep 确认前端无 Cluster 残留
 
 ## 8. 确保现有配置 UI 完整
 

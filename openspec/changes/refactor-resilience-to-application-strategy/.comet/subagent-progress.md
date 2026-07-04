@@ -24,11 +24,23 @@
 - 已勾选: plan Task 5/6/7（26 Step）+ tasks.md 2.1-2.10
 - 全量回归: 724 测试全绿
 
-## 当前阶段：批次3 进行中（跨模块边界）
+## 批次3 完成状态（thorough 审查 PASS）
 
-- 批次3: Task 8 (Flyway V65-V68 迁移) + Task 9 (前端 Cluster 清除 + types 瘦身)
-- 阶段: 即将派发 implementer（Task 8 后端 DB 迁移先行，Task 9 前端清除独立）
-- 审查: 批次3 审查待 Task 8/9 完成后触发（thorough 合并审查）
+- 批次3（Task 8 Flyway + Task 9 前端清除）通过 thorough 审查
+- 实现提交: c5699b76 (Task 8) + 3623a055 (Task 9)
+- 审查结果: 无 CRITICAL/IMPORTANT，2 MINOR（i18n 孤儿 key 待 Task 12 清理 + Application Javadoc Task 编号引用轻微混淆，可接受）
+- 跨模块一致性: DB schema ↔ Java 实体 ↔ 前端类型 完全一致（索引名 V55→V66、V58→V67 匹配）
+- 测试: 后端 857 全绿，前端 tsc/build/vitest 全绿（109 测试）
+- 已勾选: plan Task 8/9 + tasks.md 3.1-3.6 + 7.1-7.4
+- Task 9 范围扩展记录: overview/index.tsx Cluster 清理（原 Task 12 Step 1/2 提前）
+
+## 当前阶段：批次4 进行中（前端 UI）
+
+- 批次4: Task 10 (策略配置 UI) + Task 11 (熔断应急 UI) + Task 12 (总览页重组)
+- Task 12 范围调整: Step 1/2 已由 Task 9 完成，专注 Step 3-7（端点熔断大盘 + locales 含 i18n 孤儿 key 清理 + eventDisplay + 测试 + 验证）
+- 阶段: 即将派发 implementer
+- 审查: 批次4 审查待 Task 10/11/12 完成后触发（thorough 合并审查）
+- 审查: 批次3 合并审查待 Task 9 完成后触发（thorough，覆盖 Task 8 DB + Task 9 前端）
 
 ## 批次2 进度
 
