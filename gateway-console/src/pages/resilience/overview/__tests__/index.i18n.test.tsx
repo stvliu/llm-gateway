@@ -10,8 +10,7 @@
 import { describe, it, expect, beforeAll, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { App as AntApp } from 'antd';
-import type { Cluster, FailoverEvent } from '@/types/resilience';
-import type { ChannelCard as ChannelCardType } from '@/types/channel';
+import type { FailoverEvent } from '@/types/resilience';
 
 // mock react-i18next：t(key, opts) 返回 `i18n:<key>`，插值用 opts 中 count
 vi.mock('react-i18next', () => ({
@@ -26,20 +25,8 @@ vi.mock('react-i18next', () => ({
   }),
 }));
 
-// mock useResilience hooks：注入 DOWN 域 + exhausted 事件
+// mock useResilience hooks：注入 exhausted 事件
 vi.mock('@/services/query/useResilience', () => ({
-  useClusters: vi.fn(() => ({
-    data: [
-      {
-        id: 1,
-        code: 'C1',
-        name: '域一',
-        providerId: 1,
-        description: '共因特征说明',
-      } as Cluster,
-    ],
-    isLoading: false,
-  })),
   useFailoverEvents: vi.fn(() => ({
     data: [
       {
@@ -69,11 +56,6 @@ vi.mock('@/services/query/useResilience', () => ({
     })) as FailoverEvent[],
     isLoading: false,
   })),
-}));
-
-// mock useAllChannels 返回空列表（避免 ChannelResponse 依赖）
-vi.mock('@/services/query/useChannels', () => ({
-  useAllChannels: vi.fn(() => ({ data: [] as ChannelCardType[] })),
 }));
 
 import OverviewPage from '@/pages/resilience/overview';
@@ -127,7 +109,6 @@ describe('OverviewPage 耗尽告警 i18n（技术债偿还）', () => {
     const text = container.textContent ?? '';
     expect(text).toContain('i18n:overview.exhaustedEventItem');
     // 硬编码「渠道」单独成词不应出现（i18n 渲染后是标记串）
-    // 注意：cluster.name='域一' 不含「渠道」，exhaustedNoTarget 不触发
     expect(text).not.toMatch(/— 渠道 /);
   });
 
