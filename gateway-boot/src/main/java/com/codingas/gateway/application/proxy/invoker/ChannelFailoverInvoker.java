@@ -151,15 +151,17 @@ public class ChannelFailoverInvoker {
                 if (strategy == FailureStrategy.FAIL_FAST) {
                     throw e;
                 }
-                // L1 可转移故障：发转移事件，记录 lastException
-                publishFailoverEvent(candidate, candidates, i, applicationId,
-                        e.getErrorType(), decision, traceId);
+                // L1 可转移故障：记录 lastException
                 lastException = e;
-                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环，不跑 L1）
+                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环，不跑 L1，不发转移事件）
+                // 不发事件：FAIL_RETRY break 不换候选，publishFailoverEvent 内部按 nextIndex<size
+                // 计算 to=下一候选 + exhausted=false，会画出"from→to"未发生的转移路径误导可观测性
                 if (strategy == FailureStrategy.FAIL_RETRY) {
                     break;
                 }
-                // FAIL_OVER：继续换下一候选（循环 continue，跑 L1）
+                // FAIL_OVER：换候选前发转移事件，继续下一候选（循环 continue，跑 L1）
+                publishFailoverEvent(candidate, candidates, i, applicationId,
+                        e.getErrorType(), decision, traceId);
             }
         }
 
@@ -273,14 +275,16 @@ public class ChannelFailoverInvoker {
                     throw e;
                 }
 
-                // L1 可转移故障：发转移事件，记录 lastException（首字节前失败可转移）
-                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
+                // L1 可转移故障：记录 lastException（首字节前失败可转移）
                 lastException = e;
-                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环）
+                // FAIL_RETRY：不换渠道，同渠道 Key 耗尽抛错（跳出循环，不发转移事件）
+                // 不发事件：FAIL_RETRY break 不换候选，publishFailoverEvent 内部按 nextIndex<size
+                // 计算 to=下一候选 + exhausted=false，会画出"from→to"未发生的转移路径误导可观测性
                 if (strategy == FailureStrategy.FAIL_RETRY) {
                     break;
                 }
-                // FAIL_OVER：继续换下一候选（循环 continue）
+                // FAIL_OVER：换候选前发转移事件，继续下一候选（循环 continue）
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
             }
         }
 
