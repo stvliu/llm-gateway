@@ -6,17 +6,17 @@
 
 ## 1. 删除 Cluster 与共因跳过（减法，后端）
 
-- [ ] 1.1 删除 Cluster 实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
-- [ ] 1.2 删除 Channel.clusterId 字段 + ChannelDo/Repository 适配
-- [ ] 1.3 删除 RoutingContext.clusterId 字段 + 所有构造点适配
-- [ ] 1.4 删除 RoutingResolver.buildContext 的 clusterId 填充
-- [ ] 1.5 删除 ChannelFailoverInvoker 共因跳过逻辑（commonCauseFailedClusters + 跳过判定）
-- [ ] 1.6 删除 FailoverOccurredEvent/FailoverEvent/FailoverEventDo/FailoverEventResponse 的 commonCauseSkip + fromClusterId/toClusterId 字段
-- [ ] 1.7 删除 FailoverEventGatewayImpl.toEntity/toDataObject 相关字段透传 + findRecent 的 clusterId 过滤参数
-- [ ] 1.8 删除 FailoverEventListener.toEntity 的 commonCauseSkip 透传
-- [ ] 1.9 删除 publishFailoverEvent 的 commonCauseSkip 参数（保留 FailoverDecision.valueOf 容错）
-- [ ] 1.10 适配 ResilienceEventController/Service 的查询 API（删 clusterId 过滤）
-- [ ] 1.11 grep 确认无 Cluster/clusterId/commonCauseSkip 代码残留
+- [x] 1.1 删除 Cluster 实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
+- [x] 1.2 删除 Channel.clusterId 字段 + ChannelDo/Repository 适配
+- [x] 1.3 删除 RoutingContext.clusterId 字段 + 所有构造点适配
+- [x] 1.4 删除 RoutingResolver.buildContext 的 clusterId 填充
+- [x] 1.5 删除 ChannelFailoverInvoker 共因跳过逻辑（commonCauseFailedClusters + 跳过判定）
+- [x] 1.6 删除 FailoverOccurredEvent/FailoverEvent/FailoverEventDo/FailoverEventResponse 的 commonCauseSkip + fromClusterId/toClusterId 字段
+- [x] 1.7 删除 FailoverEventGatewayImpl.toEntity/toDataObject 相关字段透传 + findRecent 的 clusterId 过滤参数
+- [x] 1.8 删除 FailoverEventListener.toEntity 的 commonCauseSkip 透传
+- [x] 1.9 删除 publishFailoverEvent 的 commonCauseSkip 参数（保留 FailoverDecision.valueOf 容错）
+- [x] 1.10 适配 ResilienceEventController/Service 的查询 API（删 clusterId 过滤）
+- [x] 1.11 grep 确认无 Cluster/clusterId/commonCauseSkip 代码残留
 
 ## 2. 应用级失败处理策略（加法，后端）
 

@@ -137,7 +137,7 @@ Task 9 (前端 Cluster 清除) ─→ Task 10 (策略配置 UI) ─→ Task 11 (
 
 **说明：** Cluster 聚合根与 Channel.clusterId 是物理 ID 关联（无 FK 约束），删除 Cluster 全套不影响 Channel.clusterId 字段编译（字段在 Task 3 删）。Cluster 删除后 Channel.clusterId 成为悬空物理 ID，由 Task 3 清理。
 
-- [ ] **Step 1: 删除 Cluster 全套源文件与测试**
+- [x] **Step 1: 删除 Cluster 全套源文件与测试**
 
 ```bash
 cd gateway-boot/src/main/java/com/codingas/gateway
@@ -159,12 +159,12 @@ rm adapter/api/ClusterControllerIT.java \
    infrastructure/resilience/gateway/ClusterGatewayImplTest.java
 ```
 
-- [ ] **Step 2: 编译验证（预期无 Cluster 引用残留报错）**
+- [x] **Step 2: 编译验证（预期无 Cluster 引用残留报错）**
 
 Run: `./mvnw -pl gateway-boot -am compile`
 Expected: BUILD SUCCESS。若报错指向残留 import，移除对应 import 行。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add -A gateway-boot
@@ -186,7 +186,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** 本任务只移除"共因跳过行为"——删 commonCauseFailedClusters Set、跳过判定、clusterId 标记。publishFailoverEvent 的 commonCauseSkip 参数暂传 false（字段在 Task 3 删）。行为变更：不再共因跳过，所有候选按顺序试。
 
-- [ ] **Step 1: 重写 invoke 方法（非流式）**
+- [x] **Step 1: 重写 invoke 方法（非流式）**
 
 替换 `invoke` 方法体（当前行 104-159）为：
 
@@ -225,28 +225,28 @@ public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> c
 }
 ```
 
-- [ ] **Step 2: 重写 invokeStream 方法（流式）**
+- [x] **Step 2: 重写 invokeStream 方法（流式）**
 
 替换 `invokeStream` 方法体（当前行 186-273），删除 commonCauseFailedClusters Set、共因跳过 if 块、catch 中 clusterId 标记。保留首字节追踪与换候选逻辑：catch 中 `firstByteSent` 为 true 直接抛；否则 NONE 直接抛，其余 publishFailoverEvent + 记录 lastException。
 
-- [ ] **Step 3: publishFailoverEvent 调用统一传 false**
+- [x] **Step 3: publishFailoverEvent 调用统一传 false**
 
 将 invoke/invokeStream 中 `publishFailoverEvent` 调用的最后一个参数（原 `true`/`false`）统一改为 `false`。方法签名暂保留 `boolean commonCauseSkip` 参数（Task 3 删）。
 
-- [ ] **Step 4: 移除 import HashSet/Set**
+- [x] **Step 4: 移除 import HashSet/Set**
 
 `ChannelFailoverInvoker.java` 顶部删除 `import java.util.HashSet;` 和 `import java.util.Set;`。
 
-- [ ] **Step 5: 适配共因跳过相关测试**
+- [x] **Step 5: 适配共因跳过相关测试**
 
 `ChannelFailoverIntegrationTest` 中 `e2e_commonCauseFailure_skipsSameCluster_*` 等测试改为断言"不跳过、按顺序试所有候选"。删除共因跳过断言，改为验证全候选耗尽后抛错。
 
-- [ ] **Step 6: 编译并运行测试**
+- [x] **Step 6: 编译并运行测试**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverIntegrationTest`
 Expected: BUILD SUCCESS，测试通过。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add gateway-boot
@@ -268,88 +268,88 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** 横切删除 clusterId/commonCauseSkip 字段定义与所有转换/查询参数。机械删除，一次性编译通过。
 
-- [ ] **Step 1: RoutingContext 删 clusterId 字段**
+- [x] **Step 1: RoutingContext 删 clusterId 字段**
 
 `domain/supply/valueobject/RoutingContext.java`：record 定义删除 `Long clusterId` 末行，Javadoc 删 `@param clusterId`。
 
-- [ ] **Step 2: RoutingResolver 删 clusterId 填充**
+- [x] **Step 2: RoutingResolver 删 clusterId 填充**
 
 `application/proxy/routing/RoutingResolver.java` 行 145-156：`buildContext` 的 RoutingContext 构造删除 `channel.getClusterId()` 实参。
 
-- [ ] **Step 3: Channel / ChannelDo 删 clusterId**
+- [x] **Step 3: Channel / ChannelDo 删 clusterId**
 
 - `domain/supply/entity/Channel.java` 行 51-52：删 `private Long clusterId;` 及注释
 - `infrastructure/supply/gateway/database/dataobject/ChannelDo.java` 行 57-59：删 `clusterId` 字段及 `@Column(name = "cluster_id")`
 
-- [ ] **Step 4: ChannelGatewayImpl 删 clusterId 转换**
+- [x] **Step 4: ChannelGatewayImpl 删 clusterId 转换**
 
 `infrastructure/supply/gateway/ChannelGatewayImpl.java` 行 93 删 `entity.setClusterId(doObj.getClusterId());`，行 115 删 `doObj.setClusterId(entity.getClusterId());`。
 
-- [ ] **Step 5: ChannelResponse / ChannelServiceImpl 删 clusterId**
+- [x] **Step 5: ChannelResponse / ChannelServiceImpl 删 clusterId**
 
 - `application/channel/dto/ChannelResponse.java` 行 39：删 `private Long clusterId;`
 - `application/channel/ChannelServiceImpl.java` 行 232：删 `response.setClusterId(channel.getClusterId());`
 
-- [ ] **Step 6: FailoverOccurredEvent 删 3 字段**
+- [x] **Step 6: FailoverOccurredEvent 删 3 字段**
 
 `common/event/FailoverOccurredEvent.java`：record 删除 `fromClusterId`/`toClusterId`/`commonCauseSkip` 三个字段，删除 12 参数次级构造器（不再需要兼容）。规范构造器变为 10 参数。更新 Javadoc。
 
-- [ ] **Step 7: FailoverEvent 实体删 3 字段**
+- [x] **Step 7: FailoverEvent 实体删 3 字段**
 
 `domain/resilience/entity/FailoverEvent.java`：删 `fromClusterId`/`toClusterId`/`commonCauseSkip` 字段及注释。
 
-- [ ] **Step 8: FailoverEventDo 删 3 列映射**
+- [x] **Step 8: FailoverEventDo 删 3 列映射**
 
 `infrastructure/resilience/gateway/database/dataobject/FailoverEventDo.java`：删 `fromClusterId`/`toClusterId`/`commonCauseSkip` 字段及 `@Column`。
 
-- [ ] **Step 9: FailoverEventResponse 删 3 字段**
+- [x] **Step 9: FailoverEventResponse 删 3 字段**
 
 `application/resilience/dto/FailoverEventResponse.java`：删 `fromClusterId`/`toClusterId`/`commonCauseSkip` 字段。
 
-- [ ] **Step 10: FailoverEventGatewayImpl 删字段透传 + findRecent 参数**
+- [x] **Step 10: FailoverEventGatewayImpl 删字段透传 + findRecent 参数**
 
 `infrastructure/resilience/gateway/FailoverEventGatewayImpl.java`：
 - `toEntity`/`toDataObject` 删除 fromClusterId/toClusterId/commonCauseSkip 透传
 - `findRecent` 签名删 `Long clusterId` 参数，调用 repository 删该实参
 
-- [ ] **Step 11: FailoverEventRepository 删 clusterId 参数**
+- [x] **Step 11: FailoverEventRepository 删 clusterId 参数**
 
 `infrastructure/resilience/gateway/database/repository/FailoverEventRepository.java`：`findRecent` 删 `@Param("clusterId") Long clusterId`，@Query 删除 clusterId 过滤子句。
 
-- [ ] **Step 12: FailoverEventGateway 接口删 clusterId 参数**
+- [x] **Step 12: FailoverEventGateway 接口删 clusterId 参数**
 
 `domain/resilience/gateway/FailoverEventGateway.java`：`findRecent` 删 `Long clusterId` 参数，更新 Javadoc。
 
-- [ ] **Step 13: FailoverEventListener 删字段透传**
+- [x] **Step 13: FailoverEventListener 删字段透传**
 
 `application/resilience/event/FailoverEventListener.java`：`toEntity` 删除 `setFromClusterId`/`setToClusterId`/`setCommonCauseSkip` 三行。
 
-- [ ] **Step 14: ResilienceEventService/Impl 删 clusterId 参数**
+- [x] **Step 14: ResilienceEventService/Impl 删 clusterId 参数**
 
 - `application/resilience/ResilienceEventService.java`：`findRecent` 删 `Long clusterId` 参数
 - `application/resilience/ResilienceEventServiceImpl.java`：`findRecent` 删 `Long clusterId` 参数及透传
 
-- [ ] **Step 15: ResilienceEventController 删 clusterId 请求参数**
+- [x] **Step 15: ResilienceEventController 删 clusterId 请求参数**
 
 `adapter/api/ResilienceEventController.java`：`list` 方法删 `@RequestParam(required = false) Long clusterId` 及调用透传。
 
-- [ ] **Step 16: ChannelFailoverInvoker.publishFailoverEvent 删字段**
+- [x] **Step 16: ChannelFailoverInvoker.publishFailoverEvent 删字段**
 
 `application/proxy/invoker/ChannelFailoverInvoker.java`：
 - `publishFailoverEvent` 签名删 `boolean commonCauseSkip` 参数
 - 方法体删除 `fromClusterId`/`toClusterId` 局部变量
 - `FailoverOccurredEvent` 构造删 3 个实参，更新为 10 参数构造
 
-- [ ] **Step 17: 适配既有测试**
+- [x] **Step 17: 适配既有测试**
 
 检索测试中引用 `clusterId`/`commonCauseSkip`/`fromClusterId`/`toClusterId` 的断言与构造，删除或适配。涉及：`FailoverEventListenerTest`、`FailoverEventListenerPublishTest`、`FailoverEventRepositoryTest`、`FailoverEventGatewayImplTest`、`ResilienceEventServiceImplTest`、`ResilienceEventControllerIT`、`ChatDispatchServiceTest`、`RoutingResolverTest`、`FullContextIntegrationTest` 等。
 
-- [ ] **Step 18: 编译并运行全量测试**
+- [x] **Step 18: 编译并运行全量测试**
 
 Run: `./mvnw -pl gateway-boot -am test`
 Expected: BUILD SUCCESS，所有测试通过。
 
-- [ ] **Step 19: 提交**
+- [x] **Step 19: 提交**
 
 ```bash
 git add gateway-boot
@@ -371,7 +371,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **Files:** 全仓扫描
 
-- [ ] **Step 1: 后端残留检查**
+- [x] **Step 1: 后端残留检查**
 
 ```bash
 grep -rn "Cluster\|clusterId\|commonCauseSkip\|ClusterHealthAggregator\|ClusterAffinityRouter" \
@@ -379,7 +379,7 @@ grep -rn "Cluster\|clusterId\|commonCauseSkip\|ClusterHealthAggregator\|ClusterA
 ```
 Expected: 无输出（或仅注释中残留，需清理）。重点关注 `Cluster` 作为类型名、`clusterId` 作为字段/参数名、`commonCauseSkip` 作为字段/参数名。
 
-- [ ] **Step 2: 测试残留检查**
+- [x] **Step 2: 测试残留检查**
 
 ```bash
 grep -rn "clusterId\|commonCauseSkip\|fromClusterId\|toClusterId" \
@@ -387,11 +387,11 @@ grep -rn "clusterId\|commonCauseSkip\|fromClusterId\|toClusterId" \
 ```
 Expected: 无输出。
 
-- [ ] **Step 3: 清理残留**
+- [x] **Step 3: 清理残留**
 
 对 grep 命中的残留逐个清理（删除 import、字段引用、注释中的过期描述）。
 
-- [ ] **Step 4: 提交（若有清理）**
+- [x] **Step 4: 提交（若有清理）**
 
 ```bash
 git add -A
