@@ -3,6 +3,7 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,7 +37,8 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", "gpt-4o-upstream"
+                    "gpt-4o", "gpt-4o-upstream",
+                    FailureStrategy.FAIL_RETRY
             );
 
             // when
@@ -57,7 +59,8 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", null
+                    "gpt-4o", null,
+                    FailureStrategy.FAIL_RETRY
             );
 
             // when
@@ -78,7 +81,8 @@ class OutboundTunerTest {
             RoutingContext context = new RoutingContext(
                     10L, 20L, "https://api.openai.com/v1",
                     Protocol.OPENAI, "sk-test", 60, false,
-                    "gpt-4o", "   "
+                    "gpt-4o", "   ",
+                    FailureStrategy.FAIL_RETRY
             );
 
             // when

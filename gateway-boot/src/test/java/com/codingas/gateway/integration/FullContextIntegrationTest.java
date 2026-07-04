@@ -11,6 +11,7 @@ import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;
@@ -72,7 +73,8 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
                 RoutingContext ctx = new RoutingContext(
                         1L, 1L, sim.getUrl(), Protocol.OPENAI,
-                        "sk-test-key", 30, false, "gpt-4", null);
+                        "sk-test-key", 30, false, "gpt-4", null,
+                        FailureStrategy.FAIL_RETRY);
 
                 ProtocolResponse response = invoker.invoke(ctx, createTestRequest("gpt-4", false));
 
@@ -112,7 +114,8 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
                 RoutingContext ctx = new RoutingContext(
                         1L, 1L, sim.getUrl(), Protocol.OPENAI,
-                        "sk-test-key", 30, false, "gpt-4", null);
+                        "sk-test-key", 30, false, "gpt-4", null,
+                        FailureStrategy.FAIL_RETRY);
 
                 assertThatThrownBy(() -> invoker.invoke(ctx, createTestRequest("gpt-4", false)))
                         .isInstanceOf(ProviderException.class)

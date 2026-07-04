@@ -14,6 +14,7 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -81,9 +82,11 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     void setUpFailoverFixture() {
         // 构造两个候选渠道上下文（按 priority 升序，ctx1 优先）
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_RETRY);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_RETRY);
 
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
@@ -166,11 +169,14 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
             // 构造：ch1 + ch2 + ch3 三个候选
             // Task 2 变更：删除共因跳过，所有候选按 priority 顺序逐个试，全部耗尽抛最后异常
             RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
+                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_RETRY);
             RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null);
+                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_RETRY);
             RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
-                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null);
+                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_RETRY);
 
             // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
             ProviderException ch1Ex = new ProviderException(

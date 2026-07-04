@@ -7,6 +7,7 @@ import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
@@ -66,7 +67,8 @@ class ChatDispatchServiceTest {
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
-                Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
+                Protocol.OPENAI, "sk-test", 60, false, "test-model", null,
+                FailureStrategy.FAIL_RETRY);
 
         lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
     }
@@ -113,7 +115,8 @@ class ChatDispatchServiceTest {
                     .build();
 
             RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
-                    Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null);
+                    Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null,
+                    FailureStrategy.FAIL_RETRY);
 
             // Invoker 已下沉响应转换，返回入站协议格式的最终响应；dispatch 应透传不转换
             AnthropicMessagesResponse invokerResponse = AnthropicMessagesResponse.builder()

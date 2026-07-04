@@ -2,6 +2,7 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.application.entity.Application;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
@@ -362,6 +363,7 @@ class RoutingResolverTest {
             Application app = new Application();
             app.setId(7L);
             app.setTimeout(60);
+            app.setFailureStrategy(FailureStrategy.FAIL_OVER);
 
             when(modelMatcher.match("gpt-4o")).thenReturn(model);
             when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
@@ -377,6 +379,8 @@ class RoutingResolverTest {
 
             // then — 应用级 60 覆盖渠道默认 30
             assertThat(results.get(0).timeout()).isEqualTo(60);
+            // then — 应用 failureStrategy 透传至 RoutingContext
+            assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_OVER);
         }
 
         @Test
@@ -456,6 +460,8 @@ class RoutingResolverTest {
 
             // then — 用渠道默认 30，且未查 ApplicationGateway
             assertThat(results.get(0).timeout()).isEqualTo(30);
+            // then — 无应用锚点时 failureStrategy 默认 FAIL_RETRY
+            assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
             verifyNoInteractions(applicationGateway);
         }
 
@@ -495,6 +501,99 @@ class RoutingResolverTest {
 
             // then — 回退渠道默认 30，不抛异常
             assertThat(results.get(0).timeout()).isEqualTo(30);
+            // then — Application 查不到时 failureStrategy 默认 FAIL_RETRY
+            assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
+        }
+    }
+
+    @Nested
+    @DisplayName("Application.failureStrategy 透传至 RoutingContext")
+    class ApplicationFailureStrategyTests {
+
+        @Test
+        @DisplayName("Application.failureStrategy 非 null 时透传至 RoutingContext")
+        void resolveCandidates_applicationFailureStrategy_透传至RoutingContext() {
+            // given — 应用策略 FAIL_FAST 应透传至候选
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            Application app = new Application();
+            app.setId(7L);
+            app.setTimeout(0);
+            app.setFailureStrategy(FailureStrategy.FAIL_FAST);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — FAIL_FAST 透传
+            assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_FAST);
+        }
+
+        @Test
+        @DisplayName("Application.failureStrategy 为 null 时回退默认 FAIL_RETRY")
+        void resolveCandidates_applicationFailureStrategyNull_默认FAIL_RETRY() {
+            // given — 应用策略为 null（未配置），应回退默认 FAIL_RETRY
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            Application app = new Application();
+            app.setId(7L);
+            app.setTimeout(0);
+            // failureStrategy 显式置 null
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+
+            // when
+            List<RoutingContext> results = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — null 回退默认 FAIL_RETRY
+            assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
         }
     }
 }

@@ -15,6 +15,7 @@ import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.support.ProviderSimulator;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,8 @@ public abstract class FullContextIntegrationTestBase {
                         30,
                         false,
                         "gpt-4",
-                        null
+                        null,
+                        FailureStrategy.FAIL_RETRY
                 ));
 
         // 凭证解析：返回一个默认 API Key

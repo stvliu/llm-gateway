@@ -12,6 +12,7 @@ import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -61,7 +62,8 @@ class KeyFailoverInvokerTest {
                 resilientClientFactory, circuitBreakerManager, meterRegistry);
 
         ctx = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
-                Protocol.OPENAI, "sk-test", 60, false, "test-model", null);
+                Protocol.OPENAI, "sk-test", 60, false, "test-model", null,
+                FailureStrategy.FAIL_RETRY);
 
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");
