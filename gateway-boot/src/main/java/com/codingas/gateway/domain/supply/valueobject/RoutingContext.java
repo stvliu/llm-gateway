@@ -16,7 +16,6 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
  * @param needsProtocolAdaptation 是否需要协议适配
  * @param modelName               模型名称
  * @param upstreamModelName       上游模型名
- * @param clusterId               故障域 ID（Task 9：L1 共因跳过依据，由 RoutingResolver 从 Channel.clusterId 填充）
  */
 public record RoutingContext(
         Long channelId,
@@ -27,6 +26,5 @@ public record RoutingContext(
         Integer timeout,
         boolean needsProtocolAdaptation,
         String modelName,
-        String upstreamModelName,
-        Long clusterId
+        String upstreamModelName
 ) {}

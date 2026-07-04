@@ -81,7 +81,6 @@ class RoutingResolverTest {
             channel.setName("openai-main");
             channel.setState(ChannelState.ACTIVE);
             channel.setTimeout(30);
-            channel.setClusterId(500L);
 
             ChannelEndpoint endpoint = new ChannelEndpoint();
             endpoint.setId(50L);
@@ -107,9 +106,6 @@ class RoutingResolverTest {
             assertThat(result.providerApiKey()).isEqualTo("sk-test-key");
             assertThat(result.timeout()).isEqualTo(30);
             assertThat(result.needsProtocolAdaptation()).isFalse();
-            assertThat(result.clusterId())
-                    .as("clusterId 应由 Channel.clusterId 填充（Task 9）")
-                    .isEqualTo(500L);
         }
 
         @Test

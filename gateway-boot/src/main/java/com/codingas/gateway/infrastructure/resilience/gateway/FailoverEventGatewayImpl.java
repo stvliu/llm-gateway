@@ -33,8 +33,6 @@ import java.util.List;
  * 或未知 errorType）时不再抛 {@link IllegalArgumentException}，而是回退为安全值
  * （decision→{@link FailoverDecision#NONE}，errorType→{@code null}）并 {@code log.warn} 记录原值，
  * 避免破坏管理后台容灾查询。</p>
- *
- * <p><b>Task 6 新增字段</b>：{@code commonCauseSkip} 透传（本任务仅加字段，Task 9 填充逻辑）。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -51,9 +49,9 @@ public class FailoverEventGatewayImpl implements FailoverEventGateway {
     }
 
     @Override
-    public List<FailoverEvent> findRecent(Instant since, Long applicationId, Long clusterId, int limit) {
+    public List<FailoverEvent> findRecent(Instant since, Long applicationId, int limit) {
         Pageable pageable = PageRequest.of(0, limit);
-        return repository.findRecent(since, applicationId, clusterId, pageable).stream()
+        return repository.findRecent(since, applicationId, pageable).stream()
                 .map(this::toEntity)
                 .toList();
     }
@@ -75,13 +73,10 @@ public class FailoverEventGatewayImpl implements FailoverEventGateway {
         entity.setFromEndpointId(d.getFromEndpointId());
         entity.setToChannelId(d.getToChannelId());
         entity.setToEndpointId(d.getToEndpointId());
-        entity.setFromClusterId(d.getFromClusterId());
-        entity.setToClusterId(d.getToClusterId());
         // 枚举以字符串存储，读取时还原；历史残留未知值容错（L2/未知 errorType 不抛异常）
         entity.setErrorType(parseErrorType(d.getErrorType()));
         entity.setDecision(parseDecision(d.getDecision()));
         entity.setExhausted(d.isExhausted());
-        entity.setCommonCauseSkip(d.isCommonCauseSkip());
         entity.setOccurredAt(d.getOccurredAt());
         entity.setCreatedBy(d.getCreatedBy());
         entity.setCreatedAt(d.getCreatedAt());
@@ -99,13 +94,10 @@ public class FailoverEventGatewayImpl implements FailoverEventGateway {
         d.setFromEndpointId(entity.getFromEndpointId());
         d.setToChannelId(entity.getToChannelId());
         d.setToEndpointId(entity.getToEndpointId());
-        d.setFromClusterId(entity.getFromClusterId());
-        d.setToClusterId(entity.getToClusterId());
         // 枚举转字符串存储
         d.setErrorType(entity.getErrorType() != null ? entity.getErrorType().name() : null);
         d.setDecision(entity.getDecision() != null ? entity.getDecision().name() : null);
         d.setExhausted(entity.isExhausted());
-        d.setCommonCauseSkip(entity.isCommonCauseSkip());
         d.setOccurredAt(entity.getOccurredAt());
         d.setCreatedBy(entity.getCreatedBy());
         d.setUpdatedBy(entity.getUpdatedBy());

@@ -18,7 +18,7 @@ import java.util.List;
  * 前端总览页 10s 轮询渲染转移事件流 + 耗尽告警。</p>
  *
  * <ul>
- *   <li>GET /api/v1/resilience/events — 转移事件流查询（分页 + since/applicationId/clusterId 过滤）</li>
+ *   <li>GET /api/v1/resilience/events — 转移事件流查询（分页 + since/applicationId 过滤）</li>
  *   <li>GET /api/v1/resilience/events/exhausted — 耗尽告警查询（exhausted=true 近期事件）</li>
  * </ul>
  */
@@ -41,7 +41,6 @@ public class ResilienceEventController {
      *
      * @param since         起始时间过滤（可选，ISO-8601 Instant）
      * @param applicationId 应用 ID 过滤（可选）
-     * @param clusterId     故障域 ID 过滤（可选）
      * @param limit         返回条数（默认 100，上限 500）
      * @return 转移事件响应列表
      */
@@ -49,10 +48,9 @@ public class ResilienceEventController {
     public List<FailoverEventResponse> list(
             @RequestParam(required = false) Instant since,
             @RequestParam(required = false) Long applicationId,
-            @RequestParam(required = false) Long clusterId,
             @RequestParam(required = false, defaultValue = "100") Integer limit) {
         int cappedLimit = capLimit(limit, DEFAULT_LIMIT, MAX_LIMIT);
-        return resilienceEventService.findRecent(since, applicationId, clusterId, cappedLimit);
+        return resilienceEventService.findRecent(since, applicationId, cappedLimit);
     }
 
     /**

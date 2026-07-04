@@ -48,9 +48,6 @@ public class Channel extends BaseEntity {
     /** 最近一次测试触发来源（仅 CARD / DRAWER 持久化） */
     private ChannelHealthSource lastHealthSource;
 
-    /** 所属故障域 ID（物理 ID，可空，无 FK 约束；关联 clusters.id） */
-    private Long clusterId;
-
     @Override
     public Instant getCreatedAt() {
         return createdAt;

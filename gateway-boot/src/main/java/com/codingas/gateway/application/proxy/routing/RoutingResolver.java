@@ -151,8 +151,7 @@ public class RoutingResolver {
                 effectiveTimeout,
                 needsAdaptation,
                 model.getModelName(),
-                instance.getUpstreamModelName(),
-                channel.getClusterId()
+                instance.getUpstreamModelName()
         );
     }
 }

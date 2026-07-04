@@ -20,9 +20,6 @@ import java.time.Instant;
  * {@link com.codingas.gateway.domain.supply.enums.FailoverDecision} 枚举。</p>
  *
  * <p>occurred_at 为业务时间（转移发生时刻），独立于审计字段 created_at（持久化时刻）。</p>
- *
- * <p><b>Task 6 变更</b>：新增 common_cause_skip 列（共因跳过标记，默认 false）。
- * 本任务仅加列，Task 9 填充判定逻辑。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -54,14 +51,6 @@ public class FailoverEventDo extends BaseDo {
     @Column(name = "to_endpoint_id")
     private Long toEndpointId;
 
-    /** 冗余：失败候选所属故障域 ID（可空） */
-    @Column(name = "from_cluster_id")
-    private Long fromClusterId;
-
-    /** 冗余：转移目标所属故障域 ID（可空） */
-    @Column(name = "to_cluster_id")
-    private Long toClusterId;
-
     /** 触发转移的上游错误类型（枚举名） */
     @Column(name = "error_type", nullable = false, length = 32)
     private String errorType;
@@ -73,10 +62,6 @@ public class FailoverEventDo extends BaseDo {
     /** 是否候选全部耗尽 */
     @Column(name = "exhausted", nullable = false)
     private boolean exhausted;
-
-    /** 是否共因跳过标记（默认 false，Task 9 填充） */
-    @Column(name = "common_cause_skip", nullable = false)
-    private boolean commonCauseSkip;
 
     /** 转移发生时间（业务时间，查询排序键） */
     @Column(name = "occurred_at", nullable = false)

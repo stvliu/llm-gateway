@@ -60,7 +60,6 @@ class FailoverEventListenerPublishTest {
                 7L,
                 10L, 20L,
                 11L, 21L,
-                null, null,
                 ProviderErrorType.AUTHENTICATION_ERROR,
                 FailoverDecision.L1,
                 false,

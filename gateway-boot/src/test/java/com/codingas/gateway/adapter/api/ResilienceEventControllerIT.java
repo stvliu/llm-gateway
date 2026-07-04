@@ -58,8 +58,6 @@ class ResilienceEventControllerIT {
         resp.setFromEndpointId(20L);
         resp.setToChannelId(11L);
         resp.setToEndpointId(21L);
-        resp.setFromClusterId(null);
-        resp.setToClusterId(null);
         resp.setErrorType("AUTHENTICATION_ERROR");
         resp.setDecision("L1");
         resp.setExhausted(false);
@@ -70,7 +68,7 @@ class ResilienceEventControllerIT {
     @Test
     @DisplayName("GET /api/v1/resilience/events 默认参数返回事件列表")
     void list_defaultParams_returns200WithArray() throws Exception {
-        when(resilienceEventService.findRecent(eq(null), eq(null), eq(null), eq(100)))
+        when(resilienceEventService.findRecent(eq(null), eq(null), eq(100)))
                 .thenReturn(List.of(stubResponse()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
@@ -86,16 +84,15 @@ class ResilienceEventControllerIT {
     }
 
     @Test
-    @DisplayName("GET /api/v1/resilience/events 携带 since/applicationId/clusterId/limit 过滤参数")
+    @DisplayName("GET /api/v1/resilience/events 携带 since/applicationId/limit 过滤参数")
     void list_withFilters_delegatesToService() throws Exception {
         Instant since = Instant.parse("2026-06-22T00:00:00Z");
-        when(resilienceEventService.findRecent(eq(since), eq(7L), eq(10L), eq(50)))
+        when(resilienceEventService.findRecent(eq(since), eq(7L), eq(50)))
                 .thenReturn(List.of(stubResponse()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
                         .param("since", since.toString())
                         .param("applicationId", "7")
-                        .param("clusterId", "10")
                         .param("limit", "50")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -105,7 +102,7 @@ class ResilienceEventControllerIT {
     @Test
     @DisplayName("GET /api/v1/resilience/events limit 超上限 500 被截断为 500")
     void list_limitOverCap_cappedTo500() throws Exception {
-        when(resilienceEventService.findRecent(eq(null), eq(null), eq(null), eq(500)))
+        when(resilienceEventService.findRecent(eq(null), eq(null), eq(500)))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/resilience/events")

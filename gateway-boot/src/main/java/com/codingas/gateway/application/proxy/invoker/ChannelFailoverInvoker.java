@@ -42,8 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 不再进入 L2 模型降级（降级决策交还给应用层）。容灾栈从四层（L0/L1/L2/L3）收敛为三层（L0/L1/L3）。</p>
  *
  * <p><b>Task 2 变更</b>：删除 L1 共因跳过行为。不再维护 commonCauseFailedClusters 局部 Set
- * 跳过同域候选，所有候选按 priority 顺序逐个尝试，全部耗尽抛最后捕获的异常。
- * publishFailoverEvent 的 commonCauseSkip 参数暂保留并统一传 false（字段清理由 Task 3 完成）。</p>
+ * 跳过同域候选，所有候选按 priority 顺序逐个尝试，全部耗尽抛最后捕获的异常。</p>
  */
 @Component
 public class ChannelFailoverInvoker {
@@ -122,9 +121,9 @@ public class ChannelFailoverInvoker {
                 if (decision == FailoverDecision.NONE) {
                     throw e;
                 }
-                // L1 失败：发转移事件（commonCauseSkip 暂传 false，Task 3 删字段），记录 lastException
+                // L1 失败：发转移事件，记录 lastException
                 publishFailoverEvent(candidate, candidates, i, applicationId,
-                        e.getErrorType(), decision, traceId, false);
+                        e.getErrorType(), decision, traceId);
                 lastException = e;
             }
         }
@@ -223,8 +222,8 @@ public class ChannelFailoverInvoker {
                     throw e;
                 }
 
-                // L1 失败：发转移事件（commonCauseSkip 暂传 false，Task 3 删字段），记录 lastException（首字节前失败可转移）
-                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId, false);
+                // L1 失败：发转移事件，记录 lastException（首字节前失败可转移）
+                publishFailoverEvent(candidate, candidates, i, applicationId, e.getErrorType(), decision, traceId);
                 lastException = e;
             }
         }
@@ -396,32 +395,24 @@ public class ChannelFailoverInvoker {
      * 事件由 {@code FailoverEventListener} 异步持久化为 {@code FailoverEvent} 实体，
      * 不阻塞调用链（发布与持久化解耦）。</p>
      *
-     * <p><b>Task 9 变更</b>：clusterId 从 {@link RoutingContext} 直取（不再经 ChannelGateway 反查），
-     * 新增 commonCauseSkip 标记区分「真实失败转移」与「共因跳过转移」。</p>
-     *
-     * @param candidate       当前候选上下文（from：真实失败或被共因跳过）
+     * @param candidate       当前候选上下文（from：真实失败）
      * @param candidates      候选列表
      * @param currentIndex    当前候选索引
      * @param applicationId   应用 ID
-     * @param errorType       触发转移的上游错误类型（共因跳过时取触发共因的原始错误类型）
+     * @param errorType       触发转移的上游错误类型
      * @param decision        转移决策（L1）
      * @param traceId         调用链 Trace ID，透传到事件串联同请求多次转移；为 null 时事件字段为 null
-     * @param commonCauseSkip 是否共因跳过标记：true=同域共因跳过（非真实失败），false=真实 L1 失败转移
      */
     private void publishFailoverEvent(RoutingContext candidate, List<RoutingContext> candidates,
                                        int currentIndex, Long applicationId,
                                        ProviderErrorType errorType, FailoverDecision decision,
-                                       String traceId, boolean commonCauseSkip) {
+                                       String traceId) {
         // 判断是否有下一候选：有则 to=下一候选，无则 to=null + exhausted=true
         int nextIndex = currentIndex + 1;
         boolean hasTo = nextIndex < candidates.size();
         Long toChannelId = hasTo ? candidates.get(nextIndex).channelId() : null;
         Long toEndpointId = hasTo ? candidates.get(nextIndex).channelEndpointId() : null;
         boolean exhausted = !hasTo;
-
-        // clusterId 从 RoutingContext 直取（Task 9：不再经 ChannelGateway 反查）
-        Long fromClusterId = candidate.clusterId();
-        Long toClusterId = hasTo ? candidates.get(nextIndex).clusterId() : null;
 
         FailoverOccurredEvent event = new FailoverOccurredEvent(
                 traceId,                    // traceId：由上层 ChatDispatchServiceImpl 生成并透传，串联同请求多次转移
@@ -430,12 +421,9 @@ public class ChannelFailoverInvoker {
                 candidate.channelEndpointId(),
                 toChannelId,
                 toEndpointId,
-                fromClusterId,              // 失败/跳过候选所属故障域（从 RoutingContext 直取）
-                toClusterId,                // 转移目标所属故障域（同上，无目标时为 null）
                 errorType,
                 decision,
                 exhausted,
-                commonCauseSkip,            // Task 9：共因跳过标记（true=共因跳过，false=真实失败）
                 Instant.now()
         );
         eventPublisher.publish(event);

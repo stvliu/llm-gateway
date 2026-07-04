@@ -72,7 +72,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
                 RoutingContext ctx = new RoutingContext(
                         1L, 1L, sim.getUrl(), Protocol.OPENAI,
-                        "sk-test-key", 30, false, "gpt-4", null, null);
+                        "sk-test-key", 30, false, "gpt-4", null);
 
                 ProtocolResponse response = invoker.invoke(ctx, createTestRequest("gpt-4", false));
 
@@ -112,7 +112,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
                 RoutingContext ctx = new RoutingContext(
                         1L, 1L, sim.getUrl(), Protocol.OPENAI,
-                        "sk-test-key", 30, false, "gpt-4", null, null);
+                        "sk-test-key", 30, false, "gpt-4", null);
 
                 assertThatThrownBy(() -> invoker.invoke(ctx, createTestRequest("gpt-4", false)))
                         .isInstanceOf(ProviderException.class)

@@ -83,9 +83,9 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     void setUpFailoverFixture() {
         // 构造两个候选渠道上下文（按 priority 升序，ctx1 优先）
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null);
 
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
@@ -165,14 +165,14 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         @Test
         @DisplayName("9.7 端到端：共因故障不再跳过同域 → 按顺序试所有候选 → 全部耗尽抛最后异常")
         void e2e_commonCauseFailure_triesAllCandidatesInOrder_exhaustsAndThrowsLast() {
-            // 构造：ch1(cluster=100) + ch2(cluster=100, 同域) + ch3(cluster=200, 异域)
+            // 构造：ch1 + ch2 + ch3 三个候选
             // Task 2 变更：删除共因跳过，所有候选按 priority 顺序逐个试，全部耗尽抛最后异常
             RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
+                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null);
             RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
+                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null);
             RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
-                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
+                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null);
 
             // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
             ProviderException ch1Ex = new ProviderException(
