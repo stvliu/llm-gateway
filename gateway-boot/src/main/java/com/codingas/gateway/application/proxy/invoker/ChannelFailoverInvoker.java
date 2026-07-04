@@ -41,8 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p><b>Task 4 变更</b>：L2 模型降级层已删除。候选全部耗尽后直接抛最后捕获的上游异常，
  * 不再进入 L2 模型降级（降级决策交还给应用层）。容灾栈从四层（L0/L1/L2/L3）收敛为三层（L0/L1/L3）。</p>
  *
- * <p><b>Task 2 变更</b>：删除 L1 共因跳过行为。不再维护 commonCauseFailedClusters 局部 Set
- * 跳过同域候选，所有候选按 priority 顺序逐个尝试，全部耗尽抛最后捕获的异常。</p>
+ * <p>所有候选按 priority 顺序逐个尝试，全部耗尽后抛最后捕获的上游异常。</p>
  */
 @Component
 public class ChannelFailoverInvoker {

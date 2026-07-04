@@ -32,7 +32,7 @@ import static org.mockito.Mockito.when;
  * exhausted 布尔、occurredAt 时间）、findRecent（since/applicationId 过滤 + occurredAt 倒序）、
  * findExhausted（exhausted=true 过滤）的委派逻辑。</p>
  *
- * <p>参照 {@link ClusterGatewayImplTest} 的 mock Repository 范式，不连 H2，
+ * <p>参照同类 Gateway 实现测试的 mock Repository 范式，不连 H2，
  * 聚焦 DO↔Entity 字段转换与查询参数委派。</p>
  */
 @ExtendWith(MockitoExtension.class)

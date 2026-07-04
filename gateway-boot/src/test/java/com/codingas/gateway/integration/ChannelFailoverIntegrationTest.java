@@ -16,7 +16,6 @@ import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,9 +58,8 @@ import static org.mockito.Mockito.when;
  * <p>Task 4 适配：L2 模型降级层已删除，invoke/invokeStream 签名移除 profile 参数，候选耗尽直接抛
  * 最后异常，不再进入 L2 降级。</p>
  *
- * <p>Task 5 适配：DomainHealth 域级聚合路由器（ClusterHealthAggregator + ClusterAffinityRouter）
- * 已删除，RouterChain 收敛为端点级健康过滤。本测试移除域级聚合/亲和路由端到端用例，
- * 新增 RouterChain 组成断言验证域级聚合路由器已不在责任链中。</p>
+ * <p>Task 5 适配：DomainHealth 域级聚合路由器已删除，RouterChain 收敛为端点级健康过滤。
+ * 本测试移除域级聚合端到端用例，新增 RouterChain 组成断言验证责任链顺序。</p>
  *
  * <p>参考 {@link FullContextIntegrationTest} 的 KeyFailoverTests 模式：继承基类借用上下文，
  * 测试内手动构造真实 invoker。</p>
@@ -259,35 +257,22 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         }
     }
 
-    // ==================== 跨 Cluster 不越权（P2 占位） ====================
-
-    @Test
-    @DisplayName("跨 Cluster 不越权：P2 Cluster 落地后补充")
-    @Disabled("P2 Cluster 体系落地后补充：验证 L1 转移不跨越 Cluster 边界，避免越权访问其他租户/集群的渠道")
-    void crossCluster_isolation_placeholder() {
-        // TODO P2：Cluster 体系落地后，构造同 Cluster 多候选 + 跨 Cluster 候选，
-        // 验证 L1 转移仅在同 Cluster 内进行，不越权访问其他 Cluster 的渠道。
-        // 当前 P1 阶段无 Cluster 概念，无法验证此场景，先占位。
-    }
-
-    // ==================== RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5） ====================
+    // ==================== RouterChain 组成验证 ====================
 
     /** 真实路由器责任链 bean（Spring 装配，按 @Order 自动收集所有 Router） */
     @Autowired
     private RouterChain realRouterChain;
 
     @Nested
-    @DisplayName("RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5）")
+    @DisplayName("RouterChain 组成验证")
     class RouterChainCompositionTests {
 
         @Test
-        @DisplayName("RouterChain 不含域级聚合路由器 ClusterAffinityRouter（DomainHealth 已移除）")
-        void routerChain_excludesDomainHealthAggregator() throws Exception {
+        @DisplayName("RouterChain 按预期顺序组成：Permission → Health → Priority → LoadBalance")
+        void routerChain_composedByExpectedOrder() throws Exception {
             // 读取 RouterChain 已按 @Order 排序的责任链路由器类名
             List<String> routerNames = readRouterClassNames(realRouterChain);
 
-            // DomainHealth 域级聚合路由器已删除，责任链不应再包含它
-            assertThat(routerNames).doesNotContain("ClusterAffinityRouter");
             // 保留路由器按 @Order 升序保持：Permission → EndpointHealth(Health) → Priority → LoadBalance
             assertThat(routerNames)
                     .containsSubsequence("PermissionRouter", "HealthRouter", "PriorityRouter", "LoadBalanceRouter");
