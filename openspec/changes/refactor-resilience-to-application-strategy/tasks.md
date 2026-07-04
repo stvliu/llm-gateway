@@ -20,19 +20,19 @@
 
 ## 2. 应用级失败处理策略（加法，后端）
 
-- [ ] 2.1 创建 FailureStrategy 枚举（FAIL_FAST/FAIL_OVER/FAIL_RETRY）
-- [ ] 2.2 Application 实体加 failureStrategy 字段 + ApplicationDo 适配
-- [ ] 2.3 ApplicationRequest/ApplicationResponse 加 failureStrategy 字段
-- [ ] 2.4 ApplicationServiceImpl create/update/toResponse 透传 failureStrategy（默认 FAIL_RETRY）
-- [ ] 2.5 ChannelFailoverInvoker 按应用 failureStrategy 控制 L0/L1 行为：
+- [x] 2.1 创建 FailureStrategy 枚举（FAIL_FAST/FAIL_OVER/FAIL_RETRY）
+- [x] 2.2 Application 实体加 failureStrategy 字段 + ApplicationDo 适配
+- [x] 2.3 ApplicationRequest/ApplicationResponse 加 failureStrategy 字段
+- [x] 2.4 ApplicationServiceImpl create/update/toResponse 透传 failureStrategy（默认 FAIL_RETRY）
+- [x] 2.5 ChannelFailoverInvoker 按应用 failureStrategy 控制 L0/L1 行为：
   - FAIL_FAST：候选首个 Key 失败立即抛错（不调 KeyFailoverInvoker 换 Key、不换渠道）
   - FAIL_RETRY：L0 跑（KeyFailoverInvoker 换 Key），L1 不跑（不换渠道），同渠道 Key 耗尽抛错
   - FAIL_OVER：L0 跑 + L1 跑（按 priority 换渠道），全耗尽抛错
-- [ ] 2.6 Invoker 需获取应用 failureStrategy（经 ApplicationGateway 或 RoutingRequest 透传）
-- [ ] 2.7 TDD：FAIL_FAST 首个 Key 失败立即抛错
-- [ ] 2.8 TDD：FAIL_RETRY 同渠道换 Key 不换渠道
-- [ ] 2.9 TDD：FAIL_OVER 换渠道全耗尽抛错
-- [ ] 2.10 TDD：默认策略 FAIL_RETRY（未指定时）
+- [x] 2.6 Invoker 需获取应用 failureStrategy（经 ApplicationGateway 或 RoutingRequest 透传）
+- [x] 2.7 TDD：FAIL_FAST 首个 Key 失败立即抛错
+- [x] 2.8 TDD：FAIL_RETRY 同渠道换 Key 不换渠道
+- [x] 2.9 TDD：FAIL_OVER 换渠道全耗尽抛错
+- [x] 2.10 TDD：默认策略 FAIL_RETRY（未指定时）
 
 ## 3. Flyway 迁移
 

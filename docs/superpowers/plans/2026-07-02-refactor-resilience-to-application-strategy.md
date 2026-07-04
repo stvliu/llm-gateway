@@ -413,7 +413,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/application/ApplicationServiceImpl.java`
 - Test: `gateway-boot/src/test/java/com/codingas/gateway/application/application/ApplicationServiceImplTest.java`
 
-- [ ] **Step 1: 创建 FailureStrategy 枚举**
+- [x] **Step 1: 创建 FailureStrategy 枚举**
 
 ```java
 package com.codingas.gateway.domain.application.enums;
@@ -441,7 +441,7 @@ public enum FailureStrategy {
 }
 ```
 
-- [ ] **Step 2: Application 实体加 failureStrategy 字段**
+- [x] **Step 2: Application 实体加 failureStrategy 字段**
 
 `domain/application/entity/Application.java`：在 `timeout` 字段后新增：
 
@@ -452,7 +452,7 @@ public enum FailureStrategy {
 
 全参构造器新增 `FailureStrategy failureStrategy` 参数并赋值。加 import `com.codingas.gateway.domain.application.enums.FailureStrategy`。
 
-- [ ] **Step 3: ApplicationDo 加 failure_strategy 列**
+- [x] **Step 3: ApplicationDo 加 failure_strategy 列**
 
 `infrastructure/application/gateway/database/dataobject/ApplicationDo.java`：在 `timeout` 字段后新增：
 
@@ -465,11 +465,11 @@ public enum FailureStrategy {
 
 加 import `jakarta.persistence.EnumType` 和 `jakarta.persistence.Enumerated`（若未有）。
 
-- [ ] **Step 4: ApplicationGatewayImpl 适配 failureStrategy 透传**
+- [x] **Step 4: ApplicationGatewayImpl 适配 failureStrategy 透传**
 
 `infrastructure/application/gateway/ApplicationGatewayImpl.java`：`toEntity`/`toDataObject` 新增 `failureStrategy` 字段互转（`entity.setFailureStrategy(doObj.getFailureStrategy())` 与 `doObj.setFailureStrategy(entity.getFailureStrategy())`）。
 
-- [ ] **Step 5: ApplicationRequest/ApplicationResponse 加字段**
+- [x] **Step 5: ApplicationRequest/ApplicationResponse 加字段**
 
 - `ApplicationRequest.java` 加：
 ```java
@@ -482,7 +482,7 @@ public enum FailureStrategy {
     private String failureStrategy;
 ```
 
-- [ ] **Step 6: ApplicationServiceImpl 透传 failureStrategy**
+- [x] **Step 6: ApplicationServiceImpl 透传 failureStrategy**
 
 `application/application/ApplicationServiceImpl.java`：
 - `create`：`app.setFailureStrategy(request.getFailureStrategy() != null ? request.getFailureStrategy() : FailureStrategy.FAIL_RETRY);`
@@ -491,7 +491,7 @@ public enum FailureStrategy {
 
 加 import `com.codingas.gateway.domain.application.enums.FailureStrategy`。
 
-- [ ] **Step 7: 写测试 — 默认 FAIL_RETRY**
+- [x] **Step 7: 写测试 — 默认 FAIL_RETRY**
 
 `ApplicationServiceImplTest.java` 新增测试：
 
@@ -511,7 +511,7 @@ void create_withoutFailureStrategy_defaultsToFailRetry() {
 }
 ```
 
-- [ ] **Step 8: 写测试 — 透传指定策略**
+- [x] **Step 8: 写测试 — 透传指定策略**
 
 ```java
 @Test
@@ -527,12 +527,12 @@ void create_withFailFast_propagatesStrategy() {
 }
 ```
 
-- [ ] **Step 9: 运行测试**
+- [x] **Step 9: 运行测试**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ApplicationServiceImplTest`
 Expected: PASS。
 
-- [ ] **Step 10: 提交**
+- [x] **Step 10: 提交**
 
 ```bash
 git add gateway-boot
@@ -555,7 +555,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** RoutingContext 新增 failureStrategy 字段。RoutingResolver 已在 resolveApplicationTimeout 查 Application，改为同时取 failureStrategy 填入候选，避免每请求重复查 DB。
 
-- [ ] **Step 1: RoutingContext 加 failureStrategy 字段**
+- [x] **Step 1: RoutingContext 加 failureStrategy 字段**
 
 `domain/supply/valueobject/RoutingContext.java`：record 末尾新增 `FailureStrategy failureStrategy`，加 import 与 `@param` Javadoc。
 
@@ -574,7 +574,7 @@ public record RoutingContext(
 ) {}
 ```
 
-- [ ] **Step 2: RoutingResolver 透传 failureStrategy**
+- [x] **Step 2: RoutingResolver 透传 failureStrategy**
 
 `application/proxy/routing/RoutingResolver.java`：
 - `resolveCandidates` 中将 `Integer applicationTimeout = resolveApplicationTimeout(applicationId);` 改为 `Application app = resolveApplication(applicationId);`，传 `app` 给 `buildContext`
@@ -627,16 +627,16 @@ private RoutingContext buildContext(ModelInstance instance, Model model, Protoco
 }
 ```
 
-- [ ] **Step 3: 适配 RoutingResolverTest**
+- [x] **Step 3: 适配 RoutingResolverTest**
 
 更新 `RoutingResolverTest` 中 RoutingContext 断言（新增 failureStrategy 字段断言），mock Application 返回 failureStrategy。
 
-- [ ] **Step 4: 编译并运行测试**
+- [x] **Step 4: 编译并运行测试**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=RoutingResolverTest`
 Expected: PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-boot
@@ -660,7 +660,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** KeyFailoverInvoker 新增 invokeSingleKey/invokeSingleKeyStream（只试第一个 Key，FAIL_FAST 用）。ChannelFailoverInvoker 按策略分流：FAIL_FAST 调 invokeSingleKey 失败即抛；FAIL_RETRY 调 invoke 后 break（不换渠道）；FAIL_OVER 调 invoke 后 continue（换渠道）。
 
-- [ ] **Step 1: 写 FAIL_FAST 测试（先红）**
+- [x] **Step 1: 写 FAIL_FAST 测试（先红）**
 
 ```java
 package com.codingas.gateway.application.proxy.invoker;
@@ -698,7 +698,7 @@ class ChannelFailoverStrategyTest {
 }
 ```
 
-- [ ] **Step 2: 写 FAIL_RETRY 测试（先红）**
+- [x] **Step 2: 写 FAIL_RETRY 测试（先红）**
 
 ```java
 @Test
@@ -718,7 +718,7 @@ void failRetry_sameChannelKeyExhausted_noChannelSwitch_throws() {
 }
 ```
 
-- [ ] **Step 3: 写 FAIL_OVER 测试（先红）**
+- [x] **Step 3: 写 FAIL_OVER 测试（先红）**
 
 ```java
 @Test
@@ -738,7 +738,7 @@ void failOver_channelExhausted_switchesToNextCandidate() {
 }
 ```
 
-- [ ] **Step 4: 写默认策略测试（先红）**
+- [x] **Step 4: 写默认策略测试（先红）**
 
 ```java
 @Test
@@ -758,12 +758,12 @@ void defaultStrategy_whenNull_failRetry() {
 }
 ```
 
-- [ ] **Step 5: 运行测试确认失败（红）**
+- [x] **Step 5: 运行测试确认失败（红）**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverStrategyTest`
 Expected: FAIL（invokeSingleKey 方法不存在、策略未生效）。
 
-- [ ] **Step 6: KeyFailoverInvoker 新增 invokeSingleKey/invokeSingleKeyStream**
+- [x] **Step 6: KeyFailoverInvoker 新增 invokeSingleKey/invokeSingleKeyStream**
 
 ```java
 /**
@@ -813,7 +813,7 @@ public void invokeSingleKeyStream(RoutingContext ctx, ProtocolRequest request, S
 }
 ```
 
-- [ ] **Step 7: ChannelFailoverInvoker.invoke 按策略分流**
+- [x] **Step 7: ChannelFailoverInvoker.invoke 按策略分流**
 
 替换 `invoke` 方法体：
 
@@ -866,21 +866,21 @@ public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> c
 }
 ```
 
-- [ ] **Step 8: ChannelFailoverInvoker.invokeStream 按策略分流**
+- [x] **Step 8: ChannelFailoverInvoker.invokeStream 按策略分流**
 
 同 invoke 模式：FAIL_FAST 调 invokeSingleKeyStream 失败即抛；FAIL_RETRY 调 invokeStream 后 break；FAIL_OVER 调 invokeStream 后 continue。保留首字节追踪逻辑。
 
-- [ ] **Step 9: 运行测试确认通过（绿）**
+- [x] **Step 9: 运行测试确认通过（绿）**
 
 Run: `./mvnw -pl gateway-boot -am test -Dtest=ChannelFailoverStrategyTest`
 Expected: PASS。
 
-- [ ] **Step 10: 运行全量回归**
+- [x] **Step 10: 运行全量回归**
 
 Run: `./mvnw -pl gateway-boot -am test`
 Expected: BUILD SUCCESS。
 
-- [ ] **Step 11: 提交**
+- [x] **Step 11: 提交**
 
 ```bash
 git add gateway-boot
