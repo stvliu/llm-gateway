@@ -59,12 +59,12 @@ Channel 实体 SHALL NOT 包含 priority 和 weight 字段。路由优先级和�
 
 ### Requirement: InstanceSelector.select 返回排序候选列表
 
-`InstanceSelector.select` SHALL 返回按 (cluster, priority) 排序的候选列表，供 L1 故障转移逐个尝试。
+`InstanceSelector.select` SHALL 返回按 `ApplicationChannel.priority` 升序排序的候选列表，供 L1 故障转移逐个尝试。
 
 **要点**:
-- `select` 返回 `List<ModelInstance>`，按 `priority` 升序排序，不收敛到单实例
+- `select` 返回 `List<ModelInstance>`，按应用级 `priority` 升序排序，不收敛到单实例
 - `LoadBalanceRouter`（`@Order(9999)`）降级为透传，不执行负载均衡选择
-- 候选列表经 `RouterChain` 过滤链产出：`Permission(@100) → Health(@200) → ClusterAffinity(@250) → Priority(@300) → PinnedModel(@350) → LoadBalance(@9999)`
+- 候选列表经 `RouterChain` 过滤链产出：`Permission(@100) → EndpointHealth(@200) → Priority(@300) → LoadBalance(@9999)`（已删除 `ClusterAffinity`/`PinnedModel` 路由器）
 
 **方法签名**:
 ```
@@ -73,9 +73,9 @@ List<ModelInstance> select(Long modelId, Long applicationId, Long userId, String
 ```
 
 **规则**:
-- 候选按 `priority` 升序排序（由 `PriorityRouter` 保证）
+- 候选按应用级 `ApplicationChannel.priority` 升序排序（由 `PriorityRouter` 排序器保证，null 回退默认值 100）
 - 无可用实例时抛 `ResourceNotFoundException`
-- 解析容灾画像贯穿 `RoutingRequest`（fail-open：解析异常降级 null profile）
+- `RoutingRequest` 携带 `applicationId` + `protocol` + `channelPriorityMap`（无容灾画像字段，ResilienceProfile 退场；应用级 `failureStrategy`/`timeout` 经 `RoutingContext` 透传）
 
 #### Scenario: 返回排序候选列表供 L1 逐个尝试
 
