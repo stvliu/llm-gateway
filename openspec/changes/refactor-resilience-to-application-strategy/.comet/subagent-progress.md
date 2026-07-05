@@ -43,14 +43,14 @@
 - 测试: 前端 tsc/build/vitest 全绿（121 测试）
 - 已勾选: plan Task 10/11/12 + tasks.md 4.1-4.3 + 5.1-5.4 + 6.1-6.4
 
-## 当前阶段：build 阶段 guard（最终审查已通过）
+## 当前阶段：verify 阶段
 
+- build 阶段 guard ALL CHECKS PASSED，phase=verify
 - 最终完整审查 PASS：无 CRITICAL/IMPORTANT，4 MINOR（前端 i18n/注释"通道"残留，不影响功能，可后续处理）
 - 三策略行为端到端正确，DB↔Java↔前端类型一致，架构合规，跨批次无冲突，源码零残留
-- subagent 派发循环结束，所有 14 task 完成
-- 正在运行 build 阶段 guard，通过后进入 verify 阶段
-- verify 阶段待办：端到端手动验证 7 场景 + UI 完整性 8.1-8.3
-- 审查: 批次3 合并审查待 Task 9 完成后触发（thorough，覆盖 Task 8 DB + Task 9 前端）
+- 8.1-8.3 手动验证通过（Application priority/timeout 配置 + 渠道健康状态展示）
+- 所有 14 task 完成，plan + tasks.md 全部勾选
+- verify 阶段待办：端到端手动验证 7 场景 + 分支处理
 
 ## 批次2 进度
 
