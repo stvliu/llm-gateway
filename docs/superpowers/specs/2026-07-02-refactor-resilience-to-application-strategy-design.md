@@ -2,6 +2,8 @@
 comet_change: refactor-resilience-to-application-strategy
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
+status: final
 ---
 
 # 容灾重构：删除 Cluster + 引入应用级失败处理策略
