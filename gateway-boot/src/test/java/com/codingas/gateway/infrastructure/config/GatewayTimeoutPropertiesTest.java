@@ -43,11 +43,11 @@ class GatewayTimeoutPropertiesTest {
     }
 
     @Nested
-    @DisplayName("通道级覆盖")
+    @DisplayName("渠道级覆盖")
     class ChannelOverrides {
 
         @Test
-        @DisplayName("指定通道 ID 返回覆盖值")
+        @DisplayName("指定渠道 ID 返回覆盖值")
         void channelOverride_returnsConfiguredValue() {
             GatewayTimeoutProperties props = new GatewayTimeoutProperties();
             props.setChannelTimeouts(Map.of("100", 120, "200", 30));
@@ -57,7 +57,7 @@ class GatewayTimeoutPropertiesTest {
         }
 
         @Test
-        @DisplayName("未覆盖的通道 ID 返回默认值")
+        @DisplayName("未覆盖的渠道 ID 返回默认值")
         void uncoveredChannel_returnsDefault() {
             GatewayTimeoutProperties props = new GatewayTimeoutProperties();
             props.setChannelTimeouts(Map.of("100", 120));
