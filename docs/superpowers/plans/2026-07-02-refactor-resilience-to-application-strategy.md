@@ -1025,7 +1025,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-console/src/pages/Applications/ApplicationFormModal.tsx`
 - Modify: `gateway-console/src/locales/{zh,en}/applications.json`（定位实际 locale 路径）
 
-- [ ] **Step 1: types/application.ts 加 failureStrategy 类型**
+- [x] **Step 1: types/application.ts 加 failureStrategy 类型**
 
 ```typescript
 /** 应用级失败处理策略（与后端 FailureStrategy 枚举一致） */
@@ -1034,7 +1034,7 @@ export type FailureStrategy = 'FAIL_FAST' | 'FAIL_RETRY' | 'FAIL_OVER';
 
 `Application` interface 加 `failureStrategy: string;`，`CreateApplicationRequest` 加 `failureStrategy?: FailureStrategy;`。
 
-- [ ] **Step 2: ApplicationFormModal 加策略选择下拉**
+- [x] **Step 2: ApplicationFormModal 加策略选择下拉**
 
 在 `timeout` Form.Item 后新增：
 
@@ -1060,7 +1060,7 @@ export type FailureStrategy = 'FAIL_FAST' | 'FAIL_RETRY' | 'FAIL_OVER';
 
 `useEffect` 初始化中：编辑时 `failureStrategy: application.failureStrategy`，新建时 `failureStrategy: 'FAIL_RETRY'`。加 `import { Select } from 'antd';`。
 
-- [ ] **Step 3: locales 添加三策略文案**
+- [x] **Step 3: locales 添加三策略文案**
 
 在 `applications` 命名空间 locale 文件中添加：
 - `failureStrategy`: "失败处理策略"
@@ -1072,12 +1072,12 @@ export type FailureStrategy = 'FAIL_FAST' | 'FAIL_RETRY' | 'FAIL_OVER';
 
 英文版同步添加。
 
-- [ ] **Step 4: 类型检查与构建**
+- [x] **Step 4: 类型检查与构建**
 
 Run: `cd gateway-console && npx tsc --noEmit && npm run build`
 Expected: 无错误。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-console
@@ -1100,12 +1100,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** 后端 `ChannelController` 已有 force-open/force-close/state 端点，`resilienceApi.circuitBreaker` 与 `useForceOpenCircuitBreaker`/`useForceCloseCircuitBreaker`/`useCircuitBreakerState` hooks 已封装。本任务在 Channels 页端点维度接入这些 hooks。
 
-- [ ] **Step 1: 定位端点展示组件**
+- [x] **Step 1: 定位端点展示组件**
 
 Run: `grep -rn "ChannelEndpointResponse\|endpoints" gateway-console/src/pages/Channels --include="*.tsx" -l`
 定位渲染渠道端点列表的组件（可能在 ChannelCreateWizard 或渠道详情抽屉中）。
 
-- [ ] **Step 2: 端点行新增熔断状态 Tag + 应急按钮**
+- [x] **Step 2: 端点行新增熔断状态 Tag + 应急按钮**
 
 在端点列表每行新增：
 - 熔断状态 Tag（调 `useCircuitBreakerState(channelId, endpointId)`，展示 CLOSED/OPEN/HALF_OPEN）
@@ -1131,16 +1131,16 @@ const forceClose = useForceCloseCircuitBreaker();
 </Button>
 ```
 
-- [ ] **Step 3: locales 适配**
+- [x] **Step 3: locales 适配**
 
 `channels` 命名空间添加：`forceOpen`: "强制熔断"、`forceClose`: "强制恢复"、`circuitBreakerState`: "熔断状态"、`forceOpenConfirm`: "确认强制熔断该端点？将立即切断流量。"。英文同步。
 
-- [ ] **Step 4: 类型检查与构建**
+- [x] **Step 4: 类型检查与构建**
 
 Run: `cd gateway-console && npx tsc --noEmit && npm run build`
 Expected: 无错误。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-console
@@ -1163,7 +1163,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **说明：** 删除 Cluster 拓扑卡片区块 + 共因跳过列，新增端点熔断状态大盘区块。总览页 = 耗尽告警 + 转移事件流 + 端点熔断状态大盘。
 
-- [ ] **Step 1: 删除 ClusterCard 组件与拓扑区块**
+- [x] **Step 1: 删除 ClusterCard 组件与拓扑区块**
 
 `pages/resilience/overview/index.tsx`：
 - 删除 `ClusterCard` 函数（整段）
@@ -1171,11 +1171,11 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - 删除"故障域拓扑" Card 区块（含 Row/Col/ClusterCard 渲染）
 - 删除 `Cluster`/`Channel` type import
 
-- [ ] **Step 2: 转移事件流表格删除共因跳过列**
+- [x] **Step 2: 转移事件流表格删除共因跳过列**
 
 `FailoverEventTable` 的 columns 删除 `commonCauseSkip` 列定义。移除 `WarningOutlined` import（若仅此处用）。
 
-- [ ] **Step 3: 新增端点熔断状态大盘区块**
+- [x] **Step 3: 新增端点熔断状态大盘区块**
 
 在耗尽告警与转移事件流之间新增"端点熔断状态" Card：
 
@@ -1188,24 +1188,24 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 新增 `CircuitBreakerDashboard` 组件：拉取全部渠道端点（`useAllChannels`），逐端点调 `useCircuitBreakerState` 展示状态 Tag + 应急操作入口。或简化为表格：渠道名 / 端点 URL / 协议 / 熔断状态 / 应急按钮。
 
-- [ ] **Step 4: locales 适配**
+- [x] **Step 4: locales 适配**
 
 `resilience` 命名空间：删除 `clusterTopology`/`clusterTopologyHelp`/`noClusters`/`members`/`cluster.providerId`/`commonCauseSkip`/`commonCauseSkipHelp` 等 Cluster 相关 key。新增 `circuitBreakerDashboard`: "端点熔断状态"、`circuitBreakerDashboardHelp`: "各端点熔断器当前状态与应急操作"。英文同步。
 
-- [ ] **Step 5: 适配 eventDisplay.ts**
+- [x] **Step 5: 适配 eventDisplay.ts**
 
 若 `eventDisplay.ts` 引用共因跳过相关逻辑，清理。`formatRoute` 中若处理 clusterId，删除。
 
-- [ ] **Step 6: 适配总览页测试**
+- [x] **Step 6: 适配总览页测试**
 
 `pages/resilience/overview/__tests__/` 下测试：删除 Cluster 拓扑与共因跳过相关断言，新增端点熔断大盘渲染测试。
 
-- [ ] **Step 7: 类型检查、构建与测试**
+- [x] **Step 7: 类型检查、构建与测试**
 
 Run: `cd gateway-console && npx tsc --noEmit && npm run build && npx vitest run`
 Expected: 全部通过。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
 ```bash
 git add gateway-console

@@ -45,23 +45,23 @@
 
 ## 4. 端点熔断应急 UI（前端）
 
-- [ ] 4.1 前端 Channels 页端点维度：forceOpen/forceClose 按钮 + 状态展示
-- [ ] 4.2 前端 types/services：熔断应急 API 接 UI（resilienceApi.circuitBreaker 已封装）
-- [ ] 4.3 前端 locales 适配（熔断操作文案）
+- [x] 4.1 前端 Channels 页端点维度：forceOpen/forceClose 按钮 + 状态展示
+- [x] 4.2 前端 types/services：熔断应急 API 接 UI（resilienceApi.circuitBreaker 已封装）
+- [x] 4.3 前端 locales 适配（熔断操作文案）
 
 ## 5. 应用失败处理策略配置 UI（前端）
 
-- [ ] 5.1 前端 types/application.ts 加 failureStrategy 类型
-- [ ] 5.2 前端 ApplicationFormModal 加策略选择（FAIL_FAST/FAIL_OVER/FAIL_RETRY 下拉）
-- [ ] 5.3 前端 applicationApi 请求体含 failureStrategy
-- [ ] 5.4 前端 locales 适配（三策略文案）
+- [x] 5.1 前端 types/application.ts 加 failureStrategy 类型
+- [x] 5.2 前端 ApplicationFormModal 加策略选择（FAIL_FAST/FAIL_OVER/FAIL_RETRY 下拉）
+- [x] 5.3 前端 applicationApi 请求体含 failureStrategy
+- [x] 5.4 前端 locales 适配（三策略文案）
 
 ## 6. 容灾总览页重组（前端）
 
-- [ ] 6.1 删除 Cluster 拓扑卡片 + grouping.ts
-- [ ] 6.2 删除转移事件流表格的共因跳过列 + clusterId 展示
-- [ ] 6.3 新增端点熔断状态大盘区块（各端点熔断器状态 + 应急操作入口）
-- [ ] 6.4 总览页重组：转移事件流 + 耗尽告警 + 端点熔断状态大盘
+- [x] 6.1 删除 Cluster 拓扑卡片 + grouping.ts
+- [x] 6.2 删除转移事件流表格的共因跳过列 + clusterId 展示
+- [x] 6.3 新增端点熔断状态大盘区块（各端点熔断器状态 + 应急操作入口）
+- [x] 6.4 总览页重组：转移事件流 + 耗尽告警 + 端点熔断状态大盘
 
 ## 7. 前端 Cluster 相关清除
 

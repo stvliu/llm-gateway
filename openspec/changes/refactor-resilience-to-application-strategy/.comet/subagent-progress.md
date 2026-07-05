@@ -34,12 +34,21 @@
 - 已勾选: plan Task 8/9 + tasks.md 3.1-3.6 + 7.1-7.4
 - Task 9 范围扩展记录: overview/index.tsx Cluster 清理（原 Task 12 Step 1/2 提前）
 
-## 当前阶段：批次4 进行中（前端 UI）
+## 批次4 完成状态（thorough 审查 PASS）
 
-- 批次4: Task 10 (策略配置 UI) + Task 11 (熔断应急 UI) + Task 12 (总览页重组)
-- Task 12 范围调整: Step 1/2 已由 Task 9 完成，专注 Step 3-7（端点熔断大盘 + locales 含 i18n 孤儿 key 清理 + eventDisplay + 测试 + 验证）
+- 批次4（Task 10 策略配置 UI + Task 11 熔断应急 UI + Task 12 总览页重组）通过 thorough 审查
+- 实现提交: 795d3ed4 (Task 10) + 53a2b25f (Task 11) + 48f07d2d (Task 12)
+- 审查结果: 无 CRITICAL/IMPORTANT，2 MINOR（CircuitBreakerDashboard t 类型简化 + 测试 okText 断言脆弱性，可接受）
+- 跨 task 一致性: FailureStrategy 类型与后端枚举一致、CircuitBreakerButton 复用合理、i18n 孤儿 key 无残留
+- 测试: 前端 tsc/build/vitest 全绿（121 测试）
+- 已勾选: plan Task 10/11/12 + tasks.md 4.1-4.3 + 5.1-5.4 + 6.1-6.4
+
+## 当前阶段：批次5 进行中（收尾）
+
+- 批次5: Task 13 (spec/文档同步) + Task 14 (全链路回归)
 - 阶段: 即将派发 implementer
-- 审查: 批次4 审查待 Task 10/11/12 完成后触发（thorough 合并审查）
+- 审查: 批次5 审查待 Task 13/14 完成后触发（thorough 合并审查）
+- 批次5 完成后进入最终完整审查 → verify 阶段
 - 审查: 批次3 合并审查待 Task 9 完成后触发（thorough，覆盖 Task 8 DB + Task 9 前端）
 
 ## 批次2 进度
