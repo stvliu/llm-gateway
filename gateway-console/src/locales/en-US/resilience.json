@@ -7,16 +7,13 @@
   "overview": {
     "title": "Resilience Overview",
     "subtitle": "Answers 'is it stable now', read-only",
-    "clusterTopology": "Cluster Topology",
-    "clusterTopologyHelp": "Cluster cards grouped by cross-provider failure independence with member channels",
     "exhaustionAlert": "Exhaustion Alert",
     "exhaustionAlertHelp": "Highlight when all channels/L1 candidates of a model are exhausted",
     "eventStream": "Failover Event Stream",
     "eventStreamHelp": "Recent failover events (10s auto-refresh), desc by time",
-    "noClusters": "No clusters",
-    "members": "Member channels",
     "noExhaustion": "No exhaustion alert",
     "noEvents": "No failover events",
+    "noEndpoints": "No endpoints",
     "exhaustedNoTarget": "Exhausted (no target)",
     "refresh": "Refresh",
     "exhaustedEventsAlert": "Recent {{count}} candidate-exhausted event(s)",
@@ -24,35 +21,24 @@
     "exhaustedEventItemWithTrace": "Channel {{channelId}} candidates exhausted (Trace: {{trace}}…)",
     "moreExhaustedEvents": "…{{count}} more, see failover event stream below",
     "pollingInterval": "10s",
-    "commonCauseSkip": "Common-Cause Skip",
-    "commonCauseSkipHelp": "Same cluster common-cause failure; skip other candidates in the same cluster",
+    "circuitBreakerDashboard": "Endpoint Circuit Breaker",
+    "circuitBreakerDashboardHelp": "Current circuit breaker state and emergency operations per endpoint",
     "eventColumns": {
       "time": "Time",
       "route": "Route",
       "reason": "Reason",
       "decision": "Decision",
-      "commonCauseSkip": "Common-Cause Skip",
       "trace": "Trace"
+    },
+    "circuitBreakerColumns": {
+      "channel": "Channel",
+      "endpoint": "Endpoint URL",
+      "protocol": "Protocol",
+      "operation": "Operation"
     },
     "decisions": {
       "L1": "L1 Channel"
     }
-  },
-  "cluster": {
-    "title": "Cluster",
-    "code": "Code",
-    "name": "Name",
-    "description": "Common-Cause Description",
-    "providerId": "Provider ID",
-    "add": "New Cluster",
-    "edit": "Edit",
-    "codeRequired": "Cluster code is required",
-    "nameRequired": "Cluster name is required",
-    "providerIdRequired": "Provider ID is required",
-    "createSuccess": "Cluster created",
-    "updateSuccess": "Cluster updated",
-    "createFailed": "Failed to create cluster",
-    "updateFailed": "Failed to update cluster"
   },
   "channels": {
     "circuitBreaker": "Circuit Breaker",

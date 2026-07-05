@@ -58,6 +58,11 @@ vi.mock('@/services/query/useResilience', () => ({
   })),
 }));
 
+// mock useAllChannels：总览页 Task 12 新增端点熔断大盘，注入空列表避免渲染 CircuitBreakerButton
+vi.mock('@/services/query/useChannels', () => ({
+  useAllChannels: vi.fn(() => ({ data: [], isLoading: false })),
+}));
+
 import OverviewPage from '@/pages/resilience/overview';
 
 beforeAll(() => {

@@ -25,6 +25,7 @@ import {
   decisionMeta,
   type TagColor,
 } from './eventDisplay';
+import { CircuitBreakerDashboard } from './CircuitBreakerDashboard';
 import type { FailoverEvent } from '@/types/resilience';
 
 const { Text } = Typography;
@@ -35,12 +36,14 @@ const { Text } = Typography;
  * <p>「选而非填」范式屏1：回答「现在稳不稳」，只读不配置。
  * <ul>
  *   <li>耗尽告警：最近 exhausted=true 转移事件高亮（事件级告警）</li>
+ *   <li>端点熔断状态：各端点熔断器当前状态与应急操作（复用 CircuitBreakerButton）</li>
  *   <li>转移事件流：10s 轮询渲染最近转移事件，exhausted 行红色高亮</li>
  * </ul>
  * </p>
  *
  * <p>Task 9：故障域（Cluster）随应用级失败策略删除而退场，拓扑区块移除；
- * 共因跳过标记随 Cluster 退场移除。端点熔断大盘重组由后续 Task 12 承担。</p>
+ * 共因跳过标记随 Cluster 退场移除。</p>
+ * <p>Task 12：新增端点熔断状态大盘，总览页 = 耗尽告警 + 端点熔断状态 + 转移事件流。</p>
  */
 export default function OverviewPage() {
   const { t } = useTranslation('resilience');
@@ -110,6 +113,17 @@ export default function OverviewPage() {
             }
           />
         )}
+      </Card>
+
+      {/* 端点熔断状态大盘 */}
+      <Card
+        title={t('overview.circuitBreakerDashboard')}
+        style={{ marginBottom: 16 }}
+      >
+        <div style={{ marginBottom: 8, color: 'rgba(0,0,0,0.45)', fontSize: 13 }}>
+          {t('overview.circuitBreakerDashboardHelp')}
+        </div>
+        <CircuitBreakerDashboard t={t} />
       </Card>
 
       {/* 转移事件流（10s 轮询，exhausted 行红色高亮） */}
