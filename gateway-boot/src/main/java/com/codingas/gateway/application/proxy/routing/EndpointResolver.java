@@ -24,7 +24,7 @@ public class EndpointResolver {
      * <p>优先匹配协议同源的端点，避免不必要的跨协议转换。
      * 如果找不到匹配协议的同源端点，回退到任意可用端点。</p>
      *
-     * @param channelId 通道 ID
+     * @param channelId 渠道 ID
      * @param protocol  入站协议
      * @return 可用的 ChannelEndpoint
      * @throws ResourceNotFoundException 未找到可用端点

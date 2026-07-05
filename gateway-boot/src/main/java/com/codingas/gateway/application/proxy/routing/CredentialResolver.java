@@ -23,7 +23,7 @@ public class CredentialResolver {
      *
      * <p>优先使用默认凭证，其次选择第一个可用凭证。</p>
      *
-     * @param channelId 通道 ID
+     * @param channelId 渠道 ID
      * @return 已解密的 API Key
      * @throws ResourceNotFoundException 未找到可用凭证
      */
@@ -47,7 +47,7 @@ public class CredentialResolver {
      *
      * <p>用于渠道级故障转移，按 priority 升序排列。</p>
      *
-     * @param channelId 通道 ID
+     * @param channelId 渠道 ID
      * @return 可用凭证列表（已按优先级排序）
      */
     public List<ChannelCredential> resolveAll(Long channelId) {

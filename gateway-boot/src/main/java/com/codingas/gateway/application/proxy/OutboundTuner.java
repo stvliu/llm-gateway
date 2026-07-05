@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * <p>在请求发送到上游之前，执行两层调谐：</p>
  * <ol>
  *   <li>协议级调谐：通过 ProtocolTuner 补全协议特定的默认值</li>
- *   <li>通道级调谐：根据路由上下文替换模型名</li>
+ *   <li>渠道级调谐：根据路由上下文替换模型名</li>
  * </ol>
  */
 @Component
@@ -50,7 +50,7 @@ public class OutboundTuner {
             log.debug("协议级调谐完成: protocol={}", protocol);
         }
 
-        // 第二层：通道级调谐 — 模型名替换
+        // 第二层：渠道级调谐 — 模型名替换
         String upstreamModelName = context.upstreamModelName();
         if (upstreamModelName != null && !upstreamModelName.isBlank()) {
             request.setModel(upstreamModelName);
