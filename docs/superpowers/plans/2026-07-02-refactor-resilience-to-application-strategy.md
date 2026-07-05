@@ -1229,30 +1229,30 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `openspec/specs/resilience-console/` — 总览页重组，加端点熔断应急
 - Modify: `docs/容灾方案设计.md` / `docs/容灾管理范式.md`（若存在）
 
-- [ ] **Step 1: cluster-failover capability spec 整体退场**
+- [x] **Step 1: cluster-failover capability spec 整体退场**
 
 ```bash
 rm -rf openspec/specs/cluster-failover/
 ```
 （若该目录不存在，跳过——可能已在归档时删除。）
 
-- [ ] **Step 2: 更新 application spec**
+- [x] **Step 2: 更新 application spec**
 
 `openspec/specs/application/` 下 spec：新增 failureStrategy 字段 requirement（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一，默认 FAIL_RETRY）。
 
-- [ ] **Step 3: 更新 channel-failover spec**
+- [x] **Step 3: 更新 channel-failover spec**
 
 `openspec/specs/channel-failover/`：删除共因跳过 requirement，改为"L1 转移按 ApplicationChannel.priority 顺序 + 应用 failureStrategy 控制 L0/L1"。删除转移事件 clusterId/commonCauseSkip 字段说明。
 
-- [ ] **Step 4: 更新 resilience-console spec**
+- [x] **Step 4: 更新 resilience-console spec**
 
 `openspec/specs/resilience-console/`：删除 Cluster 拓扑展示 requirement，新增端点熔断应急操作 UI + 端点熔断状态大盘 + 应用策略配置 requirement。
 
-- [ ] **Step 5: 更新 docs 文档**
+- [x] **Step 5: 更新 docs 文档**
 
 `docs/容灾方案设计.md` 与 `docs/容灾管理范式.md`（若存在）：删除 Cluster/共因跳过章节，新增应用级失败处理策略章节，说明容灾由策略 + priority + 熔断器承担。
 
-- [ ] **Step 6: grep 全仓残留确认**
+- [x] **Step 6: grep 全仓残留确认**
 
 ```bash
 grep -rn "Cluster\|clusterId\|commonCauseSkip\|ClusterHealthAggregator\|ClusterAffinityRouter" \
@@ -1261,7 +1261,7 @@ grep -rn "Cluster\|clusterId\|commonCauseSkip\|ClusterHealthAggregator\|ClusterA
 ```
 Expected: 仅 spec 归档目录与历史文档中可能残留（可接受），源码中无残留。
 
-- [ ] **Step 7: 提交**
+- [x] **Step 7: 提交**
 
 ```bash
 git add openspec docs
@@ -1280,22 +1280,22 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 **Files:** 无修改，仅验证
 
-- [ ] **Step 1: 后端全量测试**
+- [x] **Step 1: 后端全量测试**
 
 Run: `./mvnw -pl gateway-boot -am test`
 Expected: BUILD SUCCESS，所有测试通过。核心服务层覆盖率满足约束（≥90%）。
 
-- [ ] **Step 2: 前端构建**
+- [x] **Step 2: 前端构建**
 
 Run: `cd gateway-console && npm run build`
 Expected: 构建成功，tsc 类型检查通过。
 
-- [ ] **Step 3: 前端单元测试**
+- [x] **Step 3: 前端单元测试**
 
 Run: `cd gateway-console && npx vitest run`
 Expected: 所有测试通过。
 
-- [ ] **Step 4: 端到端验证（手动）**
+- [x] **Step 4: 端到端验证（手动）**
 
 启动应用，验证以下场景：
 1. **FAIL_FAST 行为**：配置应用策略为 FAIL_FAST，触发首个 Key 失败，验证立即抛错不换 Key 不换渠道
@@ -1306,11 +1306,11 @@ Expected: 所有测试通过。
 6. **跨供应商转移**：配置跨供应商渠道，验证 FAIL_OVER 跨供应商转移
 7. **双 API 兼容**：`/v1/chat/completions` 与 `/v1/messages` 行为一致
 
-- [ ] **Step 5: 确认现有配置 UI 完整（tasks.md Task 8）**
+- [x] **Step 5: 确认现有配置 UI 完整（tasks.md Task 8）**
 
 验证 Application 渠道 priority 配置（ChannelManageModal）、Application timeout 配置、渠道健康状态展示功能完整可用。
 
-- [ ] **Step 6: 提交回归报告（可选）**
+- [x] **Step 6: 提交回归报告（可选）**
 
 若有测试修复或文档补充，提交。否则标记回归通过。
 

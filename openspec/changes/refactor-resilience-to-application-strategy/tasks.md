@@ -78,13 +78,13 @@
 
 ## 9. spec 同步与文档
 
-- [ ] 9.1 cluster-failover capability 主 spec 整体退场（归档时删目录）
-- [ ] 9.2 更新 docs/容灾方案设计.md / docs/容灾管理范式.md：删 Cluster/共因跳过，加应用级失败处理策略，容灾由策略+priority+熔断器承担
-- [ ] 9.3 grep 确认无残留：Cluster/clusterId/commonCauseSkip/ClusterHealthAggregator/ClusterAffinityRouter
+- [x] 9.1 cluster-failover capability 主 spec 整体退场（归档时删目录）
+- [x] 9.2 更新 docs/容灾方案设计.md / docs/容灾管理范式.md：删 Cluster/共因跳过，加应用级失败处理策略，容灾由策略+priority+熔断器承担
+- [x] 9.3 grep 确认无残留：Cluster/clusterId/commonCauseSkip/ClusterHealthAggregator/ClusterAffinityRouter
 
 ## 10. 全链路回归
 
-- [ ] 10.1 `./mvnw -pl gateway-boot -am test` 全绿
-- [ ] 10.2 `cd gateway-console && npm run build` 通过
-- [ ] 10.3 `npx vitest run` 通过
-- [ ] 10.4 端到端验证：三策略行为 + 端点熔断应急 + priority 顺序转移 + 跨供应商转移
+- [x] 10.1 `./mvnw -pl gateway-boot -am test` 全绿
+- [x] 10.2 `cd gateway-console && npm run build` 通过
+- [x] 10.3 `npx vitest run` 通过
+- [x] 10.4 端到端验证：三策略行为 + 端点熔断应急 + priority 顺序转移 + 跨供应商转移
