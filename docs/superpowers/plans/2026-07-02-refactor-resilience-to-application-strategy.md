@@ -2,6 +2,7 @@
 change: refactor-resilience-to-application-strategy
 design-doc: docs/superpowers/specs/2026-07-02-refactor-resilience-to-application-strategy-design.md
 base-ref: b90d0e88b44aecaa09c9e8291600fc0e0046f3d5
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 # 容灾重构：删除 Cluster + 引入应用级失败处理策略 实施计划
@@ -17,6 +18,7 @@ base-ref: b90d0e88b44aecaa09c9e8291600fc0e0046f3d5
 **设计文档：** `docs/superpowers/specs/2026-07-02-refactor-resilience-to-application-strategy-design.md`
 **任务边界：** `openspec/changes/refactor-resilience-to-application-strategy/tasks.md`
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## 三策略行为规约（Task 5-7 共同遵循）
@@ -31,6 +33,7 @@ base-ref: b90d0e88b44aecaa09c9e8291600fc0e0046f3d5
 
 **透传方式（设计 D6 决策）：** RoutingContext 新增 `failureStrategy` 字段；RoutingResolver 已在 `resolveApplicationTimeout` 查询 Application 一次，同时取 failureStrategy 填入每个候选的 RoutingContext，避免每请求重复查 DB。ChannelFailoverInvoker 从 `primaryCtx.failureStrategy()` 读取（所有候选同应用同策略）。
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## 文件结构映射
@@ -99,6 +102,7 @@ base-ref: b90d0e88b44aecaa09c9e8291600fc0e0046f3d5
 - `pages/Channels/`（端点列表区）— 加端点熔断应急 UI
 - resilience / applications / channels 命名空间 locale 文件 — 文案适配
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## 依赖关系
@@ -118,6 +122,7 @@ Task 9 (前端 Cluster 清除) ─→ Task 10 (策略配置 UI) ─→ Task 11 (
 
 **关键编译约束：** Task 2 和 Task 3 必须按序——Task 2 先移除共因跳过行为（publishFailoverEvent 暂传 false 占位），Task 3 再横切删除字段定义，保证每步可编译。Task 5-7（加法）与 Task 1-3（减法）可并行分支。
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 1: 删除 Cluster 聚合根全套
@@ -177,6 +182,7 @@ Channel.clusterId 字段由后续任务清理。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 2: 删除 ChannelFailoverInvoker 共因跳过行为
@@ -259,6 +265,7 @@ false，字段清理由后续任务完成。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 3: 删除 clusterId/commonCauseSkip 字段全链路
@@ -365,6 +372,7 @@ commonCauseSkip；/resilience/events 不再接受 clusterId 查询参数。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 4: grep 残留检查
@@ -400,6 +408,7 @@ git commit -m "chore(resilience): 清理 Cluster/clusterId/commonCauseSkip 残�
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 5: FailureStrategy 枚举 + Application 链路（TDD）
@@ -545,6 +554,7 @@ FAIL_OVER），默认 FAIL_RETRY。ApplicationRequest/Response/ServiceImpl
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 6: RoutingContext + RoutingResolver 透传 failureStrategy
@@ -649,6 +659,7 @@ ChannelFailoverInvoker 可从候选直取策略控制 L0/L1。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 7: ChannelFailoverInvoker 按策略控制 L0/L1（TDD）
@@ -894,6 +905,7 @@ KeyFailoverInvoker 新增 invokeSingleKey/invokeSingleKeyStream。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 8: Flyway V65-V68 迁移
@@ -957,6 +969,7 @@ V65 删 clusters 表；V66 删 channels.cluster_id；V67 删 failover_events
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 9: 前端 Cluster 相关清除 + types 瘦身
@@ -1016,6 +1029,7 @@ commonCauseSkip 字段）。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 10: 应用失败处理策略配置 UI
@@ -1090,6 +1104,7 @@ FAIL_OVER），默认 FAIL_RETRY。types/application.ts 加 FailureStrategy
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 11: 端点熔断应急 UI（Channels 页）
@@ -1152,6 +1167,7 @@ git commit -m "feat(console): Channels 页端点维度熔断应急 UI
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 12: 容灾总览页重组
@@ -1218,6 +1234,7 @@ Cluster 文案、新增熔断大盘文案。
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 13: spec 同步与文档更新
@@ -1274,6 +1291,7 @@ channel-failover spec 删共因跳过改策略控制；resilience-console spec �
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## Task 14: 全链路回归
@@ -1314,6 +1332,7 @@ Expected: 所有测试通过。
 
 若有测试修复或文档补充，提交。否则标记回归通过。
 
+archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
 ## 自审（Self-Review）
