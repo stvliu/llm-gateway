@@ -43,16 +43,13 @@
 - 测试: 前端 tsc/build/vitest 全绿（121 测试）
 - 已勾选: plan Task 10/11/12 + tasks.md 4.1-4.3 + 5.1-5.4 + 6.1-6.4
 
-## 当前阶段：批次5 审查中（spec-review，第 1 轮）
+## 当前阶段：build 阶段 guard（最终审查已通过）
 
-- 批次5: Task 13 ✅ + Task 14 ✅
-- 实现提交: bf6dadf4 (Task 13 spec/文档) + 8af2e731 (用户另一会话提交的术语统一"通道"→"渠道"，纯注释) 
-- Task 14: 全链路回归验证，无文件变更
-  - 后端 857 测试全绿，前端 pnpm build 成功 + 121 测试全绿，grep 残留零匹配
-  - 端到端手动验证（7 场景 + UI 完整性）待 verify 阶段
-- 所有 14 个 task 完成，plan/tasks.md 全部勾选
-- 审查: 批次5 reviewer 派发中（thorough 合并审查 Task 13 spec/文档 + Task 14 回归确认 + 8af2e731 术语统一）
-- 批次5 通过后进入最终完整审查 → build guard → verify 阶段
+- 最终完整审查 PASS：无 CRITICAL/IMPORTANT，4 MINOR（前端 i18n/注释"通道"残留，不影响功能，可后续处理）
+- 三策略行为端到端正确，DB↔Java↔前端类型一致，架构合规，跨批次无冲突，源码零残留
+- subagent 派发循环结束，所有 14 task 完成
+- 正在运行 build 阶段 guard，通过后进入 verify 阶段
+- verify 阶段待办：端到端手动验证 7 场景 + UI 完整性 8.1-8.3
 - 审查: 批次3 合并审查待 Task 9 完成后触发（thorough，覆盖 Task 8 DB + Task 9 前端）
 
 ## 批次2 进度

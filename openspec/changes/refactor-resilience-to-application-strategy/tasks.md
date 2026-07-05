@@ -72,9 +72,9 @@
 
 ## 8. 确保现有配置 UI 完整
 
-- [ ] 8.1 验证 Application 渠道 priority 配置（ChannelManageModal）功能完整
-- [ ] 8.2 验证 Application timeout 配置功能完整
-- [ ] 8.3 验证渠道健康状态展示完整
+- [x] 8.1 验证 Application 渠道 priority 配置（ChannelManageModal）功能完整
+- [x] 8.2 验证 Application timeout 配置功能完整
+- [x] 8.3 验证渠道健康状态展示完整
 
 ## 9. spec 同步与文档
 
