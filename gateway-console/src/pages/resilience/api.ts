@@ -3,7 +3,6 @@
  *
  * <p>对接后端 simplify-resilience-architecture 变更后的端点：
  * <ul>
- *   <li>故障域 CRUD：/api/v1/resilience/clusters（Cluster 瘦身，字段 code/name/providerId/description）</li>
  *   <li>渠道端点熔断应急：/api/v1/channels/{cid}/endpoints/{eid}/circuit-breaker/*</li>
  *   <li>转移事件流：/api/v1/resilience/events、/api/v1/resilience/events/exhausted</li>
  * </ul>
@@ -13,6 +12,7 @@
  * <ul>
  *   <li>容灾画像 CRUD（/resilience/profiles）—— ResilienceProfile 实体退场</li>
  *   <li>紧切域（PUT /channels/{id}/cluster）—— 域级亲和路由（ClusterAffinityRouter）删除</li>
+ *   <li>故障域 CRUD（/resilience/clusters）—— Cluster 实体随应用级失败策略删除</li>
  * </ul>
  * </p>
  *
@@ -20,8 +20,6 @@
  */
 import { api } from '@/services/api/client';
 import type {
-  Cluster,
-  ClusterRequest,
   CircuitBreakerStateResponse,
   FailoverEvent,
   FailoverEventQuery,
@@ -30,23 +28,6 @@ import type {
 
 /** 容灾管理 API */
 export const resilienceApi = {
-  /** 故障域 */
-  clusters: {
-    /** 获取故障域列表 */
-    list: () => api.get<Cluster[]>('/resilience/clusters'),
-
-    /** 获取故障域详情 */
-    getById: (id: number) => api.get<Cluster>(`/resilience/clusters/${id}`),
-
-    /** 创建故障域 */
-    create: (data: ClusterRequest) =>
-      api.post<Cluster>('/resilience/clusters', data),
-
-    /** 更新故障域 */
-    update: (id: number, data: ClusterRequest) =>
-      api.put<Cluster>(`/resilience/clusters/${id}`, data),
-  },
-
   /** 渠道端点熔断器应急操作 */
   circuitBreaker: {
     /** 一键强制熔断端点（摘流量） */

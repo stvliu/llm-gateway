@@ -1,0 +1,17 @@
+{
+  "change": "refactor-resilience-to-application-strategy",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "ce67dd0f49338e76959ba6260f956b3a8ec68b6642211f7d0f64c90275f41603",
+  "files": [
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/proposal.md", "sha256": "f8fcb20c7003a9f5125086a2c810734d0cd72836d0b908230a804d3f74433659" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/design.md", "sha256": "55ffccae31ec2432d7a5d3dbe9e64953307c3aa92ecb7f45fda6e87dc0d2234b" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/tasks.md", "sha256": "2e2d115826a0c2d55cf8c5ad666b72d2a4a46a34366dbefe08590eaba99bcb14" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/specs/application-failure-strategy/spec.md", "sha256": "a5056b15bfa5b2e9d8a82d23cced1f279f5d2c9f7cefcee1b9ab4757dc789e46" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/specs/application/spec.md", "sha256": "3307ac648c693cda9983156a669fea99215e15d9653992e984f2f63fc7f4c054" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/specs/channel-failover/spec.md", "sha256": "2c2c0505224d98f5ebebf256c665692790672ba497b5e96a09fb44444178dea2" },
+    { "path": "openspec/changes/refactor-resilience-to-application-strategy/specs/resilience-console/spec.md", "sha256": "94a5fb3e45261e17309d124b13548d13f9543f1b60daed3d3654554d91241602" }
+  ]
+}

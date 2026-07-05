@@ -28,4 +28,7 @@ public class ApplicationRequest {
 
     /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
     private int timeout;
+
+    /** 应用级失败处理策略（不传时后端默认 FAIL_RETRY） */
+    private com.codingas.gateway.domain.application.enums.FailureStrategy failureStrategy;
 }

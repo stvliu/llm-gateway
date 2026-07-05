@@ -1,8 +1,5 @@
-import { useMemo } from 'react';
 import {
   Card,
-  Row,
-  Col,
   Tag,
   Empty,
   Spin,
@@ -16,108 +13,40 @@ import {
 import {
   ExclamationCircleFilled,
   ReloadOutlined,
-  WarningOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import {
-  useClusters,
   useFailoverEvents,
   useExhaustedEvents,
 } from '@/services/query/useResilience';
-import { useAllChannels } from '@/services/query/useChannels';
-import { groupChannelsByCluster } from './grouping';
 import {
   errorTypeMeta,
   formatRoute,
   decisionMeta,
   type TagColor,
 } from './eventDisplay';
-import type { Cluster, FailoverEvent } from '@/types/resilience';
-import type { Channel } from '@/types/channel';
+import { CircuitBreakerDashboard } from './CircuitBreakerDashboard';
+import type { FailoverEvent } from '@/types/resilience';
 
 const { Text } = Typography;
-
-/**
- * 故障域拓扑卡片
- *
- * <p>展示单个 Cluster 的基本信息（code/name/description/providerId）与成员渠道列表。
- * 成员渠道来自 ChannelResponse 透传的 clusterId 按 cluster 分组映射。</p>
- *
- * <p>Task 10：Cluster 语义改造为跨供应商故障独立性分组，域级健康聚合已删，
- * 不再展示健康灯 / region / priority。</p>
- */
-function ClusterCard({
-  cluster,
-  members,
-  t,
-}: {
-  cluster: Cluster;
-  members: Channel[];
-  t: (k: string) => string;
-}) {
-  return (
-    <Card
-      size="small"
-      title={<span style={{ fontFamily: 'monospace' }}>{cluster.code}</span>}
-    >
-      <div style={{ marginBottom: 4 }}>
-        <Text strong>{cluster.name}</Text>
-      </div>
-      <div style={{ fontSize: 12, color: 'rgba(0,0,0,0.45)', lineHeight: 1.8 }}>
-        {cluster.description && <div>{cluster.description}</div>}
-        <div>
-          {t('cluster.providerId')}: {cluster.providerId}
-        </div>
-      </div>
-      {/* 成员渠道：按 clusterId 分组映射到本 Cluster */}
-      <div style={{ marginTop: 8, fontSize: 12 }}>
-        <div style={{ marginBottom: 4, color: 'rgba(0,0,0,0.45)' }}>
-          {t('overview.members')}（{members.length}）
-        </div>
-        {members.length === 0 ? (
-          <div style={{ color: 'rgba(0,0,0,0.35)' }}>—</div>
-        ) : (
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-            {members.map((ch) => (
-              <Tooltip key={ch.id} title={ch.name}>
-                <Tag style={{ margin: 0 }}>
-                  <Text code style={{ fontSize: 11 }}>
-                    {ch.id}
-                  </Text>{' '}
-                  {ch.name}
-                </Tag>
-              </Tooltip>
-            ))}
-          </div>
-        )}
-      </div>
-    </Card>
-  );
-}
 
 /**
  * 容灾总览页
  *
  * <p>「选而非填」范式屏1：回答「现在稳不稳」，只读不配置。
  * <ul>
- *   <li>耗尽告警：最近 exhausted=true 转移事件高亮（域级健康聚合已删，仅事件级告警）</li>
- *   <li>故障域拓扑：Cluster 卡片视图，渠道按 clusterId 归域（跨供应商故障独立性分组）</li>
- *   <li>转移事件流：10s 轮询渲染最近转移事件，exhausted 行红色高亮，共因跳过事件标记</li>
+ *   <li>耗尽告警：最近 exhausted=true 转移事件高亮（事件级告警）</li>
+ *   <li>端点熔断状态：各端点熔断器当前状态与应急操作（复用 CircuitBreakerButton）</li>
+ *   <li>转移事件流：10s 轮询渲染最近转移事件，exhausted 行红色高亮</li>
  * </ul>
  * </p>
  *
- * <p>Task 10：移除降级/会话亲和/PinnedModel 展示；域级 DOWN 告警随 healthStatus 删除；
- * 转移事件流新增「是否共因跳过」标记。</p>
+ * <p>Task 9：故障域（Cluster）随应用级失败策略删除而退场，拓扑区块移除；
+ * 共因跳过标记随 Cluster 退场移除。</p>
+ * <p>Task 12：新增端点熔断状态大盘，总览页 = 耗尽告警 + 端点熔断状态 + 转移事件流。</p>
  */
 export default function OverviewPage() {
   const { t } = useTranslation('resilience');
-  const { data: clusters, isLoading } = useClusters();
-  // 拉取全部渠道，按 clusterId 分组映射到 Cluster 卡片（后端 ChannelResponse 已透传 clusterId）
-  const { data: channels } = useAllChannels();
-  const channelsByCluster = useMemo(
-    () => groupChannelsByCluster(channels ?? []),
-    [channels],
-  );
 
   // 转移事件流（10s 轮询，默认 100 条）
   const failoverQuery = useFailoverEvents();
@@ -186,30 +115,15 @@ export default function OverviewPage() {
         )}
       </Card>
 
-      {/* 故障域拓扑 */}
-      <Card title={t('overview.clusterTopology')} style={{ marginBottom: 16 }}>
-        <div style={{ marginBottom: 12, color: 'rgba(0,0,0,0.45)', fontSize: 13 }}>
-          {t('overview.clusterTopologyHelp')}
+      {/* 端点熔断状态大盘 */}
+      <Card
+        title={t('overview.circuitBreakerDashboard')}
+        style={{ marginBottom: 16 }}
+      >
+        <div style={{ marginBottom: 8, color: 'rgba(0,0,0,0.45)', fontSize: 13 }}>
+          {t('overview.circuitBreakerDashboardHelp')}
         </div>
-        {isLoading ? (
-          <div style={{ textAlign: 'center', padding: 48 }}>
-            <Spin />
-          </div>
-        ) : !clusters || clusters.length === 0 ? (
-          <Empty description={t('overview.noClusters')} />
-        ) : (
-          <Row gutter={[16, 16]}>
-            {clusters.map((cluster) => (
-              <Col key={cluster.id} xs={24} sm={12} md={8} lg={6}>
-                <ClusterCard
-                  cluster={cluster}
-                  members={channelsByCluster.get(cluster.id) ?? []}
-                  t={t}
-                />
-              </Col>
-            ))}
-          </Row>
-        )}
+        <CircuitBreakerDashboard t={t} />
       </Card>
 
       {/* 转移事件流（10s 轮询，exhausted 行红色高亮） */}
@@ -267,7 +181,7 @@ function formatEventTime(ev: FailoverEvent): string {
  * 转移事件流表格
  *
  * <p>列：时间 / 转移路径（from→to 渠道）/ 原因（errorType Tag）/ 决策（L1 Tag）/
- * 是否共因跳过 / Trace。exhausted 行红色背景高亮，共因跳过行橙色 Tag 标记。</p>
+ * Trace。exhausted 行红色背景高亮。</p>
  */
 function FailoverEventTable({
   events,
@@ -341,22 +255,6 @@ function FailoverEventTable({
               </Tag>
             );
           },
-        },
-        {
-          // 是否共因跳过（Task 9 新增）：true 表示同域共因跳过转移
-          title: t('overview.eventColumns.commonCauseSkip'),
-          dataIndex: 'commonCauseSkip',
-          width: 110,
-          render: (commonCauseSkip?: boolean) =>
-            commonCauseSkip ? (
-              <Tooltip title={t('overview.commonCauseSkipHelp')}>
-                <Tag color="orange" style={{ margin: 0 }} icon={<WarningOutlined />}>
-                  {t('overview.commonCauseSkip')}
-                </Tag>
-              </Tooltip>
-            ) : (
-              <Text type="secondary">-</Text>
-            ),
         },
         {
           title: t('overview.eventColumns.trace'),

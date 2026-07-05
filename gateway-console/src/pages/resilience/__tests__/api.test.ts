@@ -1,8 +1,8 @@
 // 容灾 API 封装层单元测试
 //
-// 任务 4.11b：验证 resilienceApi 封装层对后端 4.11a 端点的调用契约：
-// - clusters CRUD：GET/POST /resilience/clusters、GET/PUT /resilience/clusters/{id}
+// 验证 resilienceApi 封装层对后端端点的调用契约：
 // - 熔断应急：force-open / force-close / state
+// - 转移事件流：events.list / events.exhausted
 //
 // 策略：mock @/services/api/client 的 api 对象，断言调用的 url/method/body 与后端契约一致。
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -24,34 +24,6 @@ import { api } from '@/services/api/client';
 
 beforeEach(() => {
   vi.clearAllMocks();
-});
-
-describe('resilienceApi.clusters', () => {
-  it('list 调用 GET /resilience/clusters', async () => {
-    (api.get as any).mockResolvedValue([]);
-    await resilienceApi.clusters.list();
-    expect(api.get).toHaveBeenCalledWith('/resilience/clusters');
-  });
-
-  it('getById 调用 GET /resilience/clusters/{id}', async () => {
-    (api.get as any).mockResolvedValue({});
-    await resilienceApi.clusters.getById(9);
-    expect(api.get).toHaveBeenCalledWith('/resilience/clusters/9');
-  });
-
-  it('create 调用 POST /resilience/clusters 带请求体', async () => {
-    (api.post as any).mockResolvedValue({});
-    const body = { code: 'openai-us', name: 'OpenAI美西', providerId: 1, description: '共因域' };
-    await resilienceApi.clusters.create(body);
-    expect(api.post).toHaveBeenCalledWith('/resilience/clusters', body);
-  });
-
-  it('update 调用 PUT /resilience/clusters/{id} 带请求体', async () => {
-    (api.put as any).mockResolvedValue({});
-    const body = { code: 'openai-sg', name: 'OpenAI新加坡', providerId: 1, description: '共因域' };
-    await resilienceApi.clusters.update(5, body);
-    expect(api.put).toHaveBeenCalledWith('/resilience/clusters/5', body);
-  });
 });
 
 describe('resilienceApi.circuitBreaker 应急操作', () => {
@@ -90,20 +62,18 @@ describe('resilienceApi.events 转移事件流', () => {
     expect(api.get).toHaveBeenCalledWith('/resilience/events', { params: {} });
   });
 
-  it('list 透传 since/applicationId/clusterId/limit 到 params', async () => {
+  it('list 透传 since/applicationId/limit 到 params', async () => {
     (api.get as any).mockResolvedValue([]);
     const sinceIso = '2026-06-22T00:00:00Z';
     await resilienceApi.events.list({
       since: sinceIso,
       applicationId: 7,
-      clusterId: 3,
       limit: 50,
     });
     expect(api.get).toHaveBeenCalledWith('/resilience/events', {
       params: {
         since: sinceIso,
         applicationId: 7,
-        clusterId: 3,
         limit: 50,
       },
     });

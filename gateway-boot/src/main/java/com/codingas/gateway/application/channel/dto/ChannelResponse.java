@@ -35,9 +35,6 @@ public class ChannelResponse {
 
     private String state;
 
-    /** 所属故障域 ID（可空：渠道未归属任何 cluster 时为 null，供容灾总览页成员渠道映射） */
-    private Long clusterId;
-
     private List<ChannelEndpointResponse> endpoints;
 
     private Instant createdAt;

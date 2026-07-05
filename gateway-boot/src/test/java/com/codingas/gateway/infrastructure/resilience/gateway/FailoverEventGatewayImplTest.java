@@ -29,10 +29,10 @@ import static org.mockito.Mockito.when;
  * FailoverEventGatewayImpl 单元测试
  *
  * <p>验证转移事件实体的持久化网关行为：save（DO↔Entity 转换，含 errorType/decision 枚举↔字符串互转、
- * exhausted 布尔、occurredAt 时间）、findRecent（since/applicationId/clusterId 过滤 + occurredAt 倒序）、
+ * exhausted 布尔、occurredAt 时间）、findRecent（since/applicationId 过滤 + occurredAt 倒序）、
  * findExhausted（exhausted=true 过滤）的委派逻辑。</p>
  *
- * <p>参照 {@link ClusterGatewayImplTest} 的 mock Repository 范式，不连 H2，
+ * <p>参照同类 Gateway 实现测试的 mock Repository 范式，不连 H2，
  * 聚焦 DO↔Entity 字段转换与查询参数委派。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -69,7 +69,6 @@ class FailoverEventGatewayImplTest {
             assertThat(result.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
             assertThat(result.getDecision()).isEqualTo(FailoverDecision.L1);
             assertThat(result.isExhausted()).isFalse();
-            assertThat(result.isCommonCauseSkip()).isFalse();
             assertThat(result.getOccurredAt()).isEqualTo(Instant.parse("2026-06-22T10:00:00Z"));
 
             // 验证 DO 转换：枚举转字符串、布尔透传、审计字段透传
@@ -83,7 +82,6 @@ class FailoverEventGatewayImplTest {
             assertThat(captured.getErrorType()).isEqualTo("AUTHENTICATION_ERROR");
             assertThat(captured.getDecision()).isEqualTo("L1");
             assertThat(captured.isExhausted()).isFalse();
-            assertThat(captured.isCommonCauseSkip()).isFalse();
             assertThat(captured.getOccurredAt()).isEqualTo(Instant.parse("2026-06-22T10:00:00Z"));
         }
 
@@ -142,23 +140,6 @@ class FailoverEventGatewayImplTest {
             // 未知 errorType 容错为 null，不抛 IllegalArgumentException
             assertThat(result.getErrorType()).isNull();
         }
-
-        @Test
-        @DisplayName("commonCauseSkip=true 正确回写 DO 并还原")
-        void save_commonCauseSkipTrue_convertsCorrectly() {
-            FailoverEvent entity = createTestEntity();
-            entity.setCommonCauseSkip(true);
-            FailoverEventDo savedDo = createTestDo();
-            savedDo.setCommonCauseSkip(true);
-            when(repository.save(any())).thenReturn(savedDo);
-
-            FailoverEvent result = gateway.save(entity);
-
-            ArgumentCaptor<FailoverEventDo> captor = ArgumentCaptor.forClass(FailoverEventDo.class);
-            verify(repository).save(captor.capture());
-            assertThat(captor.getValue().isCommonCauseSkip()).isTrue();
-            assertThat(result.isCommonCauseSkip()).isTrue();
-        }
     }
 
     @Nested
@@ -175,10 +156,10 @@ class FailoverEventGatewayImplTest {
             FailoverEventDo d2 = createTestDo();
             d2.setId(1L);
             d2.setOccurredAt(Instant.parse("2026-06-22T08:00:00Z"));
-            when(repository.findRecent(eq(since), eq(null), eq(null), any(Pageable.class)))
+            when(repository.findRecent(eq(since), eq(null), any(Pageable.class)))
                     .thenReturn(List.of(d1, d2));
 
-            List<FailoverEvent> result = gateway.findRecent(since, null, null, 100);
+            List<FailoverEvent> result = gateway.findRecent(since, null, 100);
 
             assertThat(result).hasSize(2);
             // Repository 已返回倒序，Gateway 仅做映射，顺序保持
@@ -188,7 +169,7 @@ class FailoverEventGatewayImplTest {
             assertThat(result.get(0).getDecision()).isEqualTo(FailoverDecision.L1);
             // 验证 limit 转为 Pageable
             ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
-            verify(repository).findRecent(eq(since), eq(null), eq(null), pageableCaptor.capture());
+            verify(repository).findRecent(eq(since), eq(null), pageableCaptor.capture());
             assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(100);
         }
 
@@ -196,42 +177,26 @@ class FailoverEventGatewayImplTest {
         @DisplayName("applicationId 过滤：透传给 Repository")
         void findRecent_byApplicationId_delegatesFilter() {
             FailoverEventDo d = createTestDo();
-            when(repository.findRecent(eq(null), eq(7L), eq(null), any(Pageable.class)))
+            when(repository.findRecent(eq(null), eq(7L), any(Pageable.class)))
                     .thenReturn(List.of(d));
 
-            List<FailoverEvent> result = gateway.findRecent(null, 7L, null, 50);
+            List<FailoverEvent> result = gateway.findRecent(null, 7L, 50);
 
             assertThat(result).hasSize(1);
-            verify(repository).findRecent(eq(null), eq(7L), eq(null), any(Pageable.class));
-        }
-
-        @Test
-        @DisplayName("clusterId 过滤：透传给 Repository（基于冗余 fromClusterId/toClusterId 匹配）")
-        void findRecent_byClusterId_delegatesFilter() {
-            FailoverEventDo d = createTestDo();
-            d.setFromClusterId(10L);
-            d.setToClusterId(10L);
-            when(repository.findRecent(eq(null), eq(null), eq(10L), any(Pageable.class)))
-                    .thenReturn(List.of(d));
-
-            List<FailoverEvent> result = gateway.findRecent(null, null, 10L, 100);
-
-            assertThat(result).hasSize(1);
-            assertThat(result.get(0).getFromClusterId()).isEqualTo(10L);
-            verify(repository).findRecent(eq(null), eq(null), eq(10L), any(Pageable.class));
+            verify(repository).findRecent(eq(null), eq(7L), any(Pageable.class));
         }
 
         @Test
         @DisplayName("全部参数为空：返回全量倒序（limit 截断）")
         void findRecent_allNull_delegatesWithNulls() {
             FailoverEventDo d = createTestDo();
-            when(repository.findRecent(eq(null), eq(null), eq(null), any(Pageable.class)))
+            when(repository.findRecent(eq(null), eq(null), any(Pageable.class)))
                     .thenReturn(List.of(d));
 
-            List<FailoverEvent> result = gateway.findRecent(null, null, null, 100);
+            List<FailoverEvent> result = gateway.findRecent(null, null, 100);
 
             assertThat(result).hasSize(1);
-            verify(repository).findRecent(eq(null), eq(null), eq(null), any(Pageable.class));
+            verify(repository).findRecent(eq(null), eq(null), any(Pageable.class));
         }
     }
 
@@ -286,12 +251,9 @@ class FailoverEventGatewayImplTest {
         d.setFromEndpointId(20L);
         d.setToChannelId(11L);
         d.setToEndpointId(21L);
-        d.setFromClusterId(null);
-        d.setToClusterId(null);
         d.setErrorType("AUTHENTICATION_ERROR");
         d.setDecision("L1");
         d.setExhausted(false);
-        d.setCommonCauseSkip(false);
         d.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
         return d;
     }
@@ -305,12 +267,9 @@ class FailoverEventGatewayImplTest {
         entity.setFromEndpointId(20L);
         entity.setToChannelId(11L);
         entity.setToEndpointId(21L);
-        entity.setFromClusterId(null);
-        entity.setToClusterId(null);
         entity.setErrorType(ProviderErrorType.AUTHENTICATION_ERROR);
         entity.setDecision(FailoverDecision.L1);
         entity.setExhausted(false);
-        entity.setCommonCauseSkip(false);
         entity.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
         return entity;
     }

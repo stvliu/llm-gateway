@@ -35,12 +35,6 @@ public class FailoverEventResponse {
     /** 转移目标候选的端点 ID（exhausted 时为 null） */
     private Long toEndpointId;
 
-    /** 冗余：失败候选所属故障域 ID（可空） */
-    private Long fromClusterId;
-
-    /** 冗余：转移目标所属故障域 ID（可空） */
-    private Long toClusterId;
-
     /** 触发转移的上游错误类型（枚举名） */
     private String errorType;
 
@@ -49,9 +43,6 @@ public class FailoverEventResponse {
 
     /** 是否候选全部耗尽 */
     private boolean exhausted;
-
-    /** 是否共因跳过（true=同域候选被跳过，false=真实失败转移） */
-    private boolean commonCauseSkip;
 
     /** 转移发生时间 */
     private Instant occurredAt;

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -59,13 +61,14 @@ class ApplicationTest {
             Application app = new Application(
                     "app-001", "测试应用", "描述",
                     ApplicationState.ACTIVE,
-                    30, 200L, 300L);
+                    30, FailureStrategy.FAIL_RETRY, 200L, 300L);
 
             assertThat(app.getCode()).isEqualTo("app-001");
             assertThat(app.getName()).isEqualTo("测试应用");
             assertThat(app.getDescription()).isEqualTo("描述");
             assertThat(app.getState()).isEqualTo(ApplicationState.ACTIVE);
             assertThat(app.getTimeout()).isEqualTo(30);
+            assertThat(app.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
             assertThat(app.getQuotaBudgetId()).isEqualTo(200L);
             assertThat(app.getDashboardId()).isEqualTo(300L);
         }

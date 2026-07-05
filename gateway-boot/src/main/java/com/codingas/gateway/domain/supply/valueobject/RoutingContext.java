@@ -1,5 +1,6 @@
 package com.codingas.gateway.domain.supply.valueobject;
 
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 
 /**
@@ -16,7 +17,8 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
  * @param needsProtocolAdaptation 是否需要协议适配
  * @param modelName               模型名称
  * @param upstreamModelName       上游模型名
- * @param clusterId               故障域 ID（Task 9：L1 共因跳过依据，由 RoutingResolver 从 Channel.clusterId 填充）
+ * @param failureStrategy         应用级失败处理策略（控制 ChannelFailoverInvoker L0/L1 行为；
+ *                                RoutingResolver 透传自 Application，避免每请求重复查 DB）
  */
 public record RoutingContext(
         Long channelId,
@@ -28,5 +30,5 @@ public record RoutingContext(
         boolean needsProtocolAdaptation,
         String modelName,
         String upstreamModelName,
-        Long clusterId
+        FailureStrategy failureStrategy
 ) {}

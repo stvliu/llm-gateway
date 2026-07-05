@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Modal, Form, Input, InputNumber } from 'antd';
+import { Modal, Form, Input, InputNumber, Select } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { App } from 'antd';
 import { useCreateApplication, useUpdateApplication } from '@/services/query/useApplications';
@@ -14,8 +14,9 @@ interface ApplicationFormModalProps {
 /**
  * 应用创建/编辑表单弹窗
  *
- * <p>承载应用聚合根可编辑字段：code（全局唯一）、name、description、timeout。
- * timeout=0 表示用渠道默认（承接原 ResilienceProfile.timeout，Task 8）。</p>
+ * <p>承载应用聚合根可编辑字段：code（全局唯一）、name、description、timeout、failureStrategy。
+ * timeout=0 表示用渠道默认（承接原 ResilienceProfile.timeout，Task 8）。
+ * failureStrategy 控制渠道故障时转移行为，默认 FAIL_RETRY（Task 10）。</p>
  */
 export default function ApplicationFormModal({ visible, application, onClose }: ApplicationFormModalProps) {
   const { t } = useTranslation('applications');
@@ -35,11 +36,12 @@ export default function ApplicationFormModal({ visible, application, onClose }: 
           name: application.name,
           description: application.description,
           timeout: application.timeout ?? 0,
+          failureStrategy: application.failureStrategy,
         });
       } else {
         form.resetFields();
-        // 新建默认 timeout=0（用渠道默认）
-        form.setFieldsValue({ timeout: 0 });
+        // 新建默认 timeout=0（用渠道默认），failureStrategy=FAIL_RETRY
+        form.setFieldsValue({ timeout: 0, failureStrategy: 'FAIL_RETRY' });
       }
     }
   }, [visible, application, form]);
@@ -93,6 +95,23 @@ export default function ApplicationFormModal({ visible, application, onClose }: 
           tooltip={t('application.timeoutHelp')}
         >
           <InputNumber min={0} style={{ width: '100%' }} placeholder="0" />
+        </Form.Item>
+        <Form.Item
+          name="failureStrategy"
+          label={t('application.failureStrategy')}
+          tooltip={t('application.failureStrategyHelp')}
+        >
+          <Select placeholder={t('application.failureStrategyPlaceholder')}>
+            <Select.Option value="FAIL_FAST">
+              {t('application.failureStrategyFailFast')}
+            </Select.Option>
+            <Select.Option value="FAIL_RETRY">
+              {t('application.failureStrategyFailRetry')}
+            </Select.Option>
+            <Select.Option value="FAIL_OVER">
+              {t('application.failureStrategyFailOver')}
+            </Select.Option>
+          </Select>
         </Form.Item>
       </Form>
     </Modal>

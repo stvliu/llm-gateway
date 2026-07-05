@@ -29,12 +29,9 @@ import java.time.Instant;
  *   <li>fromChannelId / fromEndpointId — 失败候选的渠道 ID 与端点 ID</li>
  *   <li>toChannelId / toEndpointId — 转移目标候选的渠道 ID 与端点 ID；
  *       已是最后一个候选（exhausted=true）时为 null</li>
- *   <li>fromClusterId / toClusterId — 冗余故障域 ID（可空，便于 findRecent 的 clusterId 过滤直接匹配，
- *       避免 join channels 表）。从 RoutingContext.clusterId 直取，渠道未关联 cluster 时为 null；clusterId 过滤已生效</li>
  *   <li>errorType — 触发转移的上游错误类型</li>
  *   <li>decision — 转移决策（L1 换渠道共因故障）</li>
  *   <li>exhausted — 是否候选全部耗尽（to 为 null 时为 true）</li>
- *   <li>commonCauseSkip — 是否共因跳过标记（默认 false，Task 9 填充判定逻辑）</li>
  *   <li>occurredAt — 转移发生时间（查询排序键，倒序）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
  * </ul>
@@ -63,12 +60,6 @@ public class FailoverEvent extends BaseEntity {
     /** 转移目标候选的端点 ID（exhausted 时为 null） */
     private Long toEndpointId;
 
-    /** 冗余：失败候选所属故障域 ID（可空，便于 clusterId 过滤） */
-    private Long fromClusterId;
-
-    /** 冗余：转移目标所属故障域 ID（可空，便于 clusterId 过滤） */
-    private Long toClusterId;
-
     /** 触发转移的上游错误类型 */
     private ProviderErrorType errorType;
 
@@ -77,9 +68,6 @@ public class FailoverEvent extends BaseEntity {
 
     /** 是否候选全部耗尽（to 为 null 时为 true） */
     private boolean exhausted;
-
-    /** 是否共因跳过标记（默认 false，Task 9 填充判定逻辑） */
-    private boolean commonCauseSkip;
 
     /** 转移发生时间（查询排序键，倒序） */
     private Instant occurredAt;

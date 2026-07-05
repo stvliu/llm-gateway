@@ -1,3 +1,6 @@
+/** 应用级失败处理策略（与后端 FailureStrategy 枚举一致） */
+export type FailureStrategy = 'FAIL_FAST' | 'FAIL_RETRY' | 'FAIL_OVER';
+
 /**
  * 应用信息（与后端 ApplicationResponse 一致）
  *
@@ -5,6 +8,9 @@
  *
  * <p>Task 8：resilienceProfileId 退场（ResilienceProfile 实体删除），
  * 改为应用级 timeout（承接原 ResilienceProfile.timeout，0 表示用渠道默认）。</p>
+ *
+ * <p>Task 10：新增应用级 failureStrategy，控制渠道故障时的转移行为
+ * （FAIL_FAST/FAIL_RETRY/FAIL_OVER，默认 FAIL_RETRY）。</p>
  */
 export interface Application {
   id: number;
@@ -18,6 +24,8 @@ export interface Application {
   state: string;
   /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
   timeout: number;
+  /** 应用级失败处理策略（FAIL_FAST/FAIL_RETRY/FAIL_OVER） */
+  failureStrategy: string;
   /** 配额预算 ID（预留） */
   quotaBudgetId?: number | null;
   /** 看板 ID（预留） */
@@ -33,6 +41,8 @@ export interface CreateApplicationRequest {
   description?: string;
   /** 请求超时秒数（0 表示用渠道默认） */
   timeout?: number;
+  /** 应用级失败处理策略（默认 FAIL_RETRY） */
+  failureStrategy?: FailureStrategy;
 }
 
 /** 更新应用请求 */

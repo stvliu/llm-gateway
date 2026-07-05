@@ -2,6 +2,7 @@ package com.codingas.gateway.infrastructure.application.gateway;
 
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.infrastructure.application.gateway.database.dataobject.ApplicationDo;
 import com.codingas.gateway.infrastructure.application.gateway.database.repository.ApplicationRepository;
@@ -62,6 +63,7 @@ public class ApplicationGatewayImpl implements ApplicationGateway {
         // 状态以字符串存储，读取时还原为枚举
         entity.setState(d.getState() != null ? ApplicationState.valueOf(d.getState()) : null);
         entity.setTimeout(d.getTimeout());
+        entity.setFailureStrategy(d.getFailureStrategy());
         entity.setQuotaBudgetId(d.getQuotaBudgetId());
         entity.setDashboardId(d.getDashboardId());
         entity.setCreatedBy(d.getCreatedBy());
@@ -80,6 +82,8 @@ public class ApplicationGatewayImpl implements ApplicationGateway {
         // 状态缺省 ACTIVE，保证 NOT NULL 约束
         d.setState(entity.getState() != null ? entity.getState().name() : ApplicationState.ACTIVE.name());
         d.setTimeout(entity.getTimeout());
+        // failureStrategy 缺省 FAIL_RETRY，保证 NOT NULL 约束
+        d.setFailureStrategy(entity.getFailureStrategy() != null ? entity.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
         d.setQuotaBudgetId(entity.getQuotaBudgetId());
         d.setDashboardId(entity.getDashboardId());
         d.setCreatedBy(entity.getCreatedBy());

@@ -14,9 +14,9 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,9 +59,8 @@ import static org.mockito.Mockito.when;
  * <p>Task 4 适配：L2 模型降级层已删除，invoke/invokeStream 签名移除 profile 参数，候选耗尽直接抛
  * 最后异常，不再进入 L2 降级。</p>
  *
- * <p>Task 5 适配：DomainHealth 域级聚合路由器（ClusterHealthAggregator + ClusterAffinityRouter）
- * 已删除，RouterChain 收敛为端点级健康过滤。本测试移除域级聚合/亲和路由端到端用例，
- * 新增 RouterChain 组成断言验证域级聚合路由器已不在责任链中。</p>
+ * <p>Task 5 适配：DomainHealth 域级聚合路由器已删除，RouterChain 收敛为端点级健康过滤。
+ * 本测试移除域级聚合端到端用例，新增 RouterChain 组成断言验证责任链顺序。</p>
  *
  * <p>参考 {@link FullContextIntegrationTest} 的 KeyFailoverTests 模式：继承基类借用上下文，
  * 测试内手动构造真实 invoker。</p>
@@ -82,10 +81,13 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     @BeforeEach
     void setUpFailoverFixture() {
         // 构造两个候选渠道上下文（按 priority 升序，ctx1 优先）
+        // Task 7：期望换渠道的场景用 FAIL_OVER（FAIL_RETRY 不换渠道；NONE 决策在三种策略下都直接抛）
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_OVER);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_OVER);
 
         // mock 协议请求：仅需要 getModel 返回固定模型名（L2 降级读取）
         request = mock(ProtocolRequest.class);
@@ -163,36 +165,44 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("9.7 端到端：故障域级共因故障 → L1 跳过同域 → 跨域转移成功")
-        void e2e_commonCauseFailure_skipsSameCluster_transfersAcrossCluster() {
-            // 构造：ch1(cluster=100) + ch2(cluster=100, 同域) + ch3(cluster=200, 异域)
+        @DisplayName("9.7 端到端：共因故障不再跳过同域 → 按顺序试所有候选 → 全部耗尽抛最后异常")
+        void e2e_commonCauseFailure_triesAllCandidatesInOrder_exhaustsAndThrowsLast() {
+            // 构造：ch1 + ch2 + ch3 三个候选
+            // Task 2 变更：删除共因跳过，所有候选按 priority 顺序逐个试，全部耗尽抛最后异常
+            // Task 7：期望逐个试所有候选，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道只试首候选）
             RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
+                    Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_OVER);
             RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
+                    Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_OVER);
             RoutingContext ch3 = new RoutingContext(12L, 22L, "https://ch3.example.com/v1",
-                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
+                    Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null,
+                    FailureStrategy.FAIL_OVER);
 
-            // ch1 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 标记 cluster=100
-            ProviderException authEx = new ProviderException(
+            // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
+            ProviderException ch1Ex = new ProviderException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch1 认证失败");
+            ProviderException ch2Ex = new ProviderException(
+                    ProviderErrorType.AUTHENTICATION_ERROR, "ch2 认证失败");
+            ProviderException ch3Ex = new ProviderException(
+                    ProviderErrorType.AUTHENTICATION_ERROR, "ch3 认证失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
-            when(keyFailover.invoke(ch1, request)).thenThrow(authEx);
-            // ch2 同 cluster=100 → 被跳过（keyFailover.invoke 不应被调用）
-            // ch3 cluster=200 异域 → 被试，成功
-            ProtocolResponse successResponse = mock(ProtocolResponse.class);
-            when(keyFailover.invoke(ch3, request)).thenReturn(successResponse);
+            when(keyFailover.invoke(ch1, request)).thenThrow(ch1Ex);
+            when(keyFailover.invoke(ch2, request)).thenThrow(ch2Ex);
+            when(keyFailover.invoke(ch3, request)).thenThrow(ch3Ex);
 
             ChannelFailoverInvoker invoker = newRealInvoker(keyFailover);
 
-            ProtocolResponse result = invoker.invoke(ch1, List.of(ch1, ch2, ch3),
-                    request, Protocol.OPENAI, 7L, "test-trace-id");
+            // 断言：所有候选按顺序逐个试，全部耗尽后抛最后捕获的异常（ch3 的异常）
+            assertThatThrownBy(() -> invoker.invoke(ch1, List.of(ch1, ch2, ch3),
+                    request, Protocol.OPENAI, 7L, "test-trace-id"))
+                    .isSameAs(ch3Ex);
 
-            // 断言：跨域转移成功，返回 ch3 的响应
-            assertThat(result).isSameAs(successResponse);
+            // 断言：三个候选都被试过（Task 2 删除共因跳过，同域候选 ch2 也被试）
             verify(keyFailover).invoke(ch1, request);
-            verify(keyFailover, never()).invoke(ch2, request);  // 同域共因跳过
-            verify(keyFailover).invoke(ch3, request);  // 异域候选被试
+            verify(keyFailover).invoke(ch2, request);  // 同域候选不再跳过
+            verify(keyFailover).invoke(ch3, request);  // 异域候选也被试
         }
     }
 
@@ -255,35 +265,22 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         }
     }
 
-    // ==================== 跨 Cluster 不越权（P2 占位） ====================
-
-    @Test
-    @DisplayName("跨 Cluster 不越权：P2 Cluster 落地后补充")
-    @Disabled("P2 Cluster 体系落地后补充：验证 L1 转移不跨越 Cluster 边界，避免越权访问其他租户/集群的渠道")
-    void crossCluster_isolation_placeholder() {
-        // TODO P2：Cluster 体系落地后，构造同 Cluster 多候选 + 跨 Cluster 候选，
-        // 验证 L1 转移仅在同 Cluster 内进行，不越权访问其他 Cluster 的渠道。
-        // 当前 P1 阶段无 Cluster 概念，无法验证此场景，先占位。
-    }
-
-    // ==================== RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5） ====================
+    // ==================== RouterChain 组成验证 ====================
 
     /** 真实路由器责任链 bean（Spring 装配，按 @Order 自动收集所有 Router） */
     @Autowired
     private RouterChain realRouterChain;
 
     @Nested
-    @DisplayName("RouterChain 组成（DomainHealth 域级聚合移除验证，Task 5）")
+    @DisplayName("RouterChain 组成验证")
     class RouterChainCompositionTests {
 
         @Test
-        @DisplayName("RouterChain 不含域级聚合路由器 ClusterAffinityRouter（DomainHealth 已移除）")
-        void routerChain_excludesDomainHealthAggregator() throws Exception {
+        @DisplayName("RouterChain 按预期顺序组成：Permission → Health → Priority → LoadBalance")
+        void routerChain_composedByExpectedOrder() throws Exception {
             // 读取 RouterChain 已按 @Order 排序的责任链路由器类名
             List<String> routerNames = readRouterClassNames(realRouterChain);
 
-            // DomainHealth 域级聚合路由器已删除，责任链不应再包含它
-            assertThat(routerNames).doesNotContain("ClusterAffinityRouter");
             // 保留路由器按 @Order 升序保持：Permission → EndpointHealth(Health) → Priority → LoadBalance
             assertThat(routerNames)
                     .containsSubsequence("PermissionRouter", "HealthRouter", "PriorityRouter", "LoadBalanceRouter");

@@ -35,8 +35,8 @@ public class ResilienceEventServiceImpl implements ResilienceEventService {
     private final FailoverEventGateway failoverEventGateway;
 
     @Override
-    public List<FailoverEventResponse> findRecent(Instant since, Long applicationId, Long clusterId, int limit) {
-        return failoverEventGateway.findRecent(since, applicationId, clusterId, limit).stream()
+    public List<FailoverEventResponse> findRecent(Instant since, Long applicationId, int limit) {
+        return failoverEventGateway.findRecent(since, applicationId, limit).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -62,12 +62,9 @@ public class ResilienceEventServiceImpl implements ResilienceEventService {
         response.setFromEndpointId(event.getFromEndpointId());
         response.setToChannelId(event.getToChannelId());
         response.setToEndpointId(event.getToEndpointId());
-        response.setFromClusterId(event.getFromClusterId());
-        response.setToClusterId(event.getToClusterId());
         response.setErrorType(event.getErrorType() != null ? event.getErrorType().name() : null);
         response.setDecision(event.getDecision() != null ? event.getDecision().name() : null);
         response.setExhausted(event.isExhausted());
-        response.setCommonCauseSkip(event.isCommonCauseSkip());
         response.setOccurredAt(event.getOccurredAt());
         return response;
     }

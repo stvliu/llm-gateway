@@ -89,13 +89,13 @@ class ResilienceEventServiceImplTest {
     @Test
     @DisplayName("findRecent since 为 null 时透传 null（转移事件流支持回溯历史，不补默认窗口）")
     void findRecent_nullSince_delegatesNull() {
-        when(failoverEventGateway.findRecent(any(), any(), any(), anyInt()))
+        when(failoverEventGateway.findRecent(any(), any(), anyInt()))
                 .thenReturn(List.of());
 
-        service.findRecent(null, null, null, 100);
+        service.findRecent(null, null, 100);
 
         ArgumentCaptor<Instant> sinceCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(failoverEventGateway).findRecent(sinceCaptor.capture(), any(), any(), anyInt());
+        verify(failoverEventGateway).findRecent(sinceCaptor.capture(), any(), anyInt());
         assertThat(sinceCaptor.getValue()).isNull();
     }
 
@@ -114,23 +114,6 @@ class ResilienceEventServiceImplTest {
         assertThat(resp.isExhausted()).isTrue();
         assertThat(resp.getErrorType()).isEqualTo("AUTHENTICATION_ERROR");
         assertThat(resp.getDecision()).isEqualTo("L1");
-    }
-
-    @Test
-    @DisplayName("toResponse 透传 commonCauseSkip（共因跳过标记闭环到前端展示）")
-    void toResponse_mapsCommonCauseSkip() {
-        // spec L119：转移事件字段含 commonCauseSkip，需闭环到 Response DTO 供前端容灾总览页展示
-        FailoverEvent entity = buildExhaustedEvent();
-        entity.setCommonCauseSkip(true);
-        when(failoverEventGateway.findExhausted(any(), anyInt()))
-                .thenReturn(List.of(entity));
-
-        List<FailoverEventResponse> result = service.findExhausted(null, 50);
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).isCommonCauseSkip())
-                .as("commonCauseSkip 应从实体透传到响应 DTO（前端容灾总览页共因跳过列）")
-                .isTrue();
     }
 
     private FailoverEvent buildExhaustedEvent() {

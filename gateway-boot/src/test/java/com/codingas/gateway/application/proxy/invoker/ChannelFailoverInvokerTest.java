@@ -17,6 +17,7 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -37,8 +38,6 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -82,9 +81,11 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, outboundTuner, protocolConverter);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_OVER);
         ctx2 = new RoutingContext(11L, 21L, "https://ch2.example.com/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_OVER);
 
         request = mock(ProtocolRequest.class);
         lenient().when(request.getModel()).thenReturn("gpt-4o");
@@ -240,103 +241,6 @@ class ChannelFailoverInvokerTest {
         verify(keyFailoverInvoker, never()).invokeStream(eq(ctx2), eq(request), any(StreamCallback.class));
         // 首字节已转发给原 callback（包装 callback 透传）
         verify(callback).onChunk("first-byte-data");
-    }
-
-    // ==================== clusterId 直取（Task 9：从 RoutingContext 直取，删 ChannelGateway 反查） ====================
-
-    @Test
-    @DisplayName("转移事件 clusterId 直取：L1 转移发布事件的 fromClusterId/toClusterId 由 RoutingContext.clusterId 直取（非 null）")
-    void failover_eventClusterId_populatedFromRoutingContext() {
-        // 场景：ch1(channelId=10, clusterId=100) AUTH 共因失败 → L1 → 换 ch2(channelId=11, clusterId=200) 成功
-        // Task 9：clusterId 从 RoutingContext 直取（不再经 ChannelGateway 反查）
-        RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 200L);
-
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        when(keyFailoverInvoker.invoke(ch1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ch2, request)).thenReturn(successResponse);
-
-        invoker.invoke(ch1, List.of(ch1, ch2),
-                request, Protocol.OPENAI, 7L, "test-trace-id");
-
-        // 断言：事件 fromClusterId/toClusterId 由 RoutingContext.clusterId 直取，非 null
-        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
-        verify(eventPublisher).publish(captor.capture());
-        FailoverOccurredEvent event = captor.getValue();
-        assertThat(event.fromClusterId())
-                .as("fromClusterId 应由 RoutingContext.clusterId 直取（100）")
-                .isEqualTo(100L);
-        assertThat(event.toClusterId())
-                .as("toClusterId 应由 RoutingContext.clusterId 直取（200）")
-                .isEqualTo(200L);
-        assertThat(event.commonCauseSkip())
-                .as("真实 L1 失败转移 commonCauseSkip=false")
-                .isFalse();
-    }
-
-    @Test
-    @DisplayName("转移事件 clusterId 直取：耗尽场景 toChannelId 为 null 时 toClusterId 也为 null")
-    void failover_exhaustedEvent_toClusterIdNullWhenNoTarget() {
-        // 场景：ch1(channelId=10, clusterId=100) 失败 → L1 → 无下一候选（exhausted=true, toChannelId=null）
-        // 期望：fromClusterId=100（直取），toClusterId=null（无目标候选）
-        RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        when(keyFailoverInvoker.invoke(ch1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-
-        // 单候选耗尽 → exhausted=true, toChannelId=null，直接抛最后异常
-        assertThatThrownBy(() -> invoker.invoke(ch1, List.of(ch1),
-                request, Protocol.OPENAI, 7L, "test-trace-id"))
-                .isSameAs(authEx);
-
-        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
-        verify(eventPublisher).publish(captor.capture());
-        FailoverOccurredEvent event = captor.getValue();
-        assertThat(event.fromClusterId()).isEqualTo(100L);
-        assertThat(event.toChannelId()).isNull();
-        assertThat(event.toClusterId())
-                .as("无目标候选时 toClusterId 应为 null")
-                .isNull();
-        assertThat(event.exhausted()).isTrue();
-    }
-
-    @Test
-    @DisplayName("转移事件 clusterId 直取：RoutingContext.clusterId 为 null 时事件 clusterId 也为 null（不阻塞发布）")
-    void failover_clusterIdNullInContext_eventClusterIdNull() {
-        // 场景：ch1(channelId=10, clusterId=null) 失败 → L1 → 换 ch2(clusterId=null) 成功
-        // 期望：clusterId 直取为 null，事件仍正常发布（无 channelGateway 反查，不抛 NPE）
-        RoutingContext ch1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, null);
-        RoutingContext ch2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, null);
-
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
-        when(keyFailoverInvoker.invoke(ch1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ch2, request)).thenReturn(successResponse);
-
-        invoker.invoke(ch1, List.of(ch1, ch2),
-                request, Protocol.OPENAI, 7L, "test-trace-id");
-
-        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
-        verify(eventPublisher).publish(captor.capture());
-        FailoverOccurredEvent event = captor.getValue();
-        // clusterId 直取为 null，事件仍发布
-        assertThat(event.fromClusterId()).isNull();
-        assertThat(event.toClusterId()).isNull();
     }
 
     // ==================== 转移事件发布（Task 4.11c） ====================
@@ -570,10 +474,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, protocolConverter);
 
         // 两候选 upstreamModelName 不同；主候选失败，备候选成功（同协议，聚焦模型名替换）
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext primaryCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-upstream-model", null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-upstream-model",
+                FailureStrategy.FAIL_OVER);
         RoutingContext backupCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-upstream-model", null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-upstream-model",
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -618,10 +525,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model", null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model",
+                FailureStrategy.FAIL_OVER);
         RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model", null);
+                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model",
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -670,7 +580,8 @@ class ChannelFailoverInvokerTest {
 
         // inbound=OPENAI；候选为 Anthropic 上游（跨协议）
         RoutingContext anthropicCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model", null);
+                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model",
+                FailureStrategy.FAIL_RETRY);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -709,10 +620,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 Anthropic 上游（跨协议）失败，备候选 OpenAI 上游（同协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext anthropicCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model", null);
+                Protocol.ANTHROPIC, "sk-1", 60, true, "gpt-4o", "ch1-model",
+                FailureStrategy.FAIL_OVER);
         RoutingContext openaiCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-model", null);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", "ch2-model",
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -754,10 +668,13 @@ class ChannelFailoverInvokerTest {
                 eventPublisher, realTuner, realConverter);
 
         // inbound=OPENAI；主候选 OpenAI 上游（同协议）失败，备候选 Anthropic 上游（跨协议）成功
+        // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
         RoutingContext openaiCtx = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model", null);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", "ch1-model",
+                FailureStrategy.FAIL_OVER);
         RoutingContext anthropicCtx = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model", null);
+                Protocol.ANTHROPIC, "sk-2", 60, true, "gpt-4o", "ch2-model",
+                FailureStrategy.FAIL_OVER);
 
         OpenAIChatRequest original = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -794,109 +711,18 @@ class ChannelFailoverInvokerTest {
                 .doesNotContain("content_block_delta");
     }
 
-    // ==================== L1 clusterId 共因跳过（Task 9） ====================
+    // ==================== NONE 决策不转移 ====================
 
     @Test
-    @DisplayName("9.1 共因跳过：同 clusterId 共因失败时跳过同域候选试异域候选")
-    void commonCauseSkip_sameCluster_skipsSameClusterCandidate() {
-        // 构造：ctx1(cluster=100) + ctx2(cluster=100, 同域) + ctx3(cluster=200, 异域)
+    @DisplayName("9.3 非共因失败(NONE)不转移：INVALID_REQUEST 直接抛不试下一候选不发事件")
+    void noneDecision_doesNotFailoverOrPublishEvent() {
+        // ctx1 INVALID_REQUEST → NONE → 直接抛，不试 ctx2，不发事件
         RoutingContext ctx1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
+                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_RETRY);
         RoutingContext ctx2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx3 = new RoutingContext(12L, 22L, "https://ch3/v1",
-                Protocol.OPENAI, "sk-3", 60, false, "gpt-4o", null, 200L);
-
-        // ctx1 AUTH 共因失败 → L1 → 标记 cluster=100
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "ch1 auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-
-        // ctx2 同 cluster=100 → 应被跳过（keyFailoverInvoker.invoke 不应被调用，不设桩）
-        // RED 阶段共因跳过未实现时 ctx2 会被调用返回 null → result=null≠successResponse 断言失败
-        // GREEN 阶段 ctx2 被共因跳过，不调用（不设桩避免 Mockito strict stubs 误报 UnnecessaryStubbing）
-
-        // ctx3 cluster=200 异域 → 应被试，返回成功
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ctx3, request)).thenReturn(successResponse);
-
-        ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2, ctx3),
-                request, Protocol.OPENAI, 7L, "test-trace-id");
-
-        // 断言：返回异域候选 ctx3 的响应（共因跳过同域 ctx2）
-        assertThat(result).isSameAs(successResponse);
-        // ctx1 被试（真实失败）
-        verify(keyFailoverInvoker).invoke(ctx1, request);
-        // ctx2 被跳过（同 cluster 共因，不调用）
-        verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        // ctx3 被试（异域候选）
-        verify(keyFailoverInvoker).invoke(ctx3, request);
-
-        // 断言转移事件：ctx1→ctx2 真实失败(commonCauseSkip=false) + ctx2→ctx3 共因跳过(commonCauseSkip=true)
-        ArgumentCaptor<FailoverOccurredEvent> captor = ArgumentCaptor.forClass(FailoverOccurredEvent.class);
-        verify(eventPublisher, times(2)).publish(captor.capture());
-        java.util.List<FailoverOccurredEvent> events = captor.getAllValues();
-        // 第1条：ctx1 真实 L1 失败 → 转移到 ctx2
-        assertThat(events.get(0).fromChannelId()).isEqualTo(10L);
-        assertThat(events.get(0).toChannelId()).isEqualTo(11L);
-        assertThat(events.get(0).fromClusterId()).isEqualTo(100L);
-        assertThat(events.get(0).toClusterId()).isEqualTo(100L);
-        assertThat(events.get(0).commonCauseSkip()).isFalse();
-        // 第2条：ctx2 共因跳过 → 转移到 ctx3
-        assertThat(events.get(1).fromChannelId()).isEqualTo(11L);
-        assertThat(events.get(1).toChannelId()).isEqualTo(12L);
-        assertThat(events.get(1).fromClusterId()).isEqualTo(100L);
-        assertThat(events.get(1).toClusterId()).isEqualTo(200L);
-        assertThat(events.get(1).commonCauseSkip()).isTrue();
-    }
-
-    @Test
-    @DisplayName("9.2 共因跳过标记仅本次请求有效：下次请求同 cluster 候选不被跳过（局部 Set 无持久化）")
-    void commonCauseSkip_notInheritedAcrossRequests() {
-        // ctx1(cluster=100) + ctx2(cluster=100, 同域)
-        RoutingContext ctx1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
-
-        // 第一次请求：ctx1(cluster=100) AUTH 失败 → L1 → 标记 cluster=100 → ctx2(cluster=100) 跳过 → 耗尽抛
-        ProviderException authEx = new ProviderException(
-                ProviderErrorType.AUTHENTICATION_ERROR, "ch1 auth fail");
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
-        when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
-                .thenReturn(FailoverDecision.L1);
-
-        assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, "trace-1"))
-                .isSameAs(authEx);
-        // 第一次：ctx2 被跳过（同 cluster 共因）
-        verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-
-        // 第二次请求（同一 invoker 实例）：共因标记不应继承
-        // ctx1(cluster=100) 这次成功 —— 若标记继承，ctx1 会被跳过（试 ctx2 未 mock 成功→失败）
-        // 若标记不继承（新 Set），ctx1 被试并成功返回
-        reset(keyFailoverInvoker);
-        ProtocolResponse successResponse = mock(ProtocolResponse.class);
-        when(keyFailoverInvoker.invoke(ctx1, request)).thenReturn(successResponse);
-
-        ProtocolResponse result = invoker.invoke(ctx1, List.of(ctx1, ctx2),
-                request, Protocol.OPENAI, 7L, "trace-2");
-
-        // 断言：ctx1 被试并成功（共因标记未继承，第二次是新 Set）
-        assertThat(result).isSameAs(successResponse);
-        verify(keyFailoverInvoker).invoke(ctx1, request);
-    }
-
-    @Test
-    @DisplayName("9.3 非共因失败(NONE)不触发共因跳过：INVALID_REQUEST 直接抛不标记不发事件")
-    void commonCauseSkip_noneDecision_doesNotMarkCluster() {
-        // ctx1(cluster=100) INVALID_REQUEST → NONE → 直接抛，不标记 cluster=100
-        RoutingContext ctx1 = new RoutingContext(10L, 20L, "https://ch1/v1",
-                Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null, 100L);
-        RoutingContext ctx2 = new RoutingContext(11L, 21L, "https://ch2/v1",
-                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null, 100L);
+                Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
+                FailureStrategy.FAIL_RETRY);
 
         ProviderException invalidEx = new ProviderException(
                 ProviderErrorType.INVALID_REQUEST, "bad request");
@@ -904,13 +730,13 @@ class ChannelFailoverInvokerTest {
         when(errorClassifier.classify(ProviderErrorType.INVALID_REQUEST))
                 .thenReturn(FailoverDecision.NONE);
 
-        // INVALID_REQUEST → NONE → 直接抛，不试 ctx2，不标记，不发事件
+        // INVALID_REQUEST → NONE → 直接抛，不试 ctx2，不发事件
         assertThatThrownBy(() -> invoker.invoke(ctx1, List.of(ctx1, ctx2),
                 request, Protocol.OPENAI, 7L, "test-trace-id"))
                 .isSameAs(invalidEx);
 
         verify(keyFailoverInvoker, never()).invoke(ctx2, request);
-        // NONE 不发布任何转移事件（含共因跳过事件）
+        // NONE 不发布任何转移事件
         verify(eventPublisher, never()).publish(any());
     }
 }

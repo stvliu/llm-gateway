@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * 转移事件查询应用服务接口
  *
- * <p>提供容灾可观测性查询能力（读侧重）：转移事件流查询（分页 + since/applicationId/clusterId 过滤）
+ * <p>提供容灾可观测性查询能力（读侧重）：转移事件流查询（分页 + since/applicationId 过滤）
  * 与耗尽告警查询。委托 {@link com.codingas.gateway.domain.resilience.gateway.FailoverEventGateway}。</p>
  *
  * <p>设计见 design doc D12：容灾总览页 10s 轮询渲染转移事件流 + 耗尽告警。</p>
@@ -20,11 +20,10 @@ public interface ResilienceEventService {
      *
      * @param since         起始时间过滤（可空）
      * @param applicationId 应用 ID 过滤（可空）
-     * @param clusterId     故障域 ID 过滤（可空）
      * @param limit         返回条数上限
      * @return 转移事件响应列表（按 occurredAt 倒序）
      */
-    List<FailoverEventResponse> findRecent(Instant since, Long applicationId, Long clusterId, int limit);
+    List<FailoverEventResponse> findRecent(Instant since, Long applicationId, int limit);
 
     /**
      * 查询耗尽告警事件（exhausted=true，按 occurredAt 倒序）

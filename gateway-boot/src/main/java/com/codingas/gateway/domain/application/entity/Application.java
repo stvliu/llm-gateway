@@ -2,6 +2,7 @@ package com.codingas.gateway.domain.application.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
+import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,9 @@ import lombok.NoArgsConstructor;
  * <p>Task 8：{@code resilienceProfileId} 退场（ResilienceProfile 实体删除），
  * {@code timeout} 直接挂 Application 字段，承接原 ResilienceProfile.timeout 语义。</p>
  *
+ * <p>Task 5：新增 {@code failureStrategy} 字段（FAIL_FAST/FAIL_RETRY/FAIL_OVER），
+ * 默认 FAIL_RETRY，承接原 ResilienceProfile 的失败处理策略语义。</p>
+ *
  * <p>字段说明：</p>
  * <ul>
  *   <li>code — 应用编码，全局唯一</li>
@@ -25,6 +29,7 @@ import lombok.NoArgsConstructor;
  *   <li>description — 应用描述</li>
  *   <li>state — 应用生命周期状态，控制是否可路由</li>
  *   <li>timeout — 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout）</li>
+ *   <li>failureStrategy — 应用级失败处理策略（默认 FAIL_RETRY）</li>
  *   <li>quotaBudgetId — 配额预算 ID（预留，后续任务填充）</li>
  *   <li>dashboardId — 看板 ID（预留，后续任务填充）</li>
  *   <li>id, createdBy, createdAt, updatedBy, updatedAt — 主键与审计字段，继承自 {@link BaseEntity}</li>
@@ -51,6 +56,9 @@ public class Application extends BaseEntity {
     /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
     private int timeout;
 
+    /** 应用级失败处理策略（默认 FAIL_RETRY） */
+    private FailureStrategy failureStrategy;
+
     /** 配额预算 ID（预留） */
     private Long quotaBudgetId;
 
@@ -63,21 +71,24 @@ public class Application extends BaseEntity {
      * <p>仅初始化业务字段，主键 id 与审计字段（createdBy/createdAt/updatedBy/updatedAt）
      * 继承自 {@link BaseEntity}，由基础设施层在持久化时填充。</p>
      *
-     * @param code          应用编码
-     * @param name          应用名称
-     * @param description   应用描述
-     * @param state         应用生命周期状态
-     * @param timeout       请求超时秒数（0 表示用渠道默认）
-     * @param quotaBudgetId 配额预算 ID
-     * @param dashboardId   看板 ID
+     * @param code            应用编码
+     * @param name            应用名称
+     * @param description     应用描述
+     * @param state           应用生命周期状态
+     * @param timeout         请求超时秒数（0 表示用渠道默认）
+     * @param failureStrategy 应用级失败处理策略（默认 FAIL_RETRY）
+     * @param quotaBudgetId   配额预算 ID
+     * @param dashboardId     看板 ID
      */
     public Application(String code, String name, String description, ApplicationState state,
-                       int timeout, Long quotaBudgetId, Long dashboardId) {
+                       int timeout, FailureStrategy failureStrategy,
+                       Long quotaBudgetId, Long dashboardId) {
         this.code = code;
         this.name = name;
         this.description = description;
         this.state = state;
         this.timeout = timeout;
+        this.failureStrategy = failureStrategy;
         this.quotaBudgetId = quotaBudgetId;
         this.dashboardId = dashboardId;
     }

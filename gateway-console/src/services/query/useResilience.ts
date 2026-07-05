@@ -2,27 +2,19 @@
  * 容灾管理 React Query hooks
  *
  * <p>遵循 useApplications 既有模式：queryKey 分层 + mutation 后 invalidate 列表。
- * 覆盖故障域 CRUD 与渠道端点熔断应急操作（force-open / force-close）。</p>
+ * 覆盖渠道端点熔断应急操作（force-open / force-close）与转移事件流轮询。</p>
  *
  * <p>已退场（本 change 删除）：容灾画像 hooks（ResilienceProfile 退场）、
- * useSwitchCluster（紧切域，域级亲和路由删除）。</p>
+ * useSwitchCluster（紧切域，域级亲和路由删除）、
+ * 故障域 hooks（Cluster 退场，应用级失败策略替代）。</p>
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { resilienceApi } from '@/pages/resilience/api';
 import { channelKeys } from '@/services/query/useChannels';
 import type {
-  ClusterRequest,
   FailoverEventQuery,
   ExhaustedEventQuery,
 } from '@/types/resilience';
-
-/** 故障域 Query Keys */
-export const clusterKeys = {
-  all: ['resilience-clusters'] as const,
-  lists: () => [...clusterKeys.all, 'list'] as const,
-  details: () => [...clusterKeys.all, 'detail'] as const,
-  detail: (id: number) => [...clusterKeys.details(), id] as const,
-};
 
 /** 转移事件流 Query Keys */
 export const failoverEventKeys = {
@@ -37,48 +29,6 @@ export const failoverEventKeys = {
 
 /** 转移事件流 10s 轮询间隔（容灾可观测性，回答「现在稳不稳」） */
 const FAILOVER_EVENT_REFETCH_INTERVAL = 10_000;
-
-// ============ 故障域 ============
-
-/** 故障域列表 */
-export function useClusters() {
-  return useQuery({
-    queryKey: clusterKeys.lists(),
-    queryFn: () => resilienceApi.clusters.list(),
-  });
-}
-
-/** 故障域详情 */
-export function useCluster(id: number) {
-  return useQuery({
-    queryKey: clusterKeys.detail(id),
-    queryFn: () => resilienceApi.clusters.getById(id),
-    enabled: !!id,
-  });
-}
-
-/** 创建故障域 */
-export function useCreateCluster() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (data: ClusterRequest) => resilienceApi.clusters.create(data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: clusterKeys.lists() });
-    },
-  });
-}
-
-/** 更新故障域 */
-export function useUpdateCluster() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: ClusterRequest }) =>
-      resilienceApi.clusters.update(id, data),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: clusterKeys.lists() });
-    },
-  });
-}
 
 // ============ 渠道应急操作 ============
 
@@ -124,7 +74,7 @@ export function useCircuitBreakerState(channelId: number, endpointId: number) {
  * <p>容灾总览页轮询渲染转移事件流，10s 自动刷新，回答「最近发生了什么转移」。
  * enabled=false 时暂停轮询（如切到其他 Tab）。</p>
  *
- * @param params 查询参数（since/applicationId/clusterId/limit），可不传
+ * @param params 查询参数（since/applicationId/limit），可不传
  * @param options.enabled 是否启用查询（默认 true）
  */
 export function useFailoverEvents(

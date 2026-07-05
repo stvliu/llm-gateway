@@ -1,8 +1,8 @@
 // 容灾转移事件流 React Query hooks 单元测试
 //
-// 任务 4.11c：验证 useFailoverEvents / useExhaustedEvents hooks：
+// 验证 useFailoverEvents / useExhaustedEvents hooks：
 // - 调用 resilienceApi.events.list / exhausted 拉取数据
-// - 透传查询参数（applicationId/clusterId/limit/since）
+// - 透传查询参数（applicationId/limit/since）
 // - 10s 轮询（refetchInterval=10000）
 // - 返回 data 正确解包
 //
@@ -63,12 +63,11 @@ describe('useFailoverEvents', () => {
     expect(result.current.data).toEqual(events);
   });
 
-  it('透传 applicationId/clusterId/limit/since 查询参数', async () => {
+  it('透传 applicationId/limit/since 查询参数', async () => {
     (resilienceApi.events.list as any).mockResolvedValue([]);
     const params = {
       since: '2026-06-22T00:00:00Z',
       applicationId: 7,
-      clusterId: 3,
       limit: 50,
     };
 

@@ -7,16 +7,13 @@
   "overview": {
     "title": "容灾总览",
     "subtitle": "回答「现在稳不稳」，只读不配置",
-    "clusterTopology": "故障域拓扑",
-    "clusterTopologyHelp": "Cluster 卡片视图，按跨供应商故障独立性分组展示成员渠道",
     "exhaustionAlert": "耗尽告警",
     "exhaustionAlertHelp": "某模型所有渠道/L1 候选耗尽时高亮，提示该补供给侧",
     "eventStream": "转移事件流",
     "eventStreamHelp": "最近转移事件（10s 自动刷新），按时间倒序",
-    "noClusters": "暂无故障域",
-    "members": "成员渠道",
     "noExhaustion": "暂无耗尽告警",
     "noEvents": "暂无转移事件",
+    "noEndpoints": "暂无端点",
     "exhaustedNoTarget": "耗尽无目标",
     "refresh": "刷新",
     "exhaustedEventsAlert": "最近 {{count}} 起候选耗尽事件",
@@ -24,35 +21,24 @@
     "exhaustedEventItemWithTrace": "渠道 {{channelId}} 候选耗尽（Trace: {{trace}}…）",
     "moreExhaustedEvents": "…另有 {{count}} 起，见下方转移事件流",
     "pollingInterval": "10s",
-    "commonCauseSkip": "共因跳过",
-    "commonCauseSkipHelp": "同故障域共因故障，跳过同域其他候选",
+    "circuitBreakerDashboard": "端点熔断状态",
+    "circuitBreakerDashboardHelp": "各端点熔断器当前状态与应急操作",
     "eventColumns": {
       "time": "时间",
       "route": "转移路径",
       "reason": "原因",
       "decision": "决策",
-      "commonCauseSkip": "共因跳过",
       "trace": "Trace"
+    },
+    "circuitBreakerColumns": {
+      "channel": "渠道",
+      "endpoint": "端点 URL",
+      "protocol": "协议",
+      "operation": "操作"
     },
     "decisions": {
       "L1": "L1 渠道"
     }
-  },
-  "cluster": {
-    "title": "故障域",
-    "code": "编码",
-    "name": "名称",
-    "description": "共因特征说明",
-    "providerId": "归属供应商 ID",
-    "add": "新建故障域",
-    "edit": "编辑",
-    "codeRequired": "请输入故障域编码",
-    "nameRequired": "请输入故障域名称",
-    "providerIdRequired": "请输入归属供应商 ID",
-    "createSuccess": "故障域创建成功",
-    "updateSuccess": "故障域更新成功",
-    "createFailed": "故障域创建失败",
-    "updateFailed": "故障域更新失败"
   },
   "channels": {
     "circuitBreaker": "熔断器",

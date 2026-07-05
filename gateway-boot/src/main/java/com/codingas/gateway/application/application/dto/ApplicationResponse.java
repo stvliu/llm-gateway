@@ -32,6 +32,9 @@ public class ApplicationResponse {
     /** 请求超时秒数（0 表示用渠道默认；承接原 ResilienceProfile.timeout） */
     private int timeout;
 
+    /** 应用级失败处理策略（FAIL_FAST/FAIL_RETRY/FAIL_OVER） */
+    private String failureStrategy;
+
     /** 配额预算 ID（预留） */
     private Long quotaBudgetId;
 
