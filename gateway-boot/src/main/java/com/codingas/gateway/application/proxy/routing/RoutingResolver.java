@@ -56,7 +56,7 @@ public class RoutingResolver {
      * 根据模型名称解析路由候选列表，供 L1 渠道级故障转移逐个尝试
      *
      * <p>委托 {@link InstanceSelector#select} 拿到按 priority 升序的候选实例列表，
-     * 逐个执行凭证解析 + 端点解析 + 通道查询并组装 {@link RoutingContext}。
+     * 逐个执行凭证解析 + 端点解析 + 渠道查询并组装 {@link RoutingContext}。
      * 返回列表顺序与候选 priority 一致（由 InstanceSelector 保证）。</p>
      *
      * @param modelName     模型名称
@@ -126,7 +126,7 @@ public class RoutingResolver {
      * @param protocol 入站协议
      * @param app      应用实体（null 表示无应用锚点或查不到，超时与策略回退默认）
      * @return 路由上下文
-     * @throws ResourceNotFoundException 通道不存在
+     * @throws ResourceNotFoundException 渠道不存在
      */
     private RoutingContext buildContext(ModelInstance instance, Model model, Protocol protocol, Application app) {
         // 凭证解析
@@ -135,7 +135,7 @@ public class RoutingResolver {
         // 端点解析（优先匹配协议同源）
         ChannelEndpoint endpoint = endpointResolver.resolve(instance.getChannelId(), protocol);
 
-        // 通道信息
+        // 渠道信息
         Channel channel = channelGateway.findById(instance.getChannelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Channel", instance.getChannelId()));
 

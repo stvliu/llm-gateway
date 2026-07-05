@@ -15,8 +15,15 @@ import java.time.Instant;
 /**
  * 渠道实体
  *
- * <p>一个渠道对应一个端点和一个协议，多协议需求通过建多个 Channel 解决。</p>
- * <p>定价下沉到 ChannelModel，Channel 只持有连接和路由相关字段。</p>
+ * <p>渠道是上游接入的聚合根，下挂多协议端点（{@link ChannelEndpoint}）、
+ * 多凭证（{@link ChannelCredential}）与多模型实例（{@link ModelInstance}）。</p>
+ *
+ * <p>一个渠道可同时持有多个不同协议的端点（如同一上游同时提供 OpenAI 与 Anthropic 端点），
+ * 同协议端点由唯一约束 {@code uk_channel_endpoint(channel_id, protocol)} 限制为至多一个；
+ * 多协议需求在同一渠道内解决，无需为每种协议单独建渠道。</p>
+ *
+ * <p>定价信息由 {@link Model} 统一管理，{@link ModelInstance} 仅保留规格覆盖配置；
+ * 渠道本身只持有连接、路由、计费与健康相关字段。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

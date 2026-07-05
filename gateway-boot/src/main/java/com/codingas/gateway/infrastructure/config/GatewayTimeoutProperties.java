@@ -8,7 +8,7 @@ import java.util.Map;
 /**
  * 分级超时配置
  *
- * <p>支持全局默认超时和按通道/端点级别的超时覆盖。</p>
+ * <p>支持全局默认超时和按渠道/端点级别的超时覆盖。</p>
  *
  * <p>配置示例：</p>
  * <pre>
@@ -28,7 +28,7 @@ public class GatewayTimeoutProperties {
     /** 全局默认超时（秒） */
     private int defaultTimeoutSeconds = 60;
 
-    /** 按通道 ID 覆盖超时（秒） */
+    /** 按渠道 ID 覆盖超时（秒） */
     private Map<String, Integer> channelTimeouts = new HashMap<>();
 
     /** 按端点 ID 覆盖超时（秒） */
@@ -44,9 +44,9 @@ public class GatewayTimeoutProperties {
     public void setEndpointTimeouts(Map<String, Integer> endpointTimeouts) { this.endpointTimeouts = endpointTimeouts; }
 
     /**
-     * 获取指定通道的超时时间
+     * 获取指定渠道的超时时间
      *
-     * @param channelId 通道 ID
+     * @param channelId 渠道 ID
      * @return 超时时间（秒），未配置时返回默认值
      */
     public int getTimeoutForChannel(Long channelId) {

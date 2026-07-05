@@ -162,7 +162,7 @@ class RoutingResolverTest {
         }
 
         @Test
-        @DisplayName("通道不存在时抛出异常")
+        @DisplayName("渠道不存在时抛出异常")
         void resolve_channelNotFound_throwsException() {
             // given
             Model model = new Model();

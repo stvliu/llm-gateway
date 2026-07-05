@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * OutboundTuner 单元测试
  *
- * <p>验证出站调谐器的两层调谐逻辑：协议级调谐和通道级模型名替换。</p>
+ * <p>验证出站调谐器的两层调谐逻辑：协议级调谐和渠道级模型名替换。</p>
  */
 @DisplayName("OutboundTuner 单元测试")
 class OutboundTunerTest {
