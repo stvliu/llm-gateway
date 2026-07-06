@@ -40,6 +40,13 @@ public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
     }
 
     @Override
+    public List<UserApiKey> findByApplicationId(Long applicationId) {
+        return repository.findByApplicationId(applicationId).stream()
+                .map(this::toEntity)
+                .toList();
+    }
+
+    @Override
     public List<UserApiKey> findAllNonDeleted() {
         return repository.findAllNonDeleted().stream()
                 .map(this::toEntity)
