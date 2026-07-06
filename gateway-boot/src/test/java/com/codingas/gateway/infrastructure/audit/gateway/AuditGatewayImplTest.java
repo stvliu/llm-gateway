@@ -3,7 +3,6 @@ package com.codingas.gateway.infrastructure.audit.gateway;
 import com.codingas.gateway.domain.audit.entity.AuditLog;
 import com.codingas.gateway.infrastructure.audit.gateway.database.AuditLogRepository;
 import com.codingas.gateway.infrastructure.audit.gateway.database.dataobject.AuditLogDo;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

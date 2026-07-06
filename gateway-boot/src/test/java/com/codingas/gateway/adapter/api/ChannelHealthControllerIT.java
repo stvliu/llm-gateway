@@ -1,6 +1,5 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.adapter.api.dto.ChannelHealthCheckRequest;
 import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.supply.ChannelHealthService;
@@ -19,7 +18,6 @@ import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
 import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -218,12 +216,5 @@ class ChannelHealthControllerIT {
                         .contentType(APPLICATION_JSON)
                         .content(body))
                 .andExpect(status().is4xxClientError());
-    }
-
-    @Test
-    @Disabled("// TODO: 后续章节用 Awaitility 重写并发用例，以保证稳定性")
-    @DisplayName("并发触发 last-write-wins")
-    void 并发触发_last_write_wins() {
-        // 已禁用：并发用例稳定性较差，留待后续章节用 Awaitility 重写
     }
 }

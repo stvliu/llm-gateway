@@ -12,7 +12,6 @@ import org.springframework.boot.actuate.health.Status;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
