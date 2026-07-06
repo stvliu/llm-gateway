@@ -43,15 +43,6 @@ public class RoutingRequest {
      * 旧调用方未传入应用 ID，将导致 {@link PermissionRouter} 无权限锚点而返回空集。
      */
     @Deprecated
-    public RoutingRequest(Long modelId, Long userId, String role) {
-        this(modelId, null, userId, role, RoutingStrategy.WEIGHTED, null);
-    }
-
-    /**
-     * @deprecated 请改用 {@link #RoutingRequest(Long, Long, Long, String, RoutingStrategy, Protocol)}。
-     * 旧调用方未传入应用 ID，将导致 {@link PermissionRouter} 无权限锚点而返回空集。
-     */
-    @Deprecated
     public RoutingRequest(Long modelId, Long userId, String role, RoutingStrategy strategy) {
         this(modelId, null, userId, role, strategy, null);
     }

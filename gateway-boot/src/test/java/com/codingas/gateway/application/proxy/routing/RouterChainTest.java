@@ -15,7 +15,6 @@ import org.springframework.core.annotation.Order;
 
 import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
@@ -182,10 +181,8 @@ class RouterChainTest {
         when(circuitBreakerManager.isAvailable(150L)).thenReturn(false);
         when(circuitBreakerManager.isAvailable(250L)).thenReturn(true);
 
-        // 真实 Health + Priority + LoadBalance（Task 3.1 已降级为透传，返回候选列表）
-        LoadBalance selectSingle = instances -> instances.isEmpty() ? null : instances.getFirst();
-        LoadBalanceRouter loadBalance = new LoadBalanceRouter(
-                Map.of("weightedRandomLoadBalance", selectSingle));
+        // 真实 Health + Priority + LoadBalanceRouter（Task 3.1 已降级为透传，返回候选列表）
+        LoadBalanceRouter loadBalance = new LoadBalanceRouter();
         RouterChain chain = new RouterChain(List.of(
                 new HealthRouter(circuitBreakerManager, endpointResolver),
                 new PriorityRouter(),
