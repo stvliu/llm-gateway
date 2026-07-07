@@ -10,6 +10,7 @@ import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private final ApplicationGateway applicationGateway;
     private final ApplicationChannelGateway applicationChannelGateway;
+    private final UserApiKeyGateway userApiKeyGateway;
 
     @Override
     @Transactional
@@ -111,6 +113,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     @Transactional
     public void delete(Long id) {
+        // 前置校验：应用下有 API Key 引用时拒绝删除，避免悬空引用
+        if (!userApiKeyGateway.findByApplicationId(id).isEmpty()) {
+            throw new GatewayRequestException("APPLICATION_HAS_API_KEYS",
+                    "应用下还有 API Key，请先转移或删除");
+        }
         // 级联清理渠道授权关联，避免孤儿数据
         applicationChannelGateway.deleteByApplicationId(id);
         applicationGateway.deleteById(id);

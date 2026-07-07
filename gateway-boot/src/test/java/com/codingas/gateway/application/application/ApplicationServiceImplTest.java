@@ -10,6 +10,8 @@ import com.codingas.gateway.domain.application.entity.ApplicationState;
 import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
+import com.codingas.gateway.domain.iam.entity.UserApiKey;
+import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -45,8 +48,13 @@ class ApplicationServiceImplTest {
     @Mock
     private ApplicationChannelGateway applicationChannelGateway;
 
+    @Mock
+    private UserApiKeyGateway userApiKeyGateway;
+
     @InjectMocks
     private ApplicationServiceImpl applicationService;
+
+    private static final Long APP_ID = 7L;
 
     @Nested
     @DisplayName("create 方法测试")
@@ -278,6 +286,32 @@ class ApplicationServiceImplTest {
 
             verify(applicationGateway).deleteById(1L);
             verify(applicationChannelGateway).deleteByApplicationId(1L);
+        }
+
+        @Test
+        @DisplayName("应用下有 Key 引用 — 抛 GatewayRequestException(APPLICATION_HAS_API_KEYS)")
+        void delete_hasApiKeys_throwsConflict() {
+            UserApiKey key = new UserApiKey();
+            key.setId(100L);
+            key.setApplicationId(APP_ID);
+            when(userApiKeyGateway.findByApplicationId(APP_ID)).thenReturn(List.of(key));
+
+            assertThatThrownBy(() -> applicationService.delete(APP_ID))
+                    .isInstanceOf(GatewayRequestException.class)
+                    .hasMessageContaining("API Key");
+            verify(applicationGateway, never()).deleteById(any());
+            verify(applicationChannelGateway, never()).deleteByApplicationId(any());
+        }
+
+        @Test
+        @DisplayName("应用下无 Key 引用 — 正常删除（级联清理渠道授权）")
+        void delete_noApiKeys_deletesCascade() {
+            when(userApiKeyGateway.findByApplicationId(APP_ID)).thenReturn(List.of());
+
+            assertThatCode(() -> applicationService.delete(APP_ID)).doesNotThrowAnyException();
+
+            verify(applicationChannelGateway).deleteByApplicationId(APP_ID);
+            verify(applicationGateway).deleteById(APP_ID);
         }
     }
 
