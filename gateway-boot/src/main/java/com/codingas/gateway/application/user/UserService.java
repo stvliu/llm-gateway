@@ -68,4 +68,15 @@ public interface UserService {
      * @param request 修改密码请求
      */
     void changePassword(Long userId, ChangePasswordRequest request);
+
+    /**
+     * 重置密码（管理员触发）
+     *
+     * <p>生成 16 位随机密码（排除易混字符 O/0/I/1/l），更新哈希，
+     * 一次性返回明文。禁止重置内建用户密码。</p>
+     *
+     * @param userId 用户 ID
+     * @return 含一次性明文的响应
+     */
+    ResetPasswordResponse resetPassword(Long userId);
 }

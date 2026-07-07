@@ -6,6 +6,7 @@ import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
 import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
@@ -22,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -248,6 +250,50 @@ class UserServiceImplTest {
 
             // then
             assertThat(result).isNotNull();
+        }
+    }
+
+    @Nested
+    @DisplayName("resetPassword 方法测试")
+    class ResetPasswordTests {
+
+        @Test
+        @DisplayName("重置成功 — 返回 16 位明文且更新哈希")
+        void resetPassword_success_returns16CharPlain() {
+            User user = new User();
+            user.setId(1L);
+            user.setBuiltin(false);
+            when(userGateway.findById(1L)).thenReturn(java.util.Optional.of(user));
+            when(passwordEncoder.encode(any())).thenReturn("hashed");
+
+            ResetPasswordResponse response = service.resetPassword(1L);
+
+            assertThat(response.newPassword()).hasSize(16);
+            // 排除易混字符 O/0/I/1/l
+            assertThat(response.newPassword()).matches("[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{16}");
+            verify(userGateway).save(argThat(u -> "hashed".equals(u.getPasswordHash())));
+        }
+
+        @Test
+        @DisplayName("内建用户拒绝重置")
+        void resetPassword_builtin_throws() {
+            User user = new User();
+            user.setId(2L);
+            user.setBuiltin(true);
+            when(userGateway.findById(2L)).thenReturn(java.util.Optional.of(user));
+
+            assertThatThrownBy(() -> service.resetPassword(2L))
+                    .isInstanceOf(ForbiddenException.class);
+            verify(userGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("用户不存在 — 抛 ResourceNotFoundException")
+        void resetPassword_notFound_throws() {
+            when(userGateway.findById(99L)).thenReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> service.resetPassword(99L))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
     }
 

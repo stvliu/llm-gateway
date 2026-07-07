@@ -86,6 +86,17 @@ public class UserController {
         return userService.assignRoles(id, request);
     }
 
+    /**
+     * 重置用户密码
+     *
+     * @param id 用户 ID
+     * @return 含一次性明文密码的响应
+     */
+    @PostMapping("/{id}/reset-password")
+    public ResetPasswordResponse resetPassword(@PathVariable Long id) {
+        return userService.resetPassword(id);
+    }
+
     // ==================== UserApiKey 子资源 ====================
 
     /**

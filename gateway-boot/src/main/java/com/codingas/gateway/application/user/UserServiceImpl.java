@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.security.SecureRandom;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,12 @@ public class UserServiceImpl implements UserService {
 
     private final UserGateway userGateway;
     private final PasswordEncoder passwordEncoder;
+
+    /** 重置密码字符集：排除易混字符 O/0/I/1/l */
+    private static final String PASSWORD_CHARS =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    private static final int RESET_PASSWORD_LENGTH = 16;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     /**
      * 创建用户
@@ -260,6 +267,33 @@ public class UserServiceImpl implements UserService {
         // 更新密码
         user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
         userGateway.save(user);
+    }
+
+    /**
+     * 重置密码（管理员触发）
+     */
+    @Override
+    @Transactional
+    public ResetPasswordResponse resetPassword(Long userId) {
+        User user = userGateway.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (user.isBuiltin()) {
+            throw new ForbiddenException("不允许重置系统内建用户的密码");
+        }
+
+        // 生成 16 位随机密码（排除易混字符）
+        StringBuilder plain = new StringBuilder(RESET_PASSWORD_LENGTH);
+        for (int i = 0; i < RESET_PASSWORD_LENGTH; i++) {
+            plain.append(PASSWORD_CHARS.charAt(SECURE_RANDOM.nextInt(PASSWORD_CHARS.length())));
+        }
+        String plainPassword = plain.toString();
+
+        user.setPasswordHash(passwordEncoder.encode(plainPassword));
+        userGateway.save(user);
+        log.info("Reset password for user: id={}", userId);
+
+        return new ResetPasswordResponse(plainPassword);
     }
 
     /**
