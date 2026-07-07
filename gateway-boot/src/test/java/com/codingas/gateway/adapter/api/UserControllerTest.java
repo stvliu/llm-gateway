@@ -4,6 +4,7 @@ import com.codingas.gateway.application.user.UserService;
 import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.domain.iam.enums.UserState;
+import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -182,6 +184,39 @@ class UserControllerTest {
 
             // then
             assertThat(result.getRole()).isEqualTo("ADMIN");
+        }
+    }
+
+    @Nested
+    @DisplayName("resetPassword 方法测试")
+    class ResetPasswordTests {
+
+        @Test
+        @DisplayName("重置密码成功 — 返回 16 位明文")
+        void resetPassword_success_returnsPlaintext() {
+            // given — UserService 生成 16 位随机密码（排除易混字符）一次性返回
+            when(userService.resetPassword(1L))
+                    .thenReturn(new ResetPasswordResponse("AbcdefghijKmnp23"));
+
+            // when
+            ResetPasswordResponse result = controller.resetPassword(1L);
+
+            // then
+            assertThat(result.newPassword()).isEqualTo("AbcdefghijKmnp23");
+            assertThat(result.newPassword()).hasSize(16);
+        }
+
+        @Test
+        @DisplayName("重置内建用户密码 — 抛 ForbiddenException（映射 403）")
+        void resetPassword_builtinUser_throwsForbidden() {
+            // given — 内建用户禁止重置密码，UserService 抛 ForbiddenException
+            when(userService.resetPassword(2L))
+                    .thenThrow(new ForbiddenException("不允许重置系统内建用户的密码"));
+
+            // when & then — Controller 透传异常，由 IamExceptionHandler 映射 403
+            assertThatThrownBy(() -> controller.resetPassword(2L))
+                    .isInstanceOf(ForbiddenException.class)
+                    .hasMessageContaining("内建用户");
         }
     }
 
