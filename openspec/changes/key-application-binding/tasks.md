@@ -1,18 +1,18 @@
 ## 1. 后端 DTO 与 Service（UserApiKey 关联打通）
 
-- [ ] 1.1 `UserApiKeyCreateRequest` 新增 `@NotNull Long applicationId`
-- [ ] 1.2 `UserApiKeyUpdateRequest` 新增可选 `Long applicationId`
-- [ ] 1.3 `UserApiKeyResponse`/`UserApiKeyDetailResponse`/`UserApiKeyCreateResponse` 新增 `applicationId` 字段
-- [ ] 1.4 `UserApiKeyServiceImpl.create()` 落库 `setApplicationId` 并校验 Application 存在
-- [ ] 1.5 `UserApiKeyServiceImpl.update()` 支持 `applicationId` 变更（补绑/转移）并校验 Application 存在
-- [ ] 1.6 `UserApiKeyServiceImpl.toResponse/toDetailResponse` 映射 `applicationId`
-- [ ] 1.7 单测 `UserApiKeyServiceImplTest`：创建必填落库、补绑转移、响应含 applicationId、引用不存在 Application 被拒
+- [x] 1.1 `UserApiKeyCreateRequest` 新增 `@NotNull Long applicationId`
+- [x] 1.2 `UserApiKeyUpdateRequest` 新增可选 `Long applicationId`
+- [x] 1.3 `UserApiKeyResponse`/`UserApiKeyDetailResponse`/`UserApiKeyCreateResponse` 新增 `applicationId` 字段
+- [x] 1.4 `UserApiKeyServiceImpl.create()` 落库 `setApplicationId` 并校验 Application 存在
+- [x] 1.5 `UserApiKeyServiceImpl.update()` 支持 `applicationId` 变更（补绑/转移）并校验 Application 存在
+- [x] 1.6 `UserApiKeyServiceImpl.toResponse/toDetailResponse` 映射 `applicationId`
+- [x] 1.7 单测 `UserApiKeyServiceImplTest`：创建必填落库、补绑转移、响应含 applicationId、引用不存在 Application 被拒
 
 ## 2. 后端 Gateway（按应用查询）
 
-- [ ] 2.1 `UserApiKeyGateway` 接口新增 `findByApplicationId(Long)`
-- [ ] 2.2 `UserApiKeyGatewayImpl` 实现 `findByApplicationId`，确认 `toEntity/toDataObject` 读写 `applicationId`
-- [ ] 2.3 单测覆盖 `findByApplicationId`
+- [x] 2.1 `UserApiKeyGateway` 接口新增 `findByApplicationId(Long)`
+- [x] 2.2 `UserApiKeyGatewayImpl` 实现 `findByApplicationId`，确认 `toEntity/toDataObject` 读写 `applicationId`
+- [x] 2.3 单测覆盖 `findByApplicationId`
 
 ## 3. 后端 Controller 与端点
 
