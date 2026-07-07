@@ -23,7 +23,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
@@ -215,6 +214,73 @@ class UserApiKeyServiceImplTest {
             UserApiKeyResponse response = service.getById(API_KEY_ID);
 
             assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("findByUserId 方法测试")
+    class FindByUserIdTests {
+
+        @Test
+        @DisplayName("返回用户的 Key 列表含 applicationId（回归保护）")
+        void findByUserId_success() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setApplicationId(APPLICATION_ID);
+            when(userApiKeyGateway.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
+
+            List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
+
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("getDetailById 方法测试")
+    class GetDetailByIdTests {
+
+        @Test
+        @DisplayName("详情响应含 applicationId（覆盖 spec scenario 4.2）")
+        void getDetailById_responseContainsApplicationId() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setApplicationId(APPLICATION_ID);
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
+
+            assertThat(response).isNotNull();
+            assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+        }
+    }
+
+    @Nested
+    @DisplayName("getById notFound 测试")
+    class GetByIdNotFoundTests {
+
+        @Test
+        @DisplayName("密钥不存在 — 抛 IllegalArgumentException（回归保护）")
+        void getById_notFound() {
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.getById(API_KEY_ID))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("API Key 不存在");
+        }
+    }
+
+    @Nested
+    @DisplayName("delete 方法测试")
+    class DeleteTests {
+
+        @Test
+        @DisplayName("删除密钥 — 调用 gateway.delete（回归保护）")
+        void delete_success() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            service.delete(API_KEY_ID);
+
+            verify(userApiKeyGateway).delete(apiKey);
         }
     }
 
