@@ -5,6 +5,7 @@ import com.codingas.gateway.application.application.ApplicationService;
 import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
+import com.codingas.gateway.application.userapikey.UserApiKeyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -39,13 +40,16 @@ class ApplicationControllerIT {
     @Mock
     private ApplicationService applicationService;
 
+    @Mock
+    private UserApiKeyService userApiKeyService;
+
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        ApplicationController controller = new ApplicationController(applicationService);
+        ApplicationController controller = new ApplicationController(applicationService, userApiKeyService);
         // 装配 GlobalExceptionHandler 以便校验失败被转为 400（与生产 Web 上下文一致）
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())

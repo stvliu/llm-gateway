@@ -1,5 +1,6 @@
 package com.codingas.gateway.application.user;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
 import com.codingas.gateway.application.auth.dto.LoginRequest;
 import com.codingas.gateway.application.auth.dto.LoginResponse;
@@ -13,15 +14,14 @@ import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
