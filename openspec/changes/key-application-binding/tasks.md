@@ -16,9 +16,9 @@
 
 ## 3. 后端 Controller 与端点
 
-- [ ] 3.1 `ApplicationController` 新增 `GET /api/v1/applications/{id}/api-keys`
-- [ ] 3.2 `ApplicationServiceImpl.delete()` 新增 UserApiKey 引用前置校验，有则抛 Conflict
-- [ ] 3.3 `UserController` 新增 `POST /api/v1/users/{id}/reset-password` + `UserService.resetPassword()`（随机密码 + 一次性返回明文 + 禁止内建用户）
+- [x] 3.1 `ApplicationController` 新增 `GET /api/v1/applications/{id}/api-keys`
+- [x] 3.2 `ApplicationServiceImpl.delete()` 新增 UserApiKey 引用前置校验，有则抛 Conflict
+- [x] 3.3 `UserController` 新增 `POST /api/v1/users/{id}/reset-password` + `UserService.resetPassword()`（随机密码 + 一次性返回明文 + 禁止内建用户）
 - [ ] 3.4 集成测试：带 `applicationId` 的 Key 调用 `ChatDispatchService` 路由返回非空渠道集（回归核心问题）
 - [ ] 3.5 集成测试：删除有 Key 引用的 Application 返回 4xx Conflict
 - [ ] 3.6 集成测试：重置密码端点成功 + 内建用户拒绝
