@@ -18,9 +18,9 @@
 - 最终完整审查
 
 ## 当前阶段
-- 批次2：审查通过（第2轮 thorough PASS，45 tests），Task 4-6 已勾选
-- 准备派发 Task 7（集成测试+路由回归，批次3）
-- MINOR 待办（纳入 Task 7）：Task 6 端点 IT 契约测试、UserServiceImpl 静态字段位置
+- 批次3：审查通过（thorough PASS，702 tests），Task 7-8 已勾选
+- 准备派发 Task 9（前端类型/API 层，批次4 起点）
+- MINOR 待办（纳入最终审查）：ApplicationControllerIT 补 GET /api-keys + DELETE 冲突 IT 契约测试、ApplicationControllerTest 类注释 Task 编号引用
   - CRITICAL-1: ApplicationControllerIT test-compile 失败。根因：Task 6 给 ApplicationController 加 UserApiKeyService 依赖，@RequiredArgsConstructor 生成双参构造，但 ApplicationControllerIT 第 48 行仍用单参 `new ApplicationController(applicationService)` → 编译失败
   - MINOR-1: import 顺序问题（Task 4-6 改动文件，待修复 agent 扫描定位）
   - MINOR-2: 末尾换行缺失（Task 4-6 改动文件，待修复 agent 扫描定位）
@@ -32,8 +32,8 @@
 - [x] Task 4: ApplicationServiceImpl.delete 前置校验+单测（commit b2c0050b，批次2审查通过）
 - [x] Task 5: UserController/UserService resetPassword+单测（commit f3398930，批次2审查通过）
 - [x] Task 6: ApplicationController GET /applications/{id}/api-keys（commit 4e79019b，批次2审查通过）
-- [ ] Task 7: 集成测试+路由回归
-- [ ] Task 8: 后端全量测试+修复残留
+- [x] Task 7: 集成测试+路由回归（commit 0838e48，25 tests，批次3审查通过）
+- [x] Task 8: 后端全量测试+修复残留（702 tests PASS，无残留无提交，批次3审查通过）
 - [ ] Task 9: 前端类型/API 层
 - [ ] Task 10: DownstreamKeysTable 改造
 - [ ] Task 11: UserApiKeyModal 删 Alert+Application Select+补绑
@@ -53,3 +53,13 @@
 - 第2轮审查：PASS（无新 CRITICAL/IMPORTANT）
 - MINOR 待办（纳入 Task 7）：Task 6 端点 IT 契约测试缺口、UserServiceImpl 静态字段位置
 - MINOR 接受：Conflict 400 vs 409（设计妥协，超本批次）、ResetPasswordResponse 行尾（autocrlf 自动统一）
+
+### 批次3（Task 7-8）— 通过
+- Task 7（commit 0838e48）：5 个新测试，25 tests PASS
+  - UserControllerTest +2（resetPassword 成功+内建拒绝）
+  - ApplicationControllerTest 新建 +2（listApiKeys + delete 冲突）
+  - RoutingResolverTest +1（applicationId 透传回归）
+- Task 8：702 tests PASS，无残留无提交
+- 第1轮审查：PASS（无 CRITICAL/IMPORTANT）
+- 顾虑评估：测试风格非 MockMvc PASS（GlobalExceptionHandlerTest 400 + IamExceptionHandlerTest 403 覆盖 HTTP 映射）、RoutingResolver WARN PASS（既有模式）
+- MINOR 待办（纳入最终审查）：ApplicationControllerIT 补 GET /api-keys + DELETE 冲突 IT 契约测试、ApplicationControllerTest 类注释 Task 编号引用
