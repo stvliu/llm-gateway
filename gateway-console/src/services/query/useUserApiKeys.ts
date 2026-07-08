@@ -49,17 +49,6 @@ export function useUpdateUserApiKey() {
   });
 }
 
-/** 轮换用户 API Key（生成新 Key，旧 Key 失效） */
-export function useRotateUserApiKey() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => userApiKeyApi.rotate(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userApiKeyKeys.all });
-    },
-  });
-}
-
 /** 删除用户 API Key */
 export function useDeleteUserApiKey() {
   const queryClient = useQueryClient();

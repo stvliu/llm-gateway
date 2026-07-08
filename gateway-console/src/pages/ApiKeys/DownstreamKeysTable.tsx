@@ -1,24 +1,34 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Table, Button, Popconfirm, App, Input, Typography, Modal, Form, Select, Card } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAllUserApiKeys, useDeleteUserApiKey, useCreateUserApiKey } from '@/services/query/useUserApiKeys';
 import { useUsers } from '@/services/query/useUsers';
+import { useApplications } from '@/services/query/useApplications';
 import { MaskedKeyDisplay } from '@/components/MaskedKeyDisplay';
 import type { UserApiKey } from '@/types/userApiKey';
 import type { User } from '@/types/user';
+import type { Application } from '@/types/application';
 
 const { Text } = Typography;
 
 export default function DownstreamKeysTable() {
   const { t } = useTranslation('apiKeys');
   const { message } = App.useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { data: keys, isLoading } = useAllUserApiKeys();
   const { data: usersData } = useUsers({ size: 200 });
+  const { data: applications } = useApplications();
   const deleteMutation = useDeleteUserApiKey();
   const createMutation = useCreateUserApiKey();
   const [search, setSearch] = useState('');
+  // 按应用筛选（从 URL ?applicationId= 初始化）
+  const [applicationFilter, setApplicationFilter] = useState<number | undefined>(() => {
+    const v = searchParams.get('applicationId');
+    return v ? Number(v) : undefined;
+  });
 
   // 创建弹窗
   const [formVisible, setFormVisible] = useState(false);
@@ -32,11 +42,30 @@ export default function DownstreamKeysTable() {
     return map;
   }, [usersData]);
 
-  const filtered = (keys ?? []).filter((k: UserApiKey) => {
+  const applicationMap = useMemo(() => {
+    const map = new Map<number, Application>();
+    applications?.forEach((a: Application) => map.set(a.id, a));
+    return map;
+  }, [applications]);
+
+  // 同步应用筛选到 URL（replace 避免污染浏览历史）
+  useEffect(() => {
+    if (applicationFilter == null) {
+      searchParams.delete('applicationId');
+    } else {
+      searchParams.set('applicationId', String(applicationFilter));
+    }
+    setSearchParams(searchParams, { replace: true });
+    // 仅在 applicationFilter 变化时同步，避免 URL 回写触发循环
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [applicationFilter]);
+
+  const filtered = useMemo(() => (keys ?? []).filter((k: UserApiKey) => {
+    if (applicationFilter != null && k.applicationId !== applicationFilter) return false;
     if (!search) return true;
     const q = search.toLowerCase();
     return k.keyPrefix?.toLowerCase().includes(q) || k.name?.toLowerCase().includes(q);
-  });
+  }), [keys, applicationFilter, search]);
 
   const handleRevoke = useCallback(async (id: number) => {
     try {
@@ -50,6 +79,10 @@ export default function DownstreamKeysTable() {
   const handleAdd = () => {
     setCreatedKeyPlain(null);
     form.resetFields();
+    // 预设当前筛选的应用，减少重复选择
+    if (applicationFilter != null) {
+      form.setFieldsValue({ applicationId: applicationFilter });
+    }
     setFormVisible(true);
   };
 
@@ -60,6 +93,7 @@ export default function DownstreamKeysTable() {
 
       const result = await createMutation.mutateAsync({
         userId: values.userId,
+        applicationId: values.applicationId,
         name: values.name,
       });
       setCreatedKeyPlain(result.keyPlain);
@@ -104,6 +138,19 @@ export default function DownstreamKeysTable() {
       },
     },
     {
+      title: t('application', { defaultValue: '所属应用' }),
+      dataIndex: 'applicationId',
+      key: 'applicationId',
+      width: 100,
+      render: (applicationId: number | null) => {
+        if (applicationId == null) {
+          return <Text type="warning">{t('unbound', { defaultValue: '未绑定' })}</Text>;
+        }
+        const app = applicationMap.get(applicationId);
+        return app ? `${app.name} (${applicationId})` : `应用 ${applicationId}`;
+      },
+    },
+    {
       title: t('createdAt', { defaultValue: '创建时间' }),
       dataIndex: 'createdAt',
       key: 'createdAt',
@@ -123,19 +170,36 @@ export default function DownstreamKeysTable() {
         </Popconfirm>
       ),
     },
-  ], [t, handleRevoke, userMap]);
+  ], [t, handleRevoke, userMap, applicationMap]);
 
   return (
     <div>
       <Card title={t('title')}>
-        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
-          <Input.Search
-            placeholder={t('searchKeys', { defaultValue: '搜索 Key 前缀/名称...' })}
-            style={{ width: 320 }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            allowClear
-          />
+        <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Input.Search
+              placeholder={t('searchKeys', { defaultValue: '搜索 Key 前缀/名称...' })}
+              style={{ width: 320 }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              allowClear
+            />
+            <Select
+              allowClear
+              showSearch
+              placeholder={t('filterByApplication', { defaultValue: '按应用筛选' })}
+              style={{ width: 220 }}
+              value={applicationFilter}
+              onChange={(v: number | undefined) => setApplicationFilter(v)}
+              filterOption={(input, option) =>
+                (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={(applications ?? []).map((a: Application) => ({
+                label: `${a.name} (${a.id})`,
+                value: a.id,
+              }))}
+            />
+          </div>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd}>
             {t('createKey', { defaultValue: '创建 API Key' })}
           </Button>
@@ -181,6 +245,24 @@ export default function DownstreamKeysTable() {
               options={(usersData?.items ?? []).map((u: User) => ({
                 label: `${u.username} (${u.id})`,
                 value: u.id,
+              }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="applicationId"
+            label={t('application', { defaultValue: '所属应用' })}
+            rules={[{ required: true, message: '请选择应用' }]}
+          >
+            <Select
+              showSearch
+              placeholder="搜索并选择应用"
+              filterOption={(input, option) =>
+                (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={(applications ?? []).map((a: Application) => ({
+                label: `${a.name} (${a.id})`,
+                value: a.id,
               }))}
             />
           </Form.Item>
