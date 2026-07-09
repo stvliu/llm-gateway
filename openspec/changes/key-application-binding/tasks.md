@@ -43,5 +43,5 @@
 ## 7. 验证与收尾
 
 - [x] 7.1 后端全量测试通过（`./mvnw test`）
-- [ ] 7.2 前端构建与测试通过（`npm run build` + `npm test`）
+- [x] 7.2 前端构建与测试通过（`npm run build` + `npm test`）
 - [ ] 7.3 端到端手验：创建 Key 必选 App → 用该 Key 调网关 → 路由成功

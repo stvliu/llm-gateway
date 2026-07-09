@@ -18,10 +18,10 @@
 - 最终完整审查
 
 ## 当前阶段
-- 批次4：审查通过（thorough PASS，前端 tsc/build 全绿，8 组件测试），Task 9-12 已勾选
-- 准备派发 Task 13（验证收尾：7.2 前端构建+测试、7.3 端到端手验待人工）
-- MINOR 待办（纳入最终审查/后续）：extractErrorMessage 统一修复、locales 补 key+清理 rotate 死 key、KeyGenerateModal 空状态引导
-- 批次3 通过（15f45219，702 tests）
+- 最终完整审查 派发中（thorough final review，覆盖 Task 1-13 + MINOR 待办评估）
+- Task 13 DONE_WITH_CONCERNS：7.2 build 成功 + 测试逻辑正确（3 个超时为环境偶发，重跑通过），7.2 已勾选；7.3 端到端手验待人工（verify 阶段）
+- MINOR 待办（最终审查评估）：testTimeout 调整、extractErrorMessage 统一修复、locales 补 key+清理 rotate 死 key、KeyGenerateModal 空状态引导、ApplicationControllerIT 补 IT 契约测试
+- 批次4 通过（02526d25），批次3 通过（15f45219，702 tests）
   - CRITICAL-1: ApplicationControllerIT test-compile 失败。根因：Task 6 给 ApplicationController 加 UserApiKeyService 依赖，@RequiredArgsConstructor 生成双参构造，但 ApplicationControllerIT 第 48 行仍用单参 `new ApplicationController(applicationService)` → 编译失败
   - MINOR-1: import 顺序问题（Task 4-6 改动文件，待修复 agent 扫描定位）
   - MINOR-2: 末尾换行缺失（Task 4-6 改动文件，待修复 agent 扫描定位）
@@ -39,7 +39,7 @@
 - [x] Task 10: DownstreamKeysTable 改造（commit afaad6766，123 tests PASS，批次4审查通过）
 - [x] Task 11: UserApiKeyModal 删 Alert+Application Select+补绑（commit 9493b1c1，6 组件测试，批次4审查通过）
 - [x] Task 12: Applications 页查看 Key 入口（commit 28923e94，3 组件测试，批次4审查通过）
-- [ ] Task 13: 验证收尾
+- [ ] Task 13: 验证收尾（7.2 build+test 通过，7.3 端到端手验待人工 verify）
 
 ## 审查记录
 ### 批次1（Task 1-3）— 通过
