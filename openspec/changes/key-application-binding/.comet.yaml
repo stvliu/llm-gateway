@@ -1,5 +1,5 @@
 workflow: full
-phase: build
+phase: verify
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
@@ -7,7 +7,7 @@ subagent_dispatch: confirmed
 tdd_mode: tdd
 review_mode: thorough
 isolation: branch
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 design_doc: docs/superpowers/specs/2026-07-06-key-application-binding-design.md
