@@ -8,10 +8,10 @@
     "apiKeys": "API Key",
     "applications": "应用",
     "quickstart": "快速开始",
-    "users": "用户管理",
+    "users": "用户",
     "stats": "统计",
     "auditLogs": "审计日志",
-    "resilience": "容灾管理",
+    "resilience": "容灾",
     "catalog": "目录",
     "changePassword": "修改密码",
     "group": {
