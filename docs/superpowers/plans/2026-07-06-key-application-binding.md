@@ -2,6 +2,7 @@
 change: key-application-binding
 design-doc: docs/superpowers/specs/2026-07-06-key-application-binding-design.md
 base-ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
+archived-with: 2026-07-09-key-application-binding
 ---
 
 # Key-Application Binding 实施计划
@@ -18,6 +19,7 @@ base-ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 
 **Tasks 清单:** `openspec/changes/key-application-binding/tasks.md`（7 组 22 任务）
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## 关键设计决策（实施前必读）
@@ -29,6 +31,7 @@ base-ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 5. **存量 null Key 不自动迁移**，补绑入口上线后管理员手动处理。
 6. **DTO record 字段顺序**：`applicationId` 统一插在 `userId` 之后（Response/DetailResponse）或 `userId` 之后（CreateRequest），`UpdateRequest` 为 `(applicationId, name)`。
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## 文件结构总览
@@ -72,6 +75,7 @@ base-ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 | `pages/Users/UserApiKeyModal.tsx` | 改 | 删团队继承 Alert；加 Application Select；编辑补绑 |
 | `pages/Applications/index.tsx` | 改 | 行操作加查看 Key |
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 1: 后端 DTO 扩展 applicationId 字段
@@ -208,6 +212,7 @@ git commit -m "feat(user-api-key): DTO 扩展 applicationId 字段
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 2: 后端 Gateway 加 findByApplicationId
@@ -268,6 +273,7 @@ git commit -m "feat(user-api-key): Gateway 加 findByApplicationId 查询
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 3: 后端 UserApiKeyServiceImpl 校验与映射（TDD）
@@ -724,6 +730,7 @@ git commit -m "feat(user-api-key): Service 层校验 applicationId 引用并映�
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 4: 后端 ApplicationServiceImpl.delete 前置校验（TDD）
@@ -873,6 +880,7 @@ git commit -m "feat(application): delete 前置校验 UserApiKey 引用
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 5: 后端 UserController + UserService 重置密码（TDD）
@@ -1067,6 +1075,7 @@ git commit -m "feat(user): 重置密码端点（16 位排除易混字符，一�
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 6: 后端 ApplicationController GET /applications/{id}/api-keys
@@ -1119,6 +1128,7 @@ git commit -m "feat(application): GET /applications/{id}/api-keys 端点
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 7: 后端集成测试 + 路由回归测试
@@ -1268,6 +1278,7 @@ git commit -m "test: 集成测试 + 路由回归
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 8: 后端全量测试 + 修复残留
@@ -1302,6 +1313,7 @@ git commit -m "fix: 适配 UserApiKeyCreateRequest/UpdateRequest 新签名
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 9: 前端类型与 API 层
@@ -1440,6 +1452,7 @@ git commit -m "feat(console): 类型/API 层加 applicationId，移除 rotate �
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 10: 前端 DownstreamKeysTable 改造
@@ -1769,6 +1782,7 @@ git commit -m "feat(console): DownstreamKeysTable 加 Application Select/列/筛
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 11: 前端 UserApiKeyModal 改造
@@ -1902,6 +1916,7 @@ git commit -m "feat(console): UserApiKeyModal 删团队继承 Alert + 加 Applic
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 12: 前端 Applications 页加「查看 Key」入口
@@ -1955,6 +1970,7 @@ git commit -m "feat(console): Applications 页加查看 Key 入口
 Co-Authored-By: Claude <noreply@anthropic.com>"
 ```
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Task 13: 验证与收尾
@@ -1987,6 +2003,7 @@ Expected: 构建通过，现有测试不回归。若 `ApplicationFormModal.test.
 
 如有验证脚本或截图，记录到 `openspec/changes/key-application-binding/` 下。无需提交代码。
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## Self-Review
@@ -2022,6 +2039,7 @@ Expected: 构建通过，现有测试不回归。若 `ApplicationFormModal.test.
 - `APPLICATION_HAS_API_KEYS` code 字符串 —— Task 4 抛出与 Task 7 测试断言一致
 - 前端 `applicationId: number | null`（UserApiKey）/ `number`（CreateRequest）/ `number?`（UpdateRequest）—— Task 9 与 Task 10/11 使用一致
 
+archived-with: 2026-07-09-key-application-binding
 ---
 
 ## 执行交接
