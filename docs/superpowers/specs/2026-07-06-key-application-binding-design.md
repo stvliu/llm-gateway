@@ -2,6 +2,8 @@
 comet_change: key-application-binding
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-07-09-key-application-binding
+status: final
 ---
 
 # Design Doc: key-application-binding
