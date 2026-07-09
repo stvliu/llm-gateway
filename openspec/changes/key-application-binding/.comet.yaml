@@ -1,5 +1,5 @@
 workflow: full
-phase: verify
+phase: archive
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
@@ -12,11 +12,11 @@ auto_transition: true
 base_ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 design_doc: docs/superpowers/specs/2026-07-06-key-application-binding-design.md
 plan: docs/superpowers/plans/2026-07-06-key-application-binding.md
-verify_result: pending
-verification_report: null
-branch_status: pending
+verify_result: pass
+verification_report: docs/superpowers/reports/2026-07-09-key-application-binding-verify.md
+branch_status: handled
 created_at: 2026-07-06
-verified_at: null
+verified_at: 2026-07-09
 archived: false
 handoff_context: openspec/changes/key-application-binding/.comet/handoff/design-context.json
 handoff_hash: 128d2c571665f826665b75f0ee69ade4ddee462bdd87b5707ddf505d9bc7cd9f

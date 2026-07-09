@@ -18,10 +18,10 @@
 - 最终完整审查
 
 ## 当前阶段
-- verify 阶段：build->verify 推进完成（guard ALL CHECKS PASSED，phase=verify，commit 2125e445）
-- 7.3 端到端手验待 verify 阶段人工完成（6 项）
-- subagent 派发循环结束：最终审查 PASS（后端 702 + 前端 11 组件测试，tsc/build 全绿）
-- MINOR 待办（后续迭代）：testTimeout、extractErrorMessage、locales 清理、ApplicationControllerIT 补测试、注释修正、KeyGenerateModal 空状态、UserApiKeyModal API 层（10 项，均接受待办）
+- archive 阶段：verify 通过（phase=archive，verify_result=pass，verified_at=2026-07-09）
+- 分支已推送 origin（Gitee），PR 待用户手动创建：https://gitee.com/ezxbao_liuye/llm-gateway/pull/new/ezxbao_liuye:feature/20260706/key-application-binding...ezxbao_liuye:master
+- 7.3 端到端手验待人工（verify 报告记录）
+- fresh evidence：后端 702 tests + 前端 129 tests PASS（3 偶发超时接受偏差）
   - CRITICAL-1: ApplicationControllerIT test-compile 失败。根因：Task 6 给 ApplicationController 加 UserApiKeyService 依赖，@RequiredArgsConstructor 生成双参构造，但 ApplicationControllerIT 第 48 行仍用单参 `new ApplicationController(applicationService)` → 编译失败
   - MINOR-1: import 顺序问题（Task 4-6 改动文件，待修复 agent 扫描定位）
   - MINOR-2: 末尾换行缺失（Task 4-6 改动文件，待修复 agent 扫描定位）
