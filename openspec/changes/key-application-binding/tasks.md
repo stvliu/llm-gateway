@@ -25,20 +25,20 @@
 
 ## 4. 前端类型与 API 层
 
-- [ ] 4.1 `types/userApiKey.ts`：`UserApiKey`/`CreateUserApiKeyRequest`/`UpdateUserApiKeyRequest` 加 `applicationId`，修正注释与字段一致
-- [ ] 4.2 `services/api/userApiKey.ts`：移除 `rotate` 死代码封装，新增 `listByApplication(applicationId)`
-- [ ] 4.3 `services/api/user.ts`：确认 `resetPassword` 封装（后端已补端点）
+- [x] 4.1 `types/userApiKey.ts`：`UserApiKey`/`CreateUserApiKeyRequest`/`UpdateUserApiKeyRequest` 加 `applicationId`，修正注释与字段一致
+- [x] 4.2 `services/api/userApiKey.ts`：移除 `rotate` 死代码封装，新增 `listByApplication(applicationId)`
+- [x] 4.3 `services/api/user.ts`：确认 `resetPassword` 封装（后端已补端点）
 
 ## 5. 前端 UserApiKey 管理页
 
-- [ ] 5.1 `DownstreamKeysTable` 创建表单加 Application Select（必填），列表加「所属应用」列，加按应用筛选 Select
-- [ ] 5.2 `UserApiKeyModal` 删除「团队继承」Alert，创建表单加 Application Select，支持编辑补绑 applicationId
-- [ ] 5.3 组件测试：创建表单 Application 必填校验、列表 Application 列渲染、补绑交互
+- [x] 5.1 `DownstreamKeysTable` 创建表单加 Application Select（必填），列表加「所属应用」列，加按应用筛选 Select
+- [x] 5.2 `UserApiKeyModal` 删除「团队继承」Alert，创建表单加 Application Select，支持编辑补绑 applicationId
+- [x] 5.3 组件测试：创建表单 Application 必填校验、列表 Application 列渲染、补绑交互
 
 ## 6. 前端 Application 管理页
 
-- [ ] 6.1 `Applications/index.tsx` 行操作加「查看 Key」入口（跳转 `/keys?applicationId=<id>` 触发筛选）
-- [ ] 6.2 删除 Application 冲突提示（有 Key 引用时显示后端 Conflict 信息）
+- [x] 6.1 `Applications/index.tsx` 行操作加「查看 Key」入口（跳转 `/keys?applicationId=<id>` 触发筛选）
+- [x] 6.2 删除 Application 冲突提示（有 Key 引用时显示后端 Conflict 信息）
 
 ## 7. 验证与收尾
 

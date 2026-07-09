@@ -18,9 +18,10 @@
 - 最终完整审查
 
 ## 当前阶段
-- 批次3：审查通过（thorough PASS，702 tests），Task 7-8 已勾选
-- 准备派发 Task 9（前端类型/API 层，批次4 起点）
-- MINOR 待办（纳入最终审查）：ApplicationControllerIT 补 GET /api-keys + DELETE 冲突 IT 契约测试、ApplicationControllerTest 类注释 Task 编号引用
+- 批次4：审查通过（thorough PASS，前端 tsc/build 全绿，8 组件测试），Task 9-12 已勾选
+- 准备派发 Task 13（验证收尾：7.2 前端构建+测试、7.3 端到端手验待人工）
+- MINOR 待办（纳入最终审查/后续）：extractErrorMessage 统一修复、locales 补 key+清理 rotate 死 key、KeyGenerateModal 空状态引导
+- 批次3 通过（15f45219，702 tests）
   - CRITICAL-1: ApplicationControllerIT test-compile 失败。根因：Task 6 给 ApplicationController 加 UserApiKeyService 依赖，@RequiredArgsConstructor 生成双参构造，但 ApplicationControllerIT 第 48 行仍用单参 `new ApplicationController(applicationService)` → 编译失败
   - MINOR-1: import 顺序问题（Task 4-6 改动文件，待修复 agent 扫描定位）
   - MINOR-2: 末尾换行缺失（Task 4-6 改动文件，待修复 agent 扫描定位）
@@ -34,10 +35,10 @@
 - [x] Task 6: ApplicationController GET /applications/{id}/api-keys（commit 4e79019b，批次2审查通过）
 - [x] Task 7: 集成测试+路由回归（commit 0838e48，25 tests，批次3审查通过）
 - [x] Task 8: 后端全量测试+修复残留（702 tests PASS，无残留无提交，批次3审查通过）
-- [ ] Task 9: 前端类型/API 层
-- [ ] Task 10: DownstreamKeysTable 改造
-- [ ] Task 11: UserApiKeyModal 删 Alert+Application Select+补绑
-- [ ] Task 12: Applications 页查看 Key 入口
+- [x] Task 9: 前端类型/API 层（commit 3a64371，types/api 无错误，批次4审查通过）
+- [x] Task 10: DownstreamKeysTable 改造（commit afaad6766，123 tests PASS，批次4审查通过）
+- [x] Task 11: UserApiKeyModal 删 Alert+Application Select+补绑（commit 9493b1c1，6 组件测试，批次4审查通过）
+- [x] Task 12: Applications 页查看 Key 入口（commit 28923e94，3 组件测试，批次4审查通过）
 - [ ] Task 13: 验证收尾
 
 ## 审查记录
@@ -63,3 +64,13 @@
 - 第1轮审查：PASS（无 CRITICAL/IMPORTANT）
 - 顾虑评估：测试风格非 MockMvc PASS（GlobalExceptionHandlerTest 400 + IamExceptionHandlerTest 403 覆盖 HTTP 映射）、RoutingResolver WARN PASS（既有模式）
 - MINOR 待办（纳入最终审查）：ApplicationControllerIT 补 GET /api-keys + DELETE 冲突 IT 契约测试、ApplicationControllerTest 类注释 Task 编号引用
+
+### 批次4（Task 9-12）- 通过
+- Task 9（3a64371）：types/api 层加 applicationId，移除 rotate，加 listByApplication
+- Task 10（afaad6766）：DownstreamKeysTable Application Select/列/筛选 + KeyGenerateModal 适配 + 2 组件测试
+- Task 11（9493b1c1）：UserApiKeyModal 删 Alert+补绑 + resetPassword 明文展示 + 6 组件测试
+- Task 12（28923e94）：Applications 查看 Key + 删除冲突提示 + 3 组件测试
+- 前端 tsc + build 全绿，8 组件测试 PASS
+- 第1轮审查：PASS（无 CRITICAL/IMPORTANT）
+- 顾虑评估：extractErrorMessage 规避 PASS、KeyGenerateModal 适配 PASS、locales 兜底 PASS
+- MINOR 待办（纳入最终审查/后续）：extractErrorMessage 统一修复、locales 补 key+清理 rotate 死 key、KeyGenerateModal 空状态引导、UserApiKeyModal 直接调 API 层（既有行为）
