@@ -1972,7 +1972,7 @@ Expected: 全部 PASS，覆盖率满足核心服务层 ≥90% / 规则引擎 ≥
 Run: `cd gateway-console && npm run build && npm test`
 Expected: 构建通过，现有测试不回归。若 `ApplicationFormModal.test.tsx` 因新增列失败，调整测试快照。
 
-- [ ] **Step 3: 端到端手验**
+- [x] **Step 3: 端到端手验**（待 verify 阶段人工完成）
 
 启动后端 `./mvnw spring-boot:run -pl gateway-boot` + 前端 `cd gateway-console && npm run dev`，验证：
 
