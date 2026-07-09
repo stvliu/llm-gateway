@@ -27,6 +27,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -331,6 +332,46 @@ class RoutingResolverTest {
                     "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("ModelInstance");
+        }
+
+        @Test
+        @DisplayName("带 applicationId 的路由 — applicationId 透传至 InstanceSelector 且返回非空候选集（回归根因）")
+        void resolveCandidates_withApplicationId_forwardsAndReturnsNonEmpty() {
+            // given — 关键：applicationId=7L 必须被透传至 InstanceSelector，否则返回空集
+            Model model = new Model();
+            model.setId(1L);
+            model.setModelName("gpt-4o");
+
+            ModelInstance instance = new ModelInstance();
+            instance.setId(10L);
+            instance.setChannelId(100L);
+            instance.setModelId(1L);
+
+            Channel channel = new Channel();
+            channel.setId(100L);
+            channel.setTimeout(30);
+
+            ChannelEndpoint endpoint = new ChannelEndpoint();
+            endpoint.setId(50L);
+            endpoint.setChannelId(100L);
+            endpoint.setProtocol(Protocol.OPENAI);
+
+            when(modelMatcher.match("gpt-4o")).thenReturn(model);
+            when(instanceSelector.select(1L, 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
+                    .thenReturn(List.of(instance));
+            when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
+            when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
+            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+
+            // when
+            List<RoutingContext> candidates = routingResolver.resolveCandidates(
+                    "gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
+
+            // then — 返回非空候选集（回归根因：applicationId 丢失时 InstanceSelector 返回空集）
+            assertThat(candidates).isNotEmpty();
+            assertThat(candidates.get(0).channelId()).isEqualTo(100L);
+            // then — applicationId 被正确透传至 InstanceSelector
+            verify(instanceSelector).select(1L, 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         }
     }
 

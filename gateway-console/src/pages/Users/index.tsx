@@ -64,7 +64,20 @@ export default function Users() {
       type: 'warning',
       title: 'confirm.resetPassword',
       content: 'confirm.resetPasswordWarning',
-      onConfirm: () => resetPasswordMutation.mutateAsync(id),
+      onConfirm: async () => {
+        // resetPassword 现在一次性返回明文密码（不再走邮件），需弹窗展示供管理员转交
+        const { newPassword } = await resetPasswordMutation.mutateAsync(id);
+        Modal.info({
+          title: '重置密码成功',
+          content: (
+            <div>
+              <p>新密码（仅显示一次，请立即保存并转交用户）：</p>
+              <Input value={newPassword} readOnly />
+            </div>
+          ),
+          okText: '已保存',
+        });
+      },
     });
   };
 

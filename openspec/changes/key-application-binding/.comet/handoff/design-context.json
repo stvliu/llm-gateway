@@ -1,0 +1,16 @@
+{
+  "change": "key-application-binding",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "128d2c571665f826665b75f0ee69ade4ddee462bdd87b5707ddf505d9bc7cd9f",
+  "files": [
+    { "path": "openspec/changes/key-application-binding/proposal.md", "sha256": "e4e53ea1d52cc17b174665d8202e592d5de070d419d0c18c05a1b87aabe7f92e" },
+    { "path": "openspec/changes/key-application-binding/design.md", "sha256": "7f25c88153d158691585833b0b7a969858b484cc7409b21055d592ffec7bdf04" },
+    { "path": "openspec/changes/key-application-binding/tasks.md", "sha256": "7422ee18609b006b1d512cfd9ae3a45fb6feae237544ca8968bd90999ce00e91" },
+    { "path": "openspec/changes/key-application-binding/specs/application/spec.md", "sha256": "01c33f5ce0b4dee4662ec525e42eb49ef7a03cba5d0629b4dcdbd12849f01a65" },
+    { "path": "openspec/changes/key-application-binding/specs/user-apikey-management/spec.md", "sha256": "87e04e56e0bb68dc7a339f5a8784e9806cb5f6f89a7654c16a399997c5828a01" },
+    { "path": "openspec/changes/key-application-binding/specs/user-password-management/spec.md", "sha256": "b885ca1afc6c587b8ccfb2d35733bfafc4ad1de5e8041c57595d7a799e7a939d" }
+  ]
+}

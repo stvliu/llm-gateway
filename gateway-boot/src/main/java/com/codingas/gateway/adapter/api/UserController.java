@@ -1,7 +1,7 @@
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.application.user.UserService;
+import com.codingas.gateway.application.user.dto.*;
 import com.codingas.gateway.application.userapikey.UserApiKeyService;
 import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
@@ -84,6 +84,17 @@ public class UserController {
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
         return userService.assignRoles(id, request);
+    }
+
+    /**
+     * 重置用户密码
+     *
+     * @param id 用户 ID
+     * @return 含一次性明文密码的响应
+     */
+    @PostMapping("/{id}/reset-password")
+    public ResetPasswordResponse resetPassword(@PathVariable Long id) {
+        return userService.resetPassword(id);
     }
 
     // ==================== UserApiKey 子资源 ====================

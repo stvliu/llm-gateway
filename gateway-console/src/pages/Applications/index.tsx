@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
-import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined, KeyOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { useApplications, useDeleteApplication } from '@/services/query/useApplications';
+import { extractErrorCode } from '@/utils/errorMessage';
 import ApplicationFormModal from './ApplicationFormModal';
 import ChannelManageModal from './ChannelManageModal';
 import type { Application } from '@/types/application';
@@ -20,6 +22,7 @@ import type { Application } from '@/types/application';
 export default function ApplicationsPage() {
   const { t } = useTranslation('applications');
   const { message } = App.useApp();
+  const navigate = useNavigate();
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.APPLICATION_WRITE);
 
@@ -50,7 +53,19 @@ export default function ApplicationsPage() {
     try {
       await deleteMutation.mutateAsync(id);
       message.success(t('application.deleteSuccess', { defaultValue: '应用已删除' }));
-    } catch {
+    } catch (error) {
+      // 后端返回 APPLICATION_HAS_API_KEYS（应用下仍有 Key 引用）：
+      // 展示后端冲突说明，引导用户先转移或删除相关 Key。
+      // ApiResponse 结构 { success:false, error:{ code, message } }，message 嵌套在 error 内
+      if (extractErrorCode(error) === 'APPLICATION_HAS_API_KEYS') {
+        const conflictMsg = (
+          error as { response?: { data?: { error?: { message?: string } } } }
+        ).response?.data?.error?.message;
+        message.error(
+          conflictMsg || t('application.deleteFailed', { defaultValue: '删除失败' }),
+        );
+        return;
+      }
       message.error(t('application.deleteFailed', { defaultValue: '删除失败' }));
     }
   };
@@ -127,6 +142,15 @@ export default function ApplicationsPage() {
         <Space size="small">
           <Tooltip title={t('channelAuthorization.title')}>
             <Button type="text" size="small" icon={<SafetyOutlined />} onClick={() => setChannelManageApplication(record)} />
+          </Tooltip>
+          <Tooltip title={t('application.viewKeys', { defaultValue: '查看 Key' })}>
+            <Button
+              type="text"
+              size="small"
+              icon={<KeyOutlined />}
+              aria-label={t('application.viewKeys', { defaultValue: '查看 Key' })}
+              onClick={() => navigate(`/keys?applicationId=${record.id}`)}
+            />
           </Tooltip>
           {canWrite && (
             <>

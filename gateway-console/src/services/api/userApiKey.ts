@@ -19,6 +19,10 @@ export const userApiKeyApi = {
   listAll: () =>
     api.get<UserApiKey[]>('/user-api-keys'),
 
+  /** 按应用查询 API Key（应用详情页/筛选用） */
+  listByApplication: (applicationId: number) =>
+    api.get<UserApiKey[]>(`/applications/${applicationId}/api-keys`),
+
   /** 获取 API Key 详情 */
   getDetail: (id: number) =>
     api.get<UserApiKeyDetail>(`/user-api-keys/${id}/detail`),
@@ -30,10 +34,6 @@ export const userApiKeyApi = {
   /** 更新用户 API Key */
   update: (id: number, data: UpdateUserApiKeyRequest) =>
     api.put<UserApiKey>(`/user-api-keys/${id}`, data),
-
-  /** 轮换 API Key（生成新 Key，旧 Key 失效） */
-  rotate: (id: number) =>
-    api.post<CreateUserApiKeyResponse>(`/user-api-keys/${id}/rotate`),
 
   /** 删除用户 API Key */
   delete: (id: number) =>

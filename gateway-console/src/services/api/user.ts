@@ -37,7 +37,7 @@ export const userApi = {
   assignRoles: (id: number, data: UserRoleAssignRequest) =>
     api.put<User>(`/users/${id}/roles`, data),
 
-  /** 重置密码 */
+  /** 重置密码（返回一次性明文） */
   resetPassword: (id: number) =>
-    api.post<void>(`/users/${id}/reset-password`),
+    api.post<{ newPassword: string }>(`/users/${id}/reset-password`),
 };

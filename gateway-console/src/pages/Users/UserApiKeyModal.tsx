@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Modal, Form, Input, Table, Button, Space, message, Alert, Tooltip } from 'antd'
+import { useEffect, useMemo, useState } from 'react'
+import { Modal, Form, Input, Table, Button, Space, Select, message, Tooltip } from 'antd'
 import { CopyOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons'
 import type { UserApiKey, CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/userApiKey'
 import { userApiKeyApi } from '@/services/api/userApiKey'
 import { useUserApiKeys, useDeleteUserApiKey } from '@/services/query/useUserApiKeys'
+import { useApplications } from '@/services/query/useApplications'
 import { useConfirm } from '@/hooks/useConfirm'
 import { useTranslation } from 'react-i18next'
 
@@ -32,6 +33,13 @@ export default function UserApiKeyModal({
 
   const { data: apiKeys, isLoading } = useUserApiKeys(userId)
   const deleteMutation = useDeleteUserApiKey()
+  // 应用列表（Key 的权限锚点：通过应用-渠道授权继承渠道访问权限）
+  const { data: applications } = useApplications()
+  const applicationMap = useMemo(() => {
+    const map = new Map<number, { id: number; name: string }>()
+    applications?.forEach((a) => map.set(a.id, a))
+    return map
+  }, [applications])
 
   useEffect(() => {
     if (open) {
@@ -51,8 +59,10 @@ export default function UserApiKeyModal({
   const handleEdit = (key: UserApiKey) => {
     setEditingKey(key)
     setCreatedKey(null)
+    // 补绑交互：回填已存在 Key 的 applicationId（null 时表单显示空，可补绑）
     form.setFieldsValue({
       name: key.name,
+      applicationId: key.applicationId ?? undefined,
     })
     setShowForm(true)
   }
@@ -75,14 +85,18 @@ export default function UserApiKeyModal({
       setLoading(true)
 
       if (editingKey) {
+        // 编辑模式：update 传 applicationId 支持补绑/转移
         const request: UpdateUserApiKeyRequest = {
           name: values.name,
+          applicationId: values.applicationId,
         }
         await userApiKeyApi.update(editingKey.id, request)
-        message.success(t('apiKey.updateSuccess'))
+        message.success(t('apiKey.updateSuccess', { defaultValue: '更新成功' }))
       } else {
+        // 创建模式：applicationId 为 Key 的权限锚点（必填）
         const request: CreateUserApiKeyRequest = {
           userId,
+          applicationId: values.applicationId,
           name: values.name,
         }
         const result = await userApiKeyApi.create(request)
@@ -111,6 +125,16 @@ export default function UserApiKeyModal({
       title: t('apiKey.name'),
       dataIndex: 'name',
       key: 'name',
+    },
+    {
+      title: t('apiKey.application', { defaultValue: '所属应用' }),
+      dataIndex: 'applicationId',
+      key: 'applicationId',
+      render: (appId: number | null) => {
+        if (appId == null) return '未绑定'
+        const app = applicationMap.get(appId)
+        return app ? `${app.name} (${app.id})` : `应用 ${appId}`
+      },
     },
     {
       title: t('apiKey.key'),
@@ -162,13 +186,6 @@ export default function UserApiKeyModal({
 
       {!showForm && (
         <div style={{ marginBottom: 12 }}>
-          <Alert
-            message="权限说明"
-            description="API Key 的渠道访问权限由用户所属团队决定，创建时无需选择渠道。"
-            type="info"
-            showIcon
-            style={{ marginBottom: 12 }}
-          />
           <Button type="primary" onClick={handleCreate}>{t('addApiKey')}</Button>
         </div>
       )}
@@ -176,8 +193,26 @@ export default function UserApiKeyModal({
       {showForm && (
         <div style={{ marginBottom: 16, padding: 16, border: '1px solid #d9d9d9', borderRadius: 6 }}>
           <Form form={form} layout="vertical">
-            <Form.Item name="name" label={t('apiKey.name')} rules={[{ required: true, message: t('apiKey.nameRequired') }]}>
-              <Input placeholder={t('apiKey.namePlaceholder')} />
+            <Form.Item
+              name="applicationId"
+              label={t('apiKey.application', { defaultValue: '所属应用' })}
+              rules={[{ required: true, message: '请选择应用' }]}
+              extra="Key 的渠道权限由应用-渠道授权决定"
+            >
+              <Select
+                showSearch
+                placeholder="选择应用（权限锚点）"
+                filterOption={(input, option) =>
+                  (option?.label as string ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+                options={(applications ?? []).map((a) => ({
+                  label: `${a.name} (${a.id})`,
+                  value: a.id,
+                }))}
+              />
+            </Form.Item>
+            <Form.Item name="name" label={t('apiKey.name')} rules={[{ required: true, message: t('apiKey.nameRequired', { defaultValue: '请输入名称' }) }]}>
+              <Input placeholder={t('apiKey.namePlaceholder', { defaultValue: '请输入名称' })} />
             </Form.Item>
             <Form.Item>
               <Space>

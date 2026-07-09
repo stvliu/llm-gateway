@@ -20,6 +20,9 @@ public interface UserApiKeyRepository extends JpaRepository<UserApiKeyDo, Long> 
     @Query("SELECT u FROM UserApiKeyDo u WHERE u.userId = :userId AND u.deleted = false")
     List<UserApiKeyDo> findByUserId(@Param("userId") Long userId);
 
+    @Query("SELECT u FROM UserApiKeyDo u WHERE u.applicationId = :applicationId AND u.deleted = false")
+    List<UserApiKeyDo> findByApplicationId(@Param("applicationId") Long applicationId);
+
     @Query("SELECT u FROM UserApiKeyDo u WHERE u.deleted = false")
     List<UserApiKeyDo> findAllNonDeleted();
 

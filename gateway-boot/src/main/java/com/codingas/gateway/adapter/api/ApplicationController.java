@@ -4,6 +4,8 @@ import com.codingas.gateway.application.application.ApplicationService;
 import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
 import com.codingas.gateway.application.application.dto.ApplicationRequest;
 import com.codingas.gateway.application.application.dto.ApplicationResponse;
+import com.codingas.gateway.application.userapikey.UserApiKeyService;
+import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import java.util.List;
 public class ApplicationController {
 
     private final ApplicationService applicationService;
+    private final UserApiKeyService userApiKeyService;
 
     /**
      * 创建应用
@@ -80,6 +83,17 @@ public class ApplicationController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         applicationService.delete(id);
+    }
+
+    /**
+     * 查询应用下的所有 API Key
+     *
+     * @param id 应用 ID
+     * @return 该应用下的 API Key 响应列表
+     */
+    @GetMapping("/{id}/api-keys")
+    public List<UserApiKeyResponse> listApiKeys(@PathVariable Long id) {
+        return userApiKeyService.findByApplicationId(id);
     }
 
     /**
