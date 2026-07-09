@@ -82,7 +82,7 @@ base-ref: aa8439cb7998b50631aafbb6aef8eb6ae8f372c0
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/dto/UserApiKeyResponse.java`
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/dto/UserApiKeyDetailResponse.java`
 
-- [ ] **Step 1: 改 UserApiKeyCreateRequest，加 applicationId 字段**
+- [x] **Step 1: 改 UserApiKeyCreateRequest，加 applicationId 字段**
 
 ```java
 package com.codingas.gateway.application.userapikey.dto;
@@ -108,7 +108,7 @@ public record UserApiKeyCreateRequest(
 }
 ```
 
-- [ ] **Step 2: 改 UserApiKeyUpdateRequest，加可选 applicationId**
+- [x] **Step 2: 改 UserApiKeyUpdateRequest，加可选 applicationId**
 
 ```java
 package com.codingas.gateway.application.userapikey.dto;
@@ -126,7 +126,7 @@ public record UserApiKeyUpdateRequest(
 }
 ```
 
-- [ ] **Step 3: 改 UserApiKeyResponse，加 applicationId 字段**
+- [x] **Step 3: 改 UserApiKeyResponse，加 applicationId 字段**
 
 ```java
 package com.codingas.gateway.application.userapikey.dto;
@@ -158,7 +158,7 @@ public record UserApiKeyResponse(
 }
 ```
 
-- [ ] **Step 4: 改 UserApiKeyDetailResponse，加 applicationId 字段**
+- [x] **Step 4: 改 UserApiKeyDetailResponse，加 applicationId 字段**
 
 ```java
 package com.codingas.gateway.application.userapikey.dto;
@@ -190,12 +190,12 @@ public record UserApiKeyDetailResponse(
 }
 ```
 
-- [ ] **Step 5: 编译验证 DTO 改动不破坏 record 结构**
+- [x] **Step 5: 编译验证 DTO 改动不破坏 record 结构**
 
 Run: `./mvnw -pl gateway-boot compile -q`
 Expected: 编译失败，提示 `UserApiKeyServiceImpl` 中 `toResponse/toDetailResponse` 缺参数、`UserApiKeyServiceImplTest` 中 `new UserApiKeyCreateRequest(...)` 参数数量不匹配。这是预期的——后续 Task 3/4 会修复。仅确认 DTO 本身无语法错误。
 
-- [ ] **Step 6: 提交 DTO 改动**
+- [x] **Step 6: 提交 DTO 改动**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/dto/
@@ -217,7 +217,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/iam/gateway/database/repository/UserApiKeyRepository.java`
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/iam/gateway/UserApiKeyGatewayImpl.java`
 
-- [ ] **Step 1: UserApiKeyGateway 接口加方法**
+- [x] **Step 1: UserApiKeyGateway 接口加方法**
 
 在 `UserApiKeyGateway.java` 的 `findByUserId` 后加：
 
@@ -226,7 +226,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
     List<UserApiKey> findByApplicationId(Long applicationId);
 ```
 
-- [ ] **Step 2: UserApiKeyRepository 加派生查询**
+- [x] **Step 2: UserApiKeyRepository 加派生查询**
 
 在 `UserApiKeyRepository.java` 加方法（参照现有 `findByUserId` 的 @Query 风格，过滤 deleted=false）：
 
@@ -237,7 +237,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 注：`import org.springframework.data.repository.query.Param;` 已存在。
 
-- [ ] **Step 3: UserApiKeyGatewayImpl 实现 findByApplicationId**
+- [x] **Step 3: UserApiKeyGatewayImpl 实现 findByApplicationId**
 
 在 `UserApiKeyGatewayImpl.java` 的 `findByUserId` 后加：
 
@@ -252,12 +252,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 注：`toEntity/toDataObject` 已映射 applicationId（line 99/124），无需改。
 
-- [ ] **Step 4: 编译验证**
+- [x] **Step 4: 编译验证**
 
 Run: `./mvnw -pl gateway-boot compile -q`
 Expected: Gateway/Repository/Impl 编译通过（Service 层尚未调用新方法，不影响）。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/iam/gateway/UserApiKeyGateway.java \
@@ -277,7 +277,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/UserApiKeyService.java`
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/UserApiKeyServiceImpl.java`
 
-- [ ] **Step 1: 先写失败测试 — 更新 UserApiKeyServiceImplTest**
+- [x] **Step 1: 先写失败测试 — 更新 UserApiKeyServiceImplTest**
 
 替换 `gateway-boot/src/test/java/com/codingas/gateway/application/userapikey/UserApiKeyServiceImplTest.java` 全文为：
 
@@ -514,12 +514,12 @@ class UserApiKeyServiceImplTest {
 }
 ```
 
-- [ ] **Step 2: 运行测试验证失败**
+- [x] **Step 2: 运行测试验证失败**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=UserApiKeyServiceImplTest -q`
 Expected: 编译失败（`UserApiKeyCreateRequest` 构造参数不匹配、`UserApiKeyService` 无 `findByApplicationId` 方法、`UserApiKeyResponse` 无 `applicationId` 访问器、`UserApiKeyServiceImpl` 未注入 `ApplicationGateway`）。这是 Red 阶段。
 
-- [ ] **Step 3: UserApiKeyService 接口加 findByApplicationId**
+- [x] **Step 3: UserApiKeyService 接口加 findByApplicationId**
 
 在 `UserApiKeyService.java` 的 `findAllNonDeleted` 后加：
 
@@ -528,7 +528,7 @@ Expected: 编译失败（`UserApiKeyCreateRequest` 构造参数不匹配、`User
     List<UserApiKeyResponse> findByApplicationId(Long applicationId);
 ```
 
-- [ ] **Step 4: UserApiKeyServiceImpl 注入 ApplicationGateway + 实现校验/映射/查询**
+- [x] **Step 4: UserApiKeyServiceImpl 注入 ApplicationGateway + 实现校验/映射/查询**
 
 替换 `UserApiKeyServiceImpl.java` 全文为：
 
@@ -704,12 +704,12 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
 }
 ```
 
-- [ ] **Step 5: 运行测试验证通过**
+- [x] **Step 5: 运行测试验证通过**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=UserApiKeyServiceImplTest -q`
 Expected: 所有测试 PASS（Green 阶段）。
 
-- [ ] **Step 6: 提交**
+- [x] **Step 6: 提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/ \
@@ -732,7 +732,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Create: `gateway-boot/src/test/java/com/codingas/gateway/application/application/ApplicationServiceImplTest.java`
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/application/ApplicationServiceImpl.java`
 
-- [ ] **Step 1: 先写失败测试 — 新建 ApplicationServiceImplTest**
+- [x] **Step 1: 先写失败测试 — 新建 ApplicationServiceImplTest**
 
 ```java
 package com.codingas.gateway.application.application;
@@ -814,12 +814,12 @@ class ApplicationServiceImplTest {
 }
 ```
 
-- [ ] **Step 2: 运行测试验证失败**
+- [x] **Step 2: 运行测试验证失败**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=ApplicationServiceImplTest -q`
 Expected: 失败——`ApplicationServiceImpl` 未注入 `UserApiKeyGateway`，`@InjectMocks` 无法注入，`delete` 不校验直接删。Red 阶段。
 
-- [ ] **Step 3: ApplicationServiceImpl 注入 UserApiKeyGateway + delete 前置校验**
+- [x] **Step 3: ApplicationServiceImpl 注入 UserApiKeyGateway + delete 前置校验**
 
 修改 `ApplicationServiceImpl.java`：
 
@@ -855,12 +855,12 @@ import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 
 注：`@RequiredArgsConstructor` 会自动注入新字段。
 
-- [ ] **Step 4: 运行测试验证通过**
+- [x] **Step 4: 运行测试验证通过**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=ApplicationServiceImplTest -q`
 Expected: PASS（Green）。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/application/application/ApplicationServiceImpl.java \
@@ -884,7 +884,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/user/UserServiceImpl.java`
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/adapter/api/UserController.java`
 
-- [ ] **Step 1: 新建 ResetPasswordResponse record**
+- [x] **Step 1: 新建 ResetPasswordResponse record**
 
 ```java
 package com.codingas.gateway.application.user.dto;
@@ -898,7 +898,7 @@ public record ResetPasswordResponse(String newPassword) {
 }
 ```
 
-- [ ] **Step 2: 先写失败测试 — 在 UserServiceImplTest 中加 resetPassword 测试类**
+- [x] **Step 2: 先写失败测试 — 在 UserServiceImplTest 中加 resetPassword 测试类**
 
 在 `UserServiceImplTest.java` 中加 import：
 
@@ -958,12 +958,12 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 
 注：`passwordEncoder` 与 `userGateway` mock 已存在于现有测试类。若现有类未 import `argThat`/`verify`，补充 `import static org.mockito.ArgumentMatchers.argThat;` 与 `import static org.mockito.Mockito.*;`。
 
-- [ ] **Step 3: 运行测试验证失败**
+- [x] **Step 3: 运行测试验证失败**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=UserServiceImplTest -q`
 Expected: 编译失败——`UserService` 无 `resetPassword` 方法。Red 阶段。
 
-- [ ] **Step 4: UserService 接口加 resetPassword**
+- [x] **Step 4: UserService 接口加 resetPassword**
 
 在 `UserService.java` 的 `changePassword` 后加：
 
@@ -982,7 +982,7 @@ Expected: 编译失败——`UserService` 无 `resetPassword` 方法。Red 阶�
 
 加 import：`import com.codingas.gateway.application.user.dto.ResetPasswordResponse;`
 
-- [ ] **Step 5: UserServiceImpl 实现 resetPassword**
+- [x] **Step 5: UserServiceImpl 实现 resetPassword**
 
 5a. 加 import：
 
@@ -1028,7 +1028,7 @@ import java.security.SecureRandom;
     }
 ```
 
-- [ ] **Step 6: UserController 加 POST /users/{id}/reset-password**
+- [x] **Step 6: UserController 加 POST /users/{id}/reset-password**
 
 在 `UserController.java` 的 `listUserApiKeys` 前（或 `assignRoles` 后）加：
 
@@ -1047,12 +1047,12 @@ import java.security.SecureRandom;
 
 加 import：`import com.codingas.gateway.application.user.dto.ResetPasswordResponse;`
 
-- [ ] **Step 7: 运行测试验证通过**
+- [x] **Step 7: 运行测试验证通过**
 
 Run: `./mvnw -pl gateway-boot test -Dtest=UserServiceImplTest -q`
 Expected: PASS（Green）。
 
-- [ ] **Step 8: 提交**
+- [x] **Step 8: 提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/application/user/ \
@@ -1074,7 +1074,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Files:**
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/adapter/api/ApplicationController.java`
 
-- [ ] **Step 1: ApplicationController 注入 UserApiKeyService + 加端点**
+- [x] **Step 1: ApplicationController 注入 UserApiKeyService + 加端点**
 
 1a. 加 import：
 
@@ -1105,12 +1105,12 @@ import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
     }
 ```
 
-- [ ] **Step 2: 编译验证**
+- [x] **Step 2: 编译验证**
 
 Run: `./mvnw -pl gateway-boot compile -q`
 Expected: 编译通过。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/adapter/api/ApplicationController.java
@@ -1128,7 +1128,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify or Create: `gateway-boot/src/test/java/com/codingas/gateway/adapter/api/ApplicationControllerTest.java`
 - Modify: `gateway-boot/src/test/java/com/codingas/gateway/application/proxy/routing/RoutingResolverTest.java`
 
-- [ ] **Step 1: UserControllerTest 加 reset-password 端点测试**
+- [x] **Step 1: UserControllerTest 加 reset-password 端点测试**
 
 参照现有 `UserControllerTest` 的测试风格（@WebMvcTest 或 @SpringBootTest @AutoConfigureMockMvc）。加：
 
@@ -1159,7 +1159,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 注：根据现有 `UserControllerTest` 的实际基类与 mock 方式调整（若用 @MockBean 则用 @MockBean；若用 @WebMvcTest 则需 @Import 异常处理器）。`ForbiddenException` 由 `IamExceptionHandler` 映射为 403。
 
-- [ ] **Step 2: ApplicationControllerTest 加 GET /api-keys 与 DELETE 冲突测试**
+- [x] **Step 2: ApplicationControllerTest 加 GET /api-keys 与 DELETE 冲突测试**
 
 若 `ApplicationControllerTest.java` 不存在则新建（参照 UserControllerTest 风格）：
 
@@ -1191,7 +1191,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 注：根据现有 `ApiResponse` 序列化结构调整 jsonPath（`$.data` 或 `$.items`）。若现有测试用 `@SpringBootTest @AutoConfigureMockMvc`，保持一致。
 
-- [ ] **Step 3: 路由回归测试 — RoutingResolverTest 加带 applicationId 的 case**
+- [x] **Step 3: 路由回归测试 — RoutingResolverTest 加带 applicationId 的 case**
 
 在 `RoutingResolverTest.java` 的 `ResolveTests` 嵌套类中加：
 
@@ -1248,12 +1248,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 
 注：`import com.codingas.gateway.domain.application.entity.Application;` 与 `import java.util.List;` 已存在于该测试文件。`Application.setTimeout(45)` 验证 applicationId 非空时应用级配置生效。
 
-- [ ] **Step 4: 运行所有新增测试**
+- [x] **Step 4: 运行所有新增测试**
 
 Run: `./mvnw -pl gateway-boot test -Dtest="UserControllerTest,ApplicationControllerTest,RoutingResolverTest" -q`
 Expected: 全部 PASS。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-boot/src/test/java/com/codingas/gateway/adapter/api/UserControllerTest.java \
@@ -1275,12 +1275,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Files:**
 - 可能涉及：调用 `new UserApiKeyCreateRequest(...)` / `new UserApiKeyUpdateRequest(...)` 的其他位置（如 `SampleDataLoader`、其他测试）
 
-- [ ] **Step 1: 全量编译 + 测试**
+- [x] **Step 1: 全量编译 + 测试**
 
 Run: `./mvnw -pl gateway-boot test -q`
 Expected: 可能有编译失败——其他调用 `UserApiKeyCreateRequest`/`UserApiKeyUpdateRequest` 构造器的位置（如 `SampleDataLoader`、其他测试）需更新参数顺序。
 
-- [ ] **Step 2: 搜索并修复所有 DTO 构造调用**
+- [x] **Step 2: 搜索并修复所有 DTO 构造调用**
 
 Run: `grep -rn "new UserApiKeyCreateRequest\|new UserApiKeyUpdateRequest" gateway-boot/src/`
 
@@ -1288,12 +1288,12 @@ Run: `grep -rn "new UserApiKeyCreateRequest\|new UserApiKeyUpdateRequest" gatewa
 - `SampleDataLoader` 中创建 sample Key 时补 applicationId（从 sample 数据中取对应应用 ID）
 - 其他测试中构造请求时补 applicationId（用 mock 应用 ID）
 
-- [ ] **Step 3: 重新运行全量测试**
+- [x] **Step 3: 重新运行全量测试**
 
 Run: `./mvnw -pl gateway-boot test -q`
 Expected: 全部 PASS。
 
-- [ ] **Step 4: 提交（如有修复）**
+- [x] **Step 4: 提交（如有修复）**
 
 ```bash
 git add gateway-boot/
@@ -1311,7 +1311,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-console/src/services/api/userApiKey.ts`
 - Modify: `gateway-console/src/services/api/user.ts`
 
-- [ ] **Step 1: types/userApiKey.ts 加 applicationId + 修正注释**
+- [x] **Step 1: types/userApiKey.ts 加 applicationId + 修正注释**
 
 替换全文为：
 
@@ -1362,7 +1362,7 @@ export interface CreateUserApiKeyResponse {
 }
 ```
 
-- [ ] **Step 2: services/api/userApiKey.ts 移除 rotate + 加 listByApplication**
+- [x] **Step 2: services/api/userApiKey.ts 移除 rotate + 加 listByApplication**
 
 替换 `rotate` 方法为 `listByApplication`：
 
@@ -1410,7 +1410,7 @@ export const userApiKeyApi = {
 };
 ```
 
-- [ ] **Step 3: services/api/user.ts resetPassword 返回类型修正**
+- [x] **Step 3: services/api/user.ts resetPassword 返回类型修正**
 
 将 `resetPassword` 的返回类型从 `api.post<void>` 改为 `api.post<{ newPassword: string }>`：
 
@@ -1420,12 +1420,12 @@ export const userApiKeyApi = {
     api.post<{ newPassword: string }>(`/users/${id}/reset-password`),
 ```
 
-- [ ] **Step 4: 类型检查**
+- [x] **Step 4: 类型检查**
 
 Run: `cd gateway-console && npm run typecheck` （或 `npx tsc --noEmit`）
 Expected: 可能报错——`DownstreamKeysTable.tsx`/`UserApiKeyModal.tsx` 中 `create` 调用未传 applicationId。这是预期的，Task 10/11 会修复。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add gateway-console/src/types/userApiKey.ts \
@@ -1448,7 +1448,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 - Modify: `gateway-console/src/pages/ApiKeys/DownstreamKeysTable.tsx`
 - Modify: `gateway-console/src/services/query/useUserApiKeys.ts`（加按应用查询 hook，可选）
 
-- [ ] **Step 1: useUserApiKeys.ts 加 useUserApiKeysByApplication hook（可选）**
+- [x] **Step 1: useUserApiKeys.ts 加 useUserApiKeysByApplication hook（可选）**
 
 若希望按应用筛选走服务端查询，加：
 
@@ -1465,7 +1465,7 @@ export function useUserApiKeysByApplication(applicationId: number | undefined) {
 
 若前端纯客户端筛选（用 `useAllUserApiKeys` + filter），可跳过此步。下方 DownstreamKeysTable 用客户端筛选方案。
 
-- [ ] **Step 2: DownstreamKeysTable 改造 — 创建表单加 Application Select、列表加列、按应用筛选、URL 初始化**
+- [x] **Step 2: DownstreamKeysTable 改造 — 创建表单加 Application Select、列表加列、按应用筛选、URL 初始化**
 
 替换 `DownstreamKeysTable.tsx` 全文为：
 
@@ -1749,12 +1749,12 @@ export default function DownstreamKeysTable() {
 }
 ```
 
-- [ ] **Step 3: 类型检查 + 构建**
+- [x] **Step 3: 类型检查 + 构建**
 
 Run: `cd gateway-console && npm run build`
 Expected: 构建通过（可能需补 `useApplications` 的 import 路径，参照现有用法）。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add gateway-console/src/pages/ApiKeys/DownstreamKeysTable.tsx \
@@ -1776,7 +1776,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Files:**
 - Modify: `gateway-console/src/pages/Users/UserApiKeyModal.tsx`
 
-- [ ] **Step 1: UserApiKeyModal 删团队继承 Alert + 加 Application Select + 编辑补绑**
+- [x] **Step 1: UserApiKeyModal 删团队继承 Alert + 加 Application Select + 编辑补绑**
 
 修改 `UserApiKeyModal.tsx`：
 
@@ -1883,12 +1883,12 @@ import { useApplications } from '@/services/query/useApplications';
     },
 ```
 
-- [ ] **Step 2: 类型检查 + 构建**
+- [x] **Step 2: 类型检查 + 构建**
 
 Run: `cd gateway-console && npm run build`
 Expected: 构建通过。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-console/src/pages/Users/UserApiKeyModal.tsx
@@ -1909,7 +1909,7 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Files:**
 - Modify: `gateway-console/src/pages/Applications/index.tsx`
 
-- [ ] **Step 1: Applications/index.tsx 加查看 Key 行操作**
+- [x] **Step 1: Applications/index.tsx 加查看 Key 行操作**
 
 1a. 加 import：
 
@@ -1939,12 +1939,12 @@ import { KeyOutlined } from '@ant-design/icons';
 
 注：放在 `SafetyOutlined` Tooltip 之后、`canWrite` 块之前，使所有有读权限的用户可见。
 
-- [ ] **Step 2: 类型检查 + 构建**
+- [x] **Step 2: 类型检查 + 构建**
 
 Run: `cd gateway-console && npm run build`
 Expected: 构建通过。若 `/keys` 路由不存在，确认路由配置（通常在 `router.tsx` 或 `App.tsx`）。若路由路径不同（如 `/api-keys`），调整 `navigate` 目标。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add gateway-console/src/pages/Applications/index.tsx
@@ -1962,12 +1962,12 @@ Co-Authored-By: Claude <noreply@anthropic.com>"
 **Files:**
 - 无新文件，仅运行验证
 
-- [ ] **Step 1: 后端全量测试**
+- [x] **Step 1: 后端全量测试**
 
 Run: `./mvnw -pl gateway-boot test -q`
 Expected: 全部 PASS，覆盖率满足核心服务层 ≥90% / 规则引擎 ≥85% / 适配器层 ≥80%（参照 CLAUDE.md）。
 
-- [ ] **Step 2: 前端构建 + 测试**
+- [x] **Step 2: 前端构建 + 测试**
 
 Run: `cd gateway-console && npm run build && npm test`
 Expected: 构建通过，现有测试不回归。若 `ApplicationFormModal.test.tsx` 因新增列失败，调整测试快照。
@@ -1983,7 +1983,7 @@ Expected: 构建通过，现有测试不回归。若 `ApplicationFormModal.test.
 5. 删除有 Key 的 Application → 返回 400 + code=APPLICATION_HAS_API_KEYS
 6. 重置非内建用户密码 → 返回 16 位明文；重置内建用户 → 403
 
-- [ ] **Step 4: 提交验证记录（可选）**
+- [x] **Step 4: 提交验证记录（可选）**
 
 如有验证脚本或截图，记录到 `openspec/changes/key-application-binding/` 下。无需提交代码。
 
