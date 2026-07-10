@@ -1,0 +1,15 @@
+---
+interface Props { title: string; desc: string; href: string; }
+const { title, desc, href } = Astro.props;
+---
+<a href={href} class="feature-card">
+  <h4>{title}</h4>
+  <p>{desc}</p>
+</a>
+
+<style>
+  .feature-card { display: block; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; text-decoration: none; color: inherit; }
+  .feature-card:hover { border-color: var(--brand-primary, #6653e3); }
+  .feature-card h4 { margin: 0 0 6px; font-size: 1rem; }
+  .feature-card p { margin: 0; color: #6b7280; font-size: 0.875rem; }
+</style>
