@@ -6,8 +6,8 @@
 
 ## 2. 文档迁移
 
-- [ ] 2.1 迁移 11 篇核心公开文档到 `src/content/docs/`，文件名改英文 slug 并加 Starlight frontmatter（见 Design Doc §5 映射表）
-- [ ] 2.2 复核内部调研文档（apipark/voapi/cc-switch/FEASIBILITY/竞品分析）未进入公开站点
+- [x] 2.1 迁移 11 篇核心公开文档到 `src/content/docs/`，文件名改英文 slug 并加 Starlight frontmatter（见 Design Doc §5 映射表）
+- [x] 2.2 复核内部调研文档（apipark/voapi/cc-switch/FEASIBILITY/竞品分析）未进入公开站点
 
 ## 3. 侧边栏配置
 

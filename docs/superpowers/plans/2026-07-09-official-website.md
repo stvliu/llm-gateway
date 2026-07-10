@@ -320,7 +320,7 @@ git commit -m "feat(site): 初始化 Astro+Starlight 脚手架与 i18n 架构（
 | `容灾方案设计.md` | `features/resilience.mdx` | 容灾方案 |
 | `model-experience-design.md` | `features/model-plaza.mdx` | 模型广场 |
 
-- [ ] **Step 1: 创建 `site/src/content/docs/guide/spec.mdx`**
+- [x] **Step 1: 创建 `site/src/content/docs/guide/spec.mdx`**
 
 将 `docs/spec.md` 全文内容复制到 `site/src/content/docs/guide/spec.mdx`，并在文件**最顶部**插入 Starlight frontmatter：
 
@@ -333,7 +333,7 @@ description: LLM-Gateway 完整需求规格说明书
 
 其后粘贴 `docs/spec.md` 正文。原 `docs/spec.md` 保留不删。
 
-- [ ] **Step 2: 对其余 10 篇迁移文档重复 Step 1 的流程**
+- [x] **Step 2: 对其余 10 篇迁移文档重复 Step 1 的流程**
 
 每篇操作一致：复制源文件正文 -> 新建目标 `.mdx` -> 顶部插入 frontmatter（title/description 见映射表）-> 原 `docs/` 文件保留。具体：
 
@@ -350,7 +350,7 @@ description: LLM-Gateway 完整需求规格说明书
 | `features/resilience.mdx` | `docs/容灾方案设计.md` | `title: 容灾方案` / `description: 熔断重试与故障转移` |
 | `features/model-plaza.mdx` | `docs/model-experience-design.md` | `title: 模型广场` / `description: 模型展示与体验设计` |
 
-- [ ] **Step 3: 创建企业版占位文档 `features/semantic-cache.mdx`**
+- [x] **Step 3: 创建企业版占位文档 `features/semantic-cache.mdx`**
 
 内容提炼自 README §语义缓存，frontmatter + 正文如下：
 
@@ -373,7 +373,7 @@ badge: 企业版
 > 此功能为企业版专属，标准版默认关闭（`semantic-cache: false`）。
 ```
 
-- [ ] **Step 4: 创建企业版占位文档 `features/mcp-protocol.mdx`**
+- [x] **Step 4: 创建企业版占位文档 `features/mcp-protocol.mdx`**
 
 内容提炼自 README §MCP 协议：
 
@@ -395,7 +395,7 @@ MCP（Model Context Protocol）是企业版专属能力，为大模型提供标�
 > 此功能为企业版专属，标准版默认关闭（`mcp-protocol: false`）。
 ```
 
-- [ ] **Step 5: 创建 7 篇能力域概览页**
+- [x] **Step 5: 创建 7 篇能力域概览页**
 
 为满足 spec「8 能力域全部条目可见」，为缺少独立迁移文档的 7 个能力域各创建一篇概览页，内容来自 README 功能矩阵对应章节（README 第 41-118 行已含每域 ✅/🔒 清单）。路由域用已迁移的 `features/routing.mdx`，无需新建。
 
@@ -440,7 +440,7 @@ LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，统一接入�
 
 每篇正文为「## 功能清单」表格，列名「功能 / 标准版 / 企业版」，行数据逐条来自 README 该章节的 ✅/🔒 项（✅ 对应两列均 ✅，🔒 [企业版] 对应标准版 ❌ / 企业版 ✅）。
 
-- [ ] **Step 6: 复核内部调研文档未进入公开站点**
+- [x] **Step 6: 复核内部调研文档未进入公开站点**
 
 检查 `site/src/content/docs/` 下不存在以下内部调研文档：`apipark`、`voapi`、`cc-switch`、`FEASIBILITY`、`竞品分析`、`simulator-gateway-verification`、`connectivity-test-design`、`前端重构规划`、`页面设计规范`、`需求实现规划`、`Speckit`、`git-workflow`、`migration/`、`refactor/`、`db/`。
 
@@ -450,7 +450,7 @@ cd site && ls src/content/docs/ && echo "---" && find src/content/docs -type f |
 ```
 Expected: 文件数 = 11 迁移 + 2 企业版占位 + 7 概览 = 20 个 `.mdx`，且输出中无上述内部调研文档名。
 
-- [ ] **Step 7: 验证 Starlight 能解析迁移文档**
+- [x] **Step 7: 验证 Starlight 能解析迁移文档**
 
 Run:
 ```bash
@@ -458,7 +458,7 @@ cd site && pnpm dev
 ```
 Expected: 开发服务启动，访问 `http://localhost:4321/`，Starlight 文档站可渲染（侧边栏此时可能为空，因 Task 3 才配置；但文档文件本身不报构建错误）。Ctrl+C 停止。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add site/src/content/docs/
