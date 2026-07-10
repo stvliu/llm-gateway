@@ -23,7 +23,7 @@ export const home = {
     products: {
       title: '三产品形态',
       items: [
-        { name: '标准版', desc: 'Apache-2.0 开源，单机即可起步', href: '/docs/' },
+        { name: '标准版', desc: 'Apache-2.0 开源，单机即可起步', href: '/features/' },
         { name: '托管云', desc: '免运维的云托管服务（即将推出）', href: '/contact-us/' },
         { name: '企业版', desc: '分布式部署 + 高级安全 + 商业支持', href: '/standard-vs-enterprise/' },
       ],
@@ -56,7 +56,7 @@ export const home = {
     products: {
       title: 'Three Editions',
       items: [
-        { name: 'Standard', desc: 'Apache-2.0 open-source, single-node to start', href: '/en/docs/' },
+        { name: 'Standard', desc: 'Apache-2.0 open-source, single-node to start', href: '/features/' },
         { name: 'Managed Cloud', desc: 'Managed cloud service (coming soon)', href: '/en/contact-us/' },
         { name: 'Enterprise', desc: 'Distributed deployment + advanced security + support', href: '/en/standard-vs-enterprise/' },
       ],

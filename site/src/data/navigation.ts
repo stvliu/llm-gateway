@@ -7,7 +7,7 @@ export interface NavItem {
 
 export const navigation: NavItem[] = [
   { label: '产品', href: '/#products', enLabel: 'Product' },
-  { label: '文档', href: '/docs/', enLabel: 'Docs' },
+  { label: '文档', href: '/features/', enLabel: 'Docs' },
   { label: '版本对比', href: '/standard-vs-enterprise/', enLabel: 'Editions' },
   { label: '联系我们', href: '/contact-us/', enLabel: 'Contact' },
 ];
