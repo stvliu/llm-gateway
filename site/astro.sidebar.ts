@@ -1,11 +1,10 @@
-import type { SidebarItem } from 'astro';
-
-// 企业版 badge：Starlight 原生，variant 'tip' = 绿色。
-const enterpriseBadge = { text: '企业版', variant: 'tip' as const };
+// 企业版 badge：Starlight 原生，variant 'success' = 绿色。
+const enterpriseBadge = { text: '企业版', variant: 'success' as const };
 
 // 8 大能力域分组 + 快速开始 + 高级能力 + 模型广场 + 参考。
 // 全部条目均渲染（不做条件隐藏）；企业版专属项附 badge。
-export const sidebar: SidebarItem[] = [
+// 类型由 astro.config.ts 的 starlight({ sidebar }) 推断，无需显式导入 SidebarItem。
+export const sidebar = [
   {
     label: '快速开始',
     collapsed: true,
