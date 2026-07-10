@@ -1,0 +1,1516 @@
+---
+title: 数据架构
+description: 数据库设计与实体关系
+---
+
+# 数据架构 / Data Architecture
+
+> **文档版本**: 2.0
+> **项目版本**: v1.0.0
+> **生成日期**: 2026-05-18
+> **状态**: 草案
+
+---
+
+## 目录
+
+- [概述](#概述)
+- [设计原则](#设计原则)
+- [数据库选型](#数据库选型)
+- [命名规范](#命名规范)
+- [数据模型总览](#数据模型总览)
+- [核心实体设计](#核心实体设计)
+  - [proxy 域（模型代理）](#1-proxy-域模型代理)
+  - [model 域（模型广场）](#2-model-域模型广场)
+  - [security 域（访问控制）](#3-security-域访问控制)
+  - [quota 域（用量管控）](#4-quota-域用量管控)
+  - [audit 域（审计追溯）](#5-audit-域审计追溯)
+  - [alert 域（告警通知）](#6-alert-域告警通知)
+- [索引设计](#索引设计)
+- [数据字典](#数据字典)
+- [数据一致性约束](#数据一致性约束)
+- [数据迁移策略](#数据迁移策略)
+- [附录](#附录)
+
+---
+
+## 概述
+
+本文档定义 LLM-Gateway 的数据架构，包括数据库设计、表结构、索引策略和数据字典。数据架构基于 [需求规格说明书](./spec.md) 和 [信息架构](./信息架构.md) 设计，支撑 6 大业务域：
+
+| 业务域 | 核心职责 | 实体数量 |
+|--------|---------|---------|
+| **proxy** | 模型代理（核心域） | 3 |
+| **model** | 模型广场 | 5 |
+| **security** | 访问控制 | 8 |
+| **quota** | 用量管控 | 3 |
+| **audit** | 审计追溯 | 2 |
+| **alert** | 告警通知 | 3 |
+
+**设计规模基准**：
+
+| 维度 | v1.0 目标 | v2.0 目标 |
+|------|----------|----------|
+| 用户数 | ~10,000 | ~100,000 |
+| Provider 数 | ~100 | ~500 |
+| 模型数 | ~1,000 | ~5,000 |
+| QPS（单实例） | 10,000 | 10,000 |
+
+---
+
+## 设计原则
+
+### 核心原则
+
+| 原则 | 说明                                                            |
+|------|---------------------------------------------------------------|
+| **全实体可审计** | 每张业务表必须包含 `created_by`、`created_at`、`updated_by`、`updated_at` |
+| **软删除优先** | 核心业务实体使用 `deleted_at` 实现软删除，保留历史数据                            |
+| **密钥加密存储** | 所有 API Key、密码等敏感数据使用 AES-256-GCM 加密                           |
+| **审计链不可篡改** | 审计日志使用 WORM（Write Once Read Many）存储 + 链式哈希                    |
+| **外键关联使用物理 ID** | 表间关联使用 `*_id` BIGINT 外键                                       |
+
+### DO（Data Object）关联模式
+
+DO 层作为 JPA 实体，负责数据库映射。关联方式按场景选择：
+
+| 场景 | 建议方式 | 说明 |
+|------|---------|------|
+| **主从关系（强依赖）** | 可用 JPA `@ManyToOne` | 简化查询，但禁用级联删除 |
+| **中间表/关联表** | ID 引用 | 避免 JPA 关联带来的复杂性 |
+| **弱引用关系** | ID 引用 | 手动 JOIN 查询，更灵活 |
+
+**JPA 关联注意事项**:
+
+- ⚠️ 使用 `FetchType.LAZY` 避免不必要的数据加载
+- ⚠️ 在事务外访问 LAZY 属性会抛 `LazyInitializationException`
+- ⚠️ JSON 序列化可能导致无限递归，需使用 `@JsonIgnore` 或 DTO 转换
+- ❌ 禁止使用级联删除（`CascadeType.REMOVE`）
+
+**推荐示例**:
+
+```java
+// 主从关系：可使用 JPA 关联
+@Entity
+public class ModelDo extends BaseDo {
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    private ProviderDo provider;  // 简化查询
+}
+
+// 关联表/弱引用：使用 ID 引用
+@Entity
+public class ProviderApiKeyDo extends BaseDo {
+    @Column(name = "provider_id")
+    private Long providerId;  // 纯 ID 引用
+}
+```
+
+### 数据类型规范
+
+| 数据类型 | 使用场景 | 说明 |
+|---------|---------|------|
+| `BIGINT` | 主键、外键、数量、金额 | 足够大，避免溢出 |
+| `VARCHAR(128)` | 名称、标题 | 中等长度文本 |
+| `VARCHAR(512)` | URL、描述 | 较长文本 |
+| `TEXT` | JSON 配置、大文本 | 无长度限制 |
+| `TIMESTAMP WITH TIME ZONE` | 时间戳 | 时区感知，使用 UTC |
+| `BOOLEAN` | 布尔标志 | 默认 `false` |
+| `DECIMAL(18,6)` | 价格、精确金额 | 避免浮点精度问题 |
+| `BYTEA` | 加密数据、向量 | 二进制数据 |
+
+### 字段命名规范
+
+| 字段类型 | 命名格式 | 示例 |
+|---------|---------|------|
+| 主键 | `id` | `id BIGINT` |
+| 外键 | `*_id` | `user_id`, `provider_id` |
+| 名称 | `*_name` | `provider_name`, `model_name` |
+| 状态 | `status` | `status VARCHAR(32)` |
+| 时间戳 | `*_at` | `created_at`, `updated_at`, `expires_at` |
+| 软删除 | `deleted_at` | `deleted_at TIMESTAMP` |
+| 创建/更新人 | `created_by`, `updated_by` | `created_by BIGINT` |
+
+---
+
+## 数据库选型
+
+### 主数据库：PostgreSQL 14+
+
+**选型理由**：
+
+| 特性 | 说明 |
+|------|------|
+| **JSONB 支持** | 原生 JSON 存储，支持索引，用于 `capabilities`、`config` 等灵活字段 |
+| **全文检索** | 内置全文检索，支持日志查询 |
+| **向量扩展（pgvector）** | 语义缓存向量存储（**企业版功能**） |
+| **行级安全** | 多租户隔离（企业版） |
+| **时区支持** | `TIMESTAMP WITH TIME ZONE` 原生支持 |
+| **开源免费** | 无许可证成本 |
+
+### 缓存数据库：Redis 7+
+
+**使用场景**：
+
+| 场景 | 数据类型 | TTL | 企业版 | 标准版 |
+|------|---------|-----|--------|--------|
+| 限流计数器 | String | 按周期 | ✅ | ✅ |
+| Token 限额缓存 | Hash | 5 分钟 | ✅ | ✅ |
+| 会话缓存 | Hash | 30 分钟 | ✅ | ✅ |
+| 分布式锁 | String | 30 秒 | ✅ | ✅ |
+
+### 数据库连接配置
+
+```yaml
+# 生产配置
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:llm_gateway}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+```
+
+---
+
+## 命名规范
+
+### 表命名规范
+
+| 规则 | 示例 |
+|------|------|
+| 小写 + 下划线 | `model_providers`, `routing_strategies` |
+| 复数形式 | `users`, `providers`, `provider_api_keys` |
+| 关联表格式 | `{entity1}_{entity2}` | `user_roles` |
+| 域前缀（可选） | `quota_Usage_records` | 避免跨域命名冲突 |
+
+### 索引命名规范
+
+| 索引类型 | 命名格式 | 示例 |
+|---------|---------|------|
+| 主键 | `pk_{table}` | `pk_users` |
+| 唯一索引 | `uq_{table}_{columns}` | `uq_users_email` |
+| 普通索引 | `ix_{table}_{columns}` | `ix_users_status` |
+| 外键索引 | `fk_{table}_{ref_table}` | `fk_user_roles_users` |
+| 复合索引 | `ix_{table}_{col1}_{col2}` | `ix_usage_records_user_id_created_at` |
+
+---
+
+## 数据模型总览
+
+### ER 图（Entity-Relationship Diagram）
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              数据模型关系图                                       │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                 │
+│  [security 域]                         [quota 域]                              │
+│  ┌─────────────┐                      ┌─────────────────┐                      │
+│  │   users     │──────┬──────────────►│  token_limits   │                      │
+│  │  (role:     │      │               └─────────────────┘                      │
+│  │  ADMIN/USER)│      │               ┌─────────────────┐                      │
+│  └──────┬──────┘      ├──────────────►│ rate_limit_cfg  │                      │
+│         │             │               └─────────────────┘                      │
+│         │             │                      │                                 │
+│         │             │                      ▼                                 │
+│         │             │               ┌─────────────────┐                      │
+│         │             └──────────────►│  usage_records  │                      │
+│         │                             └─────────────────┘                      │
+│         │                                    ▲                                 │
+│         │                                    │                                 │
+│         │  ┌─────────────┐ ┌──────────┐     │                                 │
+│         ├─►│    teams    │ │user_teams│     │                                 │
+│         │  └─────────────┘ └──────────┘     │                                 │
+│         │         │                          │                                 │
+│         │  ┌──────────────────┐             │                                 │
+│         ├─►│  gateway_api_keys│─────────────┘                                 │
+│         │  └──────────────────┘                                               │
+│         │             │                                                       │
+│         │             │               [audit 域]                              │
+│         │             │               ┌─────────────┐                         │
+│         │             └──────────────►│  call_logs  │                         │
+│         │                             └─────────────┘                         │
+│         │                                    │                                │
+│         │                                    ▼                                │
+│         │                             ┌─────────────┐                         │
+│         └────────────────────────────►│ audit_logs  │                         │
+│                                       └─────────────┘                         │
+│                                                                                 │
+│  [model 域]                            [proxy 域]                              │
+│  ┌─────────────┐     ┌────────────┐   ┌────────────────┐   ┌──────────────────┐│
+│  │  providers  │────►│  products  │   │provider_api_keys│◄──│route_group_prov  ││
+│  └──────┬──────┘     └──────┬─────┘   └────────────────┘   └──────────────────┘│
+│         │                   │                ▲                                  │
+│         │                   │                │                                  │
+│         │          ┌────────────┐   ┌──────────────────┐                     │
+│         └─────────►│   models   │   │  route_groups    │                     │
+│                    └────────────┘   └──────────────────┘                     │
+│                                                                                 │
+│  [alert 域]                                                                    │
+│  ┌──────────────┐     ┌─────────────────┐     ┌────────────────────┐          │
+│  │ alert_rules  │────►│ alert_templates │     │alert_notifications│          │
+│  └──────────────┘     └─────────────────┘     └────────────────────┘          │
+│                                                                                 │
+└─────────────────────────────────────────────────────────────────────────────────┘
+```
+
+**简化角色模型说明**：
+- 用户表 `users` 直接包含 `role` 字段（`ADMIN` / `USER`）
+- 团队表 `teams` 和 `user_teams` 提供基于团队的访问控制
+- 产品表 `products` 实现 Provider→Product→Model 三层结构
+
+### 表统计
+
+| 域 | 表名 | 说明 | 预估数据量（v1.0） |
+|----|------|------|-------------------|
+| **proxy** | `route_groups` | 路由分组 | ~100 |
+| | `route_group_provider_api_keys` | 路由关联 | ~500 |
+| | `semantic_caches` | 语义缓存 | ~10,000 |
+| **model** | `providers` | 模型提供商 | ~100 |
+| | `products` | 产品 | ~500 |
+| | `models` | AI 模型 | ~1,000 |
+| | `provider_api_keys` | Provider 凭证 | ~500 |
+| **security** | `users` | 系统用户（含角色字段） | ~10,000 |
+| | `teams` | 团队 | ~100 |
+| | `user_teams` | 用户-团队关联 | ~10,000 |
+| | `gateway_api_keys` | 网关凭证 | ~30,000 |
+| | `user_oauths` | OAuth 身份 | ~15,000 |
+| | `ip_blocklists` | IP 黑名单 | ~1,000 |
+| | `sensitive_data_rules` | 脱敏规则 | ~50 |
+| | `licenses` | 许可证 | ~10 |
+| **quota** | `token_limits` | Token 限额 | ~10,000 |
+| | `rate_limit_configs` | 限流配置 | ~30,000 |
+| | `usage_records` | 用量记录 | ~100 万/月 |
+| **audit** | `audit_logs` | 审计日志 | ~100 万/月 |
+| | `call_logs` | 调用日志 | ~1000 万/月 |
+| **alert** | `alert_rules` | 告警规则 | ~100 |
+| | `alert_templates` | 告警模板 | ~20 |
+| | `alert_notifications` | 告警通知 | ~10,000/月 |
+| **合计** | **24 张表** | | |
+
+---
+
+## 核心实体设计
+
+### 1. proxy 域（模型代理）
+
+#### 1.1 route_groups（路由分组）
+
+> 对应信息架构：**RouteGroup** - 一组路由策略配置，支持负载均衡和故障转移
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `name` | VARCHAR(128) | NOT NULL | - | 路由分组名称 |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `load_balance_strategy` | VARCHAR(32) | NOT NULL | 'PRIORITY' | 负载均衡策略：PRIORITY/WEIGHT/RANDOM |
+| `failover_enabled` | BOOLEAN | NOT NULL | true | 是否启用故障转移 |
+| `failover_threshold` | INT | NULL | 5 | 故障转移阈值（连续失败次数） |
+| `health_check_interval` | INT | NULL | 60 | 健康检查间隔（秒） |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_route_groups_status ON route_groups(status) WHERE deleted_at IS NULL;
+```
+
+**业务约束**：
+- `load_balance_strategy` 枚举值：`PRIORITY`（优先级）、`WEIGHT`（权重）、`RANDOM`（随机）
+- `failover_threshold` 范围：1-100
+- `health_check_interval` 范围：10-3600 秒
+
+---
+
+#### 1.2 route_group_provider_api_keys（路由关联）
+
+> 对应信息架构：**RouteGroupProviderApiKey** - 路由分组与 ProviderApiKey 的关联，含权重/优先级
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `route_group_id` | BIGINT | NOT NULL, FK | - | 路由分组 ID |
+| `provider_api_key_id` | BIGINT | NOT NULL, FK | - | Provider API Key ID |
+| `priority` | INT | NOT NULL | 100 | 优先级（数值越大优先级越高） |
+| `weight` | INT | NOT NULL | 100 | 权重（权重模式下使用） |
+| `enabled` | BOOLEAN | NOT NULL | true | 是否启用 |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_route_group_provider_api_keys_unique ON route_group_provider_api_keys(route_group_id, provider_api_key_id);
+CREATE INDEX ix_route_group_provider_api_keys_route_group ON route_group_provider_api_keys(route_group_id);
+CREATE INDEX ix_route_group_provider_api_keys_key ON route_group_provider_api_keys(provider_api_key_id);
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE route_group_provider_api_keys
+  ADD CONSTRAINT fk_route_group_provider_api_keys_route_group FOREIGN KEY (route_group_id) REFERENCES route_groups(id),
+  ADD CONSTRAINT fk_route_group_provider_api_keys_key FOREIGN KEY (provider_api_key_id) REFERENCES provider_api_keys(id);
+```
+
+---
+
+#### 1.3 semantic_caches（语义缓存）
+
+> **企业版功能**：语义缓存仅在企业版（PostgreSQL + pgvector）中提供，标准版不支持。
+
+> 对应信息架构：**SemanticCache** - 相似请求的缓存条目，含向量、响应内容、TTL
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID（用于隔离） |
+| `request_hash` | VARCHAR(128) | NOT NULL | - | 请求内容哈希（SHA-256） |
+| `request_embedding` | VECTOR(1536) | NULL | - | 请求向量（OpenAI embedding） |
+| `request_content` | TEXT | NOT NULL | - | 原始请求内容（JSON） |
+| `response_content` | TEXT | NOT NULL | - | 缓存的响应内容（JSON） |
+| `similarity_threshold` | DECIMAL(3,2) | NOT NULL | 0.95 | 相似度阈值（0.80-0.99） |
+| `hit_count` | INT | NOT NULL | 0 | 命中次数 |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | - | 过期时间 |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_semantic_caches_user ON semantic_caches(user_id);
+CREATE INDEX ix_semantic_caches_hash ON semantic_caches(request_hash);
+CREATE INDEX ix_semantic_caches_expires ON semantic_caches(expires_at);
+-- 向量索引（需要 pgvector 扩展）
+CREATE INDEX ix_semantic_caches_embedding ON semantic_caches USING ivfflat (request_embedding vector_cosine_ops);
+```
+
+**业务约束**：
+- `similarity_threshold` 范围：0.80-0.99
+- 默认 TTL：1 小时
+- 向量维度：1536（OpenAI text-embedding-3-small）
+
+---
+
+### 2. model 域（模型广场）
+
+#### 2.1 providers（模型提供商）
+
+> 对应信息架构：**Provider** - AI 模型服务提供方
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `provider_name` | VARCHAR(128) | NOT NULL | - | 显示名称 |
+| `provider_type` | VARCHAR(32) | NOT NULL | - | 类型：OPENAI/ANTHROPIC/GEMINI/ZHIPU/QWEN/VOLCENGINE/WENXIN/OTHER |
+| `base_url` | VARCHAR(512) | NULL | - | API Base URL |
+| `website_url` | VARCHAR(512) | NULL | - | 官网地址 |
+| `api_doc_url` | VARCHAR(512) | NULL | - | API 文档地址 |
+| `priority` | INT | NOT NULL | 100 | 默认优先级 |
+| `timeout` | INT | NOT NULL | 30000 | 调用超时时间（毫秒） |
+| `max_retries` | INT | NOT NULL | 3 | 最大重试次数 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/SUSPENDED/DELETED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_providers_type ON providers(provider_type) WHERE deleted_at IS NULL;
+CREATE INDEX ix_providers_status ON providers(status) WHERE deleted_at IS NULL;
+```
+
+---
+
+#### 2.2 products（产品）
+
+> 对应信息架构：**Product** - 供应商提供的计费产品，包含一组模型和访问端点
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `provider_id` | BIGINT | NOT NULL, FK | - | Provider ID |
+| `name` | VARCHAR(128) | NOT NULL | - | 产品名称 |
+| `product_type` | VARCHAR(32) | NOT NULL | - | 产品类型：PAY_AS_YOU_GO/SUBSCRIPTION_CODING/SUBSCRIPTION_TOKEN |
+| `models` | JSONB | NOT NULL | '[]' | 模型列表，如 ["doubao-seed-code", "doubao-seed-1.6"] |
+| `endpoints` | JSONB | NOT NULL | '{}' | 多协议端点，如 `{"native": "...", "openai": "...", "anthropic": "..."}` |
+| `quota_limit` | BIGINT | NULL | - | 订阅产品的额度限制（Token 数） |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_products_provider ON products(provider_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_products_type ON products(product_type) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_products_provider_name ON products(provider_id, name) WHERE deleted_at IS NULL;
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE products
+  ADD CONSTRAINT fk_products_provider FOREIGN KEY (provider_id) REFERENCES providers(id);
+```
+
+**endpoints JSONB 结构示例**：
+
+```json
+{
+  "native": "https://ark.cn-beijing.volces.com/api/coding/v3",
+  "openai": "https://ark.cn-beijing.volces.com/api/v3",
+  "anthropic": "https://ark.cn-beijing.volces.com/api/anthropic"
+}
+```
+
+**models JSONB 结构示例**：
+
+```json
+["doubao-seed-code", "doubao-seed-1.6", "doubao-pro-32k"]
+```
+
+---
+
+#### 2.3 models（AI 模型）
+
+> 对应信息架构：**Model** - 具体的大模型
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `provider_id` | BIGINT | NOT NULL, FK | - | Provider ID |
+| `provider_model_id` | VARCHAR(128) | NOT NULL | - | Provider 侧的模型 ID |
+| `display_name` | VARCHAR(256) | NOT NULL | - | 显示名称 |
+| `description` | TEXT | NULL | - | 模型描述 |
+| `context_window` | INT | NOT NULL | 4096 | 上下文窗口大小 |
+| `input_price` | DECIMAL(18,6) | NOT NULL | 0 | 输入价格（美元/1K tokens） |
+| `output_price` | DECIMAL(18,6) | NOT NULL | 0 | 输出价格（美元/1K tokens） |
+| `capabilities` | JSONB | NOT NULL | '{}' | 能力标签（vision, function_calling, streaming） |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DEPRECATED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_models_provider ON models(provider_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_models_status ON models(status) WHERE deleted_at IS NULL;
+-- JSONB 索引（查询支持 vision 的模型）
+CREATE INDEX ix_models_capabilities ON models USING GIN (capabilities);
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE models
+  ADD CONSTRAINT fk_models_provider FOREIGN KEY (provider_id) REFERENCES providers(id);
+```
+
+**capabilities 字段示例**：
+
+```json
+{
+  "vision": true,
+  "function_calling": true,
+  "streaming": true,
+  "thinking": false,
+  "max_output_tokens": 4096
+}
+```
+
+---
+
+#### 2.4 provider_api_keys（Provider 凭证）
+
+> 对应信息架构：**ProviderApiKey** - 网关调用 Provider 的凭据
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `provider_id` | BIGINT | NOT NULL, FK | - | Provider ID |
+| `key_name` | VARCHAR(128) | NULL | - | Key 名称（便于识别） |
+| `api_key` | VARCHAR(512) | NOT NULL | - | API Key（已哈希） |
+| `encrypted_api_key` | VARCHAR(512) | NULL | - | 加密后的 API Key |
+| `is_default` | BOOLEAN | NOT NULL | false | 是否为默认 Key |
+| `priority` | INT | NOT NULL | 100 | 优先级（数值越大优先级越高） |
+| `weight` | INT | NOT NULL | 100 | 权重 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED/EXPIRED/RATE_LIMITED/OVERQUOTA/ERROR/DELETED |
+| `disabled_reason` | VARCHAR(32) | NULL | - | 禁用原因 |
+| `last_used_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 最后使用时间 |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 过期时间（null 表示永不过期） |
+| `consecutive_failures` | INT | NOT NULL | 0 | 连续失败次数 |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_provider_api_keys_provider ON provider_api_keys(provider_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_provider_api_keys_status ON provider_api_keys(status) WHERE deleted_at IS NULL;
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE provider_api_keys
+  ADD CONSTRAINT fk_provider_api_keys_provider FOREIGN KEY (provider_id) REFERENCES providers(id);
+```
+
+**加密存储说明**：
+- 使用 AES-256-GCM 加密
+- 密钥存储在环境变量或 KMS
+- 加密格式：`{nonce}:{ciphertext}:{tag}`（Base64 编码）
+
+---
+
+### 3. security 域（访问控制）
+
+#### 3.1 users（系统用户）
+
+> 对应信息架构：**User** - 网关使用者，通过 `role` 字段区分管理员（ADMIN）和普通用户（USER）
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `username` | VARCHAR(64) | NOT NULL, UNIQUE | - | 用户名 |
+| `email` | VARCHAR(128) | NOT NULL, UNIQUE | - | 邮箱 |
+| `password_hash` | VARCHAR(256) | NOT NULL | - | 密码哈希（BCrypt） |
+| `role` | VARCHAR(32) | NOT NULL | 'USER' | 角色：ADMIN/USER |
+| `phone` | VARCHAR(32) | NULL | - | 手机号 |
+| `avatar_url` | VARCHAR(512) | NULL | - | 头像 URL |
+| `email_verified` | BOOLEAN | NOT NULL | false | 邮箱是否验证 |
+| `phone_verified` | BOOLEAN | NOT NULL | false | 手机是否验证 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED/LOCKED |
+| `login_failure_count` | INT | NOT NULL | 0 | 登录失败次数 |
+| `locked_until` | TIMESTAMP WITH TIME ZONE | NULL | - | 锁定到期时间 |
+| `last_login_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 最后登录时间 |
+| `last_login_ip` | VARCHAR(64) | NULL | - | 最后登录 IP |
+| `pii_salt` | VARCHAR(64) | NULL | - | PII 哈希盐值（GDPR 合规） |
+| `created_by` | BIGINT | NULL | - | 创建人 ID（管理员创建） |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_users_username ON users(username) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX uq_users_email ON users(email) WHERE deleted_at IS NULL;
+CREATE INDEX ix_users_status ON users(status) WHERE deleted_at IS NULL;
+CREATE INDEX ix_users_role ON users(role) WHERE deleted_at IS NULL;
+```
+
+**角色权限说明**：
+
+| 角色 | 权限范围 |
+|------|---------|
+| `ADMIN` | 全部管理权限：Provider/Model 管理、用户管理、系统配置、日志查看 |
+| `USER` | 个人权限：管理自己的 API Key、调用 API、查看自己的用量和日志 |
+
+**简化设计说明**：
+- 企业内部网关场景，两种角色已满足权限控制需求
+- 无需独立的 `roles`、`permissions`、`user_roles` 表
+- 减少数据库复杂度和 JOIN 查询开销
+
+---
+
+#### 3.2 teams（团队）
+
+> 对应信息架构：**Team** - 用户组织单元，决定可访问的产品类型
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `name` | VARCHAR(128) | NOT NULL | - | 团队名称 |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_teams_name ON teams(name) WHERE deleted_at IS NULL;
+CREATE INDEX ix_teams_status ON teams(status) WHERE deleted_at IS NULL;
+```
+
+---
+
+#### 3.3 user_teams（用户-团队关联）
+
+> 对应信息架构：**UserTeam** - 用户与团队的多对多关联
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID |
+| `team_id` | BIGINT | NOT NULL, FK | - | 团队 ID |
+| `team_role` | VARCHAR(32) | NOT NULL | 'MEMBER' | 团队角色：OWNER/ADMIN/MEMBER |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_user_teams_unique ON user_teams(user_id, team_id);
+CREATE INDEX ix_user_teams_team ON user_teams(team_id);
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE user_teams
+  ADD CONSTRAINT fk_user_teams_user FOREIGN KEY (user_id) REFERENCES users(id),
+  ADD CONSTRAINT fk_user_teams_team FOREIGN KEY (team_id) REFERENCES teams(id);
+```
+
+---
+
+#### 3.4 gateway_api_keys（网关凭证）
+
+> 对应信息架构：**GatewayApiKey** - 用户调用网关的凭证
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID |
+| `team_id` | BIGINT | NOT NULL, FK | - | 团队 ID |
+| `product_id` | BIGINT | NOT NULL, FK | - | 产品 ID |
+| `name` | VARCHAR(128) | NULL | - | Key 名称 |
+| `key_prefix` | VARCHAR(16) | NOT NULL | - | Key 前缀（如 `sk-abc`） |
+| `key_hash` | VARCHAR(128) | NOT NULL | - | Key 哈希（SHA-256） |
+| `key_hint` | VARCHAR(32) | NOT NULL | - | Key 提示（如 `sk-****abcd`） |
+| `ip_whitelist` | JSONB | NULL | - | IP 白名单（CIDR 数组） |
+| `model_whitelist` | JSONB | NULL | - | 模型白名单（数组） |
+| `max_tokens` | BIGINT | NULL | - | 最大 Token 额度 |
+| `used_tokens` | BIGINT | NOT NULL | 0 | 已用 Token |
+| `rpm_limit` | INT | NULL | - | RPM 限制 |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 过期时间（NULL 表示永不过期） |
+| `last_used_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 最后使用时间 |
+| `last_used_ip` | VARCHAR(64) | NULL | - | 最后使用 IP |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED/EXPIRED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID（等于 user_id） |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_gateway_api_keys_prefix ON gateway_api_keys(key_prefix) WHERE deleted_at IS NULL;
+CREATE INDEX ix_gateway_api_keys_user ON gateway_api_keys(user_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_gateway_api_keys_team ON gateway_api_keys(team_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_gateway_api_keys_product ON gateway_api_keys(product_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_gateway_api_keys_status ON gateway_api_keys(status, expires_at) WHERE deleted_at IS NULL;
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE gateway_api_keys
+  ADD CONSTRAINT fk_gateway_api_keys_user FOREIGN KEY (user_id) REFERENCES users(id),
+  ADD CONSTRAINT fk_gateway_api_keys_team FOREIGN KEY (team_id) REFERENCES teams(id),
+  ADD CONSTRAINT fk_gateway_api_keys_product FOREIGN KEY (product_id) REFERENCES products(id);
+```
+
+**ip_whitelist 示例**：
+
+```json
+["192.168.1.0/24", "10.0.0.1"]
+```
+
+**model_whitelist 示例**：
+
+```json
+["gpt-4o", "claude-sonnet-4", "gpt-4o-mini"]
+```
+
+---
+
+#### 3.5 user_oauths（用户 OAuth 身份）
+
+> 对应信息架构：**UserOAuth** - 用户的第三方 OAuth 身份标识
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID |
+| `provider` | VARCHAR(32) | NOT NULL | - | OAuth 提供商：GITHUB/GITEE/FEISHU/DINGTALK |
+| `oauth_user_id` | VARCHAR(128) | NOT NULL | - | OAuth 用户 ID |
+| `oauth_username` | VARCHAR(128) | NULL | - | OAuth 用户名 |
+| `encrypted_access_token` | TEXT | NULL | - | 加密后的 Access Token |
+| `encrypted_refresh_token` | TEXT | NULL | - | 加密后的 Refresh Token |
+| `token_expires_at` | TIMESTAMP WITH TIME ZONE | NULL | - | Token 过期时间 |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_user_oauths_provider_user ON user_oauths(provider, oauth_user_id);
+CREATE INDEX ix_user_oauths_user ON user_oauths(user_id);
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE user_oauths
+  ADD CONSTRAINT fk_user_oauths_user FOREIGN KEY (user_id) REFERENCES users(id);
+```
+
+---
+
+#### 3.6 ip_blocklists（IP 黑名单）
+
+> 对应信息架构：**IpBlocklist** - 被系统屏蔽的 IP 地址列表
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `ip_address` | VARCHAR(64) | NOT NULL | - | IP 地址或 CIDR |
+| `reason` | VARCHAR(512) | NULL | - | 禁用原因 |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 过期时间（NULL 表示永久） |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_ip_blocklists_ip ON ip_blocklists(ip_address);
+CREATE INDEX ix_ip_blocklists_expires ON ip_blocklists(expires_at);
+```
+
+---
+
+#### 3.7 sensitive_data_rules（敏感数据规则）
+
+> 对应信息架构：**SensitiveDataRule** - PII 检测与脱敏规则定义
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `name` | VARCHAR(128) | NOT NULL | - | 规则名称 |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `pii_type` | VARCHAR(64) | NOT NULL | - | PII 类型：PHONE/ID_CARD/EMAIL/BANK_CARD/... |
+| `detection_pattern` | VARCHAR(512) | NOT NULL | - | 检测正则表达式 |
+| `mask_strategy` | VARCHAR(32) | NOT NULL | - | 掩码策略：PARTIAL/FULL/HASH |
+| `mask_char` | CHAR(1) | NOT NULL | '*' | 掩码字符 |
+| `is_active` | BOOLEAN | NOT NULL | true | 是否启用 |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_sensitive_data_rules_type ON sensitive_data_rules(pii_type, is_active);
+```
+
+**预设规则**：
+
+| pii_type | 检测模式 | 掩码策略 |
+|----------|---------|---------|
+| `PHONE_CN` | `1[3-9]\d{9}` | PARTIAL（`138****1234`） |
+| `ID_CARD_CN` | `\d{17}[\dXx]` | PARTIAL（`110***********1234`） |
+| `EMAIL` | `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` | PARTIAL（`a***@example.com`） |
+| `BANK_CARD` | `\d{16,19}` | PARTIAL（`6222****1234`） |
+
+---
+
+#### 3.8 licenses（许可证）
+
+> 对应信息架构：**License** - 企业版授权管理
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `license_id` | VARCHAR(128) | NOT NULL, UNIQUE | - | License 文件中的 ID |
+| `issuer` | VARCHAR(128) | NOT NULL | - | 授权方（签发者） |
+| `licensee` | VARCHAR(256) | NOT NULL | - | 被授权方（企业名称） |
+| `issued_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | - | 签发时间 |
+| `expires_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | - | 过期时间 |
+| `features` | JSONB | NOT NULL | '[]' | 功能列表：["ENTERPRISE", "SM_CRYPTO"] |
+| `max_users` | INT | NULL | - | 最大用户数限制 |
+| `max_nodes` | INT | NULL | - | 最大节点数限制 |
+| `machine_fingerprint` | VARCHAR(256) | NULL | - | 绑定的机器指纹 |
+| `signature` | TEXT | NOT NULL | - | RSA 签名 |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/EXPIRED/REVOKED |
+| `activated_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 激活时间 |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_licenses_license_id ON licenses(license_id);
+CREATE INDEX ix_licenses_status ON licenses(status, expires_at);
+```
+
+---
+
+### 4. quota 域（用量管控）
+
+#### 4.1 token_limits（Token 限额）
+
+> 对应信息架构：**TokenLimit** - 用户/Key/用户×渠道的 Token 用量上限
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `limit_type` | VARCHAR(32) | NOT NULL | - | 限额类型：USER/USER_PROVIDER/USER_MODEL/KEY |
+| `user_id` | BIGINT | NULL, FK | - | 用户 ID |
+| `gateway_api_key_id` | BIGINT | NULL, FK | - | API Key ID |
+| `provider_id` | BIGINT | NULL, FK | - | Provider ID（USER_PROVIDER 类型） |
+| `model_id` | BIGINT | NULL, FK | - | Model ID（USER_MODEL 类型） |
+| `max_tokens` | BIGINT | NOT NULL | - | 最大 Token 额度 |
+| `used_tokens` | BIGINT | NOT NULL | 0 | 已用 Token |
+| `reserved_tokens` | BIGINT | NOT NULL | 0 | 预扣 Token（请求前预扣） |
+| `period_type` | VARCHAR(32) | NOT NULL | 'MONTHLY' | 周期类型：DAILY/WEEKLY/MONTHLY/TOTAL |
+| `period_day_of_week` | INT | NULL | - | 周重置日（1-7，周日=1） |
+| `period_day_of_month` | INT | NULL | - | 月重置日（1-28） |
+| `period_start_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 当前周期开始时间 |
+| `period_end_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 当前周期结束时间 |
+| `exceeded_action` | VARCHAR(32) | NOT NULL | 'REJECT' | 超限策略：REJECT/DOWNGRADE |
+| `switch_model_id` | BIGINT | NULL, FK | - | 降级目标模型 ID |
+| `alert_thresholds` | JSONB | NULL | - | 告警阈值（如 [0.8, 1.0]） |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_token_limits_user ON token_limits(user_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_token_limits_key ON token_limits(gateway_api_key_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_token_limits_type ON token_limits(limit_type, status) WHERE deleted_at IS NULL;
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE token_limits
+  ADD CONSTRAINT fk_token_limits_user FOREIGN KEY (user_id) REFERENCES users(id),
+  ADD CONSTRAINT fk_token_limits_key FOREIGN KEY (gateway_api_key_id) REFERENCES gateway_api_keys(id),
+  ADD CONSTRAINT fk_token_limits_provider FOREIGN KEY (provider_id) REFERENCES providers(id),
+  ADD CONSTRAINT fk_token_limits_model FOREIGN KEY (model_id) REFERENCES models(id),
+  ADD CONSTRAINT fk_token_limits_switch_model FOREIGN KEY (switch_model_id) REFERENCES models(id);
+```
+
+---
+
+#### 4.2 rate_limit_configs（限流配置）
+
+> 对应信息架构：**RateLimitConfig** - RPM/TPM 请求次数限制
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `scope_type` | VARCHAR(32) | NOT NULL | - | 作用域：USER/KEY/PROVIDER/KEY_PROVIDER |
+| `user_id` | BIGINT | NULL, FK | - | 用户 ID |
+| `gateway_api_key_id` | BIGINT | NULL, FK | - | API Key ID |
+| `provider_id` | BIGINT | NULL, FK | - | Provider ID |
+| `rpm_limit` | INT | NULL | - | RPM 限制（请求/分钟） |
+| `tpm_limit` | INT | NULL | - | TPM 限制（Token/分钟） |
+| `burst_size` | INT | NULL | - | 突发容量（令牌桶） |
+| `status` | VARCHAR(32) | NOT NULL | 'ACTIVE' | 状态：ACTIVE/DISABLED |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_rate_limit_configs_user ON rate_limit_configs(user_id) WHERE deleted_at IS NULL;
+CREATE INDEX ix_rate_limit_configs_key ON rate_limit_configs(gateway_api_key_id) WHERE deleted_at IS NULL;
+```
+
+---
+
+#### 4.3 usage_records（用量记录）
+
+> 对应信息架构：**UsageRecord** - API 调用消耗的 Token 统计记录（计量视角）
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID |
+| `gateway_api_key_id` | BIGINT | NOT NULL, FK | - | API Key ID |
+| `team_id` | BIGINT | NOT NULL, FK | - | 团队 ID |
+| `product_id` | BIGINT | NOT NULL, FK | - | 产品 ID |
+| `provider_id` | BIGINT | NOT NULL, FK | - | Provider ID |
+| `model_id` | BIGINT | NOT NULL, FK | - | 模型 ID |
+| `trace_id` | VARCHAR(64) | NOT NULL | - | Trace ID（关联 call_logs） |
+| `input_tokens` | INT | NOT NULL | 0 | 输入 Token 数 |
+| `output_tokens` | INT | NOT NULL | 0 | 输出 Token 数 |
+| `total_tokens` | INT | NOT NULL | 0 | 总 Token 数 |
+| `cached_tokens` | INT | NOT NULL | 0 | 缓存命中 Token 数 |
+| `request_time_ms` | INT | NOT NULL | - | 请求耗时（毫秒） |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_usage_records_user ON usage_records(user_id, created_at);
+CREATE INDEX ix_usage_records_key ON usage_records(gateway_api_key_id, created_at);
+CREATE INDEX ix_usage_records_team ON usage_records(team_id, created_at);
+CREATE INDEX ix_usage_records_product ON usage_records(product_id, created_at);
+CREATE INDEX ix_usage_records_provider ON usage_records(provider_id, created_at);
+CREATE INDEX ix_usage_records_model ON usage_records(model_id, created_at);
+CREATE INDEX ix_usage_records_trace ON usage_records(trace_id);
+-- 分区索引（按月分区）
+CREATE INDEX ix_usage_records_created ON usage_records(created_at);
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE usage_records
+  ADD CONSTRAINT fk_usage_records_user FOREIGN KEY (user_id) REFERENCES users(id),
+  ADD CONSTRAINT fk_usage_records_key FOREIGN KEY (gateway_api_key_id) REFERENCES gateway_api_keys(id),
+  ADD CONSTRAINT fk_usage_records_team FOREIGN KEY (team_id) REFERENCES teams(id),
+  ADD CONSTRAINT fk_usage_records_product FOREIGN KEY (product_id) REFERENCES products(id),
+  ADD CONSTRAINT fk_usage_records_provider FOREIGN KEY (provider_id) REFERENCES providers(id),
+  ADD CONSTRAINT fk_usage_records_model FOREIGN KEY (model_id) REFERENCES models(id);
+```
+
+**分区策略**：
+
+```sql
+-- 按月分区
+CREATE TABLE usage_records (
+  ...
+) PARTITION BY RANGE (created_at);
+
+CREATE TABLE usage_records_2026_05 PARTITION OF usage_records
+  FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+
+CREATE TABLE usage_records_2026_06 PARTITION OF usage_records
+  FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+```
+
+---
+
+### 5. audit 域（审计追溯）
+
+#### 5.1 audit_logs（审计日志）
+
+> 对应信息架构：**AuditLog** - 管理操作记录
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `trace_id` | VARCHAR(64) | NULL | - | Trace ID（关联调用链，可选） |
+| `user_id` | BIGINT | NOT NULL, FK | - | 操作人 ID |
+| `username` | VARCHAR(64) | NOT NULL | - | 操作人用户名（冗余） |
+| `operation_type` | VARCHAR(64) | NOT NULL | - | 操作类型：CREATE/UPDATE/DELETE/LOGIN/... |
+| `resource_type` | VARCHAR(64) | NOT NULL | - | 资源类型：PROVIDER/MODEL/USER/... |
+| `resource_id` | BIGINT | NULL | - | 资源 ID |
+| `operation_detail` | TEXT | NULL | - | 操作详情（JSON） |
+| `before_data` | TEXT | NULL | - | 变更前数据（JSON） |
+| `after_data` | TEXT | NULL | - | 变更后数据（JSON） |
+| `ip_address` | VARCHAR(64) | NULL | - | 客户端 IP |
+| `user_agent` | VARCHAR(512) | NULL | - | User-Agent |
+| `status` | VARCHAR(32) | NOT NULL | 'SUCCESS' | 操作结果：SUCCESS/FAILURE |
+| `error_message` | TEXT | NULL | - | 错误信息 |
+| `previous_hash` | VARCHAR(128) | NOT NULL | - | 前一条记录哈希（链式校验） |
+| `current_hash` | VARCHAR(128) | NOT NULL | - | 当前记录哈希 |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_audit_logs_user ON audit_logs(user_id, created_at);
+CREATE INDEX ix_audit_logs_operation ON audit_logs(operation_type, resource_type);
+CREATE INDEX ix_audit_logs_resource ON audit_logs(resource_type, resource_id);
+CREATE INDEX ix_audit_logs_trace ON audit_logs(trace_id);
+CREATE INDEX ix_audit_logs_created ON audit_logs(created_at);
+```
+
+**链式哈希说明**：
+- `current_hash` = SHA256(`id` + `previous_hash` + `user_id` + `operation_type` + `created_at` + `secret_salt`)
+- 保证审计日志不可篡改
+- 支持完整性校验
+
+---
+
+#### 5.2 call_logs（调用日志）
+
+> 对应信息架构：**CallLog** - API 调用元数据记录（审计视角）
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `trace_id` | VARCHAR(64) | NOT NULL, UNIQUE | - | Trace ID（全链路追踪） |
+| `request_id` | VARCHAR(64) | NOT NULL | - | Request ID |
+| `user_id` | BIGINT | NOT NULL, FK | - | 用户 ID |
+| `gateway_api_key_id` | BIGINT | NOT NULL, FK | - | API Key ID |
+| `provider_id` | BIGINT | NOT NULL, FK | - | Provider ID |
+| `model_id` | BIGINT | NOT NULL, FK | - | 模型 ID |
+| `request_endpoint` | VARCHAR(256) | NOT NULL | - | 请求端点 |
+| `request_method` | VARCHAR(16) | NOT NULL | - | 请求方法 |
+| `request_model` | VARCHAR(128) | NULL | - | 请求中的模型名 |
+| `is_stream` | BOOLEAN | NOT NULL | false | 是否流式 |
+| `input_tokens` | INT | NOT NULL | 0 | 输入 Token 数 |
+| `output_tokens` | INT | NOT NULL | 0 | 输出 Token 数 |
+| `total_tokens` | INT | NOT NULL | 0 | 总 Token 数 |
+| `status_code` | INT | NOT NULL | - | HTTP 状态码 |
+| `error_type` | VARCHAR(64) | NULL | - | 错误类型 |
+| `error_code` | VARCHAR(64) | NULL | - | 错误码 |
+| `error_message` | TEXT | NULL | - | 错误信息 |
+| `latency_ms` | INT | NOT NULL | - | 延迟（毫秒） |
+| `first_token_ms` | INT | NULL | - | 首 Token 延迟（毫秒） |
+| `client_ip` | VARCHAR(64) | NULL | - | 客户端 IP |
+| `user_agent` | VARCHAR(512) | NULL | - | User-Agent |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引设计**：
+
+```sql
+CREATE UNIQUE INDEX uq_call_logs_trace ON call_logs(trace_id);
+CREATE INDEX ix_call_logs_user ON call_logs(user_id, created_at);
+CREATE INDEX ix_call_logs_key ON call_logs(gateway_api_key_id, created_at);
+CREATE INDEX ix_call_logs_provider ON call_logs(provider_id, created_at);
+CREATE INDEX ix_call_logs_model ON call_logs(model_id, created_at);
+CREATE INDEX ix_call_logs_status ON call_logs(status_code, created_at);
+CREATE INDEX ix_call_logs_created ON call_logs(created_at);
+```
+
+**分区策略**：
+
+```sql
+-- 按月分区
+CREATE TABLE call_logs (
+  ...
+) PARTITION BY RANGE (created_at);
+
+CREATE TABLE call_logs_2026_05 PARTITION OF call_logs
+  FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+```
+
+**与 usage_records 的关系**：
+- `call_logs.trace_id` = `usage_records.trace_id`
+- `call_logs` 侧重审计视角（元数据、全链路追溯）
+- `usage_records` 侧重计量视角（Token 消耗统计）
+
+---
+
+### 6. alert 域（告警通知）
+
+#### 6.1 alert_rules（告警规则）
+
+> 对应信息架构：**AlertRule** - 告警触发条件定义
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `name` | VARCHAR(128) | NOT NULL | - | 规则名称 |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `alert_type` | VARCHAR(32) | NOT NULL | - | 告警类型：SECURITY/ROUTING/SUPPLY/SYSTEM/QUOTA |
+| `severity` | VARCHAR(32) | NOT NULL | 'WARN' | 严重级别：INFO/WARN/ERROR/CRITICAL |
+| `metric_name` | VARCHAR(128) | NOT NULL | - | 指标名称 |
+| `condition_type` | VARCHAR(32) | NOT NULL | - | 条件类型：THRESHOLD/EXPRESSION |
+| `threshold_value` | DECIMAL(18,6) | NULL | - | 阈值 |
+| `comparison_operator` | VARCHAR(16) | NULL | - | 比较操作符：GT/GTE/LT/LTE/EQ |
+| `expression` | TEXT | NULL | - | 自定义表达式 |
+| `evaluation_window_seconds` | INT | NOT NULL | 300 | 评估窗口（秒） |
+| `silence_seconds` | INT | NOT NULL | 300 | 静默期（秒） |
+| `template_id` | BIGINT | NOT NULL, FK | - | 告警模板 ID |
+| `notification_channels` | JSONB | NOT NULL | '[]' | 通知渠道：["EMAIL", "WEBHOOK"] |
+| `webhook_url` | VARCHAR(512) | NULL | - | Webhook URL |
+| `is_active` | BOOLEAN | NOT NULL | true | 是否启用 |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_alert_rules_type ON alert_rules(alert_type, is_active) WHERE deleted_at IS NULL;
+CREATE INDEX ix_alert_rules_severity ON alert_rules(severity, is_active) WHERE deleted_at IS NULL;
+```
+
+**外键约束**：
+
+```sql
+ALTER TABLE alert_rules
+  ADD CONSTRAINT fk_alert_rules_template FOREIGN KEY (template_id) REFERENCES alert_templates(id);
+```
+
+---
+
+#### 6.2 alert_templates（告警模板）
+
+> 对应信息架构：**AlertTemplate** - 通知格式模板
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `name` | VARCHAR(128) | NOT NULL | - | 模板名称 |
+| `description` | VARCHAR(512) | NULL | - | 描述 |
+| `channel` | VARCHAR(32) | NOT NULL | - | 渠道：EMAIL/WEBHOOK/SMS |
+| `subject_template` | VARCHAR(256) | NULL | - | 主题模板 |
+| `body_template` | TEXT | NOT NULL | - | 内容模板 |
+| `variables` | JSONB | NOT NULL | '[]' | 变量列表 |
+| `language` | VARCHAR(16) | NOT NULL | 'zh_CN' | 语言：zh_CN/en_US |
+| `is_active` | BOOLEAN | NOT NULL | true | 是否启用 |
+| `created_by` | BIGINT | NOT NULL | - | 创建人 ID |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+| `updated_by` | BIGINT | NOT NULL | - | 更新人 ID |
+| `updated_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 更新时间 |
+| `deleted_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 软删除时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_alert_templates_channel ON alert_templates(channel, is_active) WHERE deleted_at IS NULL;
+```
+
+**模板变量示例**：
+
+```json
+[
+  {"name": "alert_name", "description": "告警名称"},
+  {"name": "threshold", "description": "阈值"},
+  {"name": "current_value", "description": "当前值"},
+  {"name": "triggered_at", "description": "触发时间"}
+]
+```
+
+---
+
+#### 6.3 alert_notifications（告警通知）
+
+> 对应信息架构：**AlertNotification** - 告警发送记录
+
+| 字段名 | 类型 | 约束 | 默认值 | 说明 |
+|--------|------|------|--------|------|
+| `id` | BIGINT | PK, AUTO_INCREMENT | - | 物理主键 |
+| `rule_id` | BIGINT | NOT NULL, FK | - | 规则 ID |
+| `alert_type` | VARCHAR(32) | NOT NULL | - | 告警类型（冗余） |
+| `severity` | VARCHAR(32) | NOT NULL | - | 严重级别（冗余） |
+| `title` | VARCHAR(256) | NOT NULL | - | 告警标题 |
+| `content` | TEXT | NOT NULL | - | 告警内容 |
+| `channel` | VARCHAR(32) | NOT NULL | - | 通知渠道 |
+| `recipient` | VARCHAR(256) | NOT NULL | - | 接收者（邮箱/Webhook URL） |
+| `status` | VARCHAR(32) | NOT NULL | 'PENDING' | 状态：PENDING/SENT/FAILED |
+| `error_message` | TEXT | NULL | - | 错误信息 |
+| `sent_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 发送时间 |
+| `acknowledged` | BOOLEAN | NOT NULL | false | 是否已确认 |
+| `acknowledged_by` | BIGINT | NULL | - | 确认人 ID |
+| `acknowledged_at` | TIMESTAMP WITH TIME ZONE | NULL | - | 确认时间 |
+| `created_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | CURRENT_TIMESTAMP | 创建时间 |
+
+**索引设计**：
+
+```sql
+CREATE INDEX ix_alert_notifications_rule ON alert_notifications(rule_id, created_at);
+CREATE INDEX ix_alert_notifications_status ON alert_notifications(status, created_at);
+CREATE INDEX ix_alert_notifications_created ON alert_notifications(created_at);
+```
+
+---
+
+## 索引设计
+
+### 索引策略
+
+| 策略 | 说明 |
+|------|------|
+| **主键索引** | 所有表使用自增 BIGINT 主键 |
+| **外键索引** | 所有外键字段自动创建索引 |
+| **复合索引** | 按查询模式设计，最左前缀原则 |
+| **部分索引** | 软删除表使用 `WHERE deleted_at IS NULL` |
+| **JSONB 索引** | 使用 GIN 索引支持 JSON 查询 |
+| **向量索引** | 使用 pgvector 的 IVFFlat 索引 |
+
+### 核心索引清单
+
+| 表 | 索引名 | 类型 | 字段 | 说明 |
+|----|--------|------|------|------|
+| `users` | `uq_users_email` | UNIQUE | `email` | 邮箱唯一 |
+| `products` | `uq_products_provider_name` | UNIQUE | `provider_id, name` | 同 Provider 产品唯一 |
+| `teams` | `uq_teams_name` | UNIQUE | `name` | 团队名称唯一 |
+| `gateway_api_keys` | `uq_gateway_api_keys_prefix` | UNIQUE | `key_prefix` | Key 前缀唯一 |
+| `user_teams` | `uq_user_teams_unique` | UNIQUE | `user_id, team_id` | 用户-团队关联唯一 |
+| `call_logs` | `uq_call_logs_trace` | UNIQUE | `trace_id` | Trace ID 唯一 |
+| `usage_records` | `ix_usage_records_user_created` | BTREE | `user_id, created_at` | 用户用量查询 |
+| `audit_logs` | `ix_audit_logs_user_created` | BTREE | `user_id, created_at` | 用户审计查询 |
+| `semantic_caches` | `ix_semantic_caches_embedding` | IVFFlat | `request_embedding` | 向量相似度查询 |
+| `models` | `ix_models_capabilities` | GIN | `capabilities` | JSONB 能力查询 |
+
+---
+
+## 数据字典
+
+### 枚举值定义
+
+#### 用户状态（UserStatus）
+
+| 值 | 说明 |
+|----|------|
+| `ACTIVE` | 正常 |
+| `DISABLED` | 已禁用 |
+| `LOCKED` | 已锁定 |
+| `DELETED` | 已删除 |
+
+#### 角色类型（RoleType）
+
+| 值 | 说明 |
+|----|------|
+| `SYSTEM` | 系统预设 |
+| `CUSTOM` | 自定义 |
+
+#### Provider 类型（ProviderType）
+
+| 值 | 说明 |
+|----|------|
+| `OPENAI` | OpenAI |
+| `ANTHROPIC` | Anthropic |
+| `GEMINI` | Google Gemini |
+| `ZHIPU` | 智谱 AI |
+| `QWEN` | 通义千问 |
+| `VOLCENGINE` | 火山引擎 |
+| `WENXIN` | 文心一言 |
+| `OTHER` | 其他 |
+
+#### 产品类型（ProductType）
+
+| 值 | 说明 |
+|----|------|
+| `PAY_AS_YOU_GO` | 按量计费 |
+| `SUBSCRIPTION_CODING` | Coding 订阅 |
+| `SUBSCRIPTION_TOKEN` | Token 订阅 |
+
+#### 团队角色（TeamRole）
+
+| 值 | 说明 |
+|----|------|
+| `OWNER` | 团队所有者 |
+| `ADMIN` | 团队管理员 |
+| `MEMBER` | 团队成员 |
+
+#### 限额周期（PeriodType）
+
+| 值 | 说明 |
+|----|------|
+| `DAILY` | 每日 |
+| `WEEKLY` | 每周 |
+| `MONTHLY` | 每月 |
+| `TOTAL` | 总量 |
+
+#### 超限策略（ExceededAction）
+
+| 值 | 说明 |
+|----|------|
+| `REJECT` | 拒绝请求（返回 402） |
+| `DOWNGRADE` | 降级到指定模型 |
+
+#### 健康状态（HealthStatus）
+
+| 值 | 说明 |
+|----|------|
+| `HEALTHY` | 健康 |
+| `DEGRADED` | 降级 |
+| `UNHEALTHY` | 不健康 |
+| `UNKNOWN` | 未知 |
+
+#### 告警类型（AlertType）
+
+| 值 | 说明 |
+|----|------|
+| `SECURITY` | 安全告警 |
+| `ROUTING` | 路由告警 |
+| `SUPPLY` | 供给告警 |
+| `SYSTEM` | 系统告警 |
+| `QUOTA` | 配额告警 |
+
+#### 告警严重级别（AlertSeverity）
+
+| 值 | 说明 |
+|----|------|
+| `INFO` | 信息 |
+| `WARN` | 警告 |
+| `ERROR` | 错误 |
+| `CRITICAL` | 严重 |
+
+#### Provider API Key 状态（ProviderApiKeyStatus）
+
+| 值 | 说明 |
+|----|------|
+| `ACTIVE` | 正常可用 |
+| `DISABLED` | 已禁用（手动禁用） |
+| `EXPIRED` | 已过期 |
+| `RATE_LIMITED` | 限流中（触发上游限流） |
+| `OVERQUOTA` | 超配额（上游配额耗尽） |
+| `ERROR` | 异常（调用错误率过高） |
+| `DELETED` | 已删除（软删除） |
+
+#### Provider API Key 禁用原因（ProviderApiKeyDisabledReason）
+
+| 值 | 说明 |
+|----|------|
+| `INVALID_KEY` | 无效 Key |
+| `RATE_LIMITED` | 触发限流 |
+| `OVERQUOTA` | 超配额 |
+| `ERROR` | 调用异常 |
+| `MANUAL` | 手动禁用 |
+
+#### Key 选择策略（KeySelectionStrategy）
+
+| 值 | 说明 |
+|----|------|
+| `PRIORITY_FIRST` | 优先级优先（高优先级 Key 优先使用） |
+| `ROUND_ROBIN` | 轮询（均匀使用所有可用 Key） |
+| `WEIGHTED` | 加权（按权重比例随机选择） |
+
+---
+
+## 数据一致性约束
+
+### 业务约束
+
+| 约束 | 表 | 说明 |
+|------|-----|------|
+| `uq_route_group_provider_api_keys_unique` | `route_group_provider_api_keys` | 同一路由分组下 Provider API Key 唯一 |
+| `uq_user_roles_unique` | `user_roles` | 用户-角色关联唯一 |
+| `uq_user_oauths_provider_user` | `user_oauths` | OAuth 提供商-用户唯一 |
+| `uq_products_provider_name` | `products` | 同一 Provider 下产品名称唯一 |
+| `uq_user_teams_unique` | `user_teams` | 用户-团队关联唯一 |
+| `fk_products_provider` | `products` | products 必须归属于 provider |
+| `fk_gateway_api_keys_product` | `gateway_api_keys` | gateway_api_keys 必须绑定 product |
+
+### 引用完整性
+
+```sql
+-- 级联删除示例
+ALTER TABLE models
+  ADD CONSTRAINT fk_models_provider
+  FOREIGN KEY (provider_id) REFERENCES providers(id)
+  ON DELETE RESTRICT;  -- Provider 有模型时禁止删除
+
+-- 级联置空示例
+ALTER TABLE token_limits
+  ADD CONSTRAINT fk_token_limits_switch_model
+  FOREIGN KEY (switch_model_id) REFERENCES models(id)
+  ON DELETE SET NULL;  -- 模型删除时置空
+```
+
+### 数据校验规则
+
+| 规则 | 字段 | 校验 |
+|------|------|------|
+| 邮箱格式 | `users.email` | 正则校验 |
+| 手机号格式 | `users.phone` | 正则校验 |
+| IP/CIDR 格式 | `ip_blocklists.ip_address` | 正则校验 |
+| JSON 格式 | `*.jsonb` | JSON 有效性 |
+| 金额非负 | `*.input_price` | `>= 0` |
+| 百分比范围 | `token_limits.alert_thresholds` | `0.0-1.0` |
+
+---
+
+## 数据迁移策略
+
+### Flyway 迁移脚本
+
+**目录结构**：
+
+```
+src/main/resources/db/
+├── V1__init_schema.sql           # 初始化表结构
+├── V2__add_indexes.sql           # 添加索引
+├── V3__seed_system_data.sql      # 种子数据（角色、权限）
+├── V4__add_semantic_cache.sql    # 语义缓存表
+└── V5__add_license_support.sql   # 许可证表
+```
+
+### 版本管理
+
+| 迁移版本 | 内容 | 执行时机 |
+|---------|------|---------|
+| V1 | 初始化 24 张表 | 首次部署 |
+| V2 | 添加索引 | 首次部署后 |
+| V3 | 种子数据（角色、权限、预设 Provider） | 首次部署后 |
+| V4+ | 功能迭代 | 版本升级 |
+
+### 数据归档策略
+
+| 表 | 归档周期 | 保留策略 | 归档目标 |
+|----|---------|---------|---------|
+| `call_logs` | 30 天 | 7 年（合规） | S3/OSS 冷存储 |
+| `usage_records` | 30 天 | 7 年（合规） | S3/OSS 冷存储 |
+| `audit_logs` | 90 天 | 7 年（合规） | WORM 存储 |
+| `semantic_caches` | 过期自动清理 | TTL（默认 1 小时） | - |
+
+---
+
+## 附录
+
+### A. 完整建表脚本
+
+参见：`src/main/resources/db/V1__init_schema.sql`
+
+### B. 种子数据
+
+参见：`src/main/resources/db/V3__seed_system_data.sql`
+
+### C. 变更记录
+
+| 版本 | 日期 | 变更内容 |
+|------|------|---------|
+| v2.0 | 2026-05-18 | **Product/Team 三层架构**：1) model 域新增 `products` 表（Provider→Product→Model 三层结构）；2) security 域新增 `teams` 和 `user_teams` 表（基于团队的访问控制）；3) `gateway_api_keys` 表新增 `team_id`、`product_id` 字段；4) `usage_records` 表新增 `team_id`、`product_id` 字段；5) 新增数据字典枚举：ProductType、TeamRole；6) 新增数据一致性约束；7) 总表数 21→24 |
+| v1.6 | 2026-05-07 | **API Key 资源池完善**：1) 补充 provider_api_keys 表业务约束（默认 Key 保护规则）；2) 新增数据字典枚举：ProviderApiKeyStatus、ProviderApiKeyDisabledReason、KeySelectionStrategy |
+| v1.5 | 2026-05-06 | **DO 关联模式**：新增 DO 层关联模式原则（主从关系可用 JPA 关联，中间表使用 ID 引用）；补充 JPA 关联注意事项和推荐示例 |
+| v1.4 | 2026-05-02 | **领域命名调整**：access 域更名为 security（访问控制）；provider 域更名为 model（模型广场）；更新目录、数据模型总览、ER 图、表统计 |
+| v1.3 | 2026-05-02 | **明确版本功能分层**：语义缓存（`semantic_caches` 表）为企业版专属功能，标准版不支持；更新 PostgreSQL 特性表和 Redis 使用场景表 |
+| v1.2 | 2026-05-02 | **简化角色模型**：移除 `roles`、`permissions`、`user_roles` 三张表；在 `users` 表添加 `role` 字段（ADMIN/USER）；更新 ER 图、表统计、实体编号；对齐信息架构 v3.3 |
+| v1.1 | 2026-05-02 | 完善业务标识决策框架：简化决策流程、新增核心判断维度、明确日志/审计数据的业务标识策略（trace_id 即业务标识）、调整 `call_logs`/`audit_logs`/`usage_records` 表结构（移除冗余的 `*_code` 字段） |
+| v1.0 | 2026-05-02 | 初始版本，基于需求规格说明书 v6.5 和信息架构 v3.2 设计 |
+
+---
+
+**文档维护**：
+
+- 数据模型变更需同步更新本文档
+- 表结构变更需创建新的 Flyway 迁移脚本
+- 索引优化需记录在变更记录中

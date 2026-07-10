@@ -1,0 +1,21 @@
+---
+title: API 网关
+description: OpenAI 与 Anthropic 双标准 API 兼容端点
+---
+
+LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，统一接入。
+
+## 功能清单
+
+| 功能 | 标准版 | 企业版 |
+|---|---|---|
+| OpenAI 兼容端点（`/v1/chat/completions`、`/v1/completions`） | ✅ | ✅ |
+| Anthropic 兼容端点（`/v1/messages`） | ✅ | ✅ |
+| SSE 流式转发（首 token ≤100ms） | ✅ | ✅ |
+| 协议转换（OpenAI ↔ Anthropic 互转） | ✅ | ✅ |
+| 图像生成端点（`/v1/images/generations`） | ✅ | ✅ |
+| 语音合成端点（`/v1/audio/speech`） | ✅ | ✅ |
+| 语音识别端点（`/v1/audio/transcriptions`） | ✅ | ✅ |
+| 内容审核端点（`/v1/moderations`） | ✅ | ✅ |
+
+详见 [API 参考](/api/api-spec/)。
