@@ -67,6 +67,9 @@ surefire-reports/
 node_modules/
 dist/
 data/
+# 例外：site 前端导航数据目录（Starlight 主题覆盖用，非 Java data/ 测试数据）
+!site/src/data/
+!site/src/data/**
 
 .flattened-pom.xml
 /.mvn/

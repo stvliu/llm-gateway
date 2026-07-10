@@ -27,8 +27,12 @@ export default defineConfig({
         baseUrl: 'https://github.com/codingas/llm-gateway/edit/master/site/src/content/docs',
       },
       customCss: ['./src/styles/global.scss'],
-      // 主题覆盖在 Task 4 启用，此处先留空对象。
-      components: {},
+      // 主题覆盖：注入营销导航 Header、版权 Footer 与品牌 SiteTitle（Starlight 0.40 对象格式）。
+      components: {
+        Header: './src/components/starlight/Header.astro',
+        Footer: './src/components/starlight/Footer.astro',
+        SiteTitle: './src/components/starlight/SiteTitle.astro',
+      },
     }),
   ],
 });
