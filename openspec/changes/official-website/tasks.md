@@ -28,9 +28,9 @@
 
 ## 6. 首页
 
-- [ ] 6.1 创建 `src/data/i18n/home.ts` 文案（Hero / 四差异化 / 三产品卡 / 生态组件 / 功能网格，中英双语）
-- [ ] 6.2 实现首页 `index.astro` 各区块组件（Hero / ProductCard / FeatureCard / Carousel 等）
-- [ ] 6.3 验证首页区块完整呈现与双语渲染
+- [x] 6.1 创建 `src/data/i18n/home.ts` 文案（Hero / 四差异化 / 三产品卡 / 生态组件 / 功能网格，中英双语）
+- [x] 6.2 实现首页 `index.astro` 各区块组件（Hero / ProductCard / FeatureCard / Carousel 等）
+- [x] 6.3 验证首页区块完整呈现与双语渲染
 
 ## 7. 工具链与部署
 

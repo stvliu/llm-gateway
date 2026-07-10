@@ -1258,7 +1258,7 @@ git commit -m "feat(site): 版本对比页中英双语（覆盖 README 全部功
 
 **目标：** 对标 thingsboard.io 的首页区块顺序：Hero -> 信任背书 -> 四差异化 -> 能力叙事 -> 三产品卡 -> 生态组件 -> 控制台轮播（P0 占位图）-> 8 能力域功能网格 -> 底部 CTA。中英双语。
 
-- [ ] **Step 1: 创建 `site/src/data/i18n/home.ts`（首页中英文案字典）**
+- [x] **Step 1: 创建 `site/src/data/i18n/home.ts`（首页中英文案字典）**
 
 ```ts
 // 首页全部文案，中英双语，组件按 locale 取值。
@@ -1332,7 +1332,7 @@ export const home = {
 } as const;
 ```
 
-- [ ] **Step 2: 创建 `site/src/data/homeFeatures.ts`（8 能力域功能卡数据）**
+- [x] **Step 2: 创建 `site/src/data/homeFeatures.ts`（8 能力域功能卡数据）**
 
 ```ts
 // 首页 8 能力域功能网格卡片数据（含跳转文档 slug）。
@@ -1355,7 +1355,7 @@ export const homeFeatures: FeatureCardData[] = [
 ];
 ```
 
-- [ ] **Step 3: 创建 `site/src/data/homeProducts.ts` 与 `homeEcosystem.ts`**
+- [x] **Step 3: 创建 `site/src/data/homeProducts.ts` 与 `homeEcosystem.ts`**
 
 `site/src/data/homeProducts.ts`：
 
@@ -1391,7 +1391,7 @@ export const homeEcosystem: EcosystemItem[] = [
 ];
 ```
 
-- [ ] **Step 4: 创建 `site/src/components/Hero.astro`**
+- [x] **Step 4: 创建 `site/src/components/Hero.astro`**
 
 ```astro
 ---
@@ -1423,7 +1423,7 @@ const { title, subtitle, cta, secondaryCta } = Astro.props;
 </style>
 ```
 
-- [ ] **Step 5: 创建 `site/src/components/ProductCard.astro`、`FeatureCard.astro`、`EcosystemCard.astro`、`Carousel.astro`**
+- [x] **Step 5: 创建 `site/src/components/ProductCard.astro`、`FeatureCard.astro`、`EcosystemCard.astro`、`Carousel.astro`**
 
 `ProductCard.astro`：
 
@@ -1502,7 +1502,7 @@ const { title, placeholder } = Astro.props;
 </style>
 ```
 
-- [ ] **Step 6: 创建 `site/src/pages/index.astro`（中文首页）**
+- [x] **Step 6: 创建 `site/src/pages/index.astro`（中文首页）**
 
 ```astro
 ---
@@ -1585,7 +1585,7 @@ const products = homeProducts.map((p) => ({
 </style>
 ```
 
-- [ ] **Step 7: 创建 `site/src/pages/en/index.astro`（英文首页镜像）**
+- [x] **Step 7: 创建 `site/src/pages/en/index.astro`（英文首页镜像）**
 
 结构与中文首页一致，`const t = home.en;`，导航 href 已在 `home.en` 字典中带 `/en/` 前缀。完整内容：
 
@@ -1665,7 +1665,7 @@ const t = home.en;
 </style>
 ```
 
-- [ ] **Step 8: 验证首页中英双语渲染**
+- [x] **Step 8: 验证首页中英双语渲染**
 
 Run:
 ```bash
@@ -1678,7 +1678,7 @@ Expected:
 
 Ctrl+C 停止。
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add site/src/data/ site/src/components/ site/src/pages/index.astro site/src/pages/en/index.astro
