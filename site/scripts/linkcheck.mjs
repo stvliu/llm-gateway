@@ -44,9 +44,11 @@ async function check() {
       const target = href.endsWith('/')
         ? join(distDir, href, 'index.html')
         : join(distDir, href);
-      // 先直接校验目标；若失败，再尝试同目录下的 index.html（兼容无尾斜杠指向目录）。
+      // 先直接校验目标；若失败，把 target 当目录尝试其下 index.html（兼容无尾斜杠指向目录）。
+      // 注意：fallback 必须基于 target 自身而非其父目录，否则无尾斜杠断链（如 /nonexistent）
+      // 会误命中上级目录的 index.html 而漏报。
       const exists = await stat(target).catch(() => null)
-        || await stat(join(dirname(target), 'index.html')).catch(() => null);
+        || await stat(join(target, 'index.html')).catch(() => null);
       if (!exists) {
         broken.push(`${file.replace(distDir, '')} -> ${href}`);
       }
