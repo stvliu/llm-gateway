@@ -837,7 +837,7 @@ git commit -m "feat(site): 覆盖 Starlight Header/Footer/SiteTitle 主题组件
 
 **目标：** `/standard-vs-enterprise/`（中文）+ `/en/standard-vs-enterprise/`（英文）双页，对比表覆盖 README 全部 ✅/🔒 功能项（API 网关/Provider 管理/路由/用户认证/密钥管理/Token 配额/安全风控/可观测性/高级能力/部署/支持），含迁移路径段。
 
-- [ ] **Step 1: 创建 `site/src/data/editionDiff.ts`（版本对比表结构化数据）**
+- [x] **Step 1: 创建 `site/src/data/editionDiff.ts`（版本对比表结构化数据）**
 
 数据覆盖 README 第 41-118 行全部 ✅/🔒 项，以及部署/支持类别。
 
@@ -970,7 +970,7 @@ export const editionDiff: DiffCategory[] = [
 ];
 ```
 
-- [ ] **Step 2: 创建 `site/src/data/i18n/editionDiff.ts`（对比页中英文案）**
+- [x] **Step 2: 创建 `site/src/data/i18n/editionDiff.ts`（对比页中英文案）**
 
 ```ts
 // 版本对比页中英文案字典。
@@ -1006,7 +1006,7 @@ export const editionDiffI18n = {
 } as const;
 ```
 
-- [ ] **Step 3: 创建 `site/src/layouts/BaseLayout.astro`（营销页基础布局）**
+- [x] **Step 3: 创建 `site/src/layouts/BaseLayout.astro`（营销页基础布局）**
 
 营销页（首页/对比页/联系页）共用此布局，复用自定义 Header/Footer。
 
@@ -1040,7 +1040,7 @@ const { title, description } = Astro.props;
 </html>
 ```
 
-- [ ] **Step 4: 创建 `site/src/pages/standard-vs-enterprise/index.astro`（中文对比页）**
+- [x] **Step 4: 创建 `site/src/pages/standard-vs-enterprise/index.astro`（中文对比页）**
 
 ```astro
 ---
@@ -1121,7 +1121,7 @@ const t = editionDiffI18n.zh;
 </style>
 ```
 
-- [ ] **Step 5: 创建 `site/src/pages/en/standard-vs-enterprise/index.astro`（英文镜像）**
+- [x] **Step 5: 创建 `site/src/pages/en/standard-vs-enterprise/index.astro`（英文镜像）**
 
 ```astro
 ---
@@ -1202,7 +1202,7 @@ const t = editionDiffI18n.en;
 </style>
 ```
 
-- [ ] **Step 6: 创建联系页占位 `site/src/pages/contact-us.astro`**
+- [x] **Step 6: 创建联系页占位 `site/src/pages/contact-us.astro`**
 
 ```astro
 ---
@@ -1220,7 +1220,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 </BaseLayout>
 ```
 
-- [ ] **Step 7: 验证对比页中英双页**
+- [x] **Step 7: 验证对比页中英双页**
 
 Run:
 ```bash
@@ -1232,7 +1232,7 @@ Expected:
 
 Ctrl+C 停止。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add site/src/data/editionDiff.ts site/src/data/i18n/editionDiff.ts site/src/pages/standard-vs-enterprise/ site/src/pages/en/standard-vs-enterprise/ site/src/pages/contact-us.astro site/src/layouts/BaseLayout.astro

@@ -22,9 +22,9 @@
 
 ## 5. 版本对比页
 
-- [ ] 5.1 创建 `src/data/editionDiff.ts`（功能对比表数据，覆盖 README 全部 ✅/🔒 项）
-- [ ] 5.2 实现 `/standard-vs-enterprise/` 页面（对比表 + 迁移路径段）
-- [ ] 5.3 实现英文版 `/en/standard-vs-enterprise/`
+- [x] 5.1 创建 `src/data/editionDiff.ts`（功能对比表数据，覆盖 README 全部 ✅/🔒 项）
+- [x] 5.2 实现 `/standard-vs-enterprise/` 页面（对比表 + 迁移路径段）
+- [x] 5.3 实现英文版 `/en/standard-vs-enterprise/`
 
 ## 6. 首页
 
