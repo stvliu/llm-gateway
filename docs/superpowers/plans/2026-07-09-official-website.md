@@ -1697,7 +1697,7 @@ git commit -m "feat(site): 首页中英双语（8 区块结构+数据化文案�
 
 **目标：** linkcheck（无断链）+ slugcheck（英文 kebab-case）lint 脚本；GitHub Actions -> Cloudflare Pages 部署流水线（PR 预览 + master 生产）。lunaria P0 不引入。
 
-- [ ] **Step 1: 创建 `site/scripts/linkcheck.mjs`**
+- [x] **Step 1: 创建 `site/scripts/linkcheck.mjs`**
 
 构建后扫描 `dist/` 产物中的 `<a href>`，校验内部链接是否指向存在的文件。断链则退出码 1。
 
@@ -1762,7 +1762,7 @@ async function check() {
 check();
 ```
 
-- [ ] **Step 2: 创建 `site/scripts/slugcheck.mjs`**
+- [x] **Step 2: 创建 `site/scripts/slugcheck.mjs`**
 
 校验 `src/content/docs/` 下所有 `.mdx` 文件名与目录名为英文 kebab-case（`^[a-z0-9-]+$`），不允许中文或大写。
 
@@ -1802,7 +1802,7 @@ async function check() {
 check();
 ```
 
-- [ ] **Step 3: 验证 lint 脚本可运行**
+- [x] **Step 3: 验证 lint 脚本可运行**
 
 Run:
 ```bash
@@ -1813,7 +1813,7 @@ Expected:
 - `slugcheck` 输出「所有 slug 合规 ✅」。
 - `linkcheck` 输出「无断链 ✅」。若有断链，修复对应 sidebar 条目或文档 href 后重跑。
 
-- [ ] **Step 4: 创建 `.github/workflows/deploy-site.yml`（根仓库工作流）**
+- [x] **Step 4: 创建 `.github/workflows/deploy-site.yml`（根仓库工作流）**
 
 ```yaml
 name: Deploy Site
@@ -1872,7 +1872,7 @@ jobs:
 
 > 注：PR 触发时 Cloudflare Pages 会自动生成预览部署（preview），master 触发为生产部署（production）。`CLOUDFLARE_API_TOKEN` 与 `CLOUDFLARE_ACCOUNT_ID` 需在 GitHub 仓库 Secrets 配置。wrangler-action 会以 `site` 为工作目录（defaults.run 已设），`dist` 路径相对于 `site/`。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add site/scripts/ .github/workflows/deploy-site.yml

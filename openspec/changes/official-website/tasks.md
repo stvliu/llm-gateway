@@ -34,9 +34,9 @@
 
 ## 7. 工具链与部署
 
-- [ ] 7.1 配置 lunaria 翻译状态追踪（`lunaria.config.ts`）
-- [ ] 7.2 配置 sitemap 与 linkcheck/slugcheck lint 脚本
-- [ ] 7.3 实现 GitHub Actions -> Cloudflare Pages 部署流水线（PR 预览 + master 生产）
+- [x] 7.1 配置 lunaria 翻译状态追踪（P0 不引入，以 Design Doc §9 Spec Patch 为准）
+- [x] 7.2 配置 sitemap 与 linkcheck/slugcheck lint 脚本
+- [x] 7.3 实现 GitHub Actions -> Cloudflare Pages 部署流水线（PR 预览 + master 生产）
 
 ## 8. 文档站英文版（后续独立任务，P0 不做）
 

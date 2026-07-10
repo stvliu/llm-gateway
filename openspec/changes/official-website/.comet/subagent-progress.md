@@ -22,7 +22,7 @@
 - [x] Task 4: Starlight 主题覆盖（映射 4.1/4.2）✓ APPROVE 14d61d71
 - [x] Task 5: 版本对比页（映射 5.1/5.2/5.3）✓ APPROVE b500566c+11cee6b5
 - [x] Task 6: 首页（映射 6.1/6.2/6.3）✓ APPROVE 2f39d1bc
-- [ ] Task 7: 工具链与部署（映射 7.1/7.2/7.3）
+- [x] Task 7: 工具链与部署（映射 7.1/7.2/7.3）✓ APPROVE 1c44930a+0ba56cfb+2d8c533a
 - [ ] Task 8: 文档站英文版（deferred，P0 不做，映射 8.1）
 - [ ] Task 9: 验收（映射 9.1/9.2）
 
@@ -30,21 +30,32 @@
 
 - Task: Task 7 - 工具链与部署
 - 映射 OpenSpec task: 7.1 / 7.2 / 7.3
-- 阶段: implementing
+- 阶段: done
 - 交接文件: openspec/changes/official-website/.comet/handoff/task-7-implementer.md
-- 实现提交: 待定
-- 风险信号自报: 待定
-- 风险任务级 review: 未触发
-- 审查-修复轮次: 0（standard 最多 1 轮）
-- Comet 约束: lunaria P0 不引入（Design Doc §3.2）；sitemap 已配（Task 1）；linkcheck/slugcheck lint 脚本；GitHub Actions -> Cloudflare Pages（PR 预览 + master 生产）；**site 级 /docs/ 路由问题需在 linkcheck 暴露后修复**
+- 实现提交: 1c44930a（11 文件 176+/16-）+ fix 0ba56cfb（linkcheck fallback [I-1]）+ fix 2d8c533a（.mdx 交叉引用 .md 断链）
+- 风险信号自报: 命中（implementer 回报 DONE_WITH_CONCERNS）-> 触发风险任务级 review
+- 风险任务级 review: APPROVE（1 IMPORTANT [I-1] + 4 MINOR，均不阻塞）
+- 审查-修复轮次: 1（[I-1] 修复 0ba56cfb 后暴露 8 个旧 fallback 漏报的真实 .mdx 断链，补修 2d8c533a）
+- 验证证据: pnpm build 27 页、slugcheck ✅、linkcheck ✅ 0 断链（协调者自行重跑确认）
+- reviewer 发现: [I-1] IMPORTANT linkcheck fallback 漏报（已修）；[M-1] 相对路径不支持（接受）；[M-2] slugcheck 目录不存在崩溃（接受）；[M-3] slugcheck 非 md/mdx 误报（接受）；[M-4] .gitignore .github/ 忽略（项目级待办）
+- implementer 顾虑: (1) .gitignore:65 .github/ 忽略（项目级待办）；(2) /en/ 营销页文档链接 fallback 中文 /features/；(3) 文档入口指向 /features/
+- task-checkoff: plan Step 5 PASS, tasks.md 7.1/7.2/7.3 PASS
+- Comet 约束: lunaria P0 不引入（7.1 回写）；sitemap 已配；linkcheck/slugcheck；部署流水线；/docs/ 路由 + .mdx 交叉引用断链均已修复
 
 ## site 级待办（跨 Task，Task 7/9 处理）
 
-- **[/docs/ 路由 404]**：navigation.ts、BaseLayout、homeFeatures 用 /docs/ 前缀，但 root locale 文档路由是根级 slug（无 /docs/），预期 404。Task 7 linkcheck 会发现，需 site 级统一修复（redirect /docs/* -> /* 或 href 去前缀）
+- **[/docs/ 路由 404]**：✅ Task 7 已修复（navigation.ts/BaseLayout/homeFeatures 等的 /docs/ 前缀改为根级 /features/ 或 /xxx/；.mdx 交叉引用 .md 改页面路径，见 1c44930a+2d8c533a）
 - **[英文页功能卡中文]**：homeFeatures 共享非 i18n，英文页功能卡中文。spec 偏离 Design Doc §4.4（features 应在 i18n）。Task 9 验收或后续 i18n 化
 - **[死代码 products 映射]**：index.astro:14-17 未使用。Task 9 清理
 
 ## 已完成 Task 记录
+
+### Task 7: 工具链与部署 - DONE
+- 实现提交: 1c44930a（linkcheck/slugcheck/deploy-site.yml + /docs/ 断链修复 8 文件）
+- fix: 0ba56cfb（[I-1] linkcheck fallback）+ 2d8c533a（.mdx 交叉引用 .md 断链 8 处）
+- review: APPROVE（1 IMPORTANT [I-1] 已修+暴露并修复 8 漏报断链，4 MINOR 接受）
+- 关键偏离: 文档入口 /docs/ -> /features/（root locale 无 /docs/）；workingDirectory 修正 wrangler-action
+- task-checkoff: plan Step 5 PASS, tasks.md 7.1/7.2/7.3 PASS
 
 ### Task 6: 首页 - DONE
 - 实现提交: 2f39d1bc（11 文件，4 数据+5 组件+2 页面，346 行）
