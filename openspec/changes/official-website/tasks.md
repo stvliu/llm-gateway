@@ -17,8 +17,8 @@
 
 ## 4. Starlight 主题覆盖
 
-- [ ] 4.1 覆盖 Header 组件（顶部导航：产品 / 文档 / 定价 / 版本对比）
-- [ ] 4.2 覆盖 Footer 与 SiteTitle 组件
+- [x] 4.1 覆盖 Header 组件（顶部导航：产品 / 文档 / 定价 / 版本对比）
+- [x] 4.2 覆盖 Footer 与 SiteTitle 组件
 
 ## 5. 版本对比页
 

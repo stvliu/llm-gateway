@@ -645,7 +645,7 @@ git commit -m "feat(site): 配置 8 能力域侧边栏+企业版 badge 标注"
 
 **目标：** 覆盖 Starlight 的 Header（顶部导航：产品/文档/定价/版本对比）、Footer、SiteTitle，使其承载营销导航，文档站与营销页视觉统一。
 
-- [ ] **Step 1: 创建 `site/src/data/navigation.ts`**
+- [x] **Step 1: 创建 `site/src/data/navigation.ts`**
 
 ```ts
 // 顶部导航项（中英双语，营销页与文档站 Header 共用）。
@@ -663,7 +663,7 @@ export const navigation: NavItem[] = [
 ];
 ```
 
-- [ ] **Step 2: 创建 `site/src/components/starlight/SiteTitle.astro`**
+- [x] **Step 2: 创建 `site/src/components/starlight/SiteTitle.astro`**
 
 ```astro
 ---
@@ -683,7 +683,7 @@ export const navigation: NavItem[] = [
 </style>
 ```
 
-- [ ] **Step 3: 创建 `site/src/components/starlight/Header.astro`**
+- [x] **Step 3: 创建 `site/src/components/starlight/Header.astro`**
 
 ```astro
 ---
@@ -744,7 +744,7 @@ const isEn = pathname.startsWith('/en/');
 </style>
 ```
 
-- [ ] **Step 4: 创建 `site/src/components/starlight/Footer.astro`**
+- [x] **Step 4: 创建 `site/src/components/starlight/Footer.astro`**
 
 ```astro
 ---
@@ -797,7 +797,7 @@ const year = new Date().getFullYear();
 </style>
 ```
 
-- [ ] **Step 5: 修改 `site/astro.config.ts` 启用组件覆盖**
+- [x] **Step 5: 修改 `site/astro.config.ts` 启用组件覆盖**
 
 将 Task 1 Step 9 中 `starlight({...})` 内的 `components: {}` 替换为：
 
@@ -809,7 +809,7 @@ const year = new Date().getFullYear();
       },
 ```
 
-- [ ] **Step 6: 验证主题覆盖生效**
+- [x] **Step 6: 验证主题覆盖生效**
 
 Run:
 ```bash
@@ -817,7 +817,7 @@ cd site && pnpm dev
 ```
 Expected: 访问 `http://localhost:4321/docs/`，顶部显示自定义 Header（品牌名 + 产品/文档/版本对比/联系我们导航），底部显示自定义 Footer（版权 + GitHub/文档/版本对比链接），SiteTitle 显示「LLM-Gateway」。Ctrl+C 停止。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add site/src/components/starlight/ site/src/data/navigation.ts site/astro.config.ts

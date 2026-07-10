@@ -19,7 +19,7 @@
 - [x] Task 1: 项目脚手架与 i18n 架构（映射 tasks.md 1.1/1.2/1.3）✓ APPROVE c586e1e7
 - [x] Task 2: 文档迁移（映射 2.1/2.2）✓ APPROVE a3d02058
 - [x] Task 3: 侧边栏配置（映射 3.1/3.2/3.3）✓ APPROVE 5e0fb614+bafe22a1
-- [ ] Task 4: Starlight 主题覆盖（映射 4.1/4.2）
+- [x] Task 4: Starlight 主题覆盖（映射 4.1/4.2）✓ APPROVE 14d61d71
 - [ ] Task 5: 版本对比页（映射 5.1/5.2/5.3）
 - [ ] Task 6: 首页（映射 6.1/6.2/6.3）
 - [ ] Task 7: 工具链与部署（映射 7.1/7.2/7.3）
@@ -28,15 +28,45 @@
 
 ## 当前 Task
 
-- Task: Task 4 - Starlight 主题覆盖
-- 映射 OpenSpec task: 4.1 / 4.2
+- Task: Task 5 - 版本对比页
+- 映射 OpenSpec task: 5.1 / 5.2 / 5.3
 - 阶段: implementing
-- 交接文件: openspec/changes/official-website/.comet/handoff/task-4-implementer.md
+- 交接文件: openspec/changes/official-website/.comet/handoff/task-5-implementer.md
 - 实现提交: 待定
 - 风险信号自报: 待定
 - 风险任务级 review: 未触发
 - 审查-修复轮次: 0（standard 最多 1 轮）
-- Comet 约束: 覆盖 Header/Footer/SiteTitle 组件（顶部导航：产品/文档/定价/版本对比/联系我们）；创建 navigation.ts；启用 astro.config.ts components 覆盖；注意 starlight 0.40 components API
+- Comet 约束: editionDiff.ts 覆盖 README 全部 ✅/🔒 项；版本对比页中英双语（/standard-vs-enterprise/ + /en/standard-vs-enterprise/）；迁移路径段；contact-us.astro 占位；BaseLayout.astro
+
+## 已完成 Task 记录
+
+### Task 4: Starlight 主题覆盖 - DONE
+- 实现提交: 14d61d71
+- review: APPROVE（命中风险信号 DONE_WITH_CONCERNS[404 顾虑经实测澄清为路径误判] + diff 超 200 行[239]，spec PASS，0.40 适配正确，.gitignore 修复必要）
+- 关键偏离: starlight 0.40 适配（Header 不用独立容器、props->Astro.locals+virtual:starlight、SiteTitle 动态取值、CSS --sl-color-*、保留默认子组件）、.gitignore 修复（data/ 误伤 site/src/data/）
+- 待 Task 9 跟进: /docs/ 导航链接在 root locale 下可能 404（应改根级路径）
+- task-checkoff: plan Step 7 PASS, tasks.md 4.1/4.2 PASS
+
+### Task 3: 侧边栏配置 - DONE
+- 实现提交: 5e0fb614 + fixup bafe22a1
+- review: NEEDS_FIX -> 修复后 APPROVE（spec PASS，2 IMPORTANT 修复：badge tip->success 绿色、类型导入移除；2 MINOR 留待 Task 9：slug 重复、代理配置 badge 语义）
+- 关键偏离: features/index->features slug 修复（Astro glob loader）、badge variant success（用户决策，plan tip=绿色事实错误）
+- 待 Task 9 跟进: provider-management slug 重复、代理配置 badge 产品语义确认
+- task-checkoff: plan Step 4 PASS, tasks.md 3.1/3.2/3.3 PASS
+
+### Task 2: 文档迁移 - DONE
+- 实现提交: a3d02058（20 篇 .mdx + content.config.ts + 2 处 MDX 修复）
+- review: APPROVE（命中风险信号 DONE_WITH_CONCERNS + diff 超 200 行，派发 reviewer，无 CRITICAL/IMPORTANT，1 MINOR badge 占位）
+- 关键偏离: content.config.ts（Task 1 遗漏，Starlight 0.40 Content Layer API 必需）、MDX 兼容性修复（`<60`->`&lt;60`、裸花括号->反引号）
+- 待 Task 3 跟进: sidebar.badge 覆盖企业版标识、迁移文档内部链接断链修正
+- task-checkoff: plan Step 8 PASS, tasks.md 2.1/2.2 PASS
+
+### Task 1: 项目脚手架与 i18n 架构 - DONE
+- 实现提交: c586e1e7（site/ Astro 6.4.8 + Starlight 0.40 脚手架，root locale）
+- 进度提交: 17a9d174
+- review: APPROVE（命中风险信号 DONE_WITH_CONCERNS，派发 reviewer，无 CRITICAL/IMPORTANT，2 MINOR 可接受）
+- 关键偏离: starlight 0.30->0.40（peer 兼容 astro 6.4.8）、social 改数组、新增 pnpm-workspace.yaml（allowBuilds）
+- task-checkoff: plan Step 12 PASS, tasks.md 1.1/1.2/1.3 PASS
 
 ## 已完成 Task 记录
 
