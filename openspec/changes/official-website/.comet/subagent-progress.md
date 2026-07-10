@@ -23,7 +23,7 @@
 - [x] Task 5: 版本对比页（映射 5.1/5.2/5.3）✓ APPROVE b500566c+11cee6b5
 - [x] Task 6: 首页（映射 6.1/6.2/6.3）✓ APPROVE 2f39d1bc
 - [x] Task 7: 工具链与部署（映射 7.1/7.2/7.3）✓ APPROVE 1c44930a+0ba56cfb+2d8c533a
-- [ ] Task 8: 文档站英文版（deferred，P0 不做，映射 8.1）
+- [x] Task 8: 文档站英文版（deferred，P0 不做，映射 8.1）✓ DEFERRED（无实现，P0 决策推迟）
 - [ ] Task 9: 验收（映射 9.1/9.2）
 
 ## 当前 Task
