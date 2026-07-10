@@ -1,0 +1,76 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { editionDiff } from '../../data/editionDiff.ts';
+import { editionDiffI18n } from '../../data/i18n/editionDiff.ts';
+
+const t = editionDiffI18n.zh;
+---
+<BaseLayout title={`${t.title} · LLM-Gateway`} description={t.intro}>
+  <section class="edition-hero">
+    <h1>{t.title}</h1>
+    <p class="intro">{t.intro}</p>
+  </section>
+
+  <section class="edition-cards">
+    <div class="card standard">
+      <h2>{t.standard}</h2>
+      <p>{t.standardDesc}</p>
+    </div>
+    <div class="card enterprise">
+      <h2>{t.enterprise}</h2>
+      <p>{t.enterpriseDesc}</p>
+    </div>
+  </section>
+
+  <section class="edition-table">
+    <table>
+      <thead>
+        <tr>
+          <th>{t.feature}</th>
+          <th>{t.standard}</th>
+          <th>{t.enterprise}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {editionDiff.map((cat) => (
+          <>
+            <tr class="category-row">
+              <th colspan="3">{cat.category}</th>
+            </tr>
+            {cat.items.map((item) => (
+              <tr>
+                <td>{item.name}</td>
+                <td>{item.standard ? '✅' : '-'}</td>
+                <td>{item.enterprise ? '✅' : '-'}</td>
+              </tr>
+            ))}
+          </>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  <section class="edition-migration">
+    <h2>{t.migrationTitle}</h2>
+    <p>{t.migrationBody}</p>
+  </section>
+
+  <section class="edition-start">
+    <h2>{t.getStarted}</h2>
+    <p>{t.getStartedBody}</p>
+    <a href="/contact-us/" class="cta">{t.contactCta}</a>
+  </section>
+</BaseLayout>
+
+<style>
+  .edition-hero { padding: 48px 0 24px; }
+  .edition-hero h1 { font-size: 2rem; }
+  .edition-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 24px 0; }
+  .card { padding: 24px; border: 1px solid #e5e7eb; border-radius: 12px; }
+  .card.enterprise { border-color: var(--enterprise-badge, #16a34a); }
+  .edition-table { overflow-x: auto; margin: 32px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+  .category-row th { background: #f9fafb; font-size: 0.95rem; }
+  .cta { display: inline-block; margin-top: 12px; padding: 10px 20px; background: var(--brand-primary, #6653e3); color: #fff; border-radius: 8px; text-decoration: none; }
+</style>

@@ -1,0 +1,31 @@
+// 版本对比页中英文案字典。
+export const editionDiffI18n = {
+  zh: {
+    title: '标准版 vs 企业版',
+    intro: 'LLM-Gateway 提供 Apache-2.0 开源标准版与企业版。企业版是标准版的超集，新增高级安全、可观测性与运维能力。',
+    standard: '标准版',
+    enterprise: '企业版',
+    feature: '功能',
+    standardDesc: '开源免费，单机即可起步，覆盖全部核心网关能力。',
+    enterpriseDesc: '标准版全部能力 + 高级安全、分布式部署、商业支持。',
+    migrationTitle: '迁移路径',
+    migrationBody: '标准版起步后可平滑升级企业版：将配置 `llm-gateway.edition` 从 `standard` 切换为 `enterprise`，数据完全兼容，无需迁移。企业版专属功能（语义缓存、MCP、国密、WORM 等）通过配置开关启用。',
+    getStarted: '如何开始',
+    getStartedBody: '从标准版开源仓库开始，业务增长后联系团队获取企业版授权与部署支持。',
+    contactCta: '联系我们',
+  },
+  en: {
+    title: 'Standard vs Enterprise',
+    intro: 'LLM-Gateway ships as an Apache-2.0 open-source Standard edition and an Enterprise edition. Enterprise is a superset adding advanced security, observability and ops.',
+    standard: 'Standard',
+    enterprise: 'Enterprise',
+    feature: 'Feature',
+    standardDesc: 'Free and open-source, single-node to start, covering all core gateway capabilities.',
+    enterpriseDesc: 'Everything in Standard plus advanced security, distributed deployment and commercial support.',
+    migrationTitle: 'Migration Path',
+    migrationBody: 'Start on Standard and upgrade smoothly: flip `llm-gateway.edition` from `standard` to `enterprise`. Data is fully compatible, no migration needed. Enterprise-only features (semantic cache, MCP, SM crypto, WORM) are toggled via config.',
+    getStarted: 'Getting Started',
+    getStartedBody: 'Begin with the open-source Standard repo; as you grow, contact us for Enterprise licensing and deployment support.',
+    contactCta: 'Contact Us',
+  },
+} as const;
