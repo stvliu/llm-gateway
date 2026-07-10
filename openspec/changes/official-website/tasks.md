@@ -11,9 +11,9 @@
 
 ## 3. 侧边栏配置
 
-- [ ] 3.1 编写 `astro.sidebar.ts`：8 大能力域分组 + 折叠 + 中英 label
-- [ ] 3.2 实现 `isEnterprise` 标记（企业版条目附 badge，标准版上下文不渲染）
-- [ ] 3.3 配置 Recipes（场景配方）子组与参考（Reference）分组
+- [x] 3.1 编写 `astro.sidebar.ts`：8 大能力域分组 + 折叠 + 中英 label
+- [x] 3.2 实现 `isEnterprise` 标记（企业版条目附 badge，标准版上下文不渲染）
+- [x] 3.3 配置 Recipes（场景配方）子组与参考（Reference）分组
 
 ## 4. Starlight 主题覆盖
 

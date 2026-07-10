@@ -475,7 +475,7 @@ git commit -m "feat(site): 迁移 11 篇核心文档+2 篇企业版占位+7 篇�
 
 **目标：** 8 大能力域分组 + 企业版 badge 标注，全部条目渲染（不做条件隐藏）。每个 sidebar 条目的 `slug` 必须对应 Task 2 中已创建的 `.mdx` 文件，确保 linkcheck 通过。
 
-- [ ] **Step 1: 创建 `site/astro.sidebar.ts`**
+- [x] **Step 1: 创建 `site/astro.sidebar.ts`**
 
 ```ts
 import type { SidebarItem } from 'astro';
@@ -508,7 +508,7 @@ export const sidebar: SidebarItem[] = [
 
 > ⚠️ 上面是结构示意。实际完整配置见 Step 2（避免重复条目）。请使用 Step 2 的完整版本**替换**本文件全部内容。
 
-- [ ] **Step 2: 写入完整的 `site/astro.sidebar.ts`**
+- [x] **Step 2: 写入完整的 `site/astro.sidebar.ts`**
 
 用以下完整内容**覆盖** Step 1 创建的文件。每个 slug 严格对应 Task 2 产出的 `.mdx`：
 
@@ -617,7 +617,7 @@ export const sidebar: SidebarItem[] = [
 
 > 说明：`badge` 字段名以实际安装的 Starlight 版本 API 为准。Starlight 0.28+ sidebar 项支持 `badge: { text, variant }`。若版本字段名为 `badges: [badge]`（数组形式），改为数组形式。
 
-- [ ] **Step 3: 验证侧边栏渲染**
+- [x] **Step 3: 验证侧边栏渲染**
 
 Run:
 ```bash
@@ -625,7 +625,7 @@ cd site && pnpm dev
 ```
 Expected: 访问 `http://localhost:4321/`，左侧侧边栏显示 12 个分组（8 能力域 + 快速开始 + 高级能力 + 模型广场 + 参考），「语义缓存」「MCP 协议」条目旁显示绿色「企业版」badge。点击任一条目可跳转到对应文档页（无 404）。Ctrl+C 停止。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add site/astro.sidebar.ts
