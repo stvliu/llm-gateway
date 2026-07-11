@@ -24,23 +24,21 @@
 - [x] Task 6: 首页（映射 6.1/6.2/6.3）✓ APPROVE 2f39d1bc
 - [x] Task 7: 工具链与部署（映射 7.1/7.2/7.3）✓ APPROVE 1c44930a+0ba56cfb+2d8c533a
 - [x] Task 8: 文档站英文版（deferred，P0 不做，映射 8.1）✓ DEFERRED（无实现，P0 决策推迟）
-- [ ] Task 9: 验收（映射 9.1/9.2）
+- [x] Task 9: 验收（映射 9.1/9.2）✓ DONE Step1-6 通过，Step7 CF Pages 预期阻塞
 
 ## 当前 Task
 
-- Task: Task 7 - 工具链与部署
-- 映射 OpenSpec task: 7.1 / 7.2 / 7.3
-- 阶段: done
-- 交接文件: openspec/changes/official-website/.comet/handoff/task-7-implementer.md
-- 实现提交: 1c44930a（11 文件 176+/16-）+ fix 0ba56cfb（linkcheck fallback [I-1]）+ fix 2d8c533a（.mdx 交叉引用 .md 断链）
-- 风险信号自报: 命中（implementer 回报 DONE_WITH_CONCERNS）-> 触发风险任务级 review
-- 风险任务级 review: APPROVE（1 IMPORTANT [I-1] + 4 MINOR，均不阻塞）
-- 审查-修复轮次: 1（[I-1] 修复 0ba56cfb 后暴露 8 个旧 fallback 漏报的真实 .mdx 断链，补修 2d8c533a）
-- 验证证据: pnpm build 27 页、slugcheck ✅、linkcheck ✅ 0 断链（协调者自行重跑确认）
-- reviewer 发现: [I-1] IMPORTANT linkcheck fallback 漏报（已修）；[M-1] 相对路径不支持（接受）；[M-2] slugcheck 目录不存在崩溃（接受）；[M-3] slugcheck 非 md/mdx 误报（接受）；[M-4] .gitignore .github/ 忽略（项目级待办）
-- implementer 顾虑: (1) .gitignore:65 .github/ 忽略（项目级待办）；(2) /en/ 营销页文档链接 fallback 中文 /features/；(3) 文档入口指向 /features/
-- task-checkoff: plan Step 5 PASS, tasks.md 7.1/7.2/7.3 PASS
-- Comet 约束: lunaria P0 不引入（7.1 回写）；sitemap 已配；linkcheck/slugcheck；部署流水线；/docs/ 路由 + .mdx 交叉引用断链均已修复
+- Task: Task 9 - 验收
+- 映射 OpenSpec task: 9.1 / 9.2
+- 阶段: done（所有 plan task 完成，进入最终轻量审查）
+- 实现提交: 无（验收无代码改动）
+- 风险信号自报: 未命中（回报 DONE，无代码改动）
+- 风险任务级 review: 未触发（未命中风险信号，直接定向勾选放行）
+- 验证证据: Step1 build 27 页含 sitemap ✅；Step2 linkcheck 0 断链 ✅；Step3 slugcheck 合规 ✅；Step4 dev 页面 200（首页/英文/对比页/文档页 9 section 完整，中英切换文案不同）；Step5 3 个绿色企业版 badge（语义缓存/MCP/代理配置）+ 8 能力域；Step6 editionDiff 11 类别 58 项 ✅100 个与 README 一致
+- Step7 CF Pages: 预期阻塞（需 GitHub Secrets + CI，plan 允许），待运维配置后 PR 触发复验
+- task-checkoff: plan Step 9 PASS, tasks.md 9.1/9.2 PASS（tasks.md 全部勾选，剩余 0）
+- 非阻塞观察: plan Step6 Provider 管理 plan 写 8 项实际 9 项（与 README 一致）；对比页用 ✅/空 而非 🔒（渲染差异不影响覆盖度）
+- site 级待办残留: [英文页功能卡中文] homeFeatures 共享非 i18n（Task 9 验收未修，留待后续 i18n 化）
 
 ## site 级待办（跨 Task，Task 7/9 处理）
 
@@ -49,6 +47,12 @@
 - **[死代码 products 映射]**：index.astro:14-17 未使用。Task 9 清理
 
 ## 已完成 Task 记录
+
+### Task 9: 验收 - DONE
+- 实现提交: 无（验收无代码改动）
+- 验收结果: Step1-6 全部通过（build 27 页含 sitemap、linkcheck 0 断链、slugcheck 合规、dev 9 section 中英切换、3 企业版 badge、editionDiff 11 类别 58 项 ✅100）；Step7 CF Pages 预期阻塞（plan 允许，待 Secrets+CI 复验）
+- review: 未命中风险信号，直接定向勾选放行
+- task-checkoff: plan Step 9 PASS, tasks.md 9.1/9.2 PASS
 
 ### Task 7: 工具链与部署 - DONE
 - 实现提交: 1c44930a（linkcheck/slugcheck/deploy-site.yml + /docs/ 断链修复 8 文件）

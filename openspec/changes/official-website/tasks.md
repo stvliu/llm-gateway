@@ -44,5 +44,5 @@
 
 ## 9. 验收
 
-- [ ] 9.1 本地 `pnpm dev` 与 `pnpm build` 验证通过
-- [ ] 9.2 全量验收：中英切换、侧边栏 isEnterprise、对比表覆盖度、linkcheck 无断链、CF Pages 预览部署成功
+- [x] 9.1 本地 `pnpm dev` 与 `pnpm build` 验证通过
+- [x] 9.2 全量验收：中英切换、侧边栏 isEnterprise、对比表覆盖度、linkcheck 无断链 ✅；CF Pages 预览部署待运维配置 Secrets 后 CI 复验（plan 允许预期阻塞）

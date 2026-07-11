@@ -1906,7 +1906,7 @@ git commit -m "feat(site): linkcheck/slugcheck lint 脚本+GitHub Actions→Clou
 
 **目标：** 按 Design Doc §7 测试策略全量验收，确认所有 P0 交付物达标。
 
-- [ ] **Step 1: 构建验收**
+- [x] **Step 1: 构建验收**
 
 Run:
 ```bash
@@ -1914,7 +1914,7 @@ cd site && pnpm build
 ```
 Expected: 构建成功，无错误，`dist/` 产物生成，含 `sitemap.xml`。
 
-- [ ] **Step 2: 链接验收**
+- [x] **Step 2: 链接验收**
 
 Run:
 ```bash
@@ -1922,7 +1922,7 @@ cd site && pnpm lint:linkcheck
 ```
 Expected: 输出「linkcheck: 无断链 ✅」，退出码 0。
 
-- [ ] **Step 3: slug 验收**
+- [x] **Step 3: slug 验收**
 
 Run:
 ```bash
@@ -1930,7 +1930,7 @@ cd site && pnpm lint:slugcheck
 ```
 Expected: 输出「slugcheck: 所有 slug 合规 ✅」，退出码 0。
 
-- [ ] **Step 4: 本地开发服务验收**
+- [x] **Step 4: 本地开发服务验收**
 
 Run:
 ```bash
@@ -1946,19 +1946,19 @@ Expected: 服务启动，逐项手动检查：
 
 Ctrl+C 停止。
 
-- [ ] **Step 5: 企业版 badge 验收**
+- [x] **Step 5: 企业版 badge 验收**
 
 在 Step 4 的开发服务中，访问 `http://localhost:4321/docs/`，确认：
 - 侧边栏「高级能力」分组下「语义缓存」「MCP 协议」条目旁显示绿色「企业版」badge。
 - 8 能力域分组全部可见（API 网关 / Provider 管理 / 路由 / 用户与认证 / 密钥管理 / Token 计量与配额 / 安全与风控 / 可观测性）。
 - 标准版条目无 badge。
 
-- [ ] **Step 6: 对比表覆盖度验收**
+- [x] **Step 6: 对比表覆盖度验收**
 
 打开 `http://localhost:4321/standard-vs-enterprise/`，对照 README 第 41-118 行功能矩阵，确认对比表覆盖全部类别与 ✅/🔒 项：
 - API 网关（8 项）、Provider 管理（8 项，含代理配置企业版）、路由（5 项，含可视化编排/脚本扩展企业版）、用户与认证（4 项，含企业 OAuth 企业版）、密钥管理（5 项）、Token 计量与配额（4 项，含用户×渠道/请求次数企业版）、安全与风控（9 项，含国密/WORM 企业版）、可观测性（6 项，含 Grafana/Jaeger 企业版）、高级能力（语义缓存/MCP 企业版）、部署、支持。
 
-- [ ] **Step 7: Cloudflare Pages 预览部署验收**
+- [x] **Step 7: Cloudflare Pages 预览部署验收**（阻塞：待运维配置 Secrets 后 CI 复验，plan 允许）
 
 创建一个 PR（包含 `site/**` 变更），确认 GitHub Actions 触发 `Deploy Site` 工作流：
 - `pnpm build` 成功。
@@ -1968,11 +1968,11 @@ Ctrl+C 停止。
 
 > 若 `CLOUDFLARE_API_TOKEN` 等 Secrets 未配置，此步可标记为阻塞项，记录待运维配置后复验。
 
-- [ ] **Step 8: 更新 tasks.md 勾选**
+- [x] **Step 8: 更新 tasks.md 勾选**
 
 打开 `openspec/changes/official-website/tasks.md`，将 Task 1-7、Task 9 的复选框勾选为 `[x]`（Task 8 保持 `[ ]` 并标注 deferred）。注意 tasks.md 原文有几处与 Design Doc 锁定决策不一致（1.2 locales、3.2 isEnterprise、7.1 lunaria），按 Design Doc §9 Spec Patch 的修正理解执行：1.2 按 root locale 配置、3.2 按 badge 全渲染、7.1 lunaria 不引入。
 
-- [ ] **Step 9: Commit 验收结果**
+- [x] **Step 9: Commit 验收结果**
 
 ```bash
 git add openspec/changes/official-website/tasks.md
