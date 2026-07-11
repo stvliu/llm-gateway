@@ -30,7 +30,7 @@
 
 - Task: Task 9 - 验收
 - 映射 OpenSpec task: 9.1 / 9.2
-- 阶段: done（所有 plan task 完成，进入最终轻量审查）
+- 阶段: final-review done（最终轻量审查 APPROVE，无 CRITICAL/IMPORTANT，5 MINOR 接受：死代码 products/redirects、pnpm 9 vs 11、badge 颜色、i18n 跨语言链接；进入 build guard）
 - 实现提交: 无（验收无代码改动）
 - 风险信号自报: 未命中（回报 DONE，无代码改动）
 - 风险任务级 review: 未触发（未命中风险信号，直接定向勾选放行）
