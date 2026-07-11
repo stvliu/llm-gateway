@@ -1,9 +1,79 @@
 ---
 title: 密钥管理
-description: API Key 全生命周期管理与访问控制
+description: 调用方 API Key 全生命周期管理与访问控制
 ---
 
-LLM-Gateway 提供 API Key 的完整生命周期管理，支持额度限制、模型白名单、IP 限制与过期时间等多维度访问控制。
+# 密钥管理
+
+LLM-Gateway 的"密钥"指签发给调用方的**网关 API Key**（`sk-` 开头），用于调用 `/v1/*` 端点。它与上游 Provider Key（OpenAI/Anthropic 的密钥，见 [Provider 管理](/provider-management/)）不同。
+
+## 管理 API
+
+所有管理 API 需会话认证（`Authorization: Bearer <token>`，token 通过 [登录](/quickstart/) 获取）。
+
+| 操作 | 方法 | 端点 |
+|------|------|------|
+| 创建 Key | POST | `/api/v1/user-api-keys` |
+| 查询全部（管理员） | GET | `/api/v1/user-api-keys` |
+| 按用户查询 | GET | `/api/v1/user-api-keys?userId={id}` |
+| 查询我的 Key | GET | `/api/v1/me/api-keys` |
+| 查询详情 | GET | `/api/v1/user-api-keys/{id}` |
+| 更新 | PUT | `/api/v1/user-api-keys/{id}` |
+| 删除 | DELETE | `/api/v1/user-api-keys/{id}` |
+
+### 创建 Key
+
+```bash
+curl -X POST http://localhost:8080/api/v1/user-api-keys \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "applicationId": 1,
+    "name": "my-app-key"
+  }'
+```
+
+响应（**明文仅此一次返回，请妥善保存**）：
+
+```json
+{
+  "id": 1,
+  "keyPrefix": "sk-****",
+  "apiKeyPlain": "sk-xxxxxxxx-my-app-key"
+}
+```
+
+请求字段：
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `userId` | Long | 是 | Key 归属用户 ID（可通过 `GET /api/v1/auth/me` 获取） |
+| `applicationId` | Long | 是 | 授权访问的应用 ID（权限锚点，决定可访问的渠道与模型范围） |
+| `name` | String | 是 | 密钥名称（便于识别） |
+
+### 查询 Key
+
+```bash
+# 管理员查询全部
+curl http://localhost:8080/api/v1/user-api-keys \
+  -H "Authorization: Bearer $TOKEN"
+
+# 当前登录用户的 Key
+curl http://localhost:8080/api/v1/me/api-keys \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+> 列表接口仅返回 `keyPrefix` 等元信息，不返回明文。明文丢失后只能重新创建。
+
+### 删除 Key
+
+```bash
+curl -X DELETE http://localhost:8080/api/v1/user-api-keys/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+删除后 Key 立即失效，无法再用于调用网关。
 
 ## 功能清单
 

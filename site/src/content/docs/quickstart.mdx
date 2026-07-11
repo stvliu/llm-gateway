@@ -1,0 +1,137 @@
+---
+title: 快速开始
+description: 5 分钟启动 LLM-Gateway 并发起第一个模型请求
+---
+
+# 快速开始
+
+本页带你用最快方式跑通 LLM-Gateway：启动网关 → 登录 → 创建调用方 API Key → 发起一次模型调用。
+
+## 前置条件
+
+- **JDK 21+**（推荐 Eclipse Temurin）
+- **Maven 3.9+**（仓库自带 `mvnw` 包装器，可直接用 `./mvnw`）
+
+> 默认 `local` profile 使用内嵌 H2 文件数据库并预置示例数据，**无需安装 PostgreSQL / Redis**，开箱即用。
+
+## 1. 启动网关
+
+在仓库根目录执行：
+
+```bash
+./mvnw spring-boot:run -pl gateway-boot
+```
+
+首次启动会自动执行 Flyway 建表并加载示例数据（用户、应用、渠道、API Key）。看到如下日志即启动成功：
+
+```
+示例数据初始化完成!
+  Test accounts:
+    Admin - Username: admin, Password: admin, Role: ADMIN
+```
+
+## 2. 确认服务就绪
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+返回 `{"status":"UP"}` 即可继续。
+
+## 3. 登录获取 Token
+
+使用预置管理员账号登录：
+
+```bash
+curl -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "admin",
+    "password": "admin",
+    "rememberMe": false
+  }'
+```
+
+响应中的 `token` 用于后续管理 API 鉴权：
+
+```json
+{
+  "user": { "id": 1, "username": "admin", "role": "ADMIN" },
+  "token": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+}
+```
+
+## 4. 创建调用方 API Key
+
+调用网关需持有 `sk-` 开头的调用方 Key。通过管理 API 创建（**明文仅返回一次，请妥善保存**）：
+
+```bash
+curl -X POST http://localhost:8080/api/v1/user-api-keys \
+  -H "Authorization: Bearer <TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 1,
+    "applicationId": 1,
+    "name": "quickstart-key"
+  }'
+```
+
+响应：
+
+```json
+{
+  "id": 1,
+  "keyPrefix": "sk-****",
+  "apiKeyPlain": "sk-xxxxxxxx-quickstart-key"
+}
+```
+
+- `<TOKEN>` 替换为第 3 步登录返回的 `token`
+- `userId` / `applicationId` 示例值为 `1`（admin 用户与首个应用，实际以你的环境为准；`userId` 可通过 `GET /api/v1/auth/me` 获取）
+- 也可直接在管理后台【密钥管理】页面创建，详见 [密钥管理](/apikey-management/)
+
+## 5. 配置上游 Provider
+
+网关需要一个真实的上游模型 API Key（如 OpenAI、Anthropic、火山引擎等）才能转发请求。在管理后台【Provider 管理】添加供应商并填入上游 Key，详见 [Provider 管理](/provider-management/)。
+
+> 未配置任何上游凭证时，调用会返回 `502` / 上游不可用错误。
+
+## 6. 发起第一个请求
+
+### OpenAI 兼容端点
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer sk-xxxxxxxx" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "user", "content": "你好，用一句话介绍你自己"}
+    ]
+  }'
+```
+
+### Anthropic 兼容端点
+
+```bash
+curl http://localhost:8080/v1/messages \
+  -H "x-api-key: sk-xxxxxxxx" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1024,
+    "messages": [
+      {"role": "user", "content": "你好，用一句话介绍你自己"}
+    ]
+  }'
+```
+
+> 客户端可继续使用原生 OpenAI / Anthropic SDK，只需把 `base_url` 指向网关（`http://localhost:8080/v1`），详见 [API 调用示例](/api/examples/)。
+
+## 下一步
+
+- [安装部署](/deploy/)：生产环境部署（PostgreSQL / Redis / Docker）
+- [API 调用示例](/api/examples/)：流式、多轮、协议互转、SDK 用法
+- [API 参考](/api/api-spec/)：完整端点、参数、错误码

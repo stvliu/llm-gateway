@@ -3,7 +3,49 @@ title: 可观测性
 description: 全链路追踪、结构化日志与实时指标
 ---
 
-LLM-Gateway 内建 OpenTelemetry 标准追踪，带 Trace ID 全链路追踪，支持 Prometheus 指标导出。
+# 可观测性
+
+LLM-Gateway 内建 OpenTelemetry 标准追踪，每个请求携带 Trace ID 贯穿全链路，并暴露 Prometheus 指标与结构化日志。
+
+## 健康检查与指标
+
+网关通过 Spring Boot Actuator 暴露运维端点（免认证）：
+
+| 端点 | 说明 |
+|------|------|
+| `/actuator/health` | 健康检查 |
+| `/actuator/health/liveness` | 存活探针 |
+| `/actuator/health/readiness` | 就绪探针（含 db、providerRegistry） |
+| `/actuator/prometheus` | Prometheus 指标抓取 |
+| `/actuator/metrics` | 指标查询 |
+| `/actuator/traces` | 追踪查询 |
+
+```bash
+curl http://localhost:8080/actuator/health
+curl http://localhost:8080/actuator/prometheus
+```
+
+## OpenTelemetry 追踪
+
+通过环境变量启用 OTel，将 Trace 上报到 OTLP Collector：
+
+```bash
+export OTEL_ENABLED=true
+export OTEL_ENDPOINT=http://otel-collector:4317
+```
+
+每个请求的 Trace ID 贯穿：客户端调用 -> 认证 -> 路由 -> 上游调用 -> 计量 -> 审计，可在响应头或日志中获取。
+
+## 监控栈
+
+`deployments/docker/docker-compose.yml` 预置完整监控栈，`docker compose up -d` 即可启动：
+
+| 组件 | 端口 | 用途 |
+|------|------|------|
+| Prometheus | 9090 | 指标采集 |
+| Grafana | 3001 | 指标可视化 |
+| Jaeger | 16686 | 链路追踪查询 |
+| OTel Collector | 4317 / 4318 | Trace 接收与转发 |
 
 ## 功能清单
 

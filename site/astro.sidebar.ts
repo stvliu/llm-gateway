@@ -9,8 +9,8 @@ export const sidebar = [
     label: '快速开始',
     collapsed: true,
     items: [
-      { label: '需求规格', slug: 'guide/spec' },
-      { label: '架构章程', slug: 'guide/constitution' },
+      { label: '快速开始', slug: 'quickstart' },
+      { label: '安装部署', slug: 'deploy' },
     ],
   },
   {
@@ -19,6 +19,7 @@ export const sidebar = [
     items: [
       { label: 'API 网关概览', slug: 'api-gateway' },
       { label: 'API 参考', slug: 'api/api-spec' },
+      { label: '调用示例', slug: 'api/examples' },
     ],
   },
   {
@@ -92,10 +93,12 @@ export const sidebar = [
     collapsed: true,
     items: [
       { label: '功能特性总览', slug: 'features' },
-      { label: '技术架构', slug: 'architecture/technical' },
-      { label: '应用架构', slug: 'architecture/application' },
-      { label: '数据架构', slug: 'architecture/data' },
-      { label: '信息架构', slug: 'architecture/information' },
+      { label: '配置项参考', slug: 'reference/config' },
+      { label: '常见问题', slug: 'faq' },
+      { label: '故障排查', slug: 'troubleshooting' },
+      { label: '升级指南', slug: 'migration' },
+      { label: '更新日志', slug: 'changelog' },
+      { label: 'SDK 使用', slug: 'sdk' },
     ],
   },
 ];

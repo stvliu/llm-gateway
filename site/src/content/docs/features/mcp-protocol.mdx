@@ -4,12 +4,31 @@ description: Model Context Protocol 支持（Resources/Prompts/Tools）
 badge: 企业版
 ---
 
-MCP（Model Context Protocol）是企业版专属能力，为大模型提供标准化上下文与工具接入。
+# MCP 协议
+
+MCP（Model Context Protocol）是企业版专属能力，为大模型提供标准化上下文与工具接入，支持 Claude / Cursor / Dify 等 MCP 客户端。
+
+> ⚠️ **企业版规划功能，当前版本尚未实现。** 以下为设计规格，供评估与规划参考。
 
 ## 核心能力
 
-- **Resources**：提供上下文数据
+- **Resources**：提供上下文数据（如可用模型列表、用量统计）
 - **Prompts**：提供预定义的提示模板
-- **Tools**：提供可调用的工具函数
+- **Tools**：提供可调用的工具函数（如查询 Provider 健康、估算 Token）
+
+## 设计端点
+
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/mcp/v1/resources` | GET | 列出可用资源 |
+| `/mcp/v1/resources/{id}` | GET | 获取资源内容 |
+| `/mcp/v1/prompts` | GET | 列出可用提示模板 |
+| `/mcp/v1/prompts/{id}` | POST | 执行提示模板 |
+| `/mcp/v1/tools` | GET | 列出可用工具 |
+| `/mcp/v1/tools/{id}/invoke` | POST | 调用工具 |
+
+## 认证
+
+客户端携带网关 API Key（`Authorization: Bearer sk-xxx`），复用现有认证体系，按用户权限过滤可访问的资源与工具。
 
 > 此功能为企业版专属，标准版默认关闭（`mcp-protocol: false`）。

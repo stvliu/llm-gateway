@@ -3,7 +3,37 @@ title: API 网关
 description: OpenAI 与 Anthropic 双标准 API 兼容端点
 ---
 
-LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，统一接入。
+# API 网关
+
+LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，客户端可继续使用原生 SDK，只需将 `base_url` 指向网关。
+
+## 端点总览
+
+| 协议标准 | 端点 | 方法 | 用途 |
+|---------|------|------|------|
+| OpenAI | `/v1/chat/completions` | POST | 聊天补全（核心） |
+| OpenAI | `/v1/completions` | POST | 文本补全 |
+| OpenAI | `/v1/embeddings` | POST | 向量嵌入 |
+| OpenAI | `/v1/images/generations` | POST | 图像生成 |
+| OpenAI | `/v1/audio/speech` | POST | 语音合成 |
+| OpenAI | `/v1/audio/transcriptions` | POST | 语音识别 |
+| OpenAI | `/v1/moderations` | POST | 内容审核 |
+| OpenAI | `/v1/models` | GET | 模型列表 |
+| Anthropic | `/v1/messages` | POST | 消息创建（核心） |
+
+## Base URL 与认证
+
+| 项 | 说明 |
+|---|------|
+| Base URL | `http://{gateway-host}/v1` |
+| OpenAI 端点认证 | `Authorization: Bearer <网关 API Key>` |
+| Anthropic 端点认证 | `x-api-key: <网关 API Key>` + `anthropic-version: 2023-06-01` |
+
+> 网关 API Key 以 `sk-` 开头，由管理后台签发给调用方，与上游 Provider Key 不同。详见 [密钥管理](/apikey-management/)。
+
+## 协议互转
+
+网关自动完成 OpenAI ↔ Anthropic 协议转换，客户端无需特殊参数：可用 OpenAI SDK 调用 Anthropic 模型，反之亦然。部分参数（如 OpenAI 的 `seed`、Anthropic 的 `top_k`）跨协议时会丢失。
 
 ## 功能清单
 
@@ -18,4 +48,8 @@ LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，统一接入�
 | 语音识别端点（`/v1/audio/transcriptions`） | ✅ | ✅ |
 | 内容审核端点（`/v1/moderations`） | ✅ | ✅ |
 
-详见 [API 参考](/api/api-spec/)。
+## 下一步
+
+- [快速开始](/quickstart/)：跑通第一个请求
+- [API 调用示例](/api/examples/)：可运行的 curl / SDK 示例
+- [API 参考](/api/api-spec/)：完整端点、参数、错误码

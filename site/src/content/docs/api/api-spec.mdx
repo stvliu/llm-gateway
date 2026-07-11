@@ -119,6 +119,20 @@ description: OpenAI 与 Anthropic 双 API 标准
 }
 ```
 
+**调用示例**：
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer $GATEWAY_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+> 认证使用 `Authorization: Bearer <网关 API Key>`（以 `sk-` 开头）。完整可运行示例见 [API 调用示例](/api/examples/)。
+
 #### 2.2.2 请求参数说明
 
 | 参数 | 类型 | 必填 | 默认值 | 说明 |
@@ -640,6 +654,22 @@ anthropic-version: 2023-06-01
   }
 }
 ```
+
+**调用示例**：
+
+```bash
+curl http://localhost:8080/v1/messages \
+  -H "x-api-key: $GATEWAY_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+> 认证使用 `x-api-key` 头（非 Bearer），且必须携带 `anthropic-version: 2023-06-01`。完整示例见 [API 调用示例](/api/examples/)。
 
 #### 3.2.2 请求参数说明
 
