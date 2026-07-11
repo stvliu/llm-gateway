@@ -28,7 +28,12 @@ const shouldRenderSearch =
   <nav class="marketing-nav sl-hidden md:sl-flex" aria-label="主导航">
     {
       navigation.map((item) => (
-        <a href={item.href} class="nav-item">
+        <a
+          href={item.href}
+          class="nav-item"
+          target={item.external ? '_blank' : undefined}
+          rel={item.external ? 'noopener noreferrer' : undefined}
+        >
           {isEn ? item.enLabel : item.label}
         </a>
       ))

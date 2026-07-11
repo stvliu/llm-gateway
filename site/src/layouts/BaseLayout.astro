@@ -35,7 +35,12 @@ const year = new Date().getFullYear();
         <nav class="marketing-nav" aria-label={isEn ? 'Main navigation' : '主导航'}>
           {
             navigation.map((item) => (
-              <a href={item.href} class="nav-item">
+              <a
+                href={item.href}
+                class="nav-item"
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+              >
                 {isEn ? item.enLabel : item.label}
               </a>
             ))
