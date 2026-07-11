@@ -2,6 +2,7 @@
 change: official-website
 design-doc: docs/superpowers/specs/2026-07-09-official-website-design.md
 base-ref: 9513ee84dabbccd7e9fdbc4ce48d888c4256e43a
+archived-with: 2026-07-11-official-website
 ---
 
 # 官方网站建设 Implementation Plan
@@ -14,6 +15,7 @@ base-ref: 9513ee84dabbccd7e9fdbc4ce48d888c4256e43a
 
 **Tech Stack:** Astro 6、@astrojs/starlight、@astrojs/sitemap、sass、sharp、pnpm、Node 20+、GitHub Actions、Cloudflare Pages。
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## 文件结构
@@ -92,6 +94,7 @@ site/                                    # 新建独立 package（pnpm）
 
 **验证策略（Design Doc §7）：** 本项目为静态文档站，无可单元测试的业务逻辑。验证手段为 `pnpm build`（构建无错）、`lint:linkcheck`（无断链）、`lint:slugcheck`（slug 合规）、手动验收（中英切换、badge、对比表覆盖度、CF Pages 预览）。每个任务以验证步骤 + commit 收尾，遵循频繁提交。
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 1: 项目脚手架与 i18n 架构
@@ -284,6 +287,7 @@ git add site/
 git commit -m "feat(site): 初始化 Astro+Starlight 脚手架与 i18n 架构（root locale）"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 2: 文档迁移
@@ -325,9 +329,11 @@ git commit -m "feat(site): 初始化 Astro+Starlight 脚手架与 i18n 架构（
 将 `docs/spec.md` 全文内容复制到 `site/src/content/docs/guide/spec.mdx`，并在文件**最顶部**插入 Starlight frontmatter：
 
 ```
+archived-with: 2026-07-11-official-website
 ---
 title: 需求规格
 description: LLM-Gateway 完整需求规格说明书
+archived-with: 2026-07-11-official-website
 ---
 ```
 
@@ -355,10 +361,12 @@ description: LLM-Gateway 完整需求规格说明书
 内容提炼自 README §语义缓存，frontmatter + 正文如下：
 
 ```
+archived-with: 2026-07-11-official-website
 ---
 title: 语义缓存
 description: 相似请求命中缓存，降低成本 30%+
 badge: 企业版
+archived-with: 2026-07-11-official-website
 ---
 
 语义缓存是企业版专属能力，基于向量相似度匹配相似请求并返回缓存结果。
@@ -378,10 +386,12 @@ badge: 企业版
 内容提炼自 README §MCP 协议：
 
 ```
+archived-with: 2026-07-11-official-website
 ---
 title: MCP 协议
 description: Model Context Protocol 支持（Resources/Prompts/Tools）
 badge: 企业版
+archived-with: 2026-07-11-official-website
 ---
 
 MCP（Model Context Protocol）是企业版专属能力，为大模型提供标准化上下文与工具接入。
@@ -404,9 +414,11 @@ MCP（Model Context Protocol）是企业版专属能力，为大模型提供标�
 示例——创建 `site/src/content/docs/api-gateway.mdx`：
 
 ```
+archived-with: 2026-07-11-official-website
 ---
 title: API 网关
 description: OpenAI 与 Anthropic 双标准 API 兼容端点
+archived-with: 2026-07-11-official-website
 ---
 
 LLM-Gateway 同时支持 OpenAI 和 Anthropic 两种 API 标准，统一接入。
@@ -465,6 +477,7 @@ git add site/src/content/docs/
 git commit -m "feat(site): 迁移 11 篇核心文档+2 篇企业版占位+7 篇能力域概览"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 3: 侧边栏配置
@@ -632,6 +645,7 @@ git add site/astro.sidebar.ts
 git commit -m "feat(site): 配置 8 能力域侧边栏+企业版 badge 标注"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 4: Starlight 主题覆盖
@@ -666,8 +680,10 @@ export const navigation: NavItem[] = [
 - [x] **Step 2: 创建 `site/src/components/starlight/SiteTitle.astro`**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 // 覆盖 Starlight 默认 SiteTitle，链接回首页。
+archived-with: 2026-07-11-official-website
 ---
 <a href="/" class="site-title">
   <span class="logo">LLM-Gateway</span>
@@ -686,12 +702,14 @@ export const navigation: NavItem[] = [
 - [x] **Step 3: 创建 `site/src/components/starlight/Header.astro`**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 // 覆盖 Starlight Header，追加营销导航。
 import { navigation } from '../../data/navigation.ts';
 // 当前路径判断：/en/ 前缀用英文 label。
 const pathname = Astro.url.pathname;
 const isEn = pathname.startsWith('/en/');
+archived-with: 2026-07-11-official-website
 ---
 <header class="header">
   <div class="header-inner">
@@ -747,9 +765,11 @@ const isEn = pathname.startsWith('/en/');
 - [x] **Step 4: 创建 `site/src/components/starlight/Footer.astro`**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 // 覆盖 Starlight Footer，含版权与 GitHub 链接。
 const year = new Date().getFullYear();
+archived-with: 2026-07-11-official-website
 ---
 <footer class="footer">
   <div class="footer-inner">
@@ -824,6 +844,7 @@ git add site/src/components/starlight/ site/src/data/navigation.ts site/astro.co
 git commit -m "feat(site): 覆盖 Starlight Header/Footer/SiteTitle 主题组件"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 5: 版本对比页
@@ -1011,6 +1032,7 @@ export const editionDiffI18n = {
 营销页（首页/对比页/联系页）共用此布局，复用自定义 Header/Footer。
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import Header from '../components/starlight/Header.astro';
 import Footer from '../components/starlight/Footer.astro';
@@ -1020,6 +1042,7 @@ interface Props {
   description?: string;
 }
 const { title, description } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <!doctype html>
 <html lang={Astro.url.pathname.startsWith('/en/') ? 'en' : 'zh-CN'}>
@@ -1043,12 +1066,14 @@ const { title, description } = Astro.props;
 - [x] **Step 4: 创建 `site/src/pages/standard-vs-enterprise/index.astro`（中文对比页）**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { editionDiff } from '../../data/editionDiff.ts';
 import { editionDiffI18n } from '../../data/i18n/editionDiff.ts';
 
 const t = editionDiffI18n.zh;
+archived-with: 2026-07-11-official-website
 ---
 <BaseLayout title={`${t.title} · LLM-Gateway`} description={t.intro}>
   <section class="edition-hero">
@@ -1124,12 +1149,14 @@ const t = editionDiffI18n.zh;
 - [x] **Step 5: 创建 `site/src/pages/en/standard-vs-enterprise/index.astro`（英文镜像）**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import { editionDiff } from '../../../data/editionDiff.ts';
 import { editionDiffI18n } from '../../../data/i18n/editionDiff.ts';
 
 const t = editionDiffI18n.en;
+archived-with: 2026-07-11-official-website
 ---
 <BaseLayout title={`${t.title} · LLM-Gateway`} description={t.intro}>
   <section class="edition-hero">
@@ -1205,8 +1232,10 @@ const t = editionDiffI18n.en;
 - [x] **Step 6: 创建联系页占位 `site/src/pages/contact-us.astro`**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+archived-with: 2026-07-11-official-website
 ---
 <BaseLayout title="联系我们 · LLM-Gateway" description="联系 LLM-Gateway 团队获取企业版授权与部署支持">
   <section style="padding: 64px 0;">
@@ -1239,6 +1268,7 @@ git add site/src/data/editionDiff.ts site/src/data/i18n/editionDiff.ts site/src/
 git commit -m "feat(site): 版本对比页中英双语（覆盖 README 全部功能项+迁移路径）"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 6: 首页
@@ -1394,6 +1424,7 @@ export const homeEcosystem: EcosystemItem[] = [
 - [x] **Step 4: 创建 `site/src/components/Hero.astro`**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 interface Props {
   title: string;
@@ -1402,6 +1433,7 @@ interface Props {
   secondaryCta: string;
 }
 const { title, subtitle, cta, secondaryCta } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <section class="hero">
   <h1>{title}</h1>
@@ -1428,9 +1460,11 @@ const { title, subtitle, cta, secondaryCta } = Astro.props;
 `ProductCard.astro`：
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 interface Props { name: string; desc: string; href: string; }
 const { name, desc, href } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <a href={href} class="product-card">
   <h3>{name}</h3>
@@ -1448,9 +1482,11 @@ const { name, desc, href } = Astro.props;
 `FeatureCard.astro`：
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 interface Props { title: string; desc: string; href: string; }
 const { title, desc, href } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <a href={href} class="feature-card">
   <h4>{title}</h4>
@@ -1468,9 +1504,11 @@ const { title, desc, href } = Astro.props;
 `EcosystemCard.astro`：
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 interface Props { name: string; desc: string; }
 const { name, desc } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <div class="ecosystem-card">
   <strong>{name}</strong>
@@ -1487,9 +1525,11 @@ const { name, desc } = Astro.props;
 `Carousel.astro`（P0 占位）：
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 interface Props { title: string; placeholder: string; }
 const { title, placeholder } = Astro.props;
+archived-with: 2026-07-11-official-website
 ---
 <section class="carousel">
   <h2>{title}</h2>
@@ -1505,6 +1545,7 @@ const { title, placeholder } = Astro.props;
 - [x] **Step 6: 创建 `site/src/pages/index.astro`（中文首页）**
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import Hero from '../components/Hero.astro';
@@ -1522,6 +1563,7 @@ const products = homeProducts.map((p) => ({
   ...home.zh.products.items.find((i, idx) => idx === homeProducts.indexOf(p)),
   ...p,
 }));
+archived-with: 2026-07-11-official-website
 ---
 <BaseLayout title={`${t.hero.title} · LLM-Gateway`} description={t.hero.subtitle}>
   <Hero title={t.hero.title} subtitle={t.hero.subtitle} cta={t.hero.cta} secondaryCta={t.hero.secondaryCta} />
@@ -1590,6 +1632,7 @@ const products = homeProducts.map((p) => ({
 结构与中文首页一致，`const t = home.en;`，导航 href 已在 `home.en` 字典中带 `/en/` 前缀。完整内容：
 
 ```astro
+archived-with: 2026-07-11-official-website
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Hero from '../../components/Hero.astro';
@@ -1602,6 +1645,7 @@ import { homeFeatures } from '../../data/homeFeatures.ts';
 import { homeEcosystem } from '../../data/homeEcosystem.ts';
 
 const t = home.en;
+archived-with: 2026-07-11-official-website
 ---
 <BaseLayout title={`${t.hero.title} · LLM-Gateway`} description={t.hero.subtitle}>
   <Hero title={t.hero.title} subtitle={t.hero.subtitle} cta={t.hero.cta} secondaryCta={t.hero.secondaryCta} />
@@ -1685,6 +1729,7 @@ git add site/src/data/ site/src/components/ site/src/pages/index.astro site/src/
 git commit -m "feat(site): 首页中英双语（8 区块结构+数据化文案）"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 7: 工具链与部署
@@ -1879,6 +1924,7 @@ git add site/scripts/ .github/workflows/deploy-site.yml
 git commit -m "feat(site): linkcheck/slugcheck lint 脚本+GitHub Actions→Cloudflare Pages 部署"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 8: 文档站英文版（deferred，P0 不做）
@@ -1898,6 +1944,7 @@ git commit -m "feat(site): linkcheck/slugcheck lint 脚本+GitHub Actions→Clou
 
 **无步骤、无 commit。** 本任务仅记录 deferred 状态。
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Task 9: 验收
@@ -1979,6 +2026,7 @@ git add openspec/changes/official-website/tasks.md
 git commit -m "chore(official-website): tasks.md 勾选完成（Task 8 deferred）"
 ```
 
+archived-with: 2026-07-11-official-website
 ---
 
 ## Self-Review（spec 覆盖度自检）
@@ -2004,3 +2052,4 @@ git commit -m "chore(official-website): tasks.md 勾选完成（Task 8 deferred�
 - Starlight badge 字段名以实际安装版本 API 为准（`badge` 单值或 `badges` 数组），Task 3 Step 2 已注明。
 - Astro 6 若未稳定，Task 1 Step 3 注明降级 Astro 5 + 对应 starlight，配置不变。
 - 首页 `homeProducts` 数据在 Step 6 的 map 逻辑较简（products 数据已在 i18n 字典中），可简化为直接遍历 `t.products.items`。如 TypeScript 报未使用导入，移除 `homeProducts`/`homeProducts` 导入即可。
+

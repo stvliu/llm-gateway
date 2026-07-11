@@ -2,6 +2,8 @@
 comet_change: official-website
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-07-11-official-website
+status: final
 ---
 
 # LLM-Gateway 官方网站 Design Doc
@@ -226,3 +228,4 @@ lunaria P0 不引入（文档站无 en）。
 - `specs/website/spec.md` Requirement「文档站侧边栏组织」：场景「标准版上下文隐藏企业版条目」-> 调整为「企业版专属条目附 badge 标注，全部上下文均渲染」。
 - `specs/website/spec.md` Requirement「中英双语国际化」：限定为「营销页中英双语；文档站 P0 仅中文，en locale 作为后续独立任务」。
 - `tasks.md`：删除 2.2「建立英文目录骨架」；任务 8「英文文档翻译」-> 调整为「文档站 en locale 作为后续独立任务，P0 营销页英文文案已在 5.3/6.1 覆盖」。
+
