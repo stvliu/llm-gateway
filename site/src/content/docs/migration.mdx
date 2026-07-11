@@ -1,0 +1,67 @@
+---
+title: 升级指南
+description: 版本升级与数据迁移
+---
+
+# 升级指南
+
+> LLM-Gateway 当前为 1.0.0-SNAPSHOT，以下为通用升级流程。具体版本变更见 [更新日志](/changelog/)。
+
+## 升级步骤
+
+### 1. 备份
+
+```bash
+# 备份数据库
+pg_dump -U llm_gateway llm_gateway > backup_$(date +%Y%m%d).sql
+
+# 备份配置与加密密钥
+cp -r gateway-boot/src/main/resources/ config_backup/
+echo $GATEWAY_ENCRYPTION_KEY > encryption_key_backup.txt
+```
+
+> **加密密钥务必备份**：密钥丢失将导致所有已加密的上游 Provider Key 无法解密。
+
+### 2. 拉取新版本
+
+```bash
+git pull
+./mvnw clean install -DskipTests -pl gateway-boot
+```
+
+### 3. 重启
+
+```bash
+java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar \
+  --spring.profiles.active=postgresql
+```
+
+启动时 Flyway 自动执行新增的数据库迁移脚本，无需手动建表。
+
+## 数据库迁移
+
+LLM-Gateway 使用 Flyway 管理表结构（迁移脚本位于 `gateway-boot/src/main/resources/db/migration/`）。启动时自动执行：
+
+- `baseline-on-migrate: true`：首次在已有库上启动自动建立 baseline
+- `validate-on-migrate: true`：启动前校验已执行脚本完整性
+
+> 若手动修改过表结构，可能导致 `validate-on-migrate` 失败。请勿直接操作数据库表结构，所有变更通过 Flyway 脚本进行。
+
+## 加密密钥兼容性
+
+`GATEWAY_ENCRYPTION_KEY` 必须跨版本保持一致：
+
+- **不可更换密钥**：换密钥后历史加密的上游 Key 无法解密
+- **如需轮换密钥**：需先解密所有上游 Key，更换密钥后重新加密（当前版本未提供自动轮换工具，需手动处理）
+
+## 回滚
+
+1. 停止新版本服务
+2. 恢复数据库备份：`psql -U llm_gateway llm_gateway < backup_YYYYMMDD.sql`
+3. 恢复旧版本 jar 并启动
+
+> Flyway 迁移脚本可能包含不可逆变更（如 DROP COLUMN），回滚前务必确认数据库备份完整。
+
+## Profile 变化
+
+升级时注意 `application*.yml` 的 profile 配置变化。若使用自定义 profile 覆盖，升级后需对照新版本默认配置调整。详见 [配置项参考](/reference/config/)。

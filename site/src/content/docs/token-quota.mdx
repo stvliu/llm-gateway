@@ -1,0 +1,77 @@
+---
+title: Token 计量与配额
+description: Token 用量统计与用户级配额控制
+---
+
+# Token 计量与配额
+
+LLM-Gateway 对每个请求分别统计输入/输出 Token，支持用户级配额控制。
+
+## Token 计量
+
+每次请求完成后，网关从上游响应的 `usage` 字段提取 Token 用量并发布事件：
+
+- **OpenAI**：输入取 `usage.prompt_tokens`，输出取 `usage.completion_tokens`
+- **Anthropic**：输入取 `usage.input_tokens`，输出取 `usage.output_tokens`
+
+## 配额管理 API
+
+需会话认证（`Authorization: Bearer <token>`）。配额为**用户级**（关联用户，可选绑定 Provider/Model）。
+
+| 操作 | 方法 | 端点 |
+|------|------|------|
+| 创建配额 | POST | `/api/v1/token-limits` |
+| 查询配额 | GET | `/api/v1/token-limits/{id}` |
+| 分页查询 | GET | `/api/v1/token-limits` |
+| 更新配额 | PUT | `/api/v1/token-limits/{id}` |
+| 删除配额 | DELETE | `/api/v1/token-limits/{id}` |
+| 重置用量 | PATCH | `/api/v1/token-limits/{id}/reset-usage` |
+
+### 创建配额
+
+```bash
+curl -X POST http://localhost:8080/api/v1/token-limits \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "limitCode": "user-1-monthly",
+    "userId": 1,
+    "maxTokens": 1000000,
+    "periodType": "MONTHLY",
+    "exceededAction": "REJECT"
+  }'
+```
+
+关键字段：
+
+| 字段 | 说明 |
+|------|------|
+| `userId` | 配额归属用户（必填） |
+| `providerId` / `modelId` | 可选，绑定到特定供应商/模型（实现"用户×渠道"配额） |
+| `maxTokens` | 周期内 Token 上限 |
+| `periodType` | 周期：`MONTHLY` 等 |
+| `exceededAction` | 超限策略：`REJECT`（拒绝）或 `DOWNGRADE`（降级，需配 `switchModelId`） |
+| `switchModelId` | 降级时切换到的模型 |
+
+> ⚠️ **配额扣减尚未接入请求链路**：配额可配置与管理，但当前 Token 用量事件仅记日志，未实际扣减配额。即配额设置后暂不生效，后续版本将接入扣减逻辑。
+
+## 用量查询
+
+```bash
+curl http://localhost:8080/api/v1/stats \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+返回概览统计（供应商数、渠道数、模型数、用户数、请求数、Token 用量）。
+
+> 当前 `/api/v1/stats` 的请求数与 Token 用量字段为占位数据，按维度查询的专用端点规划中。
+
+## 功能清单
+
+| 功能 | 标准版 | 企业版 |
+|---|---|---|
+| Token 计量（输入/输出分别统计） | ✅ | ✅ |
+| Token 限额（用户级） | ✅（扣减接入中） | ✅ |
+| API Key 级限额 | ❌（已移除） | ❌（已移除） |
+| 用户×渠道限额 | ❌ | 规划中 |
+| 请求次数配额 | ❌ | 规划中 |

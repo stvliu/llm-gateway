@@ -1,0 +1,52 @@
+---
+title: 路由设计
+description: 模型多渠道与智能路由策略
+---
+
+# 路由设计
+
+LLM-Gateway 支持一个模型名对应多个上游渠道（多供应商），按路由策略选择渠道，实现负载均衡与故障转移。
+
+## 多渠道模型
+
+同一个模型名（如 `gpt-4o`）可配置多个渠道，分别关联不同供应商：
+
+```
+用户请求 model="gpt-4o"
+    │
+    ▼
+渠道 1: OpenAI 直连  (priority=10, weight=60)
+渠道 2: Azure OpenAI  (priority=20, weight=30)
+渠道 3: 国内代理      (priority=30, weight=10)
+    │
+    ▼ 按路由策略选择渠道 -> 选择 API Key -> 转发
+```
+
+优势：不同渠道可有不同价格与可用性，主渠道故障时自动切换备用。
+
+## 路由策略
+
+| 策略 | 选择逻辑 | 适用场景 |
+|------|---------|---------|
+| **FAILOVER** | 按 `priority` 升序选第一个（默认） | 主备架构 |
+| **WEIGHTED** | 按 `weight` 加权随机 | 负载均衡 |
+| **RANDOM** | 随机选择 | 测试环境 |
+
+- `priority`：渠道优先级，**数值越小越优先**
+- `weight`：同优先级内的流量分配权重
+
+> `COST_OPTIMIZED`（按价格选最低）与 `LATENCY_OPTIMIZED`（按延迟选最快）为 Phase 2 规划策略。
+
+## API Key 选择
+
+一个供应商可挂多个上游 Key，选择逻辑：
+
+1. 优先使用 `isDefault=true` 的默认 Key
+2. 否则按 `weight` 加权随机选择
+3. 无可用 Key 时抛异常
+
+详见 [Provider 管理](/provider-management/) 的"多 Key 轮换"。
+
+## 与容灾的关系
+
+路由选择初始渠道后，若调用失败，由容灾策略决定是否转移到下一渠道。`FAIL_OVER` 策略下按 `priority` 顺序逐个尝试候选渠道。详见 [容灾方案](/features/resilience/)。

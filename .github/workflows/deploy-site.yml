@@ -1,0 +1,61 @@
+name: Deploy Site
+
+# 官网构建与部署：master push -> Cloudflare Pages 生产；pull_request -> 预览。
+# 仅在 site/ 或本工作流文件变更时触发，避免无关改动浪费 CI 资源。
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+  pull_request:
+    paths:
+      - 'site/**'
+      - '.github/workflows/deploy-site.yml'
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # run: 步骤在 site/ 下执行（pnpm build / lint 均相对 site/）。
+        working-directory: site
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # Node 版本由 site/.nvmrc 锁定（当前 20）。
+          node-version-file: 'site/.nvmrc'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+        env:
+          PUBLIC_SITE_URL: https://llm-gateway.dev
+
+      - name: Slug check
+        run: pnpm lint:slugcheck
+
+      - name: Link check
+        run: pnpm lint:linkcheck
+
+      # 部署到 Cloudflare Pages。
+      # uses: 步骤不受 defaults.run.working-directory 影响，需显式指定 workingDirectory。
+      # master push 触发生产部署；PR 触发预览部署（由 Cloudflare Pages 按 branch 自动判定）。
+      # CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID 需在 GitHub 仓库 Secrets 配置。
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: site
+          command: pages deploy dist --project-name=llm-gateway

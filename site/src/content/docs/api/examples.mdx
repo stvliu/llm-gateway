@@ -1,0 +1,188 @@
+---
+title: API 调用示例
+description: OpenAI / Anthropic 双端点的可运行调用示例
+---
+
+# API 调用示例
+
+LLM-Gateway 同时兼容 OpenAI 与 Anthropic 两种 API 标准。Base URL 为 `http://{gateway-host}/v1`，调用方持有 `sk-` 开头的网关 API Key。下面示例假设已设置环境变量 `GATEWAY_KEY`。
+
+## OpenAI 兼容端点
+
+### 基础对话
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer $GATEWAY_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "system", "content": "你是一个简洁的助手"},
+      {"role": "user", "content": "什么是 API 网关？"}
+    ],
+    "temperature": 0.7
+  }'
+```
+
+### 流式响应（SSE）
+
+加 `"stream": true`，响应以 `data:` 行增量返回：
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer $GATEWAY_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "讲个短笑话"}],
+    "stream": true
+  }'
+```
+
+流式片段以 `data: [DONE]` 结束。
+
+### 多轮对话
+
+把历史消息按时间顺序传入 `messages`：
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [
+    {"role": "user", "content": "我叫张三"},
+    {"role": "assistant", "content": "你好，张三！"},
+    {"role": "user", "content": "我叫什么？"}
+  ]
+}
+```
+
+## Anthropic 兼容端点
+
+Anthropic 端点使用 `x-api-key` 头，且必须带 `anthropic-version`。
+
+### 基础对话
+
+```bash
+curl http://localhost:8080/v1/messages \
+  -H "x-api-key: $GATEWAY_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1024,
+    "messages": [
+      {"role": "user", "content": "什么是 API 网关？"}
+    ]
+  }'
+```
+
+> `max_tokens` 为 Anthropic 端点必填字段。
+
+### 流式响应
+
+Anthropic 流式同时使用 `event:` 与 `data:` 行，文本增量在 `content_block_delta` 事件的 `delta.text` 中：
+
+```bash
+curl http://localhost:8080/v1/messages \
+  -H "x-api-key: $GATEWAY_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "讲个短笑话"}],
+    "stream": true
+  }'
+```
+
+## 协议互转
+
+网关自动完成协议转换，**客户端无需任何特殊参数**：
+
+- 用 OpenAI SDK 调用 Anthropic 模型（如 `claude-sonnet-4-20250514`）——网关将 OpenAI 请求转为 Anthropic 格式
+- 用 Anthropic SDK 调用 OpenAI 模型（如 `gpt-4o`）——网关将 Anthropic 请求转为 OpenAI 格式
+
+部分参数无法互转：OpenAI 的 `presence_penalty` / `frequency_penalty` / `n` / `seed`、Anthropic 的 `top_k` 在跨协议时会丢失。
+
+## 使用原生 SDK
+
+### Python（OpenAI SDK）
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-xxxxxxxx",
+    base_url="http://localhost:8080/v1"
+)
+
+resp = client.chat.completions.create(
+    model="gpt-4o",
+    messages=[{"role": "user", "content": "你好"}]
+)
+print(resp.choices[0].message.content)
+```
+
+### Node.js（OpenAI SDK）
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "sk-xxxxxxxx",
+  baseURL: "http://localhost:8080/v1",
+});
+
+const resp = await client.chat.completions.create({
+  model: "gpt-4o",
+  messages: [{ role: "user", content: "你好" }],
+});
+console.log(resp.choices[0].message.content);
+```
+
+### Python（Anthropic SDK）
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic(
+    api_key="sk-xxxxxxxx",
+    base_url="http://localhost:8080"
+)
+
+resp = client.messages.create(
+    model="claude-sonnet-4-20250514",
+    max_tokens=1024,
+    messages=[{"role": "user", "content": "你好"}]
+)
+print(resp.content[0].text)
+```
+
+## 错误处理
+
+网关对自身错误使用 OpenAI 兼容格式，并附加 `raw_code` / `raw_message` 透传上游信息：
+
+```json
+{
+  "error": {
+    "message": "用户可读的错误信息",
+    "type": "invalid_request_error",
+    "code": "quota_exceeded",
+    "raw_code": "GW_001",
+    "raw_message": "原始错误信息"
+  }
+}
+```
+
+常见状态码：
+
+| HTTP | 含义 | OpenAI code | Anthropic type |
+|------|------|-------------|----------------|
+| 401 | 认证失败 | `invalid_api_key` | `authentication_error` |
+| 403 | 权限不足 | `permission_denied` | `permission_error` |
+| 404 | 模型/资源不存在 | `model_not_found` | `not_found_error` |
+| 429 | 限流 | `rate_limit_exceeded` | `rate_limit_error` |
+| 502 | 上游不可用 | `api_error` | `api_error` |
+
+完整错误码见 [API 参考](/api/api-spec/)。

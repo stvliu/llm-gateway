@@ -1,0 +1,82 @@
+---
+title: 容灾方案
+description: 故障转移、熔断与失败处理策略
+---
+
+# 容灾方案
+
+LLM-Gateway 提供应用级失败处理策略与端点级熔断器，保障上游故障时的业务连续性。
+
+## 容灾三层
+
+| 层级 | 行为 | 触发 |
+|------|------|------|
+| L0 Key 级 | 同渠道换上游 Key | 单 Key 调用失败 |
+| L1 渠道级 | 同模型换渠道（按 priority 顺序） | 候选渠道失败，且错误类型可转移 |
+| 兜底 | 抛错给客户端 | L1 候选全耗尽 |
+
+> 流式请求只在首字节前转移，首字节后失败不换渠道。
+
+## 失败处理策略
+
+`Application.failureStrategy` 控制容灾行为，三选一：
+
+| 策略 | L0 换 Key | L1 换渠道 | 适用场景 |
+|------|----------|----------|---------|
+| **FAIL_FAST**（快速失败） | 否 | 否 | BI 报表（快速失败，应用自身换模型重试） |
+| **FAIL_RETRY**（失败重试，默认） | 是 | 否 | 研发自动化（同供应商多 Key，K1 限流换 K2） |
+| **FAIL_OVER**（失败转移） | 是 | 是 | 流程自动化（跨渠道/跨供应商转移保透明） |
+
+新建应用默认 `FAIL_RETRY`。
+
+## 错误分流
+
+并非所有错误都触发转移。请求级错误换哪都无效，直接抛出：
+
+| 错误类型 | 是否转移 | 说明 |
+|---------|---------|------|
+| `INVALID_REQUEST` | 否 | 请求级错误，换渠道无效 |
+| `AUTHENTICATION_ERROR` | 是 | 共因故障，换账号有效 |
+| `RATE_LIMIT_ERROR` | 是 | 账号/渠道级限流 |
+| `QUOTA_EXCEEDED` | 是 | 配额账号级共用 |
+| `TIMEOUT_ERROR` | 是 | 端点级超时 |
+| `UPSTREAM_ERROR` / `SERVICE_UNAVAILABLE` / `NETWORK_ERROR` | 是 | 上游/网络故障 |
+| `UNKNOWN_ERROR` | 否 | 未分类错误不转移 |
+
+## 应用级配置
+
+容灾配置收敛到应用（`Application` 聚合根），通过应用管理 API 配置：
+
+- `timeout`：应用级超时秒数（0 表示用渠道默认）
+- `failureStrategy`：失败处理策略（三选一）
+- 渠道 `priority`：通过 `PUT /api/v1/applications/{id}/channels` 配置各渠道转移顺序
+
+```bash
+curl -X PUT http://localhost:8080/api/v1/applications/1/channels \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "channels": [
+      {"channelId": 1, "priority": 1},
+      {"channelId": 2, "priority": 2}
+    ]
+  }'
+```
+
+## 端点级熔断器
+
+端点连续失败时自动 OPEN，后续请求跳过该端点；超时后 HALF_OPEN 试探恢复，成功转 CLOSED。管理员可手动 force-open / force-close 应急。
+
+## 转移事件查询
+
+`FAIL_OVER` 策略下渠道转移会记录事件，供控制台总览页查询：
+
+```bash
+# 转移事件流（分页 + since/applicationId 过滤）
+curl "http://localhost:8080/api/v1/resilience/events?limit=100" \
+  -H "Authorization: Bearer $TOKEN"
+
+# 耗尽告警（候选全耗尽的近期事件）
+curl http://localhost:8080/api/v1/resilience/events/exhausted \
+  -H "Authorization: Bearer $TOKEN"
+```

@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Hero from '../../components/Hero.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import FeatureCard from '../../components/FeatureCard.astro';
+import EcosystemCard from '../../components/EcosystemCard.astro';
+import Carousel from '../../components/Carousel.astro';
+import { home } from '../../data/i18n/home.ts';
+import { homeFeatures } from '../../data/homeFeatures.ts';
+import { homeEcosystem } from '../../data/homeEcosystem.ts';
+
+const t = home.en;
+---
+<BaseLayout title={`${t.hero.title} · LLM-Gateway`} description={t.hero.subtitle}>
+  <Hero title={t.hero.title} subtitle={t.hero.subtitle} cta={t.hero.cta} secondaryCta={t.hero.secondaryCta} />
+
+  <section class="trust"><h3>{t.trust.title}</h3></section>
+
+  <section class="differentiators">
+    {t.differentiators.map((d) => (
+      <div class="diff-item"><h4>{d.title}</h4><p>{d.desc}</p></div>
+    ))}
+  </section>
+
+  <section class="narrative">
+    <h2>{t.narrative.title}</h2>
+    <p>{t.narrative.dualProtocol}</p>
+    <p>{t.narrative.routing}</p>
+    <p>{t.narrative.security}</p>
+  </section>
+
+  <section class="products">
+    <h2>{t.products.title}</h2>
+    <div class="grid-3">
+      {t.products.items.map((p) => <ProductCard name={p.name} desc={p.desc} href={p.href} />)}
+    </div>
+  </section>
+
+  <section class="ecosystem">
+    <h2>{t.ecosystem.title}</h2>
+    <div class="grid-3">
+      {homeEcosystem.map((e) => <EcosystemCard name={e.name} desc={e.desc} />)}
+    </div>
+  </section>
+
+  <Carousel title={t.console.title} placeholder={t.console.placeholder} />
+
+  <section class="features">
+    <h2>{t.features.title}</h2>
+    <div class="grid-4">
+      {homeFeatures.map((f) => <FeatureCard title={f.title} desc={f.desc} href={f.href} />)}
+    </div>
+  </section>
+
+  <section class="bottom-cta">
+    <h2>{t.cta.title}</h2>
+    <a href="/features/" class="btn primary">{t.cta.button}</a>
+  </section>
+</BaseLayout>
+
+<style>
+  .trust { text-align: center; padding: 24px 0; color: #9ca3af; }
+  .differentiators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 32px 0; }
+  .diff-item h4 { margin: 0 0 8px; color: var(--brand-primary, #6653e3); }
+  .diff-item p { margin: 0; font-size: 0.875rem; color: #6b7280; }
+  .narrative, .products, .ecosystem, .features { padding: 32px 0; }
+  .narrative h2, .products h2, .ecosystem h2, .features h2 { font-size: 1.5rem; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .bottom-cta { text-align: center; padding: 64px 0; }
+  .bottom-cta .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; background: var(--brand-primary, #6653e3); color: #fff; text-decoration: none; font-weight: 600; }
+  @media (max-width: 768px) { .differentiators, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+</style>

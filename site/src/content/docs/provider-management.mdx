@@ -1,0 +1,96 @@
+---
+title: Provider 管理
+description: 多厂商模型供应商统一管理与渠道调度
+---
+
+# Provider 管理
+
+LLM-Gateway 支持 50+ 主流大模型供应商的统一接入。Provider 管理负责上游供应商接入、上游 API Key 资源池、多 Key 轮换与故障转移。
+
+## 核心概念
+
+| 概念 | 说明 |
+|------|------|
+| Provider | 上游模型供应商（如 OpenAI、Anthropic、火山引擎） |
+| Provider API Key | 上游密钥（如 OpenAI 的 `sk-xxx`），由管理员录入并加密存储 |
+| Channel / 模型 | 供应商下可调用的模型实例，关联到 Provider Key |
+
+## Provider API Key 管理 API
+
+需管理员认证（`Authorization: Bearer <token>`）。
+
+| 操作 | 方法 | 端点 |
+|------|------|------|
+| 创建上游 Key | POST | `/api/v1/provider-api-keys` |
+| 按供应商列出 Key | GET | `/api/v1/providers/{providerId}/keys` |
+| Key 详情 | GET | `/api/v1/providers/{providerId}/keys/{keyId}` |
+| Key 健康状态 | GET | `/api/v1/providers/{providerId}/keys/{keyId}/health` |
+| 启用/禁用 Key | PATCH | `/api/v1/provider-api-keys/{id}/enabled` |
+| 更新 | PUT | `/api/v1/provider-api-keys/{id}` |
+| 删除 | DELETE | `/api/v1/provider-api-keys/{id}` |
+
+### 录入上游 Key
+
+```bash
+curl -X POST http://localhost:8080/api/v1/provider-api-keys \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "providerId": 1,
+    "keyName": "主 Key",
+    "apiKey": "sk-xxxxxxxxxxxxxxxx",
+    "priority": 100,
+    "weight": 100,
+    "isDefault": false,
+    "expiresAt": "2027-12-31T23:59:59Z"
+  }'
+```
+
+响应：
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "key_name": "主 Key",
+    "key_hint": "sk-****abcd",
+    "status": "ACTIVE",
+    "is_default": true,
+    "priority": 100,
+    "expires_at": "2027-12-31T23:59:59Z"
+  }
+}
+```
+
+> 上游 Key 明文仅录入时使用，存储时 AES-256-GCM 加密；列表与详情只返回 `key_hint`。每个 Provider 下第一个 Key 自动成为默认 Key。
+
+## 多 Key 轮换与负载均衡
+
+一个 Provider 可挂多个上游 Key，网关按以下策略调度：
+
+- **优先级（priority）**：数值越高越优先；同优先级内按权重分发
+- **权重（weight）**：同优先级 Key 间的流量分配比例
+- **默认 Key**：每个 Provider 唯一一个，自动清除其他默认标记
+- **故障转移**：Key 健康检查异常时自动剔除并切换，熔断防雪崩
+
+### 查看健康状态
+
+```bash
+curl http://localhost:8080/api/v1/providers/1/keys/1/health \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+## 功能清单
+
+| 功能 | 标准版 | 企业版 |
+|---|---|---|
+| Provider CRUD（创建/查询/编辑/删除） | ✅ | ✅ |
+| 多 Key 管理（自动轮换、调度、故障切换） | ✅ | ✅ |
+| 默认 Key 设置（唯一默认 Key，自动清除其他标记） | ✅ | ✅ |
+| Key 统计展示（列表页显示活跃数/总数） | ✅ | ✅ |
+| 负载均衡（优先级 + 权重） | ✅ | ✅ |
+| 渠道分组（按用途/价格分组） | ✅ | ✅ |
+| 渠道级故障转移 | ✅ | ✅ |
+| 熔断超时（防雪崩） | ✅ | ✅ |
+| 代理配置（HTTP/S、Socket5） | ❌ | ✅ |

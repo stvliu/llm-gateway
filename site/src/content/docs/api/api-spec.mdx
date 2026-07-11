@@ -1,0 +1,1799 @@
+---
+title: API 参考
+description: OpenAI 与 Anthropic 双 API 标准
+---
+
+# API 接口规范 / API Specification
+
+> **文档版本**: v1.0
+> **生成日期**: 2026-05-02
+> **状态**: 草案
+
+---
+
+## 目录
+
+- [一、概述](#一概述)
+- [二、OpenAI API](#二openai-api)
+- [三、Anthropic API](#三anthropic-api)
+- [四、协议转换](#四协议转换)
+- [五、错误响应](#五错误响应)
+- [六、版本兼容性](#六版本兼容性)
+
+---
+
+## 一、概述
+
+### 1.1 文档目的
+
+本文档定义 LLM-Gateway 网关对外暴露的 API 接口契约，包括：
+
+- OpenAI 兼容 API 的端点、请求格式、响应格式
+- Anthropic 兼容 API 的端点、请求格式、响应格式
+- 两种协议之间的转换规则
+
+### 1.2 兼容性声明
+
+| 协议 | 兼容标准 | 说明 |
+|------|---------|------|
+| **OpenAI API** | OpenAI API Reference (2026-04) | 完全兼容 OpenAI 官方 SDK |
+| **Anthropic API** | Anthropic Messages API (2026-04) | 完全兼容 Anthropic 官方 SDK |
+
+### 1.3 基础约定
+
+| 约定 | 说明 |
+|------|------|
+| **Base URL** | `https://{gateway-host}/v1` |
+| **认证方式** | Bearer Token (GatewayApiKey) |
+| **内容类型** | `application/json` |
+| **字符编码** | UTF-8 |
+| **日期时间格式** | ISO 8601 (`2026-04-28T10:30:00Z`) |
+
+---
+
+## 二、OpenAI API
+
+### 2.1 端点总览
+
+| 端点 | 方法 | 说明 | 优先级 |
+|------|------|------|--------|
+| `/v1/chat/completions` | POST | 聊天补全（核心） | P0 |
+| `/v1/completions` | POST | 文本补全（Legacy） | P1 |
+| `/v1/embeddings` | POST | 向量嵌入 | P0 |
+| `/v1/models` | GET | 模型列表 | P1 |
+| `/v1/models/{model}` | GET | 模型详情 | P1 |
+| `/v1/images/generations` | POST | 图像生成 | P1 |
+| `/v1/images/edits` | POST | 图像编辑 | P2 |
+| `/v1/images/variations` | POST | 图像变体 | P2 |
+| `/v1/audio/speech` | POST | 文字转语音 (TTS) | P1 |
+| `/v1/audio/transcriptions` | POST | 语音转文字 (STT) | P1 |
+| `/v1/audio/translations` | POST | 语音翻译 | P2 |
+| `/v1/moderations` | POST | 内容审核 | P1 |
+
+---
+
+### 2.2 Chat Completions API
+
+#### 2.2.1 请求格式
+
+**端点**: `POST /v1/chat/completions`
+
+```json
+{
+  "model": "gpt-4o",
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant."},
+    {"role": "user", "content": "Hello!"},
+    {"role": "assistant", "content": "Hi there!"},
+    {"role": "user", "content": "How are you?"}
+  ],
+  "temperature": 0.7,
+  "top_p": 1.0,
+  "n": 1,
+  "stream": false,
+  "stop": ["STOP"],
+  "max_tokens": 1024,
+  "presence_penalty": 0.0,
+  "frequency_penalty": 0.0,
+  "logit_bias": {"1234": -100},
+  "user": "user-123",
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get current weather",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {"type": "string"}
+          },
+          "required": ["location"]
+        }
+      }
+    }
+  ],
+  "tool_choice": "auto",
+  "response_format": {"type": "json_object"},
+  "seed": 42
+}
+```
+
+**调用示例**：
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Authorization: Bearer $GATEWAY_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+> 认证使用 `Authorization: Bearer <网关 API Key>`（以 `sk-` 开头）。完整可运行示例见 [API 调用示例](/api/examples/)。
+
+#### 2.2.2 请求参数说明
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `model` | string | ✅ | - | 模型 ID，如 `gpt-4o`、`gpt-4-turbo` |
+| `messages` | array | ✅ | - | 对话消息列表 |
+| `temperature` | number | ❌ | 1.0 | 采样温度 (0-2)，值越低越确定 |
+| `top_p` | number | ❌ | 1.0 | 核采样概率 (0-1) |
+| `n` | integer | ❌ | 1 | 生成候选数量 |
+| `stream` | boolean | ❌ | false | 是否流式返回 |
+| `stop` | string/array | ❌ | null | 停止生成的序列 |
+| `max_tokens` | integer | ❌ | 模型上限 | 最大生成 Token 数 |
+| `presence_penalty` | number | ❌ | 0 | 存在惩罚 (-2.0 到 2.0) |
+| `frequency_penalty` | number | ❌ | 0 | 频率惩罚 (-2.0 到 2.0) |
+| `logit_bias` | object | ❌ | null | Token 偏置 |
+| `user` | string | ❌ | null | 终端用户标识 |
+| `tools` | array | ❌ | null | 工具定义列表 |
+| `tool_choice` | string/object | ❌ | "auto" | 工具选择策略 |
+| `response_format` | object | ❌ | null | 响应格式约束 |
+| `seed` | integer | ❌ | null | 随机种子（确定性输出） |
+
+#### 2.2.3 消息格式
+
+**基础消息**:
+
+```json
+{"role": "system|user|assistant", "content": "消息内容"}
+```
+
+**多模态消息 (Vision)**:
+
+```json
+{
+  "role": "user",
+  "content": [
+    {"type": "text", "text": "这张图片是什么?"},
+    {
+      "type": "image_url",
+      "image_url": {
+        "url": "https://example.com/image.png",
+        "detail": "auto"
+      }
+    }
+  ]
+}
+```
+
+**图片输入方式**:
+
+| 方式 | 格式 | 说明 |
+|------|------|------|
+| URL | `"url": "https://..."` | 图片 URL |
+| Base64 | `"url": "data:image/png;base64,..."` | Base64 编码 |
+
+**Assistant 消息带 Tool Calls**:
+
+```json
+{
+  "role": "assistant",
+  "content": null,
+  "tool_calls": [
+    {
+      "id": "call_abc123",
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "arguments": "{\"location\": \"Beijing\"}"
+      }
+    }
+  ]
+}
+```
+
+**Tool 响应消息**:
+
+```json
+{
+  "role": "tool",
+  "tool_call_id": "call_abc123",
+  "content": "{\"temperature\": 25, \"condition\": \"sunny\"}"
+}
+```
+
+#### 2.2.4 响应格式
+
+**非流式响应**:
+
+```json
+{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1713833628,
+  "model": "gpt-4o",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello! How can I help you today?",
+        "tool_calls": null
+      },
+      "logprobs": null,
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 10,
+    "total_tokens": 25
+  },
+  "system_fingerprint": "fp_abc123"
+}
+```
+
+**带 Tool Calls 的响应**:
+
+```json
+{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1713833628,
+  "model": "gpt-4o",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_abc123",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\"location\": \"Beijing\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 50,
+    "completion_tokens": 20,
+    "total_tokens": 70
+  }
+}
+```
+
+#### 2.2.5 流式 SSE 事件格式
+
+**请求**: 设置 `"stream": true`
+
+**SSE 事件流**:
+
+```
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1713833628,"model":"gpt-4o","choices":[{"index":0,"delta":{"role":"assistant"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1713833628,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1713833628,"model":"gpt-4o","choices":[{"index":0,"delta":{"content":"!"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-abc123","object":"chat.completion.chunk","created":1713833628,"model":"gpt-4o","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+
+data: [DONE]
+```
+
+**Delta 字段说明**:
+
+| 字段 | 说明 |
+|------|------|
+| `role` | 仅首个 chunk 包含 |
+| `content` | 增量文本内容 |
+| `tool_calls` | 工具调用增量 |
+
+#### 2.2.6 finish_reason 枚举
+
+| 值 | 说明 |
+|------|------|
+| `stop` | 正常结束 |
+| `length` | 达到 max_tokens 限制 |
+| `tool_calls` | 模型调用了工具 |
+| `content_filter` | 内容被过滤 |
+| `function_call` | (Deprecated) 函数调用 |
+
+---
+
+### 2.3 Embeddings API
+
+#### 2.3.1 请求格式
+
+**端点**: `POST /v1/embeddings`
+
+```json
+{
+  "model": "text-embedding-3-small",
+  "input": "The food was delicious and the waiter was friendly.",
+  "encoding_format": "float",
+  "dimensions": 1536,
+  "user": "user-123"
+}
+```
+
+#### 2.3.2 请求参数说明
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `model` | string | ✅ | - | 嵌入模型 ID |
+| `input` | string/array | ✅ | - | 输入文本（最多 2048 个） |
+| `encoding_format` | string | ❌ | "float" | 编码格式：`float` / `base64` |
+| `dimensions` | integer | ❌ | 模型默认 | 输出维度 |
+| `user` | string | ❌ | null | 终端用户标识 |
+
+#### 2.3.3 响应格式
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "object": "embedding",
+      "index": 0,
+      "embedding": [-0.0069, -0.0044, 0.0152, ...]
+    }
+  ],
+  "model": "text-embedding-3-small",
+  "usage": {
+    "prompt_tokens": 10,
+    "total_tokens": 10
+  }
+}
+```
+
+---
+
+### 2.4 Images API
+
+#### 2.4.1 图像生成
+
+**端点**: `POST /v1/images/generations`
+
+```json
+{
+  "model": "dall-e-3",
+  "prompt": "A cute baby sea otter floating on its back",
+  "n": 1,
+  "quality": "standard",
+  "response_format": "url",
+  "size": "1024x1024",
+  "style": "vivid",
+  "user": "user-123"
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `model` | string | ✅ | `dall-e-2` / `dall-e-3` / `gpt-image-1` |
+| `prompt` | string | ✅ | 图像描述（dall-e-3 最多 4000 字符） |
+| `n` | integer | ❌ | 生成数量（dall-e-3 仅支持 1） |
+| `quality` | string | ❌ | `standard` / `hd` |
+| `response_format` | string | ❌ | `url` / `b64_json` |
+| `size` | string | ❌ | `256x256` / `512x512` / `1024x1024` / `1792x1024` / `1024x1792` |
+| `style` | string | ❌ | `vivid` / `natural`（仅 dall-e-3） |
+
+**响应格式**:
+
+```json
+{
+  "created": 1713833628,
+  "data": [
+    {
+      "url": "https://cdn.example.com/image.png",
+      "revised_prompt": "A cute baby sea otter..."
+    }
+  ]
+}
+```
+
+#### 2.4.2 图像编辑
+
+**端点**: `POST /v1/images/edits`
+
+**Content-Type**: `multipart/form-data`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `image` | file | ✅ | 原始图片（PNG，≤4MB，正方形） |
+| `mask` | file | ❌ | 透明区域为编辑区域 |
+| `prompt` | string | ✅ | 编辑描述 |
+| `model` | string | ❌ | 默认 `dall-e-2` |
+| `n` | integer | ❌ | 生成数量 |
+| `size` | string | ❌ | `256x256` / `512x512` / `1024x1024` |
+
+#### 2.4.3 图像变体
+
+**端点**: `POST /v1/images/variations`
+
+**Content-Type**: `multipart/form-data`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `image` | file | ✅ | 原始图片（PNG，≤4MB，正方形） |
+| `model` | string | ❌ | 默认 `dall-e-2` |
+| `n` | integer | ❌ | 生成数量 |
+| `size` | string | ❌ | 输出尺寸 |
+
+---
+
+### 2.5 Audio API
+
+#### 2.5.1 文字转语音 (TTS)
+
+**端点**: `POST /v1/audio/speech`
+
+```json
+{
+  "model": "tts-1",
+  "input": "Hello, how are you today?",
+  "voice": "alloy",
+  "response_format": "mp3",
+  "speed": 1.0
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `model` | string | ✅ | `tts-1` / `tts-1-hd` |
+| `input` | string | ✅ | 输入文本（最多 4096 字符） |
+| `voice` | string | ✅ | `alloy` / `echo` / `fable` / `onyx` / `nova` / `shimmer` |
+| `response_format` | string | ❌ | `mp3` / `opus` / `aac` / `flac` / `wav` / `pcm` |
+| `speed` | number | ❌ | 语速 (0.25-4.0) |
+
+**响应**: 二进制音频数据
+
+#### 2.5.2 语音转文字 (STT)
+
+**端点**: `POST /v1/audio/transcriptions`
+
+**Content-Type**: `multipart/form-data`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `file` | file | ✅ | 音频文件 |
+| `model` | string | ✅ | `whisper-1` |
+| `language` | string | ❌ | ISO-639-1 语言代码 |
+| `prompt` | string | ❌ | 转录提示 |
+| `response_format` | string | ❌ | `json` / `text` / `srt` / `verbose_json` / `vtt` |
+| `temperature` | number | ❌ | 采样温度 (0-1) |
+
+**响应**:
+
+```json
+{
+  "text": "Hello, how are you today?"
+}
+```
+
+#### 2.5.3 语音翻译
+
+**端点**: `POST /v1/audio/translations`
+
+**Content-Type**: `multipart/form-data`
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `file` | file | ✅ | 音频文件 |
+| `model` | string | ✅ | `whisper-1` |
+| `prompt` | string | ❌ | 翻译提示 |
+| `response_format` | string | ❌ | 输出格式 |
+
+**响应**: 翻译为英文的文本
+
+---
+
+### 2.6 Models API
+
+#### 2.6.1 模型列表
+
+**端点**: `GET /v1/models`
+
+**响应**:
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gpt-4o",
+      "object": "model",
+      "created": 1715367049,
+      "owned_by": "openai"
+    }
+  ]
+}
+```
+
+#### 2.6.2 模型详情
+
+**端点**: `GET /v1/models/{model}`
+
+**响应**:
+
+```json
+{
+  "id": "gpt-4o",
+  "object": "model",
+  "created": 1715367049,
+  "owned_by": "openai"
+}
+```
+
+---
+
+### 2.7 Moderations API
+
+**端点**: `POST /v1/moderations`
+
+```json
+{
+  "model": "omni-moderation-latest",
+  "input": "I want to harm someone."
+}
+```
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `model` | string | ❌ | `omni-moderation-latest` / `text-moderation-latest` |
+| `input` | string/array | ✅ | 待审核内容 |
+
+**响应**:
+
+```json
+{
+  "id": "modr-abc123",
+  "model": "omni-moderation-latest",
+  "results": [
+    {
+      "flagged": true,
+      "categories": {
+        "hate": false,
+        "harassment": true,
+        "self-harm": false,
+        "sexual": false,
+        "violence": true
+      },
+      "category_scores": {
+        "hate": 0.1,
+        "harassment": 0.9,
+        "self-harm": 0.0,
+        "sexual": 0.0,
+        "violence": 0.8
+      }
+    }
+  ]
+}
+```
+
+---
+
+## 三、Anthropic API
+
+### 3.1 端点总览
+
+| 端点 | 方法 | 说明 | 优先级 |
+|------|------|------|--------|
+| `/v1/messages` | POST | 消息创建（核心） | P0 |
+| `/v1/messages/batches` | POST | 批量消息请求 | P2 |
+| `/v1/messages/batches/{batch_id}` | GET | 查询批量状态 | P2 |
+| `/v1/messages/batches/{batch_id}/results` | GET | 获取批量结果 | P2 |
+
+---
+
+### 3.2 Messages API
+
+#### 3.2.1 请求格式
+
+**端点**: `POST /v1/messages`
+
+**请求头**:
+
+```
+Content-Type: application/json
+x-api-key: {api_key}
+anthropic-version: 2023-06-01
+```
+
+```json
+{
+  "model": "claude-sonnet-4-20250514",
+  "max_tokens": 1024,
+  "system": "You are a helpful assistant.",
+  "messages": [
+    {"role": "user", "content": "Hello!"},
+    {"role": "assistant", "content": "Hi there!"},
+    {"role": "user", "content": "How are you?"}
+  ],
+  "temperature": 0.7,
+  "top_p": 0.9,
+  "top_k": 40,
+  "stream": false,
+  "stop_sequences": ["STOP"],
+  "tools": [
+    {
+      "name": "get_weather",
+      "description": "Get current weather",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "location": {"type": "string"}
+        },
+        "required": ["location"]
+      }
+    }
+  ],
+  "tool_choice": {"type": "auto"},
+  "metadata": {
+    "user_id": "user-123"
+  }
+}
+```
+
+**调用示例**：
+
+```bash
+curl http://localhost:8080/v1/messages \
+  -H "x-api-key: $GATEWAY_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }'
+```
+
+> 认证使用 `x-api-key` 头（非 Bearer），且必须携带 `anthropic-version: 2023-06-01`。完整示例见 [API 调用示例](/api/examples/)。
+
+#### 3.2.2 请求参数说明
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `model` | string | ✅ | - | 模型 ID，如 `claude-sonnet-4-20250514` |
+| `max_tokens` | integer | ✅ | - | 最大生成 Token 数 |
+| `messages` | array | ✅ | - | 对话消息列表 |
+| `system` | string | ❌ | null | 系统提示词 |
+| `temperature` | number | ❌ | 1.0 | 采样温度 (0-1) |
+| `top_p` | number | ❌ | - | 核采样概率 |
+| `top_k` | integer | ❌ | - | Top-k 采样 |
+| `stream` | boolean | ❌ | false | 是否流式返回 |
+| `stop_sequences` | array | ❌ | null | 停止序列 |
+| `tools` | array | ❌ | null | 工具定义列表 |
+| `tool_choice` | object | ❌ | `{"type": "auto"}` | 工具选择策略 |
+| `metadata` | object | ❌ | null | 元数据 |
+
+#### 3.2.3 消息格式
+
+**基础消息**:
+
+```json
+{"role": "user|assistant", "content": "消息内容"}
+```
+
+**多模态消息 (Vision)**:
+
+```json
+{
+  "role": "user",
+  "content": [
+    {"type": "text", "text": "这张图片是什么?"},
+    {
+      "type": "image",
+      "source": {
+        "type": "url",
+        "url": "https://example.com/image.png"
+      }
+    }
+  ]
+}
+```
+
+**图片输入方式**:
+
+| 方式 | 格式 |
+|------|------|
+| URL | `{"type": "url", "url": "https://..."}` |
+| Base64 | `{"type": "base64", "media_type": "image/png", "data": "..."}` |
+
+**支持的图片格式**:
+
+| 格式 | media_type |
+|------|------------|
+| PNG | `image/png` |
+| JPEG | `image/jpeg` |
+| GIF | `image/gif` |
+| WebP | `image/webp` |
+
+**Assistant 消息带 Tool Use**:
+
+```json
+{
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "Let me check the weather for you."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_abc123",
+      "name": "get_weather",
+      "input": {"location": "Beijing"}
+    }
+  ]
+}
+```
+
+**Tool Result 消息**:
+
+```json
+{
+  "role": "user",
+  "content": [
+    {
+      "type": "tool_result",
+      "tool_use_id": "toolu_abc123",
+      "content": "{\"temperature\": 25, \"condition\": \"sunny\"}"
+    }
+  ]
+}
+```
+
+#### 3.2.4 响应格式
+
+**非流式响应**:
+
+```json
+{
+  "id": "msg_abc123",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-20250514",
+  "content": [
+    {
+      "type": "text",
+      "text": "Hello! How can I help you today?"
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 15,
+    "output_tokens": 10
+  }
+}
+```
+
+**带 Tool Use 的响应**:
+
+```json
+{
+  "id": "msg_abc123",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-sonnet-4-20250514",
+  "content": [
+    {
+      "type": "text",
+      "text": "Let me check that for you."
+    },
+    {
+      "type": "tool_use",
+      "id": "toolu_abc123",
+      "name": "get_weather",
+      "input": {"location": "Beijing"}
+    }
+  ],
+  "stop_reason": "tool_use",
+  "stop_sequence": null,
+  "usage": {
+    "input_tokens": 50,
+    "output_tokens": 30
+  }
+}
+```
+
+#### 3.2.5 流式 SSE 事件格式
+
+**请求**: 设置 `"stream": true`
+
+**SSE 事件流**:
+
+```
+event: message_start
+data: {"type":"message_start","message":{"id":"msg_abc123","type":"message","role":"assistant","content":[],"model":"claude-sonnet-4-20250514","stop_reason":null,"usage":{"input_tokens":15,"output_tokens":0}}}
+
+event: content_block_start
+data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Hello"}}
+
+event: content_block_delta
+data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"!"}}
+
+event: content_block_stop
+data: {"type":"content_block_stop","index":0}
+
+event: message_delta
+data: {"type":"message_delta","delta":{"stop_reason":"end_turn"},"usage":{"output_tokens":10}}
+
+event: message_stop
+data: {"type":"message_stop"}
+```
+
+**事件类型说明**:
+
+| 事件 | 说明 |
+|------|------|
+| `message_start` | 消息开始，包含初始信息 |
+| `content_block_start` | 内容块开始 |
+| `content_block_delta` | 内容块增量 |
+| `content_block_stop` | 内容块结束 |
+| `message_delta` | 消息增量（stop_reason 等） |
+| `message_stop` | 消息结束 |
+| `ping` | 心跳事件 |
+
+#### 3.2.6 stop_reason 枚举
+
+| 值 | 说明 |
+|------|------|
+| `end_turn` | 正常结束 |
+| `max_tokens` | 达到 max_tokens 限制 |
+| `stop_sequence` | 遇到停止序列 |
+| `tool_use` | 模型调用了工具 |
+
+---
+
+### 3.3 Messages Batches API
+
+#### 3.3.1 创建批量请求
+
+**端点**: `POST /v1/messages/batches`
+
+```json
+{
+  "requests": [
+    {
+      "custom_id": "request-1",
+      "params": {
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 100,
+        "messages": [{"role": "user", "content": "Hello"}]
+      }
+    },
+    {
+      "custom_id": "request-2",
+      "params": {
+        "model": "claude-sonnet-4-20250514",
+        "max_tokens": 100,
+        "messages": [{"role": "user", "content": "World"}]
+      }
+    }
+  ]
+}
+```
+
+**响应**:
+
+```json
+{
+  "id": "batch_abc123",
+  "type": "message_batch",
+  "processing_status": "in_progress",
+  "request_counts": {
+    "processing": 2,
+    "succeeded": 0,
+    "errored": 0,
+    "canceled": 0,
+    "expired": 0
+  }
+}
+```
+
+#### 3.3.2 查询批量状态
+
+**端点**: `GET /v1/messages/batches/{batch_id}`
+
+#### 3.3.3 获取批量结果
+
+**端点**: `GET /v1/messages/batches/{batch_id}/results`
+
+---
+
+## 四、协议转换
+
+### 4.1 转换矩阵
+
+| 源协议 | 目标协议 | 支持状态 | 说明 |
+|--------|---------|---------|------|
+| OpenAI | Anthropic | ✅ | 客户端用 OpenAI SDK 调用 Anthropic 模型 |
+| Anthropic | OpenAI | ✅ | 客户端用 Anthropic SDK 调用 OpenAI 模型 |
+| 各厂商 | OpenAI | ✅ | 统一转换为 OpenAI 格式 |
+| 各厂商 | Anthropic | ✅ | 统一转换为 Anthropic 格式 |
+
+### 4.2 参数映射表
+
+#### 4.2.1 Chat Completions ↔ Messages 参数映射
+
+| OpenAI 参数 | Anthropic 参数 | 转换规则 |
+|-------------|----------------|---------|
+| `model` | `model` | 直接映射（模型别名） |
+| `messages` | `messages` | 格式转换（见 4.3） |
+| `temperature` | `temperature` | 直接映射 |
+| `top_p` | `top_p` | 直接映射 |
+| `max_tokens` | `max_tokens` | 直接映射 |
+| `stop` | `stop_sequences` | 数组格式一致 |
+| `stream` | `stream` | 直接映射 |
+| `tools` | `tools` | 格式转换（见 4.4） |
+| `tool_choice` | `tool_choice` | 格式转换 |
+| `presence_penalty` | - | Anthropic 不支持 |
+| `frequency_penalty` | - | Anthropic 不支持 |
+| `logit_bias` | - | Anthropic 不支持 |
+| `n` | - | Anthropic 不支持多候选 |
+| `seed` | - | Anthropic 不支持 |
+| - | `system` | OpenAI 用 messages 中 role=system |
+| - | `top_k` | OpenAI 不支持 |
+
+#### 4.2.2 system 消息处理
+
+**OpenAI 格式**:
+```json
+{"role": "system", "content": "You are a helpful assistant."}
+```
+
+**Anthropic 格式**:
+```json
+{"system": "You are a helpful assistant."}
+```
+
+**转换规则**: OpenAI 的第一条 `role=system` 消息提取为 Anthropic 的 `system` 字段。
+
+### 4.3 消息格式转换
+
+#### 4.3.1 基础消息转换
+
+**OpenAI → Anthropic**:
+
+| OpenAI | Anthropic |
+|--------|-----------|
+| `{"role": "user", "content": "text"}` | `{"role": "user", "content": "text"}` |
+| `{"role": "assistant", "content": "text"}` | `{"role": "assistant", "content": "text"}` |
+| `{"role": "system", "content": "text"}` | 提取为 `system` 字段 |
+
+#### 4.3.2 多模态消息转换
+
+**OpenAI Vision → Anthropic Vision**:
+
+```json
+// OpenAI 格式
+{
+  "role": "user",
+  "content": [
+    {"type": "text", "text": "What is this?"},
+    {"type": "image_url", "image_url": {"url": "https://example.com/img.png"}}
+  ]
+}
+
+// 转换为 Anthropic 格式
+{
+  "role": "user",
+  "content": [
+    {"type": "text", "text": "What is this?"},
+    {"type": "image", "source": {"type": "url", "url": "https://example.com/img.png"}}
+  ]
+}
+```
+
+**Base64 图片转换**:
+
+```json
+// OpenAI 格式
+{"type": "image_url", "image_url": {"url": "data:image/png;base64,iVBORw0KGgo..."}}
+
+// 转换为 Anthropic 格式
+{
+  "type": "image",
+  "source": {
+    "type": "base64",
+    "media_type": "image/png",
+    "data": "iVBORw0KGgo..."
+  }
+}
+```
+
+### 4.4 Tool Use 转换
+
+#### 4.4.1 工具定义转换
+
+**OpenAI Function → Anthropic Tool**:
+
+```json
+// OpenAI 格式
+{
+  "type": "function",
+  "function": {
+    "name": "get_weather",
+    "description": "Get weather info",
+    "parameters": {
+      "type": "object",
+      "properties": {"location": {"type": "string"}},
+      "required": ["location"]
+    }
+  }
+}
+
+// 转换为 Anthropic 格式
+{
+  "name": "get_weather",
+  "description": "Get weather info",
+  "input_schema": {
+    "type": "object",
+    "properties": {"location": {"type": "string"}},
+    "required": ["location"]
+  }
+}
+```
+
+#### 4.4.2 工具调用转换
+
+**OpenAI Tool Call → Anthropic Tool Use**:
+
+```json
+// OpenAI 格式
+{
+  "role": "assistant",
+  "content": null,
+  "tool_calls": [
+    {
+      "id": "call_abc123",
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "arguments": "{\"location\": \"Beijing\"}"
+      }
+    }
+  ]
+}
+
+// 转换为 Anthropic 格式
+{
+  "role": "assistant",
+  "content": [
+    {
+      "type": "tool_use",
+      "id": "call_abc123",
+      "name": "get_weather",
+      "input": {"location": "Beijing"}
+    }
+  ]
+}
+```
+
+#### 4.4.3 工具结果转换
+
+**OpenAI Tool Result → Anthropic Tool Result**:
+
+```json
+// OpenAI 格式
+{
+  "role": "tool",
+  "tool_call_id": "call_abc123",
+  "content": "{\"temp\": 25}"
+}
+
+// 转换为 Anthropic 格式
+{
+  "role": "user",
+  "content": [
+    {
+      "type": "tool_result",
+      "tool_use_id": "call_abc123",
+      "content": "{\"temp\": 25}"
+    }
+  ]
+}
+```
+
+### 4.5 流式事件转换
+
+| OpenAI SSE | Anthropic SSE | 转换规则 |
+|------------|---------------|---------|
+| `data: {"choices":[{"delta":{"role":"assistant"}}]}` | `event: message_start` | 首个事件 |
+| `data: {"choices":[{"delta":{"content":"Hello"}}]}` | `event: content_block_delta` + `text_delta` | 文本增量 |
+| `data: {"choices":[{"finish_reason":"stop"}]}` | `event: message_delta` + `stop_reason` | 结束事件 |
+| `data: [DONE]` | `event: message_stop` | 结束标记 |
+
+---
+
+## 五、错误响应
+
+### 5.1 OpenAI 错误格式
+
+```json
+{
+  "error": {
+    "message": "Invalid API key provided.",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "invalid_api_key"
+  }
+}
+```
+
+**错误类型**:
+
+| type | 说明 |
+|------|------|
+| `invalid_request_error` | 请求格式错误 |
+| `authentication_error` | 认证失败 |
+| `permission_error` | 权限不足 |
+| `not_found_error` | 资源不存在 |
+| `rate_limit_error` | 限流 |
+| `api_error` | 服务器错误 |
+
+### 5.2 Anthropic 错误格式
+
+```json
+{
+  "type": "error",
+  "error": {
+    "type": "invalid_request_error",
+    "message": "max_tokens is required"
+  }
+}
+```
+
+**错误类型**:
+
+| type | 说明 |
+|------|------|
+| `invalid_request_error` | 请求格式错误 |
+| `authentication_error` | 认证失败 |
+| `permission_error` | 权限不足 |
+| `not_found_error` | 资源不存在 |
+| `rate_limit_error` | 限流 |
+| `api_error` | 服务器错误 |
+| `overloaded_error` | 服务过载 |
+
+### 5.3 网关统一错误格式
+
+网关在透传上游错误时，保持原始格式；对于网关自身错误，使用 OpenAI 兼容格式：
+
+```json
+{
+  "error": {
+    "message": "用户可读的错误信息",
+    "type": "invalid_request_error",
+    "code": "quota_exceeded",
+    "param": null,
+    "raw_code": "GW_001",
+    "raw_message": "原始错误信息"
+  }
+}
+```
+
+### 5.4 HTTP 状态码映射
+
+| HTTP 状态码 | 说明 | OpenAI code | Anthropic type |
+|-------------|------|-------------|----------------|
+| 400 | 请求格式错误 | `invalid_request_error` | `invalid_request_error` |
+| 401 | 认证失败 | `invalid_api_key` | `authentication_error` |
+| 403 | 权限不足 | `permission_denied` | `permission_error` |
+| 404 | 资源不存在 | `model_not_found` | `not_found_error` |
+| 429 | 限流 | `rate_limit_exceeded` | `rate_limit_error` |
+| 500 | 服务器错误 | `api_error` | `api_error` |
+| 503 | 服务不可用 | `server_error` | `overloaded_error` |
+
+---
+
+## 六、版本兼容性
+
+### 6.1 OpenAI API 版本
+
+OpenAI API 不使用显式版本号，通过模型 ID 和端点演进：
+
+| 模型系列 | 说明 |
+|---------|------|
+| `gpt-4o` | 最新旗舰模型 |
+| `gpt-4-turbo` | GPT-4 Turbo 系列 |
+| `gpt-3.5-turbo` | 高性价比模型 |
+| `o1` | 推理增强模型 |
+| `text-embedding-3-*` | 最新嵌入模型 |
+| `dall-e-3` | 最新图像生成模型 |
+
+### 6.2 Anthropic API 版本
+
+Anthropic API 通过请求头指定版本：
+
+```
+anthropic-version: 2023-06-01
+```
+
+**当前支持版本**: `2023-06-01`
+
+**模型系列**:
+
+| 模型系列 | 说明 |
+|---------|------|
+| `claude-opus-4-*` | 最强能力模型 |
+| `claude-sonnet-4-*` | 平衡性能与成本 |
+| `claude-haiku-*` | 快速轻量模型 |
+
+### 6.3 网关兼容策略
+
+| 策略 | 说明 |
+|------|------|
+| **向后兼容** | 新增字段不影响旧客户端 |
+| **版本升级** | 通过 URL 版本控制（`/v1/`） |
+| **废弃通知** | 响应头添加 `Deprecation: true` |
+
+---
+
+## 附录
+
+### A. 参考文档
+
+- [OpenAI API Reference](https://platform.openai.com/docs/api-reference)
+- [Anthropic API Reference](https://docs.anthropic.com/en/api)
+
+### B. 变更历史
+
+| 版本 | 日期 | 变更内容 |
+|------|------|---------|
+| v1.0 | 2026-05-02 | 初始版本，完整定义 OpenAI 和 Anthropic API 兼容规范 |
+| v1.1 | 2026-05-06 | 新增第七章管理 API - Provider API Key 管理 API |
+
+---
+
+## 七、管理 API - Provider API Key 管理
+
+> **说明**: 本章节定义 Provider API Key 资源池管理相关的 API 接口。
+
+### 7.1 API Key 管理端点总览
+
+| 端点 | 方法 | 说明 | 认证 |
+|------|------|------|------|
+| `/api/v1/provider-api-keys` | POST | 创建 Key | Admin |
+| `/api/v1/provider-api-keys/{id}` | GET | 获取 Key 详情 | Admin |
+| `/api/v1/provider-api-keys` | GET | 获取 Key 列表 | Admin |
+| `/api/v1/provider-api-keys/{id}` | PUT | 更新 Key 信息 | Admin |
+| `/api/v1/provider-api-keys/{id}` | DELETE | 删除 Key | Admin |
+| `/api/v1/provider-api-keys/{id}/enabled` | PATCH | 启用/禁用 Key | Admin |
+
+---
+
+### 7.2 创建 Key
+
+**端点**: `POST /api/v1/provider-api-keys`
+
+**请求体**:
+
+```json
+{
+  "providerId": 1,
+  "keyName": "主 Key",
+  "apiKey": "sk-xxxxxxxxxxxxxxxx",
+  "priority": 100,
+  "weight": 100,
+  "isDefault": false,
+  "expiresAt": "2027-12-31T23:59:59Z"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| providerId | Long | ✅ | > 0 | Provider ID |
+| keyName | String | ✅ | 1-128 字符 | Key 名称，用于标识 |
+| apiKey | String | ✅ | 1-512 字符 | Provider 的 API Key 明文（存储时加密） |
+| priority | Integer | ❌ | 1-1000，默认 100 | 优先级数值，数值越大优先级越高 |
+| weight | Integer | ❌ | 1-1000，默认 100 | 权重，用于加权轮询 |
+| isDefault | Boolean | ❌ | 默认 false | 是否为默认 Key |
+| expiresAt | DateTime | ❌ | ISO 8601 | 过期时间（可选，过期后自动禁用） |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "key_name": "主 Key",
+    "key_hint": "sk-****abcd",
+    "status": "ACTIVE",
+    "is_default": true,
+    "priority": 100,
+    "rpm_limit": 60,
+    "tpm_limit": 100000,
+    "expires_at": "2027-12-31T23:59:59Z",
+    "created_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**业务规则**:
+- Provider 下第一个 Key 自动成为默认 Key（`is_default` 自动设为 true）
+- API Key 明文仅在创建时返回一次，后续只能看到 `key_hint`
+- 创建后 Key 状态默认为 `ACTIVE`
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
+| INVALID_API_KEY_FORMAT | 400 | API Key 格式无效 |
+| DUPLICATE_API_KEY | 409 | 该 API Key 已存在于该 Provider |
+
+---
+
+### 7.3 获取 Key 列表
+
+**端点**: `GET /api/v1/providers/{providerId}/keys`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+            "key_name": "主 Key",
+      "key_hint": "sk-****abcd",
+      "status": "ACTIVE",
+      "is_default": true,
+      "priority": 100,
+      "health_status": "HEALTHY",
+      "success_count": 1523,
+      "error_count": 3,
+      "rpm_limit": 60,
+      "tpm_limit": 100000,
+      "last_used_at": "2026-05-06T10:00:00Z",
+      "created_at": "2026-05-01T08:00:00Z"
+    }
+  ],
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.4 获取 Key 详情
+
+**端点**: `GET /api/v1/providers/{providerId}/keys/{keyId}`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+        "key_name": "主 Key",
+    "key_hint": "sk-****abcd",
+    "status": "ACTIVE",
+    "is_default": true,
+    "priority": 100,
+    "health_status": "HEALTHY",
+    "success_count": 1523,
+    "error_count": 3,
+    "rpm_limit": 60,
+    "tpm_limit": 100000,
+    "disabled_reason": null,
+    "recover_at": null,
+    "expires_at": "2027-12-31T23:59:59Z",
+    "last_used_at": "2026-05-06T10:00:00Z",
+    "created_at": "2026-05-01T08:00:00Z",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
+
+---
+
+### 7.5 更新 Key 信息
+
+**端点**: `PUT /api/v1/providers/{providerId}/keys/{keyId}`
+
+**请求体**:
+
+```json
+{
+  "key_name": "更新后的名称",
+  "rpm_limit": 100,
+  "tpm_limit": 200000,
+  "expires_at": "2028-12-31T23:59:59Z"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| key_name | String | ❌ | 1-64 字符 | Key 名称 |
+| rpm_limit | Integer | ❌ | ≥1 | 每分钟请求数限制 |
+| tpm_limit | Integer | ❌ | ≥1 | 每分钟 Token 数限制 |
+| expires_at | DateTime | ❌ | ISO 8601 | 过期时间 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "key_name": "更新后的名称",
+    "rpm_limit": 100,
+    "tpm_limit": 200000,
+    "expires_at": "2028-12-31T23:59:59Z",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
+
+---
+
+### 7.6 删除 Key
+
+**端点**: `DELETE /api/v1/providers/{providerId}/keys/{keyId}`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "deleted_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**业务规则**（KP-008 默认 Key 保护）:
+- Provider 下只剩一个 Key 时禁止删除
+- 默认 Key 禁止删除
+- 删除操作为软删除（状态变为 `DELETED`）
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
+| CANNOT_DELETE_LAST_KEY | 400 | 无法删除 Provider 中最后一个 Key |
+| CANNOT_DELETE_DEFAULT_KEY | 400 | 无法删除默认 Key |
+
+---
+
+### 7.7 调整 Key 优先级
+
+**端点**: `PUT /api/v1/providers/{providerId}/keys/{keyId}/priority`
+
+**请求体**:
+
+```json
+{
+  "priority": 100
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| priority | Integer | ✅ | 1-1000 | 优先级数值，数值越大优先级越高 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "priority": 100,
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| PROVIDER_NOT_FOUND | 404 | Provider 不存在 |
+
+---
+
+### 7.8 批量调整 Key 优先级
+
+**端点**: `PUT /api/v1/providers/{providerId}/keys/priorities`
+
+**请求体**:
+
+```json
+{
+  "items": [
+    {"id": 1, "priority": 100},
+    {"id": 2, "priority": 90},
+    {"id": 3, "priority": 80}
+  ]
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| items | Array | ✅ | Key 优先级列表 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "updated_count": 3,
+    "items": [
+      {"id": 1, "priority": 100},
+      {"id": 2, "priority": 90},
+      {"id": 3, "priority": 80}
+    ]
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.9 禁用 Key
+
+**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/disable`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "status": "DISABLED",
+    "disabled_reason": "MANUAL",
+    "disabled_at": "2026-05-06T10:00:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| CANNOT_DISABLE_LAST_KEY | 400 | 无法禁用 Provider 中最后一个 Key |
+| CANNOT_DISABLE_DEFAULT_KEY | 400 | 无法禁用默认 Key |
+
+---
+
+### 7.10 启用 Key
+
+**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/enable`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "status": "ACTIVE",
+    "enabled_at": "2026-05-06T10:00:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**说明**: 
+- 已过期的 Key 无法通过此接口启用，需更新过期时间后自动恢复
+- 启用后该 Key 可在下一个 AI 服务调用时正常被使用
+
+---
+
+### 7.11 获取 Key 健康状态
+
+**端点**: `GET /api/v1/providers/{providerId}/keys/{keyId}/health`
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "status": "ACTIVE",
+    "health_status": "HEALTHY",
+    "last_success_at": "2026-05-06T10:00:00Z",
+    "last_error_at": null,
+    "error_count": 0,
+    "success_count": 1523,
+    "success_rate": 0.998,
+    "rpm_current": 12,
+    "rpm_limit": 60,
+    "recovery_at": null
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**health_status 枚举**:
+
+| 值 | 说明 |
+|------|------|
+| HEALTHY | 健康 |
+| DEGRADED | 降级中（有错误但未超阈值） |
+| UNHEALTHY | 不健康（被禁用或错误率高） |
+| UNKNOWN | 未知（无调用记录） |
+
+---
+
+### 7.12 手动触发恢复检查
+
+**端点**: `POST /api/v1/providers/{providerId}/keys/{keyId}/check-recovery`
+
+**请求体**: 无
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+        "previous_status": "RATE_LIMITED",
+    "current_status": "ACTIVE",
+    "recovered": true,
+    "checked_at": "2026-05-06T10:30:00Z",
+    "message": "Key 已成功恢复"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+**说明**:
+- 手动触发对被禁用 Key 的可用性检查
+- 发送测试请求验证 Key 是否可用
+- 如果可用，自动将状态恢复为 `ACTIVE`
+- 适用于需要立即恢复的场景，无需等待定时任务
+
+**错误码**:
+
+| 错误码 | HTTP 状态码 | 说明 |
+|--------|-------------|------|
+| KEY_NOT_FOUND | 404 | Key 不存在 |
+| KEY_ALREADY_ACTIVE | 400 | Key 已处于 ACTIVE 状态，无需恢复 |
+
+---
+
+### 7.13 更新 Key 选择策略
+
+**端点**: `PUT /api/v1/providers/{providerId}/selection-strategy`
+
+**请求体**:
+
+```json
+{
+  "strategy": "PRIORITY_FIRST"
+}
+```
+
+| 字段 | 类型 | 必填 | 约束 | 说明 |
+|------|------|------|------|------|
+| strategy | String | ✅ | PRIORITY_FIRST / ROUND_ROBIN / WEIGHTED | Key 选择策略 |
+
+**策略说明**:
+
+| 策略 | 说明 | 适用场景 |
+|------|------|---------|
+| PRIORITY_FIRST | 按优先级选择，高优先级优先 | 成本敏感场景，优先使用高优先级 Key |
+| ROUND_ROBIN | 轮询选择，均匀分布 | 负载均衡场景，均匀使用所有 Key |
+| WEIGHTED | 按权重随机选择 | 流量分配场景，按权重比例分配 |
+
+**响应**:
+
+```json
+{
+  "success": true,
+  "data": {
+    "provider_id": 1,
+    "strategy": "PRIORITY_FIRST",
+    "updated_at": "2026-05-06T10:30:00Z"
+  },
+  "trace_id": "trace_abc123",
+  "timestamp": "2026-05-06T10:30:00Z"
+}
+```
+
+---
+
+### 7.14 Key 状态枚举
+
+| 状态 | 说明 |
+|------|------|
+| ACTIVE | 活跃，可正常使用 |
+| DISABLED | 已禁用，手动禁用 |
+| EXPIRED | 已过期，超过有效期 |
+| RATE_LIMITED | 限流中，触发上游限流 |
+| OVERQUOTA | 超配额，额度已耗尽 |
+| ERROR | 异常，调用错误达到阈值 |
+| DELETED | 已删除 |
+
+---
+
+### 7.15 禁用原因枚举
+
+| 原因 | 说明 |
+|------|------|
+| INVALID_KEY | 无效 Key |
+| RATE_LIMITED | 触发限流 |
+| OVERQUOTA | 超配额 |
+| ERROR | 调用异常 |
+| MANUAL | 手动禁用 |
+
+---
+
+## 版本历史
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.2 | 2026-05-06 | 补充完整的 CRUD 接口：创建 Key（7.2）、获取详情（7.4）、更新 Key（7.5）、删除 Key（7.6）；新增手动触发恢复检查接口（7.15） |
+| v1.1 | 2026-05-06 | 新增第七章管理 API - Provider API Key 管理 API |
+| v1.0 | 2026-05-02 | 初始版本 |

@@ -1,0 +1,65 @@
+---
+title: 故障排查
+description: 常见错误码与问题定位
+---
+
+# 故障排查
+
+## 错误码速查
+
+| HTTP | 错误码 | 含义 | 排查方向 |
+|------|--------|------|---------|
+| 401 | `invalid_api_key` | 认证失败 | 检查 API Key 是否正确、是否已禁用 |
+| 403 | `Access denied: IP blocked` | IP 被封禁 | 检查 IP 黑名单配置 |
+| 403 | `permission_denied` | 权限不足 | 检查 Key 绑定的应用是否有该模型权限 |
+| 404 | `model_not_found` | 模型不存在 | 检查 model 名拼写、是否已配置该模型渠道 |
+| 429 | `rate_limit_exceeded` | 限流 | 降低请求频率或调整限流配置 |
+| 502 | `api_error` | 上游不可用 | 检查上游 Provider Key 健康状态、网络 |
+| 503 | `overloaded_error` | 服务过载 | 上游负载高，稍后重试或启用故障转移 |
+
+## 常见问题
+
+### 401 认证失败
+
+- **OpenAI 端点**：确认 `Authorization: Bearer sk-xxx` 格式正确
+- **Anthropic 端点**：确认使用 `x-api-key` 头（非 Bearer）+ `anthropic-version: 2023-06-01`
+- Key 是否已删除或禁用：在 [密钥管理](/apikey-management/) 查询
+
+### 404 模型不存在
+
+- 检查请求的 `model` 字段拼写（如 `gpt-4o` 而非 `gpt4o`）
+- 确认管理后台已配置该模型的渠道（见 [Provider 管理](/provider-management/)）
+- 确认 Key 绑定的应用已授权访问该模型所在渠道
+
+### 429 限流
+
+网关对 API Key 级做令牌桶限流。降低请求频率，或联系管理员调整限流配置。
+
+### 502 上游不可用
+
+- 在 [Provider 管理](/provider-management/) 检查上游 Key 健康状态：`GET /api/v1/providers/{id}/keys/{id}/health`
+- 确认上游 Provider Key 未过期、未失效
+- 检查网关到上游的网络连通性
+- 配置多个上游 Key + 故障转移（`FAIL_OVER` 策略）可提升可用性，见 [容灾方案](/features/resilience/)
+
+### 调用很慢
+
+- 检查是否启用了流式（`stream: true`），首 token 延迟更低
+- 检查应用级超时配置（`Application.timeout`）
+- 查看转移事件流是否有频繁故障转移：`GET /api/v1/resilience/events`
+
+## 启动失败
+
+### 端口被占用
+
+修改 `SERVER_PORT` 环境变量，或释放占用 8080 的进程。
+
+### 数据库连接失败
+
+- PostgreSQL 模式：检查 `DB_URL` / `DB_USERNAME` / `DB_PASSWORD`，确认库 `llm_gateway` 已创建
+- 详见 [安装部署](/deploy/)
+
+### Flyway 迁移失败
+
+- 检查数据库版本兼容性（PostgreSQL 14+）
+- 查看启动日志的 Flyway 错误，常见为手动修改过表结构与迁移脚本冲突

@@ -1,0 +1,129 @@
+---
+// 营销页基础布局（首页/对比页/联系页共用）。
+// 说明：不复用 starlight/Header.astro 与 starlight/Footer.astro——这两个组件依赖
+// `Astro.locals.starlightRoute`（Starlight 运行时数据），仅在 Starlight 文档页可用。
+// 营销页是 src/pages/ 下的普通 Astro 页面，无该运行时，复用会抛
+// `locals.starlightRoute is not defined`。故此处内联营销页专用 Header/Footer，
+// 复用 navigation.ts 导航数据（与文档站 Header 数据源一致），保持视觉与链接统一。
+import { navigation } from '../data/navigation';
+import '../styles/global.scss';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+const { title, description } = Astro.props;
+
+// 当前路径判断：/en/ 前缀使用英文 label，与文档站 Header 逻辑一致。
+const pathname = Astro.url.pathname;
+const isEn = pathname.startsWith('/en/');
+const year = new Date().getFullYear();
+---
+<!doctype html>
+<html lang={isEn ? 'en' : 'zh-CN'}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description && <meta name="description" content={description} />}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container site-header-inner">
+        <a href="/" class="site-title" translate="no">LLM-Gateway</a>
+        <nav class="marketing-nav" aria-label={isEn ? 'Main navigation' : '主导航'}>
+          {
+            navigation.map((item) => (
+              <a
+                href={item.href}
+                class="nav-item"
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+              >
+                {isEn ? item.enLabel : item.label}
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+    </header>
+    <main class="container">
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="container site-footer-inner">
+        <span class="copyright">© {year} LLM-Gateway · Apache-2.0 开源</span>
+        <span class="links">
+          <a href="https://github.com/codingas/llm-gateway">GitHub</a>
+          <a href="/features/">{isEn ? 'Docs' : '文档'}</a>
+          <a href="/standard-vs-enterprise/">{isEn ? 'Editions' : '版本对比'}</a>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .site-header {
+    border-bottom: 1px solid #e5e7eb;
+    background: var(--brand-bg, #ffffff);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .site-header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 56px;
+  }
+  .site-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--brand-primary, #6653e3);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .marketing-nav {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .nav-item {
+    color: var(--brand-text, #1a1a2e);
+    font-size: 0.95rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .nav-item:hover {
+    color: var(--brand-primary, #6653e3);
+  }
+  .site-footer {
+    border-top: 1px solid #e5e7eb;
+    margin-top: 48px;
+    padding: 24px 0;
+  }
+  .site-footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+  .links {
+    display: flex;
+    gap: 1.25rem;
+  }
+  .links a {
+    color: #6b7280;
+    text-decoration: none;
+  }
+  .links a:hover {
+    color: var(--brand-primary, #6653e3);
+  }
+</style>
