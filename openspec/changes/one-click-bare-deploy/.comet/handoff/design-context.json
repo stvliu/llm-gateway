@@ -1,0 +1,14 @@
+{
+  "change": "one-click-bare-deploy",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "45655c3deb8062463d4c972f79f7c273e962927188c5dd672b0c8607cdf7b93d",
+  "files": [
+    { "path": "openspec/changes/one-click-bare-deploy/proposal.md", "sha256": "d294199fa32e962ef6cb5c8f8ec43cc11fca9541764764f1b7c5ad709dccc9a6" },
+    { "path": "openspec/changes/one-click-bare-deploy/design.md", "sha256": "dd8027687e021488240289cf7f363c8c9de7c79d72b56b9184a6bb7f2af87924" },
+    { "path": "openspec/changes/one-click-bare-deploy/tasks.md", "sha256": "c08087c5e7ccb40e8c33e515b727a1936969211885fe47ee698af4c5095d935c" },
+    { "path": "openspec/changes/one-click-bare-deploy/specs/bare-metal-deploy/spec.md", "sha256": "c82dac5a53bf3304fa3b3993a0b32e2946293e0e4f58c1d48b98a56ce4bc0fe7" }
+  ]
+}
