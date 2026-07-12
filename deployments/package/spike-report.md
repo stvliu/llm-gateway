@@ -191,3 +191,40 @@ Started GatewayApplication in 8.629 seconds (process running for 9.21)
 - fat jar：`gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar`
 - spike 临时产物（jdeps/jlink/app-image/日志）：`/tmp/llm-gateway-spike/`（本机临时目录，不入库）
 - 本报告：`deployments/package/spike-report.md`
+
+## 8. Task 2.5 环境限制说明（deb 构建验证）
+
+> 追加日期：2026-07-12
+> 关联任务：Task 2.5 - 配置 jpackage `--type deb`
+
+### 8.1 环境限制
+
+本任务在 Windows 11（Git Bash）环境执行，存在以下工具缺失：
+
+| 工具 | Windows 可用 | 用途 |
+|------|-------------|------|
+| `dpkg-deb` | 否 | 解包/查看 deb 内容（Step 3 验证 maintainer 脚本） |
+| `jpackage --type deb` | 否 | jpackage 在 Windows 上仅支持 `msi`/`exe`，不支持 `deb` |
+| Docker Desktop | 否（未安装） | 无法通过 Linux 容器交叉构建 deb |
+
+### 8.2 本任务已完成项
+
+1. **脚本权限持久化**：通过 `git update-index --chmod=+x` 将 4 个 maintainer/debconf 脚本的 git 索引模式从 `100644` 改为 `100755`，确保 CI checkout 后脚本自带可执行位（jpackage 要求 resource-dir 内 maintainer 脚本可执行）：
+   - `deployments/package/linux/postinst`
+   - `deployments/package/linux/prerm`
+   - `deployments/package/linux/postrm`
+   - `deployments/package/linux/llm-gateway.config`
+
+2. **build.sh deb 配置验证**：确认 `deployments/package/build.sh` 的 deb 打包配置正确（无需修改，Task 1.4 已配置）：
+   - `--type deb`（line 88）
+   - `--resource-dir "$LINUX_RES"`（line 89，`LINUX_RES` 在 line 15 解析为 `deployments/package/linux/`）
+   - `--maintainer "LLM-Gateway Team"`（line 90）
+
+### 8.3 延后至 CI（Phase 4）的验证项
+
+以下验证项需在 Linux CI 环境（ubuntu job）中完成：
+
+- 实际执行 `./deployments/package/build.sh` 产出 `llm-gateway_<version>_amd64.deb`
+- `dpkg-deb -c` 检查 deb 内 maintainer 脚本（postinst/prerm/postrm）、systemd unit（llm-gateway.service）、debconf 模板（templates/config）是否就位
+- `dpkg-deb -I` 检查 control 信息含 `llm-gateway` 包名与 maintainer 字段
+- 验证 jpackage 是否正确将 resource-dir 内 `postinst/prerm/postrm` 合并进 deb control archive（若未正确挂载，需改用 `dpkg-deb` 手动重组 control archive，记录到本节补充）
