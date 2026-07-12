@@ -37,7 +37,7 @@
 
 - [x] 5.1 修复 `Dockerfile`：构建路径改为单模块 `gateway-boot`，修正 COPY 与 jar 名
 - [x] 5.2 修复 `docker-compose.yml`：`context` 改根目录、移除源码挂载、补 `gateway-console` 服务
-- [ ] 5.3 验证 `docker-compose up -d` 正常构建并拉起 gateway
+- [x] 5.3 验证 `docker-compose up -d` 正常构建并拉起 gateway
 
 ## 6. 文档
 

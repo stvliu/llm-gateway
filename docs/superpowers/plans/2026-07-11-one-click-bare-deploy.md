@@ -2140,7 +2140,7 @@ git commit -m "fix(docker): Task 5.2 compose context 改根目录、移除源码
 
 **涉及文件：** 无新增（验证 Task）
 
-- [ ] **Step 1: 构建并启动 gateway 服务**
+- [x] **Step 1: 构建并启动 gateway 服务**
 
 ```bash
 cd deployments/docker
@@ -2149,7 +2149,7 @@ docker-compose up -d --build gateway
 
 > 仅启动 gateway（其依赖 postgres/redis 会按 `depends_on` 自动拉起）。`--build` 强制用新 Dockerfile 构建。
 
-- [ ] **Step 2: 等待 gateway 健康就绪**
+- [x] **Step 2: 等待 gateway 健康就绪**
 
 ```bash
 # 最多等 90s
@@ -2164,7 +2164,7 @@ docker-compose logs --tail=30 gateway
 
 预期：`health: healthy`。
 
-- [ ] **Step 3: 直接 curl 验证**
+- [x] **Step 3: 直接 curl 验证**
 
 ```bash
 curl -sf http://localhost:8080/actuator/health
@@ -2174,13 +2174,13 @@ curl -sf http://localhost:8080/actuator/health
 
 > **注意：** gateway 服务 `SPRING_PROFILES_ACTIVE=dev`，dev profile 可能需要 PG/Redis。若 dev profile 连不上 postgres/redis 导致 health DOWN，需确认 dev profile 配置。本 change 不改 `application*.yml`，若 dev profile 强依赖外部 PG/Redis，gateway 健康依赖 postgres/redis healthy（compose 已配 `depends_on: condition: service_healthy`）。若仍失败，记录到 spike-report.md 并与用户确认是否调整 compose 环境变量（不改 yml）。
 
-- [ ] **Step 4: 清理**
+- [x] **Step 4: 清理**
 
 ```bash
 docker-compose down -v
 ```
 
-- [ ] **Step 5: 记录并 Commit**
+- [x] **Step 5: 记录并 Commit**
 
 ```bash
 cd ../..

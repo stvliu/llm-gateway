@@ -9,26 +9,19 @@
 
 ## 当前 Task
 
-- Plan Task: Task 5.2: 修复 docker-compose.yml
-- 阶段: review-fix（第 1 轮，standard 最多 1 轮）
-- 修复 agent 运行中
-- reviewer 结论: NEEDS_FIX（1 CRITICAL + 1 IMPORTANT + 4 MINOR）
-  - CRITICAL #1: .dockerignore 缺失 -> 创建 gateway-console/.dockerignore
-  - IMPORTANT #2: Vite 代理容器内不可达 -> vite.config.ts env var VITE_BACKEND_URL + docker-compose env
-  - MINOR #3: pnpm@latest -> pnpm@9
-- 已有提交：ac9729b1
-
-## 待办（Task 5.2 收尾）
-
-1. 修复 agent 回报后：
-   - 复查修复 -> 通过则勾选 Task 5.2 + 派发 Task 5.3（验证 docker-compose up）
-   - 复查未通过 -> BLOCKED
+- Plan Task: Task 5.3: 验证 docker-compose up -d（Phase 5 最后 task）
+- OpenSpec Task: 5.3 验证 `docker-compose up -d` 正常构建并拉起 gateway
+- 阶段: implementing
+- implementer model: sonnet
+- 环境限制：无 docker，留 CI/用户验证
+- 风险信号: 待自报（预计无：记录环境限制）
 
 ## 已完成 Task
 
 ### Phase 1-4 全部完成
 ### Phase 5
 - Task 5.1: 修复 Dockerfile（commit 1dee5cb1）
+- Task 5.2: 修复 docker-compose（reviewer 修复后通过：.dockerignore + Vite 代理 + pnpm@9）
 
 ## D10 修复说明
 
@@ -37,4 +30,4 @@
 
 ## 审查-修复轮次预算
 
-- review_mode: standard -> 每任务最多 1 轮 review-fix（当前 Task 5.2 第 1 轮），最终轻量审查最多 1 轮修复
+- review_mode: standard -> 每任务最多 1 轮 review-fix，最终轻量审查最多 1 轮修复
