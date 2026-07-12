@@ -101,7 +101,30 @@ try {
   # Windows: 启动器在 app-image 根目录（llm-gateway.exe），非 bin/
   $Launcher = Join-Path $AppImage 'llm-gateway.exe'
   if (Test-Path $Launcher) { Log "启动器: $Launcher" } else { Log "警告: 未找到根目录启动器 llm-gateway.exe" }
-  Log "完成。下一步用 Inno Setup 编译 exe（见 Task 3.5）"
+
+  # 6. 下载 WinSW exe（命名为 LLMGateway.exe，供 iss [Files] 段打包进 app-image）
+  Log "下载 WinSW..."
+  & (Join-Path $ScriptDir 'windows\download-winsw.ps1') -OutDir $WinRes
+  if (-not (Test-Path (Join-Path $WinRes 'LLMGateway.exe'))) { Die "WinSW exe 缺失" }
+
+  # 7. Inno Setup 编译 setup.exe（需 iscc 在 PATH 或 Inno Setup 6 安装目录）
+  $Iscc = Get-Command iscc -ErrorAction SilentlyContinue
+  if (-not $Iscc) {
+    $IsccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+    if (-not (Test-Path $IsccPath)) { Die "未找到 Inno Setup (iscc)。请安装: choco install innosetup -y" }
+    $Iscc = $IsccPath
+  } else {
+    $Iscc = $Iscc.Source
+  }
+  Log "Inno Setup 编译: $Iscc"
+  & $Iscc (Join-Path $WinRes 'llm-gateway.iss')
+  if ($LASTEXITCODE -ne 0) { Die "Inno Setup 编译失败 (exit $LASTEXITCODE)" }
+
+  $SetupExe = Join-Path $DistDir 'llm-gateway-setup.exe'
+  if (-not (Test-Path $SetupExe)) { Die "安装包未生成: $SetupExe" }
+  Log "安装包: $SetupExe ($([math]::Round((Get-Item $SetupExe).Length / 1MB, 1))MB)"
+
+  Log "完成。app-image 与 setup.exe 已就绪"
   Get-ChildItem $AppImage | Format-Table Name
 } finally {
   # 清理 staging 临时目录（无论成功或异常均清理）

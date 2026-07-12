@@ -632,3 +632,43 @@ plan Step 1 文本（plan line 1400）描述旧逻辑 `StringChangeEx(Content, '
 4. **DB_URL 数据目录一致**：xml line 13 DB_URL 路径 `%ProgramData%\LLM-Gateway\data\gateway` 与 xml line 20 `<workingdirectory>%ProgramData%\LLM-Gateway\data</workingdirectory>` 一致，H2 文件库落在数据目录下 ✓
 
 > 注：本任务为静态代码核对（xml 模板 vs iss Pascal Script），未执行实际 Inno Setup 编译安装。实际安装后 xml 值的运行时验证留 Task 3.5（iscc 编译产出 setup.exe）及 Phase 4 CI smoke test。
+
+---
+
+## 14. Task 3.5 环境限制说明（iscc 未安装）
+
+### 14.1 环境检查结果
+
+| 检查项 | 命令 | 结果 |
+|---|---|---|
+| iscc 在 PATH | `Get-Command iscc -ErrorAction SilentlyContinue` | `$null`（未找到） |
+| Inno Setup 6 安装目录 | `Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"` | `False`（路径 `C:\Program Files (x86)\Inno Setup 6\ISCC.exe` 不存在） |
+
+**结论**：本机未安装 Inno Setup，无法执行 `build.ps1` 全流程（mvn package -> jlink -> jpackage app-image -> iscc 编译 setup.exe）。实际 `iscc llm-gateway.iss` 编译留 Phase 4 CI `windows-latest` runner（CI 环境通过 `choco install innosetup -y` 预装 iscc）。
+
+### 14.2 已完成的验证（语法层）
+
+| 项 | 验证方式 | 结果 |
+|---|---|---|
+| `deployments/package/windows/download-winsw.ps1` 语法 | `[System.Management.Automation.Language.Parser]::ParseFile(...)` | [OK] 语法正确，0 错误 |
+| `deployments/package/build.ps1` 语法（含新增 #6/#7 段） | `[System.Management.Automation.Language.Parser]::ParseFile(...)` | [OK] 语法正确，0 错误 |
+
+### 14.3 build.ps1 新增逻辑说明（#6 WinSW + #7 iscc）
+
+新增两段在 `# 5. 验证 app-image 产物` 之后、`Log "完成..."` 之前（try 块内，staging 清理在 finally 不受影响）：
+
+1. **#6 下载 WinSW**：调用 `windows/download-winsw.ps1 -OutDir $WinRes`，从 `https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe` 下载并命名为 `LLMGateway.exe`，落到 `deployments/package/windows/`（供 iss `[Files]` 段 `Source: "windows\LLMGateway.exe"` 打包）。
+2. **#7 Inno Setup 编译**：优先 `Get-Command iscc`（PATH），回退 `${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe`；两者皆无则 `Die "未找到 Inno Setup (iscc)。请安装: choco install innosetup -y"`。找到后 `& $Iscc (Join-Path $WinRes 'llm-gateway.iss')` 编译，校验 `$LASTEXITCODE`，最终验证 `dist/llm-gateway-setup.exe` 生成并打印体积。
+
+### 14.4 相对 plan 的微调（自报）
+
+| 微调点 | plan 原文 | 实际实现 | 理由 |
+|---|---|---|---|
+| 注释编号 | `# 5. 下载 WinSW` / `# 6. Inno Setup 编译` | `# 6.` / `# 7.` | 现有已有 `# 5. 验证 app-image 产物`，避免编号重复 |
+| Die 失败码 | `Die "Inno Setup 编译失败"` | `Die "Inno Setup 编译失败 (exit $LASTEXITCODE)"` | 与现有 `Die "...(exit $LASTEXITCODE)"` 风格一致（行 42/67/96） |
+| 安装包体积 Log | `$((Get-Item $SetupExe).Length / 1MB)MB` | `$([math]::Round((Get-Item $SetupExe).Length / 1MB, 1))MB` | 与行 68 JRE 体积 Log 的 `[math]::Round(..., 1)` 风格一致，避免小数位过长 |
+| 末尾 Log 文案 | `Log "完成。下一步用 Inno Setup 编译 exe（见 Task 3.5）"`（保留） | `Log "完成。app-image 与 setup.exe 已就绪"` | 新增 #7 已执行 iscc 编译，原文案"下一步用 Inno Setup"语义矛盾 |
+| iscc 安装提示 | `choco install innosetup` | `choco install innosetup -y` | CI/无人值守安装需 `-y` 自动确认 |
+
+> 注：Task 3.5 实际 iscc 编译验证（产出 `llm-gateway-setup.exe`）留 Phase 4 CI `windows-latest` job；本机仅完成脚本编写 + PowerShell AST 语法验证。download-winsw.ps1 的实际网络下载（Invoke-WebRequest）未执行，WinSW GitHub release URL 的可达性留 CI 验证。
+
