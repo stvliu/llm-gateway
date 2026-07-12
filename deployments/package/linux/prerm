@@ -1,0 +1,10 @@
+#!/bin/bash
+# LLM-Gateway deb 卸载前脚本：停止并禁用服务
+set -e
+
+if [ -x /usr/bin/systemctl ] || [ -x /bin/systemctl ]; then
+  systemctl stop llm-gateway.service 2>/dev/null || true
+  systemctl disable llm-gateway.service 2>/dev/null || true
+fi
+
+exit 0
