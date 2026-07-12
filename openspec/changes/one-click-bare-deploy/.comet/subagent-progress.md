@@ -9,12 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.7: 本地验证 deb（干净 Ubuntu）
-- OpenSpec Task: 2.7 本地验证 deb：干净 Ubuntu 安装 -> 健康检查 UP -> 数据落 `/var/lib/llm-gateway/`
+- Plan Task: Task 2.8: 本地验证 rpm（RHEL 系）
+- OpenSpec Task: 2.8 本地验证 rpm：RHEL 系安装 -> 健康检查 UP
 - 阶段: implementing
 - implementer model: sonnet
-- 环境限制：Windows 无 docker + 无 deb 产物，本地验证留 CI（Phase 4 ubuntu job）
-- 风险信号: 待自报（预计无：记录环境限制）
+- 环境限制：Windows 无 docker + 无 rpm 产物，本地验证留 CI（Phase 4）
+- 风险信号: 待自报（预计无）
 
 ## 已完成 Task
 
@@ -22,8 +22,8 @@
 - Task 1.1: Spike + D10 health 修复（reviewer APPROVED）
 - Task 1.2 / 1.3 / 1.4（1.4 reviewer 修复后通过）
 
-### Phase 2
-- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5 / 2.6（reviewer 修复后通过）
+### Phase 2（2.1-2.7 完成）
+- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5 / 2.6（reviewer 修复后通过）/ 2.7（环境限制留 CI）
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 

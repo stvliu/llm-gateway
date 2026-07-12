@@ -14,7 +14,7 @@
 - [x] 2.5 配置 jpackage `--type deb`（`--resource-dir` 挂 postinst/prerm/postrm/debconf/systemd unit）
 - [x] 2.6 配置 jpackage `--type rpm`（等价 maintainer 脚本，适配 dnf）
 - [x] 2.7 本地验证 deb：干净 Ubuntu 安装 -> 健康检查 UP -> 数据落 `/var/lib/llm-gateway/`
-- [ ] 2.8 本地验证 rpm：RHEL 系安装 -> 健康检查 UP
+- [x] 2.8 本地验证 rpm：RHEL 系安装 -> 健康检查 UP
 
 ## 3. Windows 安装包（exe）
 

@@ -1022,7 +1022,7 @@ git commit -m "test(package): Task 2.7 deb 干净 Ubuntu 安装验证通过"
 
 **涉及文件：** 无新增（验证 Task）
 
-- [ ] **Step 1: 用 docker 跑 Rocky Linux 安装 rpm**
+- [x] **Step 1: 用 docker 跑 Rocky Linux 安装 rpm**
 
 ```bash
 RPM=$(ls deployments/package/dist/*.rpm | head -1)
@@ -1032,7 +1032,7 @@ docker run --rm -d --name lg-rpm-test \
   rockylinux:9 sleep 300
 ```
 
-- [ ] **Step 2: 容器内安装并验证**
+- [x] **Step 2: 容器内安装并验证**
 
 ```bash
 docker exec lg-rpm-test bash -c '
@@ -1048,7 +1048,7 @@ docker exec lg-rpm-test bash -c '
 
 预期：health UP，service active，H2 数据文件存在。
 
-- [ ] **Step 3: 清理并记录**
+- [x] **Step 3: 清理并记录**
 
 ```bash
 docker stop lg-rpm-test 2>/dev/null || true
@@ -1056,7 +1056,7 @@ docker stop lg-rpm-test 2>/dev/null || true
 
 追加验证结论到 `deployments/package/spike-report.md`。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add deployments/package/spike-report.md
