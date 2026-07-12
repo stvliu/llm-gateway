@@ -12,7 +12,7 @@
 #define WinSwXmlName "LLMGateway.xml"
 
 [Setup]
-AppId={{8F3B2A1C-4D5E-4A6B-9C7D-LLMGATEWAY001}
+AppId={{8F3B2A1C-4D5E-4A6B-9C7D-1A2B3C4D5E6F}
 AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
@@ -67,10 +67,11 @@ Type: filesandordirs; Name: "{app}"
 [Code]
 var
   PortPage: TInputQueryWizardPage;
-  ExistingPort: string;
 
 // 初始化端口输入页
 procedure InitializeWizard;
+var
+  PrevPort: string;
 begin
   PortPage := CreateInputQueryPage(wpSelectDir,
     '服务端口配置', '请输入 LLM-Gateway 服务监听端口',
@@ -78,8 +79,10 @@ begin
   PortPage.Add('服务端口:', False);
   PortPage.Values[0] := '8080';
 
-  // 升级时读取已有端口
-  ExistingPort := GetEnv('SERVER_PORT');
+  // 升级时从已有 xml 读取端口（默认安装路径探测）
+  PrevPort := ReadXmlValue(ExpandConstant('{pf}\{#AppName}\{#WinSwXmlName}'), 'SERVER_PORT');
+  if PrevPort <> '' then
+    PortPage.Values[0] := PrevPort;
 end;
 
 // 校验端口为数字（不校验占用）
@@ -103,7 +106,7 @@ begin
   end;
 end;
 
-// 生成 32 字节 base64 加密密钥（PowerShell 等价 openssl rand -base64 32）
+// 生成 32 字节 base64 加密密钥（PowerShell 加密安全 RNG，等价 openssl rand -base64 32）
 function GenerateEncryptionKey: string;
 var
   ResultCode: Integer;
@@ -111,31 +114,38 @@ var
 begin
   Result := '';
   TempFile := ExpandConstant('{tmp}\gateway_key.txt');
-  // 用 PowerShell 生成 32 字节 base64 密钥
-  if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "[Convert]::ToBase64String((1..32 | %% {[byte](Get-Random -Max 256)})) > "' + TempFile + '"',
+  // 用 PowerShell 加密安全 RNG 生成 32 字节 base64 密钥
+  if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)) > "' + TempFile + '"',
          '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     LoadStringFromFile(TempFile, Result);
     Result := Trim(Result);
+    // 立即清理临时文件（含密钥，避免残留）
+    DeleteFile(TempFile);
   end;
-  // 兜底：PowerShell 失败时用固定随机串（不理想，但保证安装不中断）
+  // PowerShell 失败：中止安装，不用固定占位串（避免全新安装使用公开密钥）
   if Result = '' then
-    Result := 'REPLACE_WITH_GENERATED_KEY_32BYTES_BASE64==';
+  begin
+    RaiseException('加密密钥生成失败，请检查 PowerShell 环境后重试');
+  end;
 end;
 
-// 升级时从已有 xml 读取密钥与端口，避免覆盖
+// 从 WinSW xml 读取环境变量值（匹配 name="KeyName" value="..." 格式）
 function ReadXmlValue(const FileName, KeyName: string): string;
 var
   Content: string;
   StartPos, EndPos: Integer;
+  SearchStr: string;
 begin
   Result := '';
   if FileExists(FileName) and LoadStringFromFile(FileName, Content) then
   begin
-    StartPos := Pos(KeyName + '="', Content);
+    // 匹配 WinSW xml 格式: name="KeyName" value="..."
+    SearchStr := 'name="' + KeyName + '" value="';
+    StartPos := Pos(SearchStr, Content);
     if StartPos > 0 then
     begin
-      StartPos := StartPos + Length(KeyName) + 2;
+      StartPos := StartPos + Length(SearchStr);
       EndPos := Pos('"', Copy(Content, StartPos, Length(Content)));
       if EndPos > 0 then
         Result := Copy(Content, StartPos, EndPos - 1);
@@ -148,19 +158,18 @@ procedure CurStepChanged(CurStep: TSetupStep);
 var
   XmlPath: string;
   Content: string;
-  PortValue, KeyValue: string;
+  PortValue, KeyValue, OldPort: string;
 begin
   if CurStep = ssPostInstall then
   begin
     XmlPath := ExpandConstant('{app}\{#WinSwXmlName}');
 
-    // 端口：用户输入
+    // 端口：用户输入（新装默认 8080，升级时为已有端口）
     PortValue := PortPage.Values[0];
-    // 静默安装时 PortPage 仍有默认值 8080
 
     // 密钥：升级时读已有，新装则生成
     KeyValue := ReadXmlValue(XmlPath, 'GATEWAY_ENCRYPTION_KEY');
-    if (KeyValue = '') or (KeyValue = 'REPLACE_WITH_GENERATED_KEY_32BYTES_BASE64==') then
+    if KeyValue = '' then
     begin
       KeyValue := GenerateEncryptionKey;
       Log('生成新的 GATEWAY_ENCRYPTION_KEY（请备份！）');
@@ -171,8 +180,14 @@ begin
     // 重写 xml（确保端口与密钥就位）
     if LoadStringFromFile(XmlPath, Content) then
     begin
-      // 替换 SERVER_PORT 与 GATEWAY_ENCRYPTION_KEY 值
-      StringChangeEx(Content, 'value="8080"', 'value="' + PortValue + '"', True);
+      // 端口替换：升级时按已有端口精确匹配，新装按默认 8080
+      OldPort := ReadXmlValue(XmlPath, 'SERVER_PORT');
+      if OldPort <> '' then
+        StringChangeEx(Content, 'name="SERVER_PORT" value="' + OldPort + '"',
+                       'name="SERVER_PORT" value="' + PortValue + '"', True)
+      else
+        StringChangeEx(Content, 'name="SERVER_PORT" value="8080"',
+                       'name="SERVER_PORT" value="' + PortValue + '"', True);
       // 密钥原为空 value=""，替换为生成值
       StringChangeEx(Content, 'name="GATEWAY_ENCRYPTION_KEY" value=""',
                      'name="GATEWAY_ENCRYPTION_KEY" value="' + KeyValue + '"', True);
