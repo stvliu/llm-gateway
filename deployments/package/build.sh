@@ -27,6 +27,13 @@ STAGING_DIR="$SCRIPT_DIR/staging"
 log() { echo -e "\033[32m[build]\033[0m $*"; }
 err() { echo -e "\033[31m[error]\033[0m $*" >&2; exit 1; }
 
+# 校验 JAVA_HOME 指向 JDK 21（jlink 需要 jmods 目录）
+if [[ -z "${JAVA_HOME:-}" ]]; then
+  err "JAVA_HOME 未设置（jlink/jpackage 需要 JDK 21）"
+fi
+JMODS_DIR="${JAVA_HOME}/jmods"
+[[ -d "$JMODS_DIR" ]] || err "jmods 不存在: $JMODS_DIR（请确认 JAVA_HOME 指向 JDK 21）"
+
 # 1. 构建 fat jar
 if [[ "${1:-}" != "--skip-mvn" ]]; then
   log "构建 fat jar..."
@@ -38,30 +45,27 @@ fi
 [[ -f "$FAT_JAR" ]] || err "fat jar 不存在: $FAT_JAR"
 log "fat jar: $FAT_JAR"
 
-# 2. jdeps 验证模块清单（可选，用于发现遗漏；jdeps 静态分析无法覆盖反射加载的模块）
-log "验证 jlink 模块清单..."
-ACTUAL_MODULES="$(jdeps --multi-release 21 --print-module-deps --ignore-missing-deps "$FAT_JAR" 2>/dev/null || true)"
-if [[ -n "$ACTUAL_MODULES" ]]; then
-  log "jdeps 实际依赖: $ACTUAL_MODULES"
-  log "清单文件: $(cat "$MODULES_FILE" | tr -d '\n')"
-  log "（若启动失败，对比两者补齐缺失模块；spike 已补充 5 个反射模块）"
-fi
-
-# 3. jlink 生成精简 JRE（模块清单已固化在 jlink-modules.txt，19 个模块）
+# 2. jlink 生成精简 JRE（模块清单已固化在 jlink-modules.txt，19 个模块）
+#    说明：不重新 jdeps 分析——Spring Boot fat jar 的 BOOT-INF 无法被 jdeps 递归识别，
+#    直接分析仅得 java.base 等少量模块，结果误导；模块清单已在 spike 阶段固化。
 log "生成精简 JRE..."
 rm -rf "$JRE_DIR"
 jlink \
+  --module-path "$JMODS_DIR" \
   --add-modules "$(cat "$MODULES_FILE" | tr -d '\n')" \
   --strip-debug --no-header-files --no-man-pages \
+  --compress=2 \
   --output "$JRE_DIR"
 log "JRE 体积: $(du -sh "$JRE_DIR" | cut -f1)"
 
-# 4. 准备 dist 与 staging（staging 仅含 fat jar，避免 target/ 多余文件入包）
+# 3. 准备 dist 与 staging（staging 仅含 fat jar，避免 target/ 多余文件入包）
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 cp "$FAT_JAR" "$STAGING_DIR/"
+# 注册退出 trap：无论正常结束或异常退出，均清理 staging 临时目录
+trap 'rm -rf "$STAGING_DIR"' EXIT
 
 # 公共 jpackage 参数
 # --java-options 写入 app cfg，使产出的安装包默认禁用 redis health（裸机无 Redis 时不误报 DOWN）
@@ -79,14 +83,14 @@ JPKG_COMMON=(
   --dest "$DIST_DIR"
 )
 
-# 5. 打 deb
+# 4. 打 deb
 log "打 deb..."
 jpackage --type deb "${JPKG_COMMON[@]}" \
   --resource-dir "$LINUX_RES" \
   --maintainer "LLM-Gateway Team"
 log "deb 产物: $(ls "$DIST_DIR"/*.deb)"
 
-# 6. 打 rpm（需 rpm 工具；CI 环境 apt-get install -y rpm 即可）
+# 5. 打 rpm（需 rpm 工具；CI 环境 apt-get install -y rpm 即可）
 if command -v rpm >/dev/null 2>&1; then
   log "打 rpm..."
   jpackage --type rpm "${JPKG_COMMON[@]}" \
@@ -97,8 +101,6 @@ else
   log "警告: 未安装 rpm 工具，跳过 rpm 打包（CI 环境 apt-get install -y rpm 即可）"
 fi
 
-# 7. 清理 staging
-rm -rf "$STAGING_DIR"
-
+# 6. 完成（staging 由 EXIT trap 自动清理，无需显式删除）
 log "完成。产物目录: $DIST_DIR"
 ls -lh "$DIST_DIR"

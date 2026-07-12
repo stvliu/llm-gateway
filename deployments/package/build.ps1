@@ -28,6 +28,11 @@ $StagingDir = Join-Path $ScriptDir 'staging'
 function Log($msg) { Write-Host "[build] $msg" -ForegroundColor Green }
 function Die($msg) { Write-Host "[error] $msg" -ForegroundColor Red; exit 1 }
 
+# 校验 JAVA_HOME 指向 JDK 21（jlink 需要 jmods 目录）
+if (-not $env:JAVA_HOME) { Die "JAVA_HOME 未设置（jlink/jpackage 需要 JDK 21）" }
+$JmodsDir = Join-Path $env:JAVA_HOME 'jmods'
+if (-not (Test-Path $JmodsDir)) { Die "jmods 不存在: $JmodsDir（请确认 JAVA_HOME 指向 JDK 21）" }
+
 # 1. 构建 fat jar
 if (-not $SkipMvn) {
   Log "构建 fat jar..."
@@ -44,6 +49,7 @@ Push-Location $RepoRoot
 try {
   $AppVersion = (& .\mvnw.cmd help:evaluate "-Dexpression=project.version" -q -DforceStdout 2>$null)
 } finally { Pop-Location }
+if ($LASTEXITCODE -ne 0 -or -not $AppVersion) { Die "读取版本号失败 (exit $LASTEXITCODE)" }
 $AppVersion = $AppVersion.Trim()
 $JarName = "gateway-boot-$AppVersion.jar"
 $FatJar = Join-Path $RepoRoot "gateway-boot\target\$JarName"
@@ -51,10 +57,13 @@ if (-not (Test-Path $FatJar)) { Die "fat jar 不存在: $FatJar" }
 Log "fat jar: $FatJar"
 
 # 2. jlink 生成精简 JRE（模块清单已固化在 jlink-modules.txt，19 个模块）
+#    说明：不重新 jdeps 分析--Spring Boot fat jar 的 BOOT-INF 无法被 jdeps 递归识别，
+#    直接分析仅得 java.base 等少量模块，结果误导；模块清单已在 spike 阶段固化。
 Log "生成精简 JRE..."
 if (Test-Path $JreDir) { Remove-Item -Recurse -Force $JreDir }
-$modules = (Get-Content $ModulesFile -Raw).Trim()
-jlink --add-modules $modules --strip-debug --no-header-files --no-man-pages --output $JreDir
+# 读取模块清单并去除所有空白（含中间换行），得到逗号分隔的模块列表
+$modules = (Get-Content $ModulesFile -Raw) -replace '\s',''
+jlink --module-path $JmodsDir --add-modules $modules --strip-debug --no-header-files --no-man-pages --compress=2 --output $JreDir
 if ($LASTEXITCODE -ne 0) { Die "jlink 失败 (exit $LASTEXITCODE)" }
 $JreSizeMB = [math]::Round((Get-ChildItem $JreDir -Recurse | Measure-Object -Property Length -Sum).Sum / 1MB, 1)
 Log "JRE 体积: ${JreSizeMB}MB"
@@ -67,31 +76,34 @@ New-Item -ItemType Directory -Force -Path $StagingDir | Out-Null
 # 仅复制 fat jar 到 staging
 Copy-Item $FatJar $StagingDir
 
-# 4. 打 app-image
-# --java-options 写入 app cfg，使产出的 app-image 默认禁用 redis health（裸机无 Redis 时不误报 DOWN）
-Log "打 app-image..."
-$ver = $AppVersion -replace '-SNAPSHOT',''
-jpackage --type app-image `
-  --name llm-gateway `
-  --app-version $ver `
-  --vendor "LLM-Gateway" `
-  --copyright "Copyright 2026 LLM-Gateway" `
-  --description "LLM-Gateway - 企业级 AI 模型 API 聚合网关" `
-  --input $StagingDir `
-  --main-jar $JarName `
-  --main-class org.springframework.boot.loader.launch.JarLauncher `
-  --runtime-image $JreDir `
-  --java-options "-Dspring.profiles.active=local -Dmanagement.health.redis.enabled=false" `
-  --dest $DistDir
-if ($LASTEXITCODE -ne 0) { Die "jpackage 失败 (exit $LASTEXITCODE)" }
+try {
+  # 4. 打 app-image
+  # --java-options 写入 app cfg，使产出的 app-image 默认禁用 redis health（裸机无 Redis 时不误报 DOWN）
+  Log "打 app-image..."
+  $ver = $AppVersion -replace '-SNAPSHOT',''
+  jpackage --type app-image `
+    --name llm-gateway `
+    --app-version $ver `
+    --vendor "LLM-Gateway" `
+    --copyright "Copyright 2026 LLM-Gateway" `
+    --description "LLM-Gateway - 企业级 AI 模型 API 聚合网关" `
+    --input $StagingDir `
+    --main-jar $JarName `
+    --main-class org.springframework.boot.loader.launch.JarLauncher `
+    --runtime-image $JreDir `
+    --java-options "-Dspring.profiles.active=local -Dmanagement.health.redis.enabled=false" `
+    --dest $DistDir
+  if ($LASTEXITCODE -ne 0) { Die "jpackage 失败 (exit $LASTEXITCODE)" }
 
-# 5. 清理 staging
-Remove-Item -Recurse -Force $StagingDir
-
-$AppImage = Join-Path $DistDir 'llm-gateway'
-if (-not (Test-Path $AppImage)) { Die "app-image 未生成: $AppImage" }
-# Windows: 启动器在 app-image 根目录（llm-gateway.exe），非 bin/
-$Launcher = Join-Path $AppImage 'llm-gateway.exe'
-if (Test-Path $Launcher) { Log "启动器: $Launcher" } else { Log "警告: 未找到根目录启动器 llm-gateway.exe" }
-Log "完成。下一步用 Inno Setup 编译 exe（见 Task 3.5）"
-Get-ChildItem $AppImage | Format-Table Name
+  # 5. 验证 app-image 产物
+  $AppImage = Join-Path $DistDir 'llm-gateway'
+  if (-not (Test-Path $AppImage)) { Die "app-image 未生成: $AppImage" }
+  # Windows: 启动器在 app-image 根目录（llm-gateway.exe），非 bin/
+  $Launcher = Join-Path $AppImage 'llm-gateway.exe'
+  if (Test-Path $Launcher) { Log "启动器: $Launcher" } else { Log "警告: 未找到根目录启动器 llm-gateway.exe" }
+  Log "完成。下一步用 Inno Setup 编译 exe（见 Task 3.5）"
+  Get-ChildItem $AppImage | Format-Table Name
+} finally {
+  # 清理 staging 临时目录（无论成功或异常均清理）
+  if (Test-Path $StagingDir) { Remove-Item -Recurse -Force $StagingDir }
+}
