@@ -2343,7 +2343,7 @@ git commit -m "docs(package): Task 6.1 新增打包构建与安装说明"
 **涉及文件：**
 - Modify: `README.md`
 
-- [ ] **Step 1: 定位 README.md 中的部署章节**
+- [x] **Step 1: 定位 README.md 中的部署章节**
 
 ```bash
 # 查找部署相关章节标题
@@ -2352,7 +2352,7 @@ grep -n -E '^#.*(部署|Docker|安装|快速开始|Quick)' README.md | head -20
 
 > 若 README.md 无明确部署章节，在文件末尾合适位置追加"## 部署"章节。先 Read README.md 确认结构。
 
-- [ ] **Step 2: 读取 README.md 部署章节当前内容**
+- [x] **Step 2: 读取 README.md 部署章节当前内容**
 
 ```bash
 # 用 Read 工具读取 README.md，定位部署章节行号
@@ -2365,7 +2365,7 @@ grep -n -E '^#.*(部署|Docker|安装|快速开始|Quick)' README.md | head -20
 - 补 admin/admin 首次改密提示
 - 补 H2 Console 远程访问风险提示
 
-- [ ] **Step 3: 追加/修改部署章节**
+- [x] **Step 3: 追加/修改部署章节**
 
 在 README.md 部署章节追加（或修正为）以下内容（若已有则替换对应段落）：
 
@@ -2406,7 +2406,7 @@ docker-compose up -d
 > - **加密密钥备份**：系统安装包部署时 `GATEWAY_ENCRYPTION_KEY` 自动生成，**务必备份**，丢失则历史加密数据无法解密。
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add README.md
