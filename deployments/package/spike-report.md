@@ -228,3 +228,93 @@ Started GatewayApplication in 8.629 seconds (process running for 9.21)
 - `dpkg-deb -c` 检查 deb 内 maintainer 脚本（postinst/prerm/postrm）、systemd unit（llm-gateway.service）、debconf 模板（templates/config）是否就位
 - `dpkg-deb -I` 检查 control 信息含 `llm-gateway` 包名与 maintainer 字段
 - 验证 jpackage 是否正确将 resource-dir 内 `postinst/prerm/postrm` 合并进 deb control archive（若未正确挂载，需改用 `dpkg-deb` 手动重组 control archive，记录到本节补充）
+
+## 9. Task 2.7 环境限制说明（deb 干净 Ubuntu 安装验证）
+
+> 追加日期：2026-07-12
+> 关联任务：Task 2.7 - 本地验证 deb（干净 Ubuntu）
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 2.7（Step 1-5，约行 948-1015）
+
+### 9.1 环境限制
+
+本任务计划在干净 Ubuntu 容器中安装 deb 并验证服务启动、健康检查、数据落盘。实际执行环境（Windows 11 + Git Bash）存在以下限制：
+
+| 依赖 | Windows 可用 | 说明 |
+|------|-------------|------|
+| `docker` | 否（`command not found`，Task 2.5 已确认） | 无法拉起 `ubuntu:22.04` 容器执行干净安装 |
+| deb 产物 | 否（`deployments/package/dist/*.deb` 不存在） | Task 2.5 因 jpackage 在 Windows 不支持 `--type deb`，跳过实际构建，产物留 CI 产出 |
+
+两项前置依赖均不可用，plan Step 1-4 的本地 docker 验证无法执行。
+
+### 9.2 实际验证留 CI（Phase 4 ubuntu job）
+
+deb 的干净 Ubuntu 安装验证将延后至 CI（Phase 4 ubuntu job）完成。CI smoke test 流程如下：
+
+1. **构建 deb**：CI 环境（Linux）执行 `./deployments/package/build.sh` 产出 `deployments/package/dist/llm-gateway_<version>_amd64.deb`
+2. **干净容器安装**：`docker run ubuntu:22.04 apt-get install -y ./llm-gateway.deb`
+3. **健康检查**：`curl -sf http://localhost:8080/actuator/health` 验证返回 `"status":"UP"`
+4. **数据落盘验证**：`ls -la /var/lib/llm-gateway/` 确认含 H2 数据文件（如 `gateway.mv.db`）
+
+### 9.3 CI smoke test 参考步骤（plan Step 1-3 映射）
+
+以下为 plan Task 2.7 Step 1-3 的验证步骤，作为 CI smoke test 编写参考：
+
+#### Step 1: 干净 Ubuntu 容器挂载 deb（端口映射 18080:8080）
+
+```bash
+DEB=$(ls deployments/package/dist/*.deb | head -1)
+docker run --rm -d --name lg-deb-test \
+  -v "$(pwd)/$DEB:/tmp/llm-gateway.deb" \
+  -p 18080:8080 \
+  ubuntu:22.04 sleep 300
+```
+
+#### Step 2: 容器内安装并验证服务启动
+
+```bash
+docker exec lg-deb-test bash -c '
+  apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
+  # 等待服务就绪（最多 90s）
+  for i in $(seq 1 90); do
+    if curl -sf http://localhost:8080/actuator/health; then echo; break; fi
+    sleep 1
+  done
+  systemctl is-active llm-gateway.service
+  ls -la /var/lib/llm-gateway/
+'
+```
+
+**预期结果：**
+- `curl` 输出含 `"status":"UP"`
+- `systemctl is-active` 输出 `active`
+- `/var/lib/llm-gateway/` 含 H2 数据文件（如 `gateway.mv.db`）
+
+#### Step 3: 验证非交互安装回退默认端口 8080
+
+```bash
+docker stop lg-deb-test 2>/dev/null || true
+docker run --rm -d --name lg-deb-nonint \
+  -v "$(pwd)/$DEB:/tmp/llm-gateway.deb" \
+  -p 18080:8080 \
+  -e DEBIAN_FRONTEND=noninteractive \
+  ubuntu:22.04 sleep 300
+docker exec lg-deb-nonint bash -c '
+  apt-get update && apt-get install -y /tmp/llm-gateway.deb
+  grep SERVER_PORT /etc/llm-gateway/env
+  for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
+'
+```
+
+**预期结果：** `SERVER_PORT=8080`（非交互安装回退默认端口），health UP。
+
+### 9.4 Spec Scenario 实际验证归属
+
+以下 Spec Scenario 的实际验证均在 CI 完成：
+
+| Scenario | 验证内容 | 验证位置 |
+|----------|---------|---------|
+| 全新安装并启动 | deb 安装后 health 60s 内 UP | CI ubuntu job（Step 2 for 循环 90s 内） |
+| 升级保留数据与密钥 | 旧版 deb 安装 -> 新版 deb 升级 -> `/var/lib/llm-gateway/` 数据与密钥保留 | CI ubuntu job（需补充升级流程） |
+| 卸载保留数据 | `apt remove` / `apt purge` 后 `/var/lib/llm-gateway/` 数据保留/清除符合预期 | CI ubuntu job（需补充卸载流程） |
+
+> 注：升级保留与卸载保留两个 Scenario 需 CI 补充多阶段 docker 流程（安装旧版 -> 升级/卸载 -> 验数据），当前 plan Task 2.7 Step 1-3 仅覆盖全新安装场景。
