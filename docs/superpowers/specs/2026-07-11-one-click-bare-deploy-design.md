@@ -99,6 +99,14 @@ llm-gateway 当前部署资产存在两处阻碍快速落地的问题：
 - 改用：jpackage `--type app-image` 生成应用目录（精简 JRE + jar + 启动器 exe）+ WinSW 注册服务 + Inno Setup 打 exe installer。
 - 代价：产出 exe 非 msi（需 Spec Patch：delta spec 的 msi Requirement 改 exe）；Inno Setup exe 同样支持静默安装（`/VERYSILENT`）与升级覆盖安装。
 
+### D10: 修复 ProviderRegistryHealthIndicator（build 阶段 spike 发现，用户确认补充）
+
+- **问题**：Task 1.1 spike 发现 `/actuator/health` 全新安装时 503 DOWN。根因是 `ProviderRegistryHealthIndicator` 逻辑"全部 DOWN/UNKNOWN -> DOWN"，全新安装时 provider 状态 UNKNOWN（无流量初始态）导致整体 DOWN。这是预存在的设计缺陷：无流量≠不健康。
+- **修复**：调整 `ProviderRegistryHealthIndicator` 逻辑为"只有 provider 明确 DOWN 才整体 DOWN；UNKNOWN（初始态/无流量）和 UP 都视为健康（整体 UP）"。改动仅 1 个文件（actuator 基础设施，非业务逻辑）。
+- **Redis**：local profile 未排除 Redis 自动配置（`spring.data.redis.enabled: false` 是无效自定义属性），redis health 指标存在。spike 验证用 `-Dmanagement.health.redis.enabled=false` 禁用；安装包阶段将 `MANAGEMENT_HEALTH_REDIS_ENABLED=false` 放入服务环境变量（Linux env 文件 `/etc/llm-gateway/env` + Windows WinSW xml `<env>`）。
+- **用户决策**：build 阶段 Step 4 中等变更，用户选择"修复 health indicator"（而非改 Spec 验收标准或拆分新 change）。
+- **影响**：delta spec 的 health UP 场景依赖此修复；Task 2.3 postinst / Task 3.2 Inno Setup 需加 `MANAGEMENT_HEALTH_REDIS_ENABLED=false` 环境变量。
+
 ## 打包流程
 
 ```

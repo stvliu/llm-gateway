@@ -80,7 +80,7 @@ base-ref: f4b92150f569008c8d1399b31a552fe58c6d9c3b
 
 **前置说明：** 本任务在 Linux 或 Windows 本机执行（需 JDK 21）。spike 用 `--type app-image`（最快验证启动，不打包安装器）。fat jar 已由 `spring-boot-maven-plugin` repackage 产生，Main-Class = `org.springframework.boot.loader.launch.JarLauncher`。
 
-- [ ] **Step 1: 构建 fat jar**
+- [x] **Step 1: 构建 fat jar**
 
 ```bash
 # 仓库根目录
@@ -97,7 +97,7 @@ unzip -p gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar META-INF/MANIFEST.M
 
 预期输出含：`Main-Class: org.springframework.boot.loader.launch.JarLauncher`
 
-- [ ] **Step 2: 用 jdeps 分析 fat jar 依赖模块**
+- [x] **Step 2: 用 jdeps 分析 fat jar 依赖模块**
 
 ```bash
 jdeps --multi-release 21 --print-module-deps \
@@ -110,7 +110,7 @@ cat /tmp/llm-gateway-spike/modules.txt
 
 > 若 `jdeps` 因缺失依赖报错，加 `--ignore-missing-deps` 跳过（fat jar 内嵌依赖通常完整）。将清单记下，供 Task 1.2 固化。
 
-- [ ] **Step 3: jlink 生成精简 JRE**
+- [x] **Step 3: jlink 生成精简 JRE**
 
 ```bash
 mkdir -p /tmp/llm-gateway-spike/jre
@@ -121,7 +121,7 @@ jlink --add-modules "$(cat /tmp/llm-gateway-spike/modules.txt)" \
 
 预期：`/tmp/llm-gateway-spike/jre/bin/java` 存在，JRE 体积 ~40-60MB。
 
-- [ ] **Step 4: jpackage 打 app-image（最小命令，验证启动）**
+- [x] **Step 4: jpackage 打 app-image（最小命令，验证启动）**
 
 ```bash
 jpackage \
@@ -137,7 +137,7 @@ jpackage \
 
 预期：`/tmp/llm-gateway-spike/dist/llm-gateway/` 生成，内含 `bin/llm-gateway`（Linux）或 `bin/llm-gateway.exe`（Windows）、`runtime/`（JRE）、`app/`（jar）。
 
-- [ ] **Step 5: 启动 app-image 并验证 health**
+- [x] **Step 5: 启动 app-image 并验证 health**
 
 ```bash
 # 启动（后台）
@@ -158,7 +158,7 @@ kill $APP_PID
 
 预期：`health.json` 含 `"status":"UP"`。
 
-- [ ] **Step 6: 记录 spike 结论**
+- [x] **Step 6: 记录 spike 结论**
 
 Create `deployments/package/spike-report.md`：
 
@@ -185,7 +185,7 @@ Create `deployments/package/spike-report.md`：
 - app-image 体积: <`du -sh dist/llm-gateway` 输出>
 ```
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add deployments/package/spike-report.md
