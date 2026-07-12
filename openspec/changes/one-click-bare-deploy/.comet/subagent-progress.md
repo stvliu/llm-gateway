@@ -9,11 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.4: 编写 prerm 与 postrm
-- OpenSpec Task: 2.4 编写 `prerm`（stop/disable）与 `postrm`（清理安装文件、保留数据目录）
+- Plan Task: Task 2.5: 配置 jpackage --type deb
+- OpenSpec Task: 2.5 配置 jpackage `--type deb`（`--resource-dir` 挂 postinst/prerm/postrm/debconf/systemd unit）
 - 阶段: implementing
 - implementer model: sonnet
-- 风险信号: 待自报（预计无：卸载脚本，按 plan 严格 purge 才清数据）
+- 环境限制：Windows 无 dpkg-deb，本地做脚本权限持久化 + build.sh 配置验证，实际 deb 构建留 CI（Phase 4）
+- 风险信号: 待自报（预计无）
 
 ## 已完成 Task
 
@@ -25,6 +26,7 @@
 - Task 2.1: systemd unit 模板
 - Task 2.2: debconf 模板
 - Task 2.3: postinst（reviewer APPROVED，5 MINOR 非阻断，D10 Redis 环境变量已加）
+- Task 2.4: prerm/postrm
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 

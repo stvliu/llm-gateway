@@ -758,7 +758,7 @@ git commit -m "feat(package): Task 2.4 prerm/postrm 卸载脚本"
 **涉及文件：**
 - 修改: `deployments/package/build.sh`（已在 Task 1.4 引用 resource-dir，本任务验证 + 修正脚本权限）
 
-- [ ] **Step 1: 赋予所有 Linux 脚本可执行位**
+- [x] **Step 1: 赋予所有 Linux 脚本可执行位**
 
 ```bash
 chmod +x deployments/package/linux/postinst deployments/package/linux/prerm deployments/package/linux/postrm deployments/package/linux/llm-gateway.config
@@ -766,7 +766,7 @@ chmod +x deployments/package/linux/postinst deployments/package/linux/prerm depl
 
 > jpackage 要求 resource-dir 内 maintainer 脚本有可执行位。CI 中 checkout 后需重新 `chmod +x`（见 Phase 4）。
 
-- [ ] **Step 2: 本地执行 build.sh 打 deb**
+- [x] **Step 2: 本地执行 build.sh 打 deb**
 
 ```bash
 # Linux 环境，仓库根目录
@@ -775,7 +775,7 @@ chmod +x deployments/package/linux/postinst deployments/package/linux/prerm depl
 
 预期：`deployments/package/dist/llm-gateway_<version>_amd64.deb` 生成。
 
-- [ ] **Step 3: 检查 deb 内 maintainer 脚本与资源是否就位**
+- [x] **Step 3: 检查 deb 内 maintainer 脚本与资源是否就位**
 
 ```bash
 DEB=$(ls deployments/package/dist/*.deb | head -1)
@@ -788,7 +788,7 @@ dpkg-deb -I "$DEB"
 
 > **验证点：** 若 jpackage 未正确挂载 maintainer 脚本（jpackage 版本差异），改用 `dpkg-deb` 手动重组 control archive。记录到 spike-report.md 补充。
 
-- [ ] **Step 4: Commit（含脚本权限）**
+- [x] **Step 4: Commit（含脚本权限）**
 
 ```bash
 git add deployments/package/linux deployments/package/build.sh
