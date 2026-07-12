@@ -1497,7 +1497,7 @@ git commit -m "feat(package): Task 3.5 jpackage app-image + Inno Setup 编译 ex
 
 > **环境要求：** Windows 10/11 或 Windows Server 2019+，已装 .NET runtime（WinSW 依赖）。CI 中在 `windows-latest` runner 验证（见 Phase 4）。
 
-- [ ] **Step 1: 静默安装（验证 `/VERYSILENT` 回退默认端口）**
+- [x] **Step 1: 静默安装（验证 `/VERYSILENT` 回退默认端口）**
 
 ```powershell
 # 管理员 PowerShell
@@ -1505,7 +1505,7 @@ Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" `
   -ArgumentList "/VERYSILENT","/NORESTART" -Wait -NoNewWindow
 ```
 
-- [ ] **Step 2: 验证服务与 health**
+- [x] **Step 2: 验证服务与 health**
 
 ```powershell
 # 等待服务就绪（最多 90s）
@@ -1521,7 +1521,7 @@ Get-ChildItem "$env:ProgramData\LLM-Gateway\data"
 - `Get-Service` 显示 `Status=Running`
 - `%ProgramData%\LLM-Gateway\data\` 含 H2 数据文件
 
-- [ ] **Step 3: 验证升级保留密钥**
+- [x] **Step 3: 验证升级保留密钥**
 
 ```powershell
 # 读取首次安装的密钥
@@ -1541,7 +1541,7 @@ if ($firstKey -eq $secondKey) { Write-Host "PASS: 密钥升级保留" } else { W
 
 预期：`PASS: 密钥升级保留`。
 
-- [ ] **Step 4: 卸载验证（保留数据目录）**
+- [x] **Step 4: 卸载验证（保留数据目录）**
 
 ```powershell
 # 控制面板卸载或:
@@ -1552,7 +1552,7 @@ Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
 
 预期：服务已移除，数据目录保留。
 
-- [ ] **Step 5: 记录并 Commit**
+- [x] **Step 5: 记录并 Commit**
 
 追加验证结论到 `deployments/package/spike-report.md`。
 

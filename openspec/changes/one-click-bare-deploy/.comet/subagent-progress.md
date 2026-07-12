@@ -9,12 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 3.5: 配置 jpackage app-image + Inno Setup 编译
-- OpenSpec Task: 3.5 配置 jpackage app-image + Inno Setup 编译 exe
+- Plan Task: Task 3.6: 本地验证 exe（干净 Windows）（Phase 3 最后 task）
+- OpenSpec Task: 3.6 本地验证 exe：干净 Windows 安装 -> Service 启动 -> health UP -> 数据落 %ProgramData%
 - 阶段: implementing
 - implementer model: sonnet
-- 环境限制：iscc 可能未安装，实际编译留 CI
-- 风险信号: 待自报（build.ps1 改动，可能 diff>200）
+- 环境限制：无 exe 产物（iscc 不可用），实际验证留 CI
+- 风险信号: 待自报（预计无：记录环境限制）
 
 ## 已完成 Task
 
@@ -24,6 +24,7 @@
 - Task 3.2: Inno Setup 完整脚本（reviewer 修复后通过）
 - Task 3.3: 验证密钥 Pascal Script（CRITICAL 修复后通过：PS 5.1 兼容）
 - Task 3.4: 验证 env 写入 WinSW xml（一致性核对通过）
+- Task 3.5: jpackage app-image + Inno Setup 编译（iscc 留 CI）
 
 ## D10 修复说明
 
