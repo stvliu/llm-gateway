@@ -1766,7 +1766,7 @@ git commit -m "ci(package): Task 4.1 release.yml 新增 package job（matrix ubu
 
 **涉及文件：** 无新增（验证 Task 4.1 的 ubuntu 分支）
 
-- [ ] **Step 1: 确认 build.sh 与 CI 步骤一致性**
+- [x] **Step 1: 确认 build.sh 与 CI 步骤一致性**
 
 核对 Task 4.1 中 ubuntu 分支步骤：
 - `Install rpm tool (Linux)` → `sudo apt-get install -y rpm` ✓
@@ -1774,7 +1774,7 @@ git commit -m "ci(package): Task 4.1 release.yml 新增 package job（matrix ubu
 - `Build packages (Linux)` → `./deployments/package/build.sh` ✓
 - `Smoke test - deb` + `Smoke test - rpm` ✓
 
-- [ ] **Step 2: 记录并 Commit**
+- [x] **Step 2: 记录并 Commit**
 
 ```bash
 git add deployments/package/spike-report.md

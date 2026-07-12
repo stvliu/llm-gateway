@@ -9,24 +9,18 @@
 
 ## 当前 Task
 
-- Plan Task: Task 4.1: 在 release.yml 加 package job
-- 阶段: review-fix（第 1 轮，standard 最多 1 轮）
-- 修复 agent 运行中
-- reviewer 结论: NEEDS_FIX（1 CRITICAL + 1 IMPORTANT + 3 MINOR）
-  - CRITICAL-1: Linux smoke test 容器无 systemd（ubuntu/rockylinux + sleep 180），postinst systemctl 失败 -> 改 jrei/systemd-* 镜像 + privileged
-  - IMPORTANT-1: .gitignore 忽略 .github/ -> 加 !.github/workflows/ 例外
-  - MINOR-3/4: 端口映射冗余 / sleep 生命周期
-- 已有提交：af3b9f92
-
-## 待办（Task 4.1 收尾）
-
-1. 修复 agent 回报后：
-   - 复查修复（systemd 镜像 + .gitignore）-> 通过则勾选 Task 4.1 + 派发 Task 4.2
-   - 复查未通过 -> BLOCKED
+- Plan Task: Task 4.2: 验证 ubuntu job 构建 deb + rpm（验证点）
+- OpenSpec Task: 4.2 ubuntu job：构建 deb + rpm（安装 `rpm` 工具）
+- 阶段: implementing
+- implementer model: sonnet
+- 说明：静态核对 CI 步骤一致性，实跑留 Task 4.5
+- 风险信号: 待自报（预计无：静态核对 + 记录）
 
 ## 已完成 Task
 
 ### Phase 1（全部完成）/ Phase 2（全部完成）/ Phase 3（全部完成）
+### Phase 4
+- Task 4.1: release.yml package job（reviewer 修复后通过：systemd 镜像 + .gitignore 例外）
 
 ## D10 修复说明
 
@@ -35,4 +29,4 @@
 
 ## 审查-修复轮次预算
 
-- review_mode: standard -> 每任务最多 1 轮 review-fix（当前 Task 4.1 第 1 轮），最终轻量审查最多 1 轮修复
+- review_mode: standard -> 每任务最多 1 轮 review-fix，最终轻量审查最多 1 轮修复
