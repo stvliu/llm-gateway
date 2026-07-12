@@ -1022,3 +1022,118 @@ Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
 - exe smoke test：`/VERYSILENT` 静默安装 + 90s health 轮询 + `Get-Service LLMGateway` Running + `unins000.exe /VERYSILENT` 卸载
 - 产物上传（`Upload artifacts` 步骤，release.yml line 215-223）至 GitHub Actions artifact `packages-windows-latest`
 
+---
+
+## 18. Task 4.4 产物上传 Release 流转确认
+
+> 追加日期：2026-07-12
+> 关联任务：Task 4.4 - 验证产物上传到 GitHub Release
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 4.4（Step 1-2，约行 1810-1827）
+> 核对文件：`.github/workflows/release.yml`（package job 上传 + finalize job 下载/挂 Release）
+> 核对方式：静态代码核对（产物流转链路），实跑验证留 Task 4.5（打 tag 实跑）
+
+### 18.1 Step 1：产物流转链路核对
+
+产物流转链路：`package` job（双平台 matrix）产出 deb/rpm/exe -> `upload-artifact` 上传 -> `finalize` job `download-artifact` 合并下载 -> `softprops/action-gh-release` 挂到 GitHub Release。
+
+#### 18.1.1 package job -> upload-artifact（双平台）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Upload artifacts` | release.yml line 215 |
+| action 版本 | `actions/upload-artifact@v4` | release.yml line 216 |
+| artifact 名称 | `packages-${{ matrix.os }}` | release.yml line 218 |
+| matrix.os 取值 | `ubuntu-latest` / `windows-latest` | release.yml line 121 |
+| 实际 artifact 名称 | `packages-ubuntu-latest` / `packages-windows-latest` | matrix 展开 |
+| 上传路径 | `deployments/package/dist/*.deb` + `*.rpm` + `*.exe` | release.yml line 219-222 |
+| 保留天数 | `retention-days: 14` | release.yml line 223 |
+
+**双平台实际产出的文件类：**
+
+| 平台 | build 脚本 | 实际产出文件类 | upload-artifact path 匹配 |
+|------|-----------|---------------|--------------------------|
+| ubuntu-latest | `build.sh` | `*.deb` + `*.rpm`（jpackage `--type deb` + `--type rpm`） | `*.deb` ✓ + `*.rpm` ✓（`*.exe` 无匹配，不影响上传） |
+| windows-latest | `build.ps1` | `*.exe`（iscc 编译 `llm-gateway-setup.exe`） | `*.exe` ✓（`*.deb`/`*.rpm` 无匹配，不影响上传） |
+
+> `actions/upload-artifact@v4` 的 `path` 支持多行 glob，只要至少一个模式匹配文件即可上传；未匹配的模式不会报错。ubuntu 上 `*.exe` 无文件、windows 上 `*.deb`/`*.rpm` 无文件，均不影响各自 artifact 上传。
+
+**结论**：package job 双平台 matrix 产出 deb/rpm/exe 三类文件，通过 `upload-artifact` 上传到 `packages-ubuntu-latest`（含 deb+rpm）和 `packages-windows-latest`（含 exe）两个 artifact，与 plan Task 4.4 要求一致 ✓。
+
+#### 18.1.2 finalize job -> download-artifact（合并下载）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Download package artifacts` | release.yml line 312 |
+| action 版本 | `actions/download-artifact@v4` | release.yml line 313 |
+| pattern | `packages-*` | release.yml line 315 |
+| 下载路径 | `deployments/package/dist` | release.yml line 316 |
+| merge-multiple | `true` | release.yml line 317 |
+| finalize 依赖 | `needs: [release, build-docker, publish-helm, package]` | release.yml line 306 |
+
+**pattern 匹配说明：**
+- `pattern: packages-*` 匹配 `packages-ubuntu-latest` 与 `packages-windows-latest` 两个 artifact。
+- `merge-multiple: true` 将所有匹配的 artifact 内容合并下载到同一目录（`deployments/package/dist`），而非各自子目录。
+
+**合并下载后 `deployments/package/dist/` 目录内容：**
+
+| 来源 artifact | 文件类 | 合并后路径 |
+|--------------|-------|-----------|
+| `packages-ubuntu-latest` | `*.deb` | `deployments/package/dist/*.deb` |
+| `packages-ubuntu-latest` | `*.rpm` | `deployments/package/dist/*.rpm` |
+| `packages-windows-latest` | `*.exe` | `deployments/package/dist/*.exe` |
+
+合并后 `deployments/package/dist/` 同时含 deb + rpm + exe 三类文件，供后续 `softprops/action-gh-release` 的 `files:` glob 匹配。
+
+> `merge-multiple: true` 是 `actions/download-artifact@v4` 的关键参数：若不设此项，每个 artifact 会下载到各自的子目录（`dist/packages-ubuntu-latest/` 与 `dist/packages-windows-latest/`），导致 gh-release 的 `files: deployments/package/dist/*.deb` 等 glob 无法匹配（文件多了一层子目录）。设为 `true` 后扁平化合并，glob 可直接命中。
+
+**结论**：finalize job 通过 `download-artifact` 的 `pattern: packages-*` + `merge-multiple: true` 合并下载双平台 artifact 到 `deployments/package/dist/`，与 plan Task 4.4 要求一致 ✓。
+
+#### 18.1.3 softprops/action-gh-release -> 挂到 GitHub Release
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Update Release` | release.yml line 322 |
+| action 版本 | `softprops/action-gh-release@v2` | release.yml line 323 |
+| draft | `false` | release.yml line 325 |
+| files glob | `*.tgz` + `deployments/package/dist/*.deb` + `*.rpm` + `*.exe` | release.yml line 326-330 |
+| GITHUB_TOKEN | `${{ secrets.GITHUB_TOKEN }}` | release.yml line 332 |
+
+**files glob 与产物的对应关系：**
+
+| files glob | 匹配来源 | 匹配文件 |
+|-----------|---------|---------|
+| `deployments/package/dist/*.deb` | download-artifact 合并下载的 ubuntu 产物 | `llm-gateway_<version>_amd64.deb` |
+| `deployments/package/dist/*.rpm` | download-artifact 合并下载的 ubuntu 产物 | `llm-gateway-<version>.x86_64.rpm` |
+| `deployments/package/dist/*.exe` | download-artifact 合并下载的 windows 产物 | `llm-gateway-setup.exe` |
+| `*.tgz` | （Helm Chart，由 `publish-helm` job 的 `upload-release-asset` 直接上传，非 finalize 下载） | 见下方说明 |
+
+**关于 `*.tgz`（Helm Chart）的说明：**
+- `publish-helm` job（release.yml line 265-298）使用 `actions/upload-release-asset@v1` 直接将 Helm Chart `.tgz` 上传到 Release（非 `upload-artifact`），因此 finalize 无需下载 tgz 产物。
+- finalize 的 `files: *.tgz` glob 在 finalize 工作目录中通常无匹配文件（`publish-helm` 已独立上传），`softprops/action-gh-release` 对未匹配的 glob 不报错（仅跳过）。
+- 此 `*.tgz` 属于已有设计（非本次 Task 4.4 改动范围），不影响 deb/rpm/exe 三类产物的流转。
+
+**结论**：`softprops/action-gh-release` 的 `files:` 含 `deployments/package/dist/*.deb`、`*.rpm`、`*.exe`，匹配 finalize 合并下载的三类产物文件，全部挂到 GitHub Release，与 plan Task 4.4 要求一致 ✓。
+
+### 18.2 流转链路完整性总结
+
+| 流转环节 | plan Task 4.4 要求 | release.yml 实际 | 结论 |
+|---------|-------------------|-----------------|------|
+| package job 上传 | `upload-artifact` 到 `packages-ubuntu-latest` / `packages-windows-latest` | `name: packages-${{ matrix.os }}`，matrix.os = ubuntu-latest/windows-latest | ✓ 一致 |
+| 上传文件类 | deb + rpm + exe | `path: deployments/package/dist/*.deb` + `*.rpm` + `*.exe` | ✓ 一致 |
+| finalize 下载 | `download-artifact` `pattern: packages-*` + `merge-multiple: true` | `pattern: packages-*` + `merge-multiple: true` + `path: deployments/package/dist` | ✓ 一致 |
+| 合并下载目录 | `deployments/package/dist/` | `path: deployments/package/dist` | ✓ 一致 |
+| gh-release files | 含 `*.deb`、`*.rpm`、`*.exe` | `deployments/package/dist/*.deb` + `*.rpm` + `*.exe`（+ `*.tgz` Helm） | ✓ 一致 |
+
+**核对结论：产物流转链路正确，finalize job 下载双平台 matrix 产物（deb/rpm/exe）并挂到 GitHub Release，无不一致项。**
+
+### 18.3 实跑验证归属
+
+本任务为静态代码核对（release.yml 的 upload-artifact / download-artifact / gh-release 三段流转链路核对），未执行实际 CI 构建。实跑验证留 Task 4.5（打 `v*` tag 触发 Release workflow 实跑）：
+
+- 打 tag `v0.0.0-package-test` 触发 release.yml
+- package job 双平台 matrix 实跑：ubuntu 产出 deb+rpm、windows 产出 exe，各自 upload-artifact
+- finalize job 实跑：download-artifact 合并下载双平台产物到 `deployments/package/dist/`
+- `softprops/action-gh-release` 实际将 deb/rpm/exe 三类文件挂到 GitHub Release 的 Assets 列表
+- 在 GitHub Release 页面确认 Assets 含 `*.deb`、`*.rpm`、`*.exe` 三类文件
+
+
