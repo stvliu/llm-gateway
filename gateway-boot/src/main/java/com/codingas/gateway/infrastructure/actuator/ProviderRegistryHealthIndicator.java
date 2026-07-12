@@ -12,7 +12,7 @@ import java.util.Map;
  * Provider 注册表健康指标
  *
  * <p>聚合所有 LLM Provider 的健康状态。</p>
- * <p>至少一个 Provider UP → 整体 UP；全部 DOWN/UNKNOWN → 整体 DOWN。</p>
+ * <p>至少一个 Provider 明确 DOWN → 整体 DOWN；全部 UP/UNKNOWN → 整体 UP（无流量≠不健康）。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class ProviderRegistryHealthIndicator extends AbstractHealthIndicator {
             return;
         }
 
-        boolean anyUp = false;
+        boolean anyDown = false;
         for (var state : allStatuses) {
             builder.withDetail(state.providerCode(), Map.of(
                     "status", state.status().getCode(),
@@ -37,15 +37,16 @@ public class ProviderRegistryHealthIndicator extends AbstractHealthIndicator {
                     "consecutiveSuccesses", state.consecutiveSuccesses(),
                     "lastError", state.lastErrorMessage() != null ? state.lastErrorMessage() : ""
             ));
-            if (state.status() == Status.UP) {
-                anyUp = true;
+            // 只有明确 DOWN 才视为不健康；UNKNOWN（初始态/无流量）视为健康
+            if (state.status() == Status.DOWN) {
+                anyDown = true;
             }
         }
 
-        if (anyUp) {
-            builder.up();
-        } else {
+        if (anyDown) {
             builder.down();
+        } else {
+            builder.up();
         }
     }
 }
