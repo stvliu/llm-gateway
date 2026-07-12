@@ -9,19 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.6: 配置 jpackage --type rpm
-- 阶段: review-fix（第 1 轮，standard 最多 1 轮）
-- 修复 agent 运行中
-- reviewer 结论: NEEDS_FIX（1 IMPORTANT + 3 MINOR）
-  - IMPORTANT #1: postinst-rpm 密钥空值兜底缺失（与 deb 不一致，安全）-> 与 deb 对齐加 [ -z "$OLD_KEY" ] 兜底
-  - MINOR #2-4: build.sh RPM_RES trap / postinst-rpm 启动日志 / prerm/postrm 注释
-- 已有提交：17218987
-
-## 待办（Task 2.6 收尾）
-
-1. 修复 agent 回报后：
-   - 复查修复（同 reviewer 视角）-> 通过则勾选 Task 2.6 + 派发 Task 2.7（docker 验证 deb）
-   - 复查未通过 -> BLOCKED，暂停交用户
+- Plan Task: Task 2.7: 本地验证 deb（干净 Ubuntu）
+- OpenSpec Task: 2.7 本地验证 deb：干净 Ubuntu 安装 -> 健康检查 UP -> 数据落 `/var/lib/llm-gateway/`
+- 阶段: implementing
+- implementer model: sonnet
+- 环境限制：Windows 无 docker + 无 deb 产物，本地验证留 CI（Phase 4 ubuntu job）
+- 风险信号: 待自报（预计无：记录环境限制）
 
 ## 已完成 Task
 
@@ -30,7 +23,7 @@
 - Task 1.2 / 1.3 / 1.4（1.4 reviewer 修复后通过）
 
 ### Phase 2
-- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5
+- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5 / 2.6（reviewer 修复后通过）
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 
@@ -39,4 +32,4 @@
 
 ## 审查-修复轮次预算
 
-- review_mode: standard -> 每任务最多 1 轮 review-fix（当前 Task 2.6 第 1 轮），最终轻量审查最多 1 轮修复
+- review_mode: standard -> 每任务最多 1 轮 review-fix，最终轻量审查最多 1 轮修复

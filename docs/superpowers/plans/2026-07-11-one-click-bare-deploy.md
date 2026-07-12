@@ -951,7 +951,7 @@ git commit -m "feat(package): Task 2.6 配置 jpackage --type rpm 等价 maintai
 
 **涉及文件：** 无新增（验证 Task）
 
-- [ ] **Step 1: 用 docker 跑干净 Ubuntu 安装 deb**
+- [x] **Step 1: 用 docker 跑干净 Ubuntu 安装 deb**
 
 ```bash
 DEB=$(ls deployments/package/dist/*.deb | head -1)
@@ -961,7 +961,7 @@ docker run --rm -d --name lg-deb-test \
   ubuntu:22.04 sleep 300
 ```
 
-- [ ] **Step 2: 容器内安装并验证服务启动**
+- [x] **Step 2: 容器内安装并验证服务启动**
 
 ```bash
 docker exec lg-deb-test bash -c '
@@ -981,7 +981,7 @@ docker exec lg-deb-test bash -c '
 - `systemctl is-active` 输出 `active`
 - `/var/lib/llm-gateway/` 含 H2 数据文件（如 `gateway.mv.db`）
 
-- [ ] **Step 3: 验证非交互安装回退默认端口**
+- [x] **Step 3: 验证非交互安装回退默认端口**
 
 ```bash
 docker stop lg-deb-test 2>/dev/null || true
@@ -999,7 +999,7 @@ docker exec lg-deb-nonint bash -c '
 
 预期：`SERVER_PORT=8080`，health UP。
 
-- [ ] **Step 4: 清理并记录验证结果**
+- [x] **Step 4: 清理并记录验证结果**
 
 ```bash
 docker stop lg-deb-test lg-deb-nonint 2>/dev/null || true
@@ -1007,7 +1007,7 @@ docker stop lg-deb-test lg-deb-nonint 2>/dev/null || true
 
 将验证结论追加到 `deployments/package/spike-report.md`。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deployments/package/spike-report.md
