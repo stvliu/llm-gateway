@@ -9,27 +9,33 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.2: 编写 debconf 模板
-- OpenSpec Task: 2.2 编写 debconf 模板（端口交互，默认 8080，非交互回退默认）
-- 阶段: implementing
-- implementer model: sonnet
-- 风险信号: 待自报（预计无：创建 2 配置文件，非风险任务）
+- Plan Task: Task 2.3: 编写 postinst
+- OpenSpec Task: 2.3 编写 `postinst`
+- 阶段: task-review（reviewer 运行中）
+- review_mode=standard 命中风险信号（安全敏感：加密密钥生成）-> 派发每任务 reviewer
+- 已有提交：1fb85cd6（postinst，93 行，含 D10 MANAGEMENT_HEALTH_REDIS_ENABLED=false）
+- 测试证据：bash -n 语法通过
+
+## 待办（Task 2.3 收尾）
+
+1. reviewer 回报后：
+   - APPROVED -> 勾选 Task 2.3 + 派发 Task 2.4（prerm/postrm）
+   - NEEDS_FIX（CRITICAL/IMPORTANT）-> 修复 agent（最多 1 轮），复查，未通过则 BLOCKED
 
 ## 已完成 Task
 
 ### Phase 1（全部完成）
 - Task 1.1: Spike + D10 health 修复（reviewer APPROVED）
-- Task 1.2: 固化 jlink 模块清单
-- Task 1.3: 创建目录结构
-- Task 1.4: build.sh / build.ps1（reviewer 修复后通过）
+- Task 1.2 / 1.3 / 1.4（1.4 reviewer 修复后通过）
 
 ### Phase 2
-- Task 2.1: systemd unit 模板（commit 43effca5）
+- Task 2.1: systemd unit 模板
+- Task 2.2: debconf 模板
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 
 - 修复 `ProviderRegistryHealthIndicator`：UNKNOWN 视为 UP
-- Redis：build 脚本 --java-options 加 `-Dmanagement.health.redis.enabled=false`；安装包服务环境变量加 `MANAGEMENT_HEALTH_REDIS_ENABLED=false`（Task 2.3 postinst env 文件 / Task 3.2 WinSW xml）
+- Redis：build 脚本 --java-options 加 `-Dmanagement.health.redis.enabled=false`；安装包服务环境变量加 `MANAGEMENT_HEALTH_REDIS_ENABLED=false`（Task 2.3 postinst env 文件已加 ✓ / Task 3.2 WinSW xml 待加）
 
 ## 审查-修复轮次预算
 

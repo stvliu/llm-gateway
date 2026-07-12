@@ -583,7 +583,7 @@ git commit -m "feat(package): Task 2.2 debconf 端口交互模板"
 **涉及文件：**
 - Create: `deployments/package/linux/postinst`
 
-- [ ] **Step 1: 编写 postinst**
+- [x] **Step 1: 编写 postinst**
 
 Create `deployments/package/linux/postinst`：
 
@@ -681,7 +681,7 @@ echo "  服务状态: systemctl status llm-gateway"
 exit 0
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/linux/postinst
