@@ -9,27 +9,24 @@
 
 ## 当前 Task
 
-- Plan Task: Task 3.2: 编写 Inno Setup 安装向导 UI
-- 阶段: review-fix（第 1 轮，standard 最多 1 轮）
+- Plan Task: Task 3.3: 验证密钥生成 Pascal Script（验证点）
+- 阶段: review-fix（CRITICAL 修复，Task 3.3 验证发现 Task 3.2 iss bug）
 - 修复 agent 运行中
-- reviewer 结论: NEEDS_FIX（3 IMPORTANT + 5 MINOR）
-  - IMPORTANT-1: 密钥生成 Get-Random 非加密安全 -> RandomNumberGenerator
-  - IMPORTANT-2: 兜底占位串可预测 -> RaiseException 中止
-  - IMPORTANT-3: 升级改端口不生效 -> ReadXmlValue + 精确匹配
-  - MINOR-1-5: ExistingPort dead code / PortPage 显示已有端口 / 端口精确匹配 / AppId GUID / 临时文件清理
-- 已有提交：9f7d1444
+- CRITICAL：iss GenerateEncryptionKey 静态方法 GetBytes(32) 不兼容 PS 5.1 -> 改实例方法 Create()+GetBytes(byte[])
+- 已有提交：aab14338（Task 3.3 验证结论）
 
-## 待办（Task 3.2 收尾）
+## 待办（Task 3.3 收尾）
 
 1. 修复 agent 回报后：
-   - 复查修复（同 reviewer 视角）-> 通过则勾选 Task 3.2 + 派发 Task 3.3
-   - 复查未通过 -> BLOCKED，暂停交用户
+   - 复查修复（PS 5.1 兼容）-> 通过则勾选 Task 3.3 + 派发 Task 3.4（验证 env 写入 WinSW xml）
+   - 复查未通过 -> BLOCKED
 
 ## 已完成 Task
 
 ### Phase 1（全部完成）/ Phase 2（全部完成）
 ### Phase 3
 - Task 3.1: WinSW 配置（含 D10）
+- Task 3.2: Inno Setup 完整脚本（reviewer 修复后通过）
 
 ## D10 修复说明
 
@@ -38,4 +35,4 @@
 
 ## 审查-修复轮次预算
 
-- review_mode: standard -> 每任务最多 1 轮 review-fix（当前 Task 3.2 第 1 轮），最终轻量审查最多 1 轮修复
+- review_mode: standard -> 每任务最多 1 轮 review-fix，最终轻量审查最多 1 轮修复

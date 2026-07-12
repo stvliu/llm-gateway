@@ -1353,7 +1353,7 @@ git commit -m "feat(package): Task 3.2 Inno Setup 安装向导（端口输入页
 
 **涉及文件：** 无新增（验证 Task 3.2 已含的 Pascal Code）
 
-- [ ] **Step 1: 单独验证 PowerShell 密钥生成命令**
+- [x] **Step 1: 单独验证 PowerShell 密钥生成命令**
 
 ```powershell
 # PowerShell
@@ -1369,7 +1369,7 @@ Write-Host "解码字节数: $($bytes.Length)"
 
 > **验证点：** 确认 `llm-gateway.iss` 中 `GenerateEncryptionKey` 函数调用此 PowerShell 命令并读取 `{tmp}\gateway_key.txt`。`ReadXmlValue` 在升级时读取已有 `GATEWAY_ENCRYPTION_KEY` 值，非空则保留。
 
-- [ ] **Step 2: 记录验证结论并 Commit**
+- [x] **Step 2: 记录验证结论并 Commit**
 
 将验证结论追加到 `deployments/package/spike-report.md`：
 
