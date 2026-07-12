@@ -318,3 +318,62 @@ docker exec lg-deb-nonint bash -c '
 | 卸载保留数据 | `apt remove` / `apt purge` 后 `/var/lib/llm-gateway/` 数据保留/清除符合预期 | CI ubuntu job（需补充卸载流程） |
 
 > 注：升级保留与卸载保留两个 Scenario 需 CI 补充多阶段 docker 流程（安装旧版 -> 升级/卸载 -> 验数据），当前 plan Task 2.7 Step 1-3 仅覆盖全新安装场景。
+
+## 10. Task 2.8 环境限制说明（rpm Rocky Linux 安装验证）
+
+### 10.1 环境限制
+
+- Windows 无 docker（`docker: command not found`），无法本地启动 Rocky Linux 容器
+- 无 rpm 产物（`deployments/package/dist/*.rpm` 不存在；rpm 需 Linux 环境 rpmbuild 构建，Task 2.6 已留 CI）
+- 本地 docker 验证无法执行，实际验证留 CI
+
+### 10.2 实际验证留 CI（Phase 4 ubuntu job 交叉打 rpm）
+
+rpm 包需在 Linux 环境构建（rpmbuild），CI Phase 4 ubuntu job 将交叉打 rpm，再用 Rocky Linux 容器做 smoke test：
+
+1. ubuntu job 构建 rpm 产物（jpackage `--type rpm`，在 Linux 上交叉构建）
+2. `docker run rockylinux:9` 挂载 rpm 产物（端口映射 18081:8080）
+3. 容器内 `dnf install -y /tmp/llm-gateway.rpm`
+4. `curl http://localhost:8080/actuator/health` 验 UP
+5. 验数据目录 `/var/lib/llm-gateway/` 落盘
+
+### 10.3 CI smoke test 参考步骤（plan Step 1-2 映射）
+
+#### Step 1: 用 docker 跑 Rocky Linux 安装 rpm（端口映射 18081:8080）
+
+```bash
+RPM=$(ls deployments/package/dist/*.rpm | head -1)
+docker run --rm -d --name lg-rpm-test \
+  -v "$(pwd)/$RPM:/tmp/llm-gateway.rpm" \
+  -p 18081:8080 \
+  rockylinux:9 sleep 300
+```
+
+#### Step 2: 容器内安装并验证
+
+```bash
+docker exec lg-rpm-test bash -c '
+  dnf install -y /tmp/llm-gateway.rpm curl
+  for i in $(seq 1 90); do
+    if curl -sf http://localhost:8080/actuator/health; then echo; break; fi
+    sleep 1
+  done
+  systemctl is-active llm-gateway.service
+  ls -la /var/lib/llm-gateway/
+'
+```
+
+**预期结果：**
+- `curl` 输出含 `"status":"UP"`
+- `systemctl is-active` 输出 `active`
+- `/var/lib/llm-gateway/` 含 H2 数据文件（如 `gateway.mv.db`）
+
+### 10.4 Spec Scenario 实际验证归属
+
+以下 Spec Scenario 的实际验证均在 CI 完成：
+
+| Scenario | 验证内容 | 验证位置 |
+|----------|---------|---------|
+| rpm 全新安装并启动 | rpm 安装后 health 60s 内 UP | CI Phase 4 ubuntu job（交叉打 rpm -> Rocky Linux 9 容器 `dnf install` -> health UP） |
+
+> 注：rpm 验证需 Rocky Linux 9 容器（RHEL 系），与 deb（Ubuntu/Debian 系）互补，覆盖两类包格式；systemd 单元由 jpackage 生成，deb/rpm 均注册 `llm-gateway.service`，`systemctl is-active` 验证服务 active。
