@@ -672,3 +672,104 @@ plan Step 1 文本（plan line 1400）描述旧逻辑 `StringChangeEx(Content, '
 
 > 注：Task 3.5 实际 iscc 编译验证（产出 `llm-gateway-setup.exe`）留 Phase 4 CI `windows-latest` job；本机仅完成脚本编写 + PowerShell AST 语法验证。download-winsw.ps1 的实际网络下载（Invoke-WebRequest）未执行，WinSW GitHub release URL 的可达性留 CI 验证。
 
+## 15. Task 3.6 环境限制说明（exe 干净 Windows 安装验证）
+
+> 追加日期：2026-07-12
+> 关联任务：Task 3.6 - 本地验证 exe（干净 Windows）
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 3.6（Step 1-5，约行 1492-1562）
+> 目标：干净 Windows 安装 exe -> Service 启动 -> 健康检查 UP -> 数据落 `%ProgramData%`
+
+### 15.1 环境限制
+
+| 检查项 | 命令 | 结果 |
+|---|---|---|
+| exe 产物 | `Test-Path deployments/package/dist/llm-gateway-setup.exe` | `False`（产物不存在） |
+| iscc 可用性 | 见第 14 节 | 本机未安装 Inno Setup，Task 3.5 已确认无法编译 exe |
+
+**结论**：由于本机无 Inno Setup（iscc 不可用，详见第 14 节），Task 3.5 未能产出 `deployments/package/dist/llm-gateway-setup.exe`。Task 3.6 的 plan Step 1-4（静默安装、服务/health 验证、升级保留密钥、卸载保留数据）均依赖该 exe 产物，本地实际安装/验证无法执行。
+
+### 15.2 实际验证留 CI（Phase 4 windows job）
+
+exe 的干净 Windows 安装验证将延后至 CI（Phase 4 `windows-latest` job）完成。CI smoke test 完整流程如下：
+
+1. **编译 exe**：CI `windows-latest` runner 通过 `choco install innosetup -y` 预装 iscc，执行 `./deployments/package/build.ps1` 产出 `deployments/package/dist/llm-gateway-setup.exe`
+2. **静默安装**：管理员 PowerShell 执行 `Start-Process .\dist\llm-gateway-setup.exe -ArgumentList "/VERYSILENT","/NORESTART" -Wait`（验证 `/VERYSILENT` 非交互安装回退默认端口 8080）
+3. **健康检查**：`curl http://localhost:8080/actuator/health`（或 `Invoke-WebRequest`）验证返回 `"status":"UP"`
+4. **服务与数据落盘验证**：`Get-Service LLMGateway` 显示 `Status=Running`；`Get-ChildItem $env:ProgramData\LLM-Gateway\data` 含 H2 数据文件（如 `gateway.mv.db`）
+5. **升级保留密钥验证**：读取首次安装的 `GATEWAY_ENCRYPTION_KEY` -> 再次运行安装包（模拟升级）-> 读取升级后密钥 -> 断言两者相等（`PASS: 密钥升级保留`）
+6. **卸载保留数据验证**：`unins000.exe /VERYSILENT` 卸载 -> `Get-Service LLMGateway` 应不存在（服务已移除）-> `Test-Path $env:ProgramData\LLM-Gateway\data` 应为 `True`（数据目录保留）
+
+### 15.3 CI smoke test 参考步骤（plan Step 1-4 映射）
+
+以下为 plan Task 3.6 Step 1-4 的验证步骤，作为 CI smoke test 编写参考：
+
+#### Step 1: 静默安装（验证 `/VERYSILENT` 回退默认端口）
+
+```powershell
+# 管理员 PowerShell
+Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" `
+  -ArgumentList "/VERYSILENT","/NORESTART" -Wait -NoNewWindow
+```
+
+**预期**：非交互静默安装完成，SERVER_PORT 回退默认 8080（iss `InitializeWizard` 无用户输入时预填 8080）。
+
+#### Step 2: 验证服务与 health
+
+```powershell
+# 等待服务就绪（最多 90s）
+for ($i=1; $i -le 90; $i++) {
+  try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
+}
+Get-Service LLMGateway | Format-List Name,Status,StartType
+Get-ChildItem "$env:ProgramData\LLM-Gateway\data"
+```
+
+**预期结果：**
+- health 输出含 `"status":"UP"`
+- `Get-Service` 显示 `Status=Running`、`StartType=Automatic`
+- `%ProgramData%\LLM-Gateway\data\` 含 H2 数据文件（如 `gateway.mv.db`）
+
+#### Step 3: 验证升级保留密钥
+
+```powershell
+# 读取首次安装的密钥
+[xml]$xml = Get-Content "$env:ProgramFiles\LLM-Gateway\LLMGateway.xml"
+$firstKey = ($xml.service.env | Where-Object { $_.name -eq 'GATEWAY_ENCRYPTION_KEY' }).value
+Write-Host "首次密钥: $firstKey"
+
+# 再次运行安装包（模拟升级）
+Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" `
+  -ArgumentList "/VERYSILENT" -Wait -NoNewWindow
+
+[xml]$xml2 = Get-Content "$env:ProgramFiles\LLM-Gateway\LLMGateway.xml"
+$secondKey = ($xml2.service.env | Where-Object { $_.name -eq 'GATEWAY_ENCRYPTION_KEY' }).value
+Write-Host "升级后密钥: $secondKey"
+if ($firstKey -eq $secondKey) { Write-Host "PASS: 密钥升级保留" } else { Write-Host "FAIL: 密钥被覆盖"; exit 1 }
+```
+
+**预期结果：** `PASS: 密钥升级保留`（iss `onlyifdoesntexist` + `ReadXmlValue` 保留已有密钥，详见第 13 节核对）。
+
+#### Step 4: 卸载验证（保留数据目录）
+
+```powershell
+# 控制面板卸载或:
+Start-Process -FilePath "C:\Program Files\LLM-Gateway\unins000.exe" -ArgumentList "/VERYSILENT" -Wait
+Get-Service LLMGateway -ErrorAction SilentlyContinue  # 应不存在
+Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
+```
+
+**预期结果：** 服务已移除（`Get-Service` 返回 `$null`），数据目录保留（`Test-Path` 返回 `True`）。
+
+### 15.4 Spec Scenario 实际验证归属
+
+以下 Spec Scenario 的实际验证均在 CI 完成：
+
+| Scenario | 验证内容 | 验证位置 |
+|----------|---------|---------|
+| Windows exe 全新安装并启动 | exe `/VERYSILENT` 安装后 health 90s 内 UP + `Get-Service` Running | CI Phase 4 `windows-latest` job（Step 1-2） |
+| 升级保留数据与密钥 | 首次安装 exe -> 再次运行 exe 升级 -> `GATEWAY_ENCRYPTION_KEY` 保留不变 | CI Phase 4 `windows-latest` job（Step 3） |
+| 静默安装使用默认端口 | `/VERYSILENT` 非交互安装回退默认端口 8080，health 在 8080 可达 | CI Phase 4 `windows-latest` job（Step 1-2） |
+| 卸载保留数据 | `unins000.exe /VERYSILENT` 卸载后服务移除 + `%ProgramData%\LLM-Gateway\data` 保留 | CI Phase 4 `windows-latest` job（Step 4） |
+
+> 注：本机因 iscc 不可用（第 14 节）无 exe 产物，Task 3.6 Step 1-4 全部延后至 CI `windows-latest` job 验证。iss 的 `onlyifdoesntexist` + `ReadXmlValue` 升级保留逻辑、`GenerateEncryptionKey` 密钥生成（PS 5.1 兼容修复，第 12 节）、四项 env 写入路径（第 13 节）均已通过静态代码核对，运行时验证留 CI。
+
