@@ -545,3 +545,90 @@ if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "$r=[Securit
 - **升级安装**：不调用 `GenerateEncryptionKey`（已有密钥），不受影响 ✓
 - **加密安全性**：`RandomNumberGenerator` 为加密安全 RNG（FIPS 140-2 兼容），等价 `openssl rand -base64 32`，保留 ✓
 - **环境兼容性**：实例方法 `Create()` + `GetBytes(byte[])` 在 .NET Framework 2.0+ 与 .NET Core 均可用，兼容 Windows PowerShell 5.1 及 PowerShell 7+ ✓
+
+## 13. Task 3.4 WinSW xml 环境变量写入验证
+
+> 追加日期：2026-07-12
+> 关联任务：Task 3.4 - 验证服务环境变量写入 WinSW xml
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 3.4（Step 1-2，约行 1389-1413）
+> 验证文件：`deployments/package/windows/LLMGateway.xml`（Task 3.1）+ `deployments/package/windows/llm-gateway.iss`（Task 3.2）
+
+### 13.1 Step 1：xml 模板与 iss 协作一致性核对
+
+核对 `LLMGateway.xml`（Task 3.1 产出）与 `llm-gateway.iss`（Task 3.2 产出）在四项环境变量上的写入路径与替换逻辑。
+
+#### 13.1.1 DB_URL（数据目录外部化）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| xml 默认值 | `jdbc:h2:file:%ProgramData%\LLM-Gateway\data\gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE` | `LLMGateway.xml` line 13 |
+| iss 修改逻辑 | 无（全文无 DB_URL 相关 `StringChangeEx`） | iss 全文 |
+| 数据目录指向 | `%ProgramData%\LLM-Gateway\data\` | xml line 13 DB_URL + line 20 `<workingdirectory>` 一致 |
+
+**结论**：DB_URL 在 xml 模板中硬编码为指向 `%ProgramData%\LLM-Gateway\data\gateway` 的 H2 文件库，iss 不修改此项，安装后值正确 ✓。xml line 20 `<workingdirectory>%ProgramData%\LLM-Gateway\data</workingdirectory>` 与 DB_URL 路径一致，H2 文件库落在数据目录下。
+
+#### 13.1.2 SERVER_PORT（服务监听端口）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| xml 默认值 | `8080` | `LLMGateway.xml` line 14 |
+| iss 端口输入页预填 | 升级时 `ReadXmlValue({pf}\...\LLMGateway.xml, 'SERVER_PORT')` 读已有端口预填；新装默认 8080 | iss `InitializeWizard` line 80-85 |
+| iss 端口写入（新装） | `StringChangeEx(Content, 'name="SERVER_PORT" value="8080"', 'name="SERVER_PORT" value="' + PortValue + '"', True)` | iss `CurStepChanged` line 191 |
+| iss 端口写入（升级） | `OldPort := ReadXmlValue(XmlPath, 'SERVER_PORT')` → `StringChangeEx(Content, 'name="SERVER_PORT" value="' + OldPort + '"', 'name="SERVER_PORT" value="' + PortValue + '"', True)` | iss `CurStepChanged` line 186-189 |
+
+**关键验证点：精确匹配 vs 全局替换**
+
+plan Step 1 文本（plan line 1400）描述旧逻辑 `StringChangeEx(Content, 'value="8080"', ...)`，会替换 xml 中**所有** `value="8080"`。Task 3.2 reviewer 修复后，iss 实际代码已改为**精确匹配** `name="SERVER_PORT" value="..."`：
+
+- 新装分支（line 191）：匹配串 `name="SERVER_PORT" value="8080"`，含 `name="SERVER_PORT"` 前缀，仅替换 SERVER_PORT 这一 env 节点
+- 升级分支（line 188）：匹配串 `name="SERVER_PORT" value="<已有端口>"`，按 `ReadXmlValue` 读到的实际已有端口精确匹配
+
+此精确匹配消除了 plan line 1404 风险点所述"后续 xml 增加其他默认 8080 字段时全局替换误伤"的隐患 ✓。
+
+**结论**：SERVER_PORT 默认 8080，iss 用 `ReadXmlValue` 读已有端口 + 精确匹配 `name="SERVER_PORT" value="..."` 替换为新输入值，新装/升级两场景写入路径正确 ✓。
+
+#### 13.1.3 GATEWAY_ENCRYPTION_KEY（加密密钥）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| xml 默认值 | 空 `value=""` | `LLMGateway.xml` line 15 |
+| iss 密钥来源 | 升级时 `ReadXmlValue(XmlPath, 'GATEWAY_ENCRYPTION_KEY')` 读已有值保留；新装 `GenerateEncryptionKey` 生成 32 字节 base64 | iss `CurStepChanged` line 173-180 |
+| iss 密钥写入 | `StringChangeEx(Content, 'name="GATEWAY_ENCRYPTION_KEY" value=""', 'name="GATEWAY_ENCRYPTION_KEY" value="' + KeyValue + '"', True)` | iss `CurStepChanged` line 194-195 |
+
+**结论**：GATEWAY_ENCRYPTION_KEY 默认空 `value=""`，iss 精确匹配 `name="GATEWAY_ENCRYPTION_KEY" value=""` 替换为生成密钥（新装）或保留已有密钥（升级），写入路径正确 ✓。密钥生成逻辑经 Task 3.3 修复后兼容 Windows PowerShell 5.1（实例方法 `Create()` + `GetBytes(byte[])`，详见第 12 节）。
+
+#### 13.1.4 MANAGEMENT_HEALTH_REDIS_ENABLED（D10 Redis health 禁用）
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| xml 值 | `false` | `LLMGateway.xml` line 17 |
+| iss 修改逻辑 | 无（全文无 MANAGEMENT_HEALTH_REDIS_ENABLED 相关 `StringChangeEx`） | iss 全文 |
+
+**结论**：MANAGEMENT_HEALTH_REDIS_ENABLED 在 xml 中固定为 `false`（D10 修复：裸机部署默认无 Redis，禁用 redis health 检查避免误报 DOWN），iss 不动此 env，安装后值正确 ✓。
+
+#### 13.1.5 [Files] 升级保留机制
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| xml 部署标记 | `Flags: ignoreversion onlyifdoesntexist` | iss line 43 |
+| 升级行为 | 目标已存在则不覆盖，保留已有 xml（含密钥与端口） | iss line 44 注释 |
+
+**结论**：`onlyifdoesntexist` 确保升级时不覆盖已有 xml，配合 `CurStepChanged` 的 `ReadXmlValue` 读取已有端口/密钥，升级保留语义完整 ✓。
+
+### 13.2 Step 2：四项 env 写入路径汇总
+
+| 环境变量 | xml 默认值 | iss 修改逻辑 | 安装后值 | 结果 |
+|---|---|---|---|---|
+| `DB_URL` | `jdbc:h2:file:%ProgramData%\LLM-Gateway\data\gateway;...` | 不修改 | 保持 xml 默认（指向 `%ProgramData%\LLM-Gateway\data\`） | ✓ |
+| `SERVER_PORT` | `8080` | `ReadXmlValue` 读已有端口 + 精确匹配 `name="SERVER_PORT" value="..."` 替换为用户输入 | 用户输入值（新装默认 8080，升级保留/修改） | ✓ |
+| `GATEWAY_ENCRYPTION_KEY` | 空 `value=""` | `ReadXmlValue` 读已有密钥保留；空则 `GenerateEncryptionKey` 生成 + 精确匹配 `name="GATEWAY_ENCRYPTION_KEY" value=""` 替换 | 生成密钥（新装）/ 已有密钥（升级） | ✓ |
+| `MANAGEMENT_HEALTH_REDIS_ENABLED` | `false` | 不修改 | 保持 xml 默认 `false`（D10） | ✓ |
+
+### 13.3 验证结论
+
+1. **四项 env 写入路径正确**：DB_URL / SERVER_PORT / GATEWAY_ENCRYPTION_KEY / MANAGEMENT_HEALTH_REDIS_ENABLED 在 `LLMGateway.xml` 中均有定义，iss 按预期修改需动态写入的两项（SERVER_PORT / GATEWAY_ENCRYPTION_KEY），保持另两项（DB_URL / MANAGEMENT_HEALTH_REDIS_ENABLED）为 xml 默认值 ✓
+2. **iss 替换逻辑正确（精确匹配）**：SERVER_PORT 与 GATEWAY_ENCRYPTION_KEY 均用 `name="<KEY>" value="<...>"` 精确匹配替换，非旧逻辑全局 `value="8080"` 替换，消除了误伤 xml 中其他同值字段的风险 ✓
+3. **升级保留语义完整**：`onlyifdoesntexist`（iss line 43）保留已有 xml + `ReadXmlValue` 读取已有端口/密钥 + 非空则保留逻辑，升级时端口与密钥不丢失 ✓
+4. **DB_URL 数据目录一致**：xml line 13 DB_URL 路径 `%ProgramData%\LLM-Gateway\data\gateway` 与 xml line 20 `<workingdirectory>%ProgramData%\LLM-Gateway\data</workingdirectory>` 一致，H2 文件库落在数据目录下 ✓
+
+> 注：本任务为静态代码核对（xml 模板 vs iss Pascal Script），未执行实际 Inno Setup 编译安装。实际安装后 xml 值的运行时验证留 Task 3.5（iscc 编译产出 setup.exe）及 Phase 4 CI smoke test。
