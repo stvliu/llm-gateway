@@ -1983,7 +1983,7 @@ git commit -m "fix(docker): Task 5.1 Dockerfile 适配单模块 gateway-boot"
 **涉及文件：**
 - Modify: `deployments/docker/docker-compose.yml`
 
-- [ ] **Step 1: 修改 gateway 服务 build context 与 health**
+- [x] **Step 1: 修改 gateway 服务 build context 与 health**
 
 在 `deployments/docker/docker-compose.yml` 中，定位 `gateway` 服务的 `build:` 块：
 
@@ -2007,7 +2007,7 @@ git commit -m "fix(docker): Task 5.1 Dockerfile 适配单模块 gateway-boot"
 
 > `context: ../..` 指向仓库根（docker-compose.yml 在 `deployments/docker/`，上两级即根）。`dockerfile` 路径相对 context（仓库根），即 `deployments/docker/Dockerfile`。
 
-- [ ] **Step 2: 移除 gateway 服务的源码挂载**
+- [x] **Step 2: 移除 gateway 服务的源码挂载**
 
 定位 gateway 服务的 `volumes:`，删除源码挂载行：
 
@@ -2040,7 +2040,7 @@ volumes:
     name: llm-gateway-app-data
 ```
 
-- [ ] **Step 3: 修改 gateway 服务 health 路径**
+- [x] **Step 3: 修改 gateway 服务 health 路径**
 
 定位 gateway 服务 healthcheck：
 
@@ -2056,7 +2056,7 @@ volumes:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
 ```
 
-- [ ] **Step 4: 追加 gateway-console 服务**
+- [x] **Step 4: 追加 gateway-console 服务**
 
 在 `gateway` 服务块之后（`networks:` 定义之前）追加 `gateway-console` 服务：
 
@@ -2083,7 +2083,7 @@ volumes:
 
 > **说明：** `gateway-console` 需有 `Dockerfile`。若 `gateway-console/Dockerfile` 不存在，本 Task 同步创建一个最小 Node 构建镜像（Step 5）。
 
-- [ ] **Step 5: 创建 gateway-console Dockerfile（若不存在）**
+- [x] **Step 5: 创建 gateway-console Dockerfile（若不存在）**
 
 检查并创建 `gateway-console/Dockerfile`：
 
@@ -2125,7 +2125,7 @@ CMD ["pnpm", "dev", "--host", "0.0.0.0"]
 
 > **注意：** 若 `gateway-console` 无 `pnpm-lock.yaml`，`pnpm install` 会生成。生产场景应改为多阶段构建（build + nginx 托管），本 dev compose 用 dev server 足够验证。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add deployments/docker/docker-compose.yml gateway-console/Dockerfile
