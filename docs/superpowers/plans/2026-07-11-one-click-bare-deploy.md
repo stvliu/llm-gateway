@@ -483,7 +483,7 @@ git commit -m "feat(package): Task 1.4 编写 build.sh/build.ps1 构建入口"
 **涉及文件：**
 - Create: `deployments/package/linux/llm-gateway.service`
 
-- [ ] **Step 1: 编写 systemd unit**
+- [x] **Step 1: 编写 systemd unit**
 
 Create `deployments/package/linux/llm-gateway.service`：
 
@@ -512,7 +512,7 @@ WantedBy=multi-user.target
 
 > 说明：`User=llm-gateway` 由 postinst 创建；`EnvironmentFile` 由 postinst 生成；jpackage 默认安装 app-image 到 `/opt/llm-gateway/`，启动器为 `bin/llm-gateway`。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/linux/llm-gateway.service
