@@ -9,18 +9,11 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.3: 编写 postinst
-- OpenSpec Task: 2.3 编写 `postinst`
-- 阶段: task-review（reviewer 运行中）
-- review_mode=standard 命中风险信号（安全敏感：加密密钥生成）-> 派发每任务 reviewer
-- 已有提交：1fb85cd6（postinst，93 行，含 D10 MANAGEMENT_HEALTH_REDIS_ENABLED=false）
-- 测试证据：bash -n 语法通过
-
-## 待办（Task 2.3 收尾）
-
-1. reviewer 回报后：
-   - APPROVED -> 勾选 Task 2.3 + 派发 Task 2.4（prerm/postrm）
-   - NEEDS_FIX（CRITICAL/IMPORTANT）-> 修复 agent（最多 1 轮），复查，未通过则 BLOCKED
+- Plan Task: Task 2.4: 编写 prerm 与 postrm
+- OpenSpec Task: 2.4 编写 `prerm`（stop/disable）与 `postrm`（清理安装文件、保留数据目录）
+- 阶段: implementing
+- implementer model: sonnet
+- 风险信号: 待自报（预计无：卸载脚本，按 plan 严格 purge 才清数据）
 
 ## 已完成 Task
 
@@ -31,6 +24,7 @@
 ### Phase 2
 - Task 2.1: systemd unit 模板
 - Task 2.2: debconf 模板
+- Task 2.3: postinst（reviewer APPROVED，5 MINOR 非阻断，D10 Redis 环境变量已加）
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 

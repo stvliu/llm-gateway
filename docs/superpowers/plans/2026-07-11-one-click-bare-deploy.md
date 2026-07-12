@@ -698,7 +698,7 @@ git commit -m "feat(package): Task 2.3 postinst 安装后脚本"
 - Create: `deployments/package/linux/prerm`
 - Create: `deployments/package/linux/postrm`
 
-- [ ] **Step 1: 编写 prerm**
+- [x] **Step 1: 编写 prerm**
 
 Create `deployments/package/linux/prerm`：
 
@@ -715,7 +715,7 @@ fi
 exit 0
 ```
 
-- [ ] **Step 2: 编写 postrm**
+- [x] **Step 2: 编写 postrm**
 
 Create `deployments/package/linux/postrm`：
 
@@ -742,7 +742,7 @@ echo "[postrm] 卸载完成。数据目录 /var/lib/llm-gateway 已保留（除�
 exit 0
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add deployments/package/linux/prerm deployments/package/linux/postrm
