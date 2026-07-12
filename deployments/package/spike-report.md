@@ -773,3 +773,122 @@ Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
 
 > 注：本机因 iscc 不可用（第 14 节）无 exe 产物，Task 3.6 Step 1-4 全部延后至 CI `windows-latest` job 验证。iss 的 `onlyifdoesntexist` + `ReadXmlValue` 升级保留逻辑、`GenerateEncryptionKey` 密钥生成（PS 5.1 兼容修复，第 12 节）、四项 env 写入路径（第 13 节）均已通过静态代码核对，运行时验证留 CI。
 
+---
+
+## 16. Task 4.2 ubuntu job 一致性核对
+
+> 追加日期：2026-07-12
+> 关联任务：Task 4.2 - 验证 ubuntu job 构建 deb + rpm
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 4.2（Step 1-2，约行 1763-1784）
+> 核对文件：`.github/workflows/release.yml`（package job ubuntu 分支）+ `deployments/package/build.sh`
+> 核对方式：静态代码核对（CI 步骤 vs build.sh 调用链），实跑验证留 Task 4.5（打 tag 实跑）
+
+### 16.1 核对项 1：Install rpm tool (Linux)
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Install rpm tool (Linux)` | release.yml line 143 |
+| CI 条件 | `if: runner.os == 'Linux'` | release.yml line 144 |
+| CI 命令 | `sudo apt-get update && sudo apt-get install -y rpm` | release.yml line 145 |
+| build.sh 依赖点 | `if command -v rpm >/dev/null 2>&1; then`（rpm 工具存在才打 rpm 分支） | build.sh line 96 |
+| build.sh 注释 | "需 rpm 工具；CI 环境 apt-get install -y rpm 即可" | build.sh line 93 |
+
+**结论**：CI 在构建前预装 rpm 工具，确保 build.sh line 96 的 `command -v rpm` 检测通过，rpm 打包分支（line 97-117）得以执行。CI 命令额外包含 `apt-get update`（刷新包索引，CI runner 标准实践），plan 描述的 `sudo apt-get install -y rpm` 为简化表述，实质一致 ✓。
+
+### 16.2 核对项 2：Restore Linux script permissions
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Restore Linux script permissions` | release.yml line 134 |
+| CI 条件 | `if: runner.os == 'Linux'` | release.yml line 135 |
+| chmod 目标 | build.sh + 7 个 maintainer 脚本 | release.yml line 137-141 |
+
+**chmod 覆盖的 8 个脚本清单：**
+
+| # | 脚本路径 | 用途 | plan Task 4.2 要求 |
+|---|---------|------|-------------------|
+| 1 | `deployments/package/build.sh` | 构建脚本本体 | ✓（build.sh 需 +x 才能 `./deployments/package/build.sh` 执行） |
+| 2 | `deployments/package/linux/postinst` | deb 安装后脚本 | ✓ |
+| 3 | `deployments/package/linux/prerm` | deb 卸载前脚本 | ✓ |
+| 4 | `deployments/package/linux/postrm` | deb 卸载后脚本 | ✓ |
+| 5 | `deployments/package/linux/llm-gateway.config` | deb debconf 配置脚本 | ✓ |
+| 6 | `deployments/package/linux/postinst-rpm` | rpm 安装后脚本 | ✓ |
+| 7 | `deployments/package/linux/prerm-rpm` | rpm 卸载前脚本 | ✓ |
+| 8 | `deployments/package/linux/postrm-rpm` | rpm 卸载后脚本 | ✓ |
+
+**结论**：plan Task 4.2 要求的 7 个 maintainer 脚本（postinst/prerm/postrm/llm-gateway.config + postinst-rpm/prerm-rpm/postrm-rpm）+ build.sh 共 8 个，release.yml `Restore Linux script permissions` 步骤全部覆盖。checkout 后 git 不保留 +x 位（Windows checkout 尤甚），此步骤恢复可执行权限，确保 build.sh 可直接执行 + jpackage `--resource-dir` 内 maintainer 脚本可执行（jpackage 要求 resource-dir 内 maintainer 脚本可执行）✓。
+
+### 16.3 核对项 3：Build packages (Linux)
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Build packages (Linux)` | release.yml line 151 |
+| CI 条件 | `if: runner.os == 'Linux'` | release.yml line 152 |
+| CI 命令 | `./deployments/package/build.sh` | release.yml line 153 |
+| build.sh 产出 | deb + rpm（dist 目录） | build.sh line 88（deb）+ line 109（rpm） |
+
+**build.sh 构建链：**
+
+1. mvn package 产出 fat jar（build.sh line 38-43）
+2. jlink 生成精简 JRE（build.sh line 51-59）
+3. jpackage `--type deb` 打 deb（build.sh line 87-91，resource-dir 为 `deployments/package/linux/`）
+4. jpackage `--type rpm` 打 rpm（build.sh line 96-117，rpm 工具可用时执行，resource-dir 为临时 `linux-rpm-staging/`，内含从 `-rpm` 后缀脚本复制的标准命名 postinst/prerm/postrm）
+
+**结论**：CI `Build packages (Linux)` 步骤直接调用 `./deployments/package/build.sh`，build.sh 内部完成 deb + rpm 双格式打包。deb 分支无条件执行，rpm 分支由 `command -v rpm` 守护（CI 已预装 rpm，见核对项 1），两格式均会产出 ✓。
+
+### 16.4 核对项 4：Smoke test - deb + Smoke test - rpm
+
+#### 16.4.1 Smoke test - deb
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Smoke test - deb (Linux)` | release.yml line 159 |
+| CI 条件 | `if: runner.os == 'Linux'` | release.yml line 160 |
+| 容器镜像 | `jrei/systemd-ubuntu:22.04` | release.yml line 168 |
+| 特权模式 | `--privileged --cgroupns=host` | release.yml line 166 |
+| systemd 就绪等待 | 30 次循环，每次 1s，`systemctl is-system-running` 为 running/degraded 时 break | release.yml line 170-174 |
+| 容器内安装 | `apt-get update && apt-get install -y /tmp/llm-gateway.deb curl` | release.yml line 176 |
+| health 检查 | 90 次循环，每次 1s，`curl -sf http://localhost:8080/actuator/health` 成功即 break | release.yml line 177 |
+| 服务状态验证 | `systemctl is-active llm-gateway.service` | release.yml line 178 |
+
+#### 16.4.2 Smoke test - rpm
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Smoke test - rpm (Linux)` | release.yml line 182 |
+| CI 条件 | `if: runner.os == 'Linux'` | release.yml line 183 |
+| 容器镜像 | `jrei/systemd-rockylinux:9` | release.yml line 190 |
+| 特权模式 | `--privileged --cgroupns=host` | release.yml line 188 |
+| systemd 就绪等待 | 30 次循环，每次 1s，`systemctl is-system-running` 为 running/degraded 时 break | release.yml line 192-196 |
+| 容器内安装 | `dnf install -y /tmp/llm-gateway.rpm curl` | release.yml line 198 |
+| health 检查 | 90 次循环，每次 1s，`curl -sf http://localhost:8080/actuator/health` 成功即 break | release.yml line 199 |
+| 服务状态验证 | `systemctl is-active llm-gateway.service` | release.yml line 200 |
+
+**systemd-ready 镜像选择说明：**
+- `jrei/systemd-ubuntu:22.04` 与 `jrei/systemd-rockylinux:9` 均为 PID 1 = systemd 的镜像（非标准 ubuntu/rockylinux 镜像的 PID 1 = bash/sleep），使 `systemctl` 命令可用。
+- `--privileged --cgroupns=host` 使容器内 systemd 能访问 host cgroup 命名空间，`systemctl is-active` / `systemctl is-system-running` 正常工作。
+- 无需端口映射：容器内 `curl localhost:8080` 访问容器内服务，`docker exec` 执行 curl。
+
+**结论**：deb 与 rpm 两个 smoke test 步骤均使用 systemd-ready 镜像 + `--privileged --cgroupns=host` + systemd 就绪等待循环，符合 plan Task 4.2 要求。镜像选择覆盖 Debian 系（Ubuntu 22.04）与 RHEL 系（Rocky Linux 9）两类包格式目标平台 ✓。
+
+### 16.5 一致性核对总结
+
+| 核对项 | plan Task 4.2 要求 | release.yml 实际 | 结论 |
+|---|---|---|---|
+| Install rpm tool (Linux) | `sudo apt-get install -y rpm` | `sudo apt-get update && sudo apt-get install -y rpm` | ✓ 一致（额外 `apt-get update` 为 CI 标准实践） |
+| Restore Linux script permissions | chmod +x 所有 maintainer 脚本 | 8 个脚本（build.sh + 7 个 maintainer 脚本）全部 chmod +x | ✓ 一致 |
+| Build packages (Linux) | `./deployments/package/build.sh` | `./deployments/package/build.sh` | ✓ 一致 |
+| Smoke test - deb | `jrei/systemd-ubuntu:22.04` + `--privileged` + systemd 就绪等待 | 完全匹配 + `--cgroupns=host` + 30s 就绪等待 + 90s health 轮询 | ✓ 一致 |
+| Smoke test - rpm | `jrei/systemd-rockylinux:9` + `--privileged` + systemd 就绪等待 | 完全匹配 + `--cgroupns=host` + 30s 就绪等待 + 90s health 轮询 | ✓ 一致 |
+
+**核对结论：CI 步骤与 build.sh 完全一致，无不一致项。**
+
+### 16.6 实跑验证归属
+
+本任务为静态代码核对（release.yml ubuntu 分支步骤 vs build.sh 调用链），未执行实际 CI 构建。实跑验证留 Task 4.5（打 tag 触发 Release workflow 实跑）：
+
+- ubuntu-latest runner 实际执行 `./deployments/package/build.sh` 产出 `deployments/package/dist/*.deb` + `*.rpm`
+- deb smoke test 容器内 `apt-get install` + health UP + `systemctl is-active` 验证
+- rpm smoke test 容器内 `dnf install` + health UP + `systemctl is-active` 验证
+- 产物上传（`Upload artifacts` 步骤，release.yml line 215-223）至 GitHub Actions artifact
+
