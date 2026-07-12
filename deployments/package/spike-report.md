@@ -892,3 +892,133 @@ Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
 - rpm smoke test 容器内 `dnf install` + health UP + `systemctl is-active` 验证
 - 产物上传（`Upload artifacts` 步骤，release.yml line 215-223）至 GitHub Actions artifact
 
+---
+
+## 17. Task 4.3 windows job 一致性核对
+
+> 追加日期：2026-07-12
+> 关联任务：Task 4.3 - 验证 windows job 构建 exe
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 4.3（Step 1-2，约行 1788-1806）
+> 核对文件：`.github/workflows/release.yml`（package job windows 分支）+ `deployments/package/build.ps1`
+> 核对方式：静态代码核对（CI 步骤 vs build.ps1 调用链），实跑验证留 Task 4.5（打 tag 实跑）
+
+### 17.1 核对项 1：Install Inno Setup (Windows)
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Install Inno Setup (Windows)` | release.yml line 147 |
+| CI 条件 | `if: runner.os == 'Windows'` | release.yml line 148 |
+| CI 命令 | `choco install innosetup -y --no-progress` | release.yml line 149 |
+| build.ps1 依赖点 | `Get-Command iscc`（PATH 检测）-> 回退 `${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe` | build.ps1 line 111-118 |
+| build.ps1 失败提示 | `"未找到 Inno Setup (iscc)。请安装: choco install innosetup -y"` | build.ps1 line 114 |
+
+**choco 安装与 build.ps1 iscc 解析路径一致性说明：**
+- `choco install innosetup` 将 Inno Setup 6 安装到 `C:\Program Files (x86)\Inno Setup 6\`，choco 包通常会为 `iscc.exe` 添加 PATH shim（`C:\ProgramData\chocolatey\bin\iscc.bat`）。
+- build.ps1 line 111 优先 `Get-Command iscc` 检测 PATH：若 choco shim 生效，此处命中；若 shim 未生效（个别 choco 版本行为差异），回退 line 113 的 `${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe` 硬编码路径，该路径正是 choco innosetup 包的标准安装目录。
+- 两层检测确保无论 choco 是否添加 PATH shim，build.ps1 均能定位 iscc。
+
+**结论**：CI 通过 `choco install innosetup -y --no-progress` 预装 Inno Setup 6，build.ps1 的 iscc 双层检测（PATH + 硬编码回退路径）与之匹配。CI 命令额外包含 `--no-progress`（减少 CI 日志噪音，choco 标准实践），plan 描述的 `choco install innosetup -y` 为简化表述，实质一致 ✓。
+
+### 17.2 核对项 2：Build packages (Windows)
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Build packages (Windows)` | release.yml line 155 |
+| CI 条件 | `if: runner.os == 'Windows'` | release.yml line 156 |
+| CI 命令 | `.\deployments\package\build.ps1` | release.yml line 157 |
+| build.ps1 产出 | app-image + `llm-gateway-setup.exe`（dist 目录） | build.ps1 line 84-125 |
+
+**build.ps1 构建链（Task 3.5 已验证语法层，详见第 14 节）：**
+
+1. mvn package 产出 fat jar（build.ps1 line 37-45）
+2. 读取版本号（build.ps1 line 48-57）
+3. jlink 生成精简 JRE（build.ps1 line 62-69，模块清单固化在 `jlink-modules.txt`，19 个模块）
+4. jpackage `--type app-image` 打 app-image（build.ps1 line 84-96）
+5. 验证 app-image 产物（build.ps1 line 99-103，检查 `llm-gateway.exe` 启动器在根目录）
+6. **下载 WinSW exe**（build.ps1 line 106-108，调用 `windows/download-winsw.ps1`，下载 `WinSW-x64.exe` v2.12.0 并命名为 `LLMGateway.exe`，供 iss `[Files]` 段打包进 app-image）
+7. **Inno Setup 编译 setup.exe**（build.ps1 line 110-121，`iscc llm-gateway.iss` 编译产出 `dist/llm-gateway-setup.exe`）
+
+**WinSW 下载 + iscc 编译两项（plan Task 4.3 要求确认 Task 3.5 内容）：**
+
+| 子步骤 | build.ps1 位置 | 说明 | Task 3.5 验证 |
+|---|---|---|---|
+| WinSW 下载 | line 106-108 | `& (Join-Path $ScriptDir 'windows\download-winsw.ps1') -OutDir $WinRes` | 第 14 节：download-winsw.ps1 语法验证通过 ✓ |
+| WinSW exe 校验 | line 108 | `Test-Path (Join-Path $WinRes 'LLMGateway.exe')` | 第 14 节 ✓ |
+| iscc 定位 | line 111-118 | `Get-Command iscc` -> 回退 `${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe` | 第 14 节 ✓ |
+| iscc 编译 | line 120 | `& $Iscc (Join-Path $WinRes 'llm-gateway.iss')` | 第 14 节（实际编译留 CI） |
+| 产物校验 | line 123-125 | `Test-Path $SetupExe` + 打印体积 | 第 14 节 ✓ |
+
+**结论**：CI `Build packages (Windows)` 步骤直接调用 `.\deployments\package\build.ps1`，build.ps1 内部完成 mvn -> jlink -> jpackage app-image -> WinSW 下载 -> iscc 编译 setup.exe 全流程。WinSW 下载（#6）与 iscc 编译（#7）两项 Task 3.5 新增逻辑已在 build.ps1 中就位（详见第 14 节语法验证），CI 步骤与 build.ps1 调用链一致 ✓。
+
+### 17.3 核对项 3：Smoke test - exe
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| CI 步骤名 | `Smoke test - exe (Windows)` | release.yml line 204 |
+| CI 条件 | `if: runner.os == 'Windows'` | release.yml line 205 |
+
+**Smoke test 四项验证拆解：**
+
+#### 17.3.1 静默安装 `/VERYSILENT`
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| 安装命令 | `Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" -ArgumentList "/VERYSILENT","/NORESTART" -Wait -NoNewWindow` | release.yml line 207 |
+| Inno Setup 静默参数 | `/VERYSILENT`（完全无 UI）+ `/NORESTART`（安装后不重启） | Inno Setup 文档标准参数 |
+| plan Task 4.3 要求 | 静默安装 `/VERYSILENT` | plan line 1799 |
+
+**结论**：`/VERYSILENT` 非交互静默安装，`/NORESTART` 避免 CI runner 重启中断流水线，符合 plan 要求。静默安装回退默认端口 8080（iss `InitializeWizard` 无用户输入时预填 8080，详见第 13 节核对）✓。
+
+#### 17.3.2 health 检查
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| 轮询命令 | `(Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content` | release.yml line 209 |
+| 轮询循环 | 90 次，每次 1s，成功即 `break` | release.yml line 208-210 |
+| plan Task 4.3 要求 | health | plan line 1799 |
+
+**结论**：90s 轮询 `/actuator/health`，与 deb/rpm smoke test 的 90s health 轮询（release.yml line 177/199）一致，覆盖 Spring Boot 冷启动 + jpackage app-image JRE 预热时间 ✓。
+
+#### 17.3.3 `Get-Service LLMGateway`
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| 服务检查 | `$svc = Get-Service LLMGateway` | release.yml line 211 |
+| 状态断言 | `if ($svc.Status -ne 'Running') { throw "服务未运行" }` | release.yml line 212 |
+| plan Task 4.3 要求 | `Get-Service LLMGateway` | plan line 1799 |
+| 服务名来源 | WinSW xml `<id>LLMGateway</id>`（`LLMGateway.xml`）-> 安装时注册为 Windows 服务 `LLMGateway` | iss + WinSW 约定 |
+
+**结论**：`Get-Service LLMGateway` 验证 WinSW 注册的 Windows 服务名为 `LLMGateway`（与 `LLMGateway.xml` 的 `<id>` 一致），状态断言 `Running` 确保服务实际运行（非仅注册）✓。
+
+#### 17.3.4 卸载
+
+| 项 | 值 | 来源 |
+|---|---|---|
+| 卸载命令 | `Start-Process -FilePath "C:\Program Files\LLM-Gateway\unins000.exe" -ArgumentList "/VERYSILENT" -Wait` | release.yml line 213 |
+| 卸载程序路径 | `C:\Program Files\LLM-Gateway\unins000.exe`（Inno Setup 标准卸载程序） | iss `{app}` = `C:\Program Files\LLM-Gateway` |
+| plan Task 4.3 要求 | 卸载 | plan line 1799 |
+
+**结论**：`unins000.exe /VERYSILENT` 静默卸载，`{app}` 默认 `C:\Program Files\LLM-Gateway`（iss `DefaultDirName`），卸载程序路径正确 ✓。卸载后 smoke test 步骤结束，不验证数据目录保留（`%ProgramData%\LLM-Gateway\data` 保留验证见第 15 节 plan Task 3.6 Step 4，留 CI）。
+
+### 17.4 一致性核对总结
+
+| 核对项 | plan Task 4.3 要求 | release.yml 实际 | 结论 |
+|---|---|---|---|
+| Install Inno Setup (Windows) | `choco install innosetup -y` | `choco install innosetup -y --no-progress` | ✓ 一致（额外 `--no-progress` 为 CI 日志优化） |
+| Build packages (Windows) | `.\deployments\package\build.ps1`（含 WinSW 下载 + iscc 编译，Task 3.5） | `.\deployments\package\build.ps1`（build.ps1 #6 WinSW + #7 iscc 已就位） | ✓ 一致 |
+| Smoke test - exe（静默安装） | `/VERYSILENT` | `/VERYSILENT /NORESTART` | ✓ 一致（`/NORESTART` 避免 CI 中断） |
+| Smoke test - exe（health） | health | 90s 轮询 `Invoke-WebRequest /actuator/health` | ✓ 一致 |
+| Smoke test - exe（服务检查） | `Get-Service LLMGateway` | `Get-Service LLMGateway` + `Status -ne 'Running'` throw | ✓ 一致 |
+| Smoke test - exe（卸载） | 卸载 | `unins000.exe /VERYSILENT` | ✓ 一致 |
+
+**核对结论：CI windows 分支步骤与 build.ps1 完全一致，无不一致项。**
+
+### 17.5 实跑验证归属
+
+本任务为静态代码核对（release.yml windows 分支步骤 vs build.ps1 调用链），未执行实际 CI 构建。实跑验证留 Task 4.5（打 tag 触发 Release workflow 实跑）：
+
+- windows-latest runner 实际执行 `choco install innosetup -y --no-progress` 预装 Inno Setup 6
+- windows-latest runner 实际执行 `.\deployments\package\build.ps1` 产出 `deployments/package/dist/llm-gateway-setup.exe`（含 WinSW 下载 + iscc 编译全流程）
+- exe smoke test：`/VERYSILENT` 静默安装 + 90s health 轮询 + `Get-Service LLMGateway` Running + `unins000.exe /VERYSILENT` 卸载
+- 产物上传（`Upload artifacts` 步骤，release.yml line 215-223）至 GitHub Actions artifact `packages-windows-latest`
+
