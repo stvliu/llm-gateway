@@ -9,12 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 2.8: 本地验证 rpm（RHEL 系）
-- OpenSpec Task: 2.8 本地验证 rpm：RHEL 系安装 -> 健康检查 UP
+- Plan Task: Task 3.1: 编写 WinSW 配置（Phase 3 第一个 task）
+- OpenSpec Task: 3.1 编写 WinSW 配置（`LLMGateway.xml` + `winsw.exe`，注册 Windows Service，`<env>` 写 `DB_URL/SERVER_PORT/GATEWAY_ENCRYPTION_KEY`，`<arguments>` 指向启动器 exe）
 - 阶段: implementing
 - implementer model: sonnet
-- 环境限制：Windows 无 docker + 无 rpm 产物，本地验证留 CI（Phase 4）
-- 风险信号: 待自报（预计无）
+- D10 要求：WinSW xml 加 `MANAGEMENT_HEALTH_REDIS_ENABLED=false` env（已注入 prompt）
+- 风险信号: 待自报（预计无：创建 xml）
 
 ## 已完成 Task
 
@@ -22,13 +22,13 @@
 - Task 1.1: Spike + D10 health 修复（reviewer APPROVED）
 - Task 1.2 / 1.3 / 1.4（1.4 reviewer 修复后通过）
 
-### Phase 2（2.1-2.7 完成）
-- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5 / 2.6（reviewer 修复后通过）/ 2.7（环境限制留 CI）
+### Phase 2（全部完成）
+- Task 2.1 / 2.2 / 2.3（reviewer APPROVED）/ 2.4 / 2.5 / 2.6（reviewer 修复后通过）/ 2.7 / 2.8（环境限制留 CI）
 
 ## D10 修复说明（build 阶段 Step 4 中等变更，用户确认）
 
 - 修复 `ProviderRegistryHealthIndicator`：UNKNOWN 视为 UP
-- Redis：build 脚本 --java-options + 安装包服务环境变量 `MANAGEMENT_HEALTH_REDIS_ENABLED=false`（Task 2.3 postinst ✓ / Task 2.6 postinst-rpm ✓ / Task 3.2 WinSW xml 待加）
+- Redis：build 脚本 --java-options + 安装包服务环境变量 `MANAGEMENT_HEALTH_REDIS_ENABLED=false`（Task 2.3 postinst ✓ / Task 2.6 postinst-rpm ✓ / Task 3.1 WinSW xml 待加 -> 正在派发）
 
 ## 审查-修复轮次预算
 

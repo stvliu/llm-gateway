@@ -1076,7 +1076,7 @@ git commit -m "test(package): Task 2.8 rpm Rocky Linux 安装验证通过"
 **涉及文件：**
 - Create: `deployments/package/windows/LLMGateway.xml`
 
-- [ ] **Step 1: 编写 WinSW xml**
+- [x] **Step 1: 编写 WinSW xml**
 
 Create `deployments/package/windows/LLMGateway.xml`：
 
@@ -1123,7 +1123,7 @@ Create `deployments/package/windows/LLMGateway.xml`：
 
 > **说明：** `%BASE%` 指向 WinSW exe 所在目录（`%ProgramFiles%\LLM-Gateway\`）。`SERVER_PORT` 与 `GATEWAY_ENCRYPTION_KEY` 的最终值由 Inno Setup 在安装时写入（Inno Setup 用 `[Run]` 前的 Pascal Script 修改 xml 或写同目录 env）。本模板为默认值，Inno Setup 负责按用户输入覆盖。
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/windows/LLMGateway.xml
