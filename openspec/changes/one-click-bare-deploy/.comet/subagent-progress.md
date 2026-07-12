@@ -9,19 +9,15 @@
 
 ## 当前 Task
 
-- Plan Task: Task 4.5: 验证 release tag 触发（Phase 4 最后 task）
-- 阶段: checkoff（implementer API Error，内容已写入 spike-report.md 第 19 节，主会话代为 commit + 勾选）
-- 环境限制：推 tag outward-facing，留用户发布时验证；gh CLI 未安装
+- Plan Task: Task 5.1: 修复 Dockerfile（Phase 5 第一个 task）
+- OpenSpec Task: 5.1 修复 `Dockerfile`：构建路径改为单模块 `gateway-boot`，修正 COPY 与 jar 名
+- 阶段: implementing
+- implementer model: sonnet
+- 风险信号: 待自报（预计无：Dockerfile 重写）
 
 ## 已完成 Task
 
-### Phase 1（全部完成）/ Phase 2（全部完成）/ Phase 3（全部完成）
-### Phase 4
-- Task 4.1: release.yml package job（reviewer 修复后通过：systemd 镜像 + .gitignore 例外）
-- Task 4.2: ubuntu job 一致性核对（通过）
-- Task 4.3: windows job 一致性核对（通过）
-- Task 4.4: 产物上传 Release 流转核对（通过）
-- Task 4.5: release tag 端到端验证说明（留用户发布时验证）
+### Phase 1（全部完成）/ Phase 2（全部完成）/ Phase 3（全部完成）/ Phase 4（全部完成）
 
 ## D10 修复说明
 

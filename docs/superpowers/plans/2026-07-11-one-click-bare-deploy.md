@@ -1890,7 +1890,7 @@ git commit -m "ci(package): Task 4.5 release tag 端到端验证通过"
 **涉及文件：**
 - Modify: `deployments/docker/Dockerfile`（整体重写）
 
-- [ ] **Step 1: 重写 Dockerfile**
+- [x] **Step 1: 重写 Dockerfile**
 
 将 `deployments/docker/Dockerfile` 全文替换为：
 
@@ -1967,7 +1967,7 @@ ENTRYPOINT ["java", "-jar", "-XX:+UseZGC", "-XX:+ZGenerational", "app.jar"]
 - health 路径从 `/api/v1/health` 改为 `/actuator/health`
 - EXPOSE 移除 8081（actuator 已在 8080 同端口 `/actuator`）
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/docker/Dockerfile
