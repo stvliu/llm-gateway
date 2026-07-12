@@ -1,0 +1,15 @@
+#!/bin/bash
+# LLM-Gateway rpm %postun 脚本（等价 deb postrm）
+# $1 = 0 表示卸载；1/2 表示升级/重装（不处理）
+# 清理 systemd unit，保留数据目录与 env 文件（升级/重装需要）
+set -e
+
+if [ "$1" = "0" ]; then
+  rm -f /etc/systemd/system/llm-gateway.service
+  systemctl daemon-reload 2>/dev/null || true
+fi
+
+# 保留数据目录与 env 文件
+echo "[rpm %postun] 卸载完成。数据目录 /var/lib/llm-gateway 已保留。"
+
+exit 0

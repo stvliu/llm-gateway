@@ -91,12 +91,25 @@ jpackage --type deb "${JPKG_COMMON[@]}" \
 log "deb 产物: $(ls "$DIST_DIR"/*.deb)"
 
 # 5. 打 rpm（需 rpm 工具；CI 环境 apt-get install -y rpm 即可）
+#    rpm 分支使用 -rpm 后缀的 maintainer 脚本（无 debconf），
+#    通过临时 resource-dir 暂存为 jpackage 识别的 postinst/prerm/postrm 命名。
 if command -v rpm >/dev/null 2>&1; then
   log "打 rpm..."
+  RPM_RES="$SCRIPT_DIR/linux-rpm-staging"
+  rm -rf "$RPM_RES"
+  mkdir -p "$RPM_RES"
+  # 复制 -rpm 后缀脚本为 jpackage --type rpm 识别的标准命名（postinst/prerm/postrm）
+  cp "$LINUX_RES/postinst-rpm" "$RPM_RES/postinst"
+  cp "$LINUX_RES/prerm-rpm" "$RPM_RES/prerm"
+  cp "$LINUX_RES/postrm-rpm" "$RPM_RES/postrm"
+  # 复制共享资源（systemd unit 等）
+  [ -f "$LINUX_RES/llm-gateway.service" ] && cp "$LINUX_RES/llm-gateway.service" "$RPM_RES/"
   jpackage --type rpm "${JPKG_COMMON[@]}" \
-    --resource-dir "$LINUX_RES" \
+    --resource-dir "$RPM_RES" \
     --maintainer "LLM-Gateway Team"
   log "rpm 产物: $(ls "$DIST_DIR"/*.rpm)"
+  # 清理临时 resource-dir
+  rm -rf "$RPM_RES"
 else
   log "警告: 未安装 rpm 工具，跳过 rpm 打包（CI 环境 apt-get install -y rpm 即可）"
 fi
