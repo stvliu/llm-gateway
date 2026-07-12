@@ -807,7 +807,7 @@ git commit -m "feat(package): Task 2.5 配置 jpackage --type deb 并验证产�
 - Create: `deployments/package/linux/prerm-rpm`
 - Create: `deployments/package/linux/postrm-rpm`
 
-- [ ] **Step 1: 编写 rpm 等价 postinst（`%post`）**
+- [x] **Step 1: 编写 rpm 等价 postinst（`%post`）**
 
 Create `deployments/package/linux/postinst-rpm`：
 
@@ -868,7 +868,7 @@ systemctl restart llm-gateway.service 2>/dev/null || systemctl start llm-gateway
 exit 0
 ```
 
-- [ ] **Step 2: 编写 rpm `%preun`（等价 prerm）**
+- [x] **Step 2: 编写 rpm `%preun`（等价 prerm）**
 
 Create `deployments/package/linux/prerm-rpm`：
 
@@ -884,7 +884,7 @@ fi
 exit 0
 ```
 
-- [ ] **Step 3: 编写 rpm `%postun`（等价 postrm）**
+- [x] **Step 3: 编写 rpm `%postun`（等价 postrm）**
 
 Create `deployments/package/linux/postrm-rpm`：
 
@@ -901,7 +901,7 @@ echo "[rpm %postun] 卸载完成。数据目录 /var/lib/llm-gateway 已保留�
 exit 0
 ```
 
-- [ ] **Step 4: 修改 build.sh 区分 deb/rpm resource-dir**
+- [x] **Step 4: 修改 build.sh 区分 deb/rpm resource-dir**
 
 rpm 与 deb 共用 `linux/` 目录，但 jpackage 对 rpm 的 maintainer 脚本约定不同。由于 jpackage `--type rpm` 在 ubuntu-latest 交叉打包，且 jpackage 对 rpm 的 `%post` 等脚本支持有限，build.sh 中 rpm 分支改用"打 app-image + fpm 包装"更稳妥。但为遵循 design doc（jpackage `--type rpm`），先尝试 jpackage `--type rpm --resource-dir`。
 
@@ -923,7 +923,7 @@ fi
 
 > **说明：** jpackage 21 对 `--type rpm` 的 resource-dir 同样识别 `postinst/prerm/postrm` 文件名并映射为 `%post/%preun/%postun`。若验证失败（Task 2.8），回退用 `postinst-rpm` 等文件并按 jpackage 文档调整命名，或改用 `fpm` 包装 app-image。
 
-- [ ] **Step 5: 赋予 rpm 脚本可执行位并验证 rpm 打包**
+- [x] **Step 5: 赋予 rpm 脚本可执行位并验证 rpm 打包**
 
 ```bash
 chmod +x deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rpm deployments/package/linux/postrm-rpm
