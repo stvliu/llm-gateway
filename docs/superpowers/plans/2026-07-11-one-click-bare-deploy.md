@@ -1791,14 +1791,14 @@ git commit -m "ci(package): Task 4.2 ubuntu job deb+rpm 构建设计确认"
 
 **涉及文件：** 无新增（验证 Task 4.1 的 windows 分支）
 
-- [ ] **Step 1: 确认 windows 分支步骤**
+- [x] **Step 1: 确认 windows 分支步骤**
 
 核对 Task 4.1 中 windows 分支：
 - `Install Inno Setup (Windows)` → `choco install innosetup -y` ✓
 - `Build packages (Windows)` → `.\deployments\package\build.ps1` ✓（含 WinSW 下载 + iscc 编译，见 Task 3.5）
 - `Smoke test - exe` → 静默安装 + health + 卸载 ✓
 
-- [ ] **Step 2: 记录并 Commit**
+- [x] **Step 2: 记录并 Commit**
 
 ```bash
 git add deployments/package/spike-report.md
