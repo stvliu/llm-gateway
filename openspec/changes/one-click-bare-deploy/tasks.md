@@ -41,5 +41,5 @@
 
 ## 6. 文档
 
-- [ ] 6.1 新增 `deployments/package/README.md`（构建步骤、安装命令、配置说明）
+- [x] 6.1 新增 `deployments/package/README.md`（构建步骤、安装命令、配置说明）
 - [ ] 6.2 更新 `README.md` 部署章节：修正 DB 类型/jar 名/安装包用法，补充 admin/admin 首次改密提示与 H2 Console 风险提示

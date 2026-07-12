@@ -2199,7 +2199,7 @@ git commit -m "test(docker): Task 5.3 docker-compose up 验证 gateway 健康"
 **涉及文件：**
 - Create: `deployments/package/README.md`
 
-- [ ] **Step 1: 编写 README**
+- [x] **Step 1: 编写 README**
 
 Create `deployments/package/README.md`：
 
@@ -2327,7 +2327,7 @@ curl http://localhost:8080/actuator/health
 - **端口冲突**：安装时不校验端口占用，冲突时服务反复重启暴露（systemd `Restart=on-failure` / WinSW `onfailure restart`）。
 ````
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/README.md
