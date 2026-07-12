@@ -45,8 +45,8 @@ class ProviderRegistryHealthIndicatorTest {
     }
 
     @Test
-    @DisplayName("部分 Provider DOWN 时健康状态为 UP（降级但不宕机）")
-    void partialDown_returnsUp() {
+    @DisplayName("部分 Provider DOWN 时健康状态为 DOWN（任何 DOWN 即不健康）")
+    void partialDown_returnsDown() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
                 new ProviderHealthState("openai", Status.UP, null, 0, 1, null),
                 new ProviderHealthState("anthropic", Status.DOWN, null, 3, 0, "timeout")
@@ -54,7 +54,7 @@ class ProviderRegistryHealthIndicatorTest {
 
         Health health = indicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.UP);
+        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
         var anthropicDetail = (Map<?, ?>) health.getDetails().get("anthropic");
         assertThat(anthropicDetail.get("status")).isEqualTo("DOWN");
         assertThat(anthropicDetail.get("lastError")).isEqualTo("timeout");
@@ -84,14 +84,14 @@ class ProviderRegistryHealthIndicatorTest {
     }
 
     @Test
-    @DisplayName("Provider UNKNOWN 状态视为非健康")
-    void unknownProviders_treatedAsDown() {
+    @DisplayName("Provider UNKNOWN 状态视为健康（无流量≠不健康）")
+    void unknownProviders_treatedAsUp() {
         when(tracker.getAllStatuses()).thenReturn(List.of(
                 ProviderHealthState.initial("openai")
         ));
 
         Health health = indicator.health();
 
-        assertThat(health.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(health.getStatus()).isEqualTo(Status.UP);
     }
 }
