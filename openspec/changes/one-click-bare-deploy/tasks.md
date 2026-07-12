@@ -8,7 +8,7 @@
 ## 2. Linux 安装包（deb + rpm）
 
 - [x] 2.1 编写 systemd unit 模板（`Environment=DB_URL/SERVER_PORT/GATEWAY_ENCRYPTION_KEY`，`Restart=on-failure`）
-- [ ] 2.2 编写 debconf 模板（端口交互，默认 8080，非交互回退默认）
+- [x] 2.2 编写 debconf 模板（端口交互，默认 8080，非交互回退默认）
 - [ ] 2.3 编写 `postinst`（建 `/var/lib/llm-gateway` 与日志目录、生成 `GATEWAY_ENCRYPTION_KEY`、读 debconf 端口、注册 systemd、`enable --now`）
 - [ ] 2.4 编写 `prerm`（stop/disable）与 `postrm`（清理安装文件、保留数据目录）
 - [ ] 2.5 配置 jpackage `--type deb`（`--resource-dir` 挂 postinst/prerm/postrm/debconf/systemd unit）

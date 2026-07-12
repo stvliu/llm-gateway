@@ -529,7 +529,7 @@ git commit -m "feat(package): Task 2.1 systemd unit 模板"
 - Create: `deployments/package/linux/llm-gateway.templates`
 - Create: `deployments/package/linux/llm-gateway.config`
 
-- [ ] **Step 1: 编写 debconf 模板**
+- [x] **Step 1: 编写 debconf 模板**
 
 Create `deployments/package/linux/llm-gateway.templates`：
 
@@ -544,7 +544,7 @@ Description: LLM-Gateway 服务监听端口:
  安装时不校验端口占用；若端口冲突，服务将因 systemd Restart=on-failure 反复重启。
 ```
 
-- [ ] **Step 2: 编写 debconf config 脚本**
+- [x] **Step 2: 编写 debconf config 脚本**
 
 Create `deployments/package/linux/llm-gateway.config`：
 
@@ -567,7 +567,7 @@ db_input high llm-gateway/server_port || true
 db_go
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add deployments/package/linux/llm-gateway.templates deployments/package/linux/llm-gateway.config
