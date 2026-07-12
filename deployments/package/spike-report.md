@@ -482,3 +482,66 @@ $rng.GetBytes($bytes)
 **CRITICAL 待修复**：iss `GenerateEncryptionKey`（line 118）的 PowerShell 静态方法命令需改为实例方法方式，否则全新安装无法生成密钥并中止。详见 11.2 节根因分析与建议修复。
 
 > 注：plan 原用 `Get-Random`（非加密安全），Task 3.2 reviewer 修复改用 `RandomNumberGenerator`（加密安全，方向正确），但采用了 .NET Core 专属的静态 `GetBytes(int)` 重载，未兼容 Windows PowerShell 5.1（.NET Framework）。需改用实例方法以同时保留加密安全性与 Windows 默认 PowerShell 兼容性。
+
+## 12. Task 3.3 修复说明：GenerateEncryptionKey PS 5.1 兼容
+
+> 追加日期：2026-07-12
+> 关联任务：Task 3.3 修复（CRITICAL）
+> 关联文件：`deployments/package/windows/llm-gateway.iss` line 117-120
+
+### 12.1 问题
+
+iss `GenerateEncryptionKey`（原 line 118）原用 PowerShell 静态方法：
+
+```powershell
+[Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+`RandomNumberGenerator.GetBytes(int)` 静态方法（入参 int，返回 `byte[]`）仅在 **.NET Core 3.0+ / .NET 5+** 添加。Windows PowerShell 5.1 基于 .NET Framework 4.x，仅有实例方法 `GetBytes(byte[])`，无静态 `GetBytes(int)` 重载。
+
+iss 通过 `{cmd}` 调用 `powershell.exe`（即 Windows PowerShell 5.1，非 `pwsh.exe`），命令报 `MethodNotFound`，退出码 1，`gateway_key.txt` 内容为空，`GenerateEncryptionKey` 返回空，触发 `RaiseException` **中止全新安装**（CRITICAL）。升级场景因已有 `GATEWAY_ENCRYPTION_KEY` 不调用此函数，不受影响。
+
+### 12.2 修复
+
+将 PowerShell 命令改为实例方法（兼容 .NET Framework / PS 5.1，保留加密安全性）：
+
+```powershell
+$r=[Security.Cryptography.RandomNumberGenerator]::Create();$b=New-Object byte[] 32;$r.GetBytes($b);[Convert]::ToBase64String($b)
+```
+
+Pascal Script 改写（line 120，PowerShell `-Command` 用双引号外包，TempFile 路径用单引号包裹避免变量展开）：
+
+```pascal
+if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "$r=[Security.Cryptography.RandomNumberGenerator]::Create();$b=New-Object byte[] 32;$r.GetBytes($b);[Convert]::ToBase64String($b) > ''' + TempFile + '''"',
+       '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
+```
+
+引号配对说明：
+- 外层 Pascal 单引号 `'...'` 包裹字符串
+- `''`（两个连续单引号）转义为单个单引号字符 `'`
+- PowerShell `-Command "..."` 用双引号包裹脚本
+- TempFile 路径用单引号 `'...'` 包裹（PowerShell 字面量字符串，不展开变量）
+
+### 12.3 验证
+
+在 Windows PowerShell 5.1.26100.8655 环境模拟 iss `Exec` 完整调用链（cmd /c powershell）：
+
+```
+命令行: powershell -NoProfile -Command "$r=[Security.Cryptography.RandomNumberGenerator]::Create();$b=New-Object byte[] 32;$r.GetBytes($b);[Convert]::ToBase64String($b) > 'C:\Users\liuye\AppData\Local\Temp\gateway_key_test.txt'"
+退出码: 0
+文件内容: vF6+2AarWsZ9mP+IqEmHGs7zkSZpKvE5u/uKBjhiFxo=
+内容长度: 44
+解码字节数: 32
+```
+
+- 退出码 0（成功）
+- 44 字符 base64（32 字节经 base64 = ⌈32/3⌉×4 = 44 字符，含 1 个 `=` 填充）
+- 解码 32 字节，符合加密密钥长度要求
+- 随机性由 `RandomNumberGenerator`（加密安全 RNG）保证
+
+### 12.4 影响范围
+
+- **全新安装**：修复后 `GenerateEncryptionKey` 正常生成密钥，不再中止安装 ✓
+- **升级安装**：不调用 `GenerateEncryptionKey`（已有密钥），不受影响 ✓
+- **加密安全性**：`RandomNumberGenerator` 为加密安全 RNG（FIPS 140-2 兼容），等价 `openssl rand -base64 32`，保留 ✓
+- **环境兼容性**：实例方法 `Create()` + `GetBytes(byte[])` 在 .NET Framework 2.0+ 与 .NET Core 均可用，兼容 Windows PowerShell 5.1 及 PowerShell 7+ ✓
