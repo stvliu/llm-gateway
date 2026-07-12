@@ -68,10 +68,7 @@ jdeps 基于静态分析，无法识别 Spring Boot 反射加载的 JDK 模块�
 **最终 jlink 模块清单（19 个）：**
 
 ```
-java.base,java.compiler,java.desktop,java.instrument,java.management,
-java.naming,java.net.http,java.prefs,java.rmi,java.scripting,
-java.security.jgss,java.sql.rowset,jdk.crypto.cryptoki,jdk.crypto.ec,
-jdk.jfr,jdk.management,jdk.net,jdk.unsupported
+java.base,java.compiler,java.desktop,java.instrument,java.management,java.naming,java.net.http,java.prefs,java.rmi,java.scripting,java.security.jgss,java.sql.rowset,java.xml,jdk.crypto.cryptoki,jdk.crypto.ec,jdk.jfr,jdk.management,jdk.net,jdk.unsupported
 ```
 
 > `java.sql`、`java.transaction.xa`、`java.sql.rowset` 之间有传递依赖，jlink 会自动解析。

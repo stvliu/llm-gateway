@@ -203,7 +203,7 @@ git commit -m "feat(package): Task 1.1 jpackage+fat jar spike 验证通过"
 **涉及文件：**
 - Create: `deployments/package/jlink-modules.txt`
 
-- [ ] **Step 1: 创建模块清单文件**
+- [x] **Step 1: 创建模块清单文件**
 
 依据 spike-report.md 中记录的 jdeps 输出，Create `deployments/package/jlink-modules.txt`，内容为单行逗号分隔模块清单（示例，以实际 jdeps 输出为准）：
 
@@ -213,7 +213,7 @@ java.base,java.compiler,java.desktop,java.logging,java.management,java.naming,ja
 
 > 注意：Spring Boot + H2 + Sa-Token + JGit 实际依赖模块以 spike `jdeps --print-module-deps` 输出为准。`jdk.crypto.ec`/`jdk.crypto.cryptoki` 必须包含（H2/SSL 需要），`jdk.unsupported` 必须包含（sun.misc.Unsafe）。
 
-- [ ] **Step 2: 验证 jlink 用此清单能生成可启动 JRE**
+- [x] **Step 2: 验证 jlink 用此清单能生成可启动 JRE**
 
 ```bash
 jlink --add-modules "$(cat deployments/package/jlink-modules.txt | tr -d '\n')" \
@@ -224,7 +224,7 @@ jlink --add-modules "$(cat deployments/package/jlink-modules.txt | tr -d '\n')" 
 
 预期：打印 `openjdk version "21..."`，无报错。
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add deployments/package/jlink-modules.txt
