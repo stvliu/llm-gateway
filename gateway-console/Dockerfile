@@ -6,7 +6,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 # 启用 corepack 支持 pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
 # 复制 package 文件
 COPY package.json pnpm-lock.yaml* ./

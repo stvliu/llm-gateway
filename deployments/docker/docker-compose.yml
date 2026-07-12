@@ -187,7 +187,10 @@ services:
     container_name: llm-gateway-console
     restart: unless-stopped
     environment:
-      VITE_API_BASE_URL: http://gateway:8080
+      # 前端运行时 API 基址（浏览器端，保持指向网关宿主机端口）
+      VITE_API_BASE_URL: http://localhost:8080
+      # Vite dev server 代理目标（容器内解析，指向 compose 网络内的 gateway 服务）
+      VITE_BACKEND_URL: http://gateway:8080
     ports:
       - "5173:5173"
     depends_on:
