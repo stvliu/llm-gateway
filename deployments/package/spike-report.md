@@ -1136,4 +1136,97 @@ Test-Path "$env:ProgramData\LLM-Gateway\data"          # 应为 True（保留）
 - `softprops/action-gh-release` 实际将 deb/rpm/exe 三类文件挂到 GitHub Release 的 Assets 列表
 - 在 GitHub Release 页面确认 Assets 含 `*.deb`、`*.rpm`、`*.exe` 三类文件
 
+---
+
+## 19. Task 4.5 端到端验证说明（release tag 触发）
+
+> 追加日期：2026-07-12
+> 关联任务：Task 4.5 - 验证 release tag 触发，产物齐全
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 4.5（Step 1-5，约行 1831-1878）
+> 验证方式：端到端验证留待用户实际打 release tag 时执行（outward-facing 操作，不自动推 tag 触发 CI）
+
+### 19.1 环境检查
+
+| 检查项 | 命令 | 结果 |
+|---|---|---|
+| gh CLI 可用性 | `gh --version` | `command not found`（本机未安装 gh CLI） |
+| git 远程仓库 | `git remote -v` | `github` -> `https://github.com/stvliu/llm-gateway.git`（GitHub，release.yml 所在）；`origin` -> `git@gitee.com:ezxbao_liuye/llm-gateway.git`（Gitee） |
+
+**远程仓库说明（重要）：**
+- release.yml 是 GitHub Actions workflow，仅在推 tag 到 **GitHub 远程**（`github`）时触发。
+- plan Step 1 原文 `git push origin v0.0.0-package-test` 中的 `origin` 为 plan 编写时的假设远程名；本仓库实际 `origin` 指向 Gitee，`github` 才是 GitHub 远程。
+- **实际发布时推 tag 命令应为 `git push github v<x.y.z>`**（而非 `git push origin`），否则不会触发 release.yml。
+
+### 19.2 不自动推 tag 的原因
+
+打 `v*` tag 并推送到 GitHub 远程是 **outward-facing 操作**：
+- 触发 release.yml workflow 运行（消耗 CI 资源，双平台 matrix）
+- 在 GitHub 仓库创建 Release（对外可见）
+- 实际打 release tag 属于用户发布行为
+
+本任务不自动推 tag 触发 CI，记录验证步骤留待用户实际发布时端到端验证。
+
+此外，本机未安装 `gh` CLI（见 19.1），即使推 tag 后也无法通过 `gh run watch` / `gh release view` 本地监控与确认，进一步印证端到端验证需在用户具备 gh CLI 环境时执行。
+
+### 19.3 端到端验证步骤（用户发布时参考）
+
+以下为 plan Task 4.5 Step 1-4 的验证步骤，作为用户实际打 release tag 时的端到端验证参考：
+
+#### Step 1: 推一个测试 tag 触发 workflow
+
+```bash
+git tag v0.0.0-package-test
+# 注意：推到 github 远程（非 origin），release.yml 才会触发
+git push github v0.0.0-package-test
+```
+
+**预期**：GitHub Actions release.yml workflow 被触发，package job（ubuntu-latest + windows-latest 双平台 matrix）与 finalize job 开始运行。
+
+#### Step 2: 监控 workflow 运行
+
+```bash
+gh run watch
+```
+
+**预期**：
+- `package` job 双平台（ubuntu-latest / windows-latest）均通过：
+  - ubuntu job：build.sh 产出 deb + rpm + 两个 smoke test（deb 容器 / rpm 容器）通过
+  - windows job：build.ps1 产出 exe + smoke test（静默安装 / health / Get-Service / 卸载）通过
+- `finalize` job 通过：download-artifact 合并下载双平台产物 + `softprops/action-gh-release` 挂到 Release
+
+#### Step 3: 确认 Release 产物齐全
+
+```bash
+gh release view v0.0.0-package-test --json assets --jq '.assets[].name'
+```
+
+**预期含以下三类产物：**
+- `llm-gateway_<version>_amd64.deb`（Linux Debian 系安装包）
+- `llm-gateway_<version>-1.x86_64.rpm`（Linux RHEL 系安装包）
+- `llm-gateway-setup.exe`（Windows 安装包）
+
+> 产物文件名格式由 jpackage（deb/rpm）与 Inno Setup（exe）生成规则决定。deb 格式 `<name>_<version>_amd64.deb`，rpm 格式 `<name>-<version>-1.x86_64.rpm`，exe 格式 `llm-gateway-setup.exe`（iss `OutputBaseFilename`）。
+
+#### Step 4: 若为测试 tag，清理测试 tag/release
+
+```bash
+gh release delete v0.0.0-package-test --yes --cleanup-tag || true
+git tag -d v0.0.0-package-test
+git push github :refs/tags/v0.0.0-package-test || true
+```
+
+> 注：plan 原文为 `git push origin :refs/tags/...`，实际应推 `github` 远程（同 Step 1 说明）。
+
+### 19.4 Spec Scenario 实际验证归属
+
+| Scenario | 验证内容 | 验证位置 |
+|----------|---------|---------|
+| release 产出多平台包 | GitHub Release Assets 含 deb/rpm/exe 三类产物 | 用户实际打 release tag 时端到端验证（Step 1-3） |
+
+### 19.5 验证范围说明
+
+- **Phase 2/3/4.1-4.4 已完成**：静态代码核对（build.sh / build.ps1 / release.yml / iss / xml）+ 本地环境限制说明（jpackage deb/rpm 交叉构建、iscc exe 编译、docker smoke test 等环境不可用项均留 CI）
+- **Task 4.5 是最终端到端验证**：打 release tag 实跑 release.yml，确认双平台 CI 构建 + smoke test + 产物挂 Release 全链路通过
+- **环境限制部分留 CI**：本机无 gh CLI、无 docker、无 iscc、jpackage 不支持跨平台打包，这些限制已在第 8-15 节逐一记录；Task 4.5 的端到端实跑在 CI 环境完成，本机无法替代
+
 
