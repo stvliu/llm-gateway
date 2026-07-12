@@ -1,0 +1,93 @@
+#!/bin/bash
+# LLM-Gateway deb 安装后脚本
+set -e
+
+. /usr/share/debconf/confmodule
+
+DATA_DIR="/var/lib/llm-gateway"
+LOG_DIR="/var/log/llm-gateway"
+CONF_DIR="/etc/llm-gateway"
+ENV_FILE="$CONF_DIR/env"
+SERVICE_FILE="/opt/llm-gateway/lib/systemd/system/llm-gateway.service"
+SYSTEMD_DIR="/etc/systemd/system"
+
+# 1. 创建系统用户与组（已存在则跳过）
+if ! getent group llm-gateway >/dev/null; then
+  groupadd --system llm-gateway
+fi
+if ! id -u llm-gateway >/dev/null 2>&1; then
+  useradd --system --no-create-home --shell /usr/sbin/nologin \
+    --gid llm-gateway --home-dir "$DATA_DIR" llm-gateway
+fi
+
+# 2. 创建数据/日志/配置目录
+mkdir -p "$DATA_DIR" "$LOG_DIR" "$CONF_DIR"
+chown -R llm-gateway:llm-gateway "$DATA_DIR" "$LOG_DIR"
+
+# 3. 生成加密密钥（已存在则保留）
+GEN_KEY=0
+if [ ! -f "$ENV_FILE" ] || ! grep -q '^GATEWAY_ENCRYPTION_KEY=' "$ENV_FILE"; then
+  GEN_KEY=1
+fi
+
+# 4. 读取 debconf 端口
+db_get llm-gateway/server_port
+SERVER_PORT="${RET:-8080}"
+
+# 5. 生成/更新 env 文件（conffile，升级保留）
+#    使用临时文件 + 仅在不存在时保留旧密钥
+if [ -f "$ENV_FILE" ]; then
+  OLD_KEY="$(grep '^GATEWAY_ENCRYPTION_KEY=' "$ENV_FILE" | cut -d= -f2- || true)"
+else
+  OLD_KEY=""
+fi
+
+if [ "$GEN_KEY" = "1" ] || [ -z "$OLD_KEY" ]; then
+  NEW_KEY="$(openssl rand -base64 32)"
+  echo "[postinst] 生成新的 GATEWAY_ENCRYPTION_KEY（请妥善备份）" >&2
+else
+  NEW_KEY="$OLD_KEY"
+  echo "[postinst] 保留已有 GATEWAY_ENCRYPTION_KEY" >&2
+fi
+
+cat > "$ENV_FILE" <<EOF
+# LLM-Gateway 环境变量配置（conffile，升级保留）
+# 数据目录外部化（H2 文件持久化）
+DB_URL=jdbc:h2:file:${DATA_DIR}/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+# 服务端口（安装时交互设置，默认 8080）
+SERVER_PORT=${SERVER_PORT}
+# 加密密钥（首次安装生成，务必备份！丢失则历史加密数据无法解密）
+GATEWAY_ENCRYPTION_KEY=${NEW_KEY}
+# 禁用 Redis 健康指标（裸机部署无 Redis，避免 health 误报 DOWN）
+MANAGEMENT_HEALTH_REDIS_ENABLED=false
+EOF
+chmod 640 "$ENV_FILE"
+chown root:llm-gateway "$ENV_FILE"
+
+# 6. 注册 systemd unit
+if [ -f "$SERVICE_FILE" ]; then
+  cp "$SERVICE_FILE" "$SYSTEMD_DIR/llm-gateway.service" 2>/dev/null || true
+fi
+# jpackage resource-dir 中也会放置 unit，兜底复制
+if [ ! -f "$SYSTEMD_DIR/llm-gateway.service" ] && [ -f /opt/llm-gateway/lib/systemd/system/llm-gateway.service ]; then
+  cp /opt/llm-gateway/lib/systemd/system/llm-gateway.service "$SYSTEMD_DIR/llm-gateway.service"
+fi
+
+systemctl daemon-reload
+systemctl enable llm-gateway.service
+
+# 7. 启动服务（升级时重启）
+if systemctl is-active --quiet llm-gateway.service; then
+  systemctl restart llm-gateway.service
+else
+  systemctl start llm-gateway.service
+fi
+
+db_stop
+echo "LLM-Gateway 已安装并启动。"
+echo "  端口: $SERVER_PORT"
+echo "  数据目录: $DATA_DIR"
+echo "  配置文件: $ENV_FILE"
+echo "  服务状态: systemctl status llm-gateway"
+
+exit 0
