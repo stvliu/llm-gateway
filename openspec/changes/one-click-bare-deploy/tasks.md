@@ -27,7 +27,7 @@
 
 ## 4. CI 集成
 
-- [ ] 4.1 在 `release.yml` 加 `package` job，matrix `[ubuntu-latest, windows-latest]`
+- [x] 4.1 在 `release.yml` 加 `package` job，matrix `[ubuntu-latest, windows-latest]`
 - [ ] 4.2 ubuntu job：构建 deb + rpm（安装 `rpm` 工具）
 - [ ] 4.3 windows job：构建 exe（jpackage app-image + WinSW + Inno Setup 编译，安装 Inno Setup）
 - [ ] 4.4 产物上传到 GitHub Release

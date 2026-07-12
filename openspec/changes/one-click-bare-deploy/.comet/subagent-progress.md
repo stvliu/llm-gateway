@@ -9,22 +9,24 @@
 
 ## 当前 Task
 
-- Plan Task: Task 3.6: 本地验证 exe（干净 Windows）（Phase 3 最后 task）
-- OpenSpec Task: 3.6 本地验证 exe：干净 Windows 安装 -> Service 启动 -> health UP -> 数据落 %ProgramData%
-- 阶段: implementing
-- implementer model: sonnet
-- 环境限制：无 exe 产物（iscc 不可用），实际验证留 CI
-- 风险信号: 待自报（预计无：记录环境限制）
+- Plan Task: Task 4.1: 在 release.yml 加 package job
+- 阶段: review-fix（第 1 轮，standard 最多 1 轮）
+- 修复 agent 运行中
+- reviewer 结论: NEEDS_FIX（1 CRITICAL + 1 IMPORTANT + 3 MINOR）
+  - CRITICAL-1: Linux smoke test 容器无 systemd（ubuntu/rockylinux + sleep 180），postinst systemctl 失败 -> 改 jrei/systemd-* 镜像 + privileged
+  - IMPORTANT-1: .gitignore 忽略 .github/ -> 加 !.github/workflows/ 例外
+  - MINOR-3/4: 端口映射冗余 / sleep 生命周期
+- 已有提交：af3b9f92
+
+## 待办（Task 4.1 收尾）
+
+1. 修复 agent 回报后：
+   - 复查修复（systemd 镜像 + .gitignore）-> 通过则勾选 Task 4.1 + 派发 Task 4.2
+   - 复查未通过 -> BLOCKED
 
 ## 已完成 Task
 
-### Phase 1（全部完成）/ Phase 2（全部完成）
-### Phase 3
-- Task 3.1: WinSW 配置（含 D10）
-- Task 3.2: Inno Setup 完整脚本（reviewer 修复后通过）
-- Task 3.3: 验证密钥 Pascal Script（CRITICAL 修复后通过：PS 5.1 兼容）
-- Task 3.4: 验证 env 写入 WinSW xml（一致性核对通过）
-- Task 3.5: jpackage app-image + Inno Setup 编译（iscc 留 CI）
+### Phase 1（全部完成）/ Phase 2（全部完成）/ Phase 3（全部完成）
 
 ## D10 修复说明
 
@@ -33,4 +35,4 @@
 
 ## 审查-修复轮次预算
 
-- review_mode: standard -> 每任务最多 1 轮 review-fix，最终轻量审查最多 1 轮修复
+- review_mode: standard -> 每任务最多 1 轮 review-fix（当前 Task 4.1 第 1 轮），最终轻量审查最多 1 轮修复

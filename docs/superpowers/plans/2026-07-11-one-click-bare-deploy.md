@@ -1574,7 +1574,7 @@ git commit -m "test(package): Task 3.6 Windows exe 安装/升级/卸载验证通
 **涉及文件：**
 - Modify: `.github/workflows/release.yml`
 
-- [ ] **Step 1: 在 release.yml 的 `build-docker` job 之后、`publish-maven` 之前插入 package job**
+- [x] **Step 1: 在 release.yml 的 `build-docker` job 之后、`publish-maven` 之前插入 package job**
 
 在 `.github/workflows/release.yml` 中，定位 `build-docker` job 结束（`Generate SBOM` / `Upload SBOM` 步骤之后）与 `publish-maven` job 之间，插入以下 `package` job：
 
@@ -1676,7 +1676,7 @@ git commit -m "test(package): Task 3.6 Windows exe 安装/升级/卸载验证通
           retention-days: 14
 ```
 
-- [ ] **Step 2: 修改 finalize job 的 needs 加上 package**
+- [x] **Step 2: 修改 finalize job 的 needs 加上 package**
 
 定位 `finalize` job：
 
@@ -1714,7 +1714,7 @@ git commit -m "test(package): Task 3.6 Windows exe 安装/升级/卸载验证通
 
 > **注意：** `package` job 产物在 matrix 不同 runner 上，`finalize` 在 ubuntu runner 无法直接访问 windows 产物。需在 `package` job 用 `actions/upload-artifact` 上传后，`finalize` 用 `actions/download-artifact` 下载再挂到 Release。Step 3 处理。
 
-- [ ] **Step 3: 在 finalize job 加下载 artifact 步骤**
+- [x] **Step 3: 在 finalize job 加下载 artifact 步骤**
 
 在 `finalize` job 的 `Update Release` 步骤之前插入：
 
@@ -1740,7 +1740,7 @@ git commit -m "test(package): Task 3.6 Windows exe 安装/升级/卸载验证通
             deployments/package/dist/*.exe
 ```
 
-- [ ] **Step 4: 验证 workflow YAML 语法**
+- [x] **Step 4: 验证 workflow YAML 语法**
 
 ```bash
 # 用 yamllint 或 actionlint（若本地有）
@@ -1751,7 +1751,7 @@ python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml'))" &
 
 预期：`YAML OK`。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add .github/workflows/release.yml
