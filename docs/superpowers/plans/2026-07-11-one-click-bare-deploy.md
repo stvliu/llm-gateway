@@ -1141,7 +1141,7 @@ git commit -m "feat(package): Task 3.1 WinSW 服务配置"
 
 > Task 3.2–3.5 共同构建 `llm-gateway.iss`，本 Task 先搭骨架（含端口输入页），3.3 补密钥生成 Pascal Script，3.4 补 env 写入，3.5 补 jpackage app-image 引用与编译。为避免重复，这里一次性写出**完整 iss**，后续 Task 3.3/3.4/3.5 以"验证点"形式确认各部分就位。
 
-- [ ] **Step 1: 编写完整 Inno Setup 脚本**
+- [x] **Step 1: 编写完整 Inno Setup 脚本**
 
 Create `deployments/package/windows/llm-gateway.iss`：
 
@@ -1338,7 +1338,7 @@ begin
 end;
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/windows/llm-gateway.iss

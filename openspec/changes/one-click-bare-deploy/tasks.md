@@ -19,7 +19,7 @@
 ## 3. Windows 安装包（exe）
 
 - [x] 3.1 编写 WinSW 配置（`LLMGateway.xml` + `winsw.exe`，注册 Windows Service，`<env>` 写 `DB_URL/SERVER_PORT/GATEWAY_ENCRYPTION_KEY`，`<arguments>` 指向 jpackage 启动器 exe）
-- [ ] 3.2 编写 Inno Setup 安装向导 UI（端口输入框，默认 8080）
+- [x] 3.2 编写 Inno Setup 安装向导 UI（端口输入框，默认 8080）
 - [ ] 3.3 编写安装时密钥生成 Pascal Script（生成 `GATEWAY_ENCRYPTION_KEY`，已存在则保留）
 - [ ] 3.4 配置服务环境变量写入 WinSW xml（`DB_URL` 指向 `%ProgramData%\LLM-Gateway\data\`、`SERVER_PORT`、`GATEWAY_ENCRYPTION_KEY`）
 - [ ] 3.5 配置 jpackage `--type app-image`（生成精简 JRE + jar + 启动器 exe）+ Inno Setup 编译 exe（安装 Inno Setup）
