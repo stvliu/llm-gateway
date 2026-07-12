@@ -31,7 +31,7 @@
 - [x] 4.2 ubuntu job：构建 deb + rpm（安装 `rpm` 工具）
 - [x] 4.3 windows job：构建 exe（jpackage app-image + WinSW + Inno Setup 编译，安装 Inno Setup）
 - [x] 4.4 产物上传到 GitHub Release
-- [ ] 4.5 验证 release tag 触发，deb/rpm/exe 产物齐全
+- [x] 4.5 验证 release tag 触发，deb/rpm/exe 产物齐全
 
 ## 5. Docker 资产修复
 

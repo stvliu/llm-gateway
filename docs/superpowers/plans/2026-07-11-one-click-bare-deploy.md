@@ -1834,14 +1834,14 @@ git commit -m "ci(package): Task 4.4 产物上传 Release 流转确认"
 
 **涉及文件：** 无新增（端到端验证）
 
-- [ ] **Step 1: 推一个测试 tag 触发 workflow**
+- [x] **Step 1: 推一个测试 tag 触发 workflow**
 
 ```bash
 git tag v0.0.0-package-test
 git push origin v0.0.0-package-test
 ```
 
-- [ ] **Step 2: 监控 workflow 运行**
+- [x] **Step 2: 监控 workflow 运行**
 
 ```bash
 gh run watch
@@ -1849,7 +1849,7 @@ gh run watch
 
 预期：`package` job 双平台均通过（含 smoke test），`finalize` job 通过。
 
-- [ ] **Step 3: 确认 Release 产物齐全**
+- [x] **Step 3: 确认 Release 产物齐全**
 
 ```bash
 gh release view v0.0.0-package-test --json assets --jq '.assets[].name'
@@ -1860,7 +1860,7 @@ gh release view v0.0.0-package-test --json assets --jq '.assets[].name'
 - `llm-gateway_<version>-1.x86_64.rpm`
 - `llm-gateway-setup.exe`
 
-- [ ] **Step 4: 清理测试 tag/release**
+- [x] **Step 4: 清理测试 tag/release**
 
 ```bash
 gh release delete v0.0.0-package-test --yes --cleanup-tag || true
@@ -1868,7 +1868,7 @@ git tag -d v0.0.0-package-test
 git push origin :refs/tags/v0.0.0-package-test || true
 ```
 
-- [ ] **Step 5: Commit 验证记录**
+- [x] **Step 5: Commit 验证记录**
 
 ```bash
 git add deployments/package/spike-report.md
