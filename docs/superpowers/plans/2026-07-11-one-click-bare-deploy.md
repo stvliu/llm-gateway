@@ -1813,13 +1813,13 @@ git commit -m "ci(package): Task 4.3 windows job exe 构建设计确认"
 
 **涉及文件：** 无新增（验证 Task 4.1 Step 2-3 的 finalize 改动）
 
-- [ ] **Step 1: 确认产物流转链路**
+- [x] **Step 1: 确认产物流转链路**
 
 - `package` job（双平台）→ `actions/upload-artifact` 上传到 `packages-ubuntu-latest` / `packages-windows-latest`
 - `finalize` job → `actions/download-artifact`（`pattern: packages-*`，`merge-multiple: true`）合并下载到 `deployments/package/dist/`
 - `softprops/action-gh-release` 的 `files:` 含 `*.deb`、`*.rpm`、`*.exe`
 
-- [ ] **Step 2: 记录并 Commit**
+- [x] **Step 2: 记录并 Commit**
 
 ```bash
 git add deployments/package/spike-report.md

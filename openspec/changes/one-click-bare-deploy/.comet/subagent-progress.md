@@ -9,11 +9,11 @@
 
 ## 当前 Task
 
-- Plan Task: Task 4.3: 验证 windows job 构建 exe（验证点）
-- OpenSpec Task: 4.3 windows job：构建 exe（jpackage app-image + WinSW + Inno Setup 编译）
+- Plan Task: Task 4.4: 验证产物上传到 GitHub Release（验证点）
+- OpenSpec Task: 4.4 产物上传到 GitHub Release
 - 阶段: implementing
 - implementer model: sonnet
-- 说明：静态核对 CI 步骤一致性，实跑留 Task 4.5
+- 说明：静态核对流转链路，实跑留 Task 4.5
 - 风险信号: 待自报（预计无）
 
 ## 已完成 Task
@@ -22,6 +22,7 @@
 ### Phase 4
 - Task 4.1: release.yml package job（reviewer 修复后通过）
 - Task 4.2: ubuntu job 一致性核对（通过）
+- Task 4.3: windows job 一致性核对（通过）
 
 ## D10 修复说明
 
