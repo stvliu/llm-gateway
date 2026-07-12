@@ -266,7 +266,7 @@ git commit -m "chore(package): Task 1.3 创建 deployments/package 目录结构"
 - Create: `deployments/package/build.sh`
 - Create: `deployments/package/build.ps1`
 
-- [ ] **Step 1: 编写 build.sh（Linux deb+rpm）**
+- [x] **Step 1: 编写 build.sh（Linux deb+rpm）**
 
 Create `deployments/package/build.sh`：
 
@@ -365,7 +365,7 @@ log "完成。产物目录: $DIST_DIR"
 ls -lh "$DIST_DIR"
 ```
 
-- [ ] **Step 2: 编写 build.ps1（Windows app-image）**
+- [x] **Step 2: 编写 build.ps1（Windows app-image）**
 
 Create `deployments/package/build.ps1`：
 
@@ -443,7 +443,7 @@ Log "完成。下一步用 Inno Setup 编译 exe（见 Task 3.5）"
 Get-ChildItem $AppImage | Format-Table Name
 ```
 
-- [ ] **Step 3: 赋予执行权限并冒烟验证 build.sh（Linux 环境）**
+- [x] **Step 3: 赋予执行权限并冒烟验证 build.sh（Linux 环境）**
 
 ```bash
 chmod +x deployments/package/build.sh
@@ -453,7 +453,7 @@ bash -n deployments/package/build.sh && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 4: 验证 build.ps1 语法（Windows 环境）**
+- [x] **Step 4: 验证 build.ps1 语法（Windows 环境）**
 
 ```powershell
 # PowerShell
@@ -463,7 +463,7 @@ Write-Host "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add deployments/package/build.sh deployments/package/build.ps1
