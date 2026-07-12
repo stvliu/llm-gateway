@@ -1,6 +1,6 @@
 #!/bin/bash
 # LLM-Gateway rpm %postun 脚本（等价 deb postrm）
-# $1 = 0 表示卸载；1/2 表示升级/重装（不处理）
+# $1 = 0 表示卸载；1 表示升级（不处理）
 # 清理 systemd unit，保留数据目录与 env 文件（升级/重装需要）
 set -e
 

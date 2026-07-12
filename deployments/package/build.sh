@@ -98,6 +98,8 @@ if command -v rpm >/dev/null 2>&1; then
   RPM_RES="$SCRIPT_DIR/linux-rpm-staging"
   rm -rf "$RPM_RES"
   mkdir -p "$RPM_RES"
+  # 更新 EXIT trap：纳入 RPM_RES 临时 resource-dir，确保异常退出也清理（${RPM_RES:-} 避免未定义时报错）
+  trap 'rm -rf "$STAGING_DIR" "${RPM_RES:-}"' EXIT
   # 复制 -rpm 后缀脚本为 jpackage --type rpm 识别的标准命名（postinst/prerm/postrm）
   cp "$LINUX_RES/postinst-rpm" "$RPM_RES/postinst"
   cp "$LINUX_RES/prerm-rpm" "$RPM_RES/prerm"

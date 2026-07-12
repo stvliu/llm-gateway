@@ -1,6 +1,6 @@
 #!/bin/bash
 # LLM-Gateway rpm %preun 脚本（等价 deb prerm）
-# $1 = 0 表示卸载；1/2 表示升级/重装（不处理）
+# $1 = 0 表示卸载；1 表示升级（不处理）
 set -e
 
 if [ "$1" = "0" ]; then
