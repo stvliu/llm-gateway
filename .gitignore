@@ -63,6 +63,9 @@ surefire-reports/
 .claude/
 .qwen/
 .github/
+# 例外：CI/CD 工作流必须跟踪（release.yml 等靠 -f 跟踪易丢失）
+!.github/
+!.github/workflows/
 .specify/
 node_modules/
 dist/

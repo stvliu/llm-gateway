@@ -160,9 +160,18 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           DEB=$(ls deployments/package/dist/*.deb | head -1)
+          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
+          # 容器内 docker exec curl localhost:8080，无需端口映射
           docker run --rm -d --name lg-smoke-deb \
+            --privileged --cgroupns=host \
             -v "$PWD/$DEB:/tmp/llm-gateway.deb" \
-            -p 18080:8080 ubuntu:22.04 sleep 180
+            jrei/systemd-ubuntu:22.04
+          # 等待 systemd 就绪（starting -> running/degraded）
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
           docker exec lg-smoke-deb bash -c '
             apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
@@ -174,9 +183,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           RPM=$(ls deployments/package/dist/*.rpm | head -1)
+          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
           docker run --rm -d --name lg-smoke-rpm \
+            --privileged --cgroupns=host \
             -v "$PWD/$RPM:/tmp/llm-gateway.rpm" \
-            -p 18081:8080 rockylinux:9 sleep 180
+            jrei/systemd-rockylinux:9
+          # 等待 systemd 就绪（starting -> running/degraded）
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
           docker exec lg-smoke-rpm bash -c '
             dnf install -y /tmp/llm-gateway.rpm curl
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
