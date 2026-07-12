@@ -1422,7 +1422,7 @@ git commit -m "test(package): Task 3.4 WinSW xml 环境变量写入验证"
 - Modify: `deployments/package/build.ps1`（追加 WinSW 下载 + iscc 编译步骤）
 - Create: `deployments/package/windows/download-winsw.ps1`（WinSW 下载辅助）
 
-- [ ] **Step 1: 编写 WinSW 下载脚本**
+- [x] **Step 1: 编写 WinSW 下载脚本**
 
 Create `deployments/package/windows/download-winsw.ps1`：
 
@@ -1442,7 +1442,7 @@ if (-not (Test-Path $outFile)) { throw "WinSW 下载失败" }
 Write-Host "完成: $outFile"
 ```
 
-- [ ] **Step 2: 修改 build.ps1 追加 WinSW + Inno Setup 编译**
+- [x] **Step 2: 修改 build.ps1 追加 WinSW + Inno Setup 编译**
 
 在 `deployments/package/build.ps1` 末尾（`Log "完成。下一步用 Inno Setup 编译 exe"` 之前）追加：
 
@@ -1470,7 +1470,7 @@ if (-not (Test-Path $SetupExe)) { Die "安装包未生成: $SetupExe" }
 Log "安装包: $SetupExe ($((Get-Item $SetupExe).Length / 1MB)MB)"
 ```
 
-- [ ] **Step 3: 本地执行 build.ps1（Windows 环境，需 Inno Setup）**
+- [x] **Step 3: 本地执行 build.ps1（Windows 环境，需 Inno Setup）**
 
 ```powershell
 # 安装 Inno Setup（一次性）
@@ -1480,7 +1480,7 @@ Log "安装包: $SetupExe ($((Get-Item $SetupExe).Length / 1MB)MB)"
 
 预期：`deployments\package\dist\llm-gateway-setup.exe` 生成。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add deployments/package/windows/download-winsw.ps1 deployments/package/build.ps1

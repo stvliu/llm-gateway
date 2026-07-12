@@ -22,7 +22,7 @@
 - [x] 3.2 编写 Inno Setup 安装向导 UI（端口输入框，默认 8080）
 - [x] 3.3 编写安装时密钥生成 Pascal Script（生成 `GATEWAY_ENCRYPTION_KEY`，已存在则保留）
 - [x] 3.4 配置服务环境变量写入 WinSW xml（`DB_URL` 指向 `%ProgramData%\LLM-Gateway\data\`、`SERVER_PORT`、`GATEWAY_ENCRYPTION_KEY`）
-- [ ] 3.5 配置 jpackage `--type app-image`（生成精简 JRE + jar + 启动器 exe）+ Inno Setup 编译 exe（安装 Inno Setup）
+- [x] 3.5 配置 jpackage `--type app-image`（生成精简 JRE + jar + 启动器 exe）+ Inno Setup 编译 exe（安装 Inno Setup）
 - [ ] 3.6 本地验证 exe：干净 Windows 安装 -> Service 启动 -> 健康检查 UP -> 数据落 `%ProgramData%`
 
 ## 4. CI 集成

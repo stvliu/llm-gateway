@@ -9,12 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 3.4: 验证服务环境变量写入 WinSW xml（验证点）
-- OpenSpec Task: 3.4 验证服务环境变量写入 WinSW xml
+- Plan Task: Task 3.5: 配置 jpackage app-image + Inno Setup 编译
+- OpenSpec Task: 3.5 配置 jpackage app-image + Inno Setup 编译 exe
 - 阶段: implementing
 - implementer model: sonnet
-- 说明：核对 LLMGateway.xml + llm-gateway.iss 一致性（四项 env + D10 + 精确匹配）
-- 风险信号: 待自报（预计无：验证 + 记录）
+- 环境限制：iscc 可能未安装，实际编译留 CI
+- 风险信号: 待自报（build.ps1 改动，可能 diff>200）
 
 ## 已完成 Task
 
@@ -22,7 +22,8 @@
 ### Phase 3
 - Task 3.1: WinSW 配置（含 D10）
 - Task 3.2: Inno Setup 完整脚本（reviewer 修复后通过）
-- Task 3.3: 验证密钥 Pascal Script（CRITICAL 修复后通过：PS 5.1 兼容实例方法）
+- Task 3.3: 验证密钥 Pascal Script（CRITICAL 修复后通过：PS 5.1 兼容）
+- Task 3.4: 验证 env 写入 WinSW xml（一致性核对通过）
 
 ## D10 修复说明
 
