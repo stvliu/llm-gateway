@@ -242,14 +242,14 @@ git commit -m "feat(package): Task 1.2 固化 jlink 精简 JRE 模块清单"
 - Create: `deployments/package/windows/.gitkeep`
 - Create: `deployments/package/jpackage/.gitkeep`
 
-- [ ] **Step 1: 创建目录与占位文件**
+- [x] **Step 1: 创建目录与占位文件**
 
 ```bash
 mkdir -p deployments/package/linux deployments/package/windows deployments/package/jpackage
 touch deployments/package/linux/.gitkeep deployments/package/windows/.gitkeep deployments/package/jpackage/.gitkeep
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add deployments/package/linux/.gitkeep deployments/package/windows/.gitkeep deployments/package/jpackage/.gitkeep

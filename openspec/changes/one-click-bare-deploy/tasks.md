@@ -2,7 +2,7 @@
 
 - [x] 1.1 Spike：验证 jpackage + Spring Boot fat jar 启动（`--main-jar gateway-boot-<ver>.jar --main-class org.springframework.boot.loader.launch.JarLauncher`），确认应用正常启动
 - [x] 1.2 用 jdeps 分析 fat jar 依赖，确定 jlink 精简 JRE 模块清单
-- [ ] 1.3 创建 `deployments/package/` 目录结构（`jpackage/`、`linux/`、`windows/`、构建脚本）
+- [x] 1.3 创建 `deployments/package/` 目录结构（`jpackage/`、`linux/`、`windows/`、构建脚本）
 - [ ] 1.4 编写 `build.sh` / `build.ps1` 构建入口（mvn package -> jlink 生成精简 JRE -> jpackage 打包）
 
 ## 2. Linux 安装包（deb + rpm）
