@@ -1229,4 +1229,98 @@ git push github :refs/tags/v0.0.0-package-test || true
 - **Task 4.5 是最终端到端验证**：打 release tag 实跑 release.yml，确认双平台 CI 构建 + smoke test + 产物挂 Release 全链路通过
 - **环境限制部分留 CI**：本机无 gh CLI、无 docker、无 iscc、jpackage 不支持跨平台打包，这些限制已在第 8-15 节逐一记录；Task 4.5 的端到端实跑在 CI 环境完成，本机无法替代
 
+---
+
+## 20. Task 5.3 环境限制说明（docker-compose up 验证）
+
+> 追加日期：2026-07-12
+> 关联任务：Task 5.3 - 验证 docker-compose up -d 正常构建并拉起 gateway
+> 关联 Plan：`docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md` Task 5.3（Step 1-5，约行 2137-2189）
+> 目标：`cd deployments/docker && docker-compose up -d` gateway 服务健康 UP
+
+### 20.1 环境限制
+
+| 检查项 | 命令 | 结果 |
+|---|---|---|
+| `docker` | `docker version` | `command not found`（exit 127） |
+| `docker-compose` | `docker-compose version` | `command not found`（exit 127） |
+| `docker compose`（v2 插件） | `docker compose version` | `command not found`（exit 127） |
+
+**结论**：本机 Windows 11（Git Bash）未安装 Docker Desktop，`docker` / `docker-compose` / `docker compose` 三种调用方式均不可用（与 Task 2.5 第 8 节、Task 2.7 第 9 节、Task 2.8 第 10 节一致）。plan Step 1-4 的本地 `docker-compose up -d --build gateway` 构建启动、health 轮询、curl 验证、`down -v` 清理均无法执行，实际验证留 CI（release.yml `build-docker` job）或用户本地（已安装 Docker Desktop 的环境）。
+
+### 20.2 实际验证留 CI / 用户本地
+
+docker-compose up 验证将延后至以下两处完成：
+
+1. **CI（release.yml `build-docker` job）**：CI 环境执行 `docker build` + `docker-compose up` 构建 gateway 镜像并验证服务健康（若 CI workflow 已配 compose 集成；当前 release.yml `build-docker` job 仅做镜像构建，compose 端到端 smoke test 可能需补充）。
+2. **用户本地**：已安装 Docker Desktop 的环境执行 `docker-compose up -d --build gateway` -> 等待 health healthy -> `curl /actuator/health` 验 UP -> `docker-compose down -v` 清理。
+
+### 20.3 CI/用户本地验证参考步骤（plan Step 1-4 映射）
+
+以下为 plan Task 5.3 Step 1-4 的验证步骤，作为 CI/用户本地验证编写参考：
+
+#### Step 1: 构建并启动 gateway 服务
+
+```bash
+cd deployments/docker
+docker-compose up -d --build gateway
+```
+
+仅启动 gateway（其依赖 postgres/redis 会按 `depends_on` 自动拉起）。`--build` 强制用新 Dockerfile 构建。
+
+#### Step 2: 等待 gateway 健康就绪
+
+```bash
+# 最多等 90s
+for i in $(seq 1 90); do
+  STATUS=$(docker inspect --format='{{.State.Health.Status}}' llm-gateway 2>/dev/null || echo "none")
+  echo "[$i] health: $STATUS"
+  [ "$STATUS" = "healthy" ] && break
+  sleep 2
+done
+docker-compose logs --tail=30 gateway
+```
+
+预期：`health: healthy`。
+
+> 容器名核对：docker-compose.yml 中 gateway `container_name: llm-gateway`（line 141），与 plan Step 2 的 `docker inspect ... llm-gateway` 一致 ✓。healthcheck 配置（line 171-176）：`curl -f http://localhost:8080/actuator/health`，`start_period: 60s`，`interval: 30s`，`retries: 3`，即启动后 60s 开始首次健康检查，最多重试 3 次。
+
+#### Step 3: 直接 curl 验证
+
+```bash
+curl -sf http://localhost:8080/actuator/health
+```
+
+预期：`{"status":"UP",...}`。
+
+#### Step 4: 清理
+
+```bash
+docker-compose down -v
+```
+
+### 20.4 dev profile PG/Redis 依赖说明
+
+gateway 服务 `SPRING_PROFILES_ACTIVE=dev`（docker-compose.yml line 140 build args + line 145 environment，默认 dev）。dev profile 依赖外部 PostgreSQL 与 Redis：
+
+| 依赖 | compose 服务 | depends_on 条件 | 端口 | healthcheck |
+|------|-------------|----------------|------|-------------|
+| PostgreSQL | `postgres`（postgres:16-alpine） | `service_healthy`（line 167-168） | 5432 | `pg_isready -U llm_gateway -d llm_gateway`（line 27） |
+| Redis | `redis`（redis:7-alpine） | `service_healthy`（line 169-170） | 6379 | `redis-cli ping`（line 47） |
+
+compose 已配 `depends_on: condition: service_healthy`，gateway 启动前 postgres/redis 必须先健康。若 dev profile 连不上 PG/Redis 导致 health DOWN：
+
+- **本 change 不改 `application*.yml`**：dev profile 的数据源/Redis 配置由现有 `application-dev.yml` 决定，不在本次 one-click-bare-deploy change 范围内。
+- compose 通过环境变量注入连接信息（`DB_HOST=postgres` / `REDIS_HOST=redis`，line 147/153），需确认 dev profile 读取这些环境变量并正确连接 compose 内的 postgres/redis。
+- 若 dev profile health DOWN，需排查 `application-dev.yml` 的 `spring.datasource.url` / `spring.data.redis.host` 是否使用 `${DB_HOST}` / `${REDIS_HOST}` 环境变量占位（而非硬编码 localhost）。
+
+### 20.5 Spec Scenario 实际验证归属
+
+| Scenario | 验证内容 | 验证位置 |
+|----------|---------|---------|
+| docker-compose 正常构建 | `docker-compose up -d --build gateway` 镜像构建成功，无 Dockerfile/compose 配置错误 | CI（build-docker job）/ 用户本地（Step 1） |
+| gateway 健康检查通过 | gateway 容器 health status 为 healthy，`curl /actuator/health` 返回 `{"status":"UP"}` | CI / 用户本地（Step 2-3） |
+
+> 注：本机因无 docker（第 20.1 节）无法执行 docker-compose up 验证。docker-compose.yml（Task 5.1/5.2 产出）与 Dockerfile（Task 5.1 产出）的配置正确性已通过静态代码核对（build context 指向根目录、depends_on service_healthy、healthcheck curl 配置、SPRING_PROFILES_ACTIVE=dev），运行时构建与健康验证留 CI/用户本地。
+
 
