@@ -1392,7 +1392,7 @@ git commit -m "test(package): Task 3.3 密钥生成 Pascal Script 验证"
 
 **涉及文件：** 无新增（验证 Task 3.1 + 3.2 协作）
 
-- [ ] **Step 1: 检查 xml 模板与 iss 的协作一致性**
+- [x] **Step 1: 检查 xml 模板与 iss 的协作一致性**
 
 核对 `LLMGateway.xml`（Task 3.1）与 `llm-gateway.iss`（Task 3.2）：
 
@@ -1403,7 +1403,7 @@ git commit -m "test(package): Task 3.3 密钥生成 Pascal Script 验证"
 
 > **风险点：** `StringChangeEx(Content, 'value="8080"', ...)` 会替换 xml 中**所有** `value="8080"`。当前 xml 中仅 `SERVER_PORT` 为 8080，安全。若后续 xml 增加其他默认 8080 字段，需改用更精确的匹配（含 `name="SERVER_PORT"` 前缀）。当前无此问题。
 
-- [ ] **Step 2: 记录并 Commit**
+- [x] **Step 2: 记录并 Commit**
 
 ```bash
 git add deployments/package/spike-report.md

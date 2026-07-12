@@ -9,17 +9,12 @@
 
 ## 当前 Task
 
-- Plan Task: Task 3.3: 验证密钥生成 Pascal Script（验证点）
-- 阶段: review-fix（CRITICAL 修复，Task 3.3 验证发现 Task 3.2 iss bug）
-- 修复 agent 运行中
-- CRITICAL：iss GenerateEncryptionKey 静态方法 GetBytes(32) 不兼容 PS 5.1 -> 改实例方法 Create()+GetBytes(byte[])
-- 已有提交：aab14338（Task 3.3 验证结论）
-
-## 待办（Task 3.3 收尾）
-
-1. 修复 agent 回报后：
-   - 复查修复（PS 5.1 兼容）-> 通过则勾选 Task 3.3 + 派发 Task 3.4（验证 env 写入 WinSW xml）
-   - 复查未通过 -> BLOCKED
+- Plan Task: Task 3.4: 验证服务环境变量写入 WinSW xml（验证点）
+- OpenSpec Task: 3.4 验证服务环境变量写入 WinSW xml
+- 阶段: implementing
+- implementer model: sonnet
+- 说明：核对 LLMGateway.xml + llm-gateway.iss 一致性（四项 env + D10 + 精确匹配）
+- 风险信号: 待自报（预计无：验证 + 记录）
 
 ## 已完成 Task
 
@@ -27,6 +22,7 @@
 ### Phase 3
 - Task 3.1: WinSW 配置（含 D10）
 - Task 3.2: Inno Setup 完整脚本（reviewer 修复后通过）
+- Task 3.3: 验证密钥 Pascal Script（CRITICAL 修复后通过：PS 5.1 兼容实例方法）
 
 ## D10 修复说明
 
