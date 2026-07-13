@@ -3,6 +3,8 @@ comet_change: one-click-bare-deploy
 role: technical-design
 canonical_spec: openspec
 status: final
+archived-with: 2026-07-13-one-click-bare-deploy
+status: final
 ---
 
 # 非 Docker 一键部署 - 技术设计文档
@@ -276,3 +278,4 @@ GATEWAY_ENCRYPTION_KEY=<首次安装生成，升级保留>
 3. **debconf 是否校验端口占用**：否，运行时冲突由 systemd 暴露（D4）。
 4. **Windows 用 msi 还是 exe**：exe（Inno Setup + WinSW），因 jpackage msi 不支持 ServiceInstall（D9）。
 5. **测试策略是否充分**：CI smoke test 在 package job 内（docker 验 deb/rpm + windows runner 验 exe）+ 本地 VM 全流程 + 升级测试。
+

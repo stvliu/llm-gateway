@@ -2,6 +2,7 @@
 change: one-click-bare-deploy
 design-doc: docs/superpowers/specs/2026-07-11-one-click-bare-deploy-design.md
 base-ref: f4b92150f569008c8d1399b31a552fe58c6d9c3b
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 # 非 Docker 一键部署 实施计划
@@ -27,6 +28,7 @@ base-ref: f4b92150f569008c8d1399b31a552fe58c6d9c3b
 
 **最大技术风险：** Task 1.1（jpackage + Spring Boot fat jar 启动 spike），必须最先验证。若 `--main-class org.springframework.boot.loader.launch.JarLauncher` 启动失败，备选 layered jar 或 `JAVA_OPTIONS` 方式（见 D8）。
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## 文件结构总览
@@ -64,6 +66,7 @@ base-ref: f4b92150f569008c8d1399b31a552fe58c6d9c3b
 | `deployments/docker/docker-compose.yml` | gateway 服务 `context` 改根目录、移除源码挂载、补 `gateway-console` 服务、修 health 路径 |
 | `README.md` | 部署章节：修正 DB 类型/jar 名/安装包用法，补 admin/admin 改密与 H2 Console 风险提示 |
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 1: jpackage 打包基础验证（Tasks 1.1–1.4）
@@ -194,6 +197,7 @@ git commit -m "feat(package): Task 1.1 jpackage+fat jar spike 验证通过"
 
 > **决策点：** 若 Step 5 health 未 UP，停止本 Phase，改用 D8 备选（layered jar：`spring-boot-maven-plugin` 配 layered jars + jpackage `--module-path` 指定 layers；或 `--java-options` 传 `-jar`）。需用户确认方向后再继续。
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 1.2: 固化 jdeps/jlink 模块清单
@@ -231,6 +235,7 @@ git add deployments/package/jlink-modules.txt
 git commit -m "feat(package): Task 1.2 固化 jlink 精简 JRE 模块清单"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 1.3: 创建 deployments/package 目录结构
@@ -256,6 +261,7 @@ git add deployments/package/linux/.gitkeep deployments/package/windows/.gitkeep 
 git commit -m "chore(package): Task 1.3 创建 deployments/package 目录结构"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 1.4: 编写 build.sh / build.ps1 构建入口
@@ -470,6 +476,7 @@ git add deployments/package/build.sh deployments/package/build.ps1
 git commit -m "feat(package): Task 1.4 编写 build.sh/build.ps1 构建入口"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 2: Linux 安装包 deb + rpm（Tasks 2.1–2.8）
@@ -519,6 +526,7 @@ git add deployments/package/linux/llm-gateway.service
 git commit -m "feat(package): Task 2.1 systemd unit 模板"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.2: 编写 debconf 模板
@@ -574,6 +582,7 @@ git add deployments/package/linux/llm-gateway.templates deployments/package/linu
 git commit -m "feat(package): Task 2.2 debconf 端口交互模板"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.3: 编写 postinst
@@ -688,6 +697,7 @@ git add deployments/package/linux/postinst
 git commit -m "feat(package): Task 2.3 postinst 安装后脚本"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.4: 编写 prerm 与 postrm
@@ -749,6 +759,7 @@ git add deployments/package/linux/prerm deployments/package/linux/postrm
 git commit -m "feat(package): Task 2.4 prerm/postrm 卸载脚本"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.5: 配置 jpackage `--type deb`
@@ -796,6 +807,7 @@ git update-index --chmod=+x deployments/package/linux/postinst deployments/packa
 git commit -m "feat(package): Task 2.5 配置 jpackage --type deb 并验证产物"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.6: 配置 jpackage `--type rpm`
@@ -943,6 +955,7 @@ git update-index --chmod=+x deployments/package/linux/postinst-rpm deployments/p
 git commit -m "feat(package): Task 2.6 配置 jpackage --type rpm 等价 maintainer 脚本"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.7: 本地验证 deb（干净 Ubuntu）
@@ -1014,6 +1027,7 @@ git add deployments/package/spike-report.md
 git commit -m "test(package): Task 2.7 deb 干净 Ubuntu 安装验证通过"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 2.8: 本地验证 rpm（RHEL 系）
@@ -1063,6 +1077,7 @@ git add deployments/package/spike-report.md
 git commit -m "test(package): Task 2.8 rpm Rocky Linux 安装验证通过"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 3: Windows 安装包 exe（Tasks 3.1–3.6）
@@ -1130,6 +1145,7 @@ git add deployments/package/windows/LLMGateway.xml
 git commit -m "feat(package): Task 3.1 WinSW 服务配置"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 3.2: 编写 Inno Setup 安装向导 UI（端口输入）
@@ -1345,6 +1361,7 @@ git add deployments/package/windows/llm-gateway.iss
 git commit -m "feat(package): Task 3.2 Inno Setup 安装向导（端口输入页）"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 3.3: 验证密钥生成 Pascal Script
@@ -1384,6 +1401,7 @@ git add deployments/package/spike-report.md
 git commit -m "test(package): Task 3.3 密钥生成 Pascal Script 验证"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 3.4: 验证服务环境变量写入 WinSW xml
@@ -1412,6 +1430,7 @@ git commit -m "test(package): Task 3.4 WinSW xml 环境变量写入验证"
 
 > 追加 spike-report.md 一节确认三项 env 写入路径正确。
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 3.5: 配置 jpackage app-image + Inno Setup 编译
@@ -1487,6 +1506,7 @@ git add deployments/package/windows/download-winsw.ps1 deployments/package/build
 git commit -m "feat(package): Task 3.5 jpackage app-image + Inno Setup 编译 exe"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 3.6: 本地验证 exe（干净 Windows）
@@ -1561,6 +1581,7 @@ git add deployments/package/spike-report.md
 git commit -m "test(package): Task 3.6 Windows exe 安装/升级/卸载验证通过"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 4: CI 集成（Tasks 4.1–4.5）
@@ -1758,6 +1779,7 @@ git add .github/workflows/release.yml
 git commit -m "ci(package): Task 4.1 release.yml 新增 package job（matrix ubuntu/windows）"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 4.2: 验证 ubuntu job 构建 deb + rpm
@@ -1783,6 +1805,7 @@ git commit -m "ci(package): Task 4.2 ubuntu job deb+rpm 构建设计确认"
 
 > 完整 CI 触发验证在 Task 4.5（打 tag 实跑）。
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 4.3: 验证 windows job 构建 exe
@@ -1805,6 +1828,7 @@ git add deployments/package/spike-report.md
 git commit -m "ci(package): Task 4.3 windows job exe 构建设计确认"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 4.4: 验证产物上传到 GitHub Release
@@ -1826,6 +1850,7 @@ git add deployments/package/spike-report.md
 git commit -m "ci(package): Task 4.4 产物上传 Release 流转确认"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 4.5: 验证 release tag 触发，产物齐全
@@ -1877,6 +1902,7 @@ git commit -m "ci(package): Task 4.5 release tag 端到端验证通过"
 
 > **注意：** 本 Task 需在 Phase 2/3/4.1-4.4 全部完成后执行。若 CI 失败，加载 `systematic-debugging` skill 定位根因。
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 5: Docker 资产修复（Tasks 5.1–5.3）
@@ -1974,6 +2000,7 @@ git add deployments/docker/Dockerfile
 git commit -m "fix(docker): Task 5.1 Dockerfile 适配单模块 gateway-boot"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 5.2: 修复 docker-compose.yml
@@ -2132,6 +2159,7 @@ git add deployments/docker/docker-compose.yml gateway-console/Dockerfile
 git commit -m "fix(docker): Task 5.2 compose context 改根目录、移除源码挂载、补 console 服务"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 5.3: 验证 docker-compose up -d 正常构建并拉起 gateway
@@ -2188,6 +2216,7 @@ git add deployments/package/spike-report.md
 git commit -m "test(docker): Task 5.3 docker-compose up 验证 gateway 健康"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## Phase 6: 文档（Tasks 6.1–6.2）
@@ -2334,6 +2363,7 @@ git add deployments/package/README.md
 git commit -m "docs(package): Task 6.1 新增打包构建与安装说明"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ### Task 6.2: 更新 README.md 部署章节
@@ -2413,6 +2443,7 @@ git add README.md
 git commit -m "docs: Task 6.2 更新 README 部署章节（安装包用法/改密提示/H2 风险）"
 ```
 
+archived-with: 2026-07-13-one-click-bare-deploy
 ---
 
 ## 计划自检清单
@@ -2470,3 +2501,4 @@ git commit -m "docs: Task 6.2 更新 README 部署章节（安装包用法/改�
 | `StringChangeEx` 替换 `value="8080"` 误伤（Task 3.4） | 当前 xml 仅 SERVER_PORT 为 8080，安全；后续扩展用精确匹配 |
 | dev profile 强依赖 PG/Redis 致 compose 验证失败（Task 5.3） | 记录并与用户确认是否调 compose 环境变量（不改 yml） |
 | CI smoke test 容器内 systemd 不可用 | 改用 `docker run --privileged` 或直接 `java -jar` 冒烟（绕过服务注册） |
+
