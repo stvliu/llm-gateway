@@ -116,6 +116,10 @@ curl http://localhost:8080/actuator/health
 ## 重要提示
 
 - **加密密钥备份**：`GATEWAY_ENCRYPTION_KEY` 丢失则历史加密数据（如 API Key）无法解密。务必备份 `/etc/llm-gateway/env`（Linux）或 `LLMGateway.xml`（Windows）。
+- **Windows xml 权限**：`LLMGateway.xml` 含 `GATEWAY_ENCRYPTION_KEY`，位于 `C:\Program Files\LLM-Gateway\`，默认 ACL 允许 `Users` 组读取。生产环境建议用 `icacls` 收紧权限，仅管理员与 SYSTEM 可读：
+  ```cmd
+  icacls "C:\Program Files\LLM-Gateway\LLMGateway.xml" /inheritance:r /grant:r Administrators:F /grant:r SYSTEM:F
+  ```
 - **默认凭据**：`local` profile 自动创建 `admin/admin`，首次登录后请立即改密。
 - **H2 Console**：`local` profile 开启 H2 Console（`/h2-console`，`web-allow-others=true`），生产环境请关闭或限制访问。
 - **端口冲突**：安装时不校验端口占用，冲突时服务反复重启暴露（systemd `Restart=on-failure` / WinSW `onfailure restart`）。

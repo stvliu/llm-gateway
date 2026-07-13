@@ -117,7 +117,7 @@ begin
   // 用 PowerShell 加密安全 RNG 生成 32 字节 base64 密钥
   // 实例方法兼容 Windows PowerShell 5.1（.NET Framework）：Create() + GetBytes(byte[])
   // 静态方法 GetBytes(int) 仅 .NET Core 3.0+ 可用，PS 5.1 下 MethodNotFound
-  if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "$r=[Security.Cryptography.RandomNumberGenerator]::Create();$b=New-Object byte[] 32;$r.GetBytes($b);[Convert]::ToBase64String($b) > ''' + TempFile + '''"',
+  if Exec(ExpandConstant('{cmd}'), '/c powershell -NoProfile -Command "$r=[Security.Cryptography.RandomNumberGenerator]::Create();$b=New-Object byte[] 32;$r.GetBytes($b);[Convert]::ToBase64String($b) | Out-File -Encoding ascii -FilePath ''' + TempFile + '''"',
          '', SW_HIDE, ewWaitUntilTerminated, ResultCode) then
   begin
     LoadStringFromFile(TempFile, Result);
