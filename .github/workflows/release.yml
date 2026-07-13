@@ -140,6 +140,7 @@ jobs:
       - name: Restore Linux script permissions
         if: runner.os == 'Linux'
         run: |
+          chmod +x mvnw
           chmod +x deployments/package/build.sh
           chmod +x deployments/package/linux/postinst deployments/package/linux/prerm \
                    deployments/package/linux/postrm deployments/package/linux/llm-gateway.config
