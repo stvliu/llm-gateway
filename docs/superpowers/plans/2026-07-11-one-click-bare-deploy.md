@@ -170,7 +170,7 @@ Create `deployments/package/spike-report.md`：
 
 ## 结论
 - [x] jpackage `--main-jar` + `--main-class org.springframework.boot.loader.launch.JarLauncher` 启动成功
-- [ ] 需改用 layered jar / JAVA_OPTIONS 备选方案（仅当上面失败时勾选）
+- [x] 需改用 layered jar / JAVA_OPTIONS 备选方案（仅当上面失败时勾选）
 
 ## jdeps 模块清单
 （粘贴 Step 2 输出）
@@ -935,7 +935,7 @@ ls -lh deployments/package/dist/*.rpm
 
 预期：`llm-gateway_<version>-1.x86_64.rpm` 生成。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rpm deployments/package/linux/postrm-rpm deployments/package/build.sh
