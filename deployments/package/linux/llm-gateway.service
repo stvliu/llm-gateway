@@ -1,6 +1,6 @@
 [Unit]
 Description=LLM-Gateway Service
-Documentation=https://github.com/codingas/llm-gateway
+Documentation=https://codingas.com/api-gateway
 After=network.target
 
 [Service]
