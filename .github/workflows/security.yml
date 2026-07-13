@@ -1,0 +1,126 @@
+# ===================================================================
+# Security Workflow
+# 安全扫描工作流: PR 合并、每周定时触发
+# ===================================================================
+name: Security
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - '**.java'
+      - '**/pom.xml'
+      - '.github/workflows/**'
+  schedule:
+    - cron: '0 2 * * 1'  # 每周一凌晨 2 点
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '21'
+
+jobs:
+  # -------------------------------------------------------------------
+  # OWASP 依赖检查
+  # -------------------------------------------------------------------
+  owasp-dependency-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Run OWASP Dependency Check
+        run: |
+          mvn org.owasp:dependency-check-maven:check \
+              -Dodc.failBuildOnCVSS=7 \
+              -Dodc.outputDirectory=target/dependency-check \
+              ${{ env.MAVEN_OPTS }}
+
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-check-report
+          path: target/dependency-check
+          retention-days: 14
+
+      - name: Publish to Security Dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: target/dependency-check/dependency-check-sarif.xml
+
+  # -------------------------------------------------------------------
+  # Trivy 容器镜像扫描 (构建后)
+  # -------------------------------------------------------------------
+  trivy-scan:
+    name: Trivy Container Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: gateway-jar
+
+      - name: Build Docker Image
+        run: |
+          docker build -f deployments/docker/Dockerfile \
+            --build-arg SPRING_PROFILES_ACTIVE=dev \
+            -t llm-gateway:test .
+
+      - name: Run Trivy Scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'llm-gateway:test'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # -------------------------------------------------------------------
+  # 构建 (供 Trivy 使用)
+  # -------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: |
+          mvn package -DskipTests ${{ env.MAVEN_OPTS }}
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-jar
+          path: gateway-boot/target/*.jar
+          retention-days: 1
