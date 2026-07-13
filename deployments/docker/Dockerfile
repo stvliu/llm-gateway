@@ -17,6 +17,8 @@ RUN apk add --no-cache maven
 # 复制父 POM 与 gateway-boot POM（利用缓存）
 COPY pom.xml ./
 COPY gateway-boot/pom.xml gateway-boot/
+COPY gateway-cli/pom.xml gateway-cli/
+COPY gateway-simulator/pom.xml gateway-simulator/
 
 # 下载依赖（利用缓存）
 RUN mvn dependency:go-offline -pl gateway-boot -am -q || true

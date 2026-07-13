@@ -1,0 +1,81 @@
+# ===================================================================
+# Build Workflow
+# 构建工作流: PR 创建、push 到 main 时触发
+# ===================================================================
+name: Build
+
+on:
+  push:
+    branches: [main, master, 'release/**']
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '21'
+  MAVEN_OPTS: -Xmx2048m -Xms512m
+
+jobs:
+  # -------------------------------------------------------------------
+  # 构建
+  # -------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven
+        run: |
+          mvn clean compile -DskipTests ${{ env.MAVEN_OPTS }}
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-maven-
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: gateway-jar
+          path: gateway-boot/target/*.jar
+          retention-days: 7
+
+  # -------------------------------------------------------------------
+  # 编译检查
+  # -------------------------------------------------------------------
+  compile-check:
+    name: Compile Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK ${{ env.JAVA_VERSION }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Checkstyle
+        continue-on-error: true
+        run: |
+          mvn checkstyle:check -DskipTests ${{ env.MAVEN_OPTS }}
+
+      - name: SpotBugs
+        continue-on-error: true
+        run: |
+          mvn spotbugs:check -DskipTests ${{ env.MAVEN_OPTS }}

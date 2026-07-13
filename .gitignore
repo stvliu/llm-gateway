@@ -75,7 +75,6 @@ data/
 !site/src/data/**
 
 .flattened-pom.xml
-/.mvn/
 /.claude/
 /.specify/
 /gateway-console/test-results/
