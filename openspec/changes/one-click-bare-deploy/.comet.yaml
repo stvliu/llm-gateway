@@ -1,6 +1,6 @@
 workflow: full
 language: zh-CN
-phase: build
+phase: verify
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
@@ -8,13 +8,13 @@ subagent_dispatch: confirmed
 tdd_mode: direct
 review_mode: standard
 isolation: branch
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: 1aaa0c0167850560a685fb24b7d5fc9698ce1b19
 design_doc: docs/superpowers/specs/2026-07-11-one-click-bare-deploy-design.md
 plan: docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md
 verify_result: pending
-verification_report: null
+verification_report: docs/superpowers/reports/2026-07-13-one-click-bare-deploy-verify.md
 branch_status: pending
 created_at: 2026-07-11
 verified_at: null
