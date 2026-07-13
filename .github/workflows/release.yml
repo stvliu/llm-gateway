@@ -17,6 +17,7 @@ env:
 
 permissions:
   contents: write
+  packages: write
 
 jobs:
   # -------------------------------------------------------------------
@@ -155,7 +156,7 @@ jobs:
 
       - name: Build packages (Linux)
         if: runner.os == 'Linux'
-        run: ./deployments/package/build.sh
+        run: bash deployments/package/build.sh
 
       - name: Build packages (Windows)
         if: runner.os == 'Windows'
@@ -271,6 +272,7 @@ jobs:
     name: 发布Helm Chart
     runs-on: ubuntu-latest
     needs: release
+    if: false  # 暂时禁用，charts/ 目录不存在
 
     steps:
       - name: Checkout
