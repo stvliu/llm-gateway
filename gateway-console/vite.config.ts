@@ -4,8 +4,14 @@ import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 import { execSync } from 'node:child_process';
 
-// WSL2 下获取 Windows 主机 IP
+// 获取后端代理目标地址
+// 优先级：VITE_BACKEND_URL 环境变量（容器环境） > WSL2 自动探测 > localhost
 function getBackendTarget(): string {
+  // 容器环境：优先使用显式配置的后端 URL（如 docker-compose 中设为 http://gateway:8080）
+  if (process.env.VITE_BACKEND_URL) {
+    return process.env.VITE_BACKEND_URL;
+  }
+  // WSL2 下获取 Windows 主机 IP
   if (process.env.WSL_DISTRO_NAME) {
     try {
       const hostIp = execSync("hostname -I | awk '{print $1}'", { encoding: 'utf-8' }).trim();

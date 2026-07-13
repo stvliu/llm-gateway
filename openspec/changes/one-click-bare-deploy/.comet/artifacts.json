@@ -1,0 +1,8 @@
+{
+  "openspec_proposal": "openspec/changes/one-click-bare-deploy/proposal.md",
+  "openspec_design": "openspec/changes/one-click-bare-deploy/design.md",
+  "openspec_tasks": "openspec/changes/one-click-bare-deploy/tasks.md",
+  "openspec_delta_spec": "openspec/changes/one-click-bare-deploy/specs/bare-metal-deploy/spec.md",
+  "handoff_context": "openspec/changes/one-click-bare-deploy/.comet/handoff/design-context.json",
+  "handoff_markdown": "openspec/changes/one-click-bare-deploy/.comet/handoff/design-context.md"
+}

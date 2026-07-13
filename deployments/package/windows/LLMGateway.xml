@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service>
+  <id>LLMGateway</id>
+  <name>LLM-Gateway</name>
+  <description>LLM-Gateway - 企业级 AI 模型 API 聚合网关</description>
+
+  <!-- jpackage app-image 启动器 exe -->
+  <executable>%BASE%\llm-gateway.exe</executable>
+  <arguments></arguments>
+
+  <!-- 环境变量：数据目录外部化、端口、加密密钥 -->
+  <!-- 注意：GATEWAY_ENCRYPTION_KEY 由 Inno Setup 安装时生成并写入，升级保留 -->
+  <env name="DB_URL" value="jdbc:h2:file:%ProgramData%\LLM-Gateway\data\gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE"/>
+  <env name="SERVER_PORT" value="8080"/>
+  <env name="GATEWAY_ENCRYPTION_KEY" value=""/>
+  <!-- D10 修复：裸机部署默认无 Redis，禁用 redis health 检查避免误报 DOWN -->
+  <env name="MANAGEMENT_HEALTH_REDIS_ENABLED" value="false"/>
+
+  <!-- 工作目录 -->
+  <workingdirectory>%ProgramData%\LLM-Gateway\data</workingdirectory>
+
+  <!-- 日志 -->
+  <logpath>%ProgramData%\LLM-Gateway\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+
+  <!-- 失败自动重启（等价 systemd Restart=on-failure） -->
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="20 sec"/>
+
+  <!-- 启动模式 -->
+  <startmode>Automatic</startmode>
+  <delayedstart>true</delayedstart>
+
+  <!-- 失败停止阈值 -->
+  <stoptimeout>30 sec</stoptimeout>
+</service>

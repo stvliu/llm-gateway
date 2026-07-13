@@ -485,6 +485,41 @@ BASE_URL=http://localhost:8080 API_KEY=sk-test k6 run deployments/docker/load-te
 
 ## 📦 部署指南
 
+LLM-Gateway 支持三种部署形态：
+
+### 1. 系统安装包（推荐：非 Docker 一键部署）
+
+默认 `local` profile（H2 文件持久化 + Caffeine 缓存，零外部依赖，无 Redis），装完即用。
+
+- **Linux deb/rpm**：`apt install ./llm-gateway_*.deb` 或 `dnf install ./llm-gateway-*.rpm`
+- **Windows exe**：双击 `llm-gateway-setup.exe`
+
+安装时交互设置端口（默认 8080），加密密钥自动生成。详见 [deployments/package/README.md](deployments/package/README.md)。
+
+构建产物：`gateway-boot-1.0.0-SNAPSHOT.jar`（fat jar，Main-Class=`org.springframework.boot.loader.launch.JarLauncher`）。
+
+### 2. Docker
+
+```bash
+cd deployments/docker
+docker-compose up -d
+```
+
+详见 [deployments/docker/](deployments/docker/)。
+
+### 3. 源码运行
+
+```bash
+./mvnw spring-boot:run -pl gateway-boot
+```
+
+> **重要提示：**
+> - **默认凭据**：`local` profile 自动创建 `admin/admin`，首次登录后请**立即修改密码**。
+> - **H2 Console 风险**：`local` profile 开启 H2 Console（`/h2-console`）且 `web-allow-others=true`，允许远程访问，生产环境请关闭或限制。
+> - **加密密钥备份**：系统安装包部署时 `GATEWAY_ENCRYPTION_KEY` 自动生成，**务必备份**，丢失则历史加密数据无法解密。
+
+---
+
 ### 单机部署 (标准版)
 
 #### 最低配置

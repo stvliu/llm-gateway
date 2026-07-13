@@ -134,7 +134,7 @@ services:
   # -------------------------------------------------------------------
   gateway:
     build:
-      context: ../../gateway
+      context: ../..
       dockerfile: deployments/docker/Dockerfile
       args:
         SPRING_PROFILES_ACTIVE: dev
@@ -162,19 +162,40 @@ services:
       - "8080:8080"
       - "8081:8081"  # Actuator
     volumes:
-      - ../../gateway:/app
-      - ./config:/app/config:ro
+      - gateway_data:/app/data
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/api/v1/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    networks:
+      - llm-gateway-network
+
+  # -------------------------------------------------------------------
+  # LLM-Gateway 管理前端（React/Vite）
+  # -------------------------------------------------------------------
+  gateway-console:
+    build:
+      context: ../../gateway-console
+      dockerfile: Dockerfile
+    container_name: llm-gateway-console
+    restart: unless-stopped
+    environment:
+      # 前端运行时 API 基址（浏览器端，保持指向网关宿主机端口）
+      VITE_API_BASE_URL: http://localhost:8080
+      # Vite dev server 代理目标（容器内解析，指向 compose 网络内的 gateway 服务）
+      VITE_BACKEND_URL: http://gateway:8080
+    ports:
+      - "5173:5173"
+    depends_on:
+      gateway:
+        condition: service_healthy
     networks:
       - llm-gateway-network
 
@@ -198,3 +219,5 @@ volumes:
     name: llm-gateway-prometheus-data
   grafana_data:
     name: llm-gateway-grafana-data
+  gateway_data:
+    name: llm-gateway-app-data

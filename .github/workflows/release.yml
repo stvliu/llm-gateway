@@ -1,0 +1,355 @@
+# ===================================================================
+# Release Workflow
+# 发布工作流: Git tag 推送时触发
+# ===================================================================
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  JAVA_VERSION: '21'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # -------------------------------------------------------------------
+  # 发布准备
+  # -------------------------------------------------------------------
+  release:
+    name: Release准备
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: LLM-Gateway ${{ steps.version.outputs.version }}
+          draft: true
+          prerelease: false
+
+  # -------------------------------------------------------------------
+  # 构建 Docker 镜像 (多架构)
+  # -------------------------------------------------------------------
+  build-docker:
+    name: 构建Docker镜像
+    runs-on: ubuntu-latest
+    needs: release
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha,prefix=
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deployments/docker/Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            SPRING_PROFILES_ACTIVE=prod
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.version }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-${{ matrix.platform }}
+          path: sbom.spdx.json
+          retention-days: 90
+
+  # -------------------------------------------------------------------
+  # 构建系统安装包 (deb/rpm/exe)
+  # -------------------------------------------------------------------
+  package:
+    name: 构建安装包
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Restore Linux script permissions
+        if: runner.os == 'Linux'
+        run: |
+          chmod +x deployments/package/build.sh
+          chmod +x deployments/package/linux/postinst deployments/package/linux/prerm \
+                   deployments/package/linux/postrm deployments/package/linux/llm-gateway.config
+          chmod +x deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rpm \
+                   deployments/package/linux/postrm-rpm
+
+      - name: Install rpm tool (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - name: Install Inno Setup (Windows)
+        if: runner.os == 'Windows'
+        run: choco install innosetup -y --no-progress
+
+      - name: Build packages (Linux)
+        if: runner.os == 'Linux'
+        run: ./deployments/package/build.sh
+
+      - name: Build packages (Windows)
+        if: runner.os == 'Windows'
+        run: .\deployments\package\build.ps1
+
+      - name: Smoke test - deb (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          DEB=$(ls deployments/package/dist/*.deb | head -1)
+          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
+          # 容器内 docker exec curl localhost:8080，无需端口映射
+          docker run --rm -d --name lg-smoke-deb \
+            --privileged --cgroupns=host \
+            -v "$PWD/$DEB:/tmp/llm-gateway.deb" \
+            jrei/systemd-ubuntu:22.04
+          # 等待 systemd 就绪（starting -> running/degraded）
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
+          docker exec lg-smoke-deb bash -c '
+            apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
+            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
+            systemctl is-active llm-gateway.service
+          '
+          docker stop lg-smoke-deb
+
+      - name: Smoke test - rpm (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          RPM=$(ls deployments/package/dist/*.rpm | head -1)
+          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
+          docker run --rm -d --name lg-smoke-rpm \
+            --privileged --cgroupns=host \
+            -v "$PWD/$RPM:/tmp/llm-gateway.rpm" \
+            jrei/systemd-rockylinux:9
+          # 等待 systemd 就绪（starting -> running/degraded）
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
+          docker exec lg-smoke-rpm bash -c '
+            dnf install -y /tmp/llm-gateway.rpm curl
+            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
+            systemctl is-active llm-gateway.service
+          '
+          docker stop lg-smoke-rpm
+
+      - name: Smoke test - exe (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" -ArgumentList "/VERYSILENT","/NORESTART" -Wait -NoNewWindow
+          for ($i=1; $i -le 90; $i++) {
+            try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
+          }
+          $svc = Get-Service LLMGateway
+          if ($svc.Status -ne 'Running') { throw "服务未运行" }
+          Start-Process -FilePath "C:\Program Files\LLM-Gateway\unins000.exe" -ArgumentList "/VERYSILENT" -Wait
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.os }}
+          path: |
+            deployments/package/dist/*.deb
+            deployments/package/dist/*.rpm
+            deployments/package/dist/*.exe
+          retention-days: 14
+
+  # -------------------------------------------------------------------
+  # 发布 Maven Central (可选)
+  # -------------------------------------------------------------------
+  publish-maven:
+    name: 发布Maven Central
+    runs-on: ubuntu-latest
+    needs: release
+    if: false  # 暂时禁用，等待完善签名配置
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Import GPG Key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      - name: Build and Publish
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_TOKEN: ${{ secrets.OSSRH_TOKEN }}
+        run: |
+          mvn deploy \
+              -DskipTests \
+              -Dspotless.apply.skip=true \
+              -Dgpg.skip=false \
+              -P release \
+              ${{ env.MAVEN_OPTS }}
+
+  # -------------------------------------------------------------------
+  # 发布 Helm Chart
+  # -------------------------------------------------------------------
+  publish-helm:
+    name: 发布Helm Chart
+    runs-on: ubuntu-latest
+    needs: release
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.14.0'
+
+      - name: Create Helm Chart
+        run: |
+          mkdir -p charts/llm-gateway
+          cp -r deployments/helm/* charts/llm-gateway/
+
+      - name: Package Helm Chart
+        run: |
+          helm package charts/llm-gateway \
+            --version ${{ needs.release.outputs.version }} \
+            --app-version ${{ needs.release.outputs.version }}
+
+      - name: Upload Helm Chart
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.release.outputs.upload_url }}
+          asset_path: llm-gateway-${{ needs.release.outputs.version }}.tgz
+          asset_name: llm-gateway-${{ needs.release.outputs.version }}.tgz
+          asset_content_type: application/gzip
+
+  # -------------------------------------------------------------------
+  # 完成发布
+  # -------------------------------------------------------------------
+  finalize:
+    name: 完成发布
+    runs-on: ubuntu-latest
+    needs: [release, build-docker, publish-helm, package]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: packages-*
+          path: deployments/package/dist
+          merge-multiple: true
+
+      - name: List artifacts
+        run: ls -lhR deployments/package/dist
+
+      - name: Update Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          files: |
+            *.tgz
+            deployments/package/dist/*.deb
+            deployments/package/dist/*.rpm
+            deployments/package/dist/*.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send Notification
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "LLM-Gateway ${{ needs.release.outputs.version }} 发布完成",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*LLM-Gateway 发布完成*\n版本: ${{ needs.release.outputs.version }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
