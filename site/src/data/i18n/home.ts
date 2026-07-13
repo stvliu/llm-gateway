@@ -7,7 +7,6 @@ export const home = {
       cta: '快速开始',
       secondaryCta: '版本对比',
     },
-    trust: { title: '已被多家团队信赖' },
     differentiators: [
       { title: '更易用', desc: '开箱即用（预置模板）+ 零学习成本（OpenAI 兼容）+ 运维友好（智能诊断）' },
       { title: '更合规', desc: '国密算法（SM2/SM3/SM4）+ 完整审计链（WORM）+ 等保 2.0 三级合规' },
@@ -21,14 +20,12 @@ export const home = {
       security: '安全合规：认证、限流、脱敏、审计四层检查，密钥加密存储。',
     },
     products: {
-      title: '三产品形态',
+      title: '产品形态',
       items: [
         { name: '标准版', desc: 'Apache-2.0 开源，单机即可起步', href: '/features/' },
-        { name: '托管云', desc: '免运维的云托管服务（即将推出）', href: '/contact-us/' },
         { name: '企业版', desc: '分布式部署 + 高级安全 + 商业支持', href: '/standard-vs-enterprise/' },
       ],
     },
-    ecosystem: { title: '生态组件' },
     console: { title: '控制台预览', placeholder: '控制台截图（P0 占位，待补充真实截图）' },
     features: { title: '8 大能力域' },
     cta: { title: '开始使用 LLM-Gateway', button: '查看文档' },
@@ -40,7 +37,6 @@ export const home = {
       cta: 'Get Started',
       secondaryCta: 'Compare Editions',
     },
-    trust: { title: 'Trusted by teams' },
     differentiators: [
       { title: 'Easier', desc: 'Out-of-the-box templates + zero learning curve (OpenAI-compatible) + ops-friendly diagnostics' },
       { title: 'More Compliant', desc: 'SM2/SM3/SM4 crypto + WORM audit chain + MLPS 2.0 Level 3' },
@@ -54,14 +50,12 @@ export const home = {
       security: 'Security & compliance: auth, rate-limit, masking, audit - four-layer checks, encrypted keys.',
     },
     products: {
-      title: 'Three Editions',
+      title: 'Editions',
       items: [
         { name: 'Standard', desc: 'Apache-2.0 open-source, single-node to start', href: '/features/' },
-        { name: 'Managed Cloud', desc: 'Managed cloud service (coming soon)', href: '/en/contact-us/' },
         { name: 'Enterprise', desc: 'Distributed deployment + advanced security + support', href: '/en/standard-vs-enterprise/' },
       ],
     },
-    ecosystem: { title: 'Ecosystem' },
     console: { title: 'Console Preview', placeholder: 'Console screenshots (placeholder, real shots pending)' },
     features: { title: '8 Capability Domains' },
     cta: { title: 'Start with LLM-Gateway', button: 'View Docs' },

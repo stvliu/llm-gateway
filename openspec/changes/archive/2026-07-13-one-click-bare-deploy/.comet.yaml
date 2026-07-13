@@ -1,6 +1,6 @@
 workflow: full
 language: zh-CN
-phase: verify
+phase: archive
 context_compression: off
 build_mode: subagent-driven-development
 build_pause: null
@@ -13,12 +13,12 @@ auto_transition: true
 base_ref: 1aaa0c0167850560a685fb24b7d5fc9698ce1b19
 design_doc: docs/superpowers/specs/2026-07-11-one-click-bare-deploy-design.md
 plan: docs/superpowers/plans/2026-07-11-one-click-bare-deploy.md
-verify_result: pending
+verify_result: pass
 verification_report: docs/superpowers/reports/2026-07-13-one-click-bare-deploy-verify.md
-branch_status: pending
+branch_status: handled
 created_at: 2026-07-11
-verified_at: null
-archived: false
+verified_at: 2026-07-13
+archived: true
 direct_override: null
 handoff_context: openspec/changes/one-click-bare-deploy/.comet/handoff/design-context.json
 handoff_hash: 45655c3deb8062463d4c972f79f7c273e962927188c5dd672b0c8607cdf7b93d

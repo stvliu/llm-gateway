@@ -3,18 +3,14 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Hero from '../../components/Hero.astro';
 import ProductCard from '../../components/ProductCard.astro';
 import FeatureCard from '../../components/FeatureCard.astro';
-import EcosystemCard from '../../components/EcosystemCard.astro';
 import Carousel from '../../components/Carousel.astro';
 import { home } from '../../data/i18n/home.ts';
 import { homeFeatures } from '../../data/homeFeatures.ts';
-import { homeEcosystem } from '../../data/homeEcosystem.ts';
 
 const t = home.en;
 ---
 <BaseLayout title={`${t.hero.title} · LLM-Gateway`} description={t.hero.subtitle}>
   <Hero title={t.hero.title} subtitle={t.hero.subtitle} cta={t.hero.cta} secondaryCta={t.hero.secondaryCta} />
-
-  <section class="trust"><h3>{t.trust.title}</h3></section>
 
   <section class="differentiators">
     {t.differentiators.map((d) => (
@@ -31,15 +27,8 @@ const t = home.en;
 
   <section class="products">
     <h2>{t.products.title}</h2>
-    <div class="grid-3">
+    <div class="grid-2">
       {t.products.items.map((p) => <ProductCard name={p.name} desc={p.desc} href={p.href} />)}
-    </div>
-  </section>
-
-  <section class="ecosystem">
-    <h2>{t.ecosystem.title}</h2>
-    <div class="grid-3">
-      {homeEcosystem.map((e) => <EcosystemCard name={e.name} desc={e.desc} />)}
     </div>
   </section>
 
@@ -59,15 +48,14 @@ const t = home.en;
 </BaseLayout>
 
 <style>
-  .trust { text-align: center; padding: 24px 0; color: #9ca3af; }
   .differentiators { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 32px 0; }
   .diff-item h4 { margin: 0 0 8px; color: var(--brand-primary, #6653e3); }
   .diff-item p { margin: 0; font-size: 0.875rem; color: #6b7280; }
-  .narrative, .products, .ecosystem, .features { padding: 32px 0; }
-  .narrative h2, .products h2, .ecosystem h2, .features h2 { font-size: 1.5rem; margin-bottom: 24px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .narrative, .products, .features { padding: 32px 0; }
+  .narrative h2, .products h2, .features h2 { font-size: 1.5rem; margin-bottom: 24px; }
+  .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
   .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
   .bottom-cta { text-align: center; padding: 64px 0; }
   .bottom-cta .btn { display: inline-block; padding: 12px 28px; border-radius: 8px; background: var(--brand-primary, #6653e3); color: #fff; text-decoration: none; font-weight: 600; }
-  @media (max-width: 768px) { .differentiators, .grid-3, .grid-4 { grid-template-columns: 1fr; } }
+  @media (max-width: 768px) { .differentiators, .grid-2, .grid-4 { grid-template-columns: 1fr; } }
 </style>
