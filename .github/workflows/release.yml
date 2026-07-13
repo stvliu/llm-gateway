@@ -15,6 +15,9 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+permissions:
+  contents: write
+
 jobs:
   # -------------------------------------------------------------------
   # 发布准备
