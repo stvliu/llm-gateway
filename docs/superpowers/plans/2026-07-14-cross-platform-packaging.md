@@ -68,7 +68,7 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 
 **依据:** Design Doc §3.3。conf 是 shell 脚本，启动脚本 `source` 后环境变量被 Spring `${ENV:默认}` 占位符绑定（application.yml 已支持 `server.port: ${SERVER_PORT:8080}` 等，环境变量优先级高于 yml）。`__GENERATE_KEY__` 是唯一占位符，由 postinst/install.ps1 首次安装时替换。
 
-- [ ] **Step 1: 创建 conf 模板文件**
+- [x] **Step 1: 创建 conf 模板文件**
 
 创建 `deployments/package/conf/llmgateway.conf`，内容如下（逐行照抄，`__GENERATE_KEY__` 是占位符不要替换）：
 
@@ -84,7 +84,7 @@ GATEWAY_ENCRYPTION_KEY=__GENERATE_KEY__
 JAVA_OPTS=-Xmx512m -Dmanagement.health.redis.enabled=false
 ```
 
-- [ ] **Step 2: 验证 conf 可被 shell source 且占位符可 grep 命中**
+- [x] **Step 2: 验证 conf 可被 shell source 且占位符可 grep 命中**
 
 在 git bash 中运行：
 
@@ -95,7 +95,7 @@ grep -q '__GENERATE_KEY__' deployments/package/conf/llmgateway.conf && echo "占
 
 预期输出包含 `SERVER_PORT=8080`、`JAVA_OPTS=-Xmx512m -Dmanagement.health.redis.enabled=false`、`占位符存在 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/conf/llmgateway.conf
@@ -135,7 +135,7 @@ bash -n deployments/package/bin/llm-gateway.sh && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/bin/llm-gateway.sh
@@ -393,7 +393,7 @@ python -c "import yaml,sys; yaml.safe_load(open('deployments/package/jreleaser.y
 
 预期：`YAML OK`（若无 python 则跳过，JReleaser 运行时会校验）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/jreleaser.yml
@@ -486,7 +486,7 @@ bash -n deployments/package/linux/postinst && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/linux/postinst
@@ -606,7 +606,7 @@ ls deployments/package/linux/
 
 预期：仅剩 `llm-gateway.service`、`postinst`、`prerm`、`postrm`（无 -rpm 后缀、无 templates/config，后两者在第 7 组删）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 postinst-rpm/prerm-rpm/postrm-rpm，JReleaser deb/rpm 共用 maintainer 脚本"
@@ -929,7 +929,7 @@ bash -n deployments/package/build.sh && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/build.sh
@@ -1138,7 +1138,7 @@ python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',enco
 
 预期：`YAML OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add .github/workflows/release.yml
@@ -1192,7 +1192,7 @@ ls deployments/package/windows/
 
 预期：仅剩 `download-winsw.ps1`、`install.ps1`、`uninstall.ps1`、`start.ps1`、`llm-gateway.xml`（无 .iss、无 LLMGateway.xml）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 Inno Setup .iss 脚本（Windows 改 zip）"
@@ -1422,7 +1422,7 @@ docker exec lg-smoke-rpm bash -c '
 '
 ```
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 无需提交代码。验证通过即完成。
 
@@ -1454,7 +1454,7 @@ Test-Path C:\lg-smoke\conf\llmgateway.conf
 
 预期：conf 文件仍存在（zip 卸载不删数据）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 无需提交代码。验证通过即完成。
 
