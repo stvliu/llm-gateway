@@ -262,7 +262,7 @@ git commit -m "feat(packaging): gateway-boot 加 pkg profile + JReleaser 1.25.0 
 
 > **待实测标注（Design §3.2 末尾）：** 以下为结构化初版。JReleaser 1.25.0 的 fileSet/packager 确切语法以 build 阶段实测报错调整为准。Task 8.1 是首个实测点。
 
-- [ ] **Step 1: 创建 jreleaser.yml**
+- [x] **Step 1: 创建 jreleaser.yml**
 
 创建 `deployments/package/jreleaser.yml`：
 
@@ -340,7 +340,7 @@ assemble:
           output: bin/llm-gateway.jar
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add deployments/package/jreleaser.yml

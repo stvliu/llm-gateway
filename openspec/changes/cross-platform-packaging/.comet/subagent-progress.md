@@ -27,8 +27,8 @@
 - [x] 1.2 Linux 启动脚本（6cb1f719 实现，4f39548b 勾选）
 - [x] 1.3 systemd unit（cb46a388 实现 + 917ad2d2 reviewer APPROVED 勾选）
 - [x] 2.1 pom.xml JReleaser 插件（bece4fc8 实现；恢复期 Step3 `mvnw help:describe` BUILD SUCCESS 补验；diff 22 行未命中风险信号，standard 无每任务 reviewer）
-- [ ] 2.2 jreleaser.yml  ← 当前
-- [ ] 2.3 deb/rpm conffile 注释
+- [x] 2.2 jreleaser.yml（e9138744 实现，haiku 转写与 plan 逐字一致；diff 71 行未命中风险信号，standard 无每任务 reviewer）
+- [ ] 2.3 deb/rpm conffile 注释  ← 当前
 - [ ] 3.1 postinst
 - [ ] 3.2 prerm/postrm
 - [ ] 3.3 删 -rpm 脚本
@@ -49,8 +49,8 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 2.2 新增 jreleaser.yml（distribution + fileSets）
-- OpenSpec task: 2.2 新增 `deployments/package/jreleaser.yml`：SINGLE_JAR distribution + fileSets（fat jar/JRE/conf/启动脚本/systemd unit）+ deb/rpm packager + archive assembler
+- plan task: Task 2.3 配 deb/rpm packager 细节 + archive Windows zip
+- OpenSpec task: 2.3 配 deb/rpm packager（requires/conffile/scripts 共用 postinst/prerm/postrm）+ archive 出 Windows zip（fileSets: Windows JRE + WinSW + ps1 + conf + jar）
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
@@ -64,6 +64,7 @@
 - 1.2: commit 6cb1f719；4f39548b 勾选 plan/tasks（修复 Step3 误勾选）
 - 1.3: commit cb46a388（ExecStart 指向 llm-gateway.sh，去 EnvironmentFile）；917ad2d2 reviewer APPROVED 勾选
 - 2.1: commit bece4fc8（gateway-boot pkg profile + JReleaser 1.25.0 插件声明）；恢复期补跑 Step3 `mvnw help:describe` BUILD SUCCESS；diff 22 行未命中风险信号，standard 模式无每任务 reviewer；task-checkoff PASS
+- 2.2: commit e9138744（jreleaser.yml 71 行，SINGLE_JAR + fileSets + deb/rpm packager + archive zip）；haiku 转写与 plan 逐字一致；diff 71 行未命中风险信号，standard 无每任务 reviewer；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -
