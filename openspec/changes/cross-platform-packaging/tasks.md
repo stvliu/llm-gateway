@@ -6,7 +6,7 @@
 
 ## 2. JReleaser 打包配置
 
-- [ ] 2.1 `pom.xml` 加 `org.jreleaser:jreleaser-maven-plugin` 1.25.0 插件段（绑定 package 阶段，只 assemble 不 release）
+- [x] 2.1 `pom.xml` 加 `org.jreleaser:jreleaser-maven-plugin` 1.25.0 插件段（绑定 package 阶段，只 assemble 不 release）
 - [ ] 2.2 新增 `deployments/package/jreleaser.yml`：SINGLE_JAR distribution + fileSets（fat jar/JRE/conf/启动脚本/systemd unit）+ deb/rpm packager + archive assembler
 - [ ] 2.3 配 deb/rpm packager（requires/conffile/scripts 共用 postinst/prerm/postrm）+ archive 出 Windows zip（fileSets: Windows JRE + WinSW + ps1 + conf + jar）
 

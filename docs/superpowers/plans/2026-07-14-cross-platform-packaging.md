@@ -201,7 +201,7 @@ git commit -m "refactor(packaging): systemd unit ExecStart 指向 llm-gateway.sh
 
 > 注意：tasks.md 写 `pom.xml`，实际精化为 `gateway-boot/pom.xml`（因为 build.sh 用 `-pl gateway-boot`，插件必须在该模块才被触发）。
 
-- [ ] **Step 1: 在 gateway-boot/pom.xml 的 `<properties>` 后或 `<build>` 前加版本属性**
+- [x] **Step 1: 在 gateway-boot/pom.xml 的 `<properties>` 后或 `<build>` 前加版本属性**
 
 在 `gateway-boot/pom.xml` 顶部 `<packaging>jar</packaging>` 之后、`<dependencies>` 之前，没有 `<properties>` 段，所以版本属性加在根 `pom.xml`。改为在根 `pom.xml` 的 `<properties>` 段末尾（`<flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>` 之后）追加：
 
@@ -210,7 +210,7 @@ git commit -m "refactor(packaging): systemd unit ExecStart 指向 llm-gateway.sh
         <jreleaser-maven-plugin.version>1.25.0</jreleaser-maven-plugin.version>
 ```
 
-- [ ] **Step 2: 在 gateway-boot/pom.xml 的 `<profiles>` 段末尾追加 pkg profile**
+- [x] **Step 2: 在 gateway-boot/pom.xml 的 `<profiles>` 段末尾追加 pkg profile**
 
 在 `gateway-boot/pom.xml` 的 `<profiles>` 段内（`docker` profile 之后、`</profiles>` 之前）追加：
 
@@ -236,7 +236,7 @@ git commit -m "refactor(packaging): systemd unit ExecStart 指向 llm-gateway.sh
         </profile>
 ```
 
-- [ ] **Step 3: 验证 Maven 能解析插件（下载插件元数据，不执行打包）**
+- [x] **Step 3: 验证 Maven 能解析插件（下载插件元数据，不执行打包）**
 
 ```bash
 ./mvnw help:describe -pl gateway-boot -Dplugin=org.jreleaser:jreleaser-maven-plugin:1.25.0 -Ppkg -q
@@ -244,7 +244,7 @@ git commit -m "refactor(packaging): systemd unit ExecStart 指向 llm-gateway.sh
 
 预期：输出插件描述（`JReleaser Maven Plugin`），无报错。若网络问题导致下载失败，确认 `~/.m2/repository/org/jreleaser/` 下有插件 jar。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add pom.xml gateway-boot/pom.xml
