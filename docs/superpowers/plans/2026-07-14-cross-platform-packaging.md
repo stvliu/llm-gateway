@@ -151,7 +151,7 @@ git commit -m "feat(packaging): 新增 Linux 启动脚本 llm-gateway.sh（sourc
 
 **依据:** Design Doc §3.5。删 `EnvironmentFile=/etc/llm-gateway/env`（conf 由启动脚本 source），ExecStart 从 jpackage 启动器 `/opt/llm-gateway/bin/llm-gateway` 改为 `llm-gateway.sh`。
 
-- [ ] **Step 1: 修改 systemd unit**
+- [x] **Step 1: 修改 systemd unit**
 
 将 `deployments/package/linux/llm-gateway.service` 的 `[Service]` 段中：
 - 删除行 `EnvironmentFile=/etc/llm-gateway/env`
@@ -181,7 +181,7 @@ LimitNOFILE=65536
 WantedBy=multi-user.target
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git add deployments/package/linux/llm-gateway.service
