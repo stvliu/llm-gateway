@@ -305,5 +305,25 @@
                 </plugins>
             </build>
         </profile>
+
+        <!-- 裸机部署打包：mvn jreleaser:assemble -Ppkg 触发，出 deb/rpm + zip -->
+        <profile>
+            <id>pkg</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jreleaser</groupId>
+                        <artifactId>jreleaser-maven-plugin</artifactId>
+                        <version>${jreleaser-maven-plugin.version}</version>
+                        <configuration>
+                            <!-- JReleaser 配置文件（相对 gateway-boot 模块 basedir） -->
+                            <configFile>${project.basedir}/../deployments/package/jreleaser.yml</configFile>
+                            <!-- 只 assemble 打包，不触发 release（本项目 GH Release 由 CI 单独管理） -->
+                            <skipJreleaserRelease>true</skipJreleaserRelease>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 </project>
