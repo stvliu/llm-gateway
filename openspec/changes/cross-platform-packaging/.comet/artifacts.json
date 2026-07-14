@@ -1,0 +1,8 @@
+{
+  "openspec_proposal": "openspec/changes/cross-platform-packaging/proposal.md",
+  "openspec_design": "openspec/changes/cross-platform-packaging/design.md",
+  "openspec_tasks": "openspec/changes/cross-platform-packaging/tasks.md",
+  "openspec_delta_spec": "openspec/changes/cross-platform-packaging/specs/bare-metal-deploy/spec.md",
+  "handoff_context": "openspec/changes/cross-platform-packaging/.comet/handoff/design-context.json",
+  "handoff_markdown": "openspec/changes/cross-platform-packaging/.comet/handoff/design-context.md"
+}
