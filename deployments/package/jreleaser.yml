@@ -35,6 +35,8 @@ packagers:
     active: ALWAYS
     # 待实测：JReleaser deb requires 语法（虚包名）
     requires: [openjdk-17-jre-headless | java17-runtime]
+    # conffile：dpkg 升级时保留（NOREPLACE 语义）
+    # 待实测：JReleaser deb 是否自动将 /etc 下文件标记为 conffile，或需显式配置
     fileSets:
       - input: conf
         output: etc/llm-gateway
@@ -46,6 +48,8 @@ packagers:
   rpm:
     active: ALWAYS
     requires: [(java-17-headless or java-21-headless)]
+    # %config(noreplace)：dnf 升级时保留 conf
+    # 待实测：JReleaser rpm 对 /etc 下文件的 noreplace 标记方式
     scripts:
       postInstall: linux/postinst
       preUninstall: linux/prerm
