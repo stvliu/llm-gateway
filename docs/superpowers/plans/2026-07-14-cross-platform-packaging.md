@@ -111,7 +111,7 @@ git commit -m "feat(packaging): 新增 llmgateway.conf 统一配置模板（端�
 
 **依据:** Design Doc §3.4。systemd ExecStart 指向此脚本，source conf 后 exec java。`$JAVA_OPTS` 不加引号以触发 word splitting（`-Xmx512m` 与 `-D...` 拆为独立 JVM 参数）。
 
-- [ ] **Step 1: 创建启动脚本**
+- [x] **Step 1: 创建启动脚本**
 
 创建 `deployments/package/bin/llm-gateway.sh`：
 
@@ -127,7 +127,7 @@ exec /opt/llm-gateway/runtime/bin/java $JAVA_OPTS \
   -jar /opt/llm-gateway/bin/llm-gateway.jar
 ```
 
-- [ ] **Step 2: 语法检查**
+- [x] **Step 2: 语法检查**
 
 ```bash
 bash -n deployments/package/bin/llm-gateway.sh && echo "语法 OK"
@@ -393,7 +393,7 @@ python -c "import yaml,sys; yaml.safe_load(open('deployments/package/jreleaser.y
 
 预期：`YAML OK`（若无 python 则跳过，JReleaser 运行时会校验）。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add deployments/package/jreleaser.yml
@@ -486,7 +486,7 @@ bash -n deployments/package/linux/postinst && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add deployments/package/linux/postinst
@@ -606,7 +606,7 @@ ls deployments/package/linux/
 
 预期：仅剩 `llm-gateway.service`、`postinst`、`prerm`、`postrm`（无 -rpm 后缀、无 templates/config，后两者在第 7 组删）。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 postinst-rpm/prerm-rpm/postrm-rpm，JReleaser deb/rpm 共用 maintainer 脚本"
@@ -929,7 +929,7 @@ bash -n deployments/package/build.sh && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add deployments/package/build.sh
@@ -1138,7 +1138,7 @@ python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',enco
 
 预期：`YAML OK`。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git add .github/workflows/release.yml
@@ -1192,7 +1192,7 @@ ls deployments/package/windows/
 
 预期：仅剩 `download-winsw.ps1`、`install.ps1`、`uninstall.ps1`、`start.ps1`、`llm-gateway.xml`（无 .iss、无 LLMGateway.xml）。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 Inno Setup .iss 脚本（Windows 改 zip）"
@@ -1422,7 +1422,7 @@ docker exec lg-smoke-rpm bash -c '
 '
 ```
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 无需提交代码。验证通过即完成。
 
@@ -1454,7 +1454,7 @@ Test-Path C:\lg-smoke\conf\llmgateway.conf
 
 预期：conf 文件仍存在（zip 卸载不删数据）。
 
-- [x] **Step 3: 提交**
+- [ ] **Step 3: 提交**
 
 无需提交代码。验证通过即完成。
 

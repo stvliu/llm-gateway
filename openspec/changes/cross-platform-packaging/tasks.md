@@ -1,7 +1,7 @@
 ## 1. conf 与启动脚本
 
 - [x] 1.1 新增 conf 模板 `deployments/package/conf/llmgateway.conf`（SERVER_PORT/DB_URL/GATEWAY_ENCRYPTION_KEY 占位符/JAVA_OPTS/路径）
-- [ ] 1.2 新增 Linux 启动脚本 `deployments/package/bin/llm-gateway.sh`（source conf + exec java $JAVA_OPTS -jar）
+- [x] 1.2 新增 Linux 启动脚本 `deployments/package/bin/llm-gateway.sh`（source conf + exec java $JAVA_OPTS -jar）
 - [ ] 1.3 改 `deployments/package/linux/llm-gateway.service`（ExecStart 指向 llm-gateway.sh，去掉 EnvironmentFile）
 
 ## 2. JReleaser 打包配置
