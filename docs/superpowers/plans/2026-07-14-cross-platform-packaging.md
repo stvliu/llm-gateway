@@ -358,7 +358,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
 
 > Task 2.2 已创建完整 jreleaser.yml 含 packagers + archive 段。本任务是补充注释与待实测标记，确保 deb/rpm conffile 配置就位。
 
-- [ ] **Step 1: 在 jreleaser.yml 的 deb/rpm packager 段补充 conffile/noreplace 配置注释**
+- [x] **Step 1: 在 jreleaser.yml 的 deb/rpm packager 段补充 conffile/noreplace 配置注释**
 
 在 `deployments/package/jreleaser.yml` 的 `deb:` 段 `fileSets` 之前追加 conffile 配置注释；在 `rpm:` 段 `scripts` 之前追加 noreplace 注释。在 `deb:` 的 `fileSets` 的 conf 项后追加待实测标记。
 
@@ -385,7 +385,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
     # 待实测：JReleaser rpm 对 /etc 下文件的 noreplace 标记方式
 ```
 
-- [ ] **Step 2: 验证 YAML 语法**
+- [x] **Step 2: 验证 YAML 语法**
 
 ```bash
 python -c "import yaml,sys; yaml.safe_load(open('deployments/package/jreleaser.yml',encoding='utf-8')); print('YAML OK')" 2>/dev/null || echo "若无 python，跳过；CI 会校验"
@@ -393,7 +393,7 @@ python -c "import yaml,sys; yaml.safe_load(open('deployments/package/jreleaser.y
 
 预期：`YAML OK`（若无 python 则跳过，JReleaser 运行时会校验）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/jreleaser.yml

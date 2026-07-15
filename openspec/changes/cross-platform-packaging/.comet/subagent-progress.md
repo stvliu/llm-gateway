@@ -28,8 +28,8 @@
 - [x] 1.3 systemd unit（cb46a388 实现 + 917ad2d2 reviewer APPROVED 勾选）
 - [x] 2.1 pom.xml JReleaser 插件（bece4fc8 实现；恢复期 Step3 `mvnw help:describe` BUILD SUCCESS 补验；diff 22 行未命中风险信号，standard 无每任务 reviewer）
 - [x] 2.2 jreleaser.yml（e9138744 实现，haiku 转写与 plan 逐字一致；diff 71 行未命中风险信号，standard 无每任务 reviewer）
-- [ ] 2.3 deb/rpm conffile 注释  ← 当前
-- [ ] 3.1 postinst
+- [x] 2.3 deb/rpm conffile 注释（19e9c568 实现，4 行注释与 plan 一致，YAML OK；diff 4 行未命中风险信号，standard 无每任务 reviewer）
+- [ ] 3.1 postinst  ← 当前
 - [ ] 3.2 prerm/postrm
 - [ ] 3.3 删 -rpm 脚本
 - [ ] 4.1 Windows ps1
@@ -49,14 +49,15 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 2.3 配 deb/rpm packager 细节 + archive Windows zip
-- OpenSpec task: 2.3 配 deb/rpm packager（requires/conffile/scripts 共用 postinst/prerm/postrm）+ archive 出 Windows zip（fileSets: Windows JRE + WinSW + ps1 + conf + jar）
+- plan task: Task 3.1 改 postinst（生成 conf + chmod 兜底）
+- OpenSpec task: 3.1 改 postinst：生成 conf（密钥 `head -c 32 /dev/urandom | base64` + sed `|` 分隔符）+ `chmod 640` conf + `chmod -R 0755 runtime/bin` 兜底 JRE 权限
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
 - 变更文件: -
 - 风险信号自报: 待回报
-- 风险任务级 review: 未触发
+- 协调者风险预判: **命中安全敏感面**（postinst 生成 GATEWAY_ENCRYPTION_KEY 加密密钥 + conf 权限 + systemd 服务管理）-- implementer 回报后需派每任务 reviewer
+- 风险任务级 review: 未触发（待 implementer 回报确认）
 - 审查-修复轮次: 0/1
 
 ## 已完成 task 历史
@@ -65,6 +66,7 @@
 - 1.3: commit cb46a388（ExecStart 指向 llm-gateway.sh，去 EnvironmentFile）；917ad2d2 reviewer APPROVED 勾选
 - 2.1: commit bece4fc8（gateway-boot pkg profile + JReleaser 1.25.0 插件声明）；恢复期补跑 Step3 `mvnw help:describe` BUILD SUCCESS；diff 22 行未命中风险信号，standard 模式无每任务 reviewer；task-checkoff PASS
 - 2.2: commit e9138744（jreleaser.yml 71 行，SINGLE_JAR + fileSets + deb/rpm packager + archive zip）；haiku 转写与 plan 逐字一致；diff 71 行未命中风险信号，standard 无每任务 reviewer；task-checkoff PASS
+- 2.3: commit 19e9c568（jreleaser.yml 补 deb conffile + rpm noreplace 注释共 4 行）；YAML OK；diff 4 行未命中风险信号，standard 无每任务 reviewer；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -
