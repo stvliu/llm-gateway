@@ -34,8 +34,8 @@
 - [x] 3.2 prerm/postrm（3e95320b；与 plan 逐字一致，rm -rf 限定 purge；未命中风险信号）
 - [x] 3.3 删 -rpm 脚本（640fac2c；删除 3 文件 108 行；未命中风险信号）
 - [x] 4.1 Windows ps1（9cc63035 + fix 59efe590；reviewer NEEDS_FIX CRITICAL#1 start.ps1 引号剥离，review-fix 1 轮通过；命中安全敏感面；plan start.ps1 脚本段已同步修复）
-- [ ] 4.2 llm-gateway.xml + WinSW  ← 当前
-- [ ] 5.1 build.sh
+- [x] 4.2 llm-gateway.xml + WinSW（commit 26e1bade，恢复期核对一致，standard 直接勾选放行）
+- [ ] 5.1 build.sh  ← 当前
 - [ ] 5.2 删 build.ps1
 - [ ] 6.1 release.yml package job
 - [ ] 6.2 smoke test
@@ -50,14 +50,14 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 4.2 新增 llm-gateway.xml + 调整 WinSW 下载
-- OpenSpec task: 4.2 新增 `deployments/package/windows/llm-gateway.xml`（WinSW service 配置）+ 准备 WinSW.exe（v2.x，作为 archive fileSet）
+- plan task: Task 5.1 改 build.sh（mvn package + jlink 双平台 JRE + jreleaser:assemble）
+- OpenSpec task: 5.1 改 `deployments/package/build.sh`：mvn package + jlink（Linux JRE 交叉生成/下载，见 design §4.3）+ `mvn jreleaser:assemble` 出 deb/rpm/zip；删 jpackage deb/rpm 段 + `-rpm` 临时 resource-dir hack
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
 - 变更文件: -
 - 风险信号自报: 待回报
-- 协调者风险预判: 创建 xml + 改 download-winsw.ps1 输出名 + 删旧 xml，预判未命中风险信号
+- 协调者风险预判: build.sh 全文替换为 JReleaser 方案（plan 已含完整待写代码，单文件转写）；预判 diff 可能超 200 行阈值（旧 122 行删 + 新 ~102 行增），若超阈值命中"单任务 diff 超 200 行"风险信号 -> 派发 task reviewer；无安全敏感面/跨模块/schema/API；jlink 交叉生成为运行时风险（本地无法验证，留 CI）
 - 风险任务级 review: 未触发
 - 审查-修复轮次: 0/1
 
@@ -72,6 +72,7 @@
 - 3.2: commit 3e95320b；与 plan 逐字一致，rm -rf 限定 purge；task-checkoff PASS
 - 3.3: commit 640fac2c；删除 3 个 -rpm 脚本 108 行；task-checkoff PASS
 - 4.1: commit 9cc63035（3 ps1）+ fix 59efe590（start.ps1 引号剥离）；命中安全敏感面（install.ps1 密钥生成）；reviewer NEEDS_FIX CRITICAL#1（conf 引号不剥离）；review-fix 1 轮通过（复查 start.ps1 引号剥离正确，PS 语法 OK，DB_URL/JAVA_OPTS/KEY 三项验证）；plan start.ps1 脚本段已同步修复引号剥离；task-checkoff PASS
+- 4.2: commit 26e1bade（恢复期发现已提交：llm-gateway.xml 与 plan 逐字一致，download-winsw.ps1 仅改输出名 LLMGateway.exe->WinSW.exe，删旧 LLMGateway.xml）；diff 74 行 < 200 阈值，无安全敏感面/跨模块/schema/API -> 未命中风险信号；review_mode standard 直接勾选验证放行（未派发 task reviewer）；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -

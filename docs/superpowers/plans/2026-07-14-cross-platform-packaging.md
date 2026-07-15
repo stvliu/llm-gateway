@@ -731,7 +731,7 @@ git commit -m "feat(packaging): 新增 Windows start/install/uninstall.ps1（con
 
 **依据:** Design Doc §3.4、§3.8。WinSW 要求 exe 与 xml 同名。新方案 exe 为 `llm-gateway.exe`（install.ps1 从 WinSW.exe 改名），xml 为 `llm-gateway.xml`。WinSW executable 指向 powershell.exe 包装 start.ps1（读 conf 统一配置，不硬编码端口）。download-winsw.ps1 输出名改为 `WinSW.exe`（install.ps1 负责改名）。
 
-- [ ] **Step 1: 创建 llm-gateway.xml**
+- [x] **Step 1: 创建 llm-gateway.xml**
 
 创建 `deployments/package/windows/llm-gateway.xml`：
 
@@ -770,7 +770,7 @@ git commit -m "feat(packaging): 新增 Windows start/install/uninstall.ps1（con
 </service>
 ```
 
-- [ ] **Step 2: 修改 download-winsw.ps1 输出名为 WinSW.exe**
+- [x] **Step 2: 修改 download-winsw.ps1 输出名为 WinSW.exe**
 
 将 `deployments/package/windows/download-winsw.ps1` 中的输出文件名从 `LLMGateway.exe` 改为 `WinSW.exe`。
 
@@ -790,13 +790,13 @@ Write-Host "完成: $outFile"
 ```
 保持不变（已通用）。
 
-- [ ] **Step 3: 删除旧的 LLMGateway.xml**
+- [x] **Step 3: 删除旧的 LLMGateway.xml**
 
 ```bash
 git rm deployments/package/windows/LLMGateway.xml
 ```
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add deployments/package/windows/llm-gateway.xml deployments/package/windows/download-winsw.ps1
