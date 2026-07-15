@@ -972,7 +972,7 @@ git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 bui
 
 **依据:** Design Doc §3.8。package job 从 matrix `[ubuntu-latest, windows-latest]` 简化为单 `windows-latest`、单 JDK 21。删 Java 17 setup + `JAVA17_HOME` + `apt-get install rpm`（JReleaser 纯 Java 出 rpm）+ `choco install innosetup`（Windows 改 zip）。Windows checkout 后需 `chmod +x` 恢复脚本权限（git bash 环境）。
 
-- [ ] **Step 1: 替换 release.yml 的 package job 整段**
+- [x] **Step 1: 替换 release.yml 的 package job 整段**
 
 将 `.github/workflows/release.yml` 中从 `  # -------------------------------------------------------------------\n  # 构建系统安装包 (deb/rpm/exe)` 到该 job 结束（`          retention-days: 14` 之后空行）的整段，替换为：
 
@@ -1022,7 +1022,7 @@ git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 bui
           retention-days: 14
 ```
 
-- [ ] **Step 2: 同步修改 finalize job 的产物路径（exe → zip）**
+- [x] **Step 2: 同步修改 finalize job 的产物路径（exe → zip）**
 
 将 `.github/workflows/release.yml` 的 `finalize` job 中 `Update Release` 步骤的 `files:` 段：
 
@@ -1043,7 +1043,7 @@ git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 bui
             deployments/package/dist/*.zip
 ```
 
-- [ ] **Step 3: 验证 YAML 语法**
+- [x] **Step 3: 验证 YAML 语法**
 
 ```bash
 python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',encoding='utf-8')); print('YAML OK')" 2>/dev/null || echo "若无 python，跳过；CI 会校验"
@@ -1051,7 +1051,7 @@ python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',enco
 
 预期：`YAML OK`。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add .github/workflows/release.yml

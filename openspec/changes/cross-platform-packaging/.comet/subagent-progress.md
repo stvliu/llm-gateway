@@ -37,8 +37,8 @@
 - [x] 4.2 llm-gateway.xml + WinSW（commit 26e1bade，恢复期核对一致，standard 直接勾选放行）
 - [x] 5.1 build.sh（commit e6a7f820，125 行 diff 未命中风险，standard 直接放行）
 - [x] 5.2 删 build.ps1（commit e7d2f0b3，132 行删除，standard 直接放行）
-- [ ] 6.1 release.yml package job  ← 当前
-- [ ] 6.2 smoke test
+- [x] 6.1 release.yml package job（commit 28bf04ed，98 行 diff，standard 直接放行）
+- [ ] 6.2 smoke test  ← 当前
 - [ ] 7.1 删 debconf
 - [ ] 7.2 删 iss
 - [ ] 8.1 build.sh 验证
@@ -50,14 +50,14 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 6.1 改 release.yml package job（单 windows-latest 单 JDK 21）
-- OpenSpec task: 6.1 `release.yml` package job 单 windows-latest 单 JDK 21，删 rpm/iscc 依赖，产物 exe 改 zip
+- plan task: Task 6.2 smoke test 调整（deb/rpm 容器 + zip Windows runner）
+- OpenSpec task: 6.2 smoke test 调整：deb 用 systemd-ubuntu 容器、rpm 用 systemd-rockylinux 容器、zip 用 windows runner（Expand-Archive + install.ps1 + Get-Service + uninstall.ps1）
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
 - 变更文件: -
 - 风险信号自报: 待回报
-- 协调者风险预判: 改 release.yml 单文件（package job 整段替换 + finalize exe->zip），CI 配置但非安全敏感面（无认证/密钥/SQL），diff 估计 50-100 行 < 200 阈值；预判未命中风险信号
+- 协调者风险预判: 在 release.yml package job 插入 3 个 smoke test 步骤（deb/rpm docker 容器 + zip pwsh）；单文件插入，CI 配置非安全敏感面；diff 估计 60-80 行 < 200 阈值；预判未命中风险信号；本地无 docker 无法验证，留 CI
 - 风险任务级 review: 未触发
 - 审查-修复轮次: 0/1
 
@@ -75,6 +75,7 @@
 - 4.2: commit 26e1bade（恢复期发现已提交：llm-gateway.xml 与 plan 逐字一致，download-winsw.ps1 仅改输出名 LLMGateway.exe->WinSW.exe，删旧 LLMGateway.xml）；diff 74 行 < 200 阈值，无安全敏感面/跨模块/schema/API -> 未命中风险信号；review_mode standard 直接勾选验证放行（未派发 task reviewer）；task-checkoff PASS
 - 5.1: commit e6a7f820（build.sh 全文替换 JReleaser 方案：mvn package + jlink 双平台 JRE + jreleaser:assemble，删 jpackage 段）；diff 125 行（53 ins + 72 del）< 200 阈值；bash -n 语法 OK；协调者复核新文件与 plan 逐字一致；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 5.2: commit e7d2f0b3（删除 build.ps1，132 行删除）；单文件删除无安全敏感面/跨模块/schema/API；diff 132 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
+- 6.1: commit 28bf04ed（release.yml package job 简化单 windows-latest 单 JDK 21 + finalize exe->zip）；diff 98 行（14 ins + 84 del）< 200 阈值；YAML OK；协调者复核 package job 与 plan 一致、finalize exe->zip、其他 job 保留；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -
