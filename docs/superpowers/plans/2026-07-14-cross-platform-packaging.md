@@ -1069,7 +1069,7 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
 
 > **环境限制：** 本机无 docker，无法本地验证。smoke test 步骤在 CI（windows-latest runner，含 docker）执行。windows-latest runner 支持 `docker run`（Linux 容器）跑 deb/rpm smoke。
 
-- [ ] **Step 1: 在 package job 的 `Build packages` 步骤之后、`Upload artifacts` 之前插入三个 smoke test 步骤**
+- [x] **Step 1: 在 package job 的 `Build packages` 步骤之后、`Upload artifacts` 之前插入三个 smoke test 步骤**
 
 在 `.github/workflows/release.yml` 的 package job 中，`- name: Build packages` 步骤块之后，`- name: Upload artifacts` 之前，插入：
 
@@ -1134,7 +1134,7 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
         shell: pwsh
 ```
 
-- [ ] **Step 2: 验证 YAML 语法**
+- [x] **Step 2: 验证 YAML 语法**
 
 ```bash
 python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',encoding='utf-8')); print('YAML OK')" 2>/dev/null || echo "若无 python，跳过；CI 会校验"
@@ -1142,7 +1142,7 @@ python -c "import yaml; yaml.safe_load(open('.github/workflows/release.yml',enco
 
 预期：`YAML OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add .github/workflows/release.yml

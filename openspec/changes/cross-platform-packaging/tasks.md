@@ -29,7 +29,7 @@
 ## 6. CI 矩阵简化
 
 - [x] 6.1 改 `.github/workflows/release.yml`：package job 从 matrix `[ubuntu-latest, windows-latest]` 简化为单 windows-latest、单 JDK 21（删 Java 17 setup + JAVA17_HOME + `apt-get install rpm` + `choco install innosetup`）
-- [ ] 6.2 smoke test 调整：deb 用 systemd-ubuntu 容器、rpm 用 systemd-rockylinux 容器、zip 用 windows runner（Expand-Archive + install.ps1 + Get-Service + uninstall.ps1）
+- [x] 6.2 smoke test 调整：deb 用 systemd-ubuntu 容器、rpm 用 systemd-rockylinux 容器、zip 用 windows runner（Expand-Archive + install.ps1 + Get-Service + uninstall.ps1）
 
 ## 7. 清理冗余
 
