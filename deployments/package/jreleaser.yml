@@ -1,75 +1,74 @@
-# JReleaser 配置：SINGLE_JAR distribution + deb/rpm packager + archive(Windows zip)
+# JReleaser 配置：assemble 阶段产出 deb（DebAssembler）+ zip（ArchiveAssembler）
 # 触发：mvn jreleaser:assemble -pl gateway-boot -Ppkg
-# basedir = 本文件所在目录（deployments/package/），fileSet input 相对于此
+# basedir = repo root（E:\workspace\llm-gateway），fileSet input 相对于此
+# 注：JReleaser 1.25.0 中 deb 是 Assembler（assemble.deb），rpm 无 Assembler 仅有 SpecPackager
 project:
   name: llm-gateway
-  version: ${project.version}
+  # version 由 -Djreleaser.project.version 命令行参数提供（build.sh 从 Maven 读取）
   description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
   authors: [LLM-Gateway]
   license: Apache-2.0
+  copyright: 2026 LLM-Gateway
+  java:
+    version: 21
 
 distributions:
   llm-gateway:
     type: SINGLE_JAR
     artifacts:
       # fat jar 作为主 artifact，打包时重命名为 llm-gateway.jar
-      - path: ../../gateway-boot/target/gateway-boot-${project.version}.jar
+      - path: ../../gateway-boot/target/gateway-boot-{{projectVersion}}.jar
         transform: llm-gateway.jar
-    # Linux JRE（deb/rpm 用，build.sh 交叉生成到 jre/ 目录）
-    fileSets:
-      - input: jre/bin
-        output: opt/llm-gateway/runtime/bin
-      - input: jre/lib
-        output: opt/llm-gateway/runtime/lib
-      - input: jre/conf
-        output: opt/llm-gateway/runtime/conf
-      - input: bin
-        output: opt/llm-gateway/bin
-        includes: [llm-gateway.sh]
-      - input: linux
-        output: lib/systemd/system
-        includes: [llm-gateway.service]
 
-packagers:
-  deb:
-    active: ALWAYS
-    # 待实测：JReleaser deb requires 语法（虚包名）
-    requires: [openjdk-17-jre-headless | java17-runtime]
-    # conffile：dpkg 升级时保留（NOREPLACE 语义）
-    # 待实测：JReleaser deb 是否自动将 /etc 下文件标记为 conffile，或需显式配置
-    fileSets:
-      - input: conf
-        output: etc/llm-gateway
-        includes: [llmgateway.conf]
-    scripts:
-      postInstall: linux/postinst
-      preUninstall: linux/prerm
-      postUninstall: linux/postrm
-  rpm:
-    active: ALWAYS
-    requires: [(java-17-headless or java-21-headless)]
-    # %config(noreplace)：dnf 升级时保留 conf
-    # 待实测：JReleaser rpm 对 /etc 下文件的 noreplace 标记方式
-    scripts:
-      postInstall: linux/postinst
-      preUninstall: linux/prerm
-      postUninstall: linux/postrm
-
-# Windows zip（archive assembler，独立 fileSets，用 Windows JRE）
+# Assembler：deb + zip（jreleaser:assemble 阶段执行）
 assemble:
+  # Linux deb 包（DebAssembler，含 Linux JRE + 启动脚本 + systemd service + 配置）
+  deb:
+    llm-gateway:
+      active: ALWAYS
+      distributionType: BINARY
+      executable: llm-gateway
+      installationPath: opt/llm-gateway
+      architecture: amd64
+      fileSets:
+        - input: deployments/package/jre/bin
+          output: opt/llm-gateway/runtime/bin
+        - input: deployments/package/jre/lib
+          output: opt/llm-gateway/runtime/lib
+        - input: deployments/package/jre/conf
+          output: opt/llm-gateway/runtime/conf
+        - input: deployments/package/bin
+          output: opt/llm-gateway/bin
+          includes: [llm-gateway.sh]
+        - input: deployments/package/linux
+          output: lib/systemd/system
+          includes: [llm-gateway.service]
+        - input: deployments/package/conf
+          output: etc/llm-gateway
+          includes: [llmgateway.conf]
+        - input: gateway-boot/target/gateway-boot-{{projectVersion}}.jar
+          output: opt/llm-gateway/lib
+      control:
+        packageName: llm-gateway
+        maintainer: LLM-Gateway
+        description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
+        homepage: https://github.com/codingas/llm-gateway
+        section: utils
+        priority: optional
+
+  # Windows zip 包（ArchiveAssembler，含 Windows JRE + WinSW + 脚本 + 配置）
   archive:
     llm-gateway-win:
       active: ALWAYS
       formats: [ZIP]
-      exportDir: dist
       fileSets:
-        - input: jre-win
+        - input: deployments/package/jre-win
           output: runtime
-        - input: windows
+        - input: deployments/package/windows
           output: bin
           includes: [WinSW.exe, llm-gateway.xml, install.ps1, uninstall.ps1, start.ps1]
-        - input: conf
+        - input: deployments/package/conf
           output: conf
           includes: [llmgateway.conf]
-        - input: ../../gateway-boot/target/gateway-boot-${project.version}.jar
+        - input: gateway-boot/target/gateway-boot-{{projectVersion}}.jar
           output: bin/llm-gateway.jar

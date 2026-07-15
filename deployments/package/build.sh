@@ -33,7 +33,7 @@ fi
 JMODS_DIR="${JAVA_HOME}/jmods"
 [[ -d "$JMODS_DIR" ]] || err "jmods 不存在: $JMODS_DIR（请确认 JAVA_HOME 指向 JDK 21）"
 
-MODULES="$(cat "$MODULES_FILE" | tr -d '\n')"
+MODULES="$(tr -d '\r\n' < "$MODULES_FILE")"
 
 # 1. 构建 fat jar
 if [[ "${1:-}" != "--skip-mvn" ]]; then
@@ -67,8 +67,8 @@ LINUX_JMODS="$LINUX_JDK_DIR/jmods"
 if [[ ! -d "$LINUX_JMODS" ]]; then
   log "下载 Linux Temurin JDK 21（用于交叉生成 Linux JRE 的 jmods）..."
   mkdir -p "$LINUX_JDK_DIR"
-  # Adoptium Temurin JDK 21 Linux x64 tarball
-  TEMURIN_URL="https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.5%2B11/OpenJDK21U-jdk_x64_linux_hotspot_21.0.5_11.tar.gz"
+  # Adoptium Temurin JDK 21 Linux x64 tarball（清华镜像，规避 GitHub SSL 问题）
+  TEMURIN_URL="https://mirrors.tuna.tsinghua.edu.cn/Adoptium/21/jdk/x64/linux/OpenJDK21U-jdk_x64_linux_hotspot_21.0.11_10.tar.gz"
   TMP_TGZ="$SCRIPT_DIR/.linux-jdk.tar.gz"
   curl -fsSL "$TEMURIN_URL" -o "$TMP_TGZ" || err "下载 Linux JDK 失败（检查网络或 URL）。回退方案：手动下载 Linux JRE 解压到 $JRE_DIR"
   # 解压并定位 jmods（tarball 内顶层目录名为 jdk-21.x.x）
@@ -89,14 +89,21 @@ log "Linux JRE 体积: $(du -sh "$JRE_DIR" | cut -f1)"
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-# 5. JReleaser assemble 出 deb/rpm + archive 出 zip（Java 21，纯 Maven）
+# 5. JReleaser assemble 出 deb + zip（Java 21，纯 Maven）
 #    configFile 由 gateway-boot/pom.xml 的 pkg profile 指定（指向本目录 jreleaser.yml）
-#    output.directory 指定产物输出到 dist
-log "JReleaser assemble（出 deb/rpm + zip）..."
-(cd "$REPO_ROOT" && ./mvnw jreleaser:assemble -pl gateway-boot -Ppkg \
-  -Djreleaser.project.version="${APP_VERSION}" \
-  -Djreleaser.output.directory.override="$DIST_DIR")
+#    注：JReleaser 1.25.0 中 deb 是 DebAssembler（assemble.deb），rpm 无 Assembler 仅有 SpecPackager
+#    rpm 需 jreleaser:package 阶段 + rpmbuild（本地无 rpmbuild，留 CI 生成）
+log "JReleaser assemble（出 deb + zip）..."
+JRELEASER_OUT="$REPO_ROOT/gateway-boot/target/jreleaser/assemble"
+(cd "$REPO_ROOT" && JRELEASER_PROJECT_VERSION="${APP_VERSION}" \
+  ./mvnw jreleaser:assemble -pl gateway-boot -Ppkg \
+  -Djreleaser.project.version="${APP_VERSION}")
 
-# 6. 汇总产物
+# 6. 复制产物到 dist
+log "复制产物到 dist..."
+find "$JRELEASER_OUT" -name "*.deb" -exec cp {} "$DIST_DIR" \;
+find "$JRELEASER_OUT" -name "*.zip" -exec cp {} "$DIST_DIR" \;
+
+# 7. 汇总产物
 log "完成。产物目录: $DIST_DIR"
 ls -lh "$DIST_DIR"
