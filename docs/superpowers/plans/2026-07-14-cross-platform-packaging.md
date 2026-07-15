@@ -816,7 +816,7 @@ git commit -m "feat(packaging): 新增 llm-gateway.xml（WinSW 调 start.ps1）+
 
 > **待实测（Design §4.3）：** jlink 交叉生成 Linux JRE 是本任务核心风险。若交叉生成失败，回退方案 2（下载 Adoptium 预构建 Linux JRE tarball 解压到 jre/）。回退点已在脚本中用注释标注。
 
-- [ ] **Step 1: 重写 build.sh**
+- [x] **Step 1: 重写 build.sh**
 
 将 `deployments/package/build.sh` 全文替换为：
 
@@ -925,7 +925,7 @@ log "完成。产物目录: $DIST_DIR"
 ls -lh "$DIST_DIR"
 ```
 
-- [ ] **Step 2: 语法检查**
+- [x] **Step 2: 语法检查**
 
 ```bash
 bash -n deployments/package/build.sh && echo "语法 OK"
@@ -933,7 +933,7 @@ bash -n deployments/package/build.sh && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/build.sh

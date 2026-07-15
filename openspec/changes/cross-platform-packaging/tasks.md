@@ -23,7 +23,7 @@
 
 ## 5. 构建脚本改造
 
-- [ ] 5.1 改 `deployments/package/build.sh`：mvn package + jlink（Linux JRE 交叉生成/下载，见 design §4.3）+ `mvn jreleaser:assemble` 出 deb/rpm/zip；删 jpackage deb/rpm 段 + `-rpm` 临时 resource-dir hack
+- [x] 5.1 改 `deployments/package/build.sh`：mvn package + jlink（Linux JRE 交叉生成/下载，见 design §4.3）+ `mvn jreleaser:assemble` 出 deb/rpm/zip；删 jpackage deb/rpm 段 + `-rpm` 临时 resource-dir hack
 - [ ] 5.2 删除 `deployments/package/build.ps1`（Windows 改 zip，不再用 jpackage+iscc）
 
 ## 6. CI 矩阵简化
