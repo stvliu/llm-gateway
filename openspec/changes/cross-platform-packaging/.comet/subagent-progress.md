@@ -39,8 +39,8 @@
 - [x] 5.2 删 build.ps1（commit e7d2f0b3，132 行删除，standard 直接放行）
 - [x] 6.1 release.yml package job（commit 28bf04ed，98 行 diff，standard 直接放行）
 - [x] 6.2 smoke test（commit 112197cc，59 行插入，standard 直接放行）
-- [ ] 7.1 删 debconf  ← 当前
-- [ ] 7.2 删 iss
+- [x] 7.1 删 debconf（commit af32b4ec，24 行删除，standard 直接放行）
+- [ ] 7.2 删 iss  ← 当前
 - [ ] 8.1 build.sh 验证
 - [ ] 8.2 deb 容器验证
 - [ ] 8.3 rpm 容器验证
@@ -50,14 +50,14 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 7.1 删除 debconf templates/config
-- OpenSpec task: 7.1 删除 `deployments/package/linux/llm-gateway.templates` + `llm-gateway.config`（debconf）
+- plan task: Task 7.2 删除 Inno Setup .iss 脚本
+- OpenSpec task: 7.2 删除 Inno Setup `.iss` 脚本（Windows 改 zip）
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
 - 变更文件: -
 - 风险信号自报: 待回报
-- 协调者风险预判: 删除 2 个 debconf 文件，无安全敏感面/跨模块/schema/API，diff 小；预判未命中风险信号
+- 协调者风险预判: 删除 1 个 iss 文件 + 确认 windows 目录无遗留，无安全敏感面/跨模块/schema/API，diff 小；预判未命中风险信号
 - 风险任务级 review: 未触发
 - 审查-修复轮次: 0/1
 
@@ -77,6 +77,7 @@
 - 5.2: commit e7d2f0b3（删除 build.ps1，132 行删除）；单文件删除无安全敏感面/跨模块/schema/API；diff 132 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 6.1: commit 28bf04ed（release.yml package job 简化单 windows-latest 单 JDK 21 + finalize exe->zip）；diff 98 行（14 ins + 84 del）< 200 阈值；YAML OK；协调者复核 package job 与 plan 一致、finalize exe->zip、其他 job 保留；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 6.2: commit 112197cc（release.yml 插入 3 个 smoke test 步骤：deb/rpm systemd 容器 + zip Windows runner）；diff 59 行（+59）< 200 阈值；YAML OK；协调者复核插入位置正确（Build packages 后、Upload artifacts 前）；未命中风险信号（--privileged 仅 CI 测试容器）；review_mode standard 直接勾选放行；task-checkoff PASS
+- 7.1: commit af32b4ec（删除 debconf templates 8 行 + config 16 行 = 24 行）；无安全敏感面/跨模块/schema/API；diff 24 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -

@@ -33,7 +33,7 @@
 
 ## 7. 清理冗余
 
-- [ ] 7.1 删除 `deployments/package/linux/llm-gateway.templates` + `llm-gateway.config`（debconf）
+- [x] 7.1 删除 `deployments/package/linux/llm-gateway.templates` + `llm-gateway.config`（debconf）
 - [ ] 7.2 删除 Inno Setup `.iss` 脚本（Windows 改 zip）
 
 ## 8. 验证

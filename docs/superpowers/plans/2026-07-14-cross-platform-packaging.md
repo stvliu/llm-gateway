@@ -1161,13 +1161,13 @@ git commit -m "feat(ci): smoke test 调整为 deb/rpm systemd 容器 + zip Windo
 
 **依据:** Design Doc §3.9、D4。去掉 debconf 端口交互，端口改由 conf 的 SERVER_PORT 配置。
 
-- [ ] **Step 1: 删除 debconf 文件**
+- [x] **Step 1: 删除 debconf 文件**
 
 ```bash
 git rm deployments/package/linux/llm-gateway.templates deployments/package/linux/llm-gateway.config
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 debconf templates/config（D4 去 debconf，端口改 conf 配置）"
