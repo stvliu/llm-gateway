@@ -116,16 +116,12 @@ jobs:
           retention-days: 90
 
   # -------------------------------------------------------------------
-  # 构建系统安装包 (deb/rpm/exe)
+  # 构建系统安装包 (deb/rpm/zip) - 单 windows job，JReleaser 纯 Java 跨平台
   # -------------------------------------------------------------------
   package:
     name: 构建安装包
     needs: release
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - name: Checkout
@@ -137,96 +133,30 @@ jobs:
           java-version: ${{ env.JAVA_VERSION }}
           distribution: 'temurin'
 
-      - name: Restore Linux script permissions
-        if: runner.os == 'Linux'
+      - name: Restore script permissions
+        # Windows checkout 丢失 +x，git bash 环境需恢复
         run: |
           chmod +x mvnw
           chmod +x deployments/package/build.sh
-          chmod +x deployments/package/linux/postinst deployments/package/linux/prerm \
-                   deployments/package/linux/postrm deployments/package/linux/llm-gateway.config
-          chmod +x deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rpm \
-                   deployments/package/linux/postrm-rpm
+          chmod +x deployments/package/bin/llm-gateway.sh
+          chmod +x deployments/package/linux/postinst deployments/package/linux/prerm deployments/package/linux/postrm
+        shell: bash
 
-      - name: Install rpm tool (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y rpm
+      # 不再需要：sudo apt-get install rpm（JReleaser 纯 Java 出 rpm）
+      # 不再需要：choco install innosetup（Windows 改 zip）
 
-      - name: Install Inno Setup (Windows)
-        if: runner.os == 'Windows'
-        run: choco install innosetup -y --no-progress
-
-      - name: Build packages (Linux)
-        if: runner.os == 'Linux'
+      - name: Build packages
         run: bash deployments/package/build.sh
-
-      - name: Build packages (Windows)
-        if: runner.os == 'Windows'
-        run: .\deployments\package\build.ps1
-
-      - name: Smoke test - deb (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          DEB=$(ls deployments/package/dist/*.deb | head -1)
-          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
-          # 容器内 docker exec curl localhost:8080，无需端口映射
-          docker run --rm -d --name lg-smoke-deb \
-            --privileged --cgroupns=host \
-            -v "$PWD/$DEB:/tmp/llm-gateway.deb" \
-            jrei/systemd-ubuntu:22.04
-          # 等待 systemd 就绪（starting -> running/degraded）
-          for i in $(seq 1 30); do
-            state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo "")
-            case "$state" in running|degraded) break;; esac
-            sleep 1
-          done
-          docker exec lg-smoke-deb bash -c '
-            apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
-            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-            systemctl is-active llm-gateway.service
-          '
-          docker stop lg-smoke-deb
-
-      - name: Smoke test - rpm (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          RPM=$(ls deployments/package/dist/*.rpm | head -1)
-          # 使用 systemd-ready 镜像（PID 1 为 systemd），--privileged + --cgroupns=host 使 systemctl 可用
-          docker run --rm -d --name lg-smoke-rpm \
-            --privileged --cgroupns=host \
-            -v "$PWD/$RPM:/tmp/llm-gateway.rpm" \
-            jrei/systemd-rockylinux:9
-          # 等待 systemd 就绪（starting -> running/degraded）
-          for i in $(seq 1 30); do
-            state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo "")
-            case "$state" in running|degraded) break;; esac
-            sleep 1
-          done
-          docker exec lg-smoke-rpm bash -c '
-            dnf install -y /tmp/llm-gateway.rpm curl
-            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-            systemctl is-active llm-gateway.service
-          '
-          docker stop lg-smoke-rpm
-
-      - name: Smoke test - exe (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          Start-Process -FilePath ".\deployments\package\dist\llm-gateway-setup.exe" -ArgumentList "/VERYSILENT","/NORESTART" -Wait -NoNewWindow
-          for ($i=1; $i -le 90; $i++) {
-            try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
-          }
-          $svc = Get-Service LLMGateway
-          if ($svc.Status -ne 'Running') { throw "服务未运行" }
-          Start-Process -FilePath "C:\Program Files\LLM-Gateway\unins000.exe" -ArgumentList "/VERYSILENT" -Wait
+        shell: bash
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: packages-${{ matrix.os }}
+          name: packages
           path: |
             deployments/package/dist/*.deb
             deployments/package/dist/*.rpm
-            deployments/package/dist/*.exe
+            deployments/package/dist/*.zip
           retention-days: 14
 
   # -------------------------------------------------------------------
@@ -335,7 +265,7 @@ jobs:
             *.tgz
             deployments/package/dist/*.deb
             deployments/package/dist/*.rpm
-            deployments/package/dist/*.exe
+            deployments/package/dist/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
