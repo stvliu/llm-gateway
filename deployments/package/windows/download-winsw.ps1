@@ -18,7 +18,7 @@ $ErrorActionPreference = 'Stop'
 # 确保输出目录存在
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Force -Path $OutDir | Out-Null }
 
-$outFile = Join-Path $OutDir "LLMGateway.exe"
+$outFile = Join-Path $OutDir "WinSW.exe"
 $url = "https://github.com/winsw/winsw/releases/download/v$Version/WinSW-x64.exe"
 Write-Host "下载 WinSW v$Version -> $outFile"
 Invoke-WebRequest -Uri $url -OutFile $outFile -UseBasicParsing
