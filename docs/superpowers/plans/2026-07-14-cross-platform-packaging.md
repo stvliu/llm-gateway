@@ -503,7 +503,7 @@ git commit -m "refactor(packaging): postinst 重写为 conf 生成（/dev/urando
 
 **依据:** Design Doc §3.6。deb 与 rpm 的 maintainer 脚本参数语义不同（deb postinst 收 `configure`，prerm 收 `remove|upgrade`；rpm %preun 收 `1`(升级)|`0`(卸载)）。共用脚本通过 case 匹配两种语义。保留数据目录 `/var/lib/llm-gateway`。
 
-- [ ] **Step 1: 重写 prerm 为 deb/rpm 共用版**
+- [x] **Step 1: 重写 prerm 为 deb/rpm 共用版**
 
 将 `deployments/package/linux/prerm` 全文替换为：
 
@@ -530,7 +530,7 @@ fi
 exit 0
 ```
 
-- [ ] **Step 2: 重写 postrm 为 deb/rpm 共用版**
+- [x] **Step 2: 重写 postrm 为 deb/rpm 共用版**
 
 将 `deployments/package/linux/postrm` 全文替换为：
 
@@ -566,7 +566,7 @@ echo "[postrm] 卸载完成。数据目录 /var/lib/llm-gateway 已保留（除�
 exit 0
 ```
 
-- [ ] **Step 3: 语法检查**
+- [x] **Step 3: 语法检查**
 
 ```bash
 bash -n deployments/package/linux/prerm && bash -n deployments/package/linux/postrm && echo "语法 OK"
@@ -574,7 +574,7 @@ bash -n deployments/package/linux/prerm && bash -n deployments/package/linux/pos
 
 预期：`语法 OK`。
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add deployments/package/linux/prerm deployments/package/linux/postrm
