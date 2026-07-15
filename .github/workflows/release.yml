@@ -149,6 +149,65 @@ jobs:
         run: bash deployments/package/build.sh
         shell: bash
 
+      - name: Smoke test - deb
+        # windows-latest runner 支持 docker（Linux 容器）跑 systemd smoke
+        run: |
+          DEB=$(ls deployments/package/dist/*.deb | head -1)
+          docker run --rm -d --name lg-smoke-deb \
+            --privileged --cgroupns=host \
+            -v "$PWD/$DEB:/tmp/llm-gateway.deb" \
+            jrei/systemd-ubuntu:22.04
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
+          docker exec lg-smoke-deb bash -c '
+            apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
+            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
+            systemctl is-active llm-gateway.service
+            # 验证 conf 占位符已替换 + JRE bin 可执行
+            grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+          '
+          docker stop lg-smoke-deb
+        shell: bash
+
+      - name: Smoke test - rpm
+        run: |
+          RPM=$(ls deployments/package/dist/*.rpm | head -1)
+          docker run --rm -d --name lg-smoke-rpm \
+            --privileged --cgroupns=host \
+            -v "$PWD/$RPM:/tmp/llm-gateway.rpm" \
+            jrei/systemd-rockylinux:9
+          for i in $(seq 1 30); do
+            state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo "")
+            case "$state" in running|degraded) break;; esac
+            sleep 1
+          done
+          docker exec lg-smoke-rpm bash -c '
+            dnf install -y /tmp/llm-gateway.rpm curl
+            for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
+            systemctl is-active llm-gateway.service
+            grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+          '
+          docker stop lg-smoke-rpm
+        shell: bash
+
+      - name: Smoke test - zip (Windows)
+        run: |
+          $Zip = (Get-ChildItem deployments/package/dist/*.zip | Select-Object -First 1).FullName
+          Expand-Archive $Zip -DestinationPath C:\lg-smoke -Force
+          C:\lg-smoke\bin\install.ps1
+          for ($i=1; $i -le 90; $i++) {
+            try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
+          }
+          $svc = Get-Service llm-gateway
+          if ($svc.Status -ne 'Running') { throw "服务未运行" }
+          C:\lg-smoke\bin\uninstall.ps1
+        shell: pwsh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
