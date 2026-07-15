@@ -1182,13 +1182,13 @@ git commit -m "refactor(packaging): 删除 debconf templates/config（D4 去 deb
 
 **依据:** Design Doc §3.9、D9。Windows 改 zip，不再用 Inno Setup 安装器。
 
-- [ ] **Step 1: 删除 iss 脚本**
+- [x] **Step 1: 删除 iss 脚本**
 
 ```bash
 git rm deployments/package/windows/llm-gateway.iss
 ```
 
-- [ ] **Step 2: 确认 windows 目录无遗留 Inno Setup 文件**
+- [x] **Step 2: 确认 windows 目录无遗留 Inno Setup 文件**
 
 ```bash
 ls deployments/package/windows/
@@ -1196,7 +1196,7 @@ ls deployments/package/windows/
 
 预期：仅剩 `download-winsw.ps1`、`install.ps1`、`uninstall.ps1`、`start.ps1`、`llm-gateway.xml`（无 .iss、无 LLMGateway.xml）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 Inno Setup .iss 脚本（Windows 改 zip）"

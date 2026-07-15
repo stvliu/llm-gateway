@@ -40,7 +40,7 @@
 - [x] 6.1 release.yml package job（commit 28bf04ed，98 行 diff，standard 直接放行）
 - [x] 6.2 smoke test（commit 112197cc，59 行插入，standard 直接放行）
 - [x] 7.1 删 debconf（commit af32b4ec，24 行删除，standard 直接放行）
-- [ ] 7.2 删 iss  ← 当前
+- [x] 7.2 删 iss（commit ac0dca38，206 行删除命中 diff>200 风险，task reviewer APPROVED，无 CRITICAL/IMPORTANT）
 - [ ] 8.1 build.sh 验证
 - [ ] 8.2 deb 容器验证
 - [ ] 8.3 rpm 容器验证
@@ -50,16 +50,15 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 7.2 删除 Inno Setup .iss 脚本
-- OpenSpec task: 7.2 删除 Inno Setup `.iss` 脚本（Windows 改 zip）
-- 阶段: implementing（待派发 implementer）
-- 派发状态: 待派发
+- plan task: 第 8 组验证任务（8.1-8.7）策略评估
+- 阶段: 评估中（本地环境限制决策点，待用户确认验证策略）
+- 派发状态: 待用户确认
 - 实现提交: -
 - 变更文件: -
-- 风险信号自报: 待回报
-- 协调者风险预判: 删除 1 个 iss 文件 + 确认 windows 目录无遗留，无安全敏感面/跨模块/schema/API，diff 小；预判未命中风险信号
-- 风险任务级 review: 未触发
-- 审查-修复轮次: 0/1
+- 风险信号自报: -
+- 协调者风险预判: plan 行 1209 标注本机无 docker/dpkg-deb/rpm/iscc；8.1 build.sh 构建 + 8.7 jlink 验证本机可执行（需联网下载 Linux JDK），8.2-8.6 容器验证留 CI；memory 记录"安装包本地验证留 CI"；需用户确认是否本地执行 8.1/8.7 或全留 CI
+- 风险任务级 review: -
+- 审查-修复轮次: -
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
@@ -78,6 +77,7 @@
 - 6.1: commit 28bf04ed（release.yml package job 简化单 windows-latest 单 JDK 21 + finalize exe->zip）；diff 98 行（14 ins + 84 del）< 200 阈值；YAML OK；协调者复核 package job 与 plan 一致、finalize exe->zip、其他 job 保留；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 6.2: commit 112197cc（release.yml 插入 3 个 smoke test 步骤：deb/rpm systemd 容器 + zip Windows runner）；diff 59 行（+59）< 200 阈值；YAML OK；协调者复核插入位置正确（Build packages 后、Upload artifacts 前）；未命中风险信号（--privileged 仅 CI 测试容器）；review_mode standard 直接勾选放行；task-checkoff PASS
 - 7.1: commit af32b4ec（删除 debconf templates 8 行 + config 16 行 = 24 行）；无安全敏感面/跨模块/schema/API；diff 24 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
+- 7.2: commit ac0dca38（删除 llm-gateway.iss 206 行）；diff 206 行 > 200 阈值命中风险信号 -> 派发 task reviewer；reviewer APPROVED（spec 合规 + windows 目录符合预期 + jreleaser.yml/pom.xml/build.sh 无悬空引用，构建链完整）；MINOR 2 条接受（.gitattributes *.iss 遗留规则无害 + release.yml 注释保留）；无 CRITICAL/IMPORTANT；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -
