@@ -14,7 +14,7 @@
 
 - [x] 3.1 改 postinst：生成 conf（密钥 `head -c 32 /dev/urandom | base64` + sed `|` 分隔符）+ `chmod 640` conf + `chmod -R 0755 runtime/bin` 兜底 JRE 权限
 - [x] 3.2 改 prerm/postrm：适配 conf 与 systemd unit 新布局（保留数据目录 `/var/lib/llm-gateway`）
-- [ ] 3.3 删除 `postinst-rpm`/`prerm-rpm`/`postrm-rpm`，JReleaser deb/rpm 共用 maintainer 脚本
+- [x] 3.3 删除 `postinst-rpm`/`prerm-rpm`/`postrm-rpm`，JReleaser deb/rpm 共用 maintainer 脚本
 
 ## 4. Windows zip 脚本
 

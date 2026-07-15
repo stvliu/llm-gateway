@@ -592,13 +592,13 @@ git commit -m "refactor(packaging): prerm/postrm 重写为 deb/rpm 共用版（�
 
 **依据:** Design Doc §3.6。JReleaser deb/rpm packager 共用同一套 maintainer 脚本（`scripts: postInstall/preUninstall/postUninstall`），消除原 jpackage build.sh 复制 -rpm 脚本为临时 resource-dir 的 hack。
 
-- [ ] **Step 1: 删除三个 -rpm 后缀脚本**
+- [x] **Step 1: 删除三个 -rpm 后缀脚本**
 
 ```bash
 git rm deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rpm deployments/package/linux/postrm-rpm
 ```
 
-- [ ] **Step 2: 确认 linux 目录仅剩共用脚本**
+- [x] **Step 2: 确认 linux 目录仅剩共用脚本**
 
 ```bash
 ls deployments/package/linux/
@@ -606,7 +606,7 @@ ls deployments/package/linux/
 
 预期：仅剩 `llm-gateway.service`、`postinst`、`prerm`、`postrm`（无 -rpm 后缀、无 templates/config，后两者在第 7 组删）。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 postinst-rpm/prerm-rpm/postrm-rpm，JReleaser deb/rpm 共用 maintainer 脚本"
