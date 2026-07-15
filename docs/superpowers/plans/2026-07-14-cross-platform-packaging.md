@@ -949,13 +949,13 @@ git commit -m "refactor(packaging): build.sh 改 JReleaser 方案（mvn package 
 
 **依据:** Design Doc §3.7。Windows 改 zip 后不再用 jpackage app-image + Inno Setup，build.ps1 的整段流程删除。Windows 包改由 build.sh 在 Windows runner 上统一跑（git bash）。
 
-- [ ] **Step 1: 删除 build.ps1**
+- [x] **Step 1: 删除 build.ps1**
 
 ```bash
 git rm deployments/package/build.ps1
 ```
 
-- [ ] **Step 2: 提交**
+- [x] **Step 2: 提交**
 
 ```bash
 git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 build.sh 统一构建）"
