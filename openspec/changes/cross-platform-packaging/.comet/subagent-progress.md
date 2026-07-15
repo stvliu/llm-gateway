@@ -17,6 +17,7 @@
 1. Task 1.1 conf JAVA_OPTS 加引号
 2. Task 8.1 git add 改精确（deployments/package/）
 3. 【审查新增】conf 所有含特殊字符的值（分号/空格）都需加引号 -- DB_URL 分号截断是同类 bug
+4. 【Task 4.1 reviewer CRITICAL 修正】start.ps1 conf 解析须剥离 shell 引号（Linux source 自动剥离，Windows 正则不剥离 -> 加成对引号剥离逻辑）；plan start.ps1 脚本段已同步修复
 
 ## task-checkoff 文本约定
 - plan：用每个 Task 唯一的 `**Step 1: <标题>**`（Step 3: 提交 在多 Task 重复，不可用）
@@ -27,13 +28,13 @@
 - [x] 1.2 Linux 启动脚本（6cb1f719 实现，4f39548b 勾选）
 - [x] 1.3 systemd unit（cb46a388 实现 + 917ad2d2 reviewer APPROVED 勾选）
 - [x] 2.1 pom.xml JReleaser 插件（bece4fc8；恢复期 Step3 BUILD SUCCESS 补验；未命中风险信号）
-- [x] 2.2 jreleaser.yml（e9138744；haiku 转写与 plan 逐字一致；未命中风险信号）
+- [x] 2.2 jreleaser.yml（e9138744；未命中风险信号）
 - [x] 2.3 deb/rpm conffile 注释（19e9c568；未命中风险信号）
 - [x] 3.1 postinst（22453d55；reviewer APPROVE，命中安全敏感面已 review 通过；MINOR 4 条记录接受）
 - [x] 3.2 prerm/postrm（3e95320b；与 plan 逐字一致，rm -rf 限定 purge；未命中风险信号）
 - [x] 3.3 删 -rpm 脚本（640fac2c；删除 3 文件 108 行；未命中风险信号）
-- [ ] 4.1 Windows ps1  ← 当前
-- [ ] 4.2 llm-gateway.xml + WinSW
+- [x] 4.1 Windows ps1（9cc63035 + fix 59efe590；reviewer NEEDS_FIX CRITICAL#1 start.ps1 引号剥离，review-fix 1 轮通过；命中安全敏感面；plan start.ps1 脚本段已同步修复）
+- [ ] 4.2 llm-gateway.xml + WinSW  ← 当前
 - [ ] 5.1 build.sh
 - [ ] 5.2 删 build.ps1
 - [ ] 6.1 release.yml package job
@@ -49,15 +50,15 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: Task 4.1 新增 Windows ps1 脚本（start/install/uninstall）
-- OpenSpec task: 4.1 新增 `deployments/package/windows/start.ps1`（解析 conf 注入环境变量 + java -jar）+ `install.ps1`（WinSW install + Start-Service）+ `uninstall.ps1`（WinSW uninstall）
+- plan task: Task 4.2 新增 llm-gateway.xml + 调整 WinSW 下载
+- OpenSpec task: 4.2 新增 `deployments/package/windows/llm-gateway.xml`（WinSW service 配置）+ 准备 WinSW.exe（v2.x，作为 archive fileSet）
 - 阶段: implementing（待派发 implementer）
 - 派发状态: 待派发
 - 实现提交: -
 - 变更文件: -
 - 风险信号自报: 待回报
-- 协调者风险预判: **命中安全敏感面**（install.ps1 生成 GATEWAY_ENCRYPTION_KEY 加密密钥，RandomNumberGenerator + base64）-- implementer 回报后需派每任务 reviewer
-- 风险任务级 review: 未触发（待 implementer 回报确认）
+- 协调者风险预判: 创建 xml + 改 download-winsw.ps1 输出名 + 删旧 xml，预判未命中风险信号
+- 风险任务级 review: 未触发
 - 审查-修复轮次: 0/1
 
 ## 已完成 task 历史
@@ -70,6 +71,7 @@
 - 3.1: commit 22453d55；命中安全敏感面；reviewer APPROVE（9 项核验全过）；MINOR 4 条接受；task-checkoff PASS
 - 3.2: commit 3e95320b；与 plan 逐字一致，rm -rf 限定 purge；task-checkoff PASS
 - 3.3: commit 640fac2c；删除 3 个 -rpm 脚本 108 行；task-checkoff PASS
+- 4.1: commit 9cc63035（3 ps1）+ fix 59efe590（start.ps1 引号剥离）；命中安全敏感面（install.ps1 密钥生成）；reviewer NEEDS_FIX CRITICAL#1（conf 引号不剥离）；review-fix 1 轮通过（复查 start.ps1 引号剥离正确，PS 语法 OK，DB_URL/JAVA_OPTS/KEY 三项验证）；plan start.ps1 脚本段已同步修复引号剥离；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -

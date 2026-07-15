@@ -18,7 +18,7 @@
 
 ## 4. Windows zip 脚本
 
-- [ ] 4.1 新增 `deployments/package/windows/start.ps1`（解析 conf 注入环境变量 + java -jar）+ `install.ps1`（WinSW install + Start-Service）+ `uninstall.ps1`（WinSW uninstall）
+- [x] 4.1 新增 `deployments/package/windows/start.ps1`（解析 conf 注入环境变量 + java -jar）+ `install.ps1`（WinSW install + Start-Service）+ `uninstall.ps1`（WinSW uninstall）
 - [ ] 4.2 新增 `deployments/package/windows/llm-gateway.xml`（WinSW service 配置）+ 准备 WinSW.exe（v2.x，作为 archive fileSet）
 
 ## 5. 构建脚本改造

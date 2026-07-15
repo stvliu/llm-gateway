@@ -627,7 +627,7 @@ git commit -m "refactor(packaging): 删除 postinst-rpm/prerm-rpm/postrm-rpm，J
 
 > **关键修正：** `$env:JAVA_OPTS` 在 PowerShell 中作为单个字符串传递给 java.exe 会导致参数不分割。必须用 `-split` 拆为数组后 splatting（`@javaOpts`）。
 
-- [ ] **Step 1: 创建 start.ps1**
+- [x] **Step 1: 创建 start.ps1**
 
 创建 `deployments/package/windows/start.ps1`：
 
@@ -637,10 +637,14 @@ $ErrorActionPreference = "Stop"
 $ConfFile = Join-Path $PSScriptRoot "..\conf\llmgateway.conf"
 if (-not (Test-Path $ConfFile)) { throw "配置文件不存在: $ConfFile" }
 
-# 解析 conf（shell 风格 KEY=VALUE）注入环境变量
+# 解析 conf（shell 风格 KEY=VALUE）注入环境变量，剥离 shell 风格首尾引号
 Get-Content $ConfFile | ForEach-Object {
     if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.*)$') {
-        Set-Item -Path "Env:$($Matches[1])" -Value $Matches[2]
+        $val = $Matches[2]
+        # shell 风格引号剥离（双引号或单引号成对匹配）
+        if ($val -match '^"(.*)"$') { $val = $Matches[1] }
+        elseif ($val -match "^'(.*)'$") { $val = $Matches[1] }
+        Set-Item -Path "Env:$($Matches[1])" -Value $val
     }
 }
 
@@ -651,7 +655,7 @@ $javaOpts = $env:JAVA_OPTS -split '\s+' | Where-Object { $_ -ne '' }
   -jar "$PSScriptRoot\llm-gateway.jar"
 ```
 
-- [ ] **Step 2: 创建 install.ps1**
+- [x] **Step 2: 创建 install.ps1**
 
 创建 `deployments/package/windows/install.ps1`：
 
@@ -689,7 +693,7 @@ Write-Host "LLM-Gateway 服务已注册并启动。"
 Write-Host "  配置文件: $ConfFile（改后 Restart-Service llm-gateway 生效）"
 ```
 
-- [ ] **Step 3: 创建 uninstall.ps1**
+- [x] **Step 3: 创建 uninstall.ps1**
 
 创建 `deployments/package/windows/uninstall.ps1`：
 
@@ -701,7 +705,7 @@ $BinDir = $PSScriptRoot
 Write-Host "LLM-Gateway 服务已卸载。数据目录保留。"
 ```
 
-- [ ] **Step 4: PowerShell 语法检查**
+- [x] **Step 4: PowerShell 语法检查**
 
 ```powershell
 powershell -NoProfile -Command "$null = [System.Management.Automation.PSParser]::Tokenize((Get-Content deployments/package/windows/start.ps1 -Raw), [ref]$null); $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content deployments/package/windows/install.ps1 -Raw), [ref]$null); $null = [System.Management.Automation.PSParser]::Tokenize((Get-Content deployments/package/windows/uninstall.ps1 -Raw), [ref]$null); Write-Host 'PS 语法 OK'"
@@ -709,7 +713,7 @@ powershell -NoProfile -Command "$null = [System.Management.Automation.PSParser]:
 
 预期：`PS 语法 OK`。
 
-- [ ] **Step 5: 提交**
+- [x] **Step 5: 提交**
 
 ```bash
 git add deployments/package/windows/start.ps1 deployments/package/windows/install.ps1 deployments/package/windows/uninstall.ps1
