@@ -411,7 +411,7 @@ git commit -m "feat(packaging): jreleaser.yml 补 deb/rpm conffile 与 archive z
 
 **依据:** Design Doc §3.3、§3.6。重写 postinst：去 debconf（删 `. /usr/share/debconf/confmodule` + `db_get` + `db_stop`）、密钥改 `/dev/urandom | base64`（D7 去 openssl）、生成 conf 占位符 sed 替换（替代 env 文件）、新增 `chmod -R 0755 runtime/bin` 兜底 JRE 权限（§2.3）。deb/rpm 共用此脚本（rpm %post 不传 remove 语义参数，安装/升级都执行配置逻辑）。
 
-- [ ] **Step 1: 重写 postinst**
+- [x] **Step 1: 重写 postinst**
 
 将 `deployments/package/linux/postinst` 全文替换为：
 
@@ -478,7 +478,7 @@ echo "  服务状态: systemctl status llm-gateway"
 exit 0
 ```
 
-- [ ] **Step 2: 语法检查**
+- [x] **Step 2: 语法检查**
 
 ```bash
 bash -n deployments/package/linux/postinst && echo "语法 OK"
@@ -486,7 +486,7 @@ bash -n deployments/package/linux/postinst && echo "语法 OK"
 
 预期：`语法 OK`。
 
-- [ ] **Step 3: 提交**
+- [x] **Step 3: 提交**
 
 ```bash
 git add deployments/package/linux/postinst
