@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # =============================================================================
 # LLM-Gateway 跨平台安装包构建脚本（JReleaser 方案）
-# 产出: deb + rpm（JReleaser assemble，纯 Java）+ zip（JReleaser archive，Windows）
+# 产出: deb（DebAssembler 纯 Java）+ zip（ArchiveAssembler）+ rpm（JpackageAssembler，需 rpmbuild）
 # 用法: ./deployments/package/build.sh [--skip-mvn]
 #
-# 流程: mvn package -> jlink 双平台 JRE -> jreleaser:assemble 出 deb/rpm/zip
+# 流程: mvn package -> jlink 双平台 JRE -> 预复制 jar -> jreleaser:assemble 出 deb/zip/rpm
 # 依赖: JDK 21（含 jlink）、Maven（mvnw）
-# 无需: dpkg-deb/rpmbuild/iscc（JReleaser 纯 Java 跨平台）
+# 本地（Windows, SNAPSHOT）: 出 deb + zip（jpackage active=RELEASE 跳过 rpm，本地无 rpmbuild）
+# CI（release）: 出 deb + zip + rpm（CI runner 含 rpmbuild）
 # =============================================================================
 set -euo pipefail
 
@@ -89,20 +90,26 @@ log "Linux JRE 体积: $(du -sh "$JRE_DIR" | cut -f1)"
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-# 5. JReleaser assemble 出 deb + zip（Java 21，纯 Maven）
+# 4.1 预复制 fat jar 为固定名 llm-gateway.jar（jreleaser.yml 的 artifacts/mainJar 引用此固定名）
+STAGED_JAR="$REPO_ROOT/gateway-boot/target/llm-gateway.jar"
+cp "$FAT_JAR" "$STAGED_JAR"
+log "预复制 jar: $STAGED_JAR"
+
+# 5. JReleaser assemble 出 deb + zip + rpm（Java 21，纯 Maven）
 #    configFile 由 gateway-boot/pom.xml 的 pkg profile 指定（指向本目录 jreleaser.yml）
-#    注：JReleaser 1.25.0 中 deb 是 DebAssembler（assemble.deb），rpm 无 Assembler 仅有 SpecPackager
-#    rpm 需 jreleaser:package 阶段 + rpmbuild（本地无 rpmbuild，留 CI 生成）
-log "JReleaser assemble（出 deb + zip）..."
+#    basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to E:\workspace\llm-gateway"）
+#    deb: DebAssembler 纯 Java（本地可验证）；zip: ArchiveAssembler；rpm: JpackageAssembler（active=RELEASE，本地 SNAPSHOT 跳过，留 CI release）
+log "JReleaser assemble（出 deb + zip [+ rpm if release]）..."
 JRELEASER_OUT="$REPO_ROOT/gateway-boot/target/jreleaser/assemble"
 (cd "$REPO_ROOT" && JRELEASER_PROJECT_VERSION="${APP_VERSION}" \
   ./mvnw jreleaser:assemble -pl gateway-boot -Ppkg \
   -Djreleaser.project.version="${APP_VERSION}")
 
-# 6. 复制产物到 dist
+# 6. 复制产物到 dist（rpm 仅 release 时产出，本地 SNAPSHOT 无 rpm 正常）
 log "复制产物到 dist..."
 find "$JRELEASER_OUT" -name "*.deb" -exec cp {} "$DIST_DIR" \;
 find "$JRELEASER_OUT" -name "*.zip" -exec cp {} "$DIST_DIR" \;
+find "$JRELEASER_OUT" -name "*.rpm" -exec cp {} "$DIST_DIR" \; 2>/dev/null || true
 
 # 7. 汇总产物
 log "完成。产物目录: $DIST_DIR"

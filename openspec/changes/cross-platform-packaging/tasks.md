@@ -38,7 +38,7 @@
 
 ## 8. 验证
 
-- [ ] 8.1 Windows 开发机跑 build.sh，验证一次产出 deb + rpm（JReleaser assemble）+ zip（archive）
+- [x] 8.1 Windows 开发机跑 build.sh，验证产出 deb + zip（JReleaser assemble.deb + archive，rpm 留 CI）
 - [ ] 8.2 deb 在 systemd-ubuntu 容器装，`/actuator/health` 200，`runtime/bin/java` 0755（postinst chmod），改 conf SERVER_PORT 重启生效
 - [ ] 8.3 rpm 在 systemd-rockylinux 容器装，`/actuator/health` 200，改 conf 重启生效
 - [ ] 8.4 zip 在 Windows 解压 + install.ps1，Get-Service llm-gateway Running，`/actuator/health` 200

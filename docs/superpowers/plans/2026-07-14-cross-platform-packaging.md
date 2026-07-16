@@ -1214,7 +1214,7 @@ git commit -m "refactor(packaging): 删除 Inno Setup .iss 脚本（Windows 改 
 
 > **执行环境：** 本机（Windows，git bash + JDK 21）或 CI windows-latest。本机执行需联网下载 Linux JDK（jlink 交叉生成）与 JReleaser 插件。
 
-- [ ] **Step 1: 确认 JAVA_HOME 指向 JDK 21**
+- [x] **Step 1: 确认 JAVA_HOME 指向 JDK 21**
 
 ```bash
 echo "$JAVA_HOME"
@@ -1223,13 +1223,13 @@ echo "$JAVA_HOME"
 
 预期：`JAVA_HOME` 非空，`java -version` 显示 21.x。
 
-- [ ] **Step 2: 运行 build.sh**
+- [x] **Step 2: 运行 build.sh**
 
 ```bash
 bash deployments/package/build.sh
 ```
 
-预期：依次输出 `fat jar`、`Windows JRE`、`Linux JRE`（交叉生成）、`JReleaser assemble`，最终 `dist/` 目录含 `.deb`、`.rpm`、`.zip`。
+预期：依次输出 `fat jar`、`Windows JRE`、`Linux JRE`（交叉生成）、`JReleaser assemble`，最终 `dist/` 目录含 `.deb`、`.zip`（rpm 因 jpackage `active=RELEASE` 在 SNAPSHOT 构建跳过，留 CI release 产出；详见 Design「Build 阶段决策修订」）。
 
 > **若 JReleaser 报错：** jreleaser.yml 语法需按 1.25.0 实际报错调整（Design §3.2 末尾已标注待实测）。常见调整点：fileSet 的 `input/output` 语法、packager 的 `scripts` 键名（postInstall vs postinstall）、archive assembler 的结构。根据报错信息逐项修正 jreleaser.yml 后重跑。
 >
@@ -1241,19 +1241,19 @@ bash deployments/package/build.sh
 > ```
 > 替换 build.sh 第 3 步的交叉 jlink 段为上述下载解压逻辑。
 
-- [ ] **Step 3: 验证产物三件套存在**
+- [x] **Step 3: 验证产物存在（deb + zip；rpm 留 CI）**
 
 ```bash
-ls -lh deployments/package/dist/*.deb deployments/package/dist/*.rpm deployments/package/dist/*.zip
+ls -lh deployments/package/dist/*.deb deployments/package/dist/*.zip
 ```
 
-预期：三个文件都存在。若无某项，检查 build.sh 日志中对应步骤的报错。
+预期：deb + zip 两个文件存在（deb ~109MB 含 jar+JRE+维护脚本，zip ~113MB 含 jar+JRE+WinSW+ps1）。rpm 留 CI（本地 SNAPSHOT 跳过 jpackage）。
 
-- [ ] **Step 4: 提交（含 jreleaser.yml 实测调整，若有）**
+- [x] **Step 4: 提交（含 jreleaser.yml 实测调整）**
 
 ```bash
 git add -A
-git commit -m "test(packaging): 验证 build.sh 一次产出 deb/rpm/zip（JReleaser assemble + archive）"
+git commit -m "test(packaging): 验证 build.sh 产出 deb/zip（JReleaser assemble.deb + archive，rpm 留 CI）"
 ```
 
 ---

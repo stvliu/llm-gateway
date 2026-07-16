@@ -98,3 +98,29 @@
 - JReleaser fileSet 是否支持 per-file mode（build 阶段实测；不支持则 postinst chmod 兜底）
 - jlink 交叉生成 Linux JRE 的可行性（build 阶段实测；§4.3 平台问题）
 - conf 模板里 GATEWAY_ENCRYPTION_KEY 占位符的 postinst 替换机制（沿用 design 阶段 sed 方案）
+
+## Build 阶段决策修订（2026-07-16，Task 8.1 实测）
+
+> 以下修订基于 Task 8.1 在 Windows 开发机的实测结果，由用户确认（AskUserQuestion 选择"1.25.0 assemble.deb + jpackage rpm"）。
+
+**D1 修订：rpm 从 Redline 改 JpackageAssembler**
+- 原决策 D1 设想"rpm 用 Redline RPM 纯 Java 跨平台"。实测发现 JReleaser 1.25.0 **已移除 distribution 级 deb/rpm 打包器**（packagers.deb/rpm 不存在），deb 改用 `assemble.deb`（DebAssembler，纯 Java，本地 Windows 可验证，无需 dpkg-deb）；rpm 无纯 Java assembler，唯一路径是 `assemble.jpackage`（JpackageAssembler，底层调用 JDK jpackage，需系统 rpmbuild）。
+- 选择：deb = `assemble.deb`（纯 Java，本地出包）；rpm = `assemble.jpackage`（`linux.types: [rpm]`，`runtimeImages` 复用 build.sh 交叉 jlink 的 Linux JRE，需 rpmbuild）。
+- 影响：rpm 不再"纯 Java 跨平台"，本地 Windows 无 rpmbuild 不能出 rpm；jpackage `active: RELEASE` 使本地 SNAPSHOT 构建跳过 rpm，仅出 deb+zip，rpm 留 CI release 产出。
+
+**D6 修订：本地出 deb+zip，rpm 留 CI**
+- 原决策 D6"Windows 单机出 deb+rpm+zip"。修订为：Windows 单机出 deb + zip（纯 Java，8.1 实测通过）；rpm 需 rpmbuild，留 CI（release.yml 的 linux job 或 windows job 装 rpm-build）。
+- 8.1 实测结果（2026-07-16）：`build.sh --skip-mvn` 在 Windows 产出 `dist/llm-gateway-1.0.0-1_amd64.deb`（109MB，含 jar+JRE+维护脚本）+ `dist/llm-gateway-win-1.0.0-SNAPSHOT.zip`（113MB，含 jar+JRE+WinSW+ps1）；jpackage（rpm）因 SNAPSHOT+active=RELEASE 跳过。
+
+**JReleaser 配置实测要点（已记入 jreleaser.yml 注释）**
+- basedir 实测为 repo root（非 `${project.basedir}`=gateway-boot），日志 `basedir set to E:\workspace\llm-gateway`。fileSet input 路径相对 repo root（`deployments/package/...`、`gateway-boot/target/...`）。
+- `installationPath: /` 使 fileSet output 为完整系统路径（`opt/llm-gateway/runtime`、`etc/llm-gateway`、`lib/systemd/system`）；若设 `/opt/llm-gateway` 会与前缀重复且把 etc/lib 困到 /opt 下。
+- 维护脚本通过 `templateDirectory` 的 `control/{postinst,prerm,postrm}.tpl` 注入（assemble.deb 无 yaml 配置维护脚本的字段）。
+- jar 由 build.sh 预复制为 `gateway-boot/target/llm-gateway.jar`（固定名），fileSet `includes: [llm-gateway.jar]` 打入 `opt/llm-gateway/bin/`（匹配 llm-gateway.sh 的 `-jar` 路径）；artifacts transform 对 deb assembler 未生效，改用 fileSet。
+- `control.provides` 是 String（非数组）；`project.java` 已废弃，改 `project.languages.java`。
+
+**Open Questions 解决状态**
+- JReleaser Windows 打 deb/zip：✅ 实测可用（deb 109MB + zip 113MB）。rpm 需 rpmbuild，留 CI。
+- fileSet per-file 权限：未依赖，postinst `chmod -R 0755 runtime/bin` 兜底（D8 不变）。
+- jlink 交叉生成 Linux JRE：✅ 可行（.linux-jdk/jmods 交叉 jlink，62MB）。
+- conf 占位符 postinst 替换：✅ 沿用 sed 方案（postinst.tpl 已注入 deb）。

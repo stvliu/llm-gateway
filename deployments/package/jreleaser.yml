@@ -1,74 +1,106 @@
-# JReleaser 配置：assemble 阶段产出 deb（DebAssembler）+ zip（ArchiveAssembler）
-# 触发：mvn jreleaser:assemble -pl gateway-boot -Ppkg
-# basedir = repo root（E:\workspace\llm-gateway），fileSet input 相对于此
-# 注：JReleaser 1.25.0 中 deb 是 Assembler（assemble.deb），rpm 无 Assembler 仅有 SpecPackager
+# JReleaser 配置：assemble 出 deb（DebAssembler 纯 Java）+ zip（ArchiveAssembler）+ rpm（JpackageAssembler，需 rpmbuild，留 CI release）
+# 触发: mvn jreleaser:assemble -pl gateway-boot -Ppkg -Djreleaser.project.version=<version>
+# basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to E:\workspace\llm-gateway"），所有路径相对 repo root
+# installationPath: / 使 fileSet output 为完整系统路径（opt/.../etc/.../lib/...），避免前缀重复
+# jar 由 build.sh 预复制为 gateway-boot/target/llm-gateway.jar（固定名），fileSet includes 打入 bin/
+# 维护脚本（postinst/prerm/postrm）通过 templateDirectory 的 control/*.tpl 注入
+# 注: JReleaser 1.25.0 中 deb 是 DebAssembler（纯 Java，本地可验证），rpm 用 JpackageAssembler（需 rpmbuild，本地 SNAPSHOT 跳过留 CI）
 project:
   name: llm-gateway
-  # version 由 -Djreleaser.project.version 命令行参数提供（build.sh 从 Maven 读取）
   description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
   authors: [LLM-Gateway]
   license: Apache-2.0
   copyright: 2026 LLM-Gateway
-  java:
-    version: 21
+  stereotype: CLI
+  languages:
+    java:
+      version: 21
+      groupId: com.codingas.gateway
+      artifactId: gateway-boot
+      mainClass: org.springframework.boot.loader.launch.JarLauncher
 
 distributions:
   llm-gateway:
     type: SINGLE_JAR
-    artifacts:
-      # fat jar 作为主 artifact，打包时重命名为 llm-gateway.jar
-      - path: ../../gateway-boot/target/gateway-boot-{{projectVersion}}.jar
-        transform: llm-gateway.jar
+    # artifacts 由 assembler 产出（deb/zip/rpm），不预声明源 artifact
 
-# Assembler：deb + zip（jreleaser:assemble 阶段执行）
 assemble:
-  # Linux deb 包（DebAssembler，含 Linux JRE + 启动脚本 + systemd service + 配置）
+  # Linux deb（DebAssembler 纯 Java，本地 Windows 可验证，无需 dpkg-deb）
   deb:
     llm-gateway:
       active: ALWAYS
-      distributionType: BINARY
+      exported: true
       executable: llm-gateway
-      installationPath: opt/llm-gateway
+      installationPath: /
       architecture: amd64
+      templateDirectory: deployments/package/templates/deb
       fileSets:
-        - input: deployments/package/jre/bin
-          output: opt/llm-gateway/runtime/bin
-        - input: deployments/package/jre/lib
-          output: opt/llm-gateway/runtime/lib
-        - input: deployments/package/jre/conf
-          output: opt/llm-gateway/runtime/conf
+        - input: deployments/package/jre
+          output: opt/llm-gateway/runtime
         - input: deployments/package/bin
           output: opt/llm-gateway/bin
           includes: [llm-gateway.sh]
+        - input: gateway-boot/target
+          output: opt/llm-gateway/bin
+          includes: [llm-gateway.jar]
         - input: deployments/package/linux
           output: lib/systemd/system
           includes: [llm-gateway.service]
         - input: deployments/package/conf
           output: etc/llm-gateway
           includes: [llmgateway.conf]
-        - input: gateway-boot/target/gateway-boot-{{projectVersion}}.jar
-          output: opt/llm-gateway/lib
       control:
         packageName: llm-gateway
-        maintainer: LLM-Gateway
+        packageVersion: '{{projectVersionNumber}}'
+        packageRevision: 1
+        provides: llm-gateway
+        maintainer: LLM-Gateway <noreply@codingas.com>
         description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
         homepage: https://github.com/codingas/llm-gateway
-        section: utils
+        section: net
         priority: optional
 
-  # Windows zip 包（ArchiveAssembler，含 Windows JRE + WinSW + 脚本 + 配置）
+  # Windows zip（ArchiveAssembler，本地可验证）
   archive:
     llm-gateway-win:
       active: ALWAYS
+      exported: true
       formats: [ZIP]
+      platform:
+        replacements:
+          windows-x86_64: win
       fileSets:
         - input: deployments/package/jre-win
           output: runtime
         - input: deployments/package/windows
           output: bin
           includes: [WinSW.exe, llm-gateway.xml, install.ps1, uninstall.ps1, start.ps1]
+        - input: gateway-boot/target
+          output: bin
+          includes: [llm-gateway.jar]
         - input: deployments/package/conf
           output: conf
           includes: [llmgateway.conf]
-        - input: gateway-boot/target/gateway-boot-{{projectVersion}}.jar
-          output: bin/llm-gateway.jar
+
+  # Linux rpm（JpackageAssembler，需 rpmbuild；active=RELEASE 使本地 SNAPSHOT 跳过，留 CI release 产出）
+  jpackage:
+    llm-gateway:
+      active: RELEASE
+      exported: true
+      attachPlatform: true
+      runtimeImages:
+        - path: deployments/package/jre
+          platform: linux-x86_64
+      mainJar:
+        path: gateway-boot/target/llm-gateway.jar
+      applicationPackage:
+        appName: llm-gateway
+        appVersion: '{{projectVersionNumber}}'
+        vendor: LLM-Gateway
+      linux:
+        types: [rpm]
+        packageName: llm-gateway
+        maintainer: LLM-Gateway <noreply@codingas.com>
+        license: Apache-2.0
+        installDir: /opt/llm-gateway
+        appRelease: 1

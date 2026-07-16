@@ -3,7 +3,10 @@
 set -e
 CONF_FILE="/etc/llm-gateway/llmgateway.conf"
 [ -f "$CONF_FILE" ] || { echo "配置文件不存在: $CONF_FILE" >&2; exit 1; }
+# set -a 使 source conf 期间的变量赋值自动 export（Spring Boot ${ENV} 占位符依赖环境变量）
+set -a
 . "$CONF_FILE"
+set +a
 exec /opt/llm-gateway/runtime/bin/java $JAVA_OPTS \
   -Dspring.profiles.active=local \
   -jar /opt/llm-gateway/bin/llm-gateway.jar

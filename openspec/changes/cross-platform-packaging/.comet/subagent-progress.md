@@ -41,7 +41,7 @@
 - [x] 6.2 smoke test（commit 112197cc，59 行插入，standard 直接放行）
 - [x] 7.1 删 debconf（commit af32b4ec，24 行删除，standard 直接放行）
 - [x] 7.2 删 iss（commit ac0dca38，206 行删除命中 diff>200 风险，task reviewer APPROVED，无 CRITICAL/IMPORTANT）
-- [ ] 8.1 build.sh 验证
+- [x] 8.1 build.sh 验证（主会话接管调试；JReleaser assemble.deb + archive 本地通过，rpm 留 CI）
 - [ ] 8.2 deb 容器验证
 - [ ] 8.3 rpm 容器验证
 - [ ] 8.4 zip Windows 验证
@@ -50,15 +50,16 @@
 - [ ] 8.7 jlink 平台验证
 
 ## 当前 task
-- plan task: 第 8 组验证任务（8.1-8.7）策略评估
-- 阶段: 评估中（本地环境限制决策点，待用户确认验证策略）
-- 派发状态: 待用户确认
-- 实现提交: -
-- 变更文件: -
-- 风险信号自报: -
-- 协调者风险预判: plan 行 1209 标注本机无 docker/dpkg-deb/rpm/iscc；8.1 build.sh 构建 + 8.7 jlink 验证本机可执行（需联网下载 Linux JDK），8.2-8.6 容器验证留 CI；memory 记录"安装包本地验证留 CI"；需用户确认是否本地执行 8.1/8.7 或全留 CI
-- 风险任务级 review: -
-- 审查-修复轮次: -
+- plan task: 8.1 完成（主会话接管调试）；8.2-8.7 留 CI（本地无 docker/rpmbuild）
+- OpenSpec task: 8.1 ✅；8.2-8.7 待 CI
+- 阶段: 8.1 done（主会话接管，用户确认）；8.2-8.7 留 CI
+- 派发状态: 主会话接管（执行者 sonnet+opus 卡住 40min，用户选主会话接管调试）
+- 实现提交: 待提交（jreleaser.yml + templates + build.sh + llm-gateway.sh + design + plan + tasks 勾选）
+- 变更文件: jreleaser.yml, templates/deb/control/{postinst,prerm,postrm}.tpl, build.sh, bin/llm-gateway.sh(chmod +x), design.md, plan, tasks.md
+- 风险信号自报: diff ~280 行 > 200（含模板新文件 109 行）；配置 + 脚本改动
+- 协调者风险预判: 命中 diff>200 风险信号，派发 task reviewer
+- 风险任务级 review: 触发（diff>200）；reviewer 发现 2 CRITICAL + 2 MINOR，已全部修复并重跑 assemble 验证
+- 审查-修复轮次: 1/1（reviewer 1 轮 -> 2 CRITICAL 修复 -> 重跑 assemble 验证 postinst chmod + llm-gateway.sh set -a + mode 0755 全通过）
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
@@ -78,6 +79,7 @@
 - 6.2: commit 112197cc（release.yml 插入 3 个 smoke test 步骤：deb/rpm systemd 容器 + zip Windows runner）；diff 59 行（+59）< 200 阈值；YAML OK；协调者复核插入位置正确（Build packages 后、Upload artifacts 前）；未命中风险信号（--privileged 仅 CI 测试容器）；review_mode standard 直接勾选放行；task-checkoff PASS
 - 7.1: commit af32b4ec（删除 debconf templates 8 行 + config 16 行 = 24 行）；无安全敏感面/跨模块/schema/API；diff 24 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 7.2: commit ac0dca38（删除 llm-gateway.iss 206 行）；diff 206 行 > 200 阈值命中风险信号 -> 派发 task reviewer；reviewer APPROVED（spec 合规 + windows 目录符合预期 + jreleaser.yml/pom.xml/build.sh 无悬空引用，构建链完整）；MINOR 2 条接受（.gitattributes *.iss 遗留规则无害 + release.yml 注释保留）；无 CRITICAL/IMPORTANT；task-checkoff PASS
+- 8.1: 主会话接管调试（执行者 sonnet+opus 卡住 40min，用户选主会话接管）；JReleaser 1.25.0 配置实测要点：basedir=repo root（非 project.basedir，日志验证）、installationPath:/ 使 fileSet output 为完整系统路径（避免前缀重复+etc/lib 困到 /opt）、control.provides 是 String（非数组）、project.languages.java（project.java 已废弃）、维护脚本经 templateDirectory control/*.tpl 注入、jar 由 build.sh 预复制固定名 llm-gateway.jar + fileSet includes 打入（artifacts transform 对 deb 未生效）；assemble.deb（纯 Java）+ archive（zip）本地通过，jpackage（rpm）active=RELEASE SNAPSHOT 跳过留 CI；实测产出 deb 109MB（Python 解 ar+xz+tar 验证含 jar 83MB+JRE+postinst/prerm/postrm+正确系统路径 etc/lib/opt）+ zip 113MB（含 jar+JRE+WinSW+ps1）；命中 diff>200 风险派发 reviewer，发现 2 CRITICAL（postinst 遗漏 chmod /opt/llm-gateway/bin/llm-gateway.sh + llm-gateway.sh source conf 未 export 致 Spring 读不到 SERVER_PORT/DB_URL/KEY）+ 2 MINOR（build.sh basedir 注释过时 + postrm 未清 /lib/systemd/system），全修复（postinst 加 chmod、llm-gateway.sh 加 set -a/+a、git --chmod=+x、build.sh 注释、postrm 加 rm），重跑 assemble 验证 postinst 含 chmod + llm-gateway.sh 含 set -a + mode 0755 全通过；rpm 留 CI（8.3）；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -

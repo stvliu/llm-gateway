@@ -1,0 +1,13 @@
+# build.sh 产物目录（JReleaser 方案）
+# Linux JRE（deb/rpm 用，jlink 交叉生成）
+jre/
+# Windows JRE（zip 用，jlink 本机生成）
+jre-win/
+# 下载的 Linux Temurin JDK（用于交叉生成 Linux JRE 的 jmods）
+.linux-jdk/
+.linux-jdk.tar.gz
+# JReleaser assemble 产物输出目录
+dist/
+
+# WinSW.exe（由 download-winsw.ps1 下载的二进制产物，不入库）
+windows/WinSW.exe
