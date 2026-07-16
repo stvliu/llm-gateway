@@ -1470,7 +1470,7 @@ Test-Path C:\lg-smoke\conf\llmgateway.conf
 
 > **执行环境：** 本机 Windows（git bash + JDK 21）或 CI。本机可执行（需联网下载 Linux JDK）。
 
-- [ ] **Step 1: 验证 build.sh 中 Linux JRE 交叉生成成功**
+- [x] **Step 1: 验证 build.sh 中 Linux JRE 交叉生成成功**
 
 若 Task 8.1 已成功跑通 build.sh，则 jlink 交叉生成已验证。检查产出的 Linux JRE 是否为 Linux 平台二进制：
 
@@ -1498,7 +1498,7 @@ rm -f "$TMP_TGZ"
 log "Linux JRE 体积: $(du -sh "$JRE_DIR" | cut -f1)"
 ```
 
-- [ ] **Step 3: 提交（含回退方案调整，若应用）**
+- [x] **Step 3: 提交（含回退方案调整，若应用）**
 
 ```bash
 git add deployments/package/build.sh

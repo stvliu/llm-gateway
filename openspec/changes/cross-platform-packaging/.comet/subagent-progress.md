@@ -47,7 +47,7 @@
 - [ ] 8.4 zip Windows 验证
 - [ ] 8.5 升级验证
 - [ ] 8.6 卸载验证
-- [ ] 8.7 jlink 平台验证
+- [x] 8.7 jlink 平台验证（ELF 64-bit x86-64 交叉生成成功，62M）
 
 ## 当前 task
 - plan task: 8.1 完成（主会话接管调试）；8.2-8.7 留 CI（本地无 docker/rpmbuild）
@@ -80,6 +80,7 @@
 - 7.1: commit af32b4ec（删除 debconf templates 8 行 + config 16 行 = 24 行）；无安全敏感面/跨模块/schema/API；diff 24 行 < 200 阈值；未命中风险信号；review_mode standard 直接勾选放行；task-checkoff PASS
 - 7.2: commit ac0dca38（删除 llm-gateway.iss 206 行）；diff 206 行 > 200 阈值命中风险信号 -> 派发 task reviewer；reviewer APPROVED（spec 合规 + windows 目录符合预期 + jreleaser.yml/pom.xml/build.sh 无悬空引用，构建链完整）；MINOR 2 条接受（.gitattributes *.iss 遗留规则无害 + release.yml 注释保留）；无 CRITICAL/IMPORTANT；task-checkoff PASS
 - 8.1: 主会话接管调试（执行者 sonnet+opus 卡住 40min，用户选主会话接管）；JReleaser 1.25.0 配置实测要点：basedir=repo root（非 project.basedir，日志验证）、installationPath:/ 使 fileSet output 为完整系统路径（避免前缀重复+etc/lib 困到 /opt）、control.provides 是 String（非数组）、project.languages.java（project.java 已废弃）、维护脚本经 templateDirectory control/*.tpl 注入、jar 由 build.sh 预复制固定名 llm-gateway.jar + fileSet includes 打入（artifacts transform 对 deb 未生效）；assemble.deb（纯 Java）+ archive（zip）本地通过，jpackage（rpm）active=RELEASE SNAPSHOT 跳过留 CI；实测产出 deb 109MB（Python 解 ar+xz+tar 验证含 jar 83MB+JRE+postinst/prerm/postrm+正确系统路径 etc/lib/opt）+ zip 113MB（含 jar+JRE+WinSW+ps1）；命中 diff>200 风险派发 reviewer，发现 2 CRITICAL（postinst 遗漏 chmod /opt/llm-gateway/bin/llm-gateway.sh + llm-gateway.sh source conf 未 export 致 Spring 读不到 SERVER_PORT/DB_URL/KEY）+ 2 MINOR（build.sh basedir 注释过时 + postrm 未清 /lib/systemd/system），全修复（postinst 加 chmod、llm-gateway.sh 加 set -a/+a、git --chmod=+x、build.sh 注释、postrm 加 rm），重跑 assemble 验证 postinst 含 chmod + llm-gateway.sh 含 set -a + mode 0755 全通过；rpm 留 CI（8.3）；task-checkoff PASS
+- 8.7: jlink 平台验证（design §4.3）；8.1 调试中 build.sh jlink 交叉生成 Linux JRE 已成功（.linux-jdk/jmods 交叉 jlink，62M）；8.7 Step 1 验证 jre/bin/java 前 4 字节 7f454c46 = ELF，file 确认 ELF 64-bit LSB pie executable x86-64 for GNU/Linux（非 Windows PE）；交叉生成方案可行，无需回退方案 2；task-checkoff PASS
 
 ## 最终审查
 - 阶段: -

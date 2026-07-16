@@ -44,4 +44,4 @@
 - [ ] 8.4 zip 在 Windows 解压 + install.ps1，Get-Service llm-gateway Running，`/actuator/health` 200
 - [ ] 8.5 升级验证：deb/rpm 升级后 conf 保留（端口/密钥不变），`/var/lib/llm-gateway` 数据不丢
 - [ ] 8.6 卸载验证：apt/dnf remove 或 zip uninstall.ps1 后 `/var/lib/llm-gateway` 数据目录保留
-- [ ] 8.7 jlink 平台验证（design §4.3）：确认交叉生成 Linux JRE 或下载 Linux JRE 方案可行
+- [x] 8.7 jlink 平台验证（design §4.3）：确认交叉生成 Linux JRE 方案可行（ELF 64-bit x86-64，62M）
