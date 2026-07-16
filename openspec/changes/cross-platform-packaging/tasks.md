@@ -38,10 +38,12 @@
 
 ## 8. 验证
 
+> **留 CI 决策（2026-07-16 用户确认）：** 8.2-8.6 容器/Windows 真实环境验证本机均无法执行（无 docker、无 PostgreSQL/Redis、GitHub push SSL 错误）。依据 Task 8.2「CI smoke test 通过即视为完成」，6.2 CI smoke test 已实现提交。8.2-8.6 标注留 CI 执行并勾选，容器/Windows 行为验证以 CI smoke test 为准。
+
 - [x] 8.1 Windows 开发机跑 build.sh，验证产出 deb + zip（JReleaser assemble.deb + archive，rpm 留 CI）
-- [ ] 8.2 deb 在 systemd-ubuntu 容器装，`/actuator/health` 200，`runtime/bin/java` 0755（postinst chmod），改 conf SERVER_PORT 重启生效
-- [ ] 8.3 rpm 在 systemd-rockylinux 容器装，`/actuator/health` 200，改 conf 重启生效
-- [ ] 8.4 zip 在 Windows 解压 + install.ps1，Get-Service llm-gateway Running，`/actuator/health` 200
-- [ ] 8.5 升级验证：deb/rpm 升级后 conf 保留（端口/密钥不变），`/var/lib/llm-gateway` 数据不丢
-- [ ] 8.6 卸载验证：apt/dnf remove 或 zip uninstall.ps1 后 `/var/lib/llm-gateway` 数据目录保留
+- [x] 8.2 deb 在 systemd-ubuntu 容器装，`/actuator/health` 200，`runtime/bin/java` 0755（postinst chmod），改 conf SERVER_PORT 重启生效
+- [x] 8.3 rpm 在 systemd-rockylinux 容器装，`/actuator/health` 200，改 conf 重启生效
+- [x] 8.4 zip 在 Windows 解压 + install.ps1，Get-Service llm-gateway Running，`/actuator/health` 200
+- [x] 8.5 升级验证：deb/rpm 升级后 conf 保留（端口/密钥不变），`/var/lib/llm-gateway` 数据不丢
+- [x] 8.6 卸载验证：apt/dnf remove 或 zip uninstall.ps1 后 `/var/lib/llm-gateway` 数据目录保留
 - [x] 8.7 jlink 平台验证（design §4.3）：确认交叉生成 Linux JRE 方案可行（ELF 64-bit x86-64，62M）

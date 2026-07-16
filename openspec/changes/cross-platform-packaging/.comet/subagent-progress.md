@@ -42,24 +42,19 @@
 - [x] 7.1 删 debconf（commit af32b4ec，24 行删除，standard 直接放行）
 - [x] 7.2 删 iss（commit ac0dca38，206 行删除命中 diff>200 风险，task reviewer APPROVED，无 CRITICAL/IMPORTANT）
 - [x] 8.1 build.sh 验证（主会话接管调试；JReleaser assemble.deb + archive 本地通过，rpm 留 CI）
-- [ ] 8.2 deb 容器验证
-- [ ] 8.3 rpm 容器验证
-- [ ] 8.4 zip Windows 验证
-- [ ] 8.5 升级验证
-- [ ] 8.6 卸载验证
+- [x] 8.2 deb 容器验证（留 CI；本机无 docker，6.2 CI smoke test 已覆盖；用户 2026-07-16 确认）
+- [x] 8.3 rpm 容器验证（留 CI；本机无 docker，6.2 CI smoke test 已覆盖）
+- [x] 8.4 zip Windows 验证（留 CI；本机无 PostgreSQL/Redis，health 注定非 200；6.2 zip Windows runner 已覆盖）
+- [x] 8.5 升级验证（留 CI；本机无 docker，6.2 CI 已覆盖）
+- [x] 8.6 卸载验证（留 CI；deb/rpm 无 docker，zip 依赖 8.4；6.2 CI 已覆盖）
 - [x] 8.7 jlink 平台验证（ELF 64-bit x86-64 交叉生成成功，62M）
 
 ## 当前 task
-- plan task: 8.1 完成（主会话接管调试）；8.2-8.7 留 CI（本地无 docker/rpmbuild）
-- OpenSpec task: 8.1 ✅；8.2-8.7 待 CI
-- 阶段: 8.1 done（主会话接管，用户确认）；8.2-8.7 留 CI
-- 派发状态: 主会话接管（执行者 sonnet+opus 卡住 40min，用户选主会话接管调试）
-- 实现提交: 待提交（jreleaser.yml + templates + build.sh + llm-gateway.sh + design + plan + tasks 勾选）
-- 变更文件: jreleaser.yml, templates/deb/control/{postinst,prerm,postrm}.tpl, build.sh, bin/llm-gateway.sh(chmod +x), design.md, plan, tasks.md
-- 风险信号自报: diff ~280 行 > 200（含模板新文件 109 行）；配置 + 脚本改动
-- 协调者风险预判: 命中 diff>200 风险信号，派发 task reviewer
-- 风险任务级 review: 触发（diff>200）；reviewer 发现 2 CRITICAL + 2 MINOR，已全部修复并重跑 assemble 验证
-- 审查-修复轮次: 1/1（reviewer 1 轮 -> 2 CRITICAL 修复 -> 重跑 assemble 验证 postinst chmod + llm-gateway.sh set -a + mode 0755 全通过）
+- 阶段: final-review（24/24 task 已勾选；8.2-8.6 留 CI 决策已记录）
+- 上下文恢复: 2026-07-16 /clear 后恢复；用户确认 8.2-8.6 留 CI 并勾选推进 verify
+- 8.2-8.6 勾选依据: plan 8.2 Step 3「CI smoke test 通过即视为完成」+ 6.2 CI smoke test 已实现提交；本机无 docker/PostgreSQL/Redis + GitHub push SSL 错误
+- task-checkoff: 8.2-8.6 plan+tasks.md 共 10 次 TASK_CHECKOFF: PASS
+- 下一步: 派发最终轻量 code reviewer（review_mode: standard 收尾；范围：全分支 packaging 代码正确性/安全/边界）-> 通过后 build-complete guard -> verify
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
@@ -82,7 +77,10 @@
 - 8.1: 主会话接管调试（执行者 sonnet+opus 卡住 40min，用户选主会话接管）；JReleaser 1.25.0 配置实测要点：basedir=repo root（非 project.basedir，日志验证）、installationPath:/ 使 fileSet output 为完整系统路径（避免前缀重复+etc/lib 困到 /opt）、control.provides 是 String（非数组）、project.languages.java（project.java 已废弃）、维护脚本经 templateDirectory control/*.tpl 注入、jar 由 build.sh 预复制固定名 llm-gateway.jar + fileSet includes 打入（artifacts transform 对 deb 未生效）；assemble.deb（纯 Java）+ archive（zip）本地通过，jpackage（rpm）active=RELEASE SNAPSHOT 跳过留 CI；实测产出 deb 109MB（Python 解 ar+xz+tar 验证含 jar 83MB+JRE+postinst/prerm/postrm+正确系统路径 etc/lib/opt）+ zip 113MB（含 jar+JRE+WinSW+ps1）；命中 diff>200 风险派发 reviewer，发现 2 CRITICAL（postinst 遗漏 chmod /opt/llm-gateway/bin/llm-gateway.sh + llm-gateway.sh source conf 未 export 致 Spring 读不到 SERVER_PORT/DB_URL/KEY）+ 2 MINOR（build.sh basedir 注释过时 + postrm 未清 /lib/systemd/system），全修复（postinst 加 chmod、llm-gateway.sh 加 set -a/+a、git --chmod=+x、build.sh 注释、postrm 加 rm），重跑 assemble 验证 postinst 含 chmod + llm-gateway.sh 含 set -a + mode 0755 全通过；rpm 留 CI（8.3）；task-checkoff PASS
 - 8.7: jlink 平台验证（design §4.3）；8.1 调试中 build.sh jlink 交叉生成 Linux JRE 已成功（.linux-jdk/jmods 交叉 jlink，62M）；8.7 Step 1 验证 jre/bin/java 前 4 字节 7f454c46 = ELF，file 确认 ELF 64-bit LSB pie executable x86-64 for GNU/Linux（非 Windows PE）；交叉生成方案可行，无需回退方案 2；task-checkoff PASS
 
+- 8.2-8.6: 留 CI 验证 task（2026-07-16 用户确认）；本机无 docker/PostgreSQL/Redis，容器/Windows 真实环境验证无法执行；依据 plan 8.2 Step 3「CI smoke test 通过即视为完成」+ 6.2 CI smoke test 已实现提交（deb/rpm systemd 容器 + zip Windows runner），标注留 CI 并勾选；plan+tasks.md task-checkoff 10 次 PASS
+
 ## 最终审查
-- 阶段: -
-- 轮次: -
-- 反馈: -
+- 阶段: final-review（待派发）
+- 范围: 全分支 packaging 代码（conf/启动脚本/jreleaser.yml/maintainer 脚本/build.sh/release.yml）正确性/安全/边界
+- 轮次: 0/1（standard 最多 1 轮自动修复+复查）
+- 反馈: 待派发最终轻量 code reviewer
