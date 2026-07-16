@@ -44,7 +44,7 @@ assemble:
           output: opt/llm-gateway/bin
           includes: [llm-gateway.jar]
         - input: deployments/package/linux
-          output: lib/systemd/system
+          output: usr/lib/systemd/system
           includes: [llm-gateway.service]
         - input: deployments/package/conf
           output: etc/llm-gateway

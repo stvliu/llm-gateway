@@ -42,7 +42,7 @@ if [ -d "$RUNTIME_BIN" ]; then
 fi
 chmod 0755 /opt/llm-gateway/bin/llm-gateway.sh 2>/dev/null || true
 
-# 6. 注册 systemd unit（JReleaser 打包到 /lib/systemd/system 或 /usr/lib/systemd/system）
+# 6. 注册 systemd unit（JReleaser 打包到 /usr/lib/systemd/system，FHS 现代路径）
 systemctl daemon-reload
 systemctl enable llm-gateway.service
 

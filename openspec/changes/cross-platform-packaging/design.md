@@ -119,6 +119,11 @@
 - jar 由 build.sh 预复制为 `gateway-boot/target/llm-gateway.jar`（固定名），fileSet `includes: [llm-gateway.jar]` 打入 `opt/llm-gateway/bin/`（匹配 llm-gateway.sh 的 `-jar` 路径）；artifacts transform 对 deb assembler 未生效，改用 fileSet。
 - `control.provides` 是 String（非数组）；`project.java` 已废弃，改 `project.languages.java`。
 
+**systemd unit 路径对齐 FHS 现代（2026-07-16 探讨决策）**
+- fileSet output 从 `lib/systemd/system` 改 `usr/lib/systemd/system`（FHS 现代路径；usrmerge 后 `/lib` 是 `/usr/lib` symlink，现代发行版 Debian 12+/Fedora/Ubuntu 22.04+ 推荐 `/usr/lib/systemd/system/`；jpackage 默认亦用此路径）。
+- postinst 注释同步（`systemctl enable` 不依赖路径，systemd 自动发现 unit）；postrm 多路径清理保留（`/etc/systemd` + `/usr/lib/systemd` + `/lib/systemd`，兼容非 usrmerge 旧系统）。
+- 应用根保持 `/opt/llm-gateway/`（自带 bundled JRE，自包含产品语义符合 `/opt`；不迁 `/usr/share`）。
+
 **Open Questions 解决状态**
 - JReleaser Windows 打 deb/zip：✅ 实测可用（deb 109MB + zip 113MB）。rpm 需 rpmbuild，留 CI。
 - fileSet per-file 权限：未依赖，postinst `chmod -R 0755 runtime/bin` 兜底（D8 不变）。
