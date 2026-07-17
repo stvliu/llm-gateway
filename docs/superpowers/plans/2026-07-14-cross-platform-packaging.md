@@ -372,7 +372,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
 替换为：
 ```yaml
     # conffile：dpkg 升级时保留（NOREPLACE 语义）
-    # 待实测：JReleaser deb 是否自动将 /etc 下文件标记为 conffile，或需显式配置
+    # 已确认：JReleaser 1.25.0 DebAssembler 不支持 conffile 字段，通过 templates/deb/control/conffiles.tpl 注入 conffiles 文件实现升级保留
     fileSets:
       - input: conf
         output: etc/llm-gateway
@@ -1535,7 +1535,7 @@ git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或�
 | JReleaser Windows 出 deb/rpm/zip | 8.1 | jreleaser.yml 语法按报错调整 |
 | JReleaser fileSet per-file 权限 | 8.2（postinst chmod 兜底已内置） | postinst chmod 是真相源 |
 | jlink 交叉生成 Linux JRE | 8.7 | 方案 2：下载预构建 Linux JRE |
-| JReleaser deb conffile / rpm noreplace | 8.5（升级保留验证） | 若失效，postinst grep 占位符逻辑仍保护密钥 |
+| JReleaser deb conffile / rpm noreplace | 8.5（升级保留验证） | deb: conffiles.tpl 注入 conffile 必须生效，若失效 postinst grep 会重新生成密钥致历史加密数据无法解密；rpm: jpackage 不支持 maintainer 脚本注入（CANNOT_FIX） |
 | deb/rpm 共用 maintainer 脚本参数语义 | 8.2/8.3/8.5（容器验证） | prerm/postrm case 兼容两种语义 |
 | 83MB fat jar + 50MB JRE 体积 | 8.1（du -sh 输出） | 留 CI 实测打包时间 |
 

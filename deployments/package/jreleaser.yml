@@ -4,6 +4,8 @@
 # installationPath: / 使 fileSet output 为完整系统路径（opt/.../etc/.../lib/...），避免前缀重复
 # jar 由 build.sh 预复制为 gateway-boot/target/llm-gateway.jar（固定名），fileSet includes 打入 bin/
 # 维护脚本（postinst/prerm/postrm）通过 templateDirectory 的 control/*.tpl 注入
+# conffile 机制: JReleaser 1.25.0 DebAssembler 不支持 conffile 字段，通过 templates/deb/control/conffiles.tpl
+#   注入 conffiles 文件（copyTemplates 渲染去 .tpl 扩展名，打入 control.tar.zst），dpkg 识别为 conffile 升级保留
 # 注: JReleaser 1.25.0 中 deb 是 DebAssembler（纯 Java，本地可验证），rpm 用 JpackageAssembler（需 rpmbuild，本地 SNAPSHOT 跳过留 CI）
 project:
   name: llm-gateway
