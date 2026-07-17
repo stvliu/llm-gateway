@@ -50,11 +50,16 @@
 - [x] 8.7 jlink 平台验证（ELF 64-bit x86-64 交叉生成成功，62M）
 
 ## 当前 task
-- 阶段: final-review（24/24 task 已勾选；8.2-8.6 留 CI 决策已记录）
-- 上下文恢复: 2026-07-16 /clear 后恢复；用户确认 8.2-8.6 留 CI 并勾选推进 verify
-- 8.2-8.6 勾选依据: plan 8.2 Step 3「CI smoke test 通过即视为完成」+ 6.2 CI smoke test 已实现提交；本机无 docker/PostgreSQL/Redis + GitHub push SSL 错误
-- task-checkoff: 8.2-8.6 plan+tasks.md 共 10 次 TASK_CHECKOFF: PASS
-- 下一步: 派发最终轻量 code reviewer（review_mode: standard 收尾；范围：全分支 packaging 代码正确性/安全/边界）-> 通过后 build-complete guard -> verify
+- 阶段: final-review 完成（1 轮修复+复查；发现 1/2 FIXED，发现 3 CANNOT_FIX，用户接受 rpm 限制）
+- 最终审查结果: BLOCKED -> 1 CRITICAL(WinSW 断链) + 2 IMPORTANT(conffile 未声明+plan 论断错误 / rpm maintainer 缺失)
+- 修复 agent 回报（commit 0d101698/47f45385/f214c410）:
+  - 发现 1 WinSW FIXED: build.sh 4.2 步加 curl 幂等下载 WinSW v2.12.0
+  - 发现 2 conffile FIXED: 新增 templates/deb/control/conffiles.tpl（实测 control.tar.zst 含 conffiles）+ plan 375/1538 论断修正
+  - 发现 3 rpm CANNOT_FIX: jpackage --resource-dir 对 rpm 仅支持覆盖完整 .spec，不支持 maintainer 脚本注入（源码+jpackage --help+文档三重确认）
+- 协调者复查: 发现 1/2 改动正确（WinSW 幂等跨平台、conffiles.tpl 格式正确、plan 论断修正准确、rpm 限制已记录）
+- 用户决策（2026-07-16）: 接受 rpm 限制，当前变更聚焦已验证 deb+zip，rpm 后续新 change 重做（fpm 或 .spec 覆盖）
+- 待处理: release.yml rpm smoke 步骤会阻断 release CI（rpm 方案坏），需调整为不阻断 deb/zip 发布
+- 下一步: 派发小 agent 调整 release.yml rpm smoke（continue-on-error+注释）-> build-complete guard -> verify
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
@@ -80,7 +85,9 @@
 - 8.2-8.6: 留 CI 验证 task（2026-07-16 用户确认）；本机无 docker/PostgreSQL/Redis，容器/Windows 真实环境验证无法执行；依据 plan 8.2 Step 3「CI smoke test 通过即视为完成」+ 6.2 CI smoke test 已实现提交（deb/rpm systemd 容器 + zip Windows runner），标注留 CI 并勾选；plan+tasks.md task-checkoff 10 次 PASS
 
 ## 最终审查
-- 阶段: final-review（待派发）
-- 范围: 全分支 packaging 代码（conf/启动脚本/jreleaser.yml/maintainer 脚本/build.sh/release.yml）正确性/安全/边界
-- 轮次: 0/1（standard 最多 1 轮自动修复+复查）
-- 反馈: 待派发最终轻量 code reviewer
+- 阶段: final-review 完成
+- 审查 agent: opus，返回 BLOCKED（1 CRITICAL + 2 IMPORTANT，发现均经协调者核实属实）
+- 修复轮次: 1/1（review_mode standard 最多 1 轮）
+- 修复结果: 发现 1 WinSW FIXED + 发现 2 conffile FIXED + 发现 3 rpm CANNOT_FIX（jpackage 机制限制）
+- 协调者复查: 通过（改动正确，jreleaser:assemble BUILD SUCCESS + control.tar.zst 含 conffiles 实测）
+- 用户决策: 接受 rpm 限制，后续 change 重做 rpm 方案
