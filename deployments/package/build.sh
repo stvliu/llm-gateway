@@ -95,6 +95,19 @@ STAGED_JAR="$REPO_ROOT/gateway-boot/target/llm-gateway.jar"
 cp "$FAT_JAR" "$STAGED_JAR"
 log "预复制 jar: $STAGED_JAR"
 
+# 4.2 确保 WinSW.exe 就绪（archive assembler 包含它，CI 全新 checkout 后需下载）
+#     download-winsw.ps1 的下载逻辑在此用 curl 跨平台复现（Windows Git Bash / Linux CI 均可用）
+WINSW_EXE="$SCRIPT_DIR/windows/WinSW.exe"
+WINSW_VERSION="2.12.0"
+if [[ ! -f "$WINSW_EXE" ]]; then
+  log "下载 WinSW v${WINSW_VERSION}（archive assembler 依赖）..."
+  curl -fsSL "https://github.com/winsw/winsw/releases/download/v${WINSW_VERSION}/WinSW-x64.exe" -o "$WINSW_EXE" \
+    || err "下载 WinSW 失败（检查网络或手动放置 $WINSW_EXE）"
+  [[ -f "$WINSW_EXE" ]] || err "WinSW.exe 下载后仍不存在: $WINSW_EXE"
+else
+  log "WinSW.exe 已存在，跳过下载"
+fi
+
 # 5. JReleaser assemble 出 deb + zip + rpm（Java 21，纯 Maven）
 #    configFile 由 gateway-boot/pom.xml 的 pkg profile 指定（指向本目录 jreleaser.yml）
 #    basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to E:\workspace\llm-gateway"）
