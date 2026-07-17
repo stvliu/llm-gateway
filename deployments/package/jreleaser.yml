@@ -85,6 +85,10 @@ assemble:
           includes: [llmgateway.conf]
 
   # Linux rpm（JpackageAssembler，需 rpmbuild；active=RELEASE 使本地 SNAPSHOT 跳过，留 CI release 产出）
+  # 已知限制: jpackage --resource-dir 对 rpm 仅支持覆盖完整 <packageName>.spec，不支持注入单独 maintainer 脚本
+  #   （%post/%preun/%postun）；jpackage 也无 fileSets 概念，无法像 DebAssembler 那样包含 conf/systemd unit。
+  #   因此 rpm 安装后不生成密钥、不注册 systemd（CANNOT_FIX，需为 rpm 单独编写 .spec 或重新评估 rpm 方案）。
+  #   launcherAsService 可让 jpackage 自动注册 systemd 服务，但密钥生成逻辑仍需 spec 覆盖，留后续评估。
   jpackage:
     llm-gateway:
       active: RELEASE

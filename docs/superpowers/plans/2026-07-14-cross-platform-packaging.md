@@ -382,7 +382,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
 将 rpm 段的 `requires:` 行后追加：
 ```yaml
     # %config(noreplace)：dnf 升级时保留 conf
-    # 待实测：JReleaser rpm 对 /etc 下文件的 noreplace 标记方式
+    # 已确认：JpackageAssembler 不支持 noreplace 标记配置；jpackage --resource-dir 对 rpm 仅支持覆盖完整 .spec，不支持 maintainer 脚本注入（CANNOT_FIX，需单独编写 .spec 或重新评估 rpm 方案）
 ```
 
 - [x] **Step 2: 验证 YAML 语法**
