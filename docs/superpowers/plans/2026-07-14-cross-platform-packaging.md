@@ -1483,7 +1483,7 @@ file deployments/package/jre/bin/java 2>/dev/null || xxd deployments/package/jre
 
 预期：`ELF 64-bit LSB executable, x86-64`（Linux 二进制）。若显示 `MS-DOS`/`PE` 则是 Windows 二进制，交叉生成失败。
 
-- [ ] **Step 2: 若交叉生成失败，落实回退方案 2（下载预构建 Linux JRE）**
+- [x] **Step 2: 若交叉生成失败，落实回退方案 2（下载预构建 Linux JRE）**（条件不满足：8.7 Step 1 验证交叉生成成功 ELF 64-bit x86-64，回退方案 2 无需落实）
 
 修改 `deployments/package/build.sh` 第 3 步（Linux JRE 生成段），将交叉 jlink 替换为下载解压：
 
