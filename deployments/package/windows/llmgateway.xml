@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <service>
-  <id>llm-gateway</id>
+  <id>llmgateway</id>
   <name>LLM-Gateway</name>
   <description>LLM-Gateway - 企业级 AI 模型 API 聚合网关</description>
 

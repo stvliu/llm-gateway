@@ -11,8 +11,8 @@ esac
 
 if [ "$SHOULD_STOP" = "1" ]; then
   if [ -x /usr/bin/systemctl ] || [ -x /bin/systemctl ]; then
-    systemctl stop llm-gateway.service 2>/dev/null || true
-    systemctl disable llm-gateway.service 2>/dev/null || true
+    systemctl stop llmgateway.service 2>/dev/null || true
+    systemctl disable llmgateway.service 2>/dev/null || true
   fi
 fi
 

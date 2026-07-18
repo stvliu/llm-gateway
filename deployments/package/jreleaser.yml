@@ -1,14 +1,14 @@
 # JReleaser 配置：assemble 出 deb（DebAssembler 纯 Java）+ zip（ArchiveAssembler）+ rpm（JpackageAssembler，需 rpmbuild，留 CI release）
 # 触发: mvn jreleaser:assemble -pl gateway-boot -Ppkg -Djreleaser.project.version=<version>
-# basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to E:\workspace\llm-gateway"），所有路径相对 repo root
+# basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to <repo root>"），所有路径相对 repo root
 # installationPath: / 使 fileSet output 为完整系统路径（opt/.../etc/.../lib/...），避免前缀重复
-# jar 由 build.sh 预复制为 gateway-boot/target/llm-gateway.jar（固定名），fileSet includes 打入 bin/
+# jar 由 build.sh 预复制为 gateway-boot/target/llmgateway.jar（固定名），fileSet includes 打入 bin/
 # 维护脚本（postinst/prerm/postrm）通过 templateDirectory 的 control/*.tpl 注入
 # conffile 机制: JReleaser 1.25.0 DebAssembler 不支持 conffile 字段，通过 templates/deb/control/conffiles.tpl
 #   注入 conffiles 文件（copyTemplates 渲染去 .tpl 扩展名，打入 control.tar.zst），dpkg 识别为 conffile 升级保留
 # 注: JReleaser 1.25.0 中 deb 是 DebAssembler（纯 Java，本地可验证），rpm 用 JpackageAssembler（需 rpmbuild，本地 SNAPSHOT 跳过留 CI）
 project:
-  name: llm-gateway
+  name: llmgateway
   description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
   authors: [LLM-Gateway]
   license: Apache-2.0
@@ -22,40 +22,40 @@ project:
       mainClass: org.springframework.boot.loader.launch.JarLauncher
 
 distributions:
-  llm-gateway:
+  llmgateway:
     type: SINGLE_JAR
     # artifacts 由 assembler 产出（deb/zip/rpm），不预声明源 artifact
 
 assemble:
   # Linux deb（DebAssembler 纯 Java，本地 Windows 可验证，无需 dpkg-deb）
   deb:
-    llm-gateway:
+    llmgateway:
       active: ALWAYS
       exported: true
-      executable: llm-gateway
+      executable: llmgateway
       installationPath: /
       architecture: amd64
       templateDirectory: deployments/package/templates/deb
       fileSets:
         - input: deployments/package/jre
-          output: opt/llm-gateway/runtime
+          output: opt/llmgateway/runtime
         - input: deployments/package/bin
-          output: opt/llm-gateway/bin
-          includes: [llm-gateway.sh]
+          output: opt/llmgateway/bin
+          includes: [llmgateway.sh]
         - input: gateway-boot/target
-          output: opt/llm-gateway/bin
-          includes: [llm-gateway.jar]
+          output: opt/llmgateway/bin
+          includes: [llmgateway.jar]
         - input: deployments/package/linux
           output: usr/lib/systemd/system
-          includes: [llm-gateway.service]
+          includes: [llmgateway.service]
         - input: deployments/package/conf
-          output: etc/llm-gateway
+          output: etc/llmgateway
           includes: [llmgateway.conf]
       control:
-        packageName: llm-gateway
+        packageName: llmgateway
         packageVersion: '{{projectVersionNumber}}'
         packageRevision: 1
-        provides: llm-gateway
+        provides: llmgateway
         maintainer: LLM-Gateway <noreply@codingas.com>
         description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
         homepage: https://github.com/codingas/llm-gateway
@@ -64,7 +64,7 @@ assemble:
 
   # Windows zip（ArchiveAssembler，本地可验证）
   archive:
-    llm-gateway-win:
+    llmgateway-win:
       active: ALWAYS
       exported: true
       formats: [ZIP]
@@ -76,10 +76,10 @@ assemble:
           output: runtime
         - input: deployments/package/windows
           output: bin
-          includes: [WinSW.exe, llm-gateway.xml, install.ps1, uninstall.ps1, start.ps1]
+          includes: [WinSW.exe, llmgateway.xml, install.ps1, uninstall.ps1, start.ps1]
         - input: gateway-boot/target
           output: bin
-          includes: [llm-gateway.jar]
+          includes: [llmgateway.jar]
         - input: deployments/package/conf
           output: conf
           includes: [llmgateway.conf]
@@ -90,7 +90,7 @@ assemble:
   #   因此 rpm 安装后不生成密钥、不注册 systemd（CANNOT_FIX，需为 rpm 单独编写 .spec 或重新评估 rpm 方案）。
   #   launcherAsService 可让 jpackage 自动注册 systemd 服务，但密钥生成逻辑仍需 spec 覆盖，留后续评估。
   jpackage:
-    llm-gateway:
+    llmgateway:
       active: RELEASE
       exported: true
       attachPlatform: true
@@ -98,15 +98,15 @@ assemble:
         - path: deployments/package/jre
           platform: linux-x86_64
       mainJar:
-        path: gateway-boot/target/llm-gateway.jar
+        path: gateway-boot/target/llmgateway.jar
       applicationPackage:
-        appName: llm-gateway
+        appName: llmgateway
         appVersion: '{{projectVersionNumber}}'
         vendor: LLM-Gateway
       linux:
         types: [rpm]
-        packageName: llm-gateway
+        packageName: llmgateway
         maintainer: LLM-Gateway <noreply@codingas.com>
         license: Apache-2.0
-        installDir: /opt/llm-gateway
+        installDir: /opt/llmgateway
         appRelease: 1

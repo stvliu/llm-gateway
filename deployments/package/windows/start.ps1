@@ -18,4 +18,4 @@ Get-Content $ConfFile | ForEach-Object {
 $javaOpts = $env:JAVA_OPTS -split '\s+' | Where-Object { $_ -ne '' }
 & "$PSScriptRoot\..\runtime\bin\java.exe" @javaOpts `
   "-Dspring.profiles.active=local" `
-  -jar "$PSScriptRoot\llm-gateway.jar"
+  -jar "$PSScriptRoot\llmgateway.jar"

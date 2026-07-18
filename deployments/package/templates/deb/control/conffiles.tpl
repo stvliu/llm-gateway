@@ -1,1 +1,1 @@
-/etc/llm-gateway/llmgateway.conf
+/etc/llmgateway/llmgateway.conf

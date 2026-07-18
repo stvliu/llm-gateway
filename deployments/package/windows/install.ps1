@@ -21,11 +21,11 @@ if (Test-Path $ConfFile) {
     }
 }
 
-# 2. WinSW exe 改名为 llm-gateway.exe（与 llm-gateway.xml 同名配对，WinSW 要求 exe/xml 同名）
-Copy-Item "$BinDir\WinSW.exe" "$BinDir\llm-gateway.exe" -Force
+# 2. WinSW exe 改名为 llmgateway.exe（与 llmgateway.xml 同名配对，WinSW 要求 exe/xml 同名）
+Copy-Item "$BinDir\WinSW.exe" "$BinDir\llmgateway.exe" -Force
 
 # 3. 注册并启动服务
-& "$BinDir\llm-gateway.exe" install
-Start-Service llm-gateway
+& "$BinDir\llmgateway.exe" install
+Start-Service llmgateway
 Write-Host "LLM-Gateway 服务已注册并启动。"
-Write-Host "  配置文件: $ConfFile（改后 Restart-Service llm-gateway 生效）"
+Write-Host "  配置文件: $ConfFile（改后 Restart-Service llmgateway 生效）"

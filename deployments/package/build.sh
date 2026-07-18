@@ -90,8 +90,8 @@ log "Linux JRE 体积: $(du -sh "$JRE_DIR" | cut -f1)"
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-# 4.1 预复制 fat jar 为固定名 llm-gateway.jar（jreleaser.yml 的 artifacts/mainJar 引用此固定名）
-STAGED_JAR="$REPO_ROOT/gateway-boot/target/llm-gateway.jar"
+# 4.1 预复制 fat jar 为固定名 llmgateway.jar（jreleaser.yml 的 artifacts/mainJar 引用此固定名）
+STAGED_JAR="$REPO_ROOT/gateway-boot/target/llmgateway.jar"
 cp "$FAT_JAR" "$STAGED_JAR"
 log "预复制 jar: $STAGED_JAR"
 
@@ -110,7 +110,7 @@ fi
 
 # 5. JReleaser assemble 出 deb + zip + rpm（Java 21，纯 Maven）
 #    configFile 由 gateway-boot/pom.xml 的 pkg profile 指定（指向本目录 jreleaser.yml）
-#    basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to E:\workspace\llm-gateway"）
+#    basedir = repo root（jreleaser-maven-plugin 1.25.0 实测，日志 "basedir set to <repo root>"）
 #    deb: DebAssembler 纯 Java（本地可验证）；zip: ArchiveAssembler；rpm: JpackageAssembler（active=RELEASE，本地 SNAPSHOT 跳过，留 CI release）
 log "JReleaser assemble（出 deb + zip [+ rpm if release]）..."
 JRELEASER_OUT="$REPO_ROOT/gateway-boot/target/jreleaser/assemble"
