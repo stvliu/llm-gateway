@@ -8,7 +8,7 @@ subagent_dispatch: confirmed
 tdd_mode: direct
 review_mode: standard
 isolation: branch
-verify_mode: null
+verify_mode: full
 auto_transition: true
 base_ref: e0895232f4f747e0731f013a0a8941a4bca1f1a4
 design_doc: docs/superpowers/specs/2026-07-13-cross-platform-packaging-design.md
