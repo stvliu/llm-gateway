@@ -1,19 +1,19 @@
 ## ADDED Requirements
 
 ### Requirement: llmgateway.conf 统一配置外部化
-系统 SHALL 在 Linux deb/rpm 部署中通过 `/etc/llm-gateway/llmgateway.conf` 单一 shell 配置文件集中管理服务端口、数据库访问信息、加密因子、JVM 参数与运行路径，由启动脚本 `source` 注入为环境变量与 `JAVA_OPTS`，应用通过现有 `${ENV:默认}` 占位符绑定，升级时该文件保留（conffile/NOREPLACE）。
+系统 SHALL 在 Linux deb/rpm 部署中通过 `/etc/llmgateway/llmgateway.conf` 单一 shell 配置文件集中管理服务端口、数据库访问信息、加密因子、JVM 参数与运行路径，由启动脚本 `source` 注入为环境变量与 `JAVA_OPTS`，应用通过现有 `${ENV:默认}` 占位符绑定，升级时该文件保留（conffile/NOREPLACE）。
 
 #### Scenario: conf 注入业务参数
 - **WHEN** 安装 deb/rpm 并启动服务
 - **THEN** `llmgateway.conf` 中的 SERVER_PORT、DB_URL、GATEWAY_ENCRYPTION_KEY 经 `source` 注入为环境变量，Spring 占位符正确绑定，服务以 conf 配置启动
 
 #### Scenario: JVM 参数运行时可调
-- **WHEN** 运维人员修改 `llmgateway.conf` 的 JAVA_OPTS（如 -Xmx）后执行 `systemctl restart llm-gateway`
+- **WHEN** 运维人员修改 `llmgateway.conf` 的 JAVA_OPTS（如 -Xmx）后执行 `systemctl restart llmgateway`
 - **THEN** 服务以新 JVM 参数启动，无需重新打包
 
 #### Scenario: 升级保留 conf
 - **WHEN** 对已安装实例执行 `apt upgrade` / `dnf upgrade` 到新版本
-- **THEN** `/etc/llm-gateway/llmgateway.conf` 不被覆盖，端口/加密因子/DB 配置保持不变
+- **THEN** `/etc/llmgateway/llmgateway.conf` 不被覆盖，端口/加密因子/DB 配置保持不变
 
 #### Scenario: 首次安装生成加密因子
 - **WHEN** 首次安装 deb/rpm
@@ -26,7 +26,7 @@
 
 #### Scenario: Linux 端口由 conf 配置
 - **WHEN** 运维人员安装 deb/rpm
-- **THEN** 服务端口由 `/etc/llm-gateway/llmgateway.conf` 的 `SERVER_PORT` 决定，默认 8080，改后 `systemctl restart` 生效
+- **THEN** 服务端口由 `/etc/llmgateway/llmgateway.conf` 的 `SERVER_PORT` 决定，默认 8080，改后 `systemctl restart` 生效
 
 #### Scenario: 非交互安装使用默认端口
 - **WHEN** 运维人员以非交互方式安装 deb/rpm 或解压 Windows zip

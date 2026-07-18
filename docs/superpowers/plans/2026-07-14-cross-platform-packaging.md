@@ -26,18 +26,18 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 | 文件 | 职责 |
 |------|------|
 | `deployments/package/conf/llmgateway.conf` | 统一配置模板（端口/DB/密钥占位符/JAVA_OPTS），打入 deb/rpm/zip，conffile 升级保留 |
-| `deployments/package/bin/llm-gateway.sh` | Linux 启动脚本：source conf + exec java $JAVA_OPTS -jar |
+| `deployments/package/bin/llmgateway.sh` | Linux 启动脚本：source conf + exec java $JAVA_OPTS -jar |
 | `deployments/package/jreleaser.yml` | JReleaser 配置：SINGLE_JAR distribution + deb/rpm packager + archive(Windows zip) |
 | `deployments/package/windows/start.ps1` | Windows 启动脚本：解析 conf 注入环境变量 + java -jar |
 | `deployments/package/windows/install.ps1` | Windows 服务注册：生成密钥 + WinSW install + Start-Service |
 | `deployments/package/windows/uninstall.ps1` | Windows 服务卸载：WinSW uninstall |
-| `deployments/package/windows/llm-gateway.xml` | WinSW service 配置（与 llm-gateway.exe 同名配对） |
+| `deployments/package/windows/llmgateway.xml` | WinSW service 配置（与 llmgateway.exe 同名配对） |
 
 ### 修改文件
 | 文件 | 变更 |
 |------|------|
 | `gateway-boot/pom.xml` | 加 `pkg` profile + JReleaser 1.25.0 插件声明 |
-| `deployments/package/linux/llm-gateway.service` | ExecStart 指向 llm-gateway.sh，删 EnvironmentFile |
+| `deployments/package/linux/llmgateway.service` | ExecStart 指向 llmgateway.sh，删 EnvironmentFile |
 | `deployments/package/linux/postinst` | 重写：生成 conf（/dev/urandom 密钥 + sed 替换）+ chmod 兜底 JRE bin，去 debconf/openssl |
 | `deployments/package/linux/prerm` | 重写为 deb/rpm 共用版（参数语义兼容） |
 | `deployments/package/linux/postrm` | 重写为 deb/rpm 共用版（参数语义兼容） |
@@ -48,13 +48,13 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 ### 删除文件
 | 文件 | 原因 |
 |------|------|
-| `deployments/package/linux/llm-gateway.templates` | debconf 模板（D4 去 debconf） |
-| `deployments/package/linux/llm-gateway.config` | debconf 收集脚本（D4 去 debconf） |
+| `deployments/package/linux/llmgateway.templates` | debconf 模板（D4 去 debconf） |
+| `deployments/package/linux/llmgateway.config` | debconf 收集脚本（D4 去 debconf） |
 | `deployments/package/linux/postinst-rpm` | JReleaser 共用 maintainer 脚本 |
 | `deployments/package/linux/prerm-rpm` | 同上 |
 | `deployments/package/linux/postrm-rpm` | 同上 |
-| `deployments/package/windows/LLMGateway.xml` | 被 llm-gateway.xml 替代（exe 改名） |
-| `deployments/package/windows/llm-gateway.iss` | Inno Setup 脚本（Windows 改 zip） |
+| `deployments/package/windows/LLMGateway.xml` | 被 llmgateway.xml 替代（exe 改名） |
+| `deployments/package/windows/llmgateway.iss` | Inno Setup 脚本（Windows 改 zip） |
 | `deployments/package/build.ps1` | jpackage+iscc 流程删除（Windows 改 zip，由 build.sh 统一） |
 
 ---
@@ -74,10 +74,10 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 
 ```sh
 # LLM-Gateway 统一配置（conffile，升级保留）
-# 服务端口（默认 8080，改后 systemctl restart llm-gateway 生效）
+# 服务端口（默认 8080，改后 systemctl restart llmgateway 生效）
 SERVER_PORT=8080
 # 数据库连接（H2 文件库，数据目录外部化）
-DB_URL=jdbc:h2:file:/var/lib/llm-gateway/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+DB_URL=jdbc:h2:file:/var/lib/llmgateway/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
 # 加密密钥（首次安装由 postinst 生成，占位符 __GENERATE_KEY__ 会被替换）
 GATEWAY_ENCRYPTION_KEY=__GENERATE_KEY__
 # JVM 参数（运行时可调，改后 restart 生效，无需重打包）
@@ -107,30 +107,30 @@ git commit -m "feat(packaging): 新增 llmgateway.conf 统一配置模板（端�
 ### Task 1.2: 新增 Linux 启动脚本
 
 **Files:**
-- Create: `deployments/package/bin/llm-gateway.sh`
+- Create: `deployments/package/bin/llmgateway.sh`
 
 **依据:** Design Doc §3.4。systemd ExecStart 指向此脚本，source conf 后 exec java。`$JAVA_OPTS` 不加引号以触发 word splitting（`-Xmx512m` 与 `-D...` 拆为独立 JVM 参数）。
 
 - [x] **Step 1: 创建启动脚本**
 
-创建 `deployments/package/bin/llm-gateway.sh`：
+创建 `deployments/package/bin/llmgateway.sh`：
 
 ```sh
 #!/bin/sh
 # LLM-Gateway Linux 启动脚本：source conf 注入环境变量 + JAVA_OPTS，exec java
 set -e
-CONF_FILE="/etc/llm-gateway/llmgateway.conf"
+CONF_FILE="/etc/llmgateway/llmgateway.conf"
 [ -f "$CONF_FILE" ] || { echo "配置文件不存在: $CONF_FILE" >&2; exit 1; }
 . "$CONF_FILE"
-exec /opt/llm-gateway/runtime/bin/java $JAVA_OPTS \
+exec /opt/llmgateway/runtime/bin/java $JAVA_OPTS \
   -Dspring.profiles.active=local \
-  -jar /opt/llm-gateway/bin/llm-gateway.jar
+  -jar /opt/llmgateway/bin/llmgateway.jar
 ```
 
 - [x] **Step 2: 语法检查**
 
 ```bash
-bash -n deployments/package/bin/llm-gateway.sh && echo "语法 OK"
+bash -n deployments/package/bin/llmgateway.sh && echo "语法 OK"
 ```
 
 预期：`语法 OK`。
@@ -138,8 +138,8 @@ bash -n deployments/package/bin/llm-gateway.sh && echo "语法 OK"
 - [x] **Step 3: 提交**
 
 ```bash
-git add deployments/package/bin/llm-gateway.sh
-git commit -m "feat(packaging): 新增 Linux 启动脚本 llm-gateway.sh（source conf + exec java）"
+git add deployments/package/bin/llmgateway.sh
+git commit -m "feat(packaging): 新增 Linux 启动脚本 llmgateway.sh（source conf + exec java）"
 ```
 
 ---
@@ -147,15 +147,15 @@ git commit -m "feat(packaging): 新增 Linux 启动脚本 llm-gateway.sh（sourc
 ### Task 1.3: 改 systemd unit
 
 **Files:**
-- Modify: `deployments/package/linux/llm-gateway.service`
+- Modify: `deployments/package/linux/llmgateway.service`
 
-**依据:** Design Doc §3.5。删 `EnvironmentFile=/etc/llm-gateway/env`（conf 由启动脚本 source），ExecStart 从 jpackage 启动器 `/opt/llm-gateway/bin/llm-gateway` 改为 `llm-gateway.sh`。
+**依据:** Design Doc §3.5。删 `EnvironmentFile=/etc/llmgateway/env`（conf 由启动脚本 source），ExecStart 从 jpackage 启动器 `/opt/llmgateway/bin/llmgateway` 改为 `llmgateway.sh`。
 
 - [x] **Step 1: 修改 systemd unit**
 
-将 `deployments/package/linux/llm-gateway.service` 的 `[Service]` 段中：
-- 删除行 `EnvironmentFile=/etc/llm-gateway/env`
-- 将 `ExecStart=/opt/llm-gateway/bin/llm-gateway` 改为 `ExecStart=/opt/llm-gateway/bin/llm-gateway.sh`
+将 `deployments/package/linux/llmgateway.service` 的 `[Service]` 段中：
+- 删除行 `EnvironmentFile=/etc/llmgateway/env`
+- 将 `ExecStart=/opt/llmgateway/bin/llmgateway` 改为 `ExecStart=/opt/llmgateway/bin/llmgateway.sh`
 
 修改后完整文件应为：
 
@@ -167,14 +167,14 @@ After=network.target
 
 [Service]
 Type=simple
-User=llm-gateway
-Group=llm-gateway
-WorkingDirectory=/var/lib/llm-gateway
-ExecStart=/opt/llm-gateway/bin/llm-gateway.sh
+User=llmgateway
+Group=llmgateway
+WorkingDirectory=/var/lib/llmgateway
+ExecStart=/opt/llmgateway/bin/llmgateway.sh
 Restart=on-failure
 RestartSec=5
-StandardOutput=append:/var/log/llm-gateway/stdout.log
-StandardError=append:/var/log/llm-gateway/stderr.log
+StandardOutput=append:/var/log/llmgateway/stdout.log
+StandardError=append:/var/log/llmgateway/stderr.log
 LimitNOFILE=65536
 
 [Install]
@@ -184,8 +184,8 @@ WantedBy=multi-user.target
 - [x] **Step 2: 提交**
 
 ```bash
-git add deployments/package/linux/llm-gateway.service
-git commit -m "refactor(packaging): systemd unit ExecStart 指向 llm-gateway.sh，去掉 EnvironmentFile"
+git add deployments/package/linux/llmgateway.service
+git commit -m "refactor(packaging): systemd unit ExecStart 指向 llmgateway.sh，去掉 EnvironmentFile"
 ```
 
 ---
@@ -271,33 +271,33 @@ git commit -m "feat(packaging): gateway-boot 加 pkg profile + JReleaser 1.25.0 
 # 触发：mvn jreleaser:assemble -pl gateway-boot -Ppkg
 # basedir = 本文件所在目录（deployments/package/），fileSet input 相对于此
 project:
-  name: llm-gateway
+  name: llmgateway
   version: ${project.version}
   description: LLM-Gateway - 企业级 AI 模型 API 聚合网关
   authors: [LLM-Gateway]
   license: Apache-2.0
 
 distributions:
-  llm-gateway:
+  llmgateway:
     type: SINGLE_JAR
     artifacts:
-      # fat jar 作为主 artifact，打包时重命名为 llm-gateway.jar
+      # fat jar 作为主 artifact，打包时重命名为 llmgateway.jar
       - path: ../../gateway-boot/target/gateway-boot-${project.version}.jar
-        transform: llm-gateway.jar
+        transform: llmgateway.jar
     # Linux JRE（deb/rpm 用，build.sh 交叉生成到 jre/ 目录）
     fileSets:
       - input: jre/bin
-        output: opt/llm-gateway/runtime/bin
+        output: opt/llmgateway/runtime/bin
       - input: jre/lib
-        output: opt/llm-gateway/runtime/lib
+        output: opt/llmgateway/runtime/lib
       - input: jre/conf
-        output: opt/llm-gateway/runtime/conf
+        output: opt/llmgateway/runtime/conf
       - input: bin
-        output: opt/llm-gateway/bin
-        includes: [llm-gateway.sh]
+        output: opt/llmgateway/bin
+        includes: [llmgateway.sh]
       - input: linux
         output: lib/systemd/system
-        includes: [llm-gateway.service]
+        includes: [llmgateway.service]
 
 packagers:
   deb:
@@ -306,7 +306,7 @@ packagers:
     requires: [openjdk-17-jre-headless | java17-runtime]
     fileSets:
       - input: conf
-        output: etc/llm-gateway
+        output: etc/llmgateway
         includes: [llmgateway.conf]
     scripts:
       postInstall: linux/postinst
@@ -323,7 +323,7 @@ packagers:
 # Windows zip（archive assembler，独立 fileSets，用 Windows JRE）
 assemble:
   archive:
-    llm-gateway-win:
+    llmgateway-win:
       active: ALWAYS
       formats: [ZIP]
       exportDir: dist
@@ -332,12 +332,12 @@ assemble:
           output: runtime
         - input: windows
           output: bin
-          includes: [WinSW.exe, llm-gateway.xml, install.ps1, uninstall.ps1, start.ps1]
+          includes: [WinSW.exe, llmgateway.xml, install.ps1, uninstall.ps1, start.ps1]
         - input: conf
           output: conf
           includes: [llmgateway.conf]
         - input: ../../gateway-boot/target/gateway-boot-${project.version}.jar
-          output: bin/llm-gateway.jar
+          output: bin/llmgateway.jar
 ```
 
 - [x] **Step 2: 提交**
@@ -366,7 +366,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
 ```yaml
     fileSets:
       - input: conf
-        output: etc/llm-gateway
+        output: etc/llmgateway
         includes: [llmgateway.conf]
 ```
 替换为：
@@ -375,7 +375,7 @@ git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨
     # 已确认：JReleaser 1.25.0 DebAssembler 不支持 conffile 字段，通过 templates/deb/control/conffiles.tpl 注入 conffiles 文件实现升级保留
     fileSets:
       - input: conf
-        output: etc/llm-gateway
+        output: etc/llmgateway
         includes: [llmgateway.conf]
 ```
 
@@ -421,24 +421,24 @@ git commit -m "feat(packaging): jreleaser.yml 补 deb/rpm conffile 与 archive z
 # 首次安装：生成 conf 密钥占位符替换；升级：conffile 保留，跳过生成
 set -e
 
-DATA_DIR="/var/lib/llm-gateway"
-LOG_DIR="/var/log/llm-gateway"
-CONF_DIR="/etc/llm-gateway"
+DATA_DIR="/var/lib/llmgateway"
+LOG_DIR="/var/log/llmgateway"
+CONF_DIR="/etc/llmgateway"
 CONF_FILE="$CONF_DIR/llmgateway.conf"
-RUNTIME_BIN="/opt/llm-gateway/runtime/bin"
+RUNTIME_BIN="/opt/llmgateway/runtime/bin"
 
 # 1. 创建系统用户与组（已存在则跳过）
-if ! getent group llm-gateway >/dev/null; then
-  groupadd --system llm-gateway
+if ! getent group llmgateway >/dev/null; then
+  groupadd --system llmgateway
 fi
-if ! id -u llm-gateway >/dev/null 2>&1; then
+if ! id -u llmgateway >/dev/null 2>&1; then
   useradd --system --no-create-home --shell /usr/sbin/nologin \
-    --gid llm-gateway --home-dir "$DATA_DIR" llm-gateway
+    --gid llmgateway --home-dir "$DATA_DIR" llmgateway
 fi
 
 # 2. 创建数据/日志/配置目录
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$CONF_DIR"
-chown -R llm-gateway:llm-gateway "$DATA_DIR" "$LOG_DIR"
+chown -R llmgateway:llmgateway "$DATA_DIR" "$LOG_DIR"
 
 # 3. 生成加密密钥（首次安装：conf 含 __GENERATE_KEY__ 占位符则替换；升级：conffile 保留，grep 不命中则跳过）
 if [ -f "$CONF_FILE" ] && grep -q '__GENERATE_KEY__' "$CONF_FILE"; then
@@ -450,9 +450,9 @@ else
   echo "[postinst] 保留已有 GATEWAY_ENCRYPTION_KEY" >&2
 fi
 
-# 4. 设置 conf 权限（root 可读写，llm-gateway 组可读）
+# 4. 设置 conf 权限（root 可读写，llmgateway 组可读）
 chmod 640 "$CONF_FILE" 2>/dev/null || true
-chown root:llm-gateway "$CONF_FILE" 2>/dev/null || true
+chown root:llmgateway "$CONF_FILE" 2>/dev/null || true
 
 # 5. chmod 兜底 JRE bin 权限（JReleaser 不保证 per-file mode，postinst 矫正 bin/java 可执行位）
 if [ -d "$RUNTIME_BIN" ]; then
@@ -461,19 +461,19 @@ fi
 
 # 6. 注册 systemd unit（JReleaser 打包到 /lib/systemd/system 或 /usr/lib/systemd/system）
 systemctl daemon-reload
-systemctl enable llm-gateway.service
+systemctl enable llmgateway.service
 
 # 7. 启动服务（升级时 restart，首次安装 start）
-if systemctl is-active --quiet llm-gateway.service; then
-  systemctl restart llm-gateway.service
+if systemctl is-active --quiet llmgateway.service; then
+  systemctl restart llmgateway.service
 else
-  systemctl start llm-gateway.service
+  systemctl start llmgateway.service
 fi
 
 echo "LLM-Gateway 已安装并启动。"
-echo "  配置文件: $CONF_FILE（改后 systemctl restart llm-gateway 生效）"
+echo "  配置文件: $CONF_FILE（改后 systemctl restart llmgateway 生效）"
 echo "  数据目录: $DATA_DIR"
-echo "  服务状态: systemctl status llm-gateway"
+echo "  服务状态: systemctl status llmgateway"
 
 exit 0
 ```
@@ -501,7 +501,7 @@ git commit -m "refactor(packaging): postinst 重写为 conf 生成（/dev/urando
 - Modify: `deployments/package/linux/prerm`
 - Modify: `deployments/package/linux/postrm`
 
-**依据:** Design Doc §3.6。deb 与 rpm 的 maintainer 脚本参数语义不同（deb postinst 收 `configure`，prerm 收 `remove|upgrade`；rpm %preun 收 `1`(升级)|`0`(卸载)）。共用脚本通过 case 匹配两种语义。保留数据目录 `/var/lib/llm-gateway`。
+**依据:** Design Doc §3.6。deb 与 rpm 的 maintainer 脚本参数语义不同（deb postinst 收 `configure`，prerm 收 `remove|upgrade`；rpm %preun 收 `1`(升级)|`0`(卸载)）。共用脚本通过 case 匹配两种语义。保留数据目录 `/var/lib/llmgateway`。
 
 - [x] **Step 1: 重写 prerm 为 deb/rpm 共用版**
 
@@ -522,8 +522,8 @@ esac
 
 if [ "$SHOULD_STOP" = "1" ]; then
   if [ -x /usr/bin/systemctl ] || [ -x /bin/systemctl ]; then
-    systemctl stop llm-gateway.service 2>/dev/null || true
-    systemctl disable llm-gateway.service 2>/dev/null || true
+    systemctl stop llmgateway.service 2>/dev/null || true
+    systemctl disable llmgateway.service 2>/dev/null || true
   fi
 fi
 
@@ -549,19 +549,19 @@ case "${1:-}" in
 esac
 
 if [ "$SHOULD_CLEAN" = "1" ]; then
-  rm -f /etc/systemd/system/llm-gateway.service
-  rm -f /usr/lib/systemd/system/llm-gateway.service 2>/dev/null || true
+  rm -f /etc/systemd/system/llmgateway.service
+  rm -f /usr/lib/systemd/system/llmgateway.service 2>/dev/null || true
   systemctl daemon-reload 2>/dev/null || true
 fi
 
 # purge 模式（仅 deb）清理数据目录与配置
 if [ "${1:-}" = "purge" ]; then
   echo "[postrm] purge 模式：清理数据目录与配置..."
-  rm -rf /var/lib/llm-gateway /var/log/llm-gateway /etc/llm-gateway
-  echo "[postrm] 数据已清除。如需完全移除用户：userdel llm-gateway"
+  rm -rf /var/lib/llmgateway /var/log/llmgateway /etc/llmgateway
+  echo "[postrm] 数据已清除。如需完全移除用户：userdel llmgateway"
 fi
 
-echo "[postrm] 卸载完成。数据目录 /var/lib/llm-gateway 已保留（除非 purge）。"
+echo "[postrm] 卸载完成。数据目录 /var/lib/llmgateway 已保留（除非 purge）。"
 
 exit 0
 ```
@@ -604,7 +604,7 @@ git rm deployments/package/linux/postinst-rpm deployments/package/linux/prerm-rp
 ls deployments/package/linux/
 ```
 
-预期：仅剩 `llm-gateway.service`、`postinst`、`prerm`、`postrm`（无 -rpm 后缀、无 templates/config，后两者在第 7 组删）。
+预期：仅剩 `llmgateway.service`、`postinst`、`prerm`、`postrm`（无 -rpm 后缀、无 templates/config，后两者在第 7 组删）。
 
 - [x] **Step 3: 提交**
 
@@ -652,7 +652,7 @@ Get-Content $ConfFile | ForEach-Object {
 $javaOpts = $env:JAVA_OPTS -split '\s+' | Where-Object { $_ -ne '' }
 & "$PSScriptRoot\..\runtime\bin\java.exe" @javaOpts `
   "-Dspring.profiles.active=local" `
-  -jar "$PSScriptRoot\llm-gateway.jar"
+  -jar "$PSScriptRoot\llmgateway.jar"
 ```
 
 - [x] **Step 2: 创建 install.ps1**
@@ -683,14 +683,14 @@ if (Test-Path $ConfFile) {
     }
 }
 
-# 2. WinSW exe 改名为 llm-gateway.exe（与 llm-gateway.xml 同名配对，WinSW 要求 exe/xml 同名）
-Copy-Item "$BinDir\WinSW.exe" "$BinDir\llm-gateway.exe" -Force
+# 2. WinSW exe 改名为 llmgateway.exe（与 llmgateway.xml 同名配对，WinSW 要求 exe/xml 同名）
+Copy-Item "$BinDir\WinSW.exe" "$BinDir\llmgateway.exe" -Force
 
 # 3. 注册并启动服务
-& "$BinDir\llm-gateway.exe" install
-Start-Service llm-gateway
+& "$BinDir\llmgateway.exe" install
+Start-Service llmgateway
 Write-Host "LLM-Gateway 服务已注册并启动。"
-Write-Host "  配置文件: $ConfFile（改后 Restart-Service llm-gateway 生效）"
+Write-Host "  配置文件: $ConfFile（改后 Restart-Service llmgateway 生效）"
 ```
 
 - [x] **Step 3: 创建 uninstall.ps1**
@@ -701,7 +701,7 @@ Write-Host "  配置文件: $ConfFile（改后 Restart-Service llm-gateway 生�
 # 卸载 LLM-Gateway Windows 服务（WinSW），保留数据目录
 $ErrorActionPreference = 'Stop'
 $BinDir = $PSScriptRoot
-& "$BinDir\llm-gateway.exe" uninstall
+& "$BinDir\llmgateway.exe" uninstall
 Write-Host "LLM-Gateway 服务已卸载。数据目录保留。"
 ```
 
@@ -722,23 +722,23 @@ git commit -m "feat(packaging): 新增 Windows start/install/uninstall.ps1（con
 
 ---
 
-### Task 4.2: 新增 llm-gateway.xml + 调整 WinSW 下载
+### Task 4.2: 新增 llmgateway.xml + 调整 WinSW 下载
 
 **Files:**
-- Create: `deployments/package/windows/llm-gateway.xml`
+- Create: `deployments/package/windows/llmgateway.xml`
 - Modify: `deployments/package/windows/download-winsw.ps1`
 - Delete: `deployments/package/windows/LLMGateway.xml`
 
-**依据:** Design Doc §3.4、§3.8。WinSW 要求 exe 与 xml 同名。新方案 exe 为 `llm-gateway.exe`（install.ps1 从 WinSW.exe 改名），xml 为 `llm-gateway.xml`。WinSW executable 指向 powershell.exe 包装 start.ps1（读 conf 统一配置，不硬编码端口）。download-winsw.ps1 输出名改为 `WinSW.exe`（install.ps1 负责改名）。
+**依据:** Design Doc §3.4、§3.8。WinSW 要求 exe 与 xml 同名。新方案 exe 为 `llmgateway.exe`（install.ps1 从 WinSW.exe 改名），xml 为 `llmgateway.xml`。WinSW executable 指向 powershell.exe 包装 start.ps1（读 conf 统一配置，不硬编码端口）。download-winsw.ps1 输出名改为 `WinSW.exe`（install.ps1 负责改名）。
 
-- [x] **Step 1: 创建 llm-gateway.xml**
+- [x] **Step 1: 创建 llmgateway.xml**
 
-创建 `deployments/package/windows/llm-gateway.xml`：
+创建 `deployments/package/windows/llmgateway.xml`：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <service>
-  <id>llm-gateway</id>
+  <id>llmgateway</id>
   <name>LLM-Gateway</name>
   <description>LLM-Gateway - 企业级 AI 模型 API 聚合网关</description>
 
@@ -799,8 +799,8 @@ git rm deployments/package/windows/LLMGateway.xml
 - [x] **Step 4: 提交**
 
 ```bash
-git add deployments/package/windows/llm-gateway.xml deployments/package/windows/download-winsw.ps1
-git commit -m "feat(packaging): 新增 llm-gateway.xml（WinSW 调 start.ps1）+ WinSW 下载改名 WinSW.exe，删旧 LLMGateway.xml"
+git add deployments/package/windows/llmgateway.xml deployments/package/windows/download-winsw.ps1
+git commit -m "feat(packaging): 新增 llmgateway.xml（WinSW 调 start.ps1）+ WinSW 下载改名 WinSW.exe，删旧 LLMGateway.xml"
 ```
 
 ---
@@ -1000,7 +1000,7 @@ git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 bui
         run: |
           chmod +x mvnw
           chmod +x deployments/package/build.sh
-          chmod +x deployments/package/bin/llm-gateway.sh
+          chmod +x deployments/package/bin/llmgateway.sh
           chmod +x deployments/package/linux/postinst deployments/package/linux/prerm deployments/package/linux/postrm
         shell: bash
 
@@ -1080,7 +1080,7 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
           DEB=$(ls deployments/package/dist/*.deb | head -1)
           docker run --rm -d --name lg-smoke-deb \
             --privileged --cgroupns=host \
-            -v "$PWD/$DEB:/tmp/llm-gateway.deb" \
+            -v "$PWD/$DEB:/tmp/llmgateway.deb" \
             jrei/systemd-ubuntu:22.04
           for i in $(seq 1 30); do
             state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo "")
@@ -1088,12 +1088,12 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
             sleep 1
           done
           docker exec lg-smoke-deb bash -c '
-            apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
+            apt-get update && apt-get install -y /tmp/llmgateway.deb curl
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-            systemctl is-active llm-gateway.service
+            systemctl is-active llmgateway.service
             # 验证 conf 占位符已替换 + JRE bin 可执行
-            grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
-            test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+            grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
           '
           docker stop lg-smoke-deb
         shell: bash
@@ -1103,7 +1103,7 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
           RPM=$(ls deployments/package/dist/*.rpm | head -1)
           docker run --rm -d --name lg-smoke-rpm \
             --privileged --cgroupns=host \
-            -v "$PWD/$RPM:/tmp/llm-gateway.rpm" \
+            -v "$PWD/$RPM:/tmp/llmgateway.rpm" \
             jrei/systemd-rockylinux:9
           for i in $(seq 1 30); do
             state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo "")
@@ -1111,11 +1111,11 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
             sleep 1
           done
           docker exec lg-smoke-rpm bash -c '
-            dnf install -y /tmp/llm-gateway.rpm curl
+            dnf install -y /tmp/llmgateway.rpm curl
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-            systemctl is-active llm-gateway.service
-            grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
-            test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+            systemctl is-active llmgateway.service
+            grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
           '
           docker stop lg-smoke-rpm
         shell: bash
@@ -1128,7 +1128,7 @@ git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest
           for ($i=1; $i -le 90; $i++) {
             try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
           }
-          $svc = Get-Service llm-gateway
+          $svc = Get-Service llmgateway
           if ($svc.Status -ne 'Running') { throw "服务未运行" }
           C:\lg-smoke\bin\uninstall.ps1
         shell: pwsh
@@ -1156,15 +1156,15 @@ git commit -m "feat(ci): smoke test 调整为 deb/rpm systemd 容器 + zip Windo
 ### Task 7.1: 删除 debconf templates/config
 
 **Files:**
-- Delete: `deployments/package/linux/llm-gateway.templates`
-- Delete: `deployments/package/linux/llm-gateway.config`
+- Delete: `deployments/package/linux/llmgateway.templates`
+- Delete: `deployments/package/linux/llmgateway.config`
 
 **依据:** Design Doc §3.9、D4。去掉 debconf 端口交互，端口改由 conf 的 SERVER_PORT 配置。
 
 - [x] **Step 1: 删除 debconf 文件**
 
 ```bash
-git rm deployments/package/linux/llm-gateway.templates deployments/package/linux/llm-gateway.config
+git rm deployments/package/linux/llmgateway.templates deployments/package/linux/llmgateway.config
 ```
 
 - [x] **Step 2: 提交**
@@ -1178,14 +1178,14 @@ git commit -m "refactor(packaging): 删除 debconf templates/config（D4 去 deb
 ### Task 7.2: 删除 Inno Setup .iss 脚本
 
 **Files:**
-- Delete: `deployments/package/windows/llm-gateway.iss`
+- Delete: `deployments/package/windows/llmgateway.iss`
 
 **依据:** Design Doc §3.9、D9。Windows 改 zip，不再用 Inno Setup 安装器。
 
 - [x] **Step 1: 删除 iss 脚本**
 
 ```bash
-git rm deployments/package/windows/llm-gateway.iss
+git rm deployments/package/windows/llmgateway.iss
 ```
 
 - [x] **Step 2: 确认 windows 目录无遗留 Inno Setup 文件**
@@ -1194,7 +1194,7 @@ git rm deployments/package/windows/llm-gateway.iss
 ls deployments/package/windows/
 ```
 
-预期：仅剩 `download-winsw.ps1`、`install.ps1`、`uninstall.ps1`、`start.ps1`、`llm-gateway.xml`（无 .iss、无 LLMGateway.xml）。
+预期：仅剩 `download-winsw.ps1`、`install.ps1`、`uninstall.ps1`、`start.ps1`、`llmgateway.xml`（无 .iss、无 LLMGateway.xml）。
 
 - [x] **Step 3: 提交**
 
@@ -1273,16 +1273,16 @@ CI smoke test（Task 6.2 的 deb 步骤）已覆盖此验证。手动复现命�
 ```bash
 DEB=$(ls deployments/package/dist/*.deb | head -1)
 docker run --rm -d --name lg-smoke-deb --privileged --cgroupns=host \
-  -v "$PWD/$DEB:/tmp/llm-gateway.deb" jrei/systemd-ubuntu:22.04
+  -v "$PWD/$DEB:/tmp/llmgateway.deb" jrei/systemd-ubuntu:22.04
 # 等待 systemd 就绪
 for i in $(seq 1 30); do state=$(docker exec lg-smoke-deb systemctl is-system-running 2>/dev/null || echo ""); case "$state" in running|degraded) break;; esac; sleep 1; done
 # 安装 + 健康检查 + conf/JRE 验证
 docker exec lg-smoke-deb bash -c '
-  apt-get update && apt-get install -y /tmp/llm-gateway.deb curl
+  apt-get update && apt-get install -y /tmp/llmgateway.deb curl
   for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-  systemctl is-active llm-gateway.service
-  grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换 FAIL"; exit 1; } || echo "conf 密钥已生成 OK"
-  test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 0755 OK"
+  systemctl is-active llmgateway.service
+  grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换 FAIL"; exit 1; } || echo "conf 密钥已生成 OK"
+  test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 0755 OK"
 '
 ```
 
@@ -1292,8 +1292,8 @@ docker exec lg-smoke-deb bash -c '
 
 ```bash
 docker exec lg-smoke-deb bash -c '
-  sed -i "s/^SERVER_PORT=8080/SERVER_PORT=9090/" /etc/llm-gateway/llmgateway.conf
-  systemctl restart llm-gateway
+  sed -i "s/^SERVER_PORT=8080/SERVER_PORT=9090/" /etc/llmgateway/llmgateway.conf
+  systemctl restart llmgateway
   for i in $(seq 1 90); do curl -sf http://localhost:9090/actuator/health && break; sleep 1; done
 '
 docker stop lg-smoke-deb
@@ -1320,14 +1320,14 @@ CI smoke test 已覆盖。手动复现命令：
 ```bash
 RPM=$(ls deployments/package/dist/*.rpm | head -1)
 docker run --rm -d --name lg-smoke-rpm --privileged --cgroupns=host \
-  -v "$PWD/$RPM:/tmp/llm-gateway.rpm" jrei/systemd-rockylinux:9
+  -v "$PWD/$RPM:/tmp/llmgateway.rpm" jrei/systemd-rockylinux:9
 for i in $(seq 1 30); do state=$(docker exec lg-smoke-rpm systemctl is-system-running 2>/dev/null || echo ""); case "$state" in running|degraded) break;; esac; sleep 1; done
 docker exec lg-smoke-rpm bash -c '
-  dnf install -y /tmp/llm-gateway.rpm curl
+  dnf install -y /tmp/llmgateway.rpm curl
   for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
-  systemctl is-active llm-gateway.service
-  grep -q "__GENERATE_KEY__" /etc/llm-gateway/llmgateway.conf && { echo "占位符未替换 FAIL"; exit 1; } || echo "conf 密钥已生成 OK"
-  test -x /opt/llm-gateway/runtime/bin/java && echo "JRE bin/java 0755 OK"
+  systemctl is-active llmgateway.service
+  grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换 FAIL"; exit 1; } || echo "conf 密钥已生成 OK"
+  test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 0755 OK"
 '
 docker stop lg-smoke-rpm
 ```
@@ -1364,7 +1364,7 @@ C:\lg-smoke\bin\install.ps1
 for ($i=1; $i -le 90; $i++) {
   try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
 }
-$svc = Get-Service llm-gateway
+$svc = Get-Service llmgateway
 if ($svc.Status -ne 'Running') { throw "服务未运行" } else { Write-Host "服务 Running OK" }
 ```
 
@@ -1395,19 +1395,19 @@ C:\lg-smoke\bin\uninstall.ps1
 在 CI 或 Linux 容器中：
 1. 安装旧版 deb（或首次安装当前版）
 2. 记录 conf 的 `GATEWAY_ENCRYPTION_KEY` 值与 SERVER_PORT
-3. 在 `/var/lib/llm-gateway/` 创建标记文件
+3. 在 `/var/lib/llmgateway/` 创建标记文件
 4. 安装新版 deb（`apt-get install -y ./new.deb`，触发升级）
 5. 验证：conf 的密钥与端口不变；标记文件存在；health 200
 
 ```bash
 docker exec lg-smoke-deb bash -c '
-  OLD_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llm-gateway/llmgateway.conf | cut -d= -f2-)
-  echo "marker" > /var/lib/llm-gateway/upgrade-test.marker
+  OLD_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llmgateway/llmgateway.conf | cut -d= -f2-)
+  echo "marker" > /var/lib/llmgateway/upgrade-test.marker
   # 重新安装当前包模拟升级（apt-get install --reinstall 或装新版）
-  apt-get install -y --reinstall /tmp/llm-gateway.deb
-  NEW_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llm-gateway/llmgateway.conf | cut -d= -f2-)
+  apt-get install -y --reinstall /tmp/llmgateway.deb
+  NEW_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llmgateway/llmgateway.conf | cut -d= -f2-)
   [ "$OLD_KEY" = "$NEW_KEY" ] && echo "密钥保留 OK" || { echo "密钥变化 FAIL"; exit 1; }
-  [ -f /var/lib/llm-gateway/upgrade-test.marker ] && echo "数据保留 OK" || { echo "数据丢失 FAIL"; exit 1; }
+  [ -f /var/lib/llmgateway/upgrade-test.marker ] && echo "数据保留 OK" || { echo "数据丢失 FAIL"; exit 1; }
   curl -sf http://localhost:8080/actuator/health && echo "health OK"
 '
 ```
@@ -1418,12 +1418,12 @@ docker exec lg-smoke-deb bash -c '
 
 ```bash
 docker exec lg-smoke-rpm bash -c '
-  OLD_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llm-gateway/llmgateway.conf | cut -d= -f2-)
-  echo "marker" > /var/lib/llm-gateway/upgrade-test.marker
-  dnf reinstall -y /tmp/llm-gateway.rpm
-  NEW_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llm-gateway/llmgateway.conf | cut -d= -f2-)
+  OLD_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llmgateway/llmgateway.conf | cut -d= -f2-)
+  echo "marker" > /var/lib/llmgateway/upgrade-test.marker
+  dnf reinstall -y /tmp/llmgateway.rpm
+  NEW_KEY=$(grep "^GATEWAY_ENCRYPTION_KEY=" /etc/llmgateway/llmgateway.conf | cut -d= -f2-)
   [ "$OLD_KEY" = "$NEW_KEY" ] && echo "密钥保留 OK" || { echo "密钥变化 FAIL"; exit 1; }
-  [ -f /var/lib/llm-gateway/upgrade-test.marker ] && echo "数据保留 OK" || { echo "数据丢失 FAIL"; exit 1; }
+  [ -f /var/lib/llmgateway/upgrade-test.marker ] && echo "数据保留 OK" || { echo "数据丢失 FAIL"; exit 1; }
   curl -sf http://localhost:8080/actuator/health && echo "health OK"
 '
 ```
@@ -1444,12 +1444,12 @@ docker exec lg-smoke-rpm bash -c '
 
 ```bash
 docker exec lg-smoke-deb bash -c '
-  apt-get remove -y llm-gateway
-  [ -d /var/lib/llm-gateway ] && echo "数据目录保留 OK" || { echo "数据目录丢失 FAIL"; exit 1; }
+  apt-get remove -y llmgateway
+  [ -d /var/lib/llmgateway ] && echo "数据目录保留 OK" || { echo "数据目录丢失 FAIL"; exit 1; }
 '
 ```
 
-预期：卸载后 `/var/lib/llm-gateway` 保留。
+预期：卸载后 `/var/lib/llmgateway` 保留。
 
 - [x] **Step 2: zip 卸载验证**
 
@@ -1509,6 +1509,20 @@ git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或�
 
 ---
 
+### Task 9: 统一重命名 llm-gateway -> llmgateway（build 阶段 spec 变更，verify-fail 回退执行）
+
+**依据:** 用户 2026-07-16 决策，全部 llm-gateway 标识符统一为 llmgateway（产物文件名/路径/服务名/包名/distribution/appName）。
+
+- [x] **Step 1: 构建链路重命名 + 验证**
+  - git mv linux/llm-gateway.service->llmgateway.service, bin/llm-gateway.sh->llmgateway.sh, windows/llm-gateway.xml->llmgateway.xml
+  - jreleaser.yml/build.sh/conf/templates/release.yml 标识符改 llmgateway；删除旧 linux/{postinst,postrm,prerm}
+  - 验证：jreleaser:assemble 产出 llmgateway-*.deb/zip，解包 packageName=llmgateway、/opt/llmgateway、conffiles /etc/llmgateway
+  - commit a3ef7245
+- [x] **Step 2: 文档同步**
+  - design/proposal/tasks/delta spec/design doc/plan/README 标识符改 llmgateway（产品名 LLM-Gateway 保留）
+
+---
+
 ## 自审清单
 
 ### Spec 覆盖核对
@@ -1542,7 +1556,7 @@ git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或�
 ### 类型一致性核对
 
 - 占位符统一 `__GENERATE_KEY__`（1.1 conf 模板、3.1 postinst grep、4.1 install.ps1 match、8.2 验证 grep）
-- conf 文件路径统一 `/etc/llm-gateway/llmgateway.conf`（1.1、1.2、3.1、4.1 Windows 为 `..\conf\llmgateway.conf`）
-- JRE 路径统一 `/opt/llm-gateway/runtime/bin/java`（1.2 启动脚本、3.1 postinst chmod、jreleaser.yml fileSet output）
-- WinSW exe/xml 同名 `llm-gateway`（4.1 install.ps1 改名、4.2 xml id、6.2 Get-Service llm-gateway）
+- conf 文件路径统一 `/etc/llmgateway/llmgateway.conf`（1.1、1.2、3.1、4.1 Windows 为 `..\conf\llmgateway.conf`）
+- JRE 路径统一 `/opt/llmgateway/runtime/bin/java`（1.2 启动脚本、3.1 postinst chmod、jreleaser.yml fileSet output）
+- WinSW exe/xml 同名 `llmgateway`（4.1 install.ps1 改名、4.2 xml id、6.2 Get-Service llmgateway）
 - 启动脚本 profile 统一 `-Dspring.profiles.active=local`（1.2 Linux、4.1 Windows start.ps1）

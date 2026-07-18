@@ -46,8 +46,8 @@ design 阶段实测 nebula 时发现：JRE `bin/java` 必须打包时 0755，否
 
 ```sh
 # postinst 里（本就要改 conf 权限，顺手 chmod JRE bin）
-chmod -R 0755 /opt/llm-gateway/runtime/bin
-chmod 0640 /etc/llm-gateway/llmgateway.conf
+chmod -R 0755 /opt/llmgateway/runtime/bin
+chmod 0640 /etc/llmgateway/llmgateway.conf
 ```
 
 - **理由**：Linux 包惯例允许 postinst 修权限；postinst chmod 是权限真相源，比依赖打包工具权限位更稳健（rpm 某些打包工具会重置权限位）
@@ -56,7 +56,7 @@ chmod 0640 /etc/llm-gateway/llmgateway.conf
 
 ### 2.4 conf 升级保留 ⏳ 待 build 实测
 
-- JReleaser deb packager 配置 conffile（`/etc/llm-gateway/llmgateway.conf`），rpm 侧 `%config(noreplace)`
+- JReleaser deb packager 配置 conffile（`/etc/llmgateway/llmgateway.conf`），rpm 侧 `%config(noreplace)`
 - dpkg/dnf 升级时保留 conf（NOREPLACE 语义），postinst 首次生成、升级不覆盖
 - **验证点**：JReleaser packager 是否正确标记 conffile/noreplace（build 实测）
 
@@ -76,10 +76,10 @@ jlink (Java 21) ──> 精简 JRE (50MB, 19 模块, jlink-modules.txt)
 │ (deployments/package/jreleaser.yml 或 pom)   │
 │   assemble:                                   │
 │     deb packager（自实现 assembler）          │
-│       from fat jar  -> /opt/llm-gateway/bin   │
-│       from JRE      -> /opt/llm-gateway/runtime│
-│       from conf     -> /etc/llm-gateway (conffile)│
-│       from 启动脚本 -> /opt/llm-gateway/bin   │
+│       from fat jar  -> /opt/llmgateway/bin   │
+│       from JRE      -> /opt/llmgateway/runtime│
+│       from conf     -> /etc/llmgateway (conffile)│
+│       from 启动脚本 -> /opt/llmgateway/bin   │
 │       from unit     -> /lib/systemd/system    │
 │     rpm packager（Redline，同布局）           │
 │     archive assembler                          │
@@ -95,31 +95,31 @@ JReleaser 1.25.0，用 `SINGLE_JAR` distribution 类型（专给单 jar + fileSe
 
 ```yaml
 project:
-  name: llm-gateway
+  name: llmgateway
   version: ${project.version}
   description: LLM-Gateway
   authors: [LLM-Gateway]
   license: Apache-2.0
 
 distributions:
-  llm-gateway:
+  llmgateway:
     type: SINGLE_JAR
     artifacts:
       - path: ../../gateway-boot/target/gateway-boot-${project.version}.jar
-        transform: llm-gateway.jar
+        transform: llmgateway.jar
     # jlink JRE 作为 fileSet 塞入（Linux JRE，见 4.3 交叉生成）
     fileSets:
       - input: jre/bin
-        output: opt/llm-gateway/runtime/bin
+        output: opt/llmgateway/runtime/bin
       - input: jre/lib
-        output: opt/llm-gateway/runtime/lib
+        output: opt/llmgateway/runtime/lib
       - input: jre/conf
-        output: opt/llm-gateway/runtime/conf
+        output: opt/llmgateway/runtime/conf
       - input: bin
-        output: opt/llm-gateway/bin
+        output: opt/llmgateway/bin
       - input: linux
         output: lib/systemd/system
-        includes: [llm-gateway.service]
+        includes: [llmgateway.service]
 
 packagers:
   deb:
@@ -127,7 +127,7 @@ packagers:
     requires: [openjdk-17-jre-headless | java17-runtime]
     fileSets:
       - input: conf
-        output: etc/llm-gateway
+        output: etc/llmgateway
         includes: [llmgateway.conf]
     scripts:
       postInstall: linux/postinst
@@ -148,12 +148,12 @@ archive:
   fileSets:
     - input: win-jre          # Windows JRE（本机 jlink）
       output: runtime
-    - input: windows          # WinSW.exe + llm-gateway.xml + install.ps1 + uninstall.ps1 + start.ps1
+    - input: windows          # WinSW.exe + llmgateway.xml + install.ps1 + uninstall.ps1 + start.ps1
       output: bin
     - input: conf
       output: conf
     - input: ../../gateway-boot/target/gateway-boot-${project.version}.jar
-      output: bin/llm-gateway.jar
+      output: bin/llmgateway.jar
 ```
 
 **关键点**：
@@ -173,7 +173,7 @@ archive:
 # 服务端口（默认 8080，改后 systemctl restart 生效）
 SERVER_PORT=8080
 # 数据库连接（H2 文件库，数据目录外部化）
-DB_URL=jdbc:h2:file:/var/lib/llm-gateway/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+DB_URL=jdbc:h2:file:/var/lib/llmgateway/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
 # 加密密钥（首次安装由 postinst 生成，占位符 __GENERATE_KEY__ 会被替换）
 GATEWAY_ENCRYPTION_KEY=__GENERATE_KEY__
 # JVM 参数（运行时可调，改后 restart 生效，无需重打包）
@@ -183,7 +183,7 @@ JAVA_OPTS=-Xmx512m -Dmanagement.health.redis.enabled=false
 **postinst 密钥生成逻辑**（D7：去 openssl，用 `/dev/urandom`）：
 
 ```sh
-CONF_FILE="/etc/llm-gateway/llmgateway.conf"
+CONF_FILE="/etc/llmgateway/llmgateway.conf"
 if grep -q '__GENERATE_KEY__' "$CONF_FILE"; then
     NEW_KEY="$(head -c 32 /dev/urandom | base64)"
     # 用 | 分隔符避免 base64 密钥中的 / 冲突
@@ -193,7 +193,7 @@ else
     echo "[postinst] 保留已有 GATEWAY_ENCRYPTION_KEY" >&2
 fi
 chmod 640 "$CONF_FILE"
-chown root:llm-gateway "$CONF_FILE"
+chown root:llmgateway "$CONF_FILE"
 ```
 
 **升级保留语义**：
@@ -202,18 +202,18 @@ chown root:llm-gateway "$CONF_FILE"
 
 ### 3.4 启动脚本
 
-**Linux**（`deployments/package/bin/llm-gateway.sh`，不变）：
+**Linux**（`deployments/package/bin/llmgateway.sh`，不变）：
 
 ```sh
 #!/bin/sh
 # LLM-Gateway 启动脚本：source conf 注入环境变量 + JAVA_OPTS，exec java
 set -e
-CONF_FILE="/etc/llm-gateway/llmgateway.conf"
+CONF_FILE="/etc/llmgateway/llmgateway.conf"
 [ -f "$CONF_FILE" ] || { echo "配置文件不存在: $CONF_FILE" >&2; exit 1; }
 . "$CONF_FILE"
-exec /opt/llm-gateway/runtime/bin/java $JAVA_OPTS \
+exec /opt/llmgateway/runtime/bin/java $JAVA_OPTS \
   -Dspring.profiles.active=local \
-  -jar /opt/llm-gateway/bin/llm-gateway.jar
+  -jar /opt/llmgateway/bin/llmgateway.jar
 ```
 
 **Windows**（新增 `deployments/package/windows/start.ps1`）：
@@ -230,7 +230,7 @@ Get-Content $ConfFile | ForEach-Object {
 }
 & "$PSScriptRoot\..\runtime\bin\java.exe" $env:JAVA_OPTS `
   "-Dspring.profiles.active=local" `
-  -jar "$PSScriptRoot\llm-gateway.jar"
+  -jar "$PSScriptRoot\llmgateway.jar"
 ```
 
 **install.ps1**（注册 WinSW service）：
@@ -239,9 +239,9 @@ Get-Content $ConfFile | ForEach-Object {
 # 注册 LLM-Gateway 为 Windows 服务（WinSW）
 $ErrorActionPreference = "Stop"
 $BinDir = $PSScriptRoot
-Copy-Item "$BinDir\WinSW.exe" "$BinDir\llm-gateway.exe" -Force
-& "$BinDir\llm-gateway.exe" install
-Start-Service llm-gateway
+Copy-Item "$BinDir\WinSW.exe" "$BinDir\llmgateway.exe" -Force
+& "$BinDir\llmgateway.exe" install
+Start-Service llmgateway
 Write-Host "LLM-Gateway 服务已注册并启动。端口见 conf\llmgateway.conf 的 SERVER_PORT"
 ```
 
@@ -249,17 +249,17 @@ Write-Host "LLM-Gateway 服务已注册并启动。端口见 conf\llmgateway.con
 
 ```ps1
 $ErrorActionPreference = "Stop"
-& "$PSScriptRoot\llm-gateway.exe" uninstall
+& "$PSScriptRoot\llmgateway.exe" uninstall
 Write-Host "LLM-Gateway 服务已卸载。数据目录保留。"
 ```
 
 **关键点**：
 - Linux 启动脚本 source conf 不变；Windows start.ps1 解析 conf 注入环境变量（PowerShell 无 source，用 `Get-Content` + 正则）
-- Windows service 用 WinSW（exe 改名为 `llm-gateway.exe` + xml 配置），`install.ps1` 注册
+- Windows service 用 WinSW（exe 改名为 `llmgateway.exe` + xml 配置），`install.ps1` 注册
 - 端口由 conf 的 `SERVER_PORT` 配置，与 Linux 统一（不再有 Inno Setup 安装向导交互）
 - `-Dspring.profiles.active=local` 激活 local profile（H2 内嵌库，裸机部署）
 
-### 3.5 systemd unit（不变，`deployments/package/linux/llm-gateway.service`）
+### 3.5 systemd unit（不变，`deployments/package/linux/llmgateway.service`）
 
 ```ini
 [Unit]
@@ -269,31 +269,31 @@ After=network.target
 
 [Service]
 Type=simple
-User=llm-gateway
-Group=llm-gateway
-WorkingDirectory=/var/lib/llm-gateway
+User=llmgateway
+Group=llmgateway
+WorkingDirectory=/var/lib/llmgateway
 # 去掉 EnvironmentFile，改由启动脚本 source conf
-ExecStart=/opt/llm-gateway/bin/llm-gateway.sh
+ExecStart=/opt/llmgateway/bin/llmgateway.sh
 Restart=on-failure
 RestartSec=5
-StandardOutput=append:/var/log/llm-gateway/stdout.log
-StandardError=append:/var/log/llm-gateway/stderr.log
+StandardOutput=append:/var/log/llmgateway/stdout.log
+StandardError=append:/var/log/llmgateway/stderr.log
 LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
 ```
 
-**变化**（相对原 jpackage 方案）：`EnvironmentFile=/etc/llm-gateway/env` 删除；`ExecStart` 从 jpackage 启动器改为 `llm-gateway.sh`。
+**变化**（相对原 jpackage 方案）：`EnvironmentFile=/etc/llmgateway/env` 删除；`ExecStart` 从 jpackage 启动器改为 `llmgateway.sh`。
 
 ### 3.6 maintainer 脚本迁移
 
 **postinst**（改 `deployments/package/linux/postinst`）：
-1. 创建系统用户/组 llm-gateway（已存在则跳过）
-2. 创建数据/日志/配置目录（`/var/lib/llm-gateway`、`/var/log/llm-gateway`、`/etc/llm-gateway`）
+1. 创建系统用户/组 llmgateway（已存在则跳过）
+2. 创建数据/日志/配置目录（`/var/lib/llmgateway`、`/var/log/llmgateway`、`/etc/llmgateway`）
 3. **生成 conf 密钥**：grep `__GENERATE_KEY__` 占位符 -> `head -c 32 /dev/urandom | base64` 生成 -> sed 替换（`|` 分隔符）
-4. 设置 conf 权限 640 root:llm-gateway
-5. **chmod 兜底 JRE bin 权限**：`chmod -R 0755 /opt/llm-gateway/runtime/bin`（§2.3，不依赖打包工具 per-file mode）
+4. 设置 conf 权限 640 root:llmgateway
+5. **chmod 兜底 JRE bin 权限**：`chmod -R 0755 /opt/llmgateway/runtime/bin`（§2.3，不依赖打包工具 per-file mode）
 6. 注册 systemd unit（`systemctl daemon-reload && systemctl enable`）
 7. 启动服务（升级时 restart）
 
@@ -304,8 +304,8 @@ WantedBy=multi-user.target
 - **新增** chmod 兜底 JRE bin 权限（JReleaser 不保证 per-file mode）
 
 **prerm/postrm**（改 `deployments/package/linux/prerm`、`postrm`）：
-- prerm：停止服务 `systemctl stop llm-gateway.service`
-- postrm：清理 systemd unit（`systemctl disable` + 删除 unit 文件 + daemon-reload）；**保留数据目录** `/var/lib/llm-gateway`（卸载不丢数据）
+- prerm：停止服务 `systemctl stop llmgateway.service`
+- postrm：清理 systemd unit（`systemctl disable` + 删除 unit 文件 + daemon-reload）；**保留数据目录** `/var/lib/llmgateway`（卸载不丢数据）
 
 **合并 -rpm 后缀脚本**：
 - 删除 `postinst-rpm`/`prerm-rpm`/`postrm-rpm`
@@ -371,7 +371,7 @@ package:
       run: |
         DEB=$(ls deployments/package/dist/*.deb | head -1)
         docker run --rm -d --name lg-smoke-deb --privileged --cgroupns=host \
-          -v "$PWD/$DEB:/tmp/llm-gateway.deb" jrei/systemd-ubuntu:22.04
+          -v "$PWD/$DEB:/tmp/llmgateway.deb" jrei/systemd-ubuntu:22.04
         # ... systemd 就绪等待 + apt-get install + health 检查
     - name: Smoke test - rpm
       run: |
@@ -384,7 +384,7 @@ package:
         for ($i=1; $i -le 90; $i++) {
           try { (Invoke-WebRequest -UseBasicParsing http://localhost:8080/actuator/health).Content; break } catch { Start-Sleep -Seconds 1 }
         }
-        $svc = Get-Service llm-gateway
+        $svc = Get-Service llmgateway
         if ($svc.Status -ne 'Running') { throw "服务未运行" }
         C:\lg-smoke\bin\uninstall.ps1
 ```
@@ -402,8 +402,8 @@ package:
 |---------|------|
 | `deployments/package/build.gradle` | JReleaser 替代 nebula（原 plan 产物，未实现则直接不创建） |
 | `deployments/package/gradle/wrapper/` | 同上，无 gradle |
-| `deployments/package/linux/llm-gateway.templates` | debconf 模板，D4 去掉 debconf |
-| `deployments/package/linux/llm-gateway.config` | debconf 收集脚本，D4 去掉 debconf |
+| `deployments/package/linux/llmgateway.templates` | debconf 模板，D4 去掉 debconf |
+| `deployments/package/linux/llmgateway.config` | debconf 收集脚本，D4 去掉 debconf |
 | `deployments/package/linux/postinst-rpm`/`prerm-rpm`/`postrm-rpm` | JReleaser 原生支持 rpm maintainer 脚本，合并 |
 | `deployments/package/windows/*.iss`（Inno Setup 脚本） | Windows 改 zip，不再用 Inno Setup |
 | `deployments/package/build.ps1` 的 jpackage+iscc 段 | Windows 改 zip |
@@ -475,5 +475,5 @@ package:
 6. **JRE 平台问题**（4.3）：build 阶段确认 jlink 交叉生成 Linux JRE 或下载 Linux JRE。
 7. **不动 application*.yml**：conf 的环境变量通过 Spring `${ENV:默认}` 占位符绑定，application*.yml 已支持（前置 one-click-bare-deploy 配的 env 注入）。
 8. **BREAKING 说明**：去掉 debconf + Windows exe 改 zip，升级文档说明迁移。
-9. **Windows zip 结构**：`runtime/`（Windows JRE）+ `bin/`（jar + WinSW.exe + llm-gateway.xml + install.ps1 + uninstall.ps1 + start.ps1）+ `conf/`。`install.ps1` 注册 service，`uninstall.ps1` 卸载。
+9. **Windows zip 结构**：`runtime/`（Windows JRE）+ `bin/`（jar + WinSW.exe + llmgateway.xml + install.ps1 + uninstall.ps1 + start.ps1）+ `conf/`。`install.ps1` 注册 service，`uninstall.ps1` 卸载。
 10. **JReleaser 配置语法**：§3.2 给出结构意图，具体 fileSet/packager 语法以 build 阶段实测 JReleaser 1.25.0 文档调整为准（design 阶段未实测 JReleaser 配置）。

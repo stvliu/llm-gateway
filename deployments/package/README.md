@@ -15,14 +15,14 @@
 
 ```bash
 ./deployments/package/build.sh
-# 产物: deployments/package/dist/llm-gateway_*.deb, llm-gateway-*.rpm
+# 产物: deployments/package/dist/llmgateway_*.deb, llmgateway-*.rpm
 ```
 
 ### Windows（exe）
 
 ```powershell
 .\deployments\package\build.ps1
-# 产物: deployments\package\dist\llm-gateway-setup.exe
+# 产物: deployments\package\dist\llmgateway-setup.exe
 ```
 
 CI 自动构建见 `.github/workflows/release.yml` 的 `package` job（git tag `v*` 触发）。
@@ -32,20 +32,20 @@ CI 自动构建见 `.github/workflows/release.yml` 的 `package` job（git tag `
 ### Linux deb（Ubuntu/Debian）
 
 ```bash
-sudo apt install ./llm-gateway_*.deb
+sudo apt install ./llmgateway_*.deb
 # 安装时交互询问端口（默认 8080），非交互: DEBIAN_FRONTEND=noninteractive
 ```
 
 ### Linux rpm（RHEL/Rocky/CentOS）
 
 ```bash
-sudo dnf install ./llm-gateway-*.rpm
+sudo dnf install ./llmgateway-*.rpm
 ```
 
 ### Windows exe
 
-双击 `llm-gateway-setup.exe`，按向导输入端口（默认 8080）。
-静默安装：`llm-gateway-setup.exe /VERYSILENT`
+双击 `llmgateway-setup.exe`，按向导输入端口（默认 8080）。
+静默安装：`llmgateway-setup.exe /VERYSILENT`
 
 ## 目录布局
 
@@ -53,10 +53,10 @@ sudo dnf install ./llm-gateway-*.rpm
 
 | 路径 | 用途 |
 |------|------|
-| `/opt/llm-gateway/` | 安装目录（JRE + jar + 启动器） |
-| `/var/lib/llm-gateway/` | 数据目录（H2 文件，`DB_URL` 指向此） |
-| `/var/log/llm-gateway/` | 日志目录 |
-| `/etc/llm-gateway/env` | 环境变量配置（conffile，升级保留） |
+| `/opt/llmgateway/` | 安装目录（JRE + jar + 启动器） |
+| `/var/lib/llmgateway/` | 数据目录（H2 文件，`DB_URL` 指向此） |
+| `/var/log/llmgateway/` | 日志目录 |
+| `/etc/llmgateway/env` | 环境变量配置（conffile，升级保留） |
 
 ### Windows
 
@@ -80,9 +80,9 @@ sudo dnf install ./llm-gateway-*.rpm
 ### Linux（systemd）
 
 ```bash
-systemctl status llm-gateway
-systemctl restart llm-gateway
-journalctl -u llm-gateway -f
+systemctl status llmgateway
+systemctl restart llmgateway
+journalctl -u llmgateway -f
 ```
 
 ### Windows（WinSW / sc）
@@ -103,19 +103,19 @@ curl http://localhost:8080/actuator/health
 ## 升级
 
 直接安装新版包覆盖：
-- Linux：`sudo apt install ./llm-gateway_*.deb`（或 `dnf install`）
-- Windows：重新运行 `llm-gateway-setup.exe`
+- Linux：`sudo apt install ./llmgateway_*.deb`（或 `dnf install`）
+- Windows：重新运行 `llmgateway-setup.exe`
 
 升级**保留**：数据目录、`GATEWAY_ENCRYPTION_KEY`、端口配置。Flyway 自动迁移 schema。
 
 ## 卸载
 
-- Linux：`sudo apt remove llm-gateway`（保留数据）或 `sudo apt purge llm-gateway`（清数据）
+- Linux：`sudo apt remove llmgateway`（保留数据）或 `sudo apt purge llmgateway`（清数据）
 - Windows：控制面板卸载或 `unins000.exe /VERYSILENT`（保留数据目录）
 
 ## 重要提示
 
-- **加密密钥备份**：`GATEWAY_ENCRYPTION_KEY` 丢失则历史加密数据（如 API Key）无法解密。务必备份 `/etc/llm-gateway/env`（Linux）或 `LLMGateway.xml`（Windows）。
+- **加密密钥备份**：`GATEWAY_ENCRYPTION_KEY` 丢失则历史加密数据（如 API Key）无法解密。务必备份 `/etc/llmgateway/env`（Linux）或 `LLMGateway.xml`（Windows）。
 - **Windows xml 权限**：`LLMGateway.xml` 含 `GATEWAY_ENCRYPTION_KEY`，位于 `C:\Program Files\LLM-Gateway\`，默认 ACL 允许 `Users` 组读取。生产环境建议用 `icacls` 收紧权限，仅管理员与 SYSTEM 可读：
   ```cmd
   icacls "C:\Program Files\LLM-Gateway\LLMGateway.xml" /inheritance:r /grant:r Administrators:F /grant:r SYSTEM:F

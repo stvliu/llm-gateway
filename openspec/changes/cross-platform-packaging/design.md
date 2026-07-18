@@ -12,7 +12,7 @@
 
 **Goals:**
 - Windows 单机一次构建同时产出 deb + rpm + zip（JReleaser assemble 出 deb/rpm，archive 出 zip）
-- 单 `/etc/llm-gateway/llmgateway.conf` 统一管理端口/DB/加密因子/JVM/路径，启动脚本 source 注入
+- 单 `/etc/llmgateway/llmgateway.conf` 统一管理端口/DB/加密因子/JVM/路径，启动脚本 source 注入
 - JVM 参数运行时可调（改 conf 重启生效，不重打包）
 - 去掉 debconf，deb/rpm 配置体验统一
 - CI 简化为单 windows job
@@ -32,12 +32,12 @@
 - 理由：JReleaser 1.25.0 活跃维护（2026-06 仍更新），纯 Java 跨平台，Maven 原生插件与项目 mvnw 统一、消除 gradle/Java17 双工具链双 JDK；fileSets + packagers.scripts 能控制 deb/rpm 内部布局（塞 jlink JRE、启动脚本、conf、systemd unit）。
 
 **D2: 单 llmgateway.conf 配置文件（source 注入）**
-- 选择：`/etc/llm-gateway/llmgateway.conf` 是 shell 脚本，启动脚本 `source` 后 export 为环境变量 + JAVA_OPTS，Spring `${ENV:默认}` 占位符绑定。
+- 选择：`/etc/llmgateway/llmgateway.conf` 是 shell 脚本，启动脚本 `source` 后 export 为环境变量 + JAVA_OPTS，Spring `${ENV:默认}` 占位符绑定。
 - 备选：env 文件 + jpackage --java-options 分层（现状，JVM 硬编码）、纯 yml 编辑（thingsboard 模式，不如 env 云原生）。
 - 理由：单文件管所有，shell 表达力（注释/累加/默认值），运维心智最小；source 后仍是环境变量，保留 Spring relaxed binding。
 
-**D3: 自定义启动脚本 llm-gateway.sh**
-- 选择：`/opt/llm-gateway/bin/llm-gateway.sh`（source conf + exec java $JAVA_OPTS -jar），systemd ExecStart 指向它。
+**D3: 自定义启动脚本 llmgateway.sh**
+- 选择：`/opt/llmgateway/bin/llmgateway.sh`（source conf + exec java $JAVA_OPTS -jar），systemd ExecStart 指向它。
 - 备选：jpackage 原生启动器（不 source conf，JVM 硬编码）。
 - 理由：conf 机制前提是启动脚本 source；jpackage 启动器做不到。顺带实现 JVM 参数运行时注入。
 
@@ -62,11 +62,11 @@
 - 理由：内置 JRE 已不依赖系统 Java，openssl 也应去依赖；与 Windows PowerShell RandomNumberGenerator 对齐。
 
 **D8: jlink JRE 塞进 JReleaser deb/rpm，权限靠 postinst chmod 兜底**
-- 选择：JReleaser fileSets 把 jlink JRE 目录整体打入 deb/rpm 的 `/opt/llm-gateway/runtime/`；`bin/java` 可执行位不依赖打包工具的 per-file mode，由 postinst `chmod -R 0755 /opt/llm-gateway/runtime/bin` 兜底保证。
+- 选择：JReleaser fileSets 把 jlink JRE 目录整体打入 deb/rpm 的 `/opt/llmgateway/runtime/`；`bin/java` 可执行位不依赖打包工具的 per-file mode，由 postinst `chmod -R 0755 /opt/llmgateway/runtime/bin` 兜底保证。
 - 验证点：JReleaser fileSet 是否支持 per-file mode（build 阶段实测；不支持则 postinst chmod 是真相源，符合 Linux 包惯例）。
 
 **D9: Windows 分发改 zip（JReleaser archive + install.ps1 注册 WinSW service）**
-- 选择：JReleaser `archive` assembler 出 Windows zip，内含 jlink Windows JRE + fat jar + WinSW.exe + llm-gateway.xml + conf + install.ps1/uninstall.ps1/start.ps1；`install.ps1` 注册 WinSW service（端口由 conf 的 SERVER_PORT 配置，与 Linux 统一）。
+- 选择：JReleaser `archive` assembler 出 Windows zip，内含 jlink Windows JRE + fat jar + WinSW.exe + llmgateway.xml + conf + install.ps1/uninstall.ps1/start.ps1；`install.ps1` 注册 WinSW service（端口由 conf 的 SERVER_PORT 配置，与 Linux 统一）。
 - 备选：保留 exe（jpackage app-image + Inno Setup 安装向导 + WinSW，体验完整但需 iscc、非纯 Maven）；纯前台运行无 service（体验降级，无开机自启）。
 - 理由：用户决策改 zip 以全纯 Maven、砍 iscc；保留 WinSW service 维持开机自启体验，注册方式从 Inno Setup 自动注册改 install.ps1 手动注册（BREAKING：Windows 无安装向导，端口改 conf 配置）。
 
@@ -85,7 +85,7 @@
 
 1. 新增 JReleaser 配置（pom 插件段或 jreleaser.yml）+ conf 模板 + Linux 启动脚本 + Windows install/uninstall/start.ps1
 2. 改 postinst 生成 conf（env 逻辑迁移到 conf）+ chmod 兜底 JRE bin 权限
-3. 改 systemd unit ExecStart 指向 llm-gateway.sh
+3. 改 systemd unit ExecStart 指向 llmgateway.sh
 4. 改 build.sh：mvn package + jlink + 触发 JReleaser assemble（出 deb/rpm）+ archive（出 zip）
 5. release.yml 单 windows job、单 JDK 21、砍 choco iscc、exe smoke 改 zip smoke
 6. 删除 build.gradle + gradle wrapper + debconf templates + -rpm 后缀脚本 + Inno Setup .iss + build.ps1 的 jpackage 段
@@ -110,19 +110,19 @@
 
 **D6 修订：本地出 deb+zip，rpm 留 CI**
 - 原决策 D6"Windows 单机出 deb+rpm+zip"。修订为：Windows 单机出 deb + zip（纯 Java，8.1 实测通过）；rpm 需 rpmbuild，留 CI（release.yml 的 linux job 或 windows job 装 rpm-build）。
-- 8.1 实测结果（2026-07-16）：`build.sh --skip-mvn` 在 Windows 产出 `dist/llm-gateway-1.0.0-1_amd64.deb`（109MB，含 jar+JRE+维护脚本）+ `dist/llm-gateway-win-1.0.0-SNAPSHOT.zip`（113MB，含 jar+JRE+WinSW+ps1）；jpackage（rpm）因 SNAPSHOT+active=RELEASE 跳过。
+- 8.1 实测结果（2026-07-16）：`build.sh --skip-mvn` 在 Windows 产出 `dist/llmgateway-1.0.0-1_amd64.deb`（109MB，含 jar+JRE+维护脚本）+ `dist/llmgateway-win-1.0.0-SNAPSHOT.zip`（113MB，含 jar+JRE+WinSW+ps1）；jpackage（rpm）因 SNAPSHOT+active=RELEASE 跳过。
 
 **JReleaser 配置实测要点（已记入 jreleaser.yml 注释）**
 - basedir 实测为 repo root（非 `${project.basedir}`=gateway-boot），日志 `basedir set to E:\workspace\llm-gateway`。fileSet input 路径相对 repo root（`deployments/package/...`、`gateway-boot/target/...`）。
-- `installationPath: /` 使 fileSet output 为完整系统路径（`opt/llm-gateway/runtime`、`etc/llm-gateway`、`lib/systemd/system`）；若设 `/opt/llm-gateway` 会与前缀重复且把 etc/lib 困到 /opt 下。
+- `installationPath: /` 使 fileSet output 为完整系统路径（`opt/llmgateway/runtime`、`etc/llmgateway`、`lib/systemd/system`）；若设 `/opt/llmgateway` 会与前缀重复且把 etc/lib 困到 /opt 下。
 - 维护脚本通过 `templateDirectory` 的 `control/{postinst,prerm,postrm}.tpl` 注入（assemble.deb 无 yaml 配置维护脚本的字段）。
-- jar 由 build.sh 预复制为 `gateway-boot/target/llm-gateway.jar`（固定名），fileSet `includes: [llm-gateway.jar]` 打入 `opt/llm-gateway/bin/`（匹配 llm-gateway.sh 的 `-jar` 路径）；artifacts transform 对 deb assembler 未生效，改用 fileSet。
+- jar 由 build.sh 预复制为 `gateway-boot/target/llmgateway.jar`（固定名），fileSet `includes: [llmgateway.jar]` 打入 `opt/llmgateway/bin/`（匹配 llmgateway.sh 的 `-jar` 路径）；artifacts transform 对 deb assembler 未生效，改用 fileSet。
 - `control.provides` 是 String（非数组）；`project.java` 已废弃，改 `project.languages.java`。
 
 **systemd unit 路径对齐 FHS 现代（2026-07-16 探讨决策）**
 - fileSet output 从 `lib/systemd/system` 改 `usr/lib/systemd/system`（FHS 现代路径；usrmerge 后 `/lib` 是 `/usr/lib` symlink，现代发行版 Debian 12+/Fedora/Ubuntu 22.04+ 推荐 `/usr/lib/systemd/system/`；jpackage 默认亦用此路径）。
 - postinst 注释同步（`systemctl enable` 不依赖路径，systemd 自动发现 unit）；postrm 多路径清理保留（`/etc/systemd` + `/usr/lib/systemd` + `/lib/systemd`，兼容非 usrmerge 旧系统）。
-- 应用根保持 `/opt/llm-gateway/`（自带 bundled JRE，自包含产品语义符合 `/opt`；不迁 `/usr/share`）。
+- 应用根保持 `/opt/llmgateway/`（自带 bundled JRE，自包含产品语义符合 `/opt`；不迁 `/usr/share`）。
 
 **Open Questions 解决状态**
 - JReleaser Windows 打 deb/zip：✅ 实测可用（deb 109MB + zip 113MB）。rpm 需 rpmbuild，留 CI。
