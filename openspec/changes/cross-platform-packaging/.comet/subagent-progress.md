@@ -50,11 +50,12 @@
 - [x] 8.7 jlink 平台验证（ELF 64-bit x86-64 交叉生成成功，62M）
 
 ## 当前 task
-- 阶段: verify-fail 回退 build（2026-07-16 用户提出重命名需求，verify_result=fail, phase=build）
-- 重命名需求: 全部 llm-gateway 标识符 -> llmgateway（产物文件名 + 安装路径 + 服务名 + packageName + distribution/appName + 文档引用）
-- 用户决策: 全部标识符范围 + 回退 build 执行（不拆分新 change）
-- 涉及文件预估: jreleaser.yml/build.sh/conf/systemd unit/llm-gateway.sh/Windows(ps1,xml)/templates/deb/control/*.tpl/conffiles.tpl/release.yml/.gitignore/design.md/plan
-- 下一步: grep 评估完整范围 -> 派发 agent 执行重命名 -> 验证产出 llmgateway-* 包 -> 重新 build-complete -> verify
+- 阶段: 重命名完成，准备重新 build-complete -> verify（2026-07-16）
+- 重命名执行: Agent 1 构建链路（commit a3ef7245，产出 llmgateway-*.deb/zip 验证，解包 packageName=llmgateway/路径/conffiles 全 llmgateway）+ Agent 2 文档同步（commit 449b642f，270 处替换 + Task 9 记录）
+- task-checkoff Task 9: plan Step 1 + tasks.md 9.1 PASS
+- 刻意保留 llm-gateway: homepage URL（仓库引用）+ release.yml helm 段（禁用）+ design.md repo 路径 E:\workspace\llm-gateway（实际目录）+ Task 9 重命名说明文本（"从 llm-gateway 改为 llmgateway"）
+- 附带修正: jreleaser.yml homepage codingas->stvliu（实际 GitHub remote，非重命名）
+- 下一步: 提交 progress + homepage 修正 -> build-complete guard（COMET_SKIP_BUILD=1）-> verify
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
