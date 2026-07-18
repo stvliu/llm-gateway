@@ -129,3 +129,22 @@
 - fileSet per-file 权限：未依赖，postinst `chmod -R 0755 runtime/bin` 兜底（D8 不变）。
 - jlink 交叉生成 Linux JRE：✅ 可行（.linux-jdk/jmods 交叉 jlink，62MB）。
 - conf 占位符 postinst 替换：✅ 沿用 sed 方案（postinst.tpl 已注入 deb）。
+
+## Implementation Divergence（2026-07-16 verify 阶段记录）
+
+> 本节记录 build 阶段最终审查发现的实现与 design 决策的偏差，由 verify 阶段 W3 spec 漂移决策（选项 A：design doc 追加 Divergence 节）追加。属 verify 阶段允许产物。
+
+### D1 偏差：rpm maintainer 脚本 CANNOT_FIX
+
+**原 D1 修订**（行 106-109）：rpm 从 Redline 改 JpackageAssembler（`assemble.jpackage`，`linux.types: [rpm]`），需 rpmbuild，本地 SNAPSHOT 跳过留 CI release 产出。
+
+**build 阶段最终审查发现的进一步限制（CANNOT_FIX）**：
+- jpackage `--resource-dir` 对 rpm **仅支持覆盖完整 `<packageName>.spec` 文件**，不支持注入单独 maintainer 脚本（%post/%preun/%postun）；jpackage 也无 fileSets 概念，无法像 DebAssembler 那样包含 conf/systemd unit。
+- 后果：rpm 安装后**不执行**密钥生成（conf `__GENERATE_KEY__` 占位符保留）、不创建 llmgateway 用户/组、不 enable/start systemd 服务。CI rpm smoke test（`grep __GENERATE_KEY__ && exit 1`）必失败。
+- 查证依据：`JpackageAssemblerProcessor.customizeLinux` 源码（对 rpm 类型仅传 `--linux-rpm-license-type`，无脚本注入选项）+ `jpackage --help`（`--resource-dir` 仅"覆盖 jpackage 资源/模板"）+ JReleaser 文档（`resourceDir` 是"Path to override jpackage resources"）三重确认。
+
+**与 delta spec 的矛盾**：delta spec「llmgateway.conf 统一配置外部化」requirement 的 scenario（首次安装生成加密因子、升级保留 conf 等）标注 deb/rpm 均生效，但 rpm 实际不可用（CANNOT_FIX）。
+
+**用户决策（2026-07-16）**：接受 rpm 限制，当前变更聚焦已验证的 deb + zip，rpm 后续新 change 重做（候选方案：fpm 替代 jpackage 支持 maintainer 脚本与 fileSets；或为 rpm 单独编写完整 `llmgateway.spec` 含 %post/%preun/%postun 通过 resourceDir 覆盖 jpackage 默认 spec）。release.yml rpm smoke 已标 `continue-on-error: true` 不阻断 deb/zip 发布。
+
+**影响范围**：rpm 用户暂不可用；deb/zip 不受影响--deb maintainer 脚本通过 `templates/deb/control/{postinst,prerm,postrm}.tpl` + `conffiles.tpl` 完整注入（已本机解包验证 `control.tar.zst` 含 conffiles/postinst/prerm/postrm，packageName=llmgateway，路径 /opt/llmgateway 等）。
