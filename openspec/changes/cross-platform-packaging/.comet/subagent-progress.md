@@ -50,16 +50,11 @@
 - [x] 8.7 jlink 平台验证（ELF 64-bit x86-64 交叉生成成功，62M）
 
 ## 当前 task
-- 阶段: final-review 完成（1 轮修复+复查；发现 1/2 FIXED，发现 3 CANNOT_FIX，用户接受 rpm 限制）
-- 最终审查结果: BLOCKED -> 1 CRITICAL(WinSW 断链) + 2 IMPORTANT(conffile 未声明+plan 论断错误 / rpm maintainer 缺失)
-- 修复 agent 回报（commit 0d101698/47f45385/f214c410）:
-  - 发现 1 WinSW FIXED: build.sh 4.2 步加 curl 幂等下载 WinSW v2.12.0
-  - 发现 2 conffile FIXED: 新增 templates/deb/control/conffiles.tpl（实测 control.tar.zst 含 conffiles）+ plan 375/1538 论断修正
-  - 发现 3 rpm CANNOT_FIX: jpackage --resource-dir 对 rpm 仅支持覆盖完整 .spec，不支持 maintainer 脚本注入（源码+jpackage --help+文档三重确认）
-- 协调者复查: 发现 1/2 改动正确（WinSW 幂等跨平台、conffiles.tpl 格式正确、plan 论断修正准确、rpm 限制已记录）
-- 用户决策（2026-07-16）: 接受 rpm 限制，当前变更聚焦已验证 deb+zip，rpm 后续新 change 重做（fpm 或 .spec 覆盖）
-- 待处理: release.yml rpm smoke 步骤会阻断 release CI（rpm 方案坏），需调整为不阻断 deb/zip 发布
-- 下一步: 派发小 agent 调整 release.yml rpm smoke（continue-on-error+注释）-> build-complete guard -> verify
+- 阶段: verify-fail 回退 build（2026-07-16 用户提出重命名需求，verify_result=fail, phase=build）
+- 重命名需求: 全部 llm-gateway 标识符 -> llmgateway（产物文件名 + 安装路径 + 服务名 + packageName + distribution/appName + 文档引用）
+- 用户决策: 全部标识符范围 + 回退 build 执行（不拆分新 change）
+- 涉及文件预估: jreleaser.yml/build.sh/conf/systemd unit/llm-gateway.sh/Windows(ps1,xml)/templates/deb/control/*.tpl/conffiles.tpl/release.yml/.gitignore/design.md/plan
+- 下一步: grep 评估完整范围 -> 派发 agent 执行重命名 -> 验证产出 llmgateway-* 包 -> 重新 build-complete -> verify
 
 ## 已完成 task 历史
 - 1.1: commit a9551ba6 + fix b4a42966；命中风险信号（密钥占位符）；reviewer CRITICAL（DB_URL 分号截断）已修复；task-checkoff PASS
