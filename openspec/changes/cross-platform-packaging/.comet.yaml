@@ -14,7 +14,7 @@ base_ref: e0895232f4f747e0731f013a0a8941a4bca1f1a4
 design_doc: docs/superpowers/specs/2026-07-13-cross-platform-packaging-design.md
 plan: docs/superpowers/plans/2026-07-14-cross-platform-packaging.md
 verify_result: pending
-verification_report: null
+verification_report: docs/superpowers/reports/2026-07-16-cross-platform-packaging-verify.md
 branch_status: pending
 created_at: 2026-07-13
 verified_at: null
