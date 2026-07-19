@@ -2,6 +2,7 @@
 change: cross-platform-packaging
 design-doc: docs/superpowers/specs/2026-07-13-cross-platform-packaging-design.md
 base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 # 跨平台打包重构（JReleaser）实施计划
@@ -18,6 +19,7 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 
 **环境限制（重要）:** 本开发机（Windows 11）无 docker / iscc / dpkg-deb / rpm / gh CLI。本机能验证：mvn package、jlink（Windows JRE）、shell/PowerShell 语法检查、conf source 解析。需 CI 或容器环境验证：deb/rpm 安装、systemd 服务、升级/卸载（第 8 组验证任务已标注）。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 文件结构映射
@@ -57,6 +59,7 @@ base-ref: 51c8cd0048ff59984bae871ed60628dd1089500b
 | `deployments/package/windows/llmgateway.iss` | Inno Setup 脚本（Windows 改 zip） |
 | `deployments/package/build.ps1` | jpackage+iscc 流程删除（Windows 改 zip，由 build.sh 统一） |
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 1 组：conf 与启动脚本
@@ -102,6 +105,7 @@ git add deployments/package/conf/llmgateway.conf
 git commit -m "feat(packaging): 新增 llmgateway.conf 统一配置模板（端口/DB/密钥占位符/JAVA_OPTS）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 1.2: 新增 Linux 启动脚本
@@ -142,6 +146,7 @@ git add deployments/package/bin/llmgateway.sh
 git commit -m "feat(packaging): 新增 Linux 启动脚本 llmgateway.sh（source conf + exec java）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 1.3: 改 systemd unit
@@ -188,6 +193,7 @@ git add deployments/package/linux/llmgateway.service
 git commit -m "refactor(packaging): systemd unit ExecStart 指向 llmgateway.sh，去掉 EnvironmentFile"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 2 组：JReleaser 打包配置
@@ -251,6 +257,7 @@ git add pom.xml gateway-boot/pom.xml
 git commit -m "feat(packaging): gateway-boot 加 pkg profile + JReleaser 1.25.0 插件声明"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 2.2: 新增 jreleaser.yml（distribution + fileSets）
@@ -347,6 +354,7 @@ git add deployments/package/jreleaser.yml
 git commit -m "feat(packaging): 新增 jreleaser.yml（SINGLE_JAR + fileSets 骨架）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 2.3: 配 deb/rpm packager 细节 + archive Windows zip
@@ -400,6 +408,7 @@ git add deployments/package/jreleaser.yml
 git commit -m "feat(packaging): jreleaser.yml 补 deb/rpm conffile 与 archive zip 配置注释"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 3 组：maintainer 脚本迁移
@@ -493,6 +502,7 @@ git add deployments/package/linux/postinst
 git commit -m "refactor(packaging): postinst 重写为 conf 生成（/dev/urandom 密钥）+ chmod 兜底 JRE 权限，去 debconf/openssl"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 3.2: 改 prerm/postrm（共用版，适配 conf 与新布局）
@@ -581,6 +591,7 @@ git add deployments/package/linux/prerm deployments/package/linux/postrm
 git commit -m "refactor(packaging): prerm/postrm 重写为 deb/rpm 共用版（参数语义兼容，保留数据目录）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 3.3: 删除 -rpm 后缀脚本
@@ -612,6 +623,7 @@ ls deployments/package/linux/
 git commit -m "refactor(packaging): 删除 postinst-rpm/prerm-rpm/postrm-rpm，JReleaser deb/rpm 共用 maintainer 脚本"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 4 组：Windows zip 脚本
@@ -720,6 +732,7 @@ git add deployments/package/windows/start.ps1 deployments/package/windows/instal
 git commit -m "feat(packaging): 新增 Windows start/install/uninstall.ps1（conf 注入 + WinSW 服务注册）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 4.2: 新增 llmgateway.xml + 调整 WinSW 下载
@@ -803,6 +816,7 @@ git add deployments/package/windows/llmgateway.xml deployments/package/windows/d
 git commit -m "feat(packaging): 新增 llmgateway.xml（WinSW 调 start.ps1）+ WinSW 下载改名 WinSW.exe，删旧 LLMGateway.xml"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 5 组：构建脚本改造
@@ -940,6 +954,7 @@ git add deployments/package/build.sh
 git commit -m "refactor(packaging): build.sh 改 JReleaser 方案（mvn package + jlink 双平台 JRE + jreleaser:assemble），删 jpackage 段"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 5.2: 删除 build.ps1
@@ -961,6 +976,7 @@ git rm deployments/package/build.ps1
 git commit -m "refactor(packaging): 删除 build.ps1（Windows 改 zip，由 build.sh 统一构建）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 6 组：CI 矩阵简化
@@ -1058,6 +1074,7 @@ git add .github/workflows/release.yml
 git commit -m "refactor(ci): release.yml package job 简化为单 windows-latest 单 JDK 21，删 rpm/iscc 依赖，产物 exe 改 zip"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 6.2: smoke test 调整（deb/rpm 容器 + zip Windows runner）
@@ -1149,6 +1166,7 @@ git add .github/workflows/release.yml
 git commit -m "feat(ci): smoke test 调整为 deb/rpm systemd 容器 + zip Windows runner（install.ps1 + Get-Service）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 7 组：清理冗余
@@ -1173,6 +1191,7 @@ git rm deployments/package/linux/llmgateway.templates deployments/package/linux/
 git commit -m "refactor(packaging): 删除 debconf templates/config（D4 去 debconf，端口改 conf 配置）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 7.2: 删除 Inno Setup .iss 脚本
@@ -1202,6 +1221,7 @@ ls deployments/package/windows/
 git commit -m "refactor(packaging): 删除 Inno Setup .iss 脚本（Windows 改 zip）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 第 8 组：验证
@@ -1258,6 +1278,7 @@ git add -A
 git commit -m "test(packaging): 验证 build.sh 产出 deb/zip（JReleaser assemble.deb + archive，rpm 留 CI）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.2: deb 容器验证（health + conf + JRE 权限 + 改端口重启）
@@ -1305,6 +1326,7 @@ docker stop lg-smoke-deb
 
 无需提交代码。CI smoke test 通过即视为本任务完成。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.3: rpm 容器验证（health + conf 重启）
@@ -1338,6 +1360,7 @@ docker stop lg-smoke-rpm
 
 无需提交代码。CI smoke test 通过即完成。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.4: zip Windows 验证（install.ps1 + Get-Service + health）
@@ -1382,6 +1405,7 @@ C:\lg-smoke\bin\uninstall.ps1
 
 无需提交代码。验证通过即完成。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.5: 升级验证（conf 保留 + 数据不丢）
@@ -1432,6 +1456,7 @@ docker exec lg-smoke-rpm bash -c '
 
 无需提交代码。验证通过即完成。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.6: 卸载验证（数据目录保留）
@@ -1464,6 +1489,7 @@ Test-Path C:\lg-smoke\conf\llmgateway.conf
 
 无需提交代码。验证通过即完成。
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 8.7: jlink 平台验证（确认交叉生成 Linux JRE 方案）
@@ -1507,6 +1533,7 @@ git add deployments/package/build.sh
 git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或回退下载预构建 JRE）"
 ```
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ### Task 9: 统一重命名 llm-gateway -> llmgateway（build 阶段 spec 变更，verify-fail 回退执行）
@@ -1521,6 +1548,7 @@ git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或�
 - [x] **Step 2: 文档同步**
   - design/proposal/tasks/delta spec/design doc/plan/README 标识符改 llmgateway（产品名 LLM-Gateway 保留）
 
+archived-with: 2026-07-19-cross-platform-packaging
 ---
 
 ## 自审清单
@@ -1560,3 +1588,4 @@ git commit -m "fix(packaging): jlink 交叉生成 Linux JRE 方案验证（或�
 - JRE 路径统一 `/opt/llmgateway/runtime/bin/java`（1.2 启动脚本、3.1 postinst chmod、jreleaser.yml fileSet output）
 - WinSW exe/xml 同名 `llmgateway`（4.1 install.ps1 改名、4.2 xml id、6.2 Get-Service llmgateway）
 - 启动脚本 profile 统一 `-Dspring.profiles.active=local`（1.2 Linux、4.1 Windows start.ps1）
+

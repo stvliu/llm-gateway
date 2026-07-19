@@ -18,7 +18,7 @@ verification_report: docs/superpowers/reports/2026-07-16-cross-platform-packagin
 branch_status: handled
 created_at: 2026-07-13
 verified_at: 2026-07-18
-archived: false
+archived: true
 direct_override: null
 handoff_context: openspec/changes/cross-platform-packaging/.comet/handoff/design-context.json
 handoff_hash: 031f636810960f0279c1a2e8259ac90cad6bc2c46dd49347afbc08be1516b5bf

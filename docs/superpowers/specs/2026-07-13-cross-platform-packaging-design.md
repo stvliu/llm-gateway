@@ -2,6 +2,8 @@
 comet_change: cross-platform-packaging
 role: technical-design
 canonical_spec: openspec
+archived-with: 2026-07-19-cross-platform-packaging
+status: final
 ---
 
 # 跨平台打包重构技术设计
@@ -477,3 +479,4 @@ package:
 8. **BREAKING 说明**：去掉 debconf + Windows exe 改 zip，升级文档说明迁移。
 9. **Windows zip 结构**：`runtime/`（Windows JRE）+ `bin/`（jar + WinSW.exe + llmgateway.xml + install.ps1 + uninstall.ps1 + start.ps1）+ `conf/`。`install.ps1` 注册 service，`uninstall.ps1` 卸载。
 10. **JReleaser 配置语法**：§3.2 给出结构意图，具体 fileSet/packager 语法以 build 阶段实测 JReleaser 1.25.0 文档调整为准（design 阶段未实测 JReleaser 配置）。
+
