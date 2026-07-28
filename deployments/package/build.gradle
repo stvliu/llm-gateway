@@ -1,5 +1,5 @@
 // =============================================================================
-// LLM-Gateway 跨平台安装包构建（Gradle ospackage 方案，照抄 thingsboard 设计）
+// LLM-Gateway 跨平台安装包构建（Gradle ospackage 方案）
 // 产出: deb（JDeb 纯 Java）+ rpm（redline-rpm 纯 Java，支持完整 maintainer 脚本）
 //      + zip（Gradle 内置 Zip task，Windows）
 // 不内置 JRE：requires java-17/21/25，arch NOARCH/all，启动用系统 java
@@ -156,7 +156,7 @@ task zipWin(type: Zip) {
     }
 }
 
-// 跳过开关（-PskipDeb=true / -PskipRpm=true / -PskipZip=true，照抄 thingsboard pkg.skip.*）
+// 跳过开关（-PskipDeb=true / -PskipRpm=true / -PskipZip=true）
 buildDeb.onlyIf { !skipDeb }
 buildRpm.onlyIf { !skipRpm }
 zipWin.onlyIf { !skipZip }

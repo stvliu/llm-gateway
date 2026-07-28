@@ -2,7 +2,7 @@
 
 非 Docker 部署：Linux deb/rpm + Windows zip。**不内置 JRE，目标机器需预装 Java 17/21/25**。默认 `local` profile（H2 文件 + Caffeine，零外部依赖，无 Redis）。
 
-打包照抄 thingsboard 设计：Gradle ospackage（`com.netflix.nebula:gradle-ospackage-plugin:12.3.0`）+ Maven filters 占位符替换。deb 基于 JDeb、rpm 基于 redline-rpm，**纯 Java 实现，本地无需 dpkg-deb / rpmbuild**，rpm 完整支持 maintainer 脚本（密钥生成 + systemd 注册）。
+打包采用 Gradle ospackage（`com.netflix.nebula:gradle-ospackage-plugin:12.3.0`）+ Maven filters 占位符替换。deb 基于 JDeb、rpm 基于 redline-rpm，**纯 Java 实现，本地无需 dpkg-deb / rpmbuild**，rpm 完整支持 maintainer 脚本（密钥生成 + systemd 注册）。
 
 ## 构建依赖
 
@@ -26,7 +26,18 @@
 #   llmgateway-win-*.zip      Windows zip
 ```
 
-跳过 Maven package（复用已有 fat jar）：`./deployments/package/build.sh --skip-mvn`
+跳过参数（`pkg.skip.*` 风格，可任意组合）：
+
+| 参数 | 效果 |
+|------|------|
+| `--skip-mvn` | 跳过 `mvn package`（复用已有 fat jar，仅重新替换占位符） |
+| `--skip-deb` | 跳过 deb 构建（`-PskipDeb=true` -> `buildDeb.onlyIf`） |
+| `--skip-rpm` | 跳过 rpm 构建（`-PskipRpm=true` -> `buildRpm.onlyIf`） |
+| `--skip-zip` | 跳过 zip 构建（`-PskipZip=true` -> `zipWin.onlyIf`，跳过 WinSW 下载） |
+
+例：只构建 rpm：`./deployments/package/build.sh --skip-mvn --skip-deb --skip-zip`
+
+> docker image 不在 build.sh 范围（独立 CI job `build-docker`，用 `deployments/docker/Dockerfile`）。
 
 CI 自动构建见 `.github/workflows/release.yml` 的 `package` job（git tag `v*` 触发，含 deb/rpm/zip systemd smoke test）。
 
@@ -127,11 +138,11 @@ curl http://localhost:8080/actuator/health
 - **H2 Console**：`local` profile 开启 `/h2-console`，生产请关闭或限制访问
 - **端口冲突**：安装时不校验端口占用，冲突时服务反复重启（systemd `Restart=on-failure`）
 
-## 打包实现（照抄 thingsboard）
+## 打包实现
 
 - `build.gradle`：ospackage DSL（`ospackage{}` 通用 + `buildRpm` + `buildDeb` + `zipWin`），requires java-17/21/25、arch NOARCH/all、`link` /etc 软链接、`configurationFile`、`filter(ReplaceTokens)` 平台差异
 - `scripts/control/{deb,rpm}/`：maintainer 脚本（preinst/postinst/prerm/postrm），用 `${pkg.name}` `${pkg.user}` `${pkg.installFolder}` `${pkg.logFolder}` 占位符
 - `scripts/control/template.service`：systemd unit 占位符模板
 - `filters/unix.properties`：占位符替换值（`pkg.logFolder=${pkg.unixLogFolder}`）
 - `gateway-boot/pom.xml` pkg profile：maven-resources-plugin 复制 scripts/bin/conf 到 `target/packaging`，filtering 替换占位符
-- `build.sh`：`mvn package + process-resources -Ppkg` -> `./gradlew buildDeb buildRpm zipWin`
+- `build.sh`：`mvn package + process-resources -Ppkg` -> `./gradlew buildDeb buildRpm zipWin`；支持 `--skip-deb/--skip-rpm/--skip-zip` 跳过（`onlyIf`）

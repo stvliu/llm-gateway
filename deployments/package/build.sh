@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# LLM-Gateway 跨平台安装包构建脚本（Gradle ospackage 方案，照抄 thingsboard）
+# LLM-Gateway 跨平台安装包构建脚本（Gradle ospackage 方案）
 # 产出: deb（JDeb 纯 Java）+ rpm（redline-rpm 纯 Java，支持完整 maintainer 脚本）+ zip（Windows）
 # 不内置 JRE：requires java-17/21/25，arch NOARCH/all，目标机器需预装 Java
 # 用法: ./deployments/package/build.sh [--skip-mvn] [--skip-deb] [--skip-rpm] [--skip-zip]
@@ -19,7 +19,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# 参数解析（照抄 thingsboard pkg.skip.* 跳过能力）
+# 参数解析（pkg.skip.* 风格跳过能力）
 SKIP_MVN=0; SKIP_DEB=0; SKIP_RPM=0; SKIP_ZIP=0
 for arg in "$@"; do
   case "$arg" in
@@ -86,7 +86,7 @@ else
   step "跳过 WinSW 就绪（--skip-zip）"
 fi
 
-# 4. Gradle ospackage 打包（-Pskip* 控制 onlyIf 跳过对应 task，照抄 thingsboard pkg.skip.*）
+# 4. Gradle ospackage 打包（-Pskip* 控制 onlyIf 跳过对应 task）
 #    gradlew 总是列 buildDeb buildRpm zipWin，onlyIf false 的 task 自动跳过（SKIPPED）
 step "Gradle ospackage 打包（deb/rpm/zip，按 --skip-* 跳过）"
 SKIP_DEB_B=$(to_bool "$SKIP_DEB"); SKIP_RPM_B=$(to_bool "$SKIP_RPM"); SKIP_ZIP_B=$(to_bool "$SKIP_ZIP")
