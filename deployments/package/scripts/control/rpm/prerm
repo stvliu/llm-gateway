@@ -1,0 +1,11 @@
+#!/bin/sh
+# ${pkg.name} rpm 卸载前脚本
+# rpm: $1 = 0（卸载）/ 1（升级，卸载旧版）
+# 升级时不停止服务（新包 postinst restart 会处理）；卸载时停止并禁用
+set -e
+
+if [ "${1:-0}" = "0" ]; then
+  systemctl --no-reload disable --now ${pkg.name}.service >/dev/null 2>&1 || :
+fi
+
+exit 0

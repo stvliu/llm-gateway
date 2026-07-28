@@ -1,0 +1,46 @@
+#!/bin/sh
+# ${pkg.name} deb 安装后脚本
+# 首次安装：建目录、生成加密密钥、注册并启动 systemd；升级：conffile 保留，restart
+set -e
+
+DATA_DIR="/var/lib/${pkg.name}"
+LOG_DIR="${pkg.logFolder}"
+CONF_FILE="${pkg.installFolder}/conf/${pkg.name}.conf"
+
+# 1. 创建数据/日志目录
+mkdir -p "$DATA_DIR" "$LOG_DIR"
+chown -R ${pkg.name}:${pkg.name} "$DATA_DIR" "$LOG_DIR"
+
+# 2. 生成加密密钥（首次安装：conf 含 __GENERATE_KEY__ 占位符则替换；升级：conffile 保留，grep 不命中则跳过）
+if [ -f "$CONF_FILE" ] && grep -q '__GENERATE_KEY__' "$CONF_FILE"; then
+  NEW_KEY="$(head -c 32 /dev/urandom | base64)"
+  sed -i "s|__GENERATE_KEY__|${NEW_KEY}|" "$CONF_FILE"
+  echo "[postinst] 生成新的 GATEWAY_ENCRYPTION_KEY（请妥善备份）" >&2
+else
+  echo "[postinst] 保留已有 GATEWAY_ENCRYPTION_KEY" >&2
+fi
+
+# 3. 设置 conf 权限（root 可读写，${pkg.name} 组可读）
+chmod 640 "$CONF_FILE" 2>/dev/null || true
+chown root:${pkg.name} "$CONF_FILE" 2>/dev/null || true
+
+# 4. chmod 兜底可执行位
+chmod 0755 ${pkg.installFolder}/bin/${pkg.name}.sh 2>/dev/null || true
+
+# 5. 注册 systemd unit（deb 打包到 /lib/systemd/system）
+systemctl daemon-reload
+systemctl enable ${pkg.name}.service
+
+# 6. 启动服务（升级时 restart，首次安装 start）
+if systemctl is-active --quiet ${pkg.name}.service; then
+  systemctl restart ${pkg.name}.service
+else
+  systemctl start ${pkg.name}.service
+fi
+
+echo "${pkg.name} 已安装并启动。"
+echo "  配置文件: $CONF_FILE（改后 systemctl restart ${pkg.name} 生效）"
+echo "  数据目录: $DATA_DIR"
+echo "  服务状态: systemctl status ${pkg.name}"
+
+exit 0

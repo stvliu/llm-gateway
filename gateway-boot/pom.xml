@@ -305,5 +305,86 @@
                 </plugins>
             </build>
         </profile>
+
+        <!-- 裸机部署打包：mvn process-resources -Ppkg 触发，替换 scripts/bin/conf 占位符到 target/packaging -->
+        <!-- 占位符 ${pkg.name}/${pkg.user}/${pkg.installFolder}/${pkg.logFolder} 由 filters/unix.properties + 本 profile properties 替换 -->
+        <!-- 后续 build.sh 调 ./gradlew buildDeb buildRpm zipWin -PprojectBuildDir=../../gateway-boot/target/packaging -->
+        <profile>
+            <id>pkg</id>
+            <properties>
+                <pkg.name>llmgateway</pkg.name>
+                <pkg.user>llmgateway</pkg.user>
+                <pkg.installFolder>/opt/llmgateway</pkg.installFolder>
+                <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
+                <main.dir>${project.basedir}/..</main.dir>
+                <pkg.process-resources.phase>process-resources</pkg.process-resources.phase>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <version>3.3.1</version>
+                        <executions>
+                            <!-- 复制 scripts/（control 脚本 + template.service）到 target/packaging/scripts -->
+                            <execution>
+                                <id>copy-pkg-scripts</id>
+                                <phase>${pkg.process-resources.phase}</phase>
+                                <goals><goal>copy-resources</goal></goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/packaging/scripts</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${main.dir}/deployments/package/scripts</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <filters>
+                                        <filter>${main.dir}/deployments/package/filters/unix.properties</filter>
+                                    </filters>
+                                </configuration>
+                            </execution>
+                            <!-- 复制 bin/llmgateway.sh 到 target/packaging/bin -->
+                            <execution>
+                                <id>copy-pkg-bin</id>
+                                <phase>${pkg.process-resources.phase}</phase>
+                                <goals><goal>copy-resources</goal></goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/packaging/bin</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${main.dir}/deployments/package/bin</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <filters>
+                                        <filter>${main.dir}/deployments/package/filters/unix.properties</filter>
+                                    </filters>
+                                </configuration>
+                            </execution>
+                            <!-- 复制 conf/llmgateway.conf 到 target/packaging/conf -->
+                            <execution>
+                                <id>copy-pkg-conf</id>
+                                <phase>${pkg.process-resources.phase}</phase>
+                                <goals><goal>copy-resources</goal></goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/packaging/conf</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${main.dir}/deployments/package/conf</directory>
+                                            <filtering>true</filtering>
+                                        </resource>
+                                    </resources>
+                                    <filters>
+                                        <filter>${main.dir}/deployments/package/filters/unix.properties</filter>
+                                    </filters>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
     </profiles>
 </project>

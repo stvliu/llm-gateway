@@ -1,0 +1,14 @@
+#!/bin/sh
+# ${pkg.name} deb 卸载前脚本
+# deb: $1 = remove|upgrade|failed-upgrade|deconfigure|...
+# 升级时不停止服务（postinst restart 会处理）；卸载时停止并禁用
+set -e
+
+case "${1:-}" in
+  remove|deconfigure)
+    systemctl stop ${pkg.name}.service 2>/dev/null || true
+    systemctl disable ${pkg.name}.service 2>/dev/null || true
+    ;;
+esac
+
+exit 0

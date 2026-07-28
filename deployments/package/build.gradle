@@ -1,0 +1,162 @@
+// =============================================================================
+// LLM-Gateway 跨平台安装包构建（Gradle ospackage 方案）
+// 产出: deb（JDeb 纯 Java）+ rpm（redline-rpm 纯 Java，支持完整 maintainer 脚本）
+//      + zip（Gradle 内置 Zip task，Windows）
+// 不内置 JRE：requires java-17/21/25，arch NOARCH/all，启动用系统 java
+// 触发: ./gradlew buildDeb buildRpm zipWin（由 deployments/package/build.sh 调用）
+// 依赖: Gradle 9.5.1（wrapper 自带，nebula v12.x 要求 Gradle 9.x）、com.netflix.nebula:gradle-ospackage-plugin:12.3.0
+// 占位符替换: scripts/bin/conf 由 mvn process-resources + filters/unix.properties 替换 ${pkg.name} 等
+//             到 ${projectBuildDir}（gateway-boot/target/packaging），本脚本从该目录读
+// 纯 Java 打包: 本地无需 dpkg-deb / rpmbuild，Windows 即可验证 deb + rpm + zip
+// =============================================================================
+import org.apache.tools.ant.filters.ReplaceTokens
+
+buildscript {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.netflix.nebula:gradle-ospackage-plugin:12.3.0'
+    }
+}
+
+apply plugin: 'com.netflix.nebula.ospackage'
+
+// 由 build.sh 通过 -P 注入
+def projectBuildDir   = findProperty('projectBuildDir')   ?: 'build/staging'
+def projectVersion    = findProperty('projectVersion')    ?: '1.0.0-SNAPSHOT'
+def mainJar           = findProperty('mainJar')           ?: '../../gateway-boot/target/llmgateway.jar'
+def pkgName           = findProperty('pkgName')           ?: 'llmgateway'
+def pkgUser           = findProperty('pkgUser')           ?: 'llmgateway'
+def pkgInstallFolder  = findProperty('pkgInstallFolder')  ?: '/opt/llmgateway'
+def pkgLogFolder      = findProperty('pkgLogFolder')      ?: '/var/log/llmgateway'
+def skipDeb = findProperty('skipDeb') == 'true'
+def skipRpm = findProperty('skipRpm') == 'true'
+def skipZip = findProperty('skipZip') == 'true'
+
+// rpm 版本号不能含 '-'（rpm 规范 Version 不允许连字符），去连接符；deb 允许含 '-'
+def rpmVersion = projectVersion.replace('-', '')
+
+// 通用配置（ospackage 扩展，传播到 buildRpm/buildDeb 作为默认值）
+ospackage {
+    packageName = pkgName
+    version     = projectVersion
+    release     = '1'
+    os          = LINUX
+    user        pkgUser
+    permissionGroup pkgUser
+    into        pkgInstallFolder
+
+    // fat jar -> bin/${pkgName}.jar（去版本号，固定名）
+    from(mainJar) {
+        rename { "${pkgName}.jar" }
+        fileMode = 0500
+        into 'bin'
+    }
+
+    // 启动脚本 -> bin/${pkgName}.sh（已 mvn filter 替换占位符）
+    from("${projectBuildDir}/bin/llmgateway.sh") {
+        fileMode = 0755
+        into 'bin'
+    }
+
+    // 其他 conf 文件（排除主 conf，主 conf 在 buildRpm/buildDeb 按平台特化处理）
+    from("${projectBuildDir}/conf") {
+        exclude "${pkgName}.conf"
+        fileType CONFIG | NOREPLACE
+        fileMode = 0754
+        into 'conf'
+    }
+}
+
+// RPM（redline-rpm 纯 Java，无需 rpmbuild，支持 %pre/%post/%preun/%postun 完整脚本）
+buildRpm {
+    // rpm 包内 Version 不含 '-'，独立覆盖（deb 仍用 projectVersion）
+    version = rpmVersion
+    arch = NOARCH
+    archiveFileName = "${pkgName}.rpm"
+
+    // 依赖系统 Java（不内置 JRE），支持 17/21/25
+    requires('(java-17-headless or jre-17-headless or java-21-headless or jre-21-headless or java-25-headless or jre-25-headless)')
+
+    // 主 conf（平台特定：@pkg.platform@ -> rpm）
+    from("${projectBuildDir}/conf/${pkgName}.conf") {
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'rpm'])
+        fileType CONFIG | NOREPLACE
+        into "${pkgInstallFolder}/conf"
+    }
+
+    preInstall    file("${projectBuildDir}/scripts/control/rpm/preinst")
+    postInstall   file("${projectBuildDir}/scripts/control/rpm/postinst")
+    preUninstall  file("${projectBuildDir}/scripts/control/rpm/prerm")
+    postUninstall file("${projectBuildDir}/scripts/control/rpm/postrm")
+
+    // systemd unit -> /usr/lib/systemd/system（FHS 现代路径，template.service 已 mvn filter 替换占位符）
+    from("${projectBuildDir}/scripts/control/template.service") {
+        addParentDirs = false
+        into '/usr/lib/systemd/system'
+        rename { "${pkgName}.service" }
+    }
+
+    // /etc/${pkgName}/conf 软链接 -> ${pkgInstallFolder}/conf（FHS：/etc 指向安装目录 conf）
+    link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
+}
+
+// DEB（JDeb 纯 Java，无需 dpkg-deb）
+buildDeb {
+    arch = 'all'
+    archiveFileName = "${pkgName}.deb"
+
+    // 依赖系统 Java（不内置 JRE），deb 用 .or() 链式
+    requires('openjdk-17-jre-headless').or('openjdk-21-jre-headless').or('openjdk-25-jre-headless')
+
+    // 主 conf（平台特定：@pkg.platform@ -> deb）
+    from("${projectBuildDir}/conf/${pkgName}.conf") {
+        filter(ReplaceTokens, tokens: ['pkg.platform': 'deb'])
+        fileType CONFIG | NOREPLACE
+        into "${pkgInstallFolder}/conf"
+    }
+
+    // conffile 声明（dpkg 升级保留，与 fileType CONFIG|NOREPLACE 双重保障）
+    configurationFile("${pkgInstallFolder}/conf/${pkgName}.conf")
+
+    preInstall    file("${projectBuildDir}/scripts/control/deb/preinst")
+    postInstall   file("${projectBuildDir}/scripts/control/deb/postinst")
+    preUninstall  file("${projectBuildDir}/scripts/control/deb/prerm")
+    postUninstall file("${projectBuildDir}/scripts/control/deb/postrm")
+
+    // systemd unit -> /lib/systemd/system（deb 传统路径）
+    from("${projectBuildDir}/scripts/control/template.service") {
+        addParentDirs = false
+        into '/lib/systemd/system'
+        rename { "${pkgName}.service" }
+    }
+
+    // /etc/${pkgName}/conf 软链接 -> ${pkgInstallFolder}/conf
+    link("/etc/${pkgName}/conf", "${pkgInstallFolder}/conf")
+}
+
+// Windows zip（Gradle 内置 Zip task，不含 JRE，需目标机器预装 Java）
+task zipWin(type: Zip) {
+    archiveFileName = "${pkgName}-win-${projectVersion}.zip"
+    destinationDirectory = file('build/libs')
+
+    from('windows') {
+        include 'WinSW.exe', 'llmgateway.xml', 'install.ps1', 'uninstall.ps1', 'start.ps1'
+        into 'bin'
+    }
+    from(mainJar) {
+        rename { "${pkgName}.jar" }
+        into 'bin'
+    }
+    from('conf/llmgateway.conf') {
+        into 'conf'
+    }
+}
+
+// 跳过开关（-PskipDeb=true / -PskipRpm=true / -PskipZip=true）
+buildDeb.onlyIf { !skipDeb }
+buildRpm.onlyIf { !skipRpm }
+zipWin.onlyIf { !skipZip }

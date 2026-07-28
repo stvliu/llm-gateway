@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<service>
+  <id>llmgateway</id>
+  <name>LLM-Gateway</name>
+  <description>LLM-Gateway - 企业级 AI 模型 API 聚合网关</description>
+
+  <!-- 通过 start.ps1 读 conf 注入环境变量 + JAVA_OPTS 启动 java -->
+  <executable>powershell.exe</executable>
+  <arguments>-ExecutionPolicy Bypass -NoProfile -File "%BASE%\bin\start.ps1"</arguments>
+
+  <!-- 工作目录 -->
+  <workingdirectory>%BASE%</workingdirectory>
+
+  <!-- 日志 -->
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+
+  <!-- 失败自动重启（等价 systemd Restart=on-failure） -->
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="10 sec"/>
+  <onfailure action="restart" delay="20 sec"/>
+
+  <!-- 启动模式 -->
+  <startmode>Automatic</startmode>
+  <delayedstart>true</delayedstart>
+
+  <!-- 失败停止阈值 -->
+  <stoptimeout>30 sec</stoptimeout>
+</service>

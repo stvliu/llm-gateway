@@ -1,6 +1,6 @@
 {
-  "name": "ThingsBoard 本地化管理",
-  "short_name": "TB Localize",
+  "name": "LLM-Gateway 管理控制台",
+  "short_name": "LLM-Gateway",
   "icons": [
     {
       "src": "/favicons/favicon-16x16.png",

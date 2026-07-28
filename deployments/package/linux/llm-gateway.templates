@@ -1,8 +1,0 @@
-Template: llm-gateway/server_port
-Type: string
-Default: 8080
-Description: LLM-Gateway 服务监听端口:
- LLM-Gateway 默认监听 8080 端口。如需更改，请输入端口号。
- .
- 非交互安装（DEBIAN_FRONTEND=noninteractive）将使用默认值 8080。
- 安装时不校验端口占用；若端口冲突，服务将因 systemd Restart=on-failure 反复重启。

@@ -75,7 +75,7 @@ TBD - created by archiving change official-website. Update Purpose after archive
 
 ### Requirement: 首页内容架构
 
-系统 SHALL 提供对标 thingsboard.io 的首页区块结构（Hero / 信任背书 / 价值主张 / 能力叙事 / 三产品卡 / 生态组件 / 控制台轮播 / 功能网格 / 底部 CTA），文案数据化到 `src/data/i18n/`。
+系统 SHALL 提供首页区块结构（Hero / 信任背书 / 价值主张 / 能力叙事 / 三产品卡 / 生态组件 / 控制台轮播 / 功能网格 / 底部 CTA），文案数据化到 `src/data/i18n/`。
 
 #### Scenario: 首页区块完整呈现
 

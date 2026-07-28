@@ -1,0 +1,14 @@
+#!/bin/sh
+# ${pkg.name} rpm 安装前脚本：创建系统用户与组
+# rpm: $1 = 1（首次安装）/ 2（升级）
+set -e
+
+if ! getent group ${pkg.name} >/dev/null; then
+  groupadd -r ${pkg.name}
+fi
+if ! id -u ${pkg.name} >/dev/null 2>&1; then
+  useradd -r --no-create-home --shell /sbin/nologin \
+    -g ${pkg.name} -d /var/lib/${pkg.name} ${pkg.name}
+fi
+
+exit 0

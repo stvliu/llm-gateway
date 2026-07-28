@@ -1,0 +1,14 @@
+// LLM-Gateway 打包 Gradle 工程设置
+// 独立工程，仅用于 deb/rpm/zip 打包（Java 构建仍由 Maven 负责）
+
+// 插件解析镜像（阿里云加速，gradlePluginPortal 兜底；pluginManagement 必须为首个语句）
+pluginManagement {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'llmgateway-packaging'

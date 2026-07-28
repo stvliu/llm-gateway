@@ -8,7 +8,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ThingsBoard Indigo 色系
+        // Indigo 色系
         primary: {
           50: '#e8eaf6',
           100: '#c5cae9',

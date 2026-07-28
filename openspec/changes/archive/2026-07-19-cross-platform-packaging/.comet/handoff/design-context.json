@@ -1,0 +1,14 @@
+{
+  "change": "cross-platform-packaging",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "031f636810960f0279c1a2e8259ac90cad6bc2c46dd49347afbc08be1516b5bf",
+  "files": [
+    { "path": "openspec/changes/cross-platform-packaging/proposal.md", "sha256": "c171e2abfdcfe17fd80c686bbbdc60e105b3a3c7c577a3eb970eff424210dbfd" },
+    { "path": "openspec/changes/cross-platform-packaging/design.md", "sha256": "3175ad79a791c42437ac367ea0df6c3a403fc28cd1880340c163cd0cda5708c2" },
+    { "path": "openspec/changes/cross-platform-packaging/tasks.md", "sha256": "8c1779b75a4074812d13d19511b583259c2d7be35bbf80090a4a5324fd001e92" },
+    { "path": "openspec/changes/cross-platform-packaging/specs/bare-metal-deploy/spec.md", "sha256": "e148aa12438cb0fb77f5c76b62282eaa910c70398c742dd8823b88a14a2b9dfb" }
+  ]
+}

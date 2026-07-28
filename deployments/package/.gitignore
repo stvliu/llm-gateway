@@ -1,0 +1,9 @@
+# build.sh 产物目录（ospackage 方案，不内置 JRE）
+# Gradle 构建产物输出目录（deb/rpm/zip 先入 build/，再复制到 dist/）
+build/
+.gradle/
+# dist 汇总目录（最终产物，不入库）
+dist/
+
+# WinSW.exe（CI 全新 checkout 后由 build.sh 下载的二进制产物，不入库）
+windows/WinSW.exe
