@@ -1,0 +1,19 @@
+[Unit]
+Description=${pkg.name} Service
+Documentation=https://codingas.com/api-gateway
+After=network.target
+
+[Service]
+Type=simple
+User=${pkg.user}
+Group=${pkg.user}
+WorkingDirectory=/var/lib/${pkg.name}
+ExecStart=${pkg.installFolder}/bin/${pkg.name}.sh
+Restart=on-failure
+RestartSec=5
+StandardOutput=append:${pkg.logFolder}/stdout.log
+StandardError=append:${pkg.logFolder}/stderr.log
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

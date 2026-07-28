@@ -1,0 +1,15 @@
+#!/bin/sh
+# ${pkg.name} rpm 卸载后脚本
+# rpm: $1 = 0（卸载）/ 1（升级）
+# 卸载时清理 systemd unit；升级时 try-restart
+set -e
+
+if [ "${1:-0}" = "0" ]; then
+  rm -f /usr/lib/systemd/system/${pkg.name}.service 2>/dev/null || true
+  rm -f /lib/systemd/system/${pkg.name}.service 2>/dev/null || true
+  systemctl daemon-reload 2>/dev/null || true
+elif [ "${1:-0}" -ge 1 ]; then
+  systemctl try-restart ${pkg.name}.service >/dev/null 2>&1 || :
+fi
+
+exit 0

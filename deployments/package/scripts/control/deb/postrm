@@ -1,0 +1,24 @@
+#!/bin/sh
+# ${pkg.name} deb 卸载后脚本
+# deb: $1 = remove|purge|upgrade|failed-upgrade|...
+# 卸载时清理 systemd unit；保留数据目录（仅 purge 清数据）
+set -e
+
+case "${1:-}" in
+  remove|purge)
+    rm -f /etc/systemd/system/${pkg.name}.service
+    rm -f /usr/lib/systemd/system/${pkg.name}.service 2>/dev/null || true
+    rm -f /lib/systemd/system/${pkg.name}.service 2>/dev/null || true
+    systemctl daemon-reload 2>/dev/null || true
+    ;;
+esac
+
+if [ "${1:-}" = "purge" ]; then
+  echo "[postrm] purge 模式：清理数据目录与配置..."
+  rm -rf /var/lib/${pkg.name} ${pkg.logFolder} /etc/${pkg.name}
+  echo "[postrm] 数据已清除。如需完全移除用户：userdel ${pkg.name}"
+fi
+
+echo "[postrm] 卸载完成。数据目录 /var/lib/${pkg.name} 已保留（除非 purge）。"
+
+exit 0

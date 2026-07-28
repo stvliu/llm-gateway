@@ -1,0 +1,14 @@
+#!/bin/sh
+# ${pkg.name} deb 安装前脚本：创建系统用户与组
+# 文件解包前确保用户存在，便于解包文件 chown 给 ${pkg.user}
+set -e
+
+if ! getent group ${pkg.name} >/dev/null; then
+  groupadd --system ${pkg.name}
+fi
+if ! id -u ${pkg.name} >/dev/null 2>&1; then
+  useradd --system --no-create-home --shell /usr/sbin/nologin \
+    --gid ${pkg.name} --home-dir /var/lib/${pkg.name} ${pkg.name}
+fi
+
+exit 0

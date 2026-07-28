@@ -116,7 +116,7 @@ jobs:
           retention-days: 90
 
   # -------------------------------------------------------------------
-  # 构建系统安装包 (deb/rpm/zip) - 单 windows job，JReleaser 纯 Java 跨平台
+  # 构建系统安装包 (deb/rpm/zip) - 单 windows job，Gradle ospackage 纯 Java 跨平台
   # -------------------------------------------------------------------
   package:
     name: 构建安装包
@@ -141,8 +141,7 @@ jobs:
           chmod +x deployments/package/bin/llmgateway.sh
         shell: bash
 
-      # 不再需要：sudo apt-get install rpm（JReleaser 纯 Java 出 rpm）
-      # 不再需要：choco install innosetup（Windows 改 zip）
+      # 无需 dpkg-deb / rpmbuild / Inno Setup（Gradle ospackage 纯 Java 出 deb/rpm，zip 用内置 Zip task）
 
       - name: Build packages
         run: bash deployments/package/build.sh
@@ -162,20 +161,19 @@ jobs:
             sleep 1
           done
           docker exec lg-smoke-deb bash -c '
-            apt-get update && apt-get install -y /tmp/llmgateway.deb curl
+            apt-get update && apt-get install -y openjdk-17-jre-headless curl
+            apt-get install -y /tmp/llmgateway.deb
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
             systemctl is-active llmgateway.service
-            # 验证 conf 占位符已替换 + JRE bin 可执行
-            grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
-            test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+            # 验证 conf 密钥已生成（物理在 /opt/llmgateway/conf，/etc/llmgateway/conf 经 ospackage link）
+            grep -q "__GENERATE_KEY__" /opt/llmgateway/conf/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -L /etc/llmgateway/conf && echo "/etc 软链接 OK"
           '
           docker stop lg-smoke-deb
         shell: bash
 
       - name: Smoke test - rpm
-        # rpm 方案因 jpackage 不支持 maintainer 脚本注入暂时失败（CANNOT_FIX），
-        # continue-on-error 不阻断 deb/zip 发布；后续 change 重做 rpm（fpm/.spec 覆盖）后移除
-        continue-on-error: true
+        # ospackage redline-rpm 纯 Java 出 rpm，支持完整 maintainer 脚本（%post 生成密钥 + 注册 systemd）
         run: |
           RPM=$(ls deployments/package/dist/*.rpm | head -1)
           docker run --rm -d --name lg-smoke-rpm \
@@ -188,11 +186,12 @@ jobs:
             sleep 1
           done
           docker exec lg-smoke-rpm bash -c '
-            dnf install -y /tmp/llmgateway.rpm curl
+            dnf install -y java-17-openjdk-headless curl
+            dnf install -y /tmp/llmgateway.rpm
             for i in $(seq 1 90); do curl -sf http://localhost:8080/actuator/health && break; sleep 1; done
             systemctl is-active llmgateway.service
-            grep -q "__GENERATE_KEY__" /etc/llmgateway/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
-            test -x /opt/llmgateway/runtime/bin/java && echo "JRE bin/java 可执行 OK"
+            grep -q "__GENERATE_KEY__" /opt/llmgateway/conf/llmgateway.conf && { echo "占位符未替换"; exit 1; } || echo "conf 密钥已生成 OK"
+            test -L /etc/llmgateway/conf && echo "/etc 软链接 OK"
           '
           docker stop lg-smoke-rpm
         shell: bash

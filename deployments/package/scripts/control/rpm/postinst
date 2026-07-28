@@ -1,0 +1,37 @@
+#!/bin/sh
+# ${pkg.name} rpm 安装后脚本
+# rpm: $1 = 1（首次安装）/ 2（升级）
+# 首次安装：建目录、生成加密密钥、注册并启动 systemd；升级：restart
+set -e
+
+DATA_DIR="/var/lib/${pkg.name}"
+LOG_DIR="${pkg.logFolder}"
+CONF_FILE="${pkg.installFolder}/conf/${pkg.name}.conf"
+
+# 首次安装：建目录、生成密钥
+if [ "${1:-0}" = "1" ]; then
+  mkdir -p "$DATA_DIR" "$LOG_DIR"
+  chown -R ${pkg.name}:${pkg.name} "$DATA_DIR" "$LOG_DIR"
+
+  if [ -f "$CONF_FILE" ] && grep -q '__GENERATE_KEY__' "$CONF_FILE"; then
+    NEW_KEY="$(head -c 32 /dev/urandom | base64)"
+    sed -i "s|__GENERATE_KEY__|${NEW_KEY}|" "$CONF_FILE"
+    echo "[postinst] 生成新的 GATEWAY_ENCRYPTION_KEY（请妥善备份）" >&2
+  fi
+fi
+
+# conf 权限与可执行位兜底（每次执行都矫正，升级时无害）
+chmod 640 "$CONF_FILE" 2>/dev/null || true
+chown root:${pkg.name} "$CONF_FILE" 2>/dev/null || true
+chmod 0755 ${pkg.installFolder}/bin/${pkg.name}.sh 2>/dev/null || true
+
+# systemd 注册与启动（rpm 打包到 /usr/lib/systemd/system）
+systemctl daemon-reload
+if [ "${1:-0}" = "1" ]; then
+  systemctl enable ${pkg.name}.service
+  systemctl start ${pkg.name}.service
+elif [ "${1:-0}" = "2" ]; then
+  systemctl restart ${pkg.name}.service
+fi
+
+exit 0
