@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V61: applications 表加 timeout 列、删 resilience_profile_id 列
 -- ============================================

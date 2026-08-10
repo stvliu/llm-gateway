@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V4__init_llm_data.sql
 -- 初始化大模型 Provider、API Key 和 Model 数据
 --

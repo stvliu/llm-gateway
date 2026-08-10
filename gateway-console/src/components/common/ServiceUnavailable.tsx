@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { Modal, Button, Typography, Space, Alert, theme } from 'antd';
 import { WarningOutlined, ReloadOutlined, BugOutlined } from '@ant-design/icons';
 import { useState, useEffect, useCallback } from 'react';

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // EndpointSection 保存反馈脉冲——测试套件
 //
 // Mock 策略：与第 5 章保持一致，通过 vi.mock('@/services/api/channel') 在最底层 stub channelApi。

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useCallback } from 'react';
 import { Modal, Input, Button, Space, Steps, Alert, App, Upload, Tag, Typography, theme } from 'antd';
 import { CopyOutlined, UploadOutlined, CheckCircleOutlined } from '@ant-design/icons';

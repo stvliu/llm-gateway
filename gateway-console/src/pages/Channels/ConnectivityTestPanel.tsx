@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState } from 'react';
 import { Card, Form, Input, Button, Tag, Typography, Space, Divider, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';

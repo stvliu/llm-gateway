@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 将 gemini 供应商元数据合并到 google（按公司组织，Gemini 是 Google 的产品）
 
 -- 1. 更新 provider_metadata：gemini → google

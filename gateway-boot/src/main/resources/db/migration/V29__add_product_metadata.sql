@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V29__add_product_metadata.sql
 -- 新增产品元数据表，建立三级元数据关系
 

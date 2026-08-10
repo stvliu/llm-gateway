@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState } from 'react';
 import { Modal, Form, Input, message } from 'antd';
 import { useTranslation } from 'react-i18next';

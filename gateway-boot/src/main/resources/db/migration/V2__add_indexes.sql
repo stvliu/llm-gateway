@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V2__add_indexes.sql
 -- 补充索引（V1 已包含主要索引）
 

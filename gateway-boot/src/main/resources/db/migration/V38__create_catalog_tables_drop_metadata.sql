@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ==========================================
 -- V38: Catalog 表替代 Metadata 表
 -- 1. 创建 provider_catalogs 表

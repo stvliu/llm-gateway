@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import type { Permission } from '@/constants/permissions';
 
 /** 用户角色（兼容未来新角色） */

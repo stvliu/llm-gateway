@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V58: failover_events 补 clusterId 过滤索引
 -- ============================================

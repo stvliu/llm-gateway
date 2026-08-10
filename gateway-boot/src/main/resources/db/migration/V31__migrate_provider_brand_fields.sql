@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 为现有 providers 补充品牌信息
 -- 从 provider_metadata 表复制 icon_url、description 等字段
 

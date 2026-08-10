@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // QuotaSettingsSection 保存反馈脉冲——测试套件
 //
 // QuotaSettings 是"编辑模式 + 批量提交"，无乐观更新需求。

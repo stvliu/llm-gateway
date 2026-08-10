@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // EndpointSection 删除端点危险确认测试（任务 8.5）
 //
 // 验证目标：

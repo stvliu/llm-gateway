@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AuthGuard, PermissionGuard } from './guards';
 import Login from '@/pages/Login';

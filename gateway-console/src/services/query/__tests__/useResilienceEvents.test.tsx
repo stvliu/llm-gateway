@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 容灾转移事件流 React Query hooks 单元测试
 //
 // 验证 useFailoverEvents / useExhaustedEvents hooks：

@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V64: failover_events 表新增 common_cause_skip 列
 -- ============================================

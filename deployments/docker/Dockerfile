@@ -1,3 +1,8 @@
+#
+# Copyright (c) 2025 codingas.com
+# Licensed under the Apache License, Version 2.0.
+# See the LICENSE file for details.
+#
 # ===================================================================
 # LLM-Gateway Dockerfile
 # 多阶段构建（COLA Light 单模块 gateway-boot）

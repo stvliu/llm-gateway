@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V3__add_version_fields.sql
 -- 添加 version 字段用于乐观锁和变更检测
 

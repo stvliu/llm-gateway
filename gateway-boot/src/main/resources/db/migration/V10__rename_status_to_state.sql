@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V10__rename_status_to_state.sql
 -- 统一状态字段命名：将 status 重命名为 state
 

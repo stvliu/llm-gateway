@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 容灾 API 封装层单元测试
 //
 // 验证 resilienceApi 封装层对后端端点的调用契约：

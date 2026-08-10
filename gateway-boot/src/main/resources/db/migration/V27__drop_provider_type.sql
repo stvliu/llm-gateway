@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 移除 Provider.type 字段（协议信息已由 ProtocolGateway 体系管理）
 DROP INDEX IF EXISTS idx_providers_type;
 ALTER TABLE providers DROP COLUMN IF EXISTS provider_type;

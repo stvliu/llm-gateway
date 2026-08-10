@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useMemo } from 'react';
 import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined, KeyOutlined } from '@ant-design/icons';

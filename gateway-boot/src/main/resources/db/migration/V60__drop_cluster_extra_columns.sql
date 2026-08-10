@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V60: clusters 表瘦身（删 region/priority/health_status，新增 description）
 -- ============================================

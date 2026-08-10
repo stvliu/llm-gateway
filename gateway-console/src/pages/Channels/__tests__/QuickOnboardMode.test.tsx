@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 10.2 / 10.3-10.5：QuickOnboardMode 状态扁平化 + Step 0.5 内联创建供应商
 //
 // 不变量：

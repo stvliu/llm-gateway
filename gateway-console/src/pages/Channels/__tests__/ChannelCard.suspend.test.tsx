@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // ChannelCard 暂停操作二次确认测试（任务 8.3）
 //
 // 验证目标：

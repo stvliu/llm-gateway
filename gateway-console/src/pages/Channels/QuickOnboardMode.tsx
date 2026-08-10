@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useEffect, useMemo } from 'react';
 import { Steps, Select, Input, Checkbox, Button, Space, Typography, App, Spin, Tag, Divider, theme } from 'antd';
 import { PlusOutlined, DeleteOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';

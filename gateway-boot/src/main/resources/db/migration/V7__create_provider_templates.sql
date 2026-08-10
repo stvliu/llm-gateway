@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V7__create_provider_templates.sql
 -- Provider 模板表 - 用于存储预配置的 Provider 配置模板
 

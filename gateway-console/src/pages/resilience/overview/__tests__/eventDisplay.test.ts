@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 容灾总览转移事件展示辅助函数单元测试
 //
 // 任务 4.11c：验证事件流展示纯函数：

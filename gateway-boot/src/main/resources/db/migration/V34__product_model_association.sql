@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V34: 产品-模型关联重构
 -- 1. 创建 product_model_metadata 纯关系表

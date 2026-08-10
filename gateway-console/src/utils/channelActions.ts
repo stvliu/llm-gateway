@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { allowedTransitions } from '@/domain/channel/lifecycle';
 import type { ChannelState } from '@/types/channel';
 

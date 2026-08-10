@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V22: 为 product_api_keys 表添加 api_key_hash 和 api_key_prefix 列
 
 ALTER TABLE product_api_keys ADD COLUMN api_key_hash VARCHAR(128);

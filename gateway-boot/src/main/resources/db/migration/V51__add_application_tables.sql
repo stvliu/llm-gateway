@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 应用聚合根表：权限+行为双聚合，承载 Key 归属、渠道可见性、容灾画像
 -- 预留配额/看板字段；application_channels 关联表由后续迁移创建
 -- 说明：原计划版本号 V37，但仓库现有最大迁移为 V50（V37 已被 channel_endpoints 占用），

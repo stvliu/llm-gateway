@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // Task 12：Applications 页查看 Key 入口 + 删除冲突提示单元测试
 //
 // 验证 tasks.md 6.1 + 6.2 核心点：

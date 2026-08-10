@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { channelApi } from '@/services/api/channel';
 import type {

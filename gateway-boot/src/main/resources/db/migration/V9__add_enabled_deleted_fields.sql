@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V9__add_enabled_deleted_fields.sql
 -- 添加 models 和 providers 表的 enabled 和 deleted 字段
 

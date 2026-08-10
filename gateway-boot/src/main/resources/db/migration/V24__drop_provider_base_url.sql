@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V24: 迁移 providers.base_url 到 products.endpoints，然后移除 base_url 列
 -- Provider 的端点信息已迁移到 Product.endpoints，baseUrl 不再需要
 

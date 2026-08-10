@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import axios, { type AxiosInstance, type AxiosRequestConfig, AxiosError } from 'axios';
 import { setServiceUnavailable } from '@/components/common/ServiceUnavailable';
 import { useAuthStore } from '@/stores/authStore';

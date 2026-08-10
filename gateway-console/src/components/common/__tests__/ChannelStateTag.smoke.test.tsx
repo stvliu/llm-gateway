@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 注意：原 plan 假设 ChannelStateTag 通过命名导出且 props=state="ACTIVE" 渲染英文 "active" 文案；
 // 实际组件为默认导出（src/components/common/ChannelStateTag.tsx），ACTIVE 状态渲染中文 "运行中"。
 // 这里按真实 API 调整 import 与断言文案，但保持"渲染并验证文本可见"的 smoke 本质。

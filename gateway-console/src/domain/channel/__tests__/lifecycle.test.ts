@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 渠道生命周期 SSOT 测试
 //
 // 验证 CHANNEL_LIFECYCLE 数据结构的字段不变性 + selector helper 行为，

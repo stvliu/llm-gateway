@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 移除 usage_logs 表对 gateway_api_keys 的外键依赖
 -- 改用 user_api_key_id 字段（新架构）
 

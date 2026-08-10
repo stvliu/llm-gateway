@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V5__drop_version_fields.sql
 -- 移除 version 字段以简化架构（去除乐观锁机制）
 

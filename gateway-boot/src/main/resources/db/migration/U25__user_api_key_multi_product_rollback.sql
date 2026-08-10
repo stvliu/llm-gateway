@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 回滚 V25: 将 user_api_key_products 关联数据写回 user_api_keys.product_id
 -- 注意：如果一个 Key 关联了多个产品，回滚时只保留第一个关联的产品
 

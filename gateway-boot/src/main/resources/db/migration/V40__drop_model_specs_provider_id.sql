@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V40: Drop provider_id from model_specs, make it a global registry
 -- ModelSpec 不再绑定特定供应商，成为全局模型注册表
 

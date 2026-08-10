@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 /**
  * 渠道健康检查相关类型（与后端 ChannelHealthStatus / ChannelHealthSource 枚举对齐）。
  *

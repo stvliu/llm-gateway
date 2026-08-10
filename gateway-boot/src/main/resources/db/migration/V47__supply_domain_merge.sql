@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ==========================================
 -- V47: 供应域合并 — Catalog 表合并到运营表
 -- ==========================================

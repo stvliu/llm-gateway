@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V12__refactor_template_to_metadata.sql
 -- 供应商模板重构为元数据体系：provider_metadata + model_metadata
 

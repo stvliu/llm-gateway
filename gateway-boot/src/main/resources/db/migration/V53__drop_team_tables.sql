@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ============================================
 -- V53: 移除 Team 体系表（数据已由 V52 迁移至 Application/ApplicationChannel）
 -- ============================================

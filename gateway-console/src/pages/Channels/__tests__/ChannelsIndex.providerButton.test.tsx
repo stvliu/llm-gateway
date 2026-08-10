@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 10.6：主页面移除独立"+ 新增供应商"按钮
 //
 // 验证：渲染 Channels 主页后，不应存在 name 包含"新增供应商"的按钮。

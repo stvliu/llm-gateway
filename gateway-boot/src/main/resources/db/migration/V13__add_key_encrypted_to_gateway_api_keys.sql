@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 为 gateway_api_keys 表添加 key_encrypted 字段，用于存储加密后的完整 API Key
 ALTER TABLE gateway_api_keys ADD COLUMN key_encrypted TEXT;
 

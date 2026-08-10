@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // Task 10：DownstreamKeysTable 应用绑定改造单元测试
 //
 // 验证 tasks.md 5.3 核心点：

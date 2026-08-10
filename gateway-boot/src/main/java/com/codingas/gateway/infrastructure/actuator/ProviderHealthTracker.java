@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 package com.codingas.gateway.infrastructure.actuator;
 
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;

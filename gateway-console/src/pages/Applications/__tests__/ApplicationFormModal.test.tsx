@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 10：ApplicationFormModal 失败处理策略字段单元测试
 //
 // 验证：

@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- Phase 3: 数据迁移 — GatewayApiKey → UserApiKey
 -- 为现有 GatewayApiKey 创建对应的 UserApiKey，实现双写兼容
 

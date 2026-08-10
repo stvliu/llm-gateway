@@ -681,7 +681,9 @@ chore: 构建过程或辅助工具的变动
 
 ## 📄 开源协议
 
-本项目采用 Apache License 2.0 开源协议。详见 [LICENSE](LICENSE) 文件。
+本项目采用 [Apache License 2.0](LICENSE) 开源协议，版权所有（Copyright）归 [codingas.com](https://codingas.com) 所有。
+
+你可以自由使用、修改和分发本项目，但需保留原始版权声明，并在分发时附带一份本协议副本。详见 [LICENSE](LICENSE) 文件。
 
 ---
 

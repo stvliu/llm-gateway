@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useEffect } from 'react';
 import { Button, Dropdown, App, Typography, theme, Space } from 'antd';
 import { CopyOutlined, PlusOutlined, SwapOutlined, KeyOutlined } from '@ant-design/icons';

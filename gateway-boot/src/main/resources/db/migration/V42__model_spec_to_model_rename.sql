@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ==========================================
 -- V42: ModelSpec → Model 重命名（表/列重命名）
 -- ==========================================

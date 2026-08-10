@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V11__migrate_provider_model_state.sql
 -- 将 providers 和 models 表的 enabled 字段迁移为 state 字段
 

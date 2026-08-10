@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Input, InputNumber, Button, Space, Form, message, theme, Tooltip } from 'antd';
 import { ThunderboltOutlined } from '@ant-design/icons';

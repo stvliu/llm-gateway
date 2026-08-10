@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- 渠道健康状态字段（last-write-wins，无版本锁）
 -- 用于支撑前端健康指示与连通性测试矩阵聚合结果持久化
 ALTER TABLE channels ADD COLUMN last_health_check_at TIMESTAMP NULL;

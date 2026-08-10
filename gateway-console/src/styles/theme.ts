@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 /**
  * Ant Design 主题配置
  * 启用 CSS 变量模式，确保 CSS 文件也能引用主题 token

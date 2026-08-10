@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState } from 'react';
 import { Descriptions, InputNumber, Input, Button, Space, Form, message, Tooltip } from 'antd';
 import { EditOutlined } from '@ant-design/icons';

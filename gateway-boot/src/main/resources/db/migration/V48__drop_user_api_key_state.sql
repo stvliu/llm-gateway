@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V48: user_api_keys 表 state 列替换为 deleted 逻辑删除标记
 -- UserApiKey 只有"存在"和"已删除"两种状态，无需 state 枚举
 

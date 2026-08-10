@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState } from 'react';
 import { Segmented, Button, App, theme, Select } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useRef, useCallback } from 'react';
 import { Button, Input, Switch, Typography, Alert, theme, Space } from 'antd';
 import { PlayCircleOutlined, StopOutlined } from '@ant-design/icons';

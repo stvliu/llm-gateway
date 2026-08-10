@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V21: 为 user_api_keys 表添加 key_encrypted 列
 
 ALTER TABLE user_api_keys ADD COLUMN key_encrypted TEXT;

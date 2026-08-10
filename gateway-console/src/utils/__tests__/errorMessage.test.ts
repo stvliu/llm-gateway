@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // extractErrorMessage 工具单元测试
 // 目标：把任意 unknown 错误对象抽取成可向用户展示的中文 / 后端返回原因字符串。
 // 区分 AntD Form.validateFields 抛出的 { errorFields } 形态——返回空串，调用方据此跳过 toast。

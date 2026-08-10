@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 /** 应用级失败处理策略（与后端 FailureStrategy 枚举一致） */
 export type FailureStrategy = 'FAIL_FAST' | 'FAIL_RETRY' | 'FAIL_OVER';
 

@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V1__init_schema.sql
 -- LLM Gateway 初始数据库结构（H2 PostgreSQL 兼容模式）
 

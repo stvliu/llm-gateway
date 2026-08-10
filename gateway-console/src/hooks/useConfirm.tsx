@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { App, theme } from 'antd';
 import type { GlobalToken } from 'antd/es/theme/interface';
 import { ExclamationCircleFilled, InfoCircleFilled } from '@ant-design/icons';

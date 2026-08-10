@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 9.5 / 9.6：详情抽屉矩阵 Table + AbortController 取消语义
 //
 // 验证目标：

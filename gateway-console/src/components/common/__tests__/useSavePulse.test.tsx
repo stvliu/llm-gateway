@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // useSavePulse Hook 单元测试
 //
 // 验证保存反馈脉冲 Hook 的状态机：

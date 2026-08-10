@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { P, type Permission } from './permissions';
 
 /** 后端 role 单值 → 前端 permissions 数组 */

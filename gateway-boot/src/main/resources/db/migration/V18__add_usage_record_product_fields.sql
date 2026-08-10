@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- Phase 3: 扩展 usage_logs 表，新增新架构字段
 -- 用于记录 UserApiKey、Team、Product 关联信息
 

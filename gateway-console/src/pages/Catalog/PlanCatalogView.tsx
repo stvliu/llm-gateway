@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useMemo, useState } from 'react';
 import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card, Tooltip } from 'antd';
 import { PlusOutlined, SyncOutlined, CloudDownloadOutlined, ArrowRightOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';

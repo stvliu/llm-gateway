@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright (c) 2025 codingas.com
+    Licensed under the Apache License, Version 2.0.
+    See the LICENSE file for details.
+
+-->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
@@ -11,6 +18,20 @@
 
     <name>LLM-Gateway</name>
     <description>Enterprise AI Model API Gateway - OpenAI and Anthropic Compatible</description>
+    <url>https://github.com/codingas/llm-gateway</url>
+
+    <organization>
+        <name>codingas.com</name>
+        <url>https://codingas.com</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <modules>
         <module>gateway-boot</module>
@@ -57,6 +78,7 @@
         <spring-boot-maven-plugin.version>3.5.0</spring-boot-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.12</jacoco-maven-plugin.version>
         <flatten-maven-plugin.version>1.6.0</flatten-maven-plugin.version>
+        <license-maven-plugin.version>5.1.1</license-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -350,6 +372,52 @@
                         <phase>clean</phase>
                         <goals>
                             <goal>clean</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- 开源协议头校验插件 -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>${license-maven-plugin.version}</version>
+                <configuration>
+                    <header>${maven.multiModuleProjectDirectory}/config/license-header.txt</header>
+                    <properties>
+                        <year>2025</year>
+                        <owner>codingas.com</owner>
+                    </properties>
+                    <includes>
+                        <include>**/*.java</include>
+                        <include>**/*.xml</include>
+                        <include>**/*.yml</include>
+                        <include>**/*.yaml</include>
+                        <include>**/*.properties</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/target/**</exclude>
+                        <exclude>**/generated/**</exclude>
+                        <exclude>**/db/migration/**</exclude>
+                        <exclude>**/resources/catalog/**</exclude>
+                        <exclude>**/resources/data/**</exclude>
+                        <exclude>**/resources/metadata/**</exclude>
+                        <exclude>**/static/**</exclude>
+                    </excludes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                        <xml>XML_STYLE</xml>
+                        <yml>SCRIPT_STYLE</yml>
+                        <yaml>SCRIPT_STYLE</yaml>
+                        <properties>SCRIPT_STYLE</properties>
+                    </mapping>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-license</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>check</goal>
                         </goals>
                     </execution>
                 </executions>

@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- ==========================================
 -- V37: ChannelEndpoint 实体
 -- 1. 创建 channel_endpoints 表

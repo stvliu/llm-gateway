@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Tag, Button, Input, message, theme, Empty, Tooltip, Select, Spin } from 'antd';
 import { PlusOutlined, ArrowRightOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';

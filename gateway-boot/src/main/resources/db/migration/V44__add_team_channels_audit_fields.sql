@@ -1,3 +1,8 @@
+--
+-- Copyright (c) 2025 codingas.com
+-- Licensed under the Apache License, Version 2.0.
+-- See the LICENSE file for details.
+--
 -- V44: 创建 team_channels 表并添加审计字段
 -- 权限模型改为团队继承渠道，需要 team_channels 关联表
 

@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // CredentialSection 删除 API Key 危险确认测试（任务 8.4）
 //
 // 验证目标：

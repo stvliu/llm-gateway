@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 9.3：ChannelCard 嵌入 HealthDot
 //
 // 验证目标：ChannelCard 在状态 Tag 右侧应渲染 HealthDot；

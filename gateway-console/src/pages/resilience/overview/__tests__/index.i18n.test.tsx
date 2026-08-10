@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 4.11c 技术债偿还：总览页 i18n 硬编码回归测试
 //
 // 验证目标：耗尽告警区域的硬编码中文应改走 i18n：

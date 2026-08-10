@@ -1,3 +1,8 @@
+/*
+ * Copyright (c) 2025 codingas.com
+ * Licensed under the Apache License, Version 2.0.
+ * See the LICENSE file for details.
+ */
 // 任务 9.7：ConnectivityTestPanel 改名为"预检工具"
 //
 // 验证目标：
