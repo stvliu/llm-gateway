@@ -91,7 +91,7 @@ llm-gateway/
 | **安全** | Sa-Token | 1.45.0 | 轻量级权限框架 |
 | **HTTP 客户端** | OkHttp | 5.3.2 | 同步/异步调用，支持虚拟线程 |
 | **LLM 框架** | LangChain4j | 1.3.0 | 多厂商模型统一封装 |
-| **向量存储** | pgvector（企业版专属） | 0.5+ | 语义缓存向量存储 |
+| **向量存储** | pgvector | 0.5+ | 语义缓存向量存储 |
 | **可观测性** | OpenTelemetry | 1.47.0 | 链路追踪 |
 | **国密** | Bouncy Castle | 1.78+ | SM2/SM3/SM4 实现 |
 
@@ -142,15 +142,15 @@ llm-gateway/
 
 **分层支持策略**：
 
-| 版本 | 推荐数据库 | 语义缓存 | 说明 |
-|------|----------|---------|------|
-| **企业版** | PostgreSQL 14+ | ✅ pgvector 内置 | 语义缓存开箱即用，功能完整 |
-| **标准版** | MySQL 8.0+ | ❌ 不支持 | 简化部署，核心代理功能 |
-| **开发/测试** | H2 / MySQL / PostgreSQL | ❌ 不支持 | 快速启动，灵活配置 |
+| 数据库 | 语义缓存 | 说明 |
+|------|---------|------|
+| PostgreSQL 14+（推荐） | ✅ pgvector 内置 | 语义缓存开箱即用，功能完整 |
+| MySQL 8.0+ | ❌（无 pgvector） | 简化部署，核心代理功能 |
+| H2（开发测试） | ❌ | 快速启动，灵活配置 |
 
 **决策结论**：
-- **企业版推荐 PostgreSQL**：核心优势是 pgvector 支持语义缓存，功能开箱即用
-- **标准版支持 MySQL**：简化运维，复用现有基础设施，适合中小企业
+- **推荐 PostgreSQL**：核心优势是 pgvector 支持语义缓存，功能开箱即用
+- **支持 MySQL**：简化运维，复用现有基础设施，适合已有 MySQL 的团队
 - 通过 Gateway 接口抽象，实现对两种数据库的透明支持
 
 ### 2.3 基础设施组件
@@ -168,19 +168,19 @@ llm-gateway/
 
 ### 2.4 安全机制
 
-> **版本说明**：国密算法（SM2/SM3/SM4）为**企业版专属功能**，标准版使用标准加密算法（AES/SHA-256/RSA）。
+> 说明：支持国密算法（SM2/SM3/SM4），同时保留标准加密算法（AES/SHA-256/RSA）供选择。
 
 | 机制 | 实现 | 说明 |
 |------|------|------|
 | 认证 | Sa-Token + ApiKeySaTokenDao | API Key → User 映射 |
 | 限流 | JVM 本地 + Redis 分布式 | 双层限流 |
 | 脱敏 | MaskingResponseAdvice | 全局响应拦截 |
-| 加密 | SM4-GCM（企业版）/ AES-256-GCM（标准版） | 敏感数据加密存储 |
-| 签名 | SM2（企业版）/ RSA-2048（标准版） | 许可证签名验证 |
+| 加密 | SM4-GCM / AES-256-GCM（可选） | 敏感数据加密存储 |
+| 签名 | SM2 / RSA-2048（可选） | 许可证签名验证 |
 
 ### 2.5 国密算法实现
 
-> **版本说明**：国密算法为**企业版专属功能**，标准版不支持。
+> 说明：国密算法与标准加密算法均受支持。
 
 #### 2.5.1 算法应用场景
 
@@ -279,7 +279,7 @@ IV:密文:Tag（Base64 编码）
   "licensee": "某某企业",
   "issuedAt": "2026-05-01T00:00:00Z",
   "expiresAt": "2027-05-01T00:00:00Z",
-  "features": ["ENTERPRISE", "SM_CRYPTO"],
+  "features": ["SM_CRYPTO", "AUDIT_WORM"],
   "maxUsers": 1000
 }
 
@@ -560,15 +560,15 @@ public interface KeySelectionStrategy {
 
 ### 3.4 语义缓存架构
 
-> **版本说明**：语义缓存为**企业版专属功能**，标准版不支持。
+> 说明：语义缓存基于向量检索实现。
 
 #### 3.4.1 技术选型
 
-**企业版方案**：PostgreSQL + pgvector
+**推荐方案**：PostgreSQL + pgvector
 
 | 组件 | 技术 | 说明 |
 |------|------|------|
-| 主数据库 | PostgreSQL 14+ | 企业版推荐 |
+| 主数据库 | PostgreSQL 14+ | 推荐 |
 | 向量存储 | pgvector 0.5+ | PostgreSQL 扩展 |
 | 向量维度 | 1536 | OpenAI Embedding |
 | 相似度算法 | 余弦相似度 | 默认算法 |
@@ -688,7 +688,7 @@ public interface SemanticCacheGateway {
 ```
 
 > **扩展性设计**：`VectorStore` 接口抽象了向量存储能力，支持多种后端实现：
-> - **PgVectorStore**：基于 pgvector 的实现（企业版默认）
+> - **PgVectorStore**：基于 pgvector 的实现（默认）
 > - **MilvusVectorStore**：基于 Milvus 的实现（大规模场景）
 > - **WeaviateVectorStore**：基于 Weaviate 的实现（云原生场景）
 
@@ -739,7 +739,7 @@ WITH (lists = 100);
 
 ## 4. 审计链技术实现
 
-> **版本说明**：审计链 WORM 存储为**企业版专属功能**，标准版仅提供基础审计日志记录，无链式哈希验证。
+> 说明：审计链支持链式哈希 + WORM 存储，满足合规要求。
 
 ### 4.1 链式哈希设计
 
@@ -977,15 +977,15 @@ public class OkHttpConfig {
 
 | 部署模式 | 限流方案 | 实现技术 | 说明 |
 |---------|---------|---------|------|
-| **标准版单机** | 本地限流 | JVM 内存（令牌桶） | 单实例无需分布式协调 |
-| **企业版分布式** | 分布式限流 | Redis + Lua（滑动窗口） | 全局精确控制 |
+| **单机** | 本地限流 | JVM 内存（令牌桶） | 单实例无需分布式协调 |
+| **分布式** | 分布式限流 | Redis + Lua（滑动窗口） | 全局精确控制 |
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    限流架构                                  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  [标准版单机]                   [企业版分布式]                │
+│  [单机]                         [分布式]                     │
 │  请求 ──► RateLimiter          请求 ──► RateLimiter          │
 │              │                           │                   │
 │              ▼                           ▼                   │
@@ -1005,14 +1005,14 @@ public class OkHttpConfig {
 ### 6.3 限流配置
 
 ```yaml
-# 标准版单机
+# 单机
 rate-limit:
   mode: local
   algorithm: token-bucket
   default-rpm: 60
   burst-size: 10
 
-# 企业版分布式
+# 分布式
 rate-limit:
   mode: distributed
   algorithm: sliding-window
@@ -1023,12 +1023,12 @@ rate-limit:
 
 ### 6.4 限流维度
 
-| 维度 | 标准版 | 企业版 | 说明 |
-|------|--------|--------|------|
-| **用户级 RPM** | 60/min | 600/min | 单用户请求限制 |
-| **Key 级 RPM** | 30/min | 300/min | 单 API Key 限制 |
-| **Channel 级 RPM** | 可配置 | 可配置 | 单渠道请求限制 |
-| **全局并发** | 1000 | 10000 | 全局并发连接数 |
+| 维度 | 值 | 说明 |
+|------|------|------|
+| **用户级 RPM** | 600/min（可配置） | 单用户请求限制 |
+| **Key 级 RPM** | 300/min（可配置） | 单 API Key 限制 |
+| **Channel 级 RPM** | 可配置 | 单渠道请求限制 |
+| **全局并发** | 10000（可配置） | 全局并发连接数 |
 
 ### 6.5 限流接口设计
 
@@ -1079,7 +1079,7 @@ public class RateLimitResult {
 
 #### 6.5.2 Infrastructure 层实现
 
-**本地限流实现（标准版单机）**：
+**本地限流实现（单机）**：
 
 ```java
 @Component
@@ -1107,7 +1107,7 @@ public class LocalRateLimiter implements RateLimiter {
 }
 ```
 
-**分布式限流实现（企业版）**：
+**分布式限流实现（分布式）**：
 
 ```java
 @Component
@@ -1192,7 +1192,6 @@ end
 
 ## 7. 告警通知架构
 
-> **版本说明**：告警通知为核心功能，标准版和企业版均支持。
 
 ### 7.1 告警场景分类
 
@@ -1448,16 +1447,14 @@ public class AlertSilenceService {
 
 ## 8. OAuth 认证架构
 
-> **版本说明**：OAuth 认证为标准功能，标准版和企业版均支持。
-
 ### 8.1 支持的 OAuth 提供商
 
 | 提供商 | 类型 | 适用场景 | 说明 |
 |--------|------|---------|------|
 | GitHub | 公有云 | 开发者团队 | 默认支持 |
 | Gitee | 公有云 | 国内团队 | 国内访问优化 |
-| 飞书 | 企业协作 | 企业内部 | 企业版推荐 |
-| 钉钉 | 企业协作 | 企业内部 | 企业版推荐 |
+| 飞书 | 企业协作 | 企业内部 | 推荐 |
+| 钉钉 | 企业协作 | 企业内部 | 推荐 |
 
 ### 8.2 架构设计
 
@@ -1638,7 +1635,7 @@ public class UserOAuth {
 
 ## 9. MCP 协议架构
 
-> **版本说明**：MCP (Model Context Protocol) 为企业版专属功能，标准版不支持。
+> 说明：MCP 用于标准化 AI 模型与外部工具交互。
 
 ### 9.1 MCP 协议概述
 
@@ -1773,7 +1770,7 @@ MCP 请求认证流程：
    └── Sa-Token 验证 + 权限检查
 
 3. 检查 MCP 功能授权
-   └── 企业版 License 验证
+   └── License 授权验证
 
 4. 执行 MCP 操作
    └── 根据用户权限过滤资源
@@ -1783,7 +1780,6 @@ MCP 请求认证流程：
 
 ## 10. 敏感数据保护架构
 
-> **版本说明**：敏感数据保护为核心功能，标准版和企业版均支持。
 
 ### 10.1 敏感数据类型
 
@@ -2003,11 +1999,11 @@ gateway-console/
 | 环境 | 推荐数据库 | 备选数据库 | 语义缓存 |
 |------|----------|-----------|---------|
 | 开发/调试 | H2（内存） | - | ❌ 不支持 |
-| 测试环境 | PostgreSQL 14+ | MySQL 8.0+ | 按版本选择 |
-| 生产环境（企业版） | PostgreSQL 14+ + Redis 7+ | - | ✅ pgvector 内置 |
-| 生产环境（标准版） | MySQL 8.0+ + Redis 7+ | - | ❌ 不支持 |
+| 测试环境 | PostgreSQL 14+ | MySQL 8.0+ | 按数据库选择 |
+| 生产环境（PostgreSQL） | PostgreSQL 14+ + Redis 7+ | - | ✅ pgvector 内置 |
+| 生产环境（MySQL） | MySQL 8.0+ + Redis 7+ | - | ❌ 不支持 |
 
-### 12.2 PostgreSQL 扩展（企业版）
+### 12.2 PostgreSQL 扩展
 
 | 扩展 | 版本 | 用途 |
 |------|------|------|
@@ -2015,19 +2011,19 @@ gateway-console/
 | pg_trgm | 内置 | 模糊搜索 |
 | btree_gin | 内置 | 复合索引优化 |
 
-### 12.3 MySQL 兼容说明（标准版）
+### 12.3 MySQL 兼容说明
 
 | 功能 | MySQL 支持 | 说明 |
 |------|-----------|------|
 | 核心业务 | ✅ 完全支持 | Provider/Channel/Model/User 等核心表 |
 | JSON 字段 | ✅ 支持 | 模型能力（capabilities）存储 |
 | 全文检索 | 🟡 需配置 | 日志搜索需创建 FULLTEXT 索引 |
-| 语义缓存 | ❌ 不支持 | 标准版不提供语义缓存功能 |
+| 语义缓存 | ❌ 无 pgvector | MySQL 不提供语义缓存 |
 
 ### 12.4 数据库切换配置
 
 ```yaml
-# application-postgresql.yml（企业版）
+# application-postgresql.yml（PostgreSQL）
 spring:
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:5432/${DB_NAME:llm_gateway}
@@ -2035,7 +2031,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
-# application-mysql.yml（标准版）
+# application-mysql.yml（MySQL）
 spring:
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:3306/${DB_NAME:llm_gateway}?useSSL=false&serverTimezone=UTC
@@ -2043,9 +2039,9 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
 
-# 语义缓存配置（仅企业版）
+# 语义缓存配置
 semantic-cache:
-  enabled: true  # PostgreSQL 企业版启用
+  enabled: true  # 启用（需 PostgreSQL + pgvector）
   type: pgvector
 ```
 
@@ -2095,14 +2091,14 @@ Spring Boot 3.5 + Java 21 天然支持虚拟线程：
 **配置示例**：
 
 ```yaml
-# 标准版单机 - 本地缓存
+# 单机 - 本地缓存
 spring:
   cache:
     type: caffeine
     caffeine:
       spec: maximumSize=10000,expireAfterWrite=5m
 
-# 企业版分布式 - Redis 缓存
+# 分布式 - Redis 缓存
 spring:
   cache:
     type: redis
@@ -2167,15 +2163,15 @@ public class ApiKeyService {
 
 #### 13.3.3 缓存策略
 
-| 缓存内容 | TTL | 存储位置 | 企业版 | 标准版 |
-|---------|-----|---------|--------|--------|
-| Provider 列表 | 5 分钟 | Redis / Caffeine | ✅ | ✅ |
-| Model 列表 | 5 分钟 | Redis / Caffeine | ✅ | ✅ |
-| Token 限额 | 1 分钟 | Redis / Caffeine | ✅ | ✅ |
-| 用户信息 | 10 分钟 | Redis / Caffeine | ✅ | ✅ |
-| API Key 验证 | 1 分钟 | Redis / Caffeine | ✅ | ✅ |
-| 路由规则 | 5 分钟 | Redis / Caffeine | ✅ | ✅ |
-| 语义缓存 | 可配置（默认 1 小时） | PostgreSQL（pgvector） | ✅ | ❌ |
+| 缓存内容 | TTL | 存储位置 |
+|---------|-----|---------|
+| Provider 列表 | 5 分钟 | Redis / Caffeine |
+| Model 列表 | 5 分钟 | Redis / Caffeine |
+| Token 限额 | 1 分钟 | Redis / Caffeine |
+| 用户信息 | 10 分钟 | Redis / Caffeine |
+| API Key 验证 | 1 分钟 | Redis / Caffeine |
+| 路由规则 | 5 分钟 | Redis / Caffeine |
+| 语义缓存 | 可配置（默认 1 小时） | PostgreSQL（pgvector） |
 
 #### 13.3.4 缓存配置类
 
@@ -2185,7 +2181,7 @@ public class ApiKeyService {
 public class CacheConfig {
     
     /**
-     * 本地缓存配置（标准版单机）
+     * 本地缓存配置（单机）
      */
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "caffeine")
@@ -2199,7 +2195,7 @@ public class CacheConfig {
     }
     
     /**
-     * Redis 缓存配置（企业版分布式）
+     * Redis 缓存配置（分布式）
      */
     @Bean
     @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
@@ -2221,7 +2217,7 @@ public class CacheConfig {
 
 #### 13.3.5 配置同步兜底机制
 
-> **适用场景**：企业版多实例部署，需要保证配置变更实时同步到所有实例。
+> **适用场景**：多实例部署，需要保证配置变更实时同步到所有实例。
 
 **设计原则**：
 
@@ -2275,7 +2271,7 @@ public class CacheConfig {
 **配置示例**：
 
 ```yaml
-# application-cluster.yaml（企业版）
+# application-cluster.yaml（分布式）
 gateway:
   config:
     cache:
@@ -2625,13 +2621,13 @@ spec:
 │              ┌──────────────────────────────┐               │
 │              │     PostgreSQL 主从集群       │               │
 │              │   (数据持久化 + pgvector)     │               │
-│              │     [企业版语义缓存支持]       │               │
+│              │     [语义缓存支持]             │               │
 │              └──────────────────────────────┘               │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### 14.4 标准版单机部署
+### 14.4 单机部署
 
 > **适用场景**：中小企业、开发测试环境、POC 验证、资源受限环境。
 
@@ -2639,7 +2635,7 @@ spec:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                  标准版单机部署架构                           │
+│                  单机部署架构                                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │                      ┌─────────────┐                        │
@@ -2675,9 +2671,9 @@ spec:
 
 #### 14.4.2 技术组件对比
 
-| 组件 | 企业版（分布式） | 标准版（单机） | 说明 |
+| 组件 | 分布式 | 单机 | 说明 |
 |------|-----------------|---------------|------|
-| **实例数** | 多实例（K8s） | 单实例 | 标准版单 JVM |
+| **实例数** | 多实例（K8s） | 单实例 | 单 JVM |
 | **数据库** | PostgreSQL + pgvector | MySQL / H2 | 无语义缓存需求 |
 | **缓存** | Redis 集群 | Redis 单实例 / 本地缓存 | 可选 Redis |
 | **限流** | 分布式（Redis + Lua） | 本地（JVM 内存） | 令牌桶算法 |
@@ -2690,7 +2686,7 @@ spec:
 
 #### 14.4.3 本地限流实现
 
-标准版单机部署使用 JVM 本地限流，无需 Redis：
+单机部署使用 JVM 本地限流，无需 Redis：
 
 ```java
 // Infrastructure 层 - 本地限流实现
@@ -2732,7 +2728,7 @@ rate-limit:
 
 #### 14.4.4 缓存配置
 
-标准版使用 Spring Cache + Caffeine 本地缓存：
+单机部署使用 Spring Cache + Caffeine 本地缓存：
 
 ```yaml
 # application-standalone.yml
@@ -2831,12 +2827,11 @@ spring:
     hibernate:
       ddl-auto: validate
 
-# 标准版特性开关
+# 功能开关
 llm-gateway:
-  edition: standard                    # 标准版
   features:
-    semantic-cache: false              # 禁用语义缓存
-    mcp-protocol: false                # 禁用 MCP 协议（企业版）
+    semantic-cache: true               # 语义缓存
+    mcp-protocol: true                 # MCP 协议
 
 # 限流配置
 rate-limit:
@@ -2926,24 +2921,21 @@ java -Xms512m -Xmx1g \
 
 #### 14.4.10 限制说明
 
-标准版单机部署的限制：
+单机部署的限制：
 
 | 限制项 | 说明 |
 |--------|------|
 | **无高可用** | 单点故障风险 |
 | **无语义缓存** | 不支持向量相似度缓存 |
 | **无分布式限流** | 仅支持 JVM 本地限流 |
-| **无 MCP 协议** | 企业版专属功能 |
-| **无国密算法** | 企业版专属功能 |
-| **无审计链 WORM** | 企业版专属功能 |
 | **性能上限** | 单实例 QPS ≤ 5,000 |
 
 #### 14.4.11 升级路径
 
-从标准版单机部署升级到企业版分布式部署：
+从单机部署扩展到分布式部署：
 
 ```
-标准版单机                          企业版分布式
+单机                              分布式
 ────────────                        ────────────
 单 JVM 进行      ─────升级────►     K8s 多副本
 MySQL            ─────迁移────►     PostgreSQL + pgvector

@@ -59,20 +59,20 @@
 - ✅ 渠道分组 (按用途/价格分组)
 - ✅ 渠道级故障转移
 - ✅ 熔断超时 (防雪崩)
-- 🔒 代理配置 (HTTP/S、Socket5) **[企业版]**
+- ✅ 代理配置 (HTTP/S、Socket5)
 
 #### 路由
 - ✅ 模型级智能降级 (额度不足/模型不可用时自动切换)
 - ✅ 场景路由 (CODE/CREATIVE/SUMMARY 等)
 - ✅ 模型别名映射
-- 🔒 可视化策略编排 **[企业版]**
-- 🔒 自定义脚本扩展 **[企业版]**
+- ✅ 可视化策略编排
+- ✅ 自定义脚本扩展
 
 #### 用户与认证
 - ✅ 用户 CRUD
 - ✅ 用户名密码登录/登出
 - ✅ OAuth 登录 (GitHub, Gitee, QQ, 企业微信)
-- 🔒 企业 OAuth (飞书、钉钉、GitHub Enterprise) **[企业版]**
+- ✅ 企业 OAuth (飞书、钉钉、GitHub Enterprise)
 
 #### 密钥管理
 - ✅ API Key CRUD
@@ -84,8 +84,8 @@
 #### Token 计量与配额
 - ✅ Token 计量 (输入/输出分别统计)
 - ✅ Token 限额 (用户级/API Key 级)
-- 🔒 用户×渠道限额 **[企业版]**
-- 🔒 请求次数配额 **[企业版]**
+- ✅ 用户×渠道限额
+- ✅ 请求次数配额
 
 #### 安全与风控
 - ✅ 认证中间件 (Token 验证)
@@ -95,23 +95,24 @@
 - ✅ 数据掩码策略
 - ✅ 审计日志
 - ✅ 密钥加密存储 (AES-256)
-- 🔒 国密算法 (SM2/SM3/SM4) **[企业版]**
-- 🔒 完整审计链 (WORM) **[企业版]**
+- ✅ 国密算法 (SM2/SM3/SM4)
+- ✅ 完整审计链 (WORM)
 
 #### 可观测性
 - ✅ Trace ID (全链路追踪)
 - ✅ 结构化日志 (JSON 格式)
 - ✅ 实时指标 (延迟/QPS/Token/费用)
 - ✅ Prometheus 导出
-- 🔒 Grafana 仪表盘 **[企业版]**
-- 🔒 Jaeger 追踪 **[企业版]**
-- 
-#### 语义缓存 🔒 [企业版]
+- ✅ Grafana 仪表盘
+- ✅ Jaeger 追踪
+
+#### 语义缓存
 - 相似请求返回缓存，降低成本 30%+
 - 缓存 TTL 配置
 - 缓存命中率统计
 - 基于 pgvector 的向量相似度搜索
-#### MCP 协议 🔒 [企业版]
+
+#### MCP 协议
 - Resources: 提供上下文数据
 - Prompts: 提供预定义的提示模板
 - Tools: 提供可调用的工具函数
@@ -133,9 +134,9 @@
 | **安全** | Sa-Token | 1.45.0 | 轻量级权限框架 |
 | **HTTP 客户端** | OkHttp | 5.3.2 | 同步/异步调用 |
 | **LLM 框架** | LangChain4j | 1.3.0 | 多厂商模型统一封装 |
-| **向量存储** | pgvector | 0.5+ | 语义缓存向量存储 (企业版) |
+| **向量存储** | pgvector | 0.5+ | 语义缓存向量存储 |
 | **可观测性** | OpenTelemetry | 1.47.0 | 链路追踪 |
-| **国密** | Bouncy Castle | 1.78+ | SM2/SM3/SM4 实现 (企业版) |
+| **国密** | Bouncy Castle | 1.78+ | SM2/SM3/SM4 实现 |
 
 ### 分层架构
 
@@ -163,7 +164,7 @@
 
 ### 部署模式
 
-#### 标准版（单机部署）
+#### 单机部署
 - 单 JVM 实例运行
 - MySQL / H2 数据库
 - 本地限流 (JVM 内存令牌桶)
@@ -172,7 +173,7 @@
 
 **适用场景**: 中小企业、开发测试、POC 验证、资源受限环境
 
-#### 企业版（分布式部署）
+#### 分布式部署（K8s 高可用）
 - K8s 多副本高可用
 - PostgreSQL + pgvector (语义缓存)
 - Redis 集群 (分布式限流/缓存)
@@ -341,7 +342,7 @@ spring:
     hibernate:
       ddl-auto: validate
 
-# PostgreSQL 配置 (企业版)
+# PostgreSQL 配置 (PostgreSQL/pgvector)
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/llm_gateway
@@ -355,14 +356,14 @@ spring:
 #### 缓存配置
 
 ```yaml
-# 本地缓存 (标准版单机)
+# 本地缓存 (单机)
 spring:
   cache:
     type: caffeine
     caffeine:
       spec: maximumSize=10000,expireAfterWrite=5m
 
-# Redis 缓存 (企业版分布式)
+# Redis 缓存 (分布式)
 spring:
   cache:
     type: redis
@@ -374,14 +375,14 @@ spring:
 #### 限流配置
 
 ```yaml
-# 本地限流 (标准版)
+# 本地限流 (单机)
 rate-limit:
   mode: local
   algorithm: token-bucket
   default-rpm: 60
   burst-size: 10
 
-# 分布式限流 (企业版)
+# 分布式限流 (分布式)
 rate-limit:
   mode: distributed
   algorithm: sliding-window
@@ -389,16 +390,15 @@ rate-limit:
   window-size: 60s
 ```
 
-#### 版本特性开关
+#### 功能开关
 
 ```yaml
 llm-gateway:
-  edition: standard  # standard / enterprise
   features:
-    semantic-cache: false       # 语义缓存 (企业版专属)
-    mcp-protocol: false         # MCP 协议 (企业版专属)
-    sm-crypto: false            # 国密算法 (企业版专属)
-    audit-chain-worm: false     # WORM 审计链 (企业版专属)
+    semantic-cache: true       # 语义缓存
+    mcp-protocol: true         # MCP 协议
+    sm-crypto: true            # 国密算法
+    audit-chain-worm: true     # WORM 审计链
 ```
 
 更多配置详见 [技术架构文档](docs/技术架构.md)
@@ -520,7 +520,7 @@ docker-compose up -d
 
 ---
 
-### 单机部署 (标准版)
+### 单机部署
 
 #### 最低配置
 - CPU: 2 核
@@ -542,9 +542,9 @@ nohup java -Xms512m -Xmx1g \
   --spring.profiles.active=standalone > gateway.log 2>&1 &
 ```
 
-详见 [技术架构 - 标准版单机部署](docs/技术架构.md#144-标准版单机部署)
+详见 [技术架构 - 单机部署](docs/技术架构.md#144-标准版单机部署)
 
-### Kubernetes 部署 (企业版)
+### Kubernetes 部署 (分布式高可用)
 
 ```yaml
 apiVersion: apps/v1
