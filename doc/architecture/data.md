@@ -143,8 +143,8 @@ public class ProviderApiKeyDo extends BaseDo {
 |------|------|
 | **JSONB 支持** | 原生 JSON 存储，支持索引，用于 `capabilities`、`config` 等灵活字段 |
 | **全文检索** | 内置全文检索，支持日志查询 |
-| **向量扩展（pgvector）** | 语义缓存向量存储（**企业版功能**） |
-| **行级安全** | 多租户隔离（企业版） |
+| **向量扩展（pgvector）** | 语义缓存向量存储 |
+| **行级安全** | 多租户隔离 |
 | **时区支持** | `TIMESTAMP WITH TIME ZONE` 原生支持 |
 | **开源免费** | 无许可证成本 |
 
@@ -152,12 +152,12 @@ public class ProviderApiKeyDo extends BaseDo {
 
 **使用场景**：
 
-| 场景 | 数据类型 | TTL | 企业版 | 标准版 |
-|------|---------|-----|--------|--------|
-| 限流计数器 | String | 按周期 | ✅ | ✅ |
-| Token 限额缓存 | Hash | 5 分钟 | ✅ | ✅ |
-| 会话缓存 | Hash | 30 分钟 | ✅ | ✅ |
-| 分布式锁 | String | 30 秒 | ✅ | ✅ |
+| 场景 | 数据类型 | TTL |
+|------|---------|-----|
+| 限流计数器 | String | 按周期 |
+| Token 限额缓存 | Hash | 5 分钟 |
+| 会话缓存 | Hash | 30 分钟 |
+| 分布式锁 | String | 30 秒 |
 
 ### 数据库连接配置
 
@@ -370,7 +370,7 @@ ALTER TABLE route_group_provider_api_keys
 
 #### 1.3 semantic_caches（语义缓存）
 
-> **企业版功能**：语义缓存仅在企业版（PostgreSQL + pgvector）中提供，标准版不支持。
+> 说明：语义缓存基于 PostgreSQL + pgvector 向量检索实现。
 
 > 对应信息架构：**SemanticCache** - 相似请求的缓存条目，含向量、响应内容、TTL
 
@@ -853,7 +853,7 @@ CREATE INDEX ix_sensitive_data_rules_type ON sensitive_data_rules(pii_type, is_a
 
 #### 3.8 licenses（许可证）
 
-> 对应信息架构：**License** - 企业版授权管理
+> 对应信息架构：**License** - 授权管理
 
 | 字段名 | 类型 | 约束 | 默认值 | 说明 |
 |--------|------|------|--------|------|
@@ -863,7 +863,7 @@ CREATE INDEX ix_sensitive_data_rules_type ON sensitive_data_rules(pii_type, is_a
 | `licensee` | VARCHAR(256) | NOT NULL | - | 被授权方（企业名称） |
 | `issued_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | - | 签发时间 |
 | `expires_at` | TIMESTAMP WITH TIME ZONE | NOT NULL | - | 过期时间 |
-| `features` | JSONB | NOT NULL | '[]' | 功能列表：["ENTERPRISE", "SM_CRYPTO"] |
+| `features` | JSONB | NOT NULL | '[]' | 功能列表：["SM_CRYPTO", "AUDIT_WORM"] |
 | `max_users` | INT | NULL | - | 最大用户数限制 |
 | `max_nodes` | INT | NULL | - | 最大节点数限制 |
 | `machine_fingerprint` | VARCHAR(256) | NULL | - | 绑定的机器指纹 |

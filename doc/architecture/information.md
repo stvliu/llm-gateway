@@ -112,7 +112,7 @@ LLM-Gateway 是大模型调用的**反向代理层**，本质职责：
 | 用户 OAuth 身份 | UserOAuth | 用户的第三方 OAuth 身份标识（GitHub/飞书/钉钉等） | security |
 | IP 黑名单 | IpBlocklist | 被系统屏蔽的 IP 地址列表 | security |
 | 敏感数据规则 | SensitiveDataRule | PII 检测与脱敏规则定义 | security |
-| 许可证 | License | 企业版授权管理，含授权方、被授权方、有效期、功能列表 | security |
+| 许可证 | License | 授权管理，含授权方、被授权方、有效期、功能列表 | security |
 | Token 限额 | TokenLimit | 用户/凭证的 Token 用量上限配置 | quota |
 | 限流配置 | RateLimitConfig | RPM/TPM 请求次数限制配置 | quota |
 | 用量记录 | UsageRecord | API 调用消耗的 Token 统计记录（计量视角） | quota |
@@ -287,7 +287,7 @@ ProviderApiKey
 ├── 支持多 Key 轮换（自动选择可用 Key）
 ├── 支持默认 Key 保护（不能删除最后一个 Key）
 ├── 支持优先级可视化调整（前端拖拽排序）
-├── 加密存储（标准版：AES-256-GCM；企业版：SM4-GCM 国密算法）
+├── 加密存储（AES-256-GCM / SM4-GCM 国密算法，可选）
 ├── 状态：ACTIVE / DISABLED / EXPIRED / RATE_LIMITED / OVERQUOTA / ERROR / DELETED
 ├── 持有 RPM/TPM 限制（上游 Provider 限制）
 ├── 持有单 Key RPM/TPM 限制（独立限流，可配置）
@@ -345,7 +345,7 @@ Anthropic                   Coding Plan                     渠道3: Anthropic �
 | UserOAuth | 用户 OAuth 身份 | 用户的第三方 OAuth 身份标识 |
 | IpBlocklist | IP 黑名单 | 系统屏蔽的 IP 地址 |
 | SensitiveDataRule | 敏感数据规则 | PII 检测与脱敏规则 |
-| License | 许可证 | 企业版授权管理 |
+| License | 许可证 | 授权管理 |
 
 ### 实体关系
 
@@ -394,15 +394,15 @@ UserOAuth
 └── 支持解绑和重新绑定
 
 License
-├── 企业版授权凭证（RSA 签名验证）
+├── 授权凭证（RSA 签名验证）
 ├── 包含授权方信息（签发者）
 ├── 包含被授权方信息（企业名称）
 ├── 包含有效期（签发时间、过期时间）
-├── 包含功能列表（ENTERPRISE、SM_CRYPTO、AUDIT_WORM 等）
+├── 包含功能列表（SM_CRYPTO、AUDIT_WORM 等）
 ├── 包含限制配置（最大用户数、最大节点数）
 ├── 启动时验证签名和有效期
 ├── 到期前 30/7/1 天发送告警
-└── 过期后降级为标准版功能
+└── 过期后停用授权的高级功能
 
 SensitiveDataRule
 ├── 被应用到请求/响应进行脱敏
@@ -512,7 +512,7 @@ UsageRecord
 TokenLimit 层级关系
 ├── 用户级: User（单用户总限额）
 ├── Key 级: GatewayApiKey（单个凭证限额）
-└── 用户×渠道级: User × Channel（精细化配额控制，企业版）
+└── 用户×渠道级: User × Channel（精细化配额控制）
 ```
 
 ---
@@ -552,7 +552,7 @@ AuditLog
 ├── 记录操作结果（成功/失败）
 ├── 记录客户端 IP（来源追溯）
 ├── 使用链式哈希（每条包含前一条哈希值）
-├── WORM 存储（不可修改/删除）【企业版专属】
+├── WORM 存储（不可修改/删除）
 └── 满足 SOX/GDPR/等保合规要求
 
 CallLog
@@ -717,7 +717,7 @@ AlertNotification
 
 | 安全措施 | 实现方式 |
 |---------|---------|
-| 加密存储 | AES-256-GCM 加密 ProviderApiKey（企业版：SM4-GCM 国密算法） |
+| 加密存储 | AES-256-GCM / SM4-GCM（国密算法）加密 ProviderApiKey |
 | 哈希存储 | SHA-256 哈希 GatewayApiKey |
 | 访问日志 | 记录 `last_used_at` |
 | 权限隔离 | GatewayApiKey 只能访问绑定产品 |
