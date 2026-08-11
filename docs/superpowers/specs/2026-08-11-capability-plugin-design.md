@@ -35,7 +35,7 @@ scope: gateway-core / gateway-capability-api / gateway-capability-*
 | D3 | 插件契约 | `gateway-capability-api` **稳定 SPI（纯接口）**，能力模块只依赖它，与核心实现解耦 |
 | D4 | 插件粒度 | 按**协议 / 能力类型**划分，**不按厂商、不按模型** |
 | D5 | 健康机制 | 复用 **Spring Boot Actuator**（`HealthIndicator`/`HealthGroup`）；连通性探测复用现有 `ConnectivityTester`/`ChannelKeyProbe`；自建 `@Scheduled` 周期探活 |
-| D6 | 数据归属 | **Provider 固有信息**可进插件种子；**Model 规格（含能力）为动态数据，进 DB + 自动发现**；渠道/凭证/配额/启停状态必须留 DB |
+| D6 | 数据归属 | **插件零厂商数据**：厂商数据（Provider 固有信息、端点、鉴权、方言、Model 规格）**全部进 DB**（复用 provider_config/models_config）；渠道/凭证/配额/启停状态必须留 DB；插件只含协议翻译行为（代码） |
 | D7 | Canonical IR 范围 | **本轮仅覆盖 chat 类**；embedding/rerank 等非 chat 能力类型后置（YAGNI） |
 | D8 | 转换策略 | **每协议一个 Adapter 做"原生↔规范"**，任意两协议互转 = 2 跳到规范，消除 N×N |
 
@@ -131,10 +131,13 @@ Capability {
 
 | 数据 | 归属 | 理由 |
 |------|------|------|
-| Provider 固有信息（code/name/logo/apiDocUrl/默认priority） | **插件种子**（可选） | 相对静态 |
-| 能力词表 `Capability` | **插件**（SPI/注册表） | 协议能力静态 |
+| Provider 固有信息（code/name/logo/apiDocUrl/默认priority） | **DB**（provider_config/模板） | 部署相关，管理员可控 |
+| 厂商**方言档案**（端点/鉴权/请求响应 quirks） | **DB**（扩展 provider_config） | 按厂商微调，数据驱动 |
+| 能力词表 `Capability` | **插件**（SPI/注册表） | 协议能力静态（行为） |
 | **Model 规格**（含 capabilities/modalities） | **DB** | 高频变化，需运行时更新 |
 | 渠道/端点/凭证/配额/启停状态 | **DB** | 运行时 + 安全（含密钥） |
+
+> **插件零厂商数据**：插件只承载"协议翻译行为"（代码），不含任何具体厂商的端点、鉴权、模型、方言数据。新增 OpenAI 兼容厂商 = 纯 DB 操作（provider_config + 方言档案 + models），不碰代码。
 
 **模型能力自动发现**：
 - 复用并扩展现有 `ChannelKeyProbe`（其 `KeyTestResult` 已含可用模型列表）。
@@ -143,6 +146,30 @@ Capability {
 - `Model.capabilities` 数据源 = **自动发现 + 管理员手动录入**（双通道）。
 
 **审计**：种子/自动发现导入记录为**系统操作**（`created_by=system`），符合全实体可审计要求；种子导入不覆盖已有 DB 记录。
+
+### 6.x OpenAI 兼容厂商支持（方言档案）
+
+大部分大模型供应商兼容 OpenAI 协议，本设计用**一个 OpenAI 协议插件 + 数据驱动的"方言档案"**来支持，而非每个厂商一个插件。
+
+**两层结构**：
+- `gateway-capability-openai` 插件只提供一次 `OpenAIProtocolAdapter`（OpenAI 原生↔Canonical IR 的翻译逻辑）。
+- 各厂商差异由 **DB 数据（方言档案）**表达，OpenAI Adapter 在 normalize/denormalize 时读取当前 Provider 的方言档案做微调。
+
+**方言档案**（扩展现有 `provider_config` JSONB）字段：
+
+| 差异点 | 例子 | 字段 |
+|--------|------|------|
+| 端点路径 | OpenAI `/v1/chat/completions`；火山方舟 `/api/v3/chat/completions`；Azure `/openai/deployments/...` | `endpointTemplate` |
+| 鉴权方式 | Bearer；Azure `api-key` header | `authScheme` |
+| 请求 quirks | 强制 max_tokens、需 `api-version`、stream_options、response_format 差异 | `requestHints` |
+| 响应 quirks | 非标 usage、finish_reason 容错、流式 chunk 结构 | `responseHints` |
+| 模型名映射 | 复用 `ChannelModel.upstreamModelName` + `UPSTREAM_MODEL_NAME_RULES`（已有机制） | — |
+
+**接入判定**：
+- 厂商**兼容 OpenAI** → **零代码**：新增一条 Provider 数据（provider_config + 方言档案 + models），复用 OpenAI 插件。
+- 厂商**真不兼容**（原生 Anthropic/Gemini 等非 OpenAI 方言）→ 才需要写**新协议插件**（各一个 Adapter）。
+
+**整合既有设计（不重复造轮子）**：方言档案扩展 `provider_template` 的 `provider_config`；模型名映射复用 `model-name-mapping-design`；官方模板按 `provider_type=OPENAI` + 方言档案预置主流厂商。
 
 ## 7. 能力健康机制
 
