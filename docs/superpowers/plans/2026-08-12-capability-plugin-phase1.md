@@ -710,7 +710,7 @@ public class OpenAIProtocolAdapter implements ProtocolAdapter<OpenAIChatRequest>
                                 .toolUse(CanonicalToolCall.builder()
                                         .id(tc.getId())
                                         .name(tc.getFunction() != null ? tc.getFunction().getName() : null)
-                                        .arguments(tc.getFunction() != null ? tc.getFunction().getArguments() : null)
+                                        .arguments(tc.getFunction() != null ? toJsonNode(tc.getFunction().getArguments()) : null)
                                         .build())
                                 .build());
                     }
@@ -748,7 +748,7 @@ public class OpenAIProtocolAdapter implements ProtocolAdapter<OpenAIChatRequest>
                             .type("function")
                             .function(OpenAIChatResponse.FunctionCall.builder()
                                     .name(tu.getName())
-                                    .arguments(tu.getArguments())
+                                    .arguments(tu.getArguments() != null ? tu.getArguments().toString() : null)
                                     .build())
                             .build());
                 }
