@@ -34,6 +34,13 @@
     <description>LLM-Gateway Backend Module - Core API Gateway Services</description>
 
     <dependencies>
+        <!-- 能力 SPI 契约模块（规范内部模型 + ProtocolAdapter 纯接口，无 Spring 依赖） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-capability-api</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
