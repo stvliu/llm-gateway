@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -210,11 +211,16 @@ public class OpenAIProtocolAdapter implements ProtocolAdapter<OpenAIChatRequest>
         if (tools == null) return null;
         List<Map<String, Object>> out = new ArrayList<>();
         for (CanonicalTool t : tools) {
-            out.add(Map.of("type", "function",
-                    "function", Map.of(
-                            "name", t.getName(),
-                            "description", t.getDescription() == null ? "" : t.getDescription(),
-                            "parameters", t.getParameters())));
+            // 用 HashMap 容忍 name/description/parameters 为 null（工具无入参 schema 时合法），
+            // 避免 Map.of 对 null 值抛 NPE；配合 @JsonInclude(NON_NULL) 省略 null 字段
+            Map<String, Object> openaiTool = new HashMap<>();
+            openaiTool.put("type", "function");
+            Map<String, Object> function = new HashMap<>();
+            function.put("name", t.getName());
+            function.put("description", t.getDescription());
+            function.put("parameters", t.getParameters());
+            openaiTool.put("function", function);
+            out.add(openaiTool);
         }
         return out;
     }
