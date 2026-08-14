@@ -23,7 +23,7 @@ import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
@@ -102,7 +102,7 @@ class ChannelFailoverStrategyTest {
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(returnsFirstArg());
         return new ChannelFailoverInvoker(keyInvoker, errorClassifier,
-                eventPublisher, tuner, mock(ProtocolConverter.class));
+                eventPublisher, tuner, mock(ProtocolConversionFacade.class));
     }
 
     /**

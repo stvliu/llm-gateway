@@ -15,12 +15,15 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
+import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,22 +36,24 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 跨协议转换集成测试 — 验证 {@link ProtocolConverter} 的 OpenAI ↔ Anthropic 双向转换逻辑。
+ * 跨协议转换集成测试 — 验证 {@link ProtocolConversionFacade} 的 OpenAI ↔ Anthropic 双向转换逻辑。
  * <p>
- * 直接构造真实的 {@link ProtocolConverter} 实例（生产 {@code @Component}，非 mock），
- * 覆盖请求与响应四个方向的转换语义：
+ * 直接构造真实的 {@link ProtocolConversionFacade}（生产 {@code @Component}，内部使用两个真实
+ * ProtocolAdapter 走 Canonical IR 两跳 normalize→denormalize），覆盖请求与响应四个方向的转换语义：
  * <ul>
- *     <li>OpenAI 请求 → Anthropic 请求：system 角色提取到顶层、max_tokens 缺省补 1024、tools/tool_choice 格式转换</li>
+ *     <li>OpenAI 请求 → Anthropic 请求：system 角色提取到顶层、tools/tool_choice 格式转换</li>
  *     <li>Anthropic 请求 → OpenAI 请求：顶层 system 合并为首条消息、content 拼接、tools/tool_choice 反向转换</li>
  *     <li>Anthropic 响应 → OpenAI 响应：content blocks 拆分为 content + tool_calls、stop_reason 映射、补 total_tokens</li>
  *     <li>OpenAI 响应 → Anthropic 响应：choices 转 content blocks、finish_reason 映射、usage 字段名映射</li>
  * </ul>
  * <p>
  * ObjectMapper 配置与 {@code ProviderSimulator} 保持一致，确保转换行为贴近生产环境。
+ * 说明：max_tokens 缺省补全已从转换器下沉到出站调谐（AnthropicTuner），转换层不再补 1024；
+ * stream 在规范 IR 中为布尔值，转换后为 false（非 null）。
  */
 class ProtocolConversionIntegrationTest {
 
-    private ProtocolConverter converter;
+    private ProtocolConversionFacade facade;
 
     @BeforeEach
     void setUp() {
@@ -56,7 +61,9 @@ class ProtocolConversionIntegrationTest {
         ObjectMapper objectMapper = new ObjectMapper()
                 .findAndRegisterModules()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        converter = new ProtocolConverter(objectMapper);
+        facade = new ProtocolConversionFacade(
+                new OpenAIProtocolAdapter(objectMapper),
+                new AnthropicProtocolAdapter());
     }
 
     // ==================== 请求转换 ====================
@@ -66,9 +73,9 @@ class ProtocolConversionIntegrationTest {
     class RequestConversion {
 
         @Test
-        @DisplayName("OpenAIChatRequest → AnthropicMessagesRequest：system 提取、max_tokens 缺省、tools/tool_choice 转换")
+        @DisplayName("OpenAIChatRequest → AnthropicMessagesRequest：system 提取、tools/tool_choice 转换")
         void testConvert_openaiRequestToAnthropic() {
-            // 构造 OpenAI 请求：含 system 消息、tools、tool_choice，max_tokens 为空（验证缺省补全）
+            // 构造 OpenAI 请求：含 system 消息、tools、tool_choice
             OpenAIChatRequest request = OpenAIChatRequest.builder()
                     .model("gpt-4o")
                     .messages(List.of(
@@ -91,7 +98,7 @@ class ProtocolConversionIntegrationTest {
                     .stream(false)
                     .build();
 
-            AnthropicMessagesRequest result = converter.toAnthropic(request);
+            AnthropicMessagesRequest result = (AnthropicMessagesRequest) facade.convertRequest(request, "anthropic");
 
             // 基本字段透传
             assertThat(result.getModel()).isEqualTo("gpt-4o");
@@ -102,8 +109,8 @@ class ProtocolConversionIntegrationTest {
             assertThat(result.getMessages()).hasSize(1);
             assertThat(result.getMessages().get(0).getRole()).isEqualTo("user");
             assertThat(result.getMessages().get(0).getContent()).isEqualTo("Hello");
-            // max_tokens 缺省补 1024
-            assertThat(result.getMaxTokens()).isEqualTo(1024);
+            // max_tokens 缺省补全已下沉出站调谐（AnthropicTuner），转换层原样透传（null）
+            assertThat(result.getMaxTokens()).isNull();
             // stop → stop_sequences
             assertThat(result.getStopSequences()).containsExactly("END");
             // tools 格式转换：function.{name,description,parameters} → {name,description,input_schema}
@@ -114,8 +121,8 @@ class ProtocolConversionIntegrationTest {
             assertThat(anthropicTool).containsKey("input_schema");
             // tool_choice: String "auto" → Map{type:"auto"}
             assertThat(result.getToolChoice()).containsEntry("type", "auto");
-            // stream=false → null（Anthropic 不序列化）
-            assertThat(result.getStream()).isNull();
+            // stream 规范 IR 为布尔值，转换后为 false
+            assertThat(result.getStream()).isFalse();
         }
 
         @Test
@@ -140,7 +147,7 @@ class ProtocolConversionIntegrationTest {
                     .stream(false)
                     .build();
 
-            OpenAIChatRequest result = converter.toOpenAI(request);
+            OpenAIChatRequest result = (OpenAIChatRequest) facade.convertRequest(request, "openai");
 
             assertThat(result.getModel()).isEqualTo("claude-sonnet-4");
             assertThat(result.getMaxTokens()).isEqualTo(512);
@@ -164,8 +171,8 @@ class ProtocolConversionIntegrationTest {
             assertThat(function).containsKey("parameters");
             // tool_choice: Map{type:"auto"} → String "auto"
             assertThat(result.getToolChoice()).isEqualTo("auto");
-            // stream=false → null
-            assertThat(result.getStream()).isNull();
+            // stream 规范 IR 为布尔值，转换后为 false
+            assertThat(result.getStream()).isFalse();
         }
     }
 
@@ -200,7 +207,7 @@ class ProtocolConversionIntegrationTest {
                             .build())
                     .build();
 
-            OpenAIChatResponse result = converter.toOpenAI(response);
+            OpenAIChatResponse result = (OpenAIChatResponse) facade.convertResponse(response, "anthropic");
 
             assertThat(result.getId()).isEqualTo("msg_001");
             assertThat(result.getModel()).isEqualTo("claude-sonnet-4");
@@ -214,7 +221,7 @@ class ProtocolConversionIntegrationTest {
             assertThat(toolCall.getId()).isEqualTo("tool_1");
             assertThat(toolCall.getType()).isEqualTo("function");
             assertThat(toolCall.getFunction().getName()).isEqualTo("get_weather");
-            // tool_use.input (Map) → function.arguments (String，Map.toString)
+            // tool_use.input (Map) → function.arguments（JSON 字符串，含 city）
             assertThat(toolCall.getFunction().getArguments()).contains("city");
             // stop_reason "end_turn" → finish_reason "stop"
             assertThat(choice.getFinishReason()).isEqualTo("stop");
@@ -257,7 +264,7 @@ class ProtocolConversionIntegrationTest {
                             .build())
                     .build();
 
-            AnthropicMessagesResponse result = converter.toAnthropic(response);
+            AnthropicMessagesResponse result = (AnthropicMessagesResponse) facade.convertResponse(response, "openai");
 
             assertThat(result.getId()).isEqualTo("chatcmpl-001");
             assertThat(result.getModel()).isEqualTo("gpt-4o");
@@ -272,8 +279,9 @@ class ProtocolConversionIntegrationTest {
             AnthropicMessagesResponse.ToolUse toolUse = result.getContent().get(1).getToolUse();
             assertThat(toolUse.getId()).isEqualTo("call_1");
             assertThat(toolUse.getName()).isEqualTo("search");
-            // tool_calls.function.arguments (String) → tool_use.input (Object，原样保留)
-            assertThat(toolUse.getInput()).isEqualTo("{\"q\":\"test\"}");
+            // tool_calls.function.arguments (String) → tool_use.input（规范 IR 中为 JsonNode，文本值不变）
+            assertThat(toolUse.getInput()).isInstanceOf(JsonNode.class);
+            assertThat(((JsonNode) toolUse.getInput()).asText()).isEqualTo("{\"q\":\"test\"}");
             // finish_reason "tool_calls" → stop_reason "tool_use"
             assertThat(result.getStopReason()).isEqualTo("tool_use");
             // usage 映射：prompt_tokens→input_tokens, completion_tokens→output_tokens

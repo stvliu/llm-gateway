@@ -17,7 +17,7 @@ package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
@@ -59,7 +59,7 @@ class ChatDispatchServiceTest {
     private RoutingResolver routingResolver;
 
     @Mock
-    private ProtocolConverter protocolConverter;
+    private ProtocolConversionFacade protocolConversionFacade;
 
     @Mock
     private AuditGateway auditGateway;
@@ -78,7 +78,7 @@ class ChatDispatchServiceTest {
     @BeforeEach
     void setUp() {
         dispatchService = new ChatDispatchServiceImpl(routingResolver,
-                protocolConverter, auditGateway, eventPublisher, channelFailoverInvoker);
+                auditGateway, eventPublisher, channelFailoverInvoker);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
@@ -114,8 +114,8 @@ class ChatDispatchServiceTest {
             // then
             assertThat(result).isInstanceOf(OpenAIChatResponse.class);
             // 阶段3/4 下沉 Invoker：dispatch 不再做请求转换/调谐，protocolConverter 不被 dispatch 调用
-            verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
-            verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesResponse.class));
+            verify(protocolConversionFacade, never()).convertRequest(any(ProtocolRequest.class), anyString());
+            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString());
             verify(channelFailoverInvoker).invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString());
         }
@@ -152,8 +152,8 @@ class ChatDispatchServiceTest {
             verify(channelFailoverInvoker).invoke(eq(anthropicContext), anyList(), eq(request),
                     eq(Protocol.OPENAI), eq(7L), anyString());
             // 请求转换(toAnthropic) + 响应转换(toOpenAI) 均下沉 Invoker，dispatch 不再调用 protocolConverter
-            verify(protocolConverter, never()).toAnthropic(any(OpenAIChatRequest.class));
-            verify(protocolConverter, never()).toOpenAI(any(AnthropicMessagesResponse.class));
+            verify(protocolConversionFacade, never()).convertRequest(any(ProtocolRequest.class), anyString());
+            verify(protocolConversionFacade, never()).convertResponse(any(ProtocolResponse.class), anyString());
         }
 
         @Test
@@ -212,7 +212,7 @@ class ChatDispatchServiceTest {
             // then
             verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString(), any(StreamCallback.class));
-            verify(protocolConverter, never()).convertStreamChunk(anyString(), anyString(), anyString());
+            verify(protocolConversionFacade, never()).convertStreamChunk(anyString(), anyString(), anyString());
         }
 
         @Test

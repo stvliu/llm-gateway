@@ -19,7 +19,6 @@ import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.audit.entity.CallLog;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
@@ -51,18 +50,15 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private static final Logger log = LoggerFactory.getLogger(ChatDispatchServiceImpl.class);
 
     private final RoutingResolver routingResolver;
-    private final ProtocolConverter protocolConverter;
     private final AuditGateway auditGateway;
     private final DomainEventPublisher eventPublisher;
     private final ChannelFailoverInvoker channelFailoverInvoker;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
-                                   ProtocolConverter protocolConverter,
                                    AuditGateway auditGateway,
                                    DomainEventPublisher eventPublisher,
                                    ChannelFailoverInvoker channelFailoverInvoker) {
         this.routingResolver = routingResolver;
-        this.protocolConverter = protocolConverter;
         this.auditGateway = auditGateway;
         this.eventPublisher = eventPublisher;
         this.channelFailoverInvoker = channelFailoverInvoker;
