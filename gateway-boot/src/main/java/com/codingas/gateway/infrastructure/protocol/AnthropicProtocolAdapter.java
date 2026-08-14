@@ -73,7 +73,10 @@ public class AnthropicProtocolAdapter implements ProtocolAdapter<AnthropicMessag
                 .temperature(req.getTemperature())
                 .stop(req.getStopSequences())
                 .tools(convertToolsToCanonical(req.getTools()))
-                .toolChoice(req.getToolChoice() != null ? String.valueOf(req.getToolChoice().get("type")) : null)
+                // toolChoice 存在但 type 键缺失/null 时返回 null（对齐旧 ProtocolConverter.convertAnthropicToolChoice 语义），
+                // 避免 String.valueOf 产出字面量 "null"
+                .toolChoice(req.getToolChoice() != null && req.getToolChoice().get("type") != null
+                        ? req.getToolChoice().get("type").toString() : null)
                 .stream(req.isStream())
                 .build();
     }
@@ -174,7 +177,6 @@ public class AnthropicProtocolAdapter implements ProtocolAdapter<AnthropicMessag
 
     // ---- 工具转换 ----
 
-    @SuppressWarnings("unchecked")
     private List<CanonicalTool> convertToolsToCanonical(List<Map<String, Object>> tools) {
         if (tools == null) return null;
         List<CanonicalTool> out = new ArrayList<>();
