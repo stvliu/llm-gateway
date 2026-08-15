@@ -23,7 +23,7 @@ import com.codingas.gateway.domain.application.enums.FailureStrategy;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
@@ -68,7 +68,7 @@ class ChannelFailoverStrategyTest {
     /**
      * 构造真实 ChannelFailoverInvoker，注入 mock KeyFailoverInvoker + 真实 ErrorClassifier
      *
-     * <p>其他依赖（OutboundTuner/ProtocolConverter/DomainEventPublisher）用 mock/stub，
+     * <p>其他依赖（OutboundTuner/ProtocolConversionFacade/DomainEventPublisher）用 mock/stub，
      * 聚焦策略分流语义非调谐/转换/事件发布。OutboundTuner.tune 用 returnsFirstArg 桩，
      * 匹配 invoker 调谐下沉后 keyFailoverInvoker.invoke/invokeSingleKey 收到的 request
      * 仍是同一个 mock 对象（断言匹配 any(ProtocolRequest.class)）。</p>
@@ -87,7 +87,7 @@ class ChannelFailoverStrategyTest {
      * 构造真实 ChannelFailoverInvoker，注入 mock KeyFailoverInvoker + 真实 ErrorClassifier + 指定 eventPublisher
      *
      * <p>重载版本：用于验证转移事件发布行为（FAIL_RETRY 不发 / FAIL_OVER 发）。
-     * 调用方持有 eventPublisher mock 引用，可对其 verify。其他依赖（OutboundTuner/ProtocolConverter）
+     * 调用方持有 eventPublisher mock 引用，可对其 verify。其他依赖（OutboundTuner/ProtocolConversionFacade）
      * 用 mock/stub。ErrorClassifier 用真实实例，其 classify 逻辑确定性映射
      * （RATE_LIMIT_ERROR→L1），无需 stub。</p>
      *
@@ -102,7 +102,7 @@ class ChannelFailoverStrategyTest {
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(returnsFirstArg());
         return new ChannelFailoverInvoker(keyInvoker, errorClassifier,
-                eventPublisher, tuner, mock(ProtocolConverter.class));
+                eventPublisher, tuner, mock(ProtocolConversionFacade.class));
     }
 
     /**

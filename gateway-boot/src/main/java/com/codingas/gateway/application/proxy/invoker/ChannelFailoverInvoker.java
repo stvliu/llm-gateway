@@ -20,15 +20,11 @@ import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.domain.application.enums.FailureStrategy;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -80,28 +76,28 @@ public class ChannelFailoverInvoker {
     private final DomainEventPublisher eventPublisher;
     /** 出站调谐编排器（调谐下沉：每候选独立 convert+tune） */
     private final OutboundTuner outboundTuner;
-    /** 跨协议转换器（调谐下沉：每候选独立请求转换 + 流式 chunk 转换方向重建） */
-    private final ProtocolConverter protocolConverter;
+    /** 跨协议转换门面（调谐下沉：每候选独立请求转换 + 流式 chunk 转换方向重建） */
+    private final ProtocolConversionFacade protocolConversionFacade;
 
     /**
      * 构造渠道级故障转移 Invoker
      *
-     * @param keyFailoverInvoker  Key 级故障转移 Invoker（L0，对每个候选内部跑）
-     * @param errorClassifier     错误分流器（L1/NONE 决策）
-     * @param eventPublisher      领域事件发布器（发布转移事件，供异步持久化与可观测性）
-     * @param outboundTuner       出站调谐编排器（每候选独立 tune：协议级默认值补全 + 模型名替换）
-     * @param protocolConverter   跨协议转换器（每候选独立 convertRequest + 流式 chunk 转换方向重建）
+     * @param keyFailoverInvoker      Key 级故障转移 Invoker（L0，对每个候选内部跑）
+     * @param errorClassifier         错误分流器（L1/NONE 决策）
+     * @param eventPublisher          领域事件发布器（发布转移事件，供异步持久化与可观测性）
+     * @param outboundTuner           出站调谐编排器（每候选独立 tune：协议级默认值补全 + 模型名替换）
+     * @param protocolConversionFacade 跨协议转换门面（每候选独立 convertRequest + 流式 chunk 转换方向重建）
      */
     public ChannelFailoverInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                    ErrorClassifier errorClassifier,
                                    DomainEventPublisher eventPublisher,
                                    OutboundTuner outboundTuner,
-                                   ProtocolConverter protocolConverter) {
+                                   ProtocolConversionFacade protocolConversionFacade) {
         this.keyFailoverInvoker = keyFailoverInvoker;
         this.errorClassifier = errorClassifier;
         this.eventPublisher = eventPublisher;
         this.outboundTuner = outboundTuner;
-        this.protocolConverter = protocolConverter;
+        this.protocolConversionFacade = protocolConversionFacade;
     }
 
     /**
@@ -319,7 +315,7 @@ public class ChannelFailoverInvoker {
      * <ol>
      *   <li>{@code original.copy()} 生成同类型副本（手写字段拷贝）</li>
      *   <li>若候选需跨协议适配（{@link RoutingContext#needsProtocolAdaptation()}），
-     *       调 {@link ProtocolConverter} 转换请求协议</li>
+     *       调 {@link ProtocolConversionFacade} 转换请求协议</li>
      *   <li>{@link OutboundTuner#tune} 执行协议级默认值补全 + 模型名替换（候选 upstreamModelName）</li>
      * </ol>
      *
@@ -343,13 +339,8 @@ public class ChannelFailoverInvoker {
      * @return 转换后的请求；无需转换时返回原请求
      */
     private ProtocolRequest convertRequest(ProtocolRequest request, RoutingContext ctx) {
-        if (request instanceof OpenAIChatRequest openai && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
-            return protocolConverter.toAnthropic(openai);
-        }
-        if (request instanceof AnthropicMessagesRequest anthropic && ctx.upstreamProtocol() == Protocol.OPENAI) {
-            return protocolConverter.toOpenAI(anthropic);
-        }
-        return request;
+        // 目标协议 = 候选上游协议；Facade 内部按协议类型分支（normalize→denormalize 两跳）
+        return protocolConversionFacade.convertRequest(request, ctx.upstreamProtocol().name().toLowerCase());
     }
 
     /**
@@ -382,14 +373,8 @@ public class ChannelFailoverInvoker {
      * @return 转换后的响应；无法匹配时原样返回并告警
      */
     private ProtocolResponse convertResponse(ProtocolResponse response, RoutingContext ctx) {
-        if (response instanceof AnthropicMessagesResponse anthropic && ctx.upstreamProtocol() == Protocol.ANTHROPIC) {
-            return protocolConverter.toOpenAI(anthropic);
-        }
-        if (response instanceof OpenAIChatResponse openai && ctx.upstreamProtocol() == Protocol.OPENAI) {
-            return protocolConverter.toAnthropic(openai);
-        }
-        log.warn("无法转换响应: upstreamProtocol={}, 原样返回", ctx.upstreamProtocol());
-        return response;
+        // 源协议 = 候选上游协议（响应来源）；Facade 内部按协议类型分支（normalize→denormalize 两跳）
+        return protocolConversionFacade.convertResponse(response, ctx.upstreamProtocol().name().toLowerCase());
     }
 
     /**
@@ -401,8 +386,8 @@ public class ChannelFailoverInvoker {
      * 构造转换方向是安全的。</p>
      *
      * <ul>
-     *   <li>跨协议候选：chunk 经 {@link ProtocolConverter#convertStreamChunk} 转换，
-     *       onComplete 经 {@link ProtocolConverter#convertStreamDone} 转换结束标记</li>
+     *   <li>跨协议候选：chunk 经 {@link ProtocolConversionFacade#convertStreamChunk} 转换，
+     *       onComplete 经 {@link ProtocolConversionFacade#convertStreamDone} 转换结束标记</li>
      *   <li>同协议候选：chunk 透传，OpenAI 入站时 onComplete 注入 [DONE] 结束标记</li>
      * </ul>
      *
@@ -420,7 +405,7 @@ public class ChannelFailoverInvoker {
             return new StreamCallback() {
                 @Override
                 public void onChunk(String data) {
-                    StreamChunkResult result = protocolConverter.convertStreamChunk(data, fromProtocol, toProtocol);
+                    StreamChunkResult result = protocolConversionFacade.convertStreamChunk(data, fromProtocol, toProtocol);
                     if (result != null) {
                         downstream.onChunk(result.data());
                     }
@@ -428,7 +413,7 @@ public class ChannelFailoverInvoker {
 
                 @Override
                 public void onComplete() {
-                    StreamChunkResult done = protocolConverter.convertStreamDone(fromProtocol, toProtocol);
+                    StreamChunkResult done = protocolConversionFacade.convertStreamDone(fromProtocol, toProtocol);
                     if (done != null) {
                         downstream.onChunk(done.data());
                     }
