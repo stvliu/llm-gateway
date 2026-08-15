@@ -24,7 +24,7 @@ import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
@@ -120,13 +120,13 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyFailoverInvoker) {
         // 事件发布器用 no-op mock（集成测试不验证转移事件持久化，由 ChannelFailoverInvokerTest 覆盖）
         // OutboundTuner 用 mock + returnsFirstArg（调谐下沉后每候选 tune，集成测试聚焦真实分流表非调谐）
-        // ProtocolConverter 用 no-op mock（集成测试候选均为同协议，不触发跨协议转换）
+        // ProtocolConversionFacade 用 no-op mock（集成测试候选均为同协议，不触发跨协议转换）
         OutboundTuner tuner = mock(OutboundTuner.class);
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(org.mockito.AdditionalAnswers.returnsFirstArg());
         return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier,
                 mock(DomainEventPublisher.class),
-                tuner, mock(ProtocolConverter.class));
+                tuner, mock(ProtocolConversionFacade.class));
     }
 
     // ==================== L1 转移与错误分流（非流式） ====================

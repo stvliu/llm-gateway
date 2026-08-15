@@ -44,6 +44,7 @@
     </licenses>
 
     <modules>
+        <module>gateway-capability-api</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>

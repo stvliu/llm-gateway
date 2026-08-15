@@ -36,8 +36,7 @@ jobs:
 
       - name: Build with Maven
         run: |
-          mvn clean compile -DskipTests ${{ env.MAVEN_OPTS }}
-
+          mvn clean compile -DskipTests
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -73,9 +72,8 @@ jobs:
       - name: Checkstyle
         continue-on-error: true
         run: |
-          mvn checkstyle:check -DskipTests ${{ env.MAVEN_OPTS }}
-
+          mvn checkstyle:check -DskipTests
       - name: SpotBugs
         continue-on-error: true
         run: |
-          mvn spotbugs:check -DskipTests ${{ env.MAVEN_OPTS }}
+          mvn spotbugs:check -DskipTests

@@ -253,8 +253,7 @@ jobs:
               -DskipTests \
               -Dspotless.apply.skip=true \
               -Dgpg.skip=false \
-              -P release \
-              ${{ env.MAVEN_OPTS }}
+              -P release
 
   # -------------------------------------------------------------------
   # 发布 Helm Chart

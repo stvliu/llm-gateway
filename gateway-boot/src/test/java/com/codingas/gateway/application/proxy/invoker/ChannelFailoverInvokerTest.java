@@ -26,7 +26,9 @@ import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConverter;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
+import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -82,7 +84,7 @@ class ChannelFailoverInvokerTest {
     private OutboundTuner outboundTuner;
 
     @Mock
-    private ProtocolConverter protocolConverter;
+    private ProtocolConversionFacade protocolConversionFacade;
 
     private ChannelFailoverInvoker invoker;
 
@@ -93,7 +95,7 @@ class ChannelFailoverInvokerTest {
     @BeforeEach
     void setUp() {
         invoker = new ChannelFailoverInvoker(keyFailoverInvoker, errorClassifier,
-                eventPublisher, outboundTuner, protocolConverter);
+                eventPublisher, outboundTuner, protocolConversionFacade);
 
         ctx1 = new RoutingContext(10L, 20L, "https://ch1.example.com/v1",
                 Protocol.OPENAI, "sk-1", 60, false, "gpt-4o", null,
@@ -486,7 +488,7 @@ class ChannelFailoverInvokerTest {
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerWithRealTuner = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
-                eventPublisher, realTuner, protocolConverter);
+                eventPublisher, realTuner, protocolConversionFacade);
 
         // 两候选 upstreamModelName 不同；主候选失败，备候选成功（同协议，聚焦模型名替换）
         // Task 7：期望换渠道，用 FAIL_OVER 策略（FAIL_RETRY 不换渠道）
@@ -532,8 +534,10 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("非流式跨协议换候选：基于实际成功候选(非主候选) 转换响应为入站协议格式")
     void nonStream_failoverCrossProtocol_convertsResponsePerSuccessfulCandidate() {
-        // 真实 ProtocolConverter（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
-        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        // 真实 ProtocolConversionFacade（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
+        ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
+                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                new AnthropicProtocolAdapter());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -586,8 +590,10 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式跨协议候选：基于实际候选 upstreamProtocol 转换 chunk（修复前 invoker 不转换）")
     void stream_crossProtocolCandidate_convertsChunkPerCandidate() {
-        // 真实 ProtocolConverter（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
-        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        // 真实 ProtocolConversionFacade（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
+        ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
+                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                new AnthropicProtocolAdapter());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -628,7 +634,9 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式跨协议换候选：基于实际成功候选(非主候选) upstreamProtocol 重建转换方向")
     void stream_failoverDifferentProtocol_usesSuccessfulCandidateDirection() {
-        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
+                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                new AnthropicProtocolAdapter());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -675,8 +683,10 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式跨协议换候选：主同协议失败→备跨协议成功，chunk 被转换为入站协议格式（与 2.5b 对称方向）")
     void stream_failoverFromSameToCrossProtocol_convertsChunkToInbound() {
-        // 真实 ProtocolConverter + 真实 OutboundTuner
-        ProtocolConverter realConverter = new ProtocolConverter(new com.fasterxml.jackson.databind.ObjectMapper());
+        // 真实 ProtocolConversionFacade + 真实 OutboundTuner
+        ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
+                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                new AnthropicProtocolAdapter());
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
