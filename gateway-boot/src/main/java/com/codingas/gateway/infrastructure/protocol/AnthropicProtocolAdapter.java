@@ -73,7 +73,7 @@ public class AnthropicProtocolAdapter implements ProtocolAdapter<AnthropicMessag
                 .temperature(req.getTemperature())
                 .stop(req.getStopSequences())
                 .tools(convertToolsToCanonical(req.getTools()))
-                // toolChoice 存在但 type 键缺失/null 时返回 null（对齐旧 ProtocolConverter.convertAnthropicToolChoice 语义），
+                // toolChoice 存在但 type 键缺失/null 时返回 null（对齐旧版 convertAnthropicToolChoice 语义），
                 // 避免 String.valueOf 产出字面量 "null"
                 .toolChoice(req.getToolChoice() != null && req.getToolChoice().get("type") != null
                         ? req.getToolChoice().get("type").toString() : null)

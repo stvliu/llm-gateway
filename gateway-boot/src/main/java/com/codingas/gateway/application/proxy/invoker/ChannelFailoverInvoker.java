@@ -24,7 +24,7 @@ import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
@@ -315,7 +315,7 @@ public class ChannelFailoverInvoker {
      * <ol>
      *   <li>{@code original.copy()} 生成同类型副本（手写字段拷贝）</li>
      *   <li>若候选需跨协议适配（{@link RoutingContext#needsProtocolAdaptation()}），
-     *       调 {@link ProtocolConverter} 转换请求协议</li>
+     *       调 {@link ProtocolConversionFacade} 转换请求协议</li>
      *   <li>{@link OutboundTuner#tune} 执行协议级默认值补全 + 模型名替换（候选 upstreamModelName）</li>
      * </ol>
      *

@@ -17,7 +17,7 @@ package com.codingas.gateway.application.proxy;
 
 import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.conversion;
+package com.codingas.gateway.application.protocol.conversion;
 
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;

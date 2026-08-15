@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * AnthropicTuner 出站调谐器单元测试
  *
  * <p>该调谐器承担 max_tokens 缺省补 1024 与 system 角色消息提取职责（自旧
- * {@code ProtocolConverter} 下沉而来）。在转换层不再补 1024 后，这里是该行为的唯一
+ * 转换逻辑下沉而来）。在转换层不再补 1024 后，这里是该行为的唯一
  * 自动化回归守卫。</p>
  */
 class AnthropicTunerTest {

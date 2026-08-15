@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 /**
  * 流式 chunk 转换器：OpenAI ↔ Anthropic 的 SSE chunk / 结束标记转换。
  *
- * <p>从旧 {@code ProtocolConverter} 平移而来，纯逻辑拷贝、行为不变。规范 IR 阶段未覆盖流式
+ * <p>从旧协议转换逻辑平移而来，纯逻辑拷贝、行为不变。规范 IR 阶段未覆盖流式
  * （YAGNI，见 spec §D7 落地顺序），故本轮保持原样。</p>
  */
 @Component

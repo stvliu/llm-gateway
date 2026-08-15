@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.conversion;
+package com.codingas.gateway.application.protocol.conversion;
 
 import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
 import com.codingas.gateway.api.capability.protocol.CanonicalChatResponse;
@@ -33,9 +33,8 @@ import org.springframework.stereotype.Component;
 /**
  * 跨协议转换门面：编排各协议 Adapter，把"原生→规范→原生"收敛为对外简洁调用。
  *
- * <p>对外提供与旧 {@code ProtocolConverter} 相同语义的
- * {@code convertRequest/convertResponse/convertStreamChunk/convertStreamDone}，
- * 但底层基于 Canonical IR + ProtocolAdapter（normalize + denormalize），
+ * <p>对外提供统一的 {@code convertRequest/convertResponse/convertStreamChunk/convertStreamDone}
+ * 转换语义，底层基于 Canonical IR + ProtocolAdapter（normalize + denormalize），
  * 消除 N×N 两两转换。流式仍委托 {@link ProtocolStreamConverter}（本轮保持原样）。</p>
  */
 @Component

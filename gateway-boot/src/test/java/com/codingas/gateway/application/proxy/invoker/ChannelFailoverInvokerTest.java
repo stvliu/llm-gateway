@@ -26,7 +26,7 @@ import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
 import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
 import com.codingas.gateway.domain.supply.enums.FailoverDecision;
@@ -534,7 +534,7 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("非流式跨协议换候选：基于实际成功候选(非主候选) 转换响应为入站协议格式")
     void nonStream_failoverCrossProtocol_convertsResponsePerSuccessfulCandidate() {
-        // 真实 ProtocolConverter（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
+        // 真实 ProtocolConversionFacade（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
                 new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
                 new AnthropicProtocolAdapter());
@@ -590,7 +590,7 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式跨协议候选：基于实际候选 upstreamProtocol 转换 chunk（修复前 invoker 不转换）")
     void stream_crossProtocolCandidate_convertsChunkPerCandidate() {
-        // 真实 ProtocolConverter（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
+        // 真实 ProtocolConversionFacade（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
                 new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
                 new AnthropicProtocolAdapter());
@@ -683,7 +683,7 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式跨协议换候选：主同协议失败→备跨协议成功，chunk 被转换为入站协议格式（与 2.5b 对称方向）")
     void stream_failoverFromSameToCrossProtocol_convertsChunkToInbound() {
-        // 真实 ProtocolConverter + 真实 OutboundTuner
+        // 真实 ProtocolConversionFacade + 真实 OutboundTuner
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
                 new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
                 new AnthropicProtocolAdapter());

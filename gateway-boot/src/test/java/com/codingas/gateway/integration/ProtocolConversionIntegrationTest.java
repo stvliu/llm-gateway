@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.domain.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;

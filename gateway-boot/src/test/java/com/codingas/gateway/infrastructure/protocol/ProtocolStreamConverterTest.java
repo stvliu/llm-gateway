@@ -25,10 +25,9 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * ProtocolStreamConverter 单元测试（自旧 {@code ProtocolConverter} 流式逻辑平移）
+ * ProtocolStreamConverter 单元测试（自旧转换逻辑的流式部分平移）
  *
- * <p>覆盖 OpenAI ↔ Anthropic 的 SSE chunk 转换与结束标记转换，行为与原 {@code ProtocolConverter}
- * 保持一致（纯平移，不改语义）。</p>
+ * <p>覆盖 OpenAI ↔ Anthropic 的 SSE chunk 转换与结束标记转换，行为保持原样（纯平移，不改语义）。</p>
  */
 class ProtocolStreamConverterTest {
 
