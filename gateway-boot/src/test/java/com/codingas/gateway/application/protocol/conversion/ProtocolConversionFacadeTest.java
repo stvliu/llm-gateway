@@ -19,6 +19,7 @@ import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
 import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
+import com.codingas.gateway.infrastructure.protocol.ProtocolStreamConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 
@@ -31,8 +32,10 @@ class ProtocolConversionFacadeTest {
     @Test
     void convertRequestOpenaiToAnthropic() {
         ProtocolConversionFacade facade = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new ObjectMapper()));
 
         OpenAIChatRequest openai = OpenAIChatRequest.builder()
                 .model("gpt-4o")
@@ -50,8 +53,10 @@ class ProtocolConversionFacadeTest {
     @Test
     void convertRequestSameProtocolReturnsSame() {
         ProtocolConversionFacade facade = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new ObjectMapper()));
 
         OpenAIChatRequest openai = OpenAIChatRequest.builder().model("gpt-4o").build();
 

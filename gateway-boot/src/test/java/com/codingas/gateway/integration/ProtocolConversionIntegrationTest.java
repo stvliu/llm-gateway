@@ -22,6 +22,7 @@ import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
 import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
+import com.codingas.gateway.infrastructure.protocol.ProtocolStreamConverter;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -62,8 +63,10 @@ class ProtocolConversionIntegrationTest {
                 .findAndRegisterModules()
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         facade = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(objectMapper),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(objectMapper),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(objectMapper));
     }
 
     // ==================== 请求转换 ====================

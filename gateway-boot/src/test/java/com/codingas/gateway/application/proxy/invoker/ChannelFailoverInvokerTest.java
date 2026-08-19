@@ -29,6 +29,7 @@ import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
 import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
+import com.codingas.gateway.infrastructure.protocol.ProtocolStreamConverter;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
@@ -536,8 +537,10 @@ class ChannelFailoverInvokerTest {
     void nonStream_failoverCrossProtocol_convertsResponsePerSuccessfulCandidate() {
         // 真实 ProtocolConversionFacade（验证真实响应转换）+ 真实 OutboundTuner（仅模型名替换）
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new com.fasterxml.jackson.databind.ObjectMapper()));
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -592,8 +595,10 @@ class ChannelFailoverInvokerTest {
     void stream_crossProtocolCandidate_convertsChunkPerCandidate() {
         // 真实 ProtocolConversionFacade（验证真实 chunk 转换）+ 真实 OutboundTuner（仅模型名替换）
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new com.fasterxml.jackson.databind.ObjectMapper()));
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -635,8 +640,10 @@ class ChannelFailoverInvokerTest {
     @DisplayName("流式跨协议换候选：基于实际成功候选(非主候选) upstreamProtocol 重建转换方向")
     void stream_failoverDifferentProtocol_usesSuccessfulCandidateDirection() {
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new com.fasterxml.jackson.databind.ObjectMapper()));
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,
@@ -685,8 +692,10 @@ class ChannelFailoverInvokerTest {
     void stream_failoverFromSameToCrossProtocol_convertsChunkToInbound() {
         // 真实 ProtocolConversionFacade + 真实 OutboundTuner
         ProtocolConversionFacade realConverter = new ProtocolConversionFacade(
-                new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
-                new AnthropicProtocolAdapter());
+                List.of(
+                    new OpenAIProtocolAdapter(new com.fasterxml.jackson.databind.ObjectMapper()),
+                    new AnthropicProtocolAdapter()),
+                new ProtocolStreamConverter(new com.fasterxml.jackson.databind.ObjectMapper()));
         OutboundTuner realTuner = new OutboundTuner(List.of());
         ChannelFailoverInvoker invokerReal = new ChannelFailoverInvoker(
                 keyFailoverInvoker, errorClassifier,

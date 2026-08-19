@@ -15,7 +15,7 @@
 - [x] 1.7 新建 `gateway-iam`，迁移 User/Application/APIKey/Auth/加密。迁移三层 62 生产文件 + 10 测试（domain.iam + domain.application + application.auth/user/userapikey/application + infrastructure.iam/application）。PasswordEncoder 从 boot SecurityConfig 迁入 iam（Sa-Token SHA-256），adapter/拦截器留 boot。依赖 JPA + sa-token
 - [x] 1.8 确认 iam 依赖面：只依赖 gateway-common + gateway-provider 的 CredentialEncryptor（+ BaseDo），无 boot 特有包引用，独立编译。iam 106 测试、boot 546 surefire + failsafe 全绿，全仓 8 模块 install 通过
 - [x] 1.9 重命名 `gateway-capability-api` → `gateway-protocol`：改 artifactId/父 pom/boot 依赖；并入 Canonical IR + `ProtocolAdapter` SPI + 契约 DTO + tuning/validation（**保持包名仅改模块归属**，包名统一留待后续）
-- [ ] 1.10 改造 `ProtocolConversionFacade` 按 SPI 装配：注入 `List<ProtocolAdapter<?>>` 收集 Bean，删除对 OpenAI/Anthropic Adapter 具体类的 import
+- [x] 1.10 改造 `ProtocolConversionFacade` 按 SPI 装配：注入 `List<ProtocolAdapter<?>>` 按 `protocol()` 动态装配，删除对 OpenAI/Anthropic Adapter 具体类 import（仅保留 stream 委托）。新增协议仅需注册 Adapter Bean 即可。546 surefire + failsafe 全绿
 - [x] 1.11 迁移 tuning/validation 契约到 `gateway-protocol`（随 domain.protocol 一并并入）
 - [ ] 1.12 底座四模块（common/provider/iam/protocol）各自独立编译 + ArchUnit 通过
 
