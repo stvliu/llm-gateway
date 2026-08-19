@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.upstream;
 
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 
 /**
  * 错误分类策略接口

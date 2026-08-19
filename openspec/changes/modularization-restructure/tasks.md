@@ -12,8 +12,8 @@
 - [x] 1.4 `RoutingContext` 已是 Java `record`（字段 final、自动 getter、无 setter），天然不可变值对象，无需额外收敛
 - [ ] 1.5 （可选）拆 `provider-api` 子模块，上层只依赖 api
 - [x] 1.6 迁移 provider 的 application（ChannelHealthService 等 3 文件）+ infrastructure（JPA/Repository/UpstreamClient 等 33 文件 + ErrorClassification 族 4 文件）到 gateway-provider。前置：BaseDo 迁 gateway-common（加 spring-data-jpa）、CredentialEncryptor 接口解耦 iam 加密、provider 加 JPA/okhttp/jackson 依赖。单测迁 provider（63 全绿），boot surefire 652 + failsafe 37 全绿，provider 独立于 boot 编译
-- [ ] 1.7 新建 `gateway-iam`，迁移 User/Application/APIKey/Auth/加密
-- [ ] 1.8 确认 iam 依赖面（只依赖 common + 必要的 provider 被拦截对象）
+- [x] 1.7 新建 `gateway-iam`，迁移 User/Application/APIKey/Auth/加密。迁移三层 62 生产文件 + 10 测试（domain.iam + domain.application + application.auth/user/userapikey/application + infrastructure.iam/application）。PasswordEncoder 从 boot SecurityConfig 迁入 iam（Sa-Token SHA-256），adapter/拦截器留 boot。依赖 JPA + sa-token
+- [x] 1.8 确认 iam 依赖面：只依赖 gateway-common + gateway-provider 的 CredentialEncryptor（+ BaseDo），无 boot 特有包引用，独立编译。iam 106 测试、boot 546 surefire + failsafe 全绿，全仓 8 模块 install 通过
 - [x] 1.9 重命名 `gateway-capability-api` → `gateway-protocol`：改 artifactId/父 pom/boot 依赖；并入 Canonical IR + `ProtocolAdapter` SPI + 契约 DTO + tuning/validation（**保持包名仅改模块归属**，包名统一留待后续）
 - [ ] 1.10 改造 `ProtocolConversionFacade` 按 SPI 装配：注入 `List<ProtocolAdapter<?>>` 收集 Bean，删除对 OpenAI/Anthropic Adapter 具体类的 import
 - [x] 1.11 迁移 tuning/validation 契约到 `gateway-protocol`（随 domain.protocol 一并并入）

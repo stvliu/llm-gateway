@@ -16,7 +16,7 @@
 package com.codingas.gateway.domain.supply.exception;
 
 import com.codingas.gateway.common.exception.GatewayException;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 
 /**
  * 供应商异常

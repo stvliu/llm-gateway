@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.codingas.gateway.application.supply.dto;
+import com.codingas.gateway.domain.supply.enums.AuthStatus;
 
 import java.util.List;
 

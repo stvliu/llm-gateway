@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.common.event;
 
-import com.codingas.gateway.domain.supply.enums.FailoverDecision;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.FailoverDecision;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 
 import java.time.Instant;
 

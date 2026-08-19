@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.supply.gateway;
 
-import com.codingas.gateway.application.supply.dto.KeyTestResult;
+import com.codingas.gateway.domain.supply.valueobject.KeyTestResult;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.gateway.ChannelKeyProbe;

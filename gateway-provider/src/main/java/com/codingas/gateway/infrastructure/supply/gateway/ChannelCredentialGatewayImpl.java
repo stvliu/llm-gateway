@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.infrastructure.supply.gateway;
 
-import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.domain.supply.gateway.CredentialEncryptor;
 import com.codingas.gateway.infrastructure.supply.gateway.database.dataobject.ChannelCredentialDo;
 import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelCredentialRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ import java.util.Optional;
 public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
 
     private final ChannelCredentialRepository credentialRepository;
-    private final ApiKeyEncryptionDomainService encryptionService;
+    private final CredentialEncryptor encryptor;
 
     @Override
     public ChannelCredential save(ChannelCredential credential) {
@@ -48,7 +48,7 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
             // 创建时：从明文计算密文
             String plainKey = credential.getApiKeyPlain();
             if (plainKey != null && !plainKey.isBlank()) {
-                doObj.setApiKeyEncrypted(encryptionService.encrypt(plainKey));
+                doObj.setApiKeyEncrypted(encryptor.encrypt(plainKey));
                 // 自动生成 apiKeyPrefix（取前 8 位）
                 if (doObj.getApiKeyPrefix() == null || doObj.getApiKeyPrefix().isBlank()) {
                     doObj.setApiKeyPrefix(plainKey.substring(0, Math.min(8, plainKey.length())));
@@ -58,7 +58,7 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
             // 更新时：如果提供了新的明文 Key，重新加密；否则保留已有的密文
             String plainKey = credential.getApiKeyPlain();
             if (plainKey != null && !plainKey.isBlank()) {
-                doObj.setApiKeyEncrypted(encryptionService.encrypt(plainKey));
+                doObj.setApiKeyEncrypted(encryptor.encrypt(plainKey));
             } else {
                 credentialRepository.findById(credential.getId()).ifPresent(existing -> {
                     doObj.setApiKeyEncrypted(existing.getApiKeyEncrypted());
@@ -134,7 +134,7 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
         // 解密返回明文 Key
         if (doObj.getApiKeyEncrypted() != null && !doObj.getApiKeyEncrypted().isBlank()) {
             try {
-                entity.setApiKeyPlain(encryptionService.decrypt(doObj.getApiKeyEncrypted()));
+                entity.setApiKeyPlain(encryptor.decrypt(doObj.getApiKeyEncrypted()));
             } catch (Exception e) {
                 log.warn("解密渠道凭证失败: id={}, error={}", doObj.getId(), e.getMessage());
                 entity.setApiKeyPlain(null);

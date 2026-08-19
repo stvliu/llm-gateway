@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.application.supply;
 
-import com.codingas.gateway.application.supply.dto.AuthStatus;
+import com.codingas.gateway.domain.supply.enums.AuthStatus;
 import com.codingas.gateway.application.supply.dto.ChannelHealthResult;
-import com.codingas.gateway.application.supply.dto.KeyTestResult;
+import com.codingas.gateway.domain.supply.valueobject.KeyTestResult;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;

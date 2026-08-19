@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.supply.enums;
+package com.codingas.gateway.common.enums;
 
 /**
  * 供应商错误类型枚举

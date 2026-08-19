@@ -16,7 +16,7 @@
 package com.codingas.gateway.infrastructure.supply.upstream;
 
 import com.codingas.gateway.domain.protocol.contract.*;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;

@@ -55,6 +55,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 身份与访问管理域模块（User/Application/UserApiKey/Auth/加密） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

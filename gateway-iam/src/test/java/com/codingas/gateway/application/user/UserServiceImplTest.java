@@ -23,7 +23,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
+import com.codingas.gateway.infrastructure.iam.gateway.encryption.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

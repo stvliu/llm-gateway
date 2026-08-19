@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.application.supply.dto;
+package com.codingas.gateway.domain.supply.enums;
 
 /**
  * 单 Key 认证状态

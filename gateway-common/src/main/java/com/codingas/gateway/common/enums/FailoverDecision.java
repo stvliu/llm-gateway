@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.supply.enums;
+package com.codingas.gateway.common.enums;
 
 /**
  * 故障转移决策枚举
  *
- * <p>由 {@link com.codingas.gateway.application.proxy.failover.ErrorClassifier} 依据
+ * <p>由 com.codingas.gateway.application.proxy.failover.ErrorClassifier 依据
  * {@link ProviderErrorType} 产出，指导故障转移策略层级选择。</p>
  *
  * <ul>

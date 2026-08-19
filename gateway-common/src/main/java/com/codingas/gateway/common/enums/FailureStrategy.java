@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.application.enums;
+package com.codingas.gateway.common.enums;
 
 /**
  * 应用级失败处理策略（三选一互斥）

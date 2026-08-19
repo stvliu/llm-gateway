@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.domain.supply.valueobject;
 
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 
 /**

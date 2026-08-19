@@ -29,7 +29,7 @@ import com.codingas.gateway.domain.iam.enums.UserState;
 import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
 import com.codingas.gateway.domain.iam.exception.ForbiddenException;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.infrastructure.config.SecurityConfig.PasswordEncoder;
+import com.codingas.gateway.infrastructure.iam.gateway.encryption.PasswordEncoder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
