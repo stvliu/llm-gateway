@@ -62,6 +62,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 用量管控域模块（TokenLimit/配额/用量事件/限流执行） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-usage</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

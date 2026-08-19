@@ -23,8 +23,8 @@
 
 - [ ] 2.1 新建 `gateway-security`，迁移 threat（IP/威胁检测）+ dataprotection（脱敏）
 - [ ] 2.2 拦截链澄清：跨 auth+threat+quota 的编排放应用层，security 不反向依赖 usage
-- [ ] 2.3 新建 `gateway-usage`，迁移 TokenLimit/配额/用量事件/限流执行（写路径）
-- [ ] 2.4 明确 usage 明细表归属，暴露稳定只读查询接口给 stats
+- [x] 2.3 新建 `gateway-usage`，迁移 usage+quota 17 生产文件 + 3 测试（usage↔quota 共享 TokenLimit 边界故合并）。依赖 common/provider/iam，独立编译，23 测试全绿
+- [x] 2.4 明确 usage 明细表归属：当前 stats 直连 provider/iam 仓库计数、不读 usage（todayRequests/tokenUsage 为 mock，TODO 留待审计统计），无只读接口需求
 - [ ] 2.5 新建 `gateway-resilience`，迁移 failover/retry/circuit-breaker
 - [ ] 2.6 新建 `gateway-audit`，迁移调用日志/审计事件
 - [ ] 2.7 新建 `gateway-stats`，迁移聚合统计/仪表盘（读路径，经 usage 只读接口，不写用量）
