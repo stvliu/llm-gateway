@@ -34,10 +34,24 @@
     <description>LLM-Gateway Backend Module - Core API Gateway Services</description>
 
     <dependencies>
-        <!-- 能力 SPI 契约模块（规范内部模型 + ProtocolAdapter 纯接口，无 Spring 依赖） -->
+        <!-- 横切底座模块（BaseEntity/异常/工具/事件/通用枚举，纯横切） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
-            <artifactId>gateway-capability-api</artifactId>
+            <artifactId>gateway-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 抽象协议层模块（Canonical IR + ProtocolAdapter SPI + 协议契约 DTO） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 供给域模块（Provider/Channel/Model/Catalog/Upstream/RoutingContext） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
 
@@ -191,6 +205,14 @@
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
             <version>6.8.0.202311291450-r</version>
+        </dependency>
+
+        <!-- ArchUnit 架构测试（COLA 分层依赖约束，模块化重构 Phase 0） -->
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.3.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

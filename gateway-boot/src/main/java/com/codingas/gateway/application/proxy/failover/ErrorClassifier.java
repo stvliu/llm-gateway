@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.proxy.failover;
 
-import com.codingas.gateway.domain.supply.enums.FailoverDecision;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.FailoverDecision;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.springframework.stereotype.Component;
 
 import java.util.EnumMap;

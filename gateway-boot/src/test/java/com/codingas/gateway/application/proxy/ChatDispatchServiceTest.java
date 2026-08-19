@@ -22,7 +22,7 @@ import com.codingas.gateway.domain.protocol.contract.*;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;

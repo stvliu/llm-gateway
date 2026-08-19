@@ -16,8 +16,8 @@
 package com.codingas.gateway.infrastructure.resilience.gateway;
 
 import com.codingas.gateway.domain.resilience.entity.FailoverEvent;
-import com.codingas.gateway.domain.supply.enums.FailoverDecision;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.FailoverDecision;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.infrastructure.resilience.gateway.database.dataobject.FailoverEventDo;
 import com.codingas.gateway.infrastructure.resilience.gateway.database.repository.FailoverEventRepository;
 import org.junit.jupiter.api.DisplayName;

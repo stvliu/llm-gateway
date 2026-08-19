@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.resilience;
 
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;

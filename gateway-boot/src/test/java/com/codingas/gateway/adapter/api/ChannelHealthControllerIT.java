@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.application.supply.ChannelHealthService;
-import com.codingas.gateway.application.supply.dto.KeyTestResult;
+import com.codingas.gateway.domain.supply.valueobject.KeyTestResult;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
 import com.codingas.gateway.domain.supply.entity.Provider;

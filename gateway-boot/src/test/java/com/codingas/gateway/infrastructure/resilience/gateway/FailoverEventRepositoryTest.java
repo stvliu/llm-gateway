@@ -17,8 +17,8 @@ package com.codingas.gateway.infrastructure.resilience.gateway;
 
 import com.codingas.gateway.domain.resilience.entity.FailoverEvent;
 import com.codingas.gateway.domain.resilience.gateway.FailoverEventGateway;
-import com.codingas.gateway.domain.supply.enums.FailoverDecision;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.FailoverDecision;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

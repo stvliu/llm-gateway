@@ -22,7 +22,7 @@ import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationChannel;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;

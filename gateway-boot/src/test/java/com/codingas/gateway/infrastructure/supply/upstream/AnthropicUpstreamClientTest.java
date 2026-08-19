@@ -18,7 +18,7 @@ package com.codingas.gateway.infrastructure.supply.upstream;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
 import com.codingas.gateway.support.ProviderSimulator;

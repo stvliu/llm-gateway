@@ -20,7 +20,7 @@ import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.domain.supply.exception.ProviderException;
 import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;

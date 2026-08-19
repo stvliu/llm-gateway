@@ -31,8 +31,8 @@ import java.time.Instant;
  * 继承自 {@link BaseDo}，由 AuditingEntityListener 自动填充。</p>
  *
  * <p>error_type / decision 字段以字符串存储（枚举名），由 Gateway 实现层在 DO↔Entity 转换时
- * 还原为 {@link com.codingas.gateway.domain.supply.enums.ProviderErrorType} /
- * {@link com.codingas.gateway.domain.supply.enums.FailoverDecision} 枚举。</p>
+ * 还原为 {@link com.codingas.gateway.common.enums.ProviderErrorType} /
+ * {@link com.codingas.gateway.common.enums.FailoverDecision} 枚举。</p>
  *
  * <p>occurred_at 为业务时间（转移发生时刻），独立于审计字段 created_at（持久化时刻）。</p>
  */

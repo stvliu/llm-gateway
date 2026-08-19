@@ -18,7 +18,7 @@ package com.codingas.gateway.application.proxy;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

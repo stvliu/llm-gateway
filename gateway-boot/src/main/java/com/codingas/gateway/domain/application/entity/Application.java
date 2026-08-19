@@ -17,7 +17,7 @@ package com.codingas.gateway.domain.application.entity;
 
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

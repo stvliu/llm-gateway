@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.upstream;
 
-import com.codingas.gateway.domain.supply.enums.ProviderErrorType;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

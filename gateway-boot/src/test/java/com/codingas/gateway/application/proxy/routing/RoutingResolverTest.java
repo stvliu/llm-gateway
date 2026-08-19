@@ -17,7 +17,7 @@ package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.domain.application.entity.Application;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.domain.supply.entity.Channel;
 import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;

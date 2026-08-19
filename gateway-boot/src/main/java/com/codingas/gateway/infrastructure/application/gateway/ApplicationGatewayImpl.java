@@ -17,7 +17,7 @@ package com.codingas.gateway.infrastructure.application.gateway;
 
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.application.entity.ApplicationState;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
 import com.codingas.gateway.infrastructure.application.gateway.database.dataobject.ApplicationDo;
 import com.codingas.gateway.infrastructure.application.gateway.database.repository.ApplicationRepository;

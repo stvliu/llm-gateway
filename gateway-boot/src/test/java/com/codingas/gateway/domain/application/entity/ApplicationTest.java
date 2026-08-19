@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

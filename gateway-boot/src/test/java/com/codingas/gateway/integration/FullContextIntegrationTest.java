@@ -26,7 +26,7 @@ import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
 import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
 import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;

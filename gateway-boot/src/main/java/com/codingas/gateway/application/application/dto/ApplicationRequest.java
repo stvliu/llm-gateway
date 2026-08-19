@@ -45,5 +45,5 @@ public class ApplicationRequest {
     private int timeout;
 
     /** 应用级失败处理策略（不传时后端默认 FAIL_RETRY） */
-    private com.codingas.gateway.domain.application.enums.FailureStrategy failureStrategy;
+    private com.codingas.gateway.common.enums.FailureStrategy failureStrategy;
 }

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.application.gateway.database.dataobject;
 
-import com.codingas.gateway.domain.application.enums.FailureStrategy;
+import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
