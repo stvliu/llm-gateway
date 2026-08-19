@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.domain.iam.service;
 
-import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
+import com.codingas.gateway.domain.iam.gateway.EncryptionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

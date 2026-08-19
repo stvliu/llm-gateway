@@ -15,6 +15,8 @@
  */
 package com.codingas.gateway.infrastructure.iam.gateway.encryption;
 
+import com.codingas.gateway.domain.iam.gateway.EncryptionService;
+
 import com.codingas.gateway.domain.iam.exception.IamException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;

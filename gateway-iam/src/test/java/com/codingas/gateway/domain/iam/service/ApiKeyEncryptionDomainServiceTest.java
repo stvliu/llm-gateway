@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.domain.iam.service;
 
-import com.codingas.gateway.infrastructure.iam.gateway.encryption.EncryptionService;
+import com.codingas.gateway.domain.iam.gateway.EncryptionService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

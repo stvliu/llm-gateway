@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.iam.gateway.encryption;
+package com.codingas.gateway.domain.iam.gateway;
 
 /**
  * 加密服务接口

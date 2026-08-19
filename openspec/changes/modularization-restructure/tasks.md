@@ -17,7 +17,7 @@
 - [x] 1.9 重命名 `gateway-capability-api` → `gateway-protocol`：改 artifactId/父 pom/boot 依赖；并入 Canonical IR + `ProtocolAdapter` SPI + 契约 DTO + tuning/validation（**保持包名仅改模块归属**，包名统一留待后续）
 - [x] 1.10 改造 `ProtocolConversionFacade` 按 SPI 装配：注入 `List<ProtocolAdapter<?>>` 按 `protocol()` 动态装配，删除对 OpenAI/Anthropic Adapter 具体类 import（仅保留 stream 委托）。新增协议仅需注册 Adapter Bean 即可。546 surefire + failsafe 全绿
 - [x] 1.11 迁移 tuning/validation 契约到 `gateway-protocol`（随 domain.protocol 一并并入）
-- [ ] 1.12 底座四模块（common/provider/iam/protocol）各自独立编译 + ArchUnit 通过
+- [x] 1.12 底座四模块（common/provider/iam/protocol）各自独立编译 + ArchUnit 通过。治理 iam 违规：EncryptionService 接口从 infrastructure 上浮到 domain.iam.gateway（依赖倒置），四底座 domain 层 0 依赖 infrastructure。全仓 8 模块 clean install + ArchUnit 4 规则全绿，boot 546 surefire + failsafe 全绿
 
 ## 3. Phase 2：中基拆分
 
