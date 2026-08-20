@@ -117,37 +117,151 @@ gateway-xxx-starter/      # ③ 装配：@AutoConfiguration + @Import + imports
 每个模块贡献的包路径互不重叠，模块边界在包名层面可见、可判定。
 
 **R2｜包名 = 模块名（根包），去除 domain/application/infrastructure 顶层 DDD 前缀**
-`com.codingas.gateway.domain..` / `application..` / `infrastructure..` 三层前缀移除，以模块根包取代。业务语义子包（`entity`/`gateway`/`enums`/`exception`/`valueobject`/`catalog`/`upstream`/`dto` 等）保留。
+`com.codingas.gateway.domain..` / `application..` / `infrastructure..` 三层前缀移除，以模块根包取代。
 
 **R3｜绑定模块用拼接根包（不用子包）**
 `provider.data` 是 `provider` 的子目录，会被核心模块 `@ComponentScan(basePackages="com.codingas.gateway.provider")` 误扫；`providerdata` 是平行兄弟目录，扫不到——这正是 Jmix 用 `securitydata` 而非 `security.data` 的原因。绑定模块用拼接根包。
 
-**迁移规则**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`；绑定模块 → `<模块根包><binding>.<rest>`。域段与模块根包映射见下表。
+**R4｜内部业务子包化（仿 Jmix 业务子包，去 entity/gateway 架构子包）**
+核心模块内部按**业务概念**分组（仿 `io.jmix.security` 的 `model/`、`role/`、`user/`、`authentication/`、`constraint/`、`impl/`），不再用 `entity`/`gateway`/`enums` 等技术角色子包。原则：
+- 根包直放核心 API（服务接口、跨概念端口）
+- 业务概念子包放领域模型 + 所属端口 + 所属枚举/异常（如 `channel.Channel`、`channel.ChannelGateway`、`channel.ChannelState`）
+- `service/` 放应用服务；`dto/` 放公开 DTO
+- `impl/` 放根包 API 的非绑定实现
+- 绑定模块独立根包（`providerdata`/`providerhttp`），内部按语义子包（`dataobject`/`gateway`/`upstream`）
 
-**包名映射表**：
+**迁移规则**（两步）：
+1. **顶层**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`
+2. **内部业务子包化**：按 R4 把 `entity`/`gateway`/`enums`/`exception`/`valueobject` 打散到业务概念子包 + `service/` + `impl/`
 
-| 模块 | 根包 | 域段映射 | 说明 |
-|---|---|---|---|
-| `gateway-common` | `com.codingas.gateway.common` | — | 不变 |
-| `gateway-protocol` | `com.codingas.gateway.protocol` | — | 不变 |
-| `gateway-provider`（核心） | `com.codingas.gateway.provider` | `supply` → `provider` | 模型/端口/服务/非绑定实现 |
-| `gateway-provider-data` | `com.codingas.gateway.providerdata` | 同上 | JPA 绑定，拼接根包 |
-| `gateway-provider-http` | `com.codingas.gateway.providerhttp` | 同上 | HTTP 绑定，拼接根包 |
-| `gateway-iam` | `com.codingas.gateway.iam` | `iam` → `iam`；`application` → `iam.application` | 核心 |
-| `gateway-iam-data` | `com.codingas.gateway.iamdata` | 同上 | JPA 绑定 |
-| `gateway-usage` / `-data` | `com.codingas.gateway.usage` / `.usagedata` | `usage` → `usage` | — |
-| `gateway-security` / `-data` | `com.codingas.gateway.security` / `.securitydata` | `dataprotection` → `security.dataprotection`；`threat` → `security.threat` | — |
-| `gateway-audit` / `-data` | `com.codingas.gateway.audit` / `.auditdata` | `audit` → `audit` | — |
-| `gateway-alert` / `-data` | `com.codingas.gateway.alert` / `.alertdata` | `alert` → `alert` | — |
-| `gateway-resilience` / `-data` | `com.codingas.gateway.resilience` / `.resiliencedata` | `resilience` → `resilience` | — |
-| `gateway-proxy` | `com.codingas.gateway.proxy` | `proxy` → `proxy` | 无绑定拆分 |
-| `gateway-stats` | `com.codingas.gateway.stats` | `stats` → `stats` | 无绑定拆分 |
-| `gateway-xxx-starter` | `com.codingas.gateway.autoconfigure.<域>` | — | 装配（P2） |
+**包名映射表（9 域业务子包）**：
 
-**示例**（provider 域）：
-- 核心：`domain.supply.entity.Channel` → `provider.entity.Channel`；`domain.supply.gateway.ChannelGateway` → `provider.gateway.ChannelGateway`；`infrastructure.supply.catalog.loader.BuiltinDataLoader` → `provider.catalog.loader.BuiltinDataLoader`（留核心）
-- JPA：`infrastructure.supply.gateway.database.dataobject.ChannelDo` → `providerdata.dataobject.ChannelDo`（绑定模块）
-- HTTP：`infrastructure.supply.upstream.AnthropicUpstreamClient` → `providerhttp.upstream.AnthropicUpstreamClient`（绑定模块）
+### provider（根包 `provider`，绑定 `providerdata`/`providerhttp`）
+
+```
+com.codingas.gateway.provider
+├── channel/      Channel ChannelActions ChannelCredential ChannelEndpoint ChannelOperationLog
+│                 ChannelGateway ChannelCredentialGateway ChannelEndpointGateway
+│                 ChannelOperationLogGateway ChannelKeyProbe
+│                 ChannelState ChannelHealthSource ChannelHealthStatus
+│                 ChannelException ChannelNotFoundException
+├── model/        Model ModelInstance ModelGateway ModelInstanceGateway BillingMode
+├── vendor/       Provider ProviderGateway ProviderException
+├── catalog/      PlanCatalog PlanModelCatalog PlanCatalogGateway PlanModelCatalogGateway CatalogException
+├── upstream/     UpstreamClient UpstreamClientRegistry ConnectivityTester ResilientClientFactory
+│                 ConnectivityTestResult KeyTestResult AuthStatus Protocol RoutingStrategy RoutingContext
+├── service/      ChannelHealthService CredentialEncryptor
+├── dto/          ChannelHealthResult KeyMatrixRow
+└── impl/         BuiltinDataLoader StubChannelKeyProbe
+```
+`providerdata.*`：`ChannelDo` 等 JPA（`dataobject`/`repository`/`gateway` 子包）；`providerhttp.*`：`AnthropicUpstreamClient` 等（`upstream` 子包）。
+
+### iam（根包 `iam`，绑定 `iamdata`）
+
+```
+com.codingas.gateway.iam
+├── user/         User UserGateway UserState
+├── apikey/       UserApiKey UserApiKeyGateway UserApiKeyGenerator DefaultUserApiKeyGenerator GeneratedApiKey
+├── application/  Application ApplicationChannel ApplicationGateway ApplicationChannelGateway
+├── auth/         AuthenticationDomainService AuthenticationFailedException AuthService AuthServiceImpl
+├── encryption/   EncryptionService Aes256EncryptionService PasswordEncoder CredentialEncryptorAdapter
+├── service/      UserService UserServiceImpl UserApiKeyService UserApiKeyServiceImpl
+│                 ApplicationService ApplicationServiceImpl ApiKeyEncryptionDomainService
+├── dto/
+├── valueobject/  Identity
+└── exception/    IamException ForbiddenException UnauthorizedException
+```
+`iamdata.*`：`UserDo`/`UserApiKeyDo`/`ApplicationDo`/`ApplicationChannelDo` + REPO + IMPL。
+
+### usage（根包 `usage`，绑定 `usagedata`）
+
+```
+com.codingas.gateway.usage
+├── tokenlimit/   TokenLimit TokenLimitGateway TokenLimitService TokenLimitServiceImpl
+├── ratelimit/    RateLimitConfig
+├── event/        TokenUsedEvent TokenUsageEventListener
+├── enums/        ExceededAction PeriodType
+└── dto/
+```
+`usagedata.*`：`TokenLimitDo`/`RateLimitConfigDo` + `TokenLimitRepository` + `TokenLimitGatewayImpl`。
+
+### security（根包 `security`，绑定 `securitydata`）
+
+```
+com.codingas.gateway.security
+├── dataprotection/  SensitiveDataRule SensitiveDataRuleGateway DataProtectionException
+│                    SensitiveDataRuleInitializer
+├── threat/          IpBlocklist IpBlockGateway IpBlocklistDomainService
+│                    TokenBucketRateLimiter InMemoryTokenBucketRateLimiter TokenBucketStatus
+│                    RateLimitDomainService RateLimitProperties
+│                    IpBlockedException RateLimitExceededException ThreatException
+└── impl/
+```
+`securitydata.*`：`SensitiveDataRuleDo`/`IpBlocklistDo` + REPO + GatewayImpl + Converter（`dataprotection`/`threat` 子包）。
+
+### audit（根包 `audit`，绑定 `auditdata`）
+
+```
+com.codingas.gateway.audit
+├── AuditLog AuditLogGateway AuditGateway
+├── CallLog CallLogGateway
+├── AuditContext
+├── event/        AuditEventListener
+└── impl/
+```
+`auditdata.*`：`AuditLogDo`/`CallLogDo`/`UsageLogDo` + REPO + GatewayImpl。
+
+### alert（根包 `alert`，绑定 `alertdata`）
+
+```
+com.codingas.gateway.alert
+├── AlertNotification
+├── AlertRule
+└── impl/
+```
+`alertdata.*`：`AlertNotificationDo`/`AlertRuleDo`。
+
+### resilience（根包 `resilience`，绑定 `resiliencedata`）
+
+```
+com.codingas.gateway.resilience
+├── circuitbreaker/  CircuitBreaker CircuitBreakerState ChannelEndpointCircuitBreakerManager
+│                    CircuitOpenException
+├── retry/           RetryExecutor RetryStrategy FastRetryStrategy ExponentialBackoffStrategy
+│                    RateLimitRetryStrategy ServiceUnavailableStrategy RetryableException
+│                    GatewayRetryProperties
+├── metrics/         EndpointMetrics EndpointMetricsRegistry
+├── upstream/        ResilientUpstreamClient ResilientClientFactoryImpl
+├── failover/        FailoverEvent FailoverEventGateway ResilienceEventService
+│                    ResilienceEventServiceImpl FailoverEventListener
+└── dto/             FailoverEventResponse
+```
+`resiliencedata.*`：`FailoverEventDo` + `FailoverEventRepository` + `FailoverEventGatewayImpl`。
+
+### proxy（根包 `proxy`，无绑定拆分）
+
+```
+com.codingas.gateway.proxy
+├── chat/         ChatDispatchService ChatDispatchServiceImpl ErrorClassifier
+├── routing/      Router RouterChain RoutingResolver RoutingRequest CredentialResolver
+│                 EndpointResolver InstanceSelector LoadBalanceRouter ModelMatcher
+│                 PermissionRouter PriorityRouter HealthRouter
+├── invoker/      ChannelFailoverInvoker KeyFailoverInvoker
+├── conversion/   ProtocolConversionFacade ProtocolStreamConverter OutboundTuner
+└── dto/
+```
+
+### stats（根包 `stats`，无绑定拆分）
+
+```
+com.codingas.gateway.stats
+├── StatsService
+└── dto/          StatsResponse
+```
+
+### common / protocol（不变）
+
+`com.codingas.gateway.common`、`com.codingas.gateway.protocol` 保持。`gateway-xxx-starter` → `com.codingas.gateway.autoconfigure.<域>`（P2）。
 
 **ArchUnit 影响**：现有 `LayerDependencyTest` 基于 `com.codingas.gateway.domain..` 等顶层前缀，包名迁移后**重写**为模块级规则（核心不得依赖本域 data/http；跨模块只依赖对方根包；P1 过渡态豁免），见 P4 与 P1 计划。
 
