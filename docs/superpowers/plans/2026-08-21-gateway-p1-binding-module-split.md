@@ -12,26 +12,15 @@
 
 ### 包名迁移规则（设计文档 §4.2，已持久化到 doc/constitution.md §3.1）
 
-- **R2 核心类**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`（`layer` = domain/application/infrastructure，去掉；`域段` → 模块根包；`rest` 语义子包保留）
-- **R3 绑定类**：同上但模块根包拼接绑定类型 → `<模块根包><binding>.<rest>`（JPA → `Xdata`，HTTP → `Xhttp`）
+- **顶层迁移**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`（`layer` = domain/application/infrastructure，去掉；`域段` → 模块根包）
+- **R3 绑定类**：模块根包拼接绑定类型 → `<模块根包><binding>.<rest>`（JPA → `Xdata`，HTTP → `Xhttp`）
+- **R4 业务子包化**：核心模块内部按**业务概念子包**重排（仿 Jmix `model/role/user`），去除 `entity`/`gateway` 架构子包；实现进 `impl/`、应用服务进 `service/`、DTO 进 `dto/`、枚举/异常跟随所属概念子包
 - **R1**：每个模块唯一根包，禁止同包跨模块
 - **行为不变**：只改包名 + 模块归属，**不改任何业务逻辑**；`extends BaseDo` 的 DO 仍继承 `com.codingas.gateway.common.entity.BaseDo`（common 不变）
 
-### 完整包名映射表（每个任务按此对照执行）
+### 完整包名映射（每个任务按此对照执行）
 
-| 域（域段） | 核心模块根包 | JPA 绑定根包 | HTTP 绑定根包 |
-|---|---|---|---|
-| provider（`supply`） | `com.codingas.gateway.provider` | `com.codingas.gateway.providerdata` | `com.codingas.gateway.providerhttp` |
-| iam（`iam` + `application`） | `com.codingas.gateway.iam` | `com.codingas.gateway.iamdata` | — |
-| usage（`usage`） | `com.codingas.gateway.usage` | `com.codingas.gateway.usagedata` | — |
-| security（`dataprotection` + `threat`） | `com.codingas.gateway.security` | `com.codingas.gateway.securitydata` | — |
-| audit（`audit`） | `com.codingas.gateway.audit` | `com.codingas.gateway.auditdata` | — |
-| alert（`alert`） | `com.codingas.gateway.alert` | `com.codingas.gateway.alertdata` | — |
-| resilience（`resilience`） | `com.codingas.gateway.resilience` | `com.codingas.gateway.resiliencedata` | — |
-| proxy（`proxy`） | `com.codingas.gateway.proxy` | — | — |
-| stats（`stats`） | `com.codingas.gateway.stats` | — | — |
-
-多域段子域映射：`supply`→`provider`；`iam`→`iam`、`application`→`iam.application`；`dataprotection`→`security.dataprotection`、`threat`→`security.threat`；其余 `域段`→`模块名` 一一对应。
+**9 域业务子包完整映射见设计文档 §4.2**（每个域的核心模块业务子包树 + 绑定模块根包）。核心模块根包：`provider`/`iam`/`usage`/`security`/`audit`/`alert`/`resilience`/`proxy`/`stats`；JPA 绑定根包：`providerdata`/`iamdata`/`usagedata`/`securitydata`/`auditdata`/`alertdata`/`resiliencedata`；HTTP 绑定根包：`providerhttp`。**执行每个任务前先读设计文档 §4.2 对应域的业务子包树**，按其把类重排到业务概念子包（如 `domain.supply.entity.Channel` → `provider.channel.Channel`，`domain.supply.gateway.ChannelGateway` → `provider.channel.ChannelGateway`）。
 
 ### 非绑定技术实现留核心（设计文档 §4.3，不迁移到绑定模块）
 
@@ -141,33 +130,27 @@ git commit -m "build: 新增 8 个绑定模块骨架 pom 并注册根模块（P1
 ### Task 2: provider 域 —— 包名 Jmix 化 + provider-data/http 拆分
 
 **Files:**
-- Modify（gateway-provider 核心，包名 `domain/application/infrastructure.supply.*` → `provider.*`）：
-  - `domain/supply/**` → 留核心，包名改 `provider.**`（entity/gateway/catalog/enums/exception/valueobject 子包保留）
-  - `application/supply/**` → 留核心，包名改 `provider.**`（`ChannelHealthService`、`dto`）
-  - `infrastructure/supply/catalog/loader/BuiltinDataLoader.java`、`infrastructure/supply/gateway/StubChannelKeyProbe.java` → 留核心，包名改 `provider.catalog.loader` / `provider.gateway`
-- Create（gateway-provider-data，包名 `supply` → `providerdata`）：`infrastructure/supply/gateway/database/**`（DO 6 + REPO 6 + JPA-IMPL 7 + catalog database + repository 的 `ChannelOperationLogJpaEntity/JpaRepository` 等 27 个 JPA 类）
-- Create（gateway-provider-http，包名 → `providerhttp`）：`infrastructure/supply/upstream/**`（3 个）+ `infrastructure/upstream/**`（4 个）+ `infrastructure/supply/gateway/ConnectivityTesterImpl.java`（1 个，共 8 个 HTTP 类）
+- Modify（gateway-provider 核心，按设计文档 §4.2 provider 业务子包树重排）：
+  - `domain/supply/**`、`application/supply/**` → 留核心，按业务子包树归入 `provider.channel`/`provider.model`/`provider.vendor`/`provider.catalog`/`provider.upstream`/`provider.service`/`provider.dto`/`provider.impl`
+  - `infrastructure/supply/catalog/loader/BuiltinDataLoader.java` → `provider.impl.BuiltinDataLoader`（留核心）；`infrastructure/supply/gateway/StubChannelKeyProbe.java` → `provider.channel.StubChannelKeyProbe`（留核心）
+- Create（gateway-provider-data，包名 → `providerdata`）：`infrastructure/supply/gateway/database/**`（DO 6 + REPO 6 + JPA-IMPL 7 + catalog database + repository 的 `ChannelOperationLogJpaEntity/JpaRepository` 等 27 个 JPA 类），包名 `providerdata.dataobject`/`providerdata.repository`/`providerdata.gateway`
+- Create（gateway-provider-http，包名 → `providerhttp`）：`infrastructure/supply/upstream/**`（3 个）+ `infrastructure/upstream/**`（4 个）+ `infrastructure/supply/gateway/ConnectivityTesterImpl.java`（1 个，共 8 个 HTTP 类），包名 `providerhttp.upstream`/`providerhttp.gateway`
 - Modify（引用方 pom）：`gateway-audit`、`gateway-stats`（+ providerdata）；`gateway-resilience`（+ providerhttp）
 - Modify（引用方 import）：所有引用 `com.codingas.gateway.domain.supply.*`/`application.supply.*`/`infrastructure.supply.*`/`infrastructure.upstream.*` 的模块（见 Step 2 清单）
 - Modify: `gateway-provider/pom.xml`（移除 `spring-boot-starter-data-jpa`、`okhttp`）
 
 **Interfaces:**
 - Consumes: 无（首拆）
-- Produces: `com.codingas.gateway.provider`（核心 API：`provider.gateway.ChannelGateway` 等）+ `providerdata`（`providerdata.dataobject.ChannelDo` 等）+ `providerhttp`（`providerhttp.upstream.*`）
+- Produces: `com.codingas.gateway.provider`（核心 API：`provider.channel.ChannelGateway` 等）+ `providerdata`（`providerdata.dataobject.ChannelDo` 等）+ `providerhttp`（`providerhttp.upstream.*`）
 
-- [ ] **Step 1: 用 IDE 重构或脚本批量改包名（核心类）**
+- [ ] **Step 1: 按设计文档 §4.2 provider 业务子包树迁移（核心 + 绑定一次到位）**
 
-把 `gateway-provider/src/main/java/com/codingas/gateway/` 下：
-- `domain.supply.` → `provider.`
-- `application.supply.` → `provider.`
-- 对留在核心的 `infrastructure.supply.` 类（BuiltinDataLoader/StubChannelKeyProbe）→ `provider.`
+先读设计文档 §4.2 的 provider 业务子包树（channel/model/vendor/catalog/upstream/service/dto/impl）。对 `gateway-provider/src/main/java/com/codingas/gateway/` 下全部类，用 IDE 重构（Move + 自动改包名/import）批量处理：
+- **核心类**（entity/gateway/enums/exception/valueobject/application 留核心部分）→ 按业务子包树归入 `provider.channel`/`provider.model`/`provider.vendor`/`provider.catalog`/`provider.upstream`/`provider.service`/`provider.dto`/`provider.impl`
+- **JPA 类**（`infrastructure/supply/gateway/database/**`、`catalog/database/**`、`repository/**` 下 JPA）→ 移到 `gateway-provider-data`，包名 `providerdata`（`dataobject`/`repository`/`gateway` 子包）
+- **HTTP 类**（`infrastructure/supply/upstream/**`、`infrastructure/upstream/**`、`ConnectivityTesterImpl`）→ 移到 `gateway-provider-http`，包名 `providerhttp`（`upstream`/`gateway` 子包）
 
-逐文件替换 `package` 与内部 import 引用（`sed -i 's/com\.codingas\.gateway\.domain\.supply\./com.codingas.gateway.provider./g'` 等，或 IDE Move 重构）。**绑定类（JPA/HTTP）暂不改**，先只处理留核心的类？——**不**：绑定类也要在 Step 2 一起处理（一次到位）。
-
-**推荐做法**：对整个 provider 源树做**整体包名替换 + 模块移动**，一次完成：
-- 核心类：包名 `supply` → `provider`，留在 gateway-provider
-- JPA 类（database/** + repository/ 下 JPA）：包名 `supply` → `providerdata`，移到 gateway-provider-data
-- HTTP 类（upstream/** + ConnectivityTesterImpl）：包名 → `providerhttp`，移到 gateway-provider-http
+> 关键映射示例：`domain.supply.entity.Channel` → `provider.channel.Channel`；`domain.supply.gateway.ChannelGateway` → `provider.channel.ChannelGateway`；`infrastructure.supply.gateway.database.dataobject.ChannelDo` → `providerdata.dataobject.ChannelDo`；`infrastructure.supply.upstream.AnthropicUpstreamClient` → `providerhttp.upstream.AnthropicUpstreamClient`；`application.supply.ChannelHealthService` → `provider.service.ChannelHealthService`。
 
 - [ ] **Step 2: 更新全部引用方 import（supply → provider/providerdata/providerhttp）**
 
@@ -217,30 +200,30 @@ git commit -m "refactor: provider 域包名 Jmix 化（provider/providerdata/pro
 ### Task 3: iam 域 —— 包名 Jmix 化 + iam-data 拆分（加密留核心）
 
 **Files:**
-- Modify（gateway-iam 核心，`domain.iam.*`→`iam.*`、`domain.application.*`→`iam.application.*`、`application.*`→`iam.*`）：
-  - `domain/iam/**`、`domain/application/**`、`application/**` → 留核心，包名改 `iam.**`（entity/gateway/service/enums/exception/valueobject 子包保留）
-  - `infrastructure/iam/gateway/encryption/**`（PasswordEncoder/Aes256EncryptionService/CredentialEncryptorAdapter）→ 留核心，包名改 `iam.gateway.encryption`（非绑定）
-- Create（gateway-iam-data，包名 → `iamdata`）：`infrastructure/iam/gateway/database/**`（UserDo/UserApiKeyDo/REPO/IMPL）+ `infrastructure/application/gateway/database/**`（ApplicationDo/ApplicationChannelDo/REPO/IMPL），共 12 个 JPA 类，包名 `iamdata.*`/`iamdata.application.*`
+- Modify（gateway-iam 核心，按设计文档 §4.2 iam 业务子包树重排）：
+  - `domain/iam/**`、`domain/application/**`、`application/**` → 留核心，归入 `iam.user`/`iam.apikey`/`iam.application`/`iam.auth`/`iam.service`/`iam.valueobject`/`iam.exception`/`iam.dto`
+  - `infrastructure/iam/gateway/encryption/**`（PasswordEncoder/Aes256EncryptionService/CredentialEncryptorAdapter）→ 留核心，归入 `iam.encryption`（非绑定）
+- Create（gateway-iam-data，包名 → `iamdata`）：`infrastructure/iam/gateway/database/**`（UserDo/UserApiKeyDo/REPO/IMPL）+ `infrastructure/application/gateway/database/**`（ApplicationDo/ApplicationChannelDo/REPO/IMPL），共 12 个 JPA 类，包名 `iamdata`（dataobject/repository/gateway 子包）
 - Modify（引用方 pom）：`gateway-audit`、`gateway-alert`、`gateway-stats`（+ iamdata）
 - Modify（引用方 import）：引用 `domain.iam.*`/`domain.application.*`/`infrastructure.iam.*`/`infrastructure.application.*` 的模块
 - Modify: `gateway-iam/pom.xml`（移除 `spring-boot-starter-data-jpa`）
 
 **Interfaces:**
-- Consumes: Task 2 的 `provider` 包名（`CredentialEncryptorAdapter` 引 `provider.gateway.CredentialEncryptor`）
+- Consumes: Task 2 的 `provider` 包名（`CredentialEncryptorAdapter` 引 `provider.service.CredentialEncryptor`）
 - Produces: `com.codingas.gateway.iam`（核心）+ `iamdata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA 类（iam 域一次到位）**
+- [ ] **Step 1: 按设计文档 §4.2 iam 业务子包树迁移（核心 + 绑定一次到位）**
 
-核心类（留 gateway-iam）：`domain.iam.`/`domain.application.`/`application.` → `iam.`（application 子域 → `iam.application.`）；encryption 类 → `iam.gateway.encryption`。
-绑定类（移 gateway-iam-data）：`infrastructure.iam.` → `iamdata.`、`infrastructure.application.` → `iamdata.application.`。
+先读设计文档 §4.2 iam 业务子包树。核心类归入：`iam.user`（User/UserGateway/UserState）、`iam.apikey`（UserApiKey/UserApiKeyGateway/UserApiKeyGenerator 等）、`iam.application`（Application/ApplicationChannel/其 Gateway）、`iam.auth`（AuthenticationDomainService/AuthService 等）、`iam.encryption`（EncryptionService/Aes256EncryptionService/PasswordEncoder/CredentialEncryptorAdapter）、`iam.service`（各 Service 及 Impl/ApiKeyEncryptionDomainService）、`iam.valueobject`（Identity）、`iam.exception`（IamException 等）、`iam.dto`。
+绑定类（移 gateway-iam-data）：JPA 类 → `iamdata`（dataobject/repository/gateway 子包）。
 
 - [ ] **Step 2: 更新引用方 import**
 
-- `gateway-audit/.../UsageLogDo.java`：`infrastructure.iam.gateway.database.dataobject.UserDo` → `iamdata.gateway.database.dataobject.UserDo`
-- `gateway-alert/.../AlertNotificationDo.java`：同上
-- `gateway-stats/.../StatsService.java`：`UserRepository` → `iamdata.gateway.database.repository.UserRepository`
-- 其余引用 `domain.iam.*`/`domain.application.*`/`application.*`(iam) 的模块：proxy/boot/usage/resilience，`grep -rl "com\.codingas\.gateway\.\(domain\|application\|infrastructure\)\.\(iam\|application\)\."` 确认后替换
-- `gateway-boot/.../UserCreator.java`：`infrastructure.iam.gateway.encryption.PasswordEncoder` → `iam.gateway.encryption.PasswordEncoder`（encryption 留核心）
+- `gateway-audit/.../UsageLogDo.java`：`infrastructure.iam.gateway.database.dataobject.UserDo` → `iamdata.dataobject.UserDo`
+- `gateway-alert/.../AlertNotificationDo.java`：同上（引 UserDo）
+- `gateway-stats/.../StatsService.java`：`UserRepository` → `iamdata.repository.UserRepository`
+- 其余引用 `domain.iam.*`/`domain.application.*`/`application.*`(iam) 的模块：proxy/boot/usage/resilience，`grep -rl "com\.codingas\.gateway\.\(domain\|application\|infrastructure\)\.\(iam\|application\)\."` 确认后替换（映射：`domain.iam.*`→`iam.user/apikey.*`、`domain.application.*`→`iam.application.*` 等，见设计文档 §4.2 iam 业务子包树）
+- `gateway-boot/.../UserCreator.java`：`infrastructure.iam.gateway.encryption.PasswordEncoder` → `iam.encryption.PasswordEncoder`（encryption 留核心）
 
 - [ ] **Step 3: 更新引用方 pom**
 
@@ -272,18 +255,18 @@ git commit -m "refactor: iam 域包名 Jmix 化（iam/iamdata）+ 绑定拆分�
 ### Task 4: usage 域 —— 包名 Jmix 化 + usage-data 拆分
 
 **Files:**
-- Modify（gateway-usage 核心，`domain.usage.*`/`domain.quota.*`/`application.quota.*` → `usage.*`）：`domain/usage/**`、`domain/quota/**`、`application/quota/**` 留核心，包名改 `usage.**`
+- Modify（gateway-usage 核心，按设计文档 §4.2 usage 业务子包树重排）：`domain/usage/**`、`domain/quota/**`、`application/quota/**` → 归入 `usage.tokenlimit`/`usage.ratelimit`/`usage.event`/`usage.enums`/`usage.dto`
 - Create（gateway-usage-data，包名 → `usagedata`）：`infrastructure/usage/gateway/database/dataobject/*`（TokenLimitDo/RateLimitConfigDo）+ `infrastructure/usage/gateway/database/TokenLimitRepository` + `infrastructure/usage/gateway/TokenLimitGatewayImpl`（4 个）
 - Modify（引用方 import）：引用 `domain.usage.*`/`domain.quota.*` 的模块（audit/alert/proxy/boot）
 - Modify: `gateway-usage/pom.xml`（移除 `spring-boot-starter-data-jpa`）
 
 **Interfaces:**
-- Consumes: `provider`/`iam` 包名（`TokenLimit` 引 `provider.entity.Model/Provider`、`iam.entity.User`）
+- Consumes: `provider`/`iam` 包名（`TokenLimit` 引 `provider.model.Model/Provider`、`iam.user.User`）
 - Produces: `com.codingas.gateway.usage` + `usagedata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA 类**
+- [ ] **Step 1: 按设计文档 §4.2 usage 业务子包树迁移**
 
-核心：`domain.usage.`/`domain.quota.`/`application.quota.` → `usage.`。绑定：`infrastructure.usage.` → `usagedata.`（移 gateway-usage-data）。
+核心类归入：`usage.tokenlimit`（TokenLimit/TokenLimitGateway/TokenLimitService/TokenLimitServiceImpl）、`usage.ratelimit`（RateLimitConfig）、`usage.event`（TokenUsedEvent/TokenUsageEventListener）、`usage.enums`（ExceededAction/PeriodType）、`usage.dto`。绑定类（移 gateway-usage-data）→ `usagedata`。
 
 - [ ] **Step 2: 更新引用方 import**
 
@@ -315,9 +298,9 @@ git commit -m "refactor: usage 域包名 Jmix 化（usage/usagedata）+ 绑定�
 ### Task 5: security 域 —— 包名 Jmix 化 + security-data 拆分（限流留核心）
 
 **Files:**
-- Modify（gateway-security 核心，`domain.dataprotection.*`→`security.dataprotection.*`、`domain.threat.*`→`security.threat.*`）：`domain/**` 留核心
-- **留核心**：`infrastructure/dataprotection/SensitiveDataRuleInitializer`、`infrastructure/threat/gateway/InMemoryTokenBucketRateLimiter`（包名 → `security.dataprotection`/`security.threat`）
-- Create（gateway-security-data，包名 → `securitydata`）：`infrastructure/dataprotection/gateway/database/**`（SensitiveDataRuleDo/REPO/GatewayImpl/Converter）+ `infrastructure/threat/gateway/database/**`（IpBlocklistDo/REPO/GatewayImpl/Converter），共 8 个 JPA 类，包名 `securitydata.dataprotection.*`/`securitydata.threat.*`
+- Modify（gateway-security 核心，按设计文档 §4.2 security 业务子包树重排）：`domain/dataprotection/**`、`domain/threat/**` → 归入 `security.dataprotection`/`security.threat`
+- **留核心**：`infrastructure/dataprotection/SensitiveDataRuleInitializer` → `security.dataprotection`；`infrastructure/threat/gateway/InMemoryTokenBucketRateLimiter` → `security.threat`
+- Create（gateway-security-data，包名 → `securitydata`）：`infrastructure/dataprotection/gateway/database/**`（SensitiveDataRuleDo/REPO/GatewayImpl/Converter）+ `infrastructure/threat/gateway/database/**`（IpBlocklistDo/REPO/GatewayImpl/Converter），共 8 个 JPA 类，包名 `securitydata`（dataprotection/threat 子包）
 - Modify（引用方 import）：引用 `domain.threat.*`/`domain.dataprotection.*` 的模块（boot/proxy）
 - Modify: `gateway-security/pom.xml`（移除 `spring-boot-starter-data-jpa`）
 
@@ -325,10 +308,9 @@ git commit -m "refactor: usage 域包名 Jmix 化（usage/usagedata）+ 绑定�
 - Consumes: `provider`/`iam` 包名
 - Produces: `com.codingas.gateway.security` + `securitydata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA 类**
+- [ ] **Step 1: 按设计文档 §4.2 security 业务子包树迁移**
 
-核心：`domain.dataprotection.` → `security.dataprotection.`、`domain.threat.` → `security.threat.`；`SensitiveDataRuleInitializer`/`InMemoryTokenBucketRateLimiter` → `security.dataprotection`/`security.threat`。
-绑定：`infrastructure.dataprotection.` → `securitydata.dataprotection.`、`infrastructure.threat.` → `securitydata.threat.`（移 gateway-security-data）。
+核心类归入：`security.dataprotection`（SensitiveDataRule/SensitiveDataRuleGateway/DataProtectionException/SensitiveDataRuleInitializer）、`security.threat`（IpBlocklist/IpBlockGateway/IpBlocklistDomainService/TokenBucketRateLimiter/InMemoryTokenBucketRateLimiter/TokenBucketStatus/RateLimitDomainService/RateLimitProperties/ThreatException 等）。绑定类（移 gateway-security-data）→ `securitydata`（dataprotection/threat 子包）。
 
 - [ ] **Step 2: 更新引用方 import**
 
@@ -360,18 +342,18 @@ git commit -m "refactor: security 域包名 Jmix 化（security/securitydata）+
 ### Task 6: audit 域 —— 包名 Jmix 化 + audit-data 拆分
 
 **Files:**
-- Modify（gateway-audit 核心，`domain.audit.*`→`audit.*`、`application.audit.*`→`audit.*`）：`domain/audit/**`、`application/audit/**` 留核心
-- Create（gateway-audit-data，包名 → `auditdata`）：`infrastructure/audit/gateway/**`（DO 3 + REPO 3 + IMPL 2，共 8 个 JPA 类），包名 `auditdata.**`
-- Modify（引用方 import）：`gateway-proxy`（`domain.audit.entity.CallLog` 等 → `audit.entity.CallLog`）、`gateway-boot`
+- Modify（gateway-audit 核心，按设计文档 §4.2 audit 业务子包树重排）：`domain/audit/**`、`application/audit/**` → 归入 `audit` 根包 + `audit.event`
+- Create（gateway-audit-data，包名 → `auditdata`）：`infrastructure/audit/gateway/**`（DO 3 + REPO 3 + IMPL 2，共 8 个 JPA 类），包名 `auditdata`
+- Modify（引用方 import）：`gateway-proxy`（`domain.audit.entity.CallLog` 等 → `audit.CallLog`）、`gateway-boot`
 - Modify: `gateway-audit/pom.xml`（移除 data-jpa；保留 providerdata/iamdata 依赖——UsageLogDo 引跨域 DO）
 
 **Interfaces:**
 - Consumes: `providerdata`/`iamdata`（UsageLogDo 引 ModelDo/ProviderDo/UserDo，过渡态）
 - Produces: `com.codingas.gateway.audit` + `auditdata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA 类**
+- [ ] **Step 1: 按设计文档 §4.2 audit 业务子包树迁移**
 
-核心：`domain.audit.` → `audit.`、`application.audit.` → `audit.`。绑定：`infrastructure.audit.` → `auditdata.`（移 gateway-audit-data）。`UsageLogDo` 的跨域 import（`providerdata`/`iamdata`）保持 Task 2/3 已改的包名。
+核心类归入：`audit` 根包（AuditLog/AuditLogGateway/AuditGateway/CallLog/CallLogGateway/AuditContext）、`audit.event`（AuditEventListener）。绑定类（移 gateway-audit-data）→ `auditdata`。`UsageLogDo` 的跨域 import（`providerdata`/`iamdata`）保持 Task 2/3 已改的包名。
 
 - [ ] **Step 2: 更新引用方 import**
 
@@ -403,17 +385,17 @@ git commit -m "refactor: audit 域包名 Jmix 化（audit/auditdata）+ 绑定�
 ### Task 7: alert 域 —— 包名 Jmix 化 + alert-data 拆分
 
 **Files:**
-- Modify（gateway-alert 核心，`domain.alert.*`→`alert.*`）：`domain/alert/**` 留核心
-- Create（gateway-alert-data，包名 → `alertdata`）：`infrastructure/alert/gateway/database/dataobject/*`（AlertNotificationDo/AlertRuleDo，2 个 JPA DO），包名 `alertdata.**`
+- Modify（gateway-alert 核心，按设计文档 §4.2 alert 业务子包树重排）：`domain/alert/**` → 归入 `alert` 根包（AlertNotification/AlertRule）
+- Create（gateway-alert-data，包名 → `alertdata`）：`infrastructure/alert/gateway/database/dataobject/*`（AlertNotificationDo/AlertRuleDo，2 个 JPA DO），包名 `alertdata`
 - Modify: `gateway-alert/pom.xml`（移除 data-jpa；保留 iamdata 依赖——AlertNotificationDo 引 UserDo）
 
 **Interfaces:**
 - Consumes: `iamdata`（AlertNotificationDo 引 UserDo，过渡态）
 - Produces: `com.codingas.gateway.alert` + `alertdata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA DO**
+- [ ] **Step 1: 按设计文档 §4.2 alert 业务子包树迁移**
 
-核心：`domain.alert.` → `alert.`。绑定：`infrastructure.alert.` → `alertdata.`（移 gateway-alert-data）。
+核心类归入 `alert` 根包（AlertNotification/AlertRule，AlertRule 内含嵌套枚举）。绑定类（移 gateway-alert-data）→ `alertdata`。
 
 - [ ] **Step 2: 更新引用方 import**
 
@@ -445,19 +427,19 @@ git commit -m "refactor: alert 域包名 Jmix 化（alert/alertdata）+ 绑定�
 ### Task 8: resilience 域 —— 包名 Jmix 化 + resilience-data 拆分（熔断/重试留核心）
 
 **Files:**
-- Modify（gateway-resilience 核心，`domain.resilience.*`→`resilience.*`、`application.resilience.*`→`resilience.*`）：`domain/resilience/**`、`application/resilience/**` 留核心
-- **留核心**（`infrastructure/resilience/**` 非 database 的 16 个熔断/重试/指标类）：`CircuitBreaker`、`CircuitBreakerState`、`ChannelEndpointCircuitBreakerManager`、`EndpointMetrics`、`EndpointMetricsRegistry`、`RetryExecutor`、`RetryStrategy`、`FastRetryStrategy`、`ExponentialBackoffStrategy`、`RateLimitRetryStrategy`、`ServiceUnavailableStrategy`、`GatewayRetryProperties`、`RetryableException`、`CircuitOpenException`、`ResilientClientFactoryImpl`、`ResilientUpstreamClient`（包名 → `resilience.*`）
-- Create（gateway-resilience-data，包名 → `resiliencedata`）：`infrastructure/resilience/gateway/database/**`（FailoverEventDo/REPO/GatewayImpl，3 个），包名 `resiliencedata.**`
-- Modify（引用方 import）：`gateway-proxy`（`infrastructure.resilience.ChannelEndpointCircuitBreakerManager` → `resilience.ChannelEndpointCircuitBreakerManager`）、`gateway-boot`（CircuitOpenException/ChannelEndpointCircuitBreakerManager）
-- Modify: `gateway-resilience/pom.xml`（移除 data-jpa；保留 providerhttp——ResilientClientFactoryImpl 引 supplyhttp client）
+- Modify（gateway-resilience 核心，按设计文档 §4.2 resilience 业务子包树重排）：`domain/resilience/**`、`application/resilience/**` → 归入 `resilience.failover`/`resilience.dto`
+- **留核心**（`infrastructure/resilience/**` 非 database 的 16 个熔断/重试/指标类）：归入 `resilience.circuitbreaker`（CircuitBreaker/CircuitBreakerState/ChannelEndpointCircuitBreakerManager/CircuitOpenException）、`resilience.retry`（RetryExecutor/RetryStrategy/4 策略/GatewayRetryProperties/RetryableException）、`resilience.metrics`（EndpointMetrics/EndpointMetricsRegistry）、`resilience.upstream`（ResilientUpstreamClient/ResilientClientFactoryImpl）
+- Create（gateway-resilience-data，包名 → `resiliencedata`）：`infrastructure/resilience/gateway/database/**`（FailoverEventDo/REPO/GatewayImpl，3 个），包名 `resiliencedata`
+- Modify（引用方 import）：`gateway-proxy`（`infrastructure.resilience.ChannelEndpointCircuitBreakerManager` → `resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager`）、`gateway-boot`（CircuitOpenException/ChannelEndpointCircuitBreakerManager 同理）
+- Modify: `gateway-resilience/pom.xml`（移除 data-jpa；保留 providerhttp——ResilientClientFactoryImpl 引 providerhttp 的 upstream client）
 
 **Interfaces:**
 - Consumes: `providerhttp`（ResilientClientFactoryImpl 引 AnthropicUpstreamClient/OpenAIUpstreamClient，过渡态）
 - Produces: `com.codingas.gateway.resilience` + `resiliencedata`
 
-- [ ] **Step 1: 改包名 + 迁移 JPA 类**
+- [ ] **Step 1: 按设计文档 §4.2 resilience 业务子包树迁移**
 
-核心：`domain.resilience.` → `resilience.`、`application.resilience.` → `resilience.`；`infrastructure.resilience.`（非 database）→ `resilience.`（16 个留核心）。绑定：`infrastructure.resilience.gateway.database.**` → `resiliencedata.`（移 gateway-resilience-data）。
+核心类归入：`resilience.failover`（FailoverEvent/FailoverEventGateway/ResilienceEventService/ResilienceEventServiceImpl/FailoverEventListener）、`resilience.circuitbreaker`、`resilience.retry`、`resilience.metrics`、`resilience.upstream`、`resilience.dto`（FailoverEventResponse）。绑定类（移 gateway-resilience-data）→ `resiliencedata`。
 
 - [ ] **Step 2: 更新引用方 import**
 
@@ -465,7 +447,7 @@ git commit -m "refactor: alert 域包名 Jmix 化（alert/alertdata）+ 绑定�
 
 - [ ] **Step 3: 核心 pom 调整**
 
-`gateway-resilience/pom.xml`：移除 `spring-boot-starter-data-jpa`；保留 `gateway-provider-http`（ResilientClientFactoryImpl 引 supplyhttp client）。
+`gateway-resilience/pom.xml`：移除 `spring-boot-starter-data-jpa`；保留 `gateway-provider-http`（ResilientClientFactoryImpl 引 providerhttp 的 upstream client）。
 
 - [ ] **Step 4: 构建验证**
 
@@ -489,8 +471,8 @@ git commit -m "refactor: resilience 域包名 Jmix 化（resilience/resilienceda
 ### Task 9: proxy / stats 域 —— 纯包名 Jmix 化（无绑定拆分）
 
 **Files:**
-- Modify（gateway-proxy，`application.proxy.*`/`application.protocol.*`/`infrastructure.protocol.*` → `proxy.*`）：`application/**`、`infrastructure/protocol/ProtocolStreamConverter.java` 包名改 `proxy.**`
-- Modify（gateway-stats，`application.stats.*` → `stats.*`）：`application/**` 包名改 `stats.**`
+- Modify（gateway-proxy，按设计文档 §4.2 proxy 业务子包树重排）：`application/proxy/**`、`application/protocol/**`、`infrastructure/protocol/ProtocolStreamConverter.java` → 归入 `proxy.chat`/`proxy.routing`/`proxy.invoker`/`proxy.conversion`/`proxy.dto`
+- Modify（gateway-stats，按设计文档 §4.2 stats 业务子包树重排）：`application/stats/**` → `stats` 根包 + `stats.dto`
 - Modify（引用方 import）：`gateway-boot`（引 proxy 的 `application.proxy.*` 与 stats 的 `application.stats.*`）
 - Modify: `gateway-stats/pom.xml`（确认已含 `gateway-provider-data`、`gateway-iam-data` 依赖——StatsService 引 Repository，过渡态）
 
@@ -498,13 +480,13 @@ git commit -m "refactor: resilience 域包名 Jmix 化（resilience/resilienceda
 - Consumes: 全部已完成包名迁移的域（provider/iam/usage/security/audit/alert/resilience）
 - Produces: `com.codingas.gateway.proxy` + `stats`（纯包名迁移完成）
 
-- [ ] **Step 1: proxy 包名迁移**
+- [ ] **Step 1: 按设计文档 §4.2 proxy 业务子包树迁移**
 
-`gateway-proxy`：`application.proxy.` → `proxy.`、`application.protocol.` → `proxy.protocol.`、`infrastructure.protocol.` → `proxy.protocol.`（ProtocolStreamConverter）。保留 `proxy` 子包结构。
+核心类归入：`proxy.chat`（ChatDispatchService/ChatDispatchServiceImpl/ErrorClassifier）、`proxy.routing`（Router/RouterChain/RoutingResolver/RoutingRequest/CredentialResolver/EndpointResolver/InstanceSelector/LoadBalanceRouter/ModelMatcher/PermissionRouter/PriorityRouter/HealthRouter）、`proxy.invoker`（ChannelFailoverInvoker/KeyFailoverInvoker）、`proxy.conversion`（ProtocolConversionFacade/ProtocolStreamConverter/OutboundTuner）、`proxy.dto`。
 
-- [ ] **Step 2: stats 包名迁移**
+- [ ] **Step 2: 按设计文档 §4.2 stats 业务子包树迁移**
 
-`gateway-stats`：`application.stats.` → `stats.`。确认 pom 含 `gateway-provider-data`、`gateway-iam-data`（Task 2/3 已加）。
+核心类归入：`stats` 根包（StatsService）、`stats.dto`（StatsResponse）。确认 pom 含 `gateway-provider-data`、`gateway-iam-data`（Task 2/3 已加）。
 
 - [ ] **Step 3: 更新引用方 import**
 
