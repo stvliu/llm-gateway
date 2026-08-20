@@ -17,8 +17,8 @@ package com.codingas.gateway.application.protocol.conversion;
 
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.infrastructure.protocol.AnthropicProtocolAdapter;
-import com.codingas.gateway.infrastructure.protocol.OpenAIProtocolAdapter;
+import com.codingas.gateway.protocol.anthropic.AnthropicProtocolAdapter;
+import com.codingas.gateway.protocol.openai.OpenAIProtocolAdapter;
 import com.codingas.gateway.infrastructure.protocol.ProtocolStreamConverter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;

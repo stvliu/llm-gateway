@@ -13,14 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.protocol;
+package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.api.capability.protocol.*;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.Map;
  * <p>system 角色消息 → 规范顶层 system；tools(Map) → CanonicalTool；
  * 反向 denormalize 时 system 还原为 system 角色消息。</p>
  */
-@Component
 public class OpenAIProtocolAdapter implements ProtocolAdapter<OpenAIChatRequest> {
 
     private final ObjectMapper objectMapper;

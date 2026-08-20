@@ -48,6 +48,18 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 协议能力插件（通过 AutoConfiguration + @ConditionalOnProperty 启用） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-openai</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-anthropic</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 供给域模块（Provider/Channel/Model/Catalog/Upstream/RoutingContext） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

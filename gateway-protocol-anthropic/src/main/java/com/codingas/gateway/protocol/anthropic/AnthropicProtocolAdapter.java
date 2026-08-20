@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.protocol;
+package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
 import com.codingas.gateway.api.capability.protocol.CanonicalChatResponse;
@@ -27,7 +27,6 @@ import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +39,6 @@ import java.util.Map;
  * <p>顶层 system 字段 ↔ 规范顶层 system；content blocks ↔ 规范 content。
  * 规范 tools 转换：Anthropic {"name","description","input_schema"} 与规范 CanonicalTool 对齐。</p>
  */
-@Component
 public class AnthropicProtocolAdapter implements ProtocolAdapter<AnthropicMessagesRequest> {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

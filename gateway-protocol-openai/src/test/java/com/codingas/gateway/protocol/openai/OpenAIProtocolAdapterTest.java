@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.protocol;
+package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
 import com.codingas.gateway.api.capability.protocol.CanonicalMessage;
