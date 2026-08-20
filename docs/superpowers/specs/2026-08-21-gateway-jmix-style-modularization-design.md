@@ -54,7 +54,7 @@ jmix-security/
 - `AccessConstraintsRegistry`：注册表模式做可插拔策略
 - 事件机制：`EntityChangedEvent`（`ApplicationEvent + ResolvableTypeProvider`）跨模块解耦
 
-> **注**：以上运行时秩序机制**本次必须实现**（用户决策），完整复刻 Jmix 的模块运行时秩序，落地详见 §5.3 与 P2 阶段。
+> **注**：以上运行时秩序机制是 Jmix 为「框架被下游应用扩展」设计的。llm-gateway 是单体应用，模块拓扑编译期静态确定，**本次不实现**（用户评估决策），替代方案见 §5.3。
 
 ## 3. llm-gateway 现状与差距
 
@@ -135,31 +135,29 @@ public class ProviderAutoConfiguration { ... }
 - starter 只依赖 `spring-boot-autoconfigure`，零业务逻辑
 - `@ConditionalOnMissingBean` 保证可覆盖
 
-### 5.2 核心模块装配入口（仿 `SecurityConfiguration`）
+### 5.2 核心模块装配入口（仿 `SecurityConfiguration`，不含 `@JmixModule` 运行时机制）
 
 ```java
 @Configuration
 @ComponentScan(basePackages = "com.codingas.gateway.provider")   // 限定本域包
 @ConfigurationPropertiesScan
-@GatewayModule(id = "provider", dependsOn = {CommonConfiguration.class})
-@PropertySource("classpath:/com/codingas/gateway/provider/module.properties")
 public class ProviderConfiguration { ... }
 ```
 
-### 5.3 运行时模块秩序（仿 Jmix 深层机制，必须实现）
+> 注：Jmix 的 `SecurityConfiguration` 带 `@JmixModule` + `@PropertySource(module.properties)`，因运行时秩序机制不实现（见 §5.3），llm-gateway 的 `XxxConfiguration` 不引入这两者。
 
-在 `gateway-common` 落地以下组件（约 5-6 个类），完整复刻 Jmix 的模块运行时秩序：
+### 5.3 运行时模块秩序：不实现（YAGNI）
 
-| 组件 | 仿 Jmix | 职责 |
-|---|---|---|
-| `@GatewayModule(id, dependsOn)` 注解 | `@JmixModule` | 主配置类声明模块 id 与依赖 |
-| `GatewayModulesProcessor` | `JmixModulesProcessor` | `BeanDefinitionRegistryPostProcessor` 启动早期扫描 `@GatewayModule` 配置，按 `dependsOn` 拓扑排序、校验 id 唯一性，把各模块 `module.properties` 注册为 PropertySource |
-| `GatewayModules` | `JmixModules` | 模块注册表（`getAll()` 按依赖序 / `get(id)` / `getLast()` = 应用 / `getPropertyValues()` 加法式属性合并） |
-| `GatewayModulesAwareBeanSelector` | `JmixModulesAwareBeanSelector` | 从多个同类型 bean 选出模块层级最低者（应用 > 绑定模块 > 核心），实现"高层模块覆盖底层默认"而无需 `allow-bean-definition-overriding` |
-| `module.properties` | 同 | 每模块一个加法式配置文件（如协议能力注册、脱敏器注册、限流策略注册） |
-| `@Internal` 注解 | `@Internal` | 标注 impl/ 内部实现，跨模块不得使用 |
+**决策**：`@GatewayModule`/`GatewayModulesProcessor`/`GatewayModules`/`GatewayModulesAwareBeanSelector`/`module.properties`/`@Internal` 等运行时模块秩序机制**不实现**（用户评估决策）。目标架构（三态模块）必须实现，但运行时秩序机制为框架化外壳，单体应用不采用。
 
-**装配时序**：`GatewayModulesProcessor`（`PriorityOrdered`）在启动早期构建模块描述符列表 → 生成 `GatewayModules` bean → 各 `XxxConfiguration`/`BeanSelector` 消费该注册表。
+**理由**：这些机制是 Jmix 作为**框架**为「下游应用扩展」设计的（运行时发现模块、应用覆盖框架默认、加法式配置）。llm-gateway 是**单体应用**，模块拓扑在 pom 编译期静态确定，无运行时发现需求。对应需求由更轻的 Spring 原生机制承担：
+
+| 框架场景（Jmix 机制） | 单体替代（llm-gateway） |
+|---|---|
+| 运行时模块发现/排序（`JmixModulesProcessor`） | pom 编译期依赖 = 模块拓扑；Spring 按 bean 依赖装配 |
+| 多 bean 模块覆盖（`JmixModulesAwareBeanSelector`） | `@ConditionalOnMissingBean` + `@Primary` |
+| 加法式配置（`module.properties`） | `List<ProtocolAdapter>` 注入 + AutoConfiguration（协议插件已用） |
+| 内部 API 标注（`@Internal`） | ArchUnit 按包路径判定 impl/DO 依赖（静态、可测试） |
 
 ### 5.4 装配显式化
 
@@ -184,13 +182,12 @@ public class ProviderConfiguration { ... }
 - 转换器（model↔DO）随 data 模块走，核心不 import 任何 DO
 - 验证：全量构建 + 全量测试绿；临时 ArchUnit 规则验证「核心 0 依赖 data」
 
-### P2 starter 化 + 运行时模块秩序
+### P2 starter 化
 
-- 核心模块补 `@Configuration` 装配入口（`@GatewayModule` + `@ComponentScan` 限定本域包 + `@ConfigurationPropertiesScan` + `@PropertySource`）
-- `gateway-common` 落地运行时模块秩序组件：`@GatewayModule` 注解、`GatewayModulesProcessor`、`GatewayModules`、`GatewayModulesAwareBeanSelector`、`@Internal` 注解；各域 `module.properties`
+- 核心模块补 `@Configuration` 装配入口（`@ComponentScan` 限定本域包 + `@ConfigurationPropertiesScan`）
 - 新增各 `-starter`（AutoConfiguration + imports，只依赖 `spring-boot-autoconfigure`）
 - boot 依赖切换为各 starter；装配显式化（去全包扫描）
-- 验证：构建绿；模块 id 唯一性校验测试；模块排序/覆盖测试；装配显式化测试
+- 验证：构建绿；装配显式化测试
 
 ### P3 boot 瘦身 + web 独立 + 协议插件自包含
 
@@ -220,5 +217,6 @@ public class ProviderConfiguration { ... }
 ## 8. 明确不做（YAGNI）
 
 - **不建自有 BOM**：llm-gateway 是单体应用（非框架），`${revision}` + 根 POM 管理已够
+- **不实现运行时模块秩序**（`@GatewayModule`/`GatewayModulesProcessor`/`GatewayModules`/`GatewayModulesAwareBeanSelector`/`module.properties`/`@Internal`）：框架为下游扩展设计，单体用 Spring 原生机制（`@ConditionalOnMissingBean`/`@Primary`/`List<X>` 注入）+ ArchUnit 替代，见 §5.3
 - **不引入 `StoreAwareLocator`**：单数据源，无多 store 需求
 - **不改前端/CLI/模拟器**：`gateway-console`/`gateway-cli`/`gateway-simulator` 不受影响
