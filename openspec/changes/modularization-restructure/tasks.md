@@ -40,11 +40,11 @@
 
 ## 5. Phase 4：协议能力插件化
 
-- [ ] 4.1 新建 `gateway-protocol-openai`，迁移 `OpenAIProtocolAdapter`，实现 `ProtocolAdapter` SPI + `OpenAIProtocolAutoConfiguration`（`@Bean` 注册 + `@ConditionalOnProperty`）
-- [ ] 4.2 新建 `gateway-protocol-anthropic`，迁移 `AnthropicProtocolAdapter` + `ProtocolStreamConverter`
-- [ ] 4.3 `gateway-boot` 依赖 `protocol-openai/anthropic`，通过 AutoConfiguration 启用；删除原 `infrastructure/protocol` 实现；`mvn test` 全绿
-- [ ] 4.4 落 `gateway-protocol-gemini` 示例插件验证可扩展性（含 Adapter + AutoConfiguration + DB 配置）——**验收金标准：新增协议仅新增插件模块 + DB 配置，不改核心**
-- [ ] 4.5 健康机制：HealthIndicator/HealthGroup + `@Scheduled` 周期探活
+- [x] 4.1 新建 `gateway-protocol-openai`，迁移 `OpenAIProtocolAdapter`（去 @Component），`OpenAIProtocolAutoConfiguration`（@Bean 注册 + `@ConditionalOnProperty(gateway.protocol.openai.enabled)`）
+- [x] 4.2 新建 `gateway-protocol-anthropic`，迁移 `AnthropicProtocolAdapter` + AutoConfiguration（ProtocolStreamConverter 已随 proxy 迁）
+- [x] 4.3 `gateway-boot` 依赖 `protocol-openai/anthropic` 经 AutoConfiguration 启用；删除原 `infrastructure/protocol` 实现（Adapter 测试随迁插件）；全仓 16 模块 install + boot 322 surefire 全绿
+- [x] 4.4 落 `gateway-protocol-gemini` 示例插件验证可扩展性——**验收金标准达成**：GeminiChatRequest 契约 + GeminiProtocolAdapter<GeminiChatRequest> + AutoConfiguration；ProtocolConversionFacade.convertRequest 通用化（源=request.getProtocol()，按协议名动态路由），新增 gemini 不改核心，集成测试验证 gemini→openai 转换
+- [x] 4.5 健康机制：HealthIndicator/HealthGroup 已有（ProviderRegistryHealthIndicator + readiness group）；新增 `ProviderHealthProbe`（@Scheduled 周期探活：遍历启用通道→端点→凭证→UpstreamClient.testConnectivity→更新供应商级健康状态，探活间隔/初始延迟可配置）+ 3 单测
 
 ## 6. 收尾与验证
 
