@@ -54,6 +54,8 @@ jmix-security/
 - `AccessConstraintsRegistry`：注册表模式做可插拔策略
 - 事件机制：`EntityChangedEvent`（`ApplicationEvent + ResolvableTypeProvider`）跨模块解耦
 
+> **注**：以上运行时秩序机制是 Jmix 为「框架被下游应用扩展」设计的。llm-gateway 是单体应用，模块拓扑编译期静态确定，**本次不实现**，替代方案见 §5.3。
+
 ## 3. llm-gateway 现状与差距
 
 ### 3.1 已具备的 Jmix 内核（源码核实）
@@ -144,18 +146,18 @@ public class ProviderAutoConfiguration { ... }
 public class ProviderConfiguration { ... }
 ```
 
-### 5.3 运行时模块秩序（仿 Jmix 深层机制）
+### 5.3 运行时模块秩序：不实现（YAGNI）
 
-在 `gateway-common` 落地以下组件（约 5-6 个类）：
+**决策**：`@JmixModule`/`JmixModulesProcessor`/`GatewayModules`/`JmixModulesAwareBeanSelector`/`module.properties` 等运行时秩序机制**不在本次实现**。
 
-| 组件 | 仿 Jmix | 职责 |
-|---|---|---|
-| `@GatewayModule(id, dependsOn)` 注解 | `@JmixModule` | 主配置类声明模块 id 与依赖 |
-| `GatewayModulesProcessor` | `JmixModulesProcessor` | `BeanDefinitionRegistryPostProcessor` 启动排序/校验 id/注册 module.properties |
-| `GatewayModules` | `JmixModules` | 模块注册表（getAll/getLast/getPropertyValues） |
-| `GatewayModulesAwareBeanSelector` | `JmixModulesAwareBeanSelector` | 多 bean 选模块层级最低者（模块覆盖） |
-| `module.properties` | 同 | 每模块加法式配置（如协议能力注册、脱敏器注册） |
-| `@Internal` 注解 | `@Internal` | 标注 impl/ 内部实现，跨模块禁用 |
+**理由**：这些机制是 Jmix 作为**框架**为「下游应用扩展」设计的（运行时发现模块、应用覆盖框架默认、加法式配置）。llm-gateway 是**单体应用**，模块拓扑在 pom 编译期静态确定，无运行时发现需求。对应需求由更轻的 Spring 原生机制承担：
+
+| 框架场景（Jmix 机制） | 单体替代（llm-gateway） |
+|---|---|
+| 运行时模块发现/排序（`JmixModulesProcessor`） | pom 编译期依赖 = 模块拓扑；Spring 按 bean 依赖装配 |
+| 多 bean 模块覆盖（`JmixModulesAwareBeanSelector`） | `@ConditionalOnMissingBean` + `@Primary` |
+| 加法式配置（`module.properties`） | `List<ProtocolAdapter>` 注入 + AutoConfiguration（协议插件已用） |
+| 内部 API 标注（`@Internal`） | ArchUnit 按包路径判定 impl/DO 依赖（静态、可测试） |
 
 ### 5.4 装配显式化
 
@@ -180,13 +182,12 @@ public class ProviderConfiguration { ... }
 - 转换器（model↔DO）随 data 模块走，核心不 import 任何 DO
 - 验证：全量构建 + 全量测试绿；临时 ArchUnit 规则验证「核心 0 依赖 data」
 
-### P2 starter 化 + 运行时模块秩序
+### P2 starter 化
 
-- 核心模块补 `@Configuration + @GatewayModule`
-- 新增各 `-starter`（AutoConfiguration + imports）
-- `GatewayModules` 机制（Processor/Modules/BeanSelector/module.properties/@Internal）落地
+- 核心模块补 `@Configuration` 装配入口（`@ComponentScan` 限定本域包 + `@ConfigurationPropertiesScan`）
+- 新增各 `-starter`（AutoConfiguration + imports，只依赖 `spring-boot-autoconfigure`）
 - boot 依赖切换为各 starter；装配显式化（去全包扫描）
-- 验证：构建绿；模块 id 校验测试；装配显式化测试
+- 验证：构建绿；装配显式化测试
 
 ### P3 boot 瘦身 + web 独立 + 协议插件自包含
 
@@ -216,6 +217,6 @@ public class ProviderConfiguration { ... }
 ## 8. 明确不做（YAGNI）
 
 - **不建自有 BOM**：llm-gateway 是单体应用（非框架），`${revision}` + 根 POM 管理已够
+- **不实现运行时模块秩序**（`@JmixModule`/`JmixModulesProcessor`/`GatewayModules`/`JmixModulesAwareBeanSelector`/`module.properties`/`@Internal`）：框架为下游扩展设计，单体用 Spring 原生机制（`@ConditionalOnMissingBean`/`@Primary`/`List<X>` 注入）+ ArchUnit 替代，见 §5.3
 - **不引入 `StoreAwareLocator`**：单数据源，无多 store 需求
-- **不引入模块级 `@Primary` 覆盖替换**：`GatewayModulesAwareBeanSelector` 已覆盖默认行为覆盖场景
 - **不改前端/CLI/模拟器**：`gateway-console`/`gateway-cli`/`gateway-simulator` 不受影响
