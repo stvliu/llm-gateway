@@ -155,6 +155,7 @@ GatewayException (根异常)
 - 接口: PascalCase + 能力描述（如 `ModelRouter`, `TokenCounter`）
 - 方法: camelCase + 动词开头
 - 常量: UPPER_SNAKE_CASE
+- **包名**: Jmix 式（模块 = 根包，去 `domain/application/infrastructure` DDD 前缀；绑定模块拼接 `Xdata`/`Xhttp` 根包；starter 用 `autoconfigure.<域>`）。详见 `doc/constitution.md` §3.1 包名规范与模块化设计文档 §4.2 包名映射表
 
 ## Active Technologies
 - Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) 

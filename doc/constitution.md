@@ -577,6 +577,17 @@ gateway:
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
 | 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
 
+**包名规范（Jmix 式：模块 = 根包，去 DDD 词汇）**：
+
+| 规则 | 说明 | 示例 |
+|------|------|------|
+| R1 模块 = 唯一根包 | 每个 Maven 模块贡献互不重叠的包路径，模块边界在包名层面可见 | `com.codingas.gateway.provider` |
+| R2 去 DDD 词汇 | 移除 `domain`/`application`/`infrastructure` 顶层前缀，以模块根包取代；业务语义子包（`entity`/`gateway`/`enums`/`exception`/`valueobject`/`dto` 等）保留 | `domain.supply.entity.Channel` → `provider.entity.Channel` |
+| R3 绑定模块拼接根包 | JPA/HTTP 绑定模块用拼接根包（`Xdata`/`Xhttp`），不用子包（`X.data`）——避免被核心 `@ComponentScan` 误扫（仿 Jmix `io.jmix.securitydata`） | `com.codingas.gateway.providerdata` / `providerhttp` |
+| R4 starter 用 autoconfigure 根包 | 装配模块统一 `com.codingas.gateway.autoconfigure.<域>`（P2 起） | `com.codingas.gateway.autoconfigure.provider` |
+
+包名迁移规则：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`；绑定模块 → `<模块根包><binding>.<rest>`。域段 → 模块根包映射（如 `supply`→`provider`、`iam`→`iam`、`application`→`iam.application`）见模块化设计文档 §4.2 包名映射表。
+
 ### 3.2 前端主题色规范
 
 **定义**:

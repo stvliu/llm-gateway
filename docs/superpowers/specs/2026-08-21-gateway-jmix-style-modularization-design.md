@@ -109,33 +109,49 @@ gateway-xxx-starter/      # ③ 装配：@AutoConfiguration + @Import + imports
 
 **核心效果**：跨模块依赖（proxy/audit/stats → provider）只能命中 provider 的根包 API（领域模型 + 端口接口），`ChannelDo` 物理不可见——"模块依赖 API"在物理层成立。
 
-### 4.2 包名治理（三铁律）
+### 4.2 包名治理（Jmix 式：模块 = 根包，去 DDD 词汇）
 
-拆分涉及包名调整。为确保包名体系合理（不产生同包跨模块、保留分层语义、可被 ArchUnit 判定），确立三条铁律：
+拆分涉及全项目包名迁移，对齐 Jmix「根包 = 模块 id」哲学（`io.jmix.security` / `io.jmix.securitydata` / `io.jmix.autoconfigure.security`），确立规则：
 
 **R1｜一个 Maven 模块 = 一组唯一包名前缀（禁止同包跨模块）**
-每个模块贡献的包路径互不重叠，模块边界在包名层面可见、可判定（仿 Jmix `io.jmix.security` / `io.jmix.securitydata` / `io.jmix.autoconfigure.security` 各占独立根包）。
+每个模块贡献的包路径互不重叠，模块边界在包名层面可见、可判定。
 
-**R2｜保留架构层顶层前缀（domain/application/infrastructure 不变）**
-`com.codingas.gateway.domain..` / `application..` / `infrastructure..` 是既有 COLA 分层约定，也是现有 ArchUnit 规则（`LayerDependencyTest`）的判定基础，拆分不破坏。
+**R2｜包名 = 模块名（根包），去除 domain/application/infrastructure 顶层 DDD 前缀**
+`com.codingas.gateway.domain..` / `application..` / `infrastructure..` 三层前缀移除，以模块根包取代。业务语义子包（`entity`/`gateway`/`enums`/`exception`/`valueobject`/`catalog`/`upstream`/`dto` 等）保留。
 
-**R3｜绑定模块用独立域段标识**
-核心模块包名**完全保持**（迁移成本≈0）；绑定模块把包名第二层"域段"改为"域段+绑定类型"，避免与核心同包。规则：域段 `X` 的 JPA 实现 → `infrastructure.Xdata.*`，HTTP 实现 → `infrastructure.Xhttp.*`；starter → `com.codingas.gateway.autoconfigure.<域>.*`（仿 Jmix `io.jmix.autoconfigure.security`）。
+**R3｜绑定模块用拼接根包（不用子包）**
+`provider.data` 是 `provider` 的子目录，会被核心模块 `@ComponentScan(basePackages="com.codingas.gateway.provider")` 误扫；`providerdata` 是平行兄弟目录，扫不到——这正是 Jmix 用 `securitydata` 而非 `security.data` 的原因。绑定模块用拼接根包。
+
+**迁移规则**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`；绑定模块 → `<模块根包><binding>.<rest>`。域段与模块根包映射见下表。
 
 **包名映射表**：
 
-| 模块 | 包名 | 说明 |
-|---|---|---|
-| `gateway-xxx`（核心） | `com.codingas.gateway.domain.<X>.*` / `.application.<X>.*` / `.infrastructure.<X>.*` | **完全保持** |
-| `gateway-xxx-data`（新） | `com.codingas.gateway.infrastructure.<X>data.*` | JPA 实现，独立域段 `Xdata` |
-| `gateway-xxx-http`（新） | `com.codingas.gateway.infrastructure.<X>http.*` | HTTP 实现，独立域段 `Xhttp` |
-| `gateway-xxx-starter`（新） | `com.codingas.gateway.autoconfigure.<X>.*` | 装配，仿 Jmix autoconfigure |
+| 模块 | 根包 | 域段映射 | 说明 |
+|---|---|---|---|
+| `gateway-common` | `com.codingas.gateway.common` | — | 不变 |
+| `gateway-protocol` | `com.codingas.gateway.protocol` | — | 不变 |
+| `gateway-provider`（核心） | `com.codingas.gateway.provider` | `supply` → `provider` | 模型/端口/服务/非绑定实现 |
+| `gateway-provider-data` | `com.codingas.gateway.providerdata` | 同上 | JPA 绑定，拼接根包 |
+| `gateway-provider-http` | `com.codingas.gateway.providerhttp` | 同上 | HTTP 绑定，拼接根包 |
+| `gateway-iam` | `com.codingas.gateway.iam` | `iam` → `iam`；`application` → `iam.application` | 核心 |
+| `gateway-iam-data` | `com.codingas.gateway.iamdata` | 同上 | JPA 绑定 |
+| `gateway-usage` / `-data` | `com.codingas.gateway.usage` / `.usagedata` | `usage` → `usage` | — |
+| `gateway-security` / `-data` | `com.codingas.gateway.security` / `.securitydata` | `dataprotection` → `security.dataprotection`；`threat` → `security.threat` | — |
+| `gateway-audit` / `-data` | `com.codingas.gateway.audit` / `.auditdata` | `audit` → `audit` | — |
+| `gateway-alert` / `-data` | `com.codingas.gateway.alert` / `.alertdata` | `alert` → `alert` | — |
+| `gateway-resilience` / `-data` | `com.codingas.gateway.resilience` / `.resiliencedata` | `resilience` → `resilience` | — |
+| `gateway-proxy` | `com.codingas.gateway.proxy` | `proxy` → `proxy` | 无绑定拆分 |
+| `gateway-stats` | `com.codingas.gateway.stats` | `stats` → `stats` | 无绑定拆分 |
+| `gateway-xxx-starter` | `com.codingas.gateway.autoconfigure.<域>` | — | 装配（P2） |
 
-> 例如 provider 域（域段 `supply`）：JPA 类 `infrastructure.supply.gateway.database.dataobject.ChannelDo` → `gateway-provider-data` 模块 + 包名 `infrastructure.supplydata.gateway.database.dataobject.ChannelDo`；HTTP 类 `infrastructure.supply.upstream.AnthropicUpstreamClient` → `gateway-provider-http` 模块 + 包名 `infrastructure.supplyhttp.upstream.AnthropicUpstreamClient`。
->
-> 为何不用子包（`infrastructure.supply.data`）？子包与父包前缀重叠，`@ComponentScan(basePackages="...infrastructure.supply")` 会把 data 模块类也扫入——独立域段拼接彻底避免前缀重叠。
+**示例**（provider 域）：
+- 核心：`domain.supply.entity.Channel` → `provider.entity.Channel`；`domain.supply.gateway.ChannelGateway` → `provider.gateway.ChannelGateway`；`infrastructure.supply.catalog.loader.BuiltinDataLoader` → `provider.catalog.loader.BuiltinDataLoader`（留核心）
+- JPA：`infrastructure.supply.gateway.database.dataobject.ChannelDo` → `providerdata.dataobject.ChannelDo`（绑定模块）
+- HTTP：`infrastructure.supply.upstream.AnthropicUpstreamClient` → `providerhttp.upstream.AnthropicUpstreamClient`（绑定模块）
 
-**机制保障**：Maven 依赖 = 物理隔离（编译期强制）；ArchUnit 按包名判定分层/跨模块违规；`@ComponentScan` 限定本模块唯一前缀；本映射表随实施逐域对照执行。
+**ArchUnit 影响**：现有 `LayerDependencyTest` 基于 `com.codingas.gateway.domain..` 等顶层前缀，包名迁移后**重写**为模块级规则（核心不得依赖本域 data/http；跨模块只依赖对方根包；P1 过渡态豁免），见 P4 与 P1 计划。
+
+**机制保障**：Maven 依赖 = 物理隔离（编译期强制）；ArchUnit 按模块根包判定违规；`@ComponentScan` 限定本模块唯一根包；本映射表随实施逐域对照执行。
 
 ### 4.3 非绑定技术实现归属
 
