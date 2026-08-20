@@ -61,35 +61,33 @@ public class ProtocolConversionFacade {
 
     /**
      * 跨协议请求转换：目标协议 ≠ 源协议时 normalize→denormalize；否则原样返回。
+     *
+     * <p><b>SPI 通用路由</b>：源协议取自 {@code request.getProtocol()}，目标协议由参数指定，
+     * 从 {@link #adapters} 映射取对应 Adapter 做 normalize→denormalize。新增协议仅需注册
+     * Adapter（且请求 DTO 的 {@code getProtocol()} 返回其协议名），本方法无需改动。</p>
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public ProtocolRequest convertRequest(ProtocolRequest request, String targetProtocol) {
-        if (request instanceof OpenAIChatRequest openai && !"openai".equals(targetProtocol)) {
-            return toAnthropic(openai);
+        String sourceProtocol = request.getProtocol();
+        if (sourceProtocol == null || sourceProtocol.equals(targetProtocol)) {
+            return request;
         }
-        if (request instanceof AnthropicMessagesRequest anthropic && !"anthropic".equals(targetProtocol)) {
-            return toOpenAI(anthropic);
+        ProtocolAdapter src = adapters.get(sourceProtocol);
+        ProtocolAdapter dst = adapters.get(targetProtocol);
+        if (src == null || dst == null) {
+            // 源或目标协议未注册 Adapter，无法转换，原样返回
+            return request;
         }
-        return request;
-    }
-
-    /** OpenAI 请求 → Anthropic 请求（normalize + denormalize 两跳） */
-    private AnthropicMessagesRequest toAnthropic(OpenAIChatRequest openai) {
-        ProtocolAdapter<OpenAIChatRequest> src = adapterFor("openai");
-        ProtocolAdapter<AnthropicMessagesRequest> dst = adapterFor("anthropic");
-        CanonicalChatRequest canonical = src.normalizeRequest(openai);
-        return dst.denormalizeRequest(canonical);
-    }
-
-    /** Anthropic 请求 → OpenAI 请求 */
-    private OpenAIChatRequest toOpenAI(AnthropicMessagesRequest anthropic) {
-        ProtocolAdapter<AnthropicMessagesRequest> src = adapterFor("anthropic");
-        ProtocolAdapter<OpenAIChatRequest> dst = adapterFor("openai");
-        CanonicalChatRequest canonical = src.normalizeRequest(anthropic);
-        return dst.denormalizeRequest(canonical);
+        CanonicalChatRequest canonical = src.normalizeRequest(request);
+        return (ProtocolRequest) dst.denormalizeRequest(canonical);
     }
 
     /**
-     * 跨协议响应转换：目标协议 ≠ 源协议时 normalize→denormalize；否则原样返回。
+     * 跨协议响应转换：源协议 ≠ 目标协议时 normalize→denormalize；否则原样返回。
+     *
+     * <p>源协议由参数指定（上游响应协议），目标协议由响应自身 {@code getProtocol()} 标识，
+     * 从 {@link #adapters} 取对应 Adapter 做 normalize→denormalize。
+     * 未注册对应 Adapter 时原样返回。</p>
      */
     public ProtocolResponse convertResponse(ProtocolResponse response, String sourceProtocol) {
         if (response instanceof AnthropicMessagesResponse anthropic && "anthropic".equals(sourceProtocol)) {

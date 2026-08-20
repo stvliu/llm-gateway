@@ -59,6 +59,12 @@
             <artifactId>gateway-protocol-anthropic</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- Gemini 协议示例插件（验证插件化可扩展性） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-gemini</artifactId>
+            <version>${revision}</version>
+        </dependency>
 
         <!-- 供给域模块（Provider/Channel/Model/Catalog/Upstream/RoutingContext） -->
         <dependency>
