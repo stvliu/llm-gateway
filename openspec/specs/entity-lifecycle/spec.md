@@ -1,11 +1,16 @@
 # Entity Lifecycle
 ## Summary
 
+## Purpose
+
+定义供应域实体（Channel、ModelInstance 等）生命周期阶段的状态机契约：明确各阶段允许的迁移与路由资格，保证实体状态流转可预期、可审计，并作为路由与告警规则的判定依据。
+
 ## Requirements
 
 ### Requirement: 实体生命周期阶段定义
 
-供应域实体（Channel、ModelInstance）必须支持五阶段生命周期：PENDING、ACTIVE、SUSPENDED、DEPRECATED、RETIRED。
+
+供应域实体（Channel、ModelInstance）SHALL 支持五阶段生命周期：PENDING、ACTIVE、SUSPENDED、DEPRECATED、RETIRED。
 
 - PENDING：实体已创建但配置不完整，不得参与路由
 - ACTIVE：实体配置完整，正常运行，参与路由
@@ -30,7 +35,8 @@
 
 ### Requirement: 状态转换规则
 
-所有状态转换必须通过 canTransitionTo() 校验，非法转换必须拒绝。
+
+所有状态转换 SHALL 通过 canTransitionTo() 校验，非法转换必须拒绝。
 
 - PENDING → ACTIVE（管理员激活）
 - ACTIVE → SUSPENDED（管理员暂停）
@@ -56,7 +62,8 @@
 
 ### Requirement: 路由可见性判断
 
-实体的路由可见性由 isRoutable() 决定。
+
+实体的路由可见性 SHALL 由 isRoutable() 决定。
 
 - ACTIVE：可路由
 - DEPRECATED：可路由（优先级低于 ACTIVE）
@@ -69,7 +76,8 @@
 
 ### Requirement: Model 废弃信息
 
-Model 实体必须支持记录上游废弃信息，不依赖状态枚举。
+
+Model 实体 SHALL 支持记录上游废弃信息，不依赖状态枚举。
 
 - deprecatedAt：上游标记废弃的时间，null 表示正常
 - scheduledRetiredAt：计划下线日期

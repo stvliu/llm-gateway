@@ -1,6 +1,10 @@
 # Catalog Cascade Materialize
 ## Summary
 
+## Purpose
+
+定义 Catalog 供应商级联物化的行为契约：Platform Admin 物化一个供应商时，系统按指定范围（全部或过滤列表）事务性级联物化其下的 Plans/Endpoints/Models，保证部分失败整体回滚，并为前端提供一致的批量结果反馈。
+
 ## Requirements
 
 ### Requirement: Provider cascade materialization
