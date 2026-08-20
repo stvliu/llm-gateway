@@ -26,7 +26,7 @@
 - [x] 2.3 新建 `gateway-usage`，迁移 usage+quota 17 生产文件 + 3 测试（usage↔quota 共享 TokenLimit 边界故合并）。依赖 common/provider/iam，独立编译，23 测试全绿
 - [x] 2.4 明确 usage 明细表归属：当前 stats 直连 provider/iam 仓库计数、不读 usage（todayRequests/tokenUsage 为 mock，TODO 留待审计统计），无只读接口需求
 - [x] 2.5 新建 `gateway-resilience`，迁移 failover/retry/circuit-breaker（25 生产文件 + 7 单测，2 个 @SpringBootTest 留 boot）。依赖 common/protocol/provider + micrometer，56 测试全绿，独立编译
-- [ ] 2.6 新建 `gateway-audit`，迁移调用日志/审计事件
+- [x] 2.6 新建 `gateway-audit`，迁移调用日志/审计事件（14 生产文件 + 2 测试）。依赖 common/provider/iam，5 测试全绿，独立编译
 - [ ] 2.7 新建 `gateway-stats`，迁移聚合统计/仪表盘（读路径，经 usage 只读接口，不写用量）
 - [ ] 2.8 新建 `gateway-alert`，迁移告警
 - [ ] 2.9 评估合并弱内聚域（alert/experience/stats），控制业务模块数 8~10

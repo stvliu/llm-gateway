@@ -51,6 +51,7 @@
         <module>gateway-usage</module>
         <module>gateway-security</module>
         <module>gateway-resilience</module>
+        <module>gateway-audit</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>

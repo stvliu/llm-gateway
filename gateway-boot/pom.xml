@@ -83,6 +83,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 审计追溯域模块（调用日志/审计事件） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
