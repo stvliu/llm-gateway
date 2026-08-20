@@ -50,13 +50,21 @@
         <module>gateway-protocol-anthropic</module>
         <module>gateway-protocol-gemini</module>
         <module>gateway-provider</module>
+        <module>gateway-provider-data</module>
+        <module>gateway-provider-http</module>
         <module>gateway-iam</module>
+        <module>gateway-iam-data</module>
         <module>gateway-usage</module>
+        <module>gateway-usage-data</module>
         <module>gateway-security</module>
+        <module>gateway-security-data</module>
         <module>gateway-resilience</module>
+        <module>gateway-resilience-data</module>
         <module>gateway-audit</module>
+        <module>gateway-audit-data</module>
         <module>gateway-stats</module>
         <module>gateway-alert</module>
+        <module>gateway-alert-data</module>
         <module>gateway-proxy</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
