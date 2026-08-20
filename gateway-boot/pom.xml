@@ -104,6 +104,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 模型代理域模块（ChatDispatch 调度 / routing / invoker / 协议转换门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-proxy</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

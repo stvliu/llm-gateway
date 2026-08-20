@@ -54,6 +54,7 @@
         <module>gateway-audit</module>
         <module>gateway-stats</module>
         <module>gateway-alert</module>
+        <module>gateway-proxy</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>

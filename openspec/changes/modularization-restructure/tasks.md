@@ -34,9 +34,9 @@
 
 ## 4. Phase 3：上层拆分
 
-- [ ] 3.1 新建 `gateway-proxy`，迁移 ChatDispatchService/routing（RoutingResolver/ModelMatcher/ChannelSelector/CredentialResolver/EndpointResolver）/invoker（ChannelFailoverInvoker/KeyFailoverInvoker）/domain/proxy
-- [ ] 3.2 确认 proxy 经 `ProtocolConversionFacade` 编排，不依赖任何具体能力插件
-- [ ] 3.3 `gateway-boot` 仅剩组装代码，业务逻辑全部迁出 + ArchUnit 通过
+- [x] 3.1 新建 `gateway-proxy`，迁移 ChatDispatchService/routing（RoutingResolver 等）/invoker（Channel/KeyFailoverInvoker）18 文件 + ProtocolConversionFacade + ProtocolStreamConverter + 15 测试。依赖 8 模块（common/iam/audit/protocol/provider/usage/resilience），102 测试全绿
+- [x] 3.2 确认 proxy 经 `ProtocolConversionFacade` 编排：仅通过 ProtocolAdapter SPI 动态装配，无任何具体 OpenAI/Anthropic Adapter 代码引用（仅 Javadoc 举例）
+- [x] 3.3 核心代理调度迁出 `gateway-boot`，boot 保留 adapter/管理端应用服务（catalog/channel/model 等）/config + Phase 4 协议 Adapter；ArchUnit 通过，全仓 14 模块 clean install + boot 331 surefire + failsafe 全绿
 
 ## 5. Phase 4：协议能力插件化
 
