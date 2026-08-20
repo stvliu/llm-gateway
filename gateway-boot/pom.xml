@@ -90,6 +90,20 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 聚合统计域模块（仪表盘统计，读路径） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-stats</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 告警通知域模块 -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-alert</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

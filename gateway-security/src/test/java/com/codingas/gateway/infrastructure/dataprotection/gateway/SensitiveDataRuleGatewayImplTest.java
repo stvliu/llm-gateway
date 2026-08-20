@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.dataprotection.gateway;
 
 import com.codingas.gateway.domain.dataprotection.entity.SensitiveDataRule;
 import com.codingas.gateway.infrastructure.dataprotection.gateway.SensitiveDataRuleGatewayImpl;

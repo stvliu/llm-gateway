@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.alert.gateway;
+package com.codingas.gateway.infrastructure.threat.gateway;
 
 import com.codingas.gateway.domain.threat.entity.IpBlocklist;
 import com.codingas.gateway.infrastructure.threat.gateway.IpBlockGatewayImpl;

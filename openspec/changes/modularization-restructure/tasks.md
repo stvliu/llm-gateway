@@ -27,10 +27,10 @@
 - [x] 2.4 明确 usage 明细表归属：当前 stats 直连 provider/iam 仓库计数、不读 usage（todayRequests/tokenUsage 为 mock，TODO 留待审计统计），无只读接口需求
 - [x] 2.5 新建 `gateway-resilience`，迁移 failover/retry/circuit-breaker（25 生产文件 + 7 单测，2 个 @SpringBootTest 留 boot）。依赖 common/protocol/provider + micrometer，56 测试全绿，独立编译
 - [x] 2.6 新建 `gateway-audit`，迁移调用日志/审计事件（14 生产文件 + 2 测试）。依赖 common/provider/iam，5 测试全绿，独立编译
-- [ ] 2.7 新建 `gateway-stats`，迁移聚合统计/仪表盘（读路径，经 usage 只读接口，不写用量）
-- [ ] 2.8 新建 `gateway-alert`，迁移告警
-- [ ] 2.9 评估合并弱内聚域（alert/experience/stats），控制业务模块数 8~10
-- [ ] 2.10 中基模块各自独立编译 + ArchUnit 通过
+- [x] 2.7 新建 `gateway-stats`，迁移聚合统计/仪表盘（2 文件，依赖 provider/iam 直连仓库计数）
+- [x] 2.8 新建 `gateway-alert`，迁移告警（4 文件，依赖 common/usage/iam）。另修复 2 个误置于 infrastructure.alert 的测试（IpBlock/SensitiveDataRule）迁回 gateway-security 正确包
+- [x] 2.9 评估合并弱内聚域：按设计维持 6 个中基模块（stats/alert 独立，未合并），experience 暂留 boot（薄应用门面，与 proxy 强相关，仅 4 文件）
+- [x] 2.10 中基模块（usage/security/resilience/audit/stats/alert）各自独立编译 + ArchUnit 通过。所有已拆 8 模块 domain 层 0 依赖 infrastructure（无冻结掩盖），全仓 13 模块 clean install 通过，boot 433 surefire + failsafe 全绿
 
 ## 4. Phase 3：上层拆分
 
