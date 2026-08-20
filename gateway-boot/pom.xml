@@ -76,6 +76,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 韧性域模块（failover/retry/circuit-breaker） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-resilience</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
