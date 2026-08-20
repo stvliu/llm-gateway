@@ -109,13 +109,55 @@ gateway-xxx-starter/      # ③ 装配：@AutoConfiguration + @Import + imports
 
 **核心效果**：跨模块依赖（proxy/audit/stats → provider）只能命中 provider 的根包 API（领域模型 + 端口接口），`ChannelDo` 物理不可见——"模块依赖 API"在物理层成立。
 
-### 4.2 模块依赖规则
+### 4.2 包名治理（三铁律）
+
+拆分涉及包名调整。为确保包名体系合理（不产生同包跨模块、保留分层语义、可被 ArchUnit 判定），确立三条铁律：
+
+**R1｜一个 Maven 模块 = 一组唯一包名前缀（禁止同包跨模块）**
+每个模块贡献的包路径互不重叠，模块边界在包名层面可见、可判定（仿 Jmix `io.jmix.security` / `io.jmix.securitydata` / `io.jmix.autoconfigure.security` 各占独立根包）。
+
+**R2｜保留架构层顶层前缀（domain/application/infrastructure 不变）**
+`com.codingas.gateway.domain..` / `application..` / `infrastructure..` 是既有 COLA 分层约定，也是现有 ArchUnit 规则（`LayerDependencyTest`）的判定基础，拆分不破坏。
+
+**R3｜绑定模块用独立域段标识**
+核心模块包名**完全保持**（迁移成本≈0）；绑定模块把包名第二层"域段"改为"域段+绑定类型"，避免与核心同包。规则：域段 `X` 的 JPA 实现 → `infrastructure.Xdata.*`，HTTP 实现 → `infrastructure.Xhttp.*`；starter → `com.codingas.gateway.autoconfigure.<域>.*`（仿 Jmix `io.jmix.autoconfigure.security`）。
+
+**包名映射表**：
+
+| 模块 | 包名 | 说明 |
+|---|---|---|
+| `gateway-xxx`（核心） | `com.codingas.gateway.domain.<X>.*` / `.application.<X>.*` / `.infrastructure.<X>.*` | **完全保持** |
+| `gateway-xxx-data`（新） | `com.codingas.gateway.infrastructure.<X>data.*` | JPA 实现，独立域段 `Xdata` |
+| `gateway-xxx-http`（新） | `com.codingas.gateway.infrastructure.<X>http.*` | HTTP 实现，独立域段 `Xhttp` |
+| `gateway-xxx-starter`（新） | `com.codingas.gateway.autoconfigure.<X>.*` | 装配，仿 Jmix autoconfigure |
+
+> 例如 provider 域（域段 `supply`）：JPA 类 `infrastructure.supply.gateway.database.dataobject.ChannelDo` → `gateway-provider-data` 模块 + 包名 `infrastructure.supplydata.gateway.database.dataobject.ChannelDo`；HTTP 类 `infrastructure.supply.upstream.AnthropicUpstreamClient` → `gateway-provider-http` 模块 + 包名 `infrastructure.supplyhttp.upstream.AnthropicUpstreamClient`。
+>
+> 为何不用子包（`infrastructure.supply.data`）？子包与父包前缀重叠，`@ComponentScan(basePackages="...infrastructure.supply")` 会把 data 模块类也扫入——独立域段拼接彻底避免前缀重叠。
+
+**机制保障**：Maven 依赖 = 物理隔离（编译期强制）；ArchUnit 按包名判定分层/跨模块违规；`@ComponentScan` 限定本模块唯一前缀；本映射表随实施逐域对照执行。
+
+### 4.3 非绑定技术实现归属
+
+审计确认各域存在**非 JPA 非 HTTP 的技术实现**（依赖通用库而非绑定技术），这类实现**留在核心模块**（仿 Jmix 核心模块的纯逻辑 impl，可依赖通用库如 Micrometer/Sa-Token/JDK crypto），不拆绑定模块：
+
+| 域 | 留在核心的技术实现 | 依赖技术 |
+|---|---|---|
+| iam | `PasswordEncoder`（SHA-256）、`Aes256EncryptionService`（AES-256-GCM）、`CredentialEncryptorAdapter`（桥接） | Sa-Token / JDK crypto / Spring |
+| security | `InMemoryTokenBucketRateLimiter`（内存限流）、`SensitiveDataRuleInitializer`（启动装载） | JDK 并发 |
+| resilience | 熔断/重试/指标/装饰器 18 个（`CircuitBreaker`、`RetryExecutor`、`ChannelEndpointCircuitBreakerManager` 等） | Micrometer |
+| provider | `BuiltinDataLoader`（启动装载）、`StubChannelKeyProbe`（占位） | Spring |
+| proxy | `ProtocolStreamConverter`（SSE 转换） | Jackson |
+
+### 4.4 模块依赖规则
 
 - 核心模块（`gateway-xxx`）：只依赖 `gateway-common`、`gateway-protocol` 等底层 API 模块 + 所需其他域的核心模块
 - 绑定模块（`gateway-xxx-data`）：依赖本域核心模块 + spring-data-jpa + 所需绑定模块
+- 绑定模块（`gateway-xxx-http`）：依赖本域核心模块 + okhttp/jackson + 所需绑定模块
 - starter（`gateway-xxx-starter`）：只依赖 `spring-boot-autoconfigure` + 本域核心模块（+ 本域绑定模块，若需自动装配 JPA）
 - `gateway-boot`：依赖各 starter + `gateway-web`，纯启动
 - `gateway-web`：承载 Controller，依赖各域核心模块的根包 API（门面接口），禁止依赖 impl/DO
+- **P1 过渡态**：已知跨模块 infrastructure 依赖（stats→provider/iam 的 Repository、audit/alert→provider/iam 的 DO、resilience→provider 的 upstream client、proxy/boot→resilience 的熔断管理器）在 P1 以「依赖对应 -data/-http 模块」保持编译，P4 解耦为端口调用或 ID 关联。
 
 ## 5. 装配机制
 
