@@ -16,7 +16,7 @@
 package com.codingas.gateway.domain.threat.service;
 
 import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
-import com.codingas.gateway.infrastructure.config.GatewayProperties;
+import com.codingas.gateway.domain.threat.valueobject.RateLimitProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,16 +39,11 @@ class RateLimitDomainServiceTest {
     @Mock
     private TokenBucketRateLimiter rateLimiter;
 
-    private GatewayProperties properties;
+    private RateLimitProperties properties;
 
     @BeforeEach
     void setUp() {
-        properties = new GatewayProperties();
-        GatewayProperties.RateLimitProperties rateLimit = new GatewayProperties.RateLimitProperties();
-        rateLimit.setBucketSize(100);
-        rateLimit.setRefillRate(10);
-        rateLimit.setQpsThreshold(1000);
-        properties.setRateLimit(rateLimit);
+        properties = new RateLimitProperties(100, 10, 1000);
     }
 
     @Test

@@ -69,6 +69,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 安全与威胁域模块（IP 威胁检测 + 数据脱敏） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-security</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

@@ -16,7 +16,7 @@
 package com.codingas.gateway.domain.threat.service;
 
 import com.codingas.gateway.domain.threat.gateway.TokenBucketRateLimiter;
-import com.codingas.gateway.infrastructure.config.GatewayProperties;
+import com.codingas.gateway.domain.threat.valueobject.RateLimitProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Service;
 public class RateLimitDomainService {
 
     private final TokenBucketRateLimiter rateLimiter;
-    private final GatewayProperties properties;
+    private final RateLimitProperties properties;
 
     /**
      * 检查是否允许请求
@@ -46,8 +46,8 @@ public class RateLimitDomainService {
         }
 
         String limitKey = "api_key:" + apiKeyId;
-        int capacity = properties.getRateLimit().getBucketSize();
-        int refillRate = properties.getRateLimit().getRefillRate();
+        int capacity = properties.bucketSize();
+        int refillRate = properties.refillRate();
 
         return rateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
     }
@@ -58,7 +58,7 @@ public class RateLimitDomainService {
      * <p>fail-close 策略：当 QPS > 配置阈值时触发。</p>
      */
     public boolean shouldFailClose(int currentQps) {
-        return currentQps > properties.getRateLimit().getQpsThreshold();
+        return currentQps > properties.qpsThreshold();
     }
 
     /**
@@ -67,14 +67,14 @@ public class RateLimitDomainService {
     public TokenBucketStatus getStatus(Long apiKeyId) {
         if (apiKeyId == null) {
             return new TokenBucketStatus(
-                    properties.getRateLimit().getBucketSize(),
-                    properties.getRateLimit().getBucketSize(),
-                    properties.getRateLimit().getRefillRate());
+                    properties.bucketSize(),
+                    properties.bucketSize(),
+                    properties.refillRate());
         }
 
         String limitKey = "api_key:" + apiKeyId;
         return rateLimiter.getStatus(limitKey,
-                properties.getRateLimit().getBucketSize(),
-                properties.getRateLimit().getRefillRate());
+                properties.bucketSize(),
+                properties.refillRate());
     }
 }
