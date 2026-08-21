@@ -50,11 +50,6 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- Spring Data JPA（TokenLimit/RateLimitConfig 的 DO/Repository 持久化） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

@@ -15,15 +15,15 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.quota.TokenLimitService;
-import com.codingas.gateway.application.quota.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.application.quota.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.application.quota.dto.TokenLimitResponse;
-import com.codingas.gateway.application.quota.dto.TokenLimitUpdateRequest;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitService;
+import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
+import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
+import com.codingas.gateway.usage.dto.TokenLimitResponse;
+import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
-import com.codingas.gateway.domain.usage.enums.ExceededAction;
-import com.codingas.gateway.domain.usage.enums.PeriodType;
-import com.codingas.gateway.domain.usage.entity.TokenLimit;
+import com.codingas.gateway.usage.enums.ExceededAction;
+import com.codingas.gateway.usage.enums.PeriodType;
+import com.codingas.gateway.usage.tokenlimit.TokenLimit;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

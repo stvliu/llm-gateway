@@ -24,7 +24,7 @@ import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.iam.valueobject.Identity;
-import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
+import com.codingas.gateway.usage.event.TokenUsedEvent;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

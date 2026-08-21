@@ -93,6 +93,13 @@
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 用量管控域绑定模块（测试引用 usagedata DO/REPO，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway.usage</groupId>
+            <artifactId>gateway-usage-data</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- 安全与威胁域模块（IP 威胁检测 + 数据脱敏） -->
         <dependency>

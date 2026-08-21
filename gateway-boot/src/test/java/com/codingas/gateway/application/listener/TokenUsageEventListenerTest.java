@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.listener;
 
-import com.codingas.gateway.application.quota.TokenUsageEventListener;
-import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
+import com.codingas.gateway.usage.event.TokenUsageEventListener;
+import com.codingas.gateway.usage.event.TokenUsedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
