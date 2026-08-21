@@ -370,6 +370,63 @@ git commit -m "refactor: 目录重组为功能域汇聚结构（仿 Jmix gateway
 
 ---
 
+### Task 3c: groupId 按域划分（仿 Jmix io.jmix.<域>）
+
+把全部模块的 groupId 从统一 `com.codingas.gateway` 改为**按功能域划分**（设计文档 §4.5 groupId 表），彻底对齐 Jmix 的 `io.jmix.security`/`io.jmix.data` 命名。
+
+**Files:**
+- Modify: 全部 25 个模块 pom.xml（显式加 `<groupId>` + 更新内部依赖声明的 groupId）
+- Modify: 根 `pom.xml`（若 dependencyManagement 含内部模块则更新；子模块 parent 的 groupId 保持 `com.codingas.gateway` 根）
+
+**Interfaces:**
+- Consumes: Task 3b 目录重组结果（所有模块在新目录）
+- Produces: groupId 按域划分（`com.codingas.gateway.<域>`），后续任务依赖声明用新 groupId
+
+- [ ] **Step 1: 建立模块 → groupId 查表**
+
+按设计文档 §4.5 groupId 表（每个功能域一个 groupId）：
+- `com.codingas.gateway.common`：gateway-common
+- `com.codingas.gateway.protocol`：gateway-protocol、gateway-protocol-openai/anthropic/gemini
+- `com.codingas.gateway.provider`：gateway-provider、-data、-http
+- `com.codingas.gateway.iam`：gateway-iam、-data
+- `com.codingas.gateway.usage`：gateway-usage、-data
+- `com.codingas.gateway.security`：gateway-security、-data
+- `com.codingas.gateway.audit`：gateway-audit、-data
+- `com.codingas.gateway.alert`：gateway-alert、-data
+- `com.codingas.gateway.resilience`：gateway-resilience、-data
+- `com.codingas.gateway.proxy`：gateway-proxy
+- `com.codingas.gateway.stats`：gateway-stats
+- `com.codingas.gateway`（根，不变）：gateway-boot、gateway-cli、gateway-simulator、父 POM gateway-project
+
+- [ ] **Step 2: 各模块 pom 显式加域 groupId**
+
+每个业务模块 pom 在 `<artifactId>` 前显式加 `<groupId>com.codingas.gateway.<域></groupId>`（否则继承父 POM 的根 groupId）。
+
+- [ ] **Step 3: 更新所有内部依赖声明的 groupId**
+
+每个模块 pom 中依赖内部模块的 `<dependency>` 的 groupId 改为**目标模块所属域**的 groupId（按 Step 1 查表）。例：provider 核心依赖 gateway-common → `<groupId>com.codingas.gateway.common</groupId>`；audit-data 依赖 gateway-provider-data → `<groupId>com.codingas.gateway.provider</groupId>`。
+
+用 `grep -rn "com.codingas.gateway" */pom.xml */*/pom.xml pom.xml` 全量核对，确保所有内部依赖 groupId 正确。
+
+- [ ] **Step 4: 全量构建验证**
+
+Run: `.\mvnw clean install -DskipTests`
+Expected: BUILD SUCCESS（groupId 变更后 reactor 解析正常）
+
+- [ ] **Step 5: 全量测试**
+
+Run: `.\mvnw test`
+Expected: 全部 PASS
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A
+git commit -m "build: groupId 按功能域划分（com.codingas.gateway.<域>，仿 Jmix io.jmix.<域>，P1）"
+```
+
+---
+
 ### Task 4: usage 域 —— 包名 Jmix 化 + usage-data 拆分
 
 **Files:**

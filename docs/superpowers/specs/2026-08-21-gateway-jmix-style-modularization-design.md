@@ -333,7 +333,26 @@ gateway/                              # 项目根（父 POM）
 - 协议插件 = `gateway-protocol/<protocol-openai>` 等（汇聚到协议域目录）
 - 底座/应用/工具模块（common/protocol 核心、boot/web/cli/simulator/console）保持根目录
 
-**Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）。依赖声明仍按 artifactId，不受目录影响。
+**groupId 命名（按域划分，仿 Jmix `io.jmix.security`/`io.jmix.data`）**：
+
+| 功能域 | groupId | 包含模块 |
+|---|---|---|
+| 底座 | `com.codingas.gateway.common` | `gateway-common` |
+| 协议 | `com.codingas.gateway.protocol` | `gateway-protocol`、`gateway-protocol-openai/anthropic/gemini` |
+| 供给 | `com.codingas.gateway.provider` | `gateway-provider`、`-data`、`-http`、`-starter` |
+| 身份 | `com.codingas.gateway.iam` | `gateway-iam`、`-data`、`-starter` |
+| 用量 | `com.codingas.gateway.usage` | `gateway-usage`、`-data`、`-starter` |
+| 安全 | `com.codingas.gateway.security` | `gateway-security`、`-data`、`-starter` |
+| 审计 | `com.codingas.gateway.audit` | `gateway-audit`、`-data`、`-starter` |
+| 告警 | `com.codingas.gateway.alert` | `gateway-alert`、`-data`、`-starter` |
+| 韧性 | `com.codingas.gateway.resilience` | `gateway-resilience`、`-data`、`-starter` |
+| 派发 | `com.codingas.gateway.proxy` | `gateway-proxy`、`-starter` |
+| 报表 | `com.codingas.gateway.stats` | `gateway-stats`、`-starter` |
+| 应用/工具 | `com.codingas.gateway` | `gateway-boot`、`gateway-web`、`gateway-cli`、`gateway-simulator` |
+
+**starter 对应（对齐 Jmix `security-starter` + `security-data-starter`）**：核心模块有 `gateway-<域>-starter`，每个绑定模块有独立 `gateway-<域>-<绑定>-starter`（如 `provider-starter` + `provider-data-starter` + `provider-http-starter`）。
+
+**Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）；所有模块 pom 的依赖声明 groupId 按上表使用对应域 groupId。依赖声明仍按 artifactId，不受目录影响。
 
 ## 5. 装配机制
 
