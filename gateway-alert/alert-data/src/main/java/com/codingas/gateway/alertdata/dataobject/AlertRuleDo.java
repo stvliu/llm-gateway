@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.alert.gateway.database.dataobject;
+package com.codingas.gateway.alertdata.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
 import com.codingas.gateway.usage.enums.PeriodType;

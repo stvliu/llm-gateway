@@ -50,16 +50,11 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- IAM 绑定模块（AlertNotificationDo 引用 iamdata.dataobject.UserDo） -->
+        <!-- IAM 绑定模块（AlertNotificationDo 引用 iamdata.dataobject.UserDo，过渡态保留） -->
         <dependency>
             <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
-        </dependency>
-        <!-- Spring Data JPA（AlertRule/AlertNotification 的 DO 持久化） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <!-- Lombok -->
         <dependency>
