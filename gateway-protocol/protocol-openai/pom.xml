@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.protocol</groupId>
     <artifactId>gateway-protocol-openai</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Protocol OpenAI</name>
@@ -33,7 +34,7 @@
     <dependencies>
         <!-- 抽象协议层（Canonical IR + ProtocolAdapter SPI + 契约） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>

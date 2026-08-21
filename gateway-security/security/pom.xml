@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.security</groupId>
     <artifactId>gateway-security</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Security</name>
@@ -33,7 +34,7 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>

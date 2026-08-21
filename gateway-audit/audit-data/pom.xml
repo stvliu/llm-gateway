@@ -26,29 +26,30 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.audit</groupId>
     <artifactId>gateway-audit-data</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Audit Data</name>
     <description>审计追溯域 JPA 绑定模块（根包 auditdata）</description>
     <dependencies>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.audit</groupId>
             <artifactId>gateway-audit</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 过渡态：审计 DO 引用 providerdata/iamdata -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-data</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
         </dependency>

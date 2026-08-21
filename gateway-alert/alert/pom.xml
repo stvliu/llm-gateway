@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.alert</groupId>
     <artifactId>gateway-alert</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Alert</name>
@@ -33,25 +34,25 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 用量管控域（AlertRule 依赖 usage.PeriodType） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.usage</groupId>
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 身份与访问管理域（AlertNotificationDo 依赖 UserDo） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- IAM 绑定模块（AlertNotificationDo 引用 iamdata.dataobject.UserDo） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
         </dependency>

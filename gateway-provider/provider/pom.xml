@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.provider</groupId>
     <artifactId>gateway-provider</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Provider</name>
@@ -33,13 +34,13 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 抽象协议层（UpstreamClient 依赖 domain.protocol.contract） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>

@@ -36,52 +36,52 @@
     <dependencies>
         <!-- 横切底座模块（BaseEntity/异常/工具/事件/通用枚举，纯横切） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 抽象协议层模块（Canonical IR + ProtocolAdapter SPI + 协议契约 DTO） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 协议能力插件（通过 AutoConfiguration + @ConditionalOnProperty 启用） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol-openai</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol-anthropic</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- Gemini 协议示例插件（验证插件化可扩展性） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol-gemini</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 供给域模块（Provider/Channel/Model/Catalog/Upstream/RoutingContext） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 身份与访问管理域模块（User/Application/UserApiKey/Auth/加密） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- IAM 绑定模块（测试引用 iamdata DO/REPO，如 ApplicationGatewayImplTest） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
             <scope>test</scope>
@@ -89,49 +89,49 @@
 
         <!-- 用量管控域模块（TokenLimit/配额/用量事件/限流执行） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.usage</groupId>
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 安全与威胁域模块（IP 威胁检测 + 数据脱敏） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.security</groupId>
             <artifactId>gateway-security</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 韧性域模块（failover/retry/circuit-breaker） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.resilience</groupId>
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 审计追溯域模块（调用日志/审计事件） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.audit</groupId>
             <artifactId>gateway-audit</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 聚合统计域模块（仪表盘统计，读路径） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.stats</groupId>
             <artifactId>gateway-stats</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 告警通知域模块 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.alert</groupId>
             <artifactId>gateway-alert</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 模型代理域模块（ChatDispatch 调度 / routing / invoker / 协议转换门面） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.proxy</groupId>
             <artifactId>gateway-proxy</artifactId>
             <version>${revision}</version>
         </dependency>
@@ -266,13 +266,13 @@
 
         <!-- 供给域绑定模块（测试引用 providerdata DO/REPO + providerhttp upstream client，过渡态） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-data</artifactId>
             <version>${revision}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-http</artifactId>
             <version>${revision}</version>
             <scope>test</scope>

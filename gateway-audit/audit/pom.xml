@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.audit</groupId>
     <artifactId>gateway-audit</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Audit</name>
@@ -33,31 +34,31 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 供给域（UsageLogDo 依赖 ModelDo/ProviderDo） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 供给域 JPA 绑定（UsageLogDo 依赖 providerdata.dataobject.ModelDo/ProviderDo，过渡态） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-data</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 身份与访问管理域（UsageLogDo 依赖 UserDo） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- IAM 绑定模块（UsageLogDo 引用 iamdata.dataobject.UserDo） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
         </dependency>

@@ -25,6 +25,7 @@
         <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
     </parent>
+    <groupId>com.codingas.gateway.common</groupId>
     <artifactId>gateway-common</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Common</name>

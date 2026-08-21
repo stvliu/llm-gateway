@@ -26,6 +26,7 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.iam</groupId>
     <artifactId>gateway-iam</artifactId>
     <packaging>jar</packaging>
     <name>Gateway IAM</name>
@@ -33,13 +34,13 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 供给域（依赖其 CredentialEncryptor 接口做渠道凭证加解密契约） -->
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>

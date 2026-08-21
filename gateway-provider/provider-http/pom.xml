@@ -26,23 +26,24 @@
         <version>${revision}</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
+    <groupId>com.codingas.gateway.provider</groupId>
     <artifactId>gateway-provider-http</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Provider HTTP</name>
     <description>供给域 HTTP 绑定模块（根包 providerhttp）</description>
     <dependencies>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.common</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway</groupId>
+            <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
