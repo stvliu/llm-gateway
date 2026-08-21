@@ -21,7 +21,7 @@ import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.application.proxy.routing.CredentialResolver;
 import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.common.event.DomainEventPublisher;
-import com.codingas.gateway.domain.audit.gateway.AuditGateway;
+import com.codingas.gateway.audit.AuditGateway;
 import com.codingas.gateway.iam.auth.AuthenticationDomainService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;

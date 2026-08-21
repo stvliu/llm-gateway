@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.application.listener;
 
-import com.codingas.gateway.application.audit.AuditEventListener;
+import com.codingas.gateway.audit.event.AuditEventListener;
 import com.codingas.gateway.common.event.AuditEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -38,35 +38,6 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域（UsageLogDo 依赖 ModelDo/ProviderDo） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 供给域 JPA 绑定（UsageLogDo 依赖 providerdata.dataobject.ModelDo/ProviderDo，过渡态） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider-data</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 身份与访问管理域（UsageLogDo 依赖 UserDo） -->
-        <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
-            <artifactId>gateway-iam</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- IAM 绑定模块（UsageLogDo 引用 iamdata.dataobject.UserDo） -->
-        <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
-            <artifactId>gateway-iam-data</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- Spring Data JPA（AuditLog/CallLog/UsageLog 的 DO/Repository 持久化） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

@@ -128,6 +128,12 @@
             <artifactId>gateway-audit</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 审计追溯域 JPA 绑定模块（DO/Repository/GatewayImpl，根包 auditdata） -->
+        <dependency>
+            <groupId>com.codingas.gateway.audit</groupId>
+            <artifactId>gateway-audit-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
 
         <!-- 聚合统计域模块（仪表盘统计，读路径） -->
         <dependency>
