@@ -16,7 +16,7 @@
 package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
-import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelGateway;
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceGateway;

@@ -54,6 +54,12 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- IAM 绑定模块（StatsService 引用 iamdata.repository.UserRepository） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>

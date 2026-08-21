@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.user.UserService;
-import com.codingas.gateway.application.user.dto.*;
-import com.codingas.gateway.application.userapikey.UserApiKeyService;
-import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
+import com.codingas.gateway.iam.service.UserService;
+import com.codingas.gateway.iam.dto.*;
+import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

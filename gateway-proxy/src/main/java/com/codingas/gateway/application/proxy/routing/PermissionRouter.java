@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelGateway;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelGateway;

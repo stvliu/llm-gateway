@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.application.init;
 
-import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.iam.user.UserGateway;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

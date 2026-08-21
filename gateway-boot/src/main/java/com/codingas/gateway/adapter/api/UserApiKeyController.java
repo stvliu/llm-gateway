@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.userapikey.UserApiKeyService;
-import com.codingas.gateway.application.userapikey.dto.*;
+import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;

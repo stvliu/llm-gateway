@@ -42,11 +42,6 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- Spring Data JPA（User/Application/UserApiKey 的 DO/Repository 持久化） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
         <!-- Sa-Token（会话认证 StpUtil + 密码哈希 SaSecureUtil） -->
         <dependency>
             <groupId>cn.dev33</groupId>

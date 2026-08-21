@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.domain.threat.service.RateLimitDomainService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

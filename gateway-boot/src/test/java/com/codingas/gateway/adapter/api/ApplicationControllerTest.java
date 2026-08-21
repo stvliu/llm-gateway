@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.application.ApplicationService;
-import com.codingas.gateway.application.userapikey.UserApiKeyService;
-import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
+import com.codingas.gateway.iam.service.ApplicationService;
+import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

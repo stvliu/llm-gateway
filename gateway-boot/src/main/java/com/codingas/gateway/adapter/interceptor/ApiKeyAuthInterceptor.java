@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.iam.service.AuthenticationDomainService;
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.AuthenticationFailedException;
+import com.codingas.gateway.iam.auth.AuthenticationDomainService;
+import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

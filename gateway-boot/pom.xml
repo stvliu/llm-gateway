@@ -79,6 +79,13 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- IAM 绑定模块（测试引用 iamdata DO/REPO，如 ApplicationGatewayImplTest） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam-data</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- 用量管控域模块（TokenLimit/配额/用量事件/限流执行） -->
         <dependency>

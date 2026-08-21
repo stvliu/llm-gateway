@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.init;
 
-import com.codingas.gateway.domain.application.entity.Application;
-import com.codingas.gateway.domain.iam.entity.User;
+import com.codingas.gateway.iam.application.Application;
+import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.provider.channel.Channel;
 import lombok.Getter;
 

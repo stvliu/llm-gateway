@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.model.ModelDiscoveryService;
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -16,10 +16,10 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.codingas.gateway.domain.iam.exception.AuthenticationFailedException;
-import com.codingas.gateway.domain.iam.exception.ForbiddenException;
-import com.codingas.gateway.domain.iam.exception.IamException;
-import com.codingas.gateway.domain.iam.exception.UnauthorizedException;
+import com.codingas.gateway.iam.auth.AuthenticationFailedException;
+import com.codingas.gateway.iam.exception.ForbiddenException;
+import com.codingas.gateway.iam.exception.IamException;
+import com.codingas.gateway.iam.exception.UnauthorizedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;

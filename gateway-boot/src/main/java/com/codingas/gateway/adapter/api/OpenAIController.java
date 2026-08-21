@@ -22,7 +22,7 @@ import com.codingas.gateway.application.proxy.ChatDispatchService;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.adapter.protocol.openai.OpenAIProtocolValidator;
 import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

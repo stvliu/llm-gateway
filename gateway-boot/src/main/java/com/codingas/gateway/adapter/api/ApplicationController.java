@@ -15,12 +15,12 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.application.ApplicationService;
-import com.codingas.gateway.application.application.dto.ApplicationChannelItem;
-import com.codingas.gateway.application.application.dto.ApplicationRequest;
-import com.codingas.gateway.application.application.dto.ApplicationResponse;
-import com.codingas.gateway.application.userapikey.UserApiKeyService;
-import com.codingas.gateway.application.userapikey.dto.UserApiKeyResponse;
+import com.codingas.gateway.iam.service.ApplicationService;
+import com.codingas.gateway.iam.dto.ApplicationChannelItem;
+import com.codingas.gateway.iam.dto.ApplicationRequest;
+import com.codingas.gateway.iam.dto.ApplicationResponse;
+import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

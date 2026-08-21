@@ -24,7 +24,7 @@ import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

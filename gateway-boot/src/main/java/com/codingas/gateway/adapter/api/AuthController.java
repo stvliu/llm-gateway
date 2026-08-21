@@ -16,11 +16,11 @@
 package com.codingas.gateway.adapter.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.application.auth.dto.ChangePasswordRequest;
-import com.codingas.gateway.application.auth.dto.LoginRequest;
-import com.codingas.gateway.application.auth.dto.LoginResponse;
-import com.codingas.gateway.application.user.UserService;
-import com.codingas.gateway.application.user.dto.UserResponse;
+import com.codingas.gateway.iam.dto.ChangePasswordRequest;
+import com.codingas.gateway.iam.dto.LoginRequest;
+import com.codingas.gateway.iam.dto.LoginResponse;
+import com.codingas.gateway.iam.service.UserService;
+import com.codingas.gateway.iam.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

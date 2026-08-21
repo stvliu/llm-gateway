@@ -54,6 +54,12 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- IAM 绑定模块（UsageLogDo 引用 iamdata.dataobject.UserDo） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Spring Data JPA（AuditLog/CallLog/UsageLog 的 DO/Repository 持久化） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

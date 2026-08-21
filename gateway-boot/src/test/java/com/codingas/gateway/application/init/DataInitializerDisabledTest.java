@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.init;
 
-import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
-import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.user.UserGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

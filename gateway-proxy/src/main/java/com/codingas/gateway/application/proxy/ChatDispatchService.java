@@ -20,7 +20,7 @@ import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.domain.iam.valueobject.Identity;
+import com.codingas.gateway.iam.valueobject.Identity;
 
 /**
  * 聊天调度服务

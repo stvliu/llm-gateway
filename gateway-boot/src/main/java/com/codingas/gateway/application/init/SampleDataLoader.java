@@ -15,15 +15,15 @@
  */
 package com.codingas.gateway.application.init;
 
-import com.codingas.gateway.domain.application.entity.Application;
-import com.codingas.gateway.domain.application.entity.ApplicationChannel;
-import com.codingas.gateway.domain.application.entity.ApplicationState;
-import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
-import com.codingas.gateway.domain.application.gateway.ApplicationGateway;
-import com.codingas.gateway.domain.iam.entity.User;
-import com.codingas.gateway.domain.iam.entity.UserApiKey;
-import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
-import com.codingas.gateway.domain.iam.gateway.UserGateway;
+import com.codingas.gateway.iam.application.Application;
+import com.codingas.gateway.iam.application.ApplicationChannel;
+import com.codingas.gateway.iam.application.ApplicationState;
+import com.codingas.gateway.iam.application.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.user.User;
+import com.codingas.gateway.iam.apikey.UserApiKey;
+import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
+import com.codingas.gateway.iam.user.UserGateway;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
