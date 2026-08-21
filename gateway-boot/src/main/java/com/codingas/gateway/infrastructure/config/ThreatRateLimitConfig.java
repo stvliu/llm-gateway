@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.threat.valueobject.RateLimitProperties;
+import com.codingas.gateway.security.threat.RateLimitProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

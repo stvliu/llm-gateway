@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.adapter.advice;
 
-import com.codingas.gateway.domain.threat.exception.IpBlockedException;
-import com.codingas.gateway.domain.threat.exception.RateLimitExceededException;
-import com.codingas.gateway.domain.threat.exception.ThreatException;
+import com.codingas.gateway.security.threat.IpBlockedException;
+import com.codingas.gateway.security.threat.RateLimitExceededException;
+import com.codingas.gateway.security.threat.ThreatException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;

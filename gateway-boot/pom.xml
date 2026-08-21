@@ -107,6 +107,13 @@
             <artifactId>gateway-security</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 安全与威胁域绑定模块（测试引用 securitydata DO/REPO，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway.security</groupId>
+            <artifactId>gateway-security-data</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
 
         <!-- 韧性域模块（failover/retry/circuit-breaker） -->
         <dependency>

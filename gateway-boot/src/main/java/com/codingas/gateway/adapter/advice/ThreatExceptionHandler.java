@@ -16,9 +16,9 @@
 package com.codingas.gateway.adapter.advice;
 
 import com.codingas.gateway.common.dto.ApiResponse;
-import com.codingas.gateway.domain.threat.exception.IpBlockedException;
-import com.codingas.gateway.domain.threat.exception.RateLimitExceededException;
-import com.codingas.gateway.domain.threat.exception.ThreatException;
+import com.codingas.gateway.security.threat.IpBlockedException;
+import com.codingas.gateway.security.threat.RateLimitExceededException;
+import com.codingas.gateway.security.threat.ThreatException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;

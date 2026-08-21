@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.adapter.interceptor;
 
-import com.codingas.gateway.domain.threat.service.IpBlocklistDomainService;
+import com.codingas.gateway.security.threat.IpBlocklistDomainService;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
