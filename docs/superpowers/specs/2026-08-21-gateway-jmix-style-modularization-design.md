@@ -289,6 +289,52 @@ com.codingas.gateway.stats
 - `gateway-web`：承载 Controller，依赖各域核心模块的根包 API（门面接口），禁止依赖 impl/DO
 - **P1 过渡态**：已知跨模块 infrastructure 依赖（stats→provider/iam 的 Repository、audit/alert→provider/iam 的 DO、resilience→provider 的 upstream client、proxy/boot→resilience 的熔断管理器）在 P1 以「依赖对应 -data/-http 模块」保持编译，P4 解耦为端口调用或 ID 关联。
 
+### 4.5 目录组织（功能域目录汇聚，仿 Jmix）
+
+参照 Jmix 的**功能域目录**组织（`jmix-security/` 目录汇聚 `security/`、`security-data/`、`security-starter/` 等所有该域子模块），llm-gateway 每个业务域一个目录，汇聚该域全部子模块；子模块目录用**短名**（与 artifactId 不同，仿 Jmix `security/` vs `jmix-security`）。
+
+**完整目录树**：
+
+```
+gateway/                              # 项目根（父 POM）
+├── pom.xml
+├── gateway-common/                   # 底座（保持根目录）
+├── gateway-protocol/                 # 协议域目录
+│   ├── protocol/                     # 协议 API 核心（artifactId gateway-protocol）
+│   ├── protocol-openai/              # 插件（gateway-protocol-openai）
+│   ├── protocol-anthropic/           # 插件
+│   └── protocol-gemini/              # 插件
+├── gateway-provider/                 # 供给域目录
+│   ├── provider/                     # 核心（gateway-provider）
+│   ├── provider-data/                # JPA 绑定（gateway-provider-data）
+│   ├── provider-http/                # HTTP 绑定（gateway-provider-http）
+│   └── provider-starter/             # 装配（P2）
+├── gateway-iam/                      # 身份域目录
+│   ├── iam/                          # 核心（gateway-iam）
+│   ├── iam-data/                     # 绑定（gateway-iam-data）
+│   └── iam-starter/                  # 装配（P2）
+├── gateway-usage/                    # usage/usage-data/usage-starter
+├── gateway-security/                 # security/security-data/security-starter
+├── gateway-audit/                    # audit/audit-data/audit-starter
+├── gateway-alert/                    # alert/alert-data/alert-starter
+├── gateway-resilience/               # resilience/resilience-data/resilience-starter
+├── gateway-proxy/                    # proxy/proxy-starter
+├── gateway-stats/                    # stats/stats-starter
+├── gateway-boot/                     # 应用（保持根目录）
+├── gateway-web/                      # P3 新增（保持根目录）
+├── gateway-cli/  gateway-simulator/  # 保持根目录
+└── gateway-console/                  # 前端（保持根目录）
+```
+
+**目录 → 模块映射规则**：
+- 域目录名 = `gateway-<域>`（如 `gateway-provider`）
+- 核心子模块目录 = `<域>` 短名（如 `provider`，artifactId `gateway-provider`）
+- 绑定子模块目录 = `<域>-<绑定>`（如 `provider-data`，artifactId `gateway-provider-data`）
+- 协议插件 = `gateway-protocol/<protocol-openai>` 等（汇聚到协议域目录）
+- 底座/应用/工具模块（common/protocol 核心、boot/web/cli/simulator/console）保持根目录
+
+**Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）。依赖声明仍按 artifactId，不受目录影响。
+
 ## 5. 装配机制
 
 ### 5.1 starter 纯装配（仿 `security-starter`）

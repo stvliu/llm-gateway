@@ -22,6 +22,27 @@
 
 **9 域业务子包完整映射见设计文档 §4.2**（每个域的核心模块业务子包树 + 绑定模块根包）。核心模块根包：`provider`/`iam`/`usage`/`security`/`audit`/`alert`/`resilience`/`proxy`/`stats`；JPA 绑定根包：`providerdata`/`iamdata`/`usagedata`/`securitydata`/`auditdata`/`alertdata`/`resiliencedata`；HTTP 绑定根包：`providerhttp`。**执行每个任务前先读设计文档 §4.2 对应域的业务子包树**，按其把类重排到业务概念子包（如 `domain.supply.entity.Channel` → `provider.channel.Channel`，`domain.supply.gateway.ChannelGateway` → `provider.channel.ChannelGateway`）。
 
+### 目录结构（功能域目录汇聚，设计文档 §4.5）
+
+参照 Jmix 功能域目录（`jmix-security/` 汇聚 `security/`、`security-data/` 等子模块），llm-gateway 每个业务域一个目录汇聚全部子模块，子模块目录用**短名**：
+
+| 域目录 | 核心子目录 | 绑定子目录 | artifactId |
+|---|---|---|---|
+| `gateway-provider/` | `provider/` | `provider-data/`、`provider-http/` | `gateway-provider`、`gateway-provider-data`、`gateway-provider-http` |
+| `gateway-iam/` | `iam/` | `iam-data/` | `gateway-iam`、`gateway-iam-data` |
+| `gateway-usage/` | `usage/` | `usage-data/` | 依此类推 |
+| `gateway-security/` | `security/` | `security-data/` | |
+| `gateway-audit/` | `audit/` | `audit-data/` | |
+| `gateway-alert/` | `alert/` | `alert-data/` | |
+| `gateway-resilience/` | `resilience/` | `resilience-data/` | |
+| `gateway-proxy/` | `proxy/` | — | |
+| `gateway-stats/` | `stats/` | — | |
+| `gateway-protocol/` | `protocol/` | `protocol-openai/`、`protocol-anthropic/`、`protocol-gemini/`（插件） | |
+
+底座/应用/工具模块（`gateway-common`、`gateway-boot`、`gateway-cli`、`gateway-simulator`、`gateway-console`）保持根目录。
+
+**Maven 规则**：根 `pom.xml` `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式 `../../pom.xml`；依赖声明按 artifactId 不变。
+
 ### 非绑定技术实现留核心（设计文档 §4.3，不迁移到绑定模块）
 
 | 域 | 留核心的实现（迁移到核心根包 `impl` 或原语义子包） |
@@ -252,6 +273,103 @@ git commit -m "refactor: iam 域包名 Jmix 化（iam/iamdata）+ 绑定拆分�
 
 ---
 
+### Task 3b: 目录重组 —— 功能域目录汇聚（仿 Jmix）
+
+把当前扁平模块目录重排为「功能域目录汇聚」结构（设计文档 §4.5），子模块目录用短名。此任务在 Task 1-3 完成后执行（此时所有业务模块已建），Task 4-9 使用新目录。
+
+**Files:**
+- Modify: `pom.xml`（根，`<modules>` 路径全部改为域目录相对路径）
+- Modify: 所有**被移动**模块的 `pom.xml` 的 parent `relativePath`（从默认 `../pom.xml` 改为 `../../pom.xml`）
+- Move（git mv，全部识别为 rename）：
+
+| 现状（根目录） | 目标（域目录/短名） |
+|---|---|
+| `gateway-protocol/` | `gateway-protocol/protocol/` |
+| `gateway-protocol-openai/` | `gateway-protocol/protocol-openai/` |
+| `gateway-protocol-anthropic/` | `gateway-protocol/protocol-anthropic/` |
+| `gateway-protocol-gemini/` | `gateway-protocol/protocol-gemini/` |
+| `gateway-provider/` | `gateway-provider/provider/` |
+| `gateway-provider-data/` | `gateway-provider/provider-data/` |
+| `gateway-provider-http/` | `gateway-provider/provider-http/` |
+| `gateway-iam/` | `gateway-iam/iam/` |
+| `gateway-iam-data/` | `gateway-iam/iam-data/` |
+| `gateway-usage/` | `gateway-usage/usage/` |
+| `gateway-usage-data/` | `gateway-usage/usage-data/` |
+| `gateway-security/` | `gateway-security/security/` |
+| `gateway-security-data/` | `gateway-security/security-data/` |
+| `gateway-audit/` | `gateway-audit/audit/` |
+| `gateway-audit-data/` | `gateway-audit/audit-data/` |
+| `gateway-alert/` | `gateway-alert/alert/` |
+| `gateway-alert-data/` | `gateway-alert/alert-data/` |
+| `gateway-resilience/` | `gateway-resilience/resilience/` |
+| `gateway-resilience-data/` | `gateway-resilience/resilience-data/` |
+| `gateway-proxy/` | `gateway-proxy/proxy/` |
+| `gateway-stats/` | `gateway-stats/stats/` |
+
+不移动（保持根目录）：`gateway-common/`、`gateway-boot/`、`gateway-cli/`、`gateway-simulator/`、`gateway-console/`。
+
+**Interfaces:**
+- Consumes: Task 1-3 产物（所有业务模块已建/已迁移）
+- Produces: 域目录汇聚结构，Task 4-9 用新路径
+
+- [ ] **Step 1: git mv 全部业务模块目录到域目录**
+
+按上表逐目录 `git mv`（如 `git mv gateway-provider gateway-provider/provider`）。注意：目标目录名与源目录名相同（gateway-provider/provider 含同名源），需先建域目录再 mv：`mkdir gateway-provider && git mv gateway-provider gateway-provider/provider`。或直接用 `git mv gateway-provider gateway-provider-provider-tmp && mkdir gateway-provider && git mv tmp gateway-provider/provider`（Windows 下同名冲突处理）。
+
+- [ ] **Step 2: 更新根 pom.xml `<modules>` 路径**
+
+`<modules>` 全部改为域目录相对路径：
+```xml
+<module>gateway-common</module>
+<module>gateway-protocol/protocol</module>
+<module>gateway-protocol/protocol-openai</module>
+<module>gateway-protocol/protocol-anthropic</module>
+<module>gateway-protocol/protocol-gemini</module>
+<module>gateway-provider/provider</module>
+<module>gateway-provider/provider-data</module>
+<module>gateway-provider/provider-http</module>
+<module>gateway-iam/iam</module>
+<module>gateway-iam/iam-data</module>
+<module>gateway-usage/usage</module>
+<module>gateway-usage/usage-data</module>
+<module>gateway-security/security</module>
+<module>gateway-security/security-data</module>
+<module>gateway-audit/audit</module>
+<module>gateway-audit/audit-data</module>
+<module>gateway-alert/alert</module>
+<module>gateway-alert/alert-data</module>
+<module>gateway-resilience/resilience</module>
+<module>gateway-resilience/resilience-data</module>
+<module>gateway-proxy/proxy</module>
+<module>gateway-stats/stats</module>
+<module>gateway-boot</module>
+<module>gateway-cli</module>
+<module>gateway-simulator</module>
+```
+
+- [ ] **Step 3: 更新被移动模块 pom 的 parent relativePath**
+
+所有移动到 `gateway-xxx/<sub>/` 的模块，其 `<parent>` 增加 `<relativePath>../../pom.xml</relativePath>`（父 POM 在根）。保持根目录的模块（common/boot/cli/simulator）不动。
+
+- [ ] **Step 4: 全量构建验证**
+
+Run: `.\mvnw clean install -DskipTests`
+Expected: BUILD SUCCESS（25 模块，路径全部正确）
+
+- [ ] **Step 5: 跑全量测试**
+
+Run: `.\mvnw test`
+Expected: 全部 PASS（目录移动不影响编译产物）
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A
+git commit -m "refactor: 目录重组为功能域汇聚结构（仿 Jmix gateway-xxx/<short>，P1）"
+```
+
+---
+
 ### Task 4: usage 域 —— 包名 Jmix 化 + usage-data 拆分
 
 **Files:**
@@ -289,7 +407,7 @@ Expected: 全部 PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A gateway-usage gateway-usage-data gateway-audit gateway-alert gateway-proxy gateway-boot
+git add -A gateway-usage gateway-audit gateway-alert gateway-proxy gateway-boot
 git commit -m "refactor: usage 域包名 Jmix 化（usage/usagedata）+ 绑定拆分（P1）"
 ```
 
@@ -333,7 +451,7 @@ Expected: 全部 PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A gateway-security gateway-security-data gateway-boot gateway-proxy
+git add -A gateway-security gateway-boot gateway-proxy
 git commit -m "refactor: security 域包名 Jmix 化（security/securitydata）+ 绑定拆分，限流留核心（P1）"
 ```
 
@@ -376,7 +494,7 @@ Expected: 全部 PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A gateway-audit gateway-audit-data gateway-proxy gateway-boot
+git add -A gateway-audit gateway-proxy gateway-boot
 git commit -m "refactor: audit 域包名 Jmix 化（audit/auditdata）+ 绑定拆分（P1）"
 ```
 
@@ -418,7 +536,7 @@ Expected: 全部 PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A gateway-alert gateway-alert-data
+git add -A gateway-alert
 git commit -m "refactor: alert 域包名 Jmix 化（alert/alertdata）+ 绑定拆分（P1）"
 ```
 
@@ -462,7 +580,7 @@ Expected: 全部 PASS
 - [ ] **Step 6: Commit**
 
 ```bash
-git add -A gateway-resilience gateway-resilience-data gateway-provider-http gateway-proxy gateway-boot
+git add -A gateway-resilience gateway-provider gateway-proxy gateway-boot
 git commit -m "refactor: resilience 域包名 Jmix 化（resilience/resiliencedata）+ 绑定拆分，熔断重试留核心（P1）"
 ```
 
