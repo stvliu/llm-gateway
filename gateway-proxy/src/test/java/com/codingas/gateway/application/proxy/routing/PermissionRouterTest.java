@@ -16,11 +16,11 @@
 package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
-import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.model.ModelInstance;
+import com.codingas.gateway.provider.channel.ChannelState;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
+import com.codingas.gateway.provider.channel.ChannelGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

@@ -16,9 +16,9 @@
 package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
-import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.model.ModelInstance;
+import com.codingas.gateway.provider.channel.ChannelGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;

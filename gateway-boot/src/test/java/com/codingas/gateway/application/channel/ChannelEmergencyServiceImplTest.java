@@ -16,8 +16,8 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpoint;
+import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.infrastructure.resilience.CircuitBreakerState;
 import org.junit.jupiter.api.DisplayName;

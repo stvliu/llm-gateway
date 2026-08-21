@@ -21,8 +21,8 @@ import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialD
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialResponse;
 import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.provider.channel.ChannelCredential;
+import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

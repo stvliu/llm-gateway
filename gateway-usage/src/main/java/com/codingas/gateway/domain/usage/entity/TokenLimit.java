@@ -19,8 +19,8 @@ import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.domain.usage.enums.ExceededAction;
 import com.codingas.gateway.domain.usage.enums.PeriodType;
-import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.entity.Provider;
+import com.codingas.gateway.provider.model.Model;
+import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.domain.iam.entity.User;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;

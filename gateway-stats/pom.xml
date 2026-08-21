@@ -42,6 +42,12 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 供给域 JPA 绑定（StatsService 直连 providerdata.repository.Channel/Model/ProviderRepository，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- 身份与访问管理域（StatsService 直连 UserRepository 计数） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

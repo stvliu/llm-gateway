@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.provider.model.ModelInstance;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;

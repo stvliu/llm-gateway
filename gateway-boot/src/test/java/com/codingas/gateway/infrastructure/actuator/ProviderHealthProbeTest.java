@@ -15,16 +15,16 @@
  */
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.entity.ChannelCredential;
-import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
-import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
-import com.codingas.gateway.domain.supply.valueobject.ConnectivityTestResult;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.channel.ChannelCredential;
+import com.codingas.gateway.provider.channel.ChannelEndpoint;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.upstream.UpstreamClient;
+import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
+import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

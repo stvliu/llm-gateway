@@ -16,7 +16,7 @@
 package com.codingas.gateway.infrastructure.resilience;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.provider.vendor.ProviderException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;

@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.provider.channel.ChannelEndpoint;
+import com.codingas.gateway.provider.model.ModelInstance;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

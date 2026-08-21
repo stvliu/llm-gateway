@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.application.proxy.ChatDispatchService;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;

@@ -20,7 +20,7 @@ import com.codingas.gateway.application.channel.dto.ChannelEndpointRequest;
 import com.codingas.gateway.application.channel.dto.ChannelEndpointResponse;
 import com.codingas.gateway.application.channel.dto.ChannelRequest;
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
-import com.codingas.gateway.domain.supply.enums.BillingMode;
+import com.codingas.gateway.provider.model.BillingMode;
 
 import java.util.List;
 

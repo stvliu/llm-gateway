@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.domain.supply.gateway.UpstreamClientRegistry;
+import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

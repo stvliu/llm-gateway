@@ -257,6 +257,20 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- 供给域绑定模块（测试引用 providerdata DO/REPO + providerhttp upstream client，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-data</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-http</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- 测试 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

@@ -16,9 +16,9 @@
 package com.codingas.gateway.support;
 
 import com.codingas.gateway.domain.protocol.contract.*;
-import com.codingas.gateway.domain.supply.exception.ProviderException;
-import com.codingas.gateway.infrastructure.supply.upstream.AnthropicUpstreamClient;
-import com.codingas.gateway.infrastructure.supply.upstream.OpenAIUpstreamClient;
+import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.providerhttp.upstream.AnthropicUpstreamClient;
+import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;
 import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.Test;
@@ -53,7 +53,7 @@ class ProviderSimulatorTest {
         OpenAIUpstreamClient client = new OpenAIUpstreamClient(
                 new OkHttpClient(), url, "key", 2,
                 new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules(),
-                new com.codingas.gateway.infrastructure.upstream.OpenAIErrorClassifier()
+                new com.codingas.gateway.providerhttp.upstream.OpenAIErrorClassifier()
         );
 
         OpenAIChatRequest request = OpenAIChatRequest.builder()

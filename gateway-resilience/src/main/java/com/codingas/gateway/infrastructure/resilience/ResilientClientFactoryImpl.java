@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.infrastructure.resilience;
 
-import com.codingas.gateway.domain.supply.gateway.ResilientClientFactory;
-import com.codingas.gateway.domain.supply.gateway.UpstreamClient;
-import com.codingas.gateway.infrastructure.supply.upstream.AnthropicUpstreamClient;
-import com.codingas.gateway.infrastructure.supply.upstream.OpenAIUpstreamClient;
+import com.codingas.gateway.provider.upstream.ResilientClientFactory;
+import com.codingas.gateway.provider.upstream.UpstreamClient;
+import com.codingas.gateway.providerhttp.upstream.AnthropicUpstreamClient;
+import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.stereotype.Component;
 

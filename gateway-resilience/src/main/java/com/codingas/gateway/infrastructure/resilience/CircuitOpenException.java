@@ -16,7 +16,7 @@
 package com.codingas.gateway.infrastructure.resilience;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.domain.supply.exception.ProviderException;
+import com.codingas.gateway.provider.vendor.ProviderException;
 
 /**
  * 熔断器开启异常

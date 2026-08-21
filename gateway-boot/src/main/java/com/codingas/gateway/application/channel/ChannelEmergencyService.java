@@ -26,7 +26,7 @@ package com.codingas.gateway.application.channel;
  * </ul>
  *
  * <p>委托 {@link com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager}
- * 与 {@link com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway}。</p>
+ * 与 {@link com.codingas.gateway.provider.channel.ChannelEndpointGateway}。</p>
  */
 public interface ChannelEmergencyService {
 

@@ -48,6 +48,12 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 供给域 HTTP 绑定（ResilientClientFactoryImpl 依赖 providerhttp.upstream 的 client 实现，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-http</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Spring Data JPA（FailoverEvent 的 DO/Repository 持久化） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

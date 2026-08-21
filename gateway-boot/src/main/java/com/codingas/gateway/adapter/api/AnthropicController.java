@@ -19,7 +19,7 @@ import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.application.proxy.ChatDispatchService;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.adapter.protocol.anthropic.AnthropicProtocolValidator;
 import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.domain.iam.valueobject.Identity;

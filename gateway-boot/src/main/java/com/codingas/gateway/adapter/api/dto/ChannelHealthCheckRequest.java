@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.adapter.api.dto;
 
-import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
+import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import jakarta.validation.constraints.NotNull;
 
 /**

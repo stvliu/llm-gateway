@@ -20,9 +20,9 @@ import com.codingas.gateway.application.proxy.routing.RoutingResolver;
 import com.codingas.gateway.domain.audit.entity.CallLog;
 import com.codingas.gateway.domain.audit.gateway.AuditGateway;
 import com.codingas.gateway.domain.protocol.contract.*;
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
-import com.codingas.gateway.domain.supply.valueobject.RoutingContext;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
+import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 import com.codingas.gateway.domain.usage.event.TokenUsedEvent;
 import com.codingas.gateway.common.event.DomainEventPublisher;
@@ -147,8 +147,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             @Override
             public void onError(Throwable t) {
                 String errorJson;
-                if (t instanceof com.codingas.gateway.domain.supply.exception.ProviderException pe) {
-                    errorJson = com.codingas.gateway.infrastructure.upstream.SseErrorFormatter.format(pe);
+                if (t instanceof com.codingas.gateway.provider.vendor.ProviderException pe) {
+                    errorJson = com.codingas.gateway.providerhttp.upstream.SseErrorFormatter.format(pe);
                 } else {
                     errorJson = "{\"error\":\"unknown_error\",\"retry_after\":0}";
                 }

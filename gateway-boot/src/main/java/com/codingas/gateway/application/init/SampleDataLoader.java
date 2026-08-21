@@ -24,7 +24,7 @@ import com.codingas.gateway.domain.iam.entity.User;
 import com.codingas.gateway.domain.iam.entity.UserApiKey;
 import com.codingas.gateway.domain.iam.gateway.UserApiKeyGateway;
 import com.codingas.gateway.domain.iam.gateway.UserGateway;
-import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.infrastructure.config.GatewayProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;

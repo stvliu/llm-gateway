@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.channel.dto;
 
-import com.codingas.gateway.domain.supply.enums.ChannelHealthSource;
-import com.codingas.gateway.domain.supply.enums.ChannelHealthStatus;
+import com.codingas.gateway.provider.channel.ChannelHealthSource;
+import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import lombok.Data;
 
 import java.time.Instant;

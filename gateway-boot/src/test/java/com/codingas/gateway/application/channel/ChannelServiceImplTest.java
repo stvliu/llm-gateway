@@ -16,14 +16,14 @@
 package com.codingas.gateway.application.channel;
 
 import com.codingas.gateway.application.channel.dto.ChannelResponse;
-import com.codingas.gateway.domain.supply.entity.Channel;
-import com.codingas.gateway.domain.supply.enums.BillingMode;
-import com.codingas.gateway.domain.supply.enums.ChannelState;
-import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelGateway;
-import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
-import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.model.BillingMode;
+import com.codingas.gateway.provider.channel.ChannelState;
+import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.model.ModelInstanceGateway;
+import com.codingas.gateway.provider.vendor.ProviderGateway;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

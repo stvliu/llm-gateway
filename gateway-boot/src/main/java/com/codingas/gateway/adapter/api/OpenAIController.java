@@ -19,7 +19,7 @@ import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.application.proxy.ChatDispatchService;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.adapter.protocol.openai.OpenAIProtocolValidator;
 import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.domain.iam.valueobject.Identity;

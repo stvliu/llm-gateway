@@ -17,10 +17,10 @@ package com.codingas.gateway.application.model;
 
 import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.domain.application.gateway.ApplicationChannelGateway;
-import com.codingas.gateway.domain.supply.entity.Model;
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
-import com.codingas.gateway.domain.supply.gateway.ModelInstanceGateway;
-import com.codingas.gateway.domain.supply.gateway.ModelGateway;
+import com.codingas.gateway.provider.model.Model;
+import com.codingas.gateway.provider.model.ModelInstance;
+import com.codingas.gateway.provider.model.ModelInstanceGateway;
+import com.codingas.gateway.provider.model.ModelGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

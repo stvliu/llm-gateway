@@ -16,9 +16,9 @@
 package com.codingas.gateway.application.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.domain.supply.entity.ChannelEndpoint;
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.gateway.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpoint;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

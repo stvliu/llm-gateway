@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.supply.entity.ModelInstance;
+import com.codingas.gateway.provider.model.ModelInstance;
 import java.util.List;
 
 /**

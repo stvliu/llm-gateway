@@ -17,7 +17,7 @@ package com.codingas.gateway.application.init;
 
 import com.codingas.gateway.domain.application.entity.Application;
 import com.codingas.gateway.domain.iam.entity.User;
-import com.codingas.gateway.domain.supply.entity.Channel;
+import com.codingas.gateway.provider.channel.Channel;
 import lombok.Getter;
 
 import java.util.HashMap;

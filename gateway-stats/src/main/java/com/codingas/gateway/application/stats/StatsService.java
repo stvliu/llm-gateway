@@ -16,9 +16,9 @@
 package com.codingas.gateway.application.stats;
 
 import com.codingas.gateway.application.stats.dto.StatsResponse;
-import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ChannelRepository;
-import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ModelRepository;
-import com.codingas.gateway.infrastructure.supply.gateway.database.repository.ProviderRepository;
+import com.codingas.gateway.providerdata.repository.ChannelRepository;
+import com.codingas.gateway.providerdata.repository.ModelRepository;
+import com.codingas.gateway.providerdata.repository.ProviderRepository;
 import com.codingas.gateway.infrastructure.iam.gateway.database.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

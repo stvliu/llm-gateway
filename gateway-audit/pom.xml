@@ -42,6 +42,12 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 供给域 JPA 绑定（UsageLogDo 依赖 providerdata.dataobject.ModelDo/ProviderDo，过渡态） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- 身份与访问管理域（UsageLogDo 依赖 UserDo） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

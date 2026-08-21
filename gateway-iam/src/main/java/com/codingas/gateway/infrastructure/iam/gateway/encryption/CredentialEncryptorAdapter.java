@@ -16,7 +16,7 @@
 package com.codingas.gateway.infrastructure.iam.gateway.encryption;
 
 import com.codingas.gateway.domain.iam.service.ApiKeyEncryptionDomainService;
-import com.codingas.gateway.domain.supply.gateway.CredentialEncryptor;
+import com.codingas.gateway.provider.service.CredentialEncryptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

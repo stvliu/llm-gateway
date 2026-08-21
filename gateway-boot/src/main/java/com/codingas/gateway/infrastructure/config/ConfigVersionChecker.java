@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.infrastructure.config;
 
-import com.codingas.gateway.domain.supply.gateway.ModelGateway;
-import com.codingas.gateway.domain.supply.gateway.ProviderGateway;
-import com.codingas.gateway.domain.supply.gateway.ChannelCredentialGateway;
+import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

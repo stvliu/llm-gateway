@@ -42,18 +42,7 @@
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- Spring Data JPA（supply 的 DO/Repository 持久化 + 审计） -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
-        </dependency>
-        <!-- HTTP 客户端（Anthropic/OpenAI UpstreamClient 上游调用） -->
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-            <version>${okhttp.version}</version>
-        </dependency>
-        <!-- Jackson（UpstreamClient/DataLoader JSON 序列化） -->
+        <!-- Jackson（BuiltinDataLoader 内置数据 JSON 序列化） -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

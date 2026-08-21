@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.application.proxy.routing;
 
-import com.codingas.gateway.domain.supply.enums.Protocol;
-import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.upstream.RoutingStrategy;
 
 import java.util.Map;
 
