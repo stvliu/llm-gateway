@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.application.experience;
+package com.codingas.gateway.proxy.experience;
 
-import com.codingas.gateway.application.experience.dto.ExperienceChatEvent;
-import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
-import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
+import com.codingas.gateway.proxy.dto.ExperienceChatEvent;
+import com.codingas.gateway.proxy.dto.ExperienceChatRequest;
+import com.codingas.gateway.proxy.dto.ExperienceModelResponse;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.model.ModelInstance;

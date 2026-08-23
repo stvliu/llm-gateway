@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.experience.ModelExperienceService;
-import com.codingas.gateway.application.experience.dto.ExperienceChatRequest;
-import com.codingas.gateway.application.experience.dto.ExperienceModelResponse;
+import com.codingas.gateway.proxy.experience.ModelExperienceService;
+import com.codingas.gateway.proxy.dto.ExperienceChatRequest;
+import com.codingas.gateway.proxy.dto.ExperienceModelResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

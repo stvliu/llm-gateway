@@ -13,11 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.adapter.protocol.anthropic;
+package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.tuning.ProtocolTuner;
-import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +30,6 @@ import java.util.List;
  *   <li>system 角色消息提取到顶层 system 字段</li>
  * </ul>
  */
-@Component
 public class AnthropicTuner implements ProtocolTuner<AnthropicMessagesRequest> {
 
     private static final int DEFAULT_MAX_TOKENS = 1024;

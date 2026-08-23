@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.adapter.protocol.openai;
+package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.protocol.validation.ProtocolValidator;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Set;
@@ -26,7 +25,6 @@ import java.util.Set;
 /**
  * OpenAI Chat Completions 协议校验器
  */
-@Component
 public class OpenAIProtocolValidator implements ProtocolValidator<OpenAIChatRequest> {
 
     private static final Set<String> VALID_ROLES = Set.of("system", "user", "assistant", "tool");

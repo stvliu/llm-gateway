@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.application.experience.dto;
+package com.codingas.gateway.proxy.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

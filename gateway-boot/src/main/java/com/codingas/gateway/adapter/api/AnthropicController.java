@@ -20,7 +20,7 @@ import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.adapter.protocol.anthropic.AnthropicProtocolValidator;
+import com.codingas.gateway.protocol.anthropic.AnthropicProtocolValidator;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletResponse;

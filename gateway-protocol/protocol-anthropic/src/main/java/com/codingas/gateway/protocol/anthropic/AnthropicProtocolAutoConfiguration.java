@@ -49,4 +49,20 @@ public class AnthropicProtocolAutoConfiguration {
     public AnthropicUpstreamClientFactory anthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
         return new AnthropicUpstreamClientFactory(httpClient, objectMapper);
     }
+
+    /**
+     * Anthropic 协议校验器（插件自包含注册，无 @Component 防 boot 扫描误装配）
+     */
+    @Bean
+    public AnthropicProtocolValidator anthropicProtocolValidator() {
+        return new AnthropicProtocolValidator();
+    }
+
+    /**
+     * Anthropic 协议出站调谐器（供 OutboundTuner 按 List&lt;ProtocolTuner&gt; 集合收集）
+     */
+    @Bean
+    public AnthropicTuner anthropicTuner() {
+        return new AnthropicTuner();
+    }
 }

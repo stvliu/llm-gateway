@@ -74,6 +74,11 @@
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- Spring Web MVC（ModelExperienceService 使用 SseEmitter 流式响应；框架依赖，非跨域依赖） -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+        </dependency>
         <!-- Micrometer（调度指标监控） -->
         <dependency>
             <groupId>io.micrometer</groupId>

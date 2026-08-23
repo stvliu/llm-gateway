@@ -49,4 +49,20 @@ public class OpenAIProtocolAutoConfiguration {
     public OpenAIUpstreamClientFactory openAIUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
         return new OpenAIUpstreamClientFactory(httpClient, objectMapper);
     }
+
+    /**
+     * OpenAI 协议校验器（插件自包含注册，无 @Component 防 boot 扫描误装配）
+     */
+    @Bean
+    public OpenAIProtocolValidator openAIProtocolValidator() {
+        return new OpenAIProtocolValidator();
+    }
+
+    /**
+     * OpenAI 协议出站调谐器（供 OutboundTuner 按 List&lt;ProtocolTuner&gt; 集合收集）
+     */
+    @Bean
+    public OpenAITuner openAITuner() {
+        return new OpenAITuner();
+    }
 }

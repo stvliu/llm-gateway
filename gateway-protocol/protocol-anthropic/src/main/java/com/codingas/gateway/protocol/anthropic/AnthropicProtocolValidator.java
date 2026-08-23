@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.adapter.protocol.anthropic;
+package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
 import com.codingas.gateway.protocol.validation.ProtocolValidator;
-import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 /**
  * Anthropic Messages 协议校验器
  */
-@Component
 public class AnthropicProtocolValidator implements ProtocolValidator<AnthropicMessagesRequest> {
 
     @Override
