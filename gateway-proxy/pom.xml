@@ -21,29 +21,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.stats</groupId>
-        <artifactId>gateway-stats-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.codingas.gateway.stats</groupId>
-    <artifactId>gateway-stats-starter</artifactId>
-    <packaging>jar</packaging>
-    <name>Gateway Stats Starter</name>
-    <description>Stats 域纯装配：AutoConfiguration 引入 StatsConfiguration（零业务逻辑）</description>
+    <groupId>com.codingas.gateway.proxy</groupId>
+    <artifactId>gateway-proxy-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>Gateway Proxy Parent</name>
+    <description>Proxy 域父 POM：聚合核心/装配子模块，支持域内独立构建</description>
 
-    <dependencies>
-        <!-- 装配框架 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
-        <!-- 本域核心模块（@Import 编译期引用 + 传递组件依赖） -->
-        <dependency>
-            <groupId>com.codingas.gateway.stats</groupId>
-            <artifactId>gateway-stats</artifactId>
-            <version>${revision}</version>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>proxy</module>
+        <module>proxy-starter</module>
+    </modules>
 </project>
