@@ -16,12 +16,12 @@
 package com.codingas.gateway.adapter.api;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
-import com.codingas.gateway.application.catalog.CatalogSyncFacade;
-import com.codingas.gateway.application.catalog.ChannelProvisionService;
-import com.codingas.gateway.application.catalog.dto.BatchProvisionRequest;
-import com.codingas.gateway.application.catalog.dto.BatchProvisionResult;
-import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
-import com.codingas.gateway.application.catalog.dto.ProvisionResult;
+import com.codingas.gateway.provider.service.CatalogSyncFacade;
+import com.codingas.gateway.provider.service.ChannelProvisionService;
+import com.codingas.gateway.provider.catalog.BatchProvisionRequest;
+import com.codingas.gateway.provider.catalog.BatchProvisionResult;
+import com.codingas.gateway.provider.catalog.ProvisionRequest;
+import com.codingas.gateway.provider.catalog.ProvisionResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

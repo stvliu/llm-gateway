@@ -44,6 +44,18 @@
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 跨域门面：模型发现查询应用渠道（ModelDiscoveryService） -->
+        <dependency>
+            <groupId>com.codingas.gateway.iam</groupId>
+            <artifactId>gateway-iam</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <!-- 跨域门面：渠道紧急操作使用熔断管理器（ChannelEmergencyServiceImpl） -->
+        <dependency>
+            <groupId>com.codingas.gateway.resilience</groupId>
+            <artifactId>gateway-resilience</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Jackson（BuiltinDataLoader 内置数据 JSON 序列化） -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>

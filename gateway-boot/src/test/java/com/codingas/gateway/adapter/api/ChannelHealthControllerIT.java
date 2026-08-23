@@ -16,8 +16,8 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.application.channel.ChannelEmergencyService;
-import com.codingas.gateway.application.channel.ChannelService;
+import com.codingas.gateway.provider.service.ChannelEmergencyService;
+import com.codingas.gateway.provider.service.ChannelService;
 import com.codingas.gateway.provider.service.ChannelHealthService;
 import com.codingas.gateway.provider.upstream.KeyTestResult;
 import com.codingas.gateway.provider.channel.Channel;

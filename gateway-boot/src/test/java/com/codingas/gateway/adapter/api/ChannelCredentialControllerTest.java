@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.channelcredential.ChannelCredentialService;
-import com.codingas.gateway.application.channelcredential.dto.*;
+import com.codingas.gateway.provider.service.ChannelCredentialService;
+import com.codingas.gateway.provider.channel.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

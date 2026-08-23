@@ -16,8 +16,9 @@
 package com.codingas.gateway.application.catalog;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
-import com.codingas.gateway.application.catalog.dto.ProvisionResult;
+import com.codingas.gateway.provider.service.ChannelProvisionService;
+import com.codingas.gateway.provider.catalog.ProvisionRequest;
+import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.PlanCatalogGateway;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;

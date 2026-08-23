@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.catalog.PlanCatalogService;
-import com.codingas.gateway.application.catalog.dto.ModelResponse;
-import com.codingas.gateway.application.catalog.dto.PlanCatalogResponse;
-import com.codingas.gateway.application.catalog.dto.PlanDetailResponse;
-import com.codingas.gateway.application.catalog.dto.ProviderCatalogResponse;
+import com.codingas.gateway.provider.service.PlanCatalogService;
+import com.codingas.gateway.provider.catalog.ModelResponse;
+import com.codingas.gateway.provider.catalog.PlanCatalogResponse;
+import com.codingas.gateway.provider.catalog.PlanDetailResponse;
+import com.codingas.gateway.provider.catalog.ProviderCatalogResponse;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

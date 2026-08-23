@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.model.ModelService;
-import com.codingas.gateway.application.model.dto.ModelCreateRequest;
-import com.codingas.gateway.application.model.dto.ModelQueryRequest;
-import com.codingas.gateway.application.model.dto.ModelResponse;
-import com.codingas.gateway.application.model.dto.ModelUpdateRequest;
+import com.codingas.gateway.provider.service.ModelService;
+import com.codingas.gateway.provider.model.ModelCreateRequest;
+import com.codingas.gateway.provider.model.ModelQueryRequest;
+import com.codingas.gateway.provider.model.ModelResponse;
+import com.codingas.gateway.provider.model.ModelUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

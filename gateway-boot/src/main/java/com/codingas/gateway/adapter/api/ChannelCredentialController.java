@@ -15,13 +15,13 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.channel.dto.ApiKeyTestResponse;
-import com.codingas.gateway.application.channelcredential.ChannelCredentialService;
-import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialCreateRequest;
-import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialCreateResponse;
-import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialDetailResponse;
-import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialResponse;
-import com.codingas.gateway.application.channelcredential.dto.ChannelCredentialUpdateRequest;
+import com.codingas.gateway.provider.channel.ApiKeyTestResponse;
+import com.codingas.gateway.provider.service.ChannelCredentialService;
+import com.codingas.gateway.provider.channel.ChannelCredentialCreateRequest;
+import com.codingas.gateway.provider.channel.ChannelCredentialCreateResponse;
+import com.codingas.gateway.provider.channel.ChannelCredentialDetailResponse;
+import com.codingas.gateway.provider.channel.ChannelCredentialResponse;
+import com.codingas.gateway.provider.channel.ChannelCredentialUpdateRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

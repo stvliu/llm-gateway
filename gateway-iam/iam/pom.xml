@@ -38,12 +38,6 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域（依赖其 CredentialEncryptor 接口做渠道凭证加解密契约） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider</artifactId>
-            <version>${revision}</version>
-        </dependency>
         <!-- Sa-Token（会话认证 StpUtil + 密码哈希 SaSecureUtil） -->
         <dependency>
             <groupId>cn.dev33</groupId>

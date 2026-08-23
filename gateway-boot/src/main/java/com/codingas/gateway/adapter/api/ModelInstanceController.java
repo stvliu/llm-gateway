@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.channel.ModelInstanceService;
-import com.codingas.gateway.application.channel.dto.ModelInstanceCreateRequest;
-import com.codingas.gateway.application.channel.dto.ModelInstanceUpdateRequest;
-import com.codingas.gateway.application.channel.dto.ModelInstanceStateTransitionRequest;
-import com.codingas.gateway.application.channel.dto.ModelInstanceResponse;
+import com.codingas.gateway.provider.service.ModelInstanceService;
+import com.codingas.gateway.provider.channel.ModelInstanceCreateRequest;
+import com.codingas.gateway.provider.channel.ModelInstanceUpdateRequest;
+import com.codingas.gateway.provider.channel.ModelInstanceStateTransitionRequest;
+import com.codingas.gateway.provider.channel.ModelInstanceResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

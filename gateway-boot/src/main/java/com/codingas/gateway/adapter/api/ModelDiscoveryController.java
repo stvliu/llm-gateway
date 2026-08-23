@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.model.ModelDiscoveryService;
-import com.codingas.gateway.application.model.dto.ModelDiscoveryResponse;
+import com.codingas.gateway.provider.service.ModelDiscoveryService;
+import com.codingas.gateway.provider.model.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;

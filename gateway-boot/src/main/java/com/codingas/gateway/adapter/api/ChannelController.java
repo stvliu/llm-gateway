@@ -16,13 +16,13 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.adapter.api.dto.ChannelHealthCheckRequest;
-import com.codingas.gateway.application.channel.ChannelEmergencyService;
-import com.codingas.gateway.application.channel.ChannelService;
-import com.codingas.gateway.application.channel.dto.*;
+import com.codingas.gateway.provider.service.ChannelEmergencyService;
+import com.codingas.gateway.provider.service.ChannelService;
+import com.codingas.gateway.provider.channel.*;
 import com.codingas.gateway.provider.service.ChannelHealthService;
 import com.codingas.gateway.provider.dto.ChannelHealthResult;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.application.channel.dto.ChannelStateTransitionRequest;
+import com.codingas.gateway.provider.channel.ChannelStateTransitionRequest;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;

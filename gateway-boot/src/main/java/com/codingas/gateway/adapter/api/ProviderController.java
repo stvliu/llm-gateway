@@ -15,13 +15,13 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.provider.ProviderService;
-import com.codingas.gateway.application.provider.dto.ConnectivityTestRequest;
-import com.codingas.gateway.application.provider.dto.ConnectivityTestResult;
-import com.codingas.gateway.application.provider.dto.ProviderCreateRequest;
-import com.codingas.gateway.application.provider.dto.ProviderQueryRequest;
-import com.codingas.gateway.application.provider.dto.ProviderResponse;
-import com.codingas.gateway.application.provider.dto.ProviderUpdateRequest;
+import com.codingas.gateway.provider.service.ProviderService;
+import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
+import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
+import com.codingas.gateway.provider.vendor.ProviderCreateRequest;
+import com.codingas.gateway.provider.vendor.ProviderQueryRequest;
+import com.codingas.gateway.provider.vendor.ProviderResponse;
+import com.codingas.gateway.provider.vendor.ProviderUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
