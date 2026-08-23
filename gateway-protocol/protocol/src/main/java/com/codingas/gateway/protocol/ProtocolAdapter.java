@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.codingas.gateway.protocol;
+
 import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
 import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
 

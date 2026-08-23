@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 package com.codingas.gateway.protocol.contract;
+
 import com.codingas.gateway.protocol.ProtocolRequest;
 
 import com.fasterxml.jackson.annotation.JsonInclude;

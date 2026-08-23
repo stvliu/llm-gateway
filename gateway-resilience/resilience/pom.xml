@@ -38,7 +38,7 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 抽象协议层（ResilientUpstreamClient 依赖 domain.protocol.contract） -->
+        <!-- 抽象协议层（ResilientUpstreamClient 依赖 protocol.transport 传输 SPI） -->
         <dependency>
             <groupId>com.codingas.gateway.protocol</groupId>
             <artifactId>gateway-protocol</artifactId>

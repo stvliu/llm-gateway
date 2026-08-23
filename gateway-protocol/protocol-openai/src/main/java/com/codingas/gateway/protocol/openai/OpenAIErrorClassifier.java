@@ -17,14 +17,13 @@ package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
-import org.springframework.stereotype.Component;
 
 /**
  * OpenAI 错误分类器
  *
- * <p>根据 OpenAI API 错误响应格式，将 HTTP 状态码 + 错误体映射为 ProviderErrorType。</p>
+ * <p>根据 OpenAI API 错误响应格式，将 HTTP 状态码 + 错误体映射为 ProviderErrorType。
+ * 由 {@code OpenAIUpstreamClientFactory} 自建实例（非 Spring Bean），与协议插件自包含一致。</p>
  */
-@Component
 public class OpenAIErrorClassifier implements ErrorClassificationStrategy {
 
     private static final String PROVIDER = "openai";

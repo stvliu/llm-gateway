@@ -30,7 +30,7 @@
     <artifactId>gateway-protocol</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Protocol</name>
-    <description>抽象协议层：Canonical IR + ProtocolAdapter SPI + 协议契约 DTO + tuning/validation（由 gateway-capability-api 与 domain.protocol 并入）</description>
+    <description>抽象协议层：Canonical IR + ProtocolAdapter SPI + 协议契约 DTO + tuning/validation + transport 传输端口</description>
     <dependencies>
         <!-- 横切底座（GatewayException 等） -->
         <dependency>

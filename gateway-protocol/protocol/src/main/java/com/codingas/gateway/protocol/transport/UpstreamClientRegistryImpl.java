@@ -19,6 +19,7 @@ import com.codingas.gateway.protocol.ProtocolRequest;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -36,8 +37,10 @@ public class UpstreamClientRegistryImpl implements UpstreamClientRegistry {
     private final Map<String, ProtocolUpstreamClientFactory> factories;
 
     public UpstreamClientRegistryImpl(List<ProtocolUpstreamClientFactory> factoryList) {
+        // LinkedHashMap 保持工厂装配顺序，getSupportedProtocols 返回稳定（可观测行为）
         this.factories = factoryList.stream()
-                .collect(Collectors.toMap(ProtocolUpstreamClientFactory::supportedProtocol, Function.identity()));
+                .collect(Collectors.toMap(ProtocolUpstreamClientFactory::supportedProtocol, Function.identity(),
+                        (existing, replacement) -> existing, LinkedHashMap::new));
     }
 
     @Override
