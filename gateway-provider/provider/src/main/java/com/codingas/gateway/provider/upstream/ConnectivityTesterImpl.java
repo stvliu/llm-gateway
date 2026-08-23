@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.providerhttp.gateway;
+package com.codingas.gateway.provider.upstream;
 
 import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.upstream.ConnectivityTester;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import lombok.RequiredArgsConstructor;

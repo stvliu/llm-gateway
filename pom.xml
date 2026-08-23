@@ -51,7 +51,6 @@
         <module>gateway-protocol/protocol-gemini</module>
         <module>gateway-provider/provider</module>
         <module>gateway-provider/provider-data</module>
-        <module>gateway-provider/provider-http</module>
         <module>gateway-iam/iam</module>
         <module>gateway-iam/iam-data</module>
         <module>gateway-usage/usage</module>
