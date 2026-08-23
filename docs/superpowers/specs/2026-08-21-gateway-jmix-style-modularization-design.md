@@ -426,13 +426,15 @@ public class ProviderConfiguration { ... }
 - boot 依赖切换为各 starter；装配显式化（去全包扫描）
 - 验证：构建绿；装配显式化测试
 
-### P2 架构优化项（P1 final review 承接）
+### P2 架构优化项（P1 final review 承接 + 架构演进）
 
-- **UpstreamClient 泛型化**：`UpstreamClient.chat(ProtocolRequest)` 的多态参数当前靠 `ctx.upstreamProtocol` 运行时约定保证类型匹配（OpenAI client 只应收 `OpenAIChatRequest`、Anthropic client 只应收 `AnthropicMessagesRequest`），传错类型会静默序列化成错误格式。升级为 `UpstreamClient<T extends ProtocolRequest>` + `chat(T request)`，把运行时约定升级为编译期类型约束
+- **协议传输归协议域 + 插件自包含**（架构演进）：`UpstreamClient` SPI + `ConnectivityTestResult` 上浮 `gateway-protocol`（协议传输端口）；`OpenAIUpstreamClient`/`AnthropicUpstreamClient` + `ErrorClassificationStrategy`/`AnthropicErrorClassifier`/`OpenAIErrorClassifier`/`SseErrorFormatter` 分别并入 `gateway-protocol/protocol-openai`/`protocol-anthropic`（协议插件自包含：格式转换 + 传输调用）；`gateway-provider-http` 模块解散；`UpstreamClientRegistry` 改为协议域注册表（按协议收集各插件 client，仿 `ProtocolAdapter` 的 `List` 注入）；`ConnectivityTesterImpl` 归 provider 核心（用 SPI 做连通性测试）；`ResilientClientFactory` 保持 resilience（包装 SPI）
+- **`ProviderException`/`ProviderErrorType` 上浮**（最大连锁）：当前在 `provider.vendor`，被 provider/proxy/resilience 广泛使用；上浮到 `gateway-protocol`（协议/传输异常归协议域）后协议插件才不反向依赖 provider——跨域重构
+- **UpstreamClient 泛型化**（随搬迁顺带完成）：`UpstreamClient<T extends ProtocolRequest>` + `chat(T request)`，把多态参数的运行时约定（`ctx.upstreamProtocol` 保证类型匹配）升级为编译期类型约束
 - **jacoco 全模块 + report-aggregate**：P1 拆分后核心域覆盖率不可测（jacoco 仅配置 gateway-boot），扩展全模块并加聚合报告，恢复覆盖率 DoD（核心 ≥90% / 规则引擎 ≥85% / 适配器 ≥80%）可验证
 - **freeze 基线上库**：ArchUnit `archunit.properties` 的 `path=target/archunit`（gitignored）使全新检出/CI 首跑静默重建基线，改为入库位置（`src/test/resources/archunit/`），保证模块依赖铁律可复现守护
-- **proxy 显式声明 `gateway-provider-http`**：proxy 编译目前靠 `resilience → provider-http` 传递依赖兜底（引用 `providerhttp.upstream.SseErrorFormatter`），显式声明避免 resilience 移除过渡态依赖时 proxy 无声编译失败
 - **provider-data 补真测试**：P1 拆分后 `gateway-provider-data` 无任何测试（12 个 JPA GatewayImpl 覆盖为 0），随 jacoco 扩展补核心覆盖
+- **proxy 依赖调整**（随协议传输归域）：proxy 改用 `UpstreamClient` SPI（protocol 域），不再依赖 provider-http 传递依赖（原「显式声明 provider-http」项被本项取代）
 
 ### P3 boot 瘦身 + web 独立 + 协议插件自包含
 
