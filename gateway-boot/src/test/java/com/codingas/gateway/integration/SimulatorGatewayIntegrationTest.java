@@ -15,14 +15,14 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.retry.RetryExecutor;
-import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;
+import com.codingas.gateway.protocol.openai.OpenAIUpstreamClient;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -277,17 +278,12 @@ class SimulatorGatewayIntegrationTest {
 
     // ==================== 辅助方法 ====================
 
-    private ProtocolRequest createTestRequest(String model, boolean stream) {
-        return new ProtocolRequest() {
-            private String m = model;
-            private boolean s = stream;
-
-            @Override public String getModel() { return m; }
-            @Override public void setModel(String model) { this.m = model; }
-            @Override public String getProtocol() { return "openai"; }
-            @Override public boolean isStream() { return s; }
-            @Override public void setStream(boolean stream) { this.s = stream; }
-        };
+    private OpenAIChatRequest createTestRequest(String model, boolean stream) {
+        return OpenAIChatRequest.builder()
+                .model(model)
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("Hello").build()))
+                .stream(stream)
+                .build();
     }
 
     private void sleep(long ms) {

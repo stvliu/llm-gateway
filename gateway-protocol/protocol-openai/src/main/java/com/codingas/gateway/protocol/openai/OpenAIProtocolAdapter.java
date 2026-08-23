@@ -15,9 +15,10 @@
  */
 package com.codingas.gateway.protocol.openai;
 
-import com.codingas.gateway.api.capability.protocol.*;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.*;
+import com.codingas.gateway.protocol.canonical.*;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

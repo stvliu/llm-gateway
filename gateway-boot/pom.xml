@@ -293,13 +293,6 @@
             <artifactId>gateway-provider-data</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域 HTTP 出站模块（UpstreamClientRegistryImpl/OpenAIUpstreamClient 等运行时 Bean，根包 providerhttp；显式 compile 防传递依赖失效） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider-http</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
         <!-- 测试 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

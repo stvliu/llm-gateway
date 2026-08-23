@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.advice;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

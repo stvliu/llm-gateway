@@ -44,18 +44,6 @@
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域（依赖 ResilientClientFactory/UpstreamClient + upstream client 实现） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 供给域 HTTP 绑定（ResilientClientFactoryImpl 依赖 providerhttp.upstream 的 client 实现，过渡态） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider-http</artifactId>
-            <version>${revision}</version>
-        </dependency>
         <!-- Micrometer（ResilientUpstreamClient/RetryExecutor 指标监控） -->
         <dependency>
             <groupId>io.micrometer</groupId>

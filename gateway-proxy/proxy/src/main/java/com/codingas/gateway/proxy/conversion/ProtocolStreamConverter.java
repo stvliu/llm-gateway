@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.proxy.conversion;
 
-import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
+import com.codingas.gateway.protocol.StreamChunkResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

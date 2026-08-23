@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.proxy.conversion;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.tuning.ProtocolTuner;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.tuning.ProtocolTuner;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

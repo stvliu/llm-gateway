@@ -34,7 +34,7 @@ import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.upstream.ConnectivityTester;
 import com.codingas.gateway.provider.model.ModelGateway;
 import com.codingas.gateway.provider.vendor.ProviderGateway;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

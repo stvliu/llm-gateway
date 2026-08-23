@@ -15,10 +15,9 @@
  */
 package com.codingas.gateway.resilience.upstream;
 
-import com.codingas.gateway.provider.upstream.ResilientClientFactory;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.providerhttp.upstream.AnthropicUpstreamClient;
-import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.transport.ResilientClientFactory;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.metrics.EndpointMetricsRegistry;
@@ -49,20 +48,14 @@ public class ResilientClientFactoryImpl implements ResilientClientFactory {
     }
 
     @Override
-    public UpstreamClient wrap(UpstreamClient rawClient, Long channelEndpointId) {
+    public UpstreamClient<ProtocolRequest> wrap(UpstreamClient<ProtocolRequest> rawClient, Long channelEndpointId) {
         CircuitBreaker breaker = circuitBreakerManager.getBreaker(channelEndpointId);
         String providerCode = resolveProviderCode(rawClient);
         return new ResilientUpstreamClient(rawClient, breaker, retryExecutor,
                 meterRegistry, metricsRegistry, providerCode, channelEndpointId);
     }
 
-    private String resolveProviderCode(UpstreamClient client) {
-        if (client instanceof OpenAIUpstreamClient) {
-            return "openai";
-        }
-        if (client instanceof AnthropicUpstreamClient) {
-            return "anthropic";
-        }
-        return "unknown";
+    private String resolveProviderCode(UpstreamClient<ProtocolRequest> client) {
+        return client.supportedProvider();
     }
 }

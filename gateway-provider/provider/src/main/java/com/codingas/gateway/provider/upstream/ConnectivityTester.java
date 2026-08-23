@@ -16,7 +16,7 @@
 package com.codingas.gateway.provider.upstream;
 
 import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 
 /**
  * 连通性测试网关接口

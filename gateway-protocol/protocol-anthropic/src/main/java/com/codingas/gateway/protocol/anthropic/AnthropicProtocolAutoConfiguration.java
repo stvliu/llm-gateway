@@ -15,7 +15,9 @@
  */
 package com.codingas.gateway.protocol.anthropic;
 
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.ProtocolAdapter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +25,8 @@ import org.springframework.context.annotation.Bean;
 /**
  * Anthropic 协议能力插件自动装配。
  *
- * <p>注册 {@link AnthropicProtocolAdapter} 为 {@link ProtocolAdapter} Bean。
+ * <p>注册 {@link AnthropicProtocolAdapter} 为 {@link ProtocolAdapter} Bean、
+ * {@link AnthropicUpstreamClientFactory} 为 {@link com.codingas.gateway.protocol.transport.ProtocolUpstreamClientFactory} Bean。
  * 通过 {@code gateway.protocol.anthropic.enabled=true}（默认启用）控制插件开关，
  * 未启用时该协议插件不参与装配。</p>
  */
@@ -37,5 +40,13 @@ public class AnthropicProtocolAutoConfiguration {
     @Bean
     public AnthropicProtocolAdapter anthropicProtocolAdapter() {
         return new AnthropicProtocolAdapter();
+    }
+
+    /**
+     * Anthropic 上游客户端工厂（供协议域注册表收集）
+     */
+    @Bean
+    public AnthropicUpstreamClientFactory anthropicUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
+        return new AnthropicUpstreamClientFactory(httpClient, objectMapper);
     }
 }

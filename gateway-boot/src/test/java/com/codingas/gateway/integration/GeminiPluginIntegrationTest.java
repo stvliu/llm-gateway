@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.ProtocolAdapter;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.protocol.gemini.GeminiChatRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

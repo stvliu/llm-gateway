@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.protocol.openai;
 
-import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
-import com.codingas.gateway.api.capability.protocol.CanonicalMessage;
-import com.codingas.gateway.api.capability.protocol.CanonicalTool;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalMessage;
+import com.codingas.gateway.protocol.canonical.CanonicalTool;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;

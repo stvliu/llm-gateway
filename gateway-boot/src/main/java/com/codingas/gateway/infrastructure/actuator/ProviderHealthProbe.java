@@ -21,9 +21,10 @@ import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
 import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
 import com.codingas.gateway.provider.channel.ChannelGateway;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -85,7 +86,7 @@ public class ProviderHealthProbe {
                     boolean success;
                     String error;
                     try {
-                        UpstreamClient client = clientRegistry.getClient(
+                        UpstreamClient<ProtocolRequest> client = clientRegistry.getClient(
                                 protocol, endpoint.getEndpointUrl(),
                                 cred.getApiKeyPlain(), channel.getTimeout() == null ? 30 : channel.getTimeout());
                         ConnectivityTestResult result = client.testConnectivity();

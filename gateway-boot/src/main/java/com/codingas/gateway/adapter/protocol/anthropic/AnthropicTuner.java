@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.adapter.protocol.anthropic;
 
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.protocol.tuning.ProtocolTuner;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.tuning.ProtocolTuner;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

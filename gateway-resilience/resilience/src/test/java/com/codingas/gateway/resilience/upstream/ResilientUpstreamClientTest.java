@@ -15,12 +15,12 @@
  */
 package com.codingas.gateway.resilience.upstream;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
+import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreakerState;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitOpenException;
@@ -51,7 +51,7 @@ import static org.mockito.Mockito.*;
 class ResilientUpstreamClientTest {
 
     @Mock
-    private UpstreamClient delegate;
+    private UpstreamClient<ProtocolRequest> delegate;
 
     @Mock
     private ProtocolRequest request;

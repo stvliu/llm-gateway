@@ -41,7 +41,7 @@ import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
  * <p><b>模块根包约定</b>：
  * <ul>
  *   <li>核心模块根包：{@code provider / iam / usage / security / audit / alert / resilience / proxy / stats / protocol}</li>
- *   <li>绑定模块根包：{@code providerdata / iamdata / usagedata / securitydata / auditdata / alertdata / resiliencedata / providerhttp}</li>
+ *   <li>绑定模块根包：{@code providerdata / iamdata / usagedata / securitydata / auditdata / alertdata / resiliencedata}</li>
  *   <li>{@code common} 保持纯横切：不依赖任何业务/绑定根包</li>
  * </ul>
  *
@@ -50,8 +50,6 @@ import static com.tngtech.archunit.library.freeze.FreezingArchRule.freeze;
  * 当前冻结基线（验证时实测）：
  * <ul>
  *   <li>stats→providerdata/iamdata（StatsService 引 Repository）</li>
- *   <li>resilience→providerhttp（ResilientClientFactoryImpl 引 upstream client）</li>
- *   <li>proxy→providerhttp（ChatDispatchServiceImpl 经 provider-http 传递依赖引 SseErrorFormatter）</li>
  *   <li>auditdata→providerdata/iamdata（UsageLogDo 引跨域 DO）</li>
  * </ul>
  * alert→iamdata 的 DO 依赖（AlertNotificationDo）因 gateway-alert-data 尚未进入 gateway-boot 依赖，
@@ -82,18 +80,17 @@ public class LayerDependencyTest {
         "com.codingas.gateway.securitydata..",
         "com.codingas.gateway.auditdata..",
         "com.codingas.gateway.alertdata..",
-        "com.codingas.gateway.resiliencedata..",
-        "com.codingas.gateway.providerhttp.."
+        "com.codingas.gateway.resiliencedata.."
     };
 
     /** 绑定根包名（{@code com.codingas.gateway.<根包>} 的第一段） */
     private static final Set<String> BINDING_ROOTS = Set.of(
         "providerdata", "iamdata", "usagedata", "securitydata",
-        "auditdata", "alertdata", "resiliencedata", "providerhttp");
+        "auditdata", "alertdata", "resiliencedata");
 
     /**
      * 核心模块不得依赖绑定模块（模块依赖 API 铁律雏形）。
-     * P1 过渡态已知违规（stats→providerdata/iamdata、resilience→providerhttp）冻结为基线，P4 解冻。
+     * P1 过渡态已知违规（stats→providerdata/iamdata）冻结为基线，P4 解冻。
      */
     @ArchTest
     static final ArchRule NO_CORE_DEPENDS_BINDING_MODULES = freeze(

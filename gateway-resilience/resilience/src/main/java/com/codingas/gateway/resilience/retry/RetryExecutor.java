@@ -16,7 +16,7 @@
 package com.codingas.gateway.resilience.retry;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

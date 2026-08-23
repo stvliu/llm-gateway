@@ -27,12 +27,12 @@ import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
 import com.codingas.gateway.provider.channel.ChannelGateway;
 import com.codingas.gateway.provider.model.ModelInstanceGateway;
 import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
-import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.ProviderGateway;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -195,7 +195,7 @@ public class ModelExperienceService {
         log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
 
         String baseUrl = config.baseUrl != null ? config.baseUrl : "";
-        UpstreamClient client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
+        UpstreamClient<ProtocolRequest> client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
 
         ProtocolRequest protocolRequest = buildProtocolRequest(config.protocolName, request);
 
