@@ -21,6 +21,8 @@ import com.codingas.gateway.audit.CallLog;
 import com.codingas.gateway.audit.AuditGateway;
 import com.codingas.gateway.protocol.*;
 import com.codingas.gateway.protocol.contract.*;
+import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.SseErrorFormatter;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
@@ -148,8 +150,8 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             @Override
             public void onError(Throwable t) {
                 String errorJson;
-                if (t instanceof com.codingas.gateway.provider.vendor.ProviderException pe) {
-                    errorJson = com.codingas.gateway.providerhttp.upstream.SseErrorFormatter.format(pe);
+                if (t instanceof ProviderException pe) {
+                    errorJson = SseErrorFormatter.format(pe);
                 } else {
                     errorJson = "{\"error\":\"unknown_error\",\"retry_after\":0}";
                 }

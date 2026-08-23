@@ -21,7 +21,7 @@ import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.provider.upstream.ResilientClientFactory;
 import com.codingas.gateway.provider.upstream.UpstreamClient;
 import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;

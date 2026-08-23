@@ -33,7 +33,7 @@ import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;

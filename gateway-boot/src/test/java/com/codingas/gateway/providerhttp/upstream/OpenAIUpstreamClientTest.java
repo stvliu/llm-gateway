@@ -18,7 +18,7 @@ package com.codingas.gateway.providerhttp.upstream;
 import com.codingas.gateway.protocol.*;
 import com.codingas.gateway.protocol.contract.*;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;

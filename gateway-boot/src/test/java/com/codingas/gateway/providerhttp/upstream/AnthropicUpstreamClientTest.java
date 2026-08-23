@@ -19,7 +19,7 @@ import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;

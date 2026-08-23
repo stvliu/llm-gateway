@@ -16,7 +16,7 @@
 package com.codingas.gateway.resilience.circuitbreaker;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.provider.vendor.ProviderException;
+import com.codingas.gateway.protocol.transport.ProviderException;
 
 /**
  * 熔断器开启异常
