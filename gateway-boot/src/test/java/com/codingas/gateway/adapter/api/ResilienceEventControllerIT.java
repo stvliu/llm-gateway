@@ -16,8 +16,8 @@
 package com.codingas.gateway.adapter.api;
 
 import com.codingas.gateway.adapter.advice.GlobalExceptionHandler;
-import com.codingas.gateway.application.resilience.ResilienceEventService;
-import com.codingas.gateway.application.resilience.dto.FailoverEventResponse;
+import com.codingas.gateway.resilience.failover.ResilienceEventService;
+import com.codingas.gateway.resilience.dto.FailoverEventResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

@@ -30,7 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p><b>职责边界（D3/D11）</b>：本追踪器仅提供供应商级粗粒度 DOWN 信号，
  * 供 actuator 健康检查（{@link ProviderRegistryHealthIndicator}）暴露供应商级健康信号，
  * <b>不参与路由决策</b>；路由决策由端点级熔断
- * {@link com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager} 驱动，
+ * {@link com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager} 驱动，
  * 与本追踪器无关。</p>
  *
  * <p>被动推断策略：基于实际请求结果判断 Provider 健康状态。</p>

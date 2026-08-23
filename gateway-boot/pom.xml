@@ -121,6 +121,12 @@
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 韧性域 JPA 绑定模块（FailoverEventGatewayImpl 运行时 Bean，根包 resiliencedata） -->
+        <dependency>
+            <groupId>com.codingas.gateway.resilience</groupId>
+            <artifactId>gateway-resilience-data</artifactId>
+            <version>${revision}</version>
+        </dependency>
 
         <!-- 审计追溯域模块（调用日志/审计事件） -->
         <dependency>

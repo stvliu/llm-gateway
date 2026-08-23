@@ -25,7 +25,7 @@ package com.codingas.gateway.application.channel;
  *   <li>状态查询（getState）：查询端点熔断器当前状态</li>
  * </ul>
  *
- * <p>委托 {@link com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager}
+ * <p>委托 {@link com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager}
  * 与 {@link com.codingas.gateway.provider.channel.ChannelEndpointGateway}。</p>
  */
 public interface ChannelEmergencyService {

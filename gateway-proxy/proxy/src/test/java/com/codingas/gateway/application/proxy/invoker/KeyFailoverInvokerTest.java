@@ -28,7 +28,7 @@ import com.codingas.gateway.provider.upstream.UpstreamClient;
 import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.infrastructure.resilience.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
