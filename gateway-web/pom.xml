@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2025-2026 codingas.com
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <artifactId>gateway-web</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Gateway Web</name>
+    <description>HTTP 承载层模块：Controller/Interceptor/Advice，@AutoConfiguration 装配（boot 依赖即生效）</description>
+
+    <dependencies>
+        <!-- 横切底座模块（BaseEntity/异常/工具/事件/通用枚举，纯横切） -->
+        <dependency>
+            <groupId>com.codingas.gateway.common</groupId>
+            <artifactId>gateway-common</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 抽象协议层模块（Canonical IR + ProtocolAdapter SPI + 协议契约 DTO） -->
+        <dependency>
+            <groupId>com.codingas.gateway.protocol</groupId>
+            <artifactId>gateway-protocol</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 协议能力插件（OpenAI/Anthropic 协议校验器，Controller 直接引用） -->
+        <dependency>
+            <groupId>com.codingas.gateway.protocol</groupId>
+            <artifactId>gateway-protocol-openai</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway.protocol</groupId>
+            <artifactId>gateway-protocol-anthropic</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 供给域核心模块（Provider 门面，Task 2 下沉） -->
+        <dependency>
+            <groupId>com.codingas.gateway.provider</groupId>
+            <artifactId>gateway-provider</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 身份与访问管理域核心模块（IAM 门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway.iam</groupId>
+            <artifactId>gateway-iam</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 安全与威胁域核心模块（IP 黑名单/限流/威胁异常） -->
+        <dependency>
+            <groupId>com.codingas.gateway.security</groupId>
+            <artifactId>gateway-security</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 韧性域核心模块（熔断/容灾事件门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway.resilience</groupId>
+            <artifactId>gateway-resilience</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 模型代理域核心模块（ChatDispatchService/体验门面，Task 3 下沉） -->
+        <dependency>
+            <groupId>com.codingas.gateway.proxy</groupId>
+            <artifactId>gateway-proxy</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 聚合统计域核心模块（Stats 门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway.stats</groupId>
+            <artifactId>gateway-stats</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 用量管控域核心模块（TokenLimit 门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway.usage</groupId>
+            <artifactId>gateway-usage</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- Spring Boot Web MVC（HTTP 承载层基础） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 自动装配框架（@AutoConfiguration + imports 注册） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+        <!-- Lombok -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- 编译插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -129,6 +129,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- HTTP 承载层模块（Controller/Interceptor/Advice，@AutoConfiguration 装配） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-web</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- Spring Boot Web MVC (同步) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

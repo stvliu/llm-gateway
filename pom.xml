@@ -55,6 +55,7 @@
         <module>gateway-resilience</module>
         <module>gateway-proxy</module>
         <module>gateway-stats</module>
+        <module>gateway-web</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>
