@@ -38,6 +38,10 @@ function getBackendTarget(): string {
   return 'http://localhost:8080';
 }
 
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
+// @ts-ignore
 export default defineConfig({
   plugins: [react()],
   resolve: {
