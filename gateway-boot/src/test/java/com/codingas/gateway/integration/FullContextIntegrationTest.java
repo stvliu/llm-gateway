@@ -19,12 +19,13 @@ import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.protocol.transport.ProviderException;
-import com.codingas.gateway.provider.upstream.ResilientClientFactory;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.transport.ResilientClientFactory;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
@@ -222,19 +223,14 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
          *
          * @param model  模型名
          * @param stream 是否流式
-         * @return 匿名 ProtocolRequest 实现
+         * @return OpenAI 协议请求
          */
-        private ProtocolRequest createTestRequest(String model, boolean stream) {
-            return new ProtocolRequest() {
-                private String m = model;
-                private boolean s = stream;
-
-                @Override public String getModel() { return m; }
-                @Override public void setModel(String model) { this.m = model; }
-                @Override public String getProtocol() { return "openai"; }
-                @Override public boolean isStream() { return s; }
-                @Override public void setStream(boolean stream) { this.s = stream; }
-            };
+        private OpenAIChatRequest createTestRequest(String model, boolean stream) {
+            return OpenAIChatRequest.builder()
+                    .model(model)
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("Hello").build()))
+                    .stream(stream)
+                    .build();
         }
     }
 }

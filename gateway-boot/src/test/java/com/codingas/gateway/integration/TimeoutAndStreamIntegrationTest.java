@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.support.ProviderSimulator;
@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -154,22 +155,17 @@ class TimeoutAndStreamIntegrationTest {
     // ==================== 辅助方法 ====================
 
     /**
-     * 创建匿名 ProtocolRequest 测试桩，仅携带 model/protocol/stream 三个最小字段。
+     * 创建 OpenAI 协议请求测试桩，仅携带 model/protocol/stream 三个最小字段。
      *
      * @param model  模型名
      * @param stream 是否流式
-     * @return ProtocolRequest 测试桩
+     * @return OpenAI 协议请求测试桩
      */
-    private ProtocolRequest createTestRequest(String model, boolean stream) {
-        return new ProtocolRequest() {
-            private String m = model;
-            private boolean s = stream;
-
-            @Override public String getModel() { return m; }
-            @Override public void setModel(String model) { this.m = model; }
-            @Override public String getProtocol() { return "openai"; }
-            @Override public boolean isStream() { return s; }
-            @Override public void setStream(boolean stream) { this.s = stream; }
-        };
+    private OpenAIChatRequest createTestRequest(String model, boolean stream) {
+        return OpenAIChatRequest.builder()
+                .model(model)
+                .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("Hello").build()))
+                .stream(stream)
+                .build();
     }
 }

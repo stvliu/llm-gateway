@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
+package com.codingas.gateway.protocol.transport;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
 
 /**
- * 上游调用接口，负责调用上游 LLM API
+ * 上游调用接口（协议传输端口）
  *
- * <p>每个实例绑定特定 Provider 配置（endpointUrl/apiKey/timeout），通过 UpstreamClientRegistry 获取。</p>
+ * <p>每个实例绑定特定 Provider 配置（endpointUrl/apiKey/timeout），
+ * 由 {@link ProtocolUpstreamClientFactory} 创建、{@link UpstreamClientRegistry} 按协议获取。</p>
+ *
+ * @param <T> 该客户端专署的协议请求类型
  */
-public interface UpstreamClient {
+public interface UpstreamClient<T extends ProtocolRequest> {
 
-    /**
-     * 非流式调用
-     */
-    ProtocolResponse chat(ProtocolRequest request);
+    /** 非流式调用 */
+    ProtocolResponse chat(T request);
 
-    /**
-     * 流式调用
-     */
-    void chatStream(ProtocolRequest request, StreamCallback callback);
+    /** 流式调用 */
+    void chatStream(T request, StreamCallback callback);
 
-    /**
-     * 连通性测试（测试已绑定 Provider 的连通性）
-     */
+    /** 连通性测试（测试已绑定 Provider 的连通性） */
     ConnectivityTestResult testConnectivity();
+
+    /** 协议标识自描述（"openai"/"anthropic"），供韧性层按协议归类，替代对实现的 instanceof */
+    String supportedProvider();
 }

@@ -18,9 +18,9 @@ package com.codingas.gateway.resilience.upstream;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.ProviderException;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitOpenException;
 import com.codingas.gateway.resilience.metrics.EndpointMetrics;
@@ -35,9 +35,9 @@ import lombok.extern.java.Log;
  * <p>组合熔断器 + 重试策略 + Metrics 埋点，为上游调用提供弹性保护。</p>
  */
 @Log
-public class ResilientUpstreamClient implements UpstreamClient {
+public class ResilientUpstreamClient implements UpstreamClient<ProtocolRequest> {
 
-    private final UpstreamClient delegate;
+    private final UpstreamClient<ProtocolRequest> delegate;
     private final CircuitBreaker circuitBreaker;
     private final RetryExecutor retryExecutor;
     private final MeterRegistry meterRegistry;
@@ -45,7 +45,7 @@ public class ResilientUpstreamClient implements UpstreamClient {
     private final String providerCode;
     private final Long endpointId;
 
-    public ResilientUpstreamClient(UpstreamClient delegate, CircuitBreaker circuitBreaker,
+    public ResilientUpstreamClient(UpstreamClient<ProtocolRequest> delegate, CircuitBreaker circuitBreaker,
                                     RetryExecutor retryExecutor, MeterRegistry meterRegistry,
                                     EndpointMetricsRegistry metricsRegistry,
                                     String providerCode, Long endpointId) {
@@ -156,5 +156,10 @@ public class ResilientUpstreamClient implements UpstreamClient {
     @Override
     public ConnectivityTestResult testConnectivity() {
         return delegate.testConnectivity();
+    }
+
+    @Override
+    public String supportedProvider() {
+        return delegate.supportedProvider();
     }
 }

@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.providerhttp.upstream;
+package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
+import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
 import org.springframework.stereotype.Component;
 
 /**
- * Anthropic 错误分类器
+ * OpenAI 错误分类器
  *
- * <p>根据 Anthropic API 错误响应格式，将 HTTP 状态码 + 错误体映射为 ProviderErrorType。</p>
+ * <p>根据 OpenAI API 错误响应格式，将 HTTP 状态码 + 错误体映射为 ProviderErrorType。</p>
  */
 @Component
-public class AnthropicErrorClassifier implements ErrorClassificationStrategy {
+public class OpenAIErrorClassifier implements ErrorClassificationStrategy {
 
-    private static final String PROVIDER = "anthropic";
+    private static final String PROVIDER = "openai";
 
     @Override
     public ProviderErrorType classify(int statusCode, String responseBody) {
@@ -36,7 +37,7 @@ public class AnthropicErrorClassifier implements ErrorClassificationStrategy {
             case 400 -> ProviderErrorType.INVALID_REQUEST;
             case 408 -> ProviderErrorType.TIMEOUT_ERROR;
             case 504 -> ProviderErrorType.TIMEOUT_ERROR;
-            case 500, 502, 529 -> ProviderErrorType.UPSTREAM_ERROR;
+            case 500, 502 -> ProviderErrorType.UPSTREAM_ERROR;
             case 503 -> ProviderErrorType.SERVICE_UNAVAILABLE;
             default -> ProviderErrorType.UNKNOWN_ERROR;
         };

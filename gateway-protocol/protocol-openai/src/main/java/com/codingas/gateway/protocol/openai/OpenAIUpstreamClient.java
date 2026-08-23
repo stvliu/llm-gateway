@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.providerhttp.upstream;
+package com.codingas.gateway.protocol.openai;
 
-import com.codingas.gateway.protocol.*;
-import com.codingas.gateway.protocol.contract.*;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.common.enums.ProviderErrorType;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
 import com.codingas.gateway.protocol.transport.ProviderException;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
-import com.codingas.gateway.providerhttp.upstream.ErrorClassificationStrategy;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 
@@ -33,9 +35,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
- * OpenAI 上游调用实现
+ * OpenAI 上游调用实现（协议插件自包含：格式转换 + 传输调用）
  */
-public class OpenAIUpstreamClient implements UpstreamClient {
+public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
 
     private static final String CHAT_PATH = "/v1/chat/completions";
     private static final String MODELS_PATH = "/v1/models";
@@ -59,7 +61,7 @@ public class OpenAIUpstreamClient implements UpstreamClient {
     }
 
     @Override
-    public ProtocolResponse chat(ProtocolRequest request) {
+    public ProtocolResponse chat(OpenAIChatRequest request) {
         try {
             String json = objectMapper.writeValueAsString(request);
 
@@ -92,7 +94,7 @@ public class OpenAIUpstreamClient implements UpstreamClient {
     }
 
     @Override
-    public void chatStream(ProtocolRequest request, StreamCallback callback) {
+    public void chatStream(OpenAIChatRequest request, StreamCallback callback) {
         try {
             request.setStream(true);
             String json = objectMapper.writeValueAsString(request);
@@ -186,5 +188,10 @@ public class OpenAIUpstreamClient implements UpstreamClient {
         } catch (Exception e) {
             return new ConnectivityTestResult(false, null, e.getMessage(), 0);
         }
+    }
+
+    @Override
+    public String supportedProvider() {
+        return "openai";
     }
 }

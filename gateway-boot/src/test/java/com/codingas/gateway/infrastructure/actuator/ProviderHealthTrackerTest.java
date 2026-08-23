@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.infrastructure.actuator;
 
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

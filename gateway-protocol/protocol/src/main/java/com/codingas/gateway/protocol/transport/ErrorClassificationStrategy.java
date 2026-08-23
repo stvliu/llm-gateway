@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.providerhttp.upstream;
+package com.codingas.gateway.protocol.transport;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
 

@@ -13,28 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
+package com.codingas.gateway.protocol.transport;
 
+import com.codingas.gateway.protocol.ProtocolRequest;
 import java.util.List;
 
 /**
- * 上游调用注册表，按协议类型获取绑定 Provider 配置的 UpstreamClient 实例
+ * 上游调用注册表（协议域）
+ *
+ * <p>按协议收集各插件 {@link ProtocolUpstreamClientFactory}，按协议获取绑定配置的 client。
+ * 返回类型擦除为 {@code UpstreamClient<ProtocolRequest>}，调用方无需处理通配符。</p>
  */
 public interface UpstreamClientRegistry {
 
-    /**
-     * 获取绑定特定 Provider 配置的 UpstreamClient 实例
-     *
-     * @param protocol       协议标识（"openai" / "anthropic"）
-     * @param endpointUrl    上游 Endpoint URL
-     * @param apiKey         上游 API Key
-     * @param timeoutSeconds 超时秒数
-     * @return 绑定配置的 UpstreamClient 实例
-     */
-    UpstreamClient getClient(String protocol, String endpointUrl, String apiKey, int timeoutSeconds);
+    UpstreamClient<ProtocolRequest> getClient(String protocol, String endpointUrl, String apiKey, int timeoutSeconds);
 
-    /**
-     * 获取系统支持的所有协议标识
-     */
+    /** 获取系统支持的所有协议标识（来自已装配工厂，新增协议插件自动生效） */
     List<String> getSupportedProtocols();
 }

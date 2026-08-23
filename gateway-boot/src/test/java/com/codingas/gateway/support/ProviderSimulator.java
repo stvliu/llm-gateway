@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.support;
 
-import com.codingas.gateway.providerhttp.upstream.AnthropicUpstreamClient;
-import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;
-import com.codingas.gateway.providerhttp.upstream.AnthropicErrorClassifier;
-import com.codingas.gateway.providerhttp.upstream.OpenAIErrorClassifier;
+import com.codingas.gateway.protocol.anthropic.AnthropicUpstreamClient;
+import com.codingas.gateway.protocol.openai.OpenAIUpstreamClient;
+import com.codingas.gateway.protocol.anthropic.AnthropicErrorClassifier;
+import com.codingas.gateway.protocol.openai.OpenAIErrorClassifier;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;

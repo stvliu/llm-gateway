@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
+package com.codingas.gateway.protocol.transport;
+
+import com.codingas.gateway.protocol.ProtocolRequest;
 
 /**
- * 韧性客户端工厂
+ * 韧性客户端工厂（协议域端口，resilience 域提供实现）
  *
- * <p>为原始 UpstreamClient 包装熔断器 + 重试策略，返回带韧性保护的 UpstreamClient。</p>
- * <p>接口定义在 domain 层，实现在 infrastructure 层，避免 application 层直接依赖 infrastructure 实现类。</p>
+ * <p>为原始 UpstreamClient 包装熔断 + 重试等韧性保护。</p>
  */
 public interface ResilientClientFactory {
 
-    /**
-     * 为原始 UpstreamClient 包装韧性保护
-     *
-     * @param rawClient       原始上游客户端
-     * @param channelEndpointId 端点 ID（用于获取对应的熔断器）
-     * @return 带韧性保护的 UpstreamClient
-     */
-    UpstreamClient wrap(UpstreamClient rawClient, Long channelEndpointId);
+    UpstreamClient<ProtocolRequest> wrap(UpstreamClient<ProtocolRequest> rawClient, Long channelEndpointId);
 }

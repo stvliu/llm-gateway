@@ -22,9 +22,9 @@ import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ProviderException;
-import com.codingas.gateway.provider.upstream.ResilientClientFactory;
-import com.codingas.gateway.provider.upstream.UpstreamClient;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.transport.ResilientClientFactory;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -77,7 +77,7 @@ public class KeyFailoverInvoker {
                 continue;
             }
 
-            UpstreamClient client = buildClient(ctx, cred);
+            UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
 
             try {
                 return client.chat(request);
@@ -128,7 +128,7 @@ public class KeyFailoverInvoker {
                     "端点熔断中: " + ctx.channelEndpointId(),
                     null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
-        UpstreamClient client = buildClient(ctx, cred);
+        UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
         try {
             return client.chat(request);
         } catch (ProviderException e) {
@@ -166,7 +166,7 @@ public class KeyFailoverInvoker {
                     "流式调用：端点熔断中: " + ctx.channelEndpointId(),
                     null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
-        UpstreamClient client = buildClient(ctx, cred);
+        UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
         try {
             client.chatStream(request, callback);
         } catch (ProviderException e) {
@@ -193,7 +193,7 @@ public class KeyFailoverInvoker {
                 continue;
             }
 
-            UpstreamClient client = buildClient(ctx, cred);
+            UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
             try {
                 client.chatStream(request, callback);
                 return;
@@ -216,8 +216,8 @@ public class KeyFailoverInvoker {
                 null, request.getModel(), provider, ctx.channelEndpointId(), null);
     }
 
-    private UpstreamClient buildClient(RoutingContext ctx, ChannelCredential cred) {
-        UpstreamClient rawClient = clientRegistry.getClient(
+    private UpstreamClient<ProtocolRequest> buildClient(RoutingContext ctx, ChannelCredential cred) {
+        UpstreamClient<ProtocolRequest> rawClient = clientRegistry.getClient(
                 ctx.upstreamProtocol().name().toLowerCase(),
                 ctx.endpointUrl(),
                 cred.getApiKeyPlain(),

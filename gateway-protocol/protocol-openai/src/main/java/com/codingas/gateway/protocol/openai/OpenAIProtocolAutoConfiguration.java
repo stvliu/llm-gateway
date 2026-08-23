@@ -17,6 +17,7 @@ package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.protocol.ProtocolAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import okhttp3.OkHttpClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +25,8 @@ import org.springframework.context.annotation.Bean;
 /**
  * OpenAI 协议能力插件自动装配。
  *
- * <p>注册 {@link OpenAIProtocolAdapter} 为 {@link ProtocolAdapter} Bean。
+ * <p>注册 {@link OpenAIProtocolAdapter} 为 {@link ProtocolAdapter} Bean、
+ * {@link OpenAIUpstreamClientFactory} 为 {@link com.codingas.gateway.protocol.transport.ProtocolUpstreamClientFactory} Bean。
  * 通过 {@code gateway.protocol.openai.enabled=true}（默认启用）控制插件开关，
  * 未启用时该协议插件不参与装配。</p>
  */
@@ -38,5 +40,13 @@ public class OpenAIProtocolAutoConfiguration {
     @Bean
     public OpenAIProtocolAdapter openAIProtocolAdapter(ObjectMapper objectMapper) {
         return new OpenAIProtocolAdapter(objectMapper);
+    }
+
+    /**
+     * OpenAI 上游客户端工厂（供协议域注册表收集）
+     */
+    @Bean
+    public OpenAIUpstreamClientFactory openAIUpstreamClientFactory(OkHttpClient httpClient, ObjectMapper objectMapper) {
+        return new OpenAIUpstreamClientFactory(httpClient, objectMapper);
     }
 }

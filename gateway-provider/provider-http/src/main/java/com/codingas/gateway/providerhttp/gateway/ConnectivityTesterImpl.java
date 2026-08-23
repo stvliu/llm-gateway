@@ -17,8 +17,8 @@ package com.codingas.gateway.providerhttp.gateway;
 
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.upstream.ConnectivityTester;
-import com.codingas.gateway.provider.upstream.UpstreamClientRegistry;
-import com.codingas.gateway.provider.upstream.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
