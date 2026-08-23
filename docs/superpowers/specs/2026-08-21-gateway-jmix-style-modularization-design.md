@@ -428,13 +428,24 @@ public class ProviderConfiguration { ... }
 
 ### P2 架构优化项（P1 final review 承接 + 架构演进）
 
-- **协议传输归协议域 + 插件自包含**（架构演进）：`UpstreamClient` SPI + `ConnectivityTestResult` 上浮 `gateway-protocol`（协议传输端口）；`OpenAIUpstreamClient`/`AnthropicUpstreamClient` + `ErrorClassificationStrategy`/`AnthropicErrorClassifier`/`OpenAIErrorClassifier`/`SseErrorFormatter` 分别并入 `gateway-protocol/protocol-openai`/`protocol-anthropic`（协议插件自包含：格式转换 + 传输调用）；`gateway-provider-http` 模块解散；`UpstreamClientRegistry` 改为协议域注册表（按协议收集各插件 client，仿 `ProtocolAdapter` 的 `List` 注入）；`ConnectivityTesterImpl` 归 provider 核心（用 SPI 做连通性测试）；`ResilientClientFactory` 保持 resilience（包装 SPI）
-- **`ProviderException`/`ProviderErrorType` 上浮**（最大连锁）：当前在 `provider.vendor`，被 provider/proxy/resilience 广泛使用；上浮到 `gateway-protocol`（协议/传输异常归协议域）后协议插件才不反向依赖 provider——跨域重构
-- **UpstreamClient 泛型化**（随搬迁顺带完成）：`UpstreamClient<T extends ProtocolRequest>` + `chat(T request)`，把多态参数的运行时约定（`ctx.upstreamProtocol` 保证类型匹配）升级为编译期类型约束
-- **jacoco 全模块 + report-aggregate**：P1 拆分后核心域覆盖率不可测（jacoco 仅配置 gateway-boot），扩展全模块并加聚合报告，恢复覆盖率 DoD（核心 ≥90% / 规则引擎 ≥85% / 适配器 ≥80%）可验证
-- **freeze 基线上库**：ArchUnit `archunit.properties` 的 `path=target/archunit`（gitignored）使全新检出/CI 首跑静默重建基线，改为入库位置（`src/test/resources/archunit/`），保证模块依赖铁律可复现守护
+> **2026-08-23 评估补强**：本组条目经代码勘察复核后修订——修正 `ProviderErrorType` 上浮描述（保持 common 不上浮）、补充 `ResilientClientFactoryImpl` instanceof 依赖处理、澄清 `UpstreamClientRegistry` 工厂注册语义、新增 `ResilientClientFactory` 接口归属/`ConnectivityTestResult` 双版本/协议域包名 Jmix 化/P2 范围拆分四项。标注「修订」处为本次评估变更，未标注处为原已批准表述。
+
+- **协议传输归协议域 + 插件自包含**（架构演进）：`UpstreamClient` SPI + `ConnectivityTestResult`（upstream 版）上浮 `gateway-protocol`（协议传输端口）；`OpenAIUpstreamClient`/`AnthropicUpstreamClient` + `ErrorClassificationStrategy`/`AnthropicErrorClassifier`/`OpenAIErrorClassifier`/`SseErrorFormatter` 分别并入 `gateway-protocol/protocol-openai`/`protocol-anthropic`（协议插件自包含：格式转换 + 传输调用）；`gateway-provider-http` 模块解散；`UpstreamClientRegistry` 改为协议域注册表；`ConnectivityTesterImpl` 归 provider 核心（用 SPI 做连通性测试，现实现仅依赖 SPI、无 HTTP 技术，归核心可行）；`ResilientClientFactory` 保持 resilience（包装 SPI）
+  - **修订｜`ResilientClientFactoryImpl` instanceof 依赖（必改）**：当前 `resolveProviderCode` 用 `instanceof OpenAIUpstreamClient/AnthropicUpstreamClient` 判断协议（`resilience/.../upstream/ResilientClientFactoryImpl.java`），构成 resilience → provider-http 直接依赖；provider-http 解散后必须消除，否则 resilience 反向依赖协议插件。方案二选一：① `UpstreamClient` SPI 增加 `supportedProvider()`（推荐，去 instanceof）；② `ResilientClientFactory.wrap()` 增加 `providerCode` 参数（`KeyFailoverInvoker.buildClient` 已知 `ctx.upstreamProtocol()`）
+  - **修订｜`UpstreamClientRegistry` 为「工厂注册」语义**：`getClient(protocol, endpointUrl, apiKey, timeout)` 现为每请求创建绑定配置实例的工厂语义（client 非单例），`List` 注入收集的应是「client 工厂」（协议插件注册 `ProtocolUpstreamClientFactory`）而非 client 实例；注册表按协议选工厂再创建，对外签名不变，proxy/boot 现有 6 处调用零改动
+  - **修订｜boot 4 个使用者依赖调整**：`ProtocolController`/`ModelExperienceService`/`ProviderHealthProbe`/`ProviderHealthTracker` 均使用 `UpstreamClientRegistry`，provider-http 解散后 boot pom 依赖改为协议插件模块
+  - **修订｜测试随迁**：provider-http 的 UpstreamClient/ErrorClassifier 测试现位于 boot/src/test 下（12+），须随实现并入协议插件模块（TDD 随迁）
+  - **明确不做**：Gemini 插件 P2 仍仅转换（无传输 client），`getSupportedProtocols` 行为与现状一致，不阻塞；Gemini 传输为未来项
+- **`ProviderException` 上浮**（最大连锁）：`ProviderException` 当前在 `provider.vendor`，被 provider/proxy/resilience 广泛使用；上浮到 `gateway-protocol`（协议/传输异常归协议域）后协议插件才不反向依赖 provider——跨域重构。**修订｜`ProviderErrorType` 保持 common、不上浮**：它已在 `gateway-common/common/enums/`，且被 common 内部类（`FailoverDecision`/`FailoverOccurredEvent`）使用，上浮会使 common → protocol 反向依赖；只需上浮 `ProviderException`（其依赖的 `GatewayException`/`ProviderErrorType` 均在 common，上浮后无新增依赖缺口）
+- **UpstreamClient 泛型化**（随搬迁顺带完成）：`UpstreamClient<T extends ProtocolRequest>` + `chat(T request)`，把多态参数的运行时约定（`ctx.upstreamProtocol` 保证类型匹配）升级为编译期类型约束。**修订｜收益限定**：类型约束落在协议插件内部与测试（如 `OpenAIUpstreamClient.chat(OpenAIChatRequest)`、消除 `setStream(true)` 基类可变副作用）；proxy 主链路（`KeyFailoverInvoker`）拿到的是 `UpstreamClient<? extends ProtocolRequest>`，运行时 `ctx.upstreamProtocol()` 分支依然存在——泛型化不消除 proxy 运行时分支，不承诺「编译期消除运行时约定」
+- **`ResilientClientFactory` 接口归属**（修订新增）：接口当前在 `provider.upstream`；UpstreamClient/Registry 上浮后建议一并上浮协议域（协议域聚合「传输端口 + 韧性端口」，proxy 无需为它依赖 provider 核心）；或明确留在 provider 核心（proxy 本就因 `RoutingContext` 等依赖 provider 核心）。实施时二选一并记录决策
+- **`ConnectivityTestResult` 双版本区分**（修订新增）：`provider.upstream.ConnectivityTestResult`（`UpstreamClient.testConnectivity` 返回，上浮协议域）与 boot `application/provider/dto.ConnectivityTestResult`（ChannelHealth 分层 DTO，字段完全不同：success/message/models/level1/level2/totalLatencyMs）——只上浮 upstream 版，应用层 DTO 不动，勿合并
+- **协议域包名 Jmix 化**（修订新增）：gateway-protocol 核心现仍为 `domain.protocol.contract.*` + `api.capability.protocol.*` 两套旧包名（与 §4.2「protocol 包名不变」表述有偏差）；P4 模块级 ArchUnit 按模块根包判定将无法统一命中协议模块——建议 P2 上浮 UpstreamClient 时顺手把协议域根包迁移为 `com.codingas.gateway.protocol.*`（连锁 import 协议契约的 provider/proxy/resilience/boot），或明确推迟到 P3，不得拖到 P4
+- **jacoco 全模块 + report-aggregate**：P1 拆分后核心域覆盖率不可测（jacoco 仅配置 gateway-boot），扩展全模块并加聚合报告（放根 POM 或独立模块），`check` 门槛按聚合结果 + 合理 excludes（DO/适配器），恢复覆盖率 DoD（核心 ≥90% / 规则引擎 ≥85% / 适配器 ≥80%）可验证
+- **freeze 基线上库**：ArchUnit 基线数据（`freeze.store.default.path=target/archunit`，gitignored）使全新检出/CI 首跑静默重建基线。**修订｜描述修正**：`archunit.properties` 本身已入库（`gateway-boot/src/test/resources/archunit.properties`），需入库的是 freeze 基线数据目录（改为 `src/test/resources/archunit/`）；并在 CI 禁止 `allowStoreCreation=true`（双保险），保证模块依赖铁律可复现守护
 - **provider-data 补真测试**：P1 拆分后 `gateway-provider-data` 无任何测试（12 个 JPA GatewayImpl 覆盖为 0），随 jacoco 扩展补核心覆盖
 - **proxy 依赖调整**（随协议传输归域）：proxy 改用 `UpstreamClient` SPI（protocol 域），不再依赖 provider-http 传递依赖（原「显式声明 provider-http」项被本项取代）
+- **P2 范围拆分建议**（修订新增）：P2 当前 = starter 化（本节主线）+ 架构演进（本组）+ 质量基建（jacoco/freeze/补测试）三大块；建议「质量基建」独立并行（与架构演进无强依赖，仅 provider-data 补测试链式依赖 jacoco 全模块），避免架构演进（有回归风险）与纯增量混在同一变更、无法独立回滚
 
 ### P3 boot 瘦身 + web 独立 + 协议插件自包含
 
