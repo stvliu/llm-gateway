@@ -426,6 +426,14 @@ public class ProviderConfiguration { ... }
 - boot 依赖切换为各 starter；装配显式化（去全包扫描）
 - 验证：构建绿；装配显式化测试
 
+### P2 架构优化项（P1 final review 承接）
+
+- **UpstreamClient 泛型化**：`UpstreamClient.chat(ProtocolRequest)` 的多态参数当前靠 `ctx.upstreamProtocol` 运行时约定保证类型匹配（OpenAI client 只应收 `OpenAIChatRequest`、Anthropic client 只应收 `AnthropicMessagesRequest`），传错类型会静默序列化成错误格式。升级为 `UpstreamClient<T extends ProtocolRequest>` + `chat(T request)`，把运行时约定升级为编译期类型约束
+- **jacoco 全模块 + report-aggregate**：P1 拆分后核心域覆盖率不可测（jacoco 仅配置 gateway-boot），扩展全模块并加聚合报告，恢复覆盖率 DoD（核心 ≥90% / 规则引擎 ≥85% / 适配器 ≥80%）可验证
+- **freeze 基线上库**：ArchUnit `archunit.properties` 的 `path=target/archunit`（gitignored）使全新检出/CI 首跑静默重建基线，改为入库位置（`src/test/resources/archunit/`），保证模块依赖铁律可复现守护
+- **proxy 显式声明 `gateway-provider-http`**：proxy 编译目前靠 `resilience → provider-http` 传递依赖兜底（引用 `providerhttp.upstream.SseErrorFormatter`），显式声明避免 resilience 移除过渡态依赖时 proxy 无声编译失败
+- **provider-data 补真测试**：P1 拆分后 `gateway-provider-data` 无任何测试（12 个 JPA GatewayImpl 覆盖为 0），随 jacoco 扩展补核心覆盖
+
 ### P3 boot 瘦身 + web 独立 + 协议插件自包含
 
 - boot 的 9 个 application 门面服务下沉到对应域模块
