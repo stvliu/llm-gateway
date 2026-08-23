@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.application.init;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.iam.application.ApplicationGateway;
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.user.UserGateway;
@@ -29,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles({"test", "test-demo"})
 @Transactional
 class DataInitializerTest {

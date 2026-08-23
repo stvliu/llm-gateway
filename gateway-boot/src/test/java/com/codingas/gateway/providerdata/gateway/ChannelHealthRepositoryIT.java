@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.providerdata.gateway;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.model.BillingMode;
@@ -39,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>验证 Gateway / Repository 层是否正确透传 last_health_check_at /
  * last_health_status / last_health_source 三个字段（往返保存与读取）。</p>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @Transactional
 class ChannelHealthRepositoryIT {

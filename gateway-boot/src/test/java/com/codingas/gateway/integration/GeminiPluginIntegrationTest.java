@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.integration;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.protocol.ProtocolAdapter;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
@@ -37,7 +38,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 即可被 {@link ProtocolConversionFacade} 按协议名通用路由转换，
  * 无需改动 gateway-proxy / gateway-protocol 核心。</p>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @DisplayName("Gemini 协议插件集成")
 class GeminiPluginIntegrationTest {

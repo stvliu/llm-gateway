@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway;
+package com.codingas.gateway.proxy;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
 
 /**
- * LLM Gateway 应用启动类
+ * Proxy 域装配入口
  *
- * @author Liu Ye
+ * <p>限定扫描本域核心包 {@code com.codingas.gateway.proxy}（无 data 绑定包），
+ * 并扫描本域 @ConfigurationProperties。</p>
  */
-@SpringBootApplication
-@EnableScheduling
-public class GatewayApplication {
-
-    public static void main(String[] args) {
-        SpringApplication.run(GatewayApplication.class, args);
-    }
+@Configuration
+@ComponentScan(basePackages = {
+        "com.codingas.gateway.proxy"
+})
+@ConfigurationPropertiesScan
+public class ProxyConfiguration {
 }

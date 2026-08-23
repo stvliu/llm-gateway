@@ -66,96 +66,66 @@
             <version>${revision}</version>
         </dependency>
 
-        <!-- 供给域模块（Provider/Channel/Model/Catalog/Upstream/RoutingContext） -->
+        <!-- 供给域 starter（AutoConfiguration 显式装配，@ConditionalOnProperty 可关） -->
         <dependency>
             <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider</artifactId>
+            <artifactId>gateway-provider-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 身份与访问管理域模块（User/Application/UserApiKey/Auth/加密） -->
+        <!-- 身份与访问管理域 starter（IAM 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.iam</groupId>
-            <artifactId>gateway-iam</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- IAM 绑定模块（UserGatewayImpl/ApplicationGatewayImpl 等运行时 Bean，根包 iamdata；显式 compile 防传递依赖失效） -->
-        <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
-            <artifactId>gateway-iam-data</artifactId>
+            <artifactId>gateway-iam-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 用量管控域模块（TokenLimit/配额/用量事件/限流执行） -->
+        <!-- 用量管控域 starter（Usage 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.usage</groupId>
-            <artifactId>gateway-usage</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 用量管控域绑定模块（TokenLimitGatewayImpl 运行时 Bean，根包 usagedata） -->
-        <dependency>
-            <groupId>com.codingas.gateway.usage</groupId>
-            <artifactId>gateway-usage-data</artifactId>
+            <artifactId>gateway-usage-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 安全与威胁域模块（IP 威胁检测 + 数据脱敏） -->
+        <!-- 安全与威胁域 starter（Security 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.security</groupId>
-            <artifactId>gateway-security</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 安全与威胁域绑定模块（SensitiveDataRuleGatewayImpl/IpBlockGatewayImpl 运行时 Bean，根包 securitydata） -->
-        <dependency>
-            <groupId>com.codingas.gateway.security</groupId>
-            <artifactId>gateway-security-data</artifactId>
+            <artifactId>gateway-security-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 韧性域模块（failover/retry/circuit-breaker） -->
+        <!-- 韧性域 starter（Resilience 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.resilience</groupId>
-            <artifactId>gateway-resilience</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 韧性域 JPA 绑定模块（FailoverEventGatewayImpl 运行时 Bean，根包 resiliencedata） -->
-        <dependency>
-            <groupId>com.codingas.gateway.resilience</groupId>
-            <artifactId>gateway-resilience-data</artifactId>
+            <artifactId>gateway-resilience-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 审计追溯域模块（调用日志/审计事件） -->
+        <!-- 审计追溯域 starter（Audit 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.audit</groupId>
-            <artifactId>gateway-audit</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 审计追溯域 JPA 绑定模块（DO/Repository/GatewayImpl，根包 auditdata） -->
-        <dependency>
-            <groupId>com.codingas.gateway.audit</groupId>
-            <artifactId>gateway-audit-data</artifactId>
+            <artifactId>gateway-audit-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 聚合统计域模块（仪表盘统计，读路径） -->
-        <dependency>
-            <groupId>com.codingas.gateway.stats</groupId>
-            <artifactId>gateway-stats</artifactId>
-            <version>${revision}</version>
-        </dependency>
-
-        <!-- 告警通知域模块 -->
+        <!-- 告警通知域 starter（Alert 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.alert</groupId>
-            <artifactId>gateway-alert</artifactId>
+            <artifactId>gateway-alert-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
-        <!-- 模型代理域模块（ChatDispatch 调度 / routing / invoker / 协议转换门面） -->
+        <!-- 模型代理域 starter（Proxy 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway.proxy</groupId>
-            <artifactId>gateway-proxy</artifactId>
+            <artifactId>gateway-proxy-starter</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <!-- 聚合统计域 starter（Stats 域装配入口） -->
+        <dependency>
+            <groupId>com.codingas.gateway.stats</groupId>
+            <artifactId>gateway-stats-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
@@ -287,12 +257,6 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- 供给域绑定模块（ChannelGatewayImpl/ProviderGatewayImpl 等运行时 Bean，根包 providerdata；显式 compile 防传递依赖失效） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider-data</artifactId>
-            <version>${revision}</version>
-        </dependency>
         <!-- 测试 -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

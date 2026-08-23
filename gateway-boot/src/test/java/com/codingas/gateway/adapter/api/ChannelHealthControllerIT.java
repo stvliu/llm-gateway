@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.application.channel.ChannelEmergencyService;
 import com.codingas.gateway.application.channel.ChannelService;
 import com.codingas.gateway.provider.service.ChannelHealthService;
@@ -65,7 +66,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *   <li>并发触发 last-write-wins（暂禁用，待 Awaitility 重写）</li>
  * </ul>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @DisplayName("ChannelHealthControllerIT")
 class ChannelHealthControllerIT {

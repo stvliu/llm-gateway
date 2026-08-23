@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.application.catalog;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.application.catalog.dto.ProvisionRequest;
 import com.codingas.gateway.application.catalog.dto.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
@@ -59,7 +60,7 @@ import static org.mockito.Mockito.when;
  *     <li>{@link DirtiesContext} 在每个测试后重置 Spring 上下文，避免被污染的 mock bean 影响其它套件</li>
  * </ul>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("ChannelProvisionService 事务回滚 IT")

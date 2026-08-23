@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.resiliencedata.gateway;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.resilience.failover.FailoverEvent;
 import com.codingas.gateway.resilience.failover.FailoverEventGateway;
 import com.codingas.gateway.common.enums.FailoverDecision;
@@ -43,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * （application-test.yml：H2 PostgreSQL 兼容模式 + ddl-auto create-drop + flyway disabled，
  * 表由 JPA 实体自动建）。</p>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @Transactional
 @DisplayName("FailoverEventRepository 集成测试（H2）")

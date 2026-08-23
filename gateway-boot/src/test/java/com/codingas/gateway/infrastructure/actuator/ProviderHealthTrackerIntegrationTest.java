@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.infrastructure.actuator;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +25,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @DisplayName("ProviderHealthTracker 集成测试")
 class ProviderHealthTrackerIntegrationTest {

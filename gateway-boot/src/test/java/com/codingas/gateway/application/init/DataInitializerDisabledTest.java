@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.application.init;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.iam.application.ApplicationGateway;
 import com.codingas.gateway.iam.user.UserGateway;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>使用独立的 profile 确保不启用演示数据。</p>
  */
-@SpringBootTest
+@SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles({"test"})
 @Transactional
 class DataInitializerDisabledTest {

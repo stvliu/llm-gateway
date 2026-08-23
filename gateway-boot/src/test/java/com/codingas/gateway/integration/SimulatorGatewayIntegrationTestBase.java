@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.GatewayApplication;
+import com.codingas.gateway.boot.GatewayApplication;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

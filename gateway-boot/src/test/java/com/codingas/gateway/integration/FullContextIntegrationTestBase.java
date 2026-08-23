@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.integration;
 
+import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
@@ -50,7 +51,7 @@ import static org.mockito.Mockito.when;
  *
  * <p>Mock 认证+路由等外部依赖，直接调用 ChatDispatchService 验证完整的七阶段调度链。</p>
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(classes = GatewayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("integration-test")
 public abstract class FullContextIntegrationTestBase {
 
