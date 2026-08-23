@@ -79,12 +79,11 @@
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- IAM 绑定模块（测试引用 iamdata DO/REPO，如 ApplicationGatewayImplTest） -->
+        <!-- IAM 绑定模块（UserGatewayImpl/ApplicationGatewayImpl 等运行时 Bean，根包 iamdata；显式 compile 防传递依赖失效） -->
         <dependency>
             <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- 用量管控域模块（TokenLimit/配额/用量事件/限流执行） -->
@@ -93,12 +92,11 @@
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 用量管控域绑定模块（测试引用 usagedata DO/REPO，过渡态） -->
+        <!-- 用量管控域绑定模块（TokenLimitGatewayImpl 运行时 Bean，根包 usagedata） -->
         <dependency>
             <groupId>com.codingas.gateway.usage</groupId>
             <artifactId>gateway-usage-data</artifactId>
             <version>${revision}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- 安全与威胁域模块（IP 威胁检测 + 数据脱敏） -->
@@ -107,12 +105,11 @@
             <artifactId>gateway-security</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 安全与威胁域绑定模块（测试引用 securitydata DO/REPO，过渡态） -->
+        <!-- 安全与威胁域绑定模块（SensitiveDataRuleGatewayImpl/IpBlockGatewayImpl 运行时 Bean，根包 securitydata） -->
         <dependency>
             <groupId>com.codingas.gateway.security</groupId>
             <artifactId>gateway-security-data</artifactId>
             <version>${revision}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- 韧性域模块（failover/retry/circuit-breaker） -->
@@ -290,18 +287,17 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- 供给域绑定模块（测试引用 providerdata DO/REPO + providerhttp upstream client，过渡态） -->
+        <!-- 供给域绑定模块（ChannelGatewayImpl/ProviderGatewayImpl 等运行时 Bean，根包 providerdata；显式 compile 防传递依赖失效） -->
         <dependency>
             <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-data</artifactId>
             <version>${revision}</version>
-            <scope>test</scope>
         </dependency>
+        <!-- 供给域 HTTP 出站模块（UpstreamClientRegistryImpl/OpenAIUpstreamClient 等运行时 Bean，根包 providerhttp；显式 compile 防传递依赖失效） -->
         <dependency>
             <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider-http</artifactId>
             <version>${revision}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- 测试 -->
