@@ -321,7 +321,7 @@ gateway/                              # 项目根（父 POM）
 ├── gateway-proxy/                    # proxy/proxy-starter（含域父 POM）
 ├── gateway-stats/                    # stats/stats-starter（含域父 POM）
 ├── gateway-boot/                     # 应用（保持根目录）
-├── gateway-web/                      # P3 新增（保持根目录）
+├── gateway-web/                      # HTTP 承载层（Controller/Interceptor/Advice，已落地）
 ├── gateway-cli/  gateway-simulator/  # 保持根目录
 └── gateway-console/                  # 前端（保持根目录）
 ```
@@ -455,6 +455,13 @@ public class ProviderConfiguration { ... }
 - 拆出 `gateway-web` 承载全部 Controller/Interceptor/Advice
 - `OpenAIProtocolValidator`/`AnthropicProtocolValidator`/`*Tuner` 从 boot 迁回协议插件模块
 - 验证：boot 纯启动；web 独立构建；协议插件自包含集成测试
+
+> **2026-08-24 完成（P3 全部落地）**：
+> - **boot 瘦身达成**：boot 主源码仅剩 `boot`（启动类）+ `infrastructure`（装配/全局配置）+ `application/init`（9 类初始化种子，CommandLineRunner）三个包；9 个 application 门面服务全部下沉对应域（provider 六组 + experience→proxy），boot main 零门面残留；`scanBasePackages` 最终化为 `boot/infrastructure/common/protocol/application`（application 仅命中 init 种子）。
+> - **gateway-web 落地**：34 个 Controller/Interceptor/Advice 文件全部搬迁（包名 `com.codingas.gateway.adapter.*` 不变），`WebAutoConfiguration`（@AutoConfiguration + imports）装配，boot 依赖 gateway-web 即生效；web 独立构建。
+> - **协议插件自包含完成**：`OpenAIProtocolValidator`/`AnthropicProtocolValidator`/`*Tuner` 迁回 `protocol-openai`/`protocol-anthropic` 插件（改 @Bean 注册，boot 不再扫插件类），插件自包含集成测试通过。
+> - **验证**：全量 `./mvnw clean install` 绿（boot 纯启动 + web 独立构建 + 协议插件自包含集成测试）。
+> - **已知例外（boot 保留全局 Web 配置）**：boot `infrastructure/config/WebConfig`（WebMvcConfigurer：拦截器注册 + SPA 路由 + ActuatorHealthProperties）保留 boot，注入 `adapter.interceptor.SecurityInterceptorChain`（gateway-web 模块）——符合 §5.5「boot 只保留全局 Web/安全配置」，为 Task 4 明确文档化决策（boot 依赖 web，classpath 可达）；boot main 唯一 adapter 引用即此（专项 grep 验证）。
 
 ### P4 ArchUnit 模块级铁律 + DO 依赖清零
 
