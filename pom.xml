@@ -45,35 +45,16 @@
 
     <modules>
         <module>gateway-common</module>
-        <module>gateway-protocol/protocol</module>
-        <module>gateway-protocol/protocol-openai</module>
-        <module>gateway-protocol/protocol-anthropic</module>
-        <module>gateway-protocol/protocol-gemini</module>
-        <module>gateway-provider/provider</module>
-        <module>gateway-provider/provider-starter</module>
-        <module>gateway-provider/provider-data</module>
-        <module>gateway-iam/iam</module>
-        <module>gateway-iam/iam-starter</module>
-        <module>gateway-iam/iam-data</module>
-        <module>gateway-usage/usage</module>
-        <module>gateway-usage/usage-starter</module>
-        <module>gateway-usage/usage-data</module>
-        <module>gateway-security/security</module>
-        <module>gateway-security/security-starter</module>
-        <module>gateway-security/security-data</module>
-        <module>gateway-audit/audit</module>
-        <module>gateway-audit/audit-starter</module>
-        <module>gateway-audit/audit-data</module>
-        <module>gateway-alert/alert</module>
-        <module>gateway-alert/alert-starter</module>
-        <module>gateway-alert/alert-data</module>
-        <module>gateway-resilience/resilience</module>
-        <module>gateway-resilience/resilience-starter</module>
-        <module>gateway-resilience/resilience-data</module>
-        <module>gateway-proxy/proxy</module>
-        <module>gateway-proxy/proxy-starter</module>
-        <module>gateway-stats/stats</module>
-        <module>gateway-stats/stats-starter</module>
+        <module>gateway-protocol</module>
+        <module>gateway-provider</module>
+        <module>gateway-iam</module>
+        <module>gateway-usage</module>
+        <module>gateway-security</module>
+        <module>gateway-audit</module>
+        <module>gateway-alert</module>
+        <module>gateway-resilience</module>
+        <module>gateway-proxy</module>
+        <module>gateway-stats</module>
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>

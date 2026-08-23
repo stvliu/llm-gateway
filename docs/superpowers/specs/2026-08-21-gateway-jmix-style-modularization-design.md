@@ -299,27 +299,27 @@ com.codingas.gateway.stats
 gateway/                              # 项目根（父 POM）
 ├── pom.xml
 ├── gateway-common/                   # 底座（保持根目录）
-├── gateway-protocol/                 # 协议域目录
+├── gateway-protocol/                 # 协议域目录（含域父 POM，聚合 protocol/protocol-openai/protocol-anthropic/protocol-gemini）
 │   ├── protocol/                     # 协议 API 核心（artifactId gateway-protocol）
 │   ├── protocol-openai/              # 插件（gateway-protocol-openai）
 │   ├── protocol-anthropic/           # 插件
 │   └── protocol-gemini/              # 插件
-├── gateway-provider/                 # 供给域目录
+├── gateway-provider/                 # 供给域目录（含域父 POM，聚合 provider/provider-data/provider-starter）
 │   ├── provider/                     # 核心（gateway-provider）
 │   ├── provider-data/                # JPA 绑定（gateway-provider-data）
 │   ├── provider-http/                # HTTP 绑定（gateway-provider-http）
 │   └── provider-starter/             # 装配（P2）
-├── gateway-iam/                      # 身份域目录
+├── gateway-iam/                      # 身份域目录（含域父 POM，聚合 iam/iam-data/iam-starter）
 │   ├── iam/                          # 核心（gateway-iam）
 │   ├── iam-data/                     # 绑定（gateway-iam-data）
 │   └── iam-starter/                  # 装配（P2）
-├── gateway-usage/                    # usage/usage-data/usage-starter
-├── gateway-security/                 # security/security-data/security-starter
-├── gateway-audit/                    # audit/audit-data/audit-starter
-├── gateway-alert/                    # alert/alert-data/alert-starter
-├── gateway-resilience/               # resilience/resilience-data/resilience-starter
-├── gateway-proxy/                    # proxy/proxy-starter
-├── gateway-stats/                    # stats/stats-starter
+├── gateway-usage/                    # usage/usage-data/usage-starter（含域父 POM）
+├── gateway-security/                 # security/security-data/security-starter（含域父 POM）
+├── gateway-audit/                    # audit/audit-data/audit-starter（含域父 POM）
+├── gateway-alert/                    # alert/alert-data/alert-starter（含域父 POM）
+├── gateway-resilience/               # resilience/resilience-data/resilience-starter（含域父 POM）
+├── gateway-proxy/                    # proxy/proxy-starter（含域父 POM）
+├── gateway-stats/                    # stats/stats-starter（含域父 POM）
 ├── gateway-boot/                     # 应用（保持根目录）
 ├── gateway-web/                      # P3 新增（保持根目录）
 ├── gateway-cli/  gateway-simulator/  # 保持根目录
@@ -353,6 +353,8 @@ gateway/                              # 项目根（父 POM）
 **starter 对应（对齐 Jmix `security-starter` + `security-data-starter`）**：核心模块有 `gateway-<域>-starter`，每个绑定模块有独立 `gateway-<域>-<绑定>-starter`（如 `provider-starter` + `provider-data-starter` + `provider-http-starter`）。
 
 **Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）；所有模块 pom 的依赖声明 groupId 按上表使用对应域 groupId。依赖声明仍按 artifactId，不受目录影响。
+
+> **2026-08-24 决策（偏离原方案）**：域目录增加中间父 POM（层级聚合）——每个域目录一个 `pom.xml`（`gateway-<域>-parent`，parent=根 pom，packaging=pom，聚合域内子模块），子模块 parent 指向域 pom（`relativePath=../pom.xml`），根 pom `<modules>` 只聚合 10 个域 pom + 4 个根目录模块（common/boot/cli/simulator）。收益：cd 进域目录可独立构建该域；域级模块组织语义化。成本：pom 层级 +1、14 个新 pom 文件。原「根 pom 直接聚合子模块、relativePath=../../pom.xml」方案废弃。
 
 ## 5. 装配机制
 
