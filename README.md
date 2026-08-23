@@ -30,7 +30,7 @@
 ### 差异化竞争力
 
 - ✅ **更易用** - 开箱即用 (预置模板) + 零学习成本 (OpenAI 兼容) + 运维友好 (智能诊断)
-- ✅ **更合规** - 国密算法 (SM2/SM3/SM4) + 完整审计链 (WORM) + 等保 2.0 三级合规
+- 🚧 **更合规** - 等保 2.0 三级合规；国密算法 (SM2/SM3/SM4) + 完整审计链 (WORM) *(规划中)*
 - ✅ **更安全** - Prompt 注入防护 + PII 智能脱敏 + 内容安全审核 + 零信任架构
 - ✅ **更智能** - 智能降级 (业务连续性) + 语义缓存 (降本 30%+) + 场景路由
 
@@ -45,10 +45,10 @@
 - ✅ Anthropic 兼容端点 (`/v1/messages`)
 - ✅ SSE 流式转发 (首 token ≤100ms)
 - ✅ 协议转换 (OpenAI ↔ Anthropic 互转)
-- ✅ 图像生成端点 (`/v1/images/generations`)
-- ✅ 语音合成端点 (`/v1/audio/speech`)
-- ✅ 语音识别端点 (`/v1/audio/transcriptions`)
-- ✅ 内容审核端点 (`/v1/moderations`)
+- 🚧 图像生成端点 (`/v1/images/generations`) *(规划中)*
+- 🚧 语音合成端点 (`/v1/audio/speech`) *(规划中)*
+- 🚧 语音识别端点 (`/v1/audio/transcriptions`) *(规划中)*
+- 🚧 内容审核端点 (`/v1/moderations`) *(规划中)*
 
 #### Provider 管理
 - ✅ Provider CRUD (创建/查询/编辑/删除)
@@ -71,8 +71,8 @@
 #### 用户与认证
 - ✅ 用户 CRUD
 - ✅ 用户名密码登录/登出
-- ✅ OAuth 登录 (GitHub, Gitee, QQ, 企业微信)
-- ✅ 企业 OAuth (飞书、钉钉、GitHub Enterprise)
+- 🚧 OAuth 登录 (GitHub, Gitee, QQ, 企业微信) *(规划中)*
+- 🚧 企业 OAuth (飞书、钉钉、GitHub Enterprise) *(规划中)*
 
 #### 密钥管理
 - ✅ API Key CRUD
@@ -94,9 +94,9 @@
 - ✅ PII 脱敏 (手机号、身份证、邮箱、银行卡等)
 - ✅ 数据掩码策略
 - ✅ 审计日志
-- ✅ 密钥加密存储 (AES-256)
-- ✅ 国密算法 (SM2/SM3/SM4)
-- ✅ 完整审计链 (WORM)
+- ✅ 密钥加密存储 (AES-256-GCM)
+- 🚧 国密算法 (SM2/SM3/SM4) *(规划中)*
+- 🚧 完整审计链 (WORM) *(规划中)*
 
 #### 可观测性
 - ✅ Trace ID (全链路追踪)
@@ -106,13 +106,13 @@
 - ✅ Grafana 仪表盘
 - ✅ Jaeger 追踪
 
-#### 语义缓存
+#### 语义缓存 *(规划中)*
 - 相似请求返回缓存，降低成本 30%+
 - 缓存 TTL 配置
 - 缓存命中率统计
 - 基于 pgvector 的向量相似度搜索
 
-#### MCP 协议
+#### MCP 协议 *(规划中)*
 - Resources: 提供上下文数据
 - Prompts: 提供预定义的提示模板
 - Tools: 提供可调用的工具函数
@@ -126,24 +126,51 @@
 | 类别 | 技术 | 版本 | 说明 |
 |------|------|------|------|
 | **语言** | Java | 21 LTS | 支持虚拟线程 |
-| **框架** | Spring Boot | 3.5.x | MVC + 虚拟线程 |
+| **框架** | Spring Boot | 3.5.13 | Web MVC（同步） |
 | **ORM** | Spring Data JPA | 3.5.x | Hibernate 6.x |
-| **主数据库** | MySQL / PostgreSQL | 8.0+ / 14+ | 生产环境，支持双数据库 |
-| **开发数据库** | H2 | 2.x | 本地开发调试 |
-| **缓存** | Redis | 7.x | 限流、缓存、分布式锁 |
+| **主数据库** | PostgreSQL | 14+ | 生产环境 |
+| **开发数据库** | H2 | 2.3.232 | 本地开发调试（MODE=PostgreSQL） |
+| **数据库迁移** | Flyway | 11.0.0 | 版本化 schema 迁移（V1~V68） |
+| **缓存** | Redis + Caffeine | 7.x | 分布式缓存/会话 + 本地缓存 |
 | **安全** | Sa-Token | 1.45.0 | 轻量级权限框架 |
-| **HTTP 客户端** | OkHttp | 5.3.2 | 同步/异步调用 |
-| **LLM 框架** | LangChain4j | 1.3.0 | 多厂商模型统一封装 |
-| **向量存储** | pgvector | 0.5+ | 语义缓存向量存储 |
-| **可观测性** | OpenTelemetry | 1.47.0 | 链路追踪 |
-| **国密** | Bouncy Castle | 1.78+ | SM2/SM3/SM4 实现 |
+| **HTTP 客户端** | OkHttp | 4.12.0 | 同步/异步调用 + SSE |
+| **可观测性** | OpenTelemetry + Micrometer | 1.47.0 | 链路追踪 + Prometheus 指标 |
+| **日志** | Logstash Logback Encoder | 7.4 | JSON 结构化日志 |
+| **测试** | Testcontainers | 1.20.4 | 容器化集成测试 |
 
-### 分层架构
+### 模块化架构
+
+采用 **17 模块多模块 Maven 结构**（命名对齐 Jmix），业务按功能域拆分为核心模块 + JPA 绑定模块，协议层插件化：
+
+| 分组 | 模块 | 职责 |
+|------|------|------|
+| 横切基础 | `gateway-common` | BaseEntity、异常、工具、通用枚举 |
+| 协议域 | `gateway-protocol/protocol` | Canonical IR + ProtocolAdapter SPI + 协议契约 |
+| | `gateway-protocol/protocol-openai` | OpenAI 协议插件 |
+| | `gateway-protocol/protocol-anthropic` | Anthropic 协议插件 |
+| | `gateway-protocol/protocol-gemini` | Gemini 协议插件（可扩展性示例） |
+| 供给域 | `gateway-provider/provider`（+`provider-data`） | Provider / Channel / Model / Catalog / Upstream |
+| 身份与访问 | `gateway-iam/iam`（+`iam-data`） | User / Application / UserApiKey / Auth / 加密 |
+| 用量管控 | `gateway-usage/usage`（+`usage-data`） | Token 计量 / 配额 / 限流 |
+| 安全与威胁 | `gateway-security/security`（+`security-data`） | IP 威胁检测 + 数据脱敏 |
+| 审计追溯 | `gateway-audit/audit`（+`audit-data`） | 调用日志 / 审计事件 |
+| 告警通知 | `gateway-alert/alert`（+`alert-data`） | 告警通知 |
+| 韧性 | `gateway-resilience/resilience`（+`resilience-data`） | failover / retry / 熔断 |
+| 模型代理 | `gateway-proxy/proxy` | ChatDispatch 调度 / routing / 协议转换 |
+| 聚合统计 | `gateway-stats/stats` | 仪表盘统计（读路径） |
+| 应用 / 入口 | `gateway-boot` | 后端主模块（Adapter / Application + 模块装配） |
+| | `gateway-cli` | CLI 管理工具 |
+| | `gateway-simulator` | LLM 提供商模拟服务 |
+| 前端 | `gateway-console` | Web 管理界面 |
+
+- **命名规范（Jmix 式）**：模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分（`com.codingas.gateway.<域>`）；JPA 绑定模块根包为 `<域>data`（如 `usagedata`、`securitydata`）
+- **协议插件化**：OpenAI / Anthropic / Gemini 以插件形式通过 AutoConfiguration + `@ConditionalOnProperty` 启用，可扩展新协议
+- **分层架构**：gateway-boot 内仍保留 Adapter → Application 分层，Domain 与 Infrastructure 下沉至各功能域模块
 
 ```
 ┌─────────────────────────────────────────────────────┐
 │                    Adapter 层                        │
-│  (Controller / REST API / Webhook / MCP Endpoint)   │
+│        (Controller / REST API / Interceptor)        │
 └──────────────────┬──────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────┐
@@ -152,13 +179,10 @@
 └──────────────────┬──────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────┐
-│                    Domain 层                         │
-│  (Entity / Domain Service / Gateway Interface)      │
-└──────────────────┬──────────────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────────────┐
-│               Infrastructure 层                      │
-│    (Gateway Impl / Repository / External Client)    │
+│                   功能域模块                         │
+│   (Domain + Gateway Interface + Infrastructure)    │
+│   gateway-provider / gateway-iam / gateway-usage    │
+│   gateway-proxy / gateway-protocol / ...            │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -166,7 +190,7 @@
 
 #### 单机部署
 - 单 JVM 实例运行
-- MySQL / H2 数据库
+- H2 / PostgreSQL 数据库
 - 本地限流 (JVM 内存令牌桶)
 - 本地缓存 (Caffeine)
 - 无语义缓存依赖
@@ -175,7 +199,7 @@
 
 #### 分布式部署（K8s 高可用）
 - K8s 多副本高可用
-- PostgreSQL + pgvector (语义缓存)
+- PostgreSQL（+ pgvector 语义缓存，规划中）
 - Redis 集群 (分布式限流/缓存)
 - Nacos 配置中心
 - Prometheus + Grafana 监控
@@ -190,7 +214,7 @@
 
 - JDK 21+
 - Maven 3.9+
-- MySQL 8.0+ 或 PostgreSQL 14+ (可选，默认使用 H2)
+- PostgreSQL 14+ (可选，默认使用 H2)
 - Redis 7.x+ (可选，用于分布式部署)
 
 ### 方式一：源码构建运行
@@ -200,21 +224,24 @@
 git clone https://github.com/codingas/llm-gateway.git
 cd llm-gateway
 
-# 编译打包
-mvn clean package -DskipTests
+# 编译打包（多模块）
+./mvnw clean install -DskipTests
 
-# 运行应用 (使用 H2 内存数据库，适合开发调试)
-java -jar target/gateway-boot.jar --spring.profiles.active=dev
+# 运行应用（默认 local profile：H2 文件持久化 + Caffeine，零外部依赖，适合开发调试）
+./mvnw spring-boot:run -pl gateway-boot
 
-# 运行应用 (使用 MySQL，需先创建数据库)
-java -jar target/gateway-boot.jar --spring.profiles.active=prod
+# 或直接运行 fat jar
+java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar
+
+# 连接 PostgreSQL 运行（需先创建数据库）
+java -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar --spring.profiles.active=postgresql
 ```
 
 访问地址:
 - API 服务: http://localhost:8080
-- H2 控制台 (dev 模式): http://localhost:8080/h2-console
 - Actuator 健康检查: http://localhost:8080/actuator/health
 - Prometheus 指标: http://localhost:8080/actuator/prometheus
+- H2 控制台 (local 模式): http://localhost:8080/h2-console
 
 ### 方式二：Docker 运行
 
@@ -222,20 +249,20 @@ java -jar target/gateway-boot.jar --spring.profiles.active=prod
 # 构建镜像
 docker build -t llm-gateway:latest .
 
-# 运行容器 (H2 内存数据库)
+# 运行容器 (默认 local profile，H2 文件持久化)
 docker run -d \
   --name llm-gateway \
   -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=dev \
+  -e SPRING_PROFILES_ACTIVE=local \
   llm-gateway:latest
 
-# 运行容器 (连接外部 MySQL)
+# 运行容器 (连接外部 PostgreSQL)
 docker run -d \
   --name llm-gateway \
   -p 8080:8080 \
-  -e SPRING_PROFILES_ACTIVE=prod \
+  -e SPRING_PROFILES_ACTIVE=postgresql \
   -e DB_HOST=host.docker.internal \
-  -e DB_USERNAME=root \
+  -e DB_USERNAME=llm_gateway \
   -e DB_PASSWORD=yourpassword \
   llm-gateway:latest
 ```
@@ -249,10 +276,11 @@ docker-compose up -d
 
 包含组件:
 - LLM-Gateway 应用
-- MySQL 数据库
+- PostgreSQL 数据库
 - Redis 缓存
 - Prometheus 监控
 - Grafana 可视化
+- Jaeger 链路追踪 + OpenTelemetry Collector
 
 ---
 
@@ -318,11 +346,13 @@ curl -X POST http://localhost:8080/v1/messages \
 ### 配置文件结构
 
 ```
-src/main/resources/
-├── application.yml          # 主配置文件
-├── application-dev.yml      # 开发环境配置
-├── application-prod.yml     # 生产环境配置
-└── application-local.yml    # 本地调试配置
+gateway-boot/src/main/resources/
+├── application.yml              # 主配置（默认 local profile）
+├── application-local.yml        # 本地调试（H2 文件库 + Caffeine，零外部依赖）
+├── application-dev.yml          # 开发环境
+├── application-prod.yml         # 生产环境
+├── application-postgresql.yml   # PostgreSQL 独立配置
+└── application-standalone.yml   # 单机部署配置
 ```
 
 ### 关键配置项
@@ -330,28 +360,22 @@ src/main/resources/
 #### 数据库配置
 
 ```yaml
-# MySQL 配置
+# H2 配置（默认 local profile，文件持久化，MODE=PostgreSQL 兼容）
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/llm_gateway?useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: ${DB_PASSWORD:}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.MySQLDialect
-    hibernate:
-      ddl-auto: validate
+    url: jdbc:h2:file:./data/gateway;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
 
-# PostgreSQL 配置 (PostgreSQL/pgvector)
+# PostgreSQL 配置（生产 / postgresql profile）
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/llm_gateway
-    username: postgres
+    username: ${DB_USERNAME:llm_gateway}
     password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
-  jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
 ```
+
+> schema 由 **Flyway** 版本化迁移管理（`gateway-boot/src/main/resources/db/migration/`，V1~V68），无需手动建表。
 
 #### 缓存配置
 
@@ -372,33 +396,42 @@ spring:
       cache-null-values: false
 ```
 
-#### 限流配置
+#### 网关配置
 
 ```yaml
-# 本地限流 (单机)
-rate-limit:
-  mode: local
-  algorithm: token-bucket
-  default-rpm: 60
-  burst-size: 10
-
-# 分布式限流 (分布式)
-rate-limit:
-  mode: distributed
-  algorithm: sliding-window
-  backend: redis
-  window-size: 60s
+gateway:
+  init:
+    demo-data-enabled: false       # 初始化演示数据
+  actuator:
+    health:
+      public-access: true          # 健康检查公网可访问
+  health:
+    provider:
+      stale-threshold: 300s        # Provider 健康状态过期阈值
+      failure-threshold: 3         # 连续失败熔断阈值
+      success-threshold: 2         # 连续成功恢复阈值
+      probe-timeout: 10s           # 健康探测超时
 ```
 
-#### 功能开关
+#### 管理端点
 
 ```yaml
-llm-gateway:
-  features:
-    semantic-cache: true       # 语义缓存
-    mcp-protocol: true         # MCP 协议
-    sm-crypto: true            # 国密算法
-    audit-chain-worm: true     # WORM 审计链
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics,traces   # 暴露端点
+      base-path: /actuator
+  endpoint:
+    health:
+      group:
+        liveness:                  # 存活探针
+          include: ping
+        readiness:                 # 就绪探针
+          include: db, providerRegistry
+  tracing:
+    sampling:
+      probability: 1.0             # 全量链路采样
 ```
 
 更多配置详见 [技术架构文档](docs/技术架构.md)
@@ -409,13 +442,16 @@ llm-gateway:
 
 ### Prometheus 指标
 
-访问 `http://localhost:8080/actuator/prometheus` 获取指标。
+访问 `http://localhost:8080/actuator/prometheus` 获取指标（Micrometer 标准指标 + 自定义指标）。
 
-核心指标:
+已实现的自定义指标:
+- `gateway.failover.triggered` - 渠道故障切换触发次数
+- `gateway.failover.exhausted` - 故障切换全部耗尽次数
+
+规划中指标 *(Roadmap)*:
 - `llm_gateway_requests_total` - 请求总数
 - `llm_gateway_request_duration_seconds` - 请求延迟分布
-- `llm_gateway_tokens_input_total` - 输入 Token 总数
-- `llm_gateway_tokens_output_total` - 输出 Token 总数
+- `llm_gateway_tokens_input_total` / `llm_gateway_tokens_output_total` - Token 计量
 - `llm_gateway_channel_requests_total` - 按 Channel 统计请求数
 - `llm_gateway_cache_hits_total` - 缓存命中次数
 - `llm_gateway_rate_limit_rejected_total` - 限流拒绝次数
@@ -451,31 +487,19 @@ docker logs -f llm-gateway
 ### 单元测试
 
 ```bash
-mvn test
+./mvnw test
 ```
 
-### 负载测试
-
-使用 k6 进行性能测试:
+### 集成测试
 
 ```bash
-# 安装 k6
-brew install k6  # macOS
-
-# 运行负载测试
-k6 run deployments/docker/load-test.js
-
-# 带环境变量运行
-BASE_URL=http://localhost:8080 API_KEY=sk-test k6 run deployments/docker/load-test.js
+./mvnw verify
 ```
 
-测试场景:
-- 冒烟测试: 1-10 并发，1 分钟
-- 负载测试: 100-1000 并发，5-10 分钟
-- 压力测试: 1000-5000 并发，10-30 分钟
-- 浸泡测试: 100-500 并发，1-4 小时
+> 单元测试（Surefire：`*Test`/`*Tests`）与集成测试（Failsafe：`*IntegrationTest`/`*E2ETest`，基于 Testcontainers）分离。
 
-性能目标:
+### 性能目标 *(Roadmap)*
+
 - QPS: 10,000/实例
 - P95 延迟: < 500ms
 - P99 延迟: < 2000ms
@@ -538,7 +562,7 @@ docker-compose up -d
 # JAR 直接运行
 nohup java -Xms512m -Xmx1g \
   -XX:+UseZGC \
-  -jar gateway-boot.jar \
+  -jar gateway-boot/target/gateway-boot-1.0.0-SNAPSHOT.jar \
   --spring.profiles.active=standalone > gateway.log 2>&1 &
 ```
 
@@ -699,11 +723,10 @@ chore: 构建过程或辅助工具的变动
 感谢以下开源项目的支持:
 
 - [Spring Boot](https://spring.io/projects/spring-boot)
-- [LangChain4j](https://github.com/langchain4j/langchain4j)
 - [Sa-Token](https://sa-token.cc/)
 - [OkHttp](https://square.github.io/okhttp/)
+- [Flyway](https://flywaydb.org/)
 - [Redisson](https://redisson.org/)
-- [Bouncy Castle](https://www.bouncycastle.org/)
 
 ---
 

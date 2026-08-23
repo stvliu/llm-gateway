@@ -5,7 +5,7 @@
 | 属性 | 值 |
 |------|------|
 | 规范名称 | AI Gateway Constitution |
-| 版本 | 2.7.0 |
+| 版本 | 2.8.0 |
 | 状态 | 草案 |
 | 创建日期 | 2026-04-08 |
 | 技术栈 | Java 21 + Spring Boot 3.5.x + PostgreSQL 14+ + Redis 6.0+ |
@@ -138,115 +138,83 @@ Token 必须是所有成本追踪的核心单位。
 
 **定义**:
 ```
-系统采用 COLA Light 5.0 架构：单模块架构，用 package 代替模块划分层次。
-按业务领域分包，Gateway 接口定义在 domain 层，实现 in infrastructure 层（依赖倒置）。
-跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
+系统采用 COLA Light 5.0 架构：多模块 Maven 结构，按功能域划分模块（Jmix 式命名）。
+分层规则：gateway-boot 内保留 adapter/application 分层；Domain 与 Infrastructure 下沉至各功能域模块。
+业务域以「核心模块（领域逻辑 + Gateway 接口）+ <域>data 绑定模块（JPA 持久化实现）」成对组织，
+实现依赖倒置；跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
 ```
 
-**项目结构（Maven 单一模块）**:
+**项目结构（17 模块多模块 Maven，父 POM artifactId = gateway-project）**:
 ```
-gateway-boot/                          # Maven 单一模块
-└── src/main/java/com/codingas/gateway/
-    ├── adapter/                       # 适配器层（按用例分包）
-    │   ├── api/                       # REST Controller + SSE 流处理
-    │   ├── protocol/                  # 协议入站/出站适配
-    │   │   ├── openai/                #   OpenAI 协议校验器 + 出站调谐器
-    │   │   └── anthropic/             #   Anthropic 协议校验器 + 出站调谐器
-    │   ├── filter/                    # 安全拦截链
-    │   └── interceptor/               # 通用拦截器
-    ├── application/                   # 应用层（按用例分包）
-    │   ├── proxy/                     # 模型调用编排（ChatDispatchService, OutboundTuner）
-    │   ├── routing/                   # 路由解析（RoutingResolver, ModelMatcher, ChannelSelector）
-    │   ├── auth/
-    │   ├── chat/
-    │   └── model/
-    ├── domain/                        # 领域层
-    │   ├── gateway/                   # 跨领域 Gateway 接口
-    │   ├── supply/                    # 供给领域（核心域）
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   ├── protocol/                  # 协议领域（核心域）
-    │   │   ├── contract/             # 协议数据契约（DTO + 接口）
-    │   │   ├── conversion/           # 跨协议转换（核心业务逻辑）
-    │   │   └── validation/           # 校验接口
-    │   ├── iam/                        # 身份与访问控制领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── valueobject/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   ├── threat/                      # 威胁防护领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   └── exception/
-    │   ├── dataprotection/              # 数据保护领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   └── exception/
-    │   ├── quota/                     # 限额配额领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   ├── audit/                     # 审计合规领域
-    │   │   ├── entity/
-    │   │   ├── service/
-    │   │   ├── gateway/
-    │   │   ├── enums/
-    │   │   └── exception/
-    │   └── alert/                     # 告警管理领域
-    │       ├── entity/
-    │       ├── service/
-    │       ├── gateway/
-    │       ├── enums/
-    │       └── exception/
-    ├── infrastructure/                # 基础设施层
-    │   ├── config/
-    │   ├── gateway/                  # Gateway 实现
-    │   │   ├── provider/             # Provider/Model 持久化
-    │   │   ├── iam/                 # IAM 持久化（User/ApiKey）
-    │   │   ├── threat/              # 威胁防护实现（限流/IP封禁）
-    │   │   ├── dataprotection/      # 数据保护实现（脱敏）
-    │   │   ├── quota/               # 限流实现
-    │   │   ├── audit/               # 审计持久化
-    │   │   ├── alert/               # 告警持久化
-    │   │   └── llm/                 # OpenAI/Anthropic 代理实现
-    │   └── util/
-    └── common/                        # 公共组件
-        ├── constants/
-        ├── exception/
-        └── util/
+gateway-project/                       # 父 POM（打包类型: pom）
+├── gateway-common/                    # 横切基础模块（com.codingas.gateway.common）
+│   └── BaseEntity / 异常 / 工具 / 事件 / 通用枚举，纯横切
+├── gateway-protocol/                  # 协议域（抽象层 + 插件化实现）
+│   ├── protocol/                      #   协议核心（com.codingas.gateway.protocol）
+│   │   ├── api/capability/protocol/   #     Canonical IR + ProtocolAdapter SPI
+│   │   └── domain/protocol/           #     contract（协议契约 DTO）/ tuning / validation
+│   ├── protocol-openai/               #   OpenAI 协议插件（AutoConfiguration + @ConditionalOnProperty 启用）
+│   ├── protocol-anthropic/            #   Anthropic 协议插件
+│   └── protocol-gemini/               #   Gemini 协议插件（示例，验证插件化可扩展性）
+├── gateway-provider/                  # 供给域（com.codingas.gateway.provider）
+│   ├── provider/                      #   核心：Provider/Channel/Model/Catalog/Upstream/RoutingContext
+│   └── provider-data/                 #   JPA 绑定（providerdata）
+├── gateway-iam/                       # 身份与访问域（com.codingas.gateway.iam）
+│   ├── iam/                           #   核心：User/Application/UserApiKey/Auth/加密
+│   └── iam-data/                      #   JPA 绑定（iamdata）
+├── gateway-usage/                     # 用量管控域（com.codingas.gateway.usage）
+│   ├── usage/                         #   核心：TokenLimit/配额/用量事件/限流执行
+│   └── usage-data/                    #   JPA 绑定（usagedata）
+├── gateway-security/                  # 安全与威胁域（com.codingas.gateway.security）
+│   ├── security/                      #   核心：IP 威胁检测 + 数据脱敏（SensitiveDataRule/IpBlock）
+│   └── security-data/                 #   JPA 绑定（securitydata）
+├── gateway-audit/                     # 审计追溯域（com.codingas.gateway.audit）
+│   ├── audit/                         #   核心：调用日志（CallLogs）/ 审计事件
+│   └── audit-data/                    #   JPA 绑定（auditdata）
+├── gateway-alert/                     # 告警通知域（com.codingas.gateway.alert）
+│   ├── alert/                         #   核心：告警通知
+│   └── alert-data/                    #   JPA 绑定（alertdata）
+├── gateway-resilience/                # 韧性域（com.codingas.gateway.resilience）
+│   ├── resilience/                    #   核心：failover/retry/circuit-breaker
+│   └── resilience-data/               #   JPA 绑定（resiliencedata）
+├── gateway-proxy/                     # 模型代理域（com.codingas.gateway.proxy）
+│   └── proxy/                         #   ChatDispatch 调度 / routing / invoker / 协议转换门面
+├── gateway-stats/                     # 聚合统计域（com.codingas.gateway.stats）
+│   └── stats/                         #   仪表盘聚合统计（读路径）
+├── gateway-boot/                      # 后端主模块（适配器层 + 应用层 + 装配）
+│   ├── adapter/                       #   API Controller + 协议校验适配 + 拦截器
+│   ├── application/                   #   用例编排（按用例分包）
+│   └── infrastructure/                #   配置、装配、横切组件（domain 包为空，业务已下沉）
+├── gateway-cli/                       # CLI 管理工具（API 消费者）
+└── gateway-simulator/                 # LLM 提供商模拟服务（本地开发 / 集成测试）
 ```
+
+> gateway-console 为 Web 管理界面前端（React/Vue，vite），非 Maven 模块，属 API 消费者。
 
 **各层职责**:
 
 | 层 | 职责 | 包含内容 |
 |---|------|---------|
-| **adapter** | 接收请求、返回响应 | Controller、DTO（按用例分包） |
-| **application** | 用例编排，跨域协调 | Application Service（按用例分包） |
-| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
-| **infrastructure** | 技术实现 | Gateway 实现、配置、工具 |
-| **common** | 跨领域共享 | 基础异常、技术常量、工具类 |
+| **adapter** | 接收请求、返回响应 | Controller、DTO（gateway-boot 内，按用例分包） |
+| **application** | 用例编排，跨域协调 | Application Service（gateway-boot 内，按用例分包） |
+| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举（位于各功能域核心模块） |
+| **infrastructure** | 技术实现 | Gateway 实现、配置、工具（位于 `<域>data` 绑定模块与 gateway-boot） |
+| **common** | 跨领域共享 | 基础异常、技术常量、工具类（gateway-common） |
+
+> 业务域代码（domain/infrastructure）不再集中在 gateway-boot，而是下沉至各功能域模块；gateway-boot 只保留 Web 适配层、应用编排与装配。
 
 ### 2.2 Gateway 模式
 
 **定义**:
 ```
-Gateway 接口定义在 domain/xxx/gateway/ 包中。
-Gateway 实现在 infrastructure/xxx/gateway/ 包中。
+Gateway 接口定义在功能域核心模块中（根包 com.codingas.gateway.<域>）。
+Gateway 实现在对应的 <域>data 绑定模块中（根包 com.codingas.gateway.<域>data）。
 Domain 只依赖 Gateway 接口，不直接依赖外部资源。
-Infrastructure 通过依赖注入实现 Gateway。
+绑定模块通过依赖注入实现 Gateway，负责 DO ↔ Entity 转换。
 ```
 
 ```
-Domain 层                     Infrastructure 层
+功能域核心模块（领域层）              <域>data 绑定模块（基础设施层）
    │                                │
    │   ┌─────────────────┐          │
    │   │ XxxGateway     │          │
@@ -266,22 +234,22 @@ Domain 层                     Infrastructure 层
 
 | 组件 | 放置位置 |
 |------|---------|
-| Gateway 接口 | `domain/xxx/gateway/` |
-| Gateway 实现 | `infrastructure/xxx/gateway/` |
+| Gateway 接口 | 功能域核心模块（如 `com.codingas.gateway.audit.AuditGateway`） |
+| Gateway 实现 | `<域>data` 绑定模块 gateway 包（如 `com.codingas.gateway.auditdata.gateway.AuditGatewayImpl`） |
 
 ### 2.3 服务分类
 
 **Domain Service（领域服务）**：
 - 职责：业务逻辑，领域规则
-- 放置：`domain/xxx/service/`
+- 放置：功能域核心模块（如 `com.codingas.gateway.iam.auth`、`com.codingas.gateway.iam.service`）
 - 命名：能力名 + `DomainService` 后缀
-- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `RbacDomainService`
+- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `ApiKeyEncryptionDomainService`
 
 **Application Service（应用服务）**：
 - 职责：用例编排，跨领域协调，不含业务逻辑
-- 放置：`application/xxx/`（按用例分包）
+- 放置：gateway-boot 的 `com.codingas.gateway.application.*`（按用例分包）
 - 命名：能力名 + `Service` 后缀
-- 示例：`AuthenticationService`, `RateLimitService`, `TokenCounterService`
+- 示例：`ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
 
 **命名区分原则**：
 | 层 | 命名模式 | 语义 |
@@ -291,37 +259,37 @@ Domain 层                     Infrastructure 层
 
 **示例对照**：
 ```
-domain/security/service/AuthenticationDomainService     # 领域认证能力
-domain/security/service/RateLimitDomainService           # 领域限流能力
-application/auth/AuthenticationService                    # 应用认证服务
-application/auth/TokenLimitService                       # 应用限额服务
+gateway-iam · com.codingas.gateway.iam.auth.AuthenticationDomainService     # 领域认证能力
+gateway-iam · com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService # 领域加密能力
+gateway-boot · com.codingas.gateway.application.channel.ChannelService      # 应用渠道服务
+gateway-boot · com.codingas.gateway.application.model.ModelService          # 应用模型服务
 ```
 
 ### 2.4 Exception 分类
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 基础异常 | `common/exception/` | GatewayException |
-| 领域异常 | `domain/xxx/exception/` | AuthenticationException |
-| 基础设施异常 | `infrastructure/exception/` | ProviderException |
+| 基础异常 | gateway-common · `com.codingas.gateway.common.exception` | GatewayException |
+| 领域异常 | 功能域核心模块 exception 包（如 `com.codingas.gateway.iam.exception`） | IamException |
+| 基础设施异常 | 功能域核心模块（如 `com.codingas.gateway.provider.vendor`） | ProviderException |
 
 ### 2.5 跨域访问规则
 
 | 方式 | 场景 | 规则 |
 |------|------|------|
-| Gateway 接口 | Domain 访问外部资源 | ✅ 定义在 `domain/xxx/gateway/` |
-| 应用服务编排 | 主流程（认证→路由→调用） | ✅ Application 调用 Domain Service |
+| Gateway 接口 | Domain 访问外部资源 | ✅ 定义在功能域核心模块，实现在 `<域>data` 绑定模块 |
+| 应用服务编排 | 主流程（认证→路由→调用） | ✅ gateway-boot 的 application 调用功能域模块的 Domain Service |
 | 领域事件 | 旁路（统计、审计） | ✅ 异步解耦 |
 | Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
 | Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过 Gateway |
 
 **违规示例**:
-- ❌ `ChatApplication` 直接调用 `JpaModelRepository` 获取 Entity
-- ✅ `ChatApplication` → `ModelRouterService` → `ModelGateway` → `JpaModelGateway`
+- ❌ 应用服务直接调用绑定模块的 `XxxRepository` 获取 Entity
+- ✅ 应用服务 → 功能域 Domain Service → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
 - ❌ `DomainService` 直接使用 `EntityManager` 持久化
-- ✅ `DomainService` → `XxxGateway` → `JpaXxxGateway`
-- ❌ `security` Domain 直接调用 `router` Domain 的服务
-- ✅ `application/` 编排两者的调用
+- ✅ `DomainService` → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
+- ❌ iam 域 Domain 直接调用 proxy 域 Domain 的服务
+- ✅ gateway-boot 的 `application/` 编排两者的调用
 
 ### 2.6 大模型调用链路
 
@@ -334,53 +302,58 @@ application/auth/TokenLimitService                       # 应用限额服务
 **完整调用链路**:
 
 ```
-请求入口 (adapter/api)
-  │
+请求入口 (gateway-boot · adapter/api)
+  │    OpenAIController / AnthropicController
   ▼
-安全拦截链 (adapter/filter)
-  │  Auth → RateLimit → IpBlock → DataMasking → ModelAccess
+安全拦截链 (gateway-boot · adapter/interceptor)
+  │    ApiKeyAuth → RateLimit → IPBlockCheck → TokenAuth ...
   ▼
-ChatDispatchService (application/proxy)     ← 统一编排入口
+ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统一编排入口
   │
   │  ┌─ 前置阶段 ────────────────────────────────────────┐
-  │  │  1. 校验：InboundValidator.validate(request)      │
-  │  │     位置：adapter/protocol/                       │
+  │  │  1. 校验：ProtocolValidator.validate(request)     │
+  │  │     位置：gateway-protocol（校验 SPI）            │
+  │  │     校验适配：gateway-boot · adapter/protocol/    │
   │  │  2. 路由：RoutingResolver.resolve(identity, model)│
-  │  │     位置：application/routing/                    │
-  │  │     ModelMatcher → ChannelSelector(strategy)      │
-  │  │       → CredentialResolver → EndpointResolver    │
-  │  │  3. 记录审计起点：auditGateway.logRequest(...)    │
+  │  │     位置：gateway-proxy · routing                 │
+  │  │     ModelMatcher → CredentialResolver             │
+  │  │       → EndpointResolver                          │
+  │  │  3. 记录审计起点：AuditGateway.logRequest(...)    │
+  │  │     位置：gateway-audit（实现：audit-data）        │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
-  │  │  4. 请求转换：protocolConverter.convertRequest() │
-  │  │     位置：domain/protocol/conversion/             │
+  │  │  4. 请求转换：ProtocolConversionFacade.convert()  │
+  │  │     位置：gateway-proxy · conversion（编排门面）   │
+  │  │     契约与 SPI：gateway-protocol                  │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 调谐阶段 ────────────────────────────────────────┐
-  │  │  5. 调谐：outboundTuner.tune(request, ctx)        │
-  │  │     位置：application/proxy/                      │
+  │  │  5. 调谐：OutboundTuner.tune(request, ctx)        │
+  │  │     位置：gateway-proxy · conversion              │
+  │  │     调谐 SPI：gateway-protocol                    │
   │  │     职责：模型名替换、默认值填充、字段覆盖、      │
   │  │           敏感字段剥离                              │
   │  │     调谐必须按目标协议要求执行，而非入站协议       │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 调用阶段 ────────────────────────────────────────┐
-  │  │  6. 上游调用：upstreamClient.chat(request)        │
-  │  │     位置：infrastructure/upstream/                 │
-  │  │     韧性包装：RetryPolicy + CircuitBreaker        │
+  │  │  6. 上游调用：UpstreamClient.chat(request)        │
+  │  │     接口：gateway-provider · provider.upstream     │
+  │  │     实现：provider-http · providerhttp.upstream    │
+  │  │     韧性包装：gateway-resilience                   │
   │  │     纯 HTTP 调用 + SSE 解析，不含业务逻辑         │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 转换阶段（仅跨协议时执行）───────────────────────┐
-  │  │  7. 响应转换：protocolConverter.convertResponse()│
-  │  │     位置：domain/protocol/conversion/             │
+  │  │  7. 响应转换：ProtocolConversionFacade.convert()  │
+  │  │     位置：gateway-proxy · conversion              │
   │  └──────────────────────────────────────────────────┘
   │
   │  ┌─ 后置阶段 ────────────────────────────────────────┐
-  │  │  8. Token 计量：publish TokenUsedEvent            │
-  │  │     位置：application/proxy/                      │
-  │  │  9. 记录审计终点：auditGateway.logResponse(...)   │
+  │  │  8. Token 计量：发布 TokenUsedEvent               │
+  │  │     位置：gateway-usage · usage.event             │
+  │  │  9. 记录审计终点：AuditGateway.logResponse(...)   │
   │  │     包含：duration、success/failure、Token 用量    │
   │  └──────────────────────────────────────────────────┘
   │
@@ -395,22 +368,22 @@ ChatDispatchService (application/proxy)     ← 统一编排入口
 | 转换先于调谐 | 跨协议时必须先转换为目标协议格式，再按目标协议要求调谐 |
 | 调谐依赖路由 | OutboundTuner 必须在 RoutingResolver 之后执行，因为调谐参数来自路由结果 |
 | 调用不含业务 | UpstreamClient 只做 HTTP 调用 + SSE 解析，不含模型名替换、默认值填充等业务逻辑 |
-| 韧性包装调用 | RetryPolicy 和 CircuitBreaker 包装在 UpstreamClient 外层，与路由选择联动 |
+| 韧性包装调用 | 重试策略（RetryStrategy）和 CircuitBreaker 包装在 UpstreamClient 外层，与路由选择联动 |
 | 审计前后各记 | 审计日志在调用前记录起点（入站信息），调用后记录终点（响应+耗时） |
 | 计量基于响应 | Token 计量从 ProtocolResponse 提取，在响应返回前发布事件 |
 
-**各阶段归属层**:
+**各阶段归属模块**:
 
-| 阶段 | 归属层 | 关键类 |
+| 阶段 | 归属模块 | 关键类 |
 |------|--------|--------|
-| 校验 | adapter | `OpenAIProtocolValidator`, `AnthropicProtocolValidator` |
-| 路由 | application | `RoutingResolver`, `ModelMatcher`, `ChannelSelector`, `CredentialResolver`, `EndpointResolver` |
-| 转换 | domain | `ProtocolConverter` |
-| 调谐 | application | `OutboundTuner`, `OpenAIOutboundTuner`, `AnthropicOutboundTuner` |
-| 调用 | infrastructure | `UpstreamClient`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient`, `UpstreamClientRegistry` |
-| 韧性 | infrastructure | `RetryPolicy`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerManager` |
-| 计量 | application | `ChatDispatchService` → 发布 `TokenUsedEvent` |
-| 审计 | domain + application | `AuditGateway.logRequest()`, `AuditGateway.logResponse()` |
+| 校验 | gateway-protocol（SPI）+ gateway-boot（校验适配） | `ProtocolValidator`；`OpenAIProtocolValidator`, `AnthropicProtocolValidator` |
+| 路由 | gateway-proxy | `RoutingResolver`, `ModelMatcher`, `CredentialResolver`, `EndpointResolver` |
+| 转换 | gateway-proxy（编排）+ gateway-protocol（契约/SPI） | `ProtocolConversionFacade`, `ProtocolAdapter`, `ProtocolRequest/ProtocolResponse` |
+| 调谐 | gateway-proxy（编排）+ gateway-protocol（SPI） | `OutboundTuner`, `ProtocolTuner` |
+| 调用 | gateway-provider（接口）/ provider-http（实现） | `UpstreamClient`, `UpstreamClientRegistry`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient` |
+| 韧性 | gateway-resilience | `RetryStrategy`/`RetryExecutor`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerManager`, `ResilientUpstreamClient` |
+| 计量 | gateway-usage | `ChatDispatchService` → 发布 `TokenUsedEvent` |
+| 审计 | gateway-audit + audit-data | `AuditGateway.logRequest()`, `AuditGateway.logResponse()` |
 
 ### 2.7 领域模型纯洁性
 
@@ -428,7 +401,7 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 - ✅ 纯 POJO，依赖 `BaseEntity`（无 JPA 注解）
 
 **Gateway（防腐层）原则**:
-- ✅ Gateway 接口定义在 `domain/xxx/gateway/`，实现 `infrastructure/xxx/gateway/`
+- ✅ Gateway 接口定义在功能域核心模块，实现于 `<域>data` 绑定模块
 - ✅ Gateway 实现负责 **DO ↔ Entity 转换**（DO 是 JPA 实体，含 `@Entity`、`@ManyToOne` 等）
 - ✅ 领域层只依赖 Gateway 接口，完全不知道 JPA、数据库、ORM 的存在
 - ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改 Gateway 实现，领域层不受影响
@@ -478,6 +451,8 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 │  └──────────────┘    └──────────────┘    └──────────────┘   │
 └───────────────────────────────────────────────────────────────┘
 ```
+
+> 分层映射到模块：Application Layer → gateway-boot 的 application 包；Domain Layer → 各功能域核心模块；Infrastructure Layer → `<域>data` 绑定模块（JPA 实现）。
 
 **Entity 与 DO 关联模式**:
 
@@ -571,6 +546,11 @@ gateway:
 | 变量 | camelCase + 名词 | `tokenThreshold`, `providerId` |
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
 | 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
+| 模块（根包） | 模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分 | `com.codingas.gateway.<域>`（如 `com.codingas.gateway.iam`） |
+| JPA 绑定模块 | `<域>data` 根包 | `iamdata`（`com.codingas.gateway.iamdata`） |
+| 装配包 | gateway-boot 内部保留 adapter/application 分层 | `com.codingas.gateway.adapter.*`, `com.codingas.gateway.application.*` |
+
+> 协议插件模块遵循 `gateway-protocol-<协议>` 命名，根包 `com.codingas.gateway.protocol.<协议>`（如 `com.codingas.gateway.protocol.openai`）。
 
 ### 3.2 前端主题色规范
 
@@ -615,6 +595,8 @@ GatewayException (根异常)
 └── DataProtectionException (数据保护异常)
 ```
 
+> 异常放置：根异常 `GatewayException` 位于 gateway-common；领域异常（`IamException` 位于 gateway-iam、`ThreatException`/`DataProtectionException` 位于 gateway-security 等）位于对应功能域核心模块的 exception 包；提供商异常 `ProviderException` 位于 gateway-provider。
+
 **处理原则**:
 - ✅ 所有受检异常必须转换为运行时异常
 - ✅ 每个异常必须包含清晰的错误上下文（请求 ID、模型 ID、提供商）
@@ -631,7 +613,7 @@ GatewayException (根异常)
 **并发安全保证**:
 - ✅ JDK 21 虚拟线程提供轻量级并发,无需手动管理线程池
 - ✅ `TokenQuotaTracker` 使用 `AtomicInteger` 保证线程安全
-- ✅ `LLMProviderAdapter` 必须是无状态的，支持多线程并发调用
+- ✅ `ProtocolAdapter` 必须是无状态的，支持多线程并发调用
 - ✅ 请求记录按任务 ID 分区写入，避免行锁竞争
 - ✅ LLM HTTP 客户端使用 OkHttp，虚拟线程中阻塞调用自动挂起
 
@@ -660,15 +642,15 @@ GatewayException (根异常)
 
 ### 4.3 可扩展性
 
-**新增 Provider 步骤**:
-1. 实现 `LLMProviderAdapter` 接口
-2. 添加 `@Component` 注解
-3. 通过 Web 界面或 REST API 配置 Provider 信息
+**新增 Provider/协议步骤**:
+1. 在 `gateway-protocol-*` 插件模块实现 `ProtocolAdapter` SPI（协议适配器 + 协议契约 DTO）
+2. 提供 `AutoConfiguration`，通过 `@ConditionalOnProperty` 启用插件
+3. 通过 Web 界面或 REST API 配置 Provider/Channel 信息
 4. （可选）调整优先级顺序
 
 **开闭原则**:
-- ✅ 对扩展开放：新增 Provider 无需修改现有代码
-- ✅ 对修改关闭：现有 Provider 逻辑不受影响
+- ✅ 对扩展开放：新增协议无需修改现有代码（插件化 SPI）
+- ✅ 对修改关闭：现有协议逻辑不受影响
 
 ---
 
@@ -722,11 +704,12 @@ GatewayException (根异常)
 所有组件必须在 CI/CD 流水线中验证章程合规性。
 复杂度必须有可衡量的性能或业务价值来证明。
 
-**版本**: 2.7.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-05-31
+**版本**: 2.8.0 | **制定日期**: 2026-04-08 | **最后修订**: 2026-08-23
 
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
+| v2.8.0 | 2026-08-23 | **P1 Jmix 模块化重构同步**：§2.1 更新为 17 模块多模块 Maven 结构（Jmix 式命名），Domain/Infrastructure 下沉至各功能域模块；§2.2-2.5 包路径对齐新结构（Gateway 接口在功能域核心模块、实现在 `<域>data` 绑定模块）；§2.6 调用链路归属模块更新（gateway-proxy/gateway-protocol/gateway-provider/gateway-resilience/gateway-usage/gateway-audit）；§3.1 新增 Jmix 包名规范；§4.3 Provider 扩展改为 ProtocolAdapter 插件机制 |
 | v2.0.0 | 2026-04-08 | 初始版本 |
 | v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |
