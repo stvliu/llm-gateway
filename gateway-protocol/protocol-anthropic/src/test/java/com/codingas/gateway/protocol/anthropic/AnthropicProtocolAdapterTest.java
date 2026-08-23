@@ -15,15 +15,15 @@
  */
 package com.codingas.gateway.protocol.anthropic;
 
-import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
-import com.codingas.gateway.api.capability.protocol.CanonicalChatResponse;
-import com.codingas.gateway.api.capability.protocol.CanonicalContentBlock;
-import com.codingas.gateway.api.capability.protocol.CanonicalMessage;
-import com.codingas.gateway.api.capability.protocol.CanonicalTool;
-import com.codingas.gateway.api.capability.protocol.CanonicalToolCall;
-import com.codingas.gateway.api.capability.protocol.CanonicalUsage;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
+import com.codingas.gateway.protocol.canonical.CanonicalContentBlock;
+import com.codingas.gateway.protocol.canonical.CanonicalMessage;
+import com.codingas.gateway.protocol.canonical.CanonicalTool;
+import com.codingas.gateway.protocol.canonical.CanonicalToolCall;
+import com.codingas.gateway.protocol.canonical.CanonicalUsage;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;

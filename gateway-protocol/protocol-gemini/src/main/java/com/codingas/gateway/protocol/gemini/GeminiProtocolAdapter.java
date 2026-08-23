@@ -15,12 +15,12 @@
  */
 package com.codingas.gateway.protocol.gemini;
 
-import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
-import com.codingas.gateway.api.capability.protocol.CanonicalChatResponse;
-import com.codingas.gateway.api.capability.protocol.CanonicalContentBlock;
-import com.codingas.gateway.api.capability.protocol.CanonicalMessage;
-import com.codingas.gateway.api.capability.protocol.CanonicalUsage;
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
+import com.codingas.gateway.protocol.canonical.CanonicalContentBlock;
+import com.codingas.gateway.protocol.canonical.CanonicalMessage;
+import com.codingas.gateway.protocol.canonical.CanonicalUsage;
+import com.codingas.gateway.protocol.ProtocolAdapter;
 
 import java.util.ArrayList;
 import java.util.List;

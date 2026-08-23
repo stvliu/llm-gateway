@@ -16,9 +16,9 @@
 package com.codingas.gateway.proxy.invoker;
 
 import com.codingas.gateway.proxy.routing.CredentialResolver;
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;

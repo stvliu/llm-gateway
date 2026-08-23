@@ -15,7 +15,8 @@
  */
 package com.codingas.gateway.support;
 
-import com.codingas.gateway.domain.protocol.contract.*;
+import com.codingas.gateway.protocol.*;
+import com.codingas.gateway.protocol.contract.*;
 import com.codingas.gateway.provider.vendor.ProviderException;
 import com.codingas.gateway.providerhttp.upstream.AnthropicUpstreamClient;
 import com.codingas.gateway.providerhttp.upstream.OpenAIUpstreamClient;

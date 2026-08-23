@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.anthropic;
 
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.ProtocolAdapter;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;

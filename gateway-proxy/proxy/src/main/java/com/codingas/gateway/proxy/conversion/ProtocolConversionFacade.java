@@ -15,16 +15,16 @@
  */
 package com.codingas.gateway.proxy.conversion;
 
-import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
-import com.codingas.gateway.api.capability.protocol.CanonicalChatResponse;
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
+import com.codingas.gateway.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamChunkResult;
 import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;
 import org.springframework.stereotype.Component;
 

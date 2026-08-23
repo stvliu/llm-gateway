@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
-import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.domain.protocol.contract.StreamCallback;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.ProtocolResponse;
+import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.provider.vendor.ProviderException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;

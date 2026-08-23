@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.validation;
+package com.codingas.gateway.protocol.canonical;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.*;
 
-/**
- * 协议校验器接口
- *
- * @param <T> 协议请求类型
- */
-public interface ProtocolValidator<T extends ProtocolRequest> {
+/** 规范工具调用：id + name + arguments(JSON) */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class CanonicalToolCall {
 
-    /**
-     * 获取支持的协议标识
-     */
-    String getProtocol();
+    private String id;
+    private String name;
 
-    /**
-     * 入站校验协议请求
-     */
-    void validate(T request);
+    /** 工具调用实参（JSON） */
+    private JsonNode arguments;
 }

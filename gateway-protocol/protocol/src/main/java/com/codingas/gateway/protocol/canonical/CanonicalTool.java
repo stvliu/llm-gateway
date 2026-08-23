@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.api.capability.protocol;
+package com.codingas.gateway.protocol.canonical;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.*;
 
-/** 规范工具调用：id + name + arguments(JSON) */
+/** 规范工具定义：name + description + parameters(JSON Schema) */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CanonicalToolCall {
+public class CanonicalTool {
 
-    private String id;
     private String name;
+    private String description;
 
-    /** 工具调用实参（JSON） */
-    private JsonNode arguments;
+    /** 工具入参 JSON Schema */
+    private JsonNode parameters;
 }

@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.api.capability.protocol;
+package com.codingas.gateway.protocol.canonical;
 
 import lombok.*;
 
-import java.util.List;
-
-/** 规范聊天响应——中立表示，覆盖 text 与 tool_use 两种 content block */
+/** 规范内容块：type=text 或 type=toolUse */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CanonicalChatResponse {
+public class CanonicalContentBlock {
 
-    private String id;
-    private String model;
+    /** "text" | "toolUse" */
+    private String type;
 
-    /** 内容块列表（text / toolUse） */
-    private List<CanonicalContentBlock> content;
+    /** type=text 时的文本 */
+    private String text;
 
-    /** 停止原因（end_turn / max_tokens / tool_use 等规范值） */
-    private String stopReason;
-
-    /** token 用量 */
-    private CanonicalUsage usage;
+    /** type=toolUse 时的工具调用 */
+    private CanonicalToolCall toolUse;
 }

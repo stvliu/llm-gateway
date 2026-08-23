@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.gemini;
 
-import com.codingas.gateway.api.capability.protocol.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -63,7 +63,7 @@ class GeminiProtocolAdapterTest {
         GeminiChatRequest out = adapter.denormalizeRequest(CanonicalChatRequest.builder()
                 .model("gemini-1.5-pro")
                 .system("sys")
-                .messages(java.util.List.of(com.codingas.gateway.api.capability.protocol.CanonicalMessage.builder()
+                .messages(java.util.List.of(com.codingas.gateway.protocol.canonical.CanonicalMessage.builder()
                         .role("user").content("q").build()))
                 .build());
 

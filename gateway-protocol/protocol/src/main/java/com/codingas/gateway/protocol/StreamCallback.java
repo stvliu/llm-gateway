@@ -13,20 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.contract;
+package com.codingas.gateway.protocol;
 
 /**
- * 协议响应接口，所有协议响应 DTO 实现此接口
+ * 流式回调接口
+ *
+ * <p>用于 LLM 流式请求的 SSE 事件回调。</p>
+ *
+ * <p>此接口定义在 Domain 层协议契约包中，供 UpstreamClient 使用。
+ * 具体实现在 Infrastructure 层提供。</p>
  */
-public interface ProtocolResponse {
+public interface StreamCallback {
 
     /**
-     * 获取模型名称
+     * 收到 SSE data 行
+     *
+     * @param data SSE data 内容 (不包含 "data: " 前缀)
      */
-    String getModel();
+    void onChunk(String data);
 
     /**
-     * 获取结束原因
+     * 流式响应完成
      */
-    String getFinishReason();
+    void onComplete();
+
+    /**
+     * 流式响应出错
+     *
+     * @param t 错误原因
+     */
+    void onError(Throwable t);
 }

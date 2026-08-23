@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.adapter.protocol.anthropic;
 
-import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

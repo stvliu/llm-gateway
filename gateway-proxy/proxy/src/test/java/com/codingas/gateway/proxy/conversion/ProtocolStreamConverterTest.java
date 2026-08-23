@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.proxy.conversion;
 
-import com.codingas.gateway.domain.protocol.contract.StreamChunkResult;
+import com.codingas.gateway.protocol.StreamChunkResult;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

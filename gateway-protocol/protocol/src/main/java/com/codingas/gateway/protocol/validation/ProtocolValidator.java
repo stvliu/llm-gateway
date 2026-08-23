@@ -13,34 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.contract;
+package com.codingas.gateway.protocol.validation;
+
+import com.codingas.gateway.protocol.ProtocolRequest;
 
 /**
- * 流式回调接口
+ * 协议校验器接口
  *
- * <p>用于 LLM 流式请求的 SSE 事件回调。</p>
- *
- * <p>此接口定义在 Domain 层协议契约包中，供 UpstreamClient 使用。
- * 具体实现在 Infrastructure 层提供。</p>
+ * @param <T> 协议请求类型
  */
-public interface StreamCallback {
+public interface ProtocolValidator<T extends ProtocolRequest> {
 
     /**
-     * 收到 SSE data 行
-     *
-     * @param data SSE data 内容 (不包含 "data: " 前缀)
+     * 获取支持的协议标识
      */
-    void onChunk(String data);
+    String getProtocol();
 
     /**
-     * 流式响应完成
+     * 入站校验协议请求
      */
-    void onComplete();
-
-    /**
-     * 流式响应出错
-     *
-     * @param t 错误原因
-     */
-    void onError(Throwable t);
+    void validate(T request);
 }

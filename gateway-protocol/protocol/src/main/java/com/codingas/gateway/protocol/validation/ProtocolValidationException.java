@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.domain.protocol.validation;
+package com.codingas.gateway.protocol.validation;
 
 import com.codingas.gateway.common.exception.GatewayException;
 

@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.adapter.protocol.openai;
 
-import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;
-import com.codingas.gateway.domain.protocol.validation.ProtocolValidator;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.validation.ProtocolValidationException;
+import com.codingas.gateway.protocol.validation.ProtocolValidator;
 import org.springframework.stereotype.Component;
 
 import java.util.List;

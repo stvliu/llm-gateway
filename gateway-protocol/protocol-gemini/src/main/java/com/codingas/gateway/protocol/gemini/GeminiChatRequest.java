@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.gemini;
 
-import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
+import com.codingas.gateway.protocol.ProtocolRequest;
 
 import java.util.ArrayList;
 import java.util.List;

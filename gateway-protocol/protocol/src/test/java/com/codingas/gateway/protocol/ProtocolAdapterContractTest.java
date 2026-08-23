@@ -13,7 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.api.capability.protocol;
+package com.codingas.gateway.protocol;
+import com.codingas.gateway.protocol.canonical.CanonicalChatRequest;
+import com.codingas.gateway.protocol.canonical.CanonicalChatResponse;
 
 import org.junit.jupiter.api.Test;
 

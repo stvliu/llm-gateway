@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.openai;
 
-import com.codingas.gateway.api.capability.protocol.ProtocolAdapter;
+import com.codingas.gateway.protocol.ProtocolAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

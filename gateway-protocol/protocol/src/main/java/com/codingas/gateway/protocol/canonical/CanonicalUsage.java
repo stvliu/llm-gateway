@@ -13,23 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.api.capability.protocol;
+package com.codingas.gateway.protocol.canonical;
 
 import lombok.*;
 
-/** 规范内容块：type=text 或 type=toolUse */
+/** 规范 token 用量 */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CanonicalContentBlock {
+public class CanonicalUsage {
 
-    /** "text" | "toolUse" */
-    private String type;
-
-    /** type=text 时的文本 */
-    private String text;
-
-    /** type=toolUse 时的工具调用 */
-    private CanonicalToolCall toolUse;
+    private Integer inputTokens;
+    private Integer outputTokens;
 }
