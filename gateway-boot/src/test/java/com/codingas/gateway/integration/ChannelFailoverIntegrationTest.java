@@ -15,16 +15,16 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.application.proxy.OutboundTuner;
-import com.codingas.gateway.application.proxy.failover.ErrorClassifier;
-import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
-import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
-import com.codingas.gateway.application.proxy.routing.RouterChain;
+import com.codingas.gateway.proxy.conversion.OutboundTuner;
+import com.codingas.gateway.proxy.chat.ErrorClassifier;
+import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
+import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
+import com.codingas.gateway.proxy.routing.RouterChain;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.domain.protocol.contract.StreamCallback;
-import com.codingas.gateway.application.protocol.conversion.ProtocolConversionFacade;
+import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.provider.vendor.ProviderException;

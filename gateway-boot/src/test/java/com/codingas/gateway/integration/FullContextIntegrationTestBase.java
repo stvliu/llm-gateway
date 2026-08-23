@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.application.proxy.ChatDispatchService;
-import com.codingas.gateway.application.proxy.invoker.ChannelFailoverInvoker;
-import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
-import com.codingas.gateway.application.proxy.routing.CredentialResolver;
-import com.codingas.gateway.application.proxy.routing.RoutingResolver;
+import com.codingas.gateway.proxy.chat.ChatDispatchService;
+import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
+import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
+import com.codingas.gateway.proxy.routing.CredentialResolver;
+import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.audit.AuditGateway;
 import com.codingas.gateway.iam.auth.AuthenticationDomainService;

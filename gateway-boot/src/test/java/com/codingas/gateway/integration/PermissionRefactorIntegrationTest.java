@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.application.proxy.routing.RouterChain;
-import com.codingas.gateway.application.proxy.routing.RoutingRequest;
+import com.codingas.gateway.proxy.routing.RouterChain;
+import com.codingas.gateway.proxy.routing.RoutingRequest;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelState;
 import com.codingas.gateway.provider.upstream.Protocol;

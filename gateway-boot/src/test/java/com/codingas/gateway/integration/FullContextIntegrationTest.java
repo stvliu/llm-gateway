@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.integration;
 
-import com.codingas.gateway.application.proxy.invoker.KeyFailoverInvoker;
-import com.codingas.gateway.application.proxy.routing.CredentialResolver;
+import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
+import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.domain.protocol.contract.ProtocolRequest;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
 import com.codingas.gateway.provider.channel.ChannelCredential;

@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.domain.protocol.contract.AnthropicMessagesResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.application.proxy.ChatDispatchService;
+import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.adapter.protocol.anthropic.AnthropicProtocolValidator;
 import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;

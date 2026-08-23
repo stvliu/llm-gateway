@@ -18,7 +18,7 @@ package com.codingas.gateway.adapter.api;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.domain.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.domain.protocol.contract.ProtocolResponse;
-import com.codingas.gateway.application.proxy.ChatDispatchService;
+import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.adapter.protocol.openai.OpenAIProtocolValidator;
 import com.codingas.gateway.domain.protocol.validation.ProtocolValidationException;

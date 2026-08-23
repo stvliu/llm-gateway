@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.adapter.api;
 
-import com.codingas.gateway.application.stats.StatsService;
-import com.codingas.gateway.application.stats.dto.StatsResponse;
+import com.codingas.gateway.stats.StatsService;
+import com.codingas.gateway.stats.dto.StatsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
