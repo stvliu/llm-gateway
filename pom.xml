@@ -78,6 +78,7 @@
         <module>gateway-boot</module>
         <module>gateway-cli</module>
         <module>gateway-simulator</module>
+        <module>gateway-coverage</module>
     </modules>
 
     <properties>

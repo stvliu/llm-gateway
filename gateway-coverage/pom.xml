@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright © 2025-2026 codingas.com
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
+        <version>${revision}</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+    <groupId>com.codingas.gateway</groupId>
+    <artifactId>gateway-coverage</artifactId>
+    <packaging>pom</packaging>
+    <name>Gateway Coverage</name>
+    <description>覆盖率聚合模块：声明全部子模块为 provided 依赖，由 jacoco report-aggregate（从根 pom build/plugins 继承的 verify 阶段执行）聚合全模块覆盖率报告</description>
+
+    <!--
+        聚合依赖：jacoco report-aggregate 只聚合「当前项目声明为依赖的模块」。
+        根 pom 无法声明子模块依赖（<dependencies> 被子模块继承导致自引用），
+        故放在本模块自己的 pom 中——兄弟模块不会继承本模块的 dependencies。
+        provided scope：仅为 report-aggregate 的依赖解析提供目标，不产生传递依赖。
+    -->
+    <dependencies>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-common</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-openai</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-anthropic</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-protocol-gemini</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-provider-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-iam-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-usage</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-usage-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-usage-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-security</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-security-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-security-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-alert</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-alert-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-alert-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-resilience</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-resilience-data</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-resilience-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-proxy</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-proxy-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-stats</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-stats-starter</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-web</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-boot</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-cli</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-simulator</artifactId>
+            <version>${revision}</version>
+            <scope>provided</scope>
+        </dependency>
+    </dependencies>
+</project>
