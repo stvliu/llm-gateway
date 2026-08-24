@@ -24,8 +24,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 /**
  * 应用启动类
  *
- * <p>scanBasePackages 限定 boot 自身层 + 底座（common/protocol）+ application 的
- * init 种子（boot/application 包下仅剩 init 初始化数据，CommandLineRunner 由本扫描装配）——
+ * <p>scanBasePackages 限定 boot 自身包（config/init/actuator/event 收拢于此）+ 底座
+ * （common/protocol）——CommandLineRunner 初始化种子与配置组件由本扫描装配；
  * 业务域组件由各域 starter 的 AutoConfiguration 显式装配（装配显式化，去全包扫描）；
  * HTTP 承载层（Controller/Interceptor/Advice）由 gateway-web 的
  * {@code WebAutoConfiguration} 装配（boot 依赖 gateway-web 即生效）。</p>
@@ -37,10 +37,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @SpringBootApplication(scanBasePackages = {
         "com.codingas.gateway.boot",
-        "com.codingas.gateway.infrastructure",
         "com.codingas.gateway.common",
-        "com.codingas.gateway.protocol",
-        "com.codingas.gateway.application"   // init 种子（仅剩 init 包）——若 init 迁移到 boot 包则移除此项
+        "com.codingas.gateway.protocol"
 })
 @EnableJpaRepositories(basePackages = {
         "com.codingas.gateway.providerdata",
@@ -57,8 +55,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.codingas.gateway.securitydata",
         "com.codingas.gateway.resiliencedata",
         "com.codingas.gateway.auditdata",
-        "com.codingas.gateway.alertdata",
-        "com.codingas.gateway.infrastructure"
+        "com.codingas.gateway.alertdata"
 })
 @EnableScheduling
 public class GatewayApplication {
