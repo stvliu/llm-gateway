@@ -20,6 +20,13 @@
 - 教训：Git Bash 下 `sed -i`/`grep -rl` 递归不可靠（行尾符重写 + 匹配失败），一律改用 Python 脚本
 - 教训：git mv 会立即 stage，package 内容修改需在后续 commit 提交（rename 与内容修改拆到两个 commit）
 
+## 2026-08-25 会话记录
+- ProviderHealth 系列下沉 provider.health（commit d50dce08）：核心逻辑归域、Indicator 留 boot 适配、provider 引入 actuator 依赖
+- gateway-boot 层名收拢（commit ad03a002）：infrastructure.config/actuator/event + application.init → boot.{config,init,actuator,event}，GatewayApplication 扫描配置收窄，测试跟随
+- ADR-0001 固化：模块化后 COLA 分层决策（依赖规则保留/包名层名废弃/类名后缀保留/健康监控归属原则）
+- 架构探讨结论：分层精神由模块边界 + ArchUnit 承担；web 的 adapter 根包暂视为职责名保留（未决项）
+- 全量 mvn test 通过（多次验证）
+
 ## Phase 状态
 - Phase 1 数据收集：✅ 完成（4 并行子代理 + 主会话补充）
 - Phase 2 分析评估：✅ 完成（三个维度全部评估）
