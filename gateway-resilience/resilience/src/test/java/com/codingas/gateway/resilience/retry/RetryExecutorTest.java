@@ -133,6 +133,109 @@ class RetryExecutorTest {
             })).isInstanceOf(ProviderException.class);
             assertThat(counter.get()).isEqualTo(1);
         }
+
+        @Test
+        @DisplayName("INVALID_REQUEST 不可重试")
+        void invalidRequest_notRetryable() {
+            AtomicInteger counter = new AtomicInteger(0);
+            assertThatThrownBy(() -> executor.execute(() -> {
+                counter.incrementAndGet();
+                throw new ProviderException(ProviderErrorType.INVALID_REQUEST, "400");
+            })).isInstanceOf(ProviderException.class);
+            assertThat(counter.get()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("TIMEOUT_ERROR 走快速重试策略重试后成功")
+        void timeoutError_retriesWithFastRetry() {
+            properties.getFastRetry().setBackoffFixed(1);
+            executor = new RetryExecutor(properties, new SimpleMeterRegistry());
+            AtomicInteger counter = new AtomicInteger(0);
+            String result = executor.execute(() -> {
+                if (counter.incrementAndGet() < 3) {
+                    throw new ProviderException(ProviderErrorType.TIMEOUT_ERROR, "504 超时");
+                }
+                return "ok";
+            });
+            assertThat(result).isEqualTo("ok");
+            assertThat(counter.get()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("UPSTREAM_ERROR 走服务不可用策略重试后成功")
+        void upstreamError_retriesWithServiceUnavailable() {
+            properties.getServiceUnavailable().setBackoffFixed(1);
+            executor = new RetryExecutor(properties, new SimpleMeterRegistry());
+            AtomicInteger counter = new AtomicInteger(0);
+            String result = executor.execute(() -> {
+                if (counter.incrementAndGet() < 3) {
+                    throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "502 上游错误");
+                }
+                return "ok";
+            });
+            assertThat(result).isEqualTo("ok");
+            assertThat(counter.get()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("UNKNOWN_ERROR 走指数退避策略重试后成功")
+        void unknownError_retriesWithExponentialBackoff() {
+            properties.setBackoffInitial(1);
+            properties.setBackoffMultiplier(1.0);
+            executor = new RetryExecutor(properties, new SimpleMeterRegistry());
+            AtomicInteger counter = new AtomicInteger(0);
+            String result = executor.execute(() -> {
+                if (counter.incrementAndGet() < 3) {
+                    throw new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");
+                }
+                return "ok";
+            });
+            assertThat(result).isEqualTo("ok");
+            assertThat(counter.get()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("消息包含可重试状态码的普通异常可重试")
+        void messageContainsRetryableStatusCode_retries() {
+            properties.setBackoffInitial(1);
+            properties.setBackoffMultiplier(1.0);
+            executor = new RetryExecutor(properties, new SimpleMeterRegistry());
+            AtomicInteger counter = new AtomicInteger(0);
+            String result = executor.execute(() -> {
+                if (counter.incrementAndGet() < 3) {
+                    throw new RuntimeException("上游返回 HTTP 500");
+                }
+                return "ok";
+            });
+            assertThat(result).isEqualTo("ok");
+            assertThat(counter.get()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("消息为 null 的普通异常不可重试")
+        void messageNull_notRetryable() {
+            AtomicInteger counter = new AtomicInteger(0);
+            assertThatThrownBy(() -> executor.execute(() -> {
+                counter.incrementAndGet();
+                throw new RuntimeException();
+            })).isInstanceOf(RuntimeException.class);
+            assertThat(counter.get()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("重试耗尽后记录 exhausted Metrics")
+        void execute_exhausted_recordsExhaustedMetric() {
+            properties.getServiceUnavailable().setBackoffFixed(1);
+            MeterRegistry freshRegistry = new SimpleMeterRegistry();
+            executor = new RetryExecutor(properties, freshRegistry);
+
+            assertThatThrownBy(() -> executor.execute(() -> {
+                throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "持续 502");
+            })).isInstanceOf(ProviderException.class);
+
+            assertThat(freshRegistry.counter("gateway.retry.exhausted",
+                    "error_type", "UPSTREAM_ERROR").count()).isPositive();
+        }
     }
 
     @Nested
@@ -163,6 +266,19 @@ class RetryExecutorTest {
         void isRetryable_quotaExceeded_returnsFalse() {
             assertThat(executor.isRetryable(
                 new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限"))).isFalse();
+        }
+
+        @Test
+        @DisplayName("ProviderException INVALID_REQUEST 不可重试")
+        void isRetryable_invalidRequest_returnsFalse() {
+            assertThat(executor.isRetryable(
+                new ProviderException(ProviderErrorType.INVALID_REQUEST, "400"))).isFalse();
+        }
+
+        @Test
+        @DisplayName("消息包含可重试状态码的普通异常可重试")
+        void isRetryable_messageContainsStatusCode_returnsTrue() {
+            assertThat(executor.isRetryable(new RuntimeException("上游 500 错误"))).isTrue();
         }
     }
 }

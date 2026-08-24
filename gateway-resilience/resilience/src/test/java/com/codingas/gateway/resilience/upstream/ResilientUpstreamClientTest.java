@@ -19,6 +19,7 @@ import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.common.enums.ProviderErrorType;
+import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
@@ -212,6 +213,93 @@ class ResilientUpstreamClientTest {
 
             // 失败被记录（状态取决于失败率）
             assertThat(circuitBreaker.getState()).isNotNull();
+        }
+
+        @Test
+        @DisplayName("流式数据块透传给调用方回调")
+        void chatStream_onChunk_forwardsToCallback() {
+            StreamCallback callback = mock(StreamCallback.class);
+            doAnswer(invocation -> {
+                StreamCallback inner = invocation.getArgument(1);
+                inner.onChunk("hello");
+                inner.onChunk("world");
+                return null;
+            }).when(delegate).chatStream(any(), any());
+
+            resilientClient.chatStream(request, callback);
+
+            verify(callback).onChunk("hello");
+            verify(callback).onChunk("world");
+        }
+
+        @Test
+        @DisplayName("流式 ProviderException 错误按错误类型记录 Metrics")
+        void chatStream_onErrorProviderException_recordsErrorTypeMetric() {
+            StreamCallback callback = mock(StreamCallback.class);
+            doAnswer(invocation -> {
+                StreamCallback inner = invocation.getArgument(1);
+                inner.onError(new ProviderException(ProviderErrorType.SERVICE_UNAVAILABLE, "503"));
+                return null;
+            }).when(delegate).chatStream(any(), any());
+
+            resilientClient.chatStream(request, callback);
+
+            verify(callback).onError(any());
+            assertThat(meterRegistry.counter("gateway.provider.errors",
+                    "provider", "test-provider",
+                    "error_type", "SERVICE_UNAVAILABLE").count()).isPositive();
+        }
+
+        @Test
+        @DisplayName("delegate 同步抛出 ProviderException 时按错误类型记录并上报")
+        void chatStream_delegateThrowsProviderException_recordsAndRethrows() {
+            StreamCallback callback = mock(StreamCallback.class);
+            doThrow(new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))
+                    .when(delegate).chatStream(any(), any());
+
+            assertThatThrownBy(() -> resilientClient.chatStream(request, callback))
+                    .isInstanceOf(ProviderException.class);
+
+            assertThat(meterRegistry.counter("gateway.provider.errors",
+                    "provider", "test-provider",
+                    "error_type", "RATE_LIMIT_ERROR").count()).isPositive();
+        }
+
+        @Test
+        @DisplayName("delegate 同步抛出普通异常时记录 UNKNOWN Metrics")
+        void chatStream_delegateThrowsException_recordsUnknownMetric() {
+            StreamCallback callback = mock(StreamCallback.class);
+            doThrow(new IllegalStateException("boom"))
+                    .when(delegate).chatStream(any(), any());
+
+            assertThatThrownBy(() -> resilientClient.chatStream(request, callback))
+                    .isInstanceOf(IllegalStateException.class);
+
+            assertThat(meterRegistry.counter("gateway.provider.errors",
+                    "provider", "test-provider",
+                    "error_type", "UNKNOWN").count()).isPositive();
+        }
+    }
+
+    @Nested
+    @DisplayName("透传方法测试")
+    class PassthroughTests {
+
+        @Test
+        @DisplayName("testConnectivity 透传底层结果")
+        void testConnectivity_delegates() {
+            ConnectivityTestResult result = ConnectivityTestResult.success(1L, 10);
+            when(delegate.testConnectivity()).thenReturn(result);
+
+            assertThat(resilientClient.testConnectivity()).isSameAs(result);
+        }
+
+        @Test
+        @DisplayName("supportedProvider 透传底层协议标识")
+        void supportedProvider_delegates() {
+            when(delegate.supportedProvider()).thenReturn("openai");
+
+            assertThat(resilientClient.supportedProvider()).isEqualTo("openai");
         }
     }
 }

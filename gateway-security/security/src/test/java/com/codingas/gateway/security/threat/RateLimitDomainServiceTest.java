@@ -86,4 +86,41 @@ class RateLimitDomainServiceTest {
 
         assertThat(result).isFalse();
     }
+
+    @Test
+    @DisplayName("isAllowed 限流器拒绝时应返回 false")
+    void isAllowed_rateLimiterRejects_returnsFalse() {
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(false);
+
+        boolean result = service.isAllowed(1L);
+
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @DisplayName("getStatus 有 apiKeyId 时应委托限流器查询")
+    void getStatus_withApiKey_delegatesToRateLimiter() {
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        TokenBucketStatus expected = new TokenBucketStatus(50, 100, 10);
+        when(rateLimiter.getStatus("api_key:1", 100, 10)).thenReturn(expected);
+
+        TokenBucketStatus result = service.getStatus(1L);
+
+        assertThat(result.currentTokens()).isEqualTo(50);
+        assertThat(result.capacity()).isEqualTo(100);
+        assertThat(result.refillRate()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("getStatus apiKeyId 为 null 应返回满桶状态")
+    void getStatus_nullApiKey_returnsFullBucket() {
+        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+
+        TokenBucketStatus result = service.getStatus(null);
+
+        assertThat(result.currentTokens()).isEqualTo(100);
+        assertThat(result.capacity()).isEqualTo(100);
+        assertThat(result.refillRate()).isEqualTo(10);
+    }
 }

@@ -29,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -113,5 +114,26 @@ class FailoverEventListenerTest {
         assertThat(captured.getToEndpointId()).isNull();
         assertThat(captured.isExhausted()).isTrue();
         assertThat(captured.getDecision()).isEqualTo(FailoverDecision.L1);
+    }
+
+    @Test
+    @DisplayName("持久化异常时吞掉异常不阻断调用链")
+    void handleFailoverOccurredEvent_saveThrows_swallowsException() {
+        Instant occurredOn = Instant.parse("2026-06-22T12:00:00Z");
+        FailoverOccurredEvent event = new FailoverOccurredEvent(
+                "trace-save-fail",
+                9L,
+                10L, 20L,
+                11L, 21L,
+                ProviderErrorType.UNKNOWN_ERROR,
+                FailoverDecision.L1,
+                false,
+                occurredOn
+        );
+        when(failoverEventGateway.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
+                .thenThrow(new RuntimeException("数据库不可用"));
+
+        assertThatCode(() -> listener.onFailoverOccurred(event)).doesNotThrowAnyException();
+        verify(failoverEventGateway).save(org.mockito.ArgumentMatchers.any(FailoverEvent.class));
     }
 }

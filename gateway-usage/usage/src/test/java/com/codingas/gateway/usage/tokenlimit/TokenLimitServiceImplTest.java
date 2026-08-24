@@ -22,7 +22,9 @@ import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.ProviderGateway;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit;
 import com.codingas.gateway.iam.user.User;
@@ -111,6 +113,92 @@ class TokenLimitServiceImplTest {
             assertThatThrownBy(() -> service.create(request))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
+
+        @Test
+        @DisplayName("创建限额同时绑定提供商、模型与切换模型")
+        void create_withProviderModelSwitchModel_savesAllRefs() {
+            // given
+            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
+            request.setUserId(1L);
+            request.setProviderId(10L);
+            request.setModelId(20L);
+            request.setSwitchModelId(30L);
+            request.setMaxTokens(BigDecimal.valueOf(50000));
+
+            User user = createTestUser();
+            Provider provider = new Provider();
+            provider.setId(10L);
+            Model model = new Model();
+            model.setId(20L);
+            Model switchModel = new Model();
+            switchModel.setId(30L);
+
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(providerGateway.findById(10L)).thenReturn(Optional.of(provider));
+            when(modelGateway.findById(20L)).thenReturn(Optional.of(model));
+            when(modelGateway.findById(30L)).thenReturn(Optional.of(switchModel));
+            when(tokenLimitGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            // when
+            TokenLimitResponse result = service.create(request);
+
+            // then
+            assertThat(result.getProviderId()).isEqualTo(10L);
+            assertThat(result.getProviderName()).isEqualTo(provider.getName());
+            assertThat(result.getModelId()).isEqualTo(20L);
+            assertThat(result.getSwitchModelId()).isEqualTo(30L);
+        }
+
+        @Test
+        @DisplayName("提供商不存在抛出异常")
+        void create_providerNotFound_throwsException() {
+            // given
+            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
+            request.setUserId(1L);
+            request.setProviderId(10L);
+
+            when(userGateway.findById(1L)).thenReturn(Optional.of(createTestUser()));
+            when(providerGateway.findById(10L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Provider");
+        }
+
+        @Test
+        @DisplayName("模型不存在抛出异常")
+        void create_modelNotFound_throwsException() {
+            // given
+            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
+            request.setUserId(1L);
+            request.setModelId(20L);
+
+            when(userGateway.findById(1L)).thenReturn(Optional.of(createTestUser()));
+            when(modelGateway.findById(20L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Model");
+        }
+
+        @Test
+        @DisplayName("切换模型不存在抛出异常")
+        void create_switchModelNotFound_throwsException() {
+            // given
+            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
+            request.setUserId(1L);
+            request.setSwitchModelId(30L);
+
+            when(userGateway.findById(1L)).thenReturn(Optional.of(createTestUser()));
+            when(modelGateway.findById(30L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.create(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Model");
+        }
     }
 
     @Nested
@@ -165,6 +253,137 @@ class TokenLimitServiceImplTest {
             // then
             assertThat(result.getItems()).hasSize(1);
         }
+
+        @Test
+        @DisplayName("按关键字过滤用户名")
+        void query_keywordFilter_filtersByUsername() {
+            // given
+            TokenLimit matching = createTestTokenLimit();
+            matching.setUser(createTestUser());
+            TokenLimit other = createTestTokenLimit();
+            User otherUser = createTestUser();
+            otherUser.setUsername("another");
+            other.setUser(otherUser);
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(matching, other));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setKeyword("testuser");
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("按 userId 过滤")
+        void query_userIdFilter_filtersByUser() {
+            // given
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(tokenLimit));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setUserId(1L);
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+
+            // 不匹配的用户 ID 应过滤掉全部
+            request.setUserId(2L);
+            result = service.query(request);
+            assertThat(result.getItems()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("按 providerId 过滤（含 provider 为空的条目）")
+        void query_providerIdFilter_filtersByProvider() {
+            // given
+            TokenLimit withProvider = createTestTokenLimit();
+            Provider provider = new Provider();
+            provider.setId(10L);
+            withProvider.setProvider(provider);
+            TokenLimit withoutProvider = createTestTokenLimit();
+            withoutProvider.setId(2L);
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(withProvider, withoutProvider));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setProviderId(10L);
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("按 modelId 过滤（含 model 为空的条目）")
+        void query_modelIdFilter_filtersByModel() {
+            // given
+            TokenLimit withModel = createTestTokenLimit();
+            Model model = new Model();
+            model.setId(20L);
+            withModel.setModel(model);
+            TokenLimit withoutModel = createTestTokenLimit();
+            withoutModel.setId(2L);
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(withModel, withoutModel));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setModelId(20L);
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("按 state 过滤")
+        void query_stateFilter_filtersByState() {
+            // given
+            TokenLimit active = createTestTokenLimit();
+            TokenLimit suspended = createTestTokenLimit();
+            suspended.setId(2L);
+            suspended.setState(TokenLimit.TokenLimitState.SUSPENDED);
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(active, suspended));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setState(TokenLimit.TokenLimitState.SUSPENDED);
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("分页正确跳过和截取")
+        void query_pagination_skipsAndLimits() {
+            // given
+            TokenLimit a = createTestTokenLimit();
+            TokenLimit b = createTestTokenLimit();
+            b.setId(2L);
+            TokenLimit c = createTestTokenLimit();
+            c.setId(3L);
+            when(tokenLimitGateway.findAll()).thenReturn(List.of(a, b, c));
+
+            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            request.setPage(2);
+            request.setLimit(1);
+
+            // when
+            var result = service.query(request);
+
+            // then
+            assertThat(result.getItems()).hasSize(1);
+            assertThat(result.getPagination().getTotal()).isEqualTo(3);
+        }
     }
 
     @Nested
@@ -188,6 +407,84 @@ class TokenLimitServiceImplTest {
             // then
             assertThat(result).isNotNull();
         }
+
+        @Test
+        @DisplayName("更新全字段并切换模型")
+        void update_allFields_appliesAllChanges() {
+            // given
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitGateway.findById(1L)).thenReturn(Optional.of(tokenLimit));
+            when(modelGateway.findById(30L)).thenReturn(Optional.of(new Model()));
+            when(tokenLimitGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
+            request.setMaxTokens(BigDecimal.valueOf(300000));
+            request.setPeriodType(PeriodType.WEEKLY);
+            request.setPeriodDayOfWeek(1);
+            request.setPeriodDayOfMonth(5);
+            request.setExceededAction(ExceededAction.DOWNGRADE);
+            request.setSwitchModelId(30L);
+            request.setEnabled(true);
+
+            // when
+            TokenLimitResponse result = service.update(1L, request);
+
+            // then
+            assertThat(result.getMaxTokens()).isEqualByComparingTo(BigDecimal.valueOf(300000));
+            assertThat(tokenLimit.getPeriodType()).isEqualTo(PeriodType.WEEKLY);
+            assertThat(tokenLimit.getPeriodDayOfWeek()).isEqualTo(1);
+            assertThat(tokenLimit.getPeriodDayOfMonth()).isEqualTo(5);
+            assertThat(tokenLimit.getExceededAction()).isEqualTo(ExceededAction.DOWNGRADE);
+            assertThat(tokenLimit.getSwitchModel()).isNotNull();
+            assertThat(tokenLimit.getState()).isEqualTo(TokenLimit.TokenLimitState.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("更新 enabled=false 置为暂停状态")
+        void update_disabled_setsSuspended() {
+            // given
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitGateway.findById(1L)).thenReturn(Optional.of(tokenLimit));
+            when(tokenLimitGateway.save(any())).thenReturn(tokenLimit);
+
+            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
+            request.setEnabled(false);
+
+            // when
+            TokenLimitResponse result = service.update(1L, request);
+
+            // then
+            assertThat(tokenLimit.getState()).isEqualTo(TokenLimit.TokenLimitState.SUSPENDED);
+            assertThat(result.getEnabled()).isFalse();
+        }
+
+        @Test
+        @DisplayName("更新切换模型不存在抛出异常")
+        void update_switchModelNotFound_throwsException() {
+            // given
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitGateway.findById(1L)).thenReturn(Optional.of(tokenLimit));
+            when(modelGateway.findById(30L)).thenReturn(Optional.empty());
+
+            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
+            request.setSwitchModelId(30L);
+
+            // when & then
+            assertThatThrownBy(() -> service.update(1L, request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Model");
+        }
+
+        @Test
+        @DisplayName("更新不存在的限额抛出异常")
+        void update_notFound_throwsException() {
+            // given
+            when(tokenLimitGateway.findById(999L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.update(999L, new TokenLimitUpdateRequest()))
+                .isInstanceOf(ResourceNotFoundException.class);
+        }
     }
 
     @Nested
@@ -208,6 +505,17 @@ class TokenLimitServiceImplTest {
             // then
             verify(tokenLimitGateway).save(any());
         }
+
+        @Test
+        @DisplayName("删除不存在的限额抛出异常")
+        void delete_notFound_throwsException() {
+            // given
+            when(tokenLimitGateway.findById(999L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.delete(999L))
+                .isInstanceOf(ResourceNotFoundException.class);
+        }
     }
 
     @Nested
@@ -227,7 +535,18 @@ class TokenLimitServiceImplTest {
             TokenLimitResponse result = service.resetUsage(1L);
 
             // then
-            assertThat(result).isNotNull();
+            assertThat(result.getUsedTokens()).isEqualByComparingTo(BigDecimal.ZERO);
+        }
+
+        @Test
+        @DisplayName("重置不存在的限额抛出异常")
+        void resetUsage_notFound_throwsException() {
+            // given
+            when(tokenLimitGateway.findById(999L)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> service.resetUsage(999L))
+                .isInstanceOf(ResourceNotFoundException.class);
         }
     }
 
