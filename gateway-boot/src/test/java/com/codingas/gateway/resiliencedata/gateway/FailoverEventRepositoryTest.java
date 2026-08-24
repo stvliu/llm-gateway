@@ -40,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * 无法验证 Repository @Query 的 SQL 过滤逻辑真实生效。本测试连 H2 执行真实 SQL，
  * 消除 Mockito 盲区。</p>
  *
- * <p>参照 {@code ChannelHealthRepositoryIT} 的 {@code @SpringBootTest} + H2 范式
+ * <p>参照 {@code ChannelHealthRepositoryIntegrationTest} 的 {@code @SpringBootTest} + H2 范式
  * （application-test.yml：H2 PostgreSQL 兼容模式 + ddl-auto create-drop + flyway disabled，
  * 表由 JPA 实体自动建）。</p>
  */

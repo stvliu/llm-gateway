@@ -299,27 +299,27 @@ com.codingas.gateway.stats
 gateway/                              # 项目根（父 POM）
 ├── pom.xml
 ├── gateway-common/                   # 底座（保持根目录）
-├── gateway-protocol/                 # 协议域目录（含域父 POM，聚合 protocol/protocol-openai/protocol-anthropic/protocol-gemini）
+├── gateway-protocol/                 # 协议域目录（汇聚 protocol/protocol-openai/protocol-anthropic/protocol-gemini）
 │   ├── protocol/                     # 协议 API 核心（artifactId gateway-protocol）
 │   ├── protocol-openai/              # 插件（gateway-protocol-openai）
 │   ├── protocol-anthropic/           # 插件
 │   └── protocol-gemini/              # 插件
-├── gateway-provider/                 # 供给域目录（含域父 POM，聚合 provider/provider-data/provider-starter）
+├── gateway-provider/                 # 供给域目录（汇聚 provider/provider-data/provider-starter）
 │   ├── provider/                     # 核心（gateway-provider）
 │   ├── provider-data/                # JPA 绑定（gateway-provider-data）
 │   ├── provider-http/                # HTTP 绑定（gateway-provider-http）
 │   └── provider-starter/             # 装配（P2）
-├── gateway-iam/                      # 身份域目录（含域父 POM，聚合 iam/iam-data/iam-starter）
+├── gateway-iam/                      # 身份域目录（汇聚 iam/iam-data/iam-starter）
 │   ├── iam/                          # 核心（gateway-iam）
 │   ├── iam-data/                     # 绑定（gateway-iam-data）
 │   └── iam-starter/                  # 装配（P2）
-├── gateway-usage/                    # usage/usage-data/usage-starter（含域父 POM）
-├── gateway-security/                 # security/security-data/security-starter（含域父 POM）
-├── gateway-audit/                    # audit/audit-data/audit-starter（含域父 POM）
-├── gateway-alert/                    # alert/alert-data/alert-starter（含域父 POM）
-├── gateway-resilience/               # resilience/resilience-data/resilience-starter（含域父 POM）
-├── gateway-proxy/                    # proxy/proxy-starter（含域父 POM）
-├── gateway-stats/                    # stats/stats-starter（含域父 POM）
+├── gateway-usage/                    # usage/usage-data/usage-starter
+├── gateway-security/                 # security/security-data/security-starter
+├── gateway-audit/                    # audit/audit-data/audit-starter
+├── gateway-alert/                    # alert/alert-data/alert-starter
+├── gateway-resilience/               # resilience/resilience-data/resilience-starter
+├── gateway-proxy/                    # proxy/proxy-starter
+├── gateway-stats/                    # stats/stats-starter
 ├── gateway-boot/                     # 应用（保持根目录）
 ├── gateway-web/                      # HTTP 承载层（Controller/Interceptor/Advice，已落地）
 ├── gateway-cli/  gateway-simulator/  # 保持根目录
@@ -333,44 +333,13 @@ gateway/                              # 项目根（父 POM）
 - 协议插件 = `gateway-protocol/<protocol-openai>` 等（汇聚到协议域目录）
 - 底座/应用/工具模块（common/protocol 核心、boot/web/cli/simulator/console）保持根目录
 
-**groupId 命名（按域划分，仿 Jmix `io.jmix.security`/`io.jmix.data`）**：
-
-| 功能域 | groupId | 包含模块 |
-|---|---|---|
-| 底座 | `com.codingas.gateway.common` | `gateway-common` |
-| 协议 | `com.codingas.gateway.protocol` | `gateway-protocol`、`gateway-protocol-openai/anthropic/gemini` |
-| 供给 | `com.codingas.gateway.provider` | `gateway-provider`、`-data`、`-http`、`-starter` |
-| 身份 | `com.codingas.gateway.iam` | `gateway-iam`、`-data`、`-starter` |
-| 用量 | `com.codingas.gateway.usage` | `gateway-usage`、`-data`、`-starter` |
-| 安全 | `com.codingas.gateway.security` | `gateway-security`、`-data`、`-starter` |
-| 审计 | `com.codingas.gateway.audit` | `gateway-audit`、`-data`、`-starter` |
-| 告警 | `com.codingas.gateway.alert` | `gateway-alert`、`-data`、`-starter` |
-| 韧性 | `com.codingas.gateway.resilience` | `gateway-resilience`、`-data`、`-starter` |
-| 派发 | `com.codingas.gateway.proxy` | `gateway-proxy`、`-starter` |
-| 报表 | `com.codingas.gateway.stats` | `gateway-stats`、`-starter` |
-| 应用/工具 | `com.codingas.gateway` | `gateway-boot`、`gateway-web`、`gateway-cli`、`gateway-simulator` |
+**groupId（统一，仿 Jmix 统一 `io.jmix`）**：所有模块统一 `com.codingas.gateway`。包名仍按域（`com.codingas.gateway.<域>` = groupId + 子域，与 Jmix `io.jmix.security` 同模式）。
 
 **starter 对应（对齐 Jmix `security-starter` + `security-data-starter`）**：核心模块有 `gateway-<域>-starter`，每个绑定模块有独立 `gateway-<域>-<绑定>-starter`（如 `provider-starter` + `provider-data-starter` + `provider-http-starter`）。
 
-**Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）；所有模块 pom 的依赖声明 groupId 按上表使用对应域 groupId。依赖声明仍按 artifactId，不受目录影响。
+**Maven 影响**：根 `pom.xml` 的 `<module>` 指向相对路径（如 `gateway-provider/provider`）；嵌套子模块 pom 的 parent `relativePath` 显式设为 `../../pom.xml`（根 POM）；所有模块依赖声明 groupId 统一 `com.codingas.gateway`，仍按 artifactId 引用，不受目录影响。
 
-> **2026-08-24 决策（偏离原方案）**：域目录增加中间父 POM（层级聚合）——每个域目录一个 `pom.xml`（`gateway-<域>-parent`，parent=根 pom，packaging=pom，聚合域内子模块），子模块 parent 指向域 pom（`relativePath=../pom.xml`），根 pom `<modules>` 只聚合 10 个域 pom + 4 个根目录模块（common/boot/cli/simulator）。收益：cd 进域目录可独立构建该域；域级模块组织语义化。成本：pom 层级 +1、14 个新 pom 文件。原「根 pom 直接聚合子模块、relativePath=../../pom.xml」方案废弃。
-
-> **2026-08-24 决策（命名规范，待执行）**：Maven 坐标两级命名体系——`gateway-` 前缀标识「构建聚合/根工具模块」，域内业务模块用短名（核心子模块 artifactId 去前缀）：
->
-> | 层 | groupId | artifactId | 目录 |
-> |---|---|---|---|
-> | 域父 POM（聚合/继承） | `com.codingas.gateway`（根） | `gateway-<域>`（无 parent 后缀） | `gateway-<域>/` |
-> | 核心子模块 | `com.codingas.gateway.<域>` | `<域>`（如 `provider`） | `<域>/`（= artifactId） |
-> | data/starter | `com.codingas.gateway.<域>` | `<域>-data` / `<域>-starter` | `<域>-data/` / `<域>-starter/` |
-> | 根工具/应用 | `com.codingas.gateway` | `gateway-boot/common/cli/simulator/web`（带前缀，不变） | 根目录 |
->
-> 协议域示例：父 `com.codingas.gateway:gateway-protocol`；核心 `com.codingas.gateway.protocol:protocol`；插件 `com.codingas.gateway.protocol:protocol-openai/anthropic/gemini`。
->
-> **收益**：① 模块名（目录）与 artifactId 一致（目录本为短名，去前缀后天然一致）；② 域 groupId（`com.codingas.gateway.<域>`）保持干净、父 POM 不占域 groupId；③ 域父 POM 无 parent 后缀（父与核心 artifactId 不同，无需靠 groupId 区分）。
-> **代价**：坐标连锁变更——30+ 依赖声明 artifactId 改名（`gateway-provider` → `provider` 等）、10 个域父 POM + 29 子模块 parent 引用调整、文档/记忆同步。**待执行**（P4 合并后独立分支）。
->
-> 注：此决策与上方「域父 POM `gateway-<域>-parent`」决策有冲突（后者为过渡态），执行命名重构时以本决策为准。
+> **2026-08-24 最终决策（Jmix 命名规范严格对齐）**：① 统一 groupId `com.codingas.gateway`（所有模块）；② artifactId 带 `gateway-` 前缀（核心 `gateway-<域>`、绑定 `gateway-<域>-data`、装配 `gateway-<域>-starter`，仿 Jmix `jmix-security`/`-data`/`-starter`）；③ 目录用 Jmix 式短名（`<域>/` ≠ artifactId）；④ **去掉域父 POM**（Jmix 无父 POM，Maven 扁平聚合——根 pom 直接聚合全部模块，子模块 parent 指向根 pom）；⑤ 包名 `com.codingas.gateway.<域>`（= groupId + 子域，不变）。原「按域 groupId」「核心去前缀」「域父 POM 层级聚合」决策全部废弃。
 
 ## 5. 装配机制
 

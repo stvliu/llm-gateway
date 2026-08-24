@@ -43,7 +43,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @Transactional
-class ChannelHealthRepositoryIT {
+class ChannelHealthRepositoryIntegrationTest {
 
     @Autowired
     private ChannelGateway channelGateway;

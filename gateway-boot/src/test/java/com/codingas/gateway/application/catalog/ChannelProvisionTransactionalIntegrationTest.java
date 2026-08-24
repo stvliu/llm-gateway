@@ -65,7 +65,7 @@ import static org.mockito.Mockito.when;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @DisplayName("ChannelProvisionService 事务回滚 IT")
-class ChannelProvisionTransactionalIT {
+class ChannelProvisionTransactionalIntegrationTest {
 
     @Autowired
     private ChannelProvisionService service;
