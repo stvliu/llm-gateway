@@ -147,39 +147,39 @@ Token 必须是所有成本追踪的核心单位。
 **项目结构（17 模块多模块 Maven，父 POM artifactId = gateway-project）**:
 ```
 gateway-project/                       # 父 POM（打包类型: pom）
-├── gateway-common/                    # 横切基础模块（com.codingas.gateway.common）
+├── gateway-common/                    # 横切基础模块（根包 com.codingas.gateway.common，groupId 统一 com.codingas.gateway）
 │   └── BaseEntity / 异常 / 工具 / 事件 / 通用枚举，纯横切
 ├── gateway-protocol/                  # 协议域（抽象层 + 插件化实现）
-│   ├── protocol/                      #   协议核心（com.codingas.gateway.protocol）
+│   ├── protocol/                      #   协议核心（根包 com.codingas.gateway.protocol，groupId 统一 com.codingas.gateway）
 │   │   ├── api/capability/protocol/   #     Canonical IR + ProtocolAdapter SPI
 │   │   └── domain/protocol/           #     contract（协议契约 DTO）/ tuning / validation
 │   ├── protocol-openai/               #   OpenAI 协议插件（AutoConfiguration + @ConditionalOnProperty 启用）
 │   ├── protocol-anthropic/            #   Anthropic 协议插件
 │   └── protocol-gemini/               #   Gemini 协议插件（示例，验证插件化可扩展性）
-├── gateway-provider/                  # 供给域（com.codingas.gateway.provider）
+├── gateway-provider/                  # 供给域（根包 com.codingas.gateway.provider，groupId 统一 com.codingas.gateway）
 │   ├── provider/                      #   核心：Provider/Channel/Model/Catalog/Upstream/RoutingContext
 │   └── provider-data/                 #   JPA 绑定（providerdata）
-├── gateway-iam/                       # 身份与访问域（com.codingas.gateway.iam）
+├── gateway-iam/                       # 身份与访问域（根包 com.codingas.gateway.iam，groupId 统一 com.codingas.gateway）
 │   ├── iam/                           #   核心：User/Application/UserApiKey/Auth/加密
 │   └── iam-data/                      #   JPA 绑定（iamdata）
-├── gateway-usage/                     # 用量管控域（com.codingas.gateway.usage）
+├── gateway-usage/                     # 用量管控域（根包 com.codingas.gateway.usage，groupId 统一 com.codingas.gateway）
 │   ├── usage/                         #   核心：TokenLimit/配额/用量事件/限流执行
 │   └── usage-data/                    #   JPA 绑定（usagedata）
-├── gateway-security/                  # 安全与威胁域（com.codingas.gateway.security）
+├── gateway-security/                  # 安全与威胁域（根包 com.codingas.gateway.security，groupId 统一 com.codingas.gateway）
 │   ├── security/                      #   核心：IP 威胁检测 + 数据脱敏（SensitiveDataRule/IpBlock）
 │   └── security-data/                 #   JPA 绑定（securitydata）
-├── gateway-audit/                     # 审计追溯域（com.codingas.gateway.audit）
+├── gateway-audit/                     # 审计追溯域（根包 com.codingas.gateway.audit，groupId 统一 com.codingas.gateway）
 │   ├── audit/                         #   核心：调用日志（CallLogs）/ 审计事件
 │   └── audit-data/                    #   JPA 绑定（auditdata）
-├── gateway-alert/                     # 告警通知域（com.codingas.gateway.alert）
+├── gateway-alert/                     # 告警通知域（根包 com.codingas.gateway.alert，groupId 统一 com.codingas.gateway）
 │   ├── alert/                         #   核心：告警通知
 │   └── alert-data/                    #   JPA 绑定（alertdata）
-├── gateway-resilience/                # 韧性域（com.codingas.gateway.resilience）
+├── gateway-resilience/                # 韧性域（根包 com.codingas.gateway.resilience，groupId 统一 com.codingas.gateway）
 │   ├── resilience/                    #   核心：failover/retry/circuit-breaker
 │   └── resilience-data/               #   JPA 绑定（resiliencedata）
-├── gateway-proxy/                     # 模型代理域（com.codingas.gateway.proxy）
+├── gateway-proxy/                     # 模型代理域（根包 com.codingas.gateway.proxy，groupId 统一 com.codingas.gateway）
 │   └── proxy/                         #   ChatDispatch 调度 / routing / invoker / 协议转换门面
-├── gateway-stats/                     # 聚合统计域（com.codingas.gateway.stats）
+├── gateway-stats/                     # 聚合统计域（根包 com.codingas.gateway.stats，groupId 统一 com.codingas.gateway）
 │   └── stats/                         #   仪表盘聚合统计（读路径）
 ├── gateway-boot/                      # 后端主模块（适配器层 + 应用层 + 装配）
 │   ├── adapter/                       #   API Controller + 协议校验适配 + 拦截器
@@ -207,8 +207,8 @@ gateway-project/                       # 父 POM（打包类型: pom）
 
 **定义**:
 ```
-Gateway 接口定义在功能域核心模块中（根包 com.codingas.gateway.<域>）。
-Gateway 实现在对应的 <域>data 绑定模块中（根包 com.codingas.gateway.<域>data）。
+Gateway 接口定义在功能域核心模块中（根包 = groupId + 子域，如 com.codingas.gateway.iam）。
+Gateway 实现在对应的 <域>data 绑定模块中（根包 = groupId + 子域 + data，如 com.codingas.gateway.iamdata）。
 Domain 只依赖 Gateway 接口，不直接依赖外部资源。
 绑定模块通过依赖注入实现 Gateway，负责 DO ↔ Entity 转换。
 ```
@@ -546,7 +546,7 @@ gateway:
 | 变量 | camelCase + 名词 | `tokenThreshold`, `providerId` |
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
 | 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
-| 模块（根包） | 模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分 | `com.codingas.gateway.<域>`（如 `com.codingas.gateway.iam`） |
+| 模块（根包） | 模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；**groupId 统一 `com.codingas.gateway`**，包名 = groupId + 子域（如 `com.codingas.gateway.provider`，Jmix 统一 `io.jmix` 模式） | `com.codingas.gateway.iam` |
 | JPA 绑定模块 | `<域>data` 根包 | `iamdata`（`com.codingas.gateway.iamdata`） |
 | 装配包 | gateway-boot 内部保留 adapter/application 分层 | `com.codingas.gateway.adapter.*`, `com.codingas.gateway.application.*` |
 
