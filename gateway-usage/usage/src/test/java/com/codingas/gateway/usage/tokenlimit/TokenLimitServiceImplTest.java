@@ -382,6 +382,8 @@ class TokenLimitServiceImplTest {
 
             // then
             assertThat(result.getItems()).hasSize(1);
+            // page=2、limit=1 → 跳过第 1 条，返回第 2 条
+            assertThat(result.getItems().get(0).getId()).isEqualTo(2L);
             assertThat(result.getPagination().getTotal()).isEqualTo(3);
         }
     }

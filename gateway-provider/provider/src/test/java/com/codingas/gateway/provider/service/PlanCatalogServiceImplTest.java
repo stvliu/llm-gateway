@@ -47,7 +47,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -309,26 +308,42 @@ class PlanCatalogServiceImplTest {
     class ListModelsTests {
 
         @Test
-        @DisplayName("keyword 优先，capability 次之，均空则查全部")
-        void keywordPriority() {
+        @DisplayName("keyword 优先：非空 keyword 走 findByKeyword，不查 capability/findAll")
+        void listModels_keywordPriority_usesFindByKeyword() {
             Model m = model("gpt-4", true);
             when(modelGateway.findByKeyword("gpt")).thenReturn(List.of(m));
-            when(planModelCatalogGateway.findByModelName("gpt-4")).thenReturn(List.of());
-            lenient().when(modelGateway.findByCapability(any())).thenReturn(List.of(m));
-            lenient().when(modelGateway.findAll()).thenReturn(List.of(m));
 
             List<ModelResponse> result = service.listModels(null, "gpt", null);
+
             assertThat(result).hasSize(1);
             verify(modelGateway, never()).findByCapability(any());
             verify(modelGateway, never()).findAll();
+        }
 
+        @Test
+        @DisplayName("capability 次之：keyword 为空时按能力查询")
+        void listModels_capabilityFallback_usesFindByCapability() {
+            Model m = model("gpt-4", true);
             when(modelGateway.findByCapability("vision")).thenReturn(List.of(m));
-            service.listModels(null, null, "vision");
-            verify(modelGateway).findByCapability("vision");
 
+            List<ModelResponse> result = service.listModels(null, null, "vision");
+
+            assertThat(result).hasSize(1);
+            verify(modelGateway, never()).findByKeyword(any());
+            verify(modelGateway, never()).findAll();
+        }
+
+        @Test
+        @DisplayName("keyword 与 capability 均为空时查询全部")
+        void listModels_noCriteria_usesFindAll() {
+            Model m = model("gpt-4", true);
             when(modelGateway.findAll()).thenReturn(List.of(m));
-            service.listModels(null, null, null);
-            verify(modelGateway).findAll();
+
+            List<ModelResponse> result = service.listModels(null, null, null);
+
+            assertThat(result).hasSize(1);
+            verify(modelGateway, never()).findByKeyword(any());
+            verify(modelGateway, never()).findByCapability(any());
         }
 
         @Test

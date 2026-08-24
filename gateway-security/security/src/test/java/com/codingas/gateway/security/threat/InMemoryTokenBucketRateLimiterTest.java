@@ -18,6 +18,10 @@ package com.codingas.gateway.security.threat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -39,17 +43,20 @@ class InMemoryTokenBucketRateLimiterTest {
     @Test
     @DisplayName("桶内令牌不足时拒绝")
     void tryAcquire_insufficientTokens_rejects() {
+        // 固定时钟：两次调用同一秒内，无补充，确定性拒绝（消除跨秒 flake）
+        InMemoryTokenBucketRateLimiter fixedLimiter = fixedClockLimiter();
         // 容量 5，先取 5 个清空桶
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
+        assertThat(fixedLimiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
         // 再取 1 个应拒绝
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 1)).isFalse();
+        assertThat(fixedLimiter.tryAcquire("ip:1", 5, 10, 1)).isFalse();
     }
 
     @Test
     @DisplayName("恰好消耗全部令牌后不再放行")
     void tryAcquire_exactConsumption_thenRejects() {
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 1)).isFalse();
+        InMemoryTokenBucketRateLimiter fixedLimiter = fixedClockLimiter();
+        assertThat(fixedLimiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
+        assertThat(fixedLimiter.tryAcquire("ip:1", 5, 10, 1)).isFalse();
     }
 
     @Test
@@ -74,9 +81,11 @@ class InMemoryTokenBucketRateLimiterTest {
     @Test
     @DisplayName("getStatus 反映消费后的当前令牌数")
     void getStatus_afterConsumption_returnsRemaining() {
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 2)).isTrue();
+        // 固定时钟：消费与查询同一秒内，无时间补充，确定性断言（消除跨秒 flake）
+        InMemoryTokenBucketRateLimiter fixedLimiter = fixedClockLimiter();
+        assertThat(fixedLimiter.tryAcquire("ip:1", 5, 10, 2)).isTrue();
 
-        TokenBucketStatus status = limiter.getStatus("ip:1", 5, 10);
+        TokenBucketStatus status = fixedLimiter.getStatus("ip:1", 5, 10);
 
         assertThat(status.currentTokens()).isEqualTo(3);
         assertThat(status.capacity()).isEqualTo(5);
@@ -110,5 +119,13 @@ class InMemoryTokenBucketRateLimiterTest {
         assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
         // 另一 key 仍是满桶
         assertThat(limiter.tryAcquire("ip:2", 5, 10, 5)).isTrue();
+    }
+
+    /**
+     * 使用固定时钟的限流器：同一秒内时间不前进，保证秒边界测试确定性
+     */
+    private InMemoryTokenBucketRateLimiter fixedClockLimiter() {
+        Clock fixed = Clock.fixed(Instant.ofEpochSecond(1_000_000_000L), ZoneOffset.UTC);
+        return new InMemoryTokenBucketRateLimiter(fixed);
     }
 }

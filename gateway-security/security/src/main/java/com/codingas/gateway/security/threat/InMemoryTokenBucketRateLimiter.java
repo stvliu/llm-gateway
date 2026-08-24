@@ -20,6 +20,7 @@ import com.codingas.gateway.security.threat.TokenBucketStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,12 +34,30 @@ public class InMemoryTokenBucketRateLimiter implements TokenBucketRateLimiter {
 
     private final ConcurrentHashMap<String, BucketState> buckets = new ConcurrentHashMap<>();
 
+    private final Clock clock;
+
+    /**
+     * 默认使用系统时钟（UTC），保持原有行为
+     */
+    public InMemoryTokenBucketRateLimiter() {
+        this(Clock.systemUTC());
+    }
+
+    /**
+     * 可注入时钟（测试用固定时钟消除秒边界 flake）
+     *
+     * @param clock 时间源
+     */
+    public InMemoryTokenBucketRateLimiter(Clock clock) {
+        this.clock = clock;
+    }
+
     /**
      * 尝试获取令牌
      */
     public boolean tryAcquire(String key, int capacity, int refillRate, int requested) {
         String bucketKey = "ratelimit:" + key;
-        long now = System.currentTimeMillis() / 1000;
+        long now = clock.millis() / 1000;
 
         BucketState state = buckets.compute(bucketKey, (k, existing) -> {
             if (existing == null) {
@@ -71,7 +90,7 @@ public class InMemoryTokenBucketRateLimiter implements TokenBucketRateLimiter {
         }
 
         // 计算当前令牌数（考虑时间补充）
-        long now = System.currentTimeMillis() / 1000;
+        long now = clock.millis() / 1000;
         long elapsed = now - state.lastRefill;
         int currentTokens = Math.min(capacity, state.tokens + (int) (elapsed * refillRate));
 
