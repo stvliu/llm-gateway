@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.actuator;
+package com.codingas.gateway.provider.health;
 
 import com.codingas.gateway.provider.health.ProviderHealthTracker;
 import lombok.RequiredArgsConstructor;

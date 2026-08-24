@@ -39,11 +39,11 @@
 
 ### 4. 健康监控类归属原则（本次实践确立）
 
-域内健康逻辑（探测/状态/跟踪）归域（如 provider `health` 子包），**Actuator 端点适配（HealthIndicator）归组装层**（boot）：
+**健康监控整体归域**（含 Actuator 端点适配）：`ProviderHealthProbe/Tracker/State/Properties/RegistryHealthIndicator` 全部归属 provider `health` 子包。
 
-- `ProviderHealthProbe/Tracker/State/Properties` → provider `health` 子包（域逻辑）
-- `ProviderRegistryHealthIndicator` → boot `actuator` 子包（端点暴露，应用层职责）
-- 集成测试依赖启动类的留 boot（`@SpringBootTest(GatewayApplication.class)`），避免域模块反向依赖 boot
+- 依据：① 功能内聚（同一能力不跨模块拆分）；② `HealthIndicator` 的聚合规则（任一 DOWN → 整体 DOWN）是域业务规则，Indicator 只是暴露薄壳；③ 可观测性内建原则（域对自己的健康负责）；④ 域模块已依赖 actuator（State/Tracker 使用 `Status` 类型），无额外技术成本；⑤ `ProviderConfiguration` 的 `@ComponentScan` 覆盖域根包，自动装配
+- 例外：**集成测试依赖启动类的留 boot**（如 `ProviderHealthTrackerIntegrationTest` 为 `@SpringBootTest(GatewayApplication.class)`，归 boot `integration` 测试包），避免域模块反向依赖 boot
+- boot 模块不再承担 ProviderHealth 任何组件（`boot.actuator` 包已删除）
 
 ## 后果
 
@@ -54,10 +54,11 @@
 ## 已执行（2026-08-25）
 
 - `BaseDo`：`infrastructure.common` → `common.data`（gateway-common 模块内）
-- `ProviderHealth*`：`infrastructure.actuator` → provider `health`（下沉 provider 域）
+- `ProviderHealth` 全系列：`infrastructure.actuator` → provider `health`（Probe/Tracker/State/Properties/RegistryHealthIndicator，含 Indicator 端点适配）
 - `CredentialEncryptorAdapter`：boot `infrastructure.encryption` → provider `service`
-- gateway-boot 收拢：`infrastructure.config/actuator/event`、`application.init` → `boot.config/init/actuator/event`
+- gateway-boot 收拢：`infrastructure.config/event`、`application.init` → `boot.config/init/event`
 - `GatewayApplication` 扫描配置：移除 `infrastructure`/`application` 扫描项
+- `ProviderHealthTrackerIntegrationTest` 归 boot `integration` 测试包（依赖 GatewayApplication 的集成测试）
 
 ## 未决
 
