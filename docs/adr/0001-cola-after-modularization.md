@@ -28,8 +28,8 @@
 | gateway-provider | `com.codingas.gateway.provider` | channel / service / catalog / model / vendor / health |
 | gateway-iam | `com.codingas.gateway.iam` | dto / service / auth / apikey / encryption |
 | gateway-protocol | `com.codingas.gateway.protocol` | contract / transport / tuning / validation |
-| gateway-web | `com.codingas.gateway.adapter.*` | api / interceptor / advice（web 模块即适配层，`adapter` 视为模块职责名） |
-| gateway-boot | `com.codingas.gateway.boot.*` | config / init / actuator / event（收拢后） |
+| gateway-web | `com.codingas.gateway.web.*` | api / interceptor / advice（Controller/Interceptor/Advice 承载层） |
+| gateway-boot | `com.codingas.gateway.boot.*` | config / init / event（收拢后） |
 | 绑定模块 | `com.codingas.gateway.<域>data` | dataobject / gateway / repository |
 | starter | `com.codingas.gateway.autoconfigure.<域>` | - |
 
@@ -58,9 +58,10 @@
 - `CredentialEncryptorAdapter`：boot `infrastructure.encryption` → provider `service`
 - gateway-boot 收拢：`infrastructure.config/event`、`application.init` → `boot.config/init/event`
 - `GatewayApplication` 扫描配置：移除 `infrastructure`/`application` 扫描项
-- `ProviderHealthTrackerIntegrationTest` 归 boot `integration` 测试包（依赖 GatewayApplication 的集成测试）
+- gateway-web 根包改名：`adapter.*` → `web.*`（api/interceptor/advice 子包保留），同步更新 `WebAutoConfiguration` 自动配置注册文件（`AutoConfiguration.imports`）、`WebConfiguration` 的 `@ComponentScan`、ArchUnit `LayerDependencyTest` 5 处引用
+- 测试包路径清理：boot 的 `application/listener`（AuditEventListenerTest/TokenUsageEventListenerTest 增强版归位对应域模块测试包）、`application/catalog`、`adapter/api` 遗留集成测试归位 boot `integration` 包
 
 ## 未决
 
-- gateway-web 的 `adapter` 根包：当前视为模块职责名保留；若未来追求与模块名完全一致（`web.*`），需同步更新 ArchUnit 规则与引用面（约 36 文件），暂缓
-- `application/listener` 测试包路径历史遗留（测试类在 boot 但测域模块监听器），非阻塞
+- boot 测试中少量"包名跟随被测域模块"的测试（如 `iam/application`、`iamdata/gateway`、`proxy/invoker` 等约 10 个）为历史遗留，因不影响主代码与构建，暂不处理
+- `docs/` 下部分文档（CLAUDE.md 项目结构、constitution.md）仍为单模块分层描述，待同步更新

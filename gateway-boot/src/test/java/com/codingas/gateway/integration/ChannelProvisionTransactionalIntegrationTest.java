@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.application.catalog;
+package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.provider.service.ChannelProvisionService;
