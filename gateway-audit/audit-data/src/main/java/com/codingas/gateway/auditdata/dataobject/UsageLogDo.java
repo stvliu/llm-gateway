@@ -16,9 +16,6 @@
 package com.codingas.gateway.auditdata.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.providerdata.dataobject.ModelDo;
-import com.codingas.gateway.providerdata.dataobject.ProviderDo;
-import com.codingas.gateway.iamdata.dataobject.UserDo;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -47,17 +44,17 @@ public class UsageLogDo extends BaseDo {
     @Column(name = "user_api_key_id", nullable = false)
     private Long userApiKeyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserDo user;
+    /** 用户 ID（关联 iam 域用户，仅存 ID 不跨域引用实体） */
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "provider_id", nullable = false)
-    private ProviderDo provider;
+    /** 供应商 ID（关联 provider 域供应商，仅存 ID） */
+    @Column(name = "provider_id", nullable = false)
+    private Long providerId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "model_id", nullable = false)
-    private ModelDo model;
+    /** 模型 ID（关联 provider 域模型，仅存 ID） */
+    @Column(name = "model_id", nullable = false)
+    private Long modelId;
 
     /** 新架构：团队 ID */
     @Column(name = "team_id")

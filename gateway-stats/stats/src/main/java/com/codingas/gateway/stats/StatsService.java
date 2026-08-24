@@ -38,6 +38,9 @@ public class StatsService {
     private final ModelGateway modelGateway;
     private final UserGateway userGateway;
 
+    /**
+     * 获取系统统计数据
+     */
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
         long providerCount = providerGateway.count();

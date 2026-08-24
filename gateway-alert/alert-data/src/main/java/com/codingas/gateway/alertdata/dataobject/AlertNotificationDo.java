@@ -16,7 +16,6 @@
 package com.codingas.gateway.alertdata.dataobject;
 
 import com.codingas.gateway.infrastructure.common.BaseDo;
-import com.codingas.gateway.iamdata.dataobject.UserDo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -42,9 +41,9 @@ public class AlertNotificationDo extends BaseDo {
     @JoinColumn(name = "alert_rule_id", nullable = false)
     private AlertRuleDo alertRule;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "target_user_id", nullable = false)
-    private UserDo targetUser;
+    /** 目标用户 ID（仅存 ID，不跨域引用 iam 用户实体） */
+    @Column(name = "target_user_id", nullable = false)
+    private Long targetUserId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "channel", nullable = false)
