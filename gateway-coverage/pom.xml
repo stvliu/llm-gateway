@@ -30,7 +30,7 @@
     <artifactId>gateway-coverage</artifactId>
     <packaging>pom</packaging>
     <name>Gateway Coverage</name>
-    <description>覆盖率聚合模块：声明全部子模块为 provided 依赖，由 jacoco report-aggregate（从根 pom build/plugins 继承的 verify 阶段执行）聚合全模块覆盖率报告</description>
+    <description>覆盖率聚合模块：声明全部子模块为 provided 依赖，由本模块自声明的 jacoco report-aggregate（verify 阶段执行）聚合全模块覆盖率报告</description>
 
     <!--
         聚合依赖：jacoco report-aggregate 只聚合「当前项目声明为依赖的模块」。
@@ -244,4 +244,29 @@
             <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <!--
+        report-aggregate 只在本模块声明执行（根 pom build/plugins 已移除该 execution，
+        子模块继承的只有 prepare-agent/report 单模块覆盖率）。
+        聚合报告为权威全模块覆盖率，产出在 target/site/jacoco-aggregate/。
+        version 从根 pluginManagement 继承；excludes 等 configuration 同样继承，
+        聚合无需额外 configuration。
+    -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>report-aggregate</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>report-aggregate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

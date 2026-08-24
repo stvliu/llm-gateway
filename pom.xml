@@ -407,7 +407,10 @@
                 </executions>
             </plugin>
 
-            <!-- JaCoCo 覆盖率插件（继承所有模块：prepare-agent + report + report-aggregate）。
+            <!-- JaCoCo 覆盖率插件（继承所有模块：prepare-agent + report）。
+                 各模块只做单模块覆盖率；report-aggregate 聚合报告由 gateway-coverage
+                 模块在自身 build/plugins 单独声明（避免每个子模块 verify 阶段都继承执行
+                 一次聚合，产生空/部分报告误导取数——权威聚合报告在 gateway-coverage）。
                  excludes 等 configuration 从 pluginManagement 继承（此处不写 configuration，
                  避免覆盖 pluginManagement 的 excludes 配置）。 -->
             <plugin>
@@ -424,13 +427,6 @@
                         <phase>test</phase>
                         <goals>
                             <goal>report</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>report-aggregate</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>report-aggregate</goal>
                         </goals>
                     </execution>
                 </executions>
