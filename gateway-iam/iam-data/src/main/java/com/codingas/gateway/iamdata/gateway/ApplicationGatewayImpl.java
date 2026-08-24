@@ -32,7 +32,7 @@ import java.util.List;
  *
  * <p>负责 {@link Application} 与 {@link ApplicationDo} 的互转。
  * 审计字段（createdAt/updatedAt/createdBy/updatedBy）由
- * {@link com.codingas.gateway.infrastructure.common.BaseDo} 的
+ * {@link com.codingas.gateway.common.data.BaseDo} 的
  * AuditingEntityListener 自动填充，转换时仅需透传。</p>
  */
 @Component

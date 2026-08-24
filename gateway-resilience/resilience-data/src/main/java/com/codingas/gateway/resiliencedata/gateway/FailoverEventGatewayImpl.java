@@ -35,7 +35,7 @@ import java.util.List;
  *
  * <p>负责 {@link FailoverEvent} 与 {@link FailoverEventDo} 的互转。
  * 审计字段（createdAt/updatedAt/createdBy/updatedBy）由
- * {@link com.codingas.gateway.infrastructure.common.BaseDo} 的
+ * {@link com.codingas.gateway.common.data.BaseDo} 的
  * AuditingEntityListener 自动填充，转换时仅需透传。</p>
  *
  * <p>errorType / decision 字段以字符串存储于 DO（枚举名），读取时还原为

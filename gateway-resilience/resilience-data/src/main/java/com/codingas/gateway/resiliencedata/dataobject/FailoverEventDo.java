@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.resiliencedata.dataobject;
 
-import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.common.data.BaseDo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;

@@ -16,7 +16,7 @@
 package com.codingas.gateway.iamdata.dataobject;
 
 import com.codingas.gateway.iam.user.UserState;
-import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.common.data.BaseDo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

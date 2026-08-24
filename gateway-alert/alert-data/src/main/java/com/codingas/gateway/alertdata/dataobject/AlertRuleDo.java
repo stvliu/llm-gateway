@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.alertdata.dataobject;
 
-import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.common.data.BaseDo;
 import com.codingas.gateway.usage.enums.PeriodType;
 import jakarta.persistence.*;
 import lombok.*;

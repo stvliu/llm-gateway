@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.usagedata.dataobject;
 
-import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.common.data.BaseDo;
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import jakarta.persistence.*;

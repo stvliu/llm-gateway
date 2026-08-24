@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.alertdata.dataobject;
 
-import com.codingas.gateway.infrastructure.common.BaseDo;
+import com.codingas.gateway.common.data.BaseDo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
