@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.encryption;
+package com.codingas.gateway.provider.service;
 
 import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
-import com.codingas.gateway.provider.service.CredentialEncryptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.adapter.api;
+package com.codingas.gateway.adapter.api.dto;
 
 import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import jakarta.validation.Valid;

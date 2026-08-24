@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.adapter.api;
 
+import com.codingas.gateway.adapter.api.dto.ApplicationChannelRequest;
 import com.codingas.gateway.iam.service.ApplicationService;
 import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import com.codingas.gateway.iam.dto.ApplicationRequest;

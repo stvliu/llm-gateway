@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.provider.service;
 
-import com.codingas.gateway.provider.impl.BuiltinDataLoader;
+import com.codingas.gateway.provider.service.BuiltinDataLoader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
