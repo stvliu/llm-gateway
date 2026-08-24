@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ResilienceEventController 端点契约")
-class ResilienceEventControllerIT {
+class ResilienceEventControllerTest {
 
     @Mock
     private ResilienceEventService resilienceEventService;

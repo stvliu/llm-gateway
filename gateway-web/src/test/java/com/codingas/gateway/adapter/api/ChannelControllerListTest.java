@@ -47,7 +47,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelController 列表/详情响应字段")
-class ChannelControllerListIT {
+class ChannelControllerListTest {
 
     @Mock
     private ChannelService channelService;

@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationController 端点契约")
-class ApplicationControllerIT {
+class ApplicationControllerHttpTest {
 
     @Mock
     private ApplicationService applicationService;

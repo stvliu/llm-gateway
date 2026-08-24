@@ -68,8 +68,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
-@DisplayName("ChannelHealthControllerIT")
-class ChannelHealthControllerIT {
+@DisplayName("ChannelHealthController 集成测试")
+class ChannelHealthControllerIntegrationTest {
 
     @Autowired
     private ChannelGateway channelGateway;

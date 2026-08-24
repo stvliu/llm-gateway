@@ -155,6 +155,18 @@
             <artifactId>hamcrest</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- jsonPath 断言（spring-test 的 JsonPathResultMatchers 依赖 com.jayway.jsonpath，P3 迁入时遗漏） -->
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <!-- @Valid 请求体校验需 Bean Validation 提供者（LocalValidatorFactoryBean 默认实现，standalone MockMvc 亦需） -->
+        <dependency>
+            <groupId>org.hibernate.validator</groupId>
+            <artifactId>hibernate-validator</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

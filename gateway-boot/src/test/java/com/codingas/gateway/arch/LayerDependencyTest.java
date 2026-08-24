@@ -215,6 +215,12 @@ public class LayerDependencyTest {
      * 不得跨域引用其他业务域（provider/iam/usage/security/audit/alert/resilience/proxy/stats）。
      * 绑定层（*data）与承载层（boot/adapter）同样禁止。
      *
+     * <p><b>取舍（两级 starter 模式）</b>：核心 starter 只依赖本域核心 Configuration，
+     * 不直连 data 绑定模块——data 绑定装配由独立 {@code -data-starter} 承担（两级 starter：
+     * 核心 starter + data-starter，对齐 Jmix {@code security-starter} + {@code security-data-starter}）。
+     * 当前阶段 data 绑定模块由核心 Configuration 的 {@code @ComponentScan} 兼扫（2026-08-23 决策），
+     * 故本规则禁止 starter 依赖 *data 绑定根包。
+     *
      * <p>实现说明：不能直接用 {@code dependOnClassesThat().resideInAnyPackage(业务域)}——
      * 那样会连「本域模块」也判违规（如 ProviderAutoConfiguration → ProviderConfiguration
      * 属合法自引用）。故用自定义条件按「源类的域 == 目标类的域」判定，跨域即违规。
@@ -246,6 +252,10 @@ public class LayerDependencyTest {
      * 生成「starter 装配只依赖本域模块」条件：源类所在的 {@code autoconfigure.<域>} 包，
      * 对目标类所在业务域根包（≠ 本域）的依赖判为违规；绑定层（*data）、承载层（boot/adapter）
      * 同样禁止。目标为 {@code common..} / 本域根包 / 外部框架类则合法。
+     *
+     * <p>绑定层（*data）禁止的取舍：核心 starter 不直连 data 绑定模块（两级 starter 模式，
+     * data 装配归独立 {@code -data-starter}；当前阶段由核心 Configuration 兼扫，
+     * 2026-08-23 决策），与 {@link #STARTER_ONLY_AUTOCONFIGURE} 同口径。
      */
     private static ArchCondition<JavaClass> onlyDependOnOwnDomainOrNotBusiness() {
         return new ArchCondition<>("只依赖本域模块（禁止跨域/绑定/承载层依赖）") {
@@ -272,12 +282,13 @@ public class LayerDependencyTest {
         };
     }
 
-    /** common 规则禁止依赖的全部目标包（业务核心 + 绑定 + 遗留分层包） */
+    /** common 规则禁止依赖的全部目标包（业务核心 + 绑定 + 承载层 + 遗留分层包） */
     private static String[] commonForbiddenTargets() {
-        List<String> targets = new ArrayList<>(CORE_MODULES.length + BINDING_MODULES.length + 5);
+        List<String> targets = new ArrayList<>(CORE_MODULES.length + BINDING_MODULES.length + 6);
         targets.addAll(Arrays.asList(CORE_MODULES));
         targets.addAll(Arrays.asList(BINDING_MODULES));
         targets.addAll(List.of(
+            "com.codingas.gateway.boot..",
             "com.codingas.gateway.domain..",
             "com.codingas.gateway.application..",
             "com.codingas.gateway.infrastructure..",

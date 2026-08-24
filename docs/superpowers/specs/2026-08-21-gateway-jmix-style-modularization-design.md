@@ -380,7 +380,7 @@ gateway/                              # 项目根（父 POM）
 
 ```java
 @AutoConfiguration
-@Import({ProviderConfiguration.class, ProviderDataConfiguration.class})
+@Import(ProviderConfiguration.class)   // 核心 starter 只装配本域核心 Configuration
 @ConditionalOnProperty(prefix = "gateway.provider", name = "enabled", matchIfMissing = true)
 @EnableConfigurationProperties(ProviderProperties.class)
 public class ProviderAutoConfiguration { ... }
@@ -390,11 +390,13 @@ public class ProviderAutoConfiguration { ... }
 - starter 只依赖 `spring-boot-autoconfigure`，零业务逻辑
 - `@ConditionalOnMissingBean` 保证可覆盖
 
+**两级 starter 模式（取舍）**：核心 starter 只 `@Import` 本域核心 Configuration（如 `ProviderConfiguration`），不直连 data 绑定模块——data 绑定装配由独立 `-data-starter` 导入（如未来拆分时，`ProviderDataConfiguration` 由 `provider-data-starter` 装配，对齐 Jmix `security-starter` + `security-data-starter`）。**当前阶段（2026-08-23 决策）**：data 绑定模块由核心 Configuration 的 `@ComponentScan` 兼扫（见 §5.2），不建 data-starter。故示例为 `@Import(ProviderConfiguration.class)` 而非 `@Import({ProviderConfiguration.class, ProviderDataConfiguration.class})`——后者与 ArchUnit 规则 `STARTER_ONLY_AUTOCONFIGURE`（starter 禁止依赖 *data 绑定根包）矛盾。
+
 ### 5.2 核心模块装配入口（仿 `SecurityConfiguration`，不含 `@JmixModule` 运行时机制）
 
 ```java
 @Configuration
-@ComponentScan(basePackages = "com.codingas.gateway.provider")   // 限定本域包
+@ComponentScan(basePackages = {"com.codingas.gateway.provider", "com.codingas.gateway.providerdata"})   // 限定本域核心 + 绑定包（绑定模块由核心兼扫，2026-08-23 决策）
 @ConfigurationPropertiesScan
 public class ProviderConfiguration { ... }
 ```

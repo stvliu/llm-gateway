@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelController 应急操作端点契约")
-class ChannelEmergencyControllerIT {
+class ChannelEmergencyControllerTest {
 
     @Mock
     private ChannelService channelService;
