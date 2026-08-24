@@ -43,7 +43,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
  *   <li>核心模块根包：{@code provider / iam / usage / security / audit / alert / resilience / proxy / stats / protocol}</li>
  *   <li>绑定模块根包：{@code providerdata / iamdata / usagedata / securitydata / auditdata / alertdata / resiliencedata}</li>
  *   <li>{@code common} 保持纯横切：不依赖任何业务/绑定根包</li>
- *   <li>承载层：{@code boot}（启动装配）/ {@code adapter}（gateway-web Controller/Interceptor/Advice）</li>
+ *   <li>承载层：{@code boot}（启动装配）/ {@code web}（gateway-web Controller/Interceptor/Advice）</li>
  *   <li>starter 装配：{@code autoconfigure.<域>}（@AutoConfiguration + @Import 本域 Configuration）</li>
  * </ul>
  *
@@ -173,14 +173,14 @@ public class LayerDependencyTest {
 
     /**
      * 业务域/绑定模块禁止反向依赖 boot/web 承载层。
-     * boot（启动装配）与 adapter（gateway-web Controller/Interceptor/Advice）是承载层，
+     * boot（启动装配）与 web（gateway-web Controller/Interceptor/Advice）是承载层，
      * 业务域只向上暴露端口，不得反向依赖承载层实现。
      */
     @ArchTest
     static final ArchRule NO_DEPENDS_ON_BOOT_OR_WEB = noClasses()
         .that().resideInAnyPackage(BUSINESS_AND_BINDING_MODULES)
         .should().dependOnClassesThat().resideInAnyPackage(
-            "com.codingas.gateway.boot..", "com.codingas.gateway.adapter..");
+            "com.codingas.gateway.boot..", "com.codingas.gateway.web..");
 
     /**
      * 协议插件只依赖协议核心 + 底座（不依赖其他业务域）。
@@ -213,7 +213,7 @@ public class LayerDependencyTest {
      * <p>每个 {@code autoconfigure.<域>} 包下的 {@code *AutoConfiguration} 只可依赖本域
      * 根包（如 {@code autoconfigure.provider} → {@code provider..} 的 Configuration），
      * 不得跨域引用其他业务域（provider/iam/usage/security/audit/alert/resilience/proxy/stats）。
-     * 绑定层（*data）与承载层（boot/adapter）同样禁止。
+     * 绑定层（*data）与承载层（boot/web）同样禁止。
      *
      * <p><b>取舍（两级 starter 模式）</b>：核心 starter 只依赖本域核心 Configuration，
      * 不直连 data 绑定模块——data 绑定装配由独立 {@code -data-starter} 承担（两级 starter：
@@ -250,7 +250,7 @@ public class LayerDependencyTest {
 
     /**
      * 生成「starter 装配只依赖本域模块」条件：源类所在的 {@code autoconfigure.<域>} 包，
-     * 对目标类所在业务域根包（≠ 本域）的依赖判为违规；绑定层（*data）、承载层（boot/adapter）
+     * 对目标类所在业务域根包（≠ 本域）的依赖判为违规；绑定层（*data）、承载层（boot/web）
      * 同样禁止。目标为 {@code common..} / 本域根包 / 外部框架类则合法。
      *
      * <p>绑定层（*data）禁止的取舍：核心 starter 不直连 data 绑定模块（两级 starter 模式，
@@ -273,7 +273,7 @@ public class LayerDependencyTest {
                                     String.format("%s 依赖其他业务域 %s", item.getName(), target.getName())));
                             }
                         } else if (BINDING_ROOTS.contains(targetRoot)
-                                || "boot".equals(targetRoot) || "adapter".equals(targetRoot)) {
+                                || "boot".equals(targetRoot) || "web".equals(targetRoot)) {
                             events.add(SimpleConditionEvent.violated(item,
                                 String.format("%s 依赖非业务根包 %s", item.getName(), target.getName())));
                         }
@@ -292,7 +292,7 @@ public class LayerDependencyTest {
             "com.codingas.gateway.domain..",
             "com.codingas.gateway.application..",
             "com.codingas.gateway.infrastructure..",
-            "com.codingas.gateway.adapter..",
+            "com.codingas.gateway.web..",
             "com.codingas.gateway.api.."));
         return targets.toArray(String[]::new);
     }

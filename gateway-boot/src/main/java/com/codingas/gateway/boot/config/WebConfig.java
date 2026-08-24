@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.boot.config;
 
-import com.codingas.gateway.adapter.interceptor.SecurityInterceptorChain;
+import com.codingas.gateway.web.interceptor.SecurityInterceptorChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;

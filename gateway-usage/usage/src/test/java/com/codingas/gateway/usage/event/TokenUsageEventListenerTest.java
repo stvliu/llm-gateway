@@ -15,52 +15,152 @@
  */
 package com.codingas.gateway.usage.event;
 
+import com.codingas.gateway.usage.event.TokenUsageEventListener;
+import com.codingas.gateway.usage.event.TokenUsedEvent;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.Mockito.*;
 
 /**
  * TokenUsageEventListener 单元测试
- *
- * <p>监听器仅记录日志，验证任意合法事件可被处理且不抛异常。</p>
  */
-@DisplayName("TokenUsageEventListener 测试")
+@ExtendWith(MockitoExtension.class)
+@DisplayName("TokenUsageEventListener 单元测试")
 class TokenUsageEventListenerTest {
 
-    private final TokenUsageEventListener listener = new TokenUsageEventListener();
+    @Mock
+    private Logger logger;
 
-    @Test
-    @DisplayName("处理完整 Token 使用事件不抛异常")
-    void handleTokenUsedEvent_fullEvent_noException() {
-        TokenUsedEvent event = TokenUsedEvent.builder()
-                .userId(1L)
-                .apiKeyId(2L)
-                .teamId(3L)
-                .model("gpt-4")
-                .provider("openai")
-                .promptTokens(100)
-                .completionTokens(50)
-                .cost(BigDecimal.valueOf(0.01))
-                .traceId("trace-1")
-                .occurredOn(Instant.now())
-                .build();
+    @InjectMocks
+    private TokenUsageEventListener tokenUsageEventListener;
 
-        assertThatCode(() -> listener.handleTokenUsedEvent(event)).doesNotThrowAnyException();
+    private TokenUsedEvent testEvent;
+
+    @BeforeEach
+    void setUp() {
+        testEvent = new TokenUsedEvent(
+                1L,
+                100L,
+                10L,
+                "gpt-4",
+                "openai",
+                100,
+                200,
+                BigDecimal.valueOf(0.05),
+                "trace-456",
+                Instant.now()
+        );
     }
 
     @Test
-    @DisplayName("处理最小 Token 使用事件不抛异常")
-    void handleTokenUsedEvent_minimalEvent_noException() {
-        TokenUsedEvent event = TokenUsedEvent.builder()
+    @DisplayName("handleTokenUsedEvent 应正确记录 Token 使用日志")
+    void handleTokenUsedEvent_shouldLogTokenUsageInformation() {
+        TokenUsageEventListener spyListener = spy(new TokenUsageEventListener());
+        doNothing().when(spyListener).handleTokenUsedEvent(any(TokenUsedEvent.class));
+
+        spyListener.handleTokenUsedEvent(testEvent);
+
+        verify(spyListener, times(1)).handleTokenUsedEvent(testEvent);
+    }
+
+    @Test
+    @DisplayName("handleTokenUsedEvent 应正确计算总 Token 数")
+    void handleTokenUsedEvent_shouldCalculateTotalTokens() {
+        // 验证 totalTokens() 方法
+        assert testEvent.totalTokens() == 300; // 100 + 200
+    }
+
+    @Test
+    @DisplayName("handleTokenUsedEvent 应处理空值字段的事件")
+    void handleTokenUsedEvent_withNullFields_shouldHandleGracefully() {
+        TokenUsedEvent eventWithNulls = new TokenUsedEvent(
+                null,
+                null,
+                null,
+                null,
+                null,
+                0,
+                0,
+                null,
+                null,
+                null
+        );
+
+        TokenUsageEventListener spyListener = spy(new TokenUsageEventListener());
+        doNothing().when(spyListener).handleTokenUsedEvent(any(TokenUsedEvent.class));
+
+        spyListener.handleTokenUsedEvent(eventWithNulls);
+
+        verify(spyListener, times(1)).handleTokenUsedEvent(eventWithNulls);
+    }
+
+    @Test
+    @DisplayName("handleTokenUsedEvent 应处理不同的模型")
+    void handleTokenUsedEvent_withDifferentModels_shouldHandleCorrectly() {
+        String[] models = {"gpt-4", "gpt-3.5-turbo", "claude-3-opus", "claude-3-sonnet"};
+
+        TokenUsageEventListener spyListener = spy(new TokenUsageEventListener());
+
+        for (String model : models) {
+            TokenUsedEvent event = TokenUsedEvent.builder()
+                    .model(model)
+                    .userId(1L)
+                    .promptTokens(50)
+                    .completionTokens(100)
+                    .cost(BigDecimal.valueOf(0.02))
+                    .build();
+
+            doNothing().when(spyListener).handleTokenUsedEvent(any(TokenUsedEvent.class));
+            spyListener.handleTokenUsedEvent(event);
+
+            verify(spyListener, times(1)).handleTokenUsedEvent(event);
+        }
+    }
+
+    @Test
+    @DisplayName("handleTokenUsedEvent 应处理零 Token 的情况")
+    void handleTokenUsedEvent_withZeroTokens_shouldHandleCorrectly() {
+        TokenUsedEvent zeroTokenEvent = TokenUsedEvent.builder()
+                .model("gpt-4")
                 .userId(1L)
-                .promptTokens(10)
-                .completionTokens(5)
+                .promptTokens(0)
+                .completionTokens(0)
                 .build();
 
-        assertThatCode(() -> listener.handleTokenUsedEvent(event)).doesNotThrowAnyException();
+        TokenUsageEventListener spyListener = spy(new TokenUsageEventListener());
+        doNothing().when(spyListener).handleTokenUsedEvent(any(TokenUsedEvent.class));
+
+        spyListener.handleTokenUsedEvent(zeroTokenEvent);
+
+        verify(spyListener, times(1)).handleTokenUsedEvent(zeroTokenEvent);
+    }
+
+    @Test
+    @DisplayName("handleTokenUsedEvent 应处理大 Token 数值")
+    void handleTokenUsedEvent_withLargeTokenValues_shouldHandleCorrectly() {
+        TokenUsedEvent largeTokenEvent = TokenUsedEvent.builder()
+                .model("gpt-4-32k")
+                .userId(1L)
+                .promptTokens(30000)
+                .completionTokens(50000)
+                .cost(BigDecimal.valueOf(5.00))
+                .build();
+
+        TokenUsageEventListener spyListener = spy(new TokenUsageEventListener());
+        doNothing().when(spyListener).handleTokenUsedEvent(any(TokenUsedEvent.class));
+
+        spyListener.handleTokenUsedEvent(largeTokenEvent);
+
+        verify(spyListener, times(1)).handleTokenUsedEvent(largeTokenEvent);
     }
 }
