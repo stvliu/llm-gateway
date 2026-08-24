@@ -372,21 +372,9 @@
                             <exclude>**/*Converter*</exclude>
                         </excludes>
                     </configuration>
-                    <executions>
-                        <execution>
-                            <id>prepare-agent</id>
-                            <goals>
-                                <goal>prepare-agent</goal>
-                            </goals>
-                        </execution>
-                        <execution>
-                            <id>report</id>
-                            <phase>test</phase>
-                            <goals>
-                                <goal>report</goal>
-                            </goals>
-                        </execution>
-                    </executions>
+                    <!-- 注意：executions 统一声明在 <build><plugins>（prepare-agent/report/report-aggregate），
+                         此处不声明 executions，避免按 execution id 合并时与 build/plugins 的
+                         无 id execution（默认 id=default-prepare-agent）并存导致 prepare-agent 重复执行。 -->
                 </plugin>
             </plugins>
         </pluginManagement>
