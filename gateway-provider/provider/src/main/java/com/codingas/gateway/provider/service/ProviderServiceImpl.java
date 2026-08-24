@@ -71,6 +71,7 @@ public class ProviderServiceImpl implements ProviderService {
 
         Provider provider = new Provider();
         provider.setName(request.getProviderName());
+        provider.setCode(request.getCode());
         provider.setWebsiteUrl(request.getWebsiteUrl());
         provider.setApiDocUrl(request.getApiDocUrl());
         provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);

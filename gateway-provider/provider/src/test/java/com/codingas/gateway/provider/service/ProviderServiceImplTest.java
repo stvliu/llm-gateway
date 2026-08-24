@@ -97,6 +97,7 @@ class ProviderServiceImplTest {
         void create_withNestedModels() {
             ProviderCreateRequest request = new ProviderCreateRequest();
             request.setProviderName("OpenAI");
+            request.setCode("openai");
             request.setWebsiteUrl("https://openai.com");
             request.setApiDocUrl("https://platform.openai.com/docs");
             request.setPriority(null);
@@ -117,8 +118,10 @@ class ProviderServiceImplTest {
 
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getProviderName()).isEqualTo("OpenAI");
+            assertThat(response.getProviderId()).isEqualTo("openai");
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
             verify(providerGateway).save(captor.capture());
+            assertThat(captor.getValue().getCode()).isEqualTo("openai");
             assertThat(captor.getValue().getPriority()).isEqualTo(100);
             ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
             verify(modelGateway).save(modelCaptor.capture());
@@ -131,6 +134,7 @@ class ProviderServiceImplTest {
         void create_withoutModels() {
             ProviderCreateRequest request = new ProviderCreateRequest();
             request.setProviderName("Anthropic");
+            request.setCode("anthropic");
             request.setPriority(5);
             when(providerGateway.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
@@ -141,7 +145,11 @@ class ProviderServiceImplTest {
             ProviderResponse response = service.create(request);
 
             assertThat(response.getProviderName()).isEqualTo("Anthropic");
+            assertThat(response.getProviderId()).isEqualTo("anthropic");
             assertThat(response.getPriority()).isEqualTo(5);
+            ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
+            verify(providerGateway).save(captor.capture());
+            assertThat(captor.getValue().getCode()).isEqualTo("anthropic");
             verify(modelGateway, never()).save(any(Model.class));
         }
     }
