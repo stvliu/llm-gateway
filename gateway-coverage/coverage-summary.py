@@ -3,7 +3,7 @@
 import csv, sys
 from collections import defaultdict
 CSV_PATH = sys.argv[1] if len(sys.argv) > 1 else 'gateway-coverage/target/site/jacoco-aggregate/jacoco.csv'
-EXCLUDE_PKG = ('dataobject', '/dto', 'enums', 'entity', 'config', 'autoconfigure')
+EXCLUDE_PKG = ('dataobject', '.dto', 'enums', 'entity', 'config', 'autoconfigure')
 EXCLUDE_CLS = ('Do', 'Request', 'Response')
 def is_core(pkg, cls):
     if not pkg.startswith('com.codingas.gateway.'): return False

@@ -51,7 +51,9 @@ import static org.mockito.Mockito.when;
  * <p>覆盖启动装载逻辑：空表全量加载（ADDED）、幂等跳过、forceReload 强制加载、
  * 已存在记录更新（UPDATED + 字段拷贝）、异常兜底（不抛出）、capabilities/modalities 解析分支。</p>
  *
- * <p>测试资源 fixture 位于 src/test/resources/catalog/ 下（真实 catalog 在 gateway-boot 模块）。</p>
+ * <p>测试资源 fixture（model-specs.json/plan-models.json/plans.json/providers.json）
+ * 复制自 <code>gateway-boot/src/main/resources/catalog/</code>（真实 catalog 源）——
+ * 真实 catalog 增删条目时须同步更新本测试 fixture，否则装载计数断言将失效。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BuiltinDataLoader 单元测试")
