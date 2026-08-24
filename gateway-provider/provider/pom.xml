@@ -38,6 +38,11 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- Spring Boot Actuator（ProviderHealth 健康状态类型，供域内健康监控与 boot 层 Indicator 适配） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
         <!-- 抽象协议层（ConnectivityTesterImpl 依赖 protocol.transport 传输 SPI） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

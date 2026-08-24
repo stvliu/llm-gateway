@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.actuator;
+package com.codingas.gateway.provider.health;
 
 import org.springframework.boot.actuate.health.Status;
 

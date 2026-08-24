@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.infrastructure.actuator;
+package com.codingas.gateway.provider.health;
 
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;

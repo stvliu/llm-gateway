@@ -16,6 +16,8 @@
 package com.codingas.gateway.infrastructure.actuator;
 
 import com.codingas.gateway.boot.GatewayApplication;
+import com.codingas.gateway.provider.health.ProviderHealthProperties;
+import com.codingas.gateway.provider.health.ProviderHealthTracker;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
