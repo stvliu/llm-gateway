@@ -52,8 +52,10 @@ import static org.mockito.Mockito.when;
  * 已存在记录更新（UPDATED + 字段拷贝）、异常兜底（不抛出）、capabilities/modalities 解析分支。</p>
  *
  * <p>测试资源 fixture（model-specs.json/plan-models.json/plans.json/providers.json）
- * 复制自 <code>gateway-boot/src/main/resources/catalog/</code>（真实 catalog 源）——
- * 真实 catalog 增删条目时须同步更新本测试 fixture，否则装载计数断言将失效。</p>
+ * 是刻意裁剪的测试专用子集（providers 2 / model-specs 4 / plans 2 / plan-models 2，
+ * 含测试专用条目如 malformed-model、claude-sonnet-4），并非 gateway-boot 真实
+ * catalog 的复制——断言计数依赖本 fixture 内容，增删 fixture 条目须同步更新
+ * 装载计数断言。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("BuiltinDataLoader 单元测试")
