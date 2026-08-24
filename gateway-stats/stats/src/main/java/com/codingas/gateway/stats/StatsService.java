@@ -16,48 +16,44 @@
 package com.codingas.gateway.stats;
 
 import com.codingas.gateway.stats.dto.StatsResponse;
-import com.codingas.gateway.providerdata.repository.ChannelRepository;
-import com.codingas.gateway.providerdata.repository.ModelRepository;
-import com.codingas.gateway.providerdata.repository.ProviderRepository;
-import com.codingas.gateway.iamdata.repository.UserRepository;
+import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.iam.user.UserGateway;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 统计服务
+ * 报表服务
+ *
+ * <p>通过各域核心 Gateway 端口获取统计计数（端口调用，不依赖绑定模块 Repository）。</p>
  */
 @Service
 @RequiredArgsConstructor
 public class StatsService {
 
-    private final ProviderRepository providerRepository;
-    private final ChannelRepository channelRepository;
-    private final ModelRepository modelRepository;
-    private final UserRepository userRepository;
+    private final ProviderGateway providerGateway;
+    private final ChannelGateway channelGateway;
+    private final ModelGateway modelGateway;
+    private final UserGateway userGateway;
 
-    /**
-     * 获取系统统计数据
-     */
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
-        long providerCount = providerRepository.count();
-        long channelCount = channelRepository.count();
-        long modelCount = modelRepository.count();
-        long userCount = userRepository.count();
-
+        long providerCount = providerGateway.count();
+        long channelCount = channelGateway.count();
+        long modelCount = modelGateway.count();
+        long userCount = userGateway.count();
         // TODO: 接入真实的请求统计和 Token 用量数据
-        // 目前返回模拟数据，后续需要从审计日志或时序数据库中统计
         long todayRequests = 0;
         String tokenUsage = "0";
-
         return new StatsResponse(
-            providerCount,
-            channelCount,
-            modelCount,
-            userCount,
-            todayRequests,
-            tokenUsage
+                providerCount,
+                channelCount,
+                modelCount,
+                userCount,
+                todayRequests,
+                tokenUsage
         );
     }
 }

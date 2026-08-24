@@ -38,28 +38,16 @@
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域（StatsService 直连 Channel/Model/ProviderRepository 计数） -->
+        <!-- 供给域核心端口（StatsService 经 Provider/Channel/ModelGateway 计数） -->
         <dependency>
             <groupId>com.codingas.gateway.provider</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 供给域 JPA 绑定（StatsService 直连 providerdata.repository.Channel/Model/ProviderRepository，过渡态） -->
-        <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
-            <artifactId>gateway-provider-data</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- 身份与访问管理域（StatsService 直连 UserRepository 计数） -->
+        <!-- 身份与访问管理域核心端口（StatsService 经 UserGateway 计数） -->
         <dependency>
             <groupId>com.codingas.gateway.iam</groupId>
             <artifactId>gateway-iam</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <!-- IAM 绑定模块（StatsService 引用 iamdata.repository.UserRepository） -->
-        <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
-            <artifactId>gateway-iam-data</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- Lombok -->
