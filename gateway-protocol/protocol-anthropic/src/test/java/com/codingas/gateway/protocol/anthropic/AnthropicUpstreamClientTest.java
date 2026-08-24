@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +66,9 @@ class AnthropicUpstreamClientTest {
 
     @AfterEach
     void tearDown() {
+        if (server == null) {
+            return;
+        }
         try {
             server.shutdown();
         } catch (IOException e) {
@@ -324,5 +329,119 @@ class AnthropicUpstreamClientTest {
     @Test
     void supportedProvider_返回anthropic() {
         assertThat(createClient("sk-ant-test-key", 30).supportedProvider()).isEqualTo("anthropic");
+    }
+
+    // ==================== 场景 10：流式错误与边界 ====================
+
+    @Test
+    void chatStream_HTTP错误_触发onError() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(429)
+                .setHeader("Content-Type", "application/json")
+                .setBody(anthropicErrorBody(429)));
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isInstanceOf(ProviderException.class);
+        ProviderException pe = (ProviderException) error.get();
+        assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
+    }
+
+    @Test
+    void chatStream_网络断开_触发onError() throws Exception {
+        // 服务端立即断开连接 → okhttp onFailure → 回调 onError(NETWORK_ERROR)
+        server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isInstanceOf(ProviderException.class);
+        assertThat(((ProviderException) error.get()).getErrorType())
+                .isEqualTo(ProviderErrorType.NETWORK_ERROR);
+    }
+
+    @Test
+    void chatStream_无message_stop_循环结束触发onComplete() throws Exception {
+        // 流不含 message_stop 事件时，读到 EOF 后应 onComplete
+        server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody("""
+                        event: content_block_delta
+                        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"hi"}}
+
+                        event: content_block_delta
+                        data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"!"}}
+
+                        """));
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        List<String> chunks = new CopyOnWriteArrayList<>();
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { chunks.add(data); }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isNull();
+        assertThat(chunks).hasSize(2);
+    }
+
+    @Test
+    void testConnectivity_5xx_返回失败结果() throws Exception {
+        enqueueJson(500, anthropicErrorBody(500));
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        ConnectivityTestResult result = client.testConnectivity();
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.errorMessage()).contains("HTTP 500");
+    }
+
+    @Test
+    void testConnectivity_服务不可达_返回失败结果() throws Exception {
+        server.shutdown();
+        server = null;
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        ConnectivityTestResult result = client.testConnectivity();
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.errorMessage()).isNotNull();
+    }
+
+    @Test
+    void chat_服务不可达_抛出NETWORK_ERROR() throws Exception {
+        server.shutdown();
+        server = null;
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        assertThatThrownBy(() -> client.chat(createTestRequest()))
+                .isInstanceOf(ProviderException.class)
+                .satisfies(ex -> {
+                    ProviderException pe = (ProviderException) ex;
+                    assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.NETWORK_ERROR);
+                });
     }
 }

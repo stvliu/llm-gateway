@@ -15,13 +15,16 @@
  */
 package com.codingas.gateway.iam.service;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.iam.user.UserState;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.exception.ForbiddenException;
+import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.user.UserGateway;
 import com.codingas.gateway.iam.encryption.PasswordEncoder;
 import org.junit.jupiter.api.DisplayName;
@@ -30,8 +33,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -200,6 +205,33 @@ class UserServiceImplTest {
             // then
             assertThat(result).isNotNull();
         }
+
+        @Test
+        @DisplayName("更新手机号与头像")
+        void update_phoneAndAvatar_updatesFields() {
+            User user = createTestUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(userGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            UserUpdateRequest request = new UserUpdateRequest();
+            request.setPhone("13900000000");
+            request.setAvatarUrl("https://example.com/a.png");
+
+            UserResponse result = service.update(1L, request);
+
+            assertThat(result.getPhone()).isEqualTo("13900000000");
+            assertThat(result.getAvatarUrl()).isEqualTo("https://example.com/a.png");
+            verify(userGateway).save(argThat(u -> "13900000000".equals(u.getPhone())));
+        }
+
+        @Test
+        @DisplayName("更新不存在用户抛出异常")
+        void update_notFound_throws() {
+            when(userGateway.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.update(99L, new UserUpdateRequest()))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
     }
 
     @Nested
@@ -309,6 +341,205 @@ class UserServiceImplTest {
 
             assertThatThrownBy(() -> service.resetPassword(99L))
                     .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("内建用户保护分支测试")
+    class BuiltinGuardTests {
+
+        private User builtinUser() {
+            User user = createTestUser();
+            user.setBuiltin(true);
+            return user;
+        }
+
+        @Test
+        @DisplayName("删除内建用户 — 抛 ForbiddenException")
+        void delete_builtin_throws() {
+            User user = builtinUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+
+            assertThatThrownBy(() -> service.delete(1L))
+                    .isInstanceOf(ForbiddenException.class);
+            verify(userGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("禁用内建用户 — 抛 ForbiddenException")
+        void updateState_builtinInactive_throws() {
+            User user = builtinUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.INACTIVE);
+
+            assertThatThrownBy(() -> service.updateState(1L, request))
+                    .isInstanceOf(ForbiddenException.class);
+            verify(userGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("内建用户保持 ACTIVE — 允许")
+        void updateState_builtinActive_allowed() {
+            User user = builtinUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(userGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            UserStateUpdateRequest request = new UserStateUpdateRequest();
+            request.setState(UserState.ACTIVE);
+
+            UserResponse result = service.updateState(1L, request);
+            assertThat(result).isNotNull();
+            verify(userGateway).save(user);
+        }
+
+        @Test
+        @DisplayName("变更内建用户角色 — 抛 ForbiddenException")
+        void assignRoles_builtin_throws() {
+            User user = builtinUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+
+            UserRoleAssignRequest request = new UserRoleAssignRequest();
+            request.setRoleCodes(List.of("ADMIN"));
+
+            assertThatThrownBy(() -> service.assignRoles(1L, request))
+                    .isInstanceOf(ForbiddenException.class);
+            verify(userGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("空角色列表 — 不修改角色直接保存")
+        void assignRoles_emptyRoleCodes_keepsRole() {
+            User user = createTestUser();
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(userGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            UserRoleAssignRequest request = new UserRoleAssignRequest();
+            request.setRoleCodes(List.of());
+
+            UserResponse result = service.assignRoles(1L, request);
+
+            assertThat(result.getRole()).isEqualTo("USER");
+            verify(userGateway).save(user);
+        }
+    }
+
+    @Nested
+    @DisplayName("login 方法测试")
+    class LoginTests {
+
+        @Test
+        @DisplayName("登录成功 — 返回 token 并更新最后登录时间")
+        void login_success_returnsToken() {
+            User user = createTestUser();
+            user.setPasswordHash("hash");
+            when(userGateway.findByUsername("testuser")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("pass", "hash")).thenReturn(true);
+            when(userGateway.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.getTokenValue()).thenReturn("token-123");
+
+                LoginResponse response = service.login(new LoginRequest("testuser", "pass", false));
+
+                assertThat(response.token()).isEqualTo("token-123");
+                assertThat(response.user().username()).isEqualTo("testuser");
+                stp.verify(() -> StpUtil.login(1L));
+                assertThat(user.getLastLoginAt()).isNotNull();
+            }
+        }
+
+        @Test
+        @DisplayName("用户不存在 — 抛 AuthenticationFailedException")
+        void login_userNotFound_throws() {
+            when(userGateway.findByUsername("nobody")).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.login(new LoginRequest("nobody", "x", false)))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("用户名或密码错误");
+        }
+
+        @Test
+        @DisplayName("用户被禁用 — 抛 AuthenticationFailedException")
+        void login_inactiveUser_throws() {
+            User user = createTestUser();
+            user.setState(UserState.INACTIVE);
+            when(userGateway.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+            assertThatThrownBy(() -> service.login(new LoginRequest("testuser", "pass", false)))
+                    .isInstanceOf(AuthenticationFailedException.class)
+                    .hasMessageContaining("用户已被禁用");
+        }
+
+        @Test
+        @DisplayName("密码错误 — 抛 AuthenticationFailedException")
+        void login_wrongPassword_throws() {
+            User user = createTestUser();
+            user.setPasswordHash("hash");
+            when(userGateway.findByUsername("testuser")).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
+
+            assertThatThrownBy(() -> service.login(new LoginRequest("testuser", "wrong", false)))
+                    .isInstanceOf(AuthenticationFailedException.class);
+            verify(userGateway, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("changePassword 方法测试")
+    class ChangePasswordTests {
+
+        @Test
+        @DisplayName("修改密码成功")
+        void changePassword_success_updatesHash() {
+            User user = createTestUser();
+            user.setPasswordHash("old-hash");
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("old", "old-hash")).thenReturn(true);
+            when(passwordEncoder.encode("new")).thenReturn("new-hash");
+
+            service.changePassword(1L, new ChangePasswordRequest("old", "new"));
+
+            verify(userGateway).save(argThat(u -> "new-hash".equals(u.getPasswordHash())));
+        }
+
+        @Test
+        @DisplayName("当前密码错误 — 抛 GatewayRequestException")
+        void changePassword_wrongCurrent_throws() {
+            User user = createTestUser();
+            user.setPasswordHash("old-hash");
+            when(userGateway.findById(1L)).thenReturn(Optional.of(user));
+            when(passwordEncoder.matches("wrong", "old-hash")).thenReturn(false);
+
+            assertThatThrownBy(() -> service.changePassword(1L, new ChangePasswordRequest("wrong", "new")))
+                    .isInstanceOf(GatewayRequestException.class)
+                    .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
+                            .isEqualTo("INVALID_PASSWORD"));
+            verify(userGateway, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("用户不存在 — 抛 ResourceNotFoundException")
+        void changePassword_notFound_throws() {
+            when(userGateway.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.changePassword(99L, new ChangePasswordRequest("a", "b")))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("logout 方法测试")
+    class LogoutTests {
+
+        @Test
+        @DisplayName("登出 — 调用 StpUtil.logout")
+        void logout_callsSaTokenLogout() {
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                service.logout();
+                stp.verify(StpUtil::logout);
+            }
         }
     }
 

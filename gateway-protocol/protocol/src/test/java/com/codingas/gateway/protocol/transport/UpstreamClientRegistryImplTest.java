@@ -62,4 +62,32 @@ class UpstreamClientRegistryImplTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("不支持的协议");
     }
+
+    @Test
+    void duplicateProtocol_keepsFirstFactory() {
+        // 相同协议多个工厂时保留先注册者（merge 函数分支）
+        UpstreamClientRegistry registry = new UpstreamClientRegistryImpl(
+                List.of(new FakeFactory("openai"), new FakeFactory("openai")));
+        assertThat(registry.getSupportedProtocols()).containsExactly("openai");
+        assertThat(registry.getClient("openai", "http://x", "k", 30).supportedProvider())
+                .isEqualTo("openai");
+    }
+
+    @Test
+    void connectivityResult_successFactory() {
+        ConnectivityTestResult ok = ConnectivityTestResult.success(42L, 12L);
+        assertThat(ok.success()).isTrue();
+        assertThat(ok.channelId()).isEqualTo(42L);
+        assertThat(ok.latencyMs()).isEqualTo(12L);
+        assertThat(ok.errorMessage()).isNull();
+    }
+
+    @Test
+    void connectivityResult_failureFactory() {
+        ConnectivityTestResult fail = ConnectivityTestResult.failure(7L, "boom");
+        assertThat(fail.success()).isFalse();
+        assertThat(fail.channelId()).isEqualTo(7L);
+        assertThat(fail.errorMessage()).isEqualTo("boom");
+        assertThat(fail.latencyMs()).isZero();
+    }
 }

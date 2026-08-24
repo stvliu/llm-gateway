@@ -27,6 +27,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import okhttp3.mockwebserver.SocketPolicy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +38,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -64,6 +66,9 @@ class OpenAIUpstreamClientTest {
 
     @AfterEach
     void tearDown() {
+        if (server == null) {
+            return;
+        }
         try {
             server.shutdown();
         } catch (IOException e) {
@@ -311,10 +316,151 @@ class OpenAIUpstreamClientTest {
         assertThat(result.errorMessage()).isNull();
     }
 
+    @Test
+    void testConnectivity_HTTP失败_返回失败结果() throws Exception {
+        enqueueJson(500, openaiErrorBody(500));
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        ConnectivityTestResult result = client.testConnectivity();
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.errorMessage()).contains("HTTP 500");
+    }
+
+    @Test
+    void testConnectivity_服务不可达_返回失败结果() throws Exception {
+        // 先关闭服务端，请求必然连接失败 → 捕获异常返回失败结果
+        server.shutdown();
+        server = null;
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        ConnectivityTestResult result = client.testConnectivity();
+
+        assertThat(result.success()).isFalse();
+        assertThat(result.errorMessage()).isNotNull();
+    }
+
     // ==================== 场景 9：supportedProvider ====================
 
     @Test
     void supportedProvider_返回openai() {
         assertThat(createClient("sk-test-key", 30).supportedProvider()).isEqualTo("openai");
+    }
+
+    // ==================== 场景 10：流式错误与边界 ====================
+
+    @Test
+    void chatStream_HTTP错误_触发onError() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(429)
+                .setHeader("Content-Type", "application/json")
+                .setBody(openaiErrorBody(429)));
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isInstanceOf(ProviderException.class);
+        ProviderException pe = (ProviderException) error.get();
+        assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
+    }
+
+    @Test
+    void chatStream_网络断开_触发onError() throws Exception {
+        // 服务端立即断开连接 → okhttp onFailure → 回调 onError(NETWORK_ERROR)
+        server.enqueue(new MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START));
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isInstanceOf(ProviderException.class);
+        assertThat(((ProviderException) error.get()).getErrorType())
+                .isEqualTo(ProviderErrorType.NETWORK_ERROR);
+    }
+
+    @Test
+    void chatStream_无DONE标记_循环结束触发onComplete() throws Exception {
+        // SSE 流不含 [DONE] 标记时，读到 EOF 后应 onComplete
+        server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody("""
+                        data: {"id":"c1","choices":[{"delta":{"content":"hi"}}]}
+
+                        data: {"id":"c1","choices":[{"delta":{"content":"!"}}]}
+
+                        """));
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        List<String> chunks = new CopyOnWriteArrayList<>();
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { chunks.add(data); }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isNull();
+        assertThat(chunks).hasSize(2);
+    }
+
+    @Test
+    void chatStream_空data行_不触发onChunk() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "text/event-stream")
+                .setBody("""
+                        data:
+
+                        data: {"id":"c1","choices":[{"delta":{"content":"x"}}]}
+
+                        data: [DONE]
+                        """));
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        List<String> chunks = new CopyOnWriteArrayList<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { chunks.add(data); }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        // 空 data 行被跳过，仅 1 个 chunk
+        assertThat(chunks).hasSize(1);
+    }
+
+    @Test
+    void chat_服务不可达_抛出NETWORK_ERROR() throws Exception {
+        server.shutdown();
+        server = null;
+
+        OpenAIUpstreamClient client = createClient("sk-test-key", 30);
+        assertThatThrownBy(() -> client.chat(createTestRequest()))
+                .isInstanceOf(ProviderException.class)
+                .satisfies(ex -> {
+                    ProviderException pe = (ProviderException) ex;
+                    assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.NETWORK_ERROR);
+                });
     }
 }

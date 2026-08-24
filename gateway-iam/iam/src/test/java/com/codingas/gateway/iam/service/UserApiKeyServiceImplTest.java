@@ -233,6 +233,32 @@ class UserApiKeyServiceImplTest {
     }
 
     @Nested
+    @DisplayName("findAllNonDeleted 方法测试")
+    class FindAllNonDeletedTests {
+
+        @Test
+        @DisplayName("返回全部未删除 Key")
+        void findAllNonDeleted_success() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setApplicationId(APPLICATION_ID);
+            when(userApiKeyGateway.findAllNonDeleted()).thenReturn(List.of(apiKey));
+
+            List<UserApiKeyResponse> responses = service.findAllNonDeleted();
+
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+        }
+
+        @Test
+        @DisplayName("无未删除 Key 返回空列表")
+        void findAllNonDeleted_empty() {
+            when(userApiKeyGateway.findAllNonDeleted()).thenReturn(List.of());
+
+            assertThat(service.findAllNonDeleted()).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("findByUserId 方法测试")
     class FindByUserIdTests {
 
