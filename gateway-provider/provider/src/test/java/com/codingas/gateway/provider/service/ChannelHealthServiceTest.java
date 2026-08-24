@@ -235,6 +235,40 @@ class ChannelHealthServiceTest {
     }
 
     @Test
+    @DisplayName("单 Key 探测抛异常 → exceptionally 兜底为 TIMEOUT，聚合为 FAILED")
+    void 探测异常兜底为_TIMEOUT() {
+        when(channelGateway.findById(CHANNEL_ID)).thenReturn(Optional.of(stubChannel()));
+        ChannelCredential c1 = stubCredential(1L, "sk-aa");
+        ChannelCredential c2 = stubCredential(2L, "sk-bb");
+        c2.setApiKeyPlain("sk-plain-2222");
+        when(credentialGateway.findByChannelId(CHANNEL_ID)).thenReturn(List.of(c1, c2));
+        when(channelKeyProbe.test(any(Channel.class), eq(c1)))
+                .thenThrow(new RuntimeException("probe crashed"));
+        when(channelKeyProbe.test(any(Channel.class), eq(c2)))
+                .thenThrow(new RuntimeException("probe crashed"));
+
+        ChannelHealthResult result = service.check(CHANNEL_ID, ChannelHealthSource.DRAWER);
+
+        // 两条 Key 均超时 → 全部失败 → FAILED
+        assertThat(result.aggregateStatus()).isEqualTo(ChannelHealthStatus.FAILED);
+        assertThat(result.matrix()).hasSize(2);
+        assertThat(result.matrix()).allSatisfy(row -> assertThat(row.auth()).isEqualTo(AuthStatus.TIMEOUT));
+    }
+
+    @Test
+    @DisplayName("maskKey 脱敏分支：null/空白/短 Key/长 Key")
+    void maskKey_脱敏分支() {
+        // null / 空白 → 固定 ***
+        assertThat(ChannelHealthService.maskKey(null)).isEqualTo("***");
+        assertThat(ChannelHealthService.maskKey("   ")).isEqualTo("***");
+        // 长度 <= 8 → 固定 ***
+        assertThat(ChannelHealthService.maskKey("sk-test")).isEqualTo("***");
+        // 长 Key → 前缀4 + ***... + 后缀4
+        assertThat(ChannelHealthService.maskKey("sk-test-key-123456789"))
+                .isEqualTo("sk-t***...6789");
+    }
+
+    @Test
     @DisplayName("KeyTestResult 工厂方法状态字段正确")
     void KeyTestResult_工厂方法() {
         KeyTestResult pass = KeyTestResult.pass(1L, "sk-a", List.of("m1"), 100L);

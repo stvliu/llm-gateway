@@ -1,0 +1,67 @@
+[
+  {
+    "providerModelId": "gpt-4.1",
+    "displayName": "GPT-4.1",
+    "modelFamily": "gpt-4.1",
+    "contextWindow": 1047576,
+    "maxInputTokens": 1047576,
+    "maxOutputTokens": 32768,
+    "knowledgeCutoff": "2024-04",
+    "capabilities": {
+      "vision": false,
+      "tool_use": true
+    },
+    "modalities": [
+      "text"
+    ],
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "providerModelId": "claude-sonnet-4",
+    "displayName": "Claude Sonnet 4",
+    "modelFamily": "claude-4",
+    "contextWindow": 200000,
+    "maxInputTokens": 200000,
+    "maxOutputTokens": 64000,
+    "knowledgeCutoff": "2024-06",
+    "capabilities": null,
+    "modalities": null,
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "providerModelId": "malformed-model",
+    "displayName": "Malformed",
+    "modelFamily": "malformed",
+    "contextWindow": 1000,
+    "maxInputTokens": 1000,
+    "maxOutputTokens": 1000,
+    "knowledgeCutoff": "2024-01",
+    "capabilities": "not-a-map",
+    "modalities": "not-a-list",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "providerModelId": "deepseek-v4",
+    "displayName": "DeepSeek V4",
+    "modelFamily": "deepseek",
+    "contextWindow": 128000,
+    "maxInputTokens": 128000,
+    "maxOutputTokens": 8192,
+    "knowledgeCutoff": "2025-01",
+    "capabilities": {
+      "tool_use": true
+    },
+    "modalities": [
+      "text"
+    ],
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  }
+]

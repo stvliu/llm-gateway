@@ -1,0 +1,22 @@
+[
+  {
+    "providerCode": "openai",
+    "providerName": "OpenAI",
+    "logoUrl": "https://cdn.example.com/icons/openai.png",
+    "websiteUrl": "https://openai.com",
+    "description": "OpenAI 官方 API",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "providerCode": "anthropic",
+    "providerName": "Anthropic",
+    "logoUrl": "https://cdn.example.com/icons/anthropic.png",
+    "websiteUrl": "https://anthropic.com",
+    "description": "Anthropic Claude API",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  }
+]

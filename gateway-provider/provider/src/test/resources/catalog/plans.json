@@ -1,0 +1,37 @@
+[
+  {
+    "planCode": "openai_standard",
+    "providerCode": "openai",
+    "planName": "按量付费",
+    "billingMode": "PAY_AS_YOU_GO",
+    "endpoints": [
+      {
+        "protocol": "OPENAI",
+        "url": "https://api.openai.com/v1"
+      }
+    ],
+    "pricing": [
+      {
+        "providerModelId": "gpt-4.1",
+        "inputPrice": 2.0,
+        "outputPrice": 8.0
+      }
+    ],
+    "description": "OpenAI 标准套餐",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "anthropic_standard",
+    "providerCode": "anthropic",
+    "planName": "Standard",
+    "billingMode": "SUBSCRIPTION",
+    "endpoints": null,
+    "pricing": null,
+    "description": "Anthropic 标准套餐",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  }
+]

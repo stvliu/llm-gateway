@@ -1,0 +1,16 @@
+[
+  {
+    "planCode": "openai_standard",
+    "providerModelId": "gpt-4.1",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  },
+  {
+    "planCode": "anthropic_standard",
+    "providerModelId": "claude-sonnet-4",
+    "source": "BUILTIN",
+    "syncedAt": null,
+    "state": "ACTIVE"
+  }
+]

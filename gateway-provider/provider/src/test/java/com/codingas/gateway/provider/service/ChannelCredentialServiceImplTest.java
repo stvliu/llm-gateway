@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.provider.service;
 
+import com.codingas.gateway.provider.channel.ApiKeyTestResponse;
 import com.codingas.gateway.provider.channel.ChannelCredentialCreateRequest;
 import com.codingas.gateway.provider.channel.ChannelCredentialCreateResponse;
 import com.codingas.gateway.provider.channel.ChannelCredentialDetailResponse;
@@ -142,6 +143,101 @@ class ChannelCredentialServiceImplTest {
                 CHANNEL_ID, API_KEY_ID, null, null, "updated", null
         );
         assertThrows(ResourceNotFoundException.class, () -> service.update(request));
+    }
+
+    @Test
+    void update_replaceApiKey() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+        when(channelCredentialGateway.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
+                CHANNEL_ID, API_KEY_ID, null, null, "updated", "new-key-1234567890"
+        );
+        ChannelCredentialResponse response = service.update(request);
+
+        assertNotNull(response);
+        verify(channelCredentialGateway).save(argThat(key ->
+                "new-key-1234567890".equals(key.getApiKeyPlain())
+                        && "new-key-".equals(key.getApiKeyPrefix())
+        ));
+    }
+
+    @Test
+    void update_blankApiKey不替换() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+        when(channelCredentialGateway.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        // apiKey 为空白 → 不替换
+        ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
+                CHANNEL_ID, API_KEY_ID, 3, 4, "updated", "   "
+        );
+        ChannelCredentialResponse response = service.update(request);
+
+        assertNotNull(response);
+        verify(channelCredentialGateway).save(argThat(key ->
+                "sk-test-api-key-12345".equals(key.getApiKeyPlain())
+                        && key.getPriority() == 3 && key.getWeight() == 4
+        ));
+    }
+
+    @Test
+    void testApiKey_返回成功响应() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+        ApiKeyTestResponse response = service.testApiKey(CHANNEL_ID, API_KEY_ID);
+
+        assertNotNull(response);
+        assertTrue(response.getSuccess());
+        assertEquals(100L, response.getLatency());
+        assertEquals("gpt-4o", response.getModelName());
+    }
+
+    @Test
+    void getById_归属不匹配抛出异常() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+        // channelId 不匹配 → 视为不存在
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.getById(999L, API_KEY_ID));
+    }
+
+    @Test
+    void update_归属不匹配抛出异常() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+        ChannelCredentialUpdateRequest request = new ChannelCredentialUpdateRequest(
+                999L, API_KEY_ID, null, null, "updated", null
+        );
+        assertThrows(ResourceNotFoundException.class, () -> service.update(request));
+    }
+
+    @Test
+    void delete_归属不匹配抛出异常() {
+        ChannelCredential apiKey = createSampleApiKey();
+        when(channelCredentialGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> service.delete(999L, API_KEY_ID));
+    }
+
+    @Test
+    void create_短Key前缀取整个Key() {
+        ChannelCredential saved = createSampleApiKey();
+        when(channelCredentialGateway.save(any(ChannelCredential.class))).thenReturn(saved);
+
+        ChannelCredentialCreateRequest request = new ChannelCredentialCreateRequest(
+                CHANNEL_ID, "ab", 1, 1, "short-key"
+        );
+        service.create(request);
+
+        verify(channelCredentialGateway).save(argThat(key ->
+                "ab".equals(key.getApiKeyPrefix()) && "ab".equals(key.getApiKeyPlain())
+        ));
     }
 
     @Test
