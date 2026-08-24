@@ -21,13 +21,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.usage</groupId>
-        <artifactId>gateway-usage-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
 
-    <groupId>com.codingas.gateway.usage</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-usage-starter</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Usage Starter</name>
@@ -41,13 +41,13 @@
         </dependency>
         <!-- 本域核心模块（@Import 编译期引用 + 传递组件依赖） -->
         <dependency>
-            <groupId>com.codingas.gateway.usage</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 本域绑定模块（JPA 实体/Repository/Gateway 实现随 starter 传递到消费方，由核心 Configuration 兼扫装配） -->
         <dependency>
-            <groupId>com.codingas.gateway.usage</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-usage-data</artifactId>
             <version>${revision}</version>
         </dependency>

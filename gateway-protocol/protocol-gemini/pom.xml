@@ -21,12 +21,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.protocol</groupId>
-        <artifactId>gateway-protocol-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>com.codingas.gateway.protocol</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-protocol-gemini</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Protocol Gemini</name>
@@ -34,7 +34,7 @@
     <dependencies>
         <!-- 抽象协议层（Canonical IR + ProtocolAdapter SPI + 契约） -->
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>

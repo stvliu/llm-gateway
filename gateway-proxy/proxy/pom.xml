@@ -21,12 +21,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.proxy</groupId>
-        <artifactId>gateway-proxy-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>com.codingas.gateway.proxy</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-proxy</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Proxy</name>
@@ -34,43 +34,43 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway.common</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 抽象协议层（ProtocolConversionFacade 依赖 Canonical IR + ProtocolAdapter SPI + 契约） -->
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 供给域（调度依赖 Channel/Model/Upstream/RoutingContext） -->
         <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 身份与访问管理域（依赖 Application/ApplicationChannel/Identity） -->
         <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 用量管控域（调度发 TokenUsedEvent） -->
         <dependency>
-            <groupId>com.codingas.gateway.usage</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-usage</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 审计追溯域（调度写 CallLog） -->
         <dependency>
-            <groupId>com.codingas.gateway.audit</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-audit</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 韧性域（依赖 ChannelEndpointCircuitBreakerManager） -->
         <dependency>
-            <groupId>com.codingas.gateway.resilience</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>

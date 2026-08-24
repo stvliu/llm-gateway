@@ -21,24 +21,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.security</groupId>
-        <artifactId>gateway-security-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>com.codingas.gateway.security</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-security-data</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Security Data</name>
     <description>访问控制域 JPA 绑定模块（根包 securitydata）</description>
     <dependencies>
         <dependency>
-            <groupId>com.codingas.gateway.security</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-security</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway.common</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>

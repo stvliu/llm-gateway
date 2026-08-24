@@ -36,95 +36,95 @@
     <dependencies>
         <!-- 横切底座模块（BaseEntity/异常/工具/事件/通用枚举，纯横切） -->
         <dependency>
-            <groupId>com.codingas.gateway.common</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 抽象协议层模块（Canonical IR + ProtocolAdapter SPI + 协议契约 DTO） -->
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 协议能力插件（通过 AutoConfiguration + @ConditionalOnProperty 启用） -->
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol-openai</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol-anthropic</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- Gemini 协议示例插件（验证插件化可扩展性） -->
         <dependency>
-            <groupId>com.codingas.gateway.protocol</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-protocol-gemini</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 供给域 starter（AutoConfiguration 显式装配，@ConditionalOnProperty 可关） -->
         <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-provider-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 身份与访问管理域 starter（IAM 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-iam-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 用量管控域 starter（Usage 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.usage</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-usage-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 安全与威胁域 starter（Security 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.security</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-security-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 韧性域 starter（Resilience 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.resilience</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-resilience-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 审计追溯域 starter（Audit 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.audit</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-audit-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 告警通知域 starter（Alert 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.alert</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-alert-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 模型代理域 starter（Proxy 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.proxy</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-proxy-starter</artifactId>
             <version>${revision}</version>
         </dependency>
 
         <!-- 聚合统计域 starter（Stats 域装配入口） -->
         <dependency>
-            <groupId>com.codingas.gateway.stats</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-stats-starter</artifactId>
             <version>${revision}</version>
         </dependency>

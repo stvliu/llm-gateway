@@ -21,24 +21,24 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.resilience</groupId>
-        <artifactId>gateway-resilience-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>com.codingas.gateway.resilience</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-resilience-data</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Resilience Data</name>
     <description>韧性域 JPA 绑定模块（根包 resiliencedata）</description>
     <dependencies>
         <dependency>
-            <groupId>com.codingas.gateway.resilience</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>
-            <groupId>com.codingas.gateway.common</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>

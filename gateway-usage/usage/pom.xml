@@ -21,12 +21,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codingas.gateway.usage</groupId>
-        <artifactId>gateway-usage-parent</artifactId>
+        <groupId>com.codingas.gateway</groupId>
+        <artifactId>gateway-project</artifactId>
         <version>${revision}</version>
-        <relativePath>../pom.xml</relativePath>
+        <relativePath>../../pom.xml</relativePath>
     </parent>
-    <groupId>com.codingas.gateway.usage</groupId>
+    <groupId>com.codingas.gateway</groupId>
     <artifactId>gateway-usage</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Usage</name>
@@ -34,19 +34,19 @@
     <dependencies>
         <!-- 横切底座 -->
         <dependency>
-            <groupId>com.codingas.gateway.common</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-common</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 供给域（TokenLimit 依赖 Model/Provider） -->
         <dependency>
-            <groupId>com.codingas.gateway.provider</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
         <!-- 身份与访问管理域（TokenLimit 依赖 User） -->
         <dependency>
-            <groupId>com.codingas.gateway.iam</groupId>
+            <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-iam</artifactId>
             <version>${revision}</version>
         </dependency>
