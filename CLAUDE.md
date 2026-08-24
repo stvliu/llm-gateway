@@ -21,97 +21,103 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 
 ## 架构约束
 
-**COLA Light 5.0 架构**：单模块架构，用 package 代替模块划分层次。
+**分层依赖规则**：上层依赖下层接口、禁止反向依赖——由 **Maven 模块边界 + ArchUnit 铁律**（`LayerDependencyTest`）强制执行，包名不再保留分层约定。详见 `docs/adr/0001-modularization-architecture.md`。
 
 - **分层依赖**: 上层依赖下层接口，禁止跨层调用或反向依赖
-- **Gateway 模式**: 接口定义在 domain/xxx/gateway/，实现 in infrastructure/xxx/gateway/
+- **Gateway 模式**: 接口定义在域核心模块（如 `provider.service.CredentialEncryptor`），实现 in 绑定模块（如 `<域>data.gateway`）或域内实现包
 - **依赖倒置**: Domain 只依赖 Gateway 接口，不直接依赖外部资源
 - **职责拆分架构**: 按业务领域内聚 Entity + Domain Service + Gateway
 - **领域模型纯洁性**: JPA 实体只含 Getter/Setter，禁止含业务逻辑
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
 
-## 项目结构（多模块 Maven 项目）
+## 项目结构（多模块 Maven 项目，域模块化三明治结构：模块 = 根包）
 
 ```
-gateway/                              # 项目根目录（父 POM）
+llm-gateway/                          # 项目根目录（父 POM，统一依赖管理）
 ├── pom.xml                           # 父 POM，打包类型: pom
-├── gateway-boot/                     # 后端模块（所有层）
-│   ├── pom.xml
-│   └── src/main/java/com/codingas/gateway/
-│       ├── adapter/                  # 适配器层（按用例分包）
-│       │   ├── api/                  # 所有 API Controller
-│       │   ├── interceptor/          # 拦截器
-│       │   └── protocol/            # 协议适配层
-│       │       ├── openai/          # OpenAI 协议校验器/调谐器
-│       │       └── anthropic/       # Anthropic 协议校验器/调谐器
-│       ├── application/              # 应用层（按用例分包）
-│       │   └── proxy/               # 代理调度
-│       │       ├── routing/          # 路由解析（RoutingResolver/ModelMatcher/ChannelSelector/CredentialResolver/EndpointResolver）
-│       │       └── ChatDispatchService  # 七阶段调度
-│       ├── domain/                   # 领域层
-│       │   ├── gateway/              # 跨领域 Gateway 接口
-│       │   ├── protocol/             # 协议领域
-│       │   │   ├── contract/         # 协议数据契约（DTO）
-│       │   │   ├── conversion/       # 跨协议转换规则
-│       │   │   ├── tuning/           # 出站调谐接口
-│       │   │   └── validation/       # 入站校验接口
-│       │   ├── supply/               # 供给域
-│       │   ├── proxy/                # 模型代理领域
-│       │   ├── model/                # 模型广场领域
-│       │   ├── security/             # 访问控制领域
-│       │   ├── quota/                # 用量管控领域
-│       │   ├── audit/                # 审计追溯领域
-│       │   └── alert/                # 告警通知领域
-│       ├── infrastructure/           # 基础设施层
-│       │   ├── config/
-│       │   ├── gateway/              # Gateway 实现
-│       │   ├── resilience/           # 韧性组件（Retry/CircuitBreaker/ResilientUpstreamClient）
-│       │   ├── security/
-│       │   └── util/
-│       └── common/                   # 公共组件
-├── gateway-console                   # React/Vue 前端代码
-└── gateway-cli/                      # CLI 模块（骨架）
-    ├── pom.xml
-    └── src/main/java/com/codingas/gateway/cli/
+├── gateway-common/                   # 横切底座（common.data/entity/dto/enums/event/exception/util）
+├── gateway-protocol/                 # 协议核心（contract/transport/tuning/validation）
+│   ├── protocol-openai/              # OpenAI 协议实现（插件）
+│   ├── protocol-anthropic/           # Anthropic 协议实现（插件）
+│   └── protocol-gemini/              # Gemini 协议实现（插件）
+├── gateway-provider/                 # 供给域（channel/service/catalog/model/vendor/health）
+│   ├── provider-data/                # 供给持久化（dataobject/gateway/repository）
+│   └── provider-starter/             # 供给自动装配（autoconfigure.provider）
+├── gateway-iam/                      # 身份访问域（auth/apikey/encryption/service/dto）
+│   ├── iam-data/
+│   └── iam-starter/
+├── gateway-usage/                    # 用量管控域（tokenlimit 等）
+│   ├── usage-data/
+│   └── usage-starter/
+├── gateway-security/                 # 安全威胁域（threat/dataprotection）
+│   ├── security-data/
+│   └── security-starter/
+├── gateway-audit/                    # 审计追溯域（event 等）
+│   ├── audit-data/
+│   └── audit-starter/
+├── gateway-alert/                    # 告警通知域
+│   ├── alert-data/
+│   └── alert-starter/
+├── gateway-resilience/               # 韧性域（retry/circuitbreaker/failover/upstream）
+│   ├── resilience-data/
+│   └── resilience-starter/
+├── gateway-proxy/                    # 模型代理域（chat/invoker/routing/experience/conversion）
+│   └── proxy-starter/
+├── gateway-stats/                    # 聚合统计域
+│   └── stats-starter/
+├── gateway-web/                      # HTTP 承载层（web.api 全部 Controller + web.interceptor + web.advice）
+├── gateway-boot/                     # 启动装配（boot.config/init/event + GatewayApplication）
+├── gateway-cli/                      # CLI 管理工具
+├── gateway-simulator/                # 提供商模拟器
+├── gateway-coverage/                 # 覆盖率聚合（jacoco report-aggregate）
+└── gateway-console/                  # Web 管理界面（React，Vite）
 ```
 
-| 模块 | 职责 | 与 gateway-boot 关系 |
-|------|------|---------------------|
-| gateway-boot | 后端模块，包含所有层 | - |
-| gateway-console | Web 管理界面 | API 消费者（HTTP 调用） |
+| 模块 | 职责 |
+|------|------|
+| gateway-boot | 启动装配（config/init/event + GatewayApplication），依赖各域 starter |
+| gateway-web | HTTP 承载层（web.api 全部 Controller + interceptor + advice） |
+| gateway-common | 横切底座（被所有模块依赖） |
+| gateway-<域>（provider/iam/usage/security/audit/alert/resilience/proxy/stats/protocol） | 业务域核心（根包 = 模块名） |
+| gateway-<域>-data | 绑定持久化模块（dataobject/gateway/repository） |
+| gateway-<域>-starter | 自动装配（autoconfigure.<域>） |
+| gateway-console | Web 管理界面（React） | API 消费者（HTTP 调用） |
 | gateway-cli | 命令行管理工具 | API 消费者（HTTP 调用） |
 
-## 各层职责
+## 各层职责（模块化落位）
 
-| 层 | 职责 | 包含内容 |
+> 分层依赖规则由模块边界 + ArchUnit 铁律强制执行（见 `docs/adr/0001-modularization-architecture.md`）；包名不再保留 `adapter/application/domain/infrastructure` DDD 层名前缀。
+
+| 层（概念） | 职责 | 模块化落位 |
 |---|------|---------|
-| **adapter** | 接收请求、返回响应 | Controller、DTO（按用例分包） |
-| **application** | 用例编排，跨域协调 | Application Service（按用例分包） |
-| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
-| **infrastructure** | 技术实现 | Gateway 实现、配置、工具 |
-| **common** | 跨领域共享 | 基础异常、技术常量、工具类 |
+| **web（原 adapter）** | 接收请求、返回响应 | gateway-web（web.api / web.interceptor / web.advice） |
+| **application（用例编排）** | 用例编排，跨域协调 | 域核心模块 `<域>.service` 等 |
+| **domain（领域）** | 业务逻辑、领域模型 | 域核心模块（provider/iam/proxy/protocol...） |
+| **infrastructure（持久化实现）** | Gateway 实现、数据持久化 | 绑定模块 `<域>data`（gateway/repository） |
+| **common（横切）** | 跨领域共享 | gateway-common（data/entity/dto/enums/event/exception/util） |
 
 ## 服务分类
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| Domain Service | domain/xxx/service/ | AuthenticationService, RateLimitService |
-| Application Service | application/xxx/ | AuthApplication, ChatApplication |
+| Domain Service | 域核心模块 `<域>.service/` | ChannelService, TokenLimitService |
+| Application Service | 域核心模块 `<域>.service/`（或 application 子包） | 各域编排服务 |
 
 ## Exception 分类
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 基础异常 | common/exception/ | GatewayException |
-| 领域异常 | domain/xxx/exception/ | AuthenticationException |
-| 基础设施异常 | infrastructure/exception/ | ProviderException |
+| 基础异常 | gateway-common `common/exception/` | GatewayException |
+| 领域异常 | 域模块 `<域>.exception/` | AuthenticationException |
+| 基础设施异常 | 域模块 `<域>.exception/`（或绑定模块） | ProviderException |
 
 ## 关键文件
 
-- `doc/constitution.md` - 架构章程（设计铁律）
-- `doc/spec.md` - 完整需求规格说明书
-- `doc/AI-Gateway功能特性.md` - 产品功能文档
+- `docs/constitution.md` - 架构章程（设计铁律）
+- `docs/spec.md` - 完整需求规格说明书
+- `docs/api-spec.md` - API 规格文档
+- `docs/adr/0001-modularization-architecture.md` - 模块化后分层与命名规范决策（ADR-0001）
 
 ## 开发命令
 
@@ -155,7 +161,7 @@ GatewayException (根异常)
 - 接口: PascalCase + 能力描述（如 `ModelRouter`, `TokenCounter`）
 - 方法: camelCase + 动词开头
 - 常量: UPPER_SNAKE_CASE
-- **包名**: Jmix 式（模块 = 根包，去 `domain/application/infrastructure` DDD 前缀；绑定模块拼接 `Xdata`/`Xhttp` 根包；starter 用 `autoconfigure.<域>`）。详见 `doc/constitution.md` §3.1 包名规范与模块化设计文档 §4.2 包名映射表
+- **包名**: 域模块化（模块 = 根包，去 `domain/application/infrastructure` DDD 前缀；绑定模块拼接 `Xdata`/`Xhttp` 根包；starter 用 `autoconfigure.<域>`）。详见 `docs/constitution.md` §3.1 包名规范
 
 ## Active Technologies
 - Java 21 + Spring Boot 3.5.x, Spring MVC (Web), JPA (数据持久化) 

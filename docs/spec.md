@@ -1902,6 +1902,8 @@ LLM-Gateway 是开源的 AI 模型 API 聚合分发网关，提供两个版本�
 
 ### 9.6.10 任务列表
 
+> **说明**：以下任务列表为早期单模块规划时的文件路径（`adapter/application/domain/infrastructure` 分层），项目已于 P1-P4.5 完成 17 模块化（模块 = 根包），实际实现位置按各功能域模块（gateway-web `web.api`、gateway-boot `boot.config` 等）为准。
+
 #### Task 1: 用户管理 CRUD
 
 **Files:**

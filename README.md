@@ -140,7 +140,7 @@
 
 ### 模块化架构
 
-采用 **17 模块多模块 Maven 结构**（命名对齐 Jmix），业务按功能域拆分为核心模块 + JPA 绑定模块，协议层插件化：
+采用 **17 模块多模块 Maven 结构**（模块化命名），业务按功能域拆分为核心模块 + JPA 绑定模块，协议层插件化：
 
 | 分组 | 模块 | 职责 |
 |------|------|------|
@@ -163,7 +163,7 @@
 | | `gateway-simulator` | LLM 提供商模拟服务 |
 | 前端 | `gateway-console` | Web 管理界面 |
 
-- **命名规范（Jmix 式）**：模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分（`com.codingas.gateway.<域>`）；JPA 绑定模块根包为 `<域>data`（如 `usagedata`、`securitydata`）
+- **命名规范**：模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分（`com.codingas.gateway.<域>`）；JPA 绑定模块根包为 `<域>data`（如 `usagedata`、`securitydata`）
 - **协议插件化**：OpenAI / Anthropic / Gemini 以插件形式通过 AutoConfiguration + `@ConditionalOnProperty` 启用，可扩展新协议
 - **分层架构**：gateway-boot 内仍保留 Adapter → Application 分层，Domain 与 Infrastructure 下沉至各功能域模块
 

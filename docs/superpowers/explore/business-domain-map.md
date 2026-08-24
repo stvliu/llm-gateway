@@ -1,5 +1,7 @@
 # LLM-Gateway 业务域清单 + 跨域依赖图
 
+> **已过时**：本文为 2026-08 模块化**之前**基于单模块结构（`gateway-boot`，分层 adapter/application/domain/infrastructure/common）的领域耦合分析快照，用于支撑"按业务域拆模块"重构设计。项目已于 2026-08-25 完成 17 模块化（模块 = 根包），文中包路径仅作历史参考，请以各功能域模块的实际结构为准。
+
 > 探索代理分析产出（2026-08-16），为"按业务域拆模块"重构设计提供基础数据。
 > 主代码在 `gateway-boot/src/main/java/com/codingas/gateway/`（分层：adapter/application/domain/infrastructure/common）。
 

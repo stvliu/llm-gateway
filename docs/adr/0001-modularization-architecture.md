@@ -1,14 +1,14 @@
-# ADR-0001: 模块化后 COLA 分层架构与命名规范
+# ADR-0001: 模块化后分层架构与命名规范
 
 - 状态：已接受（2026-08-25）
 - 决策者：架构组 / Liu Ye
-- 关联：CLAUDE.md「包名：Jmix 式」、P1-P4.5 模块化重构、`docs/constitution.md`
+- 关联：CLAUDE.md「包名：域模块化」、P1-P4.5 模块化重构、`docs/constitution.md`
 
 ## 背景
 
-项目已完成 17 模块化（域模块 + `-data` 绑定模块 + `-starter`，Jmix 式三明治结构）。历史演进：早期为单模块 + COLA Light 5.0 分层包（`adapter/application/domain/infrastructure`），P1-P4.5 分批拆分为多模块并做 Jmix 命名对齐，但部分包名层名残留（如 gateway-boot 的 `infrastructure.*`、`application.*`）。
+项目已完成 17 模块化（域模块 + `-data` 绑定模块 + `-starter` 三明治结构）。历史演进：早期为单模块 + 分层包（`adapter/application/domain/infrastructure` 四层），P1-P4.5 分批拆分为多模块并做模块化命名对齐，但部分包名层名残留（如 gateway-boot 的 `infrastructure.*`、`application.*`）。
 
-需要明确：**模块化后，COLA 分层的哪些部分保留、哪些废弃**，以及命名规范的最终形态。
+需要明确：**模块化后，单模块分层架构的哪些部分保留、哪些废弃**，以及命名规范的最终形态。
 
 ## 决策
 
@@ -21,7 +21,7 @@
 
 ### 2. 分层包名（adapter/application/domain/infrastructure 前缀）——废弃
 
-模块化后包名层名成为冗余表达，且破坏模块内聚。统一为 **Jmix 域制：模块 = 根包**：
+模块化后包名层名成为冗余表达，且破坏模块内聚。统一为 **域模块化：模块 = 根包**：
 
 | 模块 | 根包 | 子包示例 |
 |------|------|---------|
