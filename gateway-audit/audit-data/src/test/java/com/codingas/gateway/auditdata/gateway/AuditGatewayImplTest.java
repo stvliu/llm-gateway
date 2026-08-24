@@ -16,6 +16,8 @@
 package com.codingas.gateway.auditdata.gateway;
 
 import com.codingas.gateway.audit.AuditLog;
+import com.codingas.gateway.audit.CallLog;
+import com.codingas.gateway.audit.CallLogGateway;
 import com.codingas.gateway.auditdata.repository.AuditLogRepository;
 import com.codingas.gateway.auditdata.dataobject.AuditLogDo;
 import org.junit.jupiter.api.DisplayName;
@@ -41,6 +43,9 @@ class AuditGatewayImplTest {
 
     @Mock
     private AuditLogRepository repository;
+
+    @Mock
+    private CallLogGateway callLogGateway;
 
     @InjectMocks
     private AuditGatewayImpl gateway;
@@ -98,6 +103,47 @@ class AuditGatewayImplTest {
 
             // then
             assertThat(result).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("saveCallLog 方法测试")
+    class SaveCallLogTests {
+
+        @Test
+        @DisplayName("saveCallLog 委托给 CallLogGateway 保存")
+        void saveCallLog_delegatesToCallLogGateway() {
+            // given
+            CallLog callLog = new CallLog();
+            callLog.setTraceId("trace-1");
+            CallLog saved = new CallLog();
+            saved.setId(5L);
+            saved.setTraceId("trace-1");
+            when(callLogGateway.save(callLog)).thenReturn(saved);
+
+            // when
+            CallLog result = gateway.saveCallLog(callLog);
+
+            // then
+            assertThat(result).isSameAs(saved);
+            assertThat(result.getId()).isEqualTo(5L);
+            verify(callLogGateway).save(callLog);
+        }
+    }
+
+    @Nested
+    @DisplayName("null 防御转换测试")
+    class NullConversionTests {
+
+        @Test
+        @DisplayName("保存 null 返回 null（toDo/toEntity 空分支）")
+        void save_nullEntity_returnsNull() {
+            // when
+            AuditLog result = gateway.save(null);
+
+            // then
+            assertThat(result).isNull();
+            verify(repository).save(null);
         }
     }
 
