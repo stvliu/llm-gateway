@@ -91,6 +91,11 @@ public class ChannelGatewayImpl implements ChannelGateway {
         return channelRepository.findByProviderIdAndName(providerId, name).map(this::toEntity);
     }
 
+    @Override
+    public long count() {
+        return channelRepository.count();
+    }
+
     private Channel toEntity(ChannelDo doObj) {
         Channel entity = new Channel();
         entity.setId(doObj.getId());

@@ -77,4 +77,9 @@ public interface ChannelGateway {
      * 根据供应商ID和计费模式查找渠道
      */
     List<Channel> findByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
+
+    /**
+     * 统计渠道总数
+     */
+    long count();
 }
