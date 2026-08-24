@@ -20,6 +20,8 @@ import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.protocol.*;
 import com.codingas.gateway.protocol.contract.*;
+import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
@@ -27,11 +29,13 @@ import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.audit.AuditGateway;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.usage.event.TokenUsedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
@@ -188,6 +193,127 @@ class ChatDispatchServiceTest {
             assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
                     .isSameAs(upstreamEx);
         }
+
+        @Test
+        @DisplayName("调度成功：审计成功日志并发布 OpenAI Token 使用事件")
+        void dispatch_success_publishesOpenAiUsage() {
+            // given — OpenAI 响应带 usage，触发 Token 计量
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            OpenAIChatResponse response = OpenAIChatResponse.builder()
+                    .id("chatcmpl-1").model("gpt-4o")
+                    .usage(OpenAIChatResponse.Usage.builder().promptTokens(10).completionTokens(5).build())
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenReturn(response);
+
+            // when
+            ProtocolResponse result = dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
+
+            // then — 审计成功 + Token 事件（OpenAI promptTokens/completionTokens 映射）
+            assertThat(result).isSameAs(response);
+            verify(auditGateway).saveCallLog(argThat(log ->
+                    Boolean.TRUE.equals(log.getSuccess()) && "gpt-4o".equals(log.getModel())));
+            ArgumentCaptor<TokenUsedEvent> eventCaptor =
+                    ArgumentCaptor.forClass(TokenUsedEvent.class);
+            verify(eventPublisher).publish(eventCaptor.capture());
+            TokenUsedEvent event = eventCaptor.getValue();
+            assertThat(event.userId()).isEqualTo(1L);
+            assertThat(event.apiKeyId()).isEqualTo(1L);
+            assertThat(event.provider()).isEqualTo("openai");
+            assertThat(event.promptTokens()).isEqualTo(10);
+            assertThat(event.completionTokens()).isEqualTo(5);
+        }
+
+        @Test
+        @DisplayName("调度成功（Anthropic 响应）发布 Anthropic Token 使用事件")
+        void dispatch_success_publishesAnthropicUsage() {
+            // given — Anthropic 响应带 usage（inputTokens/outputTokens）
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            RoutingContext anthropicContext = new RoutingContext(10L, 21L, "https://api.anthropic.com",
+                    Protocol.ANTHROPIC, "sk-ant-key", 60, true, "test-model", null,
+                    FailureStrategy.FAIL_RETRY);
+
+            AnthropicMessagesResponse response = AnthropicMessagesResponse.builder()
+                    .id("msg-1").model("claude-3-5-sonnet")
+                    .usage(AnthropicMessagesResponse.Usage.builder().inputTokens(100).outputTokens(50).build())
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(anthropicContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(anthropicContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenReturn(response);
+
+            // when
+            dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
+
+            // then
+            ArgumentCaptor<TokenUsedEvent> eventCaptor =
+                    ArgumentCaptor.forClass(TokenUsedEvent.class);
+            verify(eventPublisher).publish(eventCaptor.capture());
+            TokenUsedEvent event = eventCaptor.getValue();
+            assertThat(event.provider()).isEqualTo("anthropic");
+            assertThat(event.promptTokens()).isEqualTo(100);
+            assertThat(event.completionTokens()).isEqualTo(50);
+        }
+
+        @Test
+        @DisplayName("响应无 usage 时不发布 Token 事件")
+        void dispatch_success_noUsage_noEvent() {
+            // given — usage 为 null → publishTokenUsedEvent 分支不触发
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            OpenAIChatResponse response = OpenAIChatResponse.builder().id("chatcmpl-1").model("gpt-4o").build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString())).thenReturn(response);
+
+            // when
+            dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED);
+
+            // then
+            verify(eventPublisher, never()).publish(any());
+            verify(auditGateway).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
+        }
+
+        @Test
+        @DisplayName("调度失败：审计失败日志（success=false + errorMessage）")
+        void dispatch_failure_auditsFailureLog() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+            lenient().when(channelFailoverInvoker.invoke(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString()))
+                    .thenThrow(new RuntimeException("上游调用失败"));
+
+            // when & then
+            assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
+                    .isInstanceOf(RuntimeException.class);
+            verify(auditGateway).saveCallLog(argThat(log ->
+                    Boolean.FALSE.equals(log.getSuccess())
+                            && "上游调用失败".equals(log.getErrorMessage())
+                            && log.getDurationMs() != null));
+        }
     }
 
     @Nested
@@ -237,6 +363,120 @@ class ChatDispatchServiceTest {
             assertThatThrownBy(() -> dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, callback))
                     .isInstanceOf(RuntimeException.class)
                     .hasMessageContaining("上游调用失败");
+        }
+
+        @Test
+        @DisplayName("流式回调 onChunk 透传给用户回调")
+        void dispatchStream_callback_onChunk_passthrough() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+
+            // when — 捕获审计包装回调并驱动 onChunk
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+            auditCaptor.getValue().onChunk("data chunk");
+
+            // then — 原样透传
+            verify(userCallback).onChunk("data chunk");
+        }
+
+        @Test
+        @DisplayName("流式回调 onComplete 审计成功并回调用户")
+        void dispatchStream_callback_onComplete_auditsAndCompletes() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when
+            auditCaptor.getValue().onComplete();
+
+            // then — 审计成功日志 + 通知用户完成
+            verify(auditGateway).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
+            verify(userCallback).onComplete();
+        }
+
+        @Test
+        @DisplayName("流式回调 onError（ProviderException）格式化为 SSE 错误并审计失败")
+        void dispatchStream_callback_onError_providerException() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when — ProviderException 触发 SseErrorFormatter 格式化
+            ProviderException pe = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "限流",
+                    "trace-1", "gpt-4o", "openai", 20L, 30);
+            auditCaptor.getValue().onError(pe);
+
+            // then — 审计失败日志记录格式化后的 SSE 错误 JSON
+            verify(auditGateway).saveCallLog(argThat(log ->
+                    Boolean.FALSE.equals(log.getSuccess())
+                            && log.getErrorMessage() != null
+                            && log.getErrorMessage().contains("rate_limit")
+                            && log.getErrorMessage().contains("30")));
+            verify(userCallback).onError(argThat(t ->
+                    t instanceof RuntimeException && t.getMessage().contains("rate_limit")));
+        }
+
+        @Test
+        @DisplayName("流式回调 onError（非 ProviderException）使用 unknown_error 兜底")
+        void dispatchStream_callback_onError_unknownError() {
+            // given
+            OpenAIChatRequest request = OpenAIChatRequest.builder()
+                    .model("gpt-4o")
+                    .messages(List.of(OpenAIChatRequest.Message.builder().role("user").content("hello").build()))
+                    .build();
+
+            lenient().when(routingResolver.resolveCandidates("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
+                    .thenReturn(List.of(openAIContext));
+
+            StreamCallback userCallback = mock(StreamCallback.class);
+            ArgumentCaptor<StreamCallback> auditCaptor = ArgumentCaptor.forClass(StreamCallback.class);
+            dispatchService.dispatchStream(request, testIdentity, RoutingStrategy.WEIGHTED, userCallback);
+            verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
+                    eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
+
+            // when — 非 ProviderException 走 unknown_error 兜底分支
+            auditCaptor.getValue().onError(new IllegalStateException("boom"));
+
+            // then
+            verify(auditGateway).saveCallLog(argThat(log ->
+                    Boolean.FALSE.equals(log.getSuccess())
+                            && log.getErrorMessage() != null
+                            && log.getErrorMessage().contains("unknown_error")));
+            verify(userCallback).onError(argThat(t ->
+                    t instanceof RuntimeException && t.getMessage().contains("unknown_error")));
         }
     }
 }
