@@ -317,12 +317,6 @@
                 <artifactId>maven-failsafe-plugin</artifactId>
             </plugin>
 
-            <!-- JaCoCo 覆盖率插件 -->
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-            </plugin>
-
             <!-- Spring Boot 插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
