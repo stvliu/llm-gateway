@@ -237,9 +237,12 @@ class ChannelCredentialGatewayImplTest {
         ChannelCredentialDo doObj = sampleDo(3L, 1L);
         when(credentialRepository.findById(3L)).thenReturn(Optional.of(doObj));
 
+        // fixture sampleDo 预置了 lastUsedAt（2026-08-01 旧值），仅断言 isNotNull 恒真无法验证
+        // 更新时间逻辑；记录调用前时刻，断言 lastUsedAt 被刷新为不早于该时刻
+        Instant before = Instant.now();
         gateway.updateLastUsedAt(3L);
 
-        assertThat(doObj.getLastUsedAt()).isNotNull();
+        assertThat(doObj.getLastUsedAt()).isAfterOrEqualTo(before);
         verify(credentialRepository).save(doObj);
     }
 
