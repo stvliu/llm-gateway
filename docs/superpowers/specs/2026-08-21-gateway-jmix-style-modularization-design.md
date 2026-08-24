@@ -356,6 +356,22 @@ gateway/                              # 项目根（父 POM）
 
 > **2026-08-24 决策（偏离原方案）**：域目录增加中间父 POM（层级聚合）——每个域目录一个 `pom.xml`（`gateway-<域>-parent`，parent=根 pom，packaging=pom，聚合域内子模块），子模块 parent 指向域 pom（`relativePath=../pom.xml`），根 pom `<modules>` 只聚合 10 个域 pom + 4 个根目录模块（common/boot/cli/simulator）。收益：cd 进域目录可独立构建该域；域级模块组织语义化。成本：pom 层级 +1、14 个新 pom 文件。原「根 pom 直接聚合子模块、relativePath=../../pom.xml」方案废弃。
 
+> **2026-08-24 决策（命名规范，待执行）**：Maven 坐标两级命名体系——`gateway-` 前缀标识「构建聚合/根工具模块」，域内业务模块用短名（核心子模块 artifactId 去前缀）：
+>
+> | 层 | groupId | artifactId | 目录 |
+> |---|---|---|---|
+> | 域父 POM（聚合/继承） | `com.codingas.gateway`（根） | `gateway-<域>`（无 parent 后缀） | `gateway-<域>/` |
+> | 核心子模块 | `com.codingas.gateway.<域>` | `<域>`（如 `provider`） | `<域>/`（= artifactId） |
+> | data/starter | `com.codingas.gateway.<域>` | `<域>-data` / `<域>-starter` | `<域>-data/` / `<域>-starter/` |
+> | 根工具/应用 | `com.codingas.gateway` | `gateway-boot/common/cli/simulator/web`（带前缀，不变） | 根目录 |
+>
+> 协议域示例：父 `com.codingas.gateway:gateway-protocol`；核心 `com.codingas.gateway.protocol:protocol`；插件 `com.codingas.gateway.protocol:protocol-openai/anthropic/gemini`。
+>
+> **收益**：① 模块名（目录）与 artifactId 一致（目录本为短名，去前缀后天然一致）；② 域 groupId（`com.codingas.gateway.<域>`）保持干净、父 POM 不占域 groupId；③ 域父 POM 无 parent 后缀（父与核心 artifactId 不同，无需靠 groupId 区分）。
+> **代价**：坐标连锁变更——30+ 依赖声明 artifactId 改名（`gateway-provider` → `provider` 等）、10 个域父 POM + 29 子模块 parent 引用调整、文档/记忆同步。**待执行**（P4 合并后独立分支）。
+>
+> 注：此决策与上方「域父 POM `gateway-<域>-parent`」决策有冲突（后者为过渡态），执行命名重构时以本决策为准。
+
 ## 5. 装配机制
 
 ### 5.1 starter 纯装配（仿 `security-starter`）
@@ -468,6 +484,12 @@ public class ProviderConfiguration { ... }
 - 新增模块级 ArchUnit 铁律（解除 freeze）：禁止依赖 impl/DO；禁止反向依赖 boot/web；协议插件只依赖 SPI；starter 只依赖 autoconfigure + 本域模块
 - 整改 audit/alert 穿透 DO 的耦合（`UsageLogDo` → 改用端口接口或只存 ID）
 - 验证：ArchUnit 全绿；全量回归；覆盖率 ≥90/85/80%
+
+> **2026-08-24 完成（P4 全部落地）**：
+> - **ArchUnit 模块级铁律硬化**：`LayerDependencyTest` 升级为 7 条硬规则——3 条原 freeze 规则（`NO_CORE_DEPENDS_BINDING_MODULES`/`NO_BINDING_CROSS_DOMAIN_DEPENDS`/`COMMON_NOT_DEPEND_ON_BUSINESS`）解除 `freeze()` 转为硬规则；新增 4 条：`NO_DEPENDS_ON_BOOT_OR_WEB`（业务域/绑定模块禁止反向依赖 boot/web 承载层）、`PROTOCOL_PLUGIN_ONLY_SPI`（协议插件只依赖协议核心+底座）、`PROTOCOL_PLUGIN_NO_COMPONENT`（协议插件包禁止 `@Component/@Service/@Repository`，实测 `@AutoConfiguration` 类未被误伤）、`STARTER_ONLY_AUTOCONFIGURE`（starter 装配类只依赖本域模块，按「源类域 == 目标类域」自定义条件实现，放行各 starter 对本域 Configuration 的自引用，禁止跨域）。分析范围限定主源码（`ImportOption.DoNotIncludeTests`），集成测试合法依赖承载层。
+> - **DO 依赖清零**：`UsageLogDo` 改存 ID（`user_id/provider_id/model_id`，表结构不变）、`AlertNotificationDo` 改存 `target_user_id`，audit/alert 域不再穿透跨域 DO；`StatsService` 改注入 4 个 Gateway count 端口（`Provider/Model/Channel/UserGateway.count()`），stats→providerdata/iamdata 的 Repository 依赖清零。
+> - **web 测试归位（P3 承接）**：boot 的 `adapter/**` 下 16 个测试迁入 `gateway-web/src/test`（物理迁移、包名不变），gateway-web pom 补测试依赖（junit-jupiter/mockito-junit-jupiter/assertj-core/spring-test/hamcrest）；`ChannelHealthControllerIT` 依赖 boot `GatewayApplication` 全量起上下文，留 boot（集成测试）。
+> - **验证**：全量 `./mvnw clean install` BUILD SUCCESS，ArchUnit 7 条铁律全绿 + web 58 项测试在新模块运行。freeze 存储（target/archunit）不再需要——规则已硬化。
 
 ## 7. 测试与风险
 
