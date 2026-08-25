@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 import { useState } from 'react';
-import { Segmented, Button, App, theme, Select } from 'antd';
+import { Segmented, Button, App, theme, Typography } from 'antd';
 import { CopyOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 export type Protocol = 'openai' | 'anthropic';
-type Lang = 'curl' | 'python' | 'node' | 'java';
+export type Lang = 'curl' | 'python' | 'node' | 'java';
+
+const { Text } = Typography;
 
 interface Props {
   apiKey?: string;
   model: string;
-  models: string[];
   protocol: Protocol;
-  onModelChange: (model: string) => void;
-  onProtocolChange: (protocol: Protocol) => void;
 }
 
 /** OpenAI 协议代码模板 */
@@ -155,7 +154,8 @@ const allSnippets: Record<Protocol, Record<Lang, (url: string, key: string, mode
   anthropic: anthropicSnippets,
 };
 
-export default function CodeSnippet({ apiKey, model, models, protocol, onModelChange, onProtocolChange }: Props) {
+/** 代码示例：依据上方配置条（Key/模型/协议）与头部语言切换实时生成代码 */
+export default function CodeSnippet({ apiKey, model, protocol }: Props) {
   const { t } = useTranslation('quickstart');
   const { token } = theme.useToken();
   const { message } = App.useApp();
@@ -192,22 +192,15 @@ export default function CodeSnippet({ apiKey, model, models, protocol, onModelCh
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: 12,
+        flexWrap: 'wrap',
         padding: '8px 16px',
         background: token.colorBgLayout,
         borderBottom: `1px solid ${token.colorBorder}`,
-        flexWrap: 'wrap',
-        gap: 8,
       }}>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Segmented
-            size="small"
-            value={protocol}
-            onChange={(v) => onProtocolChange(v as Protocol)}
-            options={[
-              { value: 'openai', label: t('protocol.openai') },
-              { value: 'anthropic', label: t('protocol.anthropic') },
-            ]}
-          />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Text strong style={{ fontSize: 13 }}>{t('code.title')}</Text>
+          {/* 代码语言切换（第一行，Segmented 按钮组） */}
           <Segmented
             size="small"
             value={lang}
@@ -220,19 +213,9 @@ export default function CodeSnippet({ apiKey, model, models, protocol, onModelCh
             ]}
           />
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <Select
-            size="small"
-            value={model}
-            onChange={onModelChange}
-            style={{ minWidth: 160 }}
-            options={models.map((m) => ({ value: m, label: m }))}
-            placeholder={t('model.select')}
-          />
-          <Button size="small" icon={<CopyOutlined />} onClick={handleCopy}>
-            {t('copy')}
-          </Button>
-        </div>
+        <Button size="small" icon={<CopyOutlined />} onClick={handleCopy}>
+          {t('copy')}
+        </Button>
       </div>
       <pre style={{
         margin: 0,

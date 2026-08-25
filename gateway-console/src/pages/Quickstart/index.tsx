@@ -14,37 +14,31 @@
  * limitations under the License.
  */
 import { useState, useEffect } from 'react';
-import { Row, Col, Input, Typography, Empty, Skeleton, Card } from 'antd';
+import { Typography, Card } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useModels } from '@/services/query/useModels';
-import ModelCard from './ModelCard';
-import ApiKeySelector from './ApiKeySelector';
+import RequestConfigBar from './RequestConfigBar';
 import CodeSnippet from './CodeSnippet';
 import type { Protocol } from './CodeSnippet';
 import KeyGenerateModal from './KeyGenerateModal';
 import PlaygroundPanel from './PlaygroundPanel';
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 
 export default function Quickstart() {
   const { t } = useTranslation('quickstart');
   const { data: models, isLoading } = useModels({ limit: 1000 });
-  const [search, setSearch] = useState('');
   const [keyModalOpen, setKeyModalOpen] = useState(false);
 
-  // 页面级联动状态
+  // 页面级联动状态：Key/模型/协议统一由页面持有，代码示例与试玩共享
   const [currentKey, setCurrentKey] = useState<string>();
   const [currentKeyId, setCurrentKeyId] = useState<number>();
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [protocol, setProtocol] = useState<Protocol>('openai');
 
-  const filtered = models?.items?.filter((m) =>
-    m.state === 'ACTIVE' &&
-    (m.displayName || m.modelName).toLowerCase().includes(search.toLowerCase())
-  ) ?? [];
-
-  // 模型列表（给 CodeSnippet 的 Select 用）
-  const modelNames = filtered.map((m) => m.modelName);
+  // 可用模型（仅活跃）
+  const activeModels = models?.items?.filter((m) => m.state === 'ACTIVE') ?? [];
+  const modelNames = activeModels.map((m) => m.modelName);
 
   // 自动选择第一个模型
   useEffect(() => {
@@ -70,84 +64,47 @@ export default function Quickstart() {
     setKeyModalOpen(false);
   };
 
-  const handleModelSelect = (modelName: string) => {
-    setSelectedModel(modelName);
-  };
-
   return (
     <div>
       <Card>
         <div style={{ marginBottom: 24 }}>
-        <Title level={4} style={{ margin: 0 }}>{t('title')}</Title>
-        <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
-          {t('subtitle')}
-        </Paragraph>
-      </div>
+          <Title level={4} style={{ margin: 0 }}>{t('title')}</Title>
+          <Paragraph type="secondary" style={{ margin: '4px 0 0' }}>
+            {t('subtitle')}
+          </Paragraph>
+        </div>
 
-      {/* 区块 1: API Key 快捷区 */}
-      <div style={{ marginBottom: 24 }}>
-        <ApiKeySelector
-          currentKey={currentKey}
-          currentKeyId={currentKeyId}
-          onKeyChange={handleKeyChange}
-          onCreateClick={() => setKeyModalOpen(true)}
-        />
-      </div>
-
-      {/* 区块 2: 模型选择 + 代码示例 */}
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-          <Text strong>{t('search').replace('...', '')}</Text>
-          <Input.Search
-            placeholder={t('search')}
-            style={{ width: 280 }}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            allowClear
+        {/* 区块 1: 统一请求配置条（API Key / 模型 / 协议） */}
+        <div style={{ marginBottom: 24 }}>
+          <RequestConfigBar
+            currentKey={currentKey}
+            currentKeyId={currentKeyId}
+            onKeyChange={handleKeyChange}
+            onCreateKeyClick={() => setKeyModalOpen(true)}
+            models={activeModels}
+            loading={isLoading}
+            model={selectedModel}
+            onModelChange={setSelectedModel}
+            protocol={protocol}
+            onProtocolChange={setProtocol}
           />
         </div>
 
-        {isLoading ? (
-          <Row gutter={[12, 12]}>
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Col key={i} xs={24} sm={12} md={8}>
-                <Skeleton active paragraph={{ rows: 2 }} />
-              </Col>
-            ))}
-          </Row>
-        ) : filtered.length === 0 ? (
-          <Empty description={t('noModels')} />
-        ) : (
-          <Row gutter={[12, 12]} style={{ marginBottom: 16 }}>
-            {filtered.map((m) => (
-              <Col key={m.id} xs={24} sm={12} md={8}>
-                <ModelCard
-                  model={m}
-                  selected={m.modelName === selectedModel}
-                  onSelect={(model) => handleModelSelect(model.modelName)}
-                />
-              </Col>
-            ))}
-          </Row>
-        )}
+        {/* 区块 2: 代码示例（共享上方配置，语言切换在头部） */}
+        <div style={{ marginBottom: 24 }}>
+          <CodeSnippet
+            apiKey={currentKey}
+            model={selectedModel}
+            protocol={protocol}
+          />
+        </div>
 
-        <CodeSnippet
+        {/* 区块 3: 在线试玩（共享上方配置） */}
+        <PlaygroundPanel
           apiKey={currentKey}
           model={selectedModel}
-          models={modelNames}
           protocol={protocol}
-          onModelChange={setSelectedModel}
-          onProtocolChange={setProtocol}
         />
-      </div>
-
-      {/* 区块 3: 轻量试玩 */}
-      <PlaygroundPanel
-        apiKey={currentKey}
-        model={selectedModel}
-        protocol={protocol}
-      />
-
       </Card>
 
       <KeyGenerateModal

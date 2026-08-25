@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 import { useState, useEffect } from 'react';
-import { Button, Dropdown, App, Typography, theme, Space } from 'antd';
-import { CopyOutlined, PlusOutlined, SwapOutlined, KeyOutlined } from '@ant-design/icons';
+import { Select, Button, App, Typography, theme } from 'antd';
+import { CopyOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserApiKeys } from '@/services/query/useUserApiKeys';
@@ -25,19 +25,20 @@ import { maskApiKey } from '@/utils/maskApiKey';
 const { Text } = Typography;
 
 interface Props {
-  currentKey: string | undefined;
-  currentKeyId: number | undefined;
+  currentKey?: string;
+  currentKeyId?: number;
   onKeyChange: (keyPlain: string, keyId: number) => void;
   onCreateClick: () => void;
 }
 
-export default function ApiKeySelector({ currentKey, onKeyChange, onCreateClick }: Props) {
+/** API Key 紧凑选择：下拉切换 + 复制 + 新建（无 Key 时警示态作为唯一阻塞项） */
+export default function ApiKeySelector({ currentKey, currentKeyId, onKeyChange, onCreateClick }: Props) {
   const { t } = useTranslation('quickstart');
   const { token } = theme.useToken();
   const { message } = App.useApp();
   const currentUser = useAuthStore((s) => s.user);
   const userId = currentUser?.id ?? 0;
-  const { data: keys } = useUserApiKeys(userId);
+  const { data: keys, isLoading } = useUserApiKeys(userId);
   const [loadingKeyId, setLoadingKeyId] = useState<number | null>(null);
 
   // 自动选择第一个可用 Key
@@ -68,67 +69,39 @@ export default function ApiKeySelector({ currentKey, onKeyChange, onCreateClick 
     }
   };
 
-  const dropdownItems = keys?.map((k) => ({
-    key: String(k.id),
-    label: (
-      <Space>
-        <Text code style={{ fontSize: 12 }}>{maskApiKey(k.keyPlain)}</Text>
-        <Text type="secondary" style={{ fontSize: 11 }}>{k.name}</Text>
-      </Space>
-    ),
-    onClick: () => loadKeyDetail(k.id),
-  })) ?? [];
-
   const hasKey = !!currentKey;
 
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '12px 16px',
-      background: token.colorBgContainer,
-      border: `1px solid ${hasKey ? token.colorBorder : token.colorBorderSecondary}`,
-      borderRadius: token.borderRadiusLG,
-      borderStyle: hasKey ? 'solid' : 'dashed',
-    }}>
-      <div style={{
-        width: 32, height: 32,
-        background: hasKey ? `${token.colorPrimary}10` : token.colorFillQuaternary,
-        borderRadius: 6,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: hasKey ? token.colorPrimary : token.colorTextQuaternary,
-        fontSize: 16,
-      }}>
-        <KeyOutlined />
-      </div>
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, color: token.colorTextSecondary, marginBottom: 2 }}>
-          {t('apiKey.current')}
-        </div>
-        {hasKey ? (
-          <Text code style={{ fontSize: 14 }}>{maskApiKey(currentKey!)}</Text>
-        ) : (
-          <Text type="secondary" style={{ fontSize: 13 }}>{t('apiKey.placeholder')}</Text>
-        )}
-      </div>
-      <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-        {hasKey && (
-          <>
-            <Button size="small" icon={<CopyOutlined />} onClick={handleCopy} loading={loadingKeyId !== null}>
-              {t('apiKey.copy')}
-            </Button>
-            <Dropdown menu={{ items: dropdownItems }} trigger={['click']}>
-              <Button size="small" icon={<SwapOutlined />}>
-                {t('apiKey.switch')}
-              </Button>
-            </Dropdown>
-          </>
-        )}
-        <Button size="small" type="primary" icon={<PlusOutlined />} onClick={onCreateClick}>
-          {t('apiKey.create')}
-        </Button>
-      </div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+      <Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
+        {t('apiKey.label')}
+      </Text>
+      <Select
+        size="small"
+        data-testid="key-select"
+        style={{ minWidth: 170 }}
+        value={currentKeyId}
+        placeholder={t('apiKey.placeholder')}
+        status={hasKey ? undefined : 'warning'}
+        loading={isLoading}
+        disabled={!keys || keys.length === 0}
+        options={(keys ?? []).map((k) => ({
+          value: k.id,
+          label: `${maskApiKey(k.keyPlain)} · ${k.name}`,
+        }))}
+        onChange={(id: number) => loadKeyDetail(id)}
+      />
+      <Button
+        size="small"
+        aria-label={t('apiKey.copy')}
+        icon={<CopyOutlined />}
+        onClick={handleCopy}
+        disabled={!hasKey || loadingKeyId !== null}
+        style={{ color: token.colorTextSecondary }}
+      />
+      <Button size="small" type="primary" icon={<PlusOutlined />} onClick={onCreateClick}>
+        {t('apiKey.create')}
+      </Button>
     </div>
   );
 }
