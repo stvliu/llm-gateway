@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Import;
  * <p>通过 {@code gateway.provider.enabled}（默认开启）控制域装配开关。</p>
  */
 @AutoConfiguration
-@Import(ProviderConfiguration.class)
+@Import({ProviderConfiguration.class, HealthCheckExecutorConfiguration.class})
 @ConditionalOnProperty(prefix = "gateway.provider", name = "enabled", matchIfMissing = true)
 public class ProviderAutoConfiguration {
 }

@@ -19,8 +19,11 @@ import com.codingas.gateway.protocol.ProtocolAdapter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * Anthropic 协议能力插件自动装配。
@@ -33,6 +36,19 @@ import org.springframework.context.annotation.Bean;
 @AutoConfiguration
 @ConditionalOnProperty(prefix = "gateway.protocol.anthropic", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class AnthropicProtocolAutoConfiguration {
+
+    /**
+     * 上游 HTTP 客户端（插件自包含提供；宿主已提供 OkHttpClient Bean 时复用）
+     */
+    @Bean
+    @ConditionalOnMissingBean
+    public OkHttpClient okHttpClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build();
+    }
 
     /**
      * Anthropic 协议适配器

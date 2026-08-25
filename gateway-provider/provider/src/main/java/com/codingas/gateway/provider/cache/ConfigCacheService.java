@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.provider.cache;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 /**
- * 配置缓存服务
+ * 配置缓存服务（provider 域）
  *
- * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。</p>
- * <p>负责 Provider、Model、ChannelCredential 的缓存刷新：供 {@link ConfigVersionChecker}
+ * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。
+ * 负责 Provider、Model、ChannelCredential 的缓存刷新：供 {@link ConfigVersionChecker}
  * 在配置版本变更时触发失效。查询缓存已下沉到各 Gateway 实现直接读取，本类仅保留失效入口。</p>
  *
- * <p>注意：已迁移到新架构，使用 ChannelCredential 替代 ProductApiKey。</p>
+ * <p>缓存管理器 Bean（localCacheManager 等）由启动装配层提供。</p>
  */
 @Service
 @Slf4j

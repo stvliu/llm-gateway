@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.provider.cache;
 
+import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
 import com.codingas.gateway.provider.model.ModelGateway;
 import com.codingas.gateway.provider.vendor.ProviderGateway;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 配置版本检查服务
+ * 配置版本检查服务（provider 域）
  *
  * <p>定时检查数据库配置版本，作为事件机制的兜底。</p>
- * <p>轮询间隔：30 秒</p>
- *
- * <p>注意：已迁移到新架构，使用 ChannelCredentialGateway 替代 ProductApiKeyGateway。</p>
+ * <p>轮询间隔：30 秒。启动时经 {@link #initVersions()} 记录基线版本，
+ * 避免首次轮询把存量数据误判为版本变更。</p>
  */
 @Component
 @Slf4j
@@ -51,8 +51,9 @@ public class ConfigVersionChecker {
     /**
      * 初始化版本号
      *
-     * <p>在应用启动时调用，记录当前版本。</p>
+     * <p>Bean 初始化后自动调用（{@link PostConstruct}），记录当前版本作为轮询基线。</p>
      */
+    @PostConstruct
     public void initVersions() {
         lastProviderVersion = providerGateway.getMaxVersion();
         lastModelVersion = modelGateway.getMaxVersion();

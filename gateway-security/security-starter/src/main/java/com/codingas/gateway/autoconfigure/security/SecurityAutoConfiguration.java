@@ -26,7 +26,7 @@ import org.springframework.context.annotation.Import;
  * <p>通过 {@code gateway.security.enabled}（默认开启）控制域装配开关。</p>
  */
 @AutoConfiguration
-@Import(SecurityConfiguration.class)
+@Import({SecurityConfiguration.class, SecurityRateLimitConfiguration.class})
 @ConditionalOnProperty(prefix = "gateway.security", name = "enabled", matchIfMissing = true)
 public class SecurityAutoConfiguration {
 }

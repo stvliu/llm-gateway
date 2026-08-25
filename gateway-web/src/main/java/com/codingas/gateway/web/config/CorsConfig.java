@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.web.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,27 +22,29 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 /**
- * CORS 跨域配置
+ * CORS 跨域配置（gateway-web 承载层）
+ *
+ * <p>配置自持于 {@link CorsProperties}（前缀 {@code gateway.cors}），
+ * 不依赖 boot 装配层。</p>
  */
 @Configuration
 public class CorsConfig {
 
-    private final GatewayProperties gatewayProperties;
+    private final CorsProperties corsProperties;
 
-    public CorsConfig(GatewayProperties gatewayProperties) {
-        this.gatewayProperties = gatewayProperties;
+    public CorsConfig(CorsProperties corsProperties) {
+        this.corsProperties = corsProperties;
     }
 
     @Bean
     public CorsFilter corsFilter() {
         CorsConfiguration config = new CorsConfiguration();
-        GatewayProperties.CorsProperties cors = gatewayProperties.getCors();
 
-        config.setAllowedOriginPatterns(java.util.Arrays.asList(cors.getAllowedOrigins().split(",")));
-        config.setAllowedMethods(java.util.Arrays.asList(cors.getAllowedMethods().split(",")));
-        config.setAllowedHeaders(java.util.Arrays.asList(cors.getAllowedHeaders().split(",")));
-        config.setAllowCredentials(cors.isAllowCredentials());
-        config.setMaxAge(cors.getMaxAge());
+        config.setAllowedOriginPatterns(java.util.Arrays.asList(corsProperties.getAllowedOrigins().split(",")));
+        config.setAllowedMethods(java.util.Arrays.asList(corsProperties.getAllowedMethods().split(",")));
+        config.setAllowedHeaders(java.util.Arrays.asList(corsProperties.getAllowedHeaders().split(",")));
+        config.setAllowCredentials(corsProperties.isAllowCredentials());
+        config.setMaxAge(corsProperties.getMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

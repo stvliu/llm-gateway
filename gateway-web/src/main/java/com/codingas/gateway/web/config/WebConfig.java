@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.web.config;
 
 import com.codingas.gateway.web.interceptor.SecurityInterceptorChain;
 import lombok.RequiredArgsConstructor;
@@ -29,13 +29,14 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 import java.io.IOException;
 
 /**
- * Web MVC 配置
+ * Web MVC 配置（gateway-web 承载层）
  *
- * <p>配置拦截器和其他 Web 相关设置。</p>
+ * <p>注册安全拦截器链与 SPA 静态资源路由。承载层自持相关
+ * {@link ActuatorHealthProperties}/{@link CorsProperties} 配置。</p>
  */
 @Configuration
 @RequiredArgsConstructor
-@EnableConfigurationProperties(ActuatorHealthProperties.class)
+@EnableConfigurationProperties({ActuatorHealthProperties.class, CorsProperties.class})
 public class WebConfig implements WebMvcConfigurer {
 
     private final SecurityInterceptorChain securityInterceptorChain;

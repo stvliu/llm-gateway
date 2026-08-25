@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.provider.cache;
 
 /**
- * 缓存名称常量
+ * 缓存名称常量（provider 域）
  *
- * <p>定义系统中所有缓存的名称。</p>
+ * <p>定义 provider 域数据的缓存名称。</p>
  */
 public final class CacheNames {
 

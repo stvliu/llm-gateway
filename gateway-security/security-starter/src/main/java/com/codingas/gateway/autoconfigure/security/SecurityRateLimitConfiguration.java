@@ -13,33 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.autoconfigure.security;
 
-import okhttp3.OkHttpClient;
+import com.codingas.gateway.security.config.SecurityRateLimitProperties;
+import com.codingas.gateway.security.threat.RateLimitProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.concurrent.TimeUnit;
-
 /**
- * HTTP 客户端配置
+ * 限流配置装配（security-starter）。
  *
- * <p>提供 OkHttp 客户端 Bean。</p>
+ * <p>把 security 域自持的外部配置（{@link SecurityRateLimitProperties}）映射为 threat 域定义的
+ * {@link RateLimitProperties} 值对象 Bean，供限流领域服务注入。</p>
  */
 @Configuration
-public class HttpClientConfig {
+public class SecurityRateLimitConfiguration {
 
     /**
-     * OkHttp 客户端
-     *
- * <p>配置合理的超时时间。</p>
+     * threat 域限流配置值对象
      */
     @Bean
-    public OkHttpClient okHttpClient() {
-        return new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(60, TimeUnit.SECONDS)
-                .writeTimeout(60, TimeUnit.SECONDS)
-                .build();
+    public RateLimitProperties rateLimitProperties(SecurityRateLimitProperties properties) {
+        return new RateLimitProperties(
+                properties.getBucketSize(), properties.getRefillRate(), properties.getQpsThreshold());
     }
 }

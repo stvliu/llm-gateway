@@ -71,7 +71,7 @@ public class ChannelHealthService {
     private final Executor healthCheckExecutor;
 
     /**
-     * 构造器注入；{@code healthCheckExecutor} 来自 {@code HealthCheckExecutorConfig}。
+     * 构造器注入；{@code healthCheckExecutor} 来自 {@code HealthCheckExecutorConfiguration}。
      */
     public ChannelHealthService(ChannelGateway channelGateway,
                                 ChannelCredentialGateway credentialGateway,

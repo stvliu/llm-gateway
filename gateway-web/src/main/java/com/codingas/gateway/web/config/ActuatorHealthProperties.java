@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.web.config;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * OpenAPI 文档配置
+ * Actuator 安全配置属性（gateway-web 承载层自持）
+ *
+ * <p>控制 /actuator/health 端点是否跳过认证拦截，由 {@link WebConfig} 消费。</p>
  */
-@Configuration
-public class OpenApiConfig {
+@Data
+@ConfigurationProperties(prefix = "gateway.actuator.health")
+public class ActuatorHealthProperties {
 
-    @Bean
-    public Object openAPI() {
-        // OpenAPI 配置暂时禁用，需要添加 springdoc-openapi 依赖
-        return null;
-    }
+    /** health 端点是否公开访问（无需认证） */
+    private boolean publicAccess = true;
 }

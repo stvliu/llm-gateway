@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.boot.config;
+package com.codingas.gateway.autoconfigure.provider;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -23,9 +23,9 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 /**
- * 健康检查独立线程池配置
+ * 健康检查独立线程池配置（provider-starter 装配）。
  *
- * <p>避免连通性测试阻塞 Tomcat 主线程池：</p>
+ * <p>供 provider 域 {@code ChannelHealthService} 注入，避免连通性测试阻塞 Tomcat 主线程池：</p>
  * <ul>
  *   <li>core 4 / max 16 / queue 50</li>
  *   <li>线程命名前缀 health-check-</li>
@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
  */
 @Configuration
 @Slf4j
-public class HealthCheckExecutorConfig {
+public class HealthCheckExecutorConfiguration {
 
     /**
      * 健康检查专用 Executor Bean
