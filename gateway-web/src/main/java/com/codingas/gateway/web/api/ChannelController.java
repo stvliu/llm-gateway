@@ -17,12 +17,13 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ChannelHealthCheckRequest;
 import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelService;
-import com.codingas.gateway.provider.channel.*;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import com.codingas.gateway.provider.channel.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.dto.ChannelHealthResult;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.provider.channel.ChannelStateTransitionRequest;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
+import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -43,23 +44,28 @@ public class ChannelController {
     private final ChannelService channelService;
     private final ChannelHealthService channelHealthService;
     private final ChannelEmergencyService channelEmergencyService;
+    private final ProviderRepository providerRepository;
+    private final ChannelEndpointRepository channelEndpointRepository;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ChannelResponse create(@Valid @RequestBody ChannelRequest request) {
-        return channelService.create(request);
+        return ChannelResponse.from(channelService.create(request.toCommand()),
+                providerRepository, channelEndpointRepository);
     }
 
     @PutMapping("/{id}")
     public ChannelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ChannelRequest request) {
-        return channelService.update(id, request);
+        return ChannelResponse.from(channelService.update(id, request.toCommand()),
+                providerRepository, channelEndpointRepository);
     }
 
     @GetMapping("/{id}")
     public ChannelResponse getById(@PathVariable Long id) {
-        return channelService.getById(id);
+        return ChannelResponse.from(channelService.getById(id),
+                providerRepository, channelEndpointRepository);
     }
 
     /**
@@ -71,12 +77,15 @@ public class ChannelController {
             @RequestParam(required = false) Long providerId,
             @RequestParam(required = false) String billingMode) {
         if (providerId == null) {
-            return channelService.getAll();
+            return ChannelResponse.from(channelService.getAll(),
+                    providerRepository, channelEndpointRepository);
         } else if (billingMode != null) {
-            return channelService.getByProviderIdAndBillingMode(
-                providerId, BillingMode.fromCode(billingMode));
+            return ChannelResponse.from(channelService.getByProviderIdAndBillingMode(
+                    providerId, BillingMode.fromCode(billingMode)),
+                    providerRepository, channelEndpointRepository);
         } else {
-            return channelService.getByProviderId(providerId);
+            return ChannelResponse.from(channelService.getByProviderId(providerId),
+                    providerRepository, channelEndpointRepository);
         }
     }
 
@@ -88,7 +97,7 @@ public class ChannelController {
     public void setState(
             @PathVariable Long id,
             @Valid @RequestBody ChannelStateTransitionRequest request) {
-        channelService.setState(id, request);
+        channelService.setState(id, request.toCommand());
     }
 
     @DeleteMapping("/{id}")
@@ -106,7 +115,7 @@ public class ChannelController {
             @Valid @RequestBody ChannelEndpointRequest request) {
         // 适配层补全 channelId（不同协议从各自上下文中提取）
         request.setChannelId(channelId);
-        return channelService.addEndpoint(request);
+        return ChannelEndpointResponse.from(channelService.addEndpoint(request.toCommand()));
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")
@@ -122,7 +131,7 @@ public class ChannelController {
             @PathVariable Long channelId,
             @PathVariable Long endpointId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        return channelService.updateEndpoint(channelId, endpointId, request);
+        return ChannelEndpointResponse.from(channelService.updateEndpoint(channelId, endpointId, request.toCommand()));
     }
 
     // ===== 健康检查 =====
@@ -199,7 +208,6 @@ public class ChannelController {
     @Data
     @AllArgsConstructor
     public static class CircuitBreakerStateResponse {
-        /** 熔断器状态名（CLOSED/OPEN/HALF_OPEN） */
         private String state;
     }
 }

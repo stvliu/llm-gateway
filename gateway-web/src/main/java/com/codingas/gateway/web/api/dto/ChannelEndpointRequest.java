@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.codingas.gateway.provider.channel.ChannelEndpointCommand;
 import lombok.Data;
 
 /**
- * 渠道创建/更新请求
+ * 渠道端点创建/更新请求 DTO（HTTP 契约）
  */
 @Data
-public class ChannelRequest {
+public class ChannelEndpointRequest {
+    private Long channelId;
+    private String protocol;
+    private String endpointUrl;
 
-    @NotNull(message = "供应商 ID 不能为空")
-    private Long providerId;
-
-    @NotBlank(message = "渠道名称不能为空")
-    private String name;
-
-    /** 计费模式 */
-    @NotBlank(message = "计费模式不能为空")
-    private String billingMode;
-
-    /** 配额限制（Token 数） */
-    private Long quotaLimit;
-
-    private Integer timeout;
-
-    private Integer maxRetries;
+    /**
+     * 转换为核心端点用例入参
+     *
+     * @return 端点用例入参
+     */
+    public ChannelEndpointCommand toCommand() {
+        return new ChannelEndpointCommand(channelId, protocol, endpointUrl);
+    }
 }

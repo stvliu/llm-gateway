@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.provider.model;
 
-import lombok.Data;
-
-import java.time.Instant;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
- * 渠道端点响应
+ * 模型实例更新用例入参
+ *
+ * <p>字段为 null 表示不更新该字段。</p>
  */
-@Data
-public class ChannelEndpointResponse {
+@Getter
+@AllArgsConstructor
+public class ModelInstanceUpdateCommand {
 
-    private Long id;
+    /** 关联的模型规格 ID（可选） */
+    private final Long modelId;
 
-    private Long channelId;
-
-    private String protocol;
-
-    private String endpointUrl;
-
-    private Instant createdAt;
-
-    private Instant updatedAt;
+    /** 上游模型名（可选；null 表示不更新，空字符串表示清除） */
+    private final String upstreamModelName;
 }

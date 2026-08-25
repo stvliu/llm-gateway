@@ -15,13 +15,8 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.channel.ApiKeyTestResponse;
 import com.codingas.gateway.provider.channel.ChannelCredentialService;
-import com.codingas.gateway.provider.channel.ChannelCredentialCreateRequest;
-import com.codingas.gateway.provider.channel.ChannelCredentialCreateResponse;
-import com.codingas.gateway.provider.channel.ChannelCredentialDetailResponse;
-import com.codingas.gateway.provider.channel.ChannelCredentialResponse;
-import com.codingas.gateway.provider.channel.ChannelCredentialUpdateRequest;
+import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -43,57 +38,42 @@ public class ChannelCredentialController {
      */
     @GetMapping
     public List<ChannelCredentialResponse> list(@PathVariable Long channelId) {
-        return channelCredentialService.listByChannelId(channelId);
+        return ChannelCredentialResponse.from(channelCredentialService.listByChannelId(channelId));
     }
 
     /**
      * 根据 ID 获取凭证详情（含明文，用于页面复制）
      */
     @GetMapping("/{id}")
-    public ChannelCredentialDetailResponse get(
+    public ChannelCredentialResponse get(
             @PathVariable Long channelId,
             @PathVariable Long id) {
-        return channelCredentialService.getDetailById(channelId, id);
+        return ChannelCredentialResponse.from(channelCredentialService.getDetailById(channelId, id));
     }
 
     /**
      * 创建渠道凭证
-     * <p>适配层从路径参数中提取 channelId，补全 DTO 后传给 Service</p>
+     * <p>适配层从路径参数中提取 channelId，补全用例入参后传给 Service</p>
      */
     @PostMapping
     public ChannelCredentialCreateResponse create(
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelCredentialCreateRequest request) {
-        // 适配层补全 channelId（不同协议从各自上下文中提取）
-        var fullRequest = new ChannelCredentialCreateRequest(
-                channelId,
-                request.apiKey(),
-                request.priority(),
-                request.weight(),
-                request.description()
-        );
-        return channelCredentialService.create(fullRequest);
+        return ChannelCredentialCreateResponse.from(
+                channelCredentialService.create(request.toCommand(channelId)));
     }
 
     /**
      * 更新渠道凭证
-     * <p>适配层从路径参数中提取 channelId 和 id，补全 DTO 后传给 Service</p>
+     * <p>适配层从路径参数中提取 channelId 和 id，补全用例入参后传给 Service</p>
      */
     @PutMapping("/{id}")
     public ChannelCredentialResponse update(
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ChannelCredentialUpdateRequest request) {
-        // 适配层补全 channelId 和 id（不同协议从各自上下文中提取）
-        var fullRequest = new ChannelCredentialUpdateRequest(
-                channelId,
-                id,
-                request.priority(),
-                request.weight(),
-                request.description(),
-                request.apiKey()
-        );
-        return channelCredentialService.update(fullRequest);
+        return ChannelCredentialResponse.from(
+                channelCredentialService.update(request.toCommand(channelId, id)));
     }
 
     /**
@@ -113,6 +93,6 @@ public class ChannelCredentialController {
     public ApiKeyTestResponse testApiKey(
             @PathVariable Long channelId,
             @PathVariable Long id) {
-        return channelCredentialService.testApiKey(channelId, id);
+        return ApiKeyTestResponse.from(channelCredentialService.testApiKey(channelId, id));
     }
 }

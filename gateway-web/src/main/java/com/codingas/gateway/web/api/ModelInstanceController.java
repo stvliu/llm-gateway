@@ -16,10 +16,8 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.ModelInstanceService;
-import com.codingas.gateway.provider.channel.ModelInstanceCreateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceUpdateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceStateTransitionRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceResponse;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -37,10 +35,12 @@ import java.util.Map;
 public class ModelInstanceController {
 
     private final ModelInstanceService modelInstanceService;
+    private final ModelRepository modelRepository;
 
     @GetMapping
     public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
-        return modelInstanceService.getInstancesByChannelId(channelId);
+        return ModelInstanceResponse.from(
+                modelInstanceService.getInstancesByChannelId(channelId), modelRepository);
     }
 
     @PostMapping
@@ -50,7 +50,8 @@ public class ModelInstanceController {
             @Valid @RequestBody ModelInstanceCreateRequest request) {
         // 适配层补全 channelId（不同协议从各自上下文中提取）
         request.setChannelId(channelId);
-        return modelInstanceService.create(request);
+        return ModelInstanceResponse.from(
+                modelInstanceService.create(request.toCommand()), modelRepository);
     }
 
     @DeleteMapping("/{id}")
@@ -65,7 +66,7 @@ public class ModelInstanceController {
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceStateTransitionRequest request) {
-        modelInstanceService.setEnabled(channelId, id, request);
+        modelInstanceService.setEnabled(channelId, id, request.toCommand());
     }
 
     @PatchMapping("/{id}/upstream-model-name")
@@ -89,6 +90,7 @@ public class ModelInstanceController {
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceUpdateRequest request) {
         request.setChannelId(channelId);
-        return modelInstanceService.update(channelId, id, request);
+        return ModelInstanceResponse.from(
+                modelInstanceService.update(channelId, id, request.toCommand()), modelRepository);
     }
 }

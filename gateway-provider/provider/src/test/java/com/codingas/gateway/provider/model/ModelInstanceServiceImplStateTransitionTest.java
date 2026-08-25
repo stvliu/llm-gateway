@@ -17,7 +17,6 @@ package com.codingas.gateway.provider.model;
 
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.provider.channel.ModelInstanceStateTransitionRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -64,10 +63,8 @@ class ModelInstanceServiceImplStateTransitionTest {
         return instance;
     }
 
-    private ModelInstanceStateTransitionRequest request(String targetState) {
-        ModelInstanceStateTransitionRequest req = new ModelInstanceStateTransitionRequest();
-        req.setTargetState(targetState);
-        return req;
+    private ModelInstanceStateCommand request(String targetState) {
+        return new ModelInstanceStateCommand(targetState);
     }
 
     @Nested

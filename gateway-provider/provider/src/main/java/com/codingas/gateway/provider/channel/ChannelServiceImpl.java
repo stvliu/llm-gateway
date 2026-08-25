@@ -47,77 +47,70 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public ChannelResponse create(ChannelRequest request) {
-        if (channelRepository.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-            throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
+    public Channel create(ChannelCommand command) {
+        if (channelRepository.existsByProviderIdAndName(command.getProviderId(), command.getName())) {
+            throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + command.getName());
         }
 
         Channel channel = new Channel();
-        channel.setProviderId(request.getProviderId());
-        channel.setName(request.getName());
-        channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
-        channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setTimeout(request.getTimeout());
-        channel.setMaxRetries(request.getMaxRetries());
+        channel.setProviderId(command.getProviderId());
+        channel.setName(command.getName());
+        channel.setBillingMode(BillingMode.fromCode(command.getBillingMode()));
+        channel.setQuotaLimit(command.getQuotaLimit());
+        channel.setTimeout(command.getTimeout());
+        channel.setMaxRetries(command.getMaxRetries());
         channel.setState(ChannelState.ACTIVE);
 
         Channel saved = channelRepository.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
 
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
     @Transactional
-    public ChannelResponse update(Long id, ChannelRequest request) {
+    public Channel update(Long id, ChannelCommand command) {
         Channel channel = channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
-        if (!channel.getName().equals(request.getName())) {
-            if (channelRepository.existsByProviderIdAndName(request.getProviderId(), request.getName())) {
-                throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + request.getName());
+        if (!channel.getName().equals(command.getName())) {
+            if (channelRepository.existsByProviderIdAndName(command.getProviderId(), command.getName())) {
+                throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + command.getName());
             }
         }
 
-        channel.setProviderId(request.getProviderId());
-        channel.setName(request.getName());
-        channel.setBillingMode(BillingMode.fromCode(request.getBillingMode()));
-        channel.setQuotaLimit(request.getQuotaLimit());
-        channel.setTimeout(request.getTimeout());
-        channel.setMaxRetries(request.getMaxRetries());
+        channel.setProviderId(command.getProviderId());
+        channel.setName(command.getName());
+        channel.setBillingMode(BillingMode.fromCode(command.getBillingMode()));
+        channel.setQuotaLimit(command.getQuotaLimit());
+        channel.setTimeout(command.getTimeout());
+        channel.setMaxRetries(command.getMaxRetries());
 
         Channel saved = channelRepository.save(channel);
         log.info("Updated channel: id={}", saved.getId());
 
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
-    public ChannelResponse getById(Long id) {
-        Channel channel = channelRepository.findById(id)
+    public Channel getById(Long id) {
+        return channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        return toResponse(channel);
     }
 
     @Override
-    public List<ChannelResponse> getAll() {
-        return channelRepository.findAll().stream()
-            .map(this::toResponse)
-            .toList();
+    public List<Channel> getAll() {
+        return channelRepository.findAll();
     }
 
     @Override
-    public List<ChannelResponse> getByProviderId(Long providerId) {
-        return channelRepository.findByProviderId(providerId).stream()
-            .map(this::toResponse)
-            .toList();
+    public List<Channel> getByProviderId(Long providerId) {
+        return channelRepository.findByProviderId(providerId);
     }
 
     @Override
-    public List<ChannelResponse> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
-        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode).stream()
-            .map(this::toResponse)
-            .toList();
+    public List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
+        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode);
     }
 
     @Override
@@ -129,12 +122,12 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public void setState(Long id, ChannelStateTransitionRequest request) {
+    public void setState(Long id, ChannelStateCommand command) {
         Channel channel = channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
         ChannelState currentState = channel.getState();
-        ChannelState targetState = ChannelState.valueOf(request.getTargetState());
+        ChannelState targetState = ChannelState.valueOf(command.targetState());
 
         // 校验状态转换合法性
         if (!currentState.canTransitionTo(targetState)) {
@@ -159,7 +152,7 @@ public class ChannelServiceImpl implements ChannelService {
 
         channel.setState(targetState);
         channelRepository.save(channel);
-        log.info("渠道状态转换: id={}, {}→{}, reason={}", id, currentState, targetState, request.getReason());
+        log.info("渠道状态转换: id={}, {}→{}, reason={}", id, currentState, targetState, command.reason());
     }
 
     /**
@@ -218,49 +211,21 @@ public class ChannelServiceImpl implements ChannelService {
         }
     }
 
-    private ChannelResponse toResponse(Channel channel) {
-        ChannelResponse response = new ChannelResponse();
-        response.setId(channel.getId());
-        response.setProviderId(channel.getProviderId());
-        // 从 Provider 查找名称（仅展示用）
-        providerRepository.findById(channel.getProviderId())
-            .ifPresent(p -> response.setProviderName(p.getName()));
-        response.setName(channel.getName());
-        response.setBillingMode(channel.getBillingMode().name().toLowerCase());
-        response.setQuotaLimit(channel.getQuotaLimit());
-        response.setTimeout(channel.getTimeout());
-        response.setMaxRetries(channel.getMaxRetries());
-        response.setState(channel.getState().name());
-        // 查询端点列表
-        response.setEndpoints(
-            channelEndpointRepository.findByChannelId(channel.getId()).stream()
-                .map(this::toEndpointResponse)
-                .toList()
-        );
-        response.setCreatedAt(channel.getCreatedAt());
-        response.setUpdatedAt(channel.getUpdatedAt());
-        // 健康状态字段透传（last-write-wins，未测试过时为 null）
-        response.setLastHealthCheckAt(channel.getLastHealthCheckAt());
-        response.setLastHealthStatus(channel.getLastHealthStatus());
-        response.setLastHealthSource(channel.getLastHealthSource());
-        return response;
-    }
-
-    private void validateEndpointRequest(Long channelId, Long excludeEndpointId, ChannelEndpointRequest request) {
-        if (request.getProtocol() == null || request.getProtocol().isBlank()) {
+    private void validateEndpointRequest(Long channelId, Long excludeEndpointId, ChannelEndpointCommand command) {
+        if (command.getProtocol() == null || command.getProtocol().isBlank()) {
             throw new IllegalArgumentException("协议不能为空");
         }
-        Protocol protocol = Protocol.fromCode(request.getProtocol());
-        if (request.getEndpointUrl() == null || request.getEndpointUrl().isBlank()) {
+        Protocol protocol = Protocol.fromCode(command.getProtocol());
+        if (command.getEndpointUrl() == null || command.getEndpointUrl().isBlank()) {
             throw new IllegalArgumentException("端点 URL 不能为空");
         }
-        String normalizedUrl = request.getEndpointUrl().trim();
+        String normalizedUrl = command.getEndpointUrl().trim();
         List<ChannelEndpoint> existing = channelEndpointRepository.findByChannelId(channelId);
         // 同渠道下同协议唯一（排除自身）
         if (existing.stream()
                 .filter(ep -> !ep.getId().equals(excludeEndpointId))
                 .anyMatch(ep -> ep.getProtocol().equals(protocol))) {
-            throw new IllegalArgumentException("渠道下已存在该协议端点: " + request.getProtocol());
+            throw new IllegalArgumentException("渠道下已存在该协议端点: " + command.getProtocol());
         }
         // 同渠道下 URL 唯一（排除自身）
         if (existing.stream()
@@ -270,38 +235,27 @@ public class ChannelServiceImpl implements ChannelService {
         }
     }
 
-    private ChannelEndpointResponse toEndpointResponse(ChannelEndpoint endpoint) {
-        ChannelEndpointResponse resp = new ChannelEndpointResponse();
-        resp.setId(endpoint.getId());
-        resp.setChannelId(endpoint.getChannelId());
-        resp.setProtocol(endpoint.getProtocol().name().toLowerCase());
-        resp.setEndpointUrl(endpoint.getEndpointUrl());
-        resp.setCreatedAt(endpoint.getCreatedAt());
-        resp.setUpdatedAt(endpoint.getUpdatedAt());
-        return resp;
-    }
-
     /**
      * 添加渠道端点
      */
     @Override
     @Transactional
-    public ChannelEndpointResponse addEndpoint(ChannelEndpointRequest request) {
-        Long channelId = request.getChannelId();
+    public ChannelEndpoint addEndpoint(ChannelEndpointCommand command) {
+        Long channelId = command.getChannelId();
         channelRepository.findById(channelId)
                 .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + channelId));
 
-        validateEndpointRequest(channelId, null, request);
+        validateEndpointRequest(channelId, null, command);
 
         ChannelEndpoint endpoint = new ChannelEndpoint();
         endpoint.setChannelId(channelId);
-        endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
-        endpoint.setEndpointUrl(request.getEndpointUrl().trim());
+        endpoint.setProtocol(Protocol.fromCode(command.getProtocol()));
+        endpoint.setEndpointUrl(command.getEndpointUrl().trim());
 
         ChannelEndpoint saved = channelEndpointRepository.save(endpoint);
         log.info("Added endpoint to channel: channelId={}, endpointId={}, protocol={}",
                 channelId, saved.getId(), saved.getProtocol());
-        return toEndpointResponse(saved);
+        return saved;
     }
 
     /**
@@ -309,20 +263,20 @@ public class ChannelServiceImpl implements ChannelService {
      */
     @Override
     @Transactional
-    public ChannelEndpointResponse updateEndpoint(Long channelId, Long endpointId, ChannelEndpointRequest request) {
+    public ChannelEndpoint updateEndpoint(Long channelId, Long endpointId, ChannelEndpointCommand command) {
         ChannelEndpoint endpoint = channelEndpointRepository.findById(endpointId)
                 .orElseThrow(() -> new IllegalArgumentException("端点不存在: " + endpointId));
         if (!endpoint.getChannelId().equals(channelId)) {
             throw new IllegalArgumentException("端点不属于该渠道");
         }
 
-        validateEndpointRequest(channelId, endpointId, request);
+        validateEndpointRequest(channelId, endpointId, command);
 
-        endpoint.setProtocol(Protocol.fromCode(request.getProtocol()));
-        endpoint.setEndpointUrl(request.getEndpointUrl().trim());
+        endpoint.setProtocol(Protocol.fromCode(command.getProtocol()));
+        endpoint.setEndpointUrl(command.getEndpointUrl().trim());
         ChannelEndpoint saved = channelEndpointRepository.save(endpoint);
         log.info("Updated endpoint: channelId={}, endpointId={}", channelId, endpointId);
-        return toEndpointResponse(saved);
+        return saved;
     }
 
     /**

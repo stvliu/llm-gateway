@@ -1,0 +1,44 @@
+/*
+ * Copyright © 2025-2026 codingas.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.codingas.gateway.provider.model;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+/**
+ * 模型实例创建用例入参
+ *
+ * <p>字段合法性校验由 HTTP 层 DTO 承担（{@code web.api.dto.ModelInstanceCreateRequest}）。</p>
+ */
+@Getter
+@AllArgsConstructor
+public class ModelInstanceCreateCommand {
+
+    /** 所属渠道 ID */
+    private final Long channelId;
+
+    /** 关联的模型规格 ID */
+    private final Long modelId;
+
+    /** 上游模型名（null 表示与 Model.modelName 相同） */
+    private final String upstreamModelName;
+
+    /** 优先级（null 时核心默认 100） */
+    private final Integer priority;
+
+    /** 权重（null 时核心默认 100） */
+    private final Integer weight;
+}

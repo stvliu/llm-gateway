@@ -18,9 +18,6 @@ package com.codingas.gateway.provider.model;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
-import com.codingas.gateway.provider.channel.ModelInstanceCreateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceResponse;
-import com.codingas.gateway.provider.channel.ModelInstanceUpdateRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -68,37 +65,32 @@ class ModelInstanceServiceImplTest {
     class GetInstancesTests {
 
         @Test
-        @DisplayName("模型存在时填充模型名称/展示名/系列")
+        @DisplayName("模型实例实体原样返回（模型展示字段由 web 层 DTO 展开）")
         void withModel_fillsModelFields() {
             ModelInstance instance = createInstance(1L, 10L, 100L, ModelInstance.State.ACTIVE);
+            instance.setUpstreamModelName("up-1");
             when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(instance));
-            Model spec = new Model();
-            spec.setModelName("gpt-4");
-            spec.setDisplayName("GPT-4");
-            spec.setModelFamily("GPT");
-            when(modelRepository.findById(100L)).thenReturn(Optional.of(spec));
 
-            List<ModelInstanceResponse> result = service.getInstancesByChannelId(10L);
+            List<ModelInstance> result = service.getInstancesByChannelId(10L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getModelName()).isEqualTo("gpt-4");
-            assertThat(result.get(0).getDisplayName()).isEqualTo("GPT-4");
-            assertThat(result.get(0).getModelFamily()).isEqualTo("GPT");
-            assertThat(result.get(0).getState()).isEqualTo("ACTIVE");
+            assertThat(result.get(0).getId()).isEqualTo(1L);
+            assertThat(result.get(0).getModelId()).isEqualTo(100L);
+            assertThat(result.get(0).getUpstreamModelName()).isEqualTo("up-1");
+            assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.ACTIVE);
         }
 
         @Test
-        @DisplayName("模型不存在时模型字段留空")
+        @DisplayName("模型实例实体原样返回（不展开模型字段）")
         void withoutModel_leavesModelFieldsNull() {
             ModelInstance instance = createInstance(1L, 10L, 100L, ModelInstance.State.PENDING);
             when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(instance));
-            when(modelRepository.findById(100L)).thenReturn(Optional.empty());
 
-            List<ModelInstanceResponse> result = service.getInstancesByChannelId(10L);
+            List<ModelInstance> result = service.getInstancesByChannelId(10L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getModelName()).isNull();
-            assertThat(result.get(0).getState()).isEqualTo("PENDING");
+            assertThat(result.get(0).getModelId()).isEqualTo(100L);
+            assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.PENDING);
         }
     }
 
@@ -127,9 +119,7 @@ class ModelInstanceServiceImplTest {
                 mi.setId(50L);
                 return mi;
             });
-            when(modelRepository.findById(100L)).thenReturn(Optional.of(new Model()));
-
-            ModelInstanceResponse result = service.create(createRequest(10L, 100L, null, null));
+            ModelInstance result = service.create(createRequest(10L, 100L, null, null));
 
             assertThat(result.getId()).isEqualTo(50L);
             ArgumentCaptor<ModelInstance> captor = ArgumentCaptor.forClass(ModelInstance.class);
@@ -149,10 +139,9 @@ class ModelInstanceServiceImplTest {
                 return mi;
             });
 
-            ModelInstanceCreateRequest request = createRequest(10L, 100L, "upstream-1", 5);
-            request.setWeight(20);
+            ModelInstanceCreateCommand request = new ModelInstanceCreateCommand(10L, 100L, "upstream-1", 5, 20);
 
-            ModelInstanceResponse result = service.create(request);
+            ModelInstance result = service.create(request);
 
             assertThat(result.getUpstreamModelName()).isEqualTo("upstream-1");
             assertThat(result.getPriority()).isEqualTo(5);
@@ -250,7 +239,7 @@ class ModelInstanceServiceImplTest {
         void notFound_throws() {
             when(modelInstanceRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update(10L, 99L, new ModelInstanceUpdateRequest()))
+            assertThatThrownBy(() -> service.update(10L, 99L, new ModelInstanceUpdateCommand(null, null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -260,7 +249,7 @@ class ModelInstanceServiceImplTest {
             ModelInstance instance = createInstance(1L, 20L, 100L, ModelInstance.State.ACTIVE);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            assertThatThrownBy(() -> service.update(10L, 1L, new ModelInstanceUpdateRequest()))
+            assertThatThrownBy(() -> service.update(10L, 1L, new ModelInstanceUpdateCommand(null, null)))
                     .isInstanceOf(GatewayRequestException.class);
         }
 
@@ -271,8 +260,7 @@ class ModelInstanceServiceImplTest {
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
             when(modelInstanceRepository.existsByChannelIdAndModelId(10L, 200L)).thenReturn(true);
 
-            ModelInstanceUpdateRequest request = new ModelInstanceUpdateRequest();
-            request.setModelId(200L);
+            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(200L, null);
 
             assertThatThrownBy(() -> service.update(10L, 1L, request))
                     .isInstanceOf(DuplicateResourceException.class);
@@ -286,13 +274,10 @@ class ModelInstanceServiceImplTest {
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
             when(modelInstanceRepository.existsByChannelIdAndModelId(10L, 200L)).thenReturn(false);
             when(modelInstanceRepository.save(any(ModelInstance.class))).thenAnswer(inv -> inv.getArgument(0));
-            when(modelRepository.findById(200L)).thenReturn(Optional.of(new Model()));
 
-            ModelInstanceUpdateRequest request = new ModelInstanceUpdateRequest();
-            request.setModelId(200L);
-            request.setUpstreamModelName("upstream-2");
+            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(200L, "upstream-2");
 
-            ModelInstanceResponse result = service.update(10L, 1L, request);
+            ModelInstance result = service.update(10L, 1L, request);
 
             assertThat(result.getModelId()).isEqualTo(200L);
             assertThat(result.getUpstreamModelName()).isEqualTo("upstream-2");
@@ -306,10 +291,9 @@ class ModelInstanceServiceImplTest {
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
             when(modelInstanceRepository.save(any(ModelInstance.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            ModelInstanceUpdateRequest request = new ModelInstanceUpdateRequest();
-            request.setUpstreamModelName(null);
+            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(null, null);
 
-            ModelInstanceResponse result = service.update(10L, 1L, request);
+            ModelInstance result = service.update(10L, 1L, request);
 
             assertThat(result.getModelId()).isEqualTo(100L);
             assertThat(result.getUpstreamModelName()).isEqualTo("keep-me");
@@ -327,12 +311,7 @@ class ModelInstanceServiceImplTest {
         return instance;
     }
 
-    private ModelInstanceCreateRequest createRequest(Long channelId, Long modelId, String upstream, Integer priority) {
-        ModelInstanceCreateRequest request = new ModelInstanceCreateRequest();
-        request.setChannelId(channelId);
-        request.setModelId(modelId);
-        request.setUpstreamModelName(upstream);
-        request.setPriority(priority);
-        return request;
+    private ModelInstanceCreateCommand createRequest(Long channelId, Long modelId, String upstream, Integer priority) {
+        return new ModelInstanceCreateCommand(channelId, modelId, upstream, priority, null);
     }
 }

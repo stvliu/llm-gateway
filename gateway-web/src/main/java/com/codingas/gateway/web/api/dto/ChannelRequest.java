@@ -13,42 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
 
-import lombok.Builder;
+import com.codingas.gateway.provider.channel.ChannelCommand;
 import lombok.Data;
 
-import java.time.Instant;
-
 /**
- * API Key 测试响应
+ * 渠道创建/更新请求 DTO（HTTP 契约）
  */
 @Data
-@Builder
-public class ApiKeyTestResponse {
+public class ChannelRequest {
+    private Long providerId;
+    private String name;
+    private String billingMode;
+    private Long quotaLimit;
+    private Integer timeout;
+    private Integer maxRetries;
 
-    /** 测试是否成功 */
-    private Boolean success;
-
-    /** 延迟（毫秒） */
-    private Long latency;
-
-    /** 测试的模型名称 */
-    private String modelName;
-
-    /** 响应预览 */
-    private String responsePreview;
-
-    /** 测试时间 */
-    private Instant testedAt;
-
-    /** 错误信息 */
-    private ApiKeyTestError error;
-
-    @Data
-    @Builder
-    public static class ApiKeyTestError {
-        private String code;
-        private String message;
+    /**
+     * 转换为核心渠道用例入参
+     *
+     * @return 渠道用例入参
+     */
+    public ChannelCommand toCommand() {
+        return new ChannelCommand(providerId, name, billingMode, quotaLimit, timeout, maxRetries);
     }
 }

@@ -15,42 +15,55 @@
  */
 package com.codingas.gateway.provider.model;
 
-
-import com.codingas.gateway.provider.channel.ModelInstanceCreateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceUpdateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceStateTransitionRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceResponse;
 import java.util.List;
 
 /**
  * 模型实例应用服务接口
+ *
+ * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ModelInstanceService {
 
     /**
      * 查询指定渠道下的所有模型实例
+     *
+     * @param channelId 渠道 ID
+     * @return 模型实例实体列表
      */
-    List<ModelInstanceResponse> getInstancesByChannelId(Long channelId);
+    List<ModelInstance> getInstancesByChannelId(Long channelId);
 
     /**
      * 创建模型实例
+     *
+     * @param command 创建用例入参
+     * @return 创建后的模型实例实体
      */
-    ModelInstanceResponse create(ModelInstanceCreateRequest request);
+    ModelInstance create(ModelInstanceCreateCommand command);
 
     /**
      * 删除模型实例
+     *
+     * @param channelId 渠道 ID
+     * @param id        模型实例 ID
      */
     void delete(Long channelId, Long id);
 
     /**
      * 切换模型实例状态
+     *
      * <p>由后端校验 canTransitionTo()。</p>
+     *
+     * @param channelId 渠道 ID
+     * @param id        模型实例 ID
+     * @param command   状态切换用例入参
      */
-    void setEnabled(Long channelId, Long id, ModelInstanceStateTransitionRequest request);
+    void setEnabled(Long channelId, Long id, ModelInstanceStateCommand command);
 
     /**
      * 更新模型实例的上游模型名
      *
+     * @param channelId        渠道 ID
+     * @param id               模型实例 ID
      * @param upstreamModelName 新的上游模型名，null 表示走默认（= Model.modelName）
      */
     void updateUpstreamModelName(Long channelId, Long id, String upstreamModelName);
@@ -59,6 +72,11 @@ public interface ModelInstanceService {
      * 更新模型实例（支持修改 modelId 和 upstreamModelName）
      *
      * <p>字段为 null 表示不更新该字段。</p>
+     *
+     * @param channelId 渠道 ID
+     * @param id        模型实例 ID
+     * @param command   更新用例入参
+     * @return 更新后的模型实例实体
      */
-    ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request);
+    ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command);
 }

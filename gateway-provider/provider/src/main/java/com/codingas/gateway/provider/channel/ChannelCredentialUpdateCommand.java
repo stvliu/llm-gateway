@@ -15,22 +15,19 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import jakarta.validation.constraints.NotNull;
-
 /**
- * 渠道凭证更新请求
+ * 渠道凭证更新用例入参
  *
- * <p>注意：channelId 和 id 由适配层（Controller/gRPC stub）从协议上下文中提取并填充，
- * 请求体本身不包含这些字段。</p>
+ * <p>仅非 null 字段参与更新；apiKey 非空时替换密钥。</p>
  *
- * @param channelId 渠道 ID（适配层填充）
- * @param id 凭证 ID（适配层填充）
- * @param priority 优先级
- * @param weight 权重
- * @param description 描述
- * @param apiKey 可选，传值则替换 API Key
+ * @param channelId   渠道 ID
+ * @param id          凭证 ID
+ * @param priority    优先级（可选）
+ * @param weight      权重（可选）
+ * @param description 描述（可选）
+ * @param apiKey      API Key（可选，传值则替换）
  */
-public record ChannelCredentialUpdateRequest(
+public record ChannelCredentialUpdateCommand(
         Long channelId,
         Long id,
         Integer priority,

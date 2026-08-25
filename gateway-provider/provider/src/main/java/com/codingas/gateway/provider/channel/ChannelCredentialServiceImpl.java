@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.channel.ApiKeyTestResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,58 +38,54 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
 
     @Override
     @Transactional
-    public ChannelCredentialCreateResponse create(ChannelCredentialCreateRequest request) {
-        String plainKey = request.apiKey();
+    public ChannelCredential create(ChannelCredentialCreateCommand command) {
+        String plainKey = command.apiKey();
         String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
 
         ChannelCredential credential = new ChannelCredential();
-        credential.setChannelId(request.channelId());
+        credential.setChannelId(command.channelId());
         credential.setApiKeyPlain(plainKey);
         credential.setApiKeyPrefix(keyPrefix);
-        credential.setName(request.description());
-        credential.setWeight(request.weight());
-        credential.setPriority(request.priority());
+        credential.setName(command.description());
+        credential.setWeight(command.weight());
+        credential.setPriority(command.priority());
 
         // GatewayImpl 内部处理加密和哈希
         ChannelCredential saved = channelCredentialRepository.save(credential);
         log.info("Created ChannelCredential: id={}, channelId={}", saved.getId(), saved.getChannelId());
 
-        return new ChannelCredentialCreateResponse(saved.getId(), plainKey);
+        return saved;
     }
 
     @Override
-    public List<ChannelCredentialResponse> listByChannelId(Long channelId) {
-        return channelCredentialRepository.findByChannelId(channelId).stream()
-                .map(this::toResponse)
-                .toList();
+    public List<ChannelCredential> listByChannelId(Long channelId) {
+        return channelCredentialRepository.findByChannelId(channelId);
     }
 
     @Override
-    public ChannelCredentialResponse getById(Long channelId, Long id) {
-        ChannelCredential credential = findAndValidateOwnership(channelId, id);
-        return toResponse(credential);
+    public ChannelCredential getById(Long channelId, Long id) {
+        return findAndValidateOwnership(channelId, id);
     }
 
     @Override
-    public ChannelCredentialDetailResponse getDetailById(Long channelId, Long id) {
-        ChannelCredential credential = findAndValidateOwnership(channelId, id);
-        return toDetailResponse(credential);
+    public ChannelCredential getDetailById(Long channelId, Long id) {
+        return findAndValidateOwnership(channelId, id);
     }
 
     @Override
     @Transactional
-    public ChannelCredentialResponse update(ChannelCredentialUpdateRequest request) {
-        ChannelCredential credential = findAndValidateOwnership(request.channelId(), request.id());
+    public ChannelCredential update(ChannelCredentialUpdateCommand command) {
+        ChannelCredential credential = findAndValidateOwnership(command.channelId(), command.id());
 
-        if (request.weight() != null) {
-            credential.setWeight(request.weight());
+        if (command.weight() != null) {
+            credential.setWeight(command.weight());
         }
-        if (request.priority() != null) {
-            credential.setPriority(request.priority());
+        if (command.priority() != null) {
+            credential.setPriority(command.priority());
         }
         // 替换 API Key
-        if (request.apiKey() != null && !request.apiKey().isBlank()) {
-            String newKey = request.apiKey().trim();
+        if (command.apiKey() != null && !command.apiKey().isBlank()) {
+            String newKey = command.apiKey().trim();
             String keyPrefix = newKey.substring(0, Math.min(8, newKey.length()));
             credential.setApiKeyPlain(newKey);
             credential.setApiKeyPrefix(keyPrefix);
@@ -99,7 +94,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
         ChannelCredential saved = channelCredentialRepository.save(credential);
         log.info("Updated ChannelCredential: id={}", saved.getId());
 
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
@@ -111,7 +106,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
     }
 
     @Override
-    public ApiKeyTestResponse testApiKey(Long channelId, Long id) {
+    public ApiKeyTestResult testApiKey(Long channelId, Long id) {
         // 验证归属关系
         ChannelCredential credential = findAndValidateOwnership(channelId, id);
 
@@ -123,7 +118,7 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
 
         log.info("Testing ChannelCredential: id={}, channelId={}", id, channelId);
 
-        return ApiKeyTestResponse.builder()
+        return ApiKeyTestResult.builder()
                 .success(true)
                 .latency(100L)
                 .modelName("gpt-4o")
@@ -142,35 +137,5 @@ public class ChannelCredentialServiceImpl implements ChannelCredentialService {
             throw new ResourceNotFoundException("ChannelCredential", id);
         }
         return credential;
-    }
-
-    private ChannelCredentialResponse toResponse(ChannelCredential credential) {
-        return new ChannelCredentialResponse(
-                credential.getId(),
-                credential.getChannelId(),
-                credential.getApiKeyPrefix(),
-                credential.getApiKeyPlain(),
-                credential.getName(),
-                null, // description not in ChannelCredential
-                credential.getWeight(),
-                credential.getPriority(),
-                credential.getCreatedAt(),
-                credential.getUpdatedAt()
-        );
-    }
-
-    private ChannelCredentialDetailResponse toDetailResponse(ChannelCredential credential) {
-        return new ChannelCredentialDetailResponse(
-                credential.getId(),
-                credential.getChannelId(),
-                credential.getApiKeyPrefix(),
-                credential.getApiKeyPlain(),
-                credential.getName(),
-                null, // description not in ChannelCredential
-                credential.getWeight(),
-                credential.getPriority(),
-                credential.getCreatedAt(),
-                credential.getUpdatedAt()
-        );
     }
 }

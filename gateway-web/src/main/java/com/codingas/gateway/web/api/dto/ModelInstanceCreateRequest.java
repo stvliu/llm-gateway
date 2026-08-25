@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
 
-import jakarta.validation.constraints.NotNull;
+import com.codingas.gateway.provider.model.ModelInstanceCreateCommand;
 import lombok.Data;
 
 /**
- * 模型实例创建请求
- *
- * <p>注意：channelId 由适配层（Controller/gRPC stub）从协议上下文中提取并填充，
- * 请求体本身不包含此字段。</p>
+ * 模型实例创建请求 DTO（HTTP 契约）
  */
 @Data
 public class ModelInstanceCreateRequest {
-
-    /** 渠道 ID（适配层填充） */
     private Long channelId;
-
-    @NotNull(message = "模型 ID 不能为空")
     private Long modelId;
-
-    /** 上游模型名，为空表示与 Model.modelName 相同 */
     private String upstreamModelName;
-
-    /** 优先级（默认 100） */
     private Integer priority;
-
-    /** 权重（默认 100） */
     private Integer weight;
+
+    /**
+     * 转换为核心创建用例入参
+     *
+     * @return 创建用例入参
+     */
+    public ModelInstanceCreateCommand toCommand() {
+        return new ModelInstanceCreateCommand(channelId, modelId, upstreamModelName, priority, weight);
+    }
 }

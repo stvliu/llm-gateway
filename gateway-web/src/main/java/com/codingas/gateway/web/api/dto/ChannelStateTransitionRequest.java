@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.provider.channel.ChannelStateCommand;
 import lombok.Data;
 
 /**
- * 模型实例更新请求
- *
- * <p>支持更新模型 ID 和上游模型名。channelId 由适配层（Controller）从协议上下文中提取并填充。
- * 字段为 null 表示不更新该字段。</p>
+ * 渠道状态切换请求 DTO（HTTP 契约）
  */
 @Data
-public class ModelInstanceUpdateRequest {
+public class ChannelStateTransitionRequest {
+    private String targetState;
+    private String reason;
 
-    /** 渠道 ID（适配层填充） */
-    private Long channelId;
-
-    /** 新模型 ID，为 null 表示不更新 */
-    private Long modelId;
-
-    /** 上游模型名，为 null 表示不更新 */
-    private String upstreamModelName;
+    /**
+     * 转换为核心状态切换用例入参
+     *
+     * @return 状态切换用例入参
+     */
+    public ChannelStateCommand toCommand() {
+        return new ChannelStateCommand(targetState, reason);
+    }
 }

@@ -79,9 +79,8 @@ class ChannelServiceImplTest {
         void getById_passesBasicFieldsToResponse() {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
-            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            ChannelResponse result = channelService.getById(1L);
+            Channel result = channelService.getById(1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
@@ -127,14 +126,12 @@ class ChannelServiceImplTest {
                 c.setId(5L);
                 return c;
             });
-            when(channelEndpointRepository.findByChannelId(5L)).thenReturn(List.of());
-
-            ChannelResponse result = channelService.create(request("pay_as_you_go"));
+            Channel result = channelService.create(request("pay_as_you_go"));
 
             assertThat(result.getId()).isEqualTo(5L);
             assertThat(result.getName()).isEqualTo("ch-1");
-            assertThat(result.getBillingMode()).isEqualTo("pay_as_you_go");
-            assertThat(result.getState()).isEqualTo("ACTIVE");
+            assertThat(result.getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
+            assertThat(result.getState()).isEqualTo(ChannelState.ACTIVE);
             ArgumentCaptor<Channel> captor = ArgumentCaptor.forClass(Channel.class);
             verify(channelRepository).save(captor.capture());
             assertThat(captor.getValue().getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
@@ -180,12 +177,9 @@ class ChannelServiceImplTest {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
             when(channelRepository.save(any(Channel.class))).thenReturn(channel);
-            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
+            ChannelCommand request = new ChannelCommand(10L, "ch-1", "pay_as_you_go", 1000L, null, null);
 
-            ChannelRequest request = request("pay_as_you_go");
-            request.setQuotaLimit(1000L);
-
-            ChannelResponse result = channelService.update(1L, request);
+            Channel result = channelService.update(1L, request);
 
             assertThat(result.getName()).isEqualTo("ch-1");
             assertThat(result.getQuotaLimit()).isEqualTo(1000L);
@@ -206,9 +200,8 @@ class ChannelServiceImplTest {
             Channel c1 = buildChannel(1L, "ch-1");
             Channel c2 = buildChannel(2L, "ch-2");
             when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
-            when(channelEndpointRepository.findByChannelId(any())).thenReturn(List.of());
 
-            List<ChannelResponse> result = channelService.getAll();
+            List<Channel> result = channelService.getAll();
 
             assertThat(result).hasSize(2);
             assertThat(result.get(0).getName()).isEqualTo("ch-1");
@@ -220,9 +213,8 @@ class ChannelServiceImplTest {
         void getByProviderId() {
             Channel c1 = buildChannel(1L, "ch-1");
             when(channelRepository.findByProviderId(10L)).thenReturn(List.of(c1));
-            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            List<ChannelResponse> result = channelService.getByProviderId(10L);
+            List<Channel> result = channelService.getByProviderId(10L);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getProviderId()).isEqualTo(10L);
@@ -234,9 +226,8 @@ class ChannelServiceImplTest {
             Channel c1 = buildChannel(1L, "ch-1");
             when(channelRepository.findByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO))
                     .thenReturn(List.of(c1));
-            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            List<ChannelResponse> result =
+            List<Channel> result =
                     channelService.getByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO);
 
             assertThat(result).hasSize(1);
@@ -341,11 +332,11 @@ class ChannelServiceImplTest {
                 return ep;
             });
 
-            ChannelEndpointResponse result =
+            ChannelEndpoint result =
                     channelService.addEndpoint(endpointRequest(1L, "openai", "https://a.com"));
 
             assertThat(result.getId()).isEqualTo(300L);
-            assertThat(result.getProtocol()).isEqualTo("openai");
+            assertThat(result.getProtocol()).isEqualTo(Protocol.OPENAI);
             assertThat(result.getEndpointUrl()).isEqualTo("https://a.com");
         }
     }
@@ -398,7 +389,7 @@ class ChannelServiceImplTest {
             when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of(existing, other));
             when(channelEndpointRepository.save(any(ChannelEndpoint.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            ChannelEndpointResponse result =
+            ChannelEndpoint result =
                     channelService.updateEndpoint(1L, 100L, endpointRequest(1L, "openai", "https://new.com"));
 
             assertThat(result.getEndpointUrl()).isEqualTo("https://new.com");
@@ -449,37 +440,6 @@ class ChannelServiceImplTest {
         }
     }
 
-    // ==================== toResponse 透传测试 ====================
-
-    @Nested
-    @DisplayName("toResponse 透传")
-    class ToResponseTests {
-
-        @Test
-        @DisplayName("provider 存在时填充供应商名称，端点与健康字段透传")
-        void providerNameAndEndpointsFilled() {
-            Channel channel = buildChannel(1L, "ch-1");
-            when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
-            Provider provider = new Provider();
-            provider.setId(10L);
-            provider.setName("OpenAI");
-            when(providerRepository.findById(10L)).thenReturn(Optional.of(provider));
-            ChannelEndpoint ep = new ChannelEndpoint();
-            ep.setId(300L);
-            ep.setChannelId(1L);
-            ep.setProtocol(Protocol.OPENAI);
-            ep.setEndpointUrl("https://api.openai.com");
-            when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of(ep));
-
-            ChannelResponse result = channelService.getById(1L);
-
-            assertThat(result.getProviderName()).isEqualTo("OpenAI");
-            assertThat(result.getEndpoints()).hasSize(1);
-            assertThat(result.getEndpoints().get(0).getProtocol()).isEqualTo("openai");
-            assertThat(result.getEndpoints().get(0).getEndpointUrl()).isEqualTo("https://api.openai.com");
-        }
-    }
-
     // ==================== 辅助方法 ====================
 
     /** 构造最小可用渠道实体（state=ACTIVE，无端点） */
@@ -493,19 +453,11 @@ class ChannelServiceImplTest {
         return channel;
     }
 
-    private ChannelRequest request(String billingMode) {
-        ChannelRequest request = new ChannelRequest();
-        request.setProviderId(10L);
-        request.setName("ch-1");
-        request.setBillingMode(billingMode);
-        return request;
+    private ChannelCommand request(String billingMode) {
+        return new ChannelCommand(10L, "ch-1", billingMode, null, null, null);
     }
 
-    private ChannelEndpointRequest endpointRequest(Long channelId, String protocol, String url) {
-        ChannelEndpointRequest request = new ChannelEndpointRequest();
-        request.setChannelId(channelId);
-        request.setProtocol(protocol);
-        request.setEndpointUrl(url);
-        return request;
+    private ChannelEndpointCommand endpointRequest(Long channelId, String protocol, String url) {
+        return new ChannelEndpointCommand(channelId, protocol, url);
     }
 }

@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import com.codingas.gateway.provider.model.ModelInstanceUpdateCommand;
 import lombok.Data;
 
 /**
- * 模型实例状态转换请求
+ * 模型实例更新请求 DTO（HTTP 契约）
  */
 @Data
-public class ModelInstanceStateTransitionRequest {
+public class ModelInstanceUpdateRequest {
+    private Long channelId;
+    private Long modelId;
+    private String upstreamModelName;
 
-    /** 目标状态（PENDING / ACTIVE / SUSPENDED / DEPRECATED / RETIRED） */
-    @NotBlank(message = "目标状态不能为空")
-    private String targetState;
+    /**
+     * 转换为核心更新用例入参（channelId 仅用于归属校验）
+     *
+     * @return 更新用例入参
+     */
+    public ModelInstanceUpdateCommand toCommand() {
+        return new ModelInstanceUpdateCommand(modelId, upstreamModelName);
+    }
 }

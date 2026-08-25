@@ -77,16 +77,12 @@ class ChannelServiceImplStateTransitionTest {
         return channel;
     }
 
-    private ChannelStateTransitionRequest request(String targetState) {
-        ChannelStateTransitionRequest req = new ChannelStateTransitionRequest();
-        req.setTargetState(targetState);
-        return req;
+    private ChannelStateCommand request(String targetState) {
+        return new ChannelStateCommand(targetState, null);
     }
 
-    private ChannelStateTransitionRequest request(String targetState, String reason) {
-        ChannelStateTransitionRequest req = request(targetState);
-        req.setReason(reason);
-        return req;
+    private ChannelStateCommand request(String targetState, String reason) {
+        return new ChannelStateCommand(targetState, reason);
     }
 
     @Nested

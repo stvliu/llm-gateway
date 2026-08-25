@@ -23,10 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.codingas.gateway.provider.channel.ModelInstanceCreateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceUpdateRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceStateTransitionRequest;
-import com.codingas.gateway.provider.channel.ModelInstanceResponse;
 import java.util.List;
 
 /**
@@ -45,11 +41,8 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<ModelInstanceResponse> getInstancesByChannelId(Long channelId) {
-        List<ModelInstance> instances = modelInstanceRepository.findByChannelId(channelId);
-        return instances.stream()
-                .map(this::toResponse)
-                .toList();
+    public List<ModelInstance> getInstancesByChannelId(Long channelId) {
+        return modelInstanceRepository.findByChannelId(channelId);
     }
 
     /**
@@ -57,25 +50,25 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public ModelInstanceResponse create(ModelInstanceCreateRequest request) {
-        Long channelId = request.getChannelId();
+    public ModelInstance create(ModelInstanceCreateCommand command) {
+        Long channelId = command.getChannelId();
         // 检查是否已关联
-        boolean exists = modelInstanceRepository.existsByChannelIdAndModelId(channelId, request.getModelId());
+        boolean exists = modelInstanceRepository.existsByChannelIdAndModelId(channelId, command.getModelId());
         if (exists) {
-            log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, request.getModelId());
+            log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, command.getModelId());
             throw new DuplicateResourceException("ModelInstance", "modelId");
         }
 
         ModelInstance instance = new ModelInstance();
         instance.setChannelId(channelId);
-        instance.setModelId(request.getModelId());
-        instance.setUpstreamModelName(request.getUpstreamModelName());
-        instance.setPriority(request.getPriority() != null ? request.getPriority() : 100);
-        instance.setWeight(request.getWeight() != null ? request.getWeight() : 100);
+        instance.setModelId(command.getModelId());
+        instance.setUpstreamModelName(command.getUpstreamModelName());
+        instance.setPriority(command.getPriority() != null ? command.getPriority() : 100);
+        instance.setWeight(command.getWeight() != null ? command.getWeight() : 100);
         instance.setState(ModelInstance.State.ACTIVE);
         instance = modelInstanceRepository.save(instance);
-        log.info("模型实例创建成功, id={}, channelId={}, modelId={}", instance.getId(), channelId, request.getModelId());
-        return toResponse(instance);
+        log.info("模型实例创建成功, id={}, channelId={}, modelId={}", instance.getId(), channelId, command.getModelId());
+        return instance;
     }
 
     /**
@@ -100,7 +93,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public void setEnabled(Long channelId, Long id, ModelInstanceStateTransitionRequest request) {
+    public void setEnabled(Long channelId, Long id, ModelInstanceStateCommand command) {
         ModelInstance instance = modelInstanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ModelInstance", id));
         if (!instance.getChannelId().equals(channelId)) {
@@ -109,7 +102,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         }
 
         ModelInstance.State currentState = instance.getState();
-        ModelInstance.State targetState = ModelInstance.State.valueOf(request.getTargetState());
+        ModelInstance.State targetState = ModelInstance.State.valueOf(command.targetState());
 
         // 校验状态转换合法性
         if (!currentState.canTransitionTo(targetState)) {
@@ -120,28 +113,6 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         instance.setState(targetState);
         modelInstanceRepository.save(instance);
         log.info("模型实例状态转换成功, id={}, channelId={}, {}→{}", id, channelId, currentState, targetState);
-    }
-
-    /**
-     * 将实体转换为响应 DTO
-     */
-    private ModelInstanceResponse toResponse(ModelInstance instance) {
-        ModelInstanceResponse resp = new ModelInstanceResponse();
-        resp.setId(instance.getId());
-        resp.setChannelId(instance.getChannelId());
-        resp.setModelId(instance.getModelId());
-        resp.setUpstreamModelName(instance.getUpstreamModelName());
-        resp.setPriority(instance.getPriority());
-        resp.setWeight(instance.getWeight());
-        resp.setState(instance.getState().name());
-
-        modelRepository.findById(instance.getModelId()).ifPresent(spec -> {
-            resp.setModelName(spec.getModelName());
-            resp.setDisplayName(spec.getDisplayName());
-            resp.setModelFamily(spec.getModelFamily());
-        });
-
-        return resp;
     }
 
     /**
@@ -168,7 +139,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request) {
+    public ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command) {
         ModelInstance instance = modelInstanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ModelInstance", id));
         if (!instance.getChannelId().equals(channelId)) {
@@ -177,23 +148,23 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         }
 
         // 更新 modelId
-        if (request.getModelId() != null && !request.getModelId().equals(instance.getModelId())) {
+        if (command.getModelId() != null && !command.getModelId().equals(instance.getModelId())) {
             // 检查新 modelId 是否已关联到该渠道
-            boolean exists = modelInstanceRepository.existsByChannelIdAndModelId(channelId, request.getModelId());
+            boolean exists = modelInstanceRepository.existsByChannelIdAndModelId(channelId, command.getModelId());
             if (exists) {
-                log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, request.getModelId());
+                log.warn("模型已关联到该渠道, channelId={}, modelId={}", channelId, command.getModelId());
                 throw new DuplicateResourceException("ModelInstance", "modelId");
             }
-            instance.setModelId(request.getModelId());
+            instance.setModelId(command.getModelId());
         }
 
         // 更新 upstreamModelName（null 表示不更新，空字符串表示清除）
-        if (request.getUpstreamModelName() != null) {
-            instance.setUpstreamModelName(request.getUpstreamModelName());
+        if (command.getUpstreamModelName() != null) {
+            instance.setUpstreamModelName(command.getUpstreamModelName());
         }
 
         instance = modelInstanceRepository.save(instance);
         log.info("模型实例更新成功, id={}, channelId={}, modelId={}", id, channelId, instance.getModelId());
-        return toResponse(instance);
+        return instance;
     }
 }

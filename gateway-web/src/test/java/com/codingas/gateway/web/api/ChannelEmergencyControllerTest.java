@@ -53,13 +53,20 @@ class ChannelEmergencyControllerTest {
     @Mock
     private ChannelEmergencyService channelEmergencyService;
 
+    @Mock
+    private com.codingas.gateway.provider.vendor.ProviderRepository providerRepository;
+
+    @Mock
+    private com.codingas.gateway.provider.channel.ChannelEndpointRepository channelEndpointRepository;
+
     private MockMvc mockMvc;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
+        ChannelController controller = new ChannelController(channelService, channelHealthService,
+                channelEmergencyService, providerRepository, channelEndpointRepository);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

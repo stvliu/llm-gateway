@@ -15,38 +15,25 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 /**
- * 模型实例响应
+ * 渠道端点创建/更新用例入参
+ *
+ * <p>protocol 为协议编码字符串，由核心服务 {@code Protocol.fromCode} 转换。
+ * 字段合法性校验由 HTTP 层 DTO 承担（{@code web.api.dto.ChannelEndpointRequest}）。</p>
  */
-@Data
-public class ModelInstanceResponse {
+@Getter
+@AllArgsConstructor
+public class ChannelEndpointCommand {
 
-    private Long id;
+    /** 所属渠道 ID */
+    private final Long channelId;
 
-    private Long channelId;
+    /** 协议编码（如 openai/anthropic） */
+    private final String protocol;
 
-    private Long modelId;
-
-    /** 供应商侧模型名称 */
-    private String modelName;
-
-    /** 模型展示名称 */
-    private String displayName;
-
-    /** 模型系列 */
-    private String modelFamily;
-
-    /** 上游模型名（为 null 表示与 modelName 相同） */
-    private String upstreamModelName;
-
-    /** 优先级 */
-    private Integer priority;
-
-    /** 权重 */
-    private Integer weight;
-
-    /** 关联状态 */
-    private String state;
+    /** 端点 URL */
+    private final String endpointUrl;
 }

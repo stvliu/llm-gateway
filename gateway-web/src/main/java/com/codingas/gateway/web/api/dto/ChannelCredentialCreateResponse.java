@@ -13,16 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
+package com.codingas.gateway.web.api.dto;
+
+import com.codingas.gateway.provider.channel.ChannelCredential;
 
 /**
- * 渠道凭证创建响应（包含仅展示一次的明文 Key）
+ * 渠道凭证创建响应 DTO（HTTP 契约，包含仅展示一次的明文 Key）
  *
- * @param id 主键
+ * @param id          主键
  * @param apiKeyPlain 明文 API Key（仅创建时返回，后续不可获取）
  */
 public record ChannelCredentialCreateResponse(
         Long id,
         String apiKeyPlain
 ) {
+    /**
+     * 从创建后的凭证实体转换（携带仅此一次可见的明文）
+     *
+     * @param credential 创建后的凭证实体（含明文 apiKeyPlain）
+     * @return 创建响应 DTO
+     */
+    public static ChannelCredentialCreateResponse from(ChannelCredential credential) {
+        return new ChannelCredentialCreateResponse(credential.getId(), credential.getApiKeyPlain());
+    }
 }

@@ -13,21 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.channel;
-
-import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+package com.codingas.gateway.provider.model;
 
 /**
- * 渠道状态转换请求
+ * 模型实例状态切换用例入参
+ *
+ * @param targetState 目标状态（ModelInstance.State 枚举名）
  */
-@Data
-public class ChannelStateTransitionRequest {
-
-    /** 目标状态（PENDING / ACTIVE / SUSPENDED / DEPRECATED / RETIRED） */
-    @NotBlank(message = "目标状态不能为空")
-    private String targetState;
-
-    /** 转换原因（可选，用于审计） */
-    private String reason;
+public record ModelInstanceStateCommand(
+        String targetState
+) {
 }
