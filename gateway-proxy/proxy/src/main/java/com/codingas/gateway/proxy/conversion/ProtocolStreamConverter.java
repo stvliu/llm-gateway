@@ -142,19 +142,6 @@ public class ProtocolStreamConverter {
     }
 
     /**
-     * finish_reason → stop_reason 映射
-     */
-    private String mapFinishReasonToStopReason(String finishReason) {
-        if (finishReason == null) return null;
-        return switch (finishReason) {
-            case "stop" -> "end_turn";
-            case "length" -> "max_tokens";
-            case "tool_calls" -> "tool_use";
-            default -> finishReason;
-        };
-    }
-
-    /**
      * stop_reason → finish_reason 映射
      */
     private String mapStopReasonToFinishReason(String stopReason) {

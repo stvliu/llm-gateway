@@ -242,7 +242,7 @@ export function QuickOnboardMode({ onComplete, initialPlanCode, initialPlanName 
       queryClient.invalidateQueries({ queryKey: ['providers'] });
       queryClient.invalidateQueries({ queryKey: ['plan-catalog'] });
       onComplete();
-    } catch (error) {
+    } catch {
       message.error(t('onboard.createFailed'));
     } finally {
       setSubmitting(false);

@@ -42,16 +42,6 @@ public class ProviderException extends GatewayException {
         this.retryAfterSeconds = null;
     }
 
-    public ProviderException(String code, String message, Throwable cause) {
-        super(code, message, cause);
-        this.errorType = ProviderErrorType.UNKNOWN_ERROR;
-        this.traceId = null;
-        this.model = null;
-        this.provider = null;
-        this.channelEndpointId = null;
-        this.retryAfterSeconds = null;
-    }
-
     public ProviderException(ProviderErrorType errorType, String message) {
         super(errorType.name(), message);
         this.errorType = errorType;
@@ -76,18 +66,6 @@ public class ProviderException extends GatewayException {
                              String traceId, String model, String provider,
                              Long channelEndpointId, Integer retryAfterSeconds) {
         super(errorType.name(), message);
-        this.errorType = errorType;
-        this.traceId = traceId;
-        this.model = model;
-        this.provider = provider;
-        this.channelEndpointId = channelEndpointId;
-        this.retryAfterSeconds = retryAfterSeconds;
-    }
-
-    public ProviderException(ProviderErrorType errorType, String message, Throwable cause,
-                             String traceId, String model, String provider,
-                             Long channelEndpointId, Integer retryAfterSeconds) {
-        super(errorType.name(), message, cause);
         this.errorType = errorType;
         this.traceId = traceId;
         this.model = model;

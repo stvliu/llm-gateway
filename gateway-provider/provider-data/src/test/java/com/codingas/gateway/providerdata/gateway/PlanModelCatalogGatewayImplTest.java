@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
  * PlanModelCatalogGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
  * <p>覆盖 PlanModelCatalogGatewayImpl 全部 public 方法（save/findByPlanCodeAndModelName/
- * findByPlanCode/findByModelName/findAll）。</p>
+ * findByModelName/findAll）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("PlanModelCatalogGatewayImpl 单元测试")
@@ -108,20 +108,6 @@ class PlanModelCatalogGatewayImplTest {
         assertThat(gateway.findByPlanCodeAndModelName("plan-a", "deepseek-v4")).isPresent()
                 .get().extracting(PlanModelCatalog::getModelName).isEqualTo("deepseek-v4");
         assertThat(gateway.findByPlanCodeAndModelName("plan-a", "unknown")).isEmpty();
-    }
-
-    @Test
-    @DisplayName("findByPlanCode：按套餐代码查询并转换")
-    void findByPlanCode_convertsMatches() {
-        when(repository.findByPlanCode("plan-a")).thenReturn(List.of(
-                sampleDo(1L, "plan-a", "deepseek-v4"),
-                sampleDo(2L, "plan-a", "gpt-4o")));
-
-        List<PlanModelCatalog> result = gateway.findByPlanCode("plan-a");
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(PlanModelCatalog::getModelName)
-                .containsExactly("deepseek-v4", "gpt-4o");
     }
 
     @Test

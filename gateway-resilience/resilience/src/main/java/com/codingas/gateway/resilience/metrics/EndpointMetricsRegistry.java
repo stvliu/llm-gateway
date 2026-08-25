@@ -34,17 +34,4 @@ public class EndpointMetricsRegistry {
         return metricsMap.computeIfAbsent(endpointId, k -> new EndpointMetrics());
     }
 
-    /**
-     * 获取所有统计实例
-     */
-    public ConcurrentMap<Long, EndpointMetrics> getAll() {
-        return metricsMap;
-    }
-
-    /**
-     * 移除指定端点的统计
-     */
-    public void remove(Long endpointId) {
-        metricsMap.remove(endpointId);
-    }
 }

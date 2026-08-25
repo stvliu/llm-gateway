@@ -34,15 +34,6 @@ export function useModels(params?: PageParams) {
   });
 }
 
-/** 获取模型详情 */
-export function useModel(id: number) {
-  return useQuery({
-    queryKey: modelKeys.detail(id),
-    queryFn: () => modelApi.get(id),
-    enabled: id > 0,
-  });
-}
-
 /** 创建模型 */
 export function useCreateModel() {
   const queryClient = useQueryClient();

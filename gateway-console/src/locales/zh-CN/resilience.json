@@ -1,8 +1,7 @@
 {
   "title": "容灾",
   "menu": {
-    "resilience": "容灾管理",
-    "overview": "容灾总览"
+    "resilience": "容灾管理"
   },
   "overview": {
     "title": "容灾总览",
@@ -41,7 +40,6 @@
     }
   },
   "channels": {
-    "circuitBreaker": "熔断器",
     "forceOpen": "一键熔断",
     "forceClose": "一键恢复",
     "forceOpenConfirm": "确定要强制熔断该端点？熔断后该端点流量立即被切断。",
@@ -49,7 +47,6 @@
     "forceOpenSuccess": "端点已强制熔断",
     "forceCloseSuccess": "端点已强制恢复",
     "operationFailed": "操作失败",
-    "currentState": "当前状态",
     "state": {
       "CLOSED": "正常放行",
       "OPEN": "熔断开启",

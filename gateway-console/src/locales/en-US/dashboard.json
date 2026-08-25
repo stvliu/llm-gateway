@@ -6,19 +6,13 @@
     "modelCount": "Models",
     "userCount": "Users",
     "todayRequests": "Today's Requests",
-    "tokenUsage": "Token Usage",
-    "availableModels": "Available Models",
-    "myApiKeys": "My Keys",
-    "monthlyUsage": "Monthly Usage",
-    "tokens": "Tokens"
+    "tokenUsage": "Token Usage"
   },
   "trend": {
-    "title": "Request Trend (7 days)",
-    "placeholder": "Chart Area - ECharts/Recharts integration pending"
+    "title": "Request Trend (7 days)"
   },
   "modelUsage": {
-    "title": "Model Usage Distribution",
-    "placeholder": "Chart Area - ECharts/Recharts integration pending"
+    "title": "Model Usage Distribution"
   },
   "activity": {
     "title": "Recent Activity",
@@ -44,16 +38,7 @@
     "warning": "Warning",
     "error": "Error"
   },
-  "quickStart": {
-    "title": "Quick Start",
-    "description": "Use the following API endpoint to call models. Replace YOUR_API_KEY with your actual key."
-  },
-  "usageTrend": {
-    "title": "Usage Trend (30 days)",
-    "placeholder": "Chart Area - ECharts/Recharts integration pending"
-  },
-  "popularModels": {
-    "title": "Popular Models",
-    "empty": "No models available"
-  }
+  "quickStart": {},
+  "usageTrend": {},
+  "popularModels": {}
 }

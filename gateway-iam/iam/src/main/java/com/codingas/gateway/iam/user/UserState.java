@@ -44,17 +44,4 @@ public enum UserState {
     /** 账户锁定（登录失败次数过多触发，可恢复） */
     LOCKED;
 
-    /**
-     * 判断是否可以登录
-     */
-    public boolean canLogin() {
-        return this == ACTIVE;
-    }
-
-    /**
-     * 判断是否为安全锁定状态
-     */
-    public boolean isLocked() {
-        return this == LOCKED;
-    }
 }

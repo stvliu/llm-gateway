@@ -15,7 +15,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { userApiKeyApi } from '@/services/api/userApiKey';
-import type { CreateUserApiKeyRequest, UpdateUserApiKeyRequest } from '@/types/userApiKey';
+import type { CreateUserApiKeyRequest } from '@/types/userApiKey';
 
 export const userApiKeyKeys = {
   all: ['userApiKeys'] as const,
@@ -46,18 +46,6 @@ export function useCreateUserApiKey() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateUserApiKeyRequest) => userApiKeyApi.create(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: userApiKeyKeys.all });
-    },
-  });
-}
-
-/** 更新用户 API Key */
-export function useUpdateUserApiKey() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UpdateUserApiKeyRequest }) =>
-      userApiKeyApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userApiKeyKeys.all });
     },

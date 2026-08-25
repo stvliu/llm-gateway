@@ -54,17 +54,7 @@ public class ProviderGatewayImpl implements ProviderGateway {
     }
 
     @Override
-    public Optional<Provider> findByName(String name) {
-        return providerRepository.findByName(name).map(this::toEntity);
-    }
-
-    @Override
     public List<Provider> findAll() {
-        return providerRepository.findAll().stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<Provider> findAllActive() {
         return providerRepository.findAll().stream().map(this::toEntity).toList();
     }
 
@@ -76,21 +66,6 @@ public class ProviderGatewayImpl implements ProviderGateway {
     @Override
     public void delete(Provider provider) {
         providerRepository.deleteById(provider.getId());
-    }
-
-    @Override
-    public void deleteById(Long id) {
-        providerRepository.deleteById(id);
-    }
-
-    @Override
-    public boolean existsByName(String name) {
-        return providerRepository.existsByName(name);
-    }
-
-    @Override
-    public boolean existsByCode(String code) {
-        return providerRepository.existsByCode(code);
     }
 
     @Override

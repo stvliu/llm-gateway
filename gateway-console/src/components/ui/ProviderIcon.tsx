@@ -82,7 +82,7 @@ const PROVIDER_ICON_ENTRIES: Record<string, IconEntry> = {
   xunfei:      { Brand: Spark,     BrandColor: Spark.Color },
   wenxin:      { Brand: Wenxin,    BrandColor: Wenxin.Color },
   baichuan:    { Brand: Baichuan,  BrandColor: Baichuan.Color },
-  stepfun:     { Brand: Stepfun,   BrandColor: Stepfun.Color },
+  stepfun:     { Brand: Stepfun,   BrandColor: undefined },
   '360zhinao': { Brand: Ai360,     BrandColor: Ai360.Color },
   xai:         { Brand: XAI,       BrandColor: undefined },
   mistral:     { Brand: Mistral,   BrandColor: Mistral.Color },

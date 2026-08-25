@@ -62,12 +62,6 @@ public class ChannelEndpointGatewayImpl implements ChannelEndpointGateway {
     }
 
     @Override
-    public List<ChannelEndpoint> findAll() {
-        return channelEndpointRepository.findAll()
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public void deleteById(Long id) {
         channelEndpointRepository.deleteById(id);
     }

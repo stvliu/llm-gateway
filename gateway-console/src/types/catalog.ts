@@ -19,9 +19,6 @@
  * <p>类型字段与后端 PlanCatalogController 返回的 DTO 响应对齐。</p>
  */
 
-/** 目录状态 */
-export type CatalogState = 'ACTIVE' | 'DEPRECATED';
-
 /** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
 export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
 

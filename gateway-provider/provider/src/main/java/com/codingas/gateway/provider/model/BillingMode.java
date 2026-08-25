@@ -83,24 +83,4 @@ public enum BillingMode {
         };
     }
 
-    /**
-     * 判断是否为订阅制模式
-     */
-    public boolean isSubscription() {
-        return this == SUBSCRIPTION;
-    }
-
-    /**
-     * 判断是否为按量计费模式
-     */
-    public boolean isPayAsYouGo() {
-        return this == PAY_AS_YOU_GO;
-    }
-
-    /**
-     * 判断是否包含基础费用（订阅制和混合计费）
-     */
-    public boolean hasBaseFee() {
-        return this == HYBRID || this == SUBSCRIPTION;
-    }
 }

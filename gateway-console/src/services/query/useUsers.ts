@@ -18,8 +18,6 @@ import { userApi } from '@/services/api/user';
 import type {
   CreateUserRequest,
   UpdateUserRequest,
-  UserStateUpdateRequest,
-  UserRoleAssignRequest,
 } from '@/types/user';
 
 export const userKeys = {
@@ -34,14 +32,6 @@ export function useUsers(params?: { page?: number; size?: number }) {
   return useQuery({
     queryKey: userKeys.list(params),
     queryFn: () => userApi.list(params),
-  });
-}
-
-export function useUser(id: number) {
-  return useQuery({
-    queryKey: userKeys.detail(id),
-    queryFn: () => userApi.get(id),
-    enabled: id > 0,
   });
 }
 
@@ -83,26 +73,3 @@ export function useResetPassword() {
   });
 }
 
-export function useUpdateUserState() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UserStateUpdateRequest }) =>
-      userApi.updateState(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-    },
-  });
-}
-
-export function useAssignUserRoles() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: UserRoleAssignRequest }) =>
-      userApi.assignRoles(id, data),
-    onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: userKeys.lists() });
-    },
-  });
-}

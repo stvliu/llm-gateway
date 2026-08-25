@@ -55,21 +55,7 @@ public class ModelGatewayImpl implements ModelGateway {
     }
 
     @Override
-    public List<Model> findActiveByModelName(String modelName) {
-        return modelRepository.findByModelName(modelName)
-                .map(this::toEntity)
-                .filter(Model::isAvailable)
-                .map(List::of)
-                .orElseGet(List::of);
-    }
-
-    @Override
     public List<Model> findAll() {
-        return modelRepository.findAll().stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<Model> findAllActive() {
         return modelRepository.findAll().stream().map(this::toEntity).toList();
     }
 
@@ -86,11 +72,6 @@ public class ModelGatewayImpl implements ModelGateway {
     @Override
     public void delete(Model model) {
         modelRepository.deleteById(model.getId());
-    }
-
-    @Override
-    public boolean existsByModelName(String modelName) {
-        return modelRepository.existsByModelName(modelName);
     }
 
     @Override

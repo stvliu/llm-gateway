@@ -63,24 +63,6 @@ public class ApiKeyEncryptionService {
     }
 
     /**
-     * 验证密钥格式是否正确
-     *
-     * @param apiKey API Key 明文
-     * @return true 如果格式正确
-     */
-    public boolean isValidKeyFormat(String apiKey) {
-        if (apiKey == null || apiKey.isBlank()) {
-            return false;
-        }
-        // UserApiKey/ProductApiKey: sk- 前缀 + 32位加密随机字符串 = 44字符
-        // 或 sk-ant- 前缀（Anthropic 格式）
-        if (apiKey.startsWith("sk-")) {
-            return apiKey.length() >= 10;
-        }
-        return false;
-    }
-
-    /**
      * 生成 API Key 哈希 (用于数据库索引查询)
      * 使用 SHA-256 哈希，不加盐（因为 key 本身已经足够随机）
      *

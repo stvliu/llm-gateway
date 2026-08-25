@@ -1,13 +1,10 @@
 {
   "menu": {
     "home": "Dashboard",
-    "providers": "Providers",
-    "providerDirectory": "Provider Directory",
     "models": "Models",
     "channels": "Channels",
     "apiKeys": "API Key",
     "applications": "Applications",
-    "quickstart": "Quick Start",
     "users": "Users",
     "stats": "Statistics",
     "auditLogs": "Audit Logs",
@@ -21,72 +18,35 @@
     }
   },
   "app": {
-    "title": "LLM Gateway",
-    "copyright": "© 2024 LLM Gateway"
+    "title": "LLM Gateway"
   },
   "header": {
     "quickStart": "Quick Start"
   },
   "actions": {
     "label": "Actions",
-    "add": "Add",
     "edit": "Edit",
     "delete": "Delete",
     "save": "Save",
     "create": "Create",
     "cancel": "Cancel",
-    "search": "Search",
-    "reset": "Reset",
-    "submit": "Submit",
-    "confirm": "Confirm",
-    "copy": "Copy",
-    "enable": "Enable",
-    "disable": "Disable",
-    "resetPassword": "Reset Password",
-    "clearSelection": "Clear Selection",
-    "view": "View",
-    "refresh": "Refresh"
+    "confirm": "Confirm"
   },
   "state": {
-    "creating": "Creating",
     "active": "Active",
     "suspended": "Suspended",
-    "deleting": "Deleting",
-    "deleted": "Deleted",
-    "failed": "Failed",
-    "enabled": "Enabled",
-    "disabled": "Disabled",
-    "expired": "Expired",
-    "revoked": "Revoked",
-    "rateLimited": "Rate Limited",
-    "overquota": "Over Quota",
-    "degraded": "Degraded",
-    "compromised": "Compromised"
+    "disabled": "Disabled"
   },
   "confirm": {
     "delete": "Are you sure you want to delete?",
     "deleteEntityTitle": "Are you sure you want to delete \"{{name}}\"?",
-    "deleteProviderTitle": "Are you sure you want to delete provider \"{{name}}\"?",
-    "deleteModelTitle": "Are you sure you want to delete model \"{{name}}\"?",
     "deleteWarning": "Warning: This action cannot be undone.",
-    "toggleTitle": "Are you sure you want to {{action}} this API Key?",
-    "publish": "Are you sure you want to publish?",
-    "publishWarning": "After publishing, the template will be visible to all users.",
     "resetPassword": "Are you sure you want to reset password?",
-    "resetPasswordWarning": "After resetting, the user's password will be changed to the default value.",
-    "enable": "Are you sure you want to enable?",
-    "disable": "Are you sure you want to disable?",
-    "yes": "Yes",
-    "no": "No",
-    "unsavedTitle": "Unsaved Changes",
-    "unsavedMessage": "You have unsaved changes. Are you sure you want to discard them?",
-    "continueEdit": "Continue Editing",
-    "discard": "Discard Changes"
+    "resetPasswordWarning": "After resetting, the user's password will be changed to the default value."
   },
   "message": {
     "success": "Operation successful",
     "error": "Operation failed",
-    "copied": "Copied to clipboard",
     "deleteSuccess": "Deleted successfully",
     "deleteFailed": "Delete failed",
     "saveFailed": "Save failed: {{reason}}",
@@ -104,70 +64,12 @@
   "user": {
     "logout": "Logout"
   },
-  "settings": {
-    "title": "Settings"
-  },
+  "settings": {},
   "changePassword": {
     "title": "Change Password",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm New Password",
     "passwordMismatch": "Passwords do not match"
-  },
-  "drawer": {
-    "title": {
-      "details": "Details",
-      "edit": "Edit"
-    },
-    "navigation": {
-      "previous": "Previous",
-      "next": "Next",
-      "position": "{{current}} / {{total}}"
-    },
-    "tabs": {
-      "details": "Details",
-      "attributes": "Attributes",
-      "alerts": "Alerts",
-      "events": "Events",
-      "relations": "Relations",
-      "settings": "Settings"
-    },
-    "error": {
-      "loadFailed": "Failed to load details",
-      "retry": "Retry"
-    },
-    "info": {
-      "basicInfo": "Basic Information",
-      "advancedSettings": "Advanced Settings"
-    }
-  },
-  "table": {
-    "columnConfig": "Column Config",
-    "selectAll": "Select All",
-    "selected": "{{count}} selected",
-    "noData": "No Data"
-  },
-  "filter": {
-    "title": "Advanced Filter",
-    "addField": "Add Condition",
-    "clearAll": "Clear All",
-    "currentFilter": "Current Filter",
-    "logicAnd": "And",
-    "logicOr": "Or",
-    "logicLabel": "Logic"
-  },
-  "operators": {
-    "eq": "Equals",
-    "ne": "Not Equals",
-    "contains": "Contains",
-    "notContains": "Not Contains",
-    "startsWith": "Starts With",
-    "endsWith": "Ends With",
-    "gt": "Greater Than",
-    "lt": "Less Than",
-    "gte": "Greater Than or Equal",
-    "lte": "Less Than or Equal",
-    "before": "Before",
-    "after": "After",
-    "between": "Between"
-  }}
+  }
+}

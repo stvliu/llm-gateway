@@ -39,8 +39,8 @@ import static org.mockito.Mockito.when;
  * ModelInstanceGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
  * <p>覆盖 ModelInstanceGatewayImpl 全部 public 方法（save/findById/findByChannelId/
- * findActiveByChannelId/findActiveByModelId/findActiveByModelIdOrderByPriority/
- * findByChannelIdAndState/findByIds/existsByChannelIdAndModelId/saveAll/deleteById）。</p>
+ * findActiveByChannelId/findActiveByModelIdOrderByPriority/
+ * existsByChannelIdAndModelId/saveAll/deleteById）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ModelInstanceGatewayImpl 单元测试")
@@ -178,18 +178,6 @@ class ModelInstanceGatewayImplTest {
     }
 
     @Test
-    @DisplayName("findActiveByModelId：按模型+ACTIVE 状态查询并转换")
-    void findActiveByModelId_queriesActiveState() {
-        when(modelInstanceRepository.findByModelIdAndState(100L, "ACTIVE"))
-                .thenReturn(List.of(sampleDo(1L, 10L, 100L, "ACTIVE")));
-
-        List<ModelInstance> result = gateway.findActiveByModelId(100L);
-
-        assertThat(result).hasSize(1);
-        verify(modelInstanceRepository).findByModelIdAndState(100L, "ACTIVE");
-    }
-
-    @Test
     @DisplayName("findActiveByModelIdOrderByPriority：按优先级升序查询并转换")
     void findActiveByModelIdOrderByPriority_queriesOrdered() {
         when(modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(100L, "ACTIVE"))
@@ -199,30 +187,6 @@ class ModelInstanceGatewayImplTest {
 
         assertThat(result).hasSize(1);
         verify(modelInstanceRepository).findByModelIdAndStateOrderByPriorityAsc(100L, "ACTIVE");
-    }
-
-    @Test
-    @DisplayName("findByChannelIdAndState：按渠道+任意状态查询并转换")
-    void findByChannelIdAndState_convertsMatches() {
-        when(modelInstanceRepository.findByChannelIdAndState(10L, "SUSPENDED"))
-                .thenReturn(List.of(sampleDo(1L, 10L, 100L, "SUSPENDED")));
-
-        List<ModelInstance> result = gateway.findByChannelIdAndState(10L, "SUSPENDED");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.SUSPENDED);
-    }
-
-    @Test
-    @DisplayName("findByIds：按 id 集合批量查询并转换")
-    void findByIds_convertsMatches() {
-        when(modelInstanceRepository.findByIdIn(List.of(1L, 2L))).thenReturn(List.of(
-                sampleDo(1L, 10L, 100L, "ACTIVE"),
-                sampleDo(2L, 10L, 101L, "ACTIVE")));
-
-        List<ModelInstance> result = gateway.findByIds(List.of(1L, 2L));
-
-        assertThat(result).hasSize(2);
     }
 
     @Test

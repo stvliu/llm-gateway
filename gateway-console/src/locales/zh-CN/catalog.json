@@ -2,8 +2,7 @@
   "title": "目录管理",
   "tabs": {
     "providers": "供应商目录",
-    "plans": "套餐目录",
-    "models": "模型目录"
+    "plans": "套餐目录"
   },
   "provider": {
     "code": "供应商编码",
@@ -13,42 +12,24 @@
   },
   "plan": {
     "planCode": "套餐编码",
-    "providerCode": "供应商编码",
     "planName": "套餐名称",
     "billingMode": "计费模式",
-    "endpoints": "端点",
-    "pricing": "定价",
     "materialized": "已开通",
-    "notMaterialized": "未开通",
     "detail": "套餐详情"
-  },
-  "billingMode": {
-    "pay_as_you_go": "按量计费",
-    "subscription": "订阅制",
-    "hybrid": "混合计费",
-    "prepaid_package": "资源包"
   },
   "model": {
     "modelName": "模型名称",
-    "providerCode": "供应商编码",
     "capabilities": "能力标签",
-    "contextWindow": "上下文窗口",
-    "maxOutputTokens": "最大输出 Token",
-    "materialized": "已开通",
-    "notMaterialized": "未开通"
+    "contextWindow": "上下文窗口"
   },
   "provision": {
     "provider": "开通供应商",
-    "plan": "开通套餐",
-    "model": "开通模型",
     "resultSummary": "成功 {{success}} / 跳过 {{skipped}} / 失败 {{failed}}"
   },
   "sync": {
-    "title": "同步目录",
     "builtin": "同步内置数据"
   },
   "message": {
-    "provisionSuccess": "开通成功",
     "provisionFailed": "开通失败",
     "syncSuccess": "同步成功",
     "syncFailed": "同步失败"

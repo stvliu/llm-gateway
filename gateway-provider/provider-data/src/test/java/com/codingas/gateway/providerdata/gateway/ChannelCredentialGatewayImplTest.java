@@ -43,8 +43,7 @@ import static org.mockito.Mockito.when;
  * 委托与凭证加解密逻辑
  *
  * <p>覆盖 ChannelCredentialGatewayImpl 全部 public 方法（save/findById/findByChannelId/
- * findActiveByChannelId/findByChannelIdAndState/findDefaultByChannelId/updateLastUsedAt/
- * deleteById/countActiveByChannelId）。</p>
+ * findActiveByChannelId/findDefaultByChannelId/deleteById）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelCredentialGatewayImpl 单元测试")
@@ -214,8 +213,7 @@ class ChannelCredentialGatewayImplTest {
 
         assertThat(gateway.findByChannelId(1L)).hasSize(2);
         assertThat(gateway.findActiveByChannelId(1L)).hasSize(2);
-        assertThat(gateway.findByChannelIdAndState(1L, "ACTIVE")).hasSize(2);
-        verify(credentialRepository, times(3)).findByChannelId(1L);
+        verify(credentialRepository, times(2)).findByChannelId(1L);
     }
 
     @Test
@@ -232,45 +230,10 @@ class ChannelCredentialGatewayImplTest {
     }
 
     @Test
-    @DisplayName("updateLastUsedAt：存在时更新时间并落库")
-    void updateLastUsedAt_setsTimestampAndSaves() {
-        ChannelCredentialDo doObj = sampleDo(3L, 1L);
-        when(credentialRepository.findById(3L)).thenReturn(Optional.of(doObj));
-
-        // fixture sampleDo 预置了 lastUsedAt（2026-08-01 旧值），仅断言 isNotNull 恒真无法验证
-        // 更新时间逻辑；记录调用前时刻，断言 lastUsedAt 被刷新为不早于该时刻
-        Instant before = Instant.now();
-        gateway.updateLastUsedAt(3L);
-
-        assertThat(doObj.getLastUsedAt()).isAfterOrEqualTo(before);
-        verify(credentialRepository).save(doObj);
-    }
-
-    @Test
-    @DisplayName("updateLastUsedAt：不存在时不落库")
-    void updateLastUsedAt_noOpWhenAbsent() {
-        when(credentialRepository.findById(3L)).thenReturn(Optional.empty());
-
-        gateway.updateLastUsedAt(3L);
-
-        verify(credentialRepository, never()).save(any());
-    }
-
-    @Test
     @DisplayName("deleteById：委托 Repository 删除")
     void deleteById_delegates() {
         gateway.deleteById(3L);
         verify(credentialRepository).deleteById(3L);
     }
 
-    @Test
-    @DisplayName("countActiveByChannelId：按渠道查询列表大小")
-    void countActiveByChannelId_returnsListSize() {
-        when(credentialRepository.findByChannelId(1L)).thenReturn(List.of(
-                sampleDo(1L, 1L),
-                sampleDo(2L, 1L),
-                sampleDo(3L, 1L)));
-
-        assertThat(gateway.countActiveByChannelId(1L)).isEqualTo(3L);
-    }
 }

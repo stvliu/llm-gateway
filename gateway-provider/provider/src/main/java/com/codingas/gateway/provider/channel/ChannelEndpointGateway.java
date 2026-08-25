@@ -47,11 +47,6 @@ public interface ChannelEndpointGateway {
     Optional<ChannelEndpoint> findByChannelIdAndProtocol(Long channelId, Protocol protocol);
 
     /**
-     * 查询所有端点
-     */
-    List<ChannelEndpoint> findAll();
-
-    /**
      * 删除端点
      */
     void deleteById(Long id);

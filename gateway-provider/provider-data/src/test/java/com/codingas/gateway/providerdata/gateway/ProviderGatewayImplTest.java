@@ -38,8 +38,8 @@ import static org.mockito.Mockito.when;
 /**
  * ProviderGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
- * <p>覆盖 ProviderGatewayImpl 全部 public 方法（save/findById/findByCode/findByName/
- * findAll/findAllActive/count/delete/deleteById/existsByName/existsByCode/findByKeyword）。</p>
+ * <p>覆盖 ProviderGatewayImpl 全部 public 方法（save/findById/findByCode/
+ * findAll/count/delete/findByKeyword）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProviderGatewayImpl 单元测试")
@@ -150,17 +150,6 @@ class ProviderGatewayImplTest {
     }
 
     @Test
-    @DisplayName("findByName：命中时转换返回，未命中返回空")
-    void findByName_returnsConvertedOrEmpty() {
-        when(providerRepository.findByName("OpenAI")).thenReturn(Optional.of(sampleDo(1L, "openai", "OpenAI")));
-        when(providerRepository.findByName("N/A")).thenReturn(Optional.empty());
-
-        assertThat(gateway.findByName("OpenAI")).isPresent()
-                .get().extracting(Provider::getName).isEqualTo("OpenAI");
-        assertThat(gateway.findByName("N/A")).isEmpty();
-    }
-
-    @Test
     @DisplayName("findAll：全部转换返回")
     void findAll_convertsAll() {
         when(providerRepository.findAll()).thenReturn(List.of(
@@ -175,18 +164,6 @@ class ProviderGatewayImplTest {
     }
 
     @Test
-    @DisplayName("findAllActive：委托 findAll 并转换返回")
-    void findAllActive_delegatesToFindAll() {
-        when(providerRepository.findAll()).thenReturn(List.of(sampleDo(1L, "openai", "OpenAI")));
-
-        List<Provider> result = gateway.findAllActive();
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getName()).isEqualTo("OpenAI");
-        verify(providerRepository).findAll();
-    }
-
-    @Test
     @DisplayName("count：委托 Repository 统计并原样返回")
     void count_returnsRepositoryCount() {
         when(providerRepository.count()).thenReturn(42L);
@@ -198,23 +175,6 @@ class ProviderGatewayImplTest {
     void delete_delegatesToDeleteById() {
         gateway.delete(sampleProvider(7L, "openai", "OpenAI"));
         verify(providerRepository).deleteById(7L);
-    }
-
-    @Test
-    @DisplayName("deleteById：委托 Repository 删除")
-    void deleteById_delegates() {
-        gateway.deleteById(7L);
-        verify(providerRepository).deleteById(7L);
-    }
-
-    @Test
-    @DisplayName("existsByName / existsByCode：委托 Repository 判断")
-    void exists_returnsRepositoryResult() {
-        when(providerRepository.existsByName("OpenAI")).thenReturn(true);
-        when(providerRepository.existsByCode("openai")).thenReturn(false);
-
-        assertThat(gateway.existsByName("OpenAI")).isTrue();
-        assertThat(gateway.existsByCode("openai")).isFalse();
     }
 
     @Test

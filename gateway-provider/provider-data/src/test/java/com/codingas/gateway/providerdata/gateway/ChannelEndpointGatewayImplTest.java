@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
  * ChannelEndpointGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
  * <p>覆盖 ChannelEndpointGatewayImpl 全部 public 方法（save/findById/findByChannelId/
- * findByChannelIdAndProtocol/findAll/deleteById）。</p>
+ * findByChannelIdAndProtocol/deleteById）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelEndpointGatewayImpl 单元测试")
@@ -138,19 +138,6 @@ class ChannelEndpointGatewayImplTest {
 
         assertThat(gateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI)).isPresent();
         assertThat(gateway.findByChannelIdAndProtocol(10L, Protocol.GEMINI)).isEmpty();
-    }
-
-    @Test
-    @DisplayName("findAll：全部转换返回")
-    void findAll_convertsAll() {
-        when(channelEndpointRepository.findAll()).thenReturn(List.of(
-                sampleDo(1L, 10L, Protocol.OPENAI),
-                sampleDo(2L, 11L, Protocol.ANTHROPIC)));
-
-        List<ChannelEndpoint> result = gateway.findAll();
-
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(ChannelEndpoint::getChannelId).containsExactly(10L, 11L);
     }
 
     @Test

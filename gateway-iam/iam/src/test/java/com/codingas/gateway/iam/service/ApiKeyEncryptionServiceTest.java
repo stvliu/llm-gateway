@@ -106,47 +106,6 @@ class ApiKeyEncryptionServiceTest {
     }
 
     @Nested
-    @DisplayName("isValidKeyFormat 方法测试")
-    class IsValidKeyFormatTests {
-
-        @Test
-        @DisplayName("有效 sk- 前缀格式")
-        void isValidKeyFormat_skPrefix_returnsTrue() {
-            assertThat(service.isValidKeyFormat("sk-1234567890")).isTrue();
-        }
-
-        @Test
-        @DisplayName("sk-ant- 前缀格式")
-        void isValidKeyFormat_skAntPrefix_returnsTrue() {
-            assertThat(service.isValidKeyFormat("sk-ant-api03-xxxxx")).isTrue();
-        }
-
-        @Test
-        @DisplayName("无效前缀返回 false")
-        void isValidKeyFormat_invalidPrefix_returnsFalse() {
-            assertThat(service.isValidKeyFormat("pk-1234567890")).isFalse();
-        }
-
-        @Test
-        @DisplayName("null 输入返回 false")
-        void isValidKeyFormat_nullInput_returnsFalse() {
-            assertThat(service.isValidKeyFormat(null)).isFalse();
-        }
-
-        @Test
-        @DisplayName("空白输入返回 false")
-        void isValidKeyFormat_blankInput_returnsFalse() {
-            assertThat(service.isValidKeyFormat("   ")).isFalse();
-        }
-
-        @Test
-        @DisplayName("sk- 前缀但太短返回 false")
-        void isValidKeyFormat_shortKey_returnsFalse() {
-            assertThat(service.isValidKeyFormat("sk-abc")).isFalse();
-        }
-    }
-
-    @Nested
     @DisplayName("hashKey 方法测试")
     class HashKeyTests {
 

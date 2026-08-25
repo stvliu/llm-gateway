@@ -6,19 +6,13 @@
     "modelCount": "模型数量",
     "userCount": "用户数量",
     "todayRequests": "今日请求",
-    "tokenUsage": "Token 消耗",
-    "availableModels": "可用模型",
-    "myApiKeys": "我的 Key",
-    "monthlyUsage": "本月用量",
-    "tokens": "Tokens"
+    "tokenUsage": "Token 消耗"
   },
   "trend": {
-    "title": "请求趋势 (7天)",
-    "placeholder": "图表区域 - 待接入 ECharts/Recharts"
+    "title": "请求趋势 (7天)"
   },
   "modelUsage": {
-    "title": "模型使用分布",
-    "placeholder": "图表区域 - 待接入 ECharts/Recharts"
+    "title": "模型使用分布"
   },
   "activity": {
     "title": "最近活动",
@@ -44,16 +38,7 @@
     "warning": "警告",
     "error": "错误"
   },
-  "quickStart": {
-    "title": "快速开始",
-    "description": "使用以下 API 端点调用模型，将 YOUR_API_KEY 替换为您的实际密钥。"
-  },
-  "usageTrend": {
-    "title": "用量趋势 (30天)",
-    "placeholder": "图表区域 - 待接入 ECharts/Recharts"
-  },
-  "popularModels": {
-    "title": "热门模型",
-    "empty": "暂无模型"
-  }
+  "quickStart": {},
+  "usageTrend": {},
+  "popularModels": {}
 }

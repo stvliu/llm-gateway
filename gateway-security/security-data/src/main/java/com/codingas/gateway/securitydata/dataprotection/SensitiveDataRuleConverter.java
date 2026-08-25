@@ -20,7 +20,6 @@ import com.codingas.gateway.securitydata.dataprotection.SensitiveDataRuleDo;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -111,13 +110,4 @@ public class SensitiveDataRuleConverter {
                 .collect(Collectors.toList());
     }
 
-    /**
-     * 将 Optional 数据对象转换为 Optional 领域实体
-     *
-     * @param ruleDoOptional 可选的数据对象
-     * @return 可选的领域实体
-     */
-    public Optional<SensitiveDataRule> toDomainOptional(Optional<SensitiveDataRuleDo> ruleDoOptional) {
-        return ruleDoOptional.map(this::toDomain);
-    }
 }

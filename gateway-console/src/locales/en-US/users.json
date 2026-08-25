@@ -1,6 +1,5 @@
 {
   "title": "Users",
-  "userList": "User List",
   "apiKeyList": "API Key List",
   "addUser": "Add User",
   "addApiKey": "Add API Key",
@@ -16,7 +15,6 @@
   "apiKey": {
     "name": "Name",
     "key": "Key Value",
-    "state": "Status",
     "createdAt": "Created At",
     "copySuccess": "API Key copied",
     "createSuccess": "Created successfully, please copy and save the key immediately"

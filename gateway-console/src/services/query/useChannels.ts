@@ -53,35 +53,12 @@ export function useChannels(providerId?: number) {
   });
 }
 
-/** 批量获取多个供应商的渠道列表 */
-export function useChannelsBatch(providerIds: number[]) {
-  return useQueries({
-    queries: providerIds.map((providerId) => ({
-      queryKey: channelKeys.list(providerId),
-      queryFn: () => channelApi.list({ providerId }),
-      enabled: !!providerId,
-    })),
-  });
-}
-
 /** 获取渠道详情 */
 export function useChannel(id: number) {
   return useQuery({
     queryKey: channelKeys.detail(id),
     queryFn: () => channelApi.get(id),
     enabled: !!id,
-  });
-}
-
-/** 创建渠道（返回含 id 的 ChannelResponse） */
-export function useCreateChannel() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (data: CreateChannelRequest) => channelApi.create(data),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: channelKeys.list(variables.providerId) });
-      queryClient.invalidateQueries({ queryKey: channelKeys.allChannels() });
-    },
   });
 }
 
@@ -281,18 +258,6 @@ export function useDeleteChannelModel() {
   return useMutation({
     mutationFn: ({ channelId, modelId }: { channelId: number; modelId: number }) =>
       channelApi.deleteModel(channelId, modelId),
-    onSuccess: (_, { channelId }) => {
-      queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
-    },
-  });
-}
-
-/** 更新模型映射的上游模型名 */
-export function useUpdateChannelModel() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({ channelId, modelId, upstreamModelName }: { channelId: number; modelId: number; upstreamModelName: string }) =>
-      channelApi.updateUpstreamModelName(channelId, modelId, upstreamModelName),
     onSuccess: (_, { channelId }) => {
       queryClient.invalidateQueries({ queryKey: [...channelKeys.detail(channelId), 'models'] });
     },

@@ -41,19 +41,9 @@ public interface ProviderGateway {
     Optional<Provider> findByCode(String code);
 
     /**
-     * 根据名称查找供应商
-     */
-    Optional<Provider> findByName(String name);
-
-    /**
      * 查找所有供应商
      */
     List<Provider> findAll();
-
-    /**
-     * 查找所有活跃供应商
-     */
-    List<Provider> findAllActive();
 
     /**
      * 统计供应商总数
@@ -64,21 +54,6 @@ public interface ProviderGateway {
      * 删除供应商
      */
     void delete(Provider provider);
-
-    /**
-     * 根据ID删除供应商
-     */
-    void deleteById(Long id);
-
-    /**
-     * 检查名称是否已存在
-     */
-    boolean existsByName(String name);
-
-    /**
-     * 检查代码是否已存在
-     */
-    boolean existsByCode(String code);
 
     /**
      * 关键词搜索（code 或 name 包含关键字）

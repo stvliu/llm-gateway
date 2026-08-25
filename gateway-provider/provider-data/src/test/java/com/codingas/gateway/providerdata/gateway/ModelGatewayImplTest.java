@@ -40,8 +40,7 @@ import static org.mockito.Mockito.when;
  * ModelGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
  * <p>覆盖 ModelGatewayImpl 全部 public 方法（save/findById/findByModelName/
- * findActiveByModelName/findAll/findAllActive/findByIds/count/delete/existsByModelName/
- * findByKeyword/findByCapability）。</p>
+ * findAll/findByIds/count/delete/findByKeyword/findByCapability）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ModelGatewayImpl 单元测试")
@@ -156,35 +155,13 @@ class ModelGatewayImplTest {
     }
 
     @Test
-    @DisplayName("findActiveByModelName：未废弃模型返回列表")
-    void findActiveByModelName_returnsModelWhenNotDeprecated() {
-        when(modelRepository.findByModelName("deepseek-v4")).thenReturn(Optional.of(sampleDo(1L, "deepseek-v4")));
-
-        List<Model> result = gateway.findActiveByModelName("deepseek-v4");
-
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getModelName()).isEqualTo("deepseek-v4");
-    }
-
-    @Test
-    @DisplayName("findActiveByModelName：已废弃模型被过滤返回空列表")
-    void findActiveByModelName_filtersDeprecatedModel() {
-        ModelDo deprecated = sampleDo(1L, "deepseek-v3");
-        deprecated.setDeprecatedAt(Instant.parse("2026-08-01T00:00:00Z"));
-        when(modelRepository.findByModelName("deepseek-v3")).thenReturn(Optional.of(deprecated));
-
-        assertThat(gateway.findActiveByModelName("deepseek-v3")).isEmpty();
-    }
-
-    @Test
-    @DisplayName("findAll / findAllActive：全部转换返回")
+    @DisplayName("findAll：全部转换返回")
     void findAll_convertsAll() {
         when(modelRepository.findAll()).thenReturn(List.of(
                 sampleDo(1L, "deepseek-v4"),
                 sampleDo(2L, "gpt-4o")));
 
-        assertThat(gateway.findAll()).hasSize(2);
-        assertThat(gateway.findAllActive()).hasSize(2)
+        assertThat(gateway.findAll()).hasSize(2)
                 .extracting(Model::getModelName)
                 .containsExactly("deepseek-v4", "gpt-4o");
     }
@@ -214,13 +191,6 @@ class ModelGatewayImplTest {
     void delete_delegatesToDeleteById() {
         gateway.delete(sampleModel(3L, "deepseek-v4"));
         verify(modelRepository).deleteById(3L);
-    }
-
-    @Test
-    @DisplayName("existsByModelName：委托 Repository 判断")
-    void existsByModelName_returnsRepositoryResult() {
-        when(modelRepository.existsByModelName("deepseek-v4")).thenReturn(true);
-        assertThat(gateway.existsByModelName("deepseek-v4")).isTrue();
     }
 
     @Test

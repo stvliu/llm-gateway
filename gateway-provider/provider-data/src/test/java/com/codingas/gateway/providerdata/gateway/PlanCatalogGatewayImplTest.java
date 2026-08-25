@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 /**
  * PlanCatalogGatewayImpl 单元测试：mock Repository 验证委托与 model↔DO 双向转换
  *
- * <p>覆盖 PlanCatalogGatewayImpl 全部 public 方法（save/findByPlanCode/existsByPlanCode/
+ * <p>覆盖 PlanCatalogGatewayImpl 全部 public 方法（save/findByPlanCode/
  * findByProviderCode/findAll）。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -144,14 +144,6 @@ class PlanCatalogGatewayImplTest {
         assertThat(gateway.findByPlanCode("volcengine_doubao_payg")).isPresent()
                 .get().extracting(PlanCatalog::getBillingMode).isEqualTo(BillingMode.PAY_AS_YOU_GO);
         assertThat(gateway.findByPlanCode("unknown")).isEmpty();
-    }
-
-    @Test
-    @DisplayName("existsByPlanCode：委托 Repository 判断")
-    void existsByPlanCode_returnsRepositoryResult() {
-        when(repository.existsByPlanCode("volcengine_doubao_payg")).thenReturn(true);
-
-        assertThat(gateway.existsByPlanCode("volcengine_doubao_payg")).isTrue();
     }
 
     @Test

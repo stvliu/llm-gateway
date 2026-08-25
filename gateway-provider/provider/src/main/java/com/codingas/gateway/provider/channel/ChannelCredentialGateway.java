@@ -46,29 +46,14 @@ public interface ChannelCredentialGateway {
     List<ChannelCredential> findActiveByChannelId(Long channelId);
 
     /**
-     * 根据渠道 ID 和状态查找凭证
-     */
-    List<ChannelCredential> findByChannelIdAndState(Long channelId, String state);
-
-    /**
      * 查找渠道的默认凭证
      */
     Optional<ChannelCredential> findDefaultByChannelId(Long channelId);
 
     /**
-     * 更新最后使用时间
-     */
-    void updateLastUsedAt(Long id);
-
-    /**
      * 删除凭证
      */
     void deleteById(Long id);
-
-    /**
-     * 统计渠道活跃凭证数
-     */
-    long countActiveByChannelId(Long channelId);
 
     /**
      * 获取最大版本号

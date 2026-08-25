@@ -43,19 +43,9 @@ public interface ModelGateway {
     Optional<Model> findByModelName(String modelName);
 
     /**
-     * 查找同名模型的所有活跃渠道
-     */
-    List<Model> findActiveByModelName(String modelName);
-
-    /**
      * 查询所有模型
      */
     List<Model> findAll();
-
-    /**
-     * 查找所有活跃模型
-     */
-    List<Model> findAllActive();
 
     /**
      * 批量查找模型
@@ -71,11 +61,6 @@ public interface ModelGateway {
      * 删除模型
      */
     void delete(Model model);
-
-    /**
-     * 检查模型名是否存在
-     */
-    boolean existsByModelName(String modelName);
 
     /**
      * 关键词搜索（modelName 或 displayName 包含关键字）

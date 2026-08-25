@@ -80,10 +80,4 @@ public class Channel extends BaseEntity {
         return updatedAt;
     }
 
-    /**
-     * 检查渠道是否可用
-     */
-    public boolean isAvailable() {
-        return ChannelState.ACTIVE.equals(state) || ChannelState.DEPRECATED.equals(state);
-    }
 }

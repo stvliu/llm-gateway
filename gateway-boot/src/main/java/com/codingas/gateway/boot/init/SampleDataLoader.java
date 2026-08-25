@@ -111,10 +111,7 @@ public class SampleDataLoader implements DataLoader {
         // 读取上游数据
         Map<String, Channel> channelMap = context.getRequired(DataLoadContext.ChannelIndex.class).getMap();
         Map<String, Application> applicationMap = loadApplications(channelMap);
-        context.set(DataLoadContext.ApplicationIndex.class, new DataLoadContext.ApplicationIndex(applicationMap));
-
         Map<String, User> userMap = loadUsers();
-        context.set(DataLoadContext.UserIndex.class, new DataLoadContext.UserIndex(userMap));
 
         loadApiKeys(userMap, applicationMap);
 

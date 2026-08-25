@@ -60,26 +60,9 @@ public class ModelInstanceGatewayImpl implements ModelInstanceGateway {
     }
 
     @Override
-    public List<ModelInstance> findActiveByModelId(Long modelId) {
-        return modelInstanceRepository.findByModelIdAndState(modelId, ModelInstance.State.ACTIVE.name())
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId) {
         return modelInstanceRepository.findByModelIdAndStateOrderByPriorityAsc(modelId, ModelInstance.State.ACTIVE.name())
                 .stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<ModelInstance> findByChannelIdAndState(Long channelId, String state) {
-        return modelInstanceRepository.findByChannelIdAndState(channelId, state)
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
-    public List<ModelInstance> findByIds(List<Long> ids) {
-        return modelInstanceRepository.findByIdIn(ids).stream().map(this::toEntity).toList();
     }
 
     @Override

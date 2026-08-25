@@ -28,9 +28,4 @@ public class CircuitOpenException extends ProviderException {
     public CircuitOpenException(String message) {
         super(ProviderErrorType.UPSTREAM_ERROR, message);
     }
-
-    public CircuitOpenException(String traceId, String model, String provider, Long endpointId) {
-        super(ProviderErrorType.UPSTREAM_ERROR, "熔断器开启，拒绝请求",
-              traceId, model, provider, endpointId, null);
-    }
 }

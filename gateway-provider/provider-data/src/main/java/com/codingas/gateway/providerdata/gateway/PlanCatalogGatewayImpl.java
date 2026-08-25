@@ -50,11 +50,6 @@ public class PlanCatalogGatewayImpl implements PlanCatalogGateway {
     }
 
     @Override
-    public boolean existsByPlanCode(String planCode) {
-        return repository.existsByPlanCode(planCode);
-    }
-
-    @Override
     public List<PlanCatalog> findByProviderCode(String providerCode) {
         return repository.findByProviderCode(providerCode).stream().map(this::toEntity).toList();
     }

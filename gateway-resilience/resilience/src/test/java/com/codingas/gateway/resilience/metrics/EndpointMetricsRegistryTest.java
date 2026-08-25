@@ -38,21 +38,4 @@ class EndpointMetricsRegistryTest {
         assertThat(second).isSameAs(first);
     }
 
-    @Test
-    @DisplayName("getAll 返回全部端点统计")
-    void getAll_returnsAllMetrics() {
-        registry.get(1L);
-        registry.get(2L);
-
-        assertThat(registry.getAll()).hasSize(2);
-    }
-
-    @Test
-    @DisplayName("remove 移除指定端点统计")
-    void remove_deletesEndpoint() {
-        registry.get(1L);
-        registry.remove(1L);
-
-        assertThat(registry.getAll()).isEmpty();
-    }
 }

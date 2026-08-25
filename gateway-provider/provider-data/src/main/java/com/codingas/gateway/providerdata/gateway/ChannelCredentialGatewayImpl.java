@@ -88,32 +88,13 @@ public class ChannelCredentialGatewayImpl implements ChannelCredentialGateway {
     }
 
     @Override
-    public List<ChannelCredential> findByChannelIdAndState(Long channelId, String state) {
-        return credentialRepository.findByChannelId(channelId)
-                .stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public Optional<ChannelCredential> findDefaultByChannelId(Long channelId) {
         return findActiveByChannelId(channelId).stream().findFirst();
     }
 
     @Override
-    public void updateLastUsedAt(Long id) {
-        credentialRepository.findById(id).ifPresent(doObj -> {
-            doObj.setLastUsedAt(java.time.Instant.now());
-            credentialRepository.save(doObj);
-        });
-    }
-
-    @Override
     public void deleteById(Long id) {
         credentialRepository.deleteById(id);
-    }
-
-    @Override
-    public long countActiveByChannelId(Long channelId) {
-        return credentialRepository.findByChannelId(channelId).size();
     }
 
     private ChannelCredential toEntity(ChannelCredentialDo doObj) {

@@ -61,5 +61,4 @@ public class StreamConfig {
     public int getChunkCount() { return chunkCount; }
     public int getChunkIntervalMs() { return chunkIntervalMs; }
     public int getInterruptAfter() { return interruptAfter; }
-    public String getInvalidChunk() { return invalidChunk; }
 }

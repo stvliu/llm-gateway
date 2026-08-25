@@ -33,11 +33,6 @@ public interface PlanCatalogGateway {
     Optional<PlanCatalog> findByPlanCode(String planCode);
 
     /**
-     * 是否存在指定 planCode
-     */
-    boolean existsByPlanCode(String planCode);
-
-    /**
      * 按供应商查找
      */
     List<PlanCatalog> findByProviderCode(String providerCode);

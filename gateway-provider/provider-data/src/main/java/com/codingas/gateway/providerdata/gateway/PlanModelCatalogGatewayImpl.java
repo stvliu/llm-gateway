@@ -49,11 +49,6 @@ public class PlanModelCatalogGatewayImpl implements PlanModelCatalogGateway {
     }
 
     @Override
-    public List<PlanModelCatalog> findByPlanCode(String planCode) {
-        return repository.findByPlanCode(planCode).stream().map(this::toEntity).toList();
-    }
-
-    @Override
     public List<PlanModelCatalog> findByModelName(String modelName) {
         return repository.findByModelName(modelName).stream().map(this::toEntity).toList();
     }

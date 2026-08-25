@@ -1,8 +1,7 @@
 {
   "title": "Resilience",
   "menu": {
-    "resilience": "Resilience",
-    "overview": "Overview"
+    "resilience": "Resilience"
   },
   "overview": {
     "title": "Resilience Overview",
@@ -41,7 +40,6 @@
     }
   },
   "channels": {
-    "circuitBreaker": "Circuit Breaker",
     "forceOpen": "Force Open",
     "forceClose": "Force Close",
     "forceOpenConfirm": "Force open this endpoint? Traffic will be cut immediately.",
@@ -49,7 +47,6 @@
     "forceOpenSuccess": "Endpoint force-opened",
     "forceCloseSuccess": "Endpoint force-closed",
     "operationFailed": "Operation failed",
-    "currentState": "Current state",
     "state": {
       "CLOSED": "Closed",
       "OPEN": "Open",

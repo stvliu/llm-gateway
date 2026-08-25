@@ -76,13 +76,6 @@ public class User extends BaseEntity {
     }
 
     /**
-     * 检查是否为管理员
-     */
-    public boolean isAdmin() {
-        return "ADMIN".equals(role);
-    }
-
-    /**
      * 检查是否为内建用户
      */
     public boolean isBuiltin() {

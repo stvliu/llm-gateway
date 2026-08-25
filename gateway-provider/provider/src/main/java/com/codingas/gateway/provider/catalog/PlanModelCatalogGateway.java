@@ -33,11 +33,6 @@ public interface PlanModelCatalogGateway {
     Optional<PlanModelCatalog> findByPlanCodeAndModelName(String planCode, String modelName);
 
     /**
-     * 按套餐查找
-     */
-    List<PlanModelCatalog> findByPlanCode(String planCode);
-
-    /**
      * 按模型名查找
      */
     List<PlanModelCatalog> findByModelName(String modelName);

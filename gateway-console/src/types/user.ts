@@ -60,9 +60,6 @@ export interface LoginResponseData {
   token?: string;
 }
 
-/** 登录响应（包装在 ApiResponse 中） */
-export type LoginResponse = LoginResponseData;
-
 /** 登录返回的用户信息（后端原始结构，不含 permissions） */
 export interface LoginUserResponse {
   id: number;

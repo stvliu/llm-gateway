@@ -77,15 +77,6 @@ public class BehaviorSequence {
     }
 
     /**
-     * 获取序列总步数。
-     *
-     * @return 步数
-     */
-    public int size() {
-        return steps.size();
-    }
-
-    /**
      * 是否活跃。
      *
      * @return 是否还有未消费的步进
@@ -110,14 +101,6 @@ public class BehaviorSequence {
      */
     public List<Integer> getSteps() {
         return List.copyOf(steps);
-    }
-
-    /**
-     * 重置序列到初始状态。
-     */
-    public synchronized void reset() {
-        this.currentIndex = 0;
-        this.active = true;
     }
 
     /**

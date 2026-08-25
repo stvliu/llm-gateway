@@ -2,8 +2,7 @@
   "title": "Catalog Management",
   "tabs": {
     "providers": "Provider Catalog",
-    "plans": "Plan Catalog",
-    "models": "Model Catalog"
+    "plans": "Plan Catalog"
   },
   "provider": {
     "code": "Provider Code",
@@ -13,42 +12,24 @@
   },
   "plan": {
     "planCode": "Plan Code",
-    "providerCode": "Provider Code",
     "planName": "Plan Name",
     "billingMode": "Billing Mode",
-    "endpoints": "Endpoints",
-    "pricing": "Pricing",
     "materialized": "Provisioned",
-    "notMaterialized": "Not Provisioned",
     "detail": "Plan Detail"
-  },
-  "billingMode": {
-    "pay_as_you_go": "Pay As You Go",
-    "subscription": "Subscription",
-    "hybrid": "Hybrid",
-    "prepaid_package": "Prepaid Package"
   },
   "model": {
     "modelName": "Model Name",
-    "providerCode": "Provider Code",
     "capabilities": "Capabilities",
-    "contextWindow": "Context Window",
-    "maxOutputTokens": "Max Output Tokens",
-    "materialized": "Provisioned",
-    "notMaterialized": "Not Provisioned"
+    "contextWindow": "Context Window"
   },
   "provision": {
     "provider": "Provision Provider",
-    "plan": "Provision Plan",
-    "model": "Provision Model",
     "resultSummary": "Success {{success}} / Skipped {{skipped}} / Failed {{failed}}"
   },
   "sync": {
-    "title": "Sync Catalog",
     "builtin": "Sync Built-in"
   },
   "message": {
-    "provisionSuccess": "Provisioned successfully",
     "provisionFailed": "Provisioning failed",
     "syncSuccess": "Synced successfully",
     "syncFailed": "Sync failed"

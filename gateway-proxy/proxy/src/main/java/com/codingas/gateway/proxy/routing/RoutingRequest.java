@@ -120,8 +120,6 @@ public class RoutingRequest {
 
     public String getRole() { return role; }
 
-    public RoutingStrategy getStrategy() { return strategy; }
-
     public Protocol getProtocol() { return protocol; }
 
     /**

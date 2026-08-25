@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import type { ChannelState } from '@/types/channel';
-import { allowedTransitions, isRoutable, CHANNEL_LIFECYCLE } from '@/domain/channel/lifecycle';
+import { allowedTransitions } from '@/domain/channel/lifecycle';
 
 /**
  * 获取渠道状态可用的合法转换目标列表
@@ -26,20 +26,6 @@ import { allowedTransitions, isRoutable, CHANNEL_LIFECYCLE } from '@/domain/chan
  */
 export function getAvailableTransitions(currentState: ChannelState): ChannelState[] {
   return [...allowedTransitions(currentState)];
-}
-
-/**
- * 判断状态是否为终态（不可再转换）
- */
-export function isTerminalState(state: ChannelState): boolean {
-  return CHANNEL_LIFECYCLE[state].nextStates.length === 0;
-}
-
-/**
- * 判断状态是否可路由（可参与流量分配）
- */
-export function isRoutableState(state: ChannelState): boolean {
-  return isRoutable(state);
 }
 
 /**

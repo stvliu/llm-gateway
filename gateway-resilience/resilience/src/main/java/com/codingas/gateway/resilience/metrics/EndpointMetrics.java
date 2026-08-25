@@ -53,27 +53,4 @@ public class EndpointMetrics {
         }
     }
 
-    /** 当前活跃请求数 */
-    public int getActive() { return active.get(); }
-
-    /** 总调用次数 */
-    public long getTotalCalls() { return totalCalls.get(); }
-
-    /** 总耗时（毫秒） */
-    public long getTotalDuration() { return totalDuration.get(); }
-
-    /** 失败次数 */
-    public long getFailedCalls() { return failedCalls.get(); }
-
-    /** 平均耗时 */
-    public double getAverageDuration() {
-        long total = totalCalls.get();
-        return total > 0 ? (double) totalDuration.get() / total : 0;
-    }
-
-    /** 失败率 */
-    public double getFailureRate() {
-        long total = totalCalls.get();
-        return total > 0 ? (double) failedCalls.get() / total : 0;
-    }
 }

@@ -1,6 +1,5 @@
 {
   "title": "用户",
-  "userList": "用户列表",
   "apiKeyList": "API Key 列表",
   "addUser": "新增用户",
   "addApiKey": "新增 API Key",
@@ -16,7 +15,6 @@
   "apiKey": {
     "name": "名称",
     "key": "Key 值",
-    "state": "状态",
     "createdAt": "创建时间",
     "copySuccess": "API Key 已复制",
     "createSuccess": "创建成功，请立即复制保存 Key 值"

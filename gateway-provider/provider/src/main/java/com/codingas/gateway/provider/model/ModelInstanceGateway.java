@@ -46,24 +46,9 @@ public interface ModelInstanceGateway {
     List<ModelInstance> findActiveByChannelId(Long channelId);
 
     /**
-     * 根据模型规格ID查找活跃的模型实例
-     */
-    List<ModelInstance> findActiveByModelId(Long modelId);
-
-    /**
      * 根据模型规格ID查找活跃的模型实例（按优先级排序）
      */
     List<ModelInstance> findActiveByModelIdOrderByPriority(Long modelId);
-
-    /**
-     * 根据渠道ID和状态查找
-     */
-    List<ModelInstance> findByChannelIdAndState(Long channelId, String state);
-
-    /**
-     * 根据ID列表批量查找
-     */
-    List<ModelInstance> findByIds(List<Long> ids);
 
     /**
      * 检查渠道模型关联是否已存在

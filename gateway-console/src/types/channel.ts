@@ -13,17 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/** 协议类型（与后端 ProtocolGateway.getProtocolName() 对应） */
-export type EndpointProtocol = 'openai' | 'anthropic';
-
 /** 计费模式（与后端 BillingMode 枚举 code 对齐，小写 snake_case） */
 export type BillingMode = 'pay_as_you_go' | 'subscription' | 'hybrid' | 'prepaid_package';
-
-/** 协议信息（从 /api/protocols 获取） */
-export interface ProtocolInfo {
-  name: string;
-  label: string;
-}
 
 /** 渠道生命周期状态（与后端 Channel.State 枚举一致） */
 export type ChannelState = 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'DEPRECATED' | 'RETIRED';

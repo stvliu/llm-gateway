@@ -65,16 +65,6 @@ export function useUpdateProvider() {
   });
 }
 
-export function useDeleteProvider() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => providerApi.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: providerKeys.lists() });
-    },
-  });
-}
-
 export function useTestConnectivity() {
   return useMutation({
     mutationFn: (data: ConnectivityTestRequest) => providerApi.testConnectivity(data),
