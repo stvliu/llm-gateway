@@ -17,8 +17,7 @@ import { useState, useEffect } from 'react';
 import { Select, Button, App, Typography, theme } from 'antd';
 import { CopyOutlined, PlusOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useAuthStore } from '@/stores/authStore';
-import { useUserApiKeys } from '@/services/query/useUserApiKeys';
+import { useMyUserApiKeys } from '@/services/query/useUserApiKeys';
 import { userApiKeyApi } from '@/services/api/userApiKey';
 import { maskApiKey } from '@/utils/maskApiKey';
 
@@ -36,9 +35,7 @@ export default function ApiKeySelector({ currentKey, currentKeyId, onKeyChange, 
   const { t } = useTranslation('quickstart');
   const { token } = theme.useToken();
   const { message } = App.useApp();
-  const currentUser = useAuthStore((s) => s.user);
-  const userId = currentUser?.id ?? 0;
-  const { data: keys, isLoading } = useUserApiKeys(userId);
+  const { data: keys, isLoading } = useMyUserApiKeys();
   const [loadingKeyId, setLoadingKeyId] = useState<number | null>(null);
 
   // 自动选择第一个可用 Key

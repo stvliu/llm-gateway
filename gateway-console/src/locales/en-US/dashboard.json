@@ -6,7 +6,8 @@
     "modelCount": "Models",
     "userCount": "Users",
     "todayRequests": "Today's Requests",
-    "tokenUsage": "Token Usage"
+    "tokenUsage": "Token Usage",
+    "applications": "Available Applications"
   },
   "trend": {
     "title": "Request Trend (7 days)"

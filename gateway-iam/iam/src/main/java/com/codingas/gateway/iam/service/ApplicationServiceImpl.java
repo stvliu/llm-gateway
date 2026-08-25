@@ -15,9 +15,12 @@
  */
 package com.codingas.gateway.iam.service;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import com.codingas.gateway.iam.dto.ApplicationRequest;
 import com.codingas.gateway.iam.dto.ApplicationResponse;
+import com.codingas.gateway.iam.auth.RolePermissions;
+import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationChannel;
@@ -141,10 +144,19 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     public List<ApplicationChannelItem> listChannels(Long id) {
+        // 渠道绑定属管理数据：拦截器按 GET /applications/** 放行 USER 后，这里兜底仅管理员可查
+        assertAdmin();
         // 经 gateway 取含 priority 的关联列表，转换为响应 DTO（priority 原样透传，null 表示未配置）
         return applicationChannelGateway.findByApplicationId(id).stream()
                 .map(rel -> new ApplicationChannelItem(rel.getChannelId(), rel.getPriority()))
                 .toList();
+    }
+
+    /** 管理端操作校验：仅管理员可执行 */
+    private void assertAdmin() {
+        if (!StpUtil.hasRole(RolePermissions.ROLE_ADMIN)) {
+            throw new ForbiddenException("仅管理员可执行该操作");
+        }
     }
 
     @Override

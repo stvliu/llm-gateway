@@ -27,6 +27,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.user.UserState;
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
+import com.codingas.gateway.iam.auth.RolePermissions;
 import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.iam.user.UserGateway;
 import com.codingas.gateway.iam.encryption.PasswordEncoder;
@@ -250,16 +251,17 @@ public class UserServiceImpl implements UserService {
         user.setLastLoginAt(Instant.now());
         userGateway.save(user);
 
-        // 使用 SaToken 登录
+        // 使用 SaToken 登录（授权基于 USER/ADMIN 角色，由 PermissionInterceptor 校验）
         StpUtil.login(user.getId());
         String token = StpUtil.getTokenValue();
 
-        // 构建响应
+        // 构建响应（携带角色推导的权限码，前端 UI 直接消费、不自行维护映射）
         LoginResponse.UserResponse userResponse = new LoginResponse.UserResponse(
             user.getId(),
             user.getUsername(),
             user.getEmail(),
-            user.getRole()
+            user.getRole(),
+            RolePermissions.of(user.getRole())
         );
 
         return new LoginResponse(userResponse, token);

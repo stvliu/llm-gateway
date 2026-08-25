@@ -15,6 +15,8 @@
  */
 package com.codingas.gateway.iam.dto;
 
+import java.util.List;
+
 /**
  * 登录响应 DTO
  */
@@ -26,6 +28,7 @@ public record LoginResponse(
         Long id,
         String username,
         String email,
-        String role
+        String role,
+        List<String> permissions
     ) {}
 }

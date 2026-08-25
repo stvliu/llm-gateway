@@ -15,9 +15,11 @@
  */
 package com.codingas.gateway.iam.service;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import com.codingas.gateway.iam.dto.ApplicationRequest;
 import com.codingas.gateway.iam.dto.ApplicationResponse;
+import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationChannel;
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -43,6 +46,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.*;
 
 /**
@@ -335,7 +339,7 @@ class ApplicationServiceImplTest {
     class ChannelAuthorizationTests {
 
         @Test
-        @DisplayName("listChannels 返回应用授权的渠道及其 priority")
+        @DisplayName("管理员 listChannels 返回应用授权的渠道及其 priority")
         void listChannels_returnsChannelsWithPriority() {
             // 模拟 gateway 返回含 priority 的关联列表
             ApplicationChannel rel1 = new ApplicationChannel(1L, 10L, 1);
@@ -343,20 +347,36 @@ class ApplicationServiceImplTest {
             when(applicationChannelGateway.findByApplicationId(1L))
                     .thenReturn(List.of(rel1, rel2));
 
-            List<ApplicationChannelItem> result = applicationService.listChannels(1L);
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(true);
 
-            assertThat(result).hasSize(2);
-            assertThat(result).extracting(ApplicationChannelItem::channelId)
-                    .containsExactlyInAnyOrder(10L, 20L);
-            // priority 原样透传（null 表示未配置）
-            assertThat(result).filteredOn(i -> i.channelId().equals(10L))
-                    .singleElement()
-                    .extracting(ApplicationChannelItem::priority)
-                    .isEqualTo(1);
-            assertThat(result).filteredOn(i -> i.channelId().equals(20L))
-                    .singleElement()
-                    .extracting(ApplicationChannelItem::priority)
-                    .isNull();
+                List<ApplicationChannelItem> result = applicationService.listChannels(1L);
+
+                assertThat(result).hasSize(2);
+                assertThat(result).extracting(ApplicationChannelItem::channelId)
+                        .containsExactlyInAnyOrder(10L, 20L);
+                // priority 原样透传（null 表示未配置）
+                assertThat(result).filteredOn(i -> i.channelId().equals(10L))
+                        .singleElement()
+                        .extracting(ApplicationChannelItem::priority)
+                        .isEqualTo(1);
+                assertThat(result).filteredOn(i -> i.channelId().equals(20L))
+                        .singleElement()
+                        .extracting(ApplicationChannelItem::priority)
+                        .isNull();
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户 listChannels — 抛 ForbiddenException（渠道绑定属管理数据）")
+        void listChannels_userRole_forbidden() {
+            try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
+                stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
+
+                assertThatThrownBy(() -> applicationService.listChannels(1L))
+                        .isInstanceOf(ForbiddenException.class);
+                verify(applicationChannelGateway, never()).findByApplicationId(any());
+            }
         }
 
         @Test

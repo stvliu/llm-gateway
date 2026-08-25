@@ -15,10 +15,16 @@
  */
 import { P, type Permission } from './permissions';
 
-/** 后端 role 单值 → 前端 permissions 数组 */
+/**
+ * 前端角色 → UI 权限映射（基于 USER/ADMIN 两角色授权）
+ *
+ * <p>与后端 PermissionInterceptor 的 USER 白名单语义一致：
+ * 普通用户可用 = 仪表盘 + 模型只读 + 体验中心 + 自己的 API Key + 应用只读。
+ * 后端按同一 role 强制校验兜底，前端映射仅控制 UI 显隐。</p>
+ */
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   ADMIN: Object.values(P),
-  USER: [P.DASHBOARD, P.MODEL_READ, P.USER_READ, P.SETTINGS_READ],
+  USER: [P.DASHBOARD, P.MODEL_READ, P.QUICKSTART, P.KEY_READ, P.KEY_WRITE, P.APPLICATION_READ],
 };
 
 /** 根据角色获取权限集合 */

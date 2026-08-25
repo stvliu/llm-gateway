@@ -71,5 +71,6 @@
     "newPassword": "New Password",
     "confirmPassword": "Confirm New Password",
     "passwordMismatch": "Passwords do not match"
-  }
+  },
+  "forbidden": "No permission"
 }

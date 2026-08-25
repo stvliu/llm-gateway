@@ -429,7 +429,7 @@ class UserServiceImplTest {
     class LoginTests {
 
         @Test
-        @DisplayName("登录成功 — 返回 token 并更新最后登录时间")
+        @DisplayName("登录成功 — 返回 token、注入权限并更新最后登录时间")
         void login_success_returnsToken() {
             User user = createTestUser();
             user.setPasswordHash("hash");
@@ -444,6 +444,10 @@ class UserServiceImplTest {
 
                 assertThat(response.token()).isEqualTo("token-123");
                 assertThat(response.user().username()).isEqualTo("testuser");
+                assertThat(response.user().role()).isEqualTo("USER");
+                // 登录响应携带角色推导的权限码（前端 UI 直接消费）
+                assertThat(response.user().permissions()).contains("quickstart:access");
+                assertThat(response.user().permissions()).doesNotContain("user:read");
                 stp.verify(() -> StpUtil.login(1L));
                 assertThat(user.getLastLoginAt()).isNotNull();
             }

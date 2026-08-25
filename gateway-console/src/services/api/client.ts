@@ -194,9 +194,32 @@ instance.interceptors.response.use(
       window.location.href = target;
     }
 
+    // 处理 403 无权限（已登录但权限不足），交由全局处理器提示
+    if (axiosError.response?.status === 403) {
+      notifyForbidden();
+    }
+
     return Promise.reject(error);
   }
 );
+
+/**
+ * 403 全局通知处理器
+ *
+ * <p>由 App 组件注册（携带 Ant App context 的 message），
+ * 避免 axios 拦截器层直接依赖 UI。</p>
+ */
+let forbiddenHandler: (() => void) | null = null;
+
+/** 注册/注销 403 全局通知处理器 */
+export function setForbiddenHandler(handler: (() => void) | null) {
+  forbiddenHandler = handler;
+}
+
+/** 触发 403 全局通知 */
+export function notifyForbidden() {
+  forbiddenHandler?.();
+}
 
 export const api = {
   get: <T>(url: string, config?: AxiosRequestConfig) =>

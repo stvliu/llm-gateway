@@ -26,7 +26,11 @@ import type {
  * 用户 API Key 管理接口（用户维度）
  */
 export const userApiKeyApi = {
-  /** 获取指定用户的 API Key 列表 */
+  /** 获取当前登录用户的 API Key 列表（普通用户/体验中心用，登录即可） */
+  listMy: () =>
+    api.get<UserApiKey[]>('/me/api-keys'),
+
+  /** 获取指定用户的 API Key 列表（管理员用） */
   listByUser: (userId: number) =>
     api.get<UserApiKey[]>(`/users/${userId}/api-keys`),
 

@@ -41,7 +41,10 @@ export const useAuthStore = create<AuthState>()(
           user: loginUser
             ? {
                 ...loginUser,
-                permissions: getPermissionsByRole(loginUser.role),
+                // 后端推导的 permissions 为权威；旧数据/离线兜底按 role 推导
+                permissions: loginUser.permissions?.length
+                  ? (loginUser.permissions as Permission[])
+                  : getPermissionsByRole(loginUser.role),
               }
             : null,
           isAuthenticated: !!loginUser,

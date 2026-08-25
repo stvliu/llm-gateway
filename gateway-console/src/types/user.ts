@@ -60,21 +60,23 @@ export interface LoginResponseData {
   token?: string;
 }
 
-/** 登录返回的用户信息（后端原始结构，不含 permissions） */
+/** 登录返回的用户信息（permissions 由后端按 role 推导，前端直接消费） */
 export interface LoginUserResponse {
   id: number;
   username: string;
   email: string;
   role: UserRole;
+  /** 后端推导的权限码（单一事实源，前端不自行维护映射） */
+  permissions: string[];
 }
 
-/** 当前用户信息（前端使用，含推导的 permissions） */
+/** 当前用户信息（前端使用） */
 export interface CurrentUser {
   id: number;
   username: string;
   email: string;
   role: UserRole;
-  /** 前端根据 role 推导，非后端返回 */
+  /** 来自后端登录响应的权限码，用于 UI 显隐 */
   permissions: Permission[];
 }
 

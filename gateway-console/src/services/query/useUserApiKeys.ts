@@ -20,11 +20,20 @@ import type { CreateUserApiKeyRequest } from '@/types/userApiKey';
 export const userApiKeyKeys = {
   all: ['userApiKeys'] as const,
   list: () => [...userApiKeyKeys.all, 'list'] as const,
+  mine: () => [...userApiKeyKeys.all, 'mine'] as const,
   byUser: (userId: number) => [...userApiKeyKeys.all, 'user', userId] as const,
   detail: (id: number) => [...userApiKeyKeys.all, 'detail', id] as const,
 };
 
-/** 获取指定用户的 API Key 列表 */
+/** 获取当前登录用户的 API Key 列表（体验中心/普通用户用） */
+export function useMyUserApiKeys() {
+  return useQuery({
+    queryKey: userApiKeyKeys.mine(),
+    queryFn: () => userApiKeyApi.listMy(),
+  });
+}
+
+/** 获取指定用户的 API Key 列表（管理员管理用） */
 export function useUserApiKeys(userId: number) {
   return useQuery({
     queryKey: userApiKeyKeys.byUser(userId),

@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.iam.service;
 
+import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationGateway;
@@ -22,6 +23,7 @@ import com.codingas.gateway.iam.apikey.UserApiKeyGenerator;
 import com.codingas.gateway.iam.apikey.GeneratedApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
+import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -29,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -42,6 +45,9 @@ import static org.mockito.Mockito.*;
 
 /**
  * UserApiKeyServiceImpl 单元测试
+ *
+ * <p>owner 校验：默认用例为管理员上下文（hasRole(ADMIN)=true）；
+ * 普通用户上下文（hasRole=false + getLoginIdAsLong）用于归属校验用例。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserApiKeyServiceImpl 测试")
@@ -60,15 +66,31 @@ class UserApiKeyServiceImplTest {
     private UserApiKeyServiceImpl service;
 
     private static final Long USER_ID = 50L;
+    private static final Long OTHER_USER_ID = 999L;
     private static final Long APPLICATION_ID = 7L;
     private static final Long API_KEY_ID = 100L;
+
+    /** 管理员上下文（对 Key 操作无归属限制） */
+    private MockedStatic<StpUtil> stubAdmin() {
+        MockedStatic<StpUtil> stp = mockStatic(StpUtil.class);
+        stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(true);
+        return stp;
+    }
+
+    /** 普通用户上下文（登录用户 = userId） */
+    private MockedStatic<StpUtil> stubUser(Long userId) {
+        MockedStatic<StpUtil> stp = mockStatic(StpUtil.class);
+        stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
+        stp.when(() -> StpUtil.getLoginIdAsLong()).thenReturn(userId);
+        return stp;
+    }
 
     @Nested
     @DisplayName("create 方法测试")
     class CreateTests {
 
         @Test
-        @DisplayName("创建密钥成功 — applicationId 落库")
+        @DisplayName("管理员创建密钥成功 — applicationId 落库")
         void create_success_setsApplicationId() {
             GeneratedApiKey generated = new GeneratedApiKey("sk-abc1xxxxx", "sk-abc1");
             when(userApiKeyGenerator.generate()).thenReturn(generated);
@@ -80,18 +102,44 @@ class UserApiKeyServiceImplTest {
             saved.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenReturn(saved);
 
-            UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, APPLICATION_ID, "test-key"
-            );
-            UserApiKeyCreateResponse response = service.create(request);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                        USER_ID, APPLICATION_ID, "test-key"
+                );
+                UserApiKeyCreateResponse response = service.create(request);
 
-            assertThat(response).isNotNull();
-            assertThat(response.id()).isEqualTo(API_KEY_ID);
-            assertThat(response.apiKeyPlain()).startsWith("sk-");
-            verify(userApiKeyGateway).save(argThat(key ->
-                    key.getUserId().equals(USER_ID)
-                            && key.getApplicationId().equals(APPLICATION_ID)
-            ));
+                assertThat(response).isNotNull();
+                assertThat(response.id()).isEqualTo(API_KEY_ID);
+                assertThat(response.apiKeyPlain()).startsWith("sk-");
+                verify(userApiKeyGateway).save(argThat(key ->
+                        key.getUserId().equals(USER_ID)
+                                && key.getApplicationId().equals(APPLICATION_ID)
+                ));
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户创建密钥 — 强制归属当前用户（忽略请求体 userId）")
+        void create_userRole_forcesOwnUserId() {
+            GeneratedApiKey generated = new GeneratedApiKey("sk-abc1xxxxx", "sk-abc1");
+            when(userApiKeyGenerator.generate()).thenReturn(generated);
+            Application app = new Application();
+            app.setId(APPLICATION_ID);
+            when(applicationGateway.findById(APPLICATION_ID)).thenReturn(app);
+            when(userApiKeyGateway.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                // 请求体尝试指定他人 userId，必须被强制覆盖为当前用户
+                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                        OTHER_USER_ID, APPLICATION_ID, "test-key"
+                );
+                UserApiKeyCreateResponse response = service.create(request);
+
+                assertThat(response).isNotNull();
+                verify(userApiKeyGateway).save(argThat(key ->
+                        key.getUserId().equals(USER_ID)
+                ));
+            }
         }
 
         @Test
@@ -99,13 +147,15 @@ class UserApiKeyServiceImplTest {
         void create_applicationNotFound_throws() {
             when(applicationGateway.findById(APPLICATION_ID)).thenReturn(null);
 
-            UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, APPLICATION_ID, "test-key"
-            );
-            assertThatThrownBy(() -> service.create(request))
-                    .isInstanceOf(GatewayRequestException.class)
-                    .hasMessageContaining("应用不存在");
-            verify(userApiKeyGateway, never()).save(any());
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                        USER_ID, APPLICATION_ID, "test-key"
+                );
+                assertThatThrownBy(() -> service.create(request))
+                        .isInstanceOf(GatewayRequestException.class)
+                        .hasMessageContaining("应用不存在");
+                verify(userApiKeyGateway, never()).save(any());
+            }
         }
 
         @Test
@@ -117,12 +167,14 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyGenerator.generate())
                     .thenThrow(new IllegalStateException("无法生成唯一的 API Key，请重试"));
 
-            UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
-                    USER_ID, APPLICATION_ID, "test-key"
-            );
-            assertThatThrownBy(() -> service.create(request))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("无法生成唯一的 API Key");
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                        USER_ID, APPLICATION_ID, "test-key"
+                );
+                assertThatThrownBy(() -> service.create(request))
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("无法生成唯一的 API Key");
+            }
         }
     }
 
@@ -131,7 +183,7 @@ class UserApiKeyServiceImplTest {
     class UpdateTests {
 
         @Test
-        @DisplayName("补绑 applicationId — 校验存在并落库")
+        @DisplayName("管理员补绑 applicationId — 校验存在并落库")
         void update_rebindApplicationId() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
@@ -140,40 +192,60 @@ class UserApiKeyServiceImplTest {
             when(applicationGateway.findById(99L)).thenReturn(app);
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
-            UserApiKeyResponse response = service.update(API_KEY_ID, request);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
+                UserApiKeyResponse response = service.update(API_KEY_ID, request);
 
-            assertThat(response).isNotNull();
-            assertThat(response.applicationId()).isEqualTo(99L);
-            verify(userApiKeyGateway).save(argThat(key -> key.getApplicationId().equals(99L)));
+                assertThat(response).isNotNull();
+                assertThat(response.applicationId()).isEqualTo(99L);
+                verify(userApiKeyGateway).save(argThat(key -> key.getApplicationId().equals(99L)));
+            }
         }
 
         @Test
-        @DisplayName("补绑 applicationId 引用不存在 — 抛 GatewayRequestException")
+        @DisplayName("管理员补绑 applicationId 引用不存在 — 抛 GatewayRequestException")
         void update_applicationNotFound_throws() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
             when(applicationGateway.findById(99L)).thenReturn(null);
 
-            UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
-            assertThatThrownBy(() -> service.update(API_KEY_ID, request))
-                    .isInstanceOf(GatewayRequestException.class)
-                    .hasMessageContaining("应用不存在");
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
+                assertThatThrownBy(() -> service.update(API_KEY_ID, request))
+                        .isInstanceOf(GatewayRequestException.class)
+                        .hasMessageContaining("应用不存在");
+            }
         }
 
         @Test
-        @DisplayName("仅更新名称 — applicationId 不变")
+        @DisplayName("管理员仅更新名称 — applicationId 不变")
         void update_nameOnly() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
             when(userApiKeyGateway.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "new-name");
-            UserApiKeyResponse response = service.update(API_KEY_ID, request);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "new-name");
+                UserApiKeyResponse response = service.update(API_KEY_ID, request);
 
-            assertThat(response.name()).isEqualTo("new-name");
-            assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response.name()).isEqualTo("new-name");
+                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户更新他人 Key — 抛 ForbiddenException")
+        void update_otherUserKey_forbidden() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setUserId(OTHER_USER_ID);
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.update(API_KEY_ID, new UserApiKeyUpdateRequest(null, "x")))
+                        .isInstanceOf(ForbiddenException.class);
+                verify(userApiKeyGateway, never()).save(any());
+            }
         }
 
         @Test
@@ -181,9 +253,11 @@ class UserApiKeyServiceImplTest {
         void update_notFound() {
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
-            UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "updated");
-            assertThatThrownBy(() -> service.update(API_KEY_ID, request))
-                    .isInstanceOf(IllegalArgumentException.class);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "updated");
+                assertThatThrownBy(() -> service.update(API_KEY_ID, request))
+                        .isInstanceOf(IllegalArgumentException.class);
+            }
         }
     }
 
@@ -192,16 +266,28 @@ class UserApiKeyServiceImplTest {
     class FindByApplicationIdTests {
 
         @Test
-        @DisplayName("查询应用下的所有 Key")
+        @DisplayName("管理员查询应用下的所有 Key")
         void findByApplicationId_success() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findByApplicationId(APPLICATION_ID)).thenReturn(List.of(apiKey));
 
-            List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
 
-            assertThat(responses).hasSize(1);
-            assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses).hasSize(1);
+                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查询应用 Key — 抛 ForbiddenException")
+        void findByApplicationId_userRole_forbidden() {
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.findByApplicationId(APPLICATION_ID))
+                        .isInstanceOf(ForbiddenException.class);
+                verify(userApiKeyGateway, never()).findByApplicationId(any());
+            }
         }
 
         @Test
@@ -209,9 +295,11 @@ class UserApiKeyServiceImplTest {
         void findByApplicationId_empty() {
             when(userApiKeyGateway.findByApplicationId(APPLICATION_ID)).thenReturn(List.of());
 
-            List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
 
-            assertThat(responses).isEmpty();
+                assertThat(responses).isEmpty();
+            }
         }
     }
 
@@ -226,9 +314,11 @@ class UserApiKeyServiceImplTest {
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
-            UserApiKeyResponse response = service.getById(API_KEY_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyResponse response = service.getById(API_KEY_ID);
 
-            assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+            }
         }
     }
 
@@ -237,16 +327,28 @@ class UserApiKeyServiceImplTest {
     class FindAllNonDeletedTests {
 
         @Test
-        @DisplayName("返回全部未删除 Key")
+        @DisplayName("管理员返回全部未删除 Key")
         void findAllNonDeleted_success() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findAllNonDeleted()).thenReturn(List.of(apiKey));
 
-            List<UserApiKeyResponse> responses = service.findAllNonDeleted();
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                List<UserApiKeyResponse> responses = service.findAllNonDeleted();
 
-            assertThat(responses).hasSize(1);
-            assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses).hasSize(1);
+                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查询全部 Key — 抛 ForbiddenException")
+        void findAllNonDeleted_userRole_forbidden() {
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.findAllNonDeleted())
+                        .isInstanceOf(ForbiddenException.class);
+                verify(userApiKeyGateway, never()).findAllNonDeleted();
+            }
         }
 
         @Test
@@ -254,7 +356,9 @@ class UserApiKeyServiceImplTest {
         void findAllNonDeleted_empty() {
             when(userApiKeyGateway.findAllNonDeleted()).thenReturn(List.of());
 
-            assertThat(service.findAllNonDeleted()).isEmpty();
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                assertThat(service.findAllNonDeleted()).isEmpty();
+            }
         }
     }
 
@@ -263,16 +367,42 @@ class UserApiKeyServiceImplTest {
     class FindByUserIdTests {
 
         @Test
-        @DisplayName("返回用户的 Key 列表含 applicationId（回归保护）")
+        @DisplayName("管理员返回用户的 Key 列表含 applicationId（回归保护）")
         void findByUserId_success() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
 
-            List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
 
-            assertThat(responses).hasSize(1);
-            assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses).hasSize(1);
+                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户按 userId 查询 — 抛 ForbiddenException")
+        void findByUserId_userRole_forbidden() {
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.findByUserId(OTHER_USER_ID))
+                        .isInstanceOf(ForbiddenException.class);
+                verify(userApiKeyGateway, never()).findByUserId(any());
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查询自己的 Key 列表 — 允许（MeController 链路）")
+        void findByUserId_ownKeys_ok() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
+
+                assertThat(responses).hasSize(1);
+                assertThat(responses.get(0).userId()).isEqualTo(USER_ID);
+            }
         }
     }
 
@@ -281,31 +411,89 @@ class UserApiKeyServiceImplTest {
     class GetDetailByIdTests {
 
         @Test
-        @DisplayName("详情响应含 applicationId（覆盖 spec scenario 4.2）")
+        @DisplayName("管理员详情响应含 applicationId（覆盖 spec scenario 4.2）")
         void getDetailById_responseContainsApplicationId() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setApplicationId(APPLICATION_ID);
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
-            UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
 
-            assertThat(response).isNotNull();
-            assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response).isNotNull();
+                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查看他人 Key 详情 — 抛 ForbiddenException")
+        void getDetailById_otherUserKey_forbidden() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setUserId(OTHER_USER_ID);
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.getDetailById(API_KEY_ID))
+                        .isInstanceOf(ForbiddenException.class);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查看自己的 Key 详情 — 允许（Quickstart 链路）")
+        void getDetailById_ownKey_ok() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
+
+                assertThat(response).isNotNull();
+                assertThat(response.userId()).isEqualTo(USER_ID);
+            }
         }
     }
 
     @Nested
-    @DisplayName("getById notFound 测试")
-    class GetByIdNotFoundTests {
+    @DisplayName("getById 归属与 notFound 测试")
+    class GetByIdTests {
+
+        @Test
+        @DisplayName("普通用户查看自己的 Key — 允许")
+        void getById_ownKey_ok() {
+            UserApiKey apiKey = createSampleApiKey();
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                UserApiKeyResponse response = service.getById(API_KEY_ID);
+
+                assertThat(response).isNotNull();
+                assertThat(response.userId()).isEqualTo(USER_ID);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户查看他人 Key — 抛 ForbiddenException")
+        void getById_otherUserKey_forbidden() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setUserId(OTHER_USER_ID);
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.getById(API_KEY_ID))
+                        .isInstanceOf(ForbiddenException.class);
+            }
+        }
 
         @Test
         @DisplayName("密钥不存在 — 抛 IllegalArgumentException（回归保护）")
         void getById_notFound() {
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.getById(API_KEY_ID))
-                    .isInstanceOf(IllegalArgumentException.class)
-                    .hasMessageContaining("API Key 不存在");
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                assertThatThrownBy(() -> service.getById(API_KEY_ID))
+                        .isInstanceOf(IllegalArgumentException.class)
+                        .hasMessageContaining("API Key 不存在");
+            }
         }
     }
 
@@ -314,14 +502,30 @@ class UserApiKeyServiceImplTest {
     class DeleteTests {
 
         @Test
-        @DisplayName("删除密钥 — 调用 gateway.delete（回归保护）")
+        @DisplayName("管理员删除密钥 — 调用 gateway.delete（回归保护）")
         void delete_success() {
             UserApiKey apiKey = createSampleApiKey();
             when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
-            service.delete(API_KEY_ID);
+            try (MockedStatic<StpUtil> stp = stubAdmin()) {
+                service.delete(API_KEY_ID);
 
-            verify(userApiKeyGateway).delete(apiKey);
+                verify(userApiKeyGateway).delete(apiKey);
+            }
+        }
+
+        @Test
+        @DisplayName("普通用户删除他人 Key — 抛 ForbiddenException")
+        void delete_otherUserKey_forbidden() {
+            UserApiKey apiKey = createSampleApiKey();
+            apiKey.setUserId(OTHER_USER_ID);
+            when(userApiKeyGateway.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
+
+            try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
+                assertThatThrownBy(() -> service.delete(API_KEY_ID))
+                        .isInstanceOf(ForbiddenException.class);
+                verify(userApiKeyGateway, never()).delete(any());
+            }
         }
     }
 

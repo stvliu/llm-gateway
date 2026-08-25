@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 import { Row, Col, Card, Statistic } from 'antd';
-import {
-  AppstoreOutlined,
-  CloudServerOutlined,
-} from '@ant-design/icons';
+import { AppstoreOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-import { useProviders } from '@/services/query/useProviders';
 import { useApplications } from '@/services/query/useApplications';
 
-/** 用户仪表盘 */
+/**
+ * 用户仪表盘
+ *
+ * <p>普通用户无供应商读权限，仅展示可用应用数量。</p>
+ */
 export default function UserView() {
   const { t } = useTranslation('dashboard');
-  const { data: providersData } = useProviders();
   const { data: applications } = useApplications();
 
   return (
@@ -33,16 +32,7 @@ export default function UserView() {
       <Col xs={24} sm={12}>
         <Card>
           <Statistic
-            title={t('stats.providers', { defaultValue: '供应商' })}
-            value={providersData?.pagination?.total ?? 0}
-            prefix={<CloudServerOutlined />}
-          />
-        </Card>
-      </Col>
-      <Col xs={24} sm={12}>
-        <Card>
-          <Statistic
-            title={t('stats.applications', { defaultValue: '我的应用' })}
+            title={t('stats.applications', { defaultValue: '可用应用' })}
             value={applications?.length ?? 0}
             prefix={<AppstoreOutlined />}
           />

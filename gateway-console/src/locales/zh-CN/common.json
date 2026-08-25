@@ -71,5 +71,6 @@
     "newPassword": "新密码",
     "confirmPassword": "确认新密码",
     "passwordMismatch": "两次输入的密码不一致"
-  }
+  },
+  "forbidden": "无访问权限"
 }

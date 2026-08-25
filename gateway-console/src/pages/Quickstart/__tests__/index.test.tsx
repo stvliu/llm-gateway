@@ -43,7 +43,7 @@ vi.mock('@/services/query/useModels', () => ({
 
 // ApiKeySelector 的 Key 列表（无 Key 时展示阻塞态，不触发详情加载）
 vi.mock('@/services/query/useUserApiKeys', () => ({
-  useUserApiKeys: () => ({ data: [], isLoading: false }),
+  useMyUserApiKeys: () => ({ data: [], isLoading: false }),
   useCreateUserApiKey: () => ({ mutateAsync: vi.fn() }),
 }));
 

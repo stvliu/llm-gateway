@@ -15,12 +15,15 @@
  */
 import { RouterProvider } from 'react-router-dom';
 import { App as AntApp } from 'antd';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { router } from '@/router';
 import {
   useServiceUnavailable,
   DevServiceUnavailableModal,
   ProductionServiceUnavailablePage,
 } from '@/components/common/ServiceUnavailable';
+import { setForbiddenHandler } from '@/services/api/client';
 import '@/i18n';
 
 // 环境判断
@@ -50,6 +53,26 @@ function ServiceUnavailableHandler() {
 }
 
 /**
+ * 403 无权限全局通知组件
+ *
+ * <p>注册 axios 拦截器的 403 处理器（携带 Ant App context 的 message），
+ * 权限不足时统一提示，而不是静默失败。</p>
+ */
+function ForbiddenNotifier() {
+  const { message } = AntApp.useApp();
+  const { t } = useTranslation('common');
+
+  useEffect(() => {
+    setForbiddenHandler(() => {
+      message.error(t('forbidden'));
+    });
+    return () => setForbiddenHandler(null);
+  }, [message, t]);
+
+  return null;
+}
+
+/**
  * 应用根组件
  * 配置路由提供者和国际化
  * 使用 Ant Design 的 App 组件包裹以支持 useApp Hook
@@ -57,6 +80,7 @@ function ServiceUnavailableHandler() {
 function App() {
   return (
     <AntApp>
+      <ForbiddenNotifier />
       <RouterProvider router={router} />
       <ServiceUnavailableHandler />
     </AntApp>
