@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.iamdata.gateway;
 
-import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
 import com.codingas.gateway.iamdata.dataobject.UserApiKeyDo;
@@ -40,7 +40,7 @@ import java.util.Optional;
 public class UserApiKeyGatewayImpl implements UserApiKeyGateway {
 
     private final UserApiKeyRepository repository;
-    private final ApiKeyEncryptionDomainService encryptionService;
+    private final ApiKeyEncryptionService encryptionService;
 
     @Override
     public Optional<UserApiKey> findById(Long id) {

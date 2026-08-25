@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.auth.AuthenticationDomainService;
+import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,7 +35,7 @@ import static org.mockito.Mockito.*;
 class AuthServiceTest {
 
     @Mock
-    private AuthenticationDomainService authenticationService;
+    private AuthenticationService authenticationService;
 
     @InjectMocks
     private AuthServiceImpl authService;

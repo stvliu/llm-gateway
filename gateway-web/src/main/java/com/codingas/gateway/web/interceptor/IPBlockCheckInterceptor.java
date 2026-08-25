@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.interceptor;
 
-import com.codingas.gateway.security.threat.IpBlocklistDomainService;
+import com.codingas.gateway.security.threat.IpBlocklistService;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class IPBlockCheckInterceptor extends AbstractGatewayInterceptor {
 
-    private final IpBlocklistDomainService ipBlocklistService;
+    private final IpBlocklistService ipBlocklistService;
 
     @Override
     public String name() {

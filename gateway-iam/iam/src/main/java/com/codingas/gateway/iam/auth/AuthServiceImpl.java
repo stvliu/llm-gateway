@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.auth.AuthenticationDomainService;
+import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private final AuthenticationDomainService authenticationService;
+    private final AuthenticationService authenticationService;
 
     @Override
     public Identity authenticate(String apiKey, String clientIp) {

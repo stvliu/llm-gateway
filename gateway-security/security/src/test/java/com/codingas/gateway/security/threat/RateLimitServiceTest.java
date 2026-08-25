@@ -30,11 +30,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
- * RateLimitDomainService 单元测试
+ * RateLimitService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RateLimitDomainService")
-class RateLimitDomainServiceTest {
+@DisplayName("RateLimitService")
+class RateLimitServiceTest {
 
     @Mock
     private TokenBucketRateLimiter rateLimiter;
@@ -49,7 +49,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("isAllowed 应使用配置的 bucketSize 和 refillRate")
     void isAllowed_usesConfiguredValues() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
 
         boolean result = service.isAllowed(1L);
@@ -60,7 +60,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("isAllowed apiKeyId 为 null 应返回 true")
     void isAllowed_nullApiKey_returnsTrue() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
 
         boolean result = service.isAllowed(null);
 
@@ -70,7 +70,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 超过阈值应返回 true")
     void shouldFailClose_exceedsThreshold_returnsTrue() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
 
         boolean result = service.shouldFailClose(1001);
 
@@ -80,7 +80,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("shouldFailClose 当前 QPS 未超过阈值应返回 false")
     void shouldFailClose_belowThreshold_returnsFalse() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
 
         boolean result = service.shouldFailClose(999);
 
@@ -90,7 +90,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("isAllowed 限流器拒绝时应返回 false")
     void isAllowed_rateLimiterRejects_returnsFalse() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(false);
 
         boolean result = service.isAllowed(1L);
@@ -101,7 +101,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("getStatus 有 apiKeyId 时应委托限流器查询")
     void getStatus_withApiKey_delegatesToRateLimiter() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
         TokenBucketStatus expected = new TokenBucketStatus(50, 100, 10);
         when(rateLimiter.getStatus("api_key:1", 100, 10)).thenReturn(expected);
 
@@ -115,7 +115,7 @@ class RateLimitDomainServiceTest {
     @Test
     @DisplayName("getStatus apiKeyId 为 null 应返回满桶状态")
     void getStatus_nullApiKey_returnsFullBucket() {
-        RateLimitDomainService service = new RateLimitDomainService(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
 
         TokenBucketStatus result = service.getStatus(null);
 

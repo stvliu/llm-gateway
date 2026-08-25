@@ -29,7 +29,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class RateLimitDomainService {
+public class RateLimitService {
 
     private final TokenBucketRateLimiter rateLimiter;
     private final RateLimitProperties properties;

@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
-import com.codingas.gateway.iam.auth.AuthenticationDomainService;
+import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 class ApiKeyAuthInterceptorTest {
 
     @Mock
-    private AuthenticationDomainService authenticationService;
+    private AuthenticationService authenticationService;
 
     @Mock
     private HttpServletRequest request;

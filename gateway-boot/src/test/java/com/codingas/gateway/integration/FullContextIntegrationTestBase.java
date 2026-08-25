@@ -23,7 +23,7 @@ import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.audit.AuditGateway;
-import com.codingas.gateway.iam.auth.AuthenticationDomainService;
+import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.provider.upstream.Protocol;
@@ -59,7 +59,7 @@ public abstract class FullContextIntegrationTestBase {
     protected ChatDispatchService chatDispatchService;
 
     @MockBean
-    protected AuthenticationDomainService authenticationDomainService;
+    protected AuthenticationService authenticationService;
 
     @MockBean
     protected RoutingResolver routingResolver;
@@ -98,7 +98,7 @@ public abstract class FullContextIntegrationTestBase {
     @BeforeEach
     protected void setupDefaultMocks() {
         // 认证成功：返回一个默认 Identity（含 applicationId 权限锚点）
-        when(authenticationDomainService.authenticateUser(anyString()))
+        when(authenticationService.authenticateUser(anyString()))
                 .thenReturn(Identity.of(1L, "user", 100L, 7L));
 
         // 路由解析：返回一个默认 RoutingContext

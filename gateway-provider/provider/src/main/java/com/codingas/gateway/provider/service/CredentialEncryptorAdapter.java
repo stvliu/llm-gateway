@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.provider.service;
 
-import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
  * CredentialEncryptor 适配实现（组装层桥接）。
  *
  * <p>供给域基础设施通过 {@link CredentialEncryptor} 契约解耦对 IAM 加密服务的依赖；
- * 本类在组装层把该契约桥接到 IAM 域的 {@link ApiKeyEncryptionDomainService}。
+ * 本类在组装层把该契约桥接到 IAM 域的 {@link ApiKeyEncryptionService}。
  * P3 下沉 provider 门面后，gateway-provider 需依赖 gateway-iam（ModelDiscoveryService 查询
  * 应用渠道），为避免模块依赖环（provider→iam→provider），本桥接类由 gateway-iam 迁至
  * boot 组装层（boot 同时依赖 provider 与 iam）。</p>
@@ -32,7 +32,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CredentialEncryptorAdapter implements CredentialEncryptor {
 
-    private final ApiKeyEncryptionDomainService encryptionService;
+    private final ApiKeyEncryptionService encryptionService;
 
     @Override
     public String encrypt(String plainText) {

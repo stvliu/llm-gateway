@@ -32,7 +32,7 @@ import java.security.MessageDigest;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ApiKeyEncryptionDomainService {
+public class ApiKeyEncryptionService {
 
     private final EncryptionService encryptionService;
 

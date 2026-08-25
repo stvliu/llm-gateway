@@ -18,7 +18,7 @@ package com.codingas.gateway.iam.auth;
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
-import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,23 +35,23 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
- * AuthenticationDomainService 单元测试
+ * AuthenticationService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuthenticationDomainService 测试")
-class AuthenticationDomainServiceTest {
+@DisplayName("AuthenticationService 测试")
+class AuthenticationServiceTest {
 
     @Mock
     private UserApiKeyGateway userApiKeyGateway;
 
     @Mock
-    private ApiKeyEncryptionDomainService encryptionService;
+    private ApiKeyEncryptionService encryptionService;
 
-    private AuthenticationDomainService service;
+    private AuthenticationService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthenticationDomainService(userApiKeyGateway, encryptionService);
+        service = new AuthenticationService(userApiKeyGateway, encryptionService);
     }
 
     @Nested

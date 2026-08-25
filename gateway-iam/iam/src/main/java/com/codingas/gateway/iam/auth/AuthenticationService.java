@@ -18,7 +18,7 @@ package com.codingas.gateway.iam.auth;
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
-import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,15 +33,15 @@ import java.util.Optional;
  * <p>不再解密密钥做明文比较，避免密钥在认证流程中暴露。</p>
  */
 @Service
-public class AuthenticationDomainService {
+public class AuthenticationService {
 
-    private static final Logger log = LoggerFactory.getLogger(AuthenticationDomainService.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserApiKeyGateway userApiKeyGateway;
-    private final ApiKeyEncryptionDomainService encryptionService;
+    private final ApiKeyEncryptionService encryptionService;
 
-    public AuthenticationDomainService(UserApiKeyGateway userApiKeyGateway,
-                                       ApiKeyEncryptionDomainService encryptionService) {
+    public AuthenticationService(UserApiKeyGateway userApiKeyGateway,
+                                       ApiKeyEncryptionService encryptionService) {
         this.userApiKeyGateway = userApiKeyGateway;
         this.encryptionService = encryptionService;
     }

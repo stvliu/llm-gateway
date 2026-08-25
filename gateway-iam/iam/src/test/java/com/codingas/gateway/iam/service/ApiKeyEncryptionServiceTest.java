@@ -29,17 +29,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
- * ApiKeyEncryptionDomainService 单元测试
+ * ApiKeyEncryptionService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ApiKeyEncryptionDomainService 测试")
-class ApiKeyEncryptionDomainServiceTest {
+@DisplayName("ApiKeyEncryptionService 测试")
+class ApiKeyEncryptionServiceTest {
 
     @Mock
     private EncryptionService encryptionService;
 
     @InjectMocks
-    private ApiKeyEncryptionDomainService service;
+    private ApiKeyEncryptionService service;
 
     @Nested
     @DisplayName("encrypt 方法测试")

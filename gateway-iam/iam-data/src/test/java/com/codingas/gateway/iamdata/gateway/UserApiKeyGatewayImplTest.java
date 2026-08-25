@@ -16,7 +16,7 @@
 package com.codingas.gateway.iamdata.gateway;
 
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService;
+import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
 import com.codingas.gateway.iamdata.dataobject.UserApiKeyDo;
 import com.codingas.gateway.iamdata.repository.UserApiKeyRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -52,7 +52,7 @@ class UserApiKeyGatewayImplTest {
     private UserApiKeyRepository repository;
 
     @Mock
-    private ApiKeyEncryptionDomainService encryptionService;
+    private ApiKeyEncryptionService encryptionService;
 
     @InjectMocks
     private UserApiKeyGatewayImpl gateway;

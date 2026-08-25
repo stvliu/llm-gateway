@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.valueobject.Identity;
-import com.codingas.gateway.security.threat.RateLimitDomainService;
+import com.codingas.gateway.security.threat.RateLimitService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RateLimitInterceptor extends AbstractGatewayInterceptor {
 
-    private final RateLimitDomainService rateLimitDomainService;
+    private final RateLimitService rateLimitService;
 
     @Override
     public String name() {
@@ -57,7 +57,7 @@ public class RateLimitInterceptor extends AbstractGatewayInterceptor {
             return true; // 尚未认证，放行给后续认证拦截器处理
         }
 
-        if (!rateLimitDomainService.isAllowed(identity.credentialId())) {
+        if (!rateLimitService.isAllowed(identity.credentialId())) {
             log.warn("Rate limit exceeded: credentialId={}, path={}", identity.credentialId(), path);
             try {
                 response.setStatus(429);
