@@ -15,9 +15,6 @@
  */
 package com.codingas.gateway.proxy.experience;
 
-import com.codingas.gateway.proxy.dto.ExperienceChatEvent;
-import com.codingas.gateway.proxy.dto.ExperienceChatRequest;
-import com.codingas.gateway.proxy.dto.ExperienceModelResponse;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
@@ -196,7 +193,7 @@ class ModelExperienceServiceTest {
     }
 
     /** 启动 chatStream，返回 emitter 并捕获传入 UpstreamClient 的流式回调 */
-    private SseEmitter startStream(ExperienceChatRequest request,
+    private SseEmitter startStream(ExperienceChatCommand request,
                                    UpstreamClient<ProtocolRequest> client,
                                    ArgumentCaptor<StreamCallback> captor) {
         SseEmitter emitter = service.chatStream(request);
@@ -205,7 +202,7 @@ class ModelExperienceServiceTest {
     }
 
     /** 启动 chatStream，捕获回调并注入 RecordingHandler，返回回调 */
-    private StreamCallback startStreamWithRecorder(ExperienceChatRequest request,
+    private StreamCallback startStreamWithRecorder(ExperienceChatCommand request,
                                                    UpstreamClient<ProtocolRequest> client,
                                                    RecordingHandler recorder) throws Exception {
         ArgumentCaptor<StreamCallback> captor = ArgumentCaptor.forClass(StreamCallback.class);
@@ -214,14 +211,11 @@ class ModelExperienceServiceTest {
         return captor.getValue();
     }
 
-    private ExperienceChatRequest openAiTempRequest() {
-        ExperienceChatRequest request = new ExperienceChatRequest();
-        request.setModel("gpt-4o");
-        request.setProtocolName("openai");
-        request.setMessages(List.of(Map.of("role", "user", "content", "hello")));
-        request.setUseSavedConfig(false);
-        request.setApiKey("sk-test-key");
-        return request;
+    private ExperienceChatCommand openAiTempRequest() {
+        return new ExperienceChatCommand(
+                "gpt-4o", "openai",
+                List.of(Map.of("role", "user", "content", "hello")),
+                null, null, null, null, null, "sk-test-key", null, false);
     }
 
     // ------------------------------------------------------------------
@@ -268,7 +262,7 @@ class ModelExperienceServiceTest {
         }
 
         @Test
-        @DisplayName("多渠道实例按模型去重、过滤不可用模型、displayName 缺省回退")
+        @DisplayName("多渠道实例按模型去重、过滤不可用模型、实体原样返回")
         void modelsFound_filtersAndMaps() {
             Channel ch1 = new Channel();
             ch1.setId(10L);
@@ -298,13 +292,15 @@ class ModelExperienceServiceTest {
             m300.setDeprecatedAt(Instant.now()); // 不可用 → 过滤
             when(modelRepository.findByIds(List.of(100L, 200L))).thenReturn(List.of(m100, m200, m300));
 
-            List<ExperienceModelResponse> result = service.getModelsByProviderId(1L);
+            List<Model> result = service.getModelsByProviderId(1L);
 
             assertThat(result).hasSize(2)
-                    .extracting(ExperienceModelResponse::id)
+                    .extracting(Model::getId)
                     .containsExactly(100L, 200L);
-            assertThat(result.get(0).displayName()).isEqualTo("GPT-4o");
-            assertThat(result.get(1).displayName()).isEqualTo("claude-3-5");
+            assertThat(result.get(0).getDisplayName()).isEqualTo("GPT-4o");
+            // displayName 为 null 的模型实体原样返回（缺省回退由 web 层 DTO 负责）
+            assertThat(result.get(1).getDisplayName()).isNull();
+            assertThat(result.get(1).getModelName()).isEqualTo("claude-3-5");
         }
     }
 
@@ -320,8 +316,10 @@ class ModelExperienceServiceTest {
         @DisplayName("无效请求时发送 ERROR 事件并完成")
         void invalidRequest_sendsErrorAndCompletes() throws Exception {
             // 临时配置缺 apiKey → isValid() 为 false
-            ExperienceChatRequest request = openAiTempRequest();
-            request.setApiKey(null);
+            ExperienceChatCommand request = new ExperienceChatCommand(
+                    "gpt-4o", "openai",
+                    List.of(Map.of("role", "user", "content", "hello")),
+                    null, null, null, null, null, null, null, false);
 
             SseEmitter emitter = service.chatStream(request);
             RecordingHandler recorder = new RecordingHandler();
@@ -477,15 +475,11 @@ class ModelExperienceServiceTest {
     @DisplayName("chatStream 已保存配置")
     class ChatStreamSavedConfigTests {
 
-        private ExperienceChatRequest savedConfigRequest(Long channelId, Long credentialId) {
-            ExperienceChatRequest request = new ExperienceChatRequest();
-            request.setModel("gpt-4o");
-            request.setProtocolName(null); // 缺省回退 openai
-            request.setMessages(List.of(Map.of("role", "user", "content", "hello")));
-            request.setUseSavedConfig(true);
-            request.setChannelId(channelId);
-            request.setCredentialId(credentialId);
-            return request;
+        private ExperienceChatCommand savedConfigRequest(Long channelId, Long credentialId) {
+            return new ExperienceChatCommand(
+                    "gpt-4o", null,
+                    List.of(Map.of("role", "user", "content", "hello")),
+                    null, null, null, channelId, credentialId, null, null, true);
         }
 
         private Channel channel(Long id) {
@@ -611,14 +605,10 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("anthropic 协议构建 AnthropicMessagesRequest，maxTokens 缺省 1024")
         void tempConfig_anthropic_buildsAnthropicRequest() throws Exception {
-            ExperienceChatRequest request = new ExperienceChatRequest();
-            request.setModel("claude-3-5");
-            request.setProtocolName("anthropic");
-            request.setMessages(List.of(Map.of("role", "user", "content", "hello")));
-            request.setUseSavedConfig(false);
-            request.setApiKey("sk-ant-key");
-            request.setMaxTokens(null);
-            request.setTemperature(0.7);
+            ExperienceChatCommand request = new ExperienceChatCommand(
+                    "claude-3-5", "anthropic",
+                    List.of(Map.of("role", "user", "content", "hello")),
+                    0.7, null, null, null, null, "sk-ant-key", null, false);
 
             UpstreamClient<ProtocolRequest> client = org.mockito.Mockito.mock(UpstreamClient.class);
             when(upstreamClientRegistry.getClient(eq("anthropic"), eq(""), eq("sk-ant-key"), eq(60))).thenReturn(client);

@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.proxy.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.proxy.experience.ExperienceChatCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 体验聊天请求
+ * 体验聊天请求 DTO（HTTP 契约）
  *
  * <p>支持两种模式：使用已保存的渠道配置或临时配置。</p>
  */
@@ -60,26 +61,13 @@ public class ExperienceChatRequest {
     private Boolean useSavedConfig;
 
     /**
-     * 判断是否使用已保存的渠道配置
+     * 转换为核心体验聊天用例入参
+     *
+     * @return 体验聊天用例入参
      */
-    public boolean useSavedConfig() {
-        return useSavedConfig != null && useSavedConfig;
-    }
-
-    /**
-     * 验证请求是否有效
-     */
-    public boolean isValid() {
-        if (model == null || model.isBlank()) {
-            return false;
-        }
-        if (messages == null || messages.isEmpty()) {
-            return false;
-        }
-        if (useSavedConfig()) {
-            return channelId != null;
-        } else {
-            return apiKey != null && !apiKey.isBlank();
-        }
+    public ExperienceChatCommand toCommand() {
+        return new ExperienceChatCommand(
+                model, protocolName, messages, temperature, maxTokens, stream,
+                channelId, credentialId, apiKey, baseUrl, getUseSavedConfig());
     }
 }

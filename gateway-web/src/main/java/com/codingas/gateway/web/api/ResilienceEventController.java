@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.resilience.failover.ResilienceEventService;
-import com.codingas.gateway.resilience.dto.FailoverEventResponse;
+import com.codingas.gateway.web.api.dto.FailoverEventResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,7 +65,7 @@ public class ResilienceEventController {
             @RequestParam(required = false) Long applicationId,
             @RequestParam(required = false, defaultValue = "100") Integer limit) {
         int cappedLimit = capLimit(limit, DEFAULT_LIMIT, MAX_LIMIT);
-        return resilienceEventService.findRecent(since, applicationId, cappedLimit);
+        return FailoverEventResponse.from(resilienceEventService.findRecent(since, applicationId, cappedLimit));
     }
 
     /**
@@ -80,7 +80,7 @@ public class ResilienceEventController {
             @RequestParam(required = false) Instant since,
             @RequestParam(required = false, defaultValue = "50") Integer limit) {
         int cappedLimit = capLimit(limit, DEFAULT_EXHAUSTED_LIMIT, MAX_LIMIT);
-        return resilienceEventService.findExhausted(since, cappedLimit);
+        return FailoverEventResponse.from(resilienceEventService.findExhausted(since, cappedLimit));
     }
 
     /**

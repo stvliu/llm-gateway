@@ -19,7 +19,6 @@ import com.codingas.gateway.iam.user.UserRepository;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
-import com.codingas.gateway.stats.dto.StatsResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -70,7 +69,7 @@ class StatsServiceTest {
             when(userRepository.count()).thenReturn(42L);
 
             // when
-            StatsResponse response = statsService.getStats();
+            StatsResult response = statsService.getStats();
 
             // then
             assertThat(response.providerCount()).isEqualTo(3L);
@@ -92,7 +91,7 @@ class StatsServiceTest {
             when(userRepository.count()).thenReturn(0L);
 
             // when
-            StatsResponse response = statsService.getStats();
+            StatsResult response = statsService.getStats();
 
             // then
             assertThat(response.providerCount()).isZero();

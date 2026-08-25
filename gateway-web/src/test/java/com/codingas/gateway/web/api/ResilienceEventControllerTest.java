@@ -16,8 +16,10 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
+import com.codingas.gateway.resilience.failover.FailoverEvent;
 import com.codingas.gateway.resilience.failover.ResilienceEventService;
-import com.codingas.gateway.resilience.dto.FailoverEventResponse;
+import com.codingas.gateway.common.enums.FailoverDecision;
+import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -63,28 +65,28 @@ class ResilienceEventControllerTest {
                 .build();
     }
 
-    /** 构造含完整字段的转移事件响应桩 */
-    private FailoverEventResponse stubResponse() {
-        FailoverEventResponse resp = new FailoverEventResponse();
-        resp.setId(1L);
-        resp.setTraceId("trace-abc-123");
-        resp.setApplicationId(7L);
-        resp.setFromChannelId(10L);
-        resp.setFromEndpointId(20L);
-        resp.setToChannelId(11L);
-        resp.setToEndpointId(21L);
-        resp.setErrorType("AUTHENTICATION_ERROR");
-        resp.setDecision("L1");
-        resp.setExhausted(false);
-        resp.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
-        return resp;
+    /** 构造含完整字段的转移事件实体桩 */
+    private FailoverEvent stubEvent() {
+        FailoverEvent event = new FailoverEvent();
+        event.setId(1L);
+        event.setTraceId("trace-abc-123");
+        event.setApplicationId(7L);
+        event.setFromChannelId(10L);
+        event.setFromEndpointId(20L);
+        event.setToChannelId(11L);
+        event.setToEndpointId(21L);
+        event.setErrorType(ProviderErrorType.AUTHENTICATION_ERROR);
+        event.setDecision(FailoverDecision.L1);
+        event.setExhausted(false);
+        event.setOccurredAt(Instant.parse("2026-06-22T10:00:00Z"));
+        return event;
     }
 
     @Test
     @DisplayName("GET /api/v1/resilience/events 默认参数返回事件列表")
     void list_defaultParams_returns200WithArray() throws Exception {
         when(resilienceEventService.findRecent(eq(null), eq(null), eq(100)))
-                .thenReturn(List.of(stubResponse()));
+                .thenReturn(List.of(stubEvent()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
                         .accept(MediaType.APPLICATION_JSON))
@@ -103,7 +105,7 @@ class ResilienceEventControllerTest {
     void list_withFilters_delegatesToService() throws Exception {
         Instant since = Instant.parse("2026-06-22T00:00:00Z");
         when(resilienceEventService.findRecent(eq(since), eq(7L), eq(50)))
-                .thenReturn(List.of(stubResponse()));
+                .thenReturn(List.of(stubEvent()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
                         .param("since", since.toString())
@@ -129,7 +131,7 @@ class ResilienceEventControllerTest {
     @Test
     @DisplayName("GET /api/v1/resilience/events/exhausted 返回耗尽告警事件")
     void exhausted_returns200WithExhaustedEvents() throws Exception {
-        FailoverEventResponse resp = stubResponse();
+        FailoverEvent resp = stubEvent();
         resp.setExhausted(true);
         resp.setToChannelId(null);
         resp.setToEndpointId(null);

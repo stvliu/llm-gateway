@@ -15,9 +15,6 @@
  */
 package com.codingas.gateway.proxy.experience;
 
-import com.codingas.gateway.proxy.dto.ExperienceChatEvent;
-import com.codingas.gateway.proxy.dto.ExperienceChatRequest;
-import com.codingas.gateway.proxy.dto.ExperienceModelResponse;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.model.ModelInstance;
@@ -110,7 +107,7 @@ public class ModelExperienceService {
      * @param providerId 供应商 ID
      * @return 模型列表
      */
-    public List<ExperienceModelResponse> getModelsByProviderId(Long providerId) {
+    public List<Model> getModelsByProviderId(Long providerId) {
         List<Long> channelIds = channelRepository.findByProviderId(providerId)
                 .stream().map(Channel::getId).toList();
         if (channelIds.isEmpty()) return List.of();
@@ -124,11 +121,6 @@ public class ModelExperienceService {
 
         return modelRepository.findByIds(modelIds).stream()
             .filter(Model::isAvailable)
-            .map(model -> new ExperienceModelResponse(
-                model.getId(),
-                model.getModelName(),
-                model.getDisplayName() != null ? model.getDisplayName() : model.getModelName()
-            ))
             .toList();
     }
 
@@ -138,7 +130,7 @@ public class ModelExperienceService {
      * @param request 体验请求
      * @return SSE Emitter
      */
-    public SseEmitter chatStream(ExperienceChatRequest request) {
+    public SseEmitter chatStream(ExperienceChatCommand request) {
         // 验证请求
         if (!request.isValid()) {
             SseEmitter emitter = new SseEmitter();
@@ -190,9 +182,9 @@ public class ModelExperienceService {
     /**
      * 执行流式聊天
      */
-    private void doChatStream(ExperienceChatRequest request, SseEmitter emitter) throws IOException {
+    private void doChatStream(ExperienceChatCommand request, SseEmitter emitter) throws IOException {
         ResolvedConfig config = resolveConfig(request);
-        log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.getModel());
+        log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.model());
 
         String baseUrl = config.baseUrl != null ? config.baseUrl : "";
         UpstreamClient<ProtocolRequest> client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
@@ -249,8 +241,8 @@ public class ModelExperienceService {
     /**
      * 根据协议类型构建协议请求 DTO
      */
-    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatRequest request) {
-        List<Map<String, String>> rawMessages = request.getMessages();
+    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatCommand request) {
+        List<Map<String, String>> rawMessages = request.messages();
 
         if ("anthropic".equals(protocolName)) {
             List<AnthropicMessagesRequest.Message> messages = rawMessages.stream()
@@ -261,10 +253,10 @@ public class ModelExperienceService {
                 .toList();
 
             return AnthropicMessagesRequest.builder()
-                .model(request.getModel())
+                .model(request.model())
                 .messages(messages)
-                .maxTokens(request.getMaxTokens() != null ? request.getMaxTokens() : 1024)
-                .temperature(request.getTemperature())
+                .maxTokens(request.maxTokens() != null ? request.maxTokens() : 1024)
+                .temperature(request.temperature())
                 .stream(true)
                 .build();
         } else {
@@ -276,10 +268,10 @@ public class ModelExperienceService {
                 .toList();
 
             return OpenAIChatRequest.builder()
-                .model(request.getModel())
+                .model(request.model())
                 .messages(messages)
-                .maxTokens(request.getMaxTokens())
-                .temperature(request.getTemperature())
+                .maxTokens(request.maxTokens())
+                .temperature(request.temperature())
                 .stream(true)
                 .build();
         }
@@ -294,21 +286,21 @@ public class ModelExperienceService {
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
-    private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
+    private ResolvedConfig resolveConfig(ExperienceChatCommand request) {
         if (request.useSavedConfig()) {
             // 从数据库读取配置
-            var channel = channelRepository.findById(request.getChannelId())
-                .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.getChannelId()));
+            var channel = channelRepository.findById(request.channelId())
+                .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.channelId()));
 
             ChannelCredential credential;
-            if (request.getCredentialId() != null) {
-                credential = channelCredentialRepository.findById(request.getCredentialId())
-                    .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.getCredentialId()));
-                if (!credential.getChannelId().equals(request.getChannelId())) {
+            if (request.credentialId() != null) {
+                credential = channelCredentialRepository.findById(request.credentialId())
+                    .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.credentialId()));
+                if (!credential.getChannelId().equals(request.channelId())) {
                     throw new IllegalArgumentException("凭证不属于该渠道");
                 }
             } else {
-                credential = channelCredentialRepository.findDefaultByChannelId(request.getChannelId())
+                credential = channelCredentialRepository.findDefaultByChannelId(request.channelId())
                     .orElseThrow(() -> new IllegalArgumentException("渠道没有默认凭证，请指定要使用的凭证"));
             }
 
@@ -317,7 +309,7 @@ public class ModelExperienceService {
             }
 
             // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointRepository 获取
-            String protocolName = request.getProtocolName() != null ? request.getProtocolName() : "openai";
+            String protocolName = request.protocolName() != null ? request.protocolName() : "openai";
 
             return new ResolvedConfig(
                 protocolName,
@@ -327,9 +319,9 @@ public class ModelExperienceService {
         } else {
             // 使用临时配置：baseUrl 可选，由协议网关提供默认值
             return new ResolvedConfig(
-                request.getProtocolName(),
-                request.getBaseUrl(),
-                request.getApiKey()
+                request.protocolName(),
+                request.baseUrl(),
+                request.apiKey()
             );
         }
     }

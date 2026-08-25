@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.stats;
 
-import com.codingas.gateway.stats.dto.StatsResponse;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
@@ -42,7 +41,7 @@ public class StatsService {
      * 获取系统统计数据
      */
     @Transactional(readOnly = true)
-    public StatsResponse getStats() {
+    public StatsResult getStats() {
         long providerCount = providerRepository.count();
         long channelCount = channelRepository.count();
         long modelCount = modelRepository.count();
@@ -50,7 +49,7 @@ public class StatsService {
         // TODO: 接入真实的请求统计和 Token 用量数据
         long todayRequests = 0;
         String tokenUsage = "0";
-        return new StatsResponse(
+        return new StatsResult(
                 providerCount,
                 channelCount,
                 modelCount,

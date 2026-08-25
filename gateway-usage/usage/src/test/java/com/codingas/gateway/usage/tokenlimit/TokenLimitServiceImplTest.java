@@ -15,10 +15,6 @@
  */
 package com.codingas.gateway.usage.tokenlimit;
 
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
-import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
@@ -77,11 +73,10 @@ class TokenLimitServiceImplTest {
         @DisplayName("创建 Token 限额成功")
         void create_validRequest_returnsCreated() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(1L);
-            request.setMaxTokens(BigDecimal.valueOf(100000));
-            request.setPeriodType(PeriodType.MONTHLY);
-            request.setExceededAction(ExceededAction.REJECT);
+            TokenLimitCreateCommand request = new TokenLimitCreateCommand(
+                    null, 1L, null, null, TokenLimit.LimitType.USER_CUSTOM,
+                    BigDecimal.valueOf(100000), PeriodType.MONTHLY, null, null,
+                    ExceededAction.REJECT, null);
 
             User user = createTestUser();
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -92,7 +87,7 @@ class TokenLimitServiceImplTest {
             });
 
             // when
-            TokenLimitResponse result = service.create(request);
+            TokenLimit result = service.create(request);
 
             // then
             assertThat(result).isNotNull();
@@ -104,8 +99,9 @@ class TokenLimitServiceImplTest {
         @DisplayName("用户不存在抛出异常")
         void create_userNotFound_throwsException() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(999L);
+            TokenLimitCreateCommand request =
+                    new TokenLimitCreateCommand(null, 999L, null, null, null,
+                            null, null, null, null, null, null);
 
             when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
@@ -118,12 +114,9 @@ class TokenLimitServiceImplTest {
         @DisplayName("创建限额同时绑定提供商、模型与切换模型")
         void create_withProviderModelSwitchModel_savesAllRefs() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(1L);
-            request.setProviderId(10L);
-            request.setModelId(20L);
-            request.setSwitchModelId(30L);
-            request.setMaxTokens(BigDecimal.valueOf(50000));
+            TokenLimitCreateCommand request = new TokenLimitCreateCommand(
+                    null, 1L, 10L, 20L, null,
+                    BigDecimal.valueOf(50000), null, null, null, null, 30L);
 
             User user = createTestUser();
             Provider provider = new Provider();
@@ -140,22 +133,22 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // when
-            TokenLimitResponse result = service.create(request);
+            TokenLimit result = service.create(request);
 
             // then
-            assertThat(result.getProviderId()).isEqualTo(10L);
-            assertThat(result.getProviderName()).isEqualTo(provider.getName());
-            assertThat(result.getModelId()).isEqualTo(20L);
-            assertThat(result.getSwitchModelId()).isEqualTo(30L);
+            assertThat(result.getProvider().getId()).isEqualTo(10L);
+            assertThat(result.getProvider().getName()).isEqualTo(provider.getName());
+            assertThat(result.getModel().getId()).isEqualTo(20L);
+            assertThat(result.getSwitchModel().getId()).isEqualTo(30L);
         }
 
         @Test
         @DisplayName("提供商不存在抛出异常")
         void create_providerNotFound_throwsException() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(1L);
-            request.setProviderId(10L);
+            TokenLimitCreateCommand request =
+                    new TokenLimitCreateCommand(null, 1L, 10L, null, null,
+                            null, null, null, null, null, null);
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(createTestUser()));
             when(providerRepository.findById(10L)).thenReturn(Optional.empty());
@@ -170,9 +163,9 @@ class TokenLimitServiceImplTest {
         @DisplayName("模型不存在抛出异常")
         void create_modelNotFound_throwsException() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(1L);
-            request.setModelId(20L);
+            TokenLimitCreateCommand request =
+                    new TokenLimitCreateCommand(null, 1L, null, 20L, null,
+                            null, null, null, null, null, null);
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(createTestUser()));
             when(modelRepository.findById(20L)).thenReturn(Optional.empty());
@@ -187,9 +180,9 @@ class TokenLimitServiceImplTest {
         @DisplayName("切换模型不存在抛出异常")
         void create_switchModelNotFound_throwsException() {
             // given
-            TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setUserId(1L);
-            request.setSwitchModelId(30L);
+            TokenLimitCreateCommand request =
+                    new TokenLimitCreateCommand(null, 1L, null, null, null,
+                            null, null, null, null, null, 30L);
 
             when(userRepository.findById(1L)).thenReturn(Optional.of(createTestUser()));
             when(modelRepository.findById(30L)).thenReturn(Optional.empty());
@@ -213,7 +206,7 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(tokenLimit));
 
             // when
-            TokenLimitResponse result = service.getById(1L);
+            TokenLimit result = service.getById(1L);
 
             // then
             assertThat(result).isNotNull();
@@ -243,7 +236,7 @@ class TokenLimitServiceImplTest {
             TokenLimit tokenLimit = createTestTokenLimit();
             when(tokenLimitRepository.findAll()).thenReturn(List.of(tokenLimit));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setPage(1);
             request.setLimit(10);
 
@@ -266,7 +259,7 @@ class TokenLimitServiceImplTest {
             other.setUser(otherUser);
             when(tokenLimitRepository.findAll()).thenReturn(List.of(matching, other));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setKeyword("testuser");
 
             // when
@@ -283,7 +276,7 @@ class TokenLimitServiceImplTest {
             TokenLimit tokenLimit = createTestTokenLimit();
             when(tokenLimitRepository.findAll()).thenReturn(List.of(tokenLimit));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setUserId(1L);
 
             // when
@@ -310,7 +303,7 @@ class TokenLimitServiceImplTest {
             withoutProvider.setId(2L);
             when(tokenLimitRepository.findAll()).thenReturn(List.of(withProvider, withoutProvider));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setProviderId(10L);
 
             // when
@@ -332,7 +325,7 @@ class TokenLimitServiceImplTest {
             withoutModel.setId(2L);
             when(tokenLimitRepository.findAll()).thenReturn(List.of(withModel, withoutModel));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setModelId(20L);
 
             // when
@@ -352,7 +345,7 @@ class TokenLimitServiceImplTest {
             suspended.setState(TokenLimit.TokenLimitState.SUSPENDED);
             when(tokenLimitRepository.findAll()).thenReturn(List.of(active, suspended));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setState(TokenLimit.TokenLimitState.SUSPENDED);
 
             // when
@@ -373,7 +366,7 @@ class TokenLimitServiceImplTest {
             c.setId(3L);
             when(tokenLimitRepository.findAll()).thenReturn(List.of(a, b, c));
 
-            TokenLimitQueryRequest request = new TokenLimitQueryRequest();
+            TokenLimitQuery request = new TokenLimitQuery();
             request.setPage(2);
             request.setLimit(1);
 
@@ -400,11 +393,11 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(tokenLimit));
             when(tokenLimitRepository.save(any())).thenReturn(tokenLimit);
 
-            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
-            request.setMaxTokens(BigDecimal.valueOf(200000));
+            TokenLimitUpdateCommand request =
+                    new TokenLimitUpdateCommand(BigDecimal.valueOf(200000), null, null, null, null, null, null);
 
             // when
-            TokenLimitResponse result = service.update(1L, request);
+            TokenLimit result = service.update(1L, request);
 
             // then
             assertThat(result).isNotNull();
@@ -419,17 +412,12 @@ class TokenLimitServiceImplTest {
             when(modelRepository.findById(30L)).thenReturn(Optional.of(new Model()));
             when(tokenLimitRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
-            request.setMaxTokens(BigDecimal.valueOf(300000));
-            request.setPeriodType(PeriodType.WEEKLY);
-            request.setPeriodDayOfWeek(1);
-            request.setPeriodDayOfMonth(5);
-            request.setExceededAction(ExceededAction.DOWNGRADE);
-            request.setSwitchModelId(30L);
-            request.setEnabled(true);
+            TokenLimitUpdateCommand request = new TokenLimitUpdateCommand(
+                    BigDecimal.valueOf(300000), PeriodType.WEEKLY, 1, 5,
+                    ExceededAction.DOWNGRADE, 30L, true);
 
             // when
-            TokenLimitResponse result = service.update(1L, request);
+            TokenLimit result = service.update(1L, request);
 
             // then
             assertThat(result.getMaxTokens()).isEqualByComparingTo(BigDecimal.valueOf(300000));
@@ -449,15 +437,15 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(tokenLimit));
             when(tokenLimitRepository.save(any())).thenReturn(tokenLimit);
 
-            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
-            request.setEnabled(false);
+            TokenLimitUpdateCommand request =
+                    new TokenLimitUpdateCommand(null, null, null, null, null, null, false);
 
             // when
-            TokenLimitResponse result = service.update(1L, request);
+            TokenLimit result = service.update(1L, request);
 
             // then
             assertThat(tokenLimit.getState()).isEqualTo(TokenLimit.TokenLimitState.SUSPENDED);
-            assertThat(result.getEnabled()).isFalse();
+            assertThat(result.getState()).isEqualTo(TokenLimit.TokenLimitState.SUSPENDED);
         }
 
         @Test
@@ -468,8 +456,8 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(tokenLimit));
             when(modelRepository.findById(30L)).thenReturn(Optional.empty());
 
-            TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
-            request.setSwitchModelId(30L);
+            TokenLimitUpdateCommand request =
+                    new TokenLimitUpdateCommand(null, null, null, null, null, 30L, null);
 
             // when & then
             assertThatThrownBy(() -> service.update(1L, request))
@@ -484,7 +472,8 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> service.update(999L, new TokenLimitUpdateRequest()))
+            assertThatThrownBy(() -> service.update(999L,
+                    new TokenLimitUpdateCommand(null, null, null, null, null, null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -534,7 +523,7 @@ class TokenLimitServiceImplTest {
             when(tokenLimitRepository.save(any())).thenReturn(tokenLimit);
 
             // when
-            TokenLimitResponse result = service.resetUsage(1L);
+            TokenLimit result = service.resetUsage(1L);
 
             // then
             assertThat(result.getUsedTokens()).isEqualByComparingTo(BigDecimal.ZERO);

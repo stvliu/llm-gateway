@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.resilience.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.resilience.failover.FailoverEvent;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
- * 转移事件响应 DTO
+ * 转移事件响应 DTO（HTTP 契约）
  *
  * <p>返回转移事件聚合根的完整字段，供容灾总览页轮询渲染转移事件流与耗尽告警。</p>
  *
@@ -61,4 +63,36 @@ public class FailoverEventResponse {
 
     /** 转移发生时间 */
     private Instant occurredAt;
+
+    /**
+     * 从转移事件实体转换（枚举字段转字符串展示）
+     *
+     * @param event 转移事件实体
+     * @return 转移事件响应 DTO
+     */
+    public static FailoverEventResponse from(FailoverEvent event) {
+        FailoverEventResponse response = new FailoverEventResponse();
+        response.setId(event.getId());
+        response.setTraceId(event.getTraceId());
+        response.setApplicationId(event.getApplicationId());
+        response.setFromChannelId(event.getFromChannelId());
+        response.setFromEndpointId(event.getFromEndpointId());
+        response.setToChannelId(event.getToChannelId());
+        response.setToEndpointId(event.getToEndpointId());
+        response.setErrorType(event.getErrorType() != null ? event.getErrorType().name() : null);
+        response.setDecision(event.getDecision() != null ? event.getDecision().name() : null);
+        response.setExhausted(event.isExhausted());
+        response.setOccurredAt(event.getOccurredAt());
+        return response;
+    }
+
+    /**
+     * 从转移事件实体列表转换
+     *
+     * @param events 转移事件实体列表
+     * @return 转移事件响应 DTO 列表
+     */
+    public static List<FailoverEventResponse> from(List<FailoverEvent> events) {
+        return events.stream().map(FailoverEventResponse::from).toList();
+    }
 }

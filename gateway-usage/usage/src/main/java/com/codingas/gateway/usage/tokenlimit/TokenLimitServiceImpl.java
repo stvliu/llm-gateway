@@ -15,10 +15,6 @@
  */
 package com.codingas.gateway.usage.tokenlimit;
 
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
-import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.model.Model;
@@ -60,30 +56,30 @@ public class TokenLimitServiceImpl implements TokenLimitService {
      */
     @Override
     @Transactional
-    public TokenLimitResponse create(TokenLimitCreateRequest request) {
+    public TokenLimit create(TokenLimitCreateCommand command) {
         // 查找用户
-        User user = userRepository.findById(request.getUserId())
-            .orElseThrow(() -> new ResourceNotFoundException("User", request.getUserId()));
+        User user = userRepository.findById(command.userId())
+            .orElseThrow(() -> new ResourceNotFoundException("User", command.userId()));
 
         // 查找提供商（可选）
         Provider provider = null;
-        if (request.getProviderId() != null) {
-            provider = providerRepository.findById(request.getProviderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Provider", request.getProviderId()));
+        if (command.providerId() != null) {
+            provider = providerRepository.findById(command.providerId())
+                .orElseThrow(() -> new ResourceNotFoundException("Provider", command.providerId()));
         }
 
         // 查找模型（可选）
         Model model = null;
-        if (request.getModelId() != null) {
-            model = modelRepository.findById(request.getModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getModelId()));
+        if (command.modelId() != null) {
+            model = modelRepository.findById(command.modelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", command.modelId()));
         }
 
         // 查找切换模型（可选）
         Model switchModel = null;
-        if (request.getSwitchModelId() != null) {
-            switchModel = modelRepository.findById(request.getSwitchModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
+        if (command.switchModelId() != null) {
+            switchModel = modelRepository.findById(command.switchModelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", command.switchModelId()));
         }
 
         // 创建限额
@@ -91,66 +87,64 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         tokenLimit.setUser(user);
         tokenLimit.setProvider(provider);
         tokenLimit.setModel(model);
-        tokenLimit.setLimitType(request.getLimitType());
-        tokenLimit.setMaxTokens(request.getMaxTokens());
+        tokenLimit.setLimitType(command.limitType());
+        tokenLimit.setMaxTokens(command.maxTokens());
         tokenLimit.setUsedTokens(BigDecimal.ZERO);
-        tokenLimit.setPeriodType(request.getPeriodType());
-        tokenLimit.setPeriodDayOfWeek(request.getPeriodDayOfWeek());
-        tokenLimit.setPeriodDayOfMonth(request.getPeriodDayOfMonth());
-        tokenLimit.setExceededAction(request.getExceededAction());
+        tokenLimit.setPeriodType(command.periodType());
+        tokenLimit.setPeriodDayOfWeek(command.periodDayOfWeek());
+        tokenLimit.setPeriodDayOfMonth(command.periodDayOfMonth());
+        tokenLimit.setExceededAction(command.exceededAction());
         tokenLimit.setSwitchModel(switchModel);
         tokenLimit.setState(TokenLimitState.ACTIVE);
 
-        TokenLimit savedTokenLimit = tokenLimitRepository.save(tokenLimit);
-        return toResponse(savedTokenLimit);
+        return tokenLimitRepository.save(tokenLimit);
     }
 
     /**
      * 根据 ID 获取 Token 限额
      */
     @Override
-    public TokenLimitResponse getById(Long id) {
-        TokenLimit tokenLimit = tokenLimitRepository.findById(id)
+    public TokenLimit getById(Long id) {
+        return tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
-        return toResponse(tokenLimit);
     }
 
     /**
      * 查询 Token 限额列表
      */
     @Override
-    public PageResponse<TokenLimitResponse> query(TokenLimitQueryRequest request) {
+    public PageResponse<TokenLimit> query(TokenLimitQuery query) {
         List<TokenLimit> tokenLimits = tokenLimitRepository.findAll();
 
         // 过滤
-        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            String keyword = request.getKeyword().toLowerCase();
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+            String keyword = query.getKeyword().toLowerCase();
             tokenLimits = tokenLimits.stream()
                 .filter(t -> t.getUser().getUsername().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
         }
 
-        if (request.getUserId() != null) {
+        if (query.getUserId() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getUser().getId().equals(request.getUserId()))
+                .filter(t -> t.getUser().getId().equals(query.getUserId()))
                 .collect(Collectors.toList());
         }
 
-        if (request.getProviderId() != null) {
+        if (query.getProviderId() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getProvider() != null && t.getProvider().getId().equals(request.getProviderId()))
+                .filter(t -> t.getProvider() != null && t.getProvider().getId().equals(query.getProviderId()))
                 .collect(Collectors.toList());
         }
 
-        if (request.getModelId() != null) {
+        if (query.getModelId() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getModel() != null && t.getModel().getId().equals(request.getModelId()))
+                .filter(t -> t.getModel() != null && t.getModel().getId().equals(query.getModelId()))
                 .collect(Collectors.toList());
         }
 
-        if (request.getState() != null) {
+        if (query.getState() != null) {
             tokenLimits = tokenLimits.stream()
-                .filter(t -> t.getState() == request.getState())
+                .filter(t -> t.getState() == query.getState())
                 .collect(Collectors.toList());
         }
 
@@ -158,18 +152,14 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         long total = tokenLimits.size();
 
         // 分页
-        int offset = request.getOffset();
-        int limit = request.getLimit();
+        int offset = query.getOffset();
+        int limit = query.getLimit();
         List<TokenLimit> pagedTokenLimits = tokenLimits.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
 
-        List<TokenLimitResponse> responses = pagedTokenLimits.stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-
-        return PageResponse.of(responses, request.getPage(), limit, total);
+        return PageResponse.of(pagedTokenLimits, query.getPage(), limit, total);
     }
 
     /**
@@ -177,35 +167,35 @@ public class TokenLimitServiceImpl implements TokenLimitService {
      */
     @Override
     @Transactional
-    public TokenLimitResponse update(Long id, TokenLimitUpdateRequest request) {
+    public TokenLimit update(Long id, TokenLimitUpdateCommand command) {
         TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
 
-        if (request.getMaxTokens() != null) {
-            tokenLimit.setMaxTokens(request.getMaxTokens());
+        if (command.maxTokens() != null) {
+            tokenLimit.setMaxTokens(command.maxTokens());
         }
-        if (request.getPeriodType() != null) {
-            tokenLimit.setPeriodType(request.getPeriodType());
+        if (command.periodType() != null) {
+            tokenLimit.setPeriodType(command.periodType());
         }
-        if (request.getPeriodDayOfWeek() != null) {
-            tokenLimit.setPeriodDayOfWeek(request.getPeriodDayOfWeek());
+        if (command.periodDayOfWeek() != null) {
+            tokenLimit.setPeriodDayOfWeek(command.periodDayOfWeek());
         }
-        if (request.getPeriodDayOfMonth() != null) {
-            tokenLimit.setPeriodDayOfMonth(request.getPeriodDayOfMonth());
+        if (command.periodDayOfMonth() != null) {
+            tokenLimit.setPeriodDayOfMonth(command.periodDayOfMonth());
         }
-        if (request.getExceededAction() != null) {
-            tokenLimit.setExceededAction(request.getExceededAction());
+        if (command.exceededAction() != null) {
+            tokenLimit.setExceededAction(command.exceededAction());
         }
-        if (request.getSwitchModelId() != null) {
-            Model switchModel = modelRepository.findById(request.getSwitchModelId())
-                .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
+        if (command.switchModelId() != null) {
+            Model switchModel = modelRepository.findById(command.switchModelId())
+                .orElseThrow(() -> new ResourceNotFoundException("Model", command.switchModelId()));
             tokenLimit.setSwitchModel(switchModel);
         }
-        if (request.getEnabled() != null) {
-            tokenLimit.setState(request.getEnabled() ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
+        if (command.enabled() != null) {
+            tokenLimit.setState(command.enabled() ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
         }
 
-        return toResponse(tokenLimitRepository.save(tokenLimit));
+        return tokenLimitRepository.save(tokenLimit);
     }
 
     /**
@@ -225,47 +215,10 @@ public class TokenLimitServiceImpl implements TokenLimitService {
      */
     @Override
     @Transactional
-    public TokenLimitResponse resetUsage(Long id) {
+    public TokenLimit resetUsage(Long id) {
         TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
         tokenLimit.setUsedTokens(BigDecimal.ZERO);
-        return toResponse(tokenLimitRepository.save(tokenLimit));
-    }
-
-    /**
-     * 转换为响应 DTO
-     */
-    private TokenLimitResponse toResponse(TokenLimit tokenLimit) {
-        TokenLimitResponse response = new TokenLimitResponse();
-        response.setId(tokenLimit.getId());
-        response.setUserId(tokenLimit.getUser().getId());
-        response.setUsername(tokenLimit.getUser().getUsername());
-        if (tokenLimit.getProvider() != null) {
-            response.setProviderId(tokenLimit.getProvider().getId());
-            response.setProviderName(tokenLimit.getProvider().getName());
-        }
-        if (tokenLimit.getModel() != null) {
-            response.setModelId(tokenLimit.getModel().getId());
-            response.setModelName(tokenLimit.getModel() instanceof Model m ? m.getDisplayName() : null);
-        }
-        response.setLimitType(tokenLimit.getLimitType());
-        response.setMaxTokens(tokenLimit.getMaxTokens());
-        response.setUsedTokens(tokenLimit.getUsedTokens());
-        if (tokenLimit.getMaxTokens() != null && tokenLimit.getUsedTokens() != null) {
-            response.setRemainingTokens(tokenLimit.getMaxTokens().subtract(tokenLimit.getUsedTokens()));
-        }
-        response.setPeriodType(tokenLimit.getPeriodType());
-        response.setPeriodDayOfWeek(tokenLimit.getPeriodDayOfWeek());
-        response.setPeriodDayOfMonth(tokenLimit.getPeriodDayOfMonth());
-        response.setExceededAction(tokenLimit.getExceededAction());
-        if (tokenLimit.getSwitchModel() != null) {
-            response.setSwitchModelId(tokenLimit.getSwitchModel().getId());
-            response.setSwitchModelName(tokenLimit.getSwitchModel() instanceof Model m ? m.getDisplayName() : null);
-        }
-        response.setState(tokenLimit.getState());
-        response.setEnabled(tokenLimit.getState() == TokenLimitState.ACTIVE);
-        response.setCreatedAt(tokenLimit.getCreatedAt());
-        response.setUpdatedAt(tokenLimit.getUpdatedAt());
-        return response;
+        return tokenLimitRepository.save(tokenLimit);
     }
 }

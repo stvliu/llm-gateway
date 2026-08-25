@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.usage.tokenlimit;
 
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
@@ -24,7 +22,6 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
-import com.codingas.gateway.usage.tokenlimit.TokenLimit;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit.LimitType;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit.TokenLimitState;
 import com.codingas.gateway.iam.user.User;
@@ -75,7 +72,7 @@ class TokenLimitServiceTest {
     private Provider testProvider;
     private Model testModel;
     private TokenLimit testTokenLimit;
-    private TokenLimitCreateRequest createRequest;
+    private TokenLimitCreateCommand createCommand;
 
     @BeforeEach
     void setUp() {
@@ -109,15 +106,11 @@ class TokenLimitServiceTest {
         testTokenLimit.setCreatedAt(Instant.now());
         testTokenLimit.setUpdatedAt(Instant.now());
 
-        // 初始化创建请求
-        createRequest = new TokenLimitCreateRequest();
-        createRequest.setUserId(1L);
-        createRequest.setProviderId(1L);
-        createRequest.setModelId(1L);
-        createRequest.setLimitType(LimitType.USER_CUSTOM);
-        createRequest.setMaxTokens(new BigDecimal("10000"));
-        createRequest.setPeriodType(PeriodType.MONTHLY);
-        createRequest.setExceededAction(ExceededAction.REJECT);
+        // 初始化创建用例入参
+        createCommand = new TokenLimitCreateCommand(
+                null, 1L, 1L, 1L, LimitType.USER_CUSTOM,
+                new BigDecimal("10000"), PeriodType.MONTHLY, null, null,
+                ExceededAction.REJECT, null);
     }
 
     @Nested
@@ -128,29 +121,30 @@ class TokenLimitServiceTest {
         @DisplayName("创建 Token 限额成功")
         void create_success() {
             // given
-            when(userRepository.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
-            when(modelRepository.findById(createRequest.getModelId())).thenReturn(Optional.of(testModel));
+            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.of(testProvider));
+            when(modelRepository.findById(createCommand.modelId())).thenReturn(Optional.of(testModel));
             when(tokenLimitRepository.save(any(TokenLimit.class))).thenReturn(testTokenLimit);
 
             // when
-            TokenLimitResponse response = tokenLimitService.create(createRequest);
+            TokenLimit result = tokenLimitService.create(createCommand);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.getUserId()).isEqualTo(testUser.getId());
-            assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
-            assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
-            assertThat(response.getModelId()).isEqualTo(testModel.getId());
-            assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
-            assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
-            assertThat(response.getRemainingTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(result).isNotNull();
+            assertThat(result.getUser().getId()).isEqualTo(testUser.getId());
+            assertThat(result.getUser().getUsername()).isEqualTo(testUser.getUsername());
+            assertThat(result.getProvider().getId()).isEqualTo(testProvider.getId());
+            assertThat(result.getProvider().getName()).isEqualTo(testProvider.getName());
+            assertThat(result.getModel().getId()).isEqualTo(testModel.getId());
+            assertThat(result.getModel().getDisplayName()).isEqualTo(testModel.getDisplayName());
+            assertThat(result.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
+            assertThat(result.getMaxTokens().subtract(result.getUsedTokens()))
+                    .isEqualByComparingTo(testTokenLimit.getMaxTokens());
+            assertThat(result.getState()).isEqualTo(TokenLimitState.ACTIVE);
 
-            verify(userRepository).findById(createRequest.getUserId());
-            verify(providerRepository).findById(createRequest.getProviderId());
-            verify(modelRepository).findById(createRequest.getModelId());
+            verify(userRepository).findById(createCommand.userId());
+            verify(providerRepository).findById(createCommand.providerId());
+            verify(modelRepository).findById(createCommand.modelId());
             verify(tokenLimitRepository).save(any(TokenLimit.class));
         }
 
@@ -158,51 +152,51 @@ class TokenLimitServiceTest {
         @DisplayName("创建 Token 限额失败 - 用户不存在")
         void create_userNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createRequest.getUserId())).thenReturn(Optional.empty());
+            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createRequest))
+            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User")
-                .hasMessageContaining(String.valueOf(createRequest.getUserId()));
+                .hasMessageContaining(String.valueOf(createCommand.userId()));
 
-            verify(userRepository).findById(createRequest.getUserId());
+            verify(userRepository).findById(createCommand.userId());
         }
 
         @Test
         @DisplayName("创建 Token 限额失败 - 提供商不存在")
         void create_providerNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createRequest.getProviderId())).thenReturn(Optional.empty());
+            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createRequest))
+            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Provider")
-                .hasMessageContaining(String.valueOf(createRequest.getProviderId()));
+                .hasMessageContaining(String.valueOf(createCommand.providerId()));
 
-            verify(userRepository).findById(createRequest.getUserId());
-            verify(providerRepository).findById(createRequest.getProviderId());
+            verify(userRepository).findById(createCommand.userId());
+            verify(providerRepository).findById(createCommand.providerId());
         }
 
         @Test
         @DisplayName("创建 Token 限额失败 - 模型不存在")
         void create_modelNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createRequest.getUserId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createRequest.getProviderId())).thenReturn(Optional.of(testProvider));
-            when(modelRepository.findById(createRequest.getModelId())).thenReturn(Optional.empty());
+            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.of(testProvider));
+            when(modelRepository.findById(createCommand.modelId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createRequest))
+            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
-                .hasMessageContaining(String.valueOf(createRequest.getModelId()));
+                .hasMessageContaining(String.valueOf(createCommand.modelId()));
 
-            verify(userRepository).findById(createRequest.getUserId());
-            verify(providerRepository).findById(createRequest.getProviderId());
-            verify(modelRepository).findById(createRequest.getModelId());
+            verify(userRepository).findById(createCommand.userId());
+            verify(providerRepository).findById(createCommand.providerId());
+            verify(modelRepository).findById(createCommand.modelId());
         }
     }
 
@@ -217,20 +211,20 @@ class TokenLimitServiceTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(testTokenLimit));
 
             // when
-            TokenLimitResponse response = tokenLimitService.getById(1L);
+            TokenLimit result = tokenLimitService.getById(1L);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(testTokenLimit.getId());
-            assertThat(response.getUserId()).isEqualTo(testUser.getId());
-            assertThat(response.getUsername()).isEqualTo(testUser.getUsername());
-            assertThat(response.getProviderId()).isEqualTo(testProvider.getId());
-            assertThat(response.getProviderName()).isEqualTo(testProvider.getName());
-            assertThat(response.getModelId()).isEqualTo(testModel.getId());
-            assertThat(response.getModelName()).isEqualTo(testModel.getDisplayName());
-            assertThat(response.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
-            assertThat(response.getUsedTokens()).isEqualByComparingTo(testTokenLimit.getUsedTokens());
-            assertThat(response.getEnabled()).isTrue();
+            assertThat(result).isNotNull();
+            assertThat(result.getId()).isEqualTo(testTokenLimit.getId());
+            assertThat(result.getUser().getId()).isEqualTo(testUser.getId());
+            assertThat(result.getUser().getUsername()).isEqualTo(testUser.getUsername());
+            assertThat(result.getProvider().getId()).isEqualTo(testProvider.getId());
+            assertThat(result.getProvider().getName()).isEqualTo(testProvider.getName());
+            assertThat(result.getModel().getId()).isEqualTo(testModel.getId());
+            assertThat(result.getModel().getDisplayName()).isEqualTo(testModel.getDisplayName());
+            assertThat(result.getMaxTokens()).isEqualByComparingTo(testTokenLimit.getMaxTokens());
+            assertThat(result.getUsedTokens()).isEqualByComparingTo(testTokenLimit.getUsedTokens());
+            assertThat(result.getState()).isEqualTo(TokenLimitState.ACTIVE);
 
             verify(tokenLimitRepository).findById(1L);
         }

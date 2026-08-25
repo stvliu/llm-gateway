@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.usage.dto;
+package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit.LimitType;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitCreateCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -26,7 +27,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * 创建 Token 限额请求
+ * 创建 Token 限额请求 DTO（HTTP 契约）
  */
 @Data
 public class TokenLimitCreateRequest {
@@ -56,4 +57,20 @@ public class TokenLimitCreateRequest {
     private ExceededAction exceededAction = ExceededAction.REJECT;
 
     private Long switchModelId;
+
+    /**
+     * 转换为核心创建用例入参（保持 DTO 默认值语义）
+     *
+     * @return 创建用例入参
+     */
+    public TokenLimitCreateCommand toCommand() {
+        return new TokenLimitCreateCommand(
+                limitCode, userId, providerId, modelId,
+                limitType != null ? limitType : LimitType.USER_CUSTOM,
+                maxTokens,
+                periodType != null ? periodType : PeriodType.MONTHLY,
+                periodDayOfWeek, periodDayOfMonth,
+                exceededAction != null ? exceededAction : ExceededAction.REJECT,
+                switchModelId);
+    }
 }

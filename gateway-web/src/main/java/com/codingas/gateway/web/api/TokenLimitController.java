@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
-import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.usage.tokenlimit.TokenLimitService;
+import com.codingas.gateway.web.api.dto.TokenLimitCreateRequest;
+import com.codingas.gateway.web.api.dto.TokenLimitQueryRequest;
+import com.codingas.gateway.web.api.dto.TokenLimitResponse;
+import com.codingas.gateway.web.api.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class TokenLimitController {
      */
     @PostMapping
     public TokenLimitResponse create(@Valid @RequestBody TokenLimitCreateRequest request) {
-        return tokenLimitService.create(request);
+        return TokenLimitResponse.from(tokenLimitService.create(request.toCommand()));
     }
 
     /**
@@ -50,7 +50,7 @@ public class TokenLimitController {
      */
     @GetMapping("/{id}")
     public TokenLimitResponse getById(@PathVariable Long id) {
-        return tokenLimitService.getById(id);
+        return TokenLimitResponse.from(tokenLimitService.getById(id));
     }
 
     /**
@@ -58,7 +58,7 @@ public class TokenLimitController {
      */
     @GetMapping
     public PageResponse<TokenLimitResponse> query(@ModelAttribute TokenLimitQueryRequest request) {
-        return tokenLimitService.query(request);
+        return TokenLimitResponse.fromPage(tokenLimitService.query(request.toQuery()));
     }
 
     /**
@@ -68,7 +68,7 @@ public class TokenLimitController {
     public TokenLimitResponse update(
             @PathVariable Long id,
             @Valid @RequestBody TokenLimitUpdateRequest request) {
-        return tokenLimitService.update(id, request);
+        return TokenLimitResponse.from(tokenLimitService.update(id, request.toCommand()));
     }
 
     /**
@@ -84,6 +84,6 @@ public class TokenLimitController {
      */
     @PatchMapping("/{id}/reset-usage")
     public TokenLimitResponse resetUsage(@PathVariable Long id) {
-        return tokenLimitService.resetUsage(id);
+        return TokenLimitResponse.from(tokenLimitService.resetUsage(id));
     }
 }

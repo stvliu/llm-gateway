@@ -15,46 +15,61 @@
  */
 package com.codingas.gateway.usage.tokenlimit;
 
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
-import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 
 /**
  * Token 限额应用服务接口
  *
- * <p>处理 Token 限额管理的业务逻辑。</p>
+ * <p>处理 Token 限额管理的业务逻辑。出入参采用领域实体 {@link TokenLimit} 与轻量用例对象，
+ * HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface TokenLimitService {
 
     /**
      * 创建 Token 限额
+     *
+     * @param command 创建用例入参
+     * @return 创建后的限额实体
      */
-    TokenLimitResponse create(TokenLimitCreateRequest request);
+    TokenLimit create(TokenLimitCreateCommand command);
 
     /**
      * 根据 ID 获取 Token 限额
+     *
+     * @param id 限额 ID
+     * @return 限额实体
      */
-    TokenLimitResponse getById(Long id);
+    TokenLimit getById(Long id);
 
     /**
      * 查询 Token 限额列表
+     *
+     * @param query 查询条件
+     * @return 限额实体分页
      */
-    PageResponse<TokenLimitResponse> query(TokenLimitQueryRequest request);
+    PageResponse<TokenLimit> query(TokenLimitQuery query);
 
     /**
      * 更新 Token 限额
+     *
+     * @param id      限额 ID
+     * @param command 更新用例入参（仅非 null 字段生效）
+     * @return 更新后的限额实体
      */
-    TokenLimitResponse update(Long id, TokenLimitUpdateRequest request);
+    TokenLimit update(Long id, TokenLimitUpdateCommand command);
 
     /**
      * 删除 Token 限额（软删除）
+     *
+     * @param id 限额 ID
      */
     void delete(Long id);
 
     /**
      * 重置已使用量
+     *
+     * @param id 限额 ID
+     * @return 重置后的限额实体
      */
-    TokenLimitResponse resetUsage(Long id);
+    TokenLimit resetUsage(Long id);
 }

@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.resilience.failover;
 
-import com.codingas.gateway.resilience.dto.FailoverEventResponse;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.junit.jupiter.api.DisplayName;
@@ -113,20 +112,20 @@ class ResilienceEventServiceImplTest {
     }
 
     @Test
-    @DisplayName("findExhausted 返回的实体正确转为响应 DTO（枚举转字符串）")
+    @DisplayName("findExhausted 直接返回实体（枚举原样透传）")
     void findExhausted_mapsEntityToResponse() {
         FailoverEvent entity = buildExhaustedEvent();
         when(failoverEventRepository.findExhausted(any(), anyInt()))
                 .thenReturn(List.of(entity));
 
-        List<FailoverEventResponse> result = service.findExhausted(null, 50);
+        List<FailoverEvent> result = service.findExhausted(null, 50);
 
         assertThat(result).hasSize(1);
-        FailoverEventResponse resp = result.get(0);
+        FailoverEvent resp = result.get(0);
         assertThat(resp.getId()).isEqualTo(1L);
         assertThat(resp.isExhausted()).isTrue();
-        assertThat(resp.getErrorType()).isEqualTo("AUTHENTICATION_ERROR");
-        assertThat(resp.getDecision()).isEqualTo("L1");
+        assertThat(resp.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
+        assertThat(resp.getDecision()).isEqualTo(FailoverDecision.L1);
     }
 
     private FailoverEvent buildExhaustedEvent() {

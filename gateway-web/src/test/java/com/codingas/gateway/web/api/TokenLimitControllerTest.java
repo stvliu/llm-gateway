@@ -16,14 +16,16 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.usage.tokenlimit.TokenLimitService;
-import com.codingas.gateway.usage.dto.TokenLimitCreateRequest;
-import com.codingas.gateway.usage.dto.TokenLimitQueryRequest;
-import com.codingas.gateway.usage.dto.TokenLimitResponse;
-import com.codingas.gateway.usage.dto.TokenLimitUpdateRequest;
+import com.codingas.gateway.usage.tokenlimit.TokenLimit;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitQuery;
+import com.codingas.gateway.web.api.dto.TokenLimitCreateRequest;
+import com.codingas.gateway.web.api.dto.TokenLimitQueryRequest;
+import com.codingas.gateway.web.api.dto.TokenLimitResponse;
+import com.codingas.gateway.web.api.dto.TokenLimitUpdateRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
-import com.codingas.gateway.usage.tokenlimit.TokenLimit;
+import com.codingas.gateway.iam.user.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -68,14 +70,15 @@ class TokenLimitControllerTest {
             TokenLimitCreateRequest request = new TokenLimitCreateRequest();
             request.setLimitCode("limit-001");
 
-            TokenLimitResponse response = createTestResponse();
-            when(tokenLimitService.create(any())).thenReturn(response);
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitService.create(any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.create(request);
 
             // then
-            assertThat(result.getLimitCode()).isEqualTo("limit-001");
+            assertThat(result).isNotNull();
+            assertThat(result.getUsername()).isEqualTo("testuser");
         }
     }
 
@@ -87,8 +90,8 @@ class TokenLimitControllerTest {
         @DisplayName("获取 Token 限额详情成功")
         void getById_existingId_returnsTokenLimit() {
             // given
-            TokenLimitResponse response = createTestResponse();
-            when(tokenLimitService.getById(1L)).thenReturn(response);
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitService.getById(1L)).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.getById(1L);
@@ -106,11 +109,11 @@ class TokenLimitControllerTest {
         @DisplayName("查询 Token 限额列表")
         void query_validRequest_returnsPage() {
             // given
-            TokenLimitResponse response = createTestResponse();
-            PageResponse<TokenLimitResponse> pageResponse = PageResponse.of(
-                List.of(response), 1, 10, 1L
+            TokenLimit tokenLimit = createTestTokenLimit();
+            PageResponse<TokenLimit> pageResponse = PageResponse.of(
+                List.of(tokenLimit), 1, 10, 1L
             );
-            when(tokenLimitService.query(any(TokenLimitQueryRequest.class))).thenReturn(pageResponse);
+            when(tokenLimitService.query(any(TokenLimitQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<TokenLimitResponse> result = controller.query(new TokenLimitQueryRequest());
@@ -131,8 +134,8 @@ class TokenLimitControllerTest {
             TokenLimitUpdateRequest request = new TokenLimitUpdateRequest();
             request.setMaxTokens(BigDecimal.valueOf(200000));
 
-            TokenLimitResponse response = createTestResponse();
-            when(tokenLimitService.update(eq(1L), any())).thenReturn(response);
+            TokenLimit tokenLimit = createTestTokenLimit();
+            when(tokenLimitService.update(eq(1L), any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.update(1L, request);
@@ -167,9 +170,9 @@ class TokenLimitControllerTest {
         @DisplayName("重置使用量成功")
         void resetUsage_existingId_returnsUpdated() {
             // given
-            TokenLimitResponse response = createTestResponse();
-            response.setUsedTokens(BigDecimal.ZERO);
-            when(tokenLimitService.resetUsage(1L)).thenReturn(response);
+            TokenLimit tokenLimit = createTestTokenLimit();
+            tokenLimit.setUsedTokens(BigDecimal.ZERO);
+            when(tokenLimitService.resetUsage(1L)).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.resetUsage(1L);
@@ -180,21 +183,22 @@ class TokenLimitControllerTest {
     }
 
     // Helper methods
-    private TokenLimitResponse createTestResponse() {
-        TokenLimitResponse response = new TokenLimitResponse();
-        response.setId(1L);
-        response.setLimitCode("limit-001");
-        response.setUserId(1L);
-        response.setUsername("testuser");
-        response.setLimitType(TokenLimit.LimitType.USER_CUSTOM);
-        response.setMaxTokens(BigDecimal.valueOf(100000));
-        response.setUsedTokens(BigDecimal.ZERO);
-        response.setRemainingTokens(BigDecimal.valueOf(100000));
-        response.setPeriodType(PeriodType.MONTHLY);
-        response.setExceededAction(ExceededAction.REJECT);
-        response.setState(TokenLimit.TokenLimitState.ACTIVE);
-        response.setCreatedAt(Instant.now());
-        response.setUpdatedAt(Instant.now());
-        return response;
+    private TokenLimit createTestTokenLimit() {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+
+        TokenLimit tokenLimit = new TokenLimit();
+        tokenLimit.setId(1L);
+        tokenLimit.setUser(user);
+        tokenLimit.setLimitType(TokenLimit.LimitType.USER_CUSTOM);
+        tokenLimit.setMaxTokens(BigDecimal.valueOf(100000));
+        tokenLimit.setUsedTokens(BigDecimal.ZERO);
+        tokenLimit.setPeriodType(PeriodType.MONTHLY);
+        tokenLimit.setExceededAction(ExceededAction.REJECT);
+        tokenLimit.setState(TokenLimit.TokenLimitState.ACTIVE);
+        tokenLimit.setCreatedAt(Instant.now());
+        tokenLimit.setUpdatedAt(Instant.now());
+        return tokenLimit;
     }
 }

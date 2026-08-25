@@ -13,15 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.proxy.dto;
+package com.codingas.gateway.proxy.experience;
 
 /**
- * 体验模型响应
- *
- * <p>用于模型体验功能，返回简化的模型信息。</p>
+ * 模型体验 SSE 事件
  */
-public record ExperienceModelResponse(
-    Long id,
-    String modelName,
-    String displayName
-) {}
+public record ExperienceChatEvent(
+    EventType type,
+    Object data
+) {
+
+    public enum EventType {
+        /** 内容增量 */
+        CONTENT,
+        /** Token 使用统计 */
+        USAGE,
+        /** 错误 */
+        ERROR,
+        /** 完成 */
+        DONE
+    }
+
+    /** 内容数据 */
+    public record ContentData(String content) {}
+
+    /** 使用量数据 */
+    public record UsageData(int promptTokens, int completionTokens) {}
+
+    /** 错误数据 */
+    public record ErrorData(String message) {}
+}
