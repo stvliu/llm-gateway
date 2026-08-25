@@ -174,17 +174,18 @@
 │              HTTP 承载层 (gateway-web)                │
 │         (Controller / Interceptor / Advice)         │
 └──────────────────┬──────────────────────────────────┘
-                   │
+                   │ 调用域服务接口（依赖功能域核心模块）
 ┌──────────────────▼──────────────────────────────────┐
 │               功能域核心模块                         │
-│     (Domain Service + Gateway 接口 + 业务逻辑)       │
+│     (Domain Service + Gateway 接口定义 + 业务逻辑)   │
 │  gateway-provider / gateway-iam / gateway-proxy     │
 │  gateway-protocol / gateway-usage / ...             │
 └──────────────────┬──────────────────────────────────┘
-                   │
+                   │ 依赖倒置：核心仅定义接口，不依赖实现
 ┌──────────────────▼──────────────────────────────────┐
 │            JPA 绑定模块 (gateway-*-data)             │
-│       (Gateway 实现 / Repository / dataobject)      │
+│  (实现核心定义的 Gateway 接口；依赖核心模块)         │
+│       Gateway 实现 / Repository / dataobject        │
 └─────────────────────────────────────────────────────┘
 ```
 
