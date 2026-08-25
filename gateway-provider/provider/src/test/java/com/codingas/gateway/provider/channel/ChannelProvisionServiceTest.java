@@ -15,13 +15,11 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.catalog.BatchProvisionRequest;
 import com.codingas.gateway.provider.catalog.BatchProvisionResult;
 import com.codingas.gateway.provider.catalog.CatalogException;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.PlanCatalogRepository;
 import com.codingas.gateway.provider.catalog.PlanModelCatalogRepository;
-import com.codingas.gateway.provider.catalog.ProvisionRequest;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.model.Model;
@@ -201,8 +199,8 @@ class ChannelProvisionServiceTest {
             stubProviderCreate();
             stubChannelSave();
 
-            ProvisionRequest request = new ProvisionRequest();
-            request.setApiKeys(List.of("sk-long-key-12345678", "   ", "sk-2"));
+            ProvisionCommand request =
+                    new ProvisionCommand(List.of("sk-long-key-12345678", "   ", "sk-2"), null);
 
             ProvisionResult result = service.provisionFromPlan(PLAN_CODE, request);
 
@@ -265,8 +263,7 @@ class ChannelProvisionServiceTest {
             // SKIPPED 路径不会走到 save，无需 stubChannelSave
             when(channelRepository.existsByProviderIdAndName(7L, "p-1")).thenReturn(true);
 
-            BatchProvisionRequest request = new BatchProvisionRequest();
-            request.setPlanCodes(List.of("p-1"));
+            BatchProvisionCommand request = new BatchProvisionCommand(List.of("p-1"));
 
             BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
 
@@ -301,8 +298,7 @@ class ChannelProvisionServiceTest {
         @DisplayName("套餐目录缺失时计入 FAILED（CatalogException 路径）")
         void catalogException_countsFailed() {
             when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.of(existingProvider()));
-            BatchProvisionRequest request = new BatchProvisionRequest();
-            request.setPlanCodes(List.of("p-missing"));
+            BatchProvisionCommand request = new BatchProvisionCommand(List.of("p-missing"));
             when(planCatalogRepository.findByPlanCode("p-missing")).thenReturn(Optional.empty());
 
             BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
@@ -331,8 +327,7 @@ class ChannelProvisionServiceTest {
         void providerNotExists_autoCreated() {
             when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.empty());
             stubProviderSaveWithId();
-            BatchProvisionRequest request = new BatchProvisionRequest();
-            request.setPlanCodes(List.of());
+            BatchProvisionCommand request = new BatchProvisionCommand(List.of());
 
             BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
 
@@ -421,9 +416,7 @@ class ChannelProvisionServiceTest {
         });
     }
 
-    private BatchProvisionRequest reqWithPlanCodes(String... codes) {
-        BatchProvisionRequest req = new BatchProvisionRequest();
-        req.setPlanCodes(List.of(codes));
-        return req;
+    private BatchProvisionCommand reqWithPlanCodes(String... codes) {
+        return new BatchProvisionCommand(List.of(codes));
     }
 }

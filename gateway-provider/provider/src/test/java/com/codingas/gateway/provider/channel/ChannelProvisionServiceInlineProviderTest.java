@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.catalog.ProvisionRequest;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.CatalogException;
@@ -143,13 +142,13 @@ class ChannelProvisionServiceInlineProviderTest {
         stubProviderSave();
         stubChannelSave();
 
-        ProvisionRequest request = new ProvisionRequest();
-        request.setInlineProvider(new ProvisionRequest.InlineProvider(
-                PROVIDER_CODE,
-                "OpenAI 显示名",
-                "供应商描述",
-                "https://openai.com",
-                "https://platform.openai.com/docs"));
+        ProvisionCommand request = new ProvisionCommand(null,
+                new ProvisionCommand.InlineProviderCommand(
+                        PROVIDER_CODE,
+                        "OpenAI 显示名",
+                        "供应商描述",
+                        "https://openai.com",
+                        "https://platform.openai.com/docs"));
 
         // 执行
         ProvisionResult result = service.provisionFromPlan(PLAN_CODE, request);
@@ -176,7 +175,7 @@ class ChannelProvisionServiceInlineProviderTest {
         stubProviderSave();
         stubChannelSave();
 
-        ProvisionRequest request = new ProvisionRequest();
+        ProvisionCommand request = new ProvisionCommand(null, null);
         // inlineProvider == null
 
         service.provisionFromPlan(PLAN_CODE, request);
@@ -204,9 +203,9 @@ class ChannelProvisionServiceInlineProviderTest {
         when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.of(existing));
         stubChannelSave();
 
-        ProvisionRequest request = new ProvisionRequest();
-        request.setInlineProvider(new ProvisionRequest.InlineProvider(
-                PROVIDER_CODE, "新名字（应被忽略）", null, null, null));
+        ProvisionCommand request = new ProvisionCommand(null,
+                new ProvisionCommand.InlineProviderCommand(
+                        PROVIDER_CODE, "新名字（应被忽略）", null, null, null));
 
         service.provisionFromPlan(PLAN_CODE, request);
 
@@ -221,9 +220,9 @@ class ChannelProvisionServiceInlineProviderTest {
         // 该路径在创建任何资源前就抛错，使用 lenient 防止 strict 模式抱怨未使用桩
         lenient().when(providerRepository.findByCode(any())).thenReturn(Optional.empty());
 
-        ProvisionRequest request = new ProvisionRequest();
-        request.setInlineProvider(new ProvisionRequest.InlineProvider(
-                "wrong-code", "Wrong", null, null, null));
+        ProvisionCommand request = new ProvisionCommand(null,
+                new ProvisionCommand.InlineProviderCommand(
+                        "wrong-code", "Wrong", null, null, null));
 
         Assertions.assertThatThrownBy(() -> service.provisionFromPlan(PLAN_CODE, request))
                 .isInstanceOf(CatalogException.class)

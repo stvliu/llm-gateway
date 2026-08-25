@@ -17,7 +17,7 @@ package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.provider.channel.ChannelProvisionService;
-import com.codingas.gateway.provider.catalog.ProvisionRequest;
+import com.codingas.gateway.provider.channel.ProvisionCommand;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.PlanCatalogRepository;
@@ -135,9 +135,9 @@ class ChannelProvisionTransactionalIntegrationTest {
         when(channelEndpointRepository.save(any(ChannelEndpoint.class)))
                 .thenThrow(new RuntimeException("simulated endpoint save failure"));
 
-        ProvisionRequest request = new ProvisionRequest();
-        request.setInlineProvider(new ProvisionRequest.InlineProvider(
-                NEW_PROVIDER_CODE, "Brand New", "测试用", null, null));
+        ProvisionCommand request = new ProvisionCommand(null,
+                new ProvisionCommand.InlineProviderCommand(
+                        NEW_PROVIDER_CODE, "Brand New", "测试用", null, null));
 
         // 行为：抛错
         assertThatThrownBy(() -> service.provisionFromPlan(NEW_PLAN_CODE, request))
@@ -179,9 +179,9 @@ class ChannelProvisionTransactionalIntegrationTest {
                     return ep;
                 });
 
-        ProvisionRequest request = new ProvisionRequest();
-        request.setInlineProvider(new ProvisionRequest.InlineProvider(
-                EXISTING_PROVIDER_CODE, "Should-Be-Ignored Name", "应被忽略", null, null));
+        ProvisionCommand request = new ProvisionCommand(null,
+                new ProvisionCommand.InlineProviderCommand(
+                        EXISTING_PROVIDER_CODE, "Should-Be-Ignored Name", "应被忽略", null, null));
 
         // 走通正常路径
         ProvisionResult result = service.provisionFromPlan(EXISTING_PLAN_CODE, request);

@@ -13,36 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.catalog;
-
-import lombok.Getter;
-import lombok.Setter;
+package com.codingas.gateway.provider.channel;
 
 import java.util.List;
 
 /**
- * 渠道开通请求
+ * 渠道开通用例入参
  *
- * <p>支持批量创建 API Key 凭证，以及在 provider 不存在时通过 inlineProvider 内联创建供应商。</p>
+ * <p>支持批量创建 API Key 凭证，以及在 provider 不存在时通过 inlineProvider 内联创建供应商。
+ * 字段合法性校验由 HTTP 层 DTO 承担（{@code web.api.dto.ProvisionRequest}）。</p>
+ *
+ * @param apiKeys        API Key 列表（批量创建凭证，可选）
+ * @param inlineProvider 内联供应商信息（可选）
  */
-@Getter
-@Setter
-public class ProvisionRequest {
-
-    /** API Key 列表（批量创建凭证） */
-    private List<String> apiKeys;
-
+public record ProvisionCommand(
+        List<String> apiKeys,
+        InlineProviderCommand inlineProvider
+) {
     /**
-     * 内联供应商信息（可选）
-     *
-     * <p>仅在目标 providerCode 尚未持久化时生效；若 providerCode 已存在，则该字段被忽略。</p>
-     * <p>若提供，inlineProvider.code() 必须与套餐解析得到的 providerCode 一致，否则抛
-     * {@code INLINE_PROVIDER_CODE_MISMATCH}。</p>
-     */
-    private InlineProvider inlineProvider;
-
-    /**
-     * 内联供应商参数
+     * 内联供应商用例入参
      *
      * @param code        供应商程序标识，必须与 planCode 解析出的 providerCode 一致
      * @param name        显示名（缺省时回退为 code）
@@ -50,7 +39,7 @@ public class ProvisionRequest {
      * @param websiteUrl  官网 URL
      * @param apiDocUrl   API 文档 URL
      */
-    public record InlineProvider(
+    public record InlineProviderCommand(
             String code,
             String name,
             String description,

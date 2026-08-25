@@ -13,22 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.catalog;
+package com.codingas.gateway.web.api.dto;
 
-import lombok.Getter;
-import lombok.Setter;
+import com.codingas.gateway.provider.channel.BatchProvisionCommand;
+import lombok.Data;
 
 import java.util.List;
 
 /**
- * 批量开通请求
+ * 批量开通请求 DTO（HTTP 契约）
  *
  * <p>供应商级联开通时，可选择性指定套餐编码列表。不传则开通所有 ACTIVE 套餐。</p>
  */
-@Getter
-@Setter
+@Data
 public class BatchProvisionRequest {
 
     /** 需要开通的套餐编码列表（可选，不传则全部开通） */
     private List<String> planCodes;
+
+    /**
+     * 转换为核心批量开通用例入参
+     *
+     * @return 批量开通用例入参
+     */
+    public BatchProvisionCommand toCommand() {
+        return new BatchProvisionCommand(planCodes);
+    }
 }

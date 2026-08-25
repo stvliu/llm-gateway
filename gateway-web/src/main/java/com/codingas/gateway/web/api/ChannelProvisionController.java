@@ -18,10 +18,10 @@ package com.codingas.gateway.web.api;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.codingas.gateway.provider.CatalogSyncFacade;
 import com.codingas.gateway.provider.channel.ChannelProvisionService;
-import com.codingas.gateway.provider.catalog.BatchProvisionRequest;
 import com.codingas.gateway.provider.catalog.BatchProvisionResult;
-import com.codingas.gateway.provider.catalog.ProvisionRequest;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
+import com.codingas.gateway.web.api.dto.BatchProvisionRequest;
+import com.codingas.gateway.web.api.dto.ProvisionRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,7 +57,8 @@ public class ChannelProvisionController {
     public ProvisionResult provisionFromPlan(
             @PathVariable String planCode,
             @RequestBody(required = false) ProvisionRequest request) {
-        return channelProvisionService.provisionFromPlan(planCode, request);
+        return channelProvisionService.provisionFromPlan(planCode,
+                request != null ? request.toCommand() : null);
     }
 
     /**
@@ -74,7 +75,8 @@ public class ChannelProvisionController {
     public BatchProvisionResult provisionBatch(
             @PathVariable String providerCode,
             @RequestBody(required = false) BatchProvisionRequest request) {
-        return channelProvisionService.provisionBatch(providerCode, request);
+        return channelProvisionService.provisionBatch(providerCode,
+                request != null ? request.toCommand() : null);
     }
 
     /**

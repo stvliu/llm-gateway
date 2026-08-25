@@ -15,9 +15,7 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.catalog.BatchProvisionRequest;
 import com.codingas.gateway.provider.catalog.BatchProvisionResult;
-import com.codingas.gateway.provider.catalog.ProvisionRequest;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.CatalogException;
@@ -104,13 +102,14 @@ public class ChannelProvisionService {
      * @return 开通结果
      */
     @Transactional
-    public ProvisionResult provisionFromPlan(String planCode, ProvisionRequest request) {
+    public ProvisionResult provisionFromPlan(String planCode, ProvisionCommand command) {
         PlanCatalog catalog = planCatalogRepository.findByPlanCode(planCode)
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "套餐目录不存在: " + planCode));
 
         // 入口校验：若提供 inlineProvider，其 code 必须与套餐解析的 providerCode 一致
-        ProvisionRequest.InlineProvider inline = request != null ? request.getInlineProvider() : null;
+        ProvisionCommand.InlineProviderCommand inline =
+                command != null ? command.inlineProvider() : null;
         if (inline != null && inline.code() != null
                 && !Objects.equals(inline.code(), catalog.getProviderCode())) {
             throw new CatalogException("INLINE_PROVIDER_CODE_MISMATCH",
@@ -170,9 +169,9 @@ public class ChannelProvisionService {
         log.info("开通套餐-创建模型实例成功: planCode={}, count={}", planCode, pricing.size());
 
         // 批量创建 API Key 凭证
-        if (request != null && request.getApiKeys() != null && !request.getApiKeys().isEmpty()) {
+        if (command != null && command.apiKeys() != null && !command.apiKeys().isEmpty()) {
             int priority = 1;
-            for (String apiKey : request.getApiKeys()) {
+            for (String apiKey : command.apiKeys()) {
                 if (apiKey == null || apiKey.isBlank()) {
                     continue;
                 }
@@ -190,7 +189,7 @@ public class ChannelProvisionService {
                 channelCredentialRepository.save(credential);
                 priority++;
             }
-            log.info("开通套餐-批量创建凭证成功: planCode={}, count={}", planCode, request.getApiKeys().size());
+            log.info("开通套餐-批量创建凭证成功: planCode={}, count={}", planCode, command.apiKeys().size());
         }
 
         return ProvisionResult.created(planCode, savedChannel.getId(), endpoints.size(), pricing.size());
@@ -207,7 +206,7 @@ public class ChannelProvisionService {
      * @return 批量开通结果
      */
     @Transactional(timeout = 30)
-    public BatchProvisionResult provisionBatch(String providerCode, BatchProvisionRequest request) {
+    public BatchProvisionResult provisionBatch(String providerCode, BatchProvisionCommand command) {
         // 1. 确保 Provider 存在
         ensureProvider(providerCode);
 
@@ -215,8 +214,8 @@ public class ChannelProvisionService {
         List<PlanCatalog> allPlans = planCatalogRepository.findByProviderCode(providerCode);
         List<String> targetPlanCodes;
 
-        if (request != null && request.getPlanCodes() != null && !request.getPlanCodes().isEmpty()) {
-            targetPlanCodes = request.getPlanCodes();
+        if (command != null && command.planCodes() != null && !command.planCodes().isEmpty()) {
+            targetPlanCodes = command.planCodes();
         } else {
             targetPlanCodes = allPlans.stream()
                     .map(PlanCatalog::getPlanCode)
@@ -315,7 +314,7 @@ public class ChannelProvisionService {
      * @param inline       内联供应商参数；为空时走默认级联
      * @return 现有或新建的 Provider
      */
-    private Provider ensureProvider(String providerCode, ProvisionRequest.InlineProvider inline) {
+    private Provider ensureProvider(String providerCode, ProvisionCommand.InlineProviderCommand inline) {
         return providerRepository.findByCode(providerCode).orElseGet(() -> {
             Provider provider = new Provider();
             provider.setCode(providerCode);
