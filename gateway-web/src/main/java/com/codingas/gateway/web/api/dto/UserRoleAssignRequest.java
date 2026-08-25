@@ -13,33 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.user.UserState;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
-import java.time.Instant;
+
+import java.util.List;
 
 /**
- * 用户响应
+ * 用户角色分配请求 DTO（HTTP 契约）
  */
 @Data
-public class UserResponse {
-    private Long id;
-    private String username;
-    private String email;
-    private String phone;
-    private String avatarUrl;
-    private UserState state;
-    private Boolean emailVerified;
-    /**
-     * 用户角色：ADMIN（管理员）/ USER（普通用户）
-     */
-    private String role;
-    /**
-     * 是否为系统内建用户
-     */
-    private Boolean builtin;
-    private Instant lastLoginAt;
-    private Instant createdAt;
-    private Instant updatedAt;
+public class UserRoleAssignRequest {
+    @NotEmpty(message = "角色代码不能为空")
+    private List<String> roleCodes;
 }

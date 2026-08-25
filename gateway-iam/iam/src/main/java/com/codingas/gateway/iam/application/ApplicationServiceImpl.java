@@ -16,9 +16,6 @@
 package com.codingas.gateway.iam.application;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.ApplicationChannelItem;
-import com.codingas.gateway.iam.dto.ApplicationRequest;
-import com.codingas.gateway.iam.dto.ApplicationResponse;
 import com.codingas.gateway.iam.auth.RolePermissions;
 import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -53,74 +50,72 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional
-    public ApplicationResponse create(ApplicationRequest request) {
+    public Application create(ApplicationCommand command) {
         // code 全局唯一校验
-        if (applicationRepository.findByCode(request.getCode()) != null) {
+        if (applicationRepository.findByCode(command.code()) != null) {
             throw new GatewayRequestException("APPLICATION_CODE_DUPLICATE",
-                    "应用编码已存在: " + request.getCode());
+                    "应用编码已存在: " + command.code());
         }
 
         Application app = new Application();
-        app.setCode(request.getCode());
-        app.setName(request.getName());
-        app.setDescription(request.getDescription());
+        app.setCode(command.code());
+        app.setName(command.name());
+        app.setDescription(command.description());
         // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
-        app.setTimeout(request.getTimeout());
+        app.setTimeout(command.timeout());
         // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
-        app.setFailureStrategy(request.getFailureStrategy() != null
-                ? request.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
+        app.setFailureStrategy(command.failureStrategy() != null
+                ? command.failureStrategy() : FailureStrategy.FAIL_RETRY);
         // 创建时状态默认 ACTIVE
         app.setState(ApplicationState.ACTIVE);
 
         Application saved = applicationRepository.save(app);
         log.info("Created application: id={}, code={}", saved.getId(), saved.getCode());
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
     @Transactional
-    public ApplicationResponse update(Long id, ApplicationRequest request) {
+    public Application update(Long id, ApplicationCommand command) {
         Application app = applicationRepository.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
 
         // code 变更时校验新 code 不与其他应用冲突
-        if (!app.getCode().equals(request.getCode())) {
-            if (applicationRepository.findByCode(request.getCode()) != null) {
+        if (!app.getCode().equals(command.code())) {
+            if (applicationRepository.findByCode(command.code()) != null) {
                 throw new GatewayRequestException("APPLICATION_CODE_DUPLICATE",
-                        "应用编码已存在: " + request.getCode());
+                        "应用编码已存在: " + command.code());
             }
         }
 
-        app.setCode(request.getCode());
-        app.setName(request.getName());
-        app.setDescription(request.getDescription());
+        app.setCode(command.code());
+        app.setName(command.name());
+        app.setDescription(command.description());
         // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
-        app.setTimeout(request.getTimeout());
+        app.setTimeout(command.timeout());
         // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
-        app.setFailureStrategy(request.getFailureStrategy() != null
-                ? request.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
+        app.setFailureStrategy(command.failureStrategy() != null
+                ? command.failureStrategy() : FailureStrategy.FAIL_RETRY);
 
         Application saved = applicationRepository.save(app);
         log.info("Updated application: id={}", saved.getId());
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
-    public ApplicationResponse getById(Long id) {
+    public Application getById(Long id) {
         Application app = applicationRepository.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
-        return toResponse(app);
+        return app;
     }
 
     @Override
-    public List<ApplicationResponse> getAll() {
-        return applicationRepository.findAll().stream()
-                .map(this::toResponse)
-                .toList();
+    public List<Application> getAll() {
+        return applicationRepository.findAll();
     }
 
     @Override
@@ -138,13 +133,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    public List<ApplicationChannelItem> listChannels(Long id) {
+    public List<ApplicationChannel> listChannels(Long id) {
         // 渠道绑定属管理数据：拦截器按 GET /applications/** 放行 USER 后，这里兜底仅管理员可查
         assertAdmin();
-        // 经 gateway 取含 priority 的关联列表，转换为响应 DTO（priority 原样透传，null 表示未配置）
-        return applicationChannelRepository.findByApplicationId(id).stream()
-                .map(rel -> new ApplicationChannelItem(rel.getChannelId(), rel.getPriority()))
-                .toList();
+        // 经 gateway 取含 priority 的关联列表（priority 原样透传，null 表示未配置）
+        return applicationChannelRepository.findByApplicationId(id);
     }
 
     /** 管理端操作校验：仅管理员可执行 */
@@ -156,7 +149,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Override
     @Transactional
-    public void updateChannels(Long id, List<ApplicationChannelItem> channels) {
+    public void updateChannels(Long id, List<ApplicationChannelCommand> channels) {
         Application app = applicationRepository.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
@@ -172,25 +165,5 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         log.info("Updated application channels: appId={}, count={}", id,
                 channels != null ? channels.size() : 0);
-    }
-
-    /**
-     * 实体转响应 DTO
-     */
-    private ApplicationResponse toResponse(Application app) {
-        ApplicationResponse response = new ApplicationResponse();
-        response.setId(app.getId());
-        response.setCode(app.getCode());
-        response.setName(app.getName());
-        response.setDescription(app.getDescription());
-        response.setState(app.getState() != null ? app.getState().name() : null);
-        response.setTimeout(app.getTimeout());
-        response.setFailureStrategy(app.getFailureStrategy() != null
-                ? app.getFailureStrategy().name() : null);
-        response.setQuotaBudgetId(app.getQuotaBudgetId());
-        response.setDashboardId(app.getDashboardId());
-        response.setCreatedAt(app.getCreatedAt());
-        response.setUpdatedAt(app.getUpdatedAt());
-        return response;
     }
 }

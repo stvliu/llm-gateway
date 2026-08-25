@@ -13,30 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
-
-import java.time.Instant;
+package com.codingas.gateway.iam.apikey;
 
 /**
- * 用户 API Key 响应
+ * 更新用户 API Key 用例入参
  *
- * @param id            主键
- * @param userId        用户 ID
- * @param applicationId 应用 ID（权限锚点）
- * @param keyPrefix     Key 前缀
- * @param keyPlain      明文 Key（仅创建/详情返回）
- * @param name          密钥名称
- * @param createdAt     创建时间
- * @param updatedAt     更新时间
+ * <p>仅非 null 字段参与更新：applicationId 非 null 表示补绑/转移，name 非 null 表示重命名。</p>
+ *
+ * @param applicationId 应用 ID（可选，非 null 时表示补绑/转移）
+ * @param name          密钥名称（可选）
  */
-public record UserApiKeyResponse(
-        Long id,
-        Long userId,
+public record UserApiKeyUpdateCommand(
         Long applicationId,
-        String keyPrefix,
-        String keyPlain,
-        String name,
-        Instant createdAt,
-        Instant updatedAt
+        String name
 ) {
 }

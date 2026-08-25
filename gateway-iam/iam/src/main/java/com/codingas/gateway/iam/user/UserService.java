@@ -15,61 +15,83 @@
  */
 package com.codingas.gateway.iam.user;
 
-import com.codingas.gateway.iam.dto.ChangePasswordRequest;
-import com.codingas.gateway.iam.dto.LoginRequest;
-import com.codingas.gateway.iam.dto.LoginResponse;
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
+
+import java.util.List;
 
 /**
  * 用户应用服务接口
  *
- * <p>处理用户管理的业务逻辑。</p>
+ * <p>处理用户管理的业务逻辑。出入参采用领域实体 {@link User} 与轻量用例对象，
+ * HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface UserService {
 
     /**
      * 创建用户
+     *
+     * @param command 创建用例入参
+     * @return 创建后的用户实体
      */
-    UserResponse create(UserCreateRequest request);
+    User create(UserCreateCommand command);
 
     /**
      * 根据 ID 获取用户
+     *
+     * @param id 用户 ID
+     * @return 用户实体
      */
-    UserResponse getById(Long id);
+    User getById(Long id);
 
     /**
      * 查询用户列表
+     *
+     * @param query 查询条件
+     * @return 用户实体分页
      */
-    PageResponse<UserResponse> query(UserQueryRequest request);
+    PageResponse<User> query(UserQuery query);
 
     /**
      * 更新用户
+     *
+     * @param id      用户 ID
+     * @param command 更新用例入参（仅非 null 字段生效）
+     * @return 更新后的用户实体
      */
-    UserResponse update(Long id, UserUpdateRequest request);
+    User update(Long id, UserUpdateCommand command);
 
     /**
      * 删除用户（软删除）
+     *
+     * @param id 用户 ID
      */
     void delete(Long id);
 
     /**
      * 更新用户状态
+     *
+     * @param id    用户 ID
+     * @param state 目标状态
+     * @return 更新后的用户实体
      */
-    UserResponse updateState(Long id, UserStateUpdateRequest request);
+    User updateState(Long id, UserState state);
 
     /**
      * 分配用户角色
+     *
+     * @param id        用户 ID
+     * @param roleCodes 角色代码列表（取首个生效，空列表不修改）
+     * @return 更新后的用户实体
      */
-    UserResponse assignRoles(Long id, UserRoleAssignRequest request);
+    User assignRoles(Long id, List<String> roleCodes);
 
     /**
      * 用户登录
      *
-     * @param request 登录请求
-     * @return 登录响应（包含用户信息和令牌）
+     * @param command 登录用例入参
+     * @return 登录用例结果（用户实体、令牌与权限码）
      */
-    LoginResponse login(LoginRequest request);
+    LoginResult login(LoginCommand command);
 
     /**
      * 用户登出
@@ -79,10 +101,10 @@ public interface UserService {
     /**
      * 修改密码
      *
-     * @param userId 用户 ID
-     * @param request 修改密码请求
+     * @param userId  用户 ID
+     * @param command 修改密码用例入参
      */
-    void changePassword(Long userId, ChangePasswordRequest request);
+    void changePassword(Long userId, ChangePasswordCommand command);
 
     /**
      * 重置密码（管理员触发）
@@ -91,7 +113,7 @@ public interface UserService {
      * 一次性返回明文。禁止重置内建用户密码。</p>
      *
      * @param userId 用户 ID
-     * @return 含一次性明文的响应
+     * @return 含一次性明文的用例结果
      */
-    ResetPasswordResponse resetPassword(Long userId);
+    ResetPasswordResult resetPassword(Long userId);
 }

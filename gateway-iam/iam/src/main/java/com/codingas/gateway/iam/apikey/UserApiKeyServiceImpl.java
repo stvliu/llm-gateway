@@ -16,11 +16,6 @@
 package com.codingas.gateway.iam.apikey;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.UserApiKeyCreateRequest;
-import com.codingas.gateway.iam.dto.UserApiKeyCreateResponse;
-import com.codingas.gateway.iam.dto.UserApiKeyDetailResponse;
-import com.codingas.gateway.iam.dto.UserApiKeyResponse;
-import com.codingas.gateway.iam.dto.UserApiKeyUpdateRequest;
 import com.codingas.gateway.iam.auth.RolePermissions;
 import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -57,89 +52,83 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
 
     @Override
     @Transactional
-    public UserApiKeyCreateResponse create(UserApiKeyCreateRequest request) {
+    public UserApiKey create(UserApiKeyCreateCommand command) {
         // 校验 Application 存在（applicationId 为权限锚点，引用必须有效）
-        validateApplicationExists(request.applicationId());
+        validateApplicationExists(command.applicationId());
 
         GeneratedApiKey generated = userApiKeyGenerator.generate();
 
         UserApiKey apiKey = new UserApiKey();
         // 数据归属：普通用户强制归属当前登录用户（忽略请求体 userId，防止越权代建）
-        apiKey.setUserId(isAdmin() ? request.userId() : currentUserId());
-        apiKey.setApplicationId(request.applicationId());
+        apiKey.setUserId(isAdmin() ? command.userId() : currentUserId());
+        apiKey.setApplicationId(command.applicationId());
         apiKey.setKeyPrefix(generated.keyPrefix());
         apiKey.setKeyPlain(generated.plainKey());
-        apiKey.setName(request.name());
+        apiKey.setName(command.name());
 
         UserApiKey saved = userApiKeyRepository.save(apiKey);
         log.info("Created UserApiKey: id={}, userId={}, applicationId={}",
                 saved.getId(), saved.getUserId(), saved.getApplicationId());
 
-        return new UserApiKeyCreateResponse(saved.getId(), generated.keyPrefix(), generated.plainKey());
+        return saved;
     }
 
     @Override
-    public List<UserApiKeyResponse> findByUserId(Long userId) {
+    public List<UserApiKey> findByUserId(Long userId) {
         // 数据范围：普通用户只能查询自己的 Key（MeController/Quickstart 均传自身 userId）
         assertAccessToUser(userId);
-        return userApiKeyRepository.findByUserId(userId).stream()
-                .map(this::toResponse)
-                .toList();
+        return userApiKeyRepository.findByUserId(userId);
     }
 
     @Override
-    public List<UserApiKeyResponse> findAllNonDeleted() {
+    public List<UserApiKey> findAllNonDeleted() {
         // 全部 Key 列表为管理操作，仅管理员可查
         assertAdmin();
-        return userApiKeyRepository.findAllNonDeleted().stream()
-                .map(this::toResponse)
-                .toList();
+        return userApiKeyRepository.findAllNonDeleted();
     }
 
     @Override
-    public List<UserApiKeyResponse> findByApplicationId(Long applicationId) {
+    public List<UserApiKey> findByApplicationId(Long applicationId) {
         // 按应用查询为管理操作，仅管理员可查
         assertAdmin();
-        return userApiKeyRepository.findByApplicationId(applicationId).stream()
-                .map(this::toResponse)
-                .toList();
+        return userApiKeyRepository.findByApplicationId(applicationId);
     }
 
     @Override
-    public UserApiKeyResponse getById(Long id) {
+    public UserApiKey getById(Long id) {
         UserApiKey apiKey = userApiKeyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
         assertOwned(apiKey);
-        return toResponse(apiKey);
+        return apiKey;
     }
 
     @Override
-    public UserApiKeyDetailResponse getDetailById(Long id) {
+    public UserApiKey getDetailById(Long id) {
         UserApiKey apiKey = userApiKeyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
         assertOwned(apiKey);
-        return toDetailResponse(apiKey);
+        return apiKey;
     }
 
     @Override
     @Transactional
-    public UserApiKeyResponse update(Long id, UserApiKeyUpdateRequest request) {
+    public UserApiKey update(Long id, UserApiKeyUpdateCommand command) {
         UserApiKey apiKey = userApiKeyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
         assertOwned(apiKey);
 
         // 补绑/转移 applicationId（非 null 时校验存在）
-        if (request.applicationId() != null) {
-            validateApplicationExists(request.applicationId());
-            apiKey.setApplicationId(request.applicationId());
+        if (command.applicationId() != null) {
+            validateApplicationExists(command.applicationId());
+            apiKey.setApplicationId(command.applicationId());
         }
-        if (request.name() != null) {
-            apiKey.setName(request.name());
+        if (command.name() != null) {
+            apiKey.setName(command.name());
         }
 
         UserApiKey saved = userApiKeyRepository.save(apiKey);
         log.info("Updated UserApiKey: id={}, applicationId={}", saved.getId(), saved.getApplicationId());
-        return toResponse(saved);
+        return saved;
     }
 
     @Override
@@ -211,31 +200,5 @@ public class UserApiKeyServiceImpl implements UserApiKeyService {
         if (applicationRepository.findById(applicationId) == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + applicationId);
         }
-    }
-
-    private UserApiKeyResponse toResponse(UserApiKey apiKey) {
-        return new UserApiKeyResponse(
-                apiKey.getId(),
-                apiKey.getUserId(),
-                apiKey.getApplicationId(),
-                apiKey.getKeyPrefix(),
-                apiKey.getKeyPlain(),
-                apiKey.getName(),
-                apiKey.getCreatedAt(),
-                apiKey.getUpdatedAt()
-        );
-    }
-
-    private UserApiKeyDetailResponse toDetailResponse(UserApiKey apiKey) {
-        return new UserApiKeyDetailResponse(
-                apiKey.getId(),
-                apiKey.getUserId(),
-                apiKey.getApplicationId(),
-                apiKey.getKeyPrefix(),
-                apiKey.getKeyPlain(),
-                apiKey.getName(),
-                apiKey.getCreatedAt(),
-                apiKey.getUpdatedAt()
-        );
     }
 }

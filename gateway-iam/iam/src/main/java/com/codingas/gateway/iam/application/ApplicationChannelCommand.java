@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.iam.application;
 
 /**
- * 更新用户 API Key 请求
+ * 应用-渠道授权项用例入参
  *
- * @param applicationId 应用 ID（可选，非 null 时表示补绑/转移）
- * @param name          密钥名称（可选）
+ * <p>表示一个应用授权的渠道及其应用级转移优先级。</p>
+ *
+ * @param channelId 渠道 ID（物理主键，必然 > 0）
+ * @param priority  转移优先级（数值越小越优先；为 null 表示未配置，回退默认值 100）
  */
-public record UserApiKeyUpdateRequest(
-        Long applicationId,
-        String name
+public record ApplicationChannelCommand(
+        Long channelId,
+        Integer priority
 ) {
 }

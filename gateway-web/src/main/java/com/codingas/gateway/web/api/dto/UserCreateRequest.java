@@ -13,24 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.iam.user.UserCreateCommand;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
- * 更新用户请求
+ * 创建用户请求 DTO（HTTP 契约）
  */
 @Data
-public class UserUpdateRequest {
+public class UserCreateRequest {
+    @NotBlank(message = "用户名不能为空")
     @Size(min = 2, max = 64, message = "用户名长度必须在 2-64 之间")
     private String username;
 
+    @NotBlank(message = "邮箱不能为空")
     @Email(message = "邮箱格式不正确")
     private String email;
 
+    @NotBlank(message = "密码不能为空")
+    @Size(min = 8, max = 128, message = "密码长度必须在 8-128 之间")
+    private String password;
+
     private String phone;
 
-    private String avatarUrl;
+    /**
+     * 用户角色：ADMIN（管理员）/ USER（普通用户）
+     * 默认为 USER
+     */
+    private String role;
+
+    /**
+     * 转换为核心创建用例入参
+     *
+     * @return 创建用例入参
+     */
+    public UserCreateCommand toCommand() {
+        return new UserCreateCommand(username, email, password, phone, role);
+    }
 }

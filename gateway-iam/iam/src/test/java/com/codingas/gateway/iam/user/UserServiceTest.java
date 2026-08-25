@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.iam.user;
 
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
@@ -71,14 +70,10 @@ class UserServiceTest {
 
         @Test
         @DisplayName("创建用户成功")
-        void create_validRequest_returnsUserResponse() {
+        void create_validRequest_returnsUser() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setUsername("newuser");
-            request.setEmail("new@example.com");
-            request.setPassword("plainPassword123");
-            request.setPhone("13800138000");
-            request.setRole("ADMIN");
+            UserCreateCommand command =
+                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", "13800138000", "ADMIN");
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -89,13 +84,13 @@ class UserServiceTest {
             });
 
             // when
-            UserResponse response = userService.create(request);
+            User user = userService.create(command);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(2L);
-            assertThat(response.getUsername()).isEqualTo("newuser");
-            assertThat(response.getEmail()).isEqualTo("new@example.com");
+            assertThat(user).isNotNull();
+            assertThat(user.getId()).isEqualTo(2L);
+            assertThat(user.getUsername()).isEqualTo("newuser");
+            assertThat(user.getEmail()).isEqualTo("new@example.com");
             verify(userRepository).existsByEmail("new@example.com");
             verify(userRepository).save(any(User.class));
         }
@@ -104,10 +99,8 @@ class UserServiceTest {
         @DisplayName("创建用户时角色默认为 USER")
         void create_withoutRole_defaultsToUser() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setUsername("newuser");
-            request.setEmail("new@example.com");
-            request.setPassword("plainPassword123");
+            UserCreateCommand command =
+                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", null, null);
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -118,7 +111,7 @@ class UserServiceTest {
             });
 
             // when
-            userService.create(request);
+            userService.create(command);
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -131,15 +124,13 @@ class UserServiceTest {
         @DisplayName("邮箱已存在时抛出 DuplicateResourceException")
         void create_duplicateEmail_throwsException() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setUsername("newuser");
-            request.setEmail("existing@example.com");
-            request.setPassword("password123");
+            UserCreateCommand command =
+                    new UserCreateCommand("newuser", "existing@example.com", "password123", null, null);
 
             when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> userService.create(request))
+            assertThatThrownBy(() -> userService.create(command))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining("email");
@@ -151,10 +142,8 @@ class UserServiceTest {
         @DisplayName("创建用户时密码应被哈希")
         void create_validRequest_passwordIsHashed() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setUsername("newuser");
-            request.setEmail("new@example.com");
-            request.setPassword("plainPassword123");
+            UserCreateCommand command =
+                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", null, null);
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -165,7 +154,7 @@ class UserServiceTest {
             });
 
             // when
-            userService.create(request);
+            userService.create(command);
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -182,18 +171,18 @@ class UserServiceTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("用户存在时返回用户响应")
-        void getById_existingUser_returnsUserResponse() {
+        @DisplayName("用户存在时返回用户实体")
+        void getById_existingUser_returnsUser() {
             // given
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
             // when
-            UserResponse response = userService.getById(1L);
+            User user = userService.getById(1L);
 
             // then
-            assertThat(response).isNotNull();
-            assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getUsername()).isEqualTo("testuser");
+            assertThat(user).isNotNull();
+            assertThat(user.getId()).isEqualTo(1L);
+            assertThat(user.getUsername()).isEqualTo("testuser");
             verify(userRepository).findById(1L);
         }
 
@@ -224,12 +213,12 @@ class UserServiceTest {
             User user2 = createTestUser(2L, "user2", "user2@example.com");
             when(userRepository.findAll()).thenReturn(List.of(testUser, user2));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setPage(1);
-            request.setLimit(20);
+            UserQuery query = new UserQuery();
+            query.setPage(1);
+            query.setLimit(20);
 
             // when
-            PageResponse<UserResponse> response = userService.query(request);
+            PageResponse<User> response = userService.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(2);
@@ -242,13 +231,13 @@ class UserServiceTest {
             // given
             when(userRepository.findAll()).thenReturn(List.of(testUser));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setKeyword("test");
-            request.setPage(1);
-            request.setLimit(20);
+            UserQuery query = new UserQuery();
+            query.setKeyword("test");
+            query.setPage(1);
+            query.setLimit(20);
 
             // when
-            PageResponse<UserResponse> response = userService.query(request);
+            PageResponse<User> response = userService.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -261,13 +250,13 @@ class UserServiceTest {
             // given
             when(userRepository.findAll()).thenReturn(List.of(testUser));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setState(UserState.ACTIVE);
-            request.setPage(1);
-            request.setLimit(20);
+            UserQuery query = new UserQuery();
+            query.setState(UserState.ACTIVE);
+            query.setPage(1);
+            query.setLimit(20);
 
             // when
-            PageResponse<UserResponse> response = userService.query(request);
+            PageResponse<User> response = userService.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -284,12 +273,12 @@ class UserServiceTest {
             }
             when(userRepository.findAll()).thenReturn(users);
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setPage(2);
-            request.setLimit(10);
+            UserQuery query = new UserQuery();
+            query.setPage(2);
+            query.setLimit(10);
 
             // when
-            PageResponse<UserResponse> response = userService.query(request);
+            PageResponse<User> response = userService.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(10);
@@ -305,13 +294,13 @@ class UserServiceTest {
             // given
             when(userRepository.findAll()).thenReturn(List.of(testUser));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setKeyword("nonexistent");
-            request.setPage(1);
-            request.setLimit(20);
+            UserQuery query = new UserQuery();
+            query.setKeyword("nonexistent");
+            query.setPage(1);
+            query.setLimit(20);
 
             // when
-            PageResponse<UserResponse> response = userService.query(request);
+            PageResponse<User> response = userService.query(query);
 
             // then
             assertThat(response.getItems()).isEmpty();
@@ -332,14 +321,13 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserUpdateRequest request = new UserUpdateRequest();
-            request.setUsername("updateduser");
+            UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when
-            UserResponse response = userService.update(1L, request);
+            User user = userService.update(1L, command);
 
             // then
-            assertThat(response).isNotNull();
+            assertThat(user).isNotNull();
             verify(userRepository).findById(1L);
             verify(userRepository).save(testUser);
         }
@@ -351,11 +339,10 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserUpdateRequest request = new UserUpdateRequest();
-            request.setEmail("updated@example.com");
+            UserUpdateCommand command = new UserUpdateCommand(null, "updated@example.com", null, null);
 
             // when
-            userService.update(1L, request);
+            userService.update(1L, command);
 
             // then
             verify(userRepository).save(testUser);
@@ -367,11 +354,10 @@ class UserServiceTest {
             // given
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            UserUpdateRequest request = new UserUpdateRequest();
-            request.setUsername("updateduser");
+            UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when & then
-            assertThatThrownBy(() -> userService.update(99L, request))
+            assertThatThrownBy(() -> userService.update(99L, command))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -423,11 +409,8 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.INACTIVE);
-
             // when
-            UserResponse response = userService.updateState(1L, request);
+            User user = userService.updateState(1L, UserState.INACTIVE);
 
             // then
             assertThat(testUser.getState()).isEqualTo(UserState.INACTIVE);
@@ -440,11 +423,8 @@ class UserServiceTest {
             // given
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.LOCKED);
-
             // when & then
-            assertThatThrownBy(() -> userService.updateState(99L, request))
+            assertThatThrownBy(() -> userService.updateState(99L, UserState.LOCKED))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -462,14 +442,11 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of("ADMIN"));
-
             // when
-            UserResponse response = userService.assignRoles(1L, request);
+            User user = userService.assignRoles(1L, List.of("ADMIN"));
 
             // then
-            assertThat(response).isNotNull();
+            assertThat(user).isNotNull();
             assertThat(testUser.getRole()).isEqualTo("ADMIN");
             verify(userRepository).save(testUser);
         }
@@ -480,11 +457,8 @@ class UserServiceTest {
             // given
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of("ADMIN"));
-
             // when & then
-            assertThatThrownBy(() -> userService.assignRoles(99L, request))
+            assertThatThrownBy(() -> userService.assignRoles(99L, List.of("ADMIN")))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }

@@ -16,9 +16,8 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.iam.user.UserService;
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
-import com.codingas.gateway.iam.dto.UserApiKeyResponse;
+import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +43,7 @@ public class UserController {
      */
     @PostMapping
     public UserResponse create(@Valid @RequestBody UserCreateRequest request) {
-        return userService.create(request);
+        return UserResponse.from(userService.create(request.toCommand()));
     }
 
     /**
@@ -52,7 +51,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public UserResponse getById(@PathVariable Long id) {
-        return userService.getById(id);
+        return UserResponse.from(userService.getById(id));
     }
 
     /**
@@ -60,7 +59,7 @@ public class UserController {
      */
     @GetMapping
     public PageResponse<UserResponse> query(@ModelAttribute UserQueryRequest request) {
-        return userService.query(request);
+        return UserResponse.fromPage(userService.query(request.toQuery()));
     }
 
     /**
@@ -70,7 +69,7 @@ public class UserController {
     public UserResponse update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return userService.update(id, request);
+        return UserResponse.from(userService.update(id, request.toCommand()));
     }
 
     /**
@@ -88,7 +87,7 @@ public class UserController {
     public UserResponse updateState(
             @PathVariable Long id,
             @Valid @RequestBody UserStateUpdateRequest request) {
-        return userService.updateState(id, request);
+        return UserResponse.from(userService.updateState(id, request.getState()));
     }
 
     /**
@@ -98,7 +97,7 @@ public class UserController {
     public UserResponse assignRoles(
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
-        return userService.assignRoles(id, request);
+        return UserResponse.from(userService.assignRoles(id, request.getRoleCodes()));
     }
 
     /**
@@ -109,7 +108,7 @@ public class UserController {
      */
     @PostMapping("/{id}/reset-password")
     public ResetPasswordResponse resetPassword(@PathVariable Long id) {
-        return userService.resetPassword(id);
+        return ResetPasswordResponse.from(userService.resetPassword(id));
     }
 
     // ==================== UserApiKey 子资源 ====================
@@ -119,6 +118,6 @@ public class UserController {
      */
     @GetMapping("/{userId}/api-keys")
     public List<UserApiKeyResponse> listUserApiKeys(@PathVariable Long userId) {
-        return userApiKeyService.findByUserId(userId);
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
     }
 }

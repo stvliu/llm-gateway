@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
-import jakarta.validation.constraints.NotEmpty;
+import com.codingas.gateway.iam.user.UserState;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import java.util.List;
 
 /**
- * 用户角色分配请求
- *
- * <p>简化角色模型：仅支持分配单一角色（取列表第一个）。</p>
+ * 用户状态更新请求 DTO（HTTP 契约）
  */
 @Data
-public class UserRoleAssignRequest {
-    /**
-     * 角色代码列表（简化模型下仅使用第一个）
-     */
-    @NotEmpty(message = "角色代码不能为空")
-    private List<String> roleCodes;
+public class UserStateUpdateRequest {
+    @NotNull(message = "状态不能为空")
+    private UserState state;
 }

@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;

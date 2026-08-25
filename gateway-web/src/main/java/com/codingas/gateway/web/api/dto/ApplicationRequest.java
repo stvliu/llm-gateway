@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.common.enums.FailureStrategy;
+import com.codingas.gateway.iam.application.ApplicationCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
- * 应用创建/更新请求 DTO
+ * 应用创建/更新请求 DTO（HTTP 契约）
  *
  * <p>承载应用聚合根可编辑字段：code（全局唯一）、name、description、timeout。
  * state 由后端管理（创建时默认 ACTIVE），不通过此 DTO 修改。</p>
- *
- * <p>Task 8：{@code resilienceProfileId} 退场，改为 {@code timeout}（承接原 ResilienceProfile.timeout，
- * 0 表示用渠道默认）。update 时透传 request 值。</p>
  */
 @Data
 public class ApplicationRequest {
@@ -45,5 +44,14 @@ public class ApplicationRequest {
     private int timeout;
 
     /** 应用级失败处理策略（不传时后端默认 FAIL_RETRY） */
-    private com.codingas.gateway.common.enums.FailureStrategy failureStrategy;
+    private FailureStrategy failureStrategy;
+
+    /**
+     * 转换为核心创建/更新用例入参
+     *
+     * @return 应用用例入参
+     */
+    public ApplicationCommand toCommand() {
+        return new ApplicationCommand(code, name, description, timeout, failureStrategy);
+    }
 }

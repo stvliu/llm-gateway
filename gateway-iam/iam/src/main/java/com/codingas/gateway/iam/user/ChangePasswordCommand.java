@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
-
-import com.codingas.gateway.iam.user.UserState;
-import jakarta.validation.constraints.NotNull;
-import lombok.Data;
+package com.codingas.gateway.iam.user;
 
 /**
- * 更新用户状态请求
+ * 修改密码用例入参
+ *
+ * @param currentPassword 当前密码（明文）
+ * @param newPassword     新密码（明文）
  */
-@Data
-public class UserStateUpdateRequest {
-    @NotNull(message = "状态不能为空")
-    private UserState state;
+public record ChangePasswordCommand(
+        String currentPassword,
+        String newPassword
+) {
 }

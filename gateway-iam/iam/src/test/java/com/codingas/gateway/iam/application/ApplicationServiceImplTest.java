@@ -16,9 +16,6 @@
 package com.codingas.gateway.iam.application;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.ApplicationChannelItem;
-import com.codingas.gateway.iam.dto.ApplicationRequest;
-import com.codingas.gateway.iam.dto.ApplicationResponse;
 import com.codingas.gateway.iam.exception.ForbiddenException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.enums.FailureStrategy;
@@ -72,26 +69,23 @@ class ApplicationServiceImplTest {
 
     @Nested
     @DisplayName("create 方法测试")
-
     class CreateTests {
 
         @Test
         @DisplayName("创建应用成功，状态默认 ACTIVE")
-        void create_validRequest_returnsResponseWithActiveState() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("测试应用");
-            request.setDescription("描述");
+        void create_validRequest_returnsAppWithActiveState() {
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "测试应用", "描述", 0, null);
             when(applicationRepository.findByCode("APP-001")).thenReturn(null);
             Application saved = buildSavedApplication(1L, "APP-001", "测试应用");
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            ApplicationResponse result = applicationService.create(request);
+            Application result = applicationService.create(command);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
             assertThat(result.getCode()).isEqualTo("APP-001");
-            assertThat(result.getState()).isEqualTo("ACTIVE");
+            assertThat(result.getState()).isEqualTo(ApplicationState.ACTIVE);
             // 验证传入 save 的实体状态为 ACTIVE
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
             verify(applicationRepository).save(captor.capture());
@@ -101,16 +95,14 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("create 透传 timeout 到实体")
         void create_passesTimeoutToEntity() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("测试应用");
-            request.setTimeout(60);
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "测试应用", "描述", 60, null);
             when(applicationRepository.findByCode("APP-001")).thenReturn(null);
             Application saved = buildSavedApplication(1L, "APP-001", "测试应用");
             saved.setTimeout(60);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            ApplicationResponse result = applicationService.create(request);
+            Application result = applicationService.create(command);
 
             assertThat(result.getTimeout()).isEqualTo(60);
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
@@ -121,13 +113,12 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("code 重复时抛出 GatewayRequestException")
         void create_duplicateCode_throwsException() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("测试应用");
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "测试应用", "描述", 0, null);
             when(applicationRepository.findByCode("APP-001"))
                     .thenReturn(buildSavedApplication(1L, "APP-001", "已存在应用"));
 
-            assertThatThrownBy(() -> applicationService.create(request))
+            assertThatThrownBy(() -> applicationService.create(command))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-001");
             verify(applicationRepository, never()).save(any());
@@ -136,19 +127,17 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("create 未传 failureStrategy 时默认 FAIL_RETRY")
         void create_withoutFailureStrategy_defaultsToFailRetry() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-TEST");
-            request.setName("测试应用");
-            request.setTimeout(0);
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-TEST", "测试应用", "描述", 0, null);
             // 不设置 failureStrategy，验证后端默认 FAIL_RETRY
             when(applicationRepository.findByCode("APP-TEST")).thenReturn(null);
             Application saved = buildSavedApplication(1L, "APP-TEST", "测试应用");
             saved.setFailureStrategy(FailureStrategy.FAIL_RETRY);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            ApplicationResponse result = applicationService.create(request);
+            Application result = applicationService.create(command);
 
-            assertThat(result.getFailureStrategy()).isEqualTo("FAIL_RETRY");
+            assertThat(result.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
             // 验证传入 save 的实体 failureStrategy 被设为默认 FAIL_RETRY
             verify(applicationRepository).save(argThat(a -> a.getFailureStrategy() == FailureStrategy.FAIL_RETRY));
         }
@@ -156,18 +145,16 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("create 透传指定的 failureStrategy")
         void create_withFailFast_propagatesStrategy() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-FF");
-            request.setName("快速失败应用");
-            request.setFailureStrategy(FailureStrategy.FAIL_FAST);
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-FF", "快速失败应用", "描述", 0, FailureStrategy.FAIL_FAST);
             when(applicationRepository.findByCode("APP-FF")).thenReturn(null);
             Application saved = buildSavedApplication(1L, "APP-FF", "快速失败应用");
             saved.setFailureStrategy(FailureStrategy.FAIL_FAST);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            ApplicationResponse result = applicationService.create(request);
+            Application result = applicationService.create(command);
 
-            assertThat(result.getFailureStrategy()).isEqualTo("FAIL_FAST");
+            assertThat(result.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_FAST);
         }
     }
 
@@ -178,16 +165,14 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("更新应用成功")
         void update_validRequest_returnsUpdated() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("新名称");
-            request.setDescription("新描述");
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "新名称", "新描述", 0, null);
             Application existing = buildSavedApplication(1L, "APP-001", "旧名称");
             when(applicationRepository.findById(1L)).thenReturn(existing);
             when(applicationRepository.save(any())).thenReturn(
                     buildSavedApplication(1L, "APP-001", "新名称"));
 
-            ApplicationResponse result = applicationService.update(1L, request);
+            Application result = applicationService.update(1L, command);
 
             assertThat(result).isNotNull();
             assertThat(result.getName()).isEqualTo("新名称");
@@ -196,28 +181,26 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("应用不存在时抛出异常")
         void update_notFound_throwsException() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("名称");
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "名称", "描述", 0, null);
             when(applicationRepository.findById(999L)).thenReturn(null);
 
-            assertThatThrownBy(() -> applicationService.update(999L, request))
+            assertThatThrownBy(() -> applicationService.update(999L, command))
                     .isInstanceOf(GatewayRequestException.class);
         }
 
         @Test
         @DisplayName("修改 code 时校验新 code 不与他应用冲突")
         void update_changeCodeToExisting_throwsException() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-002");
-            request.setName("名称");
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-002", "名称", "描述", 0, null);
             Application existing = buildSavedApplication(1L, "APP-001", "旧名称");
             when(applicationRepository.findById(1L)).thenReturn(existing);
             // APP-002 已被其他应用占用
             when(applicationRepository.findByCode("APP-002"))
                     .thenReturn(buildSavedApplication(2L, "APP-002", "占用应用"));
 
-            assertThatThrownBy(() -> applicationService.update(1L, request))
+            assertThatThrownBy(() -> applicationService.update(1L, command))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-002");
         }
@@ -225,17 +208,15 @@ class ApplicationServiceImplTest {
         @Test
         @DisplayName("update 透传 timeout 到实体")
         void update_passesTimeoutToEntity() {
-            ApplicationRequest request = new ApplicationRequest();
-            request.setCode("APP-001");
-            request.setName("名称");
-            request.setTimeout(30);
+            ApplicationCommand command =
+                    new ApplicationCommand("APP-001", "名称", "描述", 30, null);
             Application existing = buildSavedApplication(1L, "APP-001", "旧名称");
             when(applicationRepository.findById(1L)).thenReturn(existing);
             Application saved = buildSavedApplication(1L, "APP-001", "名称");
             saved.setTimeout(30);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            ApplicationResponse result = applicationService.update(1L, request);
+            Application result = applicationService.update(1L, command);
 
             assertThat(result.getTimeout()).isEqualTo(30);
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
@@ -249,12 +230,12 @@ class ApplicationServiceImplTest {
     class GetByIdTests {
 
         @Test
-        @DisplayName("存在时返回响应")
-        void getById_existing_returnsResponse() {
+        @DisplayName("存在时返回实体")
+        void getById_existing_returnsApp() {
             Application app = buildSavedApplication(1L, "APP-001", "应用");
             when(applicationRepository.findById(1L)).thenReturn(app);
 
-            ApplicationResponse result = applicationService.getById(1L);
+            Application result = applicationService.getById(1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("APP-001");
@@ -281,10 +262,10 @@ class ApplicationServiceImplTest {
                     buildSavedApplication(1L, "APP-001", "应用一"),
                     buildSavedApplication(2L, "APP-002", "应用二")));
 
-            List<ApplicationResponse> result = applicationService.getAll();
+            List<Application> result = applicationService.getAll();
 
             assertThat(result).hasSize(2);
-            assertThat(result).extracting(ApplicationResponse::getCode)
+            assertThat(result).extracting(Application::getCode)
                     .containsExactly("APP-001", "APP-002");
         }
     }
@@ -345,19 +326,19 @@ class ApplicationServiceImplTest {
             try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
                 stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(true);
 
-                List<ApplicationChannelItem> result = applicationService.listChannels(1L);
+                List<ApplicationChannel> result = applicationService.listChannels(1L);
 
                 assertThat(result).hasSize(2);
-                assertThat(result).extracting(ApplicationChannelItem::channelId)
+                assertThat(result).extracting(ApplicationChannel::getChannelId)
                         .containsExactlyInAnyOrder(10L, 20L);
                 // priority 原样透传（null 表示未配置）
-                assertThat(result).filteredOn(i -> i.channelId().equals(10L))
+                assertThat(result).filteredOn(i -> i.getChannelId().equals(10L))
                         .singleElement()
-                        .extracting(ApplicationChannelItem::priority)
+                        .extracting(ApplicationChannel::getPriority)
                         .isEqualTo(1);
-                assertThat(result).filteredOn(i -> i.channelId().equals(20L))
+                assertThat(result).filteredOn(i -> i.getChannelId().equals(20L))
                         .singleElement()
-                        .extracting(ApplicationChannelItem::priority)
+                        .extracting(ApplicationChannel::getPriority)
                         .isNull();
             }
         }
@@ -382,8 +363,8 @@ class ApplicationServiceImplTest {
 
             // channel 10 配 priority=1，channel 20 不配（null）
             applicationService.updateChannels(1L, List.of(
-                    new ApplicationChannelItem(10L, 1),
-                    new ApplicationChannelItem(20L, null)));
+                    new ApplicationChannelCommand(10L, 1),
+                    new ApplicationChannelCommand(20L, null)));
 
             // 先删后建
             verify(applicationChannelRepository).deleteByApplicationId(1L);
@@ -413,7 +394,7 @@ class ApplicationServiceImplTest {
             when(applicationRepository.findById(999L)).thenReturn(null);
 
             assertThatThrownBy(() -> applicationService.updateChannels(999L,
-                    List.of(new ApplicationChannelItem(10L, 1))))
+                    List.of(new ApplicationChannelCommand(10L, 1))))
                     .isInstanceOf(GatewayRequestException.class);
         }
 

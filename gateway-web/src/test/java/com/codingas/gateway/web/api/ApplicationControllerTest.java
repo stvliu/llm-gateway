@@ -16,8 +16,9 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.iam.application.ApplicationService;
+import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
-import com.codingas.gateway.iam.dto.UserApiKeyResponse;
+import com.codingas.gateway.web.api.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -61,8 +62,12 @@ class ApplicationControllerTest {
         @DisplayName("查询应用下的 Key 列表 — 返回非空且 applicationId 匹配")
         void listApiKeys_success_returnsKeyList() {
             // given — 应用 7 下挂一个 Key
-            UserApiKeyResponse key = new UserApiKeyResponse(
-                    100L, 50L, 7L, "sk-abc1", null, "test-key", null, null);
+            UserApiKey key = new UserApiKey();
+            key.setId(100L);
+            key.setUserId(50L);
+            key.setApplicationId(7L);
+            key.setKeyPrefix("sk-abc1");
+            key.setName("test-key");
             when(userApiKeyService.findByApplicationId(7L)).thenReturn(List.of(key));
 
             // when

@@ -16,9 +16,12 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.iam.user.UserService;
-import com.codingas.gateway.iam.dto.*;
-import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.iam.user.User;
+import com.codingas.gateway.iam.user.UserQuery;
 import com.codingas.gateway.iam.user.UserState;
+import com.codingas.gateway.iam.user.ResetPasswordResult;
+import com.codingas.gateway.web.api.dto.*;
+import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.iam.exception.ForbiddenException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -64,8 +67,8 @@ class UserControllerTest {
             UserCreateRequest request = new UserCreateRequest();
             request.setUsername("testuser");
 
-            UserResponse response = createTestResponse();
-            when(userService.create(any())).thenReturn(response);
+            User user = createTestUser();
+            when(userService.create(any())).thenReturn(user);
 
             // when
             UserResponse result = controller.create(request);
@@ -83,8 +86,8 @@ class UserControllerTest {
         @DisplayName("获取用户详情成功")
         void getById_existingId_returnsUser() {
             // given
-            UserResponse response = createTestResponse();
-            when(userService.getById(1L)).thenReturn(response);
+            User user = createTestUser();
+            when(userService.getById(1L)).thenReturn(user);
 
             // when
             UserResponse result = controller.getById(1L);
@@ -102,11 +105,11 @@ class UserControllerTest {
         @DisplayName("查询用户列表")
         void query_validRequest_returnsPage() {
             // given
-            UserResponse response = createTestResponse();
-            PageResponse<UserResponse> pageResponse = PageResponse.of(
-                List.of(response), 1, 10, 1L
+            User user = createTestUser();
+            PageResponse<User> pageResponse = PageResponse.of(
+                List.of(user), 1, 10, 1L
             );
-            when(userService.query(any(UserQueryRequest.class))).thenReturn(pageResponse);
+            when(userService.query(any(UserQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<UserResponse> result = controller.query(new UserQueryRequest());
@@ -127,8 +130,8 @@ class UserControllerTest {
             UserUpdateRequest request = new UserUpdateRequest();
             request.setEmail("new@example.com");
 
-            UserResponse response = createTestResponse();
-            when(userService.update(eq(1L), any())).thenReturn(response);
+            User user = createTestUser();
+            when(userService.update(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.update(1L, request);
@@ -167,9 +170,9 @@ class UserControllerTest {
             UserStateUpdateRequest request = new UserStateUpdateRequest();
             request.setState(UserState.INACTIVE);
 
-            UserResponse response = createTestResponse();
-            response.setState(UserState.INACTIVE);
-            when(userService.updateState(eq(1L), any())).thenReturn(response);
+            User user = createTestUser();
+            user.setState(UserState.INACTIVE);
+            when(userService.updateState(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.updateState(1L, request);
@@ -190,9 +193,9 @@ class UserControllerTest {
             UserRoleAssignRequest request = new UserRoleAssignRequest();
             request.setRoleCodes(List.of("ADMIN"));
 
-            UserResponse response = createTestResponse();
-            response.setRole("ADMIN");
-            when(userService.assignRoles(eq(1L), any())).thenReturn(response);
+            User user = createTestUser();
+            user.setRole("ADMIN");
+            when(userService.assignRoles(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.assignRoles(1L, request);
@@ -211,7 +214,7 @@ class UserControllerTest {
         void resetPassword_success_returnsPlaintext() {
             // given — UserService 生成 16 位随机密码（排除易混字符）一次性返回
             when(userService.resetPassword(1L))
-                    .thenReturn(new ResetPasswordResponse("AbcdefghijKmnp23"));
+                    .thenReturn(new ResetPasswordResult("AbcdefghijKmnp23"));
 
             // when
             ResetPasswordResponse result = controller.resetPassword(1L);
@@ -236,16 +239,16 @@ class UserControllerTest {
     }
 
     // Helper methods
-    private UserResponse createTestResponse() {
-        UserResponse response = new UserResponse();
-        response.setId(1L);
-        response.setUsername("testuser");
-        response.setEmail("test@example.com");
-        response.setState(UserState.ACTIVE);
-        response.setEmailVerified(true);
-        response.setRole("USER");
-        response.setCreatedAt(Instant.now());
-        response.setUpdatedAt(Instant.now());
-        return response;
+    private User createTestUser() {
+        User user = new User();
+        user.setId(1L);
+        user.setUsername("testuser");
+        user.setEmail("test@example.com");
+        user.setState(UserState.ACTIVE);
+        user.setEmailVerified(true);
+        user.setRole("USER");
+        user.setCreatedAt(Instant.now());
+        user.setUpdatedAt(Instant.now());
+        return user;
     }
 }

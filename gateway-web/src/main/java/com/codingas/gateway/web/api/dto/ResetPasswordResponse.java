@@ -13,20 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.common.dto.PageRequest;
-import com.codingas.gateway.iam.user.UserState;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import com.codingas.gateway.iam.user.ResetPasswordResult;
 
 /**
- * 用户查询请求
+ * 重置密码响应 DTO（HTTP 契约）
+ *
+ * @param newPassword 一次性明文临时密码
  */
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class UserQueryRequest extends PageRequest {
-    private String keyword;
-    private UserState state;
-    private String roleCode;
+public record ResetPasswordResponse(String newPassword) {
+    /**
+     * 从重置密码用例结果转换
+     *
+     * @param result 重置密码用例结果
+     * @return 重置密码响应 DTO
+     */
+    public static ResetPasswordResponse from(ResetPasswordResult result) {
+        return new ResetPasswordResponse(result.newPassword());
+    }
 }

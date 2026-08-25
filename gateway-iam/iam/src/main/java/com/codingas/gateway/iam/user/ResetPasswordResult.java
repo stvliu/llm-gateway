@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
-
-import java.util.List;
+package com.codingas.gateway.iam.user;
 
 /**
- * 登录响应 DTO
+ * 重置密码用例结果
+ *
+ * <p>承载一次性明文的临时密码（仅重置时返回一次，后续不可获取）。</p>
+ *
+ * @param newPassword 一次性明文临时密码
  */
-public record LoginResponse(
-    UserResponse user,
-    String token
+public record ResetPasswordResult(
+        String newPassword
 ) {
-    public record UserResponse(
-        Long id,
-        String username,
-        String email,
-        String role,
-        List<String> permissions
-    ) {}
 }

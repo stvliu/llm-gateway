@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.iam.user.ChangePasswordCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 /**
- * 修改密码请求 DTO
+ * 修改密码请求 DTO（HTTP 契约）
  */
 public record ChangePasswordRequest(
     @NotBlank(message = "当前密码不能为空")
@@ -28,4 +29,13 @@ public record ChangePasswordRequest(
     @NotBlank(message = "新密码不能为空")
     @Size(min = 6, message = "密码长度至少6位")
     String newPassword
-) {}
+) {
+    /**
+     * 转换为核心修改密码用例入参
+     *
+     * @return 修改密码用例入参
+     */
+    public ChangePasswordCommand toCommand() {
+        return new ChangePasswordCommand(currentPassword, newPassword);
+    }
+}

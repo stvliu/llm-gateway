@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
-import com.codingas.gateway.iam.dto.*;
+import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -39,33 +39,33 @@ public class UserApiKeyController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserApiKeyCreateResponse create(@Valid @RequestBody UserApiKeyCreateRequest request) {
-        return userApiKeyService.create(request);
+        return UserApiKeyCreateResponse.from(userApiKeyService.create(request.toCommand()));
     }
 
     @GetMapping(params = "userId")
     public List<UserApiKeyResponse> findByUserId(@RequestParam Long userId) {
-        return userApiKeyService.findByUserId(userId);
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
     }
 
     /** 查询所有 API Key（管理员用） */
     @GetMapping
     public List<UserApiKeyResponse> findAll() {
-        return userApiKeyService.findAllNonDeleted();
+        return UserApiKeyResponse.from(userApiKeyService.findAllNonDeleted());
     }
 
     @GetMapping("/{id}")
     public UserApiKeyResponse getById(@PathVariable Long id) {
-        return userApiKeyService.getById(id);
+        return UserApiKeyResponse.from(userApiKeyService.getById(id));
     }
 
     @GetMapping("/{id}/detail")
-    public UserApiKeyDetailResponse getDetailById(@PathVariable Long id) {
-        return userApiKeyService.getDetailById(id);
+    public UserApiKeyResponse getDetailById(@PathVariable Long id) {
+        return UserApiKeyResponse.from(userApiKeyService.getDetailById(id));
     }
 
     @PutMapping("/{id}")
     public UserApiKeyResponse update(@PathVariable Long id, @Valid @RequestBody UserApiKeyUpdateRequest request) {
-        return userApiKeyService.update(id, request);
+        return UserApiKeyResponse.from(userApiKeyService.update(id, request.toCommand()));
     }
 
     @DeleteMapping("/{id}")

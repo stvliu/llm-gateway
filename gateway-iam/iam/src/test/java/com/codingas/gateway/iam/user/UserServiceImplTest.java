@@ -16,7 +16,6 @@
 package com.codingas.gateway.iam.user;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -66,10 +65,8 @@ class UserServiceImplTest {
         @DisplayName("创建用户成功")
         void create_validRequest_returnsCreated() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setUsername("testuser");
-            request.setEmail("test@example.com");
-            request.setPassword("password123");
+            UserCreateCommand command =
+                    new UserCreateCommand("testuser", "test@example.com", "password123", null, null);
 
             when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
             when(passwordEncoder.encode("password123")).thenReturn("encodedPassword");
@@ -80,7 +77,7 @@ class UserServiceImplTest {
             });
 
             // when
-            UserResponse result = service.create(request);
+            User result = service.create(command);
 
             // then
             assertThat(result).isNotNull();
@@ -91,13 +88,13 @@ class UserServiceImplTest {
         @DisplayName("邮箱重复抛出异常")
         void create_duplicateEmail_throwsException() {
             // given
-            UserCreateRequest request = new UserCreateRequest();
-            request.setEmail("test@example.com");
+            UserCreateCommand command =
+                    new UserCreateCommand("testuser", "test@example.com", "password123", null, null);
 
             when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> service.create(request))
+            assertThatThrownBy(() -> service.create(command))
                 .isInstanceOf(DuplicateResourceException.class);
         }
     }
@@ -114,7 +111,7 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
             // when
-            UserResponse result = service.getById(1L);
+            User result = service.getById(1L);
 
             // then
             assertThat(result).isNotNull();
@@ -144,12 +141,12 @@ class UserServiceImplTest {
             User user = createTestUser();
             when(userRepository.findAll()).thenReturn(List.of(user));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setPage(1);
-            request.setLimit(10);
+            UserQuery query = new UserQuery();
+            query.setPage(1);
+            query.setLimit(10);
 
             // when
-            PageResponse<UserResponse> result = service.query(request);
+            PageResponse<User> result = service.query(query);
 
             // then
             assertThat(result.getItems()).hasSize(1);
@@ -166,13 +163,13 @@ class UserServiceImplTest {
             user2.setEmail("other@example.com");
             when(userRepository.findAll()).thenReturn(List.of(user1, user2));
 
-            UserQueryRequest request = new UserQueryRequest();
-            request.setKeyword("test");
-            request.setPage(1);
-            request.setLimit(10);
+            UserQuery query = new UserQuery();
+            query.setKeyword("test");
+            query.setPage(1);
+            query.setLimit(10);
 
             // when
-            PageResponse<UserResponse> result = service.query(request);
+            PageResponse<User> result = service.query(query);
 
             // then
             assertThat(result.getItems()).hasSize(1);
@@ -192,11 +189,10 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenReturn(user);
 
-            UserUpdateRequest request = new UserUpdateRequest();
-            request.setUsername("newname");
+            UserUpdateCommand command = new UserUpdateCommand("newname", null, null, null);
 
             // when
-            UserResponse result = service.update(1L, request);
+            User result = service.update(1L, command);
 
             // then
             assertThat(result).isNotNull();
@@ -209,11 +205,10 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            UserUpdateRequest request = new UserUpdateRequest();
-            request.setPhone("13900000000");
-            request.setAvatarUrl("https://example.com/a.png");
+            UserUpdateCommand command =
+                    new UserUpdateCommand(null, null, "13900000000", "https://example.com/a.png");
 
-            UserResponse result = service.update(1L, request);
+            User result = service.update(1L, command);
 
             assertThat(result.getPhone()).isEqualTo("13900000000");
             assertThat(result.getAvatarUrl()).isEqualTo("https://example.com/a.png");
@@ -225,7 +220,7 @@ class UserServiceImplTest {
         void update_notFound_throws() {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update(99L, new UserUpdateRequest()))
+            assertThatThrownBy(() -> service.update(99L, new UserUpdateCommand(null, null, null, null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -262,11 +257,8 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenReturn(user);
 
-            UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.INACTIVE);
-
             // when
-            UserResponse result = service.updateState(1L, request);
+            User result = service.updateState(1L, UserState.INACTIVE);
 
             // then
             assertThat(result).isNotNull();
@@ -285,11 +277,8 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenReturn(user);
 
-            UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of("ADMIN"));
-
             // when
-            UserResponse result = service.assignRoles(1L, request);
+            User result = service.assignRoles(1L, List.of("ADMIN"));
 
             // then
             assertThat(result).isNotNull();
@@ -309,11 +298,11 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(java.util.Optional.of(user));
             when(passwordEncoder.encode(any())).thenReturn("hashed");
 
-            ResetPasswordResponse response = service.resetPassword(1L);
+            ResetPasswordResult result = service.resetPassword(1L);
 
-            assertThat(response.newPassword()).hasSize(16);
+            assertThat(result.newPassword()).hasSize(16);
             // 排除易混字符 O/0/I/1/l
-            assertThat(response.newPassword()).matches("[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{16}");
+            assertThat(result.newPassword()).matches("[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{16}");
             verify(userRepository).save(argThat(u -> "hashed".equals(u.getPasswordHash())));
         }
 
@@ -367,10 +356,7 @@ class UserServiceImplTest {
             User user = builtinUser();
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-            UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.INACTIVE);
-
-            assertThatThrownBy(() -> service.updateState(1L, request))
+            assertThatThrownBy(() -> service.updateState(1L, UserState.INACTIVE))
                     .isInstanceOf(ForbiddenException.class);
             verify(userRepository, never()).save(any());
         }
@@ -382,10 +368,7 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            UserStateUpdateRequest request = new UserStateUpdateRequest();
-            request.setState(UserState.ACTIVE);
-
-            UserResponse result = service.updateState(1L, request);
+            User result = service.updateState(1L, UserState.ACTIVE);
             assertThat(result).isNotNull();
             verify(userRepository).save(user);
         }
@@ -396,10 +379,7 @@ class UserServiceImplTest {
             User user = builtinUser();
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
 
-            UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of("ADMIN"));
-
-            assertThatThrownBy(() -> service.assignRoles(1L, request))
+            assertThatThrownBy(() -> service.assignRoles(1L, List.of("ADMIN")))
                     .isInstanceOf(ForbiddenException.class);
             verify(userRepository, never()).save(any());
         }
@@ -411,10 +391,7 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(userRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-            UserRoleAssignRequest request = new UserRoleAssignRequest();
-            request.setRoleCodes(List.of());
-
-            UserResponse result = service.assignRoles(1L, request);
+            User result = service.assignRoles(1L, List.of());
 
             assertThat(result.getRole()).isEqualTo("USER");
             verify(userRepository).save(user);
@@ -437,14 +414,14 @@ class UserServiceImplTest {
             try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
                 stp.when(() -> StpUtil.getTokenValue()).thenReturn("token-123");
 
-                LoginResponse response = service.login(new LoginRequest("testuser", "pass", false));
+                LoginResult result = service.login(new LoginCommand("testuser", "pass", false));
 
-                assertThat(response.token()).isEqualTo("token-123");
-                assertThat(response.user().username()).isEqualTo("testuser");
-                assertThat(response.user().role()).isEqualTo("USER");
-                // 登录响应携带角色推导的权限码（前端 UI 直接消费）
-                assertThat(response.user().permissions()).contains("quickstart:access");
-                assertThat(response.user().permissions()).doesNotContain("user:read");
+                assertThat(result.token()).isEqualTo("token-123");
+                assertThat(result.user().getUsername()).isEqualTo("testuser");
+                assertThat(result.user().getRole()).isEqualTo("USER");
+                // 登录结果携带角色推导的权限码（前端 UI 直接消费）
+                assertThat(result.permissions()).contains("quickstart:access");
+                assertThat(result.permissions()).doesNotContain("user:read");
                 stp.verify(() -> StpUtil.login(1L));
                 assertThat(user.getLastLoginAt()).isNotNull();
             }
@@ -455,7 +432,7 @@ class UserServiceImplTest {
         void login_userNotFound_throws() {
             when(userRepository.findByUsername("nobody")).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.login(new LoginRequest("nobody", "x", false)))
+            assertThatThrownBy(() -> service.login(new LoginCommand("nobody", "x", false)))
                     .isInstanceOf(AuthenticationFailedException.class)
                     .hasMessageContaining("用户名或密码错误");
         }
@@ -467,7 +444,7 @@ class UserServiceImplTest {
             user.setState(UserState.INACTIVE);
             when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
 
-            assertThatThrownBy(() -> service.login(new LoginRequest("testuser", "pass", false)))
+            assertThatThrownBy(() -> service.login(new LoginCommand("testuser", "pass", false)))
                     .isInstanceOf(AuthenticationFailedException.class)
                     .hasMessageContaining("用户已被禁用");
         }
@@ -480,7 +457,7 @@ class UserServiceImplTest {
             when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
 
-            assertThatThrownBy(() -> service.login(new LoginRequest("testuser", "wrong", false)))
+            assertThatThrownBy(() -> service.login(new LoginCommand("testuser", "wrong", false)))
                     .isInstanceOf(AuthenticationFailedException.class);
             verify(userRepository, never()).save(any());
         }
@@ -499,7 +476,7 @@ class UserServiceImplTest {
             when(passwordEncoder.matches("old", "old-hash")).thenReturn(true);
             when(passwordEncoder.encode("new")).thenReturn("new-hash");
 
-            service.changePassword(1L, new ChangePasswordRequest("old", "new"));
+            service.changePassword(1L, new ChangePasswordCommand("old", "new"));
 
             verify(userRepository).save(argThat(u -> "new-hash".equals(u.getPasswordHash())));
         }
@@ -512,7 +489,7 @@ class UserServiceImplTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(user));
             when(passwordEncoder.matches("wrong", "old-hash")).thenReturn(false);
 
-            assertThatThrownBy(() -> service.changePassword(1L, new ChangePasswordRequest("wrong", "new")))
+            assertThatThrownBy(() -> service.changePassword(1L, new ChangePasswordCommand("wrong", "new")))
                     .isInstanceOf(GatewayRequestException.class)
                     .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
                             .isEqualTo("INVALID_PASSWORD"));
@@ -524,7 +501,7 @@ class UserServiceImplTest {
         void changePassword_notFound_throws() {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.changePassword(99L, new ChangePasswordRequest("a", "b")))
+            assertThatThrownBy(() -> service.changePassword(99L, new ChangePasswordCommand("a", "b")))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }

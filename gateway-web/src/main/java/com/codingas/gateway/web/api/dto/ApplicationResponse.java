@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.iam.application.Application;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.List;
 
 /**
- * 应用响应 DTO
+ * 应用响应 DTO（HTTP 契约）
  *
  * <p>返回应用聚合根的完整字段，含应用级 timeout 与预留的配额预算/看板 ID。</p>
- *
- * <p>Task 8：{@code resilienceProfileId} 退场，改为 {@code timeout}（承接原 ResilienceProfile.timeout）。</p>
  */
 @Data
 public class ApplicationResponse {
@@ -61,4 +61,37 @@ public class ApplicationResponse {
 
     /** 更新时间 */
     private Instant updatedAt;
+
+    /**
+     * 从应用实体转换
+     *
+     * @param app 应用实体
+     * @return 应用响应 DTO
+     */
+    public static ApplicationResponse from(Application app) {
+        ApplicationResponse response = new ApplicationResponse();
+        response.setId(app.getId());
+        response.setCode(app.getCode());
+        response.setName(app.getName());
+        response.setDescription(app.getDescription());
+        response.setState(app.getState() != null ? app.getState().name() : null);
+        response.setTimeout(app.getTimeout());
+        response.setFailureStrategy(app.getFailureStrategy() != null
+                ? app.getFailureStrategy().name() : null);
+        response.setQuotaBudgetId(app.getQuotaBudgetId());
+        response.setDashboardId(app.getDashboardId());
+        response.setCreatedAt(app.getCreatedAt());
+        response.setUpdatedAt(app.getUpdatedAt());
+        return response;
+    }
+
+    /**
+     * 从应用实体列表转换
+     *
+     * @param apps 应用实体列表
+     * @return 应用响应 DTO 列表
+     */
+    public static List<ApplicationResponse> from(List<Application> apps) {
+        return apps.stream().map(ApplicationResponse::from).toList();
+    }
 }

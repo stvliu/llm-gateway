@@ -16,11 +16,11 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.ChangePasswordRequest;
-import com.codingas.gateway.iam.dto.LoginRequest;
-import com.codingas.gateway.iam.dto.LoginResponse;
 import com.codingas.gateway.iam.user.UserService;
-import com.codingas.gateway.iam.dto.UserResponse;
+import com.codingas.gateway.web.api.dto.ChangePasswordRequest;
+import com.codingas.gateway.web.api.dto.LoginRequest;
+import com.codingas.gateway.web.api.dto.LoginResponse;
+import com.codingas.gateway.web.api.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +42,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        return userService.login(request);
+        return LoginResponse.from(userService.login(request.toCommand()));
     }
 
     /**
@@ -59,7 +59,7 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse getCurrentUser() {
         Long userId = StpUtil.getLoginIdAsLong();
-        return userService.getById(userId);
+        return UserResponse.from(userService.getById(userId));
     }
 
     /**
@@ -68,6 +68,6 @@ public class AuthController {
     @PatchMapping("/me/password")
     public void updatePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
-        userService.changePassword(userId, request);
+        userService.changePassword(userId, request.toCommand());
     }
 }

@@ -17,11 +17,8 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ApplicationChannelRequest;
 import com.codingas.gateway.iam.application.ApplicationService;
-import com.codingas.gateway.iam.dto.ApplicationChannelItem;
-import com.codingas.gateway.iam.dto.ApplicationRequest;
-import com.codingas.gateway.iam.dto.ApplicationResponse;
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
-import com.codingas.gateway.iam.dto.UserApiKeyResponse;
+import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -52,7 +49,7 @@ public class ApplicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationResponse create(@Valid @RequestBody ApplicationRequest request) {
-        return applicationService.create(request);
+        return ApplicationResponse.from(applicationService.create(request.toCommand()));
     }
 
     /**
@@ -66,7 +63,7 @@ public class ApplicationController {
     public ApplicationResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationRequest request) {
-        return applicationService.update(id, request);
+        return ApplicationResponse.from(applicationService.update(id, request.toCommand()));
     }
 
     /**
@@ -77,7 +74,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}")
     public ApplicationResponse getById(@PathVariable Long id) {
-        return applicationService.getById(id);
+        return ApplicationResponse.from(applicationService.getById(id));
     }
 
     /**
@@ -87,7 +84,7 @@ public class ApplicationController {
      */
     @GetMapping
     public List<ApplicationResponse> list() {
-        return applicationService.getAll();
+        return ApplicationResponse.from(applicationService.getAll());
     }
 
     /**
@@ -109,7 +106,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}/api-keys")
     public List<UserApiKeyResponse> listApiKeys(@PathVariable Long id) {
-        return userApiKeyService.findByApplicationId(id);
+        return UserApiKeyResponse.from(userApiKeyService.findByApplicationId(id));
     }
 
     /**
@@ -120,7 +117,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}/channels")
     public List<ApplicationChannelItem> listChannels(@PathVariable Long id) {
-        return applicationService.listChannels(id);
+        return ApplicationChannelItem.from(applicationService.listChannels(id));
     }
 
     /**
@@ -134,6 +131,7 @@ public class ApplicationController {
     public void updateChannels(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationChannelRequest request) {
-        applicationService.updateChannels(id, request.channels());
+        applicationService.updateChannels(id,
+                request.channels().stream().map(ApplicationChannelItem::toCommand).toList());
     }
 }

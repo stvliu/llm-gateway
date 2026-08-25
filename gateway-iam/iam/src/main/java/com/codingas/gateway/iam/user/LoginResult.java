@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.iam.user;
 
-import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 /**
- * 登录请求 DTO
+ * 用户登录用例结果
+ *
+ * <p>承载登录成功的用户实体、会话令牌与角色推导的权限码
+ * （前端 UI 直接消费权限码，不自行维护映射）。</p>
+ *
+ * @param user        已认证用户实体
+ * @param token       会话令牌
+ * @param permissions 角色推导的权限码列表
  */
-public record LoginRequest(
-    @NotBlank(message = "用户名不能为空")
-    String username,
-
-    @NotBlank(message = "密码不能为空")
-    String password,
-
-    boolean rememberMe
-) {}
+public record LoginResult(
+        User user,
+        String token,
+        List<String> permissions
+) {
+}

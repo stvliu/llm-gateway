@@ -16,7 +16,6 @@
 package com.codingas.gateway.iam.apikey;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationRepository;
 import com.codingas.gateway.iam.exception.ForbiddenException;
@@ -99,14 +98,14 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenReturn(saved);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
-                UserApiKeyCreateResponse response = service.create(request);
+                UserApiKey response = service.create(request);
 
                 assertThat(response).isNotNull();
-                assertThat(response.id()).isEqualTo(API_KEY_ID);
-                assertThat(response.apiKeyPlain()).startsWith("sk-");
+                assertThat(response.getId()).isEqualTo(API_KEY_ID);
+                assertThat(response.getKeyPlain()).startsWith("sk-");
                 verify(userApiKeyRepository).save(argThat(key ->
                         key.getUserId().equals(USER_ID)
                                 && key.getApplicationId().equals(APPLICATION_ID)
@@ -126,10 +125,10 @@ class UserApiKeyServiceImplTest {
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
                 // 请求体尝试指定他人 userId，必须被强制覆盖为当前用户
-                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
                         OTHER_USER_ID, APPLICATION_ID, "test-key"
                 );
-                UserApiKeyCreateResponse response = service.create(request);
+                UserApiKey response = service.create(request);
 
                 assertThat(response).isNotNull();
                 verify(userApiKeyRepository).save(argThat(key ->
@@ -144,7 +143,7 @@ class UserApiKeyServiceImplTest {
             when(applicationRepository.findById(APPLICATION_ID)).thenReturn(null);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
                 assertThatThrownBy(() -> service.create(request))
@@ -164,7 +163,7 @@ class UserApiKeyServiceImplTest {
                     .thenThrow(new IllegalStateException("无法生成唯一的 API Key，请重试"));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateRequest request = new UserApiKeyCreateRequest(
+                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
                 assertThatThrownBy(() -> service.create(request))
@@ -189,11 +188,11 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
-                UserApiKeyResponse response = service.update(API_KEY_ID, request);
+                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(99L, null);
+                UserApiKey response = service.update(API_KEY_ID, request);
 
                 assertThat(response).isNotNull();
-                assertThat(response.applicationId()).isEqualTo(99L);
+                assertThat(response.getApplicationId()).isEqualTo(99L);
                 verify(userApiKeyRepository).save(argThat(key -> key.getApplicationId().equals(99L)));
             }
         }
@@ -206,7 +205,7 @@ class UserApiKeyServiceImplTest {
             when(applicationRepository.findById(99L)).thenReturn(null);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(99L, null);
+                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(99L, null);
                 assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                         .isInstanceOf(GatewayRequestException.class)
                         .hasMessageContaining("应用不存在");
@@ -222,11 +221,11 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "new-name");
-                UserApiKeyResponse response = service.update(API_KEY_ID, request);
+                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(null, "new-name");
+                UserApiKey response = service.update(API_KEY_ID, request);
 
-                assertThat(response.name()).isEqualTo("new-name");
-                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response.getName()).isEqualTo("new-name");
+                assertThat(response.getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
 
@@ -238,7 +237,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
-                assertThatThrownBy(() -> service.update(API_KEY_ID, new UserApiKeyUpdateRequest(null, "x")))
+                assertThatThrownBy(() -> service.update(API_KEY_ID, new UserApiKeyUpdateCommand(null, "x")))
                         .isInstanceOf(ForbiddenException.class);
                 verify(userApiKeyRepository, never()).save(any());
             }
@@ -250,7 +249,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateRequest request = new UserApiKeyUpdateRequest(null, "updated");
+                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(null, "updated");
                 assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                         .isInstanceOf(IllegalArgumentException.class);
             }
@@ -269,10 +268,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findByApplicationId(APPLICATION_ID)).thenReturn(List.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
+                List<UserApiKey> responses = service.findByApplicationId(APPLICATION_ID);
 
                 assertThat(responses).hasSize(1);
-                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses.get(0).getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
 
@@ -292,7 +291,7 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findByApplicationId(APPLICATION_ID)).thenReturn(List.of());
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                List<UserApiKeyResponse> responses = service.findByApplicationId(APPLICATION_ID);
+                List<UserApiKey> responses = service.findByApplicationId(APPLICATION_ID);
 
                 assertThat(responses).isEmpty();
             }
@@ -311,9 +310,9 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyResponse response = service.getById(API_KEY_ID);
+                UserApiKey response = service.getById(API_KEY_ID);
 
-                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response.getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
     }
@@ -330,10 +329,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findAllNonDeleted()).thenReturn(List.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                List<UserApiKeyResponse> responses = service.findAllNonDeleted();
+                List<UserApiKey> responses = service.findAllNonDeleted();
 
                 assertThat(responses).hasSize(1);
-                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses.get(0).getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
 
@@ -370,10 +369,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
+                List<UserApiKey> responses = service.findByUserId(USER_ID);
 
                 assertThat(responses).hasSize(1);
-                assertThat(responses.get(0).applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(responses.get(0).getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
 
@@ -394,10 +393,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findByUserId(USER_ID)).thenReturn(List.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
-                List<UserApiKeyResponse> responses = service.findByUserId(USER_ID);
+                List<UserApiKey> responses = service.findByUserId(USER_ID);
 
                 assertThat(responses).hasSize(1);
-                assertThat(responses.get(0).userId()).isEqualTo(USER_ID);
+                assertThat(responses.get(0).getUserId()).isEqualTo(USER_ID);
             }
         }
     }
@@ -414,10 +413,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
+                UserApiKey response = service.getDetailById(API_KEY_ID);
 
                 assertThat(response).isNotNull();
-                assertThat(response.applicationId()).isEqualTo(APPLICATION_ID);
+                assertThat(response.getApplicationId()).isEqualTo(APPLICATION_ID);
             }
         }
 
@@ -441,10 +440,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
-                UserApiKeyDetailResponse response = service.getDetailById(API_KEY_ID);
+                UserApiKey response = service.getDetailById(API_KEY_ID);
 
                 assertThat(response).isNotNull();
-                assertThat(response.userId()).isEqualTo(USER_ID);
+                assertThat(response.getUserId()).isEqualTo(USER_ID);
             }
         }
     }
@@ -460,10 +459,10 @@ class UserApiKeyServiceImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
-                UserApiKeyResponse response = service.getById(API_KEY_ID);
+                UserApiKey response = service.getById(API_KEY_ID);
 
                 assertThat(response).isNotNull();
-                assertThat(response.userId()).isEqualTo(USER_ID);
+                assertThat(response.getUserId()).isEqualTo(USER_ID);
             }
         }
 

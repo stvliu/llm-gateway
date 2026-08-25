@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.iam.apikey.UserApiKeyCreateCommand;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * 创建用户 API Key 请求
+ * 创建用户 API Key 请求 DTO（HTTP 契约）
  *
  * @param userId        用户 ID
  * @param applicationId 应用 ID（权限锚点，创建时必填）
@@ -33,4 +34,12 @@ public record UserApiKeyCreateRequest(
         @NotBlank(message = "密钥名称不能为空")
         String name
 ) {
+    /**
+     * 转换为核心创建用例入参
+     *
+     * @return 创建用例入参
+     */
+    public UserApiKeyCreateCommand toCommand() {
+        return new UserApiKeyCreateCommand(userId, applicationId, name);
+    }
 }

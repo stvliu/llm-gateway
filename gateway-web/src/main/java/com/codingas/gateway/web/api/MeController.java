@@ -17,7 +17,7 @@ package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.apikey.UserApiKeyService;
-import com.codingas.gateway.iam.dto.UserApiKeyResponse;
+import com.codingas.gateway.web.api.dto.UserApiKeyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,6 +43,6 @@ public class MeController {
     @GetMapping("/api-keys")
     public List<UserApiKeyResponse> listMyApiKeys() {
         Long userId = StpUtil.getLoginIdAsLong();
-        return userApiKeyService.findByUserId(userId);
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
     }
 }

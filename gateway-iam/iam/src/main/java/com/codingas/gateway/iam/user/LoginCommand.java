@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.dto;
+package com.codingas.gateway.iam.user;
 
 /**
- * 重置密码响应（一次性返回明文，不持久化）
+ * 用户登录用例入参
  *
- * @param newPassword 新密码明文（HTTPS 传输，仅本次返回）
+ * @param username 用户名
+ * @param password 密码（明文）
+ * @param rememberMe 是否记住登录态（透传 SaToken 登录上下文）
  */
-public record ResetPasswordResponse(String newPassword) {
+public record LoginCommand(
+        String username,
+        String password,
+        boolean rememberMe
+) {
 }

@@ -16,10 +16,6 @@
 package com.codingas.gateway.iam.user;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.dto.ChangePasswordRequest;
-import com.codingas.gateway.iam.dto.LoginRequest;
-import com.codingas.gateway.iam.dto.LoginResponse;
-import com.codingas.gateway.iam.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
@@ -62,58 +58,55 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserResponse create(UserCreateRequest request) {
+    public User create(UserCreateCommand command) {
         // 检查邮箱唯一性
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(command.getEmail())) {
             throw new DuplicateResourceException("User", "email");
         }
 
         // 创建用户
         User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setPhone(request.getPhone());
+        user.setUsername(command.getUsername());
+        user.setEmail(command.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(command.getPassword()));
+        user.setPhone(command.getPhone());
 
         // 设置角色（默认为 USER）
-        if (request.getRole() != null && !request.getRole().isBlank()) {
-            user.setRole(request.getRole());
+        if (command.getRole() != null && !command.getRole().isBlank()) {
+            user.setRole(command.getRole());
         }
 
-        User savedUser = userRepository.save(user);
-
-        return toResponse(savedUser);
+        return userRepository.save(user);
     }
 
     /**
      * 根据 ID 获取用户
      */
     @Override
-    public UserResponse getById(Long id) {
-        User user = userRepository.findById(id)
+    public User getById(Long id) {
+        return userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
-        return toResponse(user);
     }
 
     /**
      * 查询用户列表
      */
     @Override
-    public PageResponse<UserResponse> query(UserQueryRequest request) {
+    public PageResponse<User> query(UserQuery query) {
         List<User> users = userRepository.findAll();
 
         // 过滤
-        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            String keyword = request.getKeyword().toLowerCase();
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+            String keyword = query.getKeyword().toLowerCase();
             users = users.stream()
                 .filter(u -> u.getUsername().toLowerCase().contains(keyword)
                     || (u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword)))
                 .collect(Collectors.toList());
         }
 
-        if (request.getState() != null) {
+        if (query.getState() != null) {
             users = users.stream()
-                .filter(u -> u.getState() == request.getState())
+                .filter(u -> u.getState() == query.getState())
                 .collect(Collectors.toList());
         }
 
@@ -121,18 +114,14 @@ public class UserServiceImpl implements UserService {
         long total = users.size();
 
         // 分页
-        int offset = request.getOffset();
-        int limit = request.getLimit();
+        int offset = query.getOffset();
+        int limit = query.getLimit();
         List<User> pagedUsers = users.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
 
-        List<UserResponse> responses = pagedUsers.stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-
-        return PageResponse.of(responses, request.getPage(), limit, total);
+        return PageResponse.of(pagedUsers, query.getPage(), limit, total);
     }
 
     /**
@@ -140,24 +129,24 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserResponse update(Long id, UserUpdateRequest request) {
+    public User update(Long id, UserUpdateCommand command) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        if (request.getUsername() != null) {
-            user.setUsername(request.getUsername());
+        if (command.getUsername() != null) {
+            user.setUsername(command.getUsername());
         }
-        if (request.getEmail() != null) {
-            user.setEmail(request.getEmail());
+        if (command.getEmail() != null) {
+            user.setEmail(command.getEmail());
         }
-        if (request.getPhone() != null) {
-            user.setPhone(request.getPhone());
+        if (command.getPhone() != null) {
+            user.setPhone(command.getPhone());
         }
-        if (request.getAvatarUrl() != null) {
-            user.setAvatarUrl(request.getAvatarUrl());
+        if (command.getAvatarUrl() != null) {
+            user.setAvatarUrl(command.getAvatarUrl());
         }
 
-        return toResponse(userRepository.save(user));
+        return userRepository.save(user);
     }
 
     /**
@@ -186,16 +175,16 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserResponse updateState(Long id, UserStateUpdateRequest request) {
+    public User updateState(Long id, UserState state) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        if (user.isBuiltin() && request.getState() != UserState.ACTIVE) {
+        if (user.isBuiltin() && state != UserState.ACTIVE) {
             throw new ForbiddenException("不允许禁用系统内建用户");
         }
 
-        user.setState(request.getState());
-        return toResponse(userRepository.save(user));
+        user.setState(state);
+        return userRepository.save(user);
     }
 
     /**
@@ -206,12 +195,12 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public UserResponse assignRoles(Long id, UserRoleAssignRequest request) {
+    public User assignRoles(Long id, List<String> roleCodes) {
         User user = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        if (request.getRoleCodes() != null && !request.getRoleCodes().isEmpty()) {
-            String roleCode = request.getRoleCodes().get(0);
+        if (roleCodes != null && !roleCodes.isEmpty()) {
+            String roleCode = roleCodes.get(0);
 
             // 禁止变更内建用户的角色
             if (user.isBuiltin()) {
@@ -221,7 +210,7 @@ public class UserServiceImpl implements UserService {
             user.setRole(roleCode);
         }
 
-        return toResponse(userRepository.save(user));
+        return userRepository.save(user);
     }
 
     /**
@@ -229,9 +218,9 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public LoginResult login(LoginCommand command) {
         // 查找用户
-        User user = userRepository.findByUsername(request.username())
+        User user = userRepository.findByUsername(command.username())
             .orElseThrow(() -> new AuthenticationFailedException("用户名或密码错误"));
 
         // 检查用户状态
@@ -240,7 +229,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 验证密码
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(command.password(), user.getPasswordHash())) {
             throw new AuthenticationFailedException("用户名或密码错误");
         }
 
@@ -252,16 +241,8 @@ public class UserServiceImpl implements UserService {
         StpUtil.login(user.getId());
         String token = StpUtil.getTokenValue();
 
-        // 构建响应（携带角色推导的权限码，前端 UI 直接消费、不自行维护映射）
-        LoginResponse.UserResponse userResponse = new LoginResponse.UserResponse(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getRole(),
-            RolePermissions.of(user.getRole())
-        );
-
-        return new LoginResponse(userResponse, token);
+        // 构建结果（携带角色推导的权限码，前端 UI 直接消费、不自行维护映射）
+        return new LoginResult(user, token, RolePermissions.of(user.getRole()));
     }
 
     /**
@@ -269,17 +250,17 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public void changePassword(Long userId, ChangePasswordRequest request) {
+    public void changePassword(Long userId, ChangePasswordCommand command) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         // 验证当前密码
-        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(command.currentPassword(), user.getPasswordHash())) {
             throw new GatewayRequestException("INVALID_PASSWORD", "当前密码错误");
         }
 
         // 更新密码
-        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setPasswordHash(passwordEncoder.encode(command.newPassword()));
         userRepository.save(user);
     }
 
@@ -288,7 +269,7 @@ public class UserServiceImpl implements UserService {
      */
     @Override
     @Transactional
-    public ResetPasswordResponse resetPassword(Long userId) {
+    public ResetPasswordResult resetPassword(Long userId) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
@@ -307,7 +288,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         log.info("Reset password for user: id={}", userId);
 
-        return new ResetPasswordResponse(plainPassword);
+        return new ResetPasswordResult(plainPassword);
     }
 
     /**
@@ -316,26 +297,5 @@ public class UserServiceImpl implements UserService {
     @Override
     public void logout() {
         StpUtil.logout();
-    }
-
-    /**
-     * 转换为响应 DTO
-     */
-    private UserResponse toResponse(User user) {
-        UserResponse response = new UserResponse();
-        response.setId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setEmail(user.getEmail());
-        response.setPhone(user.getPhone());
-        response.setAvatarUrl(user.getAvatarUrl());
-        response.setState(user.getState());
-        response.setEmailVerified(user.getEmailVerified());
-        response.setRole(user.getRole());
-        response.setBuiltin(user.getBuiltin());
-        response.setLastLoginAt(user.getLastLoginAt());
-        response.setCreatedAt(user.getCreatedAt());
-        response.setUpdatedAt(user.getUpdatedAt());
-
-        return response;
     }
 }
