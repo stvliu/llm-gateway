@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.ModelService;
+import com.codingas.gateway.provider.model.ModelService;
 import com.codingas.gateway.provider.model.ModelCreateRequest;
 import com.codingas.gateway.provider.model.ModelQueryRequest;
 import com.codingas.gateway.provider.model.ModelResponse;

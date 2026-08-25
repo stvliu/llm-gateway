@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.ChannelEmergencyService;
-import com.codingas.gateway.provider.service.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyService;
+import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.channel.ChannelResponse;
-import com.codingas.gateway.provider.service.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import org.junit.jupiter.api.BeforeEach;

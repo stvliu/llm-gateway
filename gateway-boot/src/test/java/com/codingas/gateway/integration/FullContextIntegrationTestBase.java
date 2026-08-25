@@ -22,7 +22,7 @@ import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.common.event.DomainEventPublisher;
-import com.codingas.gateway.audit.AuditGateway;
+import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
@@ -86,7 +86,7 @@ public abstract class FullContextIntegrationTestBase {
     protected DomainEventPublisher domainEventPublisher;
 
     @MockBean
-    protected AuditGateway auditGateway;
+    protected AuditLogRepository auditRepository;
 
     // ---------- 默认 Mock 行为 ----------
 

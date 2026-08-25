@@ -16,8 +16,8 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
-import com.codingas.gateway.provider.service.CatalogSyncFacade;
-import com.codingas.gateway.provider.service.ChannelProvisionService;
+import com.codingas.gateway.provider.CatalogSyncFacade;
+import com.codingas.gateway.provider.channel.ChannelProvisionService;
 import com.codingas.gateway.provider.catalog.BatchProvisionRequest;
 import com.codingas.gateway.provider.catalog.BatchProvisionResult;
 import com.codingas.gateway.provider.catalog.ProvisionRequest;

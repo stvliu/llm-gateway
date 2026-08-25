@@ -23,10 +23,10 @@ import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
-import com.codingas.gateway.provider.model.ModelInstanceGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.protocol.StreamCallback;
@@ -34,7 +34,7 @@ import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.provider.vendor.Provider;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
@@ -64,27 +64,27 @@ import java.util.concurrent.TimeUnit;
 public class ModelExperienceService {
 
     private final UpstreamClientRegistry upstreamClientRegistry;
-    private final ProviderGateway providerGateway;
-    private final ChannelGateway channelGateway;
-    private final ModelInstanceGateway modelInstanceGateway;
-    private final ChannelCredentialGateway channelCredentialGateway;
-    private final ModelGateway modelGateway;
+    private final ProviderRepository providerRepository;
+    private final ChannelRepository channelRepository;
+    private final ModelInstanceRepository modelInstanceRepository;
+    private final ChannelCredentialRepository channelCredentialRepository;
+    private final ModelRepository modelRepository;
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
     private final ObjectMapper objectMapper;
 
     public ModelExperienceService(UpstreamClientRegistry upstreamClientRegistry,
-                                  ProviderGateway providerGateway,
-                                  ChannelGateway channelGateway,
-                                  ModelInstanceGateway modelInstanceGateway,
-                                  ChannelCredentialGateway channelCredentialGateway,
-                                  ModelGateway modelGateway,
+                                  ProviderRepository providerRepository,
+                                  ChannelRepository channelRepository,
+                                  ModelInstanceRepository modelInstanceRepository,
+                                  ChannelCredentialRepository channelCredentialRepository,
+                                  ModelRepository modelRepository,
                                   ObjectMapper objectMapper) {
         this.upstreamClientRegistry = upstreamClientRegistry;
-        this.providerGateway = providerGateway;
-        this.channelGateway = channelGateway;
-        this.modelInstanceGateway = modelInstanceGateway;
-        this.channelCredentialGateway = channelCredentialGateway;
-        this.modelGateway = modelGateway;
+        this.providerRepository = providerRepository;
+        this.channelRepository = channelRepository;
+        this.modelInstanceRepository = modelInstanceRepository;
+        this.channelCredentialRepository = channelCredentialRepository;
+        this.modelRepository = modelRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -111,18 +111,18 @@ public class ModelExperienceService {
      * @return 模型列表
      */
     public List<ExperienceModelResponse> getModelsByProviderId(Long providerId) {
-        List<Long> channelIds = channelGateway.findByProviderId(providerId)
+        List<Long> channelIds = channelRepository.findByProviderId(providerId)
                 .stream().map(Channel::getId).toList();
         if (channelIds.isEmpty()) return List.of();
 
         List<Long> modelIds = channelIds.stream()
-                .flatMap(chId -> modelInstanceGateway.findActiveByChannelId(chId).stream())
+                .flatMap(chId -> modelInstanceRepository.findActiveByChannelId(chId).stream())
                 .map(ModelInstance::getModelId)
                 .distinct()
                 .toList();
         if (modelIds.isEmpty()) return List.of();
 
-        return modelGateway.findByIds(modelIds).stream()
+        return modelRepository.findByIds(modelIds).stream()
             .filter(Model::isAvailable)
             .map(model -> new ExperienceModelResponse(
                 model.getId(),
@@ -297,18 +297,18 @@ public class ModelExperienceService {
     private ResolvedConfig resolveConfig(ExperienceChatRequest request) {
         if (request.useSavedConfig()) {
             // 从数据库读取配置
-            var channel = channelGateway.findById(request.getChannelId())
+            var channel = channelRepository.findById(request.getChannelId())
                 .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.getChannelId()));
 
             ChannelCredential credential;
             if (request.getCredentialId() != null) {
-                credential = channelCredentialGateway.findById(request.getCredentialId())
+                credential = channelCredentialRepository.findById(request.getCredentialId())
                     .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.getCredentialId()));
                 if (!credential.getChannelId().equals(request.getChannelId())) {
                     throw new IllegalArgumentException("凭证不属于该渠道");
                 }
             } else {
-                credential = channelCredentialGateway.findDefaultByChannelId(request.getChannelId())
+                credential = channelCredentialRepository.findDefaultByChannelId(request.getChannelId())
                     .orElseThrow(() -> new IllegalArgumentException("渠道没有默认凭证，请指定要使用的凭证"));
             }
 
@@ -316,7 +316,7 @@ public class ModelExperienceService {
                 throw new IllegalArgumentException("凭证不可用");
             }
 
-            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointGateway 获取
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointRepository 获取
             String protocolName = request.getProtocolName() != null ? request.getProtocolName() : "openai";
 
             return new ResolvedConfig(

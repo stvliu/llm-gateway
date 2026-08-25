@@ -16,8 +16,8 @@
 package com.codingas.gateway.boot.init;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.iam.application.ApplicationGateway;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.application.ApplicationRepository;
+import com.codingas.gateway.iam.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,10 +38,10 @@ import static org.junit.jupiter.api.Assertions.*;
 class DataInitializerDisabledTest {
 
     @Autowired
-    private UserGateway userGateway;
+    private UserRepository userRepository;
 
     @Autowired
-    private ApplicationGateway applicationGateway;
+    private ApplicationRepository applicationRepository;
 
     @Autowired
     private DataInitializer dataInitializer;
@@ -50,20 +50,20 @@ class DataInitializerDisabledTest {
     @DisplayName("admin 应始终创建")
     void adminShouldBeCreated() {
         dataInitializer.run();
-        assertTrue(userGateway.findByUsername("admin").isPresent());
+        assertTrue(userRepository.findByUsername("admin").isPresent());
     }
 
     @Test
     @DisplayName("不应创建演示用户")
     void shouldNotCreateDemoUsers() {
         dataInitializer.run();
-        assertTrue(userGateway.findByUsername("test1").isEmpty());
+        assertTrue(userRepository.findByUsername("test1").isEmpty());
     }
 
     @Test
     @DisplayName("不应创建演示应用")
     void shouldNotCreateDemoApplications() {
         dataInitializer.run();
-        assertNull(applicationGateway.findByCode("dev"));
+        assertNull(applicationRepository.findByCode("dev"));
     }
 }

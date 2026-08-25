@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelCredential;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 class CredentialResolverTest {
 
     @Mock
-    private ChannelCredentialGateway channelCredentialGateway;
+    private ChannelCredentialRepository channelCredentialRepository;
 
     @InjectMocks
     private CredentialResolver credentialResolver;
@@ -59,7 +59,7 @@ class CredentialResolverTest {
             defaultKey.setChannelId(10L);
             defaultKey.setApiKeyPlain("sk-default-key");
 
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
+            when(channelCredentialRepository.findDefaultByChannelId(10L))
                     .thenReturn(Optional.of(defaultKey));
 
             // when
@@ -78,9 +78,9 @@ class CredentialResolverTest {
             activeKey.setChannelId(10L);
             activeKey.setApiKeyPlain("sk-active-key");
 
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
+            when(channelCredentialRepository.findDefaultByChannelId(10L))
                     .thenReturn(Optional.empty());
-            when(channelCredentialGateway.findActiveByChannelId(10L))
+            when(channelCredentialRepository.findActiveByChannelId(10L))
                     .thenReturn(List.of(activeKey));
 
             // when
@@ -94,9 +94,9 @@ class CredentialResolverTest {
         @DisplayName("无可用凭证时抛出 ResourceNotFoundException")
         void resolve_noCredential_throwsException() {
             // given
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
+            when(channelCredentialRepository.findDefaultByChannelId(10L))
                     .thenReturn(Optional.empty());
-            when(channelCredentialGateway.findActiveByChannelId(10L))
+            when(channelCredentialRepository.findActiveByChannelId(10L))
                     .thenReturn(List.of());
 
             // when & then

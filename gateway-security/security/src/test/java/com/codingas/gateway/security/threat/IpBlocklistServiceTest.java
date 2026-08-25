@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.security.threat;
 
-import com.codingas.gateway.security.threat.IpBlockGateway;
+import com.codingas.gateway.security.threat.IpBlocklistRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
 class IpBlocklistServiceTest {
 
     @Mock
-    private IpBlockGateway ipBlockGateway;
+    private IpBlocklistRepository ipBlockRepository;
 
     @InjectMocks
     private IpBlocklistService ipBlocklistService;
@@ -63,7 +63,7 @@ class IpBlocklistServiceTest {
     @Test
     @DisplayName("isBlocked 在黑名单中的 IP 应返回 true")
     void isBlocked_blockedIp_returnsTrue() {
-        when(ipBlockGateway.isBlocked("192.168.1.100")).thenReturn(true);
+        when(ipBlockRepository.isBlocked("192.168.1.100")).thenReturn(true);
 
         boolean result = ipBlocklistService.isBlocked("192.168.1.100");
 
@@ -71,11 +71,11 @@ class IpBlocklistServiceTest {
     }
 
     @Test
-    @DisplayName("blockIp 永久封禁应调用 ipBlockGateway.block 带 null expiresAt")
+    @DisplayName("blockIp 永久封禁应调用 ipBlockRepository.block 带 null expiresAt")
     void blockIp_permanent_callsBlockWithNullExpires() {
         ipBlocklistService.blockIp("192.168.1.100", "Brute force", 1L);
 
-        verify(ipBlockGateway).block(eq("192.168.1.100"), eq("Brute force"), eq(1L), eq(null));
+        verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Brute force"), eq(1L), eq(null));
     }
 
     @Test
@@ -83,14 +83,14 @@ class IpBlocklistServiceTest {
     void blockIp_temporary_calculatesExpiresAt() {
         ipBlocklistService.blockIp("192.168.1.100", "Testing", 1L, 30);
 
-        verify(ipBlockGateway).block(eq("192.168.1.100"), eq("Testing"), eq(1L), any(Instant.class));
+        verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Testing"), eq(1L), any(Instant.class));
     }
 
     @Test
-    @DisplayName("unblockIp 应调用 ipBlockGateway.unblock")
+    @DisplayName("unblockIp 应调用 ipBlockRepository.unblock")
     void unblockIp_callsUnblock() {
         ipBlocklistService.unblockIp("192.168.1.100");
 
-        verify(ipBlockGateway).unblock("192.168.1.100");
+        verify(ipBlockRepository).unblock("192.168.1.100");
     }
 }

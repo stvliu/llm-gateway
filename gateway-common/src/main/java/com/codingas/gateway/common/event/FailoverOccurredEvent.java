@@ -26,7 +26,7 @@ import java.time.Instant;
  * <p>由 {@code ChannelFailoverInvoker} 在 catch 块判定 {@link FailoverDecision} 非 NONE
  * （L1 换候选）时，换下一候选前发布。由 {@code FailoverEventListener}
  * （{@code @EventListener}，非事务监听）接收并调
- * {@code FailoverEventGateway.save} 持久化为 {@code FailoverEvent} 实体。</p>
+ * {@code FailoverEventRepository.save} 持久化为 {@code FailoverEvent} 实体。</p>
  *
  * <p><b>命名说明</b>：事件类命名为 {@code FailoverOccurredEvent}（转移发生事件），
  * 避免与持久化实体 {@code FailoverEvent}（转移事件）同名冲突。参照 {@link AuditEvent}

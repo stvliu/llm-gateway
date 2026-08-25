@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.chat;
 import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.audit.CallLog;
-import com.codingas.gateway.audit.AuditGateway;
+import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.protocol.*;
 import com.codingas.gateway.protocol.contract.*;
 import com.codingas.gateway.protocol.transport.ProviderException;
@@ -53,16 +53,16 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
     private static final Logger log = LoggerFactory.getLogger(ChatDispatchServiceImpl.class);
 
     private final RoutingResolver routingResolver;
-    private final AuditGateway auditGateway;
+    private final AuditLogRepository auditRepository;
     private final DomainEventPublisher eventPublisher;
     private final ChannelFailoverInvoker channelFailoverInvoker;
 
     public ChatDispatchServiceImpl(RoutingResolver routingResolver,
-                                   AuditGateway auditGateway,
+                                   AuditLogRepository auditRepository,
                                    DomainEventPublisher eventPublisher,
                                    ChannelFailoverInvoker channelFailoverInvoker) {
         this.routingResolver = routingResolver;
-        this.auditGateway = auditGateway;
+        this.auditRepository = auditRepository;
         this.eventPublisher = eventPublisher;
         this.channelFailoverInvoker = channelFailoverInvoker;
     }
@@ -100,14 +100,14 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
             callLog.setSuccess(true);
             publishTokenUsedEvent(response, identity, primaryCtx, traceId);
-            auditGateway.saveCallLog(callLog);
+            auditRepository.saveCallLog(callLog);
 
             return response;
         } catch (Exception e) {
             callLog.setDurationMs(System.currentTimeMillis() - startTime);
             callLog.setSuccess(false);
             callLog.setErrorMessage(e.getMessage());
-            auditGateway.saveCallLog(callLog);
+            auditRepository.saveCallLog(callLog);
             throw e;
         }
     }
@@ -143,7 +143,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
             public void onComplete() {
                 callLog.setDurationMs(System.currentTimeMillis() - startTime);
                 callLog.setSuccess(true);
-                auditGateway.saveCallLog(callLog);
+                auditRepository.saveCallLog(callLog);
                 callback.onComplete();
             }
 
@@ -158,7 +158,7 @@ public class ChatDispatchServiceImpl implements ChatDispatchService {
                 callLog.setDurationMs(System.currentTimeMillis() - startTime);
                 callLog.setSuccess(false);
                 callLog.setErrorMessage(errorJson);
-                auditGateway.saveCallLog(callLog);
+                auditRepository.saveCallLog(callLog);
                 callback.onError(new RuntimeException(errorJson));
             }
         };

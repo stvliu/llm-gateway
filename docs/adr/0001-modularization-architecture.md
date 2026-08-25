@@ -30,12 +30,14 @@
 | gateway-protocol | `com.codingas.gateway.protocol` | contract / transport / tuning / validation |
 | gateway-web | `com.codingas.gateway.web.*` | api / interceptor / advice（Controller/Interceptor/Advice 承载层） |
 | gateway-boot | `com.codingas.gateway.boot.*` | config / init / event（收拢后） |
-| 绑定模块 | `com.codingas.gateway.<域>data` | dataobject / gateway / repository |
+| 绑定模块 | `com.codingas.gateway.<域>data.<实体子域>` | 按实体子域聚合：`user` / `apikey` / `application`（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包） |
 | starter | `com.codingas.gateway.autoconfigure.<域>` | - |
 
 ### 3. 类名后缀——保留
 
-`XxxService/XxxServiceImpl/XxxController/XxxGatewayImpl/XxxConfig/XxxDo` 等后缀是通用工程惯例，与分层无关，全部保留。Gateway 模式实现类（`XxxGatewayImpl`）放绑定模块 `-data` 的 `gateway` 包。
+`XxxService/XxxServiceImpl/XxxController/JpaXxxRepository/XxxConfig/XxxDo` 等后缀是通用工程惯例，与分层无关，全部保留。端口实现类（`JpaXxxRepository`）放绑定模块 `-data`，按实体子域聚合（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包）。
+
+> 命名演进（2026-08-26）：领域端口统一 `XxxRepository`（本地持久化）/ `XxxClient`（第三方防腐），弃用 `XxxGateway` 后缀（与产品名"LLM-Gateway"及业界"API 网关"概念冲突）；端口实现 `XxxGatewayImpl` → `JpaXxxRepository`（带技术前缀，与 `XxxServiceImpl` 区分）；Spring Data 接口 `XxxRepository` → `XxxJpaRepository`（避免与领域端口同名）。详见 constitution.md §2.2 / §3.1。
 
 ### 4. 健康监控类归属原则（本次实践确立）
 

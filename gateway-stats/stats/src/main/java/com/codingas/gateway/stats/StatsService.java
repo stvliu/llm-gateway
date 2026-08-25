@@ -16,10 +16,10 @@
 package com.codingas.gateway.stats;
 
 import com.codingas.gateway.stats.dto.StatsResponse;
-import com.codingas.gateway.provider.channel.ChannelGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
+import com.codingas.gateway.iam.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,20 +33,20 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class StatsService {
 
-    private final ProviderGateway providerGateway;
-    private final ChannelGateway channelGateway;
-    private final ModelGateway modelGateway;
-    private final UserGateway userGateway;
+    private final ProviderRepository providerRepository;
+    private final ChannelRepository channelRepository;
+    private final ModelRepository modelRepository;
+    private final UserRepository userRepository;
 
     /**
      * 获取系统统计数据
      */
     @Transactional(readOnly = true)
     public StatsResponse getStats() {
-        long providerCount = providerGateway.count();
-        long channelCount = channelGateway.count();
-        long modelCount = modelGateway.count();
-        long userCount = userGateway.count();
+        long providerCount = providerRepository.count();
+        long channelCount = channelRepository.count();
+        long modelCount = modelRepository.count();
+        long userCount = userRepository.count();
         // TODO: 接入真实的请求统计和 Token 用量数据
         long todayRequests = 0;
         String tokenUsage = "0";

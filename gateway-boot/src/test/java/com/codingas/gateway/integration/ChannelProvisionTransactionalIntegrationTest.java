@@ -16,16 +16,16 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.provider.service.ChannelProvisionService;
+import com.codingas.gateway.provider.channel.ChannelProvisionService;
 import com.codingas.gateway.provider.catalog.ProvisionRequest;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
-import com.codingas.gateway.provider.catalog.PlanCatalogGateway;
+import com.codingas.gateway.provider.catalog.PlanCatalogRepository;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -57,7 +57,7 @@ import static org.mockito.Mockito.when;
  * <p>关键技术点：</p>
  * <ul>
  *     <li>使用 {@link Propagation#NOT_SUPPORTED} 让外层不携带事务，service 内 {@code @Transactional} 真实生效</li>
- *     <li>{@link MockBean} 替换 {@link ChannelEndpointGateway}，模拟下游写入失败</li>
+ *     <li>{@link MockBean} 替换 {@link ChannelEndpointRepository}，模拟下游写入失败</li>
  *     <li>{@link DirtiesContext} 在每个测试后重置 Spring 上下文，避免被污染的 mock bean 影响其它套件</li>
  * </ul>
  */
@@ -71,14 +71,14 @@ class ChannelProvisionTransactionalIntegrationTest {
     private ChannelProvisionService service;
 
     @Autowired
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Autowired
-    private PlanCatalogGateway planCatalogGateway;
+    private PlanCatalogRepository planCatalogRepository;
 
     /** 模拟下游端点写入失败的关键 mock bean */
     @MockBean
-    private ChannelEndpointGateway channelEndpointGateway;
+    private ChannelEndpointRepository channelEndpointRepository;
 
     private static final String NEW_PROVIDER_CODE = "brand-new-provider";
     private static final String NEW_PLAN_CODE = "brand-new-plan-rollback";
@@ -95,10 +95,10 @@ class ChannelProvisionTransactionalIntegrationTest {
         plan.setProviderCode(providerCode);
         plan.setPlanName(planCode);
         plan.setBillingMode(BillingMode.PAY_AS_YOU_GO);
-        // endpoints JSON 必须包含一条记录，确保 service 触发 channelEndpointGateway.save（mock 抛错路径）
+        // endpoints JSON 必须包含一条记录，确保 service 触发 channelEndpointRepository.save（mock 抛错路径）
         plan.setEndpoints("[{\"protocol\":\"OPENAI\",\"url\":\"https://example.com/v1\"}]");
         plan.setPricing(null);
-        return planCatalogGateway.save(plan);
+        return planCatalogRepository.save(plan);
     }
 
     @BeforeEach
@@ -113,10 +113,10 @@ class ChannelProvisionTransactionalIntegrationTest {
     }
 
     private void cleanupArtifacts() {
-        providerGateway.findByCode(NEW_PROVIDER_CODE)
-                .ifPresent(providerGateway::delete);
-        providerGateway.findByCode(EXISTING_PROVIDER_CODE)
-                .ifPresent(providerGateway::delete);
+        providerRepository.findByCode(NEW_PROVIDER_CODE)
+                .ifPresent(providerRepository::delete);
+        providerRepository.findByCode(EXISTING_PROVIDER_CODE)
+                .ifPresent(providerRepository::delete);
     }
 
     /**
@@ -129,10 +129,10 @@ class ChannelProvisionTransactionalIntegrationTest {
         // 准备 PlanCatalog
         persistPlan(NEW_PLAN_CODE, NEW_PROVIDER_CODE);
         // 确保 Provider 此时不存在
-        assertThat(providerGateway.findByCode(NEW_PROVIDER_CODE)).isEmpty();
+        assertThat(providerRepository.findByCode(NEW_PROVIDER_CODE)).isEmpty();
 
         // mock 端点保存抛异常
-        when(channelEndpointGateway.save(any(ChannelEndpoint.class)))
+        when(channelEndpointRepository.save(any(ChannelEndpoint.class)))
                 .thenThrow(new RuntimeException("simulated endpoint save failure"));
 
         ProvisionRequest request = new ProvisionRequest();
@@ -145,7 +145,7 @@ class ChannelProvisionTransactionalIntegrationTest {
                 .hasMessageContaining("simulated endpoint save failure");
 
         // 关键断言：事务回滚后，Provider 不应被持久化
-        Optional<Provider> orphan = providerGateway.findByCode(NEW_PROVIDER_CODE);
+        Optional<Provider> orphan = providerRepository.findByCode(NEW_PROVIDER_CODE);
         assertThat(orphan)
                 .as("内联创建的 Provider 应随事务回滚而不被持久化")
                 .isEmpty();
@@ -154,7 +154,7 @@ class ChannelProvisionTransactionalIntegrationTest {
     /**
      * 关键场景：providerCode 已存在 → inlineProvider 被忽略，正常路径走通（不抛错、不重复写 Provider）
      *
-     * <p>本用例不让端点保存抛错（使用默认 mock 返回 null），确保走完 service 主流程到 channelEndpointGateway.save 之前。</p>
+     * <p>本用例不让端点保存抛错（使用默认 mock 返回 null），确保走完 service 主流程到 channelEndpointRepository.save 之前。</p>
      */
     @Test
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -165,14 +165,14 @@ class ChannelProvisionTransactionalIntegrationTest {
         preset.setCode(EXISTING_PROVIDER_CODE);
         preset.setName("Original Existing");
         preset.setPriority(50);
-        Provider savedExisting = providerGateway.save(preset);
+        Provider savedExisting = providerRepository.save(preset);
         assertThat(savedExisting.getId()).isNotNull();
 
         // 准备 PlanCatalog
         persistPlan(EXISTING_PLAN_CODE, EXISTING_PROVIDER_CODE);
 
         // mock 端点保存正常返回（避免 NPE）
-        when(channelEndpointGateway.save(any(ChannelEndpoint.class)))
+        when(channelEndpointRepository.save(any(ChannelEndpoint.class)))
                 .thenAnswer(inv -> {
                     ChannelEndpoint ep = inv.getArgument(0);
                     ep.setId(System.currentTimeMillis());
@@ -188,7 +188,7 @@ class ChannelProvisionTransactionalIntegrationTest {
         assertThat(result.getStatus()).isEqualTo("CREATED");
 
         // 关键断言：原有 Provider 的 name 未被 inline 覆盖（走的是已存在分支，没有 save 路径）
-        Provider after = providerGateway.findByCode(EXISTING_PROVIDER_CODE).orElseThrow();
+        Provider after = providerRepository.findByCode(EXISTING_PROVIDER_CODE).orElseThrow();
         assertThat(after.getName()).isEqualTo("Original Existing");
         assertThat(after.getId()).isEqualTo(savedExisting.getId());
     }

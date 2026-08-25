@@ -16,10 +16,10 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ChannelHealthCheckRequest;
-import com.codingas.gateway.provider.service.ChannelEmergencyService;
-import com.codingas.gateway.provider.service.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyService;
+import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.channel.*;
-import com.codingas.gateway.provider.service.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.dto.ChannelHealthResult;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.channel.ChannelStateTransitionRequest;

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.security.threat;
 
-import com.codingas.gateway.security.threat.IpBlockGateway;
+import com.codingas.gateway.security.threat.IpBlocklistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class IpBlocklistService {
 
-    private final IpBlockGateway ipBlockGateway;
+    private final IpBlocklistRepository ipBlockRepository;
 
     /**
      * 检查 IP 是否在黑名单中
@@ -39,14 +39,14 @@ public class IpBlocklistService {
         if (ipAddress == null || ipAddress.isBlank()) {
             return false;
         }
-        return ipBlockGateway.isBlocked(ipAddress);
+        return ipBlockRepository.isBlocked(ipAddress);
     }
 
     /**
      * 封禁 IP（永久）
      */
     public void blockIp(String ipAddress, String reason, Long blockedBy) {
-        ipBlockGateway.block(ipAddress, reason, blockedBy, null);
+        ipBlockRepository.block(ipAddress, reason, blockedBy, null);
         log.info("IP blocked: address={}, reason={}, by={}", ipAddress, reason, blockedBy);
     }
 
@@ -55,7 +55,7 @@ public class IpBlocklistService {
      */
     public void blockIp(String ipAddress, String reason, Long blockedBy, long durationMinutes) {
         java.time.Instant expiresAt = java.time.Instant.now().plusSeconds(durationMinutes * 60);
-        ipBlockGateway.block(ipAddress, reason, blockedBy, expiresAt);
+        ipBlockRepository.block(ipAddress, reason, blockedBy, expiresAt);
         log.info("IP blocked: address={}, reason={}, by={}, expires={}",
             ipAddress, reason, blockedBy, expiresAt);
     }
@@ -64,7 +64,7 @@ public class IpBlocklistService {
      * 解封 IP
      */
     public void unblockIp(String ipAddress) {
-        ipBlockGateway.unblock(ipAddress);
+        ipBlockRepository.unblock(ipAddress);
         log.info("IP unblocked: address={}", ipAddress);
     }
 }

@@ -18,12 +18,12 @@ package com.codingas.gateway.boot.init;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationChannel;
 import com.codingas.gateway.iam.application.ApplicationState;
-import com.codingas.gateway.iam.application.ApplicationChannelGateway;
-import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
+import com.codingas.gateway.iam.application.ApplicationRepository;
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
+import com.codingas.gateway.iam.user.UserRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.boot.config.GatewayProperties;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -55,23 +55,23 @@ public class SampleDataLoader implements DataLoader {
     private static final String USERS_JSON = "data/sample/users.json";
     private static final String API_KEYS_JSON = "data/sample/apikeys.json";
 
-    private final UserGateway userGateway;
-    private final ApplicationGateway applicationGateway;
-    private final ApplicationChannelGateway applicationChannelGateway;
-    private final UserApiKeyGateway userApiKeyGateway;
+    private final UserRepository userRepository;
+    private final ApplicationRepository applicationRepository;
+    private final ApplicationChannelRepository applicationChannelRepository;
+    private final UserApiKeyRepository userApiKeyRepository;
     private final UserCreator userCreator;
     private final GatewayProperties gatewayProperties;
 
-    public SampleDataLoader(UserGateway userGateway,
-                            ApplicationGateway applicationGateway,
-                            ApplicationChannelGateway applicationChannelGateway,
-                            UserApiKeyGateway userApiKeyGateway,
+    public SampleDataLoader(UserRepository userRepository,
+                            ApplicationRepository applicationRepository,
+                            ApplicationChannelRepository applicationChannelRepository,
+                            UserApiKeyRepository userApiKeyRepository,
                             UserCreator userCreator,
                             GatewayProperties gatewayProperties) {
-        this.userGateway = userGateway;
-        this.applicationGateway = applicationGateway;
-        this.applicationChannelGateway = applicationChannelGateway;
-        this.userApiKeyGateway = userApiKeyGateway;
+        this.userRepository = userRepository;
+        this.applicationRepository = applicationRepository;
+        this.applicationChannelRepository = applicationChannelRepository;
+        this.userApiKeyRepository = userApiKeyRepository;
         this.userCreator = userCreator;
         this.gatewayProperties = gatewayProperties;
     }
@@ -121,7 +121,7 @@ public class SampleDataLoader implements DataLoader {
     // ========== Internal methods ==========
 
     private boolean isLoaded() {
-        return userGateway.findByUsername("test1").isPresent();
+        return userRepository.findByUsername("test1").isPresent();
     }
 
     private Map<String, Application> loadApplications(Map<String, Channel> channelMap) {
@@ -144,7 +144,7 @@ public class SampleDataLoader implements DataLoader {
                     }
                 }
                 if (!rels.isEmpty()) {
-                    applicationChannelGateway.saveAll(rels);
+                    applicationChannelRepository.saveAll(rels);
                 }
             }
         }
@@ -159,7 +159,7 @@ public class SampleDataLoader implements DataLoader {
 
         List<SampleUserData> users = JsonResourceReader.readList(USERS_JSON, new TypeReference<>() {});
         for (SampleUserData userData : users) {
-            User saved = userGateway.findByUsername(userData.username())
+            User saved = userRepository.findByUsername(userData.username())
                     .orElseGet(() -> userCreator.create(
                             userData.username(), userData.email(),
                             userData.password(), userData.role(), false));
@@ -213,7 +213,7 @@ public class SampleDataLoader implements DataLoader {
         app.setName(code);
         app.setDescription(description);
         app.setState(ApplicationState.ACTIVE);
-        return applicationGateway.save(app);
+        return applicationRepository.save(app);
     }
 
     private void createUserApiKey(Long userId, String name, Long applicationId) {
@@ -223,7 +223,7 @@ public class SampleDataLoader implements DataLoader {
         userApiKey.setName(name);
         String uuid8 = UUID.randomUUID().toString().substring(0, 8);
         userApiKey.setKeyPlain("sk-" + uuid8 + "-" + name.toLowerCase().replace(" ", "-"));
-        userApiKeyGateway.save(userApiKey);
+        userApiKeyRepository.save(userApiKey);
     }
 
     private void logInitializationSummary(int channelCount, int applicationCount, int userCount) {

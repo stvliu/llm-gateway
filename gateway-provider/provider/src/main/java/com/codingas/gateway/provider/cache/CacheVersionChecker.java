@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.provider.cache;
 
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +38,9 @@ public class CacheVersionChecker {
 
     private static final long CHECK_INTERVAL_SECONDS = 30;
 
-    private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ProviderRepository providerRepository;
+    private final ModelRepository modelRepository;
+    private final ChannelCredentialRepository channelCredentialRepository;
     private final CacheInvalidationService cacheService;
 
     // 记录上次检查的版本
@@ -55,9 +55,9 @@ public class CacheVersionChecker {
      */
     @PostConstruct
     public void initVersions() {
-        lastProviderVersion = providerGateway.getMaxVersion();
-        lastModelVersion = modelGateway.getMaxVersion();
-        lastCredentialVersion = channelCredentialGateway.getMaxVersion();
+        lastProviderVersion = providerRepository.getMaxVersion();
+        lastModelVersion = modelRepository.getMaxVersion();
+        lastCredentialVersion = channelCredentialRepository.getMaxVersion();
         log.info("Version checker initialized: provider={}, model={}, credential={}",
             lastProviderVersion, lastModelVersion, lastCredentialVersion);
     }
@@ -70,7 +70,7 @@ public class CacheVersionChecker {
     @Scheduled(fixedRate = CHECK_INTERVAL_SECONDS * 1000)
     public void checkVersions() {
         // 检查 Provider 版本
-        long currentProviderVersion = providerGateway.getMaxVersion();
+        long currentProviderVersion = providerRepository.getMaxVersion();
         if (currentProviderVersion > lastProviderVersion) {
             log.info("Provider version changed: {} -> {}", lastProviderVersion, currentProviderVersion);
             cacheService.refreshProviders();
@@ -78,7 +78,7 @@ public class CacheVersionChecker {
         }
 
         // 检查 Model 版本
-        long currentModelVersion = modelGateway.getMaxVersion();
+        long currentModelVersion = modelRepository.getMaxVersion();
         if (currentModelVersion > lastModelVersion) {
             log.info("Model version changed: {} -> {}", lastModelVersion, currentModelVersion);
             cacheService.refreshModels();
@@ -86,7 +86,7 @@ public class CacheVersionChecker {
         }
 
         // 检查 Credential 版本
-        long currentCredentialVersion = channelCredentialGateway.getMaxVersion();
+        long currentCredentialVersion = channelCredentialRepository.getMaxVersion();
         if (currentCredentialVersion > lastCredentialVersion) {
             log.info("Credential version changed: {} -> {}", lastCredentialVersion, currentCredentialVersion);
             cacheService.refreshApiKeys();

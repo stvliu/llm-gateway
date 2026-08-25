@@ -141,7 +141,7 @@ Token 必须是所有成本追踪的核心单位。
 系统采用域模块化架构：多模块 Maven 三明治结构，按功能域划分模块（模块 = 根包）。
 分层规则：HTTP 承载归 gateway-web（api/interceptor/advice），启动装配归 gateway-boot（config/init/event）；
 领域接口与持久化实现下沉至各功能域模块。
-业务域以「核心模块（业务逻辑 + Gateway 接口 + 服务）+ <域>data 绑定模块（JPA 持久化实现）+ <域>starter（自动装配）」三明治结构组织，
+业务域以「核心模块（业务逻辑 + 端口接口 + 服务）+ <域>data 绑定模块（JPA 持久化实现）+ <域>starter（自动装配）」三明治结构组织，
 实现依赖倒置；跨域协作通过服务编排，旁路操作通过领域事件解耦。
 ```
 
@@ -202,60 +202,71 @@ gateway-project/                       # 父 POM（打包类型: pom）
 |---|------|---------|
 | **web** | 接收请求、返回响应 | Controller、拦截器、全局异常（gateway-web，按用例分包） |
 | **application** | 用例编排，跨域协调 | 编排服务（各功能域核心模块的 service 包，按用例分包） |
-| **domain** | 业务逻辑、领域模型 | Entity、Service、Gateway 接口、异常、枚举（位于各功能域核心模块） |
-| **infrastructure** | 技术实现 | Gateway 实现、配置、工具（位于 `<域>data` 绑定模块） |
+| **domain** | 业务逻辑、领域模型 | Entity、Service、端口接口（Repository/Client）、异常、枚举（位于各功能域核心模块） |
+| **infrastructure** | 技术实现 | 端口实现（JpaXxxRepository）、配置、工具（位于 `<域>data` 绑定模块） |
 | **common** | 跨领域共享 | 基础异常、技术常量、工具类（gateway-common） |
 
 > 业务域代码（domain/infrastructure）不再集中在 gateway-boot，而是下沉至各功能域模块（domain 接口在核心模块、infrastructure 实现在 `<域>data` 绑定模块）；HTTP 承载归 gateway-web，gateway-boot 只保留启动装配（config/init/event）。
 
-### 2.2 Gateway 模式
+### 2.2 Repository / Client 端口模式（防腐层）
 
 **定义**:
 ```
-Gateway 接口定义在功能域核心模块中（根包 = groupId + 子域，如 com.codingas.gateway.iam）。
-Gateway 实现在对应的 <域>data 绑定模块中（根包 = groupId + 子域 + data，如 com.codingas.gateway.iamdata）。
-业务域只依赖 Gateway 接口，不直接依赖外部资源。
-绑定模块通过依赖注入实现 Gateway，负责 DO ↔ Entity 转换。
+端口接口（Repository / Client）定义在功能域核心模块中（根包 = groupId + 子域，如 com.codingas.gateway.iam）。
+端口实现在对应的 <域>data 绑定模块中（根包 = groupId + 子域 + data，如 com.codingas.gateway.iamdata）。
+业务域只依赖端口接口，不直接依赖外部资源。
+绑定模块通过依赖注入实现端口，负责 DO ↔ Entity 转换。
 ```
 
 ```
-功能域核心模块                 <域>data 绑定模块
+功能域核心模块                    <域>data 绑定模块
    │                                │
    │   ┌─────────────────┐          │
-   │   │ XxxGateway     │          │
-   │   │ (接口定义)      │          │
+   │   │ XxxRepository  │          │
+   │   │ (端口接口定义)  │          │
    │   └────────┬────────┘          │
    │            │                     │
    │            │ 实现                │
    └────────────┼────────────────────┘
                 │
-         ┌──────┴──────┐
-         │ JpaXxx       │
-         │ Gateway      │
-         └─────────────┘
+         ┌──────┴────────┐
+         │ JpaXxx        │
+         │ Repository    │
+         └───────────────┘
 ```
 
-**Gateway 接口与实现放置规则**:
+**端口命名与放置规则**:
 
-| 组件 | 放置位置 |
-|------|---------|
-| Gateway 接口 | 功能域核心模块（如 `com.codingas.gateway.audit.AuditGateway`） |
-| Gateway 实现 | `<域>data` 绑定模块 gateway 包（如 `com.codingas.gateway.auditdata.gateway.AuditGatewayImpl`） |
+| 端口角色 | 命名 | 放置位置 |
+|---------|------|---------|
+| 本地持久化端口（领域端口） | `XxxRepository`（与实体同包，如 `iam.user.UserRepository`） | 功能域核心模块，与聚合同包 |
+| 持久化端口实现 | `JpaXxxRepository`（如 `iamdata.user.JpaUserRepository`） | `<域>data` 绑定模块，按实体子域聚合 |
+| Spring Data 技术接口 | `XxxJpaRepository`（如 `iamdata.user.UserJpaRepository`） | `<域>data` 绑定模块，与 DO 同包 |
+| 第三方外部系统防腐端口 | `XxxClient`（如 `ChannelEndpointClient`） | 功能域核心模块 |
+| 外部系统端口实现 | `HttpXxxClient` / `RestXxxClient` / `OkHttpXxxClient` | `<域>data` 或适配模块 |
+
+> **命名区分**：本地持久化用 `Repository`，访问外部第三方系统用 `Client`——前者管"存"，后者管"调"，职责边界零歧义。JPA 技术接口加 `Jpa` 前缀（`XxxJpaRepository`）以区分领域端口 `XxxRepository`。
 
 ### 2.3 服务分类
 
-**服务（Service）**：
+**应用服务（Service）**：
 - 职责：业务逻辑 / 用例编排（按能力定位，如认证、加密、渠道管理）
-- 放置：功能域核心模块的 service 包（如 `com.codingas.gateway.iam.service`、`com.codingas.gateway.iam.auth`、`com.codingas.gateway.provider.service`，按用例分包）
-- 命名：能力名 + `Service` 后缀
-- 示例：`AuthenticationService`, `ApiKeyEncryptionService`, `ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
+- 放置：**服务跟随聚合**——与所属聚合同包（如 `iam.user.UserService`、`iam.apikey.UserApiKeyService`、`provider.channel.ChannelService`），不设集中式 service 包
+- 命名：能力名 + `Service` 后缀（接口）/ `ServiceImpl`（实现）
+- 示例：`UserService`, `ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
+
+**技术能力类（非用例服务）**：
+- 职责：加密、哈希、生成、编码等通用技术能力
+- 命名：**禁止 `Service` 后缀**，用能力动词后缀：`XxxEncryptor` / `XxxGenerator` / `XxxHasher` / `XxxEncoder`
+- 放置：能力子域包（如 `iam.encryption.Encryptor`、`iam.encryption.ApiKeyEncryptor`、`provider.encryption.CredentialEncryptor`）
+- 示例：`Encryptor`, `Aes256Encryptor`, `ApiKeyEncryptor`, `PasswordEncoder`
 
 **示例对照**：
 ```
-gateway-iam · com.codingas.gateway.iam.auth.AuthenticationService       # 认证服务
-gateway-iam · com.codingas.gateway.iam.service.ApiKeyEncryptionService  # API Key 加密服务
-gateway-provider · com.codingas.gateway.provider.service.ChannelService # 渠道服务
-gateway-provider · com.codingas.gateway.provider.service.ModelService       # 模型服务
+gateway-iam · com.codingas.gateway.iam.user.UserService           # 用户用例服务（跟随 user 聚合）
+gateway-iam · com.codingas.gateway.iam.apikey.UserApiKeyService   # API Key 用例服务（跟随 apikey 聚合）
+gateway-iam · com.codingas.gateway.iam.encryption.ApiKeyEncryptor # API Key 加密能力（非 Service）
+gateway-provider · com.codingas.gateway.provider.channel.ChannelService  # 渠道用例服务
 ```
 
 ### 2.4 Exception 分类
@@ -270,19 +281,19 @@ gateway-provider · com.codingas.gateway.provider.service.ModelService       # �
 
 | 方式 | 场景 | 规则 |
 |------|------|------|
-| Gateway 接口 | Domain 访问外部资源 | ✅ 定义在功能域核心模块，实现在 `<域>data` 绑定模块 |
-| 服务编排 | 主流程（认证→路由→调用） | ✅ 功能域核心模块 service 包的服务调用（编排） |
+| 端口接口（Repository/Client） | Domain 访问外部资源 | ✅ 定义在功能域核心模块，实现在 `<域>data` 绑定模块 |
+| 服务编排 | 主流程（认证→路由→调用） | ✅ 各功能域核心模块跟随聚合的 Service 调用（编排） |
 | 领域事件 | 旁路（统计、审计） | ✅ 异步解耦 |
 | Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
-| Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过 Gateway |
+| Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过端口（Repository/Client） |
 
 **违规示例**:
-- ❌ 服务直接调用绑定模块的 `XxxRepository` 获取 Entity
-- ✅ 编排服务 → 业务服务 → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
+- ❌ 服务直接调用绑定模块的 `XxxJpaRepository` 获取 Entity
+- ✅ 编排服务 → 业务服务 → `XxxRepository` → `<域>data` 中的 `JpaXxxRepository`
 - ❌ `Service` 直接使用 `EntityManager` 持久化
-- ✅ `Service` → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
+- ✅ `Service` → `XxxRepository` → `<域>data` 中的 `JpaXxxRepository`
 - ❌ iam 域 Domain 直接调用 proxy 域 Domain 的服务
-- ✅ 功能域核心模块 service 包的服务编排两者的调用
+- ✅ 各功能域核心模块跟随聚合的 Service 编排两者的调用
 
 ### 2.6 大模型调用链路
 
@@ -311,7 +322,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
   │  │     位置：gateway-proxy · routing                 │
   │  │     ModelMatcher → CredentialResolver             │
   │  │       → EndpointResolver                          │
-  │  │  3. 记录审计起点：AuditGateway.logRequest(...)    │
+  │  │  3. 记录审计起点：AuditRepository.logRequest(...)    │
   │  │     位置：gateway-audit（实现：audit-data）        │
   │  └──────────────────────────────────────────────────┘
   │
@@ -346,7 +357,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
   │  ┌─ 后置阶段 ────────────────────────────────────────┐
   │  │  8. Token 计量：发布 TokenUsedEvent               │
   │  │     位置：gateway-usage · usage.event             │
-  │  │  9. 记录审计终点：AuditGateway.logResponse(...)   │
+  │  │  9. 记录审计终点：AuditRepository.logResponse(...)   │
   │  │     包含：duration、success/failure、Token 用量    │
   │  └──────────────────────────────────────────────────┘
   │
@@ -376,7 +387,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
 | 调用 | gateway-protocol（transport 接口 / 插件实现） | `UpstreamClient`, `UpstreamClientRegistry`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient` |
 | 韧性 | gateway-resilience | `RetryStrategy`/`RetryExecutor`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerManager`, `ResilientUpstreamClient` |
 | 计量 | gateway-usage | `ChatDispatchService` → 发布 `TokenUsedEvent` |
-| 审计 | gateway-audit + audit-data | `AuditGateway.logRequest()`, `AuditGateway.logResponse()` |
+| 审计 | gateway-audit + audit-data | `AuditRepository.logRequest()`, `AuditRepository.logResponse()` |
 
 ### 2.7 领域模型纯洁性
 
@@ -385,7 +396,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
 所有 JPA 实体必须保持纯洁，禁止包含业务逻辑。
 业务逻辑必须封装于 @Service 类中。
 Domain Entity 是业务领域的实体及实体关系，与基础设施的具体实现（DB/JPA、NoSQL、缓存、第三方系统）无关。
-Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节，防止第三方系统变化导致业务域腐化。
+端口接口（Repository/Client）是业务域与持久化实现之间的隔离接口，隔离技术细节，防止第三方系统变化导致业务域腐化。
 ```
 
 **Domain Entity 原则**:
@@ -393,11 +404,11 @@ Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节
 - ✅ 反映业务实体及其关联，不暴露任何技术实现细节
 - ✅ 纯 POJO，依赖 `BaseEntity`（无 JPA 注解）
 
-**Gateway（防腐层）原则**:
-- ✅ Gateway 接口定义在功能域核心模块，实现于 `<域>data` 绑定模块
-- ✅ Gateway 实现负责 **DO ↔ Entity 转换**（DO 是 JPA 实体，含 `@Entity`、`@ManyToOne` 等）
-- ✅ 业务域只依赖 Gateway 接口，完全不知道 JPA、数据库、ORM 的存在
-- ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改 Gateway 实现，业务域不受影响
+**端口（防腐层）原则**:
+- ✅ 端口接口（`XxxRepository`/`XxxClient`）定义在功能域核心模块，实现于 `<域>data` 绑定模块
+- ✅ 端口实现（`JpaXxxRepository`）负责 **DO ↔ Entity 转换**（DO 是 JPA 实体，含 `@Entity`、`@ManyToOne` 等）
+- ✅ 业务域只依赖端口接口，完全不知道 JPA、数据库、ORM 的存在
+- ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改端口实现，业务域不受影响
 
 **实体允许的内容**:
 - ✅ Getter/Setter
@@ -414,17 +425,17 @@ Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节
 **架构示意**:
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│            HTTP 承载与编排（gateway-web / 各域 service 包）    │
+│         HTTP 承载与编排（gateway-web / 各域聚合切片服务）      │
 │                  (用例编排，调用 Service)                     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
 │                  功能域核心模块（业务逻辑）                    │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
-│  │ Entity       │    │ Service      │    │ Gateway      │ │
+│  │ Entity       │    │ Service      │    │ 端口接口     │ │
 │  │ (纯POJO)     │    │ (业务逻辑)   │    │ (接口定义)   │ │
-│  │ User         │    │              │    │ XxxGateway   │ │
-│  │ Model ──→    │    │              │    │              │ │
+│  │ User         │    │ UserService  │    │ UserRepo-    │ │
+│  │ Model ──→    │    │              │    │ sitory       │ │
 │  │ Provider     │    │              │    │              │ │
 │  └──────────────┘    └──────────────┘    └──────┬───────┘ │
 └─────────────────────────────────────────────────┼───────────┘
@@ -432,7 +443,7 @@ Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节
 ┌─────────────────────────────────────────────────▼───────────┐
 │            JPA 绑定模块（gateway-*-data）                     │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │              JpaXxxGateway (Gateway 实现)              │   │
+│  │        JpaXxxRepository (端口实现)                     │   │
 │  │         负责 DO ↔ Entity 转换                         │   │
 │  └──────────────────────────────────────────────────────┘   │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐   │
@@ -444,7 +455,7 @@ Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节
 └───────────────────────────────────────────────────────────────┘
 ```
 
-> 模块化映射：HTTP 承载与编排 → gateway-web 与各功能域核心模块的 service 包；业务逻辑与接口 → 各功能域核心模块；JPA 持久化实现 → `<域>data` 绑定模块。
+> 模块化映射：HTTP 承载与编排 → gateway-web 与各功能域核心模块跟随聚合的服务；业务逻辑与端口接口 → 各功能域核心模块（实体/端口/服务按聚合同包）；JPA 持久化实现 → `<域>data` 绑定模块（按实体子域聚合，DO + `XxxJpaRepository` + `JpaXxxRepository` 同包）。
 
 **Entity 与 DO 关联模式**:
 
@@ -456,7 +467,7 @@ Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节
 **Entity 层 ID 引用原则**:
 
 - ✅ Entity 是纯数据载体，只持有关联对象的 ID
-- ✅ 需要关联数据时，通过 Service 或 Gateway 按需加载
+- ✅ 需要关联数据时，通过 Service 或端口（Repository/Client）按需加载
 - ✅ 避免隐式 N+1 查询风险
 - ✅ 符合聚合根边界原则
 
@@ -531,17 +542,48 @@ gateway:
 
 | 类型 | 规范 | 示例 |
 |------|------|------|
-| 实体类 | PascalCase + 明确业务含义 | `GatewayConfig`, `ModelProvider` |
-| 服务类 | PascalCase + `Service` 后缀 | `RoutingService`, `CostService` |
-| 接口 | PascalCase + 能力描述 | `ModelRouter`, `TokenCounter` |
+| 领域实体 | PascalCase + 明确业务含义 | `User`, `ModelProvider`, `GatewayConfig` |
+| 领域端口（本地持久化） | `XxxRepository`，与实体同包 | `iam.user.UserRepository` |
+| 领域端口（第三方防腐） | `XxxClient` | `ChannelEndpointClient` |
+| 端口实现 | `JpaXxxRepository` / `HttpXxxClient` | `iamdata.user.JpaUserRepository` |
+| Spring Data 接口 | `XxxJpaRepository`（与 DO 同包） | `iamdata.user.UserJpaRepository` |
+| JPA 实体（DO） | `XxxDo` | `UserDo` |
+| 应用服务 | `XxxService`（接口）/ `XxxServiceImpl`（实现），跟随聚合同包 | `iam.user.UserService` |
+| 技术能力 | 能力动词后缀，**禁止 Service** | `ApiKeyEncryptor`, `UserApiKeyGenerator`, `PasswordEncoder` |
+| 能力接口 | PascalCase + 能力描述 | `ModelRouter`, `TokenCounter`, `Encryptor` |
+| DTO（HTTP 契约） | `XxxRequest`（入）/ `XxxResponse`（出），位于 gateway-web API 层 | `UserCreateRequest`, `UserResponse` |
+| 值对象 | 业务名词 | `Identity` |
+| 状态枚举 | `XxxState` | `UserState`, `ApplicationState` |
+| 异常 | `XxxException` | `IamException`, `ForbiddenException` |
 | 方法 | camelCase + 动词开头 | `routeRequest()`, `countTokens()` |
 | 变量 | camelCase + 名词 | `tokenThreshold`, `providerId` |
 | 常量 | UPPER_SNAKE_CASE | `DEFAULT_TOKEN_THRESHOLD` |
 | 数据库表 | snake_case + 复数 | `model_providers`, `routing_strategies` |
 | 模块（根包） | 模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；**groupId 统一 `com.codingas.gateway`**，包名 = groupId + 子域（如 `com.codingas.gateway.provider`） | `com.codingas.gateway.iam` |
-| JPA 绑定模块 | `<域>data` 根包 | `iamdata`（`com.codingas.gateway.iamdata`） |
+| JPA 绑定模块 | `<域>data` 根包，**按实体子域聚合**（DO + `XxxJpaRepository` + `JpaXxxRepository` 同包） | `iamdata.user`（`com.codingas.gateway.iamdata.user`） |
 | HTTP 承载包 | gateway-web（根包 `com.codingas.gateway.web`） | `web.api.*`, `web.interceptor.*`, `web.advice.*` |
 | 装配包 | gateway-boot（根包 `com.codingas.gateway.boot`） | `boot.config.*`, `boot.init.*`, `boot.event.*` |
+
+**角色判读表（Repository vs Service）**:
+
+> 两者都以聚合名开头，区分靠方法签名：**出入参是领域实体 → Repository；出入参是 DTO/用例语义 → Service**。
+
+| | `XxxRepository`（端口） | `XxxService`（应用服务） |
+|---|---|---|
+| 方法语言 | 数据操作（`save`/`findById`/`findByEmail`/`existsBy…`/`delete`） | 业务用例（`create`/`login`/`assignRoles`/`changePassword`） |
+| 入参/出参 | 领域实体、`Long`、`Optional<Entity>` | DTO、用例参数/结果对象 |
+| 业务规则 | 无（纯存取抽象） | 有（校验、编排、决策） |
+| 调用链 | 被 Service 调用，永不反向 | 编排 Repository/其他能力 |
+
+**可见性模型（外部 API / 模块公开面 / 模块内部实现）**:
+
+| 层级 | 定义 | 实例 | 处理 |
+|------|------|------|------|
+| **外部 API** | 跨进程服务契约 | 仅 web Controller 的 REST 端点 | — |
+| **模块公开面** | 跨 Maven 模块的 Java 契约 | 实体、端口 `XxxRepository`、`XxxService`、DTO、异常 | 必须 `public`（Java 硬约束） |
+| **模块内部实现** | 仅本模块引用 | `XxxServiceImpl`、包内辅助类 | 默认 `public` 同包；出现模块私有类时按 `iam.<子域>.internal` 约定收纳 |
+
+> 强制机制：Maven 依赖边界（编译期）+ ArchUnit 铁律（源码期，见 `LayerDependencyTest`）+ 命名信号（`Do`/`Jpa` 前缀 = 内部实现警示）。
 
 > 协议插件模块遵循 `gateway-protocol-<协议>` 命名，根包 `com.codingas.gateway.protocol.<协议>`（如 `com.codingas.gateway.protocol.openai`）。
 

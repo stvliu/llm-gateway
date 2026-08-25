@@ -26,7 +26,7 @@ import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.audit.AuditGateway;
+import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.usage.event.TokenUsedEvent;
@@ -68,7 +68,7 @@ class ChatDispatchServiceTest {
     private ProtocolConversionFacade protocolConversionFacade;
 
     @Mock
-    private AuditGateway auditGateway;
+    private AuditLogRepository auditRepository;
 
     @Mock
     private DomainEventPublisher eventPublisher;
@@ -84,14 +84,14 @@ class ChatDispatchServiceTest {
     @BeforeEach
     void setUp() {
         dispatchService = new ChatDispatchServiceImpl(routingResolver,
-                auditGateway, eventPublisher, channelFailoverInvoker);
+                auditRepository, eventPublisher, channelFailoverInvoker);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);
         openAIContext = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null,
                 FailureStrategy.FAIL_RETRY);
 
-        lenient().when(auditGateway.saveCallLog(any())).thenReturn(null);
+        lenient().when(auditRepository.saveCallLog(any())).thenReturn(null);
     }
 
     @Nested
@@ -218,7 +218,7 @@ class ChatDispatchServiceTest {
 
             // then — 审计成功 + Token 事件（OpenAI promptTokens/completionTokens 映射）
             assertThat(result).isSameAs(response);
-            verify(auditGateway).saveCallLog(argThat(log ->
+            verify(auditRepository).saveCallLog(argThat(log ->
                     Boolean.TRUE.equals(log.getSuccess()) && "gpt-4o".equals(log.getModel())));
             ArgumentCaptor<TokenUsedEvent> eventCaptor =
                     ArgumentCaptor.forClass(TokenUsedEvent.class);
@@ -288,7 +288,7 @@ class ChatDispatchServiceTest {
 
             // then
             verify(eventPublisher, never()).publish(any());
-            verify(auditGateway).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
+            verify(auditRepository).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
         }
 
         @Test
@@ -309,7 +309,7 @@ class ChatDispatchServiceTest {
             // when & then
             assertThatThrownBy(() -> dispatchService.dispatch(request, testIdentity, RoutingStrategy.WEIGHTED))
                     .isInstanceOf(RuntimeException.class);
-            verify(auditGateway).saveCallLog(argThat(log ->
+            verify(auditRepository).saveCallLog(argThat(log ->
                     Boolean.FALSE.equals(log.getSuccess())
                             && "上游调用失败".equals(log.getErrorMessage())
                             && log.getDurationMs() != null));
@@ -412,7 +412,7 @@ class ChatDispatchServiceTest {
             auditCaptor.getValue().onComplete();
 
             // then — 审计成功日志 + 通知用户完成
-            verify(auditGateway).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
+            verify(auditRepository).saveCallLog(argThat(log -> Boolean.TRUE.equals(log.getSuccess())));
             verify(userCallback).onComplete();
         }
 
@@ -440,7 +440,7 @@ class ChatDispatchServiceTest {
             auditCaptor.getValue().onError(pe);
 
             // then — 审计失败日志记录格式化后的 SSE 错误 JSON
-            verify(auditGateway).saveCallLog(argThat(log ->
+            verify(auditRepository).saveCallLog(argThat(log ->
                     Boolean.FALSE.equals(log.getSuccess())
                             && log.getErrorMessage() != null
                             && log.getErrorMessage().contains("rate_limit")
@@ -471,7 +471,7 @@ class ChatDispatchServiceTest {
             auditCaptor.getValue().onError(new IllegalStateException("boom"));
 
             // then
-            verify(auditGateway).saveCallLog(argThat(log ->
+            verify(auditRepository).saveCallLog(argThat(log ->
                     Boolean.FALSE.equals(log.getSuccess())
                             && log.getErrorMessage() != null
                             && log.getErrorMessage().contains("unknown_error")));

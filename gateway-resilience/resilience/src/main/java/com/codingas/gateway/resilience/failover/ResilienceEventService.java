@@ -24,7 +24,7 @@ import java.util.List;
  * 转移事件查询应用服务接口
  *
  * <p>提供容灾可观测性查询能力（读侧重）：转移事件流查询（分页 + since/applicationId 过滤）
- * 与耗尽告警查询。委托 {@link FailoverEventGateway}。</p>
+ * 与耗尽告警查询。委托 {@link FailoverEventRepository}。</p>
  *
  * <p>设计见 design doc D12：容灾总览页 10s 轮询渲染转移事件流 + 耗尽告警。</p>
  */

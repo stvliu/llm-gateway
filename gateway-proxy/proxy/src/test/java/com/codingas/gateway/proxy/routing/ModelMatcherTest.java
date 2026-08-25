@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.model.ModelRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 class ModelMatcherTest {
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelRepository modelRepository;
 
     @InjectMocks
     private ModelMatcher modelMatcher;
@@ -57,7 +57,7 @@ class ModelMatcherTest {
             model.setId(1L);
             model.setModelName("gpt-4o");
 
-            when(modelGateway.findByModelName("gpt-4o"))
+            when(modelRepository.findByModelName("gpt-4o"))
                     .thenReturn(Optional.of(model));
 
             // when
@@ -73,7 +73,7 @@ class ModelMatcherTest {
         @DisplayName("模型不存在时抛出 ResourceNotFoundException")
         void match_modelNotFound_throwsException() {
             // given
-            when(modelGateway.findByModelName("non-existent"))
+            when(modelRepository.findByModelName("non-existent"))
                     .thenReturn(Optional.empty());
 
             // when & then
@@ -92,7 +92,7 @@ class ModelMatcherTest {
             model.setModelName("gpt-4o");
             model.setDeprecatedAt(java.time.Instant.now());
 
-            when(modelGateway.findByModelName("gpt-4o"))
+            when(modelRepository.findByModelName("gpt-4o"))
                     .thenReturn(Optional.of(model));
 
             // when & then

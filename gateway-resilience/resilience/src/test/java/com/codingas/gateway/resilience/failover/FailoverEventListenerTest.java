@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
  * FailoverEventListener 单元测试
  *
  * <p>验证监听器接收 {@link FailoverOccurredEvent} 后，构造 {@link FailoverEvent} 实体
- * 并委托 {@link FailoverEventGateway#save} 持久化。事件字段到实体字段的映射完整，
+ * 并委托 {@link FailoverEventRepository#save} 持久化。事件字段到实体字段的映射完整，
  * 不阻塞调用链（监听器用 {@code @EventListener} 同步处理，调用链无事务故不能用事务监听；
  * 事务语义差异由 {@link FailoverEventListenerPublishTest} 覆盖，此处测持久化逻辑正确性）。</p>
  */
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 class FailoverEventListenerTest {
 
     @Mock
-    private FailoverEventGateway failoverEventGateway;
+    private FailoverEventRepository failoverEventRepository;
 
     @InjectMocks
     private FailoverEventListener listener;
@@ -67,14 +67,14 @@ class FailoverEventListenerTest {
         );
         FailoverEvent savedStub = new FailoverEvent();
         savedStub.setId(1L);
-        when(failoverEventGateway.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
+        when(failoverEventRepository.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
                 .thenReturn(savedStub);
 
         listener.onFailoverOccurred(event);
 
         // 验证实体字段从事件字段完整构造
         ArgumentCaptor<FailoverEvent> captor = ArgumentCaptor.forClass(FailoverEvent.class);
-        verify(failoverEventGateway).save(captor.capture());
+        verify(failoverEventRepository).save(captor.capture());
         FailoverEvent captured = captor.getValue();
         assertThat(captured.getTraceId()).isEqualTo("trace-abc-123");
         assertThat(captured.getApplicationId()).isEqualTo(7L);
@@ -102,13 +102,13 @@ class FailoverEventListenerTest {
                 true,
                 occurredOn
         );
-        when(failoverEventGateway.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
+        when(failoverEventRepository.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
                 .thenReturn(new FailoverEvent());
 
         listener.onFailoverOccurred(event);
 
         ArgumentCaptor<FailoverEvent> captor = ArgumentCaptor.forClass(FailoverEvent.class);
-        verify(failoverEventGateway).save(captor.capture());
+        verify(failoverEventRepository).save(captor.capture());
         FailoverEvent captured = captor.getValue();
         assertThat(captured.getToChannelId()).isNull();
         assertThat(captured.getToEndpointId()).isNull();
@@ -130,10 +130,10 @@ class FailoverEventListenerTest {
                 false,
                 occurredOn
         );
-        when(failoverEventGateway.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
+        when(failoverEventRepository.save(org.mockito.ArgumentMatchers.any(FailoverEvent.class)))
                 .thenThrow(new RuntimeException("数据库不可用"));
 
         assertThatCode(() -> listener.onFailoverOccurred(event)).doesNotThrowAnyException();
-        verify(failoverEventGateway).save(org.mockito.ArgumentMatchers.any(FailoverEvent.class));
+        verify(failoverEventRepository).save(org.mockito.ArgumentMatchers.any(FailoverEvent.class));
     }
 }

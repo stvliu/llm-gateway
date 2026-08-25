@@ -1,0 +1,68 @@
+/*
+ * Copyright © 2025-2026 codingas.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.codingas.gateway.provider.vendor;
+
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 供应商网关接口
+ */
+public interface ProviderRepository {
+
+    /**
+     * 保存供应商
+     */
+    Provider save(Provider provider);
+
+    /**
+     * 根据ID查找供应商
+     */
+    Optional<Provider> findById(Long id);
+
+    /**
+     * 根据代码查找供应商
+     */
+    Optional<Provider> findByCode(String code);
+
+    /**
+     * 查找所有供应商
+     */
+    List<Provider> findAll();
+
+    /**
+     * 统计供应商总数
+     */
+    long count();
+
+    /**
+     * 删除供应商
+     */
+    void delete(Provider provider);
+
+    /**
+     * 关键词搜索（code 或 name 包含关键字）
+     */
+    List<Provider> findByKeyword(String keyword);
+
+    /**
+     * 获取最大版本号
+     */
+    default long getMaxVersion() {
+        return 0L;
+    }
+}

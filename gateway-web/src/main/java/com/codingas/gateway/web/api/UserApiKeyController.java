@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.iam.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;

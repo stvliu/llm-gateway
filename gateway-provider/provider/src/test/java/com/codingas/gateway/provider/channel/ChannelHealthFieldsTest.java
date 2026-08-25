@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.channel.ChannelHealthSource;
-import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;

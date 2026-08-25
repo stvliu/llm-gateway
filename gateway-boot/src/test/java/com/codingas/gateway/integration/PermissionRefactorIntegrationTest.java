@@ -21,12 +21,12 @@ import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelState;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.iamdata.dataobject.ApplicationChannelDo;
-import com.codingas.gateway.iamdata.repository.ApplicationChannelRepository;
-import com.codingas.gateway.providerdata.dataobject.ChannelDo;
-import com.codingas.gateway.providerdata.dataobject.ChannelEndpointDo;
-import com.codingas.gateway.providerdata.repository.ChannelEndpointRepository;
-import com.codingas.gateway.providerdata.repository.ChannelRepository;
+import com.codingas.gateway.iamdata.application.ApplicationChannelDo;
+import com.codingas.gateway.iamdata.application.ApplicationChannelJpaRepository;
+import com.codingas.gateway.providerdata.channel.ChannelDo;
+import com.codingas.gateway.providerdata.channel.ChannelEndpointDo;
+import com.codingas.gateway.providerdata.channel.ChannelEndpointJpaRepository;
+import com.codingas.gateway.providerdata.channel.ChannelJpaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -41,14 +41,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>端到端验证权限锚点从 userId 切换为 applicationId 后，数据面权限路由的真实行为。
  * 通过真实 Spring 装配的 {@link RouterChain}（含 {@code PermissionRouter}）+ 真实 H2 持久化的
- * {@link ApplicationChannelRepository}/{@link ChannelRepository}，验证应用-渠道授权过滤的端到端链路。</p>
+ * {@link ApplicationChannelJpaRepository}/{@link ChannelJpaRepository}，验证应用-渠道授权过滤的端到端链路。</p>
  *
  * <p>构造方式说明：基类 {@code FullContextIntegrationTestBase} 通过 {@code @MockBean} mock 了
  * {@code RoutingResolver}（导致 {@code ChatDispatchService} 不触发真实路由链），但 <b>未 mock</b>
- * {@link RouterChain}/{@code PermissionRouter}/{@code ApplicationChannelGateway}。
+ * {@link RouterChain}/{@code PermissionRouter}/{@code ApplicationChannelJpaRepository}。
  * 因此本测试直接注入真实 {@link RouterChain} bean，调用 {@code routerChain.filter(instances, request)}
  * 驱动真实 {@code PermissionRouter} 按 {@code applicationId} 过滤；
- * {@code ApplicationChannelGateway}/{@code ChannelGateway} 走真实 H2 查询，
+ * {@code ApplicationChannelJpaRepository}/{@code ChannelJpaRepository} 走真实 H2 查询，
  * 验证 JPA 映射与权限锚点端到端正确性。</p>
  *
  * <p>场景2分歧说明：brief 描述"无 application_id 走 migration-default 软兜底 + 告警日志"
@@ -68,13 +68,13 @@ class PermissionRefactorIntegrationTest extends FullContextIntegrationTestBase {
     private RouterChain routerChain;
 
     @Autowired
-    private ApplicationChannelRepository applicationChannelRepository;
+    private ApplicationChannelJpaRepository applicationChannelRepository;
 
     @Autowired
-    private ChannelRepository channelRepository;
+    private ChannelJpaRepository channelRepository;
 
     @Autowired
-    private ChannelEndpointRepository channelEndpointRepository;
+    private ChannelEndpointJpaRepository channelEndpointRepository;
 
     private Long ch1Id;
     private Long ch2Id;

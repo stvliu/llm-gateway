@@ -16,7 +16,7 @@
 package com.codingas.gateway.iam.apikey;
 
 import org.slf4j.Logger;
-import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +37,10 @@ public class DefaultUserApiKeyGenerator implements UserApiKeyGenerator {
     private static final int MAX_KEY_GENERATION_RETRIES = 5;
     public static final int KEY_PREFIX_LENGTH = 10;
 
-    private final UserApiKeyGateway userApiKeyGateway;
+    private final UserApiKeyRepository userApiKeyRepository;
 
-    public DefaultUserApiKeyGenerator(UserApiKeyGateway userApiKeyGateway) {
-        this.userApiKeyGateway = userApiKeyGateway;
+    public DefaultUserApiKeyGenerator(UserApiKeyRepository userApiKeyRepository) {
+        this.userApiKeyRepository = userApiKeyRepository;
     }
 
     /**
@@ -55,7 +55,7 @@ public class DefaultUserApiKeyGenerator implements UserApiKeyGenerator {
             String plainKey = generateRawKey();
             String keyPrefix = plainKey.substring(0, Math.min(KEY_PREFIX_LENGTH, plainKey.length()));
 
-            if (userApiKeyGateway.findByKeyPrefix(keyPrefix).isPresent()) {
+            if (userApiKeyRepository.findByKeyPrefix(keyPrefix).isPresent()) {
                 log.warn("Key prefix 碰撞: {}, 重试 ({}/{})", keyPrefix, attempt + 1, MAX_KEY_GENERATION_RETRIES);
                 continue;
             }

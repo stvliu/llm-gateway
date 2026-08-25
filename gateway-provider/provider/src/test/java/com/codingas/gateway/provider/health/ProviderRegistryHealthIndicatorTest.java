@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.provider.health;
 
-import com.codingas.gateway.provider.health.ProviderHealthState;
-import com.codingas.gateway.provider.health.ProviderHealthTracker;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

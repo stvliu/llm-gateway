@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.channel.ApiKeyTestResponse;
-import com.codingas.gateway.provider.service.ChannelCredentialService;
+import com.codingas.gateway.provider.channel.ChannelCredentialService;
 import com.codingas.gateway.provider.channel.ChannelCredentialCreateRequest;
 import com.codingas.gateway.provider.channel.ChannelCredentialCreateResponse;
 import com.codingas.gateway.provider.channel.ChannelCredentialDetailResponse;

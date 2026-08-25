@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.application.ApplicationRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
@@ -26,7 +26,7 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.channel.ChannelState;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -67,10 +67,10 @@ class RoutingResolverTest {
     private EndpointResolver endpointResolver;
 
     @Mock
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
 
     @Mock
-    private ApplicationGateway applicationGateway;
+    private ApplicationRepository applicationRepository;
 
     @InjectMocks
     private RoutingResolver routingResolver;
@@ -109,7 +109,7 @@ class RoutingResolverTest {
             when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
             RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
@@ -154,7 +154,7 @@ class RoutingResolverTest {
             when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-ant-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
 
             // when — 入站协议是 OPENAI，端点协议是 ANTHROPIC
             RoutingContext result = routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED);
@@ -198,7 +198,7 @@ class RoutingResolverTest {
             when(instanceSelector.select(model.getId(), 7L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI)).thenReturn(List.of(modelInstance));
             when(credentialResolver.resolve(999L)).thenReturn("sk-key");
             when(endpointResolver.resolve(999L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(999L)).thenReturn(Optional.empty());
+            when(channelRepository.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> routingResolver.resolve("gpt-4o", Protocol.OPENAI, 7L, 1L, "USER", RoutingStrategy.WEIGHTED))
@@ -260,8 +260,8 @@ class RoutingResolverTest {
             when(credentialResolver.resolve(200L)).thenReturn("sk-key-2");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint1);
             when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(endpoint2);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel1));
-            when(channelGateway.findById(200L)).thenReturn(Optional.of(channel2));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel1));
+            when(channelRepository.findById(200L)).thenReturn(Optional.of(channel2));
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -317,7 +317,7 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -376,7 +376,7 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-test-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
             List<RoutingContext> candidates = routingResolver.resolveCandidates(
@@ -426,8 +426,8 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
-            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationRepository.findById(7L)).thenReturn(app);
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -470,8 +470,8 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
-            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationRepository.findById(7L)).thenReturn(app);
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -482,7 +482,7 @@ class RoutingResolverTest {
         }
 
         @Test
-        @DisplayName("applicationId 为 null 时不查 ApplicationGateway，用渠道默认超时")
+        @DisplayName("applicationId 为 null 时不查 ApplicationRepository，用渠道默认超时")
         void resolveCandidates_applicationIdNull_usesChannelDefault() {
             // given — 无应用锚点，应直接用渠道默认
             Model model = new Model();
@@ -508,17 +508,17 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
                     "gpt-4o", Protocol.OPENAI, null, 1L, "USER", RoutingStrategy.WEIGHTED);
 
-            // then — 用渠道默认 30，且未查 ApplicationGateway
+            // then — 用渠道默认 30，且未查 ApplicationRepository
             assertThat(results.get(0).timeout()).isEqualTo(30);
             // then — 无应用锚点时 failureStrategy 默认 FAIL_RETRY
             assertThat(results.get(0).failureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
-            verifyNoInteractions(applicationGateway);
+            verifyNoInteractions(applicationRepository);
         }
 
         @Test
@@ -548,8 +548,8 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
-            lenient().when(applicationGateway.findById(7L)).thenReturn(null);
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationRepository.findById(7L)).thenReturn(null);
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -598,8 +598,8 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
-            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationRepository.findById(7L)).thenReturn(app);
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(
@@ -641,8 +641,8 @@ class RoutingResolverTest {
                     .thenReturn(List.of(instance));
             when(credentialResolver.resolve(100L)).thenReturn("sk-key");
             when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(endpoint);
-            when(channelGateway.findById(100L)).thenReturn(Optional.of(channel));
-            lenient().when(applicationGateway.findById(7L)).thenReturn(app);
+            when(channelRepository.findById(100L)).thenReturn(Optional.of(channel));
+            lenient().when(applicationRepository.findById(7L)).thenReturn(app);
 
             // when
             List<RoutingContext> results = routingResolver.resolveCandidates(

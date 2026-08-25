@@ -15,10 +15,9 @@
  */
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
-import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
+import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
 import com.codingas.gateway.iam.valueobject.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,16 +41,16 @@ import static org.mockito.Mockito.when;
 class AuthenticationServiceTest {
 
     @Mock
-    private UserApiKeyGateway userApiKeyGateway;
+    private UserApiKeyRepository userApiKeyRepository;
 
     @Mock
-    private ApiKeyEncryptionService encryptionService;
+    private ApiKeyEncryptor encryptionService;
 
     private AuthenticationService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthenticationService(userApiKeyGateway, encryptionService);
+        service = new AuthenticationService(userApiKeyRepository, encryptionService);
     }
 
     @Nested
@@ -62,7 +61,7 @@ class AuthenticationServiceTest {
         @DisplayName("认证成功")
         void authenticate_success() {
             UserApiKey apiKey = createSampleApiKey();
-            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
             when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
 
             Identity result = service.authenticateUser("sk-abc1xxxxx");
@@ -86,7 +85,7 @@ class AuthenticationServiceTest {
         @Test
         @DisplayName("Key prefix 未找到 — 抛异常")
         void authenticate_prefixNotFound() {
-            when(userApiKeyGateway.findByKeyPrefix("sk-unkno")).thenReturn(Optional.empty());
+            when(userApiKeyRepository.findByKeyPrefix("sk-unkno")).thenReturn(Optional.empty());
 
             assertThatThrownBy(() -> service.authenticateUser("sk-unknown-key"))
                     .isInstanceOf(AuthenticationFailedException.class)
@@ -97,7 +96,7 @@ class AuthenticationServiceTest {
         @DisplayName("Key hash 不匹配 — 抛异常")
         void authenticate_hashMismatch() {
             UserApiKey apiKey = createSampleApiKey();
-            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
             when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("wrong-hash");
 
             assertThatThrownBy(() -> service.authenticateUser("sk-abc1xxxxx"))
@@ -110,7 +109,7 @@ class AuthenticationServiceTest {
         void authenticate_keyDeleted() {
             UserApiKey apiKey = createSampleApiKey();
             apiKey.setDeleted(true);
-            when(userApiKeyGateway.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
+            when(userApiKeyRepository.findByKeyPrefix("sk-abc1x")).thenReturn(Optional.of(apiKey));
             when(encryptionService.hashKey("sk-abc1xxxxx")).thenReturn("hash123");
 
             assertThatThrownBy(() -> service.authenticateUser("sk-abc1xxxxx"))

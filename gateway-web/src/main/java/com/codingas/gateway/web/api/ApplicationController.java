@@ -16,11 +16,11 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ApplicationChannelRequest;
-import com.codingas.gateway.iam.service.ApplicationService;
+import com.codingas.gateway.iam.application.ApplicationService;
 import com.codingas.gateway.iam.dto.ApplicationChannelItem;
 import com.codingas.gateway.iam.dto.ApplicationRequest;
 import com.codingas.gateway.iam.dto.ApplicationResponse;
-import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

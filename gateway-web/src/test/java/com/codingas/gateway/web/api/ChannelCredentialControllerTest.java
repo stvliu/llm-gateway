@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.ChannelCredentialService;
+import com.codingas.gateway.provider.channel.ChannelCredentialService;
 import com.codingas.gateway.provider.channel.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

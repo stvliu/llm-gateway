@@ -15,10 +15,9 @@
  */
 package com.codingas.gateway.iam.auth;
 
-import com.codingas.gateway.iam.auth.AuthenticationFailedException;
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
-import com.codingas.gateway.iam.service.ApiKeyEncryptionService;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
+import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
 import com.codingas.gateway.iam.valueobject.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,12 +36,12 @@ public class AuthenticationService {
 
     private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
-    private final UserApiKeyGateway userApiKeyGateway;
-    private final ApiKeyEncryptionService encryptionService;
+    private final UserApiKeyRepository userApiKeyRepository;
+    private final ApiKeyEncryptor encryptionService;
 
-    public AuthenticationService(UserApiKeyGateway userApiKeyGateway,
-                                       ApiKeyEncryptionService encryptionService) {
-        this.userApiKeyGateway = userApiKeyGateway;
+    public AuthenticationService(UserApiKeyRepository userApiKeyRepository,
+                                       ApiKeyEncryptor encryptionService) {
+        this.userApiKeyRepository = userApiKeyRepository;
         this.encryptionService = encryptionService;
     }
 
@@ -59,7 +58,7 @@ public class AuthenticationService {
         }
 
         String prefix = extractKeyPrefix(apiKey);
-        Optional<UserApiKey> userApiKeyOpt = userApiKeyGateway.findByKeyPrefix(prefix);
+        Optional<UserApiKey> userApiKeyOpt = userApiKeyRepository.findByKeyPrefix(prefix);
 
         if (userApiKeyOpt.isEmpty()) {
             log.warn("API Key 未找到: prefix={}", prefix);

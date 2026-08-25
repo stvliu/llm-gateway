@@ -19,7 +19,7 @@ import com.codingas.gateway.provider.model.ModelCreateRequest;
 import com.codingas.gateway.provider.model.ModelQueryRequest;
 import com.codingas.gateway.provider.model.ModelResponse;
 import com.codingas.gateway.provider.model.ModelUpdateRequest;
-import com.codingas.gateway.provider.service.ModelService;
+import com.codingas.gateway.provider.model.ModelService;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

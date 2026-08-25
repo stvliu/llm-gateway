@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 class EndpointResolverTest {
 
     @Mock
-    private ChannelEndpointGateway channelEndpointGateway;
+    private ChannelEndpointRepository channelEndpointRepository;
 
     @InjectMocks
     private EndpointResolver endpointResolver;
@@ -61,7 +61,7 @@ class EndpointResolverTest {
             endpoint.setEndpointUrl("https://api.openai.com/v1");
             endpoint.setProtocol(Protocol.OPENAI);
 
-            when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
+            when(channelEndpointRepository.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
                     .thenReturn(Optional.of(endpoint));
 
             // when
@@ -83,9 +83,9 @@ class EndpointResolverTest {
             endpoint.setEndpointUrl("https://api.anthropic.com/v1");
             endpoint.setProtocol(Protocol.ANTHROPIC);
 
-            when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
+            when(channelEndpointRepository.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
                     .thenReturn(Optional.empty());
-            when(channelEndpointGateway.findByChannelId(10L))
+            when(channelEndpointRepository.findByChannelId(10L))
                     .thenReturn(List.of(endpoint));
 
             // when
@@ -100,9 +100,9 @@ class EndpointResolverTest {
         @DisplayName("无端点记录时抛出 ResourceNotFoundException")
         void resolve_emptyList_throwsException() {
             // given
-            when(channelEndpointGateway.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
+            when(channelEndpointRepository.findByChannelIdAndProtocol(10L, Protocol.OPENAI))
                     .thenReturn(Optional.empty());
-            when(channelEndpointGateway.findByChannelId(10L))
+            when(channelEndpointRepository.findByChannelId(10L))
                     .thenReturn(List.of());
 
             // when & then

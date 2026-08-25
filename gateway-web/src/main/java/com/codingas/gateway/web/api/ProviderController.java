@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.ProviderService;
+import com.codingas.gateway.provider.vendor.ProviderService;
 import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
 import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
 import com.codingas.gateway.provider.vendor.ProviderCreateRequest;

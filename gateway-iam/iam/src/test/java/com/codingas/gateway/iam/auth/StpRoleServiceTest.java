@@ -16,7 +16,7 @@
 package com.codingas.gateway.iam.auth;
 
 import com.codingas.gateway.iam.user.User;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.user.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,7 +42,7 @@ import static org.mockito.Mockito.when;
 class StpRoleServiceTest {
 
     @Mock
-    private UserGateway userGateway;
+    private UserRepository userRepository;
 
     @InjectMocks
     private StpRoleService service;
@@ -61,7 +61,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("ADMIN 用户返回 ADMIN 角色")
         void admin_returnsAdminRole() {
-            when(userGateway.findById(1L)).thenReturn(Optional.of(userWithRole("ADMIN")));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userWithRole("ADMIN")));
 
             assertThat(service.getRoleList(1L, "login")).containsExactly("ADMIN");
         }
@@ -69,7 +69,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("USER 用户返回 USER 角色")
         void user_returnsUserRole() {
-            when(userGateway.findById(1L)).thenReturn(Optional.of(userWithRole("USER")));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userWithRole("USER")));
 
             assertThat(service.getRoleList(1L, "login")).containsExactly("USER");
         }
@@ -77,7 +77,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("用户不存在返回空集合")
         void userNotFound_returnsEmpty() {
-            when(userGateway.findById(999L)).thenReturn(Optional.empty());
+            when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
             assertThat(service.getRoleList(999L, "login")).isEmpty();
         }
@@ -90,7 +90,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("USER 用户返回受限权限码")
         void user_returnsRestrictedPermissions() {
-            when(userGateway.findById(1L)).thenReturn(Optional.of(userWithRole("USER")));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userWithRole("USER")));
 
             List<String> permissions = service.getPermissionList(1L, "login");
 
@@ -101,7 +101,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("ADMIN 用户返回全部权限码")
         void admin_returnsAllPermissions() {
-            when(userGateway.findById(1L)).thenReturn(Optional.of(userWithRole("ADMIN")));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(userWithRole("ADMIN")));
 
             List<String> permissions = service.getPermissionList(1L, "login");
 
@@ -111,7 +111,7 @@ class StpRoleServiceTest {
         @Test
         @DisplayName("用户不存在返回空集合")
         void userNotFound_returnsEmpty() {
-            when(userGateway.findById(999L)).thenReturn(Optional.empty());
+            when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
             assertThat(service.getPermissionList(999L, "login")).isEmpty();
         }

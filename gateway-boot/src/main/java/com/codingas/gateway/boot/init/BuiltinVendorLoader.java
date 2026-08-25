@@ -23,11 +23,11 @@ import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.model.ModelInstanceGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -48,22 +48,22 @@ public class BuiltinVendorLoader implements DataLoader {
 
     private static final String VENDORS_PATTERN = "data/builtin/vendors/*.json";
 
-    private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
-    private final ModelInstanceGateway modelInstanceGateway;
-    private final ChannelGateway channelGateway;
-    private final ChannelEndpointGateway channelEndpointGateway;
+    private final ProviderRepository providerRepository;
+    private final ModelRepository modelRepository;
+    private final ModelInstanceRepository modelInstanceRepository;
+    private final ChannelRepository channelRepository;
+    private final ChannelEndpointRepository channelEndpointRepository;
 
-    public BuiltinVendorLoader(ProviderGateway providerGateway,
-                               ModelGateway modelGateway,
-                               ModelInstanceGateway modelInstanceGateway,
-                               ChannelGateway channelGateway,
-                               ChannelEndpointGateway channelEndpointGateway) {
-        this.providerGateway = providerGateway;
-        this.modelGateway = modelGateway;
-        this.modelInstanceGateway = modelInstanceGateway;
-        this.channelGateway = channelGateway;
-        this.channelEndpointGateway = channelEndpointGateway;
+    public BuiltinVendorLoader(ProviderRepository providerRepository,
+                               ModelRepository modelRepository,
+                               ModelInstanceRepository modelInstanceRepository,
+                               ChannelRepository channelRepository,
+                               ChannelEndpointRepository channelEndpointRepository) {
+        this.providerRepository = providerRepository;
+        this.modelRepository = modelRepository;
+        this.modelInstanceRepository = modelInstanceRepository;
+        this.channelRepository = channelRepository;
+        this.channelEndpointRepository = channelEndpointRepository;
     }
 
     // ========== JSON DTO records ==========
@@ -105,7 +105,7 @@ public class BuiltinVendorLoader implements DataLoader {
             loadVendor(vendor, channelMap);
         }
 
-        log.info("  共加载 {} 个厂商, {} 个渠道", providerGateway.count(), channelMap.size());
+        log.info("  共加载 {} 个厂商, {} 个渠道", providerRepository.count(), channelMap.size());
         context.set(DataLoadContext.ChannelIndex.class, new DataLoadContext.ChannelIndex(channelMap));
     }
 
@@ -141,60 +141,60 @@ public class BuiltinVendorLoader implements DataLoader {
     }
 
     private Provider getOrCreateProvider(VendorData vendor) {
-        return providerGateway.findByCode(vendor.code()).orElseGet(() -> {
+        return providerRepository.findByCode(vendor.code()).orElseGet(() -> {
             Provider provider = new Provider();
             provider.setCode(vendor.code());
             provider.setName(vendor.name());
             provider.setWebsiteUrl(vendor.websiteUrl());
             provider.setApiDocUrl(vendor.apiDocUrl());
             provider.setDescription(vendor.description());
-            return providerGateway.save(provider);
+            return providerRepository.save(provider);
         });
     }
 
     private void ensureModel(ModelData model) {
-        if (modelGateway.findByModelName(model.modelName()).isPresent()) {
+        if (modelRepository.findByModelName(model.modelName()).isPresent()) {
             return;
         }
         Model m = new Model();
         m.setModelName(model.modelName());
         m.setDisplayName(model.displayName());
         m.setContextWindow(model.contextWindow());
-        modelGateway.save(m);
+        modelRepository.save(m);
     }
 
     private Channel createChannel(Long providerId, ChannelData data) {
-        return channelGateway.findByProviderIdAndName(providerId, data.name())
+        return channelRepository.findByProviderIdAndName(providerId, data.name())
                 .orElseGet(() -> {
                     log.info("  创建渠道: {}", data.name());
                     Channel channel = new Channel();
                     channel.setProviderId(providerId);
                     channel.setName(data.name());
                     channel.setBillingMode(BillingMode.valueOf(data.billingMode()));
-                    return channelGateway.save(channel);
+                    return channelRepository.save(channel);
                 });
     }
 
     private void createEndpoint(Long channelId, EndpointData data) {
         Protocol protocol = Protocol.valueOf(data.protocol());
-        if (channelEndpointGateway.findByChannelIdAndProtocol(channelId, protocol).isPresent()) {
+        if (channelEndpointRepository.findByChannelIdAndProtocol(channelId, protocol).isPresent()) {
             return;
         }
         ChannelEndpoint endpoint = new ChannelEndpoint();
         endpoint.setChannelId(channelId);
         endpoint.setProtocol(protocol);
         endpoint.setEndpointUrl(data.url());
-        channelEndpointGateway.save(endpoint);
+        channelEndpointRepository.save(endpoint);
     }
 
     private void createModelInstance(Long channelId, ModelInstanceData data) {
-        Optional<Model> modelOpt = modelGateway.findByModelName(data.modelName());
+        Optional<Model> modelOpt = modelRepository.findByModelName(data.modelName());
         if (modelOpt.isEmpty()) {
             log.warn("  模型 '{}' 不存在，跳过模型实例", data.modelName());
             return;
         }
         Long modelId = modelOpt.get().getId();
-        if (modelInstanceGateway.existsByChannelIdAndModelId(channelId, modelId)) {
+        if (modelInstanceRepository.existsByChannelIdAndModelId(channelId, modelId)) {
             return;
         }
         ModelInstance instance = new ModelInstance();
@@ -203,6 +203,6 @@ public class BuiltinVendorLoader implements DataLoader {
         instance.setUpstreamModelName(data.upstreamModelName());
         instance.setPriority(data.priority());
         instance.setWeight(data.weight());
-        modelInstanceGateway.save(instance);
+        modelInstanceRepository.save(instance);
     }
 }

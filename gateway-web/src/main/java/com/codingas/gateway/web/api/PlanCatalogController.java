@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.PlanCatalogService;
+import com.codingas.gateway.provider.catalog.PlanCatalogService;
 import com.codingas.gateway.provider.catalog.ModelResponse;
 import com.codingas.gateway.provider.catalog.PlanCatalogResponse;
 import com.codingas.gateway.provider.catalog.PlanDetailResponse;

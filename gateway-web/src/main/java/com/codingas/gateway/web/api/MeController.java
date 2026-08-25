@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

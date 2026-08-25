@@ -20,13 +20,13 @@ import com.codingas.gateway.proxy.dto.ExperienceChatRequest;
 import com.codingas.gateway.proxy.dto.ExperienceModelResponse;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.model.ModelInstanceGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
@@ -90,19 +90,19 @@ class ModelExperienceServiceTest {
     private UpstreamClientRegistry upstreamClientRegistry;
 
     @Mock
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Mock
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
 
     @Mock
-    private ModelInstanceGateway modelInstanceGateway;
+    private ModelInstanceRepository modelInstanceRepository;
 
     @Mock
-    private ChannelCredentialGateway channelCredentialGateway;
+    private ChannelCredentialRepository channelCredentialRepository;
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelRepository modelRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -110,8 +110,8 @@ class ModelExperienceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ModelExperienceService(upstreamClientRegistry, providerGateway, channelGateway,
-                modelInstanceGateway, channelCredentialGateway, modelGateway, objectMapper);
+        service = new ModelExperienceService(upstreamClientRegistry, providerRepository, channelRepository,
+                modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
     }
 
     // ------------------------------------------------------------------
@@ -235,10 +235,10 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("渠道为空时返回空列表")
         void noChannels_returnsEmpty() {
-            when(channelGateway.findByProviderId(1L)).thenReturn(List.of());
+            when(channelRepository.findByProviderId(1L)).thenReturn(List.of());
 
             assertThat(service.getModelsByProviderId(1L)).isEmpty();
-            verify(modelInstanceGateway, never()).findActiveByChannelId(any());
+            verify(modelInstanceRepository, never()).findActiveByChannelId(any());
         }
 
         @Test
@@ -246,8 +246,8 @@ class ModelExperienceServiceTest {
         void channelsButNoInstances_returnsEmpty() {
             Channel channel = new Channel();
             channel.setId(10L);
-            when(channelGateway.findByProviderId(1L)).thenReturn(List.of(channel));
-            when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of());
+            when(channelRepository.findByProviderId(1L)).thenReturn(List.of(channel));
+            when(modelInstanceRepository.findActiveByChannelId(10L)).thenReturn(List.of());
 
             assertThat(service.getModelsByProviderId(1L)).isEmpty();
         }
@@ -257,12 +257,12 @@ class ModelExperienceServiceTest {
         void instancesButNoModels_returnsEmpty() {
             Channel channel = new Channel();
             channel.setId(10L);
-            when(channelGateway.findByProviderId(1L)).thenReturn(List.of(channel));
+            when(channelRepository.findByProviderId(1L)).thenReturn(List.of(channel));
 
             ModelInstance instance = new ModelInstance();
             instance.setModelId(100L);
-            when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of(instance));
-            when(modelGateway.findByIds(List.of(100L))).thenReturn(List.of());
+            when(modelInstanceRepository.findActiveByChannelId(10L)).thenReturn(List.of(instance));
+            when(modelRepository.findByIds(List.of(100L))).thenReturn(List.of());
 
             assertThat(service.getModelsByProviderId(1L)).isEmpty();
         }
@@ -274,7 +274,7 @@ class ModelExperienceServiceTest {
             ch1.setId(10L);
             Channel ch2 = new Channel();
             ch2.setId(11L);
-            when(channelGateway.findByProviderId(1L)).thenReturn(List.of(ch1, ch2));
+            when(channelRepository.findByProviderId(1L)).thenReturn(List.of(ch1, ch2));
 
             ModelInstance i1 = new ModelInstance();
             i1.setModelId(100L);
@@ -282,8 +282,8 @@ class ModelExperienceServiceTest {
             i2.setModelId(100L); // 与 i1 同模型，distinct 去重
             ModelInstance i3 = new ModelInstance();
             i3.setModelId(200L);
-            when(modelInstanceGateway.findActiveByChannelId(10L)).thenReturn(List.of(i1));
-            when(modelInstanceGateway.findActiveByChannelId(11L)).thenReturn(List.of(i2, i3));
+            when(modelInstanceRepository.findActiveByChannelId(10L)).thenReturn(List.of(i1));
+            when(modelInstanceRepository.findActiveByChannelId(11L)).thenReturn(List.of(i2, i3));
 
             Model m100 = new Model();
             m100.setId(100L);
@@ -296,7 +296,7 @@ class ModelExperienceServiceTest {
             m300.setId(300L);
             m300.setModelName("retired-model");
             m300.setDeprecatedAt(Instant.now()); // 不可用 → 过滤
-            when(modelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(m100, m200, m300));
+            when(modelRepository.findByIds(List.of(100L, 200L))).thenReturn(List.of(m100, m200, m300));
 
             List<ExperienceModelResponse> result = service.getModelsByProviderId(1L);
 
@@ -505,8 +505,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("按凭证 ID 解析配置：使用凭证的 API Key 调用上游")
         void savedConfig_credentialById_usesCredentialKey() throws Exception {
-            when(channelGateway.findById(10L)).thenReturn(Optional.of(channel(10L)));
-            when(channelCredentialGateway.findById(20L)).thenReturn(Optional.of(credential(20L, 10L, "sk-saved-1")));
+            when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
+            when(channelCredentialRepository.findById(20L)).thenReturn(Optional.of(credential(20L, 10L, "sk-saved-1")));
 
             UpstreamClient<ProtocolRequest> client = org.mockito.Mockito.mock(UpstreamClient.class);
             when(upstreamClientRegistry.getClient(eq("openai"), eq(""), eq("sk-saved-1"), eq(60))).thenReturn(client);
@@ -524,8 +524,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("未指定凭证 ID 时使用渠道默认凭证")
         void savedConfig_defaultCredential_usesDefaultKey() throws Exception {
-            when(channelGateway.findById(10L)).thenReturn(Optional.of(channel(10L)));
-            when(channelCredentialGateway.findDefaultByChannelId(10L))
+            when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
+            when(channelCredentialRepository.findDefaultByChannelId(10L))
                     .thenReturn(Optional.of(credential(30L, 10L, "sk-default-1")));
 
             UpstreamClient<ProtocolRequest> client = org.mockito.Mockito.mock(UpstreamClient.class);
@@ -543,7 +543,7 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("渠道不存在时发送 ERROR 事件")
         void savedConfig_channelNotFound_sendsError() throws Exception {
-            when(channelGateway.findById(99L)).thenReturn(Optional.empty());
+            when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
             SseEmitter emitter = service.chatStream(savedConfigRequest(99L, null));
             RecordingHandler recorder = new RecordingHandler();
@@ -557,8 +557,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("凭证不属于渠道时发送 ERROR 事件")
         void savedConfig_credentialMismatch_sendsError() throws Exception {
-            when(channelGateway.findById(10L)).thenReturn(Optional.of(channel(10L)));
-            when(channelCredentialGateway.findById(20L)).thenReturn(Optional.of(credential(20L, 999L, "sk-x")));
+            when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
+            when(channelCredentialRepository.findById(20L)).thenReturn(Optional.of(credential(20L, 999L, "sk-x")));
 
             SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L));
             RecordingHandler recorder = new RecordingHandler();
@@ -572,8 +572,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("默认凭证缺失时发送 ERROR 事件")
         void savedConfig_defaultCredentialMissing_sendsError() throws Exception {
-            when(channelGateway.findById(10L)).thenReturn(Optional.of(channel(10L)));
-            when(channelCredentialGateway.findDefaultByChannelId(10L)).thenReturn(Optional.empty());
+            when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
+            when(channelCredentialRepository.findDefaultByChannelId(10L)).thenReturn(Optional.empty());
 
             SseEmitter emitter = service.chatStream(savedConfigRequest(10L, null));
             RecordingHandler recorder = new RecordingHandler();
@@ -587,8 +587,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("凭证不存在时发送 ERROR 事件")
         void savedConfig_credentialNotFound_sendsError() throws Exception {
-            when(channelGateway.findById(10L)).thenReturn(Optional.of(channel(10L)));
-            when(channelCredentialGateway.findById(20L)).thenReturn(Optional.empty());
+            when(channelRepository.findById(10L)).thenReturn(Optional.of(channel(10L)));
+            when(channelCredentialRepository.findById(20L)).thenReturn(Optional.empty());
 
             SseEmitter emitter = service.chatStream(savedConfigRequest(10L, 20L));
             RecordingHandler recorder = new RecordingHandler();
@@ -650,8 +650,8 @@ class ModelExperienceServiceTest {
         @Test
         @DisplayName("shutdown 关闭执行器且不抛异常")
         void shutdown_terminatesCleanly() {
-            ModelExperienceService fresh = new ModelExperienceService(upstreamClientRegistry, providerGateway,
-                    channelGateway, modelInstanceGateway, channelCredentialGateway, modelGateway, objectMapper);
+            ModelExperienceService fresh = new ModelExperienceService(upstreamClientRegistry, providerRepository,
+                    channelRepository, modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
             fresh.shutdown();
             assertThat(fresh).isNotNull();
         }

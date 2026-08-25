@@ -16,10 +16,10 @@
 package com.codingas.gateway.boot.init;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.application.ApplicationRepository;
 import com.codingas.gateway.iam.user.User;
-import com.codingas.gateway.iam.user.UserGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.iam.user.UserRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -36,13 +36,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class DataInitializerTest {
 
     @Autowired
-    private UserGateway userGateway;
+    private UserRepository userRepository;
 
     @Autowired
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Autowired
-    private ApplicationGateway applicationGateway;
+    private ApplicationRepository applicationRepository;
 
     @Autowired
     private DataInitializer dataInitializer;
@@ -53,13 +53,13 @@ class DataInitializerTest {
     @DisplayName("run 后 admin 用户应存在")
     void adminUserShouldExist() {
         dataInitializer.run();
-        assertTrue(userGateway.findByUsername("admin").isPresent());
+        assertTrue(userRepository.findByUsername("admin").isPresent());
     }
 
     @Test
     @DisplayName("admin 用户应标记为 builtin 且邮箱正确")
     void adminUserShouldBeBuiltin() {
-        User admin = userGateway.findByUsername("admin")
+        User admin = userRepository.findByUsername("admin")
             .orElseThrow(() -> new AssertionError("admin 应存在"));
         assertTrue(admin.isBuiltin());
         assertEquals("admin@example.com", admin.getEmail());
@@ -68,7 +68,7 @@ class DataInitializerTest {
     @Test
     @DisplayName("admin 用户角色应为 ADMIN")
     void adminUserShouldHaveAdminRole() {
-        User admin = userGateway.findByUsername("admin")
+        User admin = userRepository.findByUsername("admin")
             .orElseThrow(() -> new AssertionError("admin 应存在"));
         assertEquals("ADMIN", admin.getRole());
     }
@@ -81,7 +81,7 @@ class DataInitializerTest {
         dataInitializer.run();
         for (int i = 1; i <= 10; i++) {
             String username = "test" + i;
-            assertTrue(userGateway.findByUsername(username).isPresent(),
+            assertTrue(userRepository.findByUsername(username).isPresent(),
                 "演示用户 " + username + " 应存在");
         }
     }
@@ -90,7 +90,7 @@ class DataInitializerTest {
     @DisplayName("演示用户不应标记为 builtin")
     void demoUserShouldNotBeBuiltin() {
         dataInitializer.run();
-        User test1 = userGateway.findByUsername("test1")
+        User test1 = userRepository.findByUsername("test1")
             .orElseThrow(() -> new AssertionError("test1 应存在"));
         assertFalse(test1.isBuiltin());
     }
@@ -99,17 +99,17 @@ class DataInitializerTest {
     @DisplayName("应创建 4 个演示应用（default, dev, product, openclaw）")
     void shouldCreateFourDemoApplications() {
         dataInitializer.run();
-        assertNotNull(applicationGateway.findByCode("default"));
-        assertNotNull(applicationGateway.findByCode("dev"));
-        assertNotNull(applicationGateway.findByCode("product"));
-        assertNotNull(applicationGateway.findByCode("openclaw"));
+        assertNotNull(applicationRepository.findByCode("default"));
+        assertNotNull(applicationRepository.findByCode("dev"));
+        assertNotNull(applicationRepository.findByCode("product"));
+        assertNotNull(applicationRepository.findByCode("openclaw"));
     }
 
     @Test
     @DisplayName("应存在供应商（由 BuiltinDataLoader 或后备逻辑创建）")
     void shouldHaveProviders() {
         dataInitializer.run();
-        assertTrue(providerGateway.count() >= 6,
+        assertTrue(providerRepository.count() >= 6,
             "应有至少 6 个供应商（来自 BuiltinDataLoader 或后备逻辑）");
     }
 
@@ -123,11 +123,11 @@ class DataInitializerTest {
         @DisplayName("重复调用不应创建重复的 admin")
         void repeatedRunShouldNotDuplicateAdmin() {
             dataInitializer.run();
-            long adminCount1 = userGateway.findAll().stream()
+            long adminCount1 = userRepository.findAll().stream()
                 .filter(u -> "admin".equals(u.getUsername()))
                 .count();
             dataInitializer.run();
-            long adminCount2 = userGateway.findAll().stream()
+            long adminCount2 = userRepository.findAll().stream()
                 .filter(u -> "admin".equals(u.getUsername()))
                 .count();
             assertEquals(adminCount1, adminCount2);
@@ -137,9 +137,9 @@ class DataInitializerTest {
         @DisplayName("重复调用不应创建重复的演示用户")
         void repeatedRunShouldNotDuplicateDemoUsers() {
             dataInitializer.run();
-            long count1 = userGateway.count();
+            long count1 = userRepository.count();
             dataInitializer.run();
-            long count2 = userGateway.count();
+            long count2 = userRepository.count();
             assertEquals(count1, count2);
         }
 
@@ -147,9 +147,9 @@ class DataInitializerTest {
         @DisplayName("重复调用不应创建重复的应用")
         void repeatedRunShouldNotDuplicateApplications() {
             dataInitializer.run();
-            long count1 = applicationGateway.findAll().size();
+            long count1 = applicationRepository.findAll().size();
             dataInitializer.run();
-            long count2 = applicationGateway.findAll().size();
+            long count2 = applicationRepository.findAll().size();
             assertEquals(count1, count2);
         }
     }

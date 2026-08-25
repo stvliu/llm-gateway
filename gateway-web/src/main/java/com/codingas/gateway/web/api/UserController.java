@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.service.UserService;
+import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.iam.dto.*;
-import com.codingas.gateway.iam.service.UserApiKeyService;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.iam.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;

@@ -1,0 +1,341 @@
+/*
+ * Copyright © 2025-2026 codingas.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.codingas.gateway.iam.user;
+
+import cn.dev33.satoken.stp.StpUtil;
+import com.codingas.gateway.iam.dto.ChangePasswordRequest;
+import com.codingas.gateway.iam.dto.LoginRequest;
+import com.codingas.gateway.iam.dto.LoginResponse;
+import com.codingas.gateway.iam.dto.*;
+import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.common.exception.DuplicateResourceException;
+import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.iam.auth.AuthenticationFailedException;
+import com.codingas.gateway.iam.auth.RolePermissions;
+import com.codingas.gateway.iam.exception.ForbiddenException;
+import com.codingas.gateway.iam.encryption.PasswordEncoder;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * 用户应用服务实现
+ *
+ * <p>处理用户管理的业务逻辑。</p>
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService {
+
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
+    /** 重置密码字符集：排除易混字符 O/0/I/1/l */
+    private static final String PASSWORD_CHARS =
+            "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+    private static final int RESET_PASSWORD_LENGTH = 16;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    /**
+     * 创建用户
+     */
+    @Override
+    @Transactional
+    public UserResponse create(UserCreateRequest request) {
+        // 检查邮箱唯一性
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("User", "email");
+        }
+
+        // 创建用户
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
+        user.setPhone(request.getPhone());
+
+        // 设置角色（默认为 USER）
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            user.setRole(request.getRole());
+        }
+
+        User savedUser = userRepository.save(user);
+
+        return toResponse(savedUser);
+    }
+
+    /**
+     * 根据 ID 获取用户
+     */
+    @Override
+    public UserResponse getById(Long id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        return toResponse(user);
+    }
+
+    /**
+     * 查询用户列表
+     */
+    @Override
+    public PageResponse<UserResponse> query(UserQueryRequest request) {
+        List<User> users = userRepository.findAll();
+
+        // 过滤
+        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
+            String keyword = request.getKeyword().toLowerCase();
+            users = users.stream()
+                .filter(u -> u.getUsername().toLowerCase().contains(keyword)
+                    || (u.getEmail() != null && u.getEmail().toLowerCase().contains(keyword)))
+                .collect(Collectors.toList());
+        }
+
+        if (request.getState() != null) {
+            users = users.stream()
+                .filter(u -> u.getState() == request.getState())
+                .collect(Collectors.toList());
+        }
+
+        // 统计
+        long total = users.size();
+
+        // 分页
+        int offset = request.getOffset();
+        int limit = request.getLimit();
+        List<User> pagedUsers = users.stream()
+            .skip(offset)
+            .limit(limit)
+            .collect(Collectors.toList());
+
+        List<UserResponse> responses = pagedUsers.stream()
+            .map(this::toResponse)
+            .collect(Collectors.toList());
+
+        return PageResponse.of(responses, request.getPage(), limit, total);
+    }
+
+    /**
+     * 更新用户
+     */
+    @Override
+    @Transactional
+    public UserResponse update(Long id, UserUpdateRequest request) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (request.getUsername() != null) {
+            user.setUsername(request.getUsername());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getAvatarUrl() != null) {
+            user.setAvatarUrl(request.getAvatarUrl());
+        }
+
+        return toResponse(userRepository.save(user));
+    }
+
+    /**
+     * 删除用户（软删除）
+     *
+     * <p>禁止删除内建用户，防止系统失去管理入口。</p>
+     */
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (user.isBuiltin()) {
+            throw new ForbiddenException("不允许删除系统内建用户");
+        }
+
+        user.setDeletedAt(Instant.now());
+        userRepository.save(user);
+    }
+
+    /**
+     * 更新用户状态
+     *
+     * <p>禁止禁用内建用户，防止系统失去管理入口。</p>
+     */
+    @Override
+    @Transactional
+    public UserResponse updateState(Long id, UserStateUpdateRequest request) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (user.isBuiltin() && request.getState() != UserState.ACTIVE) {
+            throw new ForbiddenException("不允许禁用系统内建用户");
+        }
+
+        user.setState(request.getState());
+        return toResponse(userRepository.save(user));
+    }
+
+    /**
+     * 分配用户角色
+     *
+     * <p>简化角色模型：直接设置 User.role 字段。</p>
+     * <p>禁止变更内建用户的角色，防止系统失去管理入口。</p>
+     */
+    @Override
+    @Transactional
+    public UserResponse assignRoles(Long id, UserRoleAssignRequest request) {
+        User user = userRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("User", id));
+
+        if (request.getRoleCodes() != null && !request.getRoleCodes().isEmpty()) {
+            String roleCode = request.getRoleCodes().get(0);
+
+            // 禁止变更内建用户的角色
+            if (user.isBuiltin()) {
+                throw new ForbiddenException("不允许变更系统内建用户的角色");
+            }
+
+            user.setRole(roleCode);
+        }
+
+        return toResponse(userRepository.save(user));
+    }
+
+    /**
+     * 用户登录
+     */
+    @Override
+    @Transactional
+    public LoginResponse login(LoginRequest request) {
+        // 查找用户
+        User user = userRepository.findByUsername(request.username())
+            .orElseThrow(() -> new AuthenticationFailedException("用户名或密码错误"));
+
+        // 检查用户状态
+        if (!user.isActive()) {
+            throw new AuthenticationFailedException("用户已被禁用");
+        }
+
+        // 验证密码
+        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+            throw new AuthenticationFailedException("用户名或密码错误");
+        }
+
+        // 更新最后登录时间
+        user.setLastLoginAt(Instant.now());
+        userRepository.save(user);
+
+        // 使用 SaToken 登录（授权基于 USER/ADMIN 角色，由 PermissionInterceptor 校验）
+        StpUtil.login(user.getId());
+        String token = StpUtil.getTokenValue();
+
+        // 构建响应（携带角色推导的权限码，前端 UI 直接消费、不自行维护映射）
+        LoginResponse.UserResponse userResponse = new LoginResponse.UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole(),
+            RolePermissions.of(user.getRole())
+        );
+
+        return new LoginResponse(userResponse, token);
+    }
+
+    /**
+     * 修改密码
+     */
+    @Override
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        // 验证当前密码
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new GatewayRequestException("INVALID_PASSWORD", "当前密码错误");
+        }
+
+        // 更新密码
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+    }
+
+    /**
+     * 重置密码（管理员触发）
+     */
+    @Override
+    @Transactional
+    public ResetPasswordResponse resetPassword(Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+
+        if (user.isBuiltin()) {
+            throw new ForbiddenException("不允许重置系统内建用户的密码");
+        }
+
+        // 生成 16 位随机密码（排除易混字符）
+        StringBuilder plain = new StringBuilder(RESET_PASSWORD_LENGTH);
+        for (int i = 0; i < RESET_PASSWORD_LENGTH; i++) {
+            plain.append(PASSWORD_CHARS.charAt(SECURE_RANDOM.nextInt(PASSWORD_CHARS.length())));
+        }
+        String plainPassword = plain.toString();
+
+        user.setPasswordHash(passwordEncoder.encode(plainPassword));
+        userRepository.save(user);
+        log.info("Reset password for user: id={}", userId);
+
+        return new ResetPasswordResponse(plainPassword);
+    }
+
+    /**
+     * 用户登出
+     */
+    @Override
+    public void logout() {
+        StpUtil.logout();
+    }
+
+    /**
+     * 转换为响应 DTO
+     */
+    private UserResponse toResponse(User user) {
+        UserResponse response = new UserResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setPhone(user.getPhone());
+        response.setAvatarUrl(user.getAvatarUrl());
+        response.setState(user.getState());
+        response.setEmailVerified(user.getEmailVerified());
+        response.setRole(user.getRole());
+        response.setBuiltin(user.getBuiltin());
+        response.setLastLoginAt(user.getLastLoginAt());
+        response.setCreatedAt(user.getCreatedAt());
+        response.setUpdatedAt(user.getUpdatedAt());
+
+        return response;
+    }
+}

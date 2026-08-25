@@ -17,7 +17,7 @@ package com.codingas.gateway.boot.init;
 
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.user.UserState;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.user.UserRepository;
 import com.codingas.gateway.iam.encryption.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -30,11 +30,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserCreator {
 
-    private final UserGateway userGateway;
+    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    UserCreator(UserGateway userGateway, PasswordEncoder passwordEncoder) {
-        this.userGateway = userGateway;
+    UserCreator(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -56,6 +56,6 @@ public class UserCreator {
         user.setRole(role);
         user.setState(UserState.ACTIVE);
         user.setBuiltin(builtin);
-        return userGateway.save(user);
+        return userRepository.save(user);
     }
 }

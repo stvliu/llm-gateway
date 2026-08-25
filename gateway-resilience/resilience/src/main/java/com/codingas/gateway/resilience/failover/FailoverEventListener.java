@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
  * 转移事件监听器
  *
  * <p>接收 {@link FailoverOccurredEvent}，构造 {@link FailoverEvent} 实体并委托
- * {@link FailoverEventGateway#save} 持久化。</p>
+ * {@link FailoverEventRepository#save} 持久化。</p>
  *
  * <p><b>非事务监听</b>：使用 {@link EventListener}（而非 {@code @TransactionalEventListener}）。
  * 调用链 {@code ChatDispatchServiceImpl.dispatch} 无 {@code @Transactional}，整个请求处理不开启事务，
@@ -47,7 +47,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class FailoverEventListener {
 
-    private final FailoverEventGateway failoverEventGateway;
+    private final FailoverEventRepository failoverEventRepository;
 
     /**
      * 处理转移发生事件，持久化为转移事件实体
@@ -62,7 +62,7 @@ public class FailoverEventListener {
     public void onFailoverOccurred(FailoverOccurredEvent event) {
         try {
             FailoverEvent entity = toEntity(event);
-            failoverEventGateway.save(entity);
+            failoverEventRepository.save(entity);
             log.debug("持久化转移事件: traceId={}, fromChannel={}, toChannel={}, decision={}, exhausted={}",
                     event.traceId(), event.fromChannelId(), event.toChannelId(),
                     event.decision(), event.exhausted());

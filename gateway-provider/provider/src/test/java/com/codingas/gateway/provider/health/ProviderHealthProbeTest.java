@@ -19,9 +19,9 @@ import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
@@ -48,11 +48,11 @@ import static org.mockito.Mockito.when;
 class ProviderHealthProbeTest {
 
     @Mock
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
     @Mock
-    private ChannelEndpointGateway endpointGateway;
+    private ChannelEndpointRepository endpointRepository;
     @Mock
-    private ChannelCredentialGateway credentialGateway;
+    private ChannelCredentialRepository credentialRepository;
     @Mock
     private UpstreamClientRegistry clientRegistry;
     @Mock
@@ -61,8 +61,8 @@ class ProviderHealthProbeTest {
     private UpstreamClient upstreamClient;
 
     private ProviderHealthProbe probe() {
-        return new ProviderHealthProbe(channelGateway, endpointGateway,
-                credentialGateway, clientRegistry, healthTracker);
+        return new ProviderHealthProbe(channelRepository, endpointRepository,
+                credentialRepository, clientRegistry, healthTracker);
     }
 
     @Test
@@ -77,9 +77,9 @@ class ProviderHealthProbeTest {
         ChannelCredential cred = new ChannelCredential();
         cred.setApiKeyPlain("sk-test");
 
-        when(channelGateway.findAllActive()).thenReturn(List.of(channel));
-        when(endpointGateway.findByChannelId(1L)).thenReturn(List.of(endpoint));
-        when(credentialGateway.findActiveByChannelId(1L)).thenReturn(List.of(cred));
+        when(channelRepository.findAllActive()).thenReturn(List.of(channel));
+        when(endpointRepository.findByChannelId(1L)).thenReturn(List.of(endpoint));
+        when(credentialRepository.findActiveByChannelId(1L)).thenReturn(List.of(cred));
         when(clientRegistry.getClient(anyString(), anyString(), anyString(), anyInt()))
                 .thenReturn(upstreamClient);
         when(upstreamClient.testConnectivity())
@@ -102,9 +102,9 @@ class ProviderHealthProbeTest {
         ChannelCredential cred = new ChannelCredential();
         cred.setApiKeyPlain("sk-ant");
 
-        when(channelGateway.findAllActive()).thenReturn(List.of(channel));
-        when(endpointGateway.findByChannelId(2L)).thenReturn(List.of(endpoint));
-        when(credentialGateway.findActiveByChannelId(2L)).thenReturn(List.of(cred));
+        when(channelRepository.findAllActive()).thenReturn(List.of(channel));
+        when(endpointRepository.findByChannelId(2L)).thenReturn(List.of(endpoint));
+        when(credentialRepository.findActiveByChannelId(2L)).thenReturn(List.of(cred));
         when(clientRegistry.getClient(anyString(), anyString(), anyString(), anyInt()))
                 .thenThrow(new RuntimeException("connect timeout"));
 
@@ -123,9 +123,9 @@ class ProviderHealthProbeTest {
         endpoint.setProtocol(Protocol.OPENAI);
         endpoint.setEndpointUrl("https://api.openai.com/v1");
 
-        when(channelGateway.findAllActive()).thenReturn(List.of(channel));
-        when(endpointGateway.findByChannelId(3L)).thenReturn(List.of(endpoint));
-        when(credentialGateway.findActiveByChannelId(3L)).thenReturn(List.of());
+        when(channelRepository.findAllActive()).thenReturn(List.of(channel));
+        when(endpointRepository.findByChannelId(3L)).thenReturn(List.of(endpoint));
+        when(credentialRepository.findActiveByChannelId(3L)).thenReturn(List.of());
 
         probe().probe();
 

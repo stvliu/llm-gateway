@@ -17,11 +17,11 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.provider.model.ModelInstanceGateway;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +34,7 @@ import java.util.Map;
 /**
  * 模型实例选择器 — 委托给 RouterChain 执行权限过滤 + 健康过滤 + 优先级分组，返回候选列表
  *
- * <p>Task 3：查 {@link ApplicationChannelGateway#findByApplicationId(Long)} 取该应用所有授权渠道
+ * <p>Task 3：查 {@link ApplicationChannelRepository#findByApplicationId(Long)} 取该应用所有授权渠道
  * 的 priority，构建 {@code channelPriorityMap} 填入 {@link RoutingRequest}，供 {@link PriorityRouter}
  * 按应用级 priority 升序排序（同一渠道对不同应用可有不同转移顺序）。applicationId 为 null 时传空映射。</p>
  *
@@ -47,10 +47,10 @@ public class InstanceSelector {
 
     private static final Logger log = LoggerFactory.getLogger(InstanceSelector.class);
 
-    private final ModelInstanceGateway modelInstanceGateway;
+    private final ModelInstanceRepository modelInstanceRepository;
     private final RouterChain routerChain;
     /** 应用-渠道授权网关（Task 3 取应用级渠道 priority） */
-    private final ApplicationChannelGateway applicationChannelGateway;
+    private final ApplicationChannelRepository applicationChannelRepository;
 
     /**
      * 根据 modelId 和用户身份选择模型实例候选列表
@@ -70,7 +70,7 @@ public class InstanceSelector {
     public List<ModelInstance> select(Long modelId, Long applicationId, Long userId, String role,
                                       RoutingStrategy strategy, Protocol protocol) {
         // 获取所有活跃实例（DB 按 ModelInstance.priority 粗排，PriorityRouter 用应用级映射精排覆盖顺序）
-        List<ModelInstance> allInstances = modelInstanceGateway.findActiveByModelIdOrderByPriority(modelId);
+        List<ModelInstance> allInstances = modelInstanceRepository.findActiveByModelIdOrderByPriority(modelId);
         if (allInstances.isEmpty()) {
             throw new ResourceNotFoundException("ModelInstance", modelId);
         }
@@ -95,7 +95,7 @@ public class InstanceSelector {
     /**
      * 构建应用级渠道优先级映射（Task 3）
      *
-     * <p>查 {@link ApplicationChannelGateway#findByApplicationId(Long)} 取该应用所有授权渠道，
+     * <p>查 {@link ApplicationChannelRepository#findByApplicationId(Long)} 取该应用所有授权渠道，
      * 以 channelId 为 key、priority 为 value 构建映射；priority 为 null 的渠道不放入映射
      *（{@link PriorityRouter} 回退默认值 100）。applicationId 为 null 时返回空映射，不查网关。</p>
      *
@@ -106,7 +106,7 @@ public class InstanceSelector {
         if (applicationId == null) {
             return Map.of();
         }
-        List<ApplicationChannel> channels = applicationChannelGateway.findByApplicationId(applicationId);
+        List<ApplicationChannel> channels = applicationChannelRepository.findByApplicationId(applicationId);
         Map<Long, Integer> map = new LinkedHashMap<>();
         for (ApplicationChannel channel : channels) {
             if (channel.getPriority() != null) {

@@ -23,13 +23,13 @@ import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.vendor.Provider;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit.TokenLimitState;
 import com.codingas.gateway.iam.user.User;
-import com.codingas.gateway.usage.tokenlimit.TokenLimitGateway;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitRepository;
+import com.codingas.gateway.iam.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,10 +50,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TokenLimitServiceImpl implements TokenLimitService {
 
-    private final TokenLimitGateway tokenLimitGateway;
-    private final UserGateway userGateway;
-    private final ProviderGateway providerGateway;
-    private final ModelGateway modelGateway;
+    private final TokenLimitRepository tokenLimitRepository;
+    private final UserRepository userRepository;
+    private final ProviderRepository providerRepository;
+    private final ModelRepository modelRepository;
 
     /**
      * 创建 Token 限额
@@ -62,27 +62,27 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     @Transactional
     public TokenLimitResponse create(TokenLimitCreateRequest request) {
         // 查找用户
-        User user = userGateway.findById(request.getUserId())
+        User user = userRepository.findById(request.getUserId())
             .orElseThrow(() -> new ResourceNotFoundException("User", request.getUserId()));
 
         // 查找提供商（可选）
         Provider provider = null;
         if (request.getProviderId() != null) {
-            provider = providerGateway.findById(request.getProviderId())
+            provider = providerRepository.findById(request.getProviderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Provider", request.getProviderId()));
         }
 
         // 查找模型（可选）
         Model model = null;
         if (request.getModelId() != null) {
-            model = modelGateway.findById(request.getModelId())
+            model = modelRepository.findById(request.getModelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Model", request.getModelId()));
         }
 
         // 查找切换模型（可选）
         Model switchModel = null;
         if (request.getSwitchModelId() != null) {
-            switchModel = modelGateway.findById(request.getSwitchModelId())
+            switchModel = modelRepository.findById(request.getSwitchModelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
         }
 
@@ -101,7 +101,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
         tokenLimit.setSwitchModel(switchModel);
         tokenLimit.setState(TokenLimitState.ACTIVE);
 
-        TokenLimit savedTokenLimit = tokenLimitGateway.save(tokenLimit);
+        TokenLimit savedTokenLimit = tokenLimitRepository.save(tokenLimit);
         return toResponse(savedTokenLimit);
     }
 
@@ -110,7 +110,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
      */
     @Override
     public TokenLimitResponse getById(Long id) {
-        TokenLimit tokenLimit = tokenLimitGateway.findById(id)
+        TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
         return toResponse(tokenLimit);
     }
@@ -120,7 +120,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
      */
     @Override
     public PageResponse<TokenLimitResponse> query(TokenLimitQueryRequest request) {
-        List<TokenLimit> tokenLimits = tokenLimitGateway.findAll();
+        List<TokenLimit> tokenLimits = tokenLimitRepository.findAll();
 
         // 过滤
         if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
@@ -178,7 +178,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     @Override
     @Transactional
     public TokenLimitResponse update(Long id, TokenLimitUpdateRequest request) {
-        TokenLimit tokenLimit = tokenLimitGateway.findById(id)
+        TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
 
         if (request.getMaxTokens() != null) {
@@ -197,7 +197,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             tokenLimit.setExceededAction(request.getExceededAction());
         }
         if (request.getSwitchModelId() != null) {
-            Model switchModel = modelGateway.findById(request.getSwitchModelId())
+            Model switchModel = modelRepository.findById(request.getSwitchModelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Model", request.getSwitchModelId()));
             tokenLimit.setSwitchModel(switchModel);
         }
@@ -205,7 +205,7 @@ public class TokenLimitServiceImpl implements TokenLimitService {
             tokenLimit.setState(request.getEnabled() ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
         }
 
-        return toResponse(tokenLimitGateway.save(tokenLimit));
+        return toResponse(tokenLimitRepository.save(tokenLimit));
     }
 
     /**
@@ -214,10 +214,10 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     @Override
     @Transactional
     public void delete(Long id) {
-        TokenLimit tokenLimit = tokenLimitGateway.findById(id)
+        TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
         tokenLimit.setDeletedAt(Instant.now());
-        tokenLimitGateway.save(tokenLimit);
+        tokenLimitRepository.save(tokenLimit);
     }
 
     /**
@@ -226,10 +226,10 @@ public class TokenLimitServiceImpl implements TokenLimitService {
     @Override
     @Transactional
     public TokenLimitResponse resetUsage(Long id) {
-        TokenLimit tokenLimit = tokenLimitGateway.findById(id)
+        TokenLimit tokenLimit = tokenLimitRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("TokenLimit", id));
         tokenLimit.setUsedTokens(BigDecimal.ZERO);
-        return toResponse(tokenLimitGateway.save(tokenLimit));
+        return toResponse(tokenLimitRepository.save(tokenLimit));
     }
 
     /**

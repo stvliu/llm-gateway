@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.provider.health;
 
-import com.codingas.gateway.provider.health.ProviderHealthTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.actuate.health.AbstractHealthIndicator;
 import org.springframework.boot.actuate.health.Health;

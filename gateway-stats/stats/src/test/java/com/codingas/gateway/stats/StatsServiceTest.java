@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.stats;
 
-import com.codingas.gateway.iam.user.UserGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.iam.user.UserRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.codingas.gateway.stats.dto.StatsResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -42,16 +42,16 @@ import static org.mockito.Mockito.when;
 class StatsServiceTest {
 
     @Mock
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Mock
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelRepository modelRepository;
 
     @Mock
-    private UserGateway userGateway;
+    private UserRepository userRepository;
 
     @InjectMocks
     private StatsService statsService;
@@ -64,10 +64,10 @@ class StatsServiceTest {
         @DisplayName("返回四个域的计数统计")
         void getStats_returnsCounts() {
             // given
-            when(providerGateway.count()).thenReturn(3L);
-            when(channelGateway.count()).thenReturn(5L);
-            when(modelGateway.count()).thenReturn(10L);
-            when(userGateway.count()).thenReturn(42L);
+            when(providerRepository.count()).thenReturn(3L);
+            when(channelRepository.count()).thenReturn(5L);
+            when(modelRepository.count()).thenReturn(10L);
+            when(userRepository.count()).thenReturn(42L);
 
             // when
             StatsResponse response = statsService.getStats();
@@ -86,10 +86,10 @@ class StatsServiceTest {
         @DisplayName("无数据时所有计数为零")
         void getStats_noData_allZero() {
             // given
-            when(providerGateway.count()).thenReturn(0L);
-            when(channelGateway.count()).thenReturn(0L);
-            when(modelGateway.count()).thenReturn(0L);
-            when(userGateway.count()).thenReturn(0L);
+            when(providerRepository.count()).thenReturn(0L);
+            when(channelRepository.count()).thenReturn(0L);
+            when(modelRepository.count()).thenReturn(0L);
+            when(userRepository.count()).thenReturn(0L);
 
             // when
             StatsResponse response = statsService.getStats();
@@ -108,10 +108,10 @@ class StatsServiceTest {
             statsService.getStats();
 
             // then
-            verify(providerGateway).count();
-            verify(channelGateway).count();
-            verify(modelGateway).count();
-            verify(userGateway).count();
+            verify(providerRepository).count();
+            verify(channelRepository).count();
+            verify(modelRepository).count();
+            verify(userRepository).count();
         }
     }
 }

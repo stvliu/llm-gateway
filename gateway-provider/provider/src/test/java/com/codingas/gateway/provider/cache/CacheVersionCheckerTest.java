@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.provider.cache;
 
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.model.ModelGateway;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -34,13 +34,13 @@ import static org.mockito.Mockito.when;
 class CacheVersionCheckerTest {
 
     @Mock
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Mock
-    private ModelGateway modelGateway;
+    private ModelRepository modelRepository;
 
     @Mock
-    private ChannelCredentialGateway channelCredentialGateway;
+    private ChannelCredentialRepository channelCredentialRepository;
 
     @Mock
     private CacheInvalidationService cacheService;
@@ -49,15 +49,15 @@ class CacheVersionCheckerTest {
 
     @BeforeEach
     void setUp() {
-        checker = new CacheVersionChecker(providerGateway, modelGateway, channelCredentialGateway, cacheService);
+        checker = new CacheVersionChecker(providerRepository, modelRepository, channelCredentialRepository, cacheService);
     }
 
     @Test
     @DisplayName("初始化基线后首次轮询不触发任何缓存刷新")
     void initVersionsThenCheck_doesNotRefresh() {
-        when(providerGateway.getMaxVersion()).thenReturn(5L);
-        when(modelGateway.getMaxVersion()).thenReturn(3L);
-        when(channelCredentialGateway.getMaxVersion()).thenReturn(2L);
+        when(providerRepository.getMaxVersion()).thenReturn(5L);
+        when(modelRepository.getMaxVersion()).thenReturn(3L);
+        when(channelCredentialRepository.getMaxVersion()).thenReturn(2L);
 
         checker.initVersions();
         checker.checkVersions();
@@ -70,9 +70,9 @@ class CacheVersionCheckerTest {
     @Test
     @DisplayName("Provider 版本递增时刷新 Provider 缓存并更新基线")
     void providerVersionIncreased_refreshesProviders() {
-        when(providerGateway.getMaxVersion()).thenReturn(5L, 6L);
-        when(modelGateway.getMaxVersion()).thenReturn(3L);
-        when(channelCredentialGateway.getMaxVersion()).thenReturn(2L);
+        when(providerRepository.getMaxVersion()).thenReturn(5L, 6L);
+        when(modelRepository.getMaxVersion()).thenReturn(3L);
+        when(channelCredentialRepository.getMaxVersion()).thenReturn(2L);
 
         checker.initVersions();
         checker.checkVersions();
@@ -85,9 +85,9 @@ class CacheVersionCheckerTest {
     @Test
     @DisplayName("Model 版本递增时刷新 Model 缓存并更新基线")
     void modelVersionIncreased_refreshesModels() {
-        when(providerGateway.getMaxVersion()).thenReturn(5L);
-        when(modelGateway.getMaxVersion()).thenReturn(3L, 4L);
-        when(channelCredentialGateway.getMaxVersion()).thenReturn(2L);
+        when(providerRepository.getMaxVersion()).thenReturn(5L);
+        when(modelRepository.getMaxVersion()).thenReturn(3L, 4L);
+        when(channelCredentialRepository.getMaxVersion()).thenReturn(2L);
 
         checker.initVersions();
         checker.checkVersions();
@@ -100,9 +100,9 @@ class CacheVersionCheckerTest {
     @Test
     @DisplayName("凭据版本递增时刷新凭据缓存并更新基线")
     void credentialVersionIncreased_refreshesApiKeys() {
-        when(providerGateway.getMaxVersion()).thenReturn(5L);
-        when(modelGateway.getMaxVersion()).thenReturn(3L);
-        when(channelCredentialGateway.getMaxVersion()).thenReturn(2L, 3L);
+        when(providerRepository.getMaxVersion()).thenReturn(5L);
+        when(modelRepository.getMaxVersion()).thenReturn(3L);
+        when(channelCredentialRepository.getMaxVersion()).thenReturn(2L, 3L);
 
         checker.initVersions();
         checker.checkVersions();
@@ -115,9 +115,9 @@ class CacheVersionCheckerTest {
     @Test
     @DisplayName("多域版本同时递增时分别触发各自缓存刷新")
     void multipleVersionsIncreased_refreshAll() {
-        when(providerGateway.getMaxVersion()).thenReturn(5L, 6L);
-        when(modelGateway.getMaxVersion()).thenReturn(3L, 4L);
-        when(channelCredentialGateway.getMaxVersion()).thenReturn(2L, 3L);
+        when(providerRepository.getMaxVersion()).thenReturn(5L, 6L);
+        when(modelRepository.getMaxVersion()).thenReturn(3L, 4L);
+        when(channelCredentialRepository.getMaxVersion()).thenReturn(2L, 3L);
 
         checker.initVersions();
         checker.checkVersions();

@@ -18,14 +18,14 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.iam.application.ApplicationGateway;
+import com.codingas.gateway.iam.application.ApplicationRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,8 +45,8 @@ public class RoutingResolver {
     private final InstanceSelector instanceSelector;
     private final CredentialResolver credentialResolver;
     private final EndpointResolver endpointResolver;
-    private final ChannelGateway channelGateway;
-    private final ApplicationGateway applicationGateway;
+    private final ChannelRepository channelRepository;
+    private final ApplicationRepository applicationRepository;
 
     /**
      * 根据模型名称解析完整的路由上下文（取最高优先级候选）
@@ -117,7 +117,7 @@ public class RoutingResolver {
         if (applicationId == null) {
             return null;
         }
-        Application app = applicationGateway.findById(applicationId);
+        Application app = applicationRepository.findById(applicationId);
         if (app == null) {
             log.warn("Application 未找到，超时与策略回退默认。applicationId={}", applicationId);
             return null;
@@ -151,7 +151,7 @@ public class RoutingResolver {
         ChannelEndpoint endpoint = endpointResolver.resolve(instance.getChannelId(), protocol);
 
         // 渠道信息
-        Channel channel = channelGateway.findById(instance.getChannelId())
+        Channel channel = channelRepository.findById(instance.getChannelId())
                 .orElseThrow(() -> new ResourceNotFoundException("Channel", instance.getChannelId()));
 
         // 有效超时：Application.timeout 非 0 覆盖渠道默认；app 为 null 或 timeout 为 0 时用渠道默认

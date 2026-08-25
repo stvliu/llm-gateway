@@ -15,12 +15,12 @@
  */
 package com.codingas.gateway.proxy.routing;
 
-import com.codingas.gateway.iam.application.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelState;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,10 +46,10 @@ import static org.mockito.Mockito.when;
 class PermissionRouterTest {
 
     @Mock
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
 
     @Mock
-    private ApplicationChannelGateway applicationChannelGateway;
+    private ApplicationChannelRepository applicationChannelRepository;
 
     @InjectMocks
     private PermissionRouter router;
@@ -69,8 +69,8 @@ class PermissionRouterTest {
         ch1.setId(100L);
         ch1.setState(ChannelState.ACTIVE);
 
-        when(applicationChannelGateway.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
-        when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));
+        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
+        when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(ch1));
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi3), request);
@@ -91,7 +91,7 @@ class PermissionRouterTest {
 
         assertThat(result).isEmpty();
         // 无权限锚点时不应触碰应用-渠道授权网关
-        verify(applicationChannelGateway, org.mockito.Mockito.never())
+        verify(applicationChannelRepository, org.mockito.Mockito.never())
                 .findChannelIdsByApplicationId(org.mockito.ArgumentMatchers.any());
     }
 
@@ -110,8 +110,8 @@ class PermissionRouterTest {
         ch1.setId(100L);
         ch1.setState(ChannelState.ACTIVE);
 
-        when(applicationChannelGateway.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L));
-        when(channelGateway.findByIds(List.of(100L))).thenReturn(List.of(ch1));
+        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L));
+        when(channelRepository.findByIds(List.of(100L))).thenReturn(List.of(ch1));
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "ADMIN", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
@@ -119,7 +119,7 @@ class PermissionRouterTest {
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getId()).isEqualTo(1L);
         // 关键断言：ADMIN 角色仍调用应用-渠道授权网关（无旁路）
-        verify(applicationChannelGateway).findChannelIdsByApplicationId(1L);
+        verify(applicationChannelRepository).findChannelIdsByApplicationId(1L);
     }
 
     @Test
@@ -139,8 +139,8 @@ class PermissionRouterTest {
         ch2.setId(200L);
         ch2.setState(ChannelState.SUSPENDED);
 
-        when(applicationChannelGateway.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
-        when(channelGateway.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
+        when(applicationChannelRepository.findChannelIdsByApplicationId(1L)).thenReturn(Set.of(100L, 200L));
+        when(channelRepository.findByIds(List.of(100L, 200L))).thenReturn(List.of(ch1, ch2));
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);

@@ -16,9 +16,9 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.provider.service.ChannelEmergencyService;
-import com.codingas.gateway.provider.service.ChannelService;
-import com.codingas.gateway.provider.service.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyService;
+import com.codingas.gateway.provider.channel.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.upstream.KeyTestResult;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
@@ -27,10 +27,10 @@ import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import com.codingas.gateway.provider.channel.ChannelState;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.channel.ChannelKeyProbe;
-import com.codingas.gateway.provider.vendor.ProviderGateway;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.web.api.ChannelController;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,13 +73,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChannelHealthControllerIntegrationTest {
 
     @Autowired
-    private ChannelGateway channelGateway;
+    private ChannelRepository channelRepository;
 
     @Autowired
-    private ChannelCredentialGateway channelCredentialGateway;
+    private ChannelCredentialRepository channelCredentialRepository;
 
     @Autowired
-    private ProviderGateway providerGateway;
+    private ProviderRepository providerRepository;
 
     @Autowired
     private ChannelHealthService channelHealthService;
@@ -117,14 +117,14 @@ class ChannelHealthControllerIntegrationTest {
         Provider provider = new Provider();
         provider.setCode("health-it-provider-" + System.nanoTime());
         provider.setName("健康测试供应商");
-        Provider savedProvider = providerGateway.save(provider);
+        Provider savedProvider = providerRepository.save(provider);
 
         Channel channel = new Channel();
         channel.setProviderId(savedProvider.getId());
         channel.setName("health-it-channel-" + System.nanoTime());
         channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         channel.setState(ChannelState.ACTIVE);
-        Channel savedChannel = channelGateway.save(channel);
+        Channel savedChannel = channelRepository.save(channel);
 
         for (int i = 0; i < credentialCount; i++) {
             ChannelCredential c = new ChannelCredential();
@@ -135,7 +135,7 @@ class ChannelHealthControllerIntegrationTest {
             c.setKeyAlias("alias-" + i);
             c.setWeight(1);
             c.setPriority(1);
-            channelCredentialGateway.save(c);
+            channelCredentialRepository.save(c);
         }
 
         return savedChannel.getId();
@@ -169,7 +169,7 @@ class ChannelHealthControllerIntegrationTest {
                 .andExpect(jsonPath("$.channelId").value(channelId));
 
         // 断言持久化已发生
-        Channel reloaded = channelGateway.findById(channelId).orElseThrow();
+        Channel reloaded = channelRepository.findById(channelId).orElseThrow();
         assertThat(reloaded.getLastHealthStatus()).isEqualTo(ChannelHealthStatus.HEALTHY);
         assertThat(reloaded.getLastHealthSource()).isEqualTo(ChannelHealthSource.DRAWER);
         assertThat(reloaded.getLastHealthCheckAt()).isNotNull();
@@ -190,7 +190,7 @@ class ChannelHealthControllerIntegrationTest {
                 .andExpect(jsonPath("$.aggregateStatus").value("HEALTHY"));
 
         // 断言三字段保持 null
-        Channel reloaded = channelGateway.findById(channelId).orElseThrow();
+        Channel reloaded = channelRepository.findById(channelId).orElseThrow();
         assertThat(reloaded.getLastHealthStatus()).isNull();
         assertThat(reloaded.getLastHealthSource()).isNull();
         assertThat(reloaded.getLastHealthCheckAt()).isNull();

@@ -17,7 +17,7 @@ package com.codingas.gateway.iam.auth;
 
 import cn.dev33.satoken.stp.StpInterface;
 import com.codingas.gateway.iam.user.User;
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.user.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,10 +34,10 @@ import java.util.List;
 @Service
 public class StpRoleService implements StpInterface {
 
-    private final UserGateway userGateway;
+    private final UserRepository userRepository;
 
-    public StpRoleService(UserGateway userGateway) {
-        this.userGateway = userGateway;
+    public StpRoleService(UserRepository userRepository) {
+        this.userRepository = userRepository;
     }
 
     /**
@@ -50,7 +50,7 @@ public class StpRoleService implements StpInterface {
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
         Long userId = Long.valueOf(loginId.toString());
-        return userGateway.findById(userId)
+        return userRepository.findById(userId)
             .map(User::getRole)
             .map(List::of)
             .orElseGet(List::of);
@@ -66,7 +66,7 @@ public class StpRoleService implements StpInterface {
     @Override
     public List<String> getPermissionList(Object loginId, String loginType) {
         Long userId = Long.valueOf(loginId.toString());
-        return userGateway.findById(userId)
+        return userRepository.findById(userId)
             .map(User::getRole)
             .map(RolePermissions::of)
             .orElseGet(List::of);

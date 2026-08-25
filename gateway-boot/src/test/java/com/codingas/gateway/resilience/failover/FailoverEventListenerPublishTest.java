@@ -17,7 +17,7 @@ package com.codingas.gateway.resilience.failover;
 
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.resilience.failover.FailoverEvent;
-import com.codingas.gateway.resilience.failover.FailoverEventGateway;
+import com.codingas.gateway.resilience.failover.FailoverEventRepository;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verify;
  * 默认 false），监听器永不执行，转移事件全部丢失。修复后改用 {@code @EventListener}（非事务监听），
  * 无事务上下文下事件仍被处理。</p>
  *
- * <p>本测试在无事务的方法中发布事件，断言 {@link FailoverEventGateway#save} 被调用——
+ * <p>本测试在无事务的方法中发布事件，断言 {@link FailoverEventRepository#save} 被调用——
  * 用 {@code @TransactionalEventListener} 时此断言失败（事件丢失），用 {@code @EventListener} 时通过。</p>
  *
  * <p>参照 {@code FailoverEventListenerTest}（纯 Mockito 单测，直接调方法，无法覆盖事务语义差异），
@@ -58,7 +58,7 @@ class FailoverEventListenerPublishTest {
     private ApplicationEventPublisher eventPublisher;
 
     @MockBean
-    private FailoverEventGateway failoverEventGateway;
+    private FailoverEventRepository failoverEventRepository;
 
     /**
      * 无事务上下文下发布转移事件，监听器仍应持久化事件（非事务监听，不依赖事务提交）
@@ -85,6 +85,6 @@ class FailoverEventListenerPublishTest {
         eventPublisher.publishEvent(event);
 
         // timeout 兼容潜在 @Async（当前未启用 @EnableAsync，同步执行立即完成）
-        verify(failoverEventGateway, timeout(2000)).save(any(FailoverEvent.class));
+        verify(failoverEventRepository, timeout(2000)).save(any(FailoverEvent.class));
     }
 }

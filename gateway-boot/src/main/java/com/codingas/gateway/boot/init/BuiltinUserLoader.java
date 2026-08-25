@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.boot.init;
 
-import com.codingas.gateway.iam.user.UserGateway;
+import com.codingas.gateway.iam.user.UserRepository;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,12 +33,12 @@ public class BuiltinUserLoader implements DataLoader {
 
     private static final String USERS_JSON = "data/builtin/users.json";
 
-    private final UserGateway userGateway;
+    private final UserRepository userRepository;
     private final UserCreator userCreator;
 
-    public BuiltinUserLoader(UserGateway userGateway,
+    public BuiltinUserLoader(UserRepository userRepository,
                              UserCreator userCreator) {
-        this.userGateway = userGateway;
+        this.userRepository = userRepository;
         this.userCreator = userCreator;
     }
 
@@ -64,7 +64,7 @@ public class BuiltinUserLoader implements DataLoader {
     // ========== Internal methods ==========
 
     private void ensureBuiltinUser(BuiltinUserData data) {
-        if (userGateway.findByUsername(data.username()).isPresent()) {
+        if (userRepository.findByUsername(data.username()).isPresent()) {
             return;
         }
         userCreator.create(data.username(), data.email(), data.password(), data.role(), true);

@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelCredential;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CredentialResolver {
 
-    private final ChannelCredentialGateway channelCredentialGateway;
+    private final ChannelCredentialRepository channelCredentialRepository;
 
     /**
      * 根据 channelId 解析可用的 API Key
@@ -44,13 +44,13 @@ public class CredentialResolver {
      */
     public String resolve(Long channelId) {
         // 优先使用默认凭证
-        var defaultKey = channelCredentialGateway.findDefaultByChannelId(channelId);
+        var defaultKey = channelCredentialRepository.findDefaultByChannelId(channelId);
         if (defaultKey.isPresent() && defaultKey.get().isAvailable()) {
             return defaultKey.get().getApiKeyPlain();
         }
 
         // 其次选择活跃凭证
-        List<ChannelCredential> activeKeys = channelCredentialGateway.findActiveByChannelId(channelId);
+        List<ChannelCredential> activeKeys = channelCredentialRepository.findActiveByChannelId(channelId);
         return activeKeys.stream()
                 .findFirst()
                 .map(ChannelCredential::getApiKeyPlain)
@@ -66,7 +66,7 @@ public class CredentialResolver {
      * @return 可用凭证列表（已按优先级排序）
      */
     public List<ChannelCredential> resolveAll(Long channelId) {
-        List<ChannelCredential> activeKeys = channelCredentialGateway.findActiveByChannelId(channelId);
+        List<ChannelCredential> activeKeys = channelCredentialRepository.findActiveByChannelId(channelId);
         activeKeys.sort(Comparator.comparingInt(ChannelCredential::getPriority));
         return activeKeys;
     }

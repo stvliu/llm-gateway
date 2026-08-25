@@ -16,8 +16,6 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.provider.upstream.KeyTestResult;
-import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.channel.ChannelCredential;
 
 /**
  * 单 Key 连通性探针接口（最小占位）

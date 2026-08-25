@@ -18,9 +18,6 @@ package com.codingas.gateway.provider.channel;
 import com.codingas.gateway.common.entity.BaseEntity;
 import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.provider.channel.ChannelHealthSource;
-import com.codingas.gateway.provider.channel.ChannelHealthStatus;
-import com.codingas.gateway.provider.channel.ChannelState;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

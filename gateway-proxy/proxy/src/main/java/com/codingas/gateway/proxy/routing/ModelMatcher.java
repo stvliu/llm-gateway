@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.model.ModelGateway;
+import com.codingas.gateway.provider.model.ModelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ModelMatcher {
 
-    private final ModelGateway modelGateway;
+    private final ModelRepository modelRepository;
 
     /**
      * 根据 modelName 查找匹配的活跃模型
@@ -38,7 +38,7 @@ public class ModelMatcher {
      * @throws ResourceNotFoundException 未找到匹配模型
      */
     public Model match(String modelName) {
-        return modelGateway.findByModelName(modelName)
+        return modelRepository.findByModelName(modelName)
                 .filter(Model::isAvailable)
                 .orElseThrow(() -> new ResourceNotFoundException("Model", modelName));
     }

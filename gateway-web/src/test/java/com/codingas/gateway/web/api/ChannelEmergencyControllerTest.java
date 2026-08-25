@@ -16,9 +16,9 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
-import com.codingas.gateway.provider.service.ChannelEmergencyService;
-import com.codingas.gateway.provider.service.ChannelService;
-import com.codingas.gateway.provider.service.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyService;
+import com.codingas.gateway.provider.channel.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

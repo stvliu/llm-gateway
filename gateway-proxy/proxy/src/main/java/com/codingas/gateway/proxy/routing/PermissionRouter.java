@@ -15,10 +15,10 @@
  */
 package com.codingas.gateway.proxy.routing;
 
-import com.codingas.gateway.iam.application.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * 权限路由器 — 按应用-渠道授权（ApplicationChannel）过滤模型实例
  *
  * <p>数据面权限锚点为 {@link RoutingRequest#getApplicationId()}：
- * 通过 {@link ApplicationChannelGateway#findChannelIdsByApplicationId(Long)} 查询应用可见的渠道集合，
+ * 通过 {@link ApplicationChannelRepository#findChannelIdsByApplicationId(Long)} 查询应用可见的渠道集合，
  * 仅保留该集合内的实例，再过滤出活跃（{@code state.isRoutable()}）渠道。</p>
  *
  * <p>D9 约束：ADMIN 退管理面，数据面权限路由无特权旁路 —— 任何角色都按应用授权过滤，
@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class PermissionRouter implements Router {
 
-    private final ChannelGateway channelGateway;
-    private final ApplicationChannelGateway applicationChannelGateway;
+    private final ChannelRepository channelRepository;
+    private final ApplicationChannelRepository applicationChannelRepository;
 
     @Override
     public List<ModelInstance> filter(List<ModelInstance> instances, RoutingRequest request) {
@@ -65,7 +65,7 @@ public class PermissionRouter implements Router {
 
         // 再过滤活跃 Channel（state.isRoutable()）
         List<Long> channelIds = permitted.stream().map(ModelInstance::getChannelId).toList();
-        List<Channel> activeChannels = channelGateway.findByIds(channelIds).stream()
+        List<Channel> activeChannels = channelRepository.findByIds(channelIds).stream()
                 .filter(ch -> ch.getState() != null && ch.getState().isRoutable())
                 .toList();
         Set<Long> activeChannelIds = activeChannels.stream().map(Channel::getId).collect(Collectors.toSet());
@@ -93,6 +93,6 @@ public class PermissionRouter implements Router {
             // 无权限锚点：不允许访问任何渠道
             return Set.of();
         }
-        return applicationChannelGateway.findChannelIdsByApplicationId(applicationId);
+        return applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
     }
 }

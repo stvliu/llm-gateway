@@ -19,7 +19,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.codingas.gateway.iam.dto.ChangePasswordRequest;
 import com.codingas.gateway.iam.dto.LoginRequest;
 import com.codingas.gateway.iam.dto.LoginResponse;
-import com.codingas.gateway.iam.service.UserService;
+import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.iam.dto.UserResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

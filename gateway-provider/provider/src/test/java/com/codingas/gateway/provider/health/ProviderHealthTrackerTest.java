@@ -39,10 +39,10 @@ class ProviderHealthTrackerTest {
     private UpstreamClientRegistry upstreamClientRegistry;
 
     @Mock
-    private UpstreamClient openaiGateway;
+    private UpstreamClient openaiRepository;
 
     @Mock
-    private UpstreamClient anthropicGateway;
+    private UpstreamClient anthropicRepository;
 
     private ProviderHealthProperties properties;
     private ProviderHealthTracker tracker;

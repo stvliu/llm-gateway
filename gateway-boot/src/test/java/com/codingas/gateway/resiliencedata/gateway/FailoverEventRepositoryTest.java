@@ -17,7 +17,7 @@ package com.codingas.gateway.resiliencedata.gateway;
 
 import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.resilience.failover.FailoverEvent;
-import com.codingas.gateway.resilience.failover.FailoverEventGateway;
+import com.codingas.gateway.resilience.failover.FailoverEventRepository;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import org.junit.jupiter.api.DisplayName;
@@ -33,10 +33,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * FailoverEventRepository 集成测试（连 H2）
+ * FailoverEventJpaRepository 集成测试（连 H2）
  *
  * <p>验证 {@code findExhausted} 的真实 SQL 过滤逻辑（exhausted=true）。
- * Mockito 单测（{@link FailoverEventGatewayImplTest}）只验证参数透传，
+ * Mockito 单测（{@link JpaFailoverEventRepositoryTest}）只验证参数透传，
  * 无法验证 Repository @Query 的 SQL 过滤逻辑真实生效。本测试连 H2 执行真实 SQL，
  * 消除 Mockito 盲区。</p>
  *
@@ -47,11 +47,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @Transactional
-@DisplayName("FailoverEventRepository 集成测试（H2）")
+@DisplayName("FailoverEventJpaRepository 集成测试（H2）")
 class FailoverEventRepositoryTest {
 
     @Autowired
-    private FailoverEventGateway failoverEventGateway;
+    private FailoverEventRepository failoverEventRepository;
 
     /**
      * findExhausted 真实 SQL 过滤：仅返回 exhausted=true 的事件
@@ -66,10 +66,10 @@ class FailoverEventRepositoryTest {
         exhausted.setDecision(FailoverDecision.L1);
         FailoverEvent normal = buildEvent("trace-norm", 10L, 20L);
         normal.setExhausted(false);
-        failoverEventGateway.save(exhausted);
-        failoverEventGateway.save(normal);
+        failoverEventRepository.save(exhausted);
+        failoverEventRepository.save(normal);
 
-        List<FailoverEvent> result = failoverEventGateway.findExhausted(null, 100);
+        List<FailoverEvent> result = failoverEventRepository.findExhausted(null, 100);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getTraceId()).isEqualTo("trace-ex");

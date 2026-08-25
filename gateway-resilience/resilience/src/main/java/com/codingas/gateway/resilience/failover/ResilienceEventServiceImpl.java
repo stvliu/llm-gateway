@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * 转移事件查询应用服务实现
  *
- * <p>委托 {@link FailoverEventGateway}，将 {@link FailoverEvent} 实体转为
+ * <p>委托 {@link FailoverEventRepository}，将 {@link FailoverEvent} 实体转为
  * {@link FailoverEventResponse} DTO。枚举字段转字符串展示。</p>
  *
  * <p><b>耗尽告警默认窗口</b>：{@code findExhausted} 当 since 为 null 时由 Service 层补默认窗口
@@ -45,11 +45,11 @@ public class ResilienceEventServiceImpl implements ResilienceEventService {
     /** 耗尽告警默认查询窗口：最近 1 小时（设计 D12） */
     private static final Duration EXHAUSTED_DEFAULT_WINDOW = Duration.ofHours(1);
 
-    private final FailoverEventGateway failoverEventGateway;
+    private final FailoverEventRepository failoverEventRepository;
 
     @Override
     public List<FailoverEventResponse> findRecent(Instant since, Long applicationId, int limit) {
-        return failoverEventGateway.findRecent(since, applicationId, limit).stream()
+        return failoverEventRepository.findRecent(since, applicationId, limit).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -58,7 +58,7 @@ public class ResilienceEventServiceImpl implements ResilienceEventService {
     public List<FailoverEventResponse> findExhausted(Instant since, int limit) {
         // since 为 null 时补默认窗口最近 1 小时（耗尽告警语义为近期告警，见类 Javadoc）
         Instant effectiveSince = since != null ? since : Instant.now().minus(EXHAUSTED_DEFAULT_WINDOW);
-        return failoverEventGateway.findExhausted(effectiveSince, limit).stream()
+        return failoverEventRepository.findExhausted(effectiveSince, limit).stream()
                 .map(this::toResponse)
                 .toList();
     }

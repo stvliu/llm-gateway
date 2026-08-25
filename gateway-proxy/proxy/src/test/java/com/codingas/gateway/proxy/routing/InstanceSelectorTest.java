@@ -17,11 +17,11 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationChannelGateway;
+import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.provider.model.ModelInstanceGateway;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -49,7 +49,7 @@ import static org.mockito.Mockito.when;
  * 透传至 {@link RoutingRequest}，供下游 {@code PermissionRouter}/{@code HealthRouter} 使用。</p>
  *
  * <p>Task 3：验证 select 在构造 RoutingRequest 前查
- * {@link ApplicationChannelGateway#findByApplicationId(Long)} 取该应用授权渠道 priority，
+ * {@link ApplicationChannelRepository#findByApplicationId(Long)} 取该应用授权渠道 priority，
  * 构建 {@code channelPriorityMap} 填入 RoutingRequest。</p>
  *
  * <p>Task 8：移除容灾画像解析（ResilienceResolver 退场），select 不再解析 profile。</p>
@@ -59,13 +59,13 @@ import static org.mockito.Mockito.when;
 class InstanceSelectorTest {
 
     @Mock
-    private ModelInstanceGateway modelInstanceGateway;
+    private ModelInstanceRepository modelInstanceRepository;
 
     @Mock
     private RouterChain routerChain;
 
     @Mock
-    private ApplicationChannelGateway applicationChannelGateway;
+    private ApplicationChannelRepository applicationChannelRepository;
 
     @InjectMocks
     private InstanceSelector instanceSelector;
@@ -84,8 +84,8 @@ class InstanceSelectorTest {
         ModelInstance mi1 = buildInstance(11L, 100L, 1);
         ModelInstance mi2 = buildInstance(12L, 200L, 2);
         ModelInstance mi3 = buildInstance(13L, 300L, 3);
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(mi1, mi2, mi3));
-        when(applicationChannelGateway.findByApplicationId(7L)).thenReturn(List.of());
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(mi1, mi2, mi3));
+        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of());
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(mi1, mi2, mi3));
 
         // when
@@ -101,7 +101,7 @@ class InstanceSelectorTest {
     @Test
     @DisplayName("无活跃实例时抛出 ResourceNotFoundException")
     void select_empty_throws() {
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of());
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> instanceSelector.select(
                 1L, 7L, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI))
@@ -111,8 +111,8 @@ class InstanceSelectorTest {
     @Test
     @DisplayName("RouterChain 过滤后无候选时抛出 ResourceNotFoundException")
     void select_filterReturnsEmpty_throws() {
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
-        when(applicationChannelGateway.findByApplicationId(7L)).thenReturn(List.of());
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
+        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of());
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of());
 
         assertThatThrownBy(() -> instanceSelector.select(
@@ -124,8 +124,8 @@ class InstanceSelectorTest {
     @DisplayName("select 将 applicationId 与 protocol 透传至 RoutingRequest")
     void select_forwardsApplicationIdAndProtocolToRoutingRequest() {
         // given
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
-        when(applicationChannelGateway.findByApplicationId(7L)).thenReturn(List.of());
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
+        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of());
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(instance));
 
         // when
@@ -146,8 +146,8 @@ class InstanceSelectorTest {
     @DisplayName("select 查应用授权渠道 priority 构建 channelPriorityMap 填入 RoutingRequest")
     void select_buildsChannelPriorityMapFromApplicationChannels() {
         // given — 应用 7 授权渠道 100(priority=1)、200(priority=2)、300(priority=null)
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
-        when(applicationChannelGateway.findByApplicationId(7L)).thenReturn(List.of(
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
+        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of(
                 new ApplicationChannel(7L, 100L, 1),
                 new ApplicationChannel(7L, 200L, 2),
                 new ApplicationChannel(7L, 300L, null)));
@@ -165,15 +165,15 @@ class InstanceSelectorTest {
     }
 
     @Test
-    @DisplayName("applicationId 为 null 时 channelPriorityMap 为空且不查 ApplicationChannelGateway")
+    @DisplayName("applicationId 为 null 时 channelPriorityMap 为空且不查 ApplicationChannelRepository")
     void nullApplicationId_emptyMapAndNoGatewayCall() {
-        when(modelInstanceGateway.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
+        when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(instance));
 
         instanceSelector.select(1L, null, 50L, "user", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
 
-        // applicationId 为 null 时不查 ApplicationChannelGateway，channelPriorityMap 为空
-        verify(applicationChannelGateway, never()).findByApplicationId(any());
+        // applicationId 为 null 时不查 ApplicationChannelRepository，channelPriorityMap 为空
+        verify(applicationChannelRepository, never()).findByApplicationId(any());
         ArgumentCaptor<RoutingRequest> captor = ArgumentCaptor.forClass(RoutingRequest.class);
         verify(routerChain).filter(any(), captor.capture());
         assertThat(captor.getValue().getChannelPriorityMap()).isEmpty();

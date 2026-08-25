@@ -34,25 +34,25 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
- * Aes256EncryptionService 单元测试：加密/解密/错误密钥/边界断言。
+ * Aes256Encryptor 单元测试：加密/解密/错误密钥/边界断言。
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Aes256EncryptionService 测试")
+@DisplayName("Aes256Encryptor 测试")
 class Aes256EncryptionServiceTest {
 
     @Mock
     private Environment environment;
 
-    private Aes256EncryptionService service;
+    private Aes256Encryptor service;
 
     @BeforeEach
     void setUp() {
-        service = new Aes256EncryptionService(environment);
+        service = new Aes256Encryptor(environment);
     }
 
     /** 通过反射设置 @Value 注入的 encryptionKey 字段 */
     private void setEncryptionKey(String key) throws Exception {
-        Field field = Aes256EncryptionService.class.getDeclaredField("encryptionKey");
+        Field field = Aes256Encryptor.class.getDeclaredField("encryptionKey");
         field.setAccessible(true);
         field.set(service, key);
     }
@@ -168,7 +168,7 @@ class Aes256EncryptionServiceTest {
         @DisplayName("开发环境 profile 变体均视为开发")
         void init_devProfiles_allTreatedAsDev() throws Exception {
             for (String profile : new String[]{"dev", "test", "local", "development"}) {
-                service = new Aes256EncryptionService(environment);
+                service = new Aes256Encryptor(environment);
                 setEncryptionKey("bad!!");
                 mockProfiles(profile);
                 assertThatCode(service::init).doesNotThrowAnyException();
@@ -233,8 +233,8 @@ class Aes256EncryptionServiceTest {
             String encrypted = service.encrypt("secret");
 
             // 换密钥后解密失败（GCM 认证失败）
-            Aes256EncryptionService other = new Aes256EncryptionService(environment);
-            Field field = Aes256EncryptionService.class.getDeclaredField("encryptionKey");
+            Aes256Encryptor other = new Aes256Encryptor(environment);
+            Field field = Aes256Encryptor.class.getDeclaredField("encryptionKey");
             field.setAccessible(true);
             field.set(other, differentKey());
             other.init();

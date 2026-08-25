@@ -16,7 +16,7 @@
 package com.codingas.gateway.iam.apikey;
 
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.apikey.UserApiKeyGateway;
+import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -40,13 +40,13 @@ import static org.mockito.Mockito.*;
 class ApiKeyGeneratorTest {
 
     @Mock
-    private UserApiKeyGateway userApiKeyGateway;
+    private UserApiKeyRepository userApiKeyRepository;
 
     private UserApiKeyGenerator generator;
 
     @BeforeEach
     void setUp() {
-        generator = new DefaultUserApiKeyGenerator(userApiKeyGateway);
+        generator = new DefaultUserApiKeyGenerator(userApiKeyRepository);
     }
 
     @Nested
@@ -56,7 +56,7 @@ class ApiKeyGeneratorTest {
         @Test
         @DisplayName("生成成功")
         void generate_success() {
-            when(userApiKeyGateway.findByKeyPrefix(anyString())).thenReturn(Optional.empty());
+            when(userApiKeyRepository.findByKeyPrefix(anyString())).thenReturn(Optional.empty());
 
             GeneratedApiKey result = generator.generate();
 
@@ -69,7 +69,7 @@ class ApiKeyGeneratorTest {
         @DisplayName("prefix 碰撞时重试成功")
         void generate_collision_retrySuccess() {
             UserApiKey existing = new UserApiKey();
-            when(userApiKeyGateway.findByKeyPrefix(anyString()))
+            when(userApiKeyRepository.findByKeyPrefix(anyString()))
                     .thenReturn(Optional.of(existing))
                     .thenReturn(Optional.empty());
 
@@ -77,21 +77,21 @@ class ApiKeyGeneratorTest {
 
             assertThat(result).isNotNull();
             assertThat(result.plainKey()).startsWith("sk-");
-            verify(userApiKeyGateway, times(2)).findByKeyPrefix(anyString());
+            verify(userApiKeyRepository, times(2)).findByKeyPrefix(anyString());
         }
 
         @Test
         @DisplayName("prefix 碰撞超过重试次数抛异常")
         void generate_collision_exceedRetries() {
             UserApiKey existing = new UserApiKey();
-            when(userApiKeyGateway.findByKeyPrefix(anyString()))
+            when(userApiKeyRepository.findByKeyPrefix(anyString()))
                     .thenReturn(Optional.of(existing));
 
             assertThatThrownBy(() -> generator.generate())
                     .isInstanceOf(IllegalStateException.class)
                     .hasMessageContaining("无法生成唯一的 API Key");
 
-            verify(userApiKeyGateway, times(5)).findByKeyPrefix(anyString());
+            verify(userApiKeyRepository, times(5)).findByKeyPrefix(anyString());
         }
     }
 }

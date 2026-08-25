@@ -56,7 +56,7 @@ import static org.mockito.Mockito.when;
 class ResilienceEventServiceImplTest {
 
     @Mock
-    private FailoverEventGateway failoverEventGateway;
+    private FailoverEventRepository failoverEventRepository;
 
     @InjectMocks
     private ResilienceEventServiceImpl service;
@@ -71,13 +71,13 @@ class ResilienceEventServiceImplTest {
     void findExhausted_nullSince_appliesDefaultWindowOfOneHour() {
         Instant callTime = Instant.now();
         FailoverEvent entity = buildExhaustedEvent();
-        when(failoverEventGateway.findExhausted(any(), anyInt()))
+        when(failoverEventRepository.findExhausted(any(), anyInt()))
                 .thenReturn(List.of(entity));
 
         service.findExhausted(null, 50);
 
         ArgumentCaptor<Instant> sinceCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(failoverEventGateway).findExhausted(sinceCaptor.capture(), anyInt());
+        verify(failoverEventRepository).findExhausted(sinceCaptor.capture(), anyInt());
         Instant capturedSince = sinceCaptor.getValue();
         // 默认窗口 = 最近 1 小时：capturedSince 应在 callTime 前 1 小时附近（容差 1 分钟防时钟抖动）
         assertThat(capturedSince).isNotNull();
@@ -89,26 +89,26 @@ class ResilienceEventServiceImplTest {
     @DisplayName("findExhausted since 非 null 时透传原值（不覆盖用户指定窗口）")
     void findExhausted_nonNullSince_delegatesOriginalValue() {
         Instant since = Instant.parse("2026-06-22T00:00:00Z");
-        when(failoverEventGateway.findExhausted(any(), anyInt()))
+        when(failoverEventRepository.findExhausted(any(), anyInt()))
                 .thenReturn(List.of());
 
         service.findExhausted(since, 30);
 
         ArgumentCaptor<Instant> sinceCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(failoverEventGateway).findExhausted(sinceCaptor.capture(), anyInt());
+        verify(failoverEventRepository).findExhausted(sinceCaptor.capture(), anyInt());
         assertThat(sinceCaptor.getValue()).isEqualTo(since);
     }
 
     @Test
     @DisplayName("findRecent since 为 null 时透传 null（转移事件流支持回溯历史，不补默认窗口）")
     void findRecent_nullSince_delegatesNull() {
-        when(failoverEventGateway.findRecent(any(), any(), anyInt()))
+        when(failoverEventRepository.findRecent(any(), any(), anyInt()))
                 .thenReturn(List.of());
 
         service.findRecent(null, null, 100);
 
         ArgumentCaptor<Instant> sinceCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(failoverEventGateway).findRecent(sinceCaptor.capture(), any(), anyInt());
+        verify(failoverEventRepository).findRecent(sinceCaptor.capture(), any(), anyInt());
         assertThat(sinceCaptor.getValue()).isNull();
     }
 
@@ -116,7 +116,7 @@ class ResilienceEventServiceImplTest {
     @DisplayName("findExhausted 返回的实体正确转为响应 DTO（枚举转字符串）")
     void findExhausted_mapsEntityToResponse() {
         FailoverEvent entity = buildExhaustedEvent();
-        when(failoverEventGateway.findExhausted(any(), anyInt()))
+        when(failoverEventRepository.findExhausted(any(), anyInt()))
                 .thenReturn(List.of(entity));
 
         List<FailoverEventResponse> result = service.findExhausted(null, 50);

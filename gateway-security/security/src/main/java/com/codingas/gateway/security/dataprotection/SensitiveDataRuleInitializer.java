@@ -16,7 +16,7 @@
 package com.codingas.gateway.security.dataprotection;
 
 import com.codingas.gateway.security.dataprotection.SensitiveDataRule;
-import com.codingas.gateway.security.dataprotection.SensitiveDataRuleGateway;
+import com.codingas.gateway.security.dataprotection.SensitiveDataRuleRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -34,11 +34,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SensitiveDataRuleInitializer implements CommandLineRunner {
 
-    private final SensitiveDataRuleGateway ruleGateway;
+    private final SensitiveDataRuleRepository ruleRepository;
 
     @Override
     public void run(String... args) {
-        if (ruleGateway.count() > 0) {
+        if (ruleRepository.count() > 0) {
             log.info("Sensitive data rules already initialized, skipping");
             return;
         }
@@ -62,7 +62,7 @@ public class SensitiveDataRuleInitializer implements CommandLineRunner {
                 "\\d{3}-\\d{2}-\\d{4}", "***-**-****")
         );
 
-        ruleGateway.saveAll(defaultRules);
+        ruleRepository.saveAll(defaultRules);
         log.info("Initialized {} sensitive data rules", defaultRules.size());
     }
 

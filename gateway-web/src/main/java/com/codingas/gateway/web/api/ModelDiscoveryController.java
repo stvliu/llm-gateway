@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.service.ModelDiscoveryService;
+import com.codingas.gateway.provider.model.ModelDiscoveryService;
 import com.codingas.gateway.provider.model.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.valueobject.Identity;

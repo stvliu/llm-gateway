@@ -18,9 +18,9 @@ package com.codingas.gateway.provider.health;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
-import com.codingas.gateway.provider.channel.ChannelCredentialGateway;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
-import com.codingas.gateway.provider.channel.ChannelGateway;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
@@ -48,9 +48,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProviderHealthProbe {
 
-    private final ChannelGateway channelGateway;
-    private final ChannelEndpointGateway endpointGateway;
-    private final ChannelCredentialGateway credentialGateway;
+    private final ChannelRepository channelRepository;
+    private final ChannelEndpointRepository endpointRepository;
+    private final ChannelCredentialRepository credentialRepository;
     private final UpstreamClientRegistry clientRegistry;
     private final ProviderHealthTracker healthTracker;
 
@@ -61,7 +61,7 @@ public class ProviderHealthProbe {
             fixedDelayString = "${gateway.health.provider.probe-interval:30s}",
             initialDelayString = "${gateway.health.provider.probe-initial-delay:5s}")
     public void probe() {
-        List<Channel> channels = channelGateway.findAllActive();
+        List<Channel> channels = channelRepository.findAllActive();
         for (Channel channel : channels) {
             probeChannel(channel);
         }
@@ -70,7 +70,7 @@ public class ProviderHealthProbe {
 
     /** 探测单个通道的所有端点 */
     private void probeChannel(Channel channel) {
-        for (ChannelEndpoint endpoint : endpointGateway.findByChannelId(channel.getId())) {
+        for (ChannelEndpoint endpoint : endpointRepository.findByChannelId(channel.getId())) {
             probeEndpoint(channel, endpoint);
         }
     }
@@ -81,7 +81,7 @@ public class ProviderHealthProbe {
         if (protocol == null) {
             return;
         }
-        credentialGateway.findActiveByChannelId(channel.getId()).stream().findFirst()
+        credentialRepository.findActiveByChannelId(channel.getId()).stream().findFirst()
                 .ifPresent(cred -> {
                     boolean success;
                     String error;

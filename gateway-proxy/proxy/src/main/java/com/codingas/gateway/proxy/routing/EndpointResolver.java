@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.channel.ChannelEndpointGateway;
+import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +31,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EndpointResolver {
 
-    private final ChannelEndpointGateway channelEndpointGateway;
+    private final ChannelEndpointRepository channelEndpointRepository;
 
     /**
      * 根据 channelId 和入站协议解析可用的端点
@@ -46,9 +46,9 @@ public class EndpointResolver {
      */
     public ChannelEndpoint resolve(Long channelId, Protocol protocol) {
         // 优先匹配协议同源的端点
-        return channelEndpointGateway.findByChannelIdAndProtocol(channelId, protocol)
+        return channelEndpointRepository.findByChannelIdAndProtocol(channelId, protocol)
                 .orElseGet(() -> {
-                    List<ChannelEndpoint> endpoints = channelEndpointGateway.findByChannelId(channelId);
+                    List<ChannelEndpoint> endpoints = channelEndpointRepository.findByChannelId(channelId);
                     return endpoints.stream()
                             .findFirst()
                             .orElseThrow(() -> new ResourceNotFoundException("ChannelEndpoint", channelId));
