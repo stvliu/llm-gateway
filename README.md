@@ -144,45 +144,47 @@
 
 | 分组 | 模块 | 职责 |
 |------|------|------|
-| 横切基础 | `gateway-common` | BaseEntity、异常、工具、通用枚举 |
+| 横切基础 | `gateway-common` | BaseDo/BaseEntity、异常、DTO、事件、工具、通用枚举 |
 | 协议域 | `gateway-protocol/protocol` | Canonical IR + ProtocolAdapter SPI + 协议契约 |
 | | `gateway-protocol/protocol-openai` | OpenAI 协议插件 |
 | | `gateway-protocol/protocol-anthropic` | Anthropic 协议插件 |
 | | `gateway-protocol/protocol-gemini` | Gemini 协议插件（可扩展性示例） |
-| 供给域 | `gateway-provider/provider`（+`provider-data`） | Provider / Channel / Model / Catalog / Upstream |
-| 身份与访问 | `gateway-iam/iam`（+`iam-data`） | User / Application / UserApiKey / Auth / 加密 |
-| 用量管控 | `gateway-usage/usage`（+`usage-data`） | Token 计量 / 配额 / 限流 |
-| 安全与威胁 | `gateway-security/security`（+`security-data`） | IP 威胁检测 + 数据脱敏 |
-| 审计追溯 | `gateway-audit/audit`（+`audit-data`） | 调用日志 / 审计事件 |
-| 告警通知 | `gateway-alert/alert`（+`alert-data`） | 告警通知 |
-| 韧性 | `gateway-resilience/resilience`（+`resilience-data`） | failover / retry / 熔断 |
-| 模型代理 | `gateway-proxy/proxy` | ChatDispatch 调度 / routing / 协议转换 |
-| 聚合统计 | `gateway-stats/stats` | 仪表盘统计（读路径） |
-| 应用 / 入口 | `gateway-boot` | 后端主模块（Adapter / Application + 模块装配） |
-| | `gateway-cli` | CLI 管理工具 |
+| 供给域 | `gateway-provider/provider`（+`provider-data`/`provider-starter`） | Provider / Channel / Model / Catalog / Upstream |
+| 身份与访问 | `gateway-iam/iam`（+`iam-data`/`iam-starter`） | User / Application / UserApiKey / Auth / 加密 |
+| 用量管控 | `gateway-usage/usage`（+`usage-data`/`usage-starter`） | Token 计量 / 配额 / 限流 |
+| 安全与威胁 | `gateway-security/security`（+`security-data`/`security-starter`） | IP 威胁检测 + 数据脱敏 |
+| 审计追溯 | `gateway-audit/audit`（+`audit-data`/`audit-starter`） | 调用日志 / 审计事件 |
+| 告警通知 | `gateway-alert/alert`（+`alert-data`/`alert-starter`） | 告警通知 |
+| 韧性 | `gateway-resilience/resilience`（+`resilience-data`/`resilience-starter`） | failover / retry / 熔断 |
+| 模型代理 | `gateway-proxy/proxy`（+`proxy-starter`） | ChatDispatch 调度 / routing / 协议转换 |
+| 聚合统计 | `gateway-stats/stats`（+`stats-starter`） | 仪表盘统计（读路径） |
+| HTTP 承载 | `gateway-web` | Controller / Interceptor / Advice（web.api） |
+| 启动装配 | `gateway-boot` | 应用配置 / 初始化种子 / 事件发布（boot.config/init/event） |
+| 工具 | `gateway-cli` | CLI 管理工具 |
 | | `gateway-simulator` | LLM 提供商模拟服务 |
+| | `gateway-coverage` | 覆盖率聚合（jacoco report-aggregate） |
 | 前端 | `gateway-console` | Web 管理界面 |
 
-- **命名规范**：模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分（`com.codingas.gateway.<域>`）；JPA 绑定模块根包为 `<域>data`（如 `usagedata`、`securitydata`）
+- **命名规范**：模块 = 根包，去除 `domain/application/infrastructure` DDD 前缀；groupId 按功能域划分（`com.codingas.gateway.<域>`）；JPA 绑定模块根包为 `<域>data`（如 `usagedata`、`securitydata`）；starter 自动装配位于 `autoconfigure.<域>`
 - **协议插件化**：OpenAI / Anthropic / Gemini 以插件形式通过 AutoConfiguration + `@ConditionalOnProperty` 启用，可扩展新协议
-- **分层架构**：gateway-boot 内仍保留 Adapter → Application 分层，Domain 与 Infrastructure 下沉至各功能域模块
+- **分层架构**：HTTP 承载归 gateway-web（web.api/interceptor/advice），启动装配归 gateway-boot（boot.config/init/event）；业务逻辑下沉各域核心模块，持久化实现位于 `-data` 绑定模块；分层依赖规则（上层依赖下层、禁止反向依赖）由 **Maven 模块边界 + ArchUnit 铁律**（`LayerDependencyTest`）强制执行
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    Adapter 层                        │
-│        (Controller / REST API / Interceptor)        │
+│              HTTP 承载层 (gateway-web)                │
+│         (Controller / Interceptor / Advice)         │
 └──────────────────┬──────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────┐
-│                  Application 层                      │
-│         (Service / Use Case Orchestration)          │
+│               功能域核心模块                         │
+│     (Domain Service + Gateway 接口 + 业务逻辑)       │
+│  gateway-provider / gateway-iam / gateway-proxy     │
+│  gateway-protocol / gateway-usage / ...             │
 └──────────────────┬──────────────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────────────┐
-│                   功能域模块                         │
-│   (Domain + Gateway Interface + Infrastructure)    │
-│   gateway-provider / gateway-iam / gateway-usage    │
-│   gateway-proxy / gateway-protocol / ...            │
+│            JPA 绑定模块 (gateway-*-data)             │
+│       (Gateway 实现 / Repository / dataobject)      │
 └─────────────────────────────────────────────────────┘
 ```
 
