@@ -92,11 +92,11 @@ spring:
       maximum-size: 1000
 
   # ==============================================
-  # Redis 配置（启用时设置 spring.cache.type=redis）
+  # Redis 连接配置（本地/开发默认不启用；生产启用 Redis 的
+  # profile 通过 management.health.redis.enabled=true 恢复健康检查）
   # ==============================================
   data:
     redis:
-      enabled: false
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
@@ -195,6 +195,11 @@ management:
           include: ping
         readiness:
           include: db, providerRegistry
+  # 默认不检查 Redis 健康（本地零外部依赖启动）；
+  # 生产启用 Redis 的 profile（application-postgresql.yml）显式置为 true
+  health:
+    redis:
+      enabled: false
   metrics:
     tags:
       application: ${spring.application.name}

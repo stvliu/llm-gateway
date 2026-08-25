@@ -47,11 +47,14 @@ spring:
       enabled: false
 
   # ==============================================
-  # Redis 配置（生产环境启用）
+  # Redis 配置（生产环境启用，恢复 Redis 健康检查）
   # ==============================================
+  management:
+    health:
+      redis:
+        enabled: true
   data:
     redis:
-      enabled: true
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
