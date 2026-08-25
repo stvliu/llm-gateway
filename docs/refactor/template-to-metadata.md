@@ -299,8 +299,8 @@ export interface ModelMetadata {
 |------|------|------|
 | Phase 0 | 编写设计文档 | ✅ 完成 |
 | Phase 1 | 数据库 Migration (V12) | ✅ 完成 |
-| Phase 2 | 领域层 Entity + Gateway 接口 | ✅ 完成 |
-| Phase 3 | 基础设施层 DO + Repository + Gateway 实现 | ✅ 完成 |
+| Phase 2 | 业务域 Entity + Gateway 接口 | ✅ 完成 |
+| Phase 3 | 持久化实现 DO + Repository + Gateway 实现 | ✅ 完成 |
 | Phase 4 | 应用层 Service + DTO | ✅ 完成 |
 | Phase 5 | 适配器层 Controller | ✅ 完成 |
 | Phase 6 | 前端改造 | ✅ 完成 |

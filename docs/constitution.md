@@ -140,9 +140,9 @@ Token 必须是所有成本追踪的核心单位。
 ```
 系统采用域模块化架构：多模块 Maven 三明治结构，按功能域划分模块（模块 = 根包）。
 分层规则：HTTP 承载归 gateway-web（api/interceptor/advice），启动装配归 gateway-boot（config/init/event）；
-Domain 接口与 Infrastructure 实现下沉至各功能域模块。
-业务域以「核心模块（领域逻辑 + Gateway 接口 + 应用服务）+ <域>data 绑定模块（JPA 持久化实现）+ <域>starter（自动装配）」三明治结构组织，
-实现依赖倒置；跨域协作通过应用服务层编排，旁路操作通过领域事件解耦。
+领域接口与持久化实现下沉至各功能域模块。
+业务域以「核心模块（业务逻辑 + Gateway 接口 + 服务）+ <域>data 绑定模块（JPA 持久化实现）+ <域>starter（自动装配）」三明治结构组织，
+实现依赖倒置；跨域协作通过服务编排，旁路操作通过领域事件解耦。
 ```
 
 **项目结构（17 模块多模块 Maven，父 POM artifactId = gateway-project）**:
@@ -201,8 +201,8 @@ gateway-project/                       # 父 POM（打包类型: pom）
 | 层 | 职责 | 包含内容 |
 |---|------|---------|
 | **web** | 接收请求、返回响应 | Controller、拦截器、全局异常（gateway-web，按用例分包） |
-| **application** | 用例编排，跨域协调 | Application Service（各功能域核心模块的 service 包，按用例分包） |
-| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举（位于各功能域核心模块） |
+| **application** | 用例编排，跨域协调 | 编排服务（各功能域核心模块的 service 包，按用例分包） |
+| **domain** | 业务逻辑、领域模型 | Entity、Service、Gateway 接口、异常、枚举（位于各功能域核心模块） |
 | **infrastructure** | 技术实现 | Gateway 实现、配置、工具（位于 `<域>data` 绑定模块） |
 | **common** | 跨领域共享 | 基础异常、技术常量、工具类（gateway-common） |
 
@@ -214,12 +214,12 @@ gateway-project/                       # 父 POM（打包类型: pom）
 ```
 Gateway 接口定义在功能域核心模块中（根包 = groupId + 子域，如 com.codingas.gateway.iam）。
 Gateway 实现在对应的 <域>data 绑定模块中（根包 = groupId + 子域 + data，如 com.codingas.gateway.iamdata）。
-Domain 只依赖 Gateway 接口，不直接依赖外部资源。
+业务域只依赖 Gateway 接口，不直接依赖外部资源。
 绑定模块通过依赖注入实现 Gateway，负责 DO ↔ Entity 转换。
 ```
 
 ```
-功能域核心模块（领域层）              <域>data 绑定模块（基础设施层）
+功能域核心模块                 <域>data 绑定模块
    │                                │
    │   ┌─────────────────┐          │
    │   │ XxxGateway     │          │
@@ -244,30 +244,18 @@ Domain 只依赖 Gateway 接口，不直接依赖外部资源。
 
 ### 2.3 服务分类
 
-**Domain Service（领域服务）**：
-- 职责：业务逻辑，领域规则
-- 放置：功能域核心模块（如 `com.codingas.gateway.iam.auth`、`com.codingas.gateway.iam.service`）
-- 命名：能力名 + `DomainService` 后缀
-- 示例：`AuthenticationDomainService`, `RateLimitDomainService`, `ApiKeyEncryptionDomainService`
-
-**Application Service（应用服务）**：
-- 职责：用例编排，跨领域协调，不含业务逻辑
-- 放置：各功能域核心模块的 service 包（如 `com.codingas.gateway.provider.service`、`com.codingas.gateway.iam.service`，按用例分包）
+**服务（Service）**：
+- 职责：业务逻辑 / 用例编排（按能力定位，如认证、加密、渠道管理）
+- 放置：功能域核心模块的 service 包（如 `com.codingas.gateway.iam.service`、`com.codingas.gateway.iam.auth`、`com.codingas.gateway.provider.service`，按用例分包）
 - 命名：能力名 + `Service` 后缀
-- 示例：`ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
-
-**命名区分原则**：
-| 层 | 命名模式 | 语义 |
-|---|---------|------|
-| Domain | `XxxDomainService` | 领域能力，表示"能做什么" |
-| Application | `XxxService` | 应用服务，表示"执行什么操作" |
+- 示例：`AuthenticationService`, `ApiKeyEncryptionService`, `ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
 
 **示例对照**：
 ```
-gateway-iam · com.codingas.gateway.iam.auth.AuthenticationDomainService     # 领域认证能力
-gateway-iam · com.codingas.gateway.iam.service.ApiKeyEncryptionDomainService # 领域加密能力
-gateway-provider · com.codingas.gateway.provider.service.ChannelService     # 应用渠道服务
-gateway-provider · com.codingas.gateway.provider.service.ModelService       # 应用模型服务
+gateway-iam · com.codingas.gateway.iam.auth.AuthenticationService       # 认证服务
+gateway-iam · com.codingas.gateway.iam.service.ApiKeyEncryptionService  # API Key 加密服务
+gateway-provider · com.codingas.gateway.provider.service.ChannelService # 渠道服务
+gateway-provider · com.codingas.gateway.provider.service.ModelService       # 模型服务
 ```
 
 ### 2.4 Exception 分类
@@ -283,18 +271,18 @@ gateway-provider · com.codingas.gateway.provider.service.ModelService       # �
 | 方式 | 场景 | 规则 |
 |------|------|------|
 | Gateway 接口 | Domain 访问外部资源 | ✅ 定义在功能域核心模块，实现在 `<域>data` 绑定模块 |
-| 应用服务编排 | 主流程（认证→路由→调用） | ✅ 功能域核心模块 service 包的应用服务调用 Domain Service |
+| 服务编排 | 主流程（认证→路由→调用） | ✅ 功能域核心模块 service 包的服务调用（编排） |
 | 领域事件 | 旁路（统计、审计） | ✅ 异步解耦 |
 | Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
 | Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过 Gateway |
 
 **违规示例**:
-- ❌ 应用服务直接调用绑定模块的 `XxxRepository` 获取 Entity
-- ✅ 应用服务 → 功能域 Domain Service → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
-- ❌ `DomainService` 直接使用 `EntityManager` 持久化
-- ✅ `DomainService` → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
+- ❌ 服务直接调用绑定模块的 `XxxRepository` 获取 Entity
+- ✅ 编排服务 → 业务服务 → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
+- ❌ `Service` 直接使用 `EntityManager` 持久化
+- ✅ `Service` → `XxxGateway` → `<域>data` 中的 `JpaXxxGateway`
 - ❌ iam 域 Domain 直接调用 proxy 域 Domain 的服务
-- ✅ 功能域核心模块 service 包的应用服务编排两者的调用
+- ✅ 功能域核心模块 service 包的服务编排两者的调用
 
 ### 2.6 大模型调用链路
 
@@ -397,7 +385,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
 所有 JPA 实体必须保持纯洁，禁止包含业务逻辑。
 业务逻辑必须封装于 @Service 类中。
 Domain Entity 是业务领域的实体及实体关系，与基础设施的具体实现（DB/JPA、NoSQL、缓存、第三方系统）无关。
-Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节，防止第三方系统变化导致领域层腐化。
+Gateway 是业务域与持久化实现之间的隔离接口，隔离技术细节，防止第三方系统变化导致业务域腐化。
 ```
 
 **Domain Entity 原则**:
@@ -408,8 +396,8 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 **Gateway（防腐层）原则**:
 - ✅ Gateway 接口定义在功能域核心模块，实现于 `<域>data` 绑定模块
 - ✅ Gateway 实现负责 **DO ↔ Entity 转换**（DO 是 JPA 实体，含 `@Entity`、`@ManyToOne` 等）
-- ✅ 领域层只依赖 Gateway 接口，完全不知道 JPA、数据库、ORM 的存在
-- ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改 Gateway 实现，领域层不受影响
+- ✅ 业务域只依赖 Gateway 接口，完全不知道 JPA、数据库、ORM 的存在
+- ✅ 当第三方系统（DB、缓存、外部API）变化时，只需修改 Gateway 实现，业务域不受影响
 
 **实体允许的内容**:
 - ✅ Getter/Setter
@@ -426,16 +414,15 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 **架构示意**:
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                      Application Layer                       │
-│                  (用例编排，调用 Domain Service)               │
+│            HTTP 承载与编排（gateway-web / 各域 service 包）    │
+│                  (用例编排，调用 Service)                     │
 └─────────────────────────┬───────────────────────────────────┘
                           │
 ┌─────────────────────────▼───────────────────────────────────┐
-│                       Domain Layer                            │
+│                  功能域核心模块（业务逻辑）                    │
 │  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐ │
-│  │ Domain       │    │ Domain       │    │ Domain       │ │
 │  │ Entity       │    │ Service      │    │ Gateway      │ │
-│  │ (纯POJO)     │    │ (业务逻辑)   │    │ (接口)       │ │
+│  │ (纯POJO)     │    │ (业务逻辑)   │    │ (接口定义)   │ │
 │  │ User         │    │              │    │ XxxGateway   │ │
 │  │ Model ──→    │    │              │    │              │ │
 │  │ Provider     │    │              │    │              │ │
@@ -443,7 +430,7 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 └─────────────────────────────────────────────────┼───────────┘
                                                   │ 依赖接口
 ┌─────────────────────────────────────────────────▼───────────┐
-│                   Infrastructure Layer                         │
+│            JPA 绑定模块（gateway-*-data）                     │
 │  ┌──────────────────────────────────────────────────────┐   │
 │  │              JpaXxxGateway (Gateway 实现)              │   │
 │  │         负责 DO ↔ Entity 转换                         │   │
@@ -457,7 +444,7 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 └───────────────────────────────────────────────────────────────┘
 ```
 
-> 分层映射到模块：Application Layer → 各功能域核心模块的 service 包；Domain Layer → 各功能域核心模块；Infrastructure Layer → `<域>data` 绑定模块（JPA 实现）。
+> 模块化映射：HTTP 承载与编排 → gateway-web 与各功能域核心模块的 service 包；业务逻辑与接口 → 各功能域核心模块；JPA 持久化实现 → `<域>data` 绑定模块。
 
 **Entity 与 DO 关联模式**:
 
@@ -469,7 +456,7 @@ Gateway 是领域层与基础设施层之间的防腐接口，隔离技术细节
 **Entity 层 ID 引用原则**:
 
 - ✅ Entity 是纯数据载体，只持有关联对象的 ID
-- ✅ 需要关联数据时，通过 Domain Service 或 Gateway 按需加载
+- ✅ 需要关联数据时，通过 Service 或 Gateway 按需加载
 - ✅ 避免隐式 N+1 查询风险
 - ✅ 符合聚合根边界原则
 
@@ -715,7 +702,7 @@ GatewayException (根异常)
 **变更记录**:
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
-| v2.8.0 | 2026-08-23 | **P1 模块化重构同步**：§2.1 更新为 17 模块多模块 Maven 结构（模块化命名），Domain/Infrastructure 下沉至各功能域模块；§2.2-2.5 包路径对齐新结构（Gateway 接口在功能域核心模块、实现在 `<域>data` 绑定模块）；§2.6 调用链路归属模块更新（gateway-proxy/gateway-protocol/gateway-provider/gateway-resilience/gateway-usage/gateway-audit）；§3.1 新增包名规范；§4.3 Provider 扩展改为 ProtocolAdapter 插件机制 |
+| v2.8.0 | 2026-08-23 | **P1 模块化重构同步**：§2.1 更新为 17 模块多模块 Maven 结构（模块化命名），领域与持久化实现下沉至各功能域模块；§2.2-2.5 包路径对齐新结构（Gateway 接口在功能域核心模块、实现在 `<域>data` 绑定模块）；§2.6 调用链路归属模块更新（gateway-proxy/gateway-protocol/gateway-provider/gateway-resilience/gateway-usage/gateway-audit）；§3.1 新增包名规范；§4.3 Provider 扩展改为 ProtocolAdapter 插件机制 |
 | v2.0.0 | 2026-04-08 | 初始版本 |
 | v2.1.0 | 2026-04-30 | 更新项目结构：替换 analytics 域为 proxy/provider/quota/audit/alert 五域；技术栈版本统一为 Spring Boot 3.5.x |
 | v2.2.0 | 2026-05-02 | **域名一致性修正**：统一使用 `provider` 作为模型供给领域名称，与信息架构、应用架构保持一致 |

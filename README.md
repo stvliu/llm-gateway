@@ -177,7 +177,7 @@
                    │ 调用域服务接口（依赖功能域核心模块）
 ┌──────────────────▼──────────────────────────────────┐
 │               功能域核心模块                         │
-│     (Domain Service + Gateway 接口定义 + 业务逻辑)   │
+│     (Service + Gateway 接口定义 + 业务逻辑)         │
 │  gateway-provider / gateway-iam / gateway-proxy     │
 │  gateway-protocol / gateway-usage / ...             │
 └──────────────────┬──────────────────────────────────┘

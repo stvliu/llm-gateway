@@ -33,7 +33,7 @@ domain/product/
 │   ├── ProductGateway.java
 │   └── ProductApiKeyGateway.java
 ├── service/
-│   └── ProductDomainService.java
+│   └── ProductService.java
 └── exception/
     └── ProductNotFoundException.java
 ```
@@ -118,7 +118,7 @@ ALTER TABLE gateway_api_keys ADD COLUMN product_id BIGINT REFERENCES products(id
 
 ### 1.4 代码变更
 
-#### 领域层
+#### 业务域
 
 **Product.java**：
 ```java
@@ -239,7 +239,7 @@ domain/team/
 │   ├── TeamGateway.java
 │   └── UserTeamGateway.java
 ├── service/
-│   └── TeamDomainService.java
+│   └── TeamService.java
 └── exception/
     └── TeamNotFoundException.java
 ```
@@ -340,7 +340,7 @@ CREATE INDEX idx_user_api_keys_product ON user_api_keys(product_id);
 
 ### 2.4 代码变更
 
-#### 领域层
+#### 业务域
 
 **Team.java**：
 ```java
@@ -438,7 +438,7 @@ UserApiKey.productId → Product → ProductApiKey + Endpoint → 调用 API
 
 #### 认证服务
 
-**AuthenticationDomainService.java** 修改：
+**AuthenticationService.java** 修改：
 ```java
 public AuthenticationResult authenticate(String apiKey) {
     // 1. 先查 UserApiKey（新逻辑）
