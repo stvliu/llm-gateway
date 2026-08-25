@@ -361,10 +361,11 @@
                             <exclude>**/enums/**</exclude>
                             <!-- 排除异常类 -->
                             <exclude>**/*Exception*</exclude>
-                            <!-- 排除配置类 -->
+                            <!-- 排除配置类（*Config* 命名的装配/配置类；业务服务已通过改名避开该规则，
+                                 如缓存一致性服务 CacheInvalidationService/CacheVersionChecker 不匹配此模式） -->
                             <exclude>**/*Config*</exclude>
                             <exclude>**/*Properties*</exclude>
-                            <!-- 排除初始化类 -->
+                            <!-- 排除初始化类（*Initializer* 命名的启动初始化组件） -->
                             <exclude>**/*Initializer*</exclude>
                             <!-- 排除应用主类 -->
                             <exclude>**/*Application*</exclude>

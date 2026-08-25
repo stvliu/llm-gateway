@@ -30,8 +30,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ConfigVersionChecker 测试")
-class ConfigVersionCheckerTest {
+@DisplayName("CacheVersionChecker 测试")
+class CacheVersionCheckerTest {
 
     @Mock
     private ProviderGateway providerGateway;
@@ -43,13 +43,13 @@ class ConfigVersionCheckerTest {
     private ChannelCredentialGateway channelCredentialGateway;
 
     @Mock
-    private ConfigCacheService cacheService;
+    private CacheInvalidationService cacheService;
 
-    private ConfigVersionChecker checker;
+    private CacheVersionChecker checker;
 
     @BeforeEach
     void setUp() {
-        checker = new ConfigVersionChecker(providerGateway, modelGateway, channelCredentialGateway, cacheService);
+        checker = new CacheVersionChecker(providerGateway, modelGateway, channelCredentialGateway, cacheService);
     }
 
     @Test

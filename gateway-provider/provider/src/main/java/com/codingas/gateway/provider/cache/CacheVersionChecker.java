@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 /**
- * 配置版本检查服务（provider 域）
+ * 缓存版本检查服务（provider 域）
  *
  * <p>定时检查数据库配置版本，作为事件机制的兜底。</p>
  * <p>轮询间隔：30 秒。启动时经 {@link #initVersions()} 记录基线版本，
@@ -34,14 +34,14 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class ConfigVersionChecker {
+public class CacheVersionChecker {
 
     private static final long CHECK_INTERVAL_SECONDS = 30;
 
     private final ProviderGateway providerGateway;
     private final ModelGateway modelGateway;
     private final ChannelCredentialGateway channelCredentialGateway;
-    private final ConfigCacheService cacheService;
+    private final CacheInvalidationService cacheService;
 
     // 记录上次检查的版本
     private volatile long lastProviderVersion = 0;

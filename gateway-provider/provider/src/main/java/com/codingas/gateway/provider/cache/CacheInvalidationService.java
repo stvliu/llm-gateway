@@ -20,17 +20,17 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 /**
- * 配置缓存服务（provider 域）
+ * 缓存失效服务（provider 域）
  *
  * <p>使用 Spring Cache 统一缓存抽象，属于技术基础设施。
- * 负责 Provider、Model、ChannelCredential 的缓存刷新：供 {@link ConfigVersionChecker}
- * 在配置版本变更时触发失效。查询缓存已下沉到各 Gateway 实现直接读取，本类仅保留失效入口。</p>
+ * 负责 Provider、Model、ChannelCredential 的缓存刷新：供 {@link CacheVersionChecker}
+ * 在缓存版本变更时触发失效。查询缓存已下沉到各 Gateway 实现直接读取，本类仅保留失效入口。</p>
  *
  * <p>缓存管理器 Bean（localCacheManager 等）由启动装配层提供。</p>
  */
 @Service
 @Slf4j
-public class ConfigCacheService {
+public class CacheInvalidationService {
 
     // ========== 缓存刷新 ==========
 
