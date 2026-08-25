@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.vendor;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.provider.vendor.ConnectivityTestCommand;
 import jakarta.validation.constraints.NotBlank;
 
 /**
- * 连通性测试请求
+ * 连通性测试请求 DTO（HTTP 契约）
  *
  * @param protocolName 协议名称（必填，如 openai、anthropic）
  * @param baseUrl      供应商 Base URL（可选，使用默认值）
@@ -35,4 +36,13 @@ public record ConnectivityTestRequest(
     String apiKey,
 
     String model
-) {}
+) {
+    /**
+     * 转换为核心连通性测试用例入参
+     *
+     * @return 连通性测试用例入参
+     */
+    public ConnectivityTestCommand toCommand() {
+        return new ConnectivityTestCommand(protocolName, baseUrl, apiKey, model);
+    }
+}

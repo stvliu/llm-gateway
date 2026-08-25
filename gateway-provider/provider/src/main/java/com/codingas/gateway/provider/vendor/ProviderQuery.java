@@ -15,31 +15,19 @@
  */
 package com.codingas.gateway.provider.vendor;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import com.codingas.gateway.common.dto.PageRequest;
 import lombok.Data;
-
-import java.math.BigDecimal;
-import java.util.Map;
+import lombok.EqualsAndHashCode;
 
 /**
- * 创建供应商时嵌套的模型请求
+ * 提供商查询条件用例入参
+ *
+ * <p>继承分页基类获得 page/limit/offset。</p>
  */
 @Data
-public class ModelNestedRequest {
+@EqualsAndHashCode(callSuper = true)
+public class ProviderQuery extends PageRequest {
 
-    @NotBlank(message = "Provider model ID is required")
-    @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
-    private String modelName;
-
-    @Size(max = 256, message = "Display name must not exceed 256 characters")
-    private String displayName;
-
-    private Integer contextWindow;
-
-    private BigDecimal inputPrice;
-
-    private BigDecimal outputPrice;
-
-    private Map<String, Boolean> capabilities;
+    /** 关键字（匹配提供商名称） */
+    private String keyword;
 }

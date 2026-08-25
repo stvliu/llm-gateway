@@ -75,10 +75,8 @@ class ModelServiceTest {
         @DisplayName("创建模型成功")
         void create_validRequest_returnsModelResponse() {
             // given
-            ModelCreateRequest request = new ModelCreateRequest();
-            request.setModelName("gpt-4o-2024-08-06");
-            request.setDisplayName("GPT-4o");
-            request.setContextWindow(128000);
+            ModelCreateCommand request =
+                    new ModelCreateCommand("gpt-4o-2024-08-06", "GPT-4o", null, 128000, null, null, null, null);
 
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> {
                 Model model = invocation.getArgument(0);
@@ -87,7 +85,7 @@ class ModelServiceTest {
             });
 
             // when
-            ModelResponse response = modelService.create(request);
+            Model response = modelService.create(request);
 
             // then
             assertThat(response).isNotNull();
@@ -114,14 +112,14 @@ class ModelServiceTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
 
             // when
-            ModelResponse response = modelService.getById(1L);
+            Model response = modelService.getById(1L);
 
             // then
             assertThat(response).isNotNull();
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getDisplayName()).isEqualTo("GPT-4");
-            // 默认（未废弃）模型状态应为 ACTIVE
-            assertThat(response.getState()).isEqualTo("ACTIVE");
+            // 默认（未废弃）模型应为可用
+            assertThat(response.isAvailable()).isTrue();
 
             verify(modelRepository).findById(1L);
         }
@@ -157,12 +155,12 @@ class ModelServiceTest {
 
             when(modelRepository.findAll()).thenReturn(List.of(testModel, model2));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(2);
@@ -177,13 +175,13 @@ class ModelServiceTest {
             // given
             when(modelRepository.findAll()).thenReturn(List.of(testModel));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setKeyword("gpt");
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -196,13 +194,13 @@ class ModelServiceTest {
             // given
             when(modelRepository.findAll()).thenReturn(List.of(testModel));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setKeyword("GPT");
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -215,13 +213,13 @@ class ModelServiceTest {
             // given
             when(modelRepository.findAll()).thenReturn(List.of(testModel));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setKeyword("claude");
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).isEmpty();
@@ -237,13 +235,13 @@ class ModelServiceTest {
 
             when(modelRepository.findAll()).thenReturn(List.of(testModel, model2));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setProviderId(1L);
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：providerId 过滤暂不生效，返回所有模型
             assertThat(response.getItems()).hasSize(2);
@@ -258,17 +256,17 @@ class ModelServiceTest {
 
             when(modelRepository.findAll()).thenReturn(List.of(testModel, disabledModel));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setState("ACTIVE");
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：仅返回启用的模型
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getState()).isEqualTo("ACTIVE");
+            assertThat(response.getItems().get(0).isAvailable()).isTrue();
             assertThat(response.getPagination().getTotal()).isEqualTo(1);
         }
 
@@ -281,17 +279,17 @@ class ModelServiceTest {
 
             when(modelRepository.findAll()).thenReturn(List.of(testModel, disabledModel));
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setState("INACTIVE");
             request.setPage(1);
             request.setLimit(20);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：仅返回禁用的模型
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getState()).isEqualTo("INACTIVE");
+            assertThat(response.getItems().get(0).isAvailable()).isFalse();
         }
 
         @Test
@@ -305,12 +303,12 @@ class ModelServiceTest {
             }
             when(modelRepository.findAll()).thenReturn(models);
 
-            ModelQueryRequest request = new ModelQueryRequest();
+            ModelQuery request = new ModelQuery();
             request.setPage(2);
             request.setLimit(10);
 
             // when
-            PageResponse<ModelResponse> response = modelService.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(10);
@@ -334,11 +332,11 @@ class ModelServiceTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelRepository.save(any(Model.class))).thenReturn(testModel);
 
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setDisplayName("GPT-4 Updated");
+            ModelUpdateCommand request =
+                    new ModelUpdateCommand(null, "GPT-4 Updated", null, null, null, null, null, null);
 
             // when
-            ModelResponse response = modelService.update(1L, request);
+            Model response = modelService.update(1L, request);
 
             // then
             assertThat(response).isNotNull();
@@ -353,8 +351,8 @@ class ModelServiceTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelRepository.save(any(Model.class))).thenReturn(testModel);
 
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setContextWindow(200000);
+            ModelUpdateCommand request =
+                    new ModelUpdateCommand(null, null, null, 200000, null, null, null, null);
 
             // when
             modelService.update(1L, request);
@@ -371,8 +369,8 @@ class ModelServiceTest {
             // given
             when(modelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            ModelUpdateRequest request = new ModelUpdateRequest();
-            request.setDisplayName("Updated Name");
+            ModelUpdateCommand request =
+                    new ModelUpdateCommand(null, "Updated Name", null, null, null, null, null, null);
 
             // when & then
             assertThatThrownBy(() -> modelService.update(99L, request))
@@ -433,12 +431,12 @@ class ModelServiceTest {
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            ModelResponse response = modelService.setEnabled(1L, true);
+            Model response = modelService.setEnabled(1L, true);
 
-            // then：deprecatedAt 被清空，状态为 ACTIVE
+            // then：deprecatedAt 被清空，模型恢复可用
             assertThat(response).isNotNull();
             assertThat(deprecatedModel.getDeprecatedAt()).isNull();
-            assertThat(response.getState()).isEqualTo("ACTIVE");
+            assertThat(response.isAvailable()).isTrue();
             verify(modelRepository).save(deprecatedModel);
         }
 
@@ -450,12 +448,12 @@ class ModelServiceTest {
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            ModelResponse response = modelService.setEnabled(1L, false);
+            Model response = modelService.setEnabled(1L, false);
 
-            // then：deprecatedAt 被设置，状态为 INACTIVE
+            // then：deprecatedAt 被设置，模型不可用
             assertThat(response).isNotNull();
             assertThat(testModel.getDeprecatedAt()).isNotNull();
-            assertThat(response.getState()).isEqualTo("INACTIVE");
+            assertThat(response.isAvailable()).isFalse();
             verify(modelRepository).save(testModel);
         }
 

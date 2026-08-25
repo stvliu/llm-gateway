@@ -15,39 +15,42 @@
  */
 package com.codingas.gateway.provider.model;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.util.List;
 import java.util.Map;
 
 /**
- * 创建模型请求
+ * 模型创建用例入参
+ *
+ * <p>字段合法性校验由 HTTP 层 DTO 承担（{@code web.api.dto.ModelCreateRequest}）。</p>
  */
-@Data
-public class ModelCreateRequest {
+@Getter
+@AllArgsConstructor
+public class ModelCreateCommand {
 
-    @NotBlank(message = "Provider model ID is required")
-    @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
-    private String modelName;
+    /** 模型名称 */
+    private final String modelName;
 
-    @Size(max = 256, message = "Display name must not exceed 256 characters")
-    private String displayName;
+    /** 展示名称 */
+    private final String displayName;
 
-    /** 模型族（如 gpt-4） */
-    private String modelFamily;
+    /** 模型系列 */
+    private final String modelFamily;
 
-    private Integer contextWindow;
+    /** 上下文窗口 */
+    private final Integer contextWindow;
 
     /** 最大输入 Token 数 */
-    private Integer maxInputTokens;
+    private final Integer maxInputTokens;
 
     /** 最大输出 Token 数 */
-    private Integer maxOutputTokens;
+    private final Integer maxOutputTokens;
 
-    private Map<String, Boolean> capabilities;
+    /** 能力覆盖配置 */
+    private final Map<String, Boolean> capabilities;
 
-    /** 支持的模态（如 text、image、audio） */
-    private List<String> modalities;
+    /** 模态（文本/图像等） */
+    private final List<String> modalities;
 }

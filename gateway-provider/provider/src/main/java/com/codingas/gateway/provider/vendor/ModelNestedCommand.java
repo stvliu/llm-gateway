@@ -15,23 +15,25 @@
  */
 package com.codingas.gateway.provider.vendor;
 
-import jakarta.validation.constraints.Size;
-import lombok.Data;
+import java.math.BigDecimal;
+import java.util.Map;
 
 /**
- * 更新提供商请求
+ * 提供商下嵌套模型用例入参
+ *
+ * @param modelName     模型名称
+ * @param displayName   展示名称
+ * @param contextWindow 上下文窗口
+ * @param inputPrice    输入单价（预留）
+ * @param outputPrice   输出单价（预留）
+ * @param capabilities  能力覆盖配置
  */
-@Data
-public class ProviderUpdateRequest {
-
-    @Size(max = 128, message = "Provider name must not exceed 128 characters")
-    private String providerName;
-
-    @Size(max = 512, message = "Website URL must not exceed 512 characters")
-    private String websiteUrl;
-
-    @Size(max = 512, message = "API doc URL must not exceed 512 characters")
-    private String apiDocUrl;
-
-    private Integer priority;
+public record ModelNestedCommand(
+        String modelName,
+        String displayName,
+        Integer contextWindow,
+        BigDecimal inputPrice,
+        BigDecimal outputPrice,
+        Map<String, Boolean> capabilities
+) {
 }

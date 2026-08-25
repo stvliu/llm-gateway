@@ -20,8 +20,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 模型发现服务
@@ -43,42 +45,35 @@ public class ModelDiscoveryService {
      * 获取应用可见的模型列表
      *
      * <p>通过应用-渠道授权关联（{@link ApplicationChannelRepository}）查询应用可见的渠道集合，
-     * 再汇聚这些渠道上活跃的 {@link ModelInstance}，映射为兼容 OpenAI 格式的模型列表。
+     * 再汇聚这些渠道上活跃的 {@link ModelInstance}，返回可见的模型实体。
      * 应用 ID 为 null（无权限锚点）时返回空列表。</p>
      *
      * @param applicationId 应用 ID（数据面权限锚点，已认证身份携带）
-     * @return 兼容 OpenAI 格式的模型列表
+     * @return 可见的模型实体列表（兼容 OpenAI 格式的响应由 web 层 DTO 组装）
      */
-    public ModelDiscoveryResponse getVisibleModels(Long applicationId) {
+    public List<Model> getVisibleModels(Long applicationId) {
         // 无权限锚点：不返回任何模型
         if (applicationId == null) {
             log.debug("应用 ID 为空，无可见模型");
-            return new ModelDiscoveryResponse("list", List.of());
+            return List.of();
         }
 
         // 通过应用查找授权的渠道集合
         Set<Long> channelIds = applicationChannelRepository.findChannelIdsByApplicationId(applicationId);
         if (channelIds.isEmpty()) {
             log.debug("应用未授权任何渠道: applicationId={}", applicationId);
-            return new ModelDiscoveryResponse("list", List.of());
+            return List.of();
         }
 
-        // 通过渠道查找可用模型（按 ModelInstance 的 modelId 去重）
-        List<ModelDiscoveryResponse.ModelItem> items = channelIds.stream()
+        // 通过渠道查找可用模型（按 ModelInstance 的 modelId 去重，保持模型名唯一）
+        return channelIds.stream()
                 .flatMap(channelId -> modelInstanceRepository.findActiveByChannelId(channelId).stream())
                 .map(mi -> modelRepository.findById(mi.getModelId()))
                 .flatMap(opt -> opt.stream())
                 .filter(Model::isAvailable)
-                .map(m -> new ModelDiscoveryResponse.ModelItem(
-                        m.getModelName(),
-                        "model",
-                        m.getCreatedAt() != null ? m.getCreatedAt().getEpochSecond() : 0L,
-                        "system"
-                ))
-                .distinct()
+                .collect(Collectors.toMap(Model::getModelName, m -> m, (a, b) -> a, LinkedHashMap::new))
+                .values()
+                .stream()
                 .toList();
-
-        log.debug("模型发现: applicationId={}, visibleModels={}", applicationId, items.size());
-        return new ModelDiscoveryResponse("list", items);
     }
 }

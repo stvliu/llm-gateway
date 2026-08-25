@@ -13,28 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.model;
+package com.codingas.gateway.provider.vendor;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 
 import java.util.List;
 
 /**
- * 模型发现响应（兼容 OpenAI /v1/models 格式）
+ * 提供商创建用例入参
+ *
+ * <p>字段合法性校验由 HTTP 层 DTO 承担（{@code web.api.dto.ProviderCreateRequest}）。</p>
  */
-@Data
+@Getter
 @AllArgsConstructor
-public class ModelDiscoveryResponse {
-    private String object;
-    private List<ModelItem> data;
+public class ProviderCreateCommand {
 
-    @Data
-    @AllArgsConstructor
-    public static class ModelItem {
-        private String id;
-        private String object;
-        private long created;
-        private String ownedBy;
-    }
+    /** 提供商编码 */
+    private final String code;
+
+    /** 提供商名称 */
+    private final String providerName;
+
+    /** 官网 URL */
+    private final String websiteUrl;
+
+    /** API 文档 URL */
+    private final String apiDocUrl;
+
+    /** 优先级（null 时核心默认 100） */
+    private final Integer priority;
+
+    /** 嵌套模型列表（可选） */
+    private final List<ModelNestedCommand> models;
 }

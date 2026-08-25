@@ -13,25 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.model;
+package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.common.dto.PageRequest;
+import com.codingas.gateway.provider.model.ModelQuery;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 查询模型请求
+ * 模型查询请求 DTO（HTTP 契约）
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class ModelQueryRequest extends PageRequest {
-
     private String keyword;
-
     private Long providerId;
+    private String state;
 
     /**
-     * 状态过滤：ACTIVE（启用）/ INACTIVE（禁用），为空则不过滤
+     * 转换为核心查询条件入参
+     *
+     * @return 查询条件
      */
-    private String state;
+    public ModelQuery toQuery() {
+        ModelQuery query = new ModelQuery();
+        query.setPage(getPage());
+        query.setLimit(getLimit());
+        query.setKeyword(keyword);
+        query.setProviderId(providerId);
+        query.setState(state);
+        return query;
+    }
 }

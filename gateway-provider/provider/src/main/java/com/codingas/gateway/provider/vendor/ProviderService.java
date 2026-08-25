@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.provider.vendor;
 
-import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
-import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
 import com.codingas.gateway.common.dto.PageResponse;
 
 import java.util.List;
@@ -24,37 +22,54 @@ import java.util.List;
 /**
  * 提供商应用服务接口
  *
- * <p>处理提供商管理的业务逻辑。</p>
+ * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ProviderService {
 
     /**
      * 创建提供商
+     *
+     * @param command 创建用例入参
+     * @return 创建后的提供商实体
      */
-    ProviderResponse create(ProviderCreateRequest request);
+    Provider create(ProviderCreateCommand command);
 
     /**
      * 根据 ID 获取提供商
+     *
+     * @param id 提供商 ID
+     * @return 提供商实体
      */
-    ProviderResponse getById(Long id);
+    Provider getById(Long id);
 
     /**
      * 查询提供商列表
+     *
+     * @param query 查询条件
+     * @return 提供商实体分页
      */
-    PageResponse<ProviderResponse> query(ProviderQueryRequest request);
+    PageResponse<Provider> query(ProviderQuery query);
 
     /**
      * 更新提供商
+     *
+     * @param id      提供商 ID
+     * @param command 更新用例入参（仅非 null 字段生效）
+     * @return 更新后的提供商实体
      */
-    ProviderResponse update(Long id, ProviderUpdateRequest request);
+    Provider update(Long id, ProviderUpdateCommand command);
 
     /**
      * 删除提供商（软删除）
+     *
+     * @param id 提供商 ID
      */
     void delete(Long id);
 
     /**
      * 获取所有供应商名称列表
+     *
+     * @return 供应商名称列表
      */
     List<String> getProviderNames();
 
@@ -67,8 +82,8 @@ public interface ProviderService {
      *   <li>Level 2：模型可用性验证（发送最小 chat 请求）</li>
      * </ul>
      *
-     * @param request 测试请求
-     * @return 测试结果
+     * @param command 测试用例入参
+     * @return 测试用例结果
      */
-    ConnectivityTestResult testConnectivity(ConnectivityTestRequest request);
+    ConnectivityTestResult testConnectivity(ConnectivityTestCommand command);
 }

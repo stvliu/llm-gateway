@@ -92,21 +92,20 @@ class ModelDiscoveryServiceTest {
             when(modelRepository.findById(200L)).thenReturn(Optional.of(model2));
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
+            List<Model> response = service.getVisibleModels(APPLICATION_ID);
 
             // Assert（渠道来自 Set，顺序不保证，按任意序断言）
-            assertThat(response.getObject()).isEqualTo("list");
-            assertThat(response.getData()).hasSize(2);
-            assertThat(response.getData()).extracting(ModelDiscoveryResponse.ModelItem::getId)
+            assertThat(response).hasSize(2);
+            assertThat(response).extracting(Model::getModelName)
                     .containsExactlyInAnyOrder("gpt-4", "gpt-3.5-turbo");
         }
 
         @Test
         @DisplayName("应用 ID 为 null（无权限锚点）时返回空列表")
         void shouldReturnEmptyListWhenApplicationIdIsNull() {
-            ModelDiscoveryResponse response = service.getVisibleModels(null);
+            List<Model> response = service.getVisibleModels(null);
 
-            assertThat(response.getData()).isEmpty();
+            assertThat(response).isEmpty();
         }
 
         @Test
@@ -115,9 +114,9 @@ class ModelDiscoveryServiceTest {
             when(applicationChannelRepository.findChannelIdsByApplicationId(APPLICATION_ID))
                     .thenReturn(Set.of());
 
-            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
+            List<Model> response = service.getVisibleModels(APPLICATION_ID);
 
-            assertThat(response.getData()).isEmpty();
+            assertThat(response).isEmpty();
         }
 
         @Test
@@ -140,10 +139,10 @@ class ModelDiscoveryServiceTest {
             when(modelRepository.findById(300L)).thenReturn(Optional.of(inactiveModel));
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
+            List<Model> response = service.getVisibleModels(APPLICATION_ID);
 
             // Assert
-            assertThat(response.getData()).isEmpty();
+            assertThat(response).isEmpty();
         }
 
         @Test
@@ -161,10 +160,10 @@ class ModelDiscoveryServiceTest {
             when(modelRepository.findById(999L)).thenReturn(Optional.empty());
 
             // Act
-            ModelDiscoveryResponse response = service.getVisibleModels(APPLICATION_ID);
+            List<Model> response = service.getVisibleModels(APPLICATION_ID);
 
             // Assert
-            assertThat(response.getData()).isEmpty();
+            assertThat(response).isEmpty();
         }
     }
 }

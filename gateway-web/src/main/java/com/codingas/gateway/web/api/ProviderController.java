@@ -15,13 +15,9 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.vendor.ProviderService;
-import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
 import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
-import com.codingas.gateway.provider.vendor.ProviderCreateRequest;
-import com.codingas.gateway.provider.vendor.ProviderQueryRequest;
-import com.codingas.gateway.provider.vendor.ProviderResponse;
-import com.codingas.gateway.provider.vendor.ProviderUpdateRequest;
+import com.codingas.gateway.provider.vendor.ProviderService;
+import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +44,7 @@ public class ProviderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProviderResponse create(@Valid @RequestBody ProviderCreateRequest request) {
-        return providerService.create(request);
+        return ProviderResponse.from(providerService.create(request.toCommand()));
     }
 
     /**
@@ -56,7 +52,7 @@ public class ProviderController {
      */
     @GetMapping("/{id}")
     public ProviderResponse getById(@PathVariable Long id) {
-        return providerService.getById(id);
+        return ProviderResponse.from(providerService.getById(id));
     }
 
     /**
@@ -64,7 +60,7 @@ public class ProviderController {
      */
     @GetMapping
     public PageResponse<ProviderResponse> query(ProviderQueryRequest request) {
-        return providerService.query(request);
+        return ProviderResponse.fromPage(providerService.query(request.toQuery()));
     }
 
     /**
@@ -73,7 +69,7 @@ public class ProviderController {
     @PutMapping("/{id}")
     public ProviderResponse update(@PathVariable Long id,
                                    @Valid @RequestBody ProviderUpdateRequest request) {
-        return providerService.update(id, request);
+        return ProviderResponse.from(providerService.update(id, request.toCommand()));
     }
 
     /**
@@ -101,6 +97,6 @@ public class ProviderController {
     @PostMapping("/test-connectivity")
     public ConnectivityTestResult testConnectivity(
             @Valid @RequestBody ConnectivityTestRequest request) {
-        return providerService.testConnectivity(request);
+        return providerService.testConnectivity(request.toCommand());
     }
 }

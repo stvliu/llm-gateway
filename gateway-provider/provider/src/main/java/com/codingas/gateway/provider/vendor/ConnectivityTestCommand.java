@@ -15,26 +15,18 @@
  */
 package com.codingas.gateway.provider.vendor;
 
-import lombok.Data;
-
-import java.time.Instant;
-
 /**
- * 提供商响应
+ * 连通性测试用例入参
  *
- * <p>注意：Key 统计信息已移除，API Key 管理迁移到 ProductApiKey。</p>
+ * @param protocolName 协议名称（必填，如 openai、anthropic）
+ * @param baseUrl      供应商 Base URL（可选，使用默认值）
+ * @param apiKey       待测试的 API Key（必填）
+ * @param model        指定测试模型（可选，用于 Level 2 测试）
  */
-@Data
-public class ProviderResponse {
-
-    private Long id;
-    /** 品牌标识（如 openai、anthropic），用于前端图标渲染 */
-    private String providerId;
-    private String providerName;
-    private String description;
-    private String websiteUrl;
-    private String apiDocUrl;
-    private Integer priority;
-    private Instant createdAt;
-    private Instant updatedAt;
+public record ConnectivityTestCommand(
+        String protocolName,
+        String baseUrl,
+        String apiKey,
+        String model
+) {
 }

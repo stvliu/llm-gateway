@@ -13,18 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.vendor;
+package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.common.dto.PageRequest;
+import com.codingas.gateway.provider.vendor.ProviderUpdateCommand;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 /**
- * 查询提供商请求
+ * 提供商更新请求 DTO（HTTP 契约）
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class ProviderQueryRequest extends PageRequest {
+public class ProviderUpdateRequest {
+    private String providerName;
+    private String websiteUrl;
+    private String apiDocUrl;
+    private Integer priority;
 
-    private String keyword;
+    /**
+     * 转换为核心更新用例入参
+     *
+     * @return 更新用例入参
+     */
+    public ProviderUpdateCommand toCommand() {
+        return new ProviderUpdateCommand(providerName, websiteUrl, apiDocUrl, priority);
+    }
 }

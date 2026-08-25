@@ -40,43 +40,42 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     @Transactional
-    public ModelResponse create(ModelCreateRequest request) {
+    public Model create(ModelCreateCommand command) {
         // 创建模型
         Model model = new Model();
-        model.setModelName(request.getModelName());
-        model.setDisplayName(request.getDisplayName());
-        model.setModelFamily(request.getModelFamily());
-        model.setContextWindow(request.getContextWindow());
-        model.setMaxInputTokens(request.getMaxInputTokens());
-        model.setMaxOutputTokens(request.getMaxOutputTokens());
-        model.setCapabilities(request.getCapabilities());
-        model.setModalities(request.getModalities());
+        model.setModelName(command.getModelName());
+        model.setDisplayName(command.getDisplayName());
+        model.setModelFamily(command.getModelFamily());
+        model.setContextWindow(command.getContextWindow());
+        model.setMaxInputTokens(command.getMaxInputTokens());
+        model.setMaxOutputTokens(command.getMaxOutputTokens());
+        model.setCapabilities(command.getCapabilities());
+        model.setModalities(command.getModalities());
 
         Model savedModel = modelRepository.save(model);
         log.info("模型创建成功, id={}, modelName={}", savedModel.getId(), savedModel.getModelName());
-        return toResponse(savedModel);
+        return savedModel;
     }
 
     /**
      * 根据 ID 获取模型
      */
     @Override
-    public ModelResponse getById(Long id) {
-        Model model = modelRepository.findById(id)
+    public Model getById(Long id) {
+        return modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
-        return toResponse(model);
     }
 
     /**
      * 查询模型列表
      */
     @Override
-    public PageResponse<ModelResponse> query(ModelQueryRequest request) {
+    public PageResponse<Model> query(ModelQuery query) {
         List<Model> models = modelRepository.findAll();
 
         // 过滤
-        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            String keyword = request.getKeyword().toLowerCase();
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+            String keyword = query.getKeyword().toLowerCase();
             models = models.stream()
                 .filter(m -> (m.getDisplayName() != null && m.getDisplayName().toLowerCase().contains(keyword))
                     || m.getModelName().toLowerCase().contains(keyword))
@@ -84,8 +83,8 @@ public class ModelServiceImpl implements ModelService {
         }
 
         // 状态过滤：ACTIVE=未废弃（deprecatedAt 为空），INACTIVE=已废弃（deprecatedAt 非空）
-        if (request.getState() != null && !request.getState().isBlank()) {
-            String state = request.getState().toUpperCase();
+        if (query.getState() != null && !query.getState().isBlank()) {
+            String state = query.getState().toUpperCase();
             models = models.stream()
                 .filter(m -> "ACTIVE".equals(state) ? m.isAvailable() : !m.isAvailable())
                 .collect(Collectors.toList());
@@ -95,18 +94,14 @@ public class ModelServiceImpl implements ModelService {
         long total = models.size();
 
         // 分页
-        int offset = request.getOffset();
-        int limit = request.getLimit();
+        int offset = query.getOffset();
+        int limit = query.getLimit();
         List<Model> pagedModels = models.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
 
-        List<ModelResponse> responses = pagedModels.stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-
-        return PageResponse.of(responses, request.getPage(), limit, total);
+        return PageResponse.of(pagedModels, query.getPage(), limit, total);
     }
 
     /**
@@ -114,38 +109,38 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     @Transactional
-    public ModelResponse update(Long id, ModelUpdateRequest request) {
+    public Model update(Long id, ModelUpdateCommand command) {
         Model model = modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
-        if (request.getModelName() != null) {
-            model.setModelName(request.getModelName());
+        if (command.getModelName() != null) {
+            model.setModelName(command.getModelName());
         }
-        if (request.getDisplayName() != null) {
-            model.setDisplayName(request.getDisplayName());
+        if (command.getDisplayName() != null) {
+            model.setDisplayName(command.getDisplayName());
         }
-        if (request.getModelFamily() != null) {
-            model.setModelFamily(request.getModelFamily());
+        if (command.getModelFamily() != null) {
+            model.setModelFamily(command.getModelFamily());
         }
-        if (request.getContextWindow() != null) {
-            model.setContextWindow(request.getContextWindow());
+        if (command.getContextWindow() != null) {
+            model.setContextWindow(command.getContextWindow());
         }
-        if (request.getMaxInputTokens() != null) {
-            model.setMaxInputTokens(request.getMaxInputTokens());
+        if (command.getMaxInputTokens() != null) {
+            model.setMaxInputTokens(command.getMaxInputTokens());
         }
-        if (request.getMaxOutputTokens() != null) {
-            model.setMaxOutputTokens(request.getMaxOutputTokens());
+        if (command.getMaxOutputTokens() != null) {
+            model.setMaxOutputTokens(command.getMaxOutputTokens());
         }
-        if (request.getCapabilities() != null) {
-            model.setCapabilities(request.getCapabilities());
+        if (command.getCapabilities() != null) {
+            model.setCapabilities(command.getCapabilities());
         }
-        if (request.getModalities() != null) {
-            model.setModalities(request.getModalities());
+        if (command.getModalities() != null) {
+            model.setModalities(command.getModalities());
         }
 
         Model saved = modelRepository.save(model);
         log.info("模型更新成功, id={}, modelName={}", id, saved.getModelName());
-        return toResponse(saved);
+        return saved;
     }
 
     /**
@@ -164,7 +159,7 @@ public class ModelServiceImpl implements ModelService {
      */
     @Override
     @Transactional
-    public ModelResponse setEnabled(Long id, boolean enabled) {
+    public Model setEnabled(Long id, boolean enabled) {
         Model model = modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
         if (enabled) {
@@ -172,29 +167,6 @@ public class ModelServiceImpl implements ModelService {
         } else {
             model.setDeprecatedAt(java.time.Instant.now());
         }
-        return toResponse(modelRepository.save(model));
-    }
-
-    /**
-     * 转换为响应 DTO
-     */
-    private ModelResponse toResponse(Model model) {
-        ModelResponse response = new ModelResponse();
-        response.setId(model.getId());
-        response.setModelName(model.getModelName());
-        response.setDisplayName(model.getDisplayName());
-        response.setModelFamily(model.getModelFamily());
-        response.setContextWindow(model.getContextWindow());
-        response.setMaxInputTokens(model.getMaxInputTokens());
-        response.setMaxOutputTokens(model.getMaxOutputTokens());
-        response.setCapabilities(model.getCapabilities());
-        response.setModalities(model.getModalities());
-        response.setDeprecatedAt(model.getDeprecatedAt());
-        response.setDeprecationMessage(model.getDeprecationMessage());
-        // 状态：未废弃为 ACTIVE，已废弃为 INACTIVE
-        response.setState(model.isAvailable() ? "ACTIVE" : "INACTIVE");
-        response.setCreatedAt(model.getCreatedAt());
-        response.setUpdatedAt(model.getUpdatedAt());
-        return response;
+        return modelRepository.save(model);
     }
 }

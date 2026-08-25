@@ -15,8 +15,9 @@
  */
 package com.codingas.gateway.web.api;
 
+import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelDiscoveryService;
-import com.codingas.gateway.provider.model.ModelDiscoveryResponse;
+import com.codingas.gateway.web.api.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,15 +58,19 @@ class ModelDiscoveryControllerTest {
     private static final Long APPLICATION_ID = 100L;
 
     private Identity identity;
-    private ModelDiscoveryResponse sampleResponse;
+    private List<Model> sampleModels;
 
     @BeforeEach
     void setUp() {
         identity = Identity.of(1L, "user", 1L, APPLICATION_ID);
-        sampleResponse = new ModelDiscoveryResponse("list", List.of(
-                new ModelDiscoveryResponse.ModelItem("gpt-4", "model", 1700000000L, "system"),
-                new ModelDiscoveryResponse.ModelItem("gpt-3.5-turbo", "model", 1700000001L, "system")
-        ));
+        sampleModels = List.of(model("gpt-4", 1700000000L), model("gpt-3.5-turbo", 1700000001L));
+    }
+
+    private Model model(String name, long created) {
+        Model m = new Model();
+        m.setModelName(name);
+        m.setCreatedAt(Instant.ofEpochSecond(created));
+        return m;
     }
 
     @Nested
@@ -76,7 +82,7 @@ class ModelDiscoveryControllerTest {
         void listModels_withValidIdentity_returnsModels() {
             // given
             when(request.getAttribute("identity")).thenReturn(identity);
-            when(modelDiscoveryService.getVisibleModels(APPLICATION_ID)).thenReturn(sampleResponse);
+            when(modelDiscoveryService.getVisibleModels(APPLICATION_ID)).thenReturn(sampleModels);
 
             // when
             ModelDiscoveryResponse result = controller.listModels(request);

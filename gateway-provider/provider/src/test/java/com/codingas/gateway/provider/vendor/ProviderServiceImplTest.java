@@ -26,9 +26,6 @@ import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.provider.upstream.ConnectivityTester;
-import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
-import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
-import com.codingas.gateway.provider.vendor.ModelNestedRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -89,18 +86,11 @@ class ProviderServiceImplTest {
         @Test
         @DisplayName("含嵌套模型时创建模型，priority 缺省为 100")
         void create_withNestedModels() {
-            ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderName("OpenAI");
-            request.setCode("openai");
-            request.setWebsiteUrl("https://openai.com");
-            request.setApiDocUrl("https://platform.openai.com/docs");
-            request.setPriority(null);
-            ModelNestedRequest nested = new ModelNestedRequest();
-            nested.setModelName("gpt-4");
-            nested.setDisplayName("GPT-4");
-            nested.setContextWindow(8000);
-            nested.setCapabilities(Map.of("vision", true));
-            request.setModels(List.of(nested));
+            ModelNestedCommand nested = new ModelNestedCommand(
+                    "gpt-4", "GPT-4", 8000, null, null, Map.of("vision", true));
+            ProviderCreateCommand request = new ProviderCreateCommand(
+                    "openai", "OpenAI", "https://openai.com",
+                    "https://platform.openai.com/docs", null, List.of(nested));
 
             when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
@@ -108,11 +98,11 @@ class ProviderServiceImplTest {
                 return p;
             });
 
-            ProviderResponse response = service.create(request);
+            Provider response = service.create(request);
 
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getProviderName()).isEqualTo("OpenAI");
-            assertThat(response.getProviderId()).isEqualTo("openai");
+            assertThat(response.getName()).isEqualTo("OpenAI");
+            assertThat(response.getCode()).isEqualTo("openai");
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
             verify(providerRepository).save(captor.capture());
             assertThat(captor.getValue().getCode()).isEqualTo("openai");
@@ -126,20 +116,18 @@ class ProviderServiceImplTest {
         @Test
         @DisplayName("无嵌套模型时不创建模型")
         void create_withoutModels() {
-            ProviderCreateRequest request = new ProviderCreateRequest();
-            request.setProviderName("Anthropic");
-            request.setCode("anthropic");
-            request.setPriority(5);
+            ProviderCreateCommand request =
+                    new ProviderCreateCommand("anthropic", "Anthropic", null, null, 5, null);
             when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
                 p.setId(2L);
                 return p;
             });
 
-            ProviderResponse response = service.create(request);
+            Provider response = service.create(request);
 
-            assertThat(response.getProviderName()).isEqualTo("Anthropic");
-            assertThat(response.getProviderId()).isEqualTo("anthropic");
+            assertThat(response.getName()).isEqualTo("Anthropic");
+            assertThat(response.getCode()).isEqualTo("anthropic");
             assertThat(response.getPriority()).isEqualTo(5);
             ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
             verify(providerRepository).save(captor.capture());
@@ -160,11 +148,11 @@ class ProviderServiceImplTest {
             Provider p = provider(1L, "openai", "OpenAI");
             when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
 
-            ProviderResponse response = service.getById(1L);
+            Provider response = service.getById(1L);
 
             assertThat(response.getId()).isEqualTo(1L);
-            assertThat(response.getProviderId()).isEqualTo("openai");
-            assertThat(response.getProviderName()).isEqualTo("OpenAI");
+            assertThat(response.getCode()).isEqualTo("openai");
+            assertThat(response.getName()).isEqualTo("OpenAI");
         }
 
         @Test
@@ -192,14 +180,14 @@ class ProviderServiceImplTest {
                     provider(2L, "anthropic", "Anthropic"),
                     provider(3L, "zhipu", "智谱")));
 
-            ProviderQueryRequest request = new ProviderQueryRequest();
+            ProviderQuery request = new ProviderQuery();
             request.setPage(2);
             request.setLimit(2);
 
-            PageResponse<ProviderResponse> response = service.query(request);
+            PageResponse<Provider> response = service.query(request);
 
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderName()).isEqualTo("智谱");
+            assertThat(response.getItems().get(0).getName()).isEqualTo("智谱");
             assertThat(response.getPagination().getTotal()).isEqualTo(3);
             assertThat(response.getPagination().getPage()).isEqualTo(2);
         }
@@ -211,13 +199,13 @@ class ProviderServiceImplTest {
                     provider(1L, "openai", "OpenAI"),
                     provider(2L, "anthropic", "Anthropic")));
 
-            ProviderQueryRequest request = new ProviderQueryRequest();
+            ProviderQuery request = new ProviderQuery();
             request.setKeyword("open");
 
-            PageResponse<ProviderResponse> response = service.query(request);
+            PageResponse<Provider> response = service.query(request);
 
             assertThat(response.getItems()).hasSize(1);
-            assertThat(response.getItems().get(0).getProviderName()).isEqualTo("OpenAI");
+            assertThat(response.getItems().get(0).getName()).isEqualTo("OpenAI");
             assertThat(response.getPagination().getTotal()).isEqualTo(1);
         }
 
@@ -226,10 +214,10 @@ class ProviderServiceImplTest {
         void keyword_noMatch() {
             when(providerRepository.findAll()).thenReturn(List.of(provider(1L, "openai", "OpenAI")));
 
-            ProviderQueryRequest request = new ProviderQueryRequest();
+            ProviderQuery request = new ProviderQuery();
             request.setKeyword("claude");
 
-            PageResponse<ProviderResponse> response = service.query(request);
+            PageResponse<Provider> response = service.query(request);
 
             assertThat(response.getItems()).isEmpty();
             assertThat(response.getPagination().getTotal()).isZero();
@@ -249,15 +237,12 @@ class ProviderServiceImplTest {
             when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
             when(providerRepository.save(any(Provider.class))).thenReturn(p);
 
-            ProviderUpdateRequest request = new ProviderUpdateRequest();
-            request.setProviderName("OpenAI 2");
-            request.setWebsiteUrl("https://openai.com/v2");
-            request.setApiDocUrl("https://platform.openai.com/docs/v2");
-            request.setPriority(10);
+            ProviderUpdateCommand request = new ProviderUpdateCommand(
+                    "OpenAI 2", "https://openai.com/v2", "https://platform.openai.com/docs/v2", 10);
 
-            ProviderResponse response = service.update(1L, request);
+            Provider response = service.update(1L, request);
 
-            assertThat(response.getProviderName()).isEqualTo("OpenAI 2");
+            assertThat(response.getName()).isEqualTo("OpenAI 2");
             assertThat(p.getWebsiteUrl()).isEqualTo("https://openai.com/v2");
             assertThat(p.getApiDocUrl()).isEqualTo("https://platform.openai.com/docs/v2");
             assertThat(p.getPriority()).isEqualTo(10);
@@ -271,12 +256,11 @@ class ProviderServiceImplTest {
             when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
             when(providerRepository.save(any(Provider.class))).thenReturn(p);
 
-            ProviderUpdateRequest request = new ProviderUpdateRequest();
-            request.setProviderName("New Name");
+            ProviderUpdateCommand request = new ProviderUpdateCommand("New Name", null, null, null);
 
-            ProviderResponse response = service.update(1L, request);
+            Provider response = service.update(1L, request);
 
-            assertThat(response.getProviderName()).isEqualTo("New Name");
+            assertThat(response.getName()).isEqualTo("New Name");
             // 其余字段保持不变
             assertThat(p.getWebsiteUrl()).isNull();
             assertThat(p.getPriority()).isEqualTo(3);
@@ -287,7 +271,7 @@ class ProviderServiceImplTest {
         void missing_throws() {
             when(providerRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update(99L, new ProviderUpdateRequest()))
+            assertThatThrownBy(() -> service.update(99L, new ProviderUpdateCommand(null, null, null, null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -387,7 +371,7 @@ class ProviderServiceImplTest {
                             true, null, null, 120L));
 
             ConnectivityTestResult result = service.testConnectivity(
-                    new ConnectivityTestRequest("openai", "https://api.openai.com", "sk-123", null));
+                    new ConnectivityTestCommand("openai", "https://api.openai.com", "sk-123", null));
 
             assertThat(result.success()).isTrue();
             assertThat(result.message()).isEqualTo("连通性测试成功");
@@ -405,7 +389,7 @@ class ProviderServiceImplTest {
                             false, null, "401 Unauthorized", 0L));
 
             ConnectivityTestResult result = service.testConnectivity(
-                    new ConnectivityTestRequest("openai", "https://api.openai.com", "sk-bad", null));
+                    new ConnectivityTestCommand("openai", "https://api.openai.com", "sk-bad", null));
 
             assertThat(result.success()).isFalse();
             assertThat(result.message()).isEqualTo("401 Unauthorized");

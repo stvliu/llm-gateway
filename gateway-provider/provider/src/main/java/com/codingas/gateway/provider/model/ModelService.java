@@ -20,37 +20,56 @@ import com.codingas.gateway.common.dto.PageResponse;
 /**
  * 模型应用服务接口
  *
- * <p>处理模型管理的业务逻辑。</p>
+ * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ModelService {
 
     /**
      * 创建模型
+     *
+     * @param command 创建用例入参
+     * @return 创建后的模型实体
      */
-    ModelResponse create(ModelCreateRequest request);
+    Model create(ModelCreateCommand command);
 
     /**
      * 根据 ID 获取模型
+     *
+     * @param id 模型 ID
+     * @return 模型实体
      */
-    ModelResponse getById(Long id);
+    Model getById(Long id);
 
     /**
      * 查询模型列表
+     *
+     * @param query 查询条件
+     * @return 模型实体分页
      */
-    PageResponse<ModelResponse> query(ModelQueryRequest request);
+    PageResponse<Model> query(ModelQuery query);
 
     /**
      * 更新模型
+     *
+     * @param id      模型 ID
+     * @param command 更新用例入参（仅非 null 字段生效）
+     * @return 更新后的模型实体
      */
-    ModelResponse update(Long id, ModelUpdateRequest request);
+    Model update(Long id, ModelUpdateCommand command);
 
     /**
      * 删除模型（软删除）
+     *
+     * @param id 模型 ID
      */
     void delete(Long id);
 
     /**
      * 启用/禁用模型
+     *
+     * @param id      模型 ID
+     * @param enabled 是否启用
+     * @return 更新后的模型实体
      */
-    ModelResponse setEnabled(Long id, boolean enabled);
+    Model setEnabled(Long id, boolean enabled);
 }

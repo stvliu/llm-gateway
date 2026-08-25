@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.provider.vendor;
 
-import com.codingas.gateway.provider.vendor.ConnectivityTestRequest;
-import com.codingas.gateway.provider.vendor.ModelNestedRequest;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.Channel;
@@ -61,54 +59,53 @@ public class ProviderServiceImpl implements ProviderService {
      */
     @Override
     @Transactional
-    public ProviderResponse create(ProviderCreateRequest request) {
+    public Provider create(ProviderCreateCommand command) {
 
         Provider provider = new Provider();
-        provider.setName(request.getProviderName());
-        provider.setCode(request.getCode());
-        provider.setWebsiteUrl(request.getWebsiteUrl());
-        provider.setApiDocUrl(request.getApiDocUrl());
-        provider.setPriority(request.getPriority() != null ? request.getPriority() : 100);
+        provider.setName(command.getProviderName());
+        provider.setCode(command.getCode());
+        provider.setWebsiteUrl(command.getWebsiteUrl());
+        provider.setApiDocUrl(command.getApiDocUrl());
+        provider.setPriority(command.getPriority() != null ? command.getPriority() : 100);
 
         Provider savedProvider = providerRepository.save(provider);
         Long providerId = savedProvider.getId();
 
         // 创建嵌套的模型
-        if (request.getModels() != null && !request.getModels().isEmpty()) {
-            for (ModelNestedRequest modelRequest : request.getModels()) {
+        if (command.getModels() != null && !command.getModels().isEmpty()) {
+            for (ModelNestedCommand modelCommand : command.getModels()) {
                 Model model = new Model();
-                model.setModelName(modelRequest.getModelName());
-                model.setDisplayName(modelRequest.getDisplayName());
-                model.setContextWindow(modelRequest.getContextWindow());
-                model.setCapabilities(modelRequest.getCapabilities());
+                model.setModelName(modelCommand.modelName());
+                model.setDisplayName(modelCommand.displayName());
+                model.setContextWindow(modelCommand.contextWindow());
+                model.setCapabilities(modelCommand.capabilities());
                 modelRepository.save(model);
             }
-            log.info("Created {} models for provider {}", request.getModels().size(), providerId);
+            log.info("Created {} models for provider {}", command.getModels().size(), providerId);
         }
 
-        return toResponse(savedProvider);
+        return savedProvider;
     }
 
     /**
      * 根据 ID 获取提供商
      */
     @Override
-    public ProviderResponse getById(Long id) {
-        Provider provider = providerRepository.findById(id)
+    public Provider getById(Long id) {
+        return providerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
-        return toResponse(provider);
     }
 
     /**
      * 查询提供商列表
      */
     @Override
-    public PageResponse<ProviderResponse> query(ProviderQueryRequest request) {
+    public PageResponse<Provider> query(ProviderQuery query) {
         List<Provider> providers = providerRepository.findAll();
 
         // 过滤
-        if (request.getKeyword() != null && !request.getKeyword().isBlank()) {
-            String keyword = request.getKeyword().toLowerCase();
+        if (query.getKeyword() != null && !query.getKeyword().isBlank()) {
+            String keyword = query.getKeyword().toLowerCase();
             providers = providers.stream()
                 .filter(p -> p.getName().toLowerCase().contains(keyword))
                 .collect(Collectors.toList());
@@ -118,18 +115,14 @@ public class ProviderServiceImpl implements ProviderService {
         long total = providers.size();
 
         // 分页
-        int offset = request.getOffset();
-        int limit = request.getLimit();
+        int offset = query.getOffset();
+        int limit = query.getLimit();
         List<Provider> pagedProviders = providers.stream()
             .skip(offset)
             .limit(limit)
             .collect(Collectors.toList());
 
-        List<ProviderResponse> responses = pagedProviders.stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
-
-        return PageResponse.of(responses, request.getPage(), limit, total);
+        return PageResponse.of(pagedProviders, query.getPage(), limit, total);
     }
 
     /**
@@ -137,24 +130,24 @@ public class ProviderServiceImpl implements ProviderService {
      */
     @Override
     @Transactional
-    public ProviderResponse update(Long id, ProviderUpdateRequest request) {
+    public Provider update(Long id, ProviderUpdateCommand command) {
         Provider provider = providerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
-        if (request.getProviderName() != null) {
-            provider.setName(request.getProviderName());
+        if (command.getProviderName() != null) {
+            provider.setName(command.getProviderName());
         }
-        if (request.getWebsiteUrl() != null) {
-            provider.setWebsiteUrl(request.getWebsiteUrl());
+        if (command.getWebsiteUrl() != null) {
+            provider.setWebsiteUrl(command.getWebsiteUrl());
         }
-        if (request.getApiDocUrl() != null) {
-            provider.setApiDocUrl(request.getApiDocUrl());
+        if (command.getApiDocUrl() != null) {
+            provider.setApiDocUrl(command.getApiDocUrl());
         }
-        if (request.getPriority() != null) {
-            provider.setPriority(request.getPriority());
+        if (command.getPriority() != null) {
+            provider.setPriority(command.getPriority());
         }
 
-        return toResponse(providerRepository.save(provider));
+        return providerRepository.save(provider);
     }
 
     /**
@@ -214,14 +207,14 @@ public class ProviderServiceImpl implements ProviderService {
      * 测试连通性
      */
     @Override
-    public com.codingas.gateway.provider.vendor.ConnectivityTestResult testConnectivity(ConnectivityTestRequest request) {
+    public com.codingas.gateway.provider.vendor.ConnectivityTestResult testConnectivity(ConnectivityTestCommand command) {
         ConnectivityTestResult vo = connectivityTester.test(
-                request.baseUrl(),
-                request.apiKey(),
-                request.protocolName()
+                command.baseUrl(),
+                command.apiKey(),
+                command.protocolName()
         );
 
-        // 将 VO 转为应用层 DTO
+        // 将 VO 转为应用层用例结果
         return new com.codingas.gateway.provider.vendor.ConnectivityTestResult(
                 vo.success(),
                 vo.errorMessage() != null ? vo.errorMessage() : "连通性测试成功",
@@ -236,21 +229,5 @@ public class ProviderServiceImpl implements ProviderService {
                 null,
                 vo.latencyMs()
         );
-    }
-
-    /**
-     * 转换为响应 DTO
-     */
-    private ProviderResponse toResponse(Provider provider) {
-        ProviderResponse response = new ProviderResponse();
-        response.setId(provider.getId());
-        response.setProviderId(provider.getCode());
-        response.setProviderName(provider.getName());
-        response.setWebsiteUrl(provider.getWebsiteUrl());
-        response.setApiDocUrl(provider.getApiDocUrl());
-        response.setPriority(provider.getPriority());
-        response.setCreatedAt(provider.getCreatedAt());
-        response.setUpdatedAt(provider.getUpdatedAt());
-        return response;
     }
 }

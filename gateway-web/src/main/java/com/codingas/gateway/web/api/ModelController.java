@@ -15,11 +15,8 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.model.ModelCreateRequest;
-import com.codingas.gateway.provider.model.ModelQueryRequest;
-import com.codingas.gateway.provider.model.ModelResponse;
-import com.codingas.gateway.provider.model.ModelUpdateRequest;
 import com.codingas.gateway.provider.model.ModelService;
+import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +39,7 @@ public class ModelController {
      */
     @PostMapping
     public ModelResponse create(@Valid @RequestBody ModelCreateRequest request) {
-        return modelService.create(request);
+        return ModelResponse.from(modelService.create(request.toCommand()));
     }
 
     /**
@@ -50,7 +47,7 @@ public class ModelController {
      */
     @GetMapping("/{id}")
     public ModelResponse getById(@PathVariable Long id) {
-        return modelService.getById(id);
+        return ModelResponse.from(modelService.getById(id));
     }
 
     /**
@@ -58,7 +55,7 @@ public class ModelController {
      */
     @GetMapping
     public PageResponse<ModelResponse> query(@ModelAttribute ModelQueryRequest request) {
-        return modelService.query(request);
+        return ModelResponse.fromPage(modelService.query(request.toQuery()));
     }
 
     /**
@@ -68,7 +65,7 @@ public class ModelController {
     public ModelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ModelUpdateRequest request) {
-        return modelService.update(id, request);
+        return ModelResponse.from(modelService.update(id, request.toCommand()));
     }
 
     /**
@@ -86,6 +83,6 @@ public class ModelController {
     public ModelResponse setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return modelService.setEnabled(id, enabled);
+        return ModelResponse.from(modelService.setEnabled(id, enabled));
     }
 }

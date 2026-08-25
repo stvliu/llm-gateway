@@ -15,11 +15,10 @@
  */
 package com.codingas.gateway.web.api;
 
+import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelService;
-import com.codingas.gateway.provider.model.ModelCreateRequest;
-import com.codingas.gateway.provider.model.ModelQueryRequest;
-import com.codingas.gateway.provider.model.ModelResponse;
-import com.codingas.gateway.provider.model.ModelUpdateRequest;
+import com.codingas.gateway.provider.model.ModelQuery;
+import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,8 +62,8 @@ class ModelControllerTest {
             // given
             ModelCreateRequest request = new ModelCreateRequest();
 
-            ModelResponse response = createTestResponse();
-            when(modelService.create(any())).thenReturn(response);
+            Model model = createTestModel();
+            when(modelService.create(any())).thenReturn(model);
 
             // when
             ModelResponse result = controller.create(request);
@@ -82,8 +81,8 @@ class ModelControllerTest {
         @DisplayName("获取模型详情成功")
         void getById_existingId_returnsModel() {
             // given
-            ModelResponse response = createTestResponse();
-            when(modelService.getById(1L)).thenReturn(response);
+            Model model = createTestModel();
+            when(modelService.getById(1L)).thenReturn(model);
 
             // when
             ModelResponse result = controller.getById(1L);
@@ -101,11 +100,11 @@ class ModelControllerTest {
         @DisplayName("查询模型列表")
         void query_validRequest_returnsPage() {
             // given
-            ModelResponse response = createTestResponse();
-            PageResponse<ModelResponse> pageResponse = PageResponse.of(
-                List.of(response), 1, 10, 1L
+            Model model = createTestModel();
+            PageResponse<Model> pageResponse = PageResponse.of(
+                List.of(model), 1, 10, 1L
             );
-            when(modelService.query(any(ModelQueryRequest.class))).thenReturn(pageResponse);
+            when(modelService.query(any(ModelQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<ModelResponse> result = controller.query(new ModelQueryRequest());
@@ -126,8 +125,8 @@ class ModelControllerTest {
             ModelUpdateRequest request = new ModelUpdateRequest();
             request.setDisplayName("Updated Model");
 
-            ModelResponse response = createTestResponse();
-            when(modelService.update(eq(1L), any())).thenReturn(response);
+            Model model = createTestModel();
+            when(modelService.update(eq(1L), any())).thenReturn(model);
 
             // when
             ModelResponse result = controller.update(1L, request);
@@ -162,8 +161,8 @@ class ModelControllerTest {
         @DisplayName("启用模型")
         void setEnabled_enable_returnsUpdated() {
             // given
-            ModelResponse response = createTestResponse();
-            when(modelService.setEnabled(1L, true)).thenReturn(response);
+            Model model = createTestModel();
+            when(modelService.setEnabled(1L, true)).thenReturn(model);
 
             // when
             ModelResponse result = controller.setEnabled(1L, true);
@@ -176,8 +175,8 @@ class ModelControllerTest {
         @DisplayName("禁用模型")
         void setEnabled_disable_returnsUpdated() {
             // given
-            ModelResponse response = createTestResponse();
-            when(modelService.setEnabled(1L, false)).thenReturn(response);
+            Model model = createTestModel();
+            when(modelService.setEnabled(1L, false)).thenReturn(model);
 
             // when
             ModelResponse result = controller.setEnabled(1L, false);
@@ -188,14 +187,14 @@ class ModelControllerTest {
     }
 
     // Helper methods
-    private ModelResponse createTestResponse() {
-        ModelResponse response = new ModelResponse();
-        response.setId(1L);
-        response.setModelName("gpt-4");
-        response.setDisplayName("GPT-4");
-        response.setContextWindow(8192);
-        response.setCreatedAt(Instant.now());
-        response.setUpdatedAt(Instant.now());
-        return response;
+    private Model createTestModel() {
+        Model model = new Model();
+        model.setId(1L);
+        model.setModelName("gpt-4");
+        model.setDisplayName("GPT-4");
+        model.setContextWindow(8192);
+        model.setCreatedAt(Instant.now());
+        model.setUpdatedAt(Instant.now());
+        return model;
     }
 }

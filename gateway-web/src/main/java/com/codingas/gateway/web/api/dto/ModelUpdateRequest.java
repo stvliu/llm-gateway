@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.model;
+package com.codingas.gateway.web.api.dto;
 
+import com.codingas.gateway.provider.model.ModelUpdateCommand;
 import lombok.Data;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 模型响应
+ * 模型更新请求 DTO（HTTP 契约）
  */
 @Data
-public class ModelResponse {
-
-    private Long id;
+public class ModelUpdateRequest {
     private String modelName;
     private String displayName;
     private String modelFamily;
@@ -36,13 +34,14 @@ public class ModelResponse {
     private Integer maxOutputTokens;
     private Map<String, Boolean> capabilities;
     private List<String> modalities;
-    private Instant deprecatedAt;
-    private String deprecationMessage;
-    /**
-     * 模型状态：ACTIVE（启用，deprecatedAt 为空）/ INACTIVE（禁用，deprecatedAt 非空）
-     */
-    private String state;
 
-    private Instant createdAt;
-    private Instant updatedAt;
+    /**
+     * 转换为核心更新用例入参
+     *
+     * @return 更新用例入参
+     */
+    public ModelUpdateCommand toCommand() {
+        return new ModelUpdateCommand(modelName, displayName, modelFamily, contextWindow,
+                maxInputTokens, maxOutputTokens, capabilities, modalities);
+    }
 }
