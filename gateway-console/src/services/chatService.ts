@@ -125,38 +125,4 @@ export const chatService = {
     }
   },
 
-  /**
-   * 非流式聊天（备用）
-   */
-  async chat(messages: ChatMessage[], model: string): Promise<string> {
-    const apiUrl = '/v1/chat/completions';
-
-    const apiMessages = messages.map((msg) => ({
-      role: msg.role,
-      content: msg.content,
-    }));
-
-    const requestBody: ChatRequest = {
-      model,
-      messages: apiMessages,
-      stream: false,
-    };
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || '';
-  },
 };

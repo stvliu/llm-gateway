@@ -6,11 +6,8 @@
   "user": "所属用户",
   "status": "状态",
   "createdAt": "创建时间",
-  "updatedAt": "更新时间",
   "actions": "操作",
   "delete": "删除",
-  "revoke": "吊销",
-  "rotate": "轮换",
   "searchKeys": "搜索 Key 前缀/名称...",
   "noKeys": "暂无 API Key",
   "confirmRevoke": "确定吊销此 Key？",
@@ -19,10 +16,12 @@
   "done": "完成",
   "createKey": "创建 API Key",
   "createSuccess": "Key 创建成功",
-  "updateSuccess": "Key 已更新",
   "createFailed": "创建失败",
   "updateFailed": "更新失败",
   "save": "保存",
   "create": "创建",
-  "oneTimeHint": "此密钥仅显示一次，关闭后无法再次查看"
+  "oneTimeHint": "此密钥仅显示一次，关闭后无法再次查看",
+  "filterByApplication": "按应用筛选",
+  "unbound": "未绑定",
+  "application": "所属应用"
 }

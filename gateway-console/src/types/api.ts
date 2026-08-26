@@ -29,19 +29,3 @@ export interface PageResponse<T> {
     totalPages: number;
   };
 }
-
-/** API 响应包装（与后端 ApiResponse 一致） */
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  error?: {
-    code: string;
-    message: string;
-    details?: unknown;
-  };
-  traceId: string;
-  timestamp: string;
-}
-
-/** 通用状态枚举 */
-export type Status = 'ENABLED' | 'INACTIVE';

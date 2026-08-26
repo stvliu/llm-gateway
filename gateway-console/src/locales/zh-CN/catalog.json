@@ -5,8 +5,6 @@
     "plans": "套餐目录"
   },
   "provider": {
-    "code": "供应商编码",
-    "name": "供应商名称",
     "materialized": "已开通",
     "notMaterialized": "未开通"
   },
@@ -16,11 +14,6 @@
     "billingMode": "计费模式",
     "materialized": "已开通",
     "detail": "套餐详情"
-  },
-  "model": {
-    "modelName": "模型名称",
-    "capabilities": "能力标签",
-    "contextWindow": "上下文窗口"
   },
   "provision": {
     "provider": "开通供应商",
@@ -32,10 +25,17 @@
   "message": {
     "provisionFailed": "开通失败",
     "syncSuccess": "同步成功",
-    "syncFailed": "同步失败"
+    "syncFailed": "同步失败",
+    "noData": "暂无数据"
   },
   "filter": {
     "keyword": "关键词搜索",
     "all": "全部"
+  },
+  "quickCreate": "创建渠道",
+  "billingMode": {
+    "package": "套餐",
+    "subscription": "订阅",
+    "pay_as_you_go": "按量付费"
   }
 }

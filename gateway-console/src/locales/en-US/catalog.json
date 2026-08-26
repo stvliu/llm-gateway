@@ -5,8 +5,6 @@
     "plans": "Plan Catalog"
   },
   "provider": {
-    "code": "Provider Code",
-    "name": "Provider Name",
     "materialized": "Provisioned",
     "notMaterialized": "Not Provisioned"
   },
@@ -16,11 +14,6 @@
     "billingMode": "Billing Mode",
     "materialized": "Provisioned",
     "detail": "Plan Detail"
-  },
-  "model": {
-    "modelName": "Model Name",
-    "capabilities": "Capabilities",
-    "contextWindow": "Context Window"
   },
   "provision": {
     "provider": "Provision Provider",
@@ -32,10 +25,17 @@
   "message": {
     "provisionFailed": "Provisioning failed",
     "syncSuccess": "Synced successfully",
-    "syncFailed": "Sync failed"
+    "syncFailed": "Sync failed",
+    "noData": "No data"
   },
   "filter": {
     "keyword": "Keyword search",
     "all": "All"
+  },
+  "quickCreate": "Quick create",
+  "billingMode": {
+    "package": "Package",
+    "subscription": "Subscription",
+    "pay_as_you_go": "Pay as you go"
   }
 }

@@ -34,7 +34,6 @@
   },
   "state": {
     "active": "正常",
-    "suspended": "暂停",
     "disabled": "禁用"
   },
   "confirm": {

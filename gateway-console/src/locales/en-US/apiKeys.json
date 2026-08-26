@@ -6,11 +6,8 @@
   "user": "User",
   "status": "Status",
   "createdAt": "Created At",
-  "updatedAt": "Updated At",
   "actions": "Actions",
   "delete": "Delete",
-  "revoke": "Revoke",
-  "rotate": "Rotate",
   "searchKeys": "Search key prefix/name...",
   "noKeys": "No API keys yet.",
   "confirmRevoke": "Revoke this key?",
@@ -19,10 +16,12 @@
   "done": "Done",
   "createKey": "Create API Key",
   "createSuccess": "Key created",
-  "updateSuccess": "Key updated",
   "createFailed": "Failed to create",
   "updateFailed": "Failed to update",
   "save": "Save",
   "create": "Create",
-  "oneTimeHint": "This key will only be shown once. Save it now."
+  "oneTimeHint": "This key will only be shown once. Save it now.",
+  "filterByApplication": "Filter by application",
+  "unbound": "Unbound",
+  "application": "Application"
 }

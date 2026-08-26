@@ -34,7 +34,6 @@
   },
   "state": {
     "active": "Active",
-    "suspended": "Suspended",
     "disabled": "Disabled"
   },
   "confirm": {
