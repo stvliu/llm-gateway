@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.invoker;
 
 import com.codingas.gateway.proxy.conversion.OutboundTuner;
 import com.codingas.gateway.proxy.chat.ErrorClassifier;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
@@ -79,7 +79,7 @@ class ChannelFailoverInvokerTest {
     private ErrorClassifier errorClassifier;
 
     @Mock
-    private DomainEventPublisher eventPublisher;
+    private BizEventPublisher eventPublisher;
 
     @Mock
     private OutboundTuner outboundTuner;

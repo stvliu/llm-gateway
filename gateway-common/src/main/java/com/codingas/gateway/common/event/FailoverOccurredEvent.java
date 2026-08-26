@@ -30,7 +30,7 @@ import java.time.Instant;
  *
  * <p><b>命名说明</b>：事件类命名为 {@code FailoverOccurredEvent}（转移发生事件），
  * 避免与持久化实体 {@code FailoverEvent}（转移事件）同名冲突。参照 {@link AuditEvent}
- * 的 record + implements {@link DomainEvent} + occurredOn() 范式。</p>
+ * 的 record + implements {@link BizEvent} + occurredOn() 范式。</p>
  *
  * <p>设计见 design doc D12：发布与持久化解耦，不阻塞 10k QPS 调用链。
  * 可靠性边界：发布后持久化前进程崩溃则事件丢失（可观测性数据可接受，非计费/审计关键路径）。</p>
@@ -57,7 +57,7 @@ public record FailoverOccurredEvent(
         FailoverDecision decision,
         boolean exhausted,
         Instant occurredOn
-) implements DomainEvent {
+) implements BizEvent {
 
     @Override
     public Instant occurredOn() {

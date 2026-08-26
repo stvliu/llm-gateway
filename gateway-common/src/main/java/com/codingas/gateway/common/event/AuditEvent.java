@@ -44,7 +44,7 @@ public record AuditEvent(
         Integer responseStatus,
         String traceId,
         Instant occurredOn
-) implements DomainEvent {
+) implements BizEvent {
 
     public static Builder builder() {
         return new Builder();

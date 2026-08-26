@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.invoker;
 
 import com.codingas.gateway.proxy.conversion.OutboundTuner;
 import com.codingas.gateway.proxy.chat.ErrorClassifier;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.protocol.ProtocolRequest;
@@ -68,19 +68,19 @@ class ChannelFailoverStrategyTest {
     /**
      * 构造真实 ChannelFailoverInvoker，注入 mock KeyFailoverInvoker + 真实 ErrorClassifier
      *
-     * <p>其他依赖（OutboundTuner/ProtocolConversionFacade/DomainEventPublisher）用 mock/stub，
+     * <p>其他依赖（OutboundTuner/ProtocolConversionFacade/BizEventPublisher）用 mock/stub，
      * 聚焦策略分流语义非调谐/转换/事件发布。OutboundTuner.tune 用 returnsFirstArg 桩，
      * 匹配 invoker 调谐下沉后 keyFailoverInvoker.invoke/invokeSingleKey 收到的 request
      * 仍是同一个 mock 对象（断言匹配 any(ProtocolRequest.class)）。</p>
      *
      * <p>eventPublisher 用匿名 mock（不持有引用），适用于不需验证事件发布的行为测试。
-     * 需验证事件发布时改用 {@link #newRealInvoker(KeyFailoverInvoker, DomainEventPublisher)}。</p>
+     * 需验证事件发布时改用 {@link #newRealInvoker(KeyFailoverInvoker, BizEventPublisher)}。</p>
      *
      * @param keyInvoker mock Key 级 Invoker（控制 invoke/invokeSingleKey 成功/失败）
      * @return 真实 ChannelFailoverInvoker 实例
      */
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyInvoker) {
-        return newRealInvoker(keyInvoker, mock(DomainEventPublisher.class));
+        return newRealInvoker(keyInvoker, mock(BizEventPublisher.class));
     }
 
     /**
@@ -96,7 +96,7 @@ class ChannelFailoverStrategyTest {
      * @return 真实 ChannelFailoverInvoker 实例
      */
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyInvoker,
-                                                   DomainEventPublisher eventPublisher) {
+                                                   BizEventPublisher eventPublisher) {
         ErrorClassifier errorClassifier = new ErrorClassifier();
         OutboundTuner tuner = mock(OutboundTuner.class);
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
@@ -241,7 +241,7 @@ class ChannelFailoverStrategyTest {
         // nextIndex<size 计算 to=下一候选 + exhausted=false，会画出"从 A 转移到 B"
         // 但实际未转移，误导容灾诊断。修复后 FAIL_RETRY 不发转移事件。
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
+        BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
         ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "Key 耗尽", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);
@@ -262,7 +262,7 @@ class ChannelFailoverStrategyTest {
     void failRetry_streamSameChannelKeyExhausted_noFailoverEventPublished() {
         // 流式 FAIL_RETRY 首字节前启动失败 break 不换渠道，同样不应发转移事件
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
+        BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
         ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "Key 耗尽", null, "gpt-4o", "openai", 20L, null);
         // 流式启动失败（首字节前同步抛错，未调 onChunk）
@@ -285,7 +285,7 @@ class ChannelFailoverStrategyTest {
     void failOver_channelExhausted_publishesFailoverEvent() {
         // 对照测试：FAIL_OVER 换候选前应发转移事件，确保 FAIL_RETRY 收窄修复未误伤 FAIL_OVER 路径
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        DomainEventPublisher eventPublisher = mock(DomainEventPublisher.class);
+        BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
         ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "限流", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);

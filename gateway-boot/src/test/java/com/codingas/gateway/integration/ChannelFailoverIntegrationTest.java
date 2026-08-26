@@ -20,7 +20,7 @@ import com.codingas.gateway.proxy.chat.ErrorClassifier;
 import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.RouterChain;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
@@ -125,7 +125,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         lenient().when(tuner.tune(any(ProtocolRequest.class), any(RoutingContext.class)))
                 .thenAnswer(org.mockito.AdditionalAnswers.returnsFirstArg());
         return new ChannelFailoverInvoker(keyFailoverInvoker, realErrorClassifier,
-                mock(DomainEventPublisher.class),
+                mock(BizEventPublisher.class),
                 tuner, mock(ProtocolConversionFacade.class));
     }
 

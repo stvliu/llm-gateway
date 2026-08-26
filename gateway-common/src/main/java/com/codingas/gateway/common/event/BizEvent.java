@@ -22,7 +22,7 @@ import java.time.Instant;
  *
  * <p>所有领域事件实现此接口。</p>
  */
-public interface DomainEvent {
+public interface BizEvent {
 
     /**
      * 获取事件发生时间

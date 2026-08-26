@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.invoker;
 
 import com.codingas.gateway.proxy.conversion.OutboundTuner;
 import com.codingas.gateway.proxy.chat.ErrorClassifier;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.protocol.ProtocolRequest;
@@ -73,7 +73,7 @@ public class ChannelFailoverInvoker {
 
     private final KeyFailoverInvoker keyFailoverInvoker;
     private final ErrorClassifier errorClassifier;
-    private final DomainEventPublisher eventPublisher;
+    private final BizEventPublisher eventPublisher;
     /** 出站调谐编排器（调谐下沉：每候选独立 convert+tune） */
     private final OutboundTuner outboundTuner;
     /** 跨协议转换门面（调谐下沉：每候选独立请求转换 + 流式 chunk 转换方向重建） */
@@ -90,7 +90,7 @@ public class ChannelFailoverInvoker {
      */
     public ChannelFailoverInvoker(KeyFailoverInvoker keyFailoverInvoker,
                                    ErrorClassifier errorClassifier,
-                                   DomainEventPublisher eventPublisher,
+                                   BizEventPublisher eventPublisher,
                                    OutboundTuner outboundTuner,
                                    ProtocolConversionFacade protocolConversionFacade) {
         this.keyFailoverInvoker = keyFailoverInvoker;

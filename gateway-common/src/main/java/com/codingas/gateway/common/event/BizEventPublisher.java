@@ -21,7 +21,7 @@ package com.codingas.gateway.common.event;
  * <p>通用接口，支持本地和远程两种实现。</p>
  */
 @FunctionalInterface
-public interface DomainEventPublisher {
+public interface BizEventPublisher {
 
     /**
      * 发布领域事件
@@ -29,5 +29,5 @@ public interface DomainEventPublisher {
      * @param event 领域事件
      * @param <T> 事件类型
      */
-    <T extends DomainEvent> void publish(T event);
+    <T extends BizEvent> void publish(T event);
 }

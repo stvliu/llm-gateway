@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.boot.event;
 
-import com.codingas.gateway.common.event.DomainEvent;
+import com.codingas.gateway.common.event.BizEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -30,20 +30,20 @@ import java.time.Instant;
 import static org.mockito.Mockito.*;
 
 /**
- * LocalDomainEventPublisher 单元测试
+ * LocalBizEventPublisher 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("LocalDomainEventPublisher 测试")
-class LocalDomainEventPublisherTest {
+@DisplayName("LocalBizEventPublisher 测试")
+class LocalBizEventPublisherTest {
 
     @Mock
     private ApplicationEventPublisher applicationEventPublisher;
 
-    private LocalDomainEventPublisher publisher;
+    private LocalBizEventPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new LocalDomainEventPublisher(applicationEventPublisher);
+        publisher = new LocalBizEventPublisher(applicationEventPublisher);
     }
 
     @Nested
@@ -54,7 +54,7 @@ class LocalDomainEventPublisherTest {
         @DisplayName("成功发布事件")
         void publish_success() {
             // Given
-            TestDomainEvent event = new TestDomainEvent("test-id", "test-data");
+            TestBizEvent event = new TestBizEvent("test-id", "test-data");
 
             // When
             publisher.publish(event);
@@ -67,8 +67,8 @@ class LocalDomainEventPublisherTest {
         @DisplayName("发布多个事件")
         void publish_multipleEvents() {
             // Given
-            TestDomainEvent event1 = new TestDomainEvent("id-1", "data-1");
-            TestDomainEvent event2 = new TestDomainEvent("id-2", "data-2");
+            TestBizEvent event1 = new TestBizEvent("id-1", "data-1");
+            TestBizEvent event2 = new TestBizEvent("id-2", "data-2");
 
             // When
             publisher.publish(event1);
@@ -83,7 +83,7 @@ class LocalDomainEventPublisherTest {
         @DisplayName("验证事件调用次数")
         void publish_verifyCallCount() {
             // Given
-            TestDomainEvent event = new TestDomainEvent("id", "data");
+            TestBizEvent event = new TestBizEvent("id", "data");
 
             // When
             publisher.publish(event);
@@ -97,12 +97,12 @@ class LocalDomainEventPublisherTest {
     /**
      * 测试用领域事件
      */
-    static class TestDomainEvent implements DomainEvent {
+    static class TestBizEvent implements BizEvent {
         private final String eventId;
         private final String data;
         private final Instant occurredOn;
 
-        public TestDomainEvent(String eventId, String data) {
+        public TestBizEvent(String eventId, String data) {
             this.eventId = eventId;
             this.data = data;
             this.occurredOn = Instant.now();
@@ -123,7 +123,7 @@ class LocalDomainEventPublisherTest {
 
         @Override
         public String toString() {
-            return "TestDomainEvent{eventId='" + eventId + "', data='" + data + "'}";
+            return "TestBizEvent{eventId='" + eventId + "', data='" + data + "'}";
         }
     }
 }

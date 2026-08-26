@@ -22,23 +22,23 @@ import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-class DomainEventPublisherTest {
+class BizEventPublisherTest {
 
     @Test
-    @DisplayName("DomainEventPublisher should be a functional interface")
+    @DisplayName("BizEventPublisher should be a functional interface")
     void shouldBeFunctionalInterface() {
         assertThatCode(() -> {
-            DomainEventPublisher publisher = new TestPublisher();
+            BizEventPublisher publisher = new TestPublisher();
             publisher.publish(new TestEvent());
         }).doesNotThrowAnyException();
     }
 
     @Test
-    @DisplayName("DomainEventPublisher should be usable as anonymous class")
+    @DisplayName("BizEventPublisher should be usable as anonymous class")
     void shouldBeUsableAsAnonymousClass() {
-        DomainEventPublisher publisher = new DomainEventPublisher() {
+        BizEventPublisher publisher = new BizEventPublisher() {
             @Override
-            public <T extends DomainEvent> void publish(T event) {
+            public <T extends BizEvent> void publish(T event) {
                 // no-op for testing
             }
         };
@@ -46,16 +46,16 @@ class DomainEventPublisherTest {
             .doesNotThrowAnyException();
     }
 
-    static class TestEvent implements DomainEvent {
+    static class TestEvent implements BizEvent {
         @Override
         public Instant occurredOn() {
             return Instant.now();
         }
     }
 
-    static class TestPublisher implements DomainEventPublisher {
+    static class TestPublisher implements BizEventPublisher {
         @Override
-        public <T extends DomainEvent> void publish(T event) {
+        public <T extends BizEvent> void publish(T event) {
             // no-op for testing
         }
     }

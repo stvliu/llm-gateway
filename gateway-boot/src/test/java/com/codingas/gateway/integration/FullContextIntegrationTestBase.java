@@ -21,7 +21,7 @@ import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.iam.auth.AuthenticationManager;
 import com.codingas.gateway.iam.auth.Identity;
@@ -83,7 +83,7 @@ public abstract class FullContextIntegrationTestBase {
     protected ProviderSimulator providerSimulator;
 
     @MockBean
-    protected DomainEventPublisher domainEventPublisher;
+    protected BizEventPublisher domainEventPublisher;
 
     @MockBean
     protected AuditLogRepository auditRepository;

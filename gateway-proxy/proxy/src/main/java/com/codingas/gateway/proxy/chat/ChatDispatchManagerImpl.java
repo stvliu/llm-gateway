@@ -28,7 +28,7 @@ import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.upstream.RoutingContext;
 import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.usage.event.TokenUsedEvent;
-import com.codingas.gateway.common.event.DomainEventPublisher;
+import com.codingas.gateway.common.event.BizEventPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,12 +54,12 @@ public class ChatDispatchManagerImpl implements ChatDispatchManager {
 
     private final RoutingResolver routingResolver;
     private final AuditLogRepository auditRepository;
-    private final DomainEventPublisher eventPublisher;
+    private final BizEventPublisher eventPublisher;
     private final ChannelFailoverInvoker channelFailoverInvoker;
 
     public ChatDispatchManagerImpl(RoutingResolver routingResolver,
                                    AuditLogRepository auditRepository,
-                                   DomainEventPublisher eventPublisher,
+                                   BizEventPublisher eventPublisher,
                                    ChannelFailoverInvoker channelFailoverInvoker) {
         this.routingResolver = routingResolver;
         this.auditRepository = auditRepository;

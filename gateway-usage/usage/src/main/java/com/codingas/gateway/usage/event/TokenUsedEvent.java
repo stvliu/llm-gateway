@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.usage.event;
 
-import com.codingas.gateway.common.event.DomainEvent;
+import com.codingas.gateway.common.event.BizEvent;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -47,7 +47,7 @@ public record TokenUsedEvent(
         BigDecimal cost,
         String traceId,
         Instant occurredOn
-) implements DomainEvent {
+) implements BizEvent {
 
     public static Builder builder() {
         return new Builder();
