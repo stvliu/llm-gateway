@@ -35,6 +35,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -85,6 +87,18 @@ class ChannelProvisionTransactionalIntegrationTest {
 
     private static final String EXISTING_PROVIDER_CODE = "existing-provider-it";
     private static final String EXISTING_PLAN_CODE = "existing-plan-it";
+
+    /**
+     * 使用独立 H2 内存库，避免 {@link DirtiesContext} 关闭上下文时 Hibernate
+     * {@code ddl-auto: create-drop} 清空共享的 {@code jdbc:h2:mem:testdb}，
+     * 导致后续复用缓存上下文的集成测试（如 PermissionRefactorIntegrationTest）命中空库报
+     * "Table not found (this database is empty)"。本类专属库的删除操作不影响其他测试。
+     */
+    @DynamicPropertySource
+    static void isolatedDatasource(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url",
+                () -> "jdbc:h2:mem:channelprovision;MODE=PostgreSQL;DB_CLOSE_DELAY=-1");
+    }
 
     /**
      * 准备一条 PlanCatalog，便于在 service 中通过 planCode 查询
