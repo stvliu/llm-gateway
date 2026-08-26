@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.proxy.experience.ExperienceChatCommand;
+import com.codingas.gateway.proxy.experience.ExperienceChatParams;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -65,8 +65,8 @@ public class ExperienceChatRequest {
      *
      * @return 体验聊天用例入参
      */
-    public ExperienceChatCommand toCommand() {
-        return new ExperienceChatCommand(
+    public ExperienceChatParams toCommand() {
+        return new ExperienceChatParams(
                 model, protocolName, messages, temperature, maxTokens, stream,
                 channelId, credentialId, apiKey, baseUrl, getUseSavedConfig());
     }

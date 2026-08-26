@@ -193,7 +193,7 @@ class ModelExperienceManagerTest {
     }
 
     /** 启动 chatStream，返回 emitter 并捕获传入 UpstreamClient 的流式回调 */
-    private SseEmitter startStream(ExperienceChatCommand request,
+    private SseEmitter startStream(ExperienceChatParams request,
                                    UpstreamClient<ProtocolRequest> client,
                                    ArgumentCaptor<StreamCallback> captor) {
         SseEmitter emitter = service.chatStream(request);
@@ -202,7 +202,7 @@ class ModelExperienceManagerTest {
     }
 
     /** 启动 chatStream，捕获回调并注入 RecordingHandler，返回回调 */
-    private StreamCallback startStreamWithRecorder(ExperienceChatCommand request,
+    private StreamCallback startStreamWithRecorder(ExperienceChatParams request,
                                                    UpstreamClient<ProtocolRequest> client,
                                                    RecordingHandler recorder) throws Exception {
         ArgumentCaptor<StreamCallback> captor = ArgumentCaptor.forClass(StreamCallback.class);
@@ -211,8 +211,8 @@ class ModelExperienceManagerTest {
         return captor.getValue();
     }
 
-    private ExperienceChatCommand openAiTempRequest() {
-        return new ExperienceChatCommand(
+    private ExperienceChatParams openAiTempRequest() {
+        return new ExperienceChatParams(
                 "gpt-4o", "openai",
                 List.of(Map.of("role", "user", "content", "hello")),
                 null, null, null, null, null, "sk-test-key", null, false);
@@ -316,7 +316,7 @@ class ModelExperienceManagerTest {
         @DisplayName("无效请求时发送 ERROR 事件并完成")
         void invalidRequest_sendsErrorAndCompletes() throws Exception {
             // 临时配置缺 apiKey → isValid() 为 false
-            ExperienceChatCommand request = new ExperienceChatCommand(
+            ExperienceChatParams request = new ExperienceChatParams(
                     "gpt-4o", "openai",
                     List.of(Map.of("role", "user", "content", "hello")),
                     null, null, null, null, null, null, null, false);
@@ -475,8 +475,8 @@ class ModelExperienceManagerTest {
     @DisplayName("chatStream 已保存配置")
     class ChatStreamSavedConfigTests {
 
-        private ExperienceChatCommand savedConfigRequest(Long channelId, Long credentialId) {
-            return new ExperienceChatCommand(
+        private ExperienceChatParams savedConfigRequest(Long channelId, Long credentialId) {
+            return new ExperienceChatParams(
                     "gpt-4o", null,
                     List.of(Map.of("role", "user", "content", "hello")),
                     null, null, null, channelId, credentialId, null, null, true);
@@ -605,7 +605,7 @@ class ModelExperienceManagerTest {
         @Test
         @DisplayName("anthropic 协议构建 AnthropicMessagesRequest，maxTokens 缺省 1024")
         void tempConfig_anthropic_buildsAnthropicRequest() throws Exception {
-            ExperienceChatCommand request = new ExperienceChatCommand(
+            ExperienceChatParams request = new ExperienceChatParams(
                     "claude-3-5", "anthropic",
                     List.of(Map.of("role", "user", "content", "hello")),
                     0.7, null, null, null, null, "sk-ant-key", null, false);

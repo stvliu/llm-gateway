@@ -20,7 +20,7 @@ import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
-import com.codingas.gateway.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.Identity;
 
 /**
  * 聊天调度服务

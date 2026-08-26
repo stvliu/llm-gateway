@@ -130,7 +130,7 @@ public class ModelExperienceManager {
      * @param request 体验请求
      * @return SSE Emitter
      */
-    public SseEmitter chatStream(ExperienceChatCommand request) {
+    public SseEmitter chatStream(ExperienceChatParams request) {
         // 验证请求
         if (!request.isValid()) {
             SseEmitter emitter = new SseEmitter();
@@ -182,7 +182,7 @@ public class ModelExperienceManager {
     /**
      * 执行流式聊天
      */
-    private void doChatStream(ExperienceChatCommand request, SseEmitter emitter) throws IOException {
+    private void doChatStream(ExperienceChatParams request, SseEmitter emitter) throws IOException {
         ResolvedConfig config = resolveConfig(request);
         log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.model());
 
@@ -241,7 +241,7 @@ public class ModelExperienceManager {
     /**
      * 根据协议类型构建协议请求 DTO
      */
-    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatCommand request) {
+    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatParams request) {
         List<Map<String, String>> rawMessages = request.messages();
 
         if ("anthropic".equals(protocolName)) {
@@ -286,7 +286,7 @@ public class ModelExperienceManager {
      *   <li>临时配置：直接使用请求中的配置</li>
      * </ol>
      */
-    private ResolvedConfig resolveConfig(ExperienceChatCommand request) {
+    private ResolvedConfig resolveConfig(ExperienceChatParams request) {
         if (request.useSavedConfig()) {
             // 从数据库读取配置
             var channel = channelRepository.findById(request.channelId())

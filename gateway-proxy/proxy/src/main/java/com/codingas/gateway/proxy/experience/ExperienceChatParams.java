@@ -36,7 +36,7 @@ import java.util.Map;
  * @param baseUrl      直接传入的 Base URL（不使用已保存配置时，可选）
  * @param savedConfig 是否使用已保存的渠道配置
  */
-public record ExperienceChatCommand(
+public record ExperienceChatParams(
         String model,
         String protocolName,
         List<Map<String, String>> messages,
