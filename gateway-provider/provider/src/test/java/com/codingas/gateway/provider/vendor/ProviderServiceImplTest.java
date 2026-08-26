@@ -25,7 +25,9 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
-import com.codingas.gateway.provider.upstream.ConnectivityTester;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -66,7 +68,9 @@ class ProviderManagerImplTest {
     @Mock
     private ChannelCredentialRepository channelCredentialRepository;
     @Mock
-    private ConnectivityTester connectivityTester;
+    private UpstreamClientRegistry upstreamClientRegistry;
+    @Mock
+    private UpstreamClient<ProtocolRequest> upstreamClient;
 
     private ProviderManagerImpl service;
 
@@ -74,7 +78,7 @@ class ProviderManagerImplTest {
     void setUp() {
         service = new ProviderManagerImpl(
                 providerRepository, modelRepository, channelRepository,
-                modelInstanceRepository, channelCredentialRepository, connectivityTester);
+                modelInstanceRepository, channelCredentialRepository, upstreamClientRegistry);
     }
 
     // ==================== create 测试 ====================
@@ -361,7 +365,9 @@ class ProviderManagerImplTest {
         @Test
         @DisplayName("成功时返回默认成功消息")
         void success_returnsDefaultMessage() {
-            when(connectivityTester.test("https://api.openai.com", "sk-123", "openai"))
+            when(upstreamClientRegistry.getClient("openai", "https://api.openai.com", "sk-123", 30))
+                    .thenReturn(upstreamClient);
+            when(upstreamClient.testConnectivity())
                     .thenReturn(new com.codingas.gateway.protocol.transport.ConnectivityTestResult(
                             true, null, null, 120L));
 
@@ -378,7 +384,9 @@ class ProviderManagerImplTest {
         @Test
         @DisplayName("失败时透传错误消息")
         void failure_passesErrorMessage() {
-            when(connectivityTester.test("https://api.openai.com", "sk-bad", "openai"))
+            when(upstreamClientRegistry.getClient("openai", "https://api.openai.com", "sk-bad", 30))
+                    .thenReturn(upstreamClient);
+            when(upstreamClient.testConnectivity())
                     .thenReturn(new com.codingas.gateway.protocol.transport.ConnectivityTestResult(
                             false, null, "401 Unauthorized", 0L));
 

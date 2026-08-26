@@ -66,7 +66,7 @@
 | P3-2 | 构建时间度量与优化 | 记录 CI 各阶段时长，全量验证 ≤10 分钟 |
 | P3-3 | Codecov 阈值配置 | 新增 codecov.yml，line ≥80% 门禁（当前 fail_ci_if_error: false 无约束） |
 | P3-4 | 前端规范补全 | 补 .editorconfig/.prettierrc，ESLint 纳入前端 CI |
-| P3-5 | 源码 TODO 清零 | 4 条 TODO 转正式任务（ChannelCredentialServiceImpl/ConnectivityTesterImpl/ModelExperienceService/StatsService） |
+| P3-5 | 源码 TODO 清零 | 3 条 TODO 转正式任务（ChannelCredentialManagerImpl/ModelExperienceManager/StatsManager；ConnectivityTesterImpl 已随 2026-08-27 清理删除） |
 
 ## P4 — 技术演进（季度级）
 

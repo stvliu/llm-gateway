@@ -24,9 +24,9 @@ import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.upstream.ConnectivityTester;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -50,7 +50,7 @@ public class ProviderManagerImpl implements ProviderManager {
     private final ChannelRepository channelRepository;
     private final ModelInstanceRepository modelInstanceRepository;
     private final ChannelCredentialRepository channelCredentialRepository;
-    private final ConnectivityTester connectivityTester;
+    private final UpstreamClientRegistry upstreamClientRegistry;
 
     /**
      * 创建提供商
@@ -201,11 +201,10 @@ public class ProviderManagerImpl implements ProviderManager {
      */
     @Override
     public com.codingas.gateway.provider.vendor.ConnectivityTestResult testConnectivity(String protocolName, String baseUrl, String apiKey, String model) {
-        ConnectivityTestResult vo = connectivityTester.test(
-                baseUrl,
-                apiKey,
-                protocolName
-        );
+        // 直接经协议域注册表创建真实客户端执行端点连通性测试（原 ConnectivityTester 中间层已移除）
+        ConnectivityTestResult vo = upstreamClientRegistry
+                .getClient(protocolName, baseUrl, apiKey, TEST_CONNECTIVITY_TIMEOUT_SECONDS)
+                .testConnectivity();
 
         // 将 VO 转为应用层用例结果
         return new com.codingas.gateway.provider.vendor.ConnectivityTestResult(
@@ -223,4 +222,7 @@ public class ProviderManagerImpl implements ProviderManager {
                 vo.latencyMs()
         );
     }
+
+    /** 连通性测试超时（秒） */
+    private static final int TEST_CONNECTIVITY_TIMEOUT_SECONDS = 30;
 }

@@ -22,11 +22,8 @@ import com.codingas.gateway.provider.upstream.KeyTestResult;
  *
  * <p>占位实现：第 9 章会接入真实的出站连通性测试与模型探测；当前默认 {@code Stub} 实现返回 PASS。</p>
  *
- * <p>与既有 {@link ConnectivityTester} 的差异：</p>
- * <ul>
- *   <li>{@code ConnectivityTester} 面向 Channel 整体，仅返回布尔型连通性结果</li>
- *   <li>{@code ChannelKeyProbe} 面向单条凭证，返回 {@link KeyTestResult}（含可用模型列表、延迟、认证状态）</li>
- * </ul>
+ * <p>与 Provider 级连通性测试（{@code ProviderManager.testConnectivity}）的差异：
+ * 面向单条凭证，返回 {@link KeyTestResult}（含可用模型列表、延迟、认证状态）。</p>
  */
 public interface ChannelKeyProbe {
 
