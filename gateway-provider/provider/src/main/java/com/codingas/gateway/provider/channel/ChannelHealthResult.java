@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.dto;
+package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 

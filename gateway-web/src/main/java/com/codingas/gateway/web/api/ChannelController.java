@@ -17,12 +17,10 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ChannelHealthCheckRequest;
 import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelService;
-import com.codingas.gateway.provider.dto.ChannelHealthResult;
+import com.codingas.gateway.provider.channel.ChannelHealthResult;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.provider.vendor.ProviderRepository;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -44,28 +42,23 @@ public class ChannelController {
     private final ChannelService channelService;
     private final ChannelHealthService channelHealthService;
     private final ChannelEmergencyService channelEmergencyService;
-    private final ProviderRepository providerRepository;
-    private final ChannelEndpointRepository channelEndpointRepository;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ChannelResponse create(@Valid @RequestBody ChannelRequest request) {
-        return ChannelResponse.from(channelService.create(request.toCommand()),
-                providerRepository, channelEndpointRepository);
+        return ChannelResponse.from(channelService.create(request.toCommand()));
     }
 
     @PutMapping("/{id}")
     public ChannelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ChannelRequest request) {
-        return ChannelResponse.from(channelService.update(id, request.toCommand()),
-                providerRepository, channelEndpointRepository);
+        return ChannelResponse.from(channelService.update(id, request.toCommand()));
     }
 
     @GetMapping("/{id}")
     public ChannelResponse getById(@PathVariable Long id) {
-        return ChannelResponse.from(channelService.getById(id),
-                providerRepository, channelEndpointRepository);
+        return ChannelResponse.from(channelService.getById(id));
     }
 
     /**
@@ -77,15 +70,12 @@ public class ChannelController {
             @RequestParam(required = false) Long providerId,
             @RequestParam(required = false) String billingMode) {
         if (providerId == null) {
-            return ChannelResponse.from(channelService.getAll(),
-                    providerRepository, channelEndpointRepository);
+            return ChannelResponse.from(channelService.getAll());
         } else if (billingMode != null) {
             return ChannelResponse.from(channelService.getByProviderIdAndBillingMode(
-                    providerId, BillingMode.fromCode(billingMode)),
-                    providerRepository, channelEndpointRepository);
+                    providerId, BillingMode.fromCode(billingMode)));
         } else {
-            return ChannelResponse.from(channelService.getByProviderId(providerId),
-                    providerRepository, channelEndpointRepository);
+            return ChannelResponse.from(channelService.getByProviderId(providerId));
         }
     }
 

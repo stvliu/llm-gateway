@@ -41,8 +41,10 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional(readOnly = true)
     @Override
-    public List<ModelInstance> getInstancesByChannelId(Long channelId) {
-        return modelInstanceRepository.findByChannelId(channelId);
+    public List<ModelInstanceView> getInstancesByChannelId(Long channelId) {
+        return modelInstanceRepository.findByChannelId(channelId).stream()
+                .map(this::toView)
+                .toList();
     }
 
     /**
@@ -50,7 +52,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public ModelInstance create(ModelInstanceCreateCommand command) {
+    public ModelInstanceView create(ModelInstanceCreateCommand command) {
         Long channelId = command.getChannelId();
         // 检查是否已关联
         boolean exists = modelInstanceRepository.existsByChannelIdAndModelId(channelId, command.getModelId());
@@ -68,7 +70,18 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
         instance.setState(ModelInstance.State.ACTIVE);
         instance = modelInstanceRepository.save(instance);
         log.info("模型实例创建成功, id={}, channelId={}, modelId={}", instance.getId(), channelId, command.getModelId());
-        return instance;
+        return toView(instance);
+    }
+
+    /**
+     * 组装模型实例视图对象（读取模型规格展示字段）
+     *
+     * @param instance 模型实例实体
+     * @return 模型实例视图对象
+     */
+    private ModelInstanceView toView(ModelInstance instance) {
+        Model model = modelRepository.findById(instance.getModelId()).orElse(null);
+        return new ModelInstanceView(instance, model);
     }
 
     /**
@@ -139,7 +152,7 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
      */
     @Transactional
     @Override
-    public ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command) {
+    public ModelInstanceView update(Long channelId, Long id, ModelInstanceUpdateCommand command) {
         ModelInstance instance = modelInstanceRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("ModelInstance", id));
         if (!instance.getChannelId().equals(channelId)) {
@@ -165,6 +178,6 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
 
         instance = modelInstanceRepository.save(instance);
         log.info("模型实例更新成功, id={}, channelId={}, modelId={}", id, channelId, instance.getModelId());
-        return instance;
+        return toView(instance);
     }
 }

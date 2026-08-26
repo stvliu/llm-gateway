@@ -16,10 +16,9 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
-import com.codingas.gateway.provider.vendor.ProviderRepository;
+import com.codingas.gateway.provider.channel.ChannelView;
 import lombok.Data;
 
 import java.time.Instant;
@@ -28,8 +27,8 @@ import java.util.List;
 /**
  * 渠道响应 DTO（HTTP 契约）
  *
- * <p>由 {@link #from(Channel, ProviderRepository, ChannelEndpointRepository)} 从 {@code Channel}
- * 实体展开提供商名称与端点列表后生成。</p>
+ * <p>由 {@link #from(ChannelView)} 从核心组装好的渠道视图对象纯映射生成
+ * （提供商名称与端点列表已由核心 Service 组装，转换层不依赖持久化仓储）。</p>
  */
 @Data
 public class ChannelResponse {
@@ -50,35 +49,28 @@ public class ChannelResponse {
     private ChannelHealthSource lastHealthSource;
 
     /**
-     * 从渠道实体转换（展开提供商名称与端点列表）
+     * 从渠道视图对象纯映射转换
      *
-     * @param channel            渠道实体
-     * @param providerRepository 提供商仓储（查名称，仅展示用）
-     * @param endpointRepository 端点仓储（查端点列表）
+     * @param view 渠道视图对象（含渠道实体、提供商名称与端点列表）
      * @return 渠道响应 DTO
      */
-    public static ChannelResponse from(Channel channel,
-                                       ProviderRepository providerRepository,
-                                       ChannelEndpointRepository endpointRepository) {
+    public static ChannelResponse from(ChannelView view) {
+        Channel channel = view.getChannel();
         ChannelResponse response = new ChannelResponse();
         response.setId(channel.getId());
         response.setProviderId(channel.getProviderId());
-        // 从 Provider 查找名称（仅展示用）
-        providerRepository.findById(channel.getProviderId())
-            .ifPresent(p -> response.setProviderName(p.getName()));
+        response.setProviderName(view.getProviderName());
         response.setName(channel.getName());
         response.setBillingMode(channel.getBillingMode().name().toLowerCase());
         response.setQuotaLimit(channel.getQuotaLimit());
         response.setTimeout(channel.getTimeout());
         response.setMaxRetries(channel.getMaxRetries());
         response.setState(channel.getState().name());
-        // 查询端点列表
         response.setEndpoints(
-            endpointRepository.findByChannelId(channel.getId()).stream()
+            view.getEndpoints().stream()
                 .map(ChannelEndpointResponse::from)
                 .toList()
         );
-
         response.setCreatedAt(channel.getCreatedAt());
         response.setUpdatedAt(channel.getUpdatedAt());
         // 健康状态字段透传（last-write-wins，未测试过时为 null）
@@ -89,18 +81,12 @@ public class ChannelResponse {
     }
 
     /**
-     * 从渠道实体列表转换
+     * 从渠道视图对象列表纯映射转换
      *
-     * @param channels           渠道实体列表
-     * @param providerRepository 提供商仓储（查名称，仅展示用）
-     * @param endpointRepository 端点仓储（查端点列表）
+     * @param views 渠道视图对象列表
      * @return 渠道响应 DTO 列表
      */
-    public static List<ChannelResponse> from(List<Channel> channels,
-                                             ProviderRepository providerRepository,
-                                             ChannelEndpointRepository endpointRepository) {
-        return channels.stream()
-                .map(c -> from(c, providerRepository, endpointRepository))
-                .toList();
+    public static List<ChannelResponse> from(List<ChannelView> views) {
+        return views.stream().map(ChannelResponse::from).toList();
     }
 }

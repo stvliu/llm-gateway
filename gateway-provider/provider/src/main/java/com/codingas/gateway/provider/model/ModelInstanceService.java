@@ -20,7 +20,8 @@ import java.util.List;
 /**
  * 模型实例应用服务接口
  *
- * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
+ * <p>出入参采用领域对象与轻量用例对象：读返回携带模型规格关联的 {@link ModelInstanceView}，
+ * HTTP 契约（Request/Response DTO）由 web 层负责纯映射。</p>
  */
 public interface ModelInstanceService {
 
@@ -28,17 +29,17 @@ public interface ModelInstanceService {
      * 查询指定渠道下的所有模型实例
      *
      * @param channelId 渠道 ID
-     * @return 模型实例实体列表
+     * @return 模型实例视图对象列表（含模型规格展示字段）
      */
-    List<ModelInstance> getInstancesByChannelId(Long channelId);
+    List<ModelInstanceView> getInstancesByChannelId(Long channelId);
 
     /**
      * 创建模型实例
      *
      * @param command 创建用例入参
-     * @return 创建后的模型实例实体
+     * @return 创建后的模型实例视图对象（含模型规格展示字段）
      */
-    ModelInstance create(ModelInstanceCreateCommand command);
+    ModelInstanceView create(ModelInstanceCreateCommand command);
 
     /**
      * 删除模型实例
@@ -76,7 +77,7 @@ public interface ModelInstanceService {
      * @param channelId 渠道 ID
      * @param id        模型实例 ID
      * @param command   更新用例入参
-     * @return 更新后的模型实例实体
+     * @return 更新后的模型实例视图对象（含模型规格展示字段）
      */
-    ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command);
+    ModelInstanceView update(Long channelId, Long id, ModelInstanceUpdateCommand command);
 }

@@ -91,9 +91,6 @@ class ChannelHealthControllerIntegrationTest {
     private ChannelEmergencyService channelEmergencyService;
 
     @Autowired
-    private com.codingas.gateway.provider.channel.ChannelEndpointRepository channelEndpointRepository;
-
-    @Autowired
     private GlobalExceptionHandler globalExceptionHandler;
 
     @MockBean
@@ -107,8 +104,7 @@ class ChannelHealthControllerIntegrationTest {
     void setUp() {
         // standaloneSetup 跳过 SecurityInterceptorChain 等业务拦截器，
         // 仅装配本次端点所需的 Controller + 全局异常处理
-        ChannelController controller = new ChannelController(channelService, channelHealthService,
-                channelEmergencyService, providerRepository, channelEndpointRepository);
+        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(globalExceptionHandler)
                 .build();

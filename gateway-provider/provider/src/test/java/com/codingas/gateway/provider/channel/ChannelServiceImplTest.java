@@ -24,6 +24,7 @@ import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -36,6 +37,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -68,6 +70,13 @@ class ChannelServiceImplTest {
     @InjectMocks
     private ChannelServiceImpl channelService;
 
+    @BeforeEach
+    void setUp() {
+        // toView 组装需要查询提供商名称与端点列表；lenient 避免未使用该查询的测试报 UnnecessaryStubbing
+        lenient().when(providerRepository.findById(any())).thenReturn(Optional.empty());
+        lenient().when(channelEndpointRepository.findByChannelId(any())).thenReturn(List.of());
+    }
+
     // ==================== getById 测试 ====================
 
     @Nested
@@ -80,11 +89,11 @@ class ChannelServiceImplTest {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            Channel result = channelService.getById(1L);
+            ChannelView result = channelService.getById(1L);
 
             assertThat(result).isNotNull();
-            assertThat(result.getId()).isEqualTo(1L);
-            assertThat(result.getName()).isEqualTo("ch-1");
+            assertThat(result.getChannel().getId()).isEqualTo(1L);
+            assertThat(result.getChannel().getName()).isEqualTo("ch-1");
         }
 
         @Test
@@ -126,12 +135,12 @@ class ChannelServiceImplTest {
                 c.setId(5L);
                 return c;
             });
-            Channel result = channelService.create(request("pay_as_you_go"));
+            ChannelView result = channelService.create(request("pay_as_you_go"));
 
-            assertThat(result.getId()).isEqualTo(5L);
-            assertThat(result.getName()).isEqualTo("ch-1");
-            assertThat(result.getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
-            assertThat(result.getState()).isEqualTo(ChannelState.ACTIVE);
+            assertThat(result.getChannel().getId()).isEqualTo(5L);
+            assertThat(result.getChannel().getName()).isEqualTo("ch-1");
+            assertThat(result.getChannel().getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
+            assertThat(result.getChannel().getState()).isEqualTo(ChannelState.ACTIVE);
             ArgumentCaptor<Channel> captor = ArgumentCaptor.forClass(Channel.class);
             verify(channelRepository).save(captor.capture());
             assertThat(captor.getValue().getBillingMode()).isEqualTo(BillingMode.PAY_AS_YOU_GO);
@@ -179,10 +188,10 @@ class ChannelServiceImplTest {
             when(channelRepository.save(any(Channel.class))).thenReturn(channel);
             ChannelCommand request = new ChannelCommand(10L, "ch-1", "pay_as_you_go", 1000L, null, null);
 
-            Channel result = channelService.update(1L, request);
+            ChannelView result = channelService.update(1L, request);
 
-            assertThat(result.getName()).isEqualTo("ch-1");
-            assertThat(result.getQuotaLimit()).isEqualTo(1000L);
+            assertThat(result.getChannel().getName()).isEqualTo("ch-1");
+            assertThat(result.getChannel().getQuotaLimit()).isEqualTo(1000L);
             // 名称未变 → 不触发重复校验
             verify(channelRepository, never()).existsByProviderIdAndName(any(), any());
         }
@@ -201,11 +210,11 @@ class ChannelServiceImplTest {
             Channel c2 = buildChannel(2L, "ch-2");
             when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
 
-            List<Channel> result = channelService.getAll();
+            List<ChannelView> result = channelService.getAll();
 
             assertThat(result).hasSize(2);
-            assertThat(result.get(0).getName()).isEqualTo("ch-1");
-            assertThat(result.get(1).getName()).isEqualTo("ch-2");
+            assertThat(result.get(0).getChannel().getName()).isEqualTo("ch-1");
+            assertThat(result.get(1).getChannel().getName()).isEqualTo("ch-2");
         }
 
         @Test
@@ -214,10 +223,10 @@ class ChannelServiceImplTest {
             Channel c1 = buildChannel(1L, "ch-1");
             when(channelRepository.findByProviderId(10L)).thenReturn(List.of(c1));
 
-            List<Channel> result = channelService.getByProviderId(10L);
+            List<ChannelView> result = channelService.getByProviderId(10L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getProviderId()).isEqualTo(10L);
+            assertThat(result.get(0).getChannel().getProviderId()).isEqualTo(10L);
         }
 
         @Test
@@ -227,7 +236,7 @@ class ChannelServiceImplTest {
             when(channelRepository.findByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO))
                     .thenReturn(List.of(c1));
 
-            List<Channel> result =
+            List<ChannelView> result =
                     channelService.getByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO);
 
             assertThat(result).hasSize(1);

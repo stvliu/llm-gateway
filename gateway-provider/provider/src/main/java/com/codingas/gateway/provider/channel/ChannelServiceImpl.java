@@ -47,7 +47,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public Channel create(ChannelCommand command) {
+    public ChannelView create(ChannelCommand command) {
         if (channelRepository.existsByProviderIdAndName(command.getProviderId(), command.getName())) {
             throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + command.getName());
         }
@@ -64,12 +64,12 @@ public class ChannelServiceImpl implements ChannelService {
         Channel saved = channelRepository.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
 
-        return saved;
+        return toView(saved);
     }
 
     @Override
     @Transactional
-    public Channel update(Long id, ChannelCommand command) {
+    public ChannelView update(Long id, ChannelCommand command) {
         Channel channel = channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
@@ -89,28 +89,49 @@ public class ChannelServiceImpl implements ChannelService {
         Channel saved = channelRepository.save(channel);
         log.info("Updated channel: id={}", saved.getId());
 
-        return saved;
+        return toView(saved);
     }
 
     @Override
-    public Channel getById(Long id) {
-        return channelRepository.findById(id)
+    public ChannelView getById(Long id) {
+        Channel channel = channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
+        return toView(channel);
     }
 
     @Override
-    public List<Channel> getAll() {
-        return channelRepository.findAll();
+    public List<ChannelView> getAll() {
+        return channelRepository.findAll().stream()
+            .map(this::toView)
+            .toList();
     }
 
     @Override
-    public List<Channel> getByProviderId(Long providerId) {
-        return channelRepository.findByProviderId(providerId);
+    public List<ChannelView> getByProviderId(Long providerId) {
+        return channelRepository.findByProviderId(providerId).stream()
+            .map(this::toView)
+            .toList();
     }
 
     @Override
-    public List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
-        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode);
+    public List<ChannelView> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
+        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode).stream()
+            .map(this::toView)
+            .toList();
+    }
+
+    /**
+     * 组装渠道视图对象（读取提供商名称与端点列表）
+     *
+     * @param channel 渠道实体
+     * @return 渠道视图对象
+     */
+    private ChannelView toView(Channel channel) {
+        String providerName = providerRepository.findById(channel.getProviderId())
+            .map(com.codingas.gateway.provider.vendor.Provider::getName)
+            .orElse(null);
+        List<ChannelEndpoint> endpoints = channelEndpointRepository.findByChannelId(channel.getId());
+        return new ChannelView(channel, providerName, endpoints);
     }
 
     @Override

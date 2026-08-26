@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.provider.model.ModelInstanceView;
 import lombok.Data;
 
 import java.util.List;
@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * 模型实例响应 DTO（HTTP 契约）
  *
- * <p>由 {@link #from(ModelInstance, ModelRepository)} 从 {@code ModelInstance} 实体
- * 展开模型规格展示字段（modelName/displayName/modelFamily）后生成。</p>
+ * <p>由 {@link #from(ModelInstanceView)} 从核心组装好的模型实例视图对象纯映射生成
+ * （模型规格展示字段已由核心 Service 组装，转换层不依赖持久化仓储）。</p>
  */
 @Data
 public class ModelInstanceResponse {
@@ -41,13 +41,13 @@ public class ModelInstanceResponse {
     private String state;
 
     /**
-     * 从模型实例实体转换（展开模型规格展示字段）
+     * 从模型实例视图对象纯映射转换
      *
-     * @param instance        模型实例实体
-     * @param modelRepository 模型仓储（查规格展示字段）
+     * @param view 模型实例视图对象（含模型实例实体与模型规格关联）
      * @return 模型实例响应 DTO
      */
-    public static ModelInstanceResponse from(ModelInstance instance, ModelRepository modelRepository) {
+    public static ModelInstanceResponse from(ModelInstanceView view) {
+        ModelInstance instance = view.getInstance();
         ModelInstanceResponse resp = new ModelInstanceResponse();
         resp.setId(instance.getId());
         resp.setChannelId(instance.getChannelId());
@@ -57,25 +57,22 @@ public class ModelInstanceResponse {
         resp.setWeight(instance.getWeight());
         resp.setState(instance.getState().name());
 
-        modelRepository.findById(instance.getModelId()).ifPresent(spec -> {
-            resp.setModelName(spec.getModelName());
-            resp.setDisplayName(spec.getDisplayName());
-            resp.setModelFamily(spec.getModelFamily());
-        });
+        if (view.getModel() != null) {
+            resp.setModelName(view.getModel().getModelName());
+            resp.setDisplayName(view.getModel().getDisplayName());
+            resp.setModelFamily(view.getModel().getModelFamily());
+        }
 
         return resp;
     }
 
     /**
-     * 从模型实例实体列表转换
+     * 从模型实例视图对象列表纯映射转换
      *
-     * @param instances       模型实例实体列表
-     * @param modelRepository 模型仓储（查规格展示字段）
+     * @param views 模型实例视图对象列表
      * @return 模型实例响应 DTO 列表
      */
-    public static List<ModelInstanceResponse> from(List<ModelInstance> instances, ModelRepository modelRepository) {
-        return instances.stream()
-                .map(i -> from(i, modelRepository))
-                .toList();
+    public static List<ModelInstanceResponse> from(List<ModelInstanceView> views) {
+        return views.stream().map(ModelInstanceResponse::from).toList();
     }
 }

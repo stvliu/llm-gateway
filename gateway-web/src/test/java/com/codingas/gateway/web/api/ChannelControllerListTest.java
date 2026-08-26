@@ -17,14 +17,13 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.channel.ChannelState;
+import com.codingas.gateway.provider.channel.ChannelView;
 import com.codingas.gateway.provider.model.BillingMode;
-import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,7 +37,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -64,25 +62,18 @@ class ChannelControllerListTest {
     @Mock
     private ChannelEmergencyService channelEmergencyService;
 
-    @Mock
-    private ProviderRepository providerRepository;
-
-    @Mock
-    private ChannelEndpointRepository channelEndpointRepository;
-
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelService, channelHealthService,
-                channelEmergencyService, providerRepository, channelEndpointRepository);
+        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 
     /**
-     * 构造一个含完整健康字段的 Channel 实体桩
+     * 构造一个含完整健康字段的 Channel 视图桩（providerName/endpoints 已由核心组装）
      */
-    private Channel stubChannelWithHealth() {
+    private ChannelView stubChannelWithHealth() {
         Channel channel = new Channel();
         channel.setId(1L);
         channel.setProviderId(10L);
@@ -92,14 +83,13 @@ class ChannelControllerListTest {
         channel.setLastHealthCheckAt(Instant.parse("2026-06-13T10:00:00Z"));
         channel.setLastHealthStatus(ChannelHealthStatus.HEALTHY);
         channel.setLastHealthSource(ChannelHealthSource.DRAWER);
-        return channel;
+        return new ChannelView(channel, "OpenAI", List.of());
     }
 
     @Test
     @DisplayName("GET /api/v1/channels 响应应包含三个健康字段")
     void getChannels_responseContainsHealthFields() throws Exception {
         when(channelService.getAll()).thenReturn(List.of(stubChannelWithHealth()));
-        when(channelEndpointRepository.findByChannelId(any())).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/channels"))
                 .andExpect(status().isOk())
@@ -112,7 +102,6 @@ class ChannelControllerListTest {
     @DisplayName("GET /api/v1/channels/{id} 响应应包含三个健康字段")
     void getChannelById_responseContainsHealthFields() throws Exception {
         when(channelService.getById(1L)).thenReturn(stubChannelWithHealth());
-        when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/channels/{id}", 1L))
                 .andExpect(status().isOk())
@@ -131,8 +120,7 @@ class ChannelControllerListTest {
         channel.setBillingMode(BillingMode.PAY_AS_YOU_GO);
         channel.setState(ChannelState.PENDING);
         // 三个健康字段保持 null
-        when(channelService.getById(2L)).thenReturn(channel);
-        when(channelEndpointRepository.findByChannelId(2L)).thenReturn(List.of());
+        when(channelService.getById(2L)).thenReturn(new ChannelView(channel, null, List.of()));
 
         mockMvc.perform(get("/api/v1/channels/{id}", 2L))
                 .andExpect(status().isOk())

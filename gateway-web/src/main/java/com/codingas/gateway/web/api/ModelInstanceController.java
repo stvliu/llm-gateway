@@ -16,7 +16,6 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.ModelInstanceService;
-import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -35,12 +34,10 @@ import java.util.Map;
 public class ModelInstanceController {
 
     private final ModelInstanceService modelInstanceService;
-    private final ModelRepository modelRepository;
 
     @GetMapping
     public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
-        return ModelInstanceResponse.from(
-                modelInstanceService.getInstancesByChannelId(channelId), modelRepository);
+        return ModelInstanceResponse.from(modelInstanceService.getInstancesByChannelId(channelId));
     }
 
     @PostMapping
@@ -50,8 +47,7 @@ public class ModelInstanceController {
             @Valid @RequestBody ModelInstanceCreateRequest request) {
         // 适配层补全 channelId（不同协议从各自上下文中提取）
         request.setChannelId(channelId);
-        return ModelInstanceResponse.from(
-                modelInstanceService.create(request.toCommand()), modelRepository);
+        return ModelInstanceResponse.from(modelInstanceService.create(request.toCommand()));
     }
 
     @DeleteMapping("/{id}")
@@ -90,7 +86,6 @@ public class ModelInstanceController {
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceUpdateRequest request) {
         request.setChannelId(channelId);
-        return ModelInstanceResponse.from(
-                modelInstanceService.update(channelId, id, request.toCommand()), modelRepository);
+        return ModelInstanceResponse.from(modelInstanceService.update(channelId, id, request.toCommand()));
     }
 }
