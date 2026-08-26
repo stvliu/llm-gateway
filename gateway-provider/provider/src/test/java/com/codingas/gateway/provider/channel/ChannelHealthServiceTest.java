@@ -15,8 +15,6 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.upstream.AuthStatus;
-import com.codingas.gateway.provider.upstream.KeyTestResult;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

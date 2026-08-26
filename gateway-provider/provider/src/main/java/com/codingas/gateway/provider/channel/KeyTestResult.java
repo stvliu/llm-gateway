@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
-import com.codingas.gateway.provider.upstream.AuthStatus;
+package com.codingas.gateway.provider.channel;
 
 import java.util.Collections;
 import java.util.List;

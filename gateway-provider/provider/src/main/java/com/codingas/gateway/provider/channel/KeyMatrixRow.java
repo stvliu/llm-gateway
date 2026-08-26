@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.provider.channel;
-import com.codingas.gateway.provider.upstream.AuthStatus;
 
 import java.util.List;
 

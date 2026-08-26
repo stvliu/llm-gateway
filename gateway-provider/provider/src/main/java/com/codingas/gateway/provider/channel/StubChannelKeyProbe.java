@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.upstream.KeyTestResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

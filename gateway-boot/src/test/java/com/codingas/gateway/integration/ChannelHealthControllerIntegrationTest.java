@@ -19,7 +19,7 @@ import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
 import com.codingas.gateway.provider.channel.ChannelManager;
 import com.codingas.gateway.provider.channel.ChannelHealthManager;
-import com.codingas.gateway.provider.upstream.KeyTestResult;
+import com.codingas.gateway.provider.channel.KeyTestResult;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.vendor.Provider;
