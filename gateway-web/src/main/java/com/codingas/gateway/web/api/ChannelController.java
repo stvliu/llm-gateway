@@ -20,7 +20,7 @@ import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
 import com.codingas.gateway.provider.channel.ChannelHealthManager;
 import com.codingas.gateway.provider.channel.ChannelManager;
 import com.codingas.gateway.provider.channel.ChannelHealthResult;
-import com.codingas.gateway.web.api.assembler.ChannelFacade;
+import com.codingas.gateway.web.api.facade.ChannelFacade;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;

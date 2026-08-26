@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.web.api.assembler;
+package com.codingas.gateway.web.api.facade;
 
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelManager;

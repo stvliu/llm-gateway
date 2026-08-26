@@ -91,7 +91,7 @@ class ChannelHealthControllerIntegrationTest {
     private ChannelEmergencyManager channelEmergencyManager;
 
     @Autowired
-    private com.codingas.gateway.web.api.assembler.ChannelFacade channelFacade;
+    private com.codingas.gateway.web.api.facade.ChannelFacade channelFacade;
 
     @Autowired
     private GlobalExceptionHandler globalExceptionHandler;

@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.ModelInstanceManager;
-import com.codingas.gateway.web.api.assembler.ModelInstanceFacade;
+import com.codingas.gateway.web.api.facade.ModelInstanceFacade;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

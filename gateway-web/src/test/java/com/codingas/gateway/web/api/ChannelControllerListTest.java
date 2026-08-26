@@ -20,7 +20,7 @@ import com.codingas.gateway.provider.channel.ChannelHealthManager;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
 import com.codingas.gateway.provider.channel.ChannelManager;
-import com.codingas.gateway.web.api.assembler.ChannelFacade;
+import com.codingas.gateway.web.api.facade.ChannelFacade;
 import com.codingas.gateway.web.api.dto.ChannelResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

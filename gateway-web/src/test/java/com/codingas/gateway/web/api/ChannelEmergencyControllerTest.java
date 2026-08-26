@@ -45,7 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChannelEmergencyControllerTest {
 
     @Mock
-    private com.codingas.gateway.web.api.assembler.ChannelFacade channelFacade;
+    private com.codingas.gateway.web.api.facade.ChannelFacade channelFacade;
 
     @Mock
     private ChannelManager channelManager;
