@@ -31,19 +31,19 @@ public interface ChannelManager {
     /**
      * 创建渠道
      *
-     * @param command 创建用例入参
+     * @param channel 渠道实体（承载 providerId/name/billingMode 等）
      * @return 创建后的渠道实体
      */
-    Channel create(ChannelCommand command);
+    Channel create(Channel channel);
 
     /**
      * 更新渠道
      *
      * @param id      渠道 ID
-     * @param command 更新用例入参
+     * @param channel 渠道实体
      * @return 更新后的渠道实体
      */
-    Channel update(Long id, ChannelCommand command);
+    Channel update(Long id, Channel channel);
 
     /**
      * 按 ID 获取渠道
@@ -106,17 +106,18 @@ public interface ChannelManager {
      * <p>由后端校验 canTransitionTo()，PENDING→ACTIVE 时校验前置条件并级联激活 ModelInstance。</p>
      *
      * @param id      渠道 ID
-     * @param command 状态切换用例入参
+     * @param targetState 目标状态（ChannelState 枚举名）
+     * @param reason      切换原因
      */
-    void setState(Long id, ChannelStateCommand command);
+    void setState(Long id, String targetState, String reason);
 
     /**
      * 添加渠道端点
      *
-     * @param command 端点用例入参
+     * @param endpoint 端点实体（承载 channelId/protocol/endpointUrl）
      * @return 添加后的端点实体
      */
-    ChannelEndpoint addEndpoint(ChannelEndpointCommand command);
+    ChannelEndpoint addEndpoint(ChannelEndpoint endpoint);
 
     /**
      * 更新渠道端点
@@ -126,7 +127,7 @@ public interface ChannelManager {
      * @param command    端点用例入参
      * @return 更新后的端点实体
      */
-    ChannelEndpoint updateEndpoint(Long channelId, Long endpointId, ChannelEndpointCommand command);
+    ChannelEndpoint updateEndpoint(Long channelId, Long endpointId, ChannelEndpoint endpoint);
 
     /**
      * 删除渠道端点

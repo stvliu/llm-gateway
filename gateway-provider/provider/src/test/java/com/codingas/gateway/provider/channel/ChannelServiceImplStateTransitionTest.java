@@ -77,12 +77,12 @@ class ChannelManagerImplStateTransitionTest {
         return channel;
     }
 
-    private ChannelStateCommand request(String targetState) {
-        return new ChannelStateCommand(targetState, null);
+    private void setState(Long id, String targetState) {
+        channelManager.setState(id, targetState, null);
     }
 
-    private ChannelStateCommand request(String targetState, String reason) {
-        return new ChannelStateCommand(targetState, reason);
+    private void setState(Long id, String targetState, String reason) {
+        channelManager.setState(id, targetState, reason);
     }
 
     @Nested
@@ -106,7 +106,7 @@ class ChannelManagerImplStateTransitionTest {
             when(modelInstanceRepository.findByChannelId(1L))
                 .thenReturn(List.of(pendingMi, activeMi));
 
-            channelManager.setState(1L, request("ACTIVE"));
+            setState(1L, "ACTIVE");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.ACTIVE);
@@ -127,7 +127,7 @@ class ChannelManagerImplStateTransitionTest {
 
             when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("ACTIVE")))
+            assertThatThrownBy(() -> setState(1L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("CHANNEL_NO_ENDPOINT"))
                 .hasMessageContaining("请先添加端点");
@@ -145,7 +145,7 @@ class ChannelManagerImplStateTransitionTest {
                 .thenReturn(List.of(createEndpoint()));
             when(channelCredentialRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("ACTIVE")))
+            assertThatThrownBy(() -> setState(1L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("CHANNEL_NO_CREDENTIAL"))
                 .hasMessageContaining("请先添加凭证");
@@ -165,7 +165,7 @@ class ChannelManagerImplStateTransitionTest {
                 .thenReturn(List.of(createCredential()));
             when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("ACTIVE")))
+            assertThatThrownBy(() -> setState(1L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("CHANNEL_NO_MODEL_INSTANCE"))
                 .hasMessageContaining("请先关联模型实例");
@@ -184,7 +184,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            channelManager.setState(1L, request("SUSPENDED", "供应商维护"));
+            setState(1L, "SUSPENDED", "供应商维护");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.SUSPENDED);
@@ -201,7 +201,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            channelManager.setState(1L, request("DEPRECATED", "模型升级"));
+            setState(1L, "DEPRECATED", "模型升级");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.DEPRECATED);
@@ -223,7 +223,7 @@ class ChannelManagerImplStateTransitionTest {
             when(channelCredentialRepository.findByChannelId(1L)).thenReturn(List.of());
             when(modelInstanceRepository.findByChannelId(1L)).thenReturn(List.of());
 
-            channelManager.setState(1L, request("ACTIVE"));
+            setState(1L, "ACTIVE");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.ACTIVE);
@@ -240,7 +240,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.SUSPENDED);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            channelManager.setState(1L, request("DEPRECATED"));
+            setState(1L, "DEPRECATED");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.DEPRECATED);
@@ -257,7 +257,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.SUSPENDED);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            channelManager.setState(1L, request("RETIRED", "渠道下线"));
+            setState(1L, "RETIRED", "渠道下线");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.RETIRED);
@@ -274,7 +274,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.DEPRECATED);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            channelManager.setState(1L, request("RETIRED"));
+            setState(1L, "RETIRED");
 
             verify(channelRepository).save(channelCaptor.capture());
             assertThat(channelCaptor.getValue().getState()).isEqualTo(ChannelState.RETIRED);
@@ -290,7 +290,7 @@ class ChannelManagerImplStateTransitionTest {
         void channelNotFound() {
             when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelManager.setState(99L, request("ACTIVE")))
+            assertThatThrownBy(() -> setState(99L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("CHANNEL_NOT_FOUND"))
                 .hasMessageContaining("渠道不存在");
@@ -302,7 +302,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("PENDING")))
+            assertThatThrownBy(() -> setState(1L, "PENDING"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("INVALID_STATE_TRANSITION"))
                 .hasMessageContaining("不允许从");
@@ -314,7 +314,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.ACTIVE);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("RETIRED")))
+            assertThatThrownBy(() -> setState(1L, "RETIRED"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("INVALID_STATE_TRANSITION"))
                 .hasMessageContaining("不允许从");
@@ -326,7 +326,7 @@ class ChannelManagerImplStateTransitionTest {
             Channel channel = createChannel(1L, ChannelState.RETIRED);
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            assertThatThrownBy(() -> channelManager.setState(1L, request("ACTIVE")))
+            assertThatThrownBy(() -> setState(1L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("INVALID_STATE_TRANSITION"));
         }

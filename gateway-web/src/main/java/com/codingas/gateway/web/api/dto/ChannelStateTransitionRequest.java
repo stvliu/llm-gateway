@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ChannelStateCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -29,12 +28,4 @@ public class ChannelStateTransitionRequest {
     private String targetState;
     private String reason;
 
-    /**
-     * 转换为核心状态切换用例入参
-     *
-     * @return 状态切换用例入参
-     */
-    public ChannelStateCommand toCommand() {
-        return new ChannelStateCommand(targetState, reason);
-    }
 }

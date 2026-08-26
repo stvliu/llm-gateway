@@ -15,7 +15,8 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ChannelCommand;
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.model.BillingMode;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -39,11 +40,18 @@ public class ChannelRequest {
     private Integer maxRetries;
 
     /**
-     * 转换为核心渠道用例入参
+     * 转换为渠道实体（billingMode 转枚举）
      *
-     * @return 渠道用例入参
+     * @return 渠道实体
      */
-    public ChannelCommand toCommand() {
-        return new ChannelCommand(providerId, name, billingMode, quotaLimit, timeout, maxRetries);
+    public Channel toEntity() {
+        Channel channel = new Channel();
+        channel.setProviderId(providerId);
+        channel.setName(name);
+        channel.setBillingMode(BillingMode.fromCode(billingMode));
+        channel.setQuotaLimit(quotaLimit);
+        channel.setTimeout(timeout);
+        channel.setMaxRetries(maxRetries);
+        return channel;
     }
 }

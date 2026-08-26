@@ -46,7 +46,7 @@ public class ChannelFacade {
      * @return 渠道响应 DTO
      */
     public ChannelResponse create(ChannelRequest request) {
-        return toResponse(channelManager.create(request.toCommand()));
+        return toResponse(channelManager.create(request.toEntity()));
     }
 
     /**
@@ -57,7 +57,7 @@ public class ChannelFacade {
      * @return 渠道响应 DTO
      */
     public ChannelResponse update(Long id, ChannelRequest request) {
-        return toResponse(channelManager.update(id, request.toCommand()));
+        return toResponse(channelManager.update(id, request.toEntity()));
     }
 
     /**

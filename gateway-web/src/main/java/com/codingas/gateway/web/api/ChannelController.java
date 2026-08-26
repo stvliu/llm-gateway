@@ -84,7 +84,7 @@ public class ChannelController {
     public void setState(
             @PathVariable Long id,
             @Valid @RequestBody ChannelStateTransitionRequest request) {
-        channelManager.setState(id, request.toCommand());
+        channelManager.setState(id, request.getTargetState(), request.getReason());
     }
 
     @DeleteMapping("/{id}")
@@ -102,7 +102,7 @@ public class ChannelController {
             @Valid @RequestBody ChannelEndpointRequest request) {
         // 适配层补全 channelId（不同协议从各自上下文中提取）
         request.setChannelId(channelId);
-        return ChannelEndpointResponse.from(channelManager.addEndpoint(request.toCommand()));
+        return ChannelEndpointResponse.from(channelManager.addEndpoint(request.toEntity()));
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")
@@ -118,7 +118,7 @@ public class ChannelController {
             @PathVariable Long channelId,
             @PathVariable Long endpointId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        return ChannelEndpointResponse.from(channelManager.updateEndpoint(channelId, endpointId, request.toCommand()));
+        return ChannelEndpointResponse.from(channelManager.updateEndpoint(channelId, endpointId, request.toEntity()));
     }
 
     // ===== 健康检查 =====

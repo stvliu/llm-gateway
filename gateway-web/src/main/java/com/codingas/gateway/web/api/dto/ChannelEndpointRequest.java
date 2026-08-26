@@ -15,7 +15,8 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ChannelEndpointCommand;
+import com.codingas.gateway.provider.channel.ChannelEndpoint;
+import com.codingas.gateway.provider.upstream.Protocol;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -34,11 +35,15 @@ public class ChannelEndpointRequest {
     private String endpointUrl;
 
     /**
-     * 转换为核心端点用例入参
+     * 转换为端点实体（protocol 转枚举）
      *
-     * @return 端点用例入参
+     * @return 端点实体
      */
-    public ChannelEndpointCommand toCommand() {
-        return new ChannelEndpointCommand(channelId, protocol, endpointUrl);
+    public ChannelEndpoint toEntity() {
+        ChannelEndpoint endpoint = new ChannelEndpoint();
+        endpoint.setChannelId(channelId);
+        endpoint.setProtocol(Protocol.fromCode(protocol));
+        endpoint.setEndpointUrl(endpointUrl);
+        return endpoint;
     }
 }
