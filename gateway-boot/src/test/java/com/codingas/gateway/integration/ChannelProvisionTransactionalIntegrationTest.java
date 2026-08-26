@@ -17,7 +17,7 @@ package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.provider.channel.ChannelProvisionManager;
-import com.codingas.gateway.provider.channel.ProvisionCommand;
+import com.codingas.gateway.provider.channel.InlineProviderParams;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
 import com.codingas.gateway.provider.catalog.PlanCatalogRepository;
@@ -135,12 +135,10 @@ class ChannelProvisionTransactionalIntegrationTest {
         when(channelEndpointRepository.save(any(ChannelEndpoint.class)))
                 .thenThrow(new RuntimeException("simulated endpoint save failure"));
 
-        ProvisionCommand request = new ProvisionCommand(null,
-                new ProvisionCommand.InlineProviderCommand(
-                        NEW_PROVIDER_CODE, "Brand New", "测试用", null, null));
-
+                // 行为：抛错
         // 行为：抛错
-        assertThatThrownBy(() -> service.provisionFromPlan(NEW_PLAN_CODE, request))
+        assertThatThrownBy(() -> service.provisionFromPlan(NEW_PLAN_CODE, null,
+                new InlineProviderParams(NEW_PROVIDER_CODE, "Brand New", "测试用", null, null)))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("simulated endpoint save failure");
 
@@ -179,12 +177,10 @@ class ChannelProvisionTransactionalIntegrationTest {
                     return ep;
                 });
 
-        ProvisionCommand request = new ProvisionCommand(null,
-                new ProvisionCommand.InlineProviderCommand(
-                        EXISTING_PROVIDER_CODE, "Should-Be-Ignored Name", "应被忽略", null, null));
-
+                // 走通正常路径
         // 走通正常路径
-        ProvisionResult result = service.provisionFromPlan(EXISTING_PLAN_CODE, request);
+        ProvisionResult result = service.provisionFromPlan(EXISTING_PLAN_CODE, null,
+                new InlineProviderParams(EXISTING_PROVIDER_CODE, "Should-Be-Ignored Name", "应被忽略", null, null));
         assertThat(result.getStatus()).isEqualTo("CREATED");
 
         // 关键断言：原有 Provider 的 name 未被 inline 覆盖（走的是已存在分支，没有 save 路径）

@@ -15,16 +15,20 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import java.util.List;
-
 /**
- * 批量开通用例入参
+ * 内联供应商参数
  *
- * <p>供应商级联开通时，可选择性指定套餐编码列表。不传则开通所有 ACTIVE 套餐。</p>
- *
- * @param planCodes 需要开通的套餐编码列表（可选，不传则全部开通）
+ * @param code        供应商程序标识，必须与 planCode 解析出的 providerCode 一致
+ * @param name        显示名（缺省时回退为 code）
+ * @param description 描述
+ * @param websiteUrl  官网 URL
+ * @param apiDocUrl   API 文档 URL
  */
-public record BatchProvisionCommand(
-        List<String> planCodes
+public record InlineProviderParams(
+        String code,
+        String name,
+        String description,
+        String websiteUrl,
+        String apiDocUrl
 ) {
 }

@@ -58,7 +58,8 @@ public class ChannelProvisionController {
             @PathVariable String planCode,
             @RequestBody(required = false) ProvisionRequest request) {
         return channelProvisionManager.provisionFromPlan(planCode,
-                request != null ? request.toCommand() : null);
+                request != null ? request.getApiKeys() : null,
+                request != null ? request.toInlineParams() : null);
     }
 
     /**
@@ -76,7 +77,7 @@ public class ChannelProvisionController {
             @PathVariable String providerCode,
             @RequestBody(required = false) BatchProvisionRequest request) {
         return channelProvisionManager.provisionBatch(providerCode,
-                request != null ? request.toCommand() : null);
+                request != null ? request.getPlanCodes() : null);
     }
 
     /**

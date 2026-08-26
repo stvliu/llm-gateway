@@ -199,10 +199,7 @@ class ChannelProvisionManagerTest {
             stubProviderCreate();
             stubChannelSave();
 
-            ProvisionCommand request =
-                    new ProvisionCommand(List.of("sk-long-key-12345678", "   ", "sk-2"), null);
-
-            ProvisionResult result = service.provisionFromPlan(PLAN_CODE, request);
+            ProvisionResult result = service.provisionFromPlan(PLAN_CODE, List.of("sk-long-key-12345678", "   ", "sk-2"), null);
 
             assertThat(result.getStatus()).isEqualTo("CREATED");
             ArgumentCaptor<ChannelCredential> captor = ArgumentCaptor.forClass(ChannelCredential.class);
@@ -263,9 +260,7 @@ class ChannelProvisionManagerTest {
             // SKIPPED 路径不会走到 save，无需 stubChannelSave
             when(channelRepository.existsByProviderIdAndName(7L, "p-1")).thenReturn(true);
 
-            BatchProvisionCommand request = new BatchProvisionCommand(List.of("p-1"));
-
-            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
+            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, List.of("p-1"));
 
             assertThat(result.getTotalCount()).isEqualTo(1);
             assertThat(result.getSkippedCount()).isEqualTo(1);
@@ -298,10 +293,7 @@ class ChannelProvisionManagerTest {
         @DisplayName("套餐目录缺失时计入 FAILED（CatalogException 路径）")
         void catalogException_countsFailed() {
             when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.of(existingProvider()));
-            BatchProvisionCommand request = new BatchProvisionCommand(List.of("p-missing"));
-            when(planCatalogRepository.findByPlanCode("p-missing")).thenReturn(Optional.empty());
-
-            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
+            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, List.of("p-missing"));
 
             assertThat(result.getFailedCount()).isEqualTo(1);
             assertThat(result.getResults().get(0).getStatus()).isEqualTo("FAILED");
@@ -327,9 +319,7 @@ class ChannelProvisionManagerTest {
         void providerNotExists_autoCreated() {
             when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.empty());
             stubProviderSaveWithId();
-            BatchProvisionCommand request = new BatchProvisionCommand(List.of());
-
-            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, request);
+            BatchProvisionResult result = service.provisionBatch(PROVIDER_CODE, List.of());
 
             assertThat(result.getTotalCount()).isZero();
             verify(providerRepository).save(any(Provider.class));
@@ -416,7 +406,7 @@ class ChannelProvisionManagerTest {
         });
     }
 
-    private BatchProvisionCommand reqWithPlanCodes(String... codes) {
-        return new BatchProvisionCommand(List.of(codes));
+    private List<String> reqWithPlanCodes(String... codes) {
+        return List.of(codes);
     }
 }

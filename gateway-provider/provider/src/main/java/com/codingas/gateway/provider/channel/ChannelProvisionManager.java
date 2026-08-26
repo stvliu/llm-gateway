@@ -89,7 +89,7 @@ public class ChannelProvisionManager {
      */
     @Transactional
     public ProvisionResult provisionFromPlan(String planCode) {
-        return provisionFromPlan(planCode, null);
+        return provisionFromPlan(planCode, null, null);
     }
 
     /**
@@ -102,14 +102,13 @@ public class ChannelProvisionManager {
      * @return 开通结果
      */
     @Transactional
-    public ProvisionResult provisionFromPlan(String planCode, ProvisionCommand command) {
+    public ProvisionResult provisionFromPlan(String planCode, List<String> apiKeys, InlineProviderParams inline) {
         PlanCatalog catalog = planCatalogRepository.findByPlanCode(planCode)
                 .orElseThrow(() -> new CatalogException("CATALOG_NOT_FOUND",
                         "套餐目录不存在: " + planCode));
 
         // 入口校验：若提供 inlineProvider，其 code 必须与套餐解析的 providerCode 一致
-        ProvisionCommand.InlineProviderCommand inline =
-                command != null ? command.inlineProvider() : null;
+        
         if (inline != null && inline.code() != null
                 && !Objects.equals(inline.code(), catalog.getProviderCode())) {
             throw new CatalogException("INLINE_PROVIDER_CODE_MISMATCH",
@@ -169,9 +168,9 @@ public class ChannelProvisionManager {
         log.info("开通套餐-创建模型实例成功: planCode={}, count={}", planCode, pricing.size());
 
         // 批量创建 API Key 凭证
-        if (command != null && command.apiKeys() != null && !command.apiKeys().isEmpty()) {
+        if (apiKeys != null && !apiKeys.isEmpty()) {
             int priority = 1;
-            for (String apiKey : command.apiKeys()) {
+            for (String apiKey : apiKeys) {
                 if (apiKey == null || apiKey.isBlank()) {
                     continue;
                 }
@@ -189,7 +188,7 @@ public class ChannelProvisionManager {
                 channelCredentialRepository.save(credential);
                 priority++;
             }
-            log.info("开通套餐-批量创建凭证成功: planCode={}, count={}", planCode, command.apiKeys().size());
+            log.info("开通套餐-批量创建凭证成功: planCode={}, count={}", planCode, apiKeys.size());
         }
 
         return ProvisionResult.created(planCode, savedChannel.getId(), endpoints.size(), pricing.size());
@@ -206,7 +205,7 @@ public class ChannelProvisionManager {
      * @return 批量开通结果
      */
     @Transactional(timeout = 30)
-    public BatchProvisionResult provisionBatch(String providerCode, BatchProvisionCommand command) {
+    public BatchProvisionResult provisionBatch(String providerCode, List<String> planCodes) {
         // 1. 确保 Provider 存在
         ensureProvider(providerCode);
 
@@ -214,8 +213,8 @@ public class ChannelProvisionManager {
         List<PlanCatalog> allPlans = planCatalogRepository.findByProviderCode(providerCode);
         List<String> targetPlanCodes;
 
-        if (command != null && command.planCodes() != null && !command.planCodes().isEmpty()) {
-            targetPlanCodes = command.planCodes();
+        if (planCodes != null && !planCodes.isEmpty()) {
+            targetPlanCodes = planCodes;
         } else {
             targetPlanCodes = allPlans.stream()
                     .map(PlanCatalog::getPlanCode)
@@ -314,7 +313,7 @@ public class ChannelProvisionManager {
      * @param inline       内联供应商参数；为空时走默认级联
      * @return 现有或新建的 Provider
      */
-    private Provider ensureProvider(String providerCode, ProvisionCommand.InlineProviderCommand inline) {
+    private Provider ensureProvider(String providerCode, InlineProviderParams inline) {
         return providerRepository.findByCode(providerCode).orElseGet(() -> {
             Provider provider = new Provider();
             provider.setCode(providerCode);

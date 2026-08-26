@@ -142,16 +142,12 @@ class ChannelProvisionManagerInlineProviderTest {
         stubProviderSave();
         stubChannelSave();
 
-        ProvisionCommand request = new ProvisionCommand(null,
-                new ProvisionCommand.InlineProviderCommand(
+        ProvisionResult result = service.provisionFromPlan(PLAN_CODE, null, new InlineProviderParams(
                         PROVIDER_CODE,
                         "OpenAI 显示名",
                         "供应商描述",
                         "https://openai.com",
                         "https://platform.openai.com/docs"));
-
-        // 执行
-        ProvisionResult result = service.provisionFromPlan(PLAN_CODE, request);
 
         // 断言：保存 Provider 时使用了 inline 字段
         ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
@@ -175,10 +171,7 @@ class ChannelProvisionManagerInlineProviderTest {
         stubProviderSave();
         stubChannelSave();
 
-        ProvisionCommand request = new ProvisionCommand(null, null);
-        // inlineProvider == null
-
-        service.provisionFromPlan(PLAN_CODE, request);
+        service.provisionFromPlan(PLAN_CODE, null, null);
 
         ArgumentCaptor<Provider> captor = ArgumentCaptor.forClass(Provider.class);
         verify(providerRepository).save(captor.capture());
@@ -203,11 +196,8 @@ class ChannelProvisionManagerInlineProviderTest {
         when(providerRepository.findByCode(PROVIDER_CODE)).thenReturn(Optional.of(existing));
         stubChannelSave();
 
-        ProvisionCommand request = new ProvisionCommand(null,
-                new ProvisionCommand.InlineProviderCommand(
+        ProvisionResult result = service.provisionFromPlan(PLAN_CODE, null, new InlineProviderParams(
                         PROVIDER_CODE, "新名字（应被忽略）", null, null, null));
-
-        service.provisionFromPlan(PLAN_CODE, request);
 
         // 关键断言：现有 Provider 已存在时，永不触发 save
         verify(providerRepository, never()).save(any(Provider.class));
@@ -220,11 +210,8 @@ class ChannelProvisionManagerInlineProviderTest {
         // 该路径在创建任何资源前就抛错，使用 lenient 防止 strict 模式抱怨未使用桩
         lenient().when(providerRepository.findByCode(any())).thenReturn(Optional.empty());
 
-        ProvisionCommand request = new ProvisionCommand(null,
-                new ProvisionCommand.InlineProviderCommand(
-                        "wrong-code", "Wrong", null, null, null));
-
-        Assertions.assertThatThrownBy(() -> service.provisionFromPlan(PLAN_CODE, request))
+        Assertions.assertThatThrownBy(() -> service.provisionFromPlan(PLAN_CODE, null, new InlineProviderParams(
+                        "wrong-code", "Wrong", null, null, null)))
                 .isInstanceOf(CatalogException.class)
                 .hasMessageContaining("INLINE_PROVIDER_CODE_MISMATCH");
 

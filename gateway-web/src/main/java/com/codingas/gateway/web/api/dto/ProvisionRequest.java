@@ -15,8 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ProvisionCommand;
-import com.codingas.gateway.provider.channel.ProvisionCommand.InlineProviderCommand;
+import com.codingas.gateway.provider.channel.InlineProviderParams;
 import lombok.Data;
 
 import java.util.List;
@@ -58,16 +57,16 @@ public class ProvisionRequest {
     }
 
     /**
-     * 转换为核心开通用例入参
+     * 转换为内联供应商参数
      *
-     * @return 开通用例入参
+     * @return 内联供应商参数（无内联时为 null）
      */
-    public ProvisionCommand toCommand() {
-        InlineProviderCommand inlineCommand = inlineProvider != null
-                ? new InlineProviderCommand(
-                        inlineProvider.code(), inlineProvider.name(), inlineProvider.description(),
-                        inlineProvider.websiteUrl(), inlineProvider.apiDocUrl())
-                : null;
-        return new ProvisionCommand(apiKeys, inlineCommand);
+    public InlineProviderParams toInlineParams() {
+        if (inlineProvider == null) {
+            return null;
+        }
+        return new InlineProviderParams(
+                inlineProvider.code(), inlineProvider.name(), inlineProvider.description(),
+                inlineProvider.websiteUrl(), inlineProvider.apiDocUrl());
     }
 }

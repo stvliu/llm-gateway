@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.BatchProvisionCommand;
 import lombok.Data;
 
 import java.util.List;
@@ -31,12 +30,5 @@ public class BatchProvisionRequest {
     /** 需要开通的套餐编码列表（可选，不传则全部开通） */
     private List<String> planCodes;
 
-    /**
-     * 转换为核心批量开通用例入参
-     *
-     * @return 批量开通用例入参
-     */
-    public BatchProvisionCommand toCommand() {
-        return new BatchProvisionCommand(planCodes);
-    }
+
 }
