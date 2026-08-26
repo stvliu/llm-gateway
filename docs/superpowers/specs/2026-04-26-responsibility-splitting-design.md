@@ -24,8 +24,8 @@
 - **单模块架构**：用 package 代替模块划分层次
 - **Gateway 接口定义在 domain 层**（依赖倒置）
 - **Gateway 实现在 infrastructure 层**
-- 跨域协作通过**应用服务层**编排
-- 旁路操作通过**领域事件**解耦
+- 跨域协作通过**管理服务层**编排
+- 旁路操作通过**业务事件**解耦
 
 ### 1.3 COLA Light 5.0 核心概念
 
@@ -107,7 +107,7 @@ gateway-boot/                          # Maven 单一模块
 |---|------|---------|
 | **adapter** | 接收请求、返回响应 | Controller、DTO（按用例分包） |
 | **application** | 用例编排，跨域协调 | Application Service（按用例分包） |
-| **domain** | 业务逻辑、领域模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
+| **domain** | 业务逻辑、模型 | Entity、Domain Service、Gateway 接口、异常、枚举 |
 | **infrastructure** | 技术实现 | Gateway 实现、配置、工具 |
 | **common** | 跨领域共享 | 基础异常、技术常量、工具类 |
 
@@ -145,7 +145,7 @@ domain/xxx ← 只依赖 domain/gateway，不依赖 infrastructure
 |--------|---------------------|---------------------|
 | **接口定义位置** | 调用方 | domain 层 |
 | **实现位置** | 被调用方 | infrastructure 层 |
-| **依赖方向** | 应用服务 → 领域服务 | Domain → Gateway 接口 |
+| **依赖方向** | 管理服务 → 管理服务 | Domain → Gateway 接口 |
 | **外部依赖** | 直接调用 | 通过接口间接调用 |
 
 ### 3.3 Gateway 接口定义示例
@@ -225,7 +225,7 @@ public class JpaApiKeyGateway implements ApiKeyGateway {
 /**
  * API 密钥认证服务
  *
- * <p>领域服务，不直接操作持久化，通过 Gateway 接口访问。</p>
+ * <p>管理服务，不直接操作持久化，通过 Gateway 接口访问。</p>
  */
 @Service
 public class ApiKeyAuthService {
@@ -294,7 +294,7 @@ domain/
 │   │   ├── User.java
 │   │   ├── GatewayApiKey.java
 │   │   └── IpBlocklist.java
-│   ├── service/              # 领域服务
+│   ├── service/              # 管理服务
 │   │   ├── AuthenticationService.java
 │   │   ├── RateLimitService.java
 │   │   └── RbacService.java
@@ -311,7 +311,7 @@ domain/
 │   │   ├── Model.java
 │   │   ├── Provider.java
 │   │   └── RouteGroup.java
-│   ├── service/              # 领域服务
+│   ├── service/              # 管理服务
 │   │   └── ModelRouterService.java
 │   ├── gateway/             # 路由领域 Gateway 接口
 │   │   ├── ModelGateway.java
@@ -324,7 +324,7 @@ domain/
     │   ├── TokenUsage.java
     │   ├── AuditLog.java
     │   └── TokenLimit.java
-    ├── service/             # 领域服务
+    ├── service/             # 管理服务
     │   └── TokenTrackingService.java
     ├── gateway/
     ├── enums/
@@ -345,7 +345,7 @@ domain/
 
 ## 5. 请求流程
 
-### 5.1 主流程：应用服务编排
+### 5.1 主流程：管理服务编排
 
 ```
 HTTP 请求
@@ -420,8 +420,8 @@ public class LLMChatService {
 | 方式 | 场景 | 规则 |
 |------|------|------|
 | **Gateway 接口** | Domain 访问外部资源 | ✅ 定义在 domain/gateway/ |
-| **应用服务编排** | 主流程（认证→路由→调用） | ✅ Application 调用 Domain Service |
-| **领域事件** | 旁路（统计、审计） | ✅ 异步解耦 |
+| **管理服务编排** | 主流程（认证→路由→调用） | ✅ Application 调用 Domain Service |
+| **业务事件** | 旁路（统计、审计） | ✅ 异步解耦 |
 | **Domain 直接调用其他 Domain** | 主流程中 | ❌ 禁止 |
 
 ---
@@ -473,7 +473,7 @@ public class LLMChatService {
 - **Gateway 模式**：接口定义在 domain/xxx/gateway/，实现 in infrastructure/xxx/gateway/
 - **依赖倒置**：Domain 只知道 Gateway 接口，不知道实现
 - **业务内聚**：domain/xxx 按业务能力组织，Entity + Service + Gateway 在一起
-- **应用服务编排**：跨域协作在 application 层（按用例分包）
+- **管理服务编排**：跨域协作在 application 层（按用例分包）
 - **旁路事件驱动**：统计、审计用事件异步处理
 
 **架构优势：**

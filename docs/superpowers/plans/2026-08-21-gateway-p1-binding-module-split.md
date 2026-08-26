@@ -14,7 +14,7 @@
 
 - **顶层迁移**：`com.codingas.gateway.<layer>.<域段>.<rest>` → `com.codingas.gateway.<模块根包>.<rest>`（`layer` = domain/application/infrastructure，去掉；`域段` → 模块根包）
 - **R3 绑定类**：模块根包拼接绑定类型 → `<模块根包><binding>.<rest>`（JPA → `Xdata`，HTTP → `Xhttp`）
-- **R4 业务子包化**：核心模块内部按**业务概念子包**重排（仿 Jmix `model/role/user`），去除 `entity`/`gateway` 架构子包；实现进 `impl/`、应用服务进 `service/`、DTO 进 `dto/`、枚举/异常跟随所属概念子包
+- **R4 业务子包化**：核心模块内部按**业务概念子包**重排（仿 Jmix `model/role/user`），去除 `entity`/`gateway` 架构子包；实现进 `impl/`、管理服务进 `service/`、DTO 进 `dto/`、枚举/异常跟随所属概念子包
 - **R1**：每个模块唯一根包，禁止同包跨模块
 - **行为不变**：只改包名 + 模块归属，**不改任何业务逻辑**；`extends BaseDo` 的 DO 仍继承 `com.codingas.gateway.common.entity.BaseDo`（common 不变）
 

@@ -8,7 +8,7 @@ design-doc: docs/superpowers/specs/2026-06-19-resilience-architecture-design.md
 base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 ---
 
-**Goal:** 将 Application 升级为权限+行为聚合根、移除 Team 体系，并补齐 Channel 级（L1）透明容灾与应用级容灾画像/Cluster 故障域分组。
+**Goal:** 将 Application 升级为权限+行为根实体、移除 Team 体系，并补齐 Channel 级（L1）透明容灾与应用级容灾画像/Cluster 故障域分组。
 
 **Architecture:** 分四段顺序交付 P-r（权限重构地基）→ P0（路由与熔断错配修正）→ P1（L1 Channel 级转移回路）→ P2（画像+Cluster）。权限锚点从 userId 改为 applicationId，权限链重写为 `UserApiKey → Application → ApplicationChannel → Channel`；容灾栈四层（L0 Key→L1 Channel→L2 模型→L3 抛错），由 `ChannelFailoverInvoker` 在候选列表内逐个试，错误分流表决定 L1/L2/NONE。
 
@@ -25,7 +25,7 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 - 所有可变参数走 `@ConfigurationProperties`，禁止魔法数字。
 - 构建命令：`./mvnw -pl gateway-boot -am test`（测试）；`./mvnw -pl gateway-boot -am clean install -DskipTests`（仅构建）。
 - Flyway 版本号续接现有最大 V50，本计划从 V51 起（Task 1.1 已用 V51）。后续：1.2 追加表入 V51 或新建、1.6 迁移 V52、1.7 删表 V53、4.1 画像 V54、4.2 Cluster V55、4.4 seed V56。实现时以仓库实际最大版本号 +1 为准。
-- **实体风格铁律**：所有领域实体继承 `common/entity/BaseEntity`（已封装 id + createdBy/createdAt/updatedBy/updatedAt 审计字段），使用 `@Data + @EqualsAndHashCode(callSuper=true) + @DomainEntity`，参照 `domain/supply/entity/Channel.java`。实体类不得自包含重复声明审计字段。brief 中若列出审计字段仅作字段语义说明，实现时审计字段来自 BaseEntity 继承，业务字段单独声明。
+- **实体风格铁律**：所有实体继承 `common/entity/BaseEntity`（已封装 id + createdBy/createdAt/updatedBy/updatedAt 审计字段），使用 `@Data + @EqualsAndHashCode(callSuper=true) + @DomainEntity`，参照 `domain/supply/entity/Channel.java`。实体类不得自包含重复声明审计字段。brief 中若列出审计字段仅作字段语义说明，实现时审计字段来自 BaseEntity 继承，业务字段单独声明。
 - 涉及业务逻辑的任务遵循 TDD：先写失败测试，再实现。
 - D8 决策：**不建 `ApplicationModel`/`application_models` 表**。模型可见性由渠道上挂哪些 ModelInstance 隐式决定。proposal 第105行的 `application_models` 项已被 design D8 覆盖作废，本计划不实现。
 
@@ -33,7 +33,7 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 
 ### 领域层新增/修改
 
-- **Create** `domain/application/entity/Application.java` — 应用聚合根实体（code/name/description/state + 审计字段 + 预留 quota/profile 字段）
+- **Create** `domain/application/entity/Application.java` — 应用根实体实体（code/name/description/state + 审计字段 + 预留 quota/profile 字段）
 - **Create** `domain/application/entity/ApplicationChannel.java` — 应用-渠道授权关联实体
 - **Create** `domain/application/gateway/ApplicationGateway.java` — 应用查询/持久化 Gateway 接口
 - **Create** `domain/application/gateway/ApplicationChannelGateway.java` — 应用-渠道授权 Gateway 接口
@@ -103,7 +103,7 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 
 ## 里程碑 P-r：权限重构（地基）
 
-### Task 1.1: Application 聚合根实体 + applications 表
+### Task 1.1: Application 根实体实体 + applications 表
 
 **Files:**
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/domain/application/entity/Application.java`
@@ -111,13 +111,13 @@ base-ref: f6093b75eaaf961e0f3902bd41ebbdc7037e539a
 - Test: `gateway-boot/src/test/java/com/codingas/gateway/domain/application/entity/ApplicationTest.java`
 
 **Interfaces:**
-- Produces: `Application` 实体，字段 `Long id; String code; String name; String description; ApplicationState state; Long resilienceProfileId; Long quotaBudgetId; Long dashboardId; Long createdBy; Instant createdAt; Long updatedBy; Instant updatedAt;`，构造器 + Getter/Setter（领域模型纯洁，无业务逻辑）。
+- Produces: `Application` 实体，字段 `Long id; String code; String name; String description; ApplicationState state; Long resilienceProfileId; Long quotaBudgetId; Long dashboardId; Long createdBy; Instant createdAt; Long updatedBy; Instant updatedAt;`，构造器 + Getter/Setter（模型纯洁，无业务逻辑）。
 
 - [x] **Step 1: 写实体与枚举**
 
 创建 `domain/application/entity/ApplicationState.java` 枚举：`ACTIVE, INACTIVE`，带 `isRoutable()` 返回 `this == ACTIVE`。
 
-创建 `Application.java`：Lombok `@Getter @Setter`，无参构造器，全参构造器（不含 id/审计字段）。中文 Javadoc 说明「应用聚合根：权限+行为双聚合，承载 Key 归属、渠道可见性、容灾画像，预留配额/看板字段」。
+创建 `Application.java`：Lombok `@Getter @Setter`，无参构造器，全参构造器（不含 id/审计字段）。中文 Javadoc 说明「应用根实体：权限+行为双聚合，承载 Key 归属、渠道可见性、容灾画像，预留配额/看板字段」。
 
 - [x] **Step 2: 写 Flyway 迁移**
 
@@ -156,7 +156,7 @@ Expected: PASS
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/application/ \
         gateway-boot/src/main/resources/db/migration/V37__add_application_tables.sql \
         gateway-boot/src/test/java/com/codingas/gateway/domain/application/
-git commit -m "feat(application): 新增 Application 聚合根实体与 applications 表"
+git commit -m "feat(application): 新增 Application 根实体实体与 applications 表"
 ```
 
 ### Task 1.2: ApplicationChannel 实体 + 表

@@ -238,7 +238,7 @@ GatewayException (common/exception/)
 └── ... (其他域异常不变)
 ```
 
-## 6. Identity 值对象
+## 6. Identity 不可变对象
 
 替代原 `UserAuthResult`，语义更精准：
 

@@ -29,9 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 应用应用服务实现
+ * 应用管理服务实现
  *
- * <p>管理应用聚合根的 CRUD 与渠道授权绑定。</p>
+ * <p>管理应用根实体的 CRUD 与渠道授权绑定。</p>
  * <p>code 全局唯一校验；创建时状态默认 ACTIVE；删除时级联清理渠道授权关联。</p>
  *
  * <p>Task 8：移除 {@code bindResilienceProfile} 与 ResilienceProfileGateway 依赖；

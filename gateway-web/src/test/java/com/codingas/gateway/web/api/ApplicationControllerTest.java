@@ -39,7 +39,7 @@ import static org.mockito.Mockito.when;
  * ApplicationController 单元测试
  *
  * <p>Controller 现在直接返回业务对象，由 ApiResponseWrapperAdvice 自动包装。
- * 应用是权限+行为双聚合根，本测试覆盖 Task 6 的 GET /api-keys 与 Task 4 的 DELETE 冲突前置校验。</p>
+ * 应用是权限+行为双根实体，本测试覆盖 Task 6 的 GET /api-keys 与 Task 4 的 DELETE 冲突前置校验。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ApplicationController 测试")

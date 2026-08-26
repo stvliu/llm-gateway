@@ -140,9 +140,9 @@ public class ModelSpec extends BaseEntity {
 }
 ```
 
-## 领域服务与 Gateway 接口
+## 管理服务与 Gateway 接口
 
-### 领域服务
+### 管理服务
 
 | 服务 | 职责 |
 |---------|------|

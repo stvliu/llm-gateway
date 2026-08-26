@@ -5,7 +5,7 @@ TBD - created by archiving change refactor-resilience-to-application-strategy. U
 ## Requirements
 ### Requirement: 应用级失败处理策略
 
-系统 SHALL 在 Application 聚合根上提供 `failureStrategy` 枚举字段（轻量单字段，不独立实体），承载该应用的失败处理模式。策略 SHALL 为三选一互斥：
+系统 SHALL 在 Application 根实体上提供 `failureStrategy` 枚举字段（轻量单字段，不独立实体），承载该应用的失败处理模式。策略 SHALL 为三选一互斥：
 
 - `FAIL_FAST`（快速失败）：第一个 Key 失败立即抛错，L0（同渠道换 Key）与 L1（换渠道）均不跑
 - `FAIL_OVER`（失败转移）：L0 跑（同渠道换 Key）+ L1 跑（换渠道），全候选耗尽抛错

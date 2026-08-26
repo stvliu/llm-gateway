@@ -18,7 +18,7 @@ package com.codingas.gateway.iam.application;
 /**
  * 应用状态枚举
  *
- * <p>应用聚合根的生命周期状态，控制是否参与流量路由。</p>
+ * <p>应用根实体的生命周期状态，控制是否参与流量路由。</p>
  *
  * <ul>
  *   <li>ACTIVE — 启用，可路由</li>

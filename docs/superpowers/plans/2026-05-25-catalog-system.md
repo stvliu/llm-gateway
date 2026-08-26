@@ -922,7 +922,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 目录领域服务
+ * 目录管理服务
  *
  * <p>封装同步、upsert、markDeprecated、物化核心逻辑。</p>
  */

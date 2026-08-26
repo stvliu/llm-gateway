@@ -44,7 +44,7 @@ import static org.mockito.Mockito.*;
 /**
  * ApplicationManagerImpl 单元测试
  *
- * <p>验证应用聚合根的 CRUD 与渠道授权绑定业务逻辑：
+ * <p>验证应用根实体的 CRUD 与渠道授权绑定业务逻辑：
  * code 唯一校验、状态默认值、渠道授权先删后建、timeout 透传等。</p>
  *
  * <p>Task 8：{@code resilienceProfileId}/bindResilienceProfile 退场，改为 {@code timeout} 透传。</p>

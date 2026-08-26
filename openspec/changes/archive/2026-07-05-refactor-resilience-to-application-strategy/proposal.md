@@ -1,6 +1,6 @@
 ## Why
 
-当前容灾模型中，Cluster（故障域聚合根）与 Application 在「控制路由走向」上职责交叉：Application 通过 `ApplicationChannel.priority` 配置转移顺序，Cluster 通过 `Channel.clusterId` 驱动共因跳过，两者独立配置、彼此不可见，语义会冲突（应用配的顺序可能被共因跳过覆盖）。且 Cluster 共因跳过会误杀不共因的候选（如同供应商不同账户的多 Key，账户额度独立、不共因，却被同 clusterId 跳过）。经场景验证（研发自动化同供应商多 Key、OpenAI 官方+Azure 跨供应商共因），共因跳过的收益（首次故障省几次失败尝试）配不上其复杂度，且熔断器已覆盖持续故障的痛感。
+当前容灾模型中，Cluster（故障域根实体）与 Application 在「控制路由走向」上职责交叉：Application 通过 `ApplicationChannel.priority` 配置转移顺序，Cluster 通过 `Channel.clusterId` 驱动共因跳过，两者独立配置、彼此不可见，语义会冲突（应用配的顺序可能被共因跳过覆盖）。且 Cluster 共因跳过会误杀不共因的候选（如同供应商不同账户的多 Key，账户额度独立、不共因，却被同 clusterId 跳过）。经场景验证（研发自动化同供应商多 Key、OpenAI 官方+Azure 跨供应商共因），共因跳过的收益（首次故障省几次失败尝试）配不上其复杂度，且熔断器已覆盖持续故障的痛感。
 
 同时，不同下游应用场景（流程自动化/研发自动化/AGI/BI）对失败处理的诉求差异大（BI 愿快速失败省成本、流程自动化要转移保可用、研发自动化要同渠道换 Key），当前无应用级失败处理策略，无法表达场景差异。
 
@@ -9,7 +9,7 @@
 ## What Changes
 
 **删除（减法）**：
-- **BREAKING** 删除 Cluster 故障域聚合根全套：实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
+- **BREAKING** 删除 Cluster 故障域根实体全套：实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
 - **BREAKING** 删除 `Channel.clusterId` 字段、`RoutingContext.clusterId` 字段
 - **BREAKING** 删除 `ChannelFailoverInvoker` 共因跳过逻辑（`commonCauseFailedClusters` + 跳过判定 + `publishFailoverEvent` 的 `commonCauseSkip` 参数）
 - **BREAKING** 删除 `FailoverOccurredEvent`/`FailoverEvent`/`FailoverEventDo`/`FailoverEventResponse` 的 `commonCauseSkip` + `fromClusterId`/`toClusterId` 字段

@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * 应用响应 DTO（HTTP 契约）
  *
- * <p>返回应用聚合根的完整字段，含应用级 timeout 与预留的配额预算/看板 ID。</p>
+ * <p>返回应用根实体的完整字段，含应用级 timeout 与预留的配额预算/看板 ID。</p>
  */
 @Data
 public class ApplicationResponse {

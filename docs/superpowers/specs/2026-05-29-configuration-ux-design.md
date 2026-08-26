@@ -9,7 +9,7 @@
 
 ### 1.1 用户思维模型优先
 
-界面按用户的思维模型组织，而非后端领域模型：
+界面按用户的思维模型组织，而非后端模型：
 
 | 用户思维 | 后端实体 |
 |---------|---------|
@@ -350,7 +350,7 @@ curl https://api.your-gateway.com/v1/chat/completions \
 ### 12.1 模板系统
 
 - 内置模板以 JSON/YAML 格式存储在 `gateway-boot/src/main/resources/templates/`
-- 模板数据结构对齐 `Channel` + `ChannelEndpoint` + `ChannelModel` 聚合根
+- 模板数据结构对齐 `Channel` + `ChannelEndpoint` + `ChannelModel` 根实体
 - 自定义模板存储在数据库 `provider_templates` 表中
 - 模板更新不影响已实例化的配置（复制而非引用）
 

@@ -12,7 +12,7 @@
 | 模块 | 主文件数 | 测试文件数 | 说明 |
 |------|----------|------------|------|
 | gateway-common | 3 | 3 | DTO、异常基类 |
-| gateway-core | ~50 | 6 | 领域实体、Gateway接口、服务、仓储、基础设施 |
+| gateway-core | ~50 | 6 | 实体、Gateway接口、服务、仓储、基础设施 |
 | gateway-infrastructure | 9 | 0 | JpaGateway 实现 |
 | gateway-router | 6 | 2 | 路由调度、协议转换 |
 | gateway-adapter | ~16 | 6 | LLM 适配器 (OpenAI/Anthropic) |
@@ -192,7 +192,7 @@ gateway-boot 中已存在:
 
 ## 六、实施步骤
 
-### 阶段 1: 核心领域模型迁移
+### 阶段 1: 核心模型迁移
 1. 迁移 gateway-core/domain/entity 到 gateway-boot/domain/
 2. 迁移 gateway-core/domain/gateway 到 gateway-boot/domain/
 3. 迁移 gateway-core/domain/enums 到 gateway-boot/common/enums/

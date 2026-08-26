@@ -25,16 +25,16 @@ import java.util.stream.Collectors;
 /**
  * 敏感数据规则对象转换器
  *
- * <p>负责在领域实体 {@link SensitiveDataRule} 和数据对象 {@link SensitiveDataRuleDo} 之间进行转换。</p>
+ * <p>负责在实体 {@link SensitiveDataRule} 和数据对象 {@link SensitiveDataRuleDo} 之间进行转换。</p>
  */
 @Component
 public class SensitiveDataRuleConverter {
 
     /**
-     * 将数据对象转换为领域实体
+     * 将数据对象转换为实体
      *
      * @param ruleDo 数据对象
-     * @return 领域实体
+     * @return 实体
      */
     public SensitiveDataRule toDomain(SensitiveDataRuleDo ruleDo) {
         if (ruleDo == null) {
@@ -55,9 +55,9 @@ public class SensitiveDataRuleConverter {
     }
 
     /**
-     * 将领域实体转换为数据对象
+     * 将实体转换为数据对象
      *
-     * @param rule 领域实体
+     * @param rule 实体
      * @return 数据对象
      */
     public SensitiveDataRuleDo toDataObject(SensitiveDataRule rule) {
@@ -79,10 +79,10 @@ public class SensitiveDataRuleConverter {
     }
 
     /**
-     * 将数据对象列表转换为领域实体列表
+     * 将数据对象列表转换为实体列表
      *
      * @param ruleDos 数据对象列表
-     * @return 领域实体列表
+     * @return 实体列表
      */
     public List<SensitiveDataRule> toDomainList(List<SensitiveDataRuleDo> ruleDos) {
         if (ruleDos == null) {
@@ -95,9 +95,9 @@ public class SensitiveDataRuleConverter {
     }
 
     /**
-     * 将领域实体列表转换为数据对象列表
+     * 将实体列表转换为数据对象列表
      *
-     * @param rules 领域实体列表
+     * @param rules 实体列表
      * @return 数据对象列表
      */
     public List<SensitiveDataRuleDo> toDataObjectList(List<SensitiveDataRule> rules) {

@@ -10,7 +10,7 @@ status: final
 
 ## 设计目标
 
-1. 删除 Cluster 故障域聚合根与共因跳过，消除与 Application 的职责交叉
+1. 删除 Cluster 故障域根实体与共因跳过，消除与 Application 的职责交叉
 2. 引入轻量应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一），支持下游场景差异化
 3. 容灾走向由应用策略 + ApplicationChannel.priority + 端点级熔断器承担
 4. 补齐管理员容灾管理前端功能

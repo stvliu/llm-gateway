@@ -50,7 +50,7 @@ Run: `grep -rl "ProviderType" gateway-boot/src/main/java/`
 
 - [ ] **Step 3: 从所有实体中删除 CatalogSource/ProviderType 字段**
 
-需要修改的领域实体：
+需要修改的实体：
 - `ProviderCatalog.java` — 删除 `source` 和 `providerType` 字段
 - `ModelCatalog.java` — 删除 `source` 字段
 - `PlanCatalog.java` — 删除 `source` 字段
@@ -264,7 +264,7 @@ git commit -m "refactor: 合并 ModelCatalog 到 Model，新增 knowledgeCutoff 
 ### Task 4: ChannelModel → ModelInstance
 
 **Files:**
-- Create: `ModelInstance.java` (领域实体)
+- Create: `ModelInstance.java` (实体)
 - Create: `ModelInstanceGateway.java` (Gateway 接口)
 - Create: `ModelInstanceGatewayImpl.java` (Gateway 实现)
 - Create: `ModelInstanceDo.java` (JPA DO)
@@ -272,7 +272,7 @@ git commit -m "refactor: 合并 ModelCatalog 到 Model，新增 knowledgeCutoff 
 - Delete: `ChannelModel.java` 及相关文件
 - Modify: 所有引用 ChannelModel/ChannelModelGateway 的文件
 
-- [ ] **Step 1: 创建 ModelInstance 领域实体**
+- [ ] **Step 1: 创建 ModelInstance 实体**
 
 在 `domain/supply/entity/ModelInstance.java` 创建新实体，包含字段：channelId, modelId, upstreamModelName, capabilitiesOverride (Map<String,Boolean>), contextWindowOverride (Integer), priority (Integer, 默认100), weight (Integer, 默认100), quotaLimit (Long), state (ChannelModelState)
 

@@ -16,7 +16,7 @@
 package com.codingas.gateway.common.event;
 
 /**
- * 领域事件发布器
+ * 业务事件发布器
  *
  * <p>通用接口，支持本地和远程两种实现。</p>
  */
@@ -24,9 +24,9 @@ package com.codingas.gateway.common.event;
 public interface BizEventPublisher {
 
     /**
-     * 发布领域事件
+     * 发布业务事件
      *
-     * @param event 领域事件
+     * @param event 业务事件
      * @param <T> 事件类型
      */
     <T extends BizEvent> void publish(T event);

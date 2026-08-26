@@ -4,7 +4,7 @@
 
 ### Requirement: Cluster 故障域实体
 
-系统 SHALL 提供显式 `Cluster` 领域实体作为 Channel 的故障域分组。同组 Channel 共享共因特征（同供应商/同账号/同区域/同专线）。
+系统 SHALL 提供显式 `Cluster` 实体作为 Channel 的故障域分组。同组 Channel 共享共因特征（同供应商/同账号/同区域/同专线）。
 
 **实体字段**:
 - `code` — 故障域编码，全局唯一（如 `openai-us`/`claude-bedrock`）

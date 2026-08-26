@@ -11,7 +11,7 @@ LLM-Gateway 已完成第一轮模块化（`modularization-restructure` 已归档
 
 本次改造**参照 Jmix 框架的模块化内涵**（而非表面机制）重划模块边界，达到：
 
-1. **模块依赖 API**：跨模块依赖只能命中对方域的根包 API（领域模型 + 端口接口），JPA DO/Repository/HTTP 实现物理不可见、不可依赖。
+1. **模块依赖 API**：跨模块依赖只能命中对方域的根包 API（模型 + 端口接口），JPA DO/Repository/HTTP 实现物理不可见、不可依赖。
 2. **实现与组装用 starter**：每个业务域拆分为「核心模块（纯逻辑）+ 绑定模块（技术实现）+ starter（纯装配）」三态；装配显式化，替代隐式包扫描。
 
 **行为不变**：本次为结构性重构，存量运行时行为（协议转换语义、路由、配额、审计等）保持不变。
@@ -39,7 +39,7 @@ jmix-security/
 
 **Jmix 内涵的三条铁律**：
 
-1. **核心模块零技术依赖**：`security.gradle` 无 jakarta.persistence / spring-boot / eclipselink；核心模块的领域模型是纯 POJO（`@JmixEntity`），真正的 JPA 实体在绑定模块（`security-data`）。
+1. **核心模块零技术依赖**：`security.gradle` 无 jakarta.persistence / spring-boot / eclipselink；核心模块的模型是纯 POJO（`@JmixEntity`），真正的 JPA 实体在绑定模块（`security-data`）。
 2. **技术实现拆独立绑定模块**：JPA（`-data`）、UI（`-flowui`）、远程数据源（`-restds`）各成绑定模块，依赖核心模块 + 具体技术，应用按需组装。
 3. **starter 纯装配**：`SecurityAutoConfiguration` 只含 `@AutoConfiguration` + `@Import({CoreConfiguration, SecurityConfiguration})` + `@ConditionalOnMissingBean` + bean 注册；`META-INF/spring/...AutoConfiguration.imports` 注册；`@ConfigurationProperties`（`SecurityProperties`）放核心模块，构造器绑定 + `@DefaultValue`，`@ConfigurationPropertiesScan` 统一扫描。
 
@@ -65,9 +65,9 @@ jmix-security/
 | 核心模块纯模型 | `@DomainEntity` 纯 POJO（`@Component` 原型 Bean + `BaseEntity` 抽象类，零 JPA 注解） | `common/entity/DomainEntity.java`、`domain/supply/entity/Channel.java` |
 | 核心模块零技术依赖 | domain 层 0 个 JPA/Redis/HTTP import | `grep -r "jakarta.persistence\|redis\|okhttp\|RestClient" gateway-provider/.../domain` = 0 |
 | 端口接口（API） | 9 个 `*Gateway` 端口接口 | `ChannelGateway/ProviderGateway/ModelGateway/...` |
-| JPA 实体独立于领域模型 | JPA DO（`@Entity`）独立于领域 POJO | `infrastructure/supply/**/dataobject/ChannelDo`（9 个 `@Entity`）vs `@DomainEntity`（6 个） |
+| JPA 实体独立于模型 | JPA DO（`@Entity`）独立于领域 POJO | `infrastructure/supply/**/dataobject/ChannelDo`（9 个 `@Entity`）vs `@DomainEntity`（6 个） |
 
-llm-gateway 已天然采用 Jmix 的 model/entity 分离：**领域模型（纯 POJO）↔ JPA DO（持久化）** 双层，与 `ResourceRoleModel ↔ ResourceRoleEntity` 同构。**不需要"POJO 化"**——领域模型本就是纯 POJO。
+llm-gateway 已天然采用 Jmix 的 model/entity 分离：**模型（纯 POJO）↔ JPA DO（持久化）** 双层，与 `ResourceRoleModel ↔ ResourceRoleEntity` 同构。**不需要"POJO 化"**——模型本就是纯 POJO。
 
 ### 3.2 真正的差距
 
@@ -89,7 +89,7 @@ llm-gateway 的改造重心不是"写新逻辑"，而是**重划模块边界**�
 
 ```
 gateway-xxx/              # ① 核心模块：纯领域逻辑
-│                         #    domain/xxx/*（纯 POJO 模型 + *Gateway 端口 + 领域服务）
+│                         #    domain/xxx/*（纯 POJO 模型 + *Gateway 端口 + 管理服务）
 │                         #    纯逻辑 impl（不碰 JPA/HTTP/Redis）
 gateway-xxx-data/         # ② 绑定模块（JPA）：DO + Repository 实现 *Gateway 端口
 │                         #    + model↔DO 转换器（转换随 data 走，核心不 import DO）
@@ -101,13 +101,13 @@ gateway-xxx-starter/      # ③ 装配：@AutoConfiguration + @Import + imports
 
 | 现状（gateway-provider） | 目标模块 |
 |---|---|
-| `domain/supply/*`（纯 POJO + 9 个端口 + 领域服务） | `gateway-provider`（核心） |
+| `domain/supply/*`（纯 POJO + 9 个端口 + 管理服务） | `gateway-provider`（核心） |
 | `infrastructure/supply/gateway/database/*`（9 个 `@Entity` DO + Repository + model↔DO 转换） | `gateway-provider-data` |
 | `infrastructure/supply/upstream/*`（HTTP client） | `gateway-provider-http` |
 | `infrastructure/supply/catalog/*`、`repository/*` | 按依赖拆分到 `-data` 或核心 impl |
 | （无） | `gateway-provider-starter` |
 
-**核心效果**：跨模块依赖（proxy/audit/stats → provider）只能命中 provider 的根包 API（领域模型 + 端口接口），`ChannelDo` 物理不可见——"模块依赖 API"在物理层成立。
+**核心效果**：跨模块依赖（proxy/audit/stats → provider）只能命中 provider 的根包 API（模型 + 端口接口），`ChannelDo` 物理不可见——"模块依赖 API"在物理层成立。
 
 ### 4.2 包名治理（Jmix 式：模块 = 根包，去 DDD 词汇）
 
@@ -125,8 +125,8 @@ gateway-xxx-starter/      # ③ 装配：@AutoConfiguration + @Import + imports
 **R4｜内部业务子包化（仿 Jmix 业务子包，去 entity/gateway 架构子包）**
 核心模块内部按**业务概念**分组（仿 `io.jmix.security` 的 `model/`、`role/`、`user/`、`authentication/`、`constraint/`、`impl/`），不再用 `entity`/`gateway`/`enums` 等技术角色子包。原则：
 - 根包直放核心 API（服务接口、跨概念端口）
-- 业务概念子包放领域模型 + 所属端口 + 所属枚举/异常（如 `channel.Channel`、`channel.ChannelGateway`、`channel.ChannelState`）
-- `service/` 放应用服务；`dto/` 放公开 DTO
+- 业务概念子包放模型 + 所属端口 + 所属枚举/异常（如 `channel.Channel`、`channel.ChannelGateway`、`channel.ChannelState`）
+- `service/` 放管理服务；`dto/` 放公开 DTO
 - `impl/` 放根包 API 的非绑定实现
 - 绑定模块独立根包（`providerdata`/`providerhttp`），内部按语义子包（`dataobject`/`gateway`/`upstream`）
 

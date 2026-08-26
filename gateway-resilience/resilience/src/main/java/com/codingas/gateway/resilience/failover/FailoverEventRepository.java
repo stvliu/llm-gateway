@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * 转移事件领域网关接口
  *
- * <p>转移事件聚合根的持久化抽象。domain 层仅依赖此接口，
+ * <p>转移事件根实体的持久化抽象。domain 层仅依赖此接口，
  * 实现位于 infrastructure 层（COLA Light 依赖倒置）。</p>
  *
  * <p>查询语义：</p>

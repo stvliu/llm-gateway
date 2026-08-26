@@ -16,7 +16,7 @@
 package com.codingas.gateway.security.threat;
 
 /**
- * 限流配置值对象（threat 域）。
+ * 限流配置不可变对象（threat 域）。
  *
  * <p>令牌桶限流的可调参数，由 threat 域定义以解除对 boot 配置包的依赖；
  * 实际取值由组装层从外部配置绑定注入。</p>

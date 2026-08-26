@@ -23,7 +23,7 @@ import lombok.Data;
 /**
  * 应用创建/更新请求 DTO（HTTP 契约）
  *
- * <p>承载应用聚合根可编辑字段：code（全局唯一）、name、description、timeout。
+ * <p>承载应用根实体可编辑字段：code（全局唯一）、name、description、timeout。
  * state 由后端管理（创建时默认 ACTIVE），不通过此 DTO 修改。</p>
  */
 @Data

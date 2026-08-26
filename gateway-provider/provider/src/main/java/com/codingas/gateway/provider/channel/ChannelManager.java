@@ -21,9 +21,9 @@ import com.codingas.gateway.provider.vendor.Provider;
 import java.util.List;
 
 /**
- * 渠道应用服务接口
+ * 渠道管理服务接口
  *
- * <p>出入参采用领域实体与轻量用例对象；跨实体的展示数据（提供商名称、端点列表）
+ * <p>出入参采用实体与轻量用例对象；跨实体的展示数据（提供商名称、端点列表）
  * 由本服务提供查询方法，web 层组装器（Assembler）经服务获取后组装 DTO。</p>
  */
 public interface ChannelManager {

@@ -157,7 +157,7 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 ## 2. Provider 合并
 
 - [ ] 2.1 Provider 实体新增字段对齐（确认 code/name/logoUrl/websiteUrl/description/apiDocUrl/priority/state 完整）
-- [ ] 2.2 删除 ProviderCatalog 领域实体
+- [ ] 2.2 删除 ProviderCatalog 实体
 - [ ] 2.3 删除 ProviderCatalogGateway 接口
 - [ ] 2.4 删除 ProviderCatalogGatewayImpl 基础设施实现
 - [ ] 2.5 删除 ProviderCatalogRepository JPA 接口
@@ -169,7 +169,7 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 
 - [ ] 3.1 Model 实体新增 knowledgeCutoff 字段
 - [ ] 3.2 Model.capabilities/modalities 统一为结构化类型（Map/List），基础设施层处理 JSON 转换
-- [ ] 3.3 删除 ModelCatalog 领域实体
+- [ ] 3.3 删除 ModelCatalog 实体
 - [ ] 3.4 删除 ModelCatalogGateway 接口
 - [ ] 3.5 删除 ModelCatalogGatewayImpl 基础设施实现
 - [ ] 3.6 删除 ModelCatalogRepository JPA 接口
@@ -179,12 +179,12 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 
 ## 4. ChannelModel → ModelInstance
 
-- [ ] 4.1 创建 ModelInstance 领域实体（channelId, modelId, upstreamModelName, capabilitiesOverride, contextWindowOverride, priority, weight, quotaLimit, state）
+- [ ] 4.1 创建 ModelInstance 实体（channelId, modelId, upstreamModelName, capabilitiesOverride, contextWindowOverride, priority, weight, quotaLimit, state）
 - [ ] 4.2 创建 ModelInstanceGateway 接口（含 findActiveByModelIdOrderByPriority）
 - [ ] 4.3 创建 ModelInstanceDo JPA 实体（表名 model_instances）
 - [ ] 4.4 创建 ModelInstanceRepository JPA 接口
 - [ ] 4.5 创建 ModelInstanceGatewayImpl 基础设施实现
-- [ ] 4.6 删除 ChannelModel 领域实体
+- [ ] 4.6 删除 ChannelModel 实体
 - [ ] 4.7 删除 ChannelModelGateway 接口
 - [ ] 4.8 删除 ChannelModelDo JPA 实体
 - [ ] 4.9 删除 ChannelModelRepository JPA 接口
@@ -210,9 +210,9 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 
 ## 7. 衍生目录删除
 
-- [ ] 7.1 删除 ChannelCatalog 领域实体及 Gateway/Repository/DO
-- [ ] 7.2 删除 ChannelModelCatalog 领域实体及 Gateway/Repository/DO
-- [ ] 7.3 删除 ChannelEndpointCatalog 领域实体及 Gateway/Repository/DO
+- [ ] 7.1 删除 ChannelCatalog 实体及 Gateway/Repository/DO
+- [ ] 7.2 删除 ChannelModelCatalog 实体及 Gateway/Repository/DO
+- [ ] 7.3 删除 ChannelEndpointCatalog 实体及 Gateway/Repository/DO
 
 ## 8. 服务层重构
 

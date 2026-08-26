@@ -19,7 +19,7 @@ import com.codingas.gateway.common.enums.FailureStrategy;
 import com.codingas.gateway.provider.upstream.Protocol;
 
 /**
- * 路由上下文值对象
+ * 路由上下文不可变对象
  *
  * <p>携带请求路由所需的全部信息。</p>
  *

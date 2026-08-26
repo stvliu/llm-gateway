@@ -4,7 +4,7 @@
 
 **Goal:** 将 LLM-Gateway 的协议数据类、校验器、转换器、上游调用等从错放位置迁移到正确的分层，规范化命名，并最终构建七阶段调用链。
 
-**Architecture:** 三阶段大步重构。阶段 1 聚焦领域模型与协议分层迁移（可编译），阶段 2 聚焦调用链拆分与 ProxyService 重构（可编译），阶段 3 聚焦重试/熔断/审计/计量能力补全（可编译）。每阶段内按 TDD 循环推进，保证每步提交后可编译通过。
+**Architecture:** 三阶段大步重构。阶段 1 聚焦模型与协议分层迁移（可编译），阶段 2 聚焦调用链拆分与 ProxyService 重构（可编译），阶段 3 聚焦重试/熔断/审计/计量能力补全（可编译）。每阶段内按 TDD 循环推进，保证每步提交后可编译通过。
 
 **Tech Stack:** Java 21, Spring Boot 3.5.x, JUnit 5, Mockito, AssertJ, Gradle/Maven
 
@@ -68,7 +68,7 @@
 
 ---
 
-## 阶段 1：领域模型重构
+## 阶段 1：模型重构
 
 ---
 
@@ -1015,7 +1015,7 @@ Expected: 无输出（全部已替换）
 
 ```bash
 git add -A
-git commit -m "refactor(protocol): 阶段 1 完成 — 领域模型重构"
+git commit -m "refactor(protocol): 阶段 1 完成 — 模型重构"
 ```
 
 ---

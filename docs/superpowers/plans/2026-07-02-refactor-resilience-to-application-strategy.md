@@ -9,7 +9,7 @@ archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 删除 Cluster 故障域聚合根与共因跳过逻辑，引入应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一），容灾走向由应用策略 + ApplicationChannel.priority + 端点级熔断器承担，并补齐管理员容灾管理前端功能。
+**Goal:** 删除 Cluster 故障域根实体与共因跳过逻辑，引入应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一），容灾走向由应用策略 + ApplicationChannel.priority + 端点级熔断器承担，并补齐管理员容灾管理前端功能。
 
 **Architecture:** 后端 COLA Light 分层（domain/application/adapter/infrastructure）。减法：横切删除 clusterId/commonCauseSkip 字段链路（RoutingContext→Channel→FailoverEvent 全链）。加法：Application 新增 failureStrategy 单枚举字段（不独立实体），经 RoutingContext 透传至 ChannelFailoverInvoker 控制 L0（同渠道换 Key）/L1（换渠道）行为。熔断器（ChannelEndpointCircuitBreakerManager）与策略正交，控制端点级跳过。
 
@@ -38,14 +38,14 @@ archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 
 ## 文件结构映射
 
-### 后端 — 删除文件（Cluster 聚合根全套）
-- `domain/resilience/entity/Cluster.java` — 故障域聚合根实体
+### 后端 — 删除文件（Cluster 根实体全套）
+- `domain/resilience/entity/Cluster.java` — 故障域根实体实体
 - `domain/resilience/gateway/ClusterGateway.java` — 故障域领域网关接口
 - `infrastructure/resilience/gateway/ClusterGatewayImpl.java` — 网关实现
 - `infrastructure/resilience/gateway/database/dataobject/ClusterDo.java` — 数据对象
 - `infrastructure/resilience/gateway/database/repository/ClusterRepository.java` — JPA Repository
-- `application/resilience/ClusterService.java` — 应用服务接口
-- `application/resilience/ClusterServiceImpl.java` — 应用服务实现
+- `application/resilience/ClusterService.java` — 管理服务接口
+- `application/resilience/ClusterServiceImpl.java` — 管理服务实现
 - `application/resilience/dto/ClusterRequest.java` / `ClusterResponse.java` — DTO
 - `adapter/api/ClusterController.java` — REST 控制器
 - 对应测试：`ClusterControllerIT.java`、`ClusterGatewayImplTest.java`
@@ -125,7 +125,7 @@ Task 9 (前端 Cluster 清除) ─→ Task 10 (策略配置 UI) ─→ Task 11 (
 archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 ---
 
-## Task 1: 删除 Cluster 聚合根全套
+## Task 1: 删除 Cluster 根实体全套
 
 **Files:**
 - Delete: `gateway-boot/src/main/java/com/codingas/gateway/domain/resilience/entity/Cluster.java`
@@ -140,7 +140,7 @@ archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 - Delete: `gateway-boot/src/test/java/com/codingas/gateway/adapter/api/ClusterControllerIT.java`
 - Delete: `gateway-boot/src/test/java/com/codingas/gateway/infrastructure/resilience/gateway/ClusterGatewayImplTest.java`
 
-**说明：** Cluster 聚合根与 Channel.clusterId 是物理 ID 关联（无 FK 约束），删除 Cluster 全套不影响 Channel.clusterId 字段编译（字段在 Task 3 删）。Cluster 删除后 Channel.clusterId 成为悬空物理 ID，由 Task 3 清理。
+**说明：** Cluster 根实体与 Channel.clusterId 是物理 ID 关联（无 FK 约束），删除 Cluster 全套不影响 Channel.clusterId 字段编译（字段在 Task 3 删）。Cluster 删除后 Channel.clusterId 成为悬空物理 ID，由 Task 3 清理。
 
 - [x] **Step 1: 删除 Cluster 全套源文件与测试**
 
@@ -173,7 +173,7 @@ Expected: BUILD SUCCESS。若报错指向残留 import，移除对应 import 行
 
 ```bash
 git add -A gateway-boot
-git commit -m "refactor(resilience): 删除 Cluster 故障域聚合根全套
+git commit -m "refactor(resilience): 删除 Cluster 故障域根实体全套
 
 删除 Cluster 实体/Gateway/Impl/Controller/DTO/Repository/DO/Service 及测试。
 Cluster 与 Application 职责交叉且共因跳过误杀不共因候选，整体退场。
@@ -921,7 +921,7 @@ archived-with: 2026-07-05-refactor-resilience-to-application-strategy
 - [x] **Step 1: V65 — 删 clusters 表**
 
 ```sql
--- V65: 删除 Cluster 故障域表（Cluster 聚合根退场）
+-- V65: 删除 Cluster 故障域表（Cluster 根实体退场）
 DROP TABLE IF EXISTS clusters;
 ```
 

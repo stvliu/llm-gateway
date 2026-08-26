@@ -53,7 +53,7 @@
 #### 1.4 新增 TokenUsage
 
 - **文件**: `domain/protocol/contract/TokenUsage.java`（新增）
-- 内容: `record TokenUsage(int promptTokens, int completionTokens)`，作为跨 DTO 的共用值对象
+- 内容: `record TokenUsage(int promptTokens, int completionTokens)`，作为跨 DTO 的共用不可变对象
 
 ### 验收标准
 

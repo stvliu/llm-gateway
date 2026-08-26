@@ -18,9 +18,9 @@ package com.codingas.gateway.iam.apikey;
 import java.util.List;
 
 /**
- * 用户 API Key 应用服务接口
+ * 用户 API Key 管理服务接口
  *
- * <p>出入参采用领域实体 {@link UserApiKey} 与轻量用例对象，
+ * <p>出入参采用实体 {@link UserApiKey} 与轻量用例对象，
  * HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface UserApiKeyManager {

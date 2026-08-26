@@ -4,7 +4,7 @@
 
 **Goal:** 实现模型名映射的完整链路——路由时携带上游模型名、出站时替换模型名、Catalog 物化时预填映射值、提供用户面模型发现 API。
 
-**Architecture:** RoutingContext 增加两个 String 字段（保持值对象轻量），RoutingResolver 组装时从 Model/ChannelModel 提取填入，OutboundTuner 直接读取替换 request.model。CatalogMaterializeService 增加内置映射表，物化 Plan 时预填 upstreamModelName。新建 ModelDiscoveryController 提供兼容 OpenAI 的 /v1/models 端点。
+**Architecture:** RoutingContext 增加两个 String 字段（保持不可变对象轻量），RoutingResolver 组装时从 Model/ChannelModel 提取填入，OutboundTuner 直接读取替换 request.model。CatalogMaterializeService 增加内置映射表，物化 Plan 时预填 upstreamModelName。新建 ModelDiscoveryController 提供兼容 OpenAI 的 /v1/models 端点。
 
 **Tech Stack:** Java 21 + Spring Boot 3.5.x, JPA, Jackson, Spring MVC
 

@@ -194,7 +194,7 @@ listUnmaterialized(providerCode?) // 未物化的 catalog 条目
 | domain/metadata/gateway/* | 5 个旧 Gateway 接口 |
 | domain/metadata/service/* | 旧 DomainService |
 | infrastructure/metadata/* | 全部旧实现 |
-| application/metadata/* | 旧应用服务 + DTO |
+| application/metadata/* | 旧管理服务 + DTO |
 | adapter/api/*MetadataController | 旧 Controller |
 
 ### 新增 infrastructure/supply/catalog

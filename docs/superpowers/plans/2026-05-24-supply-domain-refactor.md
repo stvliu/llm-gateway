@@ -30,8 +30,8 @@
 | `domain/supply/entity/ChannelCredential.java` | 凭证实体（替代 ProductApiKey） |
 | `domain/supply/entity/ChannelModel.java` | 渠道模型关联实体（替代 ProductModel，增加定价字段） |
 | `domain/supply/entity/ModelSpec.java` | 模型规格实体（从 Model 拆分规格部分） |
-| `domain/supply/valueobject/RoutingContext.java` | 路由上下文值对象（从 proxy 迁移） |
-| `domain/supply/valueobject/ConnectivityTestResultVO.java` | 连通性测试结果值对象 |
+| `domain/supply/valueobject/RoutingContext.java` | 路由上下文不可变对象（从 proxy 迁移） |
+| `domain/supply/valueobject/ConnectivityTestResultVO.java` | 连通性测试结果不可变对象 |
 | `domain/supply/gateway/ProviderGateway.java` | 供应商持久化接口 |
 | `domain/supply/gateway/ChannelGateway.java` | 渠道持久化接口 |
 | `domain/supply/gateway/ChannelCredentialGateway.java` | 凭证持久化接口 |
@@ -51,17 +51,17 @@
 | `domain/supply/protocol/AnthropicMessagesResponse.java` | Anthropic 响应（从 proxy 迁移） |
 | `domain/supply/protocol/OpenAIProtocolValidator.java` | OpenAI 协议校验器（从 proxy 迁移） |
 | `domain/supply/protocol/AnthropicProtocolValidator.java` | Anthropic 协议校验器（从 proxy 迁移） |
-| `domain/supply/service/ProviderDomainService.java` | 供应商领域服务 |
-| `domain/supply/service/ChannelDomainService.java` | 渠道领域服务 |
-| `domain/supply/service/ChannelCredentialDomainService.java` | 凭证领域服务 |
-| `domain/supply/service/ModelSpecDomainService.java` | 模型规格领域服务 |
+| `domain/supply/service/ProviderDomainService.java` | 供应商管理服务 |
+| `domain/supply/service/ChannelDomainService.java` | 渠道管理服务 |
+| `domain/supply/service/ChannelCredentialDomainService.java` | 凭证管理服务 |
+| `domain/supply/service/ModelSpecDomainService.java` | 模型规格管理服务 |
 | `domain/supply/catalog/entity/ProviderCatalog.java` | 供应商目录实体 |
 | `domain/supply/catalog/entity/ModelCatalog.java` | 模型目录实体 |
 | `domain/supply/catalog/entity/ChannelCatalog.java` | 渠道目录实体 |
 | `domain/supply/catalog/entity/ChannelModelCatalog.java` | 渠道模型目录实体 |
 | `domain/supply/catalog/gateway/ProviderCatalogGateway.java` | 供应商目录持久化接口 |
 | `domain/supply/catalog/gateway/ModelCatalogGateway.java` | 模型目录持久化接口 |
-| `domain/supply/catalog/service/CatalogDomainService.java` | 目录领域服务 |
+| `domain/supply/catalog/service/CatalogDomainService.java` | 目录管理服务 |
 | `domain/supply/catalog/enums/MetadataSource.java` | 元数据来源枚举 |
 | `domain/supply/catalog/enums/CatalogState.java` | 目录状态枚举 |
 | `domain/supply/exception/ProviderException.java` | 供应商异常 |
@@ -432,7 +432,7 @@ git commit -m "refactor: 创建 supply 域实体（Provider/Channel/ChannelCrede
 
 ---
 
-## Task 3: 创建 supply 值对象与异常
+## Task 3: 创建 supply 不可变对象与异常
 
 **Files:**
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/domain/supply/valueobject/RoutingContext.java`
@@ -448,9 +448,9 @@ mkdir -p gateway-boot/src/main/java/com/codingas/gateway/domain/supply/valueobje
 mkdir -p gateway-boot/src/main/java/com/codingas/gateway/domain/supply/exception
 ```
 
-- [ ] **Step 2: 创建 RoutingContext 值对象**
+- [ ] **Step 2: 创建 RoutingContext 不可变对象**
 
-读取当前 `domain/proxy/entity/RoutingContext.java`，将其从实体转为值对象并适配新字段名：
+读取当前 `domain/proxy/entity/RoutingContext.java`，将其从实体转为不可变对象并适配新字段名：
 
 ```java
 package com.codingas.gateway.domain.supply.valueobject;
@@ -459,7 +459,7 @@ import com.codingas.gateway.domain.supply.enums.Protocol;
 import com.codingas.gateway.domain.supply.enums.RoutingStrategy;
 
 /**
- * 路由上下文值对象
+ * 路由上下文不可变对象
  */
 public record RoutingContext(
         Long channelId,
@@ -470,13 +470,13 @@ public record RoutingContext(
 ) {}
 ```
 
-- [ ] **Step 3: 创建 ConnectivityTestResultVO 值对象**
+- [ ] **Step 3: 创建 ConnectivityTestResultVO 不可变对象**
 
 ```java
 package com.codingas.gateway.domain.supply.valueobject;
 
 /**
- * 连通性测试结果值对象
+ * 连通性测试结果不可变对象
  */
 public record ConnectivityTestResultVO(
         boolean success,
@@ -566,7 +566,7 @@ Expected: BUILD SUCCESS
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/supply/valueobject/
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/supply/exception/
-git commit -m "refactor: 创建 supply 域值对象与异常（RoutingContext/ConnectivityTestResultVO/ProviderException/ChannelException/ProtocolValidationException）"
+git commit -m "refactor: 创建 supply 域不可变对象与异常（RoutingContext/ConnectivityTestResultVO/ProviderException/ChannelException/ProtocolValidationException）"
 ```
 
 ---
@@ -858,7 +858,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 供应商领域服务
+ * 供应商管理服务
  */
 @Service
 public class ProviderDomainService {
@@ -913,7 +913,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 渠道领域服务
+ * 渠道管理服务
  */
 @Service
 public class ChannelDomainService {
@@ -972,7 +972,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 凭证领域服务
+ * 凭证管理服务
  */
 @Service
 public class ChannelCredentialDomainService {
@@ -1023,7 +1023,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 模型规格领域服务
+ * 模型规格管理服务
  */
 @Service
 public class ModelSpecDomainService {
@@ -1074,7 +1074,7 @@ Expected: BUILD SUCCESS
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/domain/supply/service/
-git commit -m "refactor: 创建 supply 域领域服务（ProviderDomainService/ChannelDomainService/ChannelCredentialDomainService/ModelSpecDomainService）"
+git commit -m "refactor: 创建 supply 域管理服务（ProviderDomainService/ChannelDomainService/ChannelCredentialDomainService/ModelSpecDomainService）"
 ```
 
 ---
@@ -1304,7 +1304,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * 目录领域服务
+ * 目录管理服务
  */
 @Service
 public class CatalogDomainService {

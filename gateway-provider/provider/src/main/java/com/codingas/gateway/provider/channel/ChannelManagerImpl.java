@@ -30,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 渠道应用服务实现
+ * 渠道管理服务实现
  *
  * <p>管理渠道（Channel）的 CRUD 操作。</p>
  * <p>定价已下沉到 ChannelModel，Channel 只持有连接和路由相关字段。</p>

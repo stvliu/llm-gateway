@@ -18,9 +18,9 @@ package com.codingas.gateway.common.event;
 import java.time.Instant;
 
 /**
- * 领域事件基接口
+ * 业务事件基接口
  *
- * <p>所有领域事件实现此接口。</p>
+ * <p>所有业务事件实现此接口。</p>
  */
 public interface BizEvent {
 

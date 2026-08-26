@@ -26,7 +26,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 /**
- * 应用聚合根数据对象
+ * 应用根实体数据对象
  *
  * <p>对应 applications 表；主键与审计字段（created_by/created_at/updated_by/updated_at）
  * 继承自 {@link BaseDo}，由 AuditingEntityListener 自动填充。</p>

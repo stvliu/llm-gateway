@@ -72,7 +72,7 @@ protocol-openai/anthropic → gateway-protocol(SPI)
 ### D8：security / iam / usage 边界
 security = 入口防护/拦截（IP 级限流、威胁、脱敏）；usage = 资源管控/配额（Key 级 TokenLimit）。**拦截链是跨域编排，放应用层**（不塞进 security），避免 security 反向依赖 usage。
 
-### D9：`RoutingContext` 收敛为不可变值对象
+### D9：`RoutingContext` 收敛为不可变不可变对象
 `RoutingContext` 在供给域产出、被 proxy 消费，位置合理（不需下沉 common）；收敛为字段 final、无 setter、Builder 构建、外部只读；provider 公开面收敛为"实体 + Gateway 接口"，必要时拆 `provider-api` 子模块。
 
 ## Risks / Trade-offs

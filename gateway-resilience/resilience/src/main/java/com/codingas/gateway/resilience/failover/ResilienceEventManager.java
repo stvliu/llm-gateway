@@ -19,12 +19,12 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 转移事件查询应用服务接口
+ * 转移事件查询管理服务接口
  *
  * <p>提供容灾可观测性查询能力（读侧重）：转移事件流查询（分页 + since/applicationId 过滤）
  * 与耗尽告警查询。委托 {@link FailoverEventRepository}。</p>
  *
- * <p>出入参采用领域实体 {@link FailoverEvent}，HTTP 契约（Response DTO）由 web 层负责转换。</p>
+ * <p>出入参采用实体 {@link FailoverEvent}，HTTP 契约（Response DTO）由 web 层负责转换。</p>
  *
  * <p>设计见 design doc D12：容灾总览页 10s 轮询渲染转移事件流 + 耗尽告警。</p>
  */

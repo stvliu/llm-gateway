@@ -84,7 +84,7 @@ PENDING ──→ ACTIVE ──→ DEPRECATED ──→ RETIRED
 
 - 删除 6 个旧枚举文件
 - 修改 6 个实体文件
-- 修改 4 个领域服务文件
+- 修改 4 个管理服务文件
 - 修改 InstanceSelector
 - 新增数据库迁移脚本
 

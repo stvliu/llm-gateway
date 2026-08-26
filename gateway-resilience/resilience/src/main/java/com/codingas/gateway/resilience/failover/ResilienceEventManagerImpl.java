@@ -24,7 +24,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 转移事件查询应用服务实现
+ * 转移事件查询管理服务实现
  *
  * <p>委托 {@link FailoverEventRepository} 直接返回 {@link FailoverEvent} 实体，
  * 枚举字段转字符串展示由 web 层 DTO 转换负责。</p>

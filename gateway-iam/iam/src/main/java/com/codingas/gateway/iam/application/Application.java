@@ -22,12 +22,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 /**
- * 应用聚合根实体
+ * 应用根实体实体
  *
- * <p>应用聚合根：权限+行为双聚合，承载 Key 归属、渠道可见性、应用级超时，
+ * <p>应用根实体：权限+行为双聚合，承载 Key 归属、渠道可见性、应用级超时，
  * 预留配额/看板字段。</p>
  *
- * <p>领域模型纯洁：仅含 Getter/Setter，不含业务逻辑；
+ * <p>模型纯洁：仅含 Getter/Setter，不含业务逻辑；
  * 路由判定下沉至 {@link ApplicationState#isRoutable()}。</p>
  *
  * <p>Task 8：{@code resilienceProfileId} 退场（ResilienceProfile 实体删除），

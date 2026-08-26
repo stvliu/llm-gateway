@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 import java.time.Instant;
 
 /**
- * 转移事件聚合根实体
+ * 转移事件根实体实体
  *
  * <p>记录每次候选转移（容灾可观测性，读侧重）。当 {@code ChannelFailoverInvoker} 在 catch 块
  * 判定 {@link FailoverDecision} 非 NONE（L1 换候选）时，换下一候选前发布
@@ -34,7 +34,7 @@ import java.time.Instant;
  * <p>设计见 design doc D12：独立 FailoverEvent domain，不复用 CallLog（调用结果语义与转移动作
  * 语义不同维度）。用途是容灾总览页 10s 轮询渲染转移事件流 + 耗尽告警。</p>
  *
- * <p>领域模型纯洁：仅含 Getter/Setter，不含业务逻辑。</p>
+ * <p>模型纯洁：仅含 Getter/Setter，不含业务逻辑。</p>
  *
  * <p>字段说明：</p>
  * <ul>

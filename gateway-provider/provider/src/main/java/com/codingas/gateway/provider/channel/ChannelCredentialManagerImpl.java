@@ -25,7 +25,7 @@ import java.time.Instant;
 import java.util.List;
 
 /**
- * 渠道凭证应用服务实现
+ * 渠道凭证管理服务实现
  *
  * <p>加解密由基础设施层（GatewayImpl）处理，Application 层只传递明文 Key。</p>
  */

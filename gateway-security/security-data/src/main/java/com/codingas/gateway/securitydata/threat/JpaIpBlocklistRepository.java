@@ -52,10 +52,10 @@ public class JpaIpBlocklistRepository implements IpBlocklistRepository {
 
         IpBlocklistDo blocklistDo;
         if (existingDo.isPresent()) {
-            // 将 DO 转换为领域实体，执行领域逻辑
+            // 将 DO 转换为实体，执行领域逻辑
             IpBlocklist blocklist = converter.toDomain(existingDo.get());
             
-            // 在领域实体上设置属性（未来可以添加领域验证逻辑）
+            // 在实体上设置属性（未来可以添加领域验证逻辑）
             blocklist.setBlockReason(reason);
             blocklist.setBlockedBy(blockedBy);
             blocklist.setExpiresAt(expiresAt);
@@ -63,7 +63,7 @@ public class JpaIpBlocklistRepository implements IpBlocklistRepository {
             // 转换回 DO 并保存
             blocklistDo = converter.toDataObject(blocklist);
         } else {
-            // 创建新的领域实体
+            // 创建新的实体
             IpBlocklist blocklist = new IpBlocklist();
             blocklist.setIpAddress(ipAddress);
             blocklist.setBlockReason(reason);

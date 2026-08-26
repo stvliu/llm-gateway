@@ -34,7 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 渠道健康检查应用服务
+ * 渠道健康检查管理服务
  *
  * <p>核心职责：</p>
  * <ul>

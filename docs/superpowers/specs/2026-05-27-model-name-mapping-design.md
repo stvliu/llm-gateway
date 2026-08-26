@@ -94,7 +94,7 @@ ChannelSelector: 按路由策略选出一个 Channel
 
 ### RoutingContext 类型变更
 
-`RoutingContext` 中增加两个 String 字段（保持值对象轻量，不持有实体引用）：
+`RoutingContext` 中增加两个 String 字段（保持不可变对象轻量，不持有实体引用）：
 
 ```java
 // 当前
@@ -312,7 +312,7 @@ Map<String, Map<String, String>> UPSTREAM_MODEL_NAME_RULES:
 
 | 当前 | 目标 | 范围说明 |
 |------|------|---------|
-| `ModelSpec`（领域实体） | `Model` | `domain/supply/entity/` |
+| `ModelSpec`（实体） | `Model` | `domain/supply/entity/` |
 | `ModelSpecDo`（JPA DO） | `ModelDo` | `infrastructure/.../dataobject/` |
 | `model_specs`（表） | `models` | Flyway 迁移（V41）。V35 将旧 `models` 改名为 `model_specs`，本次将其改回 `models`，属反向操作。需确认无其他模块残留引用旧 `models` 表名。 |
 | `ModelSpecState`（枚举） | `ModelState` | `domain/supply/enums/` |
@@ -347,7 +347,7 @@ Map<String, Map<String, String>> UPSTREAM_MODEL_NAME_RULES:
 
 | 范围 | 状态 | 说明 |
 |------|------|------|
-| 领域实体 `ModelSpec` → `Model` | ✅ 已完成 | `domain/supply/entity/Model.java` |
+| 实体 `ModelSpec` → `Model` | ✅ 已完成 | `domain/supply/entity/Model.java` |
 | DO `ModelSpecDo` → `ModelDo` | ✅ 已完成 | 映射表 `models`（V42 Flyway） |
 | 枚举 `ModelSpecState` → `ModelState` | ✅ 已完成 | |
 | Gateway / Repository | ✅ 已完成 | `ModelGateway`, `ModelRepository` |
@@ -363,8 +363,8 @@ Map<String, Map<String, String>> UPSTREAM_MODEL_NAME_RULES:
 
 | 变更 | 工作量 | 说明 | 提交 |
 |------|--------|------|------|
-| OutboundTuner 模型名改写 | 小 | RoutingContext 增加 String 字段，Tuner 从实体注入改为值对象读取 | `c35f8bf` |
+| OutboundTuner 模型名改写 | 小 | RoutingContext 增加 String 字段，Tuner 从实体注入改为不可变对象读取 | `c35f8bf` |
 | Catalog 预填 upstreamModelName | 小 | CatalogMaterializeService 增加 UPSTREAM_MODEL_NAME_RULES 内置映射表 + materializePlan 中预填逻辑 | `19276ed` |
 | 用户面 `/v1/models` 接口 | 小 | 新建 ModelDiscoveryController，兼容 OpenAI 模型列表 API | `684a4db` |
 
-> **注**：ChannelModel 的 `upstreamModelName` 字段已在领域实体、DO、Service、Controller、DTO 中完成实现，包括 `ChannelModelDo.upstream_model_name` 列（已在 V42 Flyway 中添加）。
+> **注**：ChannelModel 的 `upstreamModelName` 字段已在实体、DO、Service、Controller、DTO 中完成实现，包括 `ChannelModelDo.upstream_model_name` 列（已在 V42 Flyway 中添加）。

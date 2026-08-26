@@ -24,7 +24,7 @@ domain/product/
 │   ├── ProductGateway.java       # 产品 Gateway 接口
 │   └── ProductApiKeyGateway.java # 产品密钥 Gateway 接口
 ├── service/
-│   └── ProductDomainService.java # 产品领域服务
+│   └── ProductDomainService.java # 产品管理服务
 └── exception/
     └── ProductNotFoundException.java
 
@@ -41,8 +41,8 @@ infrastructure/product/
     └── ProductApiKeyGatewayImpl.java
 
 application/product/
-├── ProductService.java           # 应用服务接口
-├── ProductServiceImpl.java       # 应用服务实现
+├── ProductService.java           # 管理服务接口
+├── ProductServiceImpl.java       # 管理服务实现
 └── dto/
     ├── ProductRequest.java
     ├── ProductResponse.java
@@ -1094,7 +1094,7 @@ git commit -m "feat(product): implement ProductGateway and ProductApiKeyGateway"
 
 ---
 
-## Task 9: Product 应用服务
+## Task 9: Product 管理服务
 
 **Files:**
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/application/product/dto/ProductRequest.java`
@@ -1190,7 +1190,7 @@ import com.codingas.gateway.domain.product.enums.ProductType;
 import java.util.List;
 
 /**
- * 产品应用服务接口
+ * 产品管理服务接口
  */
 public interface ProductService {
 
@@ -1246,7 +1246,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 产品应用服务实现
+ * 产品管理服务实现
  */
 @Service
 @RequiredArgsConstructor
@@ -1352,7 +1352,7 @@ public class ProductServiceImpl implements ProductService {
 }
 ```
 
-- [ ] **Step 5: 提交应用服务**
+- [ ] **Step 5: 提交管理服务**
 
 ```bash
 git add gateway-boot/src/main/java/com/codingas/gateway/application/product/

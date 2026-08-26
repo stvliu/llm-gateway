@@ -84,7 +84,7 @@ public class ChannelFailoverInvoker {
      *
      * @param keyFailoverInvoker      Key 级故障转移 Invoker（L0，对每个候选内部跑）
      * @param errorClassifier         错误分流器（L1/NONE 决策）
-     * @param eventPublisher          领域事件发布器（发布转移事件，供异步持久化与可观测性）
+     * @param eventPublisher          业务事件发布器（发布转移事件，供异步持久化与可观测性）
      * @param outboundTuner           出站调谐编排器（每候选独立 tune：协议级默认值补全 + 模型名替换）
      * @param protocolConversionFacade 跨协议转换门面（每候选独立 convertRequest + 流式 chunk 转换方向重建）
      */

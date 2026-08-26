@@ -156,7 +156,7 @@ spring:
 | `BudgetCacheService` | 缓存抽象，支持本地/Redis 切换 |
 | `TokenLimitRepository` | DB 访问 |
 | `TokenUsageHandler` | 异步扣减处理器 |
-| `BudgetCheckResult` | 检查结果值对象 |
+| `BudgetCheckResult` | 检查结果不可变对象 |
 | `BudgetExceededException` | 预算超限异常 |
 
 ### 5.2 核心接口
@@ -176,7 +176,7 @@ public interface BudgetEnforcer {
 }
 ```
 
-### 5.3 值对象
+### 5.3 不可变对象
 
 ```java
 public record BudgetCheckResult(

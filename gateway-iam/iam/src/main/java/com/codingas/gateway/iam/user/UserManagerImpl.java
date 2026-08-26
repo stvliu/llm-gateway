@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 用户应用服务实现
+ * 用户管理服务实现
  *
  * <p>处理用户管理的业务逻辑。</p>
  */

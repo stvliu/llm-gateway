@@ -18,7 +18,7 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 ```md
 ## Why
 
-当前容灾模型中，Cluster（故障域聚合根）与 Application 在「控制路由走向」上职责交叉：Application 通过 `ApplicationChannel.priority` 配置转移顺序，Cluster 通过 `Channel.clusterId` 驱动共因跳过，两者独立配置、彼此不可见，语义会冲突（应用配的顺序可能被共因跳过覆盖）。且 Cluster 共因跳过会误杀不共因的候选（如同供应商不同账户的多 Key，账户额度独立、不共因，却被同 clusterId 跳过）。经场景验证（研发自动化同供应商多 Key、OpenAI 官方+Azure 跨供应商共因），共因跳过的收益（首次故障省几次失败尝试）配不上其复杂度，且熔断器已覆盖持续故障的痛感。
+当前容灾模型中，Cluster（故障域根实体）与 Application 在「控制路由走向」上职责交叉：Application 通过 `ApplicationChannel.priority` 配置转移顺序，Cluster 通过 `Channel.clusterId` 驱动共因跳过，两者独立配置、彼此不可见，语义会冲突（应用配的顺序可能被共因跳过覆盖）。且 Cluster 共因跳过会误杀不共因的候选（如同供应商不同账户的多 Key，账户额度独立、不共因，却被同 clusterId 跳过）。经场景验证（研发自动化同供应商多 Key、OpenAI 官方+Azure 跨供应商共因），共因跳过的收益（首次故障省几次失败尝试）配不上其复杂度，且熔断器已覆盖持续故障的痛感。
 
 同时，不同下游应用场景（流程自动化/研发自动化/AGI/BI）对失败处理的诉求差异大（BI 愿快速失败省成本、流程自动化要转移保可用、研发自动化要同渠道换 Key），当前无应用级失败处理策略，无法表达场景差异。
 
@@ -27,7 +27,7 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 ## What Changes
 
 **删除（减法）**：
-- **BREAKING** 删除 Cluster 故障域聚合根全套：实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
+- **BREAKING** 删除 Cluster 故障域根实体全套：实体/Gateway/Impl/Controller/DTO/Repository/DO/Service
 - **BREAKING** 删除 `Channel.clusterId` 字段、`RoutingContext.clusterId` 字段
 - **BREAKING** 删除 `ChannelFailoverInvoker` 共因跳过逻辑（`commonCauseFailedClusters` + 跳过判定 + `publishFailoverEvent` 的 `commonCauseSkip` 参数）
 - **BREAKING** 删除 `FailoverOccurredEvent`/`FailoverEvent`/`FailoverEventDo`/`FailoverEventResponse` 的 `commonCauseSkip` + `fromClusterId`/`toClusterId` 字段
@@ -104,7 +104,7 @@ OpenSpec remains the canonical capability spec. This handoff is a deterministic,
 ## Goals / Non-Goals
 
 **Goals:**
-- 删除 Cluster 故障域聚合根与共因跳过，消除与 Application 的职责交叉
+- 删除 Cluster 故障域根实体与共因跳过，消除与 Application 的职责交叉
 - 引入轻量应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一），支持场景差异化
 - 容灾走向由 Application 策略 + ApplicationChannel.priority 顺序 + 端点级熔断器承担
 - 补齐管理员容灾管理前端功能：端点熔断应急 UI、熔断状态大盘、总览页重组、策略配置
@@ -268,7 +268,7 @@ Full source: openspec/changes/refactor-resilience-to-application-strategy/tasks.
 
 ### Requirement: 应用级失败处理策略
 
-系统 SHALL 在 Application 聚合根上提供 `failureStrategy` 枚举字段（轻量单字段，不独立实体），承载该应用的失败处理模式。策略 SHALL 为三选一互斥：
+系统 SHALL 在 Application 根实体上提供 `failureStrategy` 枚举字段（轻量单字段，不独立实体），承载该应用的失败处理模式。策略 SHALL 为三选一互斥：
 
 - `FAIL_FAST`（快速失败）：第一个 Key 失败立即抛错，L0（同渠道换 Key）与 L1（换渠道）均不跑
 - `FAIL_OVER`（失败转移）：L0 跑（同渠道换 Key）+ L1 跑（换渠道），全候选耗尽抛错
@@ -318,9 +318,9 @@ Full source: openspec/changes/refactor-resilience-to-application-strategy/tasks.
 
 ## MODIFIED Requirements
 
-### Requirement: Application 聚合根实体
+### Requirement: Application 根实体实体
 
-系统 SHALL 提供 `Application` 聚合根实体作为「权限 + 行为」双聚合根，承载 N 把 Key 的应用归属、渠道可见性、应用级超时、失败处理策略，并预留配额/看板字段。
+系统 SHALL 提供 `Application` 根实体实体作为「权限 + 行为」双根实体，承载 N 把 Key 的应用归属、渠道可见性、应用级超时、失败处理策略，并预留配额/看板字段。
 
 **实体字段**（保留 timeout，新增 failureStrategy）:
 - `code` — 应用编码，全局唯一
@@ -416,7 +416,7 @@ Full source: openspec/changes/refactor-resilience-to-application-strategy/tasks.
 ## REMOVED Requirements
 
 ### Requirement: L1 共因跳过
-**Reason**: Cluster 故障域聚合根退场，基于 clusterId 的共因跳过机制随之移除。共因跳过误杀不共因候选（如同供应商不同账户的多 Key，账户额度独立、故障不共因，却被同 clusterId 跳过），且与 Application 在路由走向上职责交叉。故障跳过改由端点级熔断器（连续失败 OPEN 后跳过）+ 应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 控制 L0/L1）承担，不引入共因分组。
+**Reason**: Cluster 故障域根实体退场，基于 clusterId 的共因跳过机制随之移除。共因跳过误杀不共因候选（如同供应商不同账户的多 Key，账户额度独立、故障不共因，却被同 clusterId 跳过），且与 Application 在路由走向上职责交叉。故障跳过改由端点级熔断器（连续失败 OPEN 后跳过）+ 应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 控制 L0/L1）承担，不引入共因分组。
 **Migration**: `ChannelFailoverInvoker` 删除 `commonCauseFailedClusters` 局部 Set 与跳过判定逻辑，L0/L1 行为改为按应用 `failureStrategy` 控制。`RoutingContext.clusterId`、`FailoverOccurredEvent`/`FailoverEvent`/`FailoverEventDo`/`FailoverEventResponse` 的 `commonCauseSkip` + `fromClusterId`/`toClusterId` 字段删除，`FailoverEventGateway.findRecent` 的 clusterId 过滤参数删除。
 ```
 

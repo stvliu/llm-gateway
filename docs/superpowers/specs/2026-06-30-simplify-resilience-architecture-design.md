@@ -45,7 +45,7 @@ status: final
 - `InstanceSelector.select` 构造 RoutingRequest 前，查 `ApplicationChannelGateway.findByApplicationId(applicationId)` 取该应用所有授权渠道的 priority，构建 `Map<channelId, priority>` 填入 RoutingRequest
 - `PermissionRouter` 不变（仍按 channelId 过滤可见渠道）
 - `PriorityRouter` 从 `request.getChannelPriorityMap()` 取映射，按 `map.get(mi.getChannelId())` 升序排序（null 回退默认值 100）
-- **不污染 ModelInstance 领域实体**：遵循「领域模型纯洁性」铁律，priority 是路由上下文数据，不挂实体
+- **不污染 ModelInstance 实体**：遵循「模型纯洁性」铁律，priority 是路由上下文数据，不挂实体
 
 ### ID2: 共因跳过 — RoutingContext 带 clusterId + 局部 Set 标记
 

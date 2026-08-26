@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 模型应用服务实现
+ * 模型管理服务实现
  */
 @Slf4j
 @Service

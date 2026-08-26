@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 /**
- * 认证领域服务
+ * 认证管理服务
  *
  * <p>认证流程：通过 keyPrefix 查找 Key，再用 hash 验证完整密钥。</p>
  * <p>不再解密密钥做明文比较，避免密钥在认证流程中暴露。</p>

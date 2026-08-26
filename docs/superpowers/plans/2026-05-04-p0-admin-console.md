@@ -2845,7 +2845,7 @@ git commit -m "feat: add admin models page with channel and model management"
 - `frontend/src/pages/admin/Settings/index.tsx` - 修改密码表单
 
 ### Task 13: 用户模型查看页
-- `frontend/src/pages/user/Models/index.tsx` - 只读模型表格
+- `frontend/src/pages/user/Models/index.tsx` - 只查询结果表格
 
 ### Task 14: 用户 API Key 管理页
 - `frontend/src/pages/user/ApiKeys/index.tsx` - API Key CRUD 表格

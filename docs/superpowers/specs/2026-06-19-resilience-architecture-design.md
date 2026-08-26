@@ -18,7 +18,7 @@ canonical_spec: openspec
 ## Goals / Non-Goals
 
 **Goals:**
-- P-r：Application 升级为权限+行为聚合根，移除 Team，权限锚点从 userId 改为 applicationId。
+- P-r：Application 升级为权限+行为根实体，移除 Team，权限锚点从 userId 改为 applicationId。
 - P0：修正 RouterChain 顺序，统一熔断 key 为 endpointId。
 - P1：ChannelFailoverInvoker + 候选列表路由 + 错误分流表，补齐 L1 透明容灾。
 - P2：ResilienceProfile 纯数据库管理 + 显式 Cluster 实体 + 域级健康聚合。
@@ -33,7 +33,7 @@ canonical_spec: openspec
 - **D1**: 权限锚点从「人/团队」转为「应用」。权限链 `UserApiKey → Application → ApplicationChannel → Channel`。
 - **D2**: 执行顺序 P-r → P0 → P1 → P2（四段，原 P2/P3 合并）。
 - **D3**: 四层容灾栈 + 错误分流。INVALID_REQUEST 不转移，共因故障走 L1 换渠道。
-- **D4**: Application 为权限+行为双聚合根（Key 归属 + 渠道可见性 + 画像），不独立配模型可见性，不保留成员。
+- **D4**: Application 为权限+行为双根实体（Key 归属 + 渠道可见性 + 画像），不独立配模型可见性，不保留成员。
 - **D5**: 画像纯数据库管理，解析链 Application → Global，档位推导。
 - **D6**: 前端 Teams → Applications 平移，移除成员管理与模型可见性 Modal。
 - **D7**: 数据迁移 1:1 平移 + migration-default 兜底应用（按原 Team 渠道集授权）。
@@ -55,7 +55,7 @@ canonical_spec: openspec
 
 ## Components
 
-- **Application** 聚合根 + ApplicationChannel（应用-渠道授权）
+- **Application** 根实体 + ApplicationChannel（应用-渠道授权）
 - **ResilienceProfile** 画像 + ResilienceResolver（解析链 Application→Global）
 - **ChannelFailoverInvoker** L1 转移回路 + 错误分流表
 - **Cluster** 实体 + ClusterAffinityRouter + 域级健康聚合

@@ -10,7 +10,7 @@
 
 ---
 
-## 阶段 1: 核心领域模型迁移
+## 阶段 1: 核心模型迁移
 
 ### 任务 1.1: 检查 gateway-boot 现有实体
 
@@ -679,7 +679,7 @@ git commit -m "feat: 完成遗留模块迁移，gateway-boot 完整构建验证�
 
 ## 迁移检查清单
 
-### 核心领域模型
+### 核心模型
 - [ ] IpBlocklist 实体
 - [ ] RateLimitConfig 实体
 - [ ] SensitiveDataRule 实体

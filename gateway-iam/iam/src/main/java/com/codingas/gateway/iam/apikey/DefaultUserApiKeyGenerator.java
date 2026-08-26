@@ -24,7 +24,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 
 /**
- * API Key 生成器领域服务
+ * API Key 生成器管理服务
  *
  * <p>生成格式：{@code sk-} + 32 字节随机数的 Base64（共 46 字符）。</p>
  * <p>生成时检测 keyPrefix 碰撞，最多重试 3 次。</p>

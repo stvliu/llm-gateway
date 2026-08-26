@@ -659,7 +659,7 @@ helm install llm-gateway deployments/helm/llm-gateway \
 
 - [需求规格说明书](docs/spec.md) - 完整的功能需求和非功能性需求
 - [API 规格文档](docs/api-spec.md) - 详细的 API 接口定义
-- [信息架构文档](docs/信息架构.md) - 领域模型和业务概念
+- [信息架构文档](docs/信息架构.md) - 模型和业务概念
 - [应用架构文档](docs/应用架构.md) - 分层架构和模块设计
 - [数据架构文档](docs/数据架构.md) - 数据库设计和 ER 图
 - [技术架构文档](docs/技术架构.md) - 技术选型和实现细节

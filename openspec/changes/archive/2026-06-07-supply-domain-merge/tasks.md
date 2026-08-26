@@ -6,7 +6,7 @@
 ## 2. Provider 合并
 
 - [x] 2.1 Provider 实体新增字段对齐（确认 code/name/logoUrl/websiteUrl/description/apiDocUrl/priority/state 完整）
-- [x] 2.2 删除 ProviderCatalog 领域实体
+- [x] 2.2 删除 ProviderCatalog 实体
 - [x] 2.3 删除 ProviderCatalogGateway 接口
 - [x] 2.4 删除 ProviderCatalogGatewayImpl 基础设施实现
 - [x] 2.5 删除 ProviderCatalogRepository JPA 接口
@@ -18,7 +18,7 @@
 
 - [x] 3.1 Model 实体新增 knowledgeCutoff 字段
 - [x] 3.2 Model.capabilities/modalities 统一为结构化类型（Map/List），基础设施层处理 JSON 转换
-- [x] 3.3 删除 ModelCatalog 领域实体
+- [x] 3.3 删除 ModelCatalog 实体
 - [x] 3.4 删除 ModelCatalogGateway 接口
 - [x] 3.5 删除 ModelCatalogGatewayImpl 基础设施实现
 - [x] 3.6 删除 ModelCatalogRepository JPA 接口
@@ -28,12 +28,12 @@
 
 ## 4. ChannelModel → ModelInstance
 
-- [x] 4.1 创建 ModelInstance 领域实体（channelId, modelId, upstreamModelName, capabilitiesOverride, contextWindowOverride, priority, weight, quotaLimit, state）
+- [x] 4.1 创建 ModelInstance 实体（channelId, modelId, upstreamModelName, capabilitiesOverride, contextWindowOverride, priority, weight, quotaLimit, state）
 - [x] 4.2 创建 ModelInstanceGateway 接口（含 findActiveByModelIdOrderByPriority）
 - [x] 4.3 创建 ModelInstanceDo JPA 实体（表名 model_instances）
 - [x] 4.4 创建 ModelInstanceRepository JPA 接口
 - [x] 4.5 创建 ModelInstanceGatewayImpl 基础设施实现
-- [x] 4.6 删除 ChannelModel 领域实体
+- [x] 4.6 删除 ChannelModel 实体
 - [x] 4.7 删除 ChannelModelGateway 接口
 - [x] 4.8 删除 ChannelModelDo JPA 实体
 - [x] 4.9 删除 ChannelModelRepository JPA 接口
@@ -59,9 +59,9 @@
 
 ## 7. 衍生目录删除
 
-- [x] 7.1 删除 ChannelCatalog 领域实体及 Gateway/Repository/DO
-- [x] 7.2 删除 ChannelModelCatalog 领域实体及 Gateway/Repository/DO
-- [x] 7.3 删除 ChannelEndpointCatalog 领域实体及 Gateway/Repository/DO
+- [x] 7.1 删除 ChannelCatalog 实体及 Gateway/Repository/DO
+- [x] 7.2 删除 ChannelModelCatalog 实体及 Gateway/Repository/DO
+- [x] 7.3 删除 ChannelEndpointCatalog 实体及 Gateway/Repository/DO
 
 ## 8. 服务层重构
 

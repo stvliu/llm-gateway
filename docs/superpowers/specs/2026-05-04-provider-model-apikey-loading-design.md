@@ -166,7 +166,7 @@ WHERE id = ? AND version = ?;
 ```
 common/
 ├── event/
-│   ├── DomainEvent.java              # 领域事件基类（通用）
+│   ├── DomainEvent.java              # 业务事件基类（通用）
 │   └── DomainEventPublisher.java     # 事件发布接口（通用）
 ├── exception/
 │   └── GatewayException.java
@@ -593,14 +593,14 @@ public class ConfigCacheService {
 
 ## 5. 事件机制设计
 
-### 5.1 领域事件基类
+### 5.1 业务事件基类
 
 ```java
 /**
- * 领域事件基类
+ * 业务事件基类
  *
  * <p>位置：common/event/DomainEvent.java</p>
- * <p>所有领域事件的基类，提供通用属性。</p>
+ * <p>所有业务事件的基类，提供通用属性。</p>
  */
 public abstract class DomainEvent {
     private final Instant occurredAt;
@@ -619,7 +619,7 @@ public abstract class DomainEvent {
 
 ```java
 /**
- * 领域事件发布器
+ * 业务事件发布器
  *
  * <p>位置：common/event/DomainEventPublisher.java</p>
  * <p>通用接口，支持本地和远程两种实现。</p>
@@ -627,9 +627,9 @@ public abstract class DomainEvent {
 public interface DomainEventPublisher {
 
     /**
-     * 发布领域事件
+     * 发布业务事件
      *
-     * @param event 领域事件
+     * @param event 业务事件
      * @param <T> 事件类型
      */
     <T extends DomainEvent> void publish(T event);

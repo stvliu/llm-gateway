@@ -229,7 +229,7 @@ private ChannelHealthStatus lastHealthStatus;
 private ChannelHealthSource lastHealthSource;
 ```
 
-> 实施备注：根据 CLAUDE.md "领域模型纯洁性"约束，`Channel` 是领域 POJO（继承 BaseEntity，无 JPA），JPA 注解应放在 `ChannelDo` 上。本任务仅在 `Channel` 加 3 个 POJO 字段；`@Column` 与 `toEntity/toDo` 透传统一在任务 1.4 处理。
+> 实施备注：根据 CLAUDE.md "模型纯洁性"约束，`Channel` 是领域 POJO（继承 BaseEntity，无 JPA），JPA 注解应放在 `ChannelDo` 上。本任务仅在 `Channel` 加 3 个 POJO 字段；`@Column` 与 `toEntity/toDo` 透传统一在任务 1.4 处理。
 
 - [x] **Step 5：跑测试确认通过**
 

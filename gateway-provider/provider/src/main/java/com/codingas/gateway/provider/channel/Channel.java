@@ -26,7 +26,7 @@ import java.time.Instant;
 /**
  * 渠道实体
  *
- * <p>渠道是上游接入的聚合根，下挂多协议端点（{@link ChannelEndpoint}）、
+ * <p>渠道是上游接入的根实体，下挂多协议端点（{@link ChannelEndpoint}）、
  * 多凭证（{@link ChannelCredential}）与多模型实例（{@link ModelInstance}）。</p>
  *
  * <p>一个渠道可同时持有多个不同协议的端点（如同一上游同时提供 OpenAI 与 Anthropic 端点），

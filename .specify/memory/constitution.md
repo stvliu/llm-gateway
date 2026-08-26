@@ -89,7 +89,7 @@ Token 必须是所有成本追踪的核心单位。每个请求必须分别追�
 └─────────────────────────┘
 ```
 
-### 2.2 领域模型纯洁性
+### 2.2 模型纯洁性
 
 所有 JPA 实体必须保持纯洁，禁止包含业务逻辑。业务逻辑必须封装于 `@Service` 类中。
 
@@ -124,7 +124,7 @@ Token 必须是所有成本追踪的核心单位。每个请求必须分别追�
 
 ---
 
-## 实体领域模型
+## 实体模型
 
 ### 3.1 六大实体域
 
@@ -181,7 +181,7 @@ Token 必须是所有成本追踪的核心单位。每个请求必须分别追�
 | `com.codingas.gateway.dispatch` | 调度层（Router、Tracker、Limiter） |
 | `com.codingas.gateway.service` | 服务层（业务逻辑） |
 | `com.codingas.gateway.infrastructure` | 基础设施层（Adapter、Repository） |
-| `com.codingas.gateway.domain` | 领域模型（Entity、ValueObject） |
+| `com.codingas.gateway.domain` | 模型（Entity、ValueObject） |
 | `com.codingas.gateway.domain.team` | 团队领域 |
 | `com.codingas.gateway.domain.user` | 用户领域 |
 | `com.codingas.gateway.domain.channel` | 渠道领域 |

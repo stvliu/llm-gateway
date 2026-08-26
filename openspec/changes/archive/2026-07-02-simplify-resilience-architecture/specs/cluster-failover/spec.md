@@ -6,7 +6,7 @@
 
 ### Requirement: Cluster 故障域实体
 
-系统 SHALL 提供 `Cluster` 领域实体作为 Channel 的故障域分组（实体名保留，语义改造）。`Cluster` 表达**跨供应商的故障独立性分组**：同组 Channel 共享共因特征，但分组可跨供应商（如 OpenAI 官方 + Azure-OpenAI 同域），也可供应商内细分（同供应商多账号异域）。
+系统 SHALL 提供 `Cluster` 实体作为 Channel 的故障域分组（实体名保留，语义改造）。`Cluster` 表达**跨供应商的故障独立性分组**：同组 Channel 共享共因特征，但分组可跨供应商（如 OpenAI 官方 + Azure-OpenAI 同域），也可供应商内细分（同供应商多账号异域）。
 
 **实体字段**（瘦身，删除原 region/priority/healthStatus）:
 - `code` — 故障域编码，全局唯一（如 `openai-primary` / `azure-openai-shared` / `overseas-line`）

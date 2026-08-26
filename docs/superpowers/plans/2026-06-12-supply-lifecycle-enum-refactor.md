@@ -536,7 +536,7 @@ git add -A && git commit -m "refactor(supply): Gateway 接口适配 phase 变更
 
 ---
 
-### Task 6: 修改领域服务
+### Task 6: 修改管理服务
 
 **Files:**
 - Modify: `domain/supply/service/ChannelDomainService.java`
@@ -573,7 +573,7 @@ channel.setPhase(Channel.Phase.SUSPENDED);
 - [ ] **Step 5: 提交**
 
 ```bash
-git add -A && git commit -m "refactor(supply): 领域服务适配 phase 和无 state 实体"
+git add -A && git commit -m "refactor(supply): 管理服务适配 phase 和无 state 实体"
 ```
 
 ---

@@ -86,7 +86,7 @@ Application.failureStrategy (实体)
 ### Code Pattern Consistency
 - ✅ 中文注释 + Javadoc（public 方法）
 - ✅ `@Enumerated(EnumType.STRING)` + `@Column(nullable=false, length=16)` 持久化范式
-- ✅ 领域模型纯洁（Application 仅 Getter/Setter）
+- ✅ 模型纯洁（Application 仅 Getter/Setter）
 - ✅ 前端"选而非填"范式（CircuitBreakerDashboard 复用 CircuitBreakerButton）
 
 ---

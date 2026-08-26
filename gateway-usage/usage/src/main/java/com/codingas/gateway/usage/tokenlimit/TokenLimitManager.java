@@ -18,9 +18,9 @@ package com.codingas.gateway.usage.tokenlimit;
 import com.codingas.gateway.common.dto.PageResponse;
 
 /**
- * Token 限额应用服务接口
+ * Token 限额管理服务接口
  *
- * <p>处理 Token 限额管理的业务逻辑。出入参采用领域实体 {@link TokenLimit} 与轻量用例对象，
+ * <p>处理 Token 限额管理的业务逻辑。出入参采用实体 {@link TokenLimit} 与轻量用例对象，
  * HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface TokenLimitManager {

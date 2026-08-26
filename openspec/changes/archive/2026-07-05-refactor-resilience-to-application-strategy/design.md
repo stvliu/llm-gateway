@@ -16,7 +16,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
-- 删除 Cluster 故障域聚合根与共因跳过，消除与 Application 的职责交叉
+- 删除 Cluster 故障域根实体与共因跳过，消除与 Application 的职责交叉
 - 引入轻量应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 三选一），支持场景差异化
 - 容灾走向由 Application 策略 + ApplicationChannel.priority 顺序 + 端点级熔断器承担
 - 补齐管理员容灾管理前端功能：端点熔断应急 UI、熔断状态大盘、总览页重组、策略配置

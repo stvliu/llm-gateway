@@ -6,7 +6,7 @@
 
 **权限模型缺口**：网关作为「应用聚合分发层」，真正的调用方是应用（Claude Code/OpenClaw/ERP），但现有权限模型以「人/团队」为授权对象（`User → Team → TeamChannel`），无法干净表达「不同应用访问不同渠道与模型」——不同应用要不同渠道只能靠为每个应用建 Team 迁就，污染组织模型。授权对象应从「人/团队」转为「应用」。
 
-本 change 双线推进：将 Application 升级为权限+行为聚合根，移除 Team，使「应用」成为渠道/模型可见性与容灾画像的统一决策者；并建立四层容灾栈（Key→Channel→模型→兜底）补齐 Channel 级透明容灾。
+本 change 双线推进：将 Application 升级为权限+行为根实体，移除 Team，使「应用」成为渠道/模型可见性与容灾画像的统一决策者；并建立四层容灾栈（Key→Channel→模型→兜底）补齐 Channel 级透明容灾。
 
 **执行顺序（P-r 优先，容灾整体后置）**：权限重构 P-r 是地基（权限锚点、Application 实体、访问控制），最优先；容灾 P0/P1 紧随（共享终态 PermissionRouter，不重写两遍）；P2（画像+Cluster）最后在 Application 权限上落地。理由：权限模型是正确性问题（现有「不同应用访问不同渠道」要靠为每个应用建 Team 迁就，是模型错位），正确性优先于容灾可用性；且 PermissionRouter 先建终态，容灾候选来源无需从 Team 切到 Application 造成回归；Team 数据迁移宜早不宜晚。
 
@@ -27,7 +27,7 @@
 - P0/P1 在 P-r 完成的 Application 权限上落地（PermissionRouter 已是终态，无需从 Team 切换数据源）；候选列表来源（权限过滤）随 P-r 完成即为 ApplicationChannel，转移逻辑本身不依赖权限模型。
 
 ### P-r 权限重构（应用为中心，移除 Team）—— 权限线，最优先
-- 新增 `Application` 聚合根实体 + `applications` 表，作为「权限 + 行为」双聚合根：承载 N 把 Key 的应用归属、渠道可见性、模型可见性、容灾画像。
+- 新增 `Application` 根实体实体 + `applications` 表，作为「权限 + 行为」双根实体：承载 N 把 Key 的应用归属、渠道可见性、模型可见性、容灾画像。
 - `UserApiKey` 增加 `application_id`，权限锚点从 `userId`（人）改为 `apiKeyId` → `applicationId`（应用）。
 - 渠道可见性归 Application：新增 `ApplicationChannel`（应用能访问哪些渠道）。**模型可见性不独立配置**——由渠道上挂哪些 ModelInstance 隐式决定，废弃现有「团队模型可见性」机制。权限链重写为 `UserApiKey → Application → ApplicationChannel → Channel`。
 - **移除 Team 体系**：删除 `Team`、`UserTeam`、`TeamChannel` 实体及相关 Gateway；`team-channel-management` capability 作废。现有 Team/TeamChannel 数据 1:1 平移到 Application/ApplicationChannel（授权不丢），归属不明 Key 归 `migration-default` 应用。
@@ -35,12 +35,12 @@
 - Application 预留配额/预算、用量看板字段（留空，待 `quota`/`audit` 域填充）；密钥轮换不建。
 
 ### P2 应用级容灾画像 + Cluster 故障域分组（原 P2/P3 合并）—— 容灾线，等权限重构
-- 新增 `ResilienceProfile` 领域实体 + `resilience_profiles` 表，承载四层栈开关、错误分流覆盖、模型锁定、会话亲和、成本/超时策略。**纯数据库方案**：画像全部落库 + CRUD API + 控制台管理，预设档位（default/strict/aggressive/batch）由初始化数据写入，满足「全实体可审计」铁律。
+- 新增 `ResilienceProfile` 实体 + `resilience_profiles` 表，承载四层栈开关、错误分流覆盖、模型锁定、会话亲和、成本/超时策略。**纯数据库方案**：画像全部落库 + CRUD API + 控制台管理，预设档位（default/strict/aggressive/batch）由初始化数据写入，满足「全实体可审计」铁律。
 - `Application` 挂 `resilience_profile_id` 承载画像。解析链 `Application → Global`（Team 已移除，无中间层；Application 画像为主，全局 `default` 兜底）。
 - `ResilienceProfile` 暴露给管理员两个面向字段：容灾模式档位（STANDARD/STRICT/AGGRESSIVE，BATCH 为 STANDARD 的 QUEUED 变体）+ 降级兜底开关，其余专家字段由档位自动推导。
 - 会话亲和：场景1（agent 多轮）按请求头 `X-Session-Id` 亲和到首次命中渠道，标识缺失时不亲和（安全降级）。SessionAffinityStore 接口 + Redis(生产)/InMemory(开发) 双实现，TTL 30min，亲和优先非强制（熔断则转移并更新）。
 - 修正 `DegradationService.degrade(reason)` 语义：按 reason 分流，定位为 L2 兜底（应用可选启用），非全局主路径。
-- 新增显式 `Cluster` 领域实体 + `clusters` 表（code/name/provider_id/region/priority/health_status），`Channel.cluster_id` FK（直接建实体，不经软字段阶段）。Cluster 级健康聚合：域内所有渠道熔断 → Cluster DOWN，路由跳过整域；域内任一渠道 half-open 成功 → Cluster 解除 DOWN。Cluster 既是故障域（共因隔离）也是亲和域（就近低延迟 / 按供应商分域锁定模型）。
+- 新增显式 `Cluster` 实体 + `clusters` 表（code/name/provider_id/region/priority/health_status），`Channel.cluster_id` FK（直接建实体，不经软字段阶段）。Cluster 级健康聚合：域内所有渠道熔断 → Cluster DOWN，路由跳过整域；域内任一渠道 half-open 成功 → Cluster 解除 DOWN。Cluster 既是故障域（共因隔离）也是亲和域（就近低延迟 / 按供应商分域锁定模型）。
 
 ### 控制台管理范式
 - **屏1 容灾总览**（Dashboard 增强，只读）：故障域拓扑 + 实时转移事件流 + 耗尽告警。
@@ -50,7 +50,7 @@
 ## Capabilities
 
 ### New Capabilities
-- `application`: 应用聚合根——权限+行为双聚合，承载 Key 归属、渠道/模型可见性、容灾画像，预留配额/看板字段（本 change 启用权限+画像，配额/看板留空）。
+- `application`: 应用根实体——权限+行为双聚合，承载 Key 归属、渠道/模型可见性、容灾画像，预留配额/看板字段（本 change 启用权限+画像，配额/看板留空）。
 - `application-access-control`: 应用级访问控制——`ApplicationChannel` 渠道可见性，权限锚点为应用而非团队；数据面无 ADMIN 跳过。
 - `channel-failover`: Channel 级（L1）运行时失败转移回路——候选列表路由、`ChannelFailoverInvoker`、错误分流表、流式转移边界。
 - `resilience-profile`: 应用级容灾画像——`ResilienceProfile` 实体与纯数据库管理、解析链（Application→Global）、容灾模式档位推导、会话亲和。

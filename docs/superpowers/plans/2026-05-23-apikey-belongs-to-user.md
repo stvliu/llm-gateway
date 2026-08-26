@@ -58,7 +58,7 @@
 
 ---
 
-### Task 1: 后端领域实体 — UserApiKey 删除 teamId
+### Task 1: 后端实体 — UserApiKey 删除 teamId
 
 **Files:**
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/domain/team/entity/UserApiKey.java`
@@ -337,7 +337,7 @@ git commit -m "refactor(dto): UserApiKey DTO 移除 teamId 字段"
 
 ---
 
-### Task 5: 后端应用服务 — 删除 teamId 逻辑
+### Task 5: 后端管理服务 — 删除 teamId 逻辑
 
 **Files:**
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/application/userapikey/UserApiKeyService.java`

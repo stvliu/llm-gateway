@@ -14,7 +14,7 @@
 
 | 操作 | 文件路径 | 职责 |
 |------|---------|------|
-| 新增 | `domain/supply/entity/ChannelEndpoint.java` | ChannelEndpoint 领域实体 |
+| 新增 | `domain/supply/entity/ChannelEndpoint.java` | ChannelEndpoint 实体 |
 | 新增 | `domain/supply/enums/ChannelEndpointState.java` | 端点状态枚举 (ACTIVE/DISABLED) |
 | 新增 | `domain/supply/gateway/ChannelEndpointGateway.java` | 端点持久化接口 |
 | 修改 | `domain/supply/entity/Channel.java` | 删除 endpointUrl/protocol 字段 |
@@ -715,7 +715,7 @@ git commit -m "feat(supply): 实现 ChannelEndpoint 基础设施层（Do/Reposit
 
 ---
 
-### Task 5: 更新 RoutingContext 值对象
+### Task 5: 更新 RoutingContext 不可变对象
 
 **Files:**
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/domain/supply/valueobject/RoutingContext.java`
@@ -733,7 +733,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("RoutingContext 值对象测试")
+@DisplayName("RoutingContext 不可变对象测试")
 class RoutingContextTest {
 
     @Test
@@ -780,7 +780,7 @@ package com.codingas.gateway.domain.supply.valueobject;
 import com.codingas.gateway.domain.supply.enums.Protocol;
 
 /**
- * 路由上下文值对象
+ * 路由上下文不可变对象
  *
  * <p>携带请求路由所需的全部信息。</p>
  */
@@ -954,7 +954,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 渠道领域服务
+ * 渠道管理服务
  *
  * <p>封装渠道相关的核心业务逻辑。</p>
  */

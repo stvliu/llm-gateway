@@ -21,7 +21,7 @@ import lombok.Setter;
 import java.time.Instant;
 
 /**
- * 用户 API Key 领域实体
+ * 用户 API Key 实体
  * <p>
  * 一个 Key 归属一个用户，并挂载到具体应用（applicationId）作为权限锚点——
  * 通过应用-渠道授权关系（ApplicationChannel）继承渠道访问权限。

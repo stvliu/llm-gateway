@@ -9,7 +9,7 @@
 - [x] 1.1 新建 `gateway-common` 模块，迁移 exception/BaseEntity/util/event（16 个文件 + 上浮 ProviderErrorType/FailoverDecision 两个通用 enum 到 common.enums），编译 + 测试通过（715 全绿）
 - [x] 1.2 common 纯横切校验：enum 上浮后 common 不再依赖任何业务层，`COMMON_NOT_DEPEND_ON_BUSINESS` 违规解冻
 - [x] 1.3 新建 `gateway-provider`，迁移 `domain/supply` 全部（38 main + 6 test）。前置治理：KeyTestResult/AuthStatus 下沉到 supply、FailureStrategy 上浮 common、移除 Javadoc @link 误判、ArchUnit 改精确包前缀
-- [x] 1.4 `RoutingContext` 已是 Java `record`（字段 final、自动 getter、无 setter），天然不可变值对象，无需额外收敛
+- [x] 1.4 `RoutingContext` 已是 Java `record`（字段 final、自动 getter、无 setter），天然不可变不可变对象，无需额外收敛
 - [ ] 1.5 （可选）拆 `provider-api` 子模块，上层只依赖 api
 - [x] 1.6 迁移 provider 的 application（ChannelHealthService 等 3 文件）+ infrastructure（JPA/Repository/UpstreamClient 等 33 文件 + ErrorClassification 族 4 文件）到 gateway-provider。前置：BaseDo 迁 gateway-common（加 spring-data-jpa）、CredentialEncryptor 接口解耦 iam 加密、provider 加 JPA/okhttp/jackson 依赖。单测迁 provider（63 全绿），boot surefire 652 + failsafe 37 全绿，provider 独立于 boot 编译
 - [x] 1.7 新建 `gateway-iam`，迁移 User/Application/APIKey/Auth/加密。迁移三层 62 生产文件 + 10 测试（domain.iam + domain.application + application.auth/user/userapikey/application + infrastructure.iam/application）。PasswordEncoder 从 boot SecurityConfig 迁入 iam（Sa-Token SHA-256），adapter/拦截器留 boot。依赖 JPA + sa-token
@@ -21,7 +21,7 @@
 
 ## 3. Phase 2：中基拆分
 
-- [x] 2.1 新建 `gateway-security`，迁移 threat（14）+ dataprotection（8）+ 3 测试（23 文件）。前置治理：RateLimitProperties 值对象上浮 threat 域（RateLimitDomainService 不再依赖 boot GatewayProperties），boot ThreatRateLimitConfig 映射注入。security 只依赖 common，14 测试全绿
+- [x] 2.1 新建 `gateway-security`，迁移 threat（14）+ dataprotection（8）+ 3 测试（23 文件）。前置治理：RateLimitProperties 不可变对象上浮 threat 域（RateLimitDomainService 不再依赖 boot GatewayProperties），boot ThreatRateLimitConfig 映射注入。security 只依赖 common，14 测试全绿
 - [x] 2.2 拦截链澄清：拦截链为 adapter 编排（iam/threat + sa-token），security 不反向依赖 usage（TokenLimit 配额与令牌桶限流为两套独立机制，不进拦截链）
 - [x] 2.3 新建 `gateway-usage`，迁移 usage+quota 17 生产文件 + 3 测试（usage↔quota 共享 TokenLimit 边界故合并）。依赖 common/provider/iam，独立编译，23 测试全绿
 - [x] 2.4 明确 usage 明细表归属：当前 stats 直连 provider/iam 仓库计数、不读 usage（todayRequests/tokenUsage 为 mock，TODO 留待审计统计），无只读接口需求
@@ -36,7 +36,7 @@
 
 - [x] 3.1 新建 `gateway-proxy`，迁移 ChatDispatchService/routing（RoutingResolver 等）/invoker（Channel/KeyFailoverInvoker）18 文件 + ProtocolConversionFacade + ProtocolStreamConverter + 15 测试。依赖 8 模块（common/iam/audit/protocol/provider/usage/resilience），102 测试全绿
 - [x] 3.2 确认 proxy 经 `ProtocolConversionFacade` 编排：仅通过 ProtocolAdapter SPI 动态装配，无任何具体 OpenAI/Anthropic Adapter 代码引用（仅 Javadoc 举例）
-- [x] 3.3 核心代理调度迁出 `gateway-boot`，boot 保留 adapter/管理端应用服务（catalog/channel/model 等）/config + Phase 4 协议 Adapter；ArchUnit 通过，全仓 14 模块 clean install + boot 331 surefire + failsafe 全绿
+- [x] 3.3 核心代理调度迁出 `gateway-boot`，boot 保留 adapter/管理端管理服务（catalog/channel/model 等）/config + Phase 4 协议 Adapter；ArchUnit 通过，全仓 14 模块 clean install + boot 331 surefire + failsafe 全绿
 
 ## 5. Phase 4：协议能力插件化
 

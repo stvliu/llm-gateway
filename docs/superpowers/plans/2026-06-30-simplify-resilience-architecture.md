@@ -21,7 +21,7 @@ base-ref: 17c7c1f3b897aa55ffc88218e0a2844e846b8611
 ## Global Constraints
 
 - COLA Light 5.0 单模块分层：domain 只依赖 Gateway 接口，Gateway 实现在 infrastructure；禁止跨层/反向依赖。
-- **领域模型纯洁性铁律**：JPA 实体只含 Getter/Setter，禁止含业务逻辑；priority 是路由上下文数据，**不挂 ModelInstance 领域实体**（ID1）。
+- **模型纯洁性铁律**：JPA 实体只含 Getter/Setter，禁止含业务逻辑；priority 是路由上下文数据，**不挂 ModelInstance 实体**（ID1）。
 - 全实体可审计：每张业务表含 `created_by/created_at/updated_by/updated_at`（继承 `BaseEntity`）。
 - 表名 snake_case 复数；主键 `id BIGINT AUTO_INCREMENT`；外键 `*_id BIGINT`。
 - public 方法必须中文 Javadoc；类/复杂逻辑中文注释；业务逻辑块中文解释。

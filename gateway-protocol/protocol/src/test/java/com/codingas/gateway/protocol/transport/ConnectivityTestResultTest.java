@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * ConnectivityTestResult 值对象测试
+ * ConnectivityTestResult 不可变对象测试
  *
  * <p>覆盖 success/failure 两个工厂方法生成的字段组合。</p>
  */

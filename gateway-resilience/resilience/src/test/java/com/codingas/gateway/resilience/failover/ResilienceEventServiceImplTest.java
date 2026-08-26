@@ -40,7 +40,7 @@ import static org.mockito.Mockito.when;
 /**
  * ResilienceEventManagerImpl 单元测试
  *
- * <p>验证应用服务层查询委派逻辑，重点守护 I2 修复：{@code findExhausted} 当 since 为 null 时
+ * <p>验证管理服务层查询委派逻辑，重点守护 I2 修复：{@code findExhausted} 当 since 为 null 时
  * 由 Service 层补默认窗口（最近 1 小时），避免透传 null 返回全量历史耗尽事件导致前端总览页
  * 告警区被陈旧数据淹没。设计 D12「耗尽告警」语义为近期告警，默认最近 1 小时。</p>
  *

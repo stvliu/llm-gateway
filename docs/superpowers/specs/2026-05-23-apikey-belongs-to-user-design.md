@@ -33,7 +33,7 @@ UserApiKey { userId, productIds }   ← 去掉 teamId
 
 ## 后端变更
 
-### 1. 领域实体
+### 1. 实体
 
 **UserApiKey** — 移除 `teamId` 字段：
 ```java
@@ -117,7 +117,7 @@ return RoutingContext.builder()
     .build();
 ```
 
-### 6. 应用服务变更
+### 6. 管理服务变更
 
 **UserApiKeyService / UserApiKeyServiceImpl**：
 - `create()` — 不再设置 teamId，CreateRequest 去掉 teamId
@@ -256,7 +256,7 @@ export interface CreateUserApiKeyRequest {
 
 ## 实施顺序
 
-1. 后端领域模型变更（实体、Gateway、Service）
+1. 后端模型变更（实体、Gateway、Service）
 2. 数据库迁移脚本
 3. 认证链路调整
 4. 路由上下文调整

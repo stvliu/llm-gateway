@@ -26,7 +26,7 @@ import org.springframework.stereotype.Component;
 /**
  * API Key 认证拦截器
  *
- * <p>从请求中提取 API Key 并调用领域服务完成认证，order=3 在限流和 Token 认证之后执行。</p>
+ * <p>从请求中提取 API Key 并调用管理服务完成认证，order=3 在限流和 Token 认证之后执行。</p>
  */
 @Slf4j
 @Component

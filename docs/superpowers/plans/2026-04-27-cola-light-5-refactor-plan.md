@@ -1627,9 +1627,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 认证用例应用服务
+ * 认证用例管理服务
  *
- * <p>编排认证相关的领域服务，不含业务逻辑。</p>
+ * <p>编排认证相关的管理服务，不含业务逻辑。</p>
  */
 @Slf4j
 @Service
@@ -1674,9 +1674,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 聊天用例应用服务
+ * 聊天用例管理服务
  *
- * <p>编排聊天请求处理，调用多个领域服务。</p>
+ * <p>编排聊天请求处理，调用多个管理服务。</p>
  */
 @Slf4j
 @Service
@@ -1714,7 +1714,7 @@ git add gateway-boot/src/main/java/com/codingas/gateway/application/
 git commit -m "feat: 创建 Application 层服务
 
 - AuthApplication, ChatApplication
-- 按用例分包，编排领域服务
+- 按用例分包，编排管理服务
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```

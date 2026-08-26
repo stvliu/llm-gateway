@@ -24,7 +24,7 @@
 - 删除 6 个旧状态枚举文件
 - 新增 `Channel.Phase` 和 `ModelInstance.Phase` 内部枚举（PENDING/ACTIVE/SUSPENDED/DEPRECATED/RETIRED）
 - 修改 6 个实体去掉旧状态字段
-- 适配 4 个领域服务、多个应用层服务、DTO、路由层
+- 适配 4 个管理服务、多个应用层服务、DTO、路由层
 - 适配 12 个测试文件
 - 修改 DO、Repository、Gateway 实现层
 

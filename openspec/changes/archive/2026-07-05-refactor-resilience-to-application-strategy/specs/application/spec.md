@@ -2,9 +2,9 @@
 
 ## MODIFIED Requirements
 
-### Requirement: Application 聚合根实体
+### Requirement: Application 根实体实体
 
-系统 SHALL 提供 `Application` 聚合根实体作为「权限 + 行为」双聚合根，承载 N 把 Key 的应用归属、渠道可见性、应用级超时、失败处理策略，并预留配额/看板字段。
+系统 SHALL 提供 `Application` 根实体实体作为「权限 + 行为」双根实体，承载 N 把 Key 的应用归属、渠道可见性、应用级超时、失败处理策略，并预留配额/看板字段。
 
 **实体字段**（保留 timeout，新增 failureStrategy）:
 - `code` — 应用编码，全局唯一

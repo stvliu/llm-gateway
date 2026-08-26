@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 渠道应用门面（应用服务层）
+ * 渠道应用门面（管理服务层）
  *
  * <p>位于 Controller 与领域 Service 之间：负责组装对象（DTO 纯映射 + 跨实体展示数据）与跨域访问（协调核心服务），
  * 只依赖核心 Service，不访问持久化仓储。</p>

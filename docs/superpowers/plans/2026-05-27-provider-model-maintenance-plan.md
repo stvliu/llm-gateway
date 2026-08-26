@@ -73,7 +73,7 @@ git commit -m "feat(db): V40 迁移 — model_specs 去 provider_id，全局注�
 
 ---
 
-### Task 2: 后端 — ModelSpec 领域实体去掉 providerId
+### Task 2: 后端 — ModelSpec 实体去掉 providerId
 
 **Files:**
 - Modify: `gateway-boot/src/main/java/com/codingas/gateway/domain/supply/entity/ModelSpec.java`

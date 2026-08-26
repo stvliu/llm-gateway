@@ -28,7 +28,7 @@
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/product/gateway/database/dataobject/ProductModelDo.java` | 业务关联 JPA DO |
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/product/gateway/database/repository/ProductModelRepository.java` | 业务关联 JPA Repository |
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/product/gateway/ProductModelGatewayImpl.java` | 业务关联 Gateway 实现 |
-| `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/ProductModelMetadataService.java` | 元数据关联应用服务 |
+| `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/ProductModelMetadataService.java` | 元数据关联管理服务 |
 | `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/dto/ProductModelMetadataResponse.java` | 元数据关联响应 DTO |
 | `gateway-boot/src/main/java/com/codingas/gateway/adapter/api/ProductModelMetadataController.java` | 元数据关联 API Controller |
 
@@ -354,7 +354,7 @@ git commit -m "refactor: ModelMetadata 移除 productId 和定价字段"
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/database/ProductModelMetadataRepository.java`
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/gateway/ProductModelMetadataGatewayImpl.java`
 
-- [ ] **Step 1: 创建 ProductModelMetadata 领域实体**
+- [ ] **Step 1: 创建 ProductModelMetadata 实体**
 
 ```java
 package com.codingas.gateway.domain.metadata.entity;
@@ -475,7 +475,7 @@ git commit -m "feat: 元数据体系 ProductModelMetadata 关联实体和 Gatewa
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/product/gateway/database/repository/ProductModelRepository.java`
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/product/gateway/ProductModelGatewayImpl.java`
 
-- [ ] **Step 1: 创建 ProductModel 领域实体**
+- [ ] **Step 1: 创建 ProductModel 实体**
 
 ```java
 package com.codingas.gateway.domain.product.entity;

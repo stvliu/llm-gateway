@@ -28,7 +28,7 @@
 | 检查项 | 状态 | 说明 |
 |--------|------|------|
 | 分层架构（Web→应用→调度→服务→基础设施） | ✅ | 适配器层位于基础设施层，上层依赖下层 |
-| 领域模型纯洁性（实体仅 Getter/Setter） | ✅ | 实体仅含数据属性，业务逻辑在 Service 层 |
+| 模型纯洁性（实体仅 Getter/Setter） | ✅ | 实体仅含数据属性，业务逻辑在 Service 层 |
 | 配置外部化（@ConfigurationProperties） | ✅ | Provider 配置通过 @ConfigurationProperties 注入 |
 | 全实体可审计（created_by/updated_by） | ✅ | 所有实体包含审计字段 |
 | 开闭原则（对扩展开放） | ✅ | 通过 SPI + 适配器接口实现 |
@@ -57,7 +57,7 @@ gateway-core/src/main/java/com/codingas/gateway/
 │   ├── AnthropicAdapter.java        # Anthropic 实现
 │   └── spi/                         # SPI 加载机制
 │       └── AdapterLoader.java
-├── domain/                          # 领域模型
+├── domain/                          # 模型
 │   ├── entity/
 │   │   ├── Provider.java            # 模型提供商
 │   │   ├── Model.java               # 具体模型

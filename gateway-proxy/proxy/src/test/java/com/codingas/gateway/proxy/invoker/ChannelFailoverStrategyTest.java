@@ -92,7 +92,7 @@ class ChannelFailoverStrategyTest {
      * （RATE_LIMIT_ERROR→L1），无需 stub。</p>
      *
      * @param keyInvoker     mock Key 级 Invoker（控制 invoke/invokeStream 成功/失败）
-     * @param eventPublisher mock 领域事件发布器（调用方持有引用以 verify publish 调用）
+     * @param eventPublisher mock 业务事件发布器（调用方持有引用以 verify publish 调用）
      * @return 真实 ChannelFailoverInvoker 实例
      */
     private ChannelFailoverInvoker newRealInvoker(KeyFailoverInvoker keyInvoker,

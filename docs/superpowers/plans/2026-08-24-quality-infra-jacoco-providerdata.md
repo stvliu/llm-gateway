@@ -126,7 +126,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
   - `ProviderGatewayImplTest.java`、`ModelGatewayImplTest.java`、`ModelInstanceGatewayImplTest.java`、`ChannelGatewayImplTest.java`、`ChannelCredentialGatewayImplTest.java`、`ChannelEndpointGatewayImplTest.java`、`ChannelOperationLogGatewayImplTest.java`、`PlanCatalogGatewayImplTest.java`、`PlanModelCatalogGatewayImplTest.java`
 
 **Interfaces:**
-- Consumes: 现有 GatewayImpl（ProviderGatewayImpl 等）+ 领域模型（Provider/Model/Channel 等）+ DO（ProviderDo 等）+ Repository
+- Consumes: 现有 GatewayImpl（ProviderGatewayImpl 等）+ 模型（Provider/Model/Channel 等）+ DO（ProviderDo 等）+ Repository
 - Produces: 9 个 GatewayImpl 的单元测试（mock Repository，覆盖全部 public 方法）
 
 - [ ] **Step 1: 测试模式确认**
@@ -209,11 +209,11 @@ class ProviderGatewayImplTest {
 }
 ```
 
-**注意**：DO 的 setter 以实际 `XxxDo` 字段为准（@Data/手动 setter）；领域模型字段以实际 `Provider`/`Channel` 等为准（@DomainEntity 原型 Bean + setter）。若 DO/领域模型字段名与样板不同，以实际为准适配。转换验证必须覆盖「双向映射」（toDo 写字段 + toEntity 读字段）——即 save 验证写、findById 验证读。
+**注意**：DO 的 setter 以实际 `XxxDo` 字段为准（@Data/手动 setter）；模型字段以实际 `Provider`/`Channel` 等为准（@DomainEntity 原型 Bean + setter）。若 DO/模型字段名与样板不同，以实际为准适配。转换验证必须覆盖「双向映射」（toDo 写字段 + toEntity 读字段）——即 save 验证写、findById 验证读。
 
 - [ ] **Step 2: 编写 9 个测试**
 
-每个 GatewayImpl 一个测试类，mock 对应 Repository，覆盖该 GatewayImpl 的**全部 public 方法**（含转换、空值、缺省分支）。DO/领域模型 setter 以实际为准。
+每个 GatewayImpl 一个测试类，mock 对应 Repository，覆盖该 GatewayImpl 的**全部 public 方法**（含转换、空值、缺省分支）。DO/模型 setter 以实际为准。
 
 - [ ] **Step 3: 运行 provider-data 测试**
 
@@ -294,5 +294,5 @@ Expected: BUILD SUCCESS，全部测试绿（surefire + failsafe 含 Q3 新增的
 **风险**：
 - 根 pom build/plugins jacoco 与 boot 现有声明重复 → Task 2 Step 2 删 boot 声明
 - excludes 继承不生效 → Task 2 Step 1 验证
-- DO/领域模型字段与样板不符 → Task 3 Step 1 注明以实际为准
+- DO/模型字段与样板不符 → Task 3 Step 1 注明以实际为准
 - 覆盖率不达标 → Task 4 如实记录（不设 check 阻断）

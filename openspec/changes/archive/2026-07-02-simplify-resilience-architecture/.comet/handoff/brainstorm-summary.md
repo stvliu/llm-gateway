@@ -7,7 +7,7 @@
 
 核心架构决策见 OpenSpec design.md D1-D10（已确认）。本文件为实现层面技术细节确认结果：
 
-1. **ApplicationChannel.priority 注入**：方案 A — RoutingRequest 删 resilienceProfile 字段，改为携带 `Map<Long channelId, Integer priority>`。InstanceSelector 构造 RoutingRequest 前查 ApplicationChannel 填充映射。PriorityRouter 从映射取 priority 排序。不污染 ModelInstance 领域实体。
+1. **ApplicationChannel.priority 注入**：方案 A — RoutingRequest 删 resilienceProfile 字段，改为携带 `Map<Long channelId, Integer priority>`。InstanceSelector 构造 RoutingRequest 前查 ApplicationChannel 填充映射。PriorityRouter 从映射取 priority 排序。不污染 ModelInstance 实体。
 2. **共因跳过**：RoutingContext record 增加 `clusterId` 字段（RoutingResolver 构造时从 Channel 填充，转移事件发布也省反查）。invoker 内局部 `Set<Long> commonCauseFailedClusters` 标记（天然本次请求有效）。跳过候选发转移事件 `commonCauseSkip=true`；所有剩余候选都被共因跳过时抛 lastException。
 3. **调谐下沉**：convertRequest + tune 一起下沉到 ChannelFailoverInvoker。每候选从原始入站 request 调 `ProtocolRequest.copy()` 派生副本，在副本上 convert+tune，不动原始。ProtocolRequest 接口加 `copy()` 方法，OpenAIChatRequest/AnthropicMessagesRequest 各自实现字段拷贝。ChatDispatchServiceImpl 删阶段3/4，传原始 request 给 invoker。
 4. **DB 迁移**：V51-V58 全在 master，必须新加迁移从 V59 起：V59 application_channels 加 priority；V60 clusters 删 region/priority/health_status；V61 applications 加 timeout + 删 resilience_profile_id；V62 删 resilience_profiles 表 + seed（依赖 V61）；V63 model_instances 删 priority；V64 failover_events 加 common_cause_skip。

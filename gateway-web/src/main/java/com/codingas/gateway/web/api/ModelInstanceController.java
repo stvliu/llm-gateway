@@ -30,7 +30,7 @@ import java.util.Map;
  * 模型实例 REST 控制器
  *
  * <p>列表/创建/更新经 {@link ModelInstanceFacade} 组装 DTO；
- * 删除、状态切换与上游模型名更新直接调用领域服务（无跨实体组装）。</p>
+ * 删除、状态切换与上游模型名更新直接调用管理服务（无跨实体组装）。</p>
  */
 @RestController
 @RequestMapping("/api/v1/channels/{channelId}/models")

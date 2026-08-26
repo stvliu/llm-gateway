@@ -22,9 +22,9 @@ import com.codingas.gateway.common.dto.PageResponse;
 import java.util.List;
 
 /**
- * 提供商应用服务接口
+ * 提供商管理服务接口
  *
- * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
+ * <p>出入参采用实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ProviderManager {
 

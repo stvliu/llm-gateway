@@ -18,12 +18,12 @@ package com.codingas.gateway.iam.application;
 import java.util.List;
 
 /**
- * 应用应用服务接口
+ * 应用管理服务接口
  *
- * <p>管理应用聚合根的 CRUD 与渠道授权绑定。
- * Application 是权限+行为双聚合根，承载 Key 归属与渠道可见性。</p>
+ * <p>管理应用根实体的 CRUD 与渠道授权绑定。
+ * Application 是权限+行为双根实体，承载 Key 归属与渠道可见性。</p>
  *
- * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
+ * <p>出入参采用实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ApplicationManager {
 

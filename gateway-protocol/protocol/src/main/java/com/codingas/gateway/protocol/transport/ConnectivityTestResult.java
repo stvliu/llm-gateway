@@ -16,7 +16,7 @@
 package com.codingas.gateway.protocol.transport;
 
 /**
- * 连通性测试结果值对象
+ * 连通性测试结果不可变对象
  *
  * <p>用于协议网关的连通性测试返回。</p>
  */

@@ -246,7 +246,7 @@ public class OpenAIAdapter implements LLMProviderPort {
 
 核心变更同上，统一使用 `WebClient`，返回 `Mono<T>` 类型。
 
-### 3.7 领域服务（LLMDispatcher）变更
+### 3.7 管理服务（LLMDispatcher）变更
 
 **文件**: `domain/router/service/LLMDispatcher.java`
 
@@ -384,11 +384,11 @@ public class OpenAIController {
 
 ### Phase 4: 领域层迁移
 1. 修改 `LLMDispatcher` 返回 `Mono`
-2. 编写领域服务测试
+2. 编写管理服务测试
 
 ### Phase 5: 应用层迁移
 1. 修改 `LLMChatUseCase` 返回 `Mono`
-2. 编写应用服务测试
+2. 编写管理服务测试
 
 ### Phase 6: 适配器层迁移
 1. 将 `@RestController` 改为 `@RestWebFlux`

@@ -26,7 +26,7 @@ import com.codingas.gateway.common.enums.FailureStrategy;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Application 聚合根实体与 ApplicationState 枚举单元测试
+ * Application 根实体实体与 ApplicationState 枚举单元测试
  *
  * <p>覆盖：</p>
  * <ul>
@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>Task 8：{@code resilienceProfileId} 退场，新增 {@code timeout}（承接原 ResilienceProfile.timeout，
  * 0 表示用渠道默认）。</p>
  */
-@DisplayName("Application 聚合根实体测试")
+@DisplayName("Application 根实体实体测试")
 class ApplicationTest {
 
     @Nested

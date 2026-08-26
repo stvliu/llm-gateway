@@ -32,7 +32,7 @@
 | 可观测性内建 (原则四) | ✅ PASS | OpenTelemetry tracing support |
 | Token 成本透明 (原则五) | ✅ PASS | Usage tracking in LLMResponse |
 | 分层架构 | ✅ PASS | Adapter layer in infrastructure, protocol translation in dispatch |
-| 领域模型纯洁性 | ✅ PASS | Entities only have getters/setters |
+| 模型纯洁性 | ✅ PASS | Entities only have getters/setters |
 | 配置外部化 | ✅ PASS | @ConfigurationProperties |
 
 ## HTTP Client Architecture

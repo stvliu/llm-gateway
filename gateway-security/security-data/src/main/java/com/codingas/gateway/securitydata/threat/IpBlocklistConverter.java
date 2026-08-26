@@ -22,16 +22,16 @@ import org.springframework.stereotype.Component;
 /**
  * IP 黑名单对象转换器
  *
- * <p>负责在领域实体 {@link IpBlocklist} 和数据对象 {@link IpBlocklistDo} 之间进行转换。</p>
+ * <p>负责在实体 {@link IpBlocklist} 和数据对象 {@link IpBlocklistDo} 之间进行转换。</p>
  */
 @Component
 public class IpBlocklistConverter {
 
     /**
-     * 将数据对象转换为领域实体
+     * 将数据对象转换为实体
      *
      * @param ipBlocklistDo 数据对象
-     * @return 领域实体
+     * @return 实体
      */
     public IpBlocklist toDomain(IpBlocklistDo ipBlocklistDo) {
         if (ipBlocklistDo == null) {
@@ -52,9 +52,9 @@ public class IpBlocklistConverter {
     }
 
     /**
-     * 将领域实体转换为数据对象
+     * 将实体转换为数据对象
      *
-     * @param ipBlocklist 领域实体
+     * @param ipBlocklist 实体
      * @return 数据对象
      */
     public IpBlocklistDo toDataObject(IpBlocklist ipBlocklist) {

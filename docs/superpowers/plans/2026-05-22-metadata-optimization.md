@@ -21,11 +21,11 @@
 | `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/enums/ProductType.java` | 产品类型枚举 |
 | `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/enums/Protocol.java` | 协议类型枚举 |
 | `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/gateway/ProductMetadataGateway.java` | 产品元数据网关接口 |
-| `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/service/ProductMetadataDomainService.java` | 产品元数据领域服务 |
+| `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/service/ProductMetadataDomainService.java` | 产品元数据管理服务 |
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/database/ProductMetadataRepository.java` | JPA Repository |
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/database/ProductMetadataDo.java` | 数据库对象 |
 | `gateway-boot/src/main/java/com/codingas/gateway/infrastructure/metadata/gateway/ProductMetadataGatewayImpl.java` | 网关实现 |
-| `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/ProductMetadataService.java` | 应用服务 |
+| `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/ProductMetadataService.java` | 管理服务 |
 | `gateway-boot/src/main/java/com/codingas/gateway/application/metadata/dto/ProductMetadataResponse.java` | 响应DTO |
 | `gateway-boot/src/main/resources/metadata/products/*.json` | 产品元数据JSON文件（13个） |
 
@@ -426,7 +426,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 **Files:**
 - Create: `gateway-boot/src/main/java/com/codingas/gateway/domain/metadata/service/ProductMetadataDomainService.java`
 
-- [ ] **Step 1: 创建领域服务**
+- [ ] **Step 1: 创建管理服务**
 
 ```java
 package com.codingas.gateway.domain.metadata.service;
@@ -440,7 +440,7 @@ import java.time.Instant;
 import java.util.Map;
 
 /**
- * 产品元数据领域服务
+ * 产品元数据管理服务
  * <p>
  * 处理产品元数据的业务逻辑。
  * </p>
@@ -879,7 +879,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 产品元数据应用服务
+ * 产品元数据管理服务
  */
 @Service
 @RequiredArgsConstructor

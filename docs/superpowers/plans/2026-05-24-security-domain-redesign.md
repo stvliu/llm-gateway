@@ -135,7 +135,7 @@ public class IamException extends GatewayException {
 }
 ```
 
-- [ ] **Step 2: 创建 Identity 值对象（替代 UserAuthResult）**
+- [ ] **Step 2: 创建 Identity 不可变对象（替代 UserAuthResult）**
 
 ```java
 package com.codingas.gateway.domain.iam.service;
@@ -261,7 +261,7 @@ git add -A
 git commit -m "refactor: 创建 domain/iam 子域，移动身份与访问控制相关类
 
 - 新建 IamException 替代 SecurityException 作为 IAM 子域根异常
-- 新建 Identity 值对象替代 UserAuthResult
+- 新建 Identity 不可变对象替代 UserAuthResult
 - 将 User/UserApiKey/UserGateway/UserApiKeyGateway/认证/加密/Key生成 移入 domain/iam
 - 将 AuthenticationFailedException/UnauthorizedException/ForbiddenException 移入 domain/iam/exception
 - 将 UserApiKeyState 从 team/enums 移入 iam/enums
@@ -665,7 +665,7 @@ import org.springframework.stereotype.Component;
 /**
  * API Key 认证拦截器
  *
- * <p>验证代理路径的 API Key，通过 AuthService 编排领域服务。</p>
+ * <p>验证代理路径的 API Key，通过 AuthService 编排管理服务。</p>
  */
 @Slf4j
 @Component
@@ -833,7 +833,7 @@ git commit -m "refactor: 拦截器统一走 GatewayInterceptor 接口
 - ApiKeyAuthInterceptor 从 HandlerInterceptor 改为 GatewayInterceptor
 - 新增 RateLimitInterceptor（order=1）
 - 拦截器执行顺序：IP封禁(0) → 限流(1) → Token认证(2) → ApiKey认证(3)
-- 通过 AuthService 编排领域服务，不跳层
+- 通过 AuthService 编排管理服务，不跳层
 
 Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ```
@@ -1006,7 +1006,7 @@ package com.codingas.gateway.application.auth;
 import com.codingas.gateway.domain.iam.valueobject.Identity;
 
 /**
- * 认证应用服务接口
+ * 认证管理服务接口
  */
 public interface AuthService {
 

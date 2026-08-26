@@ -18,9 +18,9 @@ package com.codingas.gateway.provider.model;
 import java.util.List;
 
 /**
- * 模型实例应用服务接口
+ * 模型实例管理服务接口
  *
- * <p>出入参采用领域实体与轻量用例对象；模型规格展示字段（modelName 等）的组装
+ * <p>出入参采用实体与轻量用例对象；模型规格展示字段（modelName 等）的组装
  * 由 web 层组装器（Assembler）负责。</p>
  */
 public interface ModelInstanceManager {

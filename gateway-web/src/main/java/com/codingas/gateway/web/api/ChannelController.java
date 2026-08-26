@@ -35,7 +35,7 @@ import java.util.List;
  * 渠道管理 REST 控制器
  *
  * <p>CRUD 与列表经 {@link ChannelFacade} 组装 DTO；
- * 状态切换、端点管理、健康检查与应急操作直接调用领域服务（无跨实体组装）。</p>
+ * 状态切换、端点管理、健康检查与应急操作直接调用管理服务（无跨实体组装）。</p>
  */
 @RestController
 @RequestMapping("/api/v1/channels")

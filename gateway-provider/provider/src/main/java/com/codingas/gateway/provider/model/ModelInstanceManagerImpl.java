@@ -26,7 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 模型实例应用服务实现
+ * 模型实例管理服务实现
  */
 @Slf4j
 @Service

@@ -17,8 +17,8 @@
 | 文件 | 操作 | 职责 |
 |------|------|------|
 | `adapter/api/ModelSpecController.java` | 新增 | 模型规格 REST 端点 |
-| `application/modelspec/ModelSpecService.java` | 新增 | 模型规格应用服务接口 |
-| `application/modelspec/ModelSpecServiceImpl.java` | 新增 | 模型规格应用服务实现 |
+| `application/modelspec/ModelSpecService.java` | 新增 | 模型规格管理服务接口 |
+| `application/modelspec/ModelSpecServiceImpl.java` | 新增 | 模型规格管理服务实现 |
 | `application/modelspec/dto/ModelSpecCreateRequest.java` | 新增 | 创建模型规格请求 DTO |
 | `application/modelspec/dto/ModelSpecUpdateRequest.java` | 新增 | 更新模型规格请求 DTO |
 | `application/modelspec/dto/ModelSpecResponse.java` | 新增 | 模型规格响应 DTO |

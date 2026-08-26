@@ -112,11 +112,11 @@ application/
 
 ### 3. Domain 层（领域层）
 
-**职责：** 业务逻辑核心，包含领域模型、业务规则、Gateway 接口定义
+**职责：** 业务逻辑核心，包含模型、业务规则、Gateway 接口定义
 
 **包含组件：**
-- Entity：领域实体
-- Domain Service：领域服务（业务逻辑）
+- Entity：实体
+- Domain Service：管理服务（业务逻辑）
 - Gateway 接口：通往外部世界的门（接口定义）
 - 领域异常：业务规则违反
 - 枚举：业务概念表达
@@ -296,7 +296,7 @@ infrastructure/gateway/
 - 所有代码按 COLA 分层原则放置
 - 领域层无外部依赖（仅依赖 Gateway 接口）
 - 基础设施层实现 Gateway 接口
-- 应用层编排领域服务
+- 应用层编排管理服务
 - 无循环依赖
 
 ---

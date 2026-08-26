@@ -18,7 +18,7 @@
 ## Goals / Non-Goals
 
 **Goals:**
-- P-r：Application 升级为权限+行为聚合根，移除 Team，权限锚点从 userId 改为 applicationId；渠道/模型可见性归 Application（ApplicationChannel/ApplicationModel）。
+- P-r：Application 升级为权限+行为根实体，移除 Team，权限锚点从 userId 改为 applicationId；渠道/模型可见性归 Application（ApplicationChannel/ApplicationModel）。
 - P0：修正 RouterChain 顺序（Health 先于 Priority），统一熔断 key 为 endpointId。
 - P1：ChannelFailoverInvoker + 候选列表路由 + 错误分流表，补齐 Channel 级 L1 透明容灾。
 - P2：ResilienceProfile 纯数据库管理，挂 Application；容灾模式档位推导；会话亲和（X-Session-Id）。
@@ -42,7 +42,7 @@
 ### D3: 四层容灾栈 + 错误分流
 L0 Key 级（同渠道换 Key，已有）→ L1 Channel 级（同模型换渠道，对用户透明，本 change 核心）→ L2 模型级（换能力近似模型，应用可选兜底）→ L3 抛错。错误分流表：INVALID_REQUEST 绝不转移，其余按 ProviderErrorType 映射 L1/L2/NONE。共因故障（AUTH/QUOTA/账号限流/网络/宕机）走 L1 换渠道而非 L2 换模型。
 
-### D4: Application 为权限+行为双聚合根
+### D4: Application 为权限+行为双根实体
 Application 承载：Key 归属（N 把 Key 共用一个应用）、渠道可见性（ApplicationChannel）、容灾画像（resilience_profile_id）。**不独立配模型可见性**（见 D8），不保留成员管理。归属关系：Key → Application（无 Team 中间层）。
 
 ### D5: 画像纯数据库管理 + 解析链 Application → Global

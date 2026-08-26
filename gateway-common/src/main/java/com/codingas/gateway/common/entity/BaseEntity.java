@@ -21,9 +21,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.Instant;
 
 /**
- * 领域实体基类
+ * 实体基类
  *
- * <p>提供公共字段，无 JPA 依赖。领域实体应继承此类。</p>
+ * <p>提供公共字段，无 JPA 依赖。实体应继承此类。</p>
  *
  * <p>注意：version 字段是 JPA/数据库层的实现细节，不应暴露给领域层。</p>
  * <p>乐观锁由 Gateway 实现层处理。</p>

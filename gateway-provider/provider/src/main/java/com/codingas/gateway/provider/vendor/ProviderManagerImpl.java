@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * 提供商应用服务实现
+ * 提供商管理服务实现
  *
  * <p>已移除 ProviderApiKey 相关逻辑，API Key 管理迁移到 ProductApiKey。</p>
  */

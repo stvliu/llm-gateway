@@ -18,9 +18,9 @@ package com.codingas.gateway.provider.channel;
 import java.util.List;
 
 /**
- * 渠道凭证应用服务接口
+ * 渠道凭证管理服务接口
  *
- * <p>出入参采用领域实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
+ * <p>出入参采用实体与轻量用例对象，HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface ChannelCredentialManager {
 

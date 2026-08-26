@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Token 限额应用服务实现
+ * Token 限额管理服务实现
  *
  * <p>处理 Token 限额管理的业务逻辑。</p>
  */

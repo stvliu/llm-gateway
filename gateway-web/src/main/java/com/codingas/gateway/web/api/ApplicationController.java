@@ -29,8 +29,8 @@ import java.util.List;
 /**
  * 应用管理 REST 控制器
  *
- * <p>提供应用聚合根的 CRUD 与渠道授权绑定 API。
- * Application 是权限+行为双聚合根，承载 Key 归属与渠道可见性。</p>
+ * <p>提供应用根实体的 CRUD 与渠道授权绑定 API。
+ * Application 是权限+行为双根实体，承载 Key 归属与渠道可见性。</p>
  */
 @RestController
 @RequestMapping("/api/v1/applications")

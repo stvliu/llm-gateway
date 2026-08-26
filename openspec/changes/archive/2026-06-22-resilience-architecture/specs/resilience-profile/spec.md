@@ -4,7 +4,7 @@
 
 ### Requirement: ResilienceProfile 容灾画像实体
 
-系统 SHALL 提供 `ResilienceProfile` 聚合根实体作为应用级容灾配置的载体，承载四层容灾栈的开关与参数。画像纯数据库管理，全部落库 + CRUD + 控制台管理。
+系统 SHALL 提供 `ResilienceProfile` 根实体实体作为应用级容灾配置的载体，承载四层容灾栈的开关与参数。画像纯数据库管理，全部落库 + CRUD + 控制台管理。
 
 **实体字段**:
 - `code` — 画像编码，全局唯一（如 `default`/`strict`/`aggressive`/`batch`）

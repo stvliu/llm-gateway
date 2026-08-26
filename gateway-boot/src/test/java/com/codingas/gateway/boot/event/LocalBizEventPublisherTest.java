@@ -95,7 +95,7 @@ class LocalBizEventPublisherTest {
     }
 
     /**
-     * 测试用领域事件
+     * 测试用业务事件
      */
     static class TestBizEvent implements BizEvent {
         private final String eventId;

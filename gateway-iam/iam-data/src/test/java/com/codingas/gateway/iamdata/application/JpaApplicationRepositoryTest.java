@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 /**
  * JpaApplicationRepository 单元测试
  *
- * <p>验证 Application 聚合根的持久化网关行为：findById/findByCode/findAll/save
+ * <p>验证 Application 根实体的持久化网关行为：findById/findByCode/findAll/save
  * 的 DO↔Entity 转换与委派逻辑。</p>
  */
 @ExtendWith(MockitoExtension.class)

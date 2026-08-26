@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 /**
  * 用户查询条件用例入参
  *
- * <p>核心用户应用服务的查询入参，继承分页基类获得 page/limit/offset。</p>
+ * <p>核心用户管理服务的查询入参，继承分页基类获得 page/limit/offset。</p>
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

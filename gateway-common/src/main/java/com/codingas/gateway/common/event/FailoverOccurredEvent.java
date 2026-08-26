@@ -21,7 +21,7 @@ import com.codingas.gateway.common.enums.ProviderErrorType;
 import java.time.Instant;
 
 /**
- * 转移发生领域事件
+ * 转移发生业务事件
  *
  * <p>由 {@code ChannelFailoverInvoker} 在 catch 块判定 {@link FailoverDecision} 非 NONE
  * （L1 换候选）时，换下一候选前发布。由 {@code FailoverEventListener}

@@ -24,13 +24,13 @@ import org.springframework.context.annotation.Configuration;
  * 限流配置装配（security-starter）。
  *
  * <p>把 security 域自持的外部配置（{@link SecurityRateLimitProperties}）映射为 threat 域定义的
- * {@link RateLimitProperties} 值对象 Bean，供限流领域服务注入。</p>
+ * {@link RateLimitProperties} 不可变对象 Bean，供限流管理服务注入。</p>
  */
 @Configuration
 public class SecurityRateLimitConfiguration {
 
     /**
-     * threat 域限流配置值对象
+     * threat 域限流配置不可变对象
      */
     @Bean
     public RateLimitProperties rateLimitProperties(SecurityRateLimitProperties properties) {

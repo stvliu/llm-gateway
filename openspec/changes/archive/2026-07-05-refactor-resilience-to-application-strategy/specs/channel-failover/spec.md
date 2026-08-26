@@ -55,5 +55,5 @@
 ## REMOVED Requirements
 
 ### Requirement: L1 共因跳过
-**Reason**: Cluster 故障域聚合根退场，基于 clusterId 的共因跳过机制随之移除。共因跳过误杀不共因候选（如同供应商不同账户的多 Key，账户额度独立、故障不共因，却被同 clusterId 跳过），且与 Application 在路由走向上职责交叉。故障跳过改由端点级熔断器（连续失败 OPEN 后跳过）+ 应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 控制 L0/L1）承担，不引入共因分组。
+**Reason**: Cluster 故障域根实体退场，基于 clusterId 的共因跳过机制随之移除。共因跳过误杀不共因候选（如同供应商不同账户的多 Key，账户额度独立、故障不共因，却被同 clusterId 跳过），且与 Application 在路由走向上职责交叉。故障跳过改由端点级熔断器（连续失败 OPEN 后跳过）+ 应用级失败处理策略（FAIL_FAST/FAIL_OVER/FAIL_RETRY 控制 L0/L1）承担，不引入共因分组。
 **Migration**: `ChannelFailoverInvoker` 删除 `commonCauseFailedClusters` 局部 Set 与跳过判定逻辑，L0/L1 行为改为按应用 `failureStrategy` 控制。`RoutingContext.clusterId`、`FailoverOccurredEvent`/`FailoverEvent`/`FailoverEventDo`/`FailoverEventResponse` 的 `commonCauseSkip` + `fromClusterId`/`toClusterId` 字段删除，`FailoverEventGateway.findRecent` 的 clusterId 过滤参数删除。

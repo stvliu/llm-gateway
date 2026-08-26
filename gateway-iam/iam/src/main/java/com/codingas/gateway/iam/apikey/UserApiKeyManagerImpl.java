@@ -28,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * 用户 API Key 应用服务实现
+ * 用户 API Key 管理服务实现
  *
  * <p>applicationId 为权限锚点：create 必填并校验 Application 存在；
  * update 支持补绑/转移（非 null 时校验存在）。</p>

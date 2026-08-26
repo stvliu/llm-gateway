@@ -791,7 +791,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 ---
 
-### Task 6: 创建 analytics 领域实体
+### Task 6: 创建 analytics 实体
 
 **Files:**
 - Create: `src/main/java/com/codingas/gateway/domain/analytics/entity/UsageLog.java`
@@ -1057,7 +1057,7 @@ public class AlertNotification extends BaseEntity {
 }
 ```
 
-- [ ] **Step 4: 提交 analytics 领域实体**
+- [ ] **Step 4: 提交 analytics 实体**
 
 ```bash
 git add src/main/java/com/codingas/gateway/domain/analytics/

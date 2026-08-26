@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * 应用领域网关接口
  *
- * <p>应用聚合根的持久化抽象。domain 层仅依赖此接口，
+ * <p>应用根实体的持久化抽象。domain 层仅依赖此接口，
  * 实现位于 infrastructure 层（COLA Light 依赖倒置）。</p>
  */
 public interface ApplicationRepository {

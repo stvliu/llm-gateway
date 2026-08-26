@@ -22,7 +22,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * 限流外部配置属性（security 域自持）
  *
  * <p>由 security-starter 映射为 threat 域 {@link com.codingas.gateway.security.threat.RateLimitProperties}
- * 值对象 Bean，供限流领域服务注入。前缀 {@code gateway.security.rate-limit}。</p>
+ * 不可变对象 Bean，供限流管理服务注入。前缀 {@code gateway.security.rate-limit}。</p>
  */
 @Data
 @ConfigurationProperties(prefix = "gateway.security.rate-limit")
