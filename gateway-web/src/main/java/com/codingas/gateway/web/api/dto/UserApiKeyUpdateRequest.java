@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.apikey.UserApiKeyUpdateCommand;
+import com.codingas.gateway.iam.apikey.UserApiKey;
 
 /**
  * 更新用户 API Key 请求 DTO（HTTP 契约）
@@ -28,11 +28,14 @@ public record UserApiKeyUpdateRequest(
         String name
 ) {
     /**
-     * 转换为核心更新用例入参
+     * 转换为 Key 实体（null 字段表示不更新）
      *
-     * @return 更新用例入参
+     * @return Key 实体
      */
-    public UserApiKeyUpdateCommand toCommand() {
-        return new UserApiKeyUpdateCommand(applicationId, name);
+    public UserApiKey toEntity() {
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setApplicationId(applicationId);
+        apiKey.setName(name);
+        return apiKey;
     }
 }

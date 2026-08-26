@@ -49,7 +49,7 @@ public class ApplicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationResponse create(@Valid @RequestBody ApplicationRequest request) {
-        return ApplicationResponse.from(applicationManager.create(request.toCommand()));
+        return ApplicationResponse.from(applicationManager.create(request.toEntity()));
     }
 
     /**
@@ -63,7 +63,7 @@ public class ApplicationController {
     public ApplicationResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationRequest request) {
-        return ApplicationResponse.from(applicationManager.update(id, request.toCommand()));
+        return ApplicationResponse.from(applicationManager.update(id, request.toEntity()));
     }
 
     /**
@@ -132,6 +132,6 @@ public class ApplicationController {
             @PathVariable Long id,
             @Valid @RequestBody ApplicationChannelRequest request) {
         applicationManager.updateChannels(id,
-                request.channels().stream().map(ApplicationChannelItem::toCommand).toList());
+                request.channels().stream().map(ApplicationChannelItem::toEntity).toList());
     }
 }

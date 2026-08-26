@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.apikey.UserApiKeyCreateCommand;
+import com.codingas.gateway.iam.apikey.UserApiKey;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
@@ -35,11 +35,15 @@ public record UserApiKeyCreateRequest(
         String name
 ) {
     /**
-     * 转换为核心创建用例入参
+     * 转换为 Key 实体
      *
-     * @return 创建用例入参
+     * @return Key 实体
      */
-    public UserApiKeyCreateCommand toCommand() {
-        return new UserApiKeyCreateCommand(userId, applicationId, name);
+    public UserApiKey toEntity() {
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setUserId(userId);
+        apiKey.setApplicationId(applicationId);
+        apiKey.setName(name);
+        return apiKey;
     }
 }

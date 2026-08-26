@@ -52,19 +52,16 @@ public class UserApiKeyManagerImpl implements UserApiKeyManager {
 
     @Override
     @Transactional
-    public UserApiKey create(UserApiKeyCreateCommand command) {
+    public UserApiKey create(UserApiKey apiKey) {
         // 校验 Application 存在（applicationId 为权限锚点，引用必须有效）
-        validateApplicationExists(command.applicationId());
+        validateApplicationExists(apiKey.getApplicationId());
 
         GeneratedApiKey generated = userApiKeyGenerator.generate();
 
-        UserApiKey apiKey = new UserApiKey();
         // 数据归属：普通用户强制归属当前登录用户（忽略请求体 userId，防止越权代建）
-        apiKey.setUserId(isAdmin() ? command.userId() : currentUserId());
-        apiKey.setApplicationId(command.applicationId());
+        apiKey.setUserId(isAdmin() ? apiKey.getUserId() : currentUserId());
         apiKey.setKeyPrefix(generated.keyPrefix());
         apiKey.setKeyPlain(generated.plainKey());
-        apiKey.setName(command.name());
 
         UserApiKey saved = userApiKeyRepository.save(apiKey);
         log.info("Created UserApiKey: id={}, userId={}, applicationId={}",
@@ -112,21 +109,21 @@ public class UserApiKeyManagerImpl implements UserApiKeyManager {
 
     @Override
     @Transactional
-    public UserApiKey update(Long id, UserApiKeyUpdateCommand command) {
-        UserApiKey apiKey = userApiKeyRepository.findById(id)
+    public UserApiKey update(Long id, UserApiKey apiKey) {
+        UserApiKey existing = userApiKeyRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("API Key 不存在: " + id));
-        assertOwned(apiKey);
+        assertOwned(existing);
 
         // 补绑/转移 applicationId（非 null 时校验存在）
-        if (command.applicationId() != null) {
-            validateApplicationExists(command.applicationId());
-            apiKey.setApplicationId(command.applicationId());
+        if (apiKey.getApplicationId() != null) {
+            validateApplicationExists(apiKey.getApplicationId());
+            existing.setApplicationId(apiKey.getApplicationId());
         }
-        if (command.name() != null) {
-            apiKey.setName(command.name());
+        if (apiKey.getName() != null) {
+            existing.setName(apiKey.getName());
         }
 
-        UserApiKey saved = userApiKeyRepository.save(apiKey);
+        UserApiKey saved = userApiKeyRepository.save(existing);
         log.info("Updated UserApiKey: id={}, applicationId={}", saved.getId(), saved.getApplicationId());
         return saved;
     }

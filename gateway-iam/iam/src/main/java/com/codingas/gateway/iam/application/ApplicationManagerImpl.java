@@ -50,22 +50,16 @@ public class ApplicationManagerImpl implements ApplicationManager {
 
     @Override
     @Transactional
-    public Application create(ApplicationCommand command) {
+    public Application create(Application app) {
         // code 全局唯一校验
-        if (applicationRepository.findByCode(command.code()) != null) {
+        if (applicationRepository.findByCode(app.getCode()) != null) {
             throw new GatewayRequestException("APPLICATION_CODE_DUPLICATE",
-                    "应用编码已存在: " + command.code());
+                    "应用编码已存在: " + app.getCode());
         }
 
-        Application app = new Application();
-        app.setCode(command.code());
-        app.setName(command.name());
-        app.setDescription(command.description());
-        // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
-        app.setTimeout(command.timeout());
         // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
-        app.setFailureStrategy(command.failureStrategy() != null
-                ? command.failureStrategy() : FailureStrategy.FAIL_RETRY);
+        app.setFailureStrategy(app.getFailureStrategy() != null
+                ? app.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
         // 创建时状态默认 ACTIVE
         app.setState(ApplicationState.ACTIVE);
 
@@ -76,28 +70,27 @@ public class ApplicationManagerImpl implements ApplicationManager {
 
     @Override
     @Transactional
-    public Application update(Long id, ApplicationCommand command) {
-        Application app = applicationRepository.findById(id);
-        if (app == null) {
+    public Application update(Long id, Application app) {
+        Application existing = applicationRepository.findById(id);
+        if (existing == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
 
         // code 变更时校验新 code 不与其他应用冲突
-        if (!app.getCode().equals(command.code())) {
-            if (applicationRepository.findByCode(command.code()) != null) {
+        if (!existing.getCode().equals(app.getCode())) {
+            if (applicationRepository.findByCode(app.getCode()) != null) {
                 throw new GatewayRequestException("APPLICATION_CODE_DUPLICATE",
-                        "应用编码已存在: " + command.code());
+                        "应用编码已存在: " + app.getCode());
             }
         }
 
-        app.setCode(command.code());
-        app.setName(command.name());
-        app.setDescription(command.description());
-        // 透传应用级超时（0 表示用渠道默认，承接原 ResilienceProfile.timeout）
-        app.setTimeout(command.timeout());
+        existing.setCode(app.getCode());
+        existing.setName(app.getName());
+        existing.setDescription(app.getDescription());
+        existing.setTimeout(app.getTimeout());
         // 透传应用级失败处理策略，未传时默认 FAIL_RETRY
-        app.setFailureStrategy(command.failureStrategy() != null
-                ? command.failureStrategy() : FailureStrategy.FAIL_RETRY);
+        existing.setFailureStrategy(app.getFailureStrategy() != null
+                ? app.getFailureStrategy() : FailureStrategy.FAIL_RETRY);
 
         Application saved = applicationRepository.save(app);
         log.info("Updated application: id={}", saved.getId());
@@ -149,19 +142,17 @@ public class ApplicationManagerImpl implements ApplicationManager {
 
     @Override
     @Transactional
-    public void updateChannels(Long id, List<ApplicationChannelCommand> channels) {
+    public void updateChannels(Long id, List<ApplicationChannel> channels) {
         Application app = applicationRepository.findById(id);
         if (app == null) {
             throw new GatewayRequestException("APPLICATION_NOT_FOUND", "应用不存在: " + id);
         }
 
-        // 先删后建：清空旧关联，再用三参构造器透传 priority 批量保存新关联
+        // 先删后建：清空旧关联，批量保存新关联（applicationId 由本方法填充）
         applicationChannelRepository.deleteByApplicationId(id);
         if (channels != null && !channels.isEmpty()) {
-            List<ApplicationChannel> rels = channels.stream()
-                    .map(item -> new ApplicationChannel(id, item.channelId(), item.priority()))
-                    .toList();
-            applicationChannelRepository.saveAll(rels);
+            channels.forEach(rel -> rel.setApplicationId(id));
+            applicationChannelRepository.saveAll(channels);
         }
         log.info("Updated application channels: appId={}, count={}", id,
                 channels != null ? channels.size() : 0);

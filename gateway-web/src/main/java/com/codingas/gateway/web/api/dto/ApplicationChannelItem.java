@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationChannelCommand;
+import com.codingas.gateway.iam.application.ApplicationChannel;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
@@ -57,11 +57,14 @@ public record ApplicationChannelItem(
     }
 
     /**
-     * 转换为核心渠道授权用例入参
+     * 转换为渠道授权实体（applicationId 由 Manager 填充）
      *
-     * @return 渠道授权用例入参
+     * @return 渠道授权实体
      */
-    public ApplicationChannelCommand toCommand() {
-        return new ApplicationChannelCommand(channelId, priority);
+    public ApplicationChannel toEntity() {
+        ApplicationChannel rel = new ApplicationChannel();
+        rel.setChannelId(channelId);
+        rel.setPriority(priority);
+        return rel;
     }
 }

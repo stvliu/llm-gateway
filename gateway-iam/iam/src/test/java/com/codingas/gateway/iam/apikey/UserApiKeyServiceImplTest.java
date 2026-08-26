@@ -98,7 +98,7 @@ class UserApiKeyManagerImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenReturn(saved);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
+                UserApiKey request = apiKey(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
                 UserApiKey response = service.create(request);
@@ -125,7 +125,7 @@ class UserApiKeyManagerImplTest {
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
                 // 请求体尝试指定他人 userId，必须被强制覆盖为当前用户
-                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
+                UserApiKey request = apiKey(
                         OTHER_USER_ID, APPLICATION_ID, "test-key"
                 );
                 UserApiKey response = service.create(request);
@@ -143,7 +143,7 @@ class UserApiKeyManagerImplTest {
             when(applicationRepository.findById(APPLICATION_ID)).thenReturn(null);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
+                UserApiKey request = apiKey(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
                 assertThatThrownBy(() -> service.create(request))
@@ -163,7 +163,7 @@ class UserApiKeyManagerImplTest {
                     .thenThrow(new IllegalStateException("无法生成唯一的 API Key，请重试"));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyCreateCommand request = new UserApiKeyCreateCommand(
+                UserApiKey request = apiKey(
                         USER_ID, APPLICATION_ID, "test-key"
                 );
                 assertThatThrownBy(() -> service.create(request))
@@ -188,7 +188,7 @@ class UserApiKeyManagerImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(99L, null);
+                UserApiKey request = apiKeyUpdate(99L, null);
                 UserApiKey response = service.update(API_KEY_ID, request);
 
                 assertThat(response).isNotNull();
@@ -205,7 +205,7 @@ class UserApiKeyManagerImplTest {
             when(applicationRepository.findById(99L)).thenReturn(null);
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(99L, null);
+                UserApiKey request = apiKeyUpdate(99L, null);
                 assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                         .isInstanceOf(GatewayRequestException.class)
                         .hasMessageContaining("应用不存在");
@@ -221,7 +221,7 @@ class UserApiKeyManagerImplTest {
             when(userApiKeyRepository.save(any(UserApiKey.class))).thenAnswer(inv -> inv.getArgument(0));
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(null, "new-name");
+                UserApiKey request = apiKeyUpdate(null, "new-name");
                 UserApiKey response = service.update(API_KEY_ID, request);
 
                 assertThat(response.getName()).isEqualTo("new-name");
@@ -237,7 +237,7 @@ class UserApiKeyManagerImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
             try (MockedStatic<StpUtil> stp = stubUser(USER_ID)) {
-                assertThatThrownBy(() -> service.update(API_KEY_ID, new UserApiKeyUpdateCommand(null, "x")))
+                assertThatThrownBy(() -> service.update(API_KEY_ID, apiKeyUpdate(null, "x")))
                         .isInstanceOf(ForbiddenException.class);
                 verify(userApiKeyRepository, never()).save(any());
             }
@@ -249,7 +249,7 @@ class UserApiKeyManagerImplTest {
             when(userApiKeyRepository.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
             try (MockedStatic<StpUtil> stp = stubAdmin()) {
-                UserApiKeyUpdateCommand request = new UserApiKeyUpdateCommand(null, "updated");
+                UserApiKey request = apiKeyUpdate(null, "updated");
                 assertThatThrownBy(() -> service.update(API_KEY_ID, request))
                         .isInstanceOf(IllegalArgumentException.class);
             }
@@ -531,6 +531,23 @@ class UserApiKeyManagerImplTest {
         apiKey.setKeyPlain("sk-abc1xxxxx");
         apiKey.setKeyPrefix("sk-abc1");
         apiKey.setName("test-key");
+        return apiKey;
+    }
+
+    /** 构造 Key 实体（create 用：userId/applicationId/name） */
+    private UserApiKey apiKey(Long userId, Long applicationId, String name) {
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setUserId(userId);
+        apiKey.setApplicationId(applicationId);
+        apiKey.setName(name);
+        return apiKey;
+    }
+
+    /** 构造 Key 实体（update 用：applicationId/name，null 表示不更新） */
+    private UserApiKey apiKeyUpdate(Long applicationId, String name) {
+        UserApiKey apiKey = new UserApiKey();
+        apiKey.setApplicationId(applicationId);
+        apiKey.setName(name);
         return apiKey;
     }
 }

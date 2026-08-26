@@ -28,10 +28,10 @@ public interface UserApiKeyManager {
     /**
      * 创建 API Key
      *
-     * @param command 创建用例入参
+     * @param apiKey Key 实体（承载 userId/applicationId/name）
      * @return 创建后的 Key 实体（含仅此一次可见的明文 keyPlain）
      */
-    UserApiKey create(UserApiKeyCreateCommand command);
+    UserApiKey create(UserApiKey apiKey);
 
     /**
      * 按用户 ID 查询 Key 列表
@@ -79,7 +79,7 @@ public interface UserApiKeyManager {
      * @param command 更新用例入参（仅非 null 字段生效）
      * @return 更新后的 Key 实体
      */
-    UserApiKey update(Long id, UserApiKeyUpdateCommand command);
+    UserApiKey update(Long id, UserApiKey apiKey);
 
     /**
      * 删除 Key（逻辑删除）

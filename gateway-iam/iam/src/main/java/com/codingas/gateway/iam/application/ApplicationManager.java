@@ -30,19 +30,19 @@ public interface ApplicationManager {
     /**
      * 创建应用
      *
-     * @param command 创建用例入参（code/name/description/timeout/failureStrategy）
+     * @param app 应用实体（承载 code/name/description/timeout/failureStrategy）
      * @return 创建后的应用实体
      */
-    Application create(ApplicationCommand command);
+    Application create(Application app);
 
     /**
      * 更新应用
      *
-     * @param id      应用 ID
-     * @param command 更新用例入参
+     * @param id  应用 ID
+     * @param app 应用实体
      * @return 更新后的应用实体
      */
-    Application update(Long id, ApplicationCommand command);
+    Application update(Long id, Application app);
 
     /**
      * 按主键查询应用
@@ -83,5 +83,5 @@ public interface ApplicationManager {
      * @param id       应用 ID
      * @param channels 渠道授权项用例入参列表（channelId + priority；空列表表示清空全部授权）
      */
-    void updateChannels(Long id, List<ApplicationChannelCommand> channels);
+    void updateChannels(Long id, List<ApplicationChannel> channels);
 }

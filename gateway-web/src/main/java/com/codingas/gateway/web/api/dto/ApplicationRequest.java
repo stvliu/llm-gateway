@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.iam.application.ApplicationCommand;
+import com.codingas.gateway.iam.application.Application;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -47,11 +47,17 @@ public class ApplicationRequest {
     private FailureStrategy failureStrategy;
 
     /**
-     * 转换为核心创建/更新用例入参
+     * 转换为应用实体
      *
-     * @return 应用用例入参
+     * @return 应用实体
      */
-    public ApplicationCommand toCommand() {
-        return new ApplicationCommand(code, name, description, timeout, failureStrategy);
+    public Application toEntity() {
+        Application app = new Application();
+        app.setCode(code);
+        app.setName(name);
+        app.setDescription(description);
+        app.setTimeout(timeout);
+        app.setFailureStrategy(failureStrategy);
+        return app;
     }
 }

@@ -39,7 +39,7 @@ public class UserApiKeyController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserApiKeyCreateResponse create(@Valid @RequestBody UserApiKeyCreateRequest request) {
-        return UserApiKeyCreateResponse.from(userApiKeyManager.create(request.toCommand()));
+        return UserApiKeyCreateResponse.from(userApiKeyManager.create(request.toEntity()));
     }
 
     @GetMapping(params = "userId")
@@ -65,7 +65,7 @@ public class UserApiKeyController {
 
     @PutMapping("/{id}")
     public UserApiKeyResponse update(@PathVariable Long id, @Valid @RequestBody UserApiKeyUpdateRequest request) {
-        return UserApiKeyResponse.from(userApiKeyManager.update(id, request.toCommand()));
+        return UserApiKeyResponse.from(userApiKeyManager.update(id, request.toEntity()));
     }
 
     @DeleteMapping("/{id}")

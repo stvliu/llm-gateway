@@ -176,8 +176,8 @@ class ApplicationControllerHttpTest {
                 .andExpect(status().isNoContent());
         verify(applicationManager).updateChannels(eq(1L), argThat(items ->
                 items != null && items.size() == 2
-                        && items.get(0).channelId().equals(10L) && items.get(0).priority().equals(1)
-                        && items.get(1).channelId().equals(20L) && items.get(1).priority() == null));
+                        && items.get(0).getChannelId().equals(10L) && items.get(0).getPriority().equals(1)
+                        && items.get(1).getChannelId().equals(20L) && items.get(1).getPriority() == null));
     }
 
     @Test
