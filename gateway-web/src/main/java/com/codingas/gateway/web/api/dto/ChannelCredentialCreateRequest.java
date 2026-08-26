@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ChannelCredentialCreateCommand;
+import com.codingas.gateway.provider.channel.ChannelCredential;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -37,12 +37,18 @@ public record ChannelCredentialCreateRequest(
         String description
 ) {
     /**
-     * 转换为核心创建用例入参
+     * 转换为凭证实体（description 映射为名称）
      *
      * @param channelId 渠道 ID（适配层填充）
-     * @return 创建用例入参
+     * @return 凭证实体
      */
-    public ChannelCredentialCreateCommand toCommand(Long channelId) {
-        return new ChannelCredentialCreateCommand(channelId, apiKey, priority, weight, description);
+    public ChannelCredential toEntity(Long channelId) {
+        ChannelCredential credential = new ChannelCredential();
+        credential.setChannelId(channelId);
+        credential.setApiKeyPlain(apiKey);
+        credential.setName(description);
+        credential.setWeight(weight);
+        credential.setPriority(priority);
+        return credential;
     }
 }

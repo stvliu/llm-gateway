@@ -38,17 +38,10 @@ public class ChannelCredentialManagerImpl implements ChannelCredentialManager {
 
     @Override
     @Transactional
-    public ChannelCredential create(ChannelCredentialCreateCommand command) {
-        String plainKey = command.apiKey();
+    public ChannelCredential create(ChannelCredential credential) {
+        String plainKey = credential.getApiKeyPlain();
         String keyPrefix = plainKey.substring(0, Math.min(8, plainKey.length()));
-
-        ChannelCredential credential = new ChannelCredential();
-        credential.setChannelId(command.channelId());
-        credential.setApiKeyPlain(plainKey);
         credential.setApiKeyPrefix(keyPrefix);
-        credential.setName(command.description());
-        credential.setWeight(command.weight());
-        credential.setPriority(command.priority());
 
         // GatewayImpl 内部处理加密和哈希
         ChannelCredential saved = channelCredentialRepository.save(credential);
@@ -74,24 +67,24 @@ public class ChannelCredentialManagerImpl implements ChannelCredentialManager {
 
     @Override
     @Transactional
-    public ChannelCredential update(ChannelCredentialUpdateCommand command) {
-        ChannelCredential credential = findAndValidateOwnership(command.channelId(), command.id());
+    public ChannelCredential update(ChannelCredential credential) {
+        ChannelCredential existing = findAndValidateOwnership(credential.getChannelId(), credential.getId());
 
-        if (command.weight() != null) {
-            credential.setWeight(command.weight());
+        if (credential.getWeight() != null) {
+            existing.setWeight(credential.getWeight());
         }
-        if (command.priority() != null) {
-            credential.setPriority(command.priority());
+        if (credential.getPriority() != null) {
+            existing.setPriority(credential.getPriority());
         }
         // 替换 API Key
-        if (command.apiKey() != null && !command.apiKey().isBlank()) {
-            String newKey = command.apiKey().trim();
+        if (credential.getApiKeyPlain() != null && !credential.getApiKeyPlain().isBlank()) {
+            String newKey = credential.getApiKeyPlain().trim();
             String keyPrefix = newKey.substring(0, Math.min(8, newKey.length()));
-            credential.setApiKeyPlain(newKey);
-            credential.setApiKeyPrefix(keyPrefix);
+            existing.setApiKeyPlain(newKey);
+            existing.setApiKeyPrefix(keyPrefix);
         }
 
-        ChannelCredential saved = channelCredentialRepository.save(credential);
+        ChannelCredential saved = channelCredentialRepository.save(existing);
         log.info("Updated ChannelCredential: id={}", saved.getId());
 
         return saved;

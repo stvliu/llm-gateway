@@ -49,8 +49,8 @@ class ChannelCredentialManagerImplTest {
         ChannelCredential saved = createSampleApiKey();
         when(channelCredentialRepository.save(any(ChannelCredential.class))).thenReturn(saved);
 
-        ChannelCredentialCreateCommand request = new ChannelCredentialCreateCommand(
-                CHANNEL_ID, "sk-test-api-key-12345", 1, 1, "test-key"
+        ChannelCredential request = credential(
+                CHANNEL_ID, null, "sk-test-api-key-12345", 1, 1, "test-key"
         );
         ChannelCredential response = service.create(request);
 
@@ -116,9 +116,9 @@ class ChannelCredentialManagerImplTest {
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
         when(channelCredentialRepository.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        ChannelCredentialUpdateCommand request = new ChannelCredentialUpdateCommand(
-                CHANNEL_ID, API_KEY_ID, 5, 10, "updated-description", null
-        );
+        ChannelCredential request = credential(
+                CHANNEL_ID, API_KEY_ID, null
+        , 5, 10, "updated-description");
         ChannelCredential response = service.update(request);
 
         assertNotNull(response);
@@ -131,9 +131,9 @@ class ChannelCredentialManagerImplTest {
     void update_notFound() {
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.empty());
 
-        ChannelCredentialUpdateCommand request = new ChannelCredentialUpdateCommand(
-                CHANNEL_ID, API_KEY_ID, null, null, "updated", null
-        );
+        ChannelCredential request = credential(
+                CHANNEL_ID, API_KEY_ID, null
+        , null, null, "updated");
         assertThrows(ResourceNotFoundException.class, () -> service.update(request));
     }
 
@@ -143,9 +143,9 @@ class ChannelCredentialManagerImplTest {
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
         when(channelCredentialRepository.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        ChannelCredentialUpdateCommand request = new ChannelCredentialUpdateCommand(
-                CHANNEL_ID, API_KEY_ID, null, null, "updated", "new-key-1234567890"
-        );
+        ChannelCredential request = credential(
+                CHANNEL_ID, API_KEY_ID, "new-key-1234567890"
+        , null, null, "updated");
         ChannelCredential response = service.update(request);
 
         assertNotNull(response);
@@ -162,9 +162,9 @@ class ChannelCredentialManagerImplTest {
         when(channelCredentialRepository.save(any(ChannelCredential.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // apiKey 为空白 → 不替换
-        ChannelCredentialUpdateCommand request = new ChannelCredentialUpdateCommand(
-                CHANNEL_ID, API_KEY_ID, 3, 4, "updated", "   "
-        );
+        ChannelCredential request = credential(
+                CHANNEL_ID, API_KEY_ID, "   "
+        , 3, 4, "updated");
         ChannelCredential response = service.update(request);
 
         assertNotNull(response);
@@ -202,9 +202,9 @@ class ChannelCredentialManagerImplTest {
         ChannelCredential apiKey = createSampleApiKey();
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
 
-        ChannelCredentialUpdateCommand request = new ChannelCredentialUpdateCommand(
-                999L, API_KEY_ID, null, null, "updated", null
-        );
+        ChannelCredential request = credential(
+                999L, API_KEY_ID, null
+        , null, null, "updated");
         assertThrows(ResourceNotFoundException.class, () -> service.update(request));
     }
 
@@ -222,8 +222,8 @@ class ChannelCredentialManagerImplTest {
         ChannelCredential saved = createSampleApiKey();
         when(channelCredentialRepository.save(any(ChannelCredential.class))).thenReturn(saved);
 
-        ChannelCredentialCreateCommand request = new ChannelCredentialCreateCommand(
-                CHANNEL_ID, "ab", 1, 1, "short-key"
+        ChannelCredential request = credential(
+                CHANNEL_ID, null, "ab", 1, 1, "short-key"
         );
         service.create(request);
 
@@ -258,5 +258,18 @@ class ChannelCredentialManagerImplTest {
         apiKey.setWeight(1);
         apiKey.setPriority(1);
         return apiKey;
+    }
+
+    /** 构造凭证实体（create：id 为 null；update：null 字段表示不更新） */
+    private ChannelCredential credential(Long channelId, Long id, String apiKey, Integer priority,
+                                         Integer weight, String name) {
+        ChannelCredential credential = new ChannelCredential();
+        credential.setChannelId(channelId);
+        credential.setId(id);
+        credential.setApiKeyPlain(apiKey);
+        credential.setPriority(priority);
+        credential.setWeight(weight);
+        credential.setName(name);
+        return credential;
     }
 }

@@ -60,7 +60,7 @@ public class ChannelCredentialController {
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelCredentialCreateRequest request) {
         return ChannelCredentialCreateResponse.from(
-                channelCredentialManager.create(request.toCommand(channelId)));
+                channelCredentialManager.create(request.toEntity(channelId)));
     }
 
     /**
@@ -73,7 +73,7 @@ public class ChannelCredentialController {
             @PathVariable Long id,
             @Valid @RequestBody ChannelCredentialUpdateRequest request) {
         return ChannelCredentialResponse.from(
-                channelCredentialManager.update(request.toCommand(channelId, id)));
+                channelCredentialManager.update(request.toEntity(channelId, id)));
     }
 
     /**

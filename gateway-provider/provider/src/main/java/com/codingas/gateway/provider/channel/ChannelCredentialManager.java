@@ -27,10 +27,10 @@ public interface ChannelCredentialManager {
     /**
      * 创建渠道凭证
      *
-     * @param command 创建用例入参
+     * @param credential 凭证实体（承载 channelId/apiKeyPlain/name/weight/priority）
      * @return 创建后的凭证实体（含仅此一次可见的明文 apiKeyPlain）
      */
-    ChannelCredential create(ChannelCredentialCreateCommand command);
+    ChannelCredential create(ChannelCredential credential);
 
     /**
      * 根据 ID 获取渠道凭证（校验渠道归属，不含明文）
@@ -59,12 +59,12 @@ public interface ChannelCredentialManager {
     List<ChannelCredential> listByChannelId(Long channelId);
 
     /**
-     * 更新渠道凭证（校验渠道归属）
+     * 更新渠道凭证（校验渠道归属；实体 null 字段表示不更新）
      *
-     * @param command 更新用例入参
+     * @param credential 凭证实体（承载 channelId/id/weight/priority/apiKeyPlain）
      * @return 更新后的凭证实体
      */
-    ChannelCredential update(ChannelCredentialUpdateCommand command);
+    ChannelCredential update(ChannelCredential credential);
 
     /**
      * 删除渠道凭证（校验渠道归属）

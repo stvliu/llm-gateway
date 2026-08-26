@@ -16,9 +16,8 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.channel.ChannelCredential;
-import com.codingas.gateway.provider.channel.ChannelCredentialCreateCommand;
+import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelCredentialManager;
-import com.codingas.gateway.provider.channel.ChannelCredentialUpdateCommand;
 import com.codingas.gateway.web.api.dto.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -112,15 +111,15 @@ class ChannelCredentialControllerTest {
             var request = new ChannelCredentialCreateRequest("sk-test-key", 1, 1, "test key");
             var saved = buildCredential();
             saved.setApiKeyPlain("sk-test-key");
-            when(channelCredentialManager.create(any(ChannelCredentialCreateCommand.class)))
+            when(channelCredentialManager.create(any(ChannelCredential.class)))
                     .thenReturn(saved);
 
             ChannelCredentialCreateResponse result = controller.create(CHANNEL_ID, request);
 
             // 验证适配层补全了 channelId
-            var captured = ArgumentCaptor.forClass(ChannelCredentialCreateCommand.class);
+            var captured = ArgumentCaptor.forClass(ChannelCredential.class);
             verify(channelCredentialManager).create(captured.capture());
-            assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
+            assertThat(captured.getValue().getChannelId()).isEqualTo(CHANNEL_ID);
 
             assertThat(result.id()).isEqualTo(CREDENTIAL_ID);
             assertThat(result.apiKeyPlain()).isEqualTo("sk-test-key");
@@ -136,16 +135,16 @@ class ChannelCredentialControllerTest {
         void updatesCredential() {
             // 请求体不含 channelId 和 id，由适配层补全
             var request = new ChannelCredentialUpdateRequest(10, 5, null, null);
-            when(channelCredentialManager.update(any(ChannelCredentialUpdateCommand.class)))
+            when(channelCredentialManager.update(any(ChannelCredential.class)))
                     .thenReturn(buildCredential());
 
             ChannelCredentialResponse result = controller.update(CHANNEL_ID, CREDENTIAL_ID, request);
 
             // 验证适配层补全了 channelId 和 id
-            var captured = ArgumentCaptor.forClass(ChannelCredentialUpdateCommand.class);
+            var captured = ArgumentCaptor.forClass(ChannelCredential.class);
             verify(channelCredentialManager).update(captured.capture());
-            assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
-            assertThat(captured.getValue().id()).isEqualTo(CREDENTIAL_ID);
+            assertThat(captured.getValue().getChannelId()).isEqualTo(CHANNEL_ID);
+            assertThat(captured.getValue().getId()).isEqualTo(CREDENTIAL_ID);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(CREDENTIAL_ID);

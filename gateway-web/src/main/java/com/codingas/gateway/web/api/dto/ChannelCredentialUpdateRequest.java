@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.channel.ChannelCredentialUpdateCommand;
+import com.codingas.gateway.provider.channel.ChannelCredential;
 
 /**
  * 渠道凭证更新请求 DTO（HTTP 契约）
@@ -35,13 +35,19 @@ public record ChannelCredentialUpdateRequest(
         String apiKey
 ) {
     /**
-     * 转换为核心更新用例入参
+     * 转换为凭证实体（null 字段表示不更新）
      *
      * @param channelId 渠道 ID（适配层填充）
      * @param id        凭证 ID（适配层填充）
-     * @return 更新用例入参
+     * @return 凭证实体
      */
-    public ChannelCredentialUpdateCommand toCommand(Long channelId, Long id) {
-        return new ChannelCredentialUpdateCommand(channelId, id, priority, weight, description, apiKey);
+    public ChannelCredential toEntity(Long channelId, Long id) {
+        ChannelCredential credential = new ChannelCredential();
+        credential.setChannelId(channelId);
+        credential.setId(id);
+        credential.setWeight(weight);
+        credential.setPriority(priority);
+        credential.setApiKeyPlain(apiKey);
+        return credential;
     }
 }
