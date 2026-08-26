@@ -16,7 +16,6 @@
 package com.codingas.gateway.provider.model;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -30,7 +29,6 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 public class ModelInstance extends BaseEntity {
 
     /**

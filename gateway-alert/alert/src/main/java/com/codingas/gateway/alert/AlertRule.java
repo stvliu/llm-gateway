@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.alert;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.usage.enums.PeriodType;
@@ -32,7 +31,6 @@ import java.util.List;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class AlertRule extends BaseEntity {
 

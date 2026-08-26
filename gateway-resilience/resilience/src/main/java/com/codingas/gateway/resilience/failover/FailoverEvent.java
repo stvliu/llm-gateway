@@ -16,7 +16,6 @@
 package com.codingas.gateway.resilience.failover;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import lombok.Data;
@@ -54,7 +53,6 @@ import java.time.Instant;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 public class FailoverEvent extends BaseEntity {
 
     /** OpenTelemetry Trace ID，串联同请求多次转移 */

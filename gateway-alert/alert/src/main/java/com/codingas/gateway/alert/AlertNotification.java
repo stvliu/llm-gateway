@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.alert;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import lombok.*;
@@ -30,7 +29,6 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class AlertNotification extends BaseEntity {
 

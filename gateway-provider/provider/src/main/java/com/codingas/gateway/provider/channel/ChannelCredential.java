@@ -16,7 +16,6 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -33,7 +32,6 @@ import java.time.Instant;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @ToString(exclude = "apiKeyPlain")
-@DomainEntity
 @Slf4j
 public class ChannelCredential extends BaseEntity {
 

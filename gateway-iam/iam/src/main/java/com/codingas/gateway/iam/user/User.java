@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.iam.user;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.iam.user.UserState;
@@ -32,7 +31,6 @@ import java.util.Map;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class User extends BaseEntity {
 

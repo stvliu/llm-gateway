@@ -16,7 +16,6 @@
 package com.codingas.gateway.iam.application;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -44,7 +43,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 public class ApplicationChannel extends BaseEntity {
 
     /** 应用 ID */

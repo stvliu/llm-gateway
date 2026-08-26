@@ -16,7 +16,6 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.provider.model.BillingMode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -39,7 +38,6 @@ import java.time.Instant;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 public class Channel extends BaseEntity {
 
     private Long providerId;

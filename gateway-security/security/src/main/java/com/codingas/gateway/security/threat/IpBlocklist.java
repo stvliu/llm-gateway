@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.security.threat;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import lombok.*;
@@ -29,7 +28,6 @@ import java.time.Instant;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class IpBlocklist extends BaseEntity {
 

@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.security.dataprotection;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import lombok.*;
@@ -27,7 +26,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class SensitiveDataRule extends BaseEntity {
 

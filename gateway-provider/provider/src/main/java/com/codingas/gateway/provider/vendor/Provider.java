@@ -16,7 +16,6 @@
 package com.codingas.gateway.provider.vendor;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +28,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class Provider extends BaseEntity {
 

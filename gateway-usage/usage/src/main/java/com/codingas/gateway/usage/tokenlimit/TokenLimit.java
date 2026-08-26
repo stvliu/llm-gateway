@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.codingas.gateway.usage.tokenlimit;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.entity.BaseEntity;
 
 import com.codingas.gateway.usage.enums.ExceededAction;
@@ -35,7 +34,6 @@ import java.time.Instant;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 @Slf4j
 public class TokenLimit extends BaseEntity {
 

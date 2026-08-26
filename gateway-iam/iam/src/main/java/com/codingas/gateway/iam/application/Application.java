@@ -16,7 +16,6 @@
 package com.codingas.gateway.iam.application;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.common.entity.DomainEntity;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -53,7 +52,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@DomainEntity
 public class Application extends BaseEntity {
 
     /** 应用编码，全局唯一 */
