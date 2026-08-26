@@ -20,6 +20,7 @@ import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.upstream.Protocol;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +48,7 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     @Transactional
-    public ChannelView create(ChannelCommand command) {
+    public Channel create(ChannelCommand command) {
         if (channelRepository.existsByProviderIdAndName(command.getProviderId(), command.getName())) {
             throw new GatewayRequestException("CHANNEL_NAME_DUPLICATE", "渠道名称已存在: " + command.getName());
         }
@@ -64,12 +65,12 @@ public class ChannelServiceImpl implements ChannelService {
         Channel saved = channelRepository.save(channel);
         log.info("Created channel: id={}, name={}", saved.getId(), saved.getName());
 
-        return toView(saved);
+        return saved;
     }
 
     @Override
     @Transactional
-    public ChannelView update(Long id, ChannelCommand command) {
+    public Channel update(Long id, ChannelCommand command) {
         Channel channel = channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
 
@@ -89,49 +90,44 @@ public class ChannelServiceImpl implements ChannelService {
         Channel saved = channelRepository.save(channel);
         log.info("Updated channel: id={}", saved.getId());
 
-        return toView(saved);
+        return saved;
     }
 
     @Override
-    public ChannelView getById(Long id) {
-        Channel channel = channelRepository.findById(id)
+    public Channel getById(Long id) {
+        return channelRepository.findById(id)
             .orElseThrow(() -> new GatewayRequestException("CHANNEL_NOT_FOUND", "渠道不存在: " + id));
-        return toView(channel);
     }
 
     @Override
-    public List<ChannelView> getAll() {
-        return channelRepository.findAll().stream()
-            .map(this::toView)
-            .toList();
+    public List<Channel> getAll() {
+        return channelRepository.findAll();
     }
 
     @Override
-    public List<ChannelView> getByProviderId(Long providerId) {
-        return channelRepository.findByProviderId(providerId).stream()
-            .map(this::toView)
-            .toList();
+    public List<Channel> getByProviderId(Long providerId) {
+        return channelRepository.findByProviderId(providerId);
     }
 
     @Override
-    public List<ChannelView> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
-        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode).stream()
-            .map(this::toView)
-            .toList();
+    public List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
+        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode);
     }
 
     /**
-     * 组装渠道视图对象（读取提供商名称与端点列表）
-     *
-     * @param channel 渠道实体
-     * @return 渠道视图对象
+     * 按 ID 获取提供商（供展示组装：渠道响应需提供商名称）
      */
-    private ChannelView toView(Channel channel) {
-        String providerName = providerRepository.findById(channel.getProviderId())
-            .map(com.codingas.gateway.provider.vendor.Provider::getName)
-            .orElse(null);
-        List<ChannelEndpoint> endpoints = channelEndpointRepository.findByChannelId(channel.getId());
-        return new ChannelView(channel, providerName, endpoints);
+    @Override
+    public Provider getProvider(Long providerId) {
+        return providerRepository.findById(providerId).orElse(null);
+    }
+
+    /**
+     * 按渠道 ID 获取端点列表（供展示组装：渠道响应需端点列表）
+     */
+    @Override
+    public List<ChannelEndpoint> getEndpoints(Long channelId) {
+        return channelEndpointRepository.findByChannelId(channelId);
     }
 
     @Override

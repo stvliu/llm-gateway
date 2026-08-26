@@ -16,14 +16,15 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.provider.model.BillingMode;
+import com.codingas.gateway.provider.vendor.Provider;
 
 import java.util.List;
 
 /**
  * 渠道应用服务接口
  *
- * <p>出入参采用领域对象与轻量用例对象：读返回携带展示关联数据的 {@link ChannelView}，
- * HTTP 契约（Request/Response DTO）由 web 层负责纯映射。</p>
+ * <p>出入参采用领域实体与轻量用例对象；跨实体的展示数据（提供商名称、端点列表）
+ * 由本服务提供查询方法，web 层组装器（Assembler）经服务获取后组装 DTO。</p>
  */
 public interface ChannelService {
 
@@ -31,50 +32,66 @@ public interface ChannelService {
      * 创建渠道
      *
      * @param command 创建用例入参
-     * @return 创建后的渠道视图对象（含提供商名称与端点列表）
+     * @return 创建后的渠道实体
      */
-    ChannelView create(ChannelCommand command);
+    Channel create(ChannelCommand command);
 
     /**
      * 更新渠道
      *
      * @param id      渠道 ID
      * @param command 更新用例入参
-     * @return 更新后的渠道视图对象（含提供商名称与端点列表）
+     * @return 更新后的渠道实体
      */
-    ChannelView update(Long id, ChannelCommand command);
+    Channel update(Long id, ChannelCommand command);
 
     /**
      * 按 ID 获取渠道
      *
      * @param id 渠道 ID
-     * @return 渠道视图对象（含提供商名称与端点列表）
+     * @return 渠道实体
      */
-    ChannelView getById(Long id);
+    Channel getById(Long id);
 
     /**
      * 获取所有渠道列表
      *
-     * @return 渠道视图对象列表（含提供商名称与端点列表）
+     * @return 渠道实体列表
      */
-    List<ChannelView> getAll();
+    List<Channel> getAll();
 
     /**
      * 按提供商 ID 获取渠道列表
      *
      * @param providerId 提供商 ID
-     * @return 渠道视图对象列表
+     * @return 渠道实体列表
      */
-    List<ChannelView> getByProviderId(Long providerId);
+    List<Channel> getByProviderId(Long providerId);
 
     /**
      * 按提供商 ID 与计费模式获取渠道列表
      *
      * @param providerId  提供商 ID
      * @param billingMode 计费模式
-     * @return 渠道视图对象列表
+     * @return 渠道实体列表
      */
-    List<ChannelView> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
+    List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
+
+    /**
+     * 按 ID 获取提供商（供展示组装：渠道响应需提供商名称）
+     *
+     * @param providerId 提供商 ID
+     * @return 提供商实体（不存在时为 null）
+     */
+    Provider getProvider(Long providerId);
+
+    /**
+     * 按渠道 ID 获取端点列表（供展示组装：渠道响应需端点列表）
+     *
+     * @param channelId 渠道 ID
+     * @return 端点实体列表
+     */
+    List<ChannelEndpoint> getEndpoints(Long channelId);
 
     /**
      * 删除渠道

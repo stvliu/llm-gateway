@@ -20,7 +20,7 @@ import com.codingas.gateway.provider.channel.ChannelEmergencyService;
 import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.provider.channel.ChannelHealthResult;
-import com.codingas.gateway.provider.model.BillingMode;
+import com.codingas.gateway.web.api.assembler.ChannelFacade;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -33,12 +33,16 @@ import java.util.List;
 
 /**
  * 渠道管理 REST 控制器
+ *
+ * <p>CRUD 与列表经 {@link ChannelFacade} 组装 DTO；
+ * 状态切换、端点管理、健康检查与应急操作直接调用领域服务（无跨实体组装）。</p>
  */
 @RestController
 @RequestMapping("/api/v1/channels")
 @RequiredArgsConstructor
 public class ChannelController {
 
+    private final ChannelFacade channelFacade;
     private final ChannelService channelService;
     private final ChannelHealthService channelHealthService;
     private final ChannelEmergencyService channelEmergencyService;
@@ -46,19 +50,19 @@ public class ChannelController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ChannelResponse create(@Valid @RequestBody ChannelRequest request) {
-        return ChannelResponse.from(channelService.create(request.toCommand()));
+        return channelFacade.create(request);
     }
 
     @PutMapping("/{id}")
     public ChannelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ChannelRequest request) {
-        return ChannelResponse.from(channelService.update(id, request.toCommand()));
+        return channelFacade.update(id, request);
     }
 
     @GetMapping("/{id}")
     public ChannelResponse getById(@PathVariable Long id) {
-        return ChannelResponse.from(channelService.getById(id));
+        return channelFacade.getById(id);
     }
 
     /**
@@ -69,14 +73,7 @@ public class ChannelController {
     public List<ChannelResponse> list(
             @RequestParam(required = false) Long providerId,
             @RequestParam(required = false) String billingMode) {
-        if (providerId == null) {
-            return ChannelResponse.from(channelService.getAll());
-        } else if (billingMode != null) {
-            return ChannelResponse.from(channelService.getByProviderIdAndBillingMode(
-                    providerId, BillingMode.fromCode(billingMode)));
-        } else {
-            return ChannelResponse.from(channelService.getByProviderId(providerId));
-        }
+        return channelFacade.list(providerId, billingMode);
     }
 
     /**

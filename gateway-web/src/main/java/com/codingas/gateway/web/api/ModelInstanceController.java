@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.ModelInstanceService;
+import com.codingas.gateway.web.api.assembler.ModelInstanceFacade;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,17 +28,21 @@ import java.util.Map;
 
 /**
  * 模型实例 REST 控制器
+ *
+ * <p>列表/创建/更新经 {@link ModelInstanceFacade} 组装 DTO；
+ * 删除、状态切换与上游模型名更新直接调用领域服务（无跨实体组装）。</p>
  */
 @RestController
 @RequestMapping("/api/v1/channels/{channelId}/models")
 @RequiredArgsConstructor
 public class ModelInstanceController {
 
+    private final ModelInstanceFacade modelInstanceFacade;
     private final ModelInstanceService modelInstanceService;
 
     @GetMapping
     public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
-        return ModelInstanceResponse.from(modelInstanceService.getInstancesByChannelId(channelId));
+        return modelInstanceFacade.list(channelId);
     }
 
     @PostMapping
@@ -45,9 +50,7 @@ public class ModelInstanceController {
     public ModelInstanceResponse create(
             @PathVariable Long channelId,
             @Valid @RequestBody ModelInstanceCreateRequest request) {
-        // 适配层补全 channelId（不同协议从各自上下文中提取）
-        request.setChannelId(channelId);
-        return ModelInstanceResponse.from(modelInstanceService.create(request.toCommand()));
+        return modelInstanceFacade.create(channelId, request);
     }
 
     @DeleteMapping("/{id}")
@@ -85,7 +88,6 @@ public class ModelInstanceController {
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceUpdateRequest request) {
-        request.setChannelId(channelId);
-        return ModelInstanceResponse.from(modelInstanceService.update(channelId, id, request.toCommand()));
+        return modelInstanceFacade.update(channelId, id, request);
     }
 }

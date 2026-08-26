@@ -20,8 +20,8 @@ import java.util.List;
 /**
  * 模型实例应用服务接口
  *
- * <p>出入参采用领域对象与轻量用例对象：读返回携带模型规格关联的 {@link ModelInstanceView}，
- * HTTP 契约（Request/Response DTO）由 web 层负责纯映射。</p>
+ * <p>出入参采用领域实体与轻量用例对象；模型规格展示字段（modelName 等）的组装
+ * 由 web 层组装器（Assembler）负责。</p>
  */
 public interface ModelInstanceService {
 
@@ -29,17 +29,17 @@ public interface ModelInstanceService {
      * 查询指定渠道下的所有模型实例
      *
      * @param channelId 渠道 ID
-     * @return 模型实例视图对象列表（含模型规格展示字段）
+     * @return 模型实例实体列表
      */
-    List<ModelInstanceView> getInstancesByChannelId(Long channelId);
+    List<ModelInstance> getInstancesByChannelId(Long channelId);
 
     /**
      * 创建模型实例
      *
      * @param command 创建用例入参
-     * @return 创建后的模型实例视图对象（含模型规格展示字段）
+     * @return 创建后的模型实例实体
      */
-    ModelInstanceView create(ModelInstanceCreateCommand command);
+    ModelInstance create(ModelInstanceCreateCommand command);
 
     /**
      * 删除模型实例
@@ -77,7 +77,15 @@ public interface ModelInstanceService {
      * @param channelId 渠道 ID
      * @param id        模型实例 ID
      * @param command   更新用例入参
-     * @return 更新后的模型实例视图对象（含模型规格展示字段）
+     * @return 更新后的模型实例实体
      */
-    ModelInstanceView update(Long channelId, Long id, ModelInstanceUpdateCommand command);
+    ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command);
+
+    /**
+     * 按 ID 获取模型规格（供展示组装：模型实例响应需 modelName 等展示字段）
+     *
+     * @param modelId 模型 ID
+     * @return 模型实体（不存在时为 null）
+     */
+    Model getModel(Long modelId);
 }

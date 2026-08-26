@@ -33,7 +33,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -57,8 +56,6 @@ class ModelInstanceServiceImplTest {
     @BeforeEach
     void setUp() {
         service = new ModelInstanceServiceImpl(modelInstanceRepository, modelRepository);
-        // toView 组装需要查询模型规格；lenient 避免未使用该查询的测试报 UnnecessaryStubbing
-        lenient().when(modelRepository.findById(any())).thenReturn(Optional.empty());
     }
 
     // ==================== getInstancesByChannelId 测试 ====================
@@ -68,40 +65,32 @@ class ModelInstanceServiceImplTest {
     class GetInstancesTests {
 
         @Test
-        @DisplayName("视图对象携带模型规格关联（供 web 层 DTO 纯映射）")
+        @DisplayName("模型实例实体原样返回（模型规格展示字段由 web 层 Facade 组装）")
         void withModel_fillsModelFields() {
             ModelInstance instance = createInstance(1L, 10L, 100L, ModelInstance.State.ACTIVE);
             instance.setUpstreamModelName("up-1");
             when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(instance));
-            Model spec = new Model();
-            spec.setModelName("gpt-4");
-            spec.setDisplayName("GPT-4");
-            spec.setModelFamily("GPT");
-            when(modelRepository.findById(100L)).thenReturn(Optional.of(spec));
 
-            List<ModelInstanceView> result = service.getInstancesByChannelId(10L);
+            List<ModelInstance> result = service.getInstancesByChannelId(10L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getInstance().getId()).isEqualTo(1L);
-            assertThat(result.get(0).getInstance().getModelId()).isEqualTo(100L);
-            assertThat(result.get(0).getInstance().getUpstreamModelName()).isEqualTo("up-1");
-            assertThat(result.get(0).getInstance().getState()).isEqualTo(ModelInstance.State.ACTIVE);
-            // 视图对象携带模型规格关联（web 层 DTO 纯映射使用）
-            assertThat(result.get(0).getModel().getModelName()).isEqualTo("gpt-4");
-            assertThat(result.get(0).getModel().getDisplayName()).isEqualTo("GPT-4");
+            assertThat(result.get(0).getId()).isEqualTo(1L);
+            assertThat(result.get(0).getModelId()).isEqualTo(100L);
+            assertThat(result.get(0).getUpstreamModelName()).isEqualTo("up-1");
+            assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.ACTIVE);
         }
 
         @Test
-        @DisplayName("模型规格缺失时视图对象 model 为 null")
+        @DisplayName("模型实例实体原样返回（不展开模型规格字段）")
         void withoutModel_leavesModelFieldsNull() {
             ModelInstance instance = createInstance(1L, 10L, 100L, ModelInstance.State.PENDING);
             when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(instance));
 
-            List<ModelInstanceView> result = service.getInstancesByChannelId(10L);
+            List<ModelInstance> result = service.getInstancesByChannelId(10L);
 
             assertThat(result).hasSize(1);
-            assertThat(result.get(0).getInstance().getModelId()).isEqualTo(100L);
-            assertThat(result.get(0).getInstance().getState()).isEqualTo(ModelInstance.State.PENDING);
+            assertThat(result.get(0).getModelId()).isEqualTo(100L);
+            assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.PENDING);
         }
     }
 
@@ -130,9 +119,9 @@ class ModelInstanceServiceImplTest {
                 mi.setId(50L);
                 return mi;
             });
-            ModelInstanceView result = service.create(createRequest(10L, 100L, null, null));
+            ModelInstance result = service.create(createRequest(10L, 100L, null, null));
 
-            assertThat(result.getInstance().getId()).isEqualTo(50L);
+            assertThat(result.getId()).isEqualTo(50L);
             ArgumentCaptor<ModelInstance> captor = ArgumentCaptor.forClass(ModelInstance.class);
             verify(modelInstanceRepository).save(captor.capture());
             assertThat(captor.getValue().getPriority()).isEqualTo(100);
@@ -152,11 +141,11 @@ class ModelInstanceServiceImplTest {
 
             ModelInstanceCreateCommand request = new ModelInstanceCreateCommand(10L, 100L, "upstream-1", 5, 20);
 
-            ModelInstanceView result = service.create(request);
+            ModelInstance result = service.create(request);
 
-            assertThat(result.getInstance().getUpstreamModelName()).isEqualTo("upstream-1");
-            assertThat(result.getInstance().getPriority()).isEqualTo(5);
-            assertThat(result.getInstance().getWeight()).isEqualTo(20);
+            assertThat(result.getUpstreamModelName()).isEqualTo("upstream-1");
+            assertThat(result.getPriority()).isEqualTo(5);
+            assertThat(result.getWeight()).isEqualTo(20);
         }
     }
 
@@ -288,10 +277,10 @@ class ModelInstanceServiceImplTest {
 
             ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(200L, "upstream-2");
 
-            ModelInstanceView result = service.update(10L, 1L, request);
+            ModelInstance result = service.update(10L, 1L, request);
 
-            assertThat(result.getInstance().getModelId()).isEqualTo(200L);
-            assertThat(result.getInstance().getUpstreamModelName()).isEqualTo("upstream-2");
+            assertThat(result.getModelId()).isEqualTo(200L);
+            assertThat(result.getUpstreamModelName()).isEqualTo("upstream-2");
         }
 
         @Test
@@ -304,10 +293,10 @@ class ModelInstanceServiceImplTest {
 
             ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(null, null);
 
-            ModelInstanceView result = service.update(10L, 1L, request);
+            ModelInstance result = service.update(10L, 1L, request);
 
-            assertThat(result.getInstance().getModelId()).isEqualTo(100L);
-            assertThat(result.getInstance().getUpstreamModelName()).isEqualTo("keep-me");
+            assertThat(result.getModelId()).isEqualTo(100L);
+            assertThat(result.getUpstreamModelName()).isEqualTo("keep-me");
         }
     }
 

@@ -45,6 +45,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ChannelEmergencyControllerTest {
 
     @Mock
+    private com.codingas.gateway.web.api.assembler.ChannelFacade channelFacade;
+
+    @Mock
     private ChannelService channelService;
 
     @Mock
@@ -59,7 +62,8 @@ class ChannelEmergencyControllerTest {
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelService, channelHealthService, channelEmergencyService);
+        ChannelController controller = new ChannelController(channelFacade, channelService,
+                channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
