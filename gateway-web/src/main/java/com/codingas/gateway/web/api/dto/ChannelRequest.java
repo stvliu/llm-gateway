@@ -16,6 +16,8 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.channel.ChannelCommand;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -23,8 +25,14 @@ import lombok.Data;
  */
 @Data
 public class ChannelRequest {
+    @NotNull(message = "供应商 ID 不能为空")
     private Long providerId;
+
+    @NotBlank(message = "渠道名称不能为空")
     private String name;
+
+    /** 计费模式 */
+    @NotBlank(message = "计费模式不能为空")
     private String billingMode;
     private Long quotaLimit;
     private Integer timeout;

@@ -16,6 +16,8 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.model.ModelCreateCommand;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -26,8 +28,13 @@ import java.util.Map;
  */
 @Data
 public class ModelCreateRequest {
+    @NotBlank(message = "Provider model ID is required")
+    @Size(max = 128, message = "Provider model ID must not exceed 128 characters")
     private String modelName;
+
+    @Size(max = 256, message = "Display name must not exceed 256 characters")
     private String displayName;
+
     private String modelFamily;
     private Integer contextWindow;
     private Integer maxInputTokens;

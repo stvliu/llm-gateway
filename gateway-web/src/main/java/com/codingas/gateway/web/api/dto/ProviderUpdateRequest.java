@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.vendor.ProviderUpdateCommand;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
@@ -23,9 +24,15 @@ import lombok.Data;
  */
 @Data
 public class ProviderUpdateRequest {
+    @Size(max = 128, message = "Provider name must not exceed 128 characters")
     private String providerName;
+
+    @Size(max = 512, message = "Website URL must not exceed 512 characters")
     private String websiteUrl;
+
+    @Size(max = 512, message = "API doc URL must not exceed 512 characters")
     private String apiDocUrl;
+
     private Integer priority;
 
     /**

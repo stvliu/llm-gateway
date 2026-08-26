@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.channel.ChannelStateCommand;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 /**
@@ -23,6 +24,8 @@ import lombok.Data;
  */
 @Data
 public class ChannelStateTransitionRequest {
+    /** 目标状态（PENDING / ACTIVE / SUSPENDED / DEPRECATED / RETIRED） */
+    @NotBlank(message = "目标状态不能为空")
     private String targetState;
     private String reason;
 

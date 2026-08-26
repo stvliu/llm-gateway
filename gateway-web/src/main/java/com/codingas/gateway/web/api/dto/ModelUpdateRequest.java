@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.model.ModelUpdateCommand;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
@@ -26,8 +27,13 @@ import java.util.Map;
  */
 @Data
 public class ModelUpdateRequest {
+    /** 供应商侧模型标识（如 gpt-4o），为 null 表示不更新 */
+    @Size(max = 128, message = "Model name must not exceed 128 characters")
     private String modelName;
+
+    @Size(max = 256, message = "Display name must not exceed 256 characters")
     private String displayName;
+
     private String modelFamily;
     private Integer contextWindow;
     private Integer maxInputTokens;

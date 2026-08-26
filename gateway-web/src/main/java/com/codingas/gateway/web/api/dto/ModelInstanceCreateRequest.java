@@ -16,6 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.model.ModelInstanceCreateCommand;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -24,7 +25,10 @@ import lombok.Data;
 @Data
 public class ModelInstanceCreateRequest {
     private Long channelId;
+
+    @NotNull(message = "模型 ID 不能为空")
     private Long modelId;
+
     private String upstreamModelName;
     private Integer priority;
     private Integer weight;

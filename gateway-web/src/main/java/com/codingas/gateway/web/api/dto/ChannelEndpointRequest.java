@@ -16,6 +16,8 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.channel.ChannelEndpointCommand;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -24,7 +26,11 @@ import lombok.Data;
 @Data
 public class ChannelEndpointRequest {
     private Long channelId;
+
+    @NotNull(message = "协议类型不能为空")
     private String protocol;
+
+    @NotBlank(message = "端点 URL 不能为空")
     private String endpointUrl;
 
     /**
