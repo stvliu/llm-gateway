@@ -20,10 +20,3 @@ spring:
     type: caffeine
     caffeine:
       spec: maximumSize=1000,expireAfterWrite=1h
-
-gateway:
-  config:
-    event:
-      mode: local
-    cache:
-      version-check-interval: 30s

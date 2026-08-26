@@ -150,12 +150,6 @@
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp-sse</artifactId>
-            <version>${okhttp.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
             <artifactId>mockwebserver</artifactId>
             <version>${okhttp.version}</version>
             <scope>test</scope>
@@ -279,13 +273,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
-        </dependency>
-
-        <!-- JGit for Git repository operations -->
-        <dependency>
-            <groupId>org.eclipse.jgit</groupId>
-            <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.8.0.202311291450-r</version>
         </dependency>
 
         <!-- ArchUnit 架构测试（COLA 分层依赖约束，模块化重构 Phase 0） -->

@@ -458,7 +458,6 @@
                         <exclude>**/db/migration/**</exclude>
                         <exclude>**/resources/catalog/**</exclude>
                         <exclude>**/resources/data/**</exclude>
-                        <exclude>**/resources/metadata/**</exclude>
                         <exclude>**/static/**</exclude>
                     </excludes>
                     <mapping>

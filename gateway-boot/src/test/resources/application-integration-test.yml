@@ -27,19 +27,6 @@ spring:
 gateway:
   security:
     encryption-key: StE8KeMHjsq8sTjq0P+qa9UK6XG37aCvwG5ssJqEmNs=
-  circuit-breaker:
-    open-duration-ms: 100
-    sliding-window-size: 5
-    failure-rate-threshold: 0.5
-  http-client:
-    connect-timeout: 2s
-    read-timeout: 2s
-  degradation:
-    enabled: true
-    chains:
-      - primary: gpt-4
-        fallbacks:
-          - gpt-3.5-turbo
 
 logging:
   level:
