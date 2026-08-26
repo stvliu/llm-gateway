@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.model.ModelCreateCommand;
+import com.codingas.gateway.provider.model.Model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -43,12 +43,20 @@ public class ModelCreateRequest {
     private List<String> modalities;
 
     /**
-     * 转换为核心创建用例入参
+     * 转换为模型实体
      *
-     * @return 创建用例入参
+     * @return 模型实体
      */
-    public ModelCreateCommand toCommand() {
-        return new ModelCreateCommand(modelName, displayName, modelFamily, contextWindow,
-                maxInputTokens, maxOutputTokens, capabilities, modalities);
+    public Model toEntity() {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setModelFamily(modelFamily);
+        model.setContextWindow(contextWindow);
+        model.setMaxInputTokens(maxInputTokens);
+        model.setMaxOutputTokens(maxOutputTokens);
+        model.setCapabilities(capabilities);
+        model.setModalities(modalities);
+        return model;
     }
 }

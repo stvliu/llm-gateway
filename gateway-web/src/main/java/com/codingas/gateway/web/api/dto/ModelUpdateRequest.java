@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.model.ModelUpdateCommand;
+import com.codingas.gateway.provider.model.Model;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -42,12 +42,20 @@ public class ModelUpdateRequest {
     private List<String> modalities;
 
     /**
-     * 转换为核心更新用例入参
+     * 转换为模型实体（null 字段表示不更新）
      *
-     * @return 更新用例入参
+     * @return 模型实体
      */
-    public ModelUpdateCommand toCommand() {
-        return new ModelUpdateCommand(modelName, displayName, modelFamily, contextWindow,
-                maxInputTokens, maxOutputTokens, capabilities, modalities);
+    public Model toEntity() {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setModelFamily(modelFamily);
+        model.setContextWindow(contextWindow);
+        model.setMaxInputTokens(maxInputTokens);
+        model.setMaxOutputTokens(maxOutputTokens);
+        model.setCapabilities(capabilities);
+        model.setModalities(modalities);
+        return model;
     }
 }

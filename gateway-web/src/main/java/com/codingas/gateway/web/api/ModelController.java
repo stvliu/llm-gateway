@@ -39,7 +39,7 @@ public class ModelController {
      */
     @PostMapping
     public ModelResponse create(@Valid @RequestBody ModelCreateRequest request) {
-        return ModelResponse.from(modelManager.create(request.toCommand()));
+        return ModelResponse.from(modelManager.create(request.toEntity()));
     }
 
     /**
@@ -65,7 +65,7 @@ public class ModelController {
     public ModelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ModelUpdateRequest request) {
-        return ModelResponse.from(modelManager.update(id, request.toCommand()));
+        return ModelResponse.from(modelManager.update(id, request.toEntity()));
     }
 
     /**

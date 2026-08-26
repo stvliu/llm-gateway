@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.model.ModelInstanceCreateCommand;
+import com.codingas.gateway.provider.model.ModelInstance;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
@@ -34,11 +34,17 @@ public class ModelInstanceCreateRequest {
     private Integer weight;
 
     /**
-     * 转换为核心创建用例入参
+     * 转换为模型实例实体
      *
-     * @return 创建用例入参
+     * @return 模型实例实体
      */
-    public ModelInstanceCreateCommand toCommand() {
-        return new ModelInstanceCreateCommand(channelId, modelId, upstreamModelName, priority, weight);
+    public ModelInstance toEntity() {
+        ModelInstance instance = new ModelInstance();
+        instance.setChannelId(channelId);
+        instance.setModelId(modelId);
+        instance.setUpstreamModelName(upstreamModelName);
+        instance.setPriority(priority);
+        instance.setWeight(weight);
+        return instance;
     }
 }

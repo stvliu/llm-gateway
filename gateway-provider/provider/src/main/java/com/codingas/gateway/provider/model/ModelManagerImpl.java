@@ -40,18 +40,8 @@ public class ModelManagerImpl implements ModelManager {
      */
     @Override
     @Transactional
-    public Model create(ModelCreateCommand command) {
-        // 创建模型
-        Model model = new Model();
-        model.setModelName(command.getModelName());
-        model.setDisplayName(command.getDisplayName());
-        model.setModelFamily(command.getModelFamily());
-        model.setContextWindow(command.getContextWindow());
-        model.setMaxInputTokens(command.getMaxInputTokens());
-        model.setMaxOutputTokens(command.getMaxOutputTokens());
-        model.setCapabilities(command.getCapabilities());
-        model.setModalities(command.getModalities());
-
+    public Model create(Model model) {
+        // 创建模型（业务字段已由 DTO.toEntity 承载）
         Model savedModel = modelRepository.save(model);
         log.info("模型创建成功, id={}, modelName={}", savedModel.getId(), savedModel.getModelName());
         return savedModel;
@@ -109,36 +99,37 @@ public class ModelManagerImpl implements ModelManager {
      */
     @Override
     @Transactional
-    public Model update(Long id, ModelUpdateCommand command) {
-        Model model = modelRepository.findById(id)
+    public Model update(Long id, Model model) {
+        Model existing = modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
-        if (command.getModelName() != null) {
-            model.setModelName(command.getModelName());
+        // 实体 null 字段表示不更新
+        if (model.getModelName() != null) {
+            existing.setModelName(model.getModelName());
         }
-        if (command.getDisplayName() != null) {
-            model.setDisplayName(command.getDisplayName());
+        if (model.getDisplayName() != null) {
+            existing.setDisplayName(model.getDisplayName());
         }
-        if (command.getModelFamily() != null) {
-            model.setModelFamily(command.getModelFamily());
+        if (model.getModelFamily() != null) {
+            existing.setModelFamily(model.getModelFamily());
         }
-        if (command.getContextWindow() != null) {
-            model.setContextWindow(command.getContextWindow());
+        if (model.getContextWindow() != null) {
+            existing.setContextWindow(model.getContextWindow());
         }
-        if (command.getMaxInputTokens() != null) {
-            model.setMaxInputTokens(command.getMaxInputTokens());
+        if (model.getMaxInputTokens() != null) {
+            existing.setMaxInputTokens(model.getMaxInputTokens());
         }
-        if (command.getMaxOutputTokens() != null) {
-            model.setMaxOutputTokens(command.getMaxOutputTokens());
+        if (model.getMaxOutputTokens() != null) {
+            existing.setMaxOutputTokens(model.getMaxOutputTokens());
         }
-        if (command.getCapabilities() != null) {
-            model.setCapabilities(command.getCapabilities());
+        if (model.getCapabilities() != null) {
+            existing.setCapabilities(model.getCapabilities());
         }
-        if (command.getModalities() != null) {
-            model.setModalities(command.getModalities());
+        if (model.getModalities() != null) {
+            existing.setModalities(model.getModalities());
         }
 
-        Model saved = modelRepository.save(model);
+        Model saved = modelRepository.save(existing);
         log.info("模型更新成功, id={}, modelName={}", id, saved.getModelName());
         return saved;
     }

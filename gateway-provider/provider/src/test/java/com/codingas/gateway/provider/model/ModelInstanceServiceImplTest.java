@@ -105,7 +105,7 @@ class ModelInstanceManagerImplTest {
         void alreadyLinked_throws() {
             when(modelInstanceRepository.existsByChannelIdAndModelId(10L, 100L)).thenReturn(true);
 
-            assertThatThrownBy(() -> service.create(createRequest(10L, 100L, null, null)))
+            assertThatThrownBy(() -> service.create(instanceEntity(10L, 100L, null, null, null)))
                     .isInstanceOf(DuplicateResourceException.class);
             verify(modelInstanceRepository, never()).save(any(ModelInstance.class));
         }
@@ -119,7 +119,7 @@ class ModelInstanceManagerImplTest {
                 mi.setId(50L);
                 return mi;
             });
-            ModelInstance result = service.create(createRequest(10L, 100L, null, null));
+            ModelInstance result = service.create(instanceEntity(10L, 100L, null, null, null));
 
             assertThat(result.getId()).isEqualTo(50L);
             ArgumentCaptor<ModelInstance> captor = ArgumentCaptor.forClass(ModelInstance.class);
@@ -139,7 +139,7 @@ class ModelInstanceManagerImplTest {
                 return mi;
             });
 
-            ModelInstanceCreateCommand request = new ModelInstanceCreateCommand(10L, 100L, "upstream-1", 5, 20);
+            ModelInstance request = instanceEntity(10L, 100L, "upstream-1", 5, 20);
 
             ModelInstance result = service.create(request);
 
@@ -239,7 +239,7 @@ class ModelInstanceManagerImplTest {
         void notFound_throws() {
             when(modelInstanceRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update(10L, 99L, new ModelInstanceUpdateCommand(null, null)))
+            assertThatThrownBy(() -> service.update(10L, 99L, updateInstance(null, null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -249,7 +249,7 @@ class ModelInstanceManagerImplTest {
             ModelInstance instance = createInstance(1L, 20L, 100L, ModelInstance.State.ACTIVE);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            assertThatThrownBy(() -> service.update(10L, 1L, new ModelInstanceUpdateCommand(null, null)))
+            assertThatThrownBy(() -> service.update(10L, 1L, updateInstance(null, null)))
                     .isInstanceOf(GatewayRequestException.class);
         }
 
@@ -260,7 +260,7 @@ class ModelInstanceManagerImplTest {
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
             when(modelInstanceRepository.existsByChannelIdAndModelId(10L, 200L)).thenReturn(true);
 
-            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(200L, null);
+            ModelInstance request = updateInstance(200L, null);
 
             assertThatThrownBy(() -> service.update(10L, 1L, request))
                     .isInstanceOf(DuplicateResourceException.class);
@@ -275,7 +275,7 @@ class ModelInstanceManagerImplTest {
             when(modelInstanceRepository.existsByChannelIdAndModelId(10L, 200L)).thenReturn(false);
             when(modelInstanceRepository.save(any(ModelInstance.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(200L, "upstream-2");
+            ModelInstance request = updateInstance(200L, "upstream-2");
 
             ModelInstance result = service.update(10L, 1L, request);
 
@@ -291,7 +291,7 @@ class ModelInstanceManagerImplTest {
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
             when(modelInstanceRepository.save(any(ModelInstance.class))).thenAnswer(inv -> inv.getArgument(0));
 
-            ModelInstanceUpdateCommand request = new ModelInstanceUpdateCommand(null, null);
+            ModelInstance request = updateInstance(null, null);
 
             ModelInstance result = service.update(10L, 1L, request);
 
@@ -311,7 +311,23 @@ class ModelInstanceManagerImplTest {
         return instance;
     }
 
-    private ModelInstanceCreateCommand createRequest(Long channelId, Long modelId, String upstream, Integer priority) {
-        return new ModelInstanceCreateCommand(channelId, modelId, upstream, priority, null);
+    /** 构造模型实例实体（create 用） */
+    private ModelInstance instanceEntity(Long channelId, Long modelId, String upstream,
+                                         Integer priority, Integer weight) {
+        ModelInstance instance = new ModelInstance();
+        instance.setChannelId(channelId);
+        instance.setModelId(modelId);
+        instance.setUpstreamModelName(upstream);
+        instance.setPriority(priority);
+        instance.setWeight(weight);
+        return instance;
+    }
+
+    /** 构造模型实例实体（update 用：modelId/upstream，null 表示不更新） */
+    private ModelInstance updateInstance(Long modelId, String upstream) {
+        ModelInstance instance = new ModelInstance();
+        instance.setModelId(modelId);
+        instance.setUpstreamModelName(upstream);
+        return instance;
     }
 }

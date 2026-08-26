@@ -59,7 +59,7 @@ public class ModelInstanceFacade {
      */
     public ModelInstanceResponse create(Long channelId, ModelInstanceCreateRequest request) {
         request.setChannelId(channelId);
-        return toResponse(modelInstanceManager.create(request.toCommand()));
+        return toResponse(modelInstanceManager.create(request.toEntity()));
     }
 
     /**
@@ -72,7 +72,7 @@ public class ModelInstanceFacade {
      */
     public ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request) {
         request.setChannelId(channelId);
-        return toResponse(modelInstanceManager.update(channelId, id, request.toCommand()));
+        return toResponse(modelInstanceManager.update(channelId, id, request.toEntity()));
     }
 
     /**

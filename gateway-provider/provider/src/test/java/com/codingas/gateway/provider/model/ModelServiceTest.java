@@ -75,8 +75,8 @@ class ModelManagerTest {
         @DisplayName("创建模型成功")
         void create_validRequest_returnsModelResponse() {
             // given
-            ModelCreateCommand request =
-                    new ModelCreateCommand("gpt-4o-2024-08-06", "GPT-4o", null, 128000, null, null, null, null);
+            Model request =
+                    modelEntity("gpt-4o-2024-08-06", "GPT-4o", 128000, null);
 
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> {
                 Model model = invocation.getArgument(0);
@@ -332,8 +332,8 @@ class ModelManagerTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelRepository.save(any(Model.class))).thenReturn(testModel);
 
-            ModelUpdateCommand request =
-                    new ModelUpdateCommand(null, "GPT-4 Updated", null, null, null, null, null, null);
+            Model request =
+                    modelEntity(null, "GPT-4 Updated", null, null);
 
             // when
             Model response = modelManager.update(1L, request);
@@ -351,8 +351,8 @@ class ModelManagerTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(modelRepository.save(any(Model.class))).thenReturn(testModel);
 
-            ModelUpdateCommand request =
-                    new ModelUpdateCommand(null, null, null, 200000, null, null, null, null);
+            Model request =
+                    modelEntity(null, null, 200000, null);
 
             // when
             modelManager.update(1L, request);
@@ -369,8 +369,8 @@ class ModelManagerTest {
             // given
             when(modelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            ModelUpdateCommand request =
-                    new ModelUpdateCommand(null, "Updated Name", null, null, null, null, null, null);
+            Model request =
+                    modelEntity(null, "Updated Name", null, null);
 
             // when & then
             assertThatThrownBy(() -> modelManager.update(99L, request))
@@ -493,6 +493,17 @@ class ModelManagerTest {
         }
         model.setCreatedAt(Instant.now());
         model.setUpdatedAt(Instant.now());
+        return model;
+    }
+
+    /** 构造模型实体（modelName/displayName/contextWindow/capabilities；其余为 null） */
+    private Model modelEntity(String modelName, String displayName, Integer contextWindow,
+                              java.util.Map<String, Boolean> capabilities) {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setContextWindow(contextWindow);
+        model.setCapabilities(capabilities);
         return model;
     }
 }

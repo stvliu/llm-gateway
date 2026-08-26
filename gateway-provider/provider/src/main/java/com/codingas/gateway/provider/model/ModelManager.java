@@ -27,10 +27,10 @@ public interface ModelManager {
     /**
      * 创建模型
      *
-     * @param command 创建用例入参
+     * @param model 模型实体（承载 modelName/displayName/capabilities 等）
      * @return 创建后的模型实体
      */
-    Model create(ModelCreateCommand command);
+    Model create(Model model);
 
     /**
      * 根据 ID 获取模型
@@ -49,13 +49,13 @@ public interface ModelManager {
     PageResponse<Model> query(ModelQuery query);
 
     /**
-     * 更新模型
+     * 更新模型（实体 null 字段表示不更新）
      *
-     * @param id      模型 ID
-     * @param command 更新用例入参（仅非 null 字段生效）
+     * @param id    模型 ID
+     * @param model 模型实体
      * @return 更新后的模型实体
      */
-    Model update(Long id, ModelUpdateCommand command);
+    Model update(Long id, Model model);
 
     /**
      * 删除模型（软删除）

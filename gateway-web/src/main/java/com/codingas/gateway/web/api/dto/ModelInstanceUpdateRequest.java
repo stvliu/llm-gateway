@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.model.ModelInstanceUpdateCommand;
+import com.codingas.gateway.provider.model.ModelInstance;
 import lombok.Data;
 
 /**
@@ -28,11 +28,14 @@ public class ModelInstanceUpdateRequest {
     private String upstreamModelName;
 
     /**
-     * 转换为核心更新用例入参（channelId 仅用于归属校验）
+     * 转换为模型实例实体（null 字段表示不更新）
      *
-     * @return 更新用例入参
+     * @return 模型实例实体
      */
-    public ModelInstanceUpdateCommand toCommand() {
-        return new ModelInstanceUpdateCommand(modelId, upstreamModelName);
+    public ModelInstance toEntity() {
+        ModelInstance instance = new ModelInstance();
+        instance.setModelId(modelId);
+        instance.setUpstreamModelName(upstreamModelName);
+        return instance;
     }
 }

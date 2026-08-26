@@ -36,10 +36,10 @@ public interface ModelInstanceManager {
     /**
      * 创建模型实例
      *
-     * @param command 创建用例入参
+     * @param instance 模型实例实体（承载 channelId/modelId/priority/weight 等）
      * @return 创建后的模型实例实体
      */
-    ModelInstance create(ModelInstanceCreateCommand command);
+    ModelInstance create(ModelInstance instance);
 
     /**
      * 删除模型实例
@@ -54,11 +54,11 @@ public interface ModelInstanceManager {
      *
      * <p>由后端校验 canTransitionTo()。</p>
      *
-     * @param channelId 渠道 ID
-     * @param id        模型实例 ID
-     * @param command   状态切换用例入参
+     * @param channelId   渠道 ID
+     * @param id          模型实例 ID
+     * @param targetState 目标状态（ModelInstance.State 枚举名）
      */
-    void setEnabled(Long channelId, Long id, ModelInstanceStateCommand command);
+    void setEnabled(Long channelId, Long id, String targetState);
 
     /**
      * 更新模型实例的上游模型名
@@ -70,16 +70,14 @@ public interface ModelInstanceManager {
     void updateUpstreamModelName(Long channelId, Long id, String upstreamModelName);
 
     /**
-     * 更新模型实例（支持修改 modelId 和 upstreamModelName）
-     *
-     * <p>字段为 null 表示不更新该字段。</p>
+     * 更新模型实例（实体 null 字段表示不更新）
      *
      * @param channelId 渠道 ID
      * @param id        模型实例 ID
-     * @param command   更新用例入参
+     * @param instance  模型实例实体
      * @return 更新后的模型实例实体
      */
-    ModelInstance update(Long channelId, Long id, ModelInstanceUpdateCommand command);
+    ModelInstance update(Long channelId, Long id, ModelInstance instance);
 
     /**
      * 按 ID 获取模型规格（供展示组装：模型实例响应需 modelName 等展示字段）

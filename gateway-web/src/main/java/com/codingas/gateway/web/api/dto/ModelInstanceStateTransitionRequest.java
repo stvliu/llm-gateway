@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.model.ModelInstanceStateCommand;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
@@ -28,12 +27,5 @@ public class ModelInstanceStateTransitionRequest {
     @NotBlank(message = "目标状态不能为空")
     private String targetState;
 
-    /**
-     * 转换为核心状态切换用例入参
-     *
-     * @return 状态切换用例入参
-     */
-    public ModelInstanceStateCommand toCommand() {
-        return new ModelInstanceStateCommand(targetState);
-    }
+
 }

@@ -63,9 +63,7 @@ class ModelInstanceManagerImplStateTransitionTest {
         return instance;
     }
 
-    private ModelInstanceStateCommand request(String targetState) {
-        return new ModelInstanceStateCommand(targetState);
-    }
+
 
     @Nested
     @DisplayName("PENDING→ACTIVE 测试")
@@ -77,7 +75,7 @@ class ModelInstanceManagerImplStateTransitionTest {
             ModelInstance instance = createInstance(1L, 10L, ModelInstance.State.PENDING);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            service.setEnabled(10L, 1L, request("ACTIVE"));
+            service.setEnabled(10L, 1L, "ACTIVE");
 
             verify(modelInstanceRepository).save(instanceCaptor.capture());
             assertThat(instanceCaptor.getValue().getState()).isEqualTo(ModelInstance.State.ACTIVE);
@@ -94,7 +92,7 @@ class ModelInstanceManagerImplStateTransitionTest {
             ModelInstance instance = createInstance(1L, 10L, ModelInstance.State.ACTIVE);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            service.setEnabled(10L, 1L, request("SUSPENDED"));
+            service.setEnabled(10L, 1L, "SUSPENDED");
 
             verify(modelInstanceRepository).save(instanceCaptor.capture());
             assertThat(instanceCaptor.getValue().getState()).isEqualTo(ModelInstance.State.SUSPENDED);
@@ -110,7 +108,7 @@ class ModelInstanceManagerImplStateTransitionTest {
         void instanceNotFound() {
             when(modelInstanceRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.setEnabled(10L, 99L, request("ACTIVE")))
+            assertThatThrownBy(() -> service.setEnabled(10L, 99L, "ACTIVE"))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -120,7 +118,7 @@ class ModelInstanceManagerImplStateTransitionTest {
             ModelInstance instance = createInstance(1L, 20L, ModelInstance.State.ACTIVE);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            assertThatThrownBy(() -> service.setEnabled(10L, 1L, request("SUSPENDED")))
+            assertThatThrownBy(() -> service.setEnabled(10L, 1L, "SUSPENDED"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("CHANNEL_MISMATCH"));
         }
@@ -131,7 +129,7 @@ class ModelInstanceManagerImplStateTransitionTest {
             ModelInstance instance = createInstance(1L, 10L, ModelInstance.State.RETIRED);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            assertThatThrownBy(() -> service.setEnabled(10L, 1L, request("ACTIVE")))
+            assertThatThrownBy(() -> service.setEnabled(10L, 1L, "ACTIVE"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("INVALID_STATE_TRANSITION"));
         }
@@ -142,7 +140,7 @@ class ModelInstanceManagerImplStateTransitionTest {
             ModelInstance instance = createInstance(1L, 10L, ModelInstance.State.PENDING);
             when(modelInstanceRepository.findById(1L)).thenReturn(Optional.of(instance));
 
-            assertThatThrownBy(() -> service.setEnabled(10L, 1L, request("SUSPENDED")))
+            assertThatThrownBy(() -> service.setEnabled(10L, 1L, "SUSPENDED"))
                 .isInstanceOf(GatewayRequestException.class)
                 .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode()).isEqualTo("INVALID_STATE_TRANSITION"));
         }

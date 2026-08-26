@@ -65,7 +65,7 @@ public class ModelInstanceController {
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceStateTransitionRequest request) {
-        modelInstanceManager.setEnabled(channelId, id, request.toCommand());
+        modelInstanceManager.setEnabled(channelId, id, request.getTargetState());
     }
 
     @PatchMapping("/{id}/upstream-model-name")
