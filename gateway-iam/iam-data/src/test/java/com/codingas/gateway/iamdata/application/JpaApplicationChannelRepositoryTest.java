@@ -111,39 +111,16 @@ class JpaApplicationChannelRepositoryTest {
         @Test
         @DisplayName("批量保存关联")
         void saveAll_persistsAll() {
-            List<ApplicationChannel> rels = List.of(
-                    new ApplicationChannel(1L, 10L, 1),
-                    new ApplicationChannel(1L, 20L, 2));
+            ApplicationChannel rel1 = new ApplicationChannel(1L, 10L);
+            rel1.setPriority(1);
+            ApplicationChannel rel2 = new ApplicationChannel(1L, 20L);
+            rel2.setPriority(2);
+            List<ApplicationChannel> rels = List.of(rel1, rel2);
             when(repository.saveAll(anyList())).thenReturn(List.of());
 
             gateway.saveAll(rels);
 
             verify(repository).saveAll(anyList());
-        }
-    }
-
-    @Nested
-    @DisplayName("existsByApplicationIdAndChannelId 方法测试")
-    class ExistsTests {
-
-        @Test
-        @DisplayName("存在关联返回 true")
-        void exists_returnsTrue() {
-            when(repository.existsByApplicationIdAndChannelId(1L, 10L)).thenReturn(true);
-
-            boolean result = gateway.existsByApplicationIdAndChannelId(1L, 10L);
-
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("不存在关联返回 false")
-        void exists_returnsFalse() {
-            when(repository.existsByApplicationIdAndChannelId(1L, 99L)).thenReturn(false);
-
-            boolean result = gateway.existsByApplicationIdAndChannelId(1L, 99L);
-
-            assertThat(result).isFalse();
         }
     }
 

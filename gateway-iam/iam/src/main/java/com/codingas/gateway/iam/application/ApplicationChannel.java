@@ -72,17 +72,4 @@ public class ApplicationChannel extends BaseEntity {
         this.applicationId = applicationId;
         this.channelId = channelId;
     }
-
-    /**
-     * 业务构造器（含转移优先级）
-     *
-     * @param applicationId 应用 ID
-     * @param channelId     渠道 ID
-     * @param priority      转移优先级（数值越小越优先；null 回退默认值 100）
-     */
-    public ApplicationChannel(Long applicationId, Long channelId, Integer priority) {
-        this.applicationId = applicationId;
-        this.channelId = channelId;
-        this.priority = priority;
-    }
 }

@@ -27,8 +27,6 @@ import java.util.Optional;
  */
 public interface UserApiKeyJpaRepository extends JpaRepository<UserApiKeyDo, Long> {
 
-    Optional<UserApiKeyDo> findByKeyHash(String keyHash);
-
     Optional<UserApiKeyDo> findByKeyPrefix(String keyPrefix);
 
     @Query("SELECT u FROM UserApiKeyDo u WHERE u.userId = :userId AND u.deleted = false")
@@ -39,6 +37,4 @@ public interface UserApiKeyJpaRepository extends JpaRepository<UserApiKeyDo, Lon
 
     @Query("SELECT u FROM UserApiKeyDo u WHERE u.deleted = false")
     List<UserApiKeyDo> findAllNonDeleted();
-
-    boolean existsByKeyPrefix(String keyPrefix);
 }

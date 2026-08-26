@@ -20,7 +20,6 @@ import com.codingas.gateway.provider.vendor.Provider;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.List;
 
 /**
  * 提供商响应 DTO（HTTP 契约）
@@ -57,16 +56,6 @@ public class ProviderResponse {
         response.setCreatedAt(provider.getCreatedAt());
         response.setUpdatedAt(provider.getUpdatedAt());
         return response;
-    }
-
-    /**
-     * 从提供商实体列表转换
-     *
-     * @param providers 提供商实体列表
-     * @return 提供商响应 DTO 列表
-     */
-    public static List<ProviderResponse> from(List<Provider> providers) {
-        return providers.stream().map(ProviderResponse::from).toList();
     }
 
     /**

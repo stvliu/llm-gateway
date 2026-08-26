@@ -20,7 +20,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.util.Map;
 
 /**
@@ -36,8 +35,6 @@ public class ModelNestedRequest {
     private String displayName;
 
     private Integer contextWindow;
-    private BigDecimal inputPrice;
-    private BigDecimal outputPrice;
     private Map<String, Boolean> capabilities;
 
     /**

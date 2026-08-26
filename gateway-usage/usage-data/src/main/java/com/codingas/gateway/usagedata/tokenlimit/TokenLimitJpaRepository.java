@@ -18,9 +18,6 @@ package com.codingas.gateway.usagedata.tokenlimit;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface TokenLimitJpaRepository extends JpaRepository<TokenLimitDo, Long> {
-    List<TokenLimitDo> findByUserId(Long userId);
 }

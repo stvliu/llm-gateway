@@ -71,7 +71,6 @@ public class ModelInstanceFacade {
      * @return 模型实例响应 DTO
      */
     public ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request) {
-        request.setChannelId(channelId);
         return toResponse(modelInstanceManager.update(channelId, id, request.toEntity()));
     }
 

@@ -33,7 +33,4 @@ public class UserQuery extends PageRequest {
 
     /** 用户状态过滤 */
     private UserState state;
-
-    /** 角色代码过滤（预留） */
-    private String roleCode;
 }

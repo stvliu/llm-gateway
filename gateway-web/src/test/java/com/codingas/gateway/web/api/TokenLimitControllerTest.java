@@ -68,7 +68,6 @@ class TokenLimitControllerTest {
         void create_validRequest_returnsCreated() {
             // given
             TokenLimitCreateRequest request = new TokenLimitCreateRequest();
-            request.setLimitCode("limit-001");
 
             TokenLimit tokenLimit = createTestTokenLimit();
             when(tokenLimitManager.create(any(), any(), any(), any(), any())).thenReturn(tokenLimit);

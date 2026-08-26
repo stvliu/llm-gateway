@@ -44,41 +44,9 @@ public interface TokenLimitRepository {
     Optional<TokenLimit> findById(Long id);
 
     /**
-     * 根据用户 ID 查找限额列表
-     *
-     * @param userId 用户 ID
-     * @return 限额列表
-     */
-    List<TokenLimit> findByUserId(Long userId);
-
-    /**
      * 查询所有限额
      *
      * @return 限额列表
      */
     List<TokenLimit> findAll();
-
-    /**
-     * 统计限额总数
-     *
-     * @return 限额数量
-     */
-    long count();
-
-    /**
-     * 删除限额
-     *
-     * @param tokenLimit 限额实体
-     */
-    void delete(TokenLimit tokenLimit);
-
-
-    /**
-     * 扣减已使用量
-     *
-     * @param userId 用户 ID
-     * @param inputTokens 输入 Token 数
-     * @param outputTokens 输出 Token 数
-     */
-    void deductUsage(Long userId, Long inputTokens, Long outputTokens);
 }

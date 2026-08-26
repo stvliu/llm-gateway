@@ -96,20 +96,4 @@ class ProviderHealthStateTest {
         assertThat(state.consecutiveSuccesses()).isZero();
         assertThat(state.consecutiveFailures()).isEqualTo(1);
     }
-
-    @Test
-    @DisplayName("isStale 无请求时间时返回 true")
-    void isStale_noRequestTime_returnsTrue() {
-        var state = ProviderHealthState.initial("openai");
-
-        assertThat(state.isStale(java.time.Duration.ofSeconds(300))).isTrue();
-    }
-
-    @Test
-    @DisplayName("isStale 未过期时返回 false")
-    void isStale_notExpired_returnsFalse() {
-        var state = ProviderHealthState.initial("openai").withSuccess();
-
-        assertThat(state.isStale(java.time.Duration.ofSeconds(300))).isFalse();
-    }
 }

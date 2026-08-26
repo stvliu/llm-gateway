@@ -45,15 +45,6 @@ public interface ApplicationChannelJpaRepository extends JpaRepository<Applicati
     List<ApplicationChannelDo> findByApplicationId(Long applicationId);
 
     /**
-     * 判断应用-渠道授权关联是否存在
-     *
-     * @param applicationId 应用 ID
-     * @param channelId     渠道 ID
-     * @return 存在返回 true
-     */
-    boolean existsByApplicationIdAndChannelId(Long applicationId, Long channelId);
-
-    /**
      * 删除应用下的全部授权关联
      *
      * @param applicationId 应用 ID

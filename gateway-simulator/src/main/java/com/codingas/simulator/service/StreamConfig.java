@@ -26,7 +26,6 @@ public class StreamConfig {
     private int chunkCount = 3;
     private int chunkIntervalMs = 50;
     private int interruptAfter = 0;
-    private String invalidChunk = "";
 
     /**
      * 配置流行为。
@@ -35,15 +34,13 @@ public class StreamConfig {
      * @param chunkCount      chunk 数量
      * @param chunkIntervalMs chunk 间隔毫秒
      * @param interruptAfter  中断前发送的 chunk 数
-     * @param invalidChunk    非法数据内容
      */
     public void configure(String action, int chunkCount, int chunkIntervalMs,
-                          int interruptAfter, String invalidChunk) {
+                          int interruptAfter) {
         this.action = action != null ? action : "normal";
         this.chunkCount = chunkCount > 0 ? chunkCount : 3;
         this.chunkIntervalMs = chunkIntervalMs > 0 ? chunkIntervalMs : 50;
         this.interruptAfter = interruptAfter;
-        this.invalidChunk = invalidChunk != null ? invalidChunk : "";
     }
 
     /**
@@ -54,7 +51,6 @@ public class StreamConfig {
         this.chunkCount = 3;
         this.chunkIntervalMs = 50;
         this.interruptAfter = 0;
-        this.invalidChunk = "";
     }
 
     public String getAction() { return action; }

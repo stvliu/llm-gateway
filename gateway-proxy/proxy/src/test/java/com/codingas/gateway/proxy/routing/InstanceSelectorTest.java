@@ -146,11 +146,13 @@ class InstanceSelectorTest {
     @DisplayName("select 查应用授权渠道 priority 构建 channelPriorityMap 填入 RoutingRequest")
     void select_buildsChannelPriorityMapFromApplicationChannels() {
         // given — 应用 7 授权渠道 100(priority=1)、200(priority=2)、300(priority=null)
+        ApplicationChannel rel1 = new ApplicationChannel(7L, 100L);
+        rel1.setPriority(1);
+        ApplicationChannel rel2 = new ApplicationChannel(7L, 200L);
+        rel2.setPriority(2);
+        ApplicationChannel rel3 = new ApplicationChannel(7L, 300L);
         when(modelInstanceRepository.findActiveByModelIdOrderByPriority(1L)).thenReturn(List.of(instance));
-        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of(
-                new ApplicationChannel(7L, 100L, 1),
-                new ApplicationChannel(7L, 200L, 2),
-                new ApplicationChannel(7L, 300L, null)));
+        when(applicationChannelRepository.findByApplicationId(7L)).thenReturn(List.of(rel1, rel2, rel3));
         when(routerChain.filter(any(), any(RoutingRequest.class))).thenReturn(List.of(instance));
 
         // when

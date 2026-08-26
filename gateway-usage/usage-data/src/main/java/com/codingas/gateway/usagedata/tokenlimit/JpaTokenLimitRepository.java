@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -51,39 +50,10 @@ public class JpaTokenLimitRepository implements TokenLimitRepository {
     }
 
     @Override
-    public List<TokenLimit> findByUserId(Long userId) {
-        return tokenLimitRepository.findByUserId(userId).stream()
-            .map(this::toEntity)
-            .collect(Collectors.toList());
-    }
-
-    @Override
     public List<TokenLimit> findAll() {
         return tokenLimitRepository.findAll().stream()
             .map(this::toEntity)
             .collect(Collectors.toList());
-    }
-
-    @Override
-    public long count() {
-        return tokenLimitRepository.count();
-    }
-
-    @Override
-    public void delete(TokenLimit tokenLimit) {
-        tokenLimitRepository.delete(toDo(tokenLimit));
-    }
-
-    @Override
-    public void deductUsage(Long userId, Long inputTokens, Long outputTokens) {
-        tokenLimitRepository.findAll().stream()
-                .filter(t -> t.getUserId() != null && t.getUserId().equals(userId))
-                .findFirst()
-                .ifPresent(t -> {
-                    BigDecimal currentUsed = t.getUsedTokens() != null ? t.getUsedTokens() : BigDecimal.ZERO;
-                    t.setUsedTokens(currentUsed.add(BigDecimal.valueOf(inputTokens + outputTokens)));
-                    tokenLimitRepository.save(t);
-                });
     }
 
     /**

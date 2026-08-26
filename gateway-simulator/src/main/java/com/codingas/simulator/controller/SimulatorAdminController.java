@@ -238,11 +238,7 @@ public class SimulatorAdminController {
             int chunkCount = asInt(body, "chunkCount", 3);
             int chunkIntervalMs = asInt(body, "chunkIntervalMs", 50);
             int interruptAfter = asInt(body, "interruptAfter", 0);
-            String invalidChunk = asString(body, "invalidChunk");
-            if (invalidChunk == null) {
-                invalidChunk = "";
-            }
-            modeService.getStreamConfig().configure(action, chunkCount, chunkIntervalMs, interruptAfter, invalidChunk);
+            modeService.getStreamConfig().configure(action, chunkCount, chunkIntervalMs, interruptAfter);
             return ResponseEntity.ok(Map.of("status", "ok"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

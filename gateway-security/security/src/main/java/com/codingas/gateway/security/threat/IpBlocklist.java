@@ -40,11 +40,4 @@ public class IpBlocklist extends BaseEntity {
     private Instant expiresAt;
 
     private Long blockedBy;
-
-    /**
-     * 检查封锁是否已过期
-     */
-    public boolean isExpired() {
-        return expiresAt != null && Instant.now().isAfter(expiresAt);
-    }
 }

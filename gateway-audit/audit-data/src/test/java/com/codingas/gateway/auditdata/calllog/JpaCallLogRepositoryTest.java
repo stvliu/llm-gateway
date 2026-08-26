@@ -36,7 +36,7 @@ import static org.mockito.Mockito.when;
 /**
  * JpaCallLogRepository 单元测试
  *
- * <p>mock CallLogJpaRepository，覆盖 save/findByTraceId/findByUserId 及实体↔数据对象双向转换全字段断言。</p>
+ * <p>mock CallLogJpaRepository，覆盖 save 及实体↔数据对象双向转换全字段断言。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JpaCallLogRepository 测试")
@@ -88,72 +88,6 @@ class JpaCallLogRepositoryTest {
             // then
             assertThat(result.getId()).isEqualTo(1L);
             assertEntityFields(result);
-        }
-    }
-
-    @Nested
-    @DisplayName("findByTraceId 方法测试")
-    class FindByTraceIdTests {
-
-        @Test
-        @DisplayName("按 traceId 找到日志返回实体")
-        void findByTraceId_existing_returnsEntity() {
-            // given
-            CallLogDo doEntity = createTestDo();
-            when(repository.findByTraceId("trace-abc")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<CallLog> result = gateway.findByTraceId("trace-abc");
-
-            // then
-            assertThat(result).isPresent();
-            assertEntityFields(result.get());
-        }
-
-        @Test
-        @DisplayName("按 traceId 未找到返回空 Optional")
-        void findByTraceId_missing_returnsEmpty() {
-            // given
-            when(repository.findByTraceId("nope")).thenReturn(Optional.empty());
-
-            // when
-            Optional<CallLog> result = gateway.findByTraceId("nope");
-
-            // then
-            assertThat(result).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("findByUserId 方法测试")
-    class FindByUserIdTests {
-
-        @Test
-        @DisplayName("按用户 ID 找到多条日志")
-        void findByUserId_existing_returnsList() {
-            // given
-            when(repository.findByUserId(1L)).thenReturn(List.of(createTestDo(), createTestDo()));
-
-            // when
-            List<CallLog> result = gateway.findByUserId(1L);
-
-            // then
-            assertThat(result).hasSize(2);
-            assertEntityFields(result.get(0));
-            assertEntityFields(result.get(1));
-        }
-
-        @Test
-        @DisplayName("用户无日志返回空列表")
-        void findByUserId_noLogs_returnsEmpty() {
-            // given
-            when(repository.findByUserId(999L)).thenReturn(List.of());
-
-            // when
-            List<CallLog> result = gateway.findByUserId(999L);
-
-            // then
-            assertThat(result).isEmpty();
         }
     }
 

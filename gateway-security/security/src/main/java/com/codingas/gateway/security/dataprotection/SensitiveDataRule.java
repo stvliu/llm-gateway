@@ -38,11 +38,4 @@ public class SensitiveDataRule extends BaseEntity {
     private String maskFormat;
 
     private Boolean enabled;
-
-    /**
-     * 检查规则是否启用
-     */
-    public boolean isEnabled() {
-        return Boolean.TRUE.equals(enabled);
-    }
 }

@@ -76,11 +76,4 @@ public class TokenLimit extends BaseEntity {
         /** 暂停 */
         SUSPENDED
     }
-
-    /**
-     * 检查是否超限
-     */
-    public boolean isExceeded() {
-        return usedTokens.compareTo(maxTokens) >= 0;
-    }
 }

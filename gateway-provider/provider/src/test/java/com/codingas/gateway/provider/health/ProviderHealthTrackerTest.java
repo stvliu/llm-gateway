@@ -68,13 +68,6 @@ class ProviderHealthTrackerTest {
     }
 
     @Test
-    @DisplayName("getStatus 返回当前状态（被动推断模式）")
-    void getStatus_returnsCurrentState() {
-        var status = tracker.getStatus("openai");
-        assertThat(status.status()).isEqualTo(Status.UNKNOWN);
-    }
-
-    @Test
     @DisplayName("记录成功请求后状态为 UP")
     void recordSuccess_statusIsUp() {
         tracker.recordRequestResult("openai", true, null);
@@ -146,22 +139,4 @@ class ProviderHealthTrackerTest {
                 .containsExactlyInAnyOrder("openai", "anthropic");
     }
 
-    @Test
-    @DisplayName("至少一个 Provider UP 时 hasHealthyProvider 为 true")
-    void hasHealthyProvider_atLeastOneUp() {
-        tracker.recordRequestResult("openai", true, null);
-
-        assertThat(tracker.hasHealthyProvider()).isTrue();
-    }
-
-    @Test
-    @DisplayName("所有 Provider DOWN 时 hasHealthyProvider 为 false")
-    void hasHealthyProvider_allDown() {
-        for (int i = 0; i < 3; i++) {
-            tracker.recordRequestResult("openai", false, "err");
-            tracker.recordRequestResult("anthropic", false, "err");
-        }
-
-        assertThat(tracker.hasHealthyProvider()).isFalse();
-    }
 }

@@ -43,14 +43,6 @@ public interface UserRepository {
     Optional<User> findById(Long id);
 
     /**
-     * 根据邮箱查找用户
-     *
-     * @param email 邮箱
-     * @return 用户信息
-     */
-    Optional<User> findByEmail(String email);
-
-    /**
      * 查询所有用户
      *
      * @return 用户列表
@@ -65,27 +57,12 @@ public interface UserRepository {
     long count();
 
     /**
-     * 删除用户
-     *
-     * @param user 用户实体
-     */
-    void delete(User user);
-
-    /**
      * 检查邮箱是否存在
      *
      * @param email 邮箱
      * @return 是否存在
      */
     boolean existsByEmail(String email);
-
-    /**
-     * 检查用户名是否存在
-     *
-     * @param username 用户名
-     * @return 是否存在
-     */
-    boolean existsByUsername(String username);
 
     /**
      * 根据用户名查找用户

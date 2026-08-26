@@ -20,9 +20,6 @@ import com.codingas.gateway.audit.CallLogRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
  * 调用日志 Gateway 实现
  */
@@ -37,16 +34,6 @@ public class JpaCallLogRepository implements CallLogRepository {
         CallLogDo do_ = toDo(callLog);
         CallLogDo saved = repository.save(do_);
         return toEntity(saved);
-    }
-
-    @Override
-    public Optional<CallLog> findByTraceId(String traceId) {
-        return repository.findByTraceId(traceId).map(this::toEntity);
-    }
-
-    @Override
-    public List<CallLog> findByUserId(Long userId) {
-        return repository.findByUserId(userId).stream().map(this::toEntity).toList();
     }
 
     private CallLogDo toDo(CallLog entity) {

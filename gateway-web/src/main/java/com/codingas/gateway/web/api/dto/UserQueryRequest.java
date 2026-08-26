@@ -29,7 +29,6 @@ import lombok.EqualsAndHashCode;
 public class UserQueryRequest extends PageRequest {
     private String keyword;
     private UserState state;
-    private String roleCode;
 
     /**
      * 转换为核心查询条件入参
@@ -42,7 +41,6 @@ public class UserQueryRequest extends PageRequest {
         query.setLimit(getLimit());
         query.setKeyword(keyword);
         query.setState(state);
-        query.setRoleCode(roleCode);
         return query;
     }
 }

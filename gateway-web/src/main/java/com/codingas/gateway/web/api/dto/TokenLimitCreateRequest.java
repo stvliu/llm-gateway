@@ -19,9 +19,7 @@ import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit.LimitType;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -31,10 +29,6 @@ import java.math.BigDecimal;
  */
 @Data
 public class TokenLimitCreateRequest {
-
-    @NotBlank(message = "Limit code is required")
-    @Size(max = 64, message = "Limit code must not exceed 64 characters")
-    private String limitCode;
 
     @NotNull(message = "User ID is required")
     private Long userId;

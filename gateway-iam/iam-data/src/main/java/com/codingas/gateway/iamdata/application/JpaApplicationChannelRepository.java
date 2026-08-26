@@ -59,11 +59,6 @@ public class JpaApplicationChannelRepository implements ApplicationChannelReposi
     }
 
     @Override
-    public boolean existsByApplicationIdAndChannelId(Long appId, Long chId) {
-        return repository.existsByApplicationIdAndChannelId(appId, chId);
-    }
-
-    @Override
     @Transactional
     public void deleteByApplicationId(Long appId) {
         repository.deleteByApplicationId(appId);

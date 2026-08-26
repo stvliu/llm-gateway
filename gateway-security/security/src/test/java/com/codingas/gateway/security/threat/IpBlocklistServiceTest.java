@@ -23,12 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.Instant;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -68,29 +63,5 @@ class IpBlocklistManagerTest {
         boolean result = ipBlocklistManager.isBlocked("192.168.1.100");
 
         assertThat(result).isTrue();
-    }
-
-    @Test
-    @DisplayName("blockIp 永久封禁应调用 ipBlockRepository.block 带 null expiresAt")
-    void blockIp_permanent_callsBlockWithNullExpires() {
-        ipBlocklistManager.blockIp("192.168.1.100", "Brute force", 1L);
-
-        verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Brute force"), eq(1L), eq(null));
-    }
-
-    @Test
-    @DisplayName("blockIp 临时封禁应计算正确的过期时间")
-    void blockIp_temporary_calculatesExpiresAt() {
-        ipBlocklistManager.blockIp("192.168.1.100", "Testing", 1L, 30);
-
-        verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Testing"), eq(1L), any(Instant.class));
-    }
-
-    @Test
-    @DisplayName("unblockIp 应调用 ipBlockRepository.unblock")
-    void unblockIp_callsUnblock() {
-        ipBlocklistManager.unblockIp("192.168.1.100");
-
-        verify(ipBlockRepository).unblock("192.168.1.100");
     }
 }

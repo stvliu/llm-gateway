@@ -28,15 +28,4 @@ package com.codingas.gateway.iam.application;
 public enum ApplicationState {
     ACTIVE,
     INACTIVE;
-
-    /**
-     * 是否可参与路由
-     *
-     * <p>仅 ACTIVE 状态可路由；INACTIVE 状态不参与流量分配。</p>
-     *
-     * @return 当前状态为 ACTIVE 时返回 true，否则 false
-     */
-    public boolean isRoutable() {
-        return this == ACTIVE;
-    }
 }

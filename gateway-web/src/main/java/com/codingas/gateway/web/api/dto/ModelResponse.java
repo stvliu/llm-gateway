@@ -72,16 +72,6 @@ public class ModelResponse {
     }
 
     /**
-     * 从模型实体列表转换
-     *
-     * @param models 模型实体列表
-     * @return 模型响应 DTO 列表
-     */
-    public static List<ModelResponse> from(List<Model> models) {
-        return models.stream().map(ModelResponse::from).toList();
-    }
-
-    /**
      * 从模型实体分页转换
      *
      * @param page 模型实体分页

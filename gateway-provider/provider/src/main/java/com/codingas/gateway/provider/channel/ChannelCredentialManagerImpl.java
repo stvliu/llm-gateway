@@ -56,11 +56,6 @@ public class ChannelCredentialManagerImpl implements ChannelCredentialManager {
     }
 
     @Override
-    public ChannelCredential getById(Long channelId, Long id) {
-        return findAndValidateOwnership(channelId, id);
-    }
-
-    @Override
     public ChannelCredential getDetailById(Long channelId, Long id) {
         return findAndValidateOwnership(channelId, id);
     }

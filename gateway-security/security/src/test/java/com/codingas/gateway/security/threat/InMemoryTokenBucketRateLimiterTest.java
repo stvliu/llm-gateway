@@ -104,16 +104,6 @@ class InMemoryTokenBucketRateLimiterTest {
     }
 
     @Test
-    @DisplayName("reset 移除桶状态")
-    void reset_removesBucket() {
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
-        limiter.reset("ip:1");
-
-        // 重置后按新桶处理（满桶）
-        assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();
-    }
-
-    @Test
     @DisplayName("不同 key 相互独立")
     void tryAcquire_distinctKeys_areIsolated() {
         assertThat(limiter.tryAcquire("ip:1", 5, 10, 5)).isTrue();

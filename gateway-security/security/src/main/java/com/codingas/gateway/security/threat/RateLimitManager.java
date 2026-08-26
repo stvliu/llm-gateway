@@ -51,30 +51,4 @@ public class RateLimitManager {
 
         return rateLimiter.tryAcquire(limitKey, capacity, refillRate, 1);
     }
-
-    /**
-     * 检查当前限流策略（fail-open 或 fail-close）
-     *
-     * <p>fail-close 策略：当 QPS > 配置阈值时触发。</p>
-     */
-    public boolean shouldFailClose(int currentQps) {
-        return currentQps > properties.qpsThreshold();
-    }
-
-    /**
-     * 获取限流状态
-     */
-    public TokenBucketStatus getStatus(Long apiKeyId) {
-        if (apiKeyId == null) {
-            return new TokenBucketStatus(
-                    properties.bucketSize(),
-                    properties.bucketSize(),
-                    properties.refillRate());
-        }
-
-        String limitKey = "api_key:" + apiKeyId;
-        return rateLimiter.getStatus(limitKey,
-                properties.bucketSize(),
-                properties.refillRate());
-    }
 }

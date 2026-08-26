@@ -50,11 +50,6 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public Optional<User> findByEmail(String email) {
-        return userRepository.findByEmail(email).map(this::toEntity);
-    }
-
-    @Override
     public List<User> findAll() {
         return userRepository.findAll().stream()
             .map(this::toEntity)
@@ -67,18 +62,8 @@ public class JpaUserRepository implements UserRepository {
     }
 
     @Override
-    public void delete(User user) {
-        userRepository.delete(toDo(user));
-    }
-
-    @Override
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
-    }
-
-    @Override
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
     }
 
     @Override

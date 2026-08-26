@@ -28,7 +28,7 @@ import lombok.NoArgsConstructor;
  * 预留配额/看板字段。</p>
  *
  * <p>模型纯洁：仅含 Getter/Setter，不含业务逻辑；
- * 路由判定下沉至 {@link ApplicationState#isRoutable()}。</p>
+ * 路由判定依据 {@link ApplicationState} 状态。</p>
  *
  * <p>Task 8：{@code resilienceProfileId} 退场（ResilienceProfile 实体删除），
  * {@code timeout} 直接挂 Application 字段，承接原 ResilienceProfile.timeout 语义。</p>
@@ -78,31 +78,4 @@ public class Application extends BaseEntity {
     /** 看板 ID（预留） */
     private Long dashboardId;
 
-    /**
-     * 全参构造器（仅业务字段）
-     *
-     * <p>仅初始化业务字段，主键 id 与审计字段（createdBy/createdAt/updatedBy/updatedAt）
-     * 继承自 {@link BaseEntity}，由基础设施层在持久化时填充。</p>
-     *
-     * @param code            应用编码
-     * @param name            应用名称
-     * @param description     应用描述
-     * @param state           应用生命周期状态
-     * @param timeout         请求超时秒数（0 表示用渠道默认）
-     * @param failureStrategy 应用级失败处理策略（默认 FAIL_RETRY）
-     * @param quotaBudgetId   配额预算 ID
-     * @param dashboardId     看板 ID
-     */
-    public Application(String code, String name, String description, ApplicationState state,
-                       int timeout, FailureStrategy failureStrategy,
-                       Long quotaBudgetId, Long dashboardId) {
-        this.code = code;
-        this.name = name;
-        this.description = description;
-        this.state = state;
-        this.timeout = timeout;
-        this.failureStrategy = failureStrategy;
-        this.quotaBudgetId = quotaBudgetId;
-        this.dashboardId = dashboardId;
-    }
 }

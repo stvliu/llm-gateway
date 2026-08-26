@@ -49,25 +49,6 @@ public class RoutingResolver {
     private final ApplicationRepository applicationRepository;
 
     /**
-     * 根据模型名称解析完整的路由上下文（取最高优先级候选）
-     *
-     * <p>委托 {@link #resolveCandidates} 取候选列表的第一个，等价于"最高优先级候选"。
-     * 候选列表为空时 {@link InstanceSelector#select} 已抛 {@link ResourceNotFoundException}，
-     * 因此 getFirst() 调用安全。</p>
-     *
-     * @param modelName     模型名称
-     * @param protocol      入站协议
-     * @param applicationId 应用 ID（数据面权限锚点，透传至 InstanceSelector/RoutingRequest）
-     * @param userId        用户 ID
-     * @param role          用户角色（保留字段；数据面权限基于 applicationId 判定可见渠道）
-     * @param strategy      路由策略
-     * @return 路由上下文（最高优先级候选）
-     */
-    public RoutingContext resolve(String modelName, Protocol protocol, Long applicationId, Long userId, String role, RoutingStrategy strategy) {
-        return resolveCandidates(modelName, protocol, applicationId, userId, role, strategy).getFirst();
-    }
-
-    /**
      * 根据模型名称解析路由候选列表，供 L1 渠道级故障转移逐个尝试
      *
      * <p>委托 {@link InstanceSelector#select} 拿到按 priority 升序的候选实例列表，

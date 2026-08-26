@@ -103,26 +103,6 @@ class JpaUserRepositoryTest {
     }
 
     @Nested
-    @DisplayName("findByEmail 方法测试")
-    class FindByEmailTests {
-
-        @Test
-        @DisplayName("通过邮箱找到 User")
-        void findByEmail_existingEmail_returnsEntity() {
-            // given
-            UserDo doEntity = createTestDo();
-            when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(doEntity));
-
-            // when
-            Optional<User> result = gateway.findByEmail("test@example.com");
-
-            // then
-            assertThat(result).isPresent();
-            assertThat(result.get().getEmail()).isEqualTo("test@example.com");
-        }
-    }
-
-    @Nested
     @DisplayName("findAll 方法测试")
     class FindAllTests {
 
@@ -162,25 +142,6 @@ class JpaUserRepositoryTest {
     }
 
     @Nested
-    @DisplayName("delete 方法测试")
-    class DeleteTests {
-
-        @Test
-        @DisplayName("删除成功")
-        void delete_existingEntity_deletes() {
-            // given
-            User entity = createTestEntity();
-            doNothing().when(userRepository).delete(any());
-
-            // when
-            gateway.delete(entity);
-
-            // then
-            verify(userRepository).delete(any());
-        }
-    }
-
-    @Nested
     @DisplayName("existsByEmail 方法测试")
     class ExistsByEmailTests {
 
@@ -205,37 +166,6 @@ class JpaUserRepositoryTest {
 
             // when
             boolean result = gateway.existsByEmail("unknown@example.com");
-
-            // then
-            assertThat(result).isFalse();
-        }
-    }
-
-    @Nested
-    @DisplayName("existsByUsername 方法测试")
-    class ExistsByUsernameTests {
-
-        @Test
-        @DisplayName("用户名存在返回 true")
-        void existsByUsername_existingUsername_returnsTrue() {
-            // given
-            when(userRepository.existsByUsername("testuser")).thenReturn(true);
-
-            // when
-            boolean result = gateway.existsByUsername("testuser");
-
-            // then
-            assertThat(result).isTrue();
-        }
-
-        @Test
-        @DisplayName("用户名不存在返回 false")
-        void existsByUsername_nonExistingUsername_returnsFalse() {
-            // given
-            when(userRepository.existsByUsername("unknown")).thenReturn(false);
-
-            // when
-            boolean result = gateway.existsByUsername("unknown");
 
             // then
             assertThat(result).isFalse();

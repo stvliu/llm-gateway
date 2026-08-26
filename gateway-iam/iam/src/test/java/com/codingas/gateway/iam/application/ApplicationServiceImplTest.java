@@ -318,8 +318,9 @@ class ApplicationManagerImplTest {
         @DisplayName("管理员 listChannels 返回应用授权的渠道及其 priority")
         void listChannels_returnsChannelsWithPriority() {
             // 模拟 gateway 返回含 priority 的关联列表
-            ApplicationChannel rel1 = new ApplicationChannel(1L, 10L, 1);
-            ApplicationChannel rel2 = new ApplicationChannel(1L, 20L, null);
+            ApplicationChannel rel1 = new ApplicationChannel(1L, 10L);
+            rel1.setPriority(1);
+            ApplicationChannel rel2 = new ApplicationChannel(1L, 20L);
             when(applicationChannelRepository.findByApplicationId(1L))
                     .thenReturn(List.of(rel1, rel2));
 

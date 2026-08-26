@@ -17,7 +17,6 @@ package com.codingas.gateway.provider.health;
 
 import org.springframework.boot.actuate.health.Status;
 
-import java.time.Duration;
 import java.time.Instant;
 
 /**
@@ -62,15 +61,5 @@ public record ProviderHealthState(
     public ProviderHealthState withFailure(String errorMessage) {
         int newFailures = consecutiveFailures + 1;
         return new ProviderHealthState(providerCode, Status.DOWN, Instant.now(), newFailures, 0, errorMessage);
-    }
-
-    /**
-     * 判断状态是否过期
-     */
-    public boolean isStale(Duration threshold) {
-        if (lastRequestTime == null) {
-            return true;
-        }
-        return Instant.now().isAfter(lastRequestTime.plus(threshold));
     }
 }

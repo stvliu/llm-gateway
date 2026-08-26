@@ -39,9 +39,4 @@ public interface TokenBucketRateLimiter {
      * 获取当前令牌桶状态
      */
     TokenBucketStatus getStatus(String key, int capacity, int refillRate);
-
-    /**
-     * 重置限流桶
-     */
-    void reset(String key);
 }

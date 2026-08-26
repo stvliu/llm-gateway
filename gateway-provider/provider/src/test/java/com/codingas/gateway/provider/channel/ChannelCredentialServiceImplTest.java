@@ -75,24 +75,6 @@ class ChannelCredentialManagerImplTest {
     }
 
     @Test
-    void getById_success() {
-        ChannelCredential apiKey = createSampleApiKey();
-        when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
-
-        ChannelCredential response = service.getById(CHANNEL_ID, API_KEY_ID);
-
-        assertNotNull(response);
-        assertEquals(API_KEY_ID, response.getId());
-        assertEquals("test-key", response.getName());
-    }
-
-    @Test
-    void getById_notFound() {
-        when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> service.getById(CHANNEL_ID, API_KEY_ID));
-    }
-
-    @Test
     void getDetailById_success() {
         ChannelCredential apiKey = createSampleApiKey();
         when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
@@ -185,16 +167,6 @@ class ChannelCredentialManagerImplTest {
         assertTrue(response.getSuccess());
         assertEquals(100L, response.getLatency());
         assertEquals("gpt-4o", response.getModelName());
-    }
-
-    @Test
-    void getById_归属不匹配抛出异常() {
-        ChannelCredential apiKey = createSampleApiKey();
-        when(channelCredentialRepository.findById(API_KEY_ID)).thenReturn(Optional.of(apiKey));
-
-        // channelId 不匹配 → 视为不存在
-        assertThrows(ResourceNotFoundException.class,
-                () -> service.getById(999L, API_KEY_ID));
     }
 
     @Test

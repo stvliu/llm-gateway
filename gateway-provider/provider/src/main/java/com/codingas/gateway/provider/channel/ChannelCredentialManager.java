@@ -33,15 +33,6 @@ public interface ChannelCredentialManager {
     ChannelCredential create(ChannelCredential credential);
 
     /**
-     * 根据 ID 获取渠道凭证（校验渠道归属，不含明文）
-     *
-     * @param channelId 渠道 ID
-     * @param id        凭证 ID
-     * @return 凭证实体
-     */
-    ChannelCredential getById(Long channelId, Long id);
-
-    /**
      * 根据 ID 获取渠道凭证详情（含明文，用于页面复制）
      *
      * @param channelId 渠道 ID

@@ -23,7 +23,6 @@ import lombok.Data;
  */
 @Data
 public class ModelInstanceUpdateRequest {
-    private Long channelId;
     private Long modelId;
     private String upstreamModelName;
 

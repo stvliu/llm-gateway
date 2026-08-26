@@ -17,15 +17,8 @@ package com.codingas.gateway.auditdata.calllog;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
  * 调用日志 JPA Repository
  */
 public interface CallLogJpaRepository extends JpaRepository<CallLogDo, Long> {
-
-    Optional<CallLogDo> findByTraceId(String traceId);
-
-    List<CallLogDo> findByUserId(Long userId);
 }

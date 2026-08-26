@@ -16,7 +16,6 @@
 package com.codingas.gateway.provider.health;
 
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -36,7 +35,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * <p>被动推断策略：基于实际请求结果判断 Provider 健康状态。</p>
  * <p>连续失败 ≥ failureThreshold → DOWN；DOWN 状态下连续成功 ≥ successThreshold → UP。</p>
  */
-@Slf4j
 @Component
 @EnableConfigurationProperties(ProviderHealthProperties.class)
 public class ProviderHealthTracker {
@@ -48,21 +46,6 @@ public class ProviderHealthTracker {
     public ProviderHealthTracker(UpstreamClientRegistry upstreamClientRegistry, ProviderHealthProperties properties) {
         this.upstreamClientRegistry = upstreamClientRegistry;
         this.properties = properties;
-    }
-
-    /**
-     * 获取指定 Provider 的健康状态
-     *
-     * <p>如果状态过期，标记为需要重新评估（由下次实际请求结果驱动）。</p>
-     */
-    public ProviderHealthState getStatus(String providerCode) {
-        ProviderHealthState state = states.computeIfAbsent(providerCode, ProviderHealthState::initial);
-
-        if (state.isStale(properties.getStaleThreshold())) {
-            log.debug("Provider {} 状态过期，等待下次请求结果重新评估", providerCode);
-        }
-
-        return state;
     }
 
     /**
@@ -119,11 +102,4 @@ public class ProviderHealthTracker {
         });
     }
 
-    /**
-     * 是否至少有一个健康的 Provider
-     */
-    public boolean hasHealthyProvider() {
-        return getAllStatuses().stream()
-                .anyMatch(state -> state.status() == Status.UP);
-    }
 }

@@ -105,25 +105,6 @@ class JpaTokenLimitRepositoryTest {
     }
 
     @Nested
-    @DisplayName("findByUserId 方法测试")
-    class FindByUserIdTests {
-
-        @Test
-        @DisplayName("找到用户的 TokenLimit 列表")
-        void findByUserId_existingUser_returnsList() {
-            // given
-            TokenLimitDo doEntity = createTestDo();
-            when(tokenLimitRepository.findByUserId(1L)).thenReturn(List.of(doEntity));
-
-            // when
-            List<TokenLimit> result = gateway.findByUserId(1L);
-
-            // then
-            assertThat(result).hasSize(1);
-        }
-    }
-
-    @Nested
     @DisplayName("findAll 方法测试")
     class FindAllTests {
 
@@ -141,80 +122,6 @@ class JpaTokenLimitRepositoryTest {
 
             // then
             assertThat(result).hasSize(2);
-        }
-    }
-
-    @Nested
-    @DisplayName("count 方法测试")
-    class CountTests {
-
-        @Test
-        @DisplayName("返回总数")
-        void count_returnsCount() {
-            // given
-            when(tokenLimitRepository.count()).thenReturn(10L);
-
-            // when
-            long result = gateway.count();
-
-            // then
-            assertThat(result).isEqualTo(10L);
-        }
-    }
-
-    @Nested
-    @DisplayName("delete 方法测试")
-    class DeleteTests {
-
-        @Test
-        @DisplayName("删除成功")
-        void delete_existingEntity_deletes() {
-            // given
-            TokenLimit entity = createTestEntity();
-            doNothing().when(tokenLimitRepository).delete(any());
-
-            // when
-            gateway.delete(entity);
-
-            // then
-            verify(tokenLimitRepository).delete(any());
-        }
-    }
-
-    @Nested
-    @DisplayName("deductUsage 方法测试")
-    class DeductUsageTests {
-
-        @Test
-        @DisplayName("扣除用户用量成功")
-        void deductUsage_existingUser_deductsTokens() {
-            // given
-            TokenLimitDo doEntity = createTestDo();
-            doEntity.setUserId(1L);
-            doEntity.setUsedTokens(BigDecimal.valueOf(100));
-            when(tokenLimitRepository.findAll()).thenReturn(List.of(doEntity));
-            when(tokenLimitRepository.save(any())).thenReturn(doEntity);
-
-            // when
-            gateway.deductUsage(1L, 50L, 30L);
-
-            // then
-            verify(tokenLimitRepository).save(any());
-        }
-
-        @Test
-        @DisplayName("用户无匹配记录时不扣除")
-        void deductUsage_noMatchingUser_noDeduction() {
-            // given
-            TokenLimitDo doEntity = createTestDo();
-            doEntity.setUserId(2L);
-            when(tokenLimitRepository.findAll()).thenReturn(List.of(doEntity));
-
-            // when
-            gateway.deductUsage(1L, 50L, 30L);
-
-            // then
-            verify(tokenLimitRepository, never()).save(any());
         }
     }
 

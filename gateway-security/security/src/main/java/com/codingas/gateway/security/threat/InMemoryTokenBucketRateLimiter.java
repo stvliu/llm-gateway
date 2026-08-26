@@ -97,13 +97,5 @@ public class InMemoryTokenBucketRateLimiter implements TokenBucketRateLimiter {
         return new TokenBucketStatus(currentTokens, capacity, refillRate);
     }
 
-    /**
-     * 重置限流桶
-     */
-    public void reset(String key) {
-        String bucketKey = "ratelimit:" + key;
-        buckets.remove(bucketKey);
-    }
-
     private record BucketState(int tokens, long lastRefill) {}
 }

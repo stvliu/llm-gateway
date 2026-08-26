@@ -30,10 +30,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  *
  * <p>覆盖：</p>
  * <ul>
- *   <li>{@link ApplicationState#ACTIVE} 可路由</li>
- *   <li>{@link ApplicationState#INACTIVE} 不可路由</li>
+ *   <li>{@link ApplicationState} 枚举值</li>
  *   <li>{@link Application} 实体全部字段可读写</li>
- *   <li>全参构造器（不含 id 与审计字段）正确赋值业务字段</li>
  * </ul>
  *
  * <p>Task 8：{@code resilienceProfileId} 退场，新增 {@code timeout}（承接原 ResilienceProfile.timeout，
@@ -43,20 +41,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ApplicationTest {
 
     @Nested
-    @DisplayName("ApplicationState.isRoutable 测试")
-    class IsRoutableTests {
-
-        @Test
-        @DisplayName("ACTIVE 可路由")
-        void active_isRoutable() {
-            assertThat(ApplicationState.ACTIVE.isRoutable()).isTrue();
-        }
-
-        @Test
-        @DisplayName("INACTIVE 不可路由")
-        void inactive_isNotRoutable() {
-            assertThat(ApplicationState.INACTIVE.isRoutable()).isFalse();
-        }
+    @DisplayName("ApplicationState 枚举测试")
+    class StateTests {
 
         @Test
         @DisplayName("枚举仅包含 ACTIVE 与 INACTIVE 两个值")
@@ -69,24 +55,6 @@ class ApplicationTest {
     @Nested
     @DisplayName("Application 字段读写测试")
     class FieldReadWriteTests {
-
-        @Test
-        @DisplayName("全参构造器（不含 id/审计字段）能正确赋值业务字段")
-        void allArgsConstructor_setsBusinessFields() {
-            Application app = new Application(
-                    "app-001", "测试应用", "描述",
-                    ApplicationState.ACTIVE,
-                    30, FailureStrategy.FAIL_RETRY, 200L, 300L);
-
-            assertThat(app.getCode()).isEqualTo("app-001");
-            assertThat(app.getName()).isEqualTo("测试应用");
-            assertThat(app.getDescription()).isEqualTo("描述");
-            assertThat(app.getState()).isEqualTo(ApplicationState.ACTIVE);
-            assertThat(app.getTimeout()).isEqualTo(30);
-            assertThat(app.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
-            assertThat(app.getQuotaBudgetId()).isEqualTo(200L);
-            assertThat(app.getDashboardId()).isEqualTo(300L);
-        }
 
         @Test
         @DisplayName("无参构造器 + Setter 能读写全部 12 个字段（含 id 与审计字段）")

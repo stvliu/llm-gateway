@@ -101,9 +101,9 @@ public abstract class FullContextIntegrationTestBase {
         when(authenticationManager.authenticateUser(anyString()))
                 .thenReturn(Identity.of(1L, "user", 100L, 7L));
 
-        // 路由解析：返回一个默认 RoutingContext
-        when(routingResolver.resolve(anyString(), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class)))
-                .thenReturn(new RoutingContext(
+        // 路由解析：返回一个默认 RoutingContext 候选列表
+        when(routingResolver.resolveCandidates(anyString(), any(Protocol.class), anyLong(), anyLong(), anyString(), any(RoutingStrategy.class)))
+                .thenReturn(List.of(new RoutingContext(
                         1L,
                         1L,
                         "http://localhost:8080",
@@ -114,7 +114,7 @@ public abstract class FullContextIntegrationTestBase {
                         "gpt-4",
                         null,
                         FailureStrategy.FAIL_RETRY
-                ));
+                )));
 
         // 凭证解析：返回一个默认 API Key
         when(credentialResolver.resolve(anyLong()))

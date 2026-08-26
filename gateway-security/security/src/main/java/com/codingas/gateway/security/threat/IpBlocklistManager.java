@@ -17,15 +17,13 @@ package com.codingas.gateway.security.threat;
 
 import com.codingas.gateway.security.threat.IpBlocklistRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
  * IP 黑名单服务
  *
- * <p>提供动态 IP 封禁/解封、黑名单查询功能。</p>
+ * <p>提供 IP 黑名单查询功能。</p>
  */
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IpBlocklistManager {
@@ -40,31 +38,5 @@ public class IpBlocklistManager {
             return false;
         }
         return ipBlockRepository.isBlocked(ipAddress);
-    }
-
-    /**
-     * 封禁 IP（永久）
-     */
-    public void blockIp(String ipAddress, String reason, Long blockedBy) {
-        ipBlockRepository.block(ipAddress, reason, blockedBy, null);
-        log.info("IP blocked: address={}, reason={}, by={}", ipAddress, reason, blockedBy);
-    }
-
-    /**
-     * 封禁 IP（临时）
-     */
-    public void blockIp(String ipAddress, String reason, Long blockedBy, long durationMinutes) {
-        java.time.Instant expiresAt = java.time.Instant.now().plusSeconds(durationMinutes * 60);
-        ipBlockRepository.block(ipAddress, reason, blockedBy, expiresAt);
-        log.info("IP blocked: address={}, reason={}, by={}, expires={}",
-            ipAddress, reason, blockedBy, expiresAt);
-    }
-
-    /**
-     * 解封 IP
-     */
-    public void unblockIp(String ipAddress) {
-        ipBlockRepository.unblock(ipAddress);
-        log.info("IP unblocked: address={}", ipAddress);
     }
 }

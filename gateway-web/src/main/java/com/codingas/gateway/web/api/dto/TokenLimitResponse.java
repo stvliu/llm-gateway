@@ -36,7 +36,6 @@ import java.time.Instant;
 public class TokenLimitResponse {
 
     private Long id;
-    private String limitCode;
     private Long userId;
     private String username;
     private Long providerId;

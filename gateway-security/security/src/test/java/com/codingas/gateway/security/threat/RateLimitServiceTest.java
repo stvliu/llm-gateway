@@ -68,26 +68,6 @@ class RateLimitManagerTest {
     }
 
     @Test
-    @DisplayName("shouldFailClose 当前 QPS 超过阈值应返回 true")
-    void shouldFailClose_exceedsThreshold_returnsTrue() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
-
-        boolean result = service.shouldFailClose(1001);
-
-        assertThat(result).isTrue();
-    }
-
-    @Test
-    @DisplayName("shouldFailClose 当前 QPS 未超过阈值应返回 false")
-    void shouldFailClose_belowThreshold_returnsFalse() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
-
-        boolean result = service.shouldFailClose(999);
-
-        assertThat(result).isFalse();
-    }
-
-    @Test
     @DisplayName("isAllowed 限流器拒绝时应返回 false")
     void isAllowed_rateLimiterRejects_returnsFalse() {
         RateLimitManager service = new RateLimitManager(rateLimiter, properties);
@@ -96,31 +76,5 @@ class RateLimitManagerTest {
         boolean result = service.isAllowed(1L);
 
         assertThat(result).isFalse();
-    }
-
-    @Test
-    @DisplayName("getStatus 有 apiKeyId 时应委托限流器查询")
-    void getStatus_withApiKey_delegatesToRateLimiter() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
-        TokenBucketStatus expected = new TokenBucketStatus(50, 100, 10);
-        when(rateLimiter.getStatus("api_key:1", 100, 10)).thenReturn(expected);
-
-        TokenBucketStatus result = service.getStatus(1L);
-
-        assertThat(result.currentTokens()).isEqualTo(50);
-        assertThat(result.capacity()).isEqualTo(100);
-        assertThat(result.refillRate()).isEqualTo(10);
-    }
-
-    @Test
-    @DisplayName("getStatus apiKeyId 为 null 应返回满桶状态")
-    void getStatus_nullApiKey_returnsFullBucket() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
-
-        TokenBucketStatus result = service.getStatus(null);
-
-        assertThat(result.currentTokens()).isEqualTo(100);
-        assertThat(result.capacity()).isEqualTo(100);
-        assertThat(result.refillRate()).isEqualTo(10);
     }
 }

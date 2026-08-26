@@ -155,9 +155,10 @@ class ApplicationControllerHttpTest {
     @Test
     @DisplayName("GET /api/v1/applications/{id}/channels 返回渠道授权项列表（含 priority）")
     void listChannels_returnsChannelItems() throws Exception {
-        when(applicationManager.listChannels(1L)).thenReturn(List.of(
-                new ApplicationChannel(1L, 10L, 1),
-                new ApplicationChannel(1L, 20L, null)));
+        ApplicationChannel rel1 = new ApplicationChannel(1L, 10L);
+        rel1.setPriority(1);
+        ApplicationChannel rel2 = new ApplicationChannel(1L, 20L);
+        when(applicationManager.listChannels(1L)).thenReturn(List.of(rel1, rel2));
 
         mockMvc.perform(get("/api/v1/applications/{id}/channels", 1L))
                 .andExpect(status().isOk())
