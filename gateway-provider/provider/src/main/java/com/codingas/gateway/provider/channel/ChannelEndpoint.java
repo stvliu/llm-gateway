@@ -16,7 +16,7 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.common.entity.BaseEntity;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

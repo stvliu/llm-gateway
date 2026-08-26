@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
+package com.codingas.gateway.protocol;
 
 /**
  * 协议类型枚举

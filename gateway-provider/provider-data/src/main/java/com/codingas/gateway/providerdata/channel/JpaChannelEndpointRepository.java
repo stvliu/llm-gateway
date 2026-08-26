@@ -16,7 +16,7 @@
 package com.codingas.gateway.providerdata.channel;
 
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

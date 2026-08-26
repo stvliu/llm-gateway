@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.provider.channel;
 
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 
 import java.util.List;
 import java.util.Optional;

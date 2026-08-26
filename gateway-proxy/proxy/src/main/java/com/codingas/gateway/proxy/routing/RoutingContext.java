@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.provider.upstream;
+package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 
 /**
  * 路由上下文不可变对象

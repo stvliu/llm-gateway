@@ -16,8 +16,8 @@
 package com.codingas.gateway.proxy.conversion;
 
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.provider.upstream.Protocol;
-import com.codingas.gateway.provider.upstream.RoutingContext;
+import com.codingas.gateway.protocol.Protocol;
+import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

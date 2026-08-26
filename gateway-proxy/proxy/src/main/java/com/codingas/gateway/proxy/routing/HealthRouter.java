@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;

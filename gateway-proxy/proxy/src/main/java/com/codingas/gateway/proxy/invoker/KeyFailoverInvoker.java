@@ -25,7 +25,7 @@ import com.codingas.gateway.protocol.transport.ProviderException;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
-import com.codingas.gateway.provider.upstream.RoutingContext;
+import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;

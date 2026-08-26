@@ -19,7 +19,6 @@ import com.codingas.gateway.iam.application.ApplicationChannelRepository;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.channel.ChannelState;
-import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

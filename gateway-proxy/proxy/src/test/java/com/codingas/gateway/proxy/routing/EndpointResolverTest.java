@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

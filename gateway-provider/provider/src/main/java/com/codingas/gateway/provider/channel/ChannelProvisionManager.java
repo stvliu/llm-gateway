@@ -24,7 +24,7 @@ import com.codingas.gateway.provider.catalog.PlanModelCatalogRepository;
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.vendor.Provider;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.model.ModelRepository;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
 import com.codingas.gateway.provider.vendor.ProviderRepository;

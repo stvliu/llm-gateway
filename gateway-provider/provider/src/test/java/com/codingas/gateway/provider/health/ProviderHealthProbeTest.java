@@ -18,7 +18,7 @@ package com.codingas.gateway.provider.health;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
 import com.codingas.gateway.provider.channel.ChannelEndpointRepository;
 import com.codingas.gateway.provider.channel.ChannelRepository;

@@ -18,7 +18,7 @@ package com.codingas.gateway.provider.channel;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.provider.vendor.ProviderRepository;
 import org.junit.jupiter.api.DisplayName;

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.providerdata.channel;
 
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

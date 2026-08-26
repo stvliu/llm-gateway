@@ -34,7 +34,7 @@ public class ChannelEndpointDo extends BaseDo {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "protocol", nullable = false, length = 32)
-    private com.codingas.gateway.provider.upstream.Protocol protocol;
+    private com.codingas.gateway.protocol.Protocol protocol;
 
     @Column(name = "endpoint_url", nullable = false, length = 512)
     private String endpointUrl;

@@ -17,7 +17,7 @@ package com.codingas.gateway.proxy.conversion;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.tuning.ProtocolTuner;
-import com.codingas.gateway.provider.upstream.RoutingContext;
+import com.codingas.gateway.proxy.routing.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

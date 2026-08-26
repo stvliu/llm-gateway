@@ -16,7 +16,6 @@
 package com.codingas.gateway.proxy.routing;
 
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

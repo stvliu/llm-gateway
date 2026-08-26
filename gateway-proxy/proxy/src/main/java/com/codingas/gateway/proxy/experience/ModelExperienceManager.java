@@ -19,7 +19,7 @@ import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
 import com.codingas.gateway.provider.channel.ChannelRepository;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;

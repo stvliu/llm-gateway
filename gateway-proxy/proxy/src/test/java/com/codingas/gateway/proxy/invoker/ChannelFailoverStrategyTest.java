@@ -24,10 +24,10 @@ import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ProviderException;
-import com.codingas.gateway.provider.upstream.RoutingContext;
+import com.codingas.gateway.proxy.routing.RoutingContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

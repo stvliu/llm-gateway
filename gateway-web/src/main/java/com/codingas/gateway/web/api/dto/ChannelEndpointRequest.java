@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
-import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.protocol.Protocol;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
