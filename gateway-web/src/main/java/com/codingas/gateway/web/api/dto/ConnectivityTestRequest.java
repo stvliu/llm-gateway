@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.vendor.ConnectivityTestCommand;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -37,12 +36,5 @@ public record ConnectivityTestRequest(
 
     String model
 ) {
-    /**
-     * 转换为核心连通性测试用例入参
-     *
-     * @return 连通性测试用例入参
-     */
-    public ConnectivityTestCommand toCommand() {
-        return new ConnectivityTestCommand(protocolName, baseUrl, apiKey, model);
-    }
+
 }

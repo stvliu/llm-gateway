@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.vendor.ModelNestedCommand;
-import com.codingas.gateway.provider.vendor.ProviderCreateCommand;
+import com.codingas.gateway.provider.model.Model;
+import com.codingas.gateway.provider.vendor.Provider;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -51,14 +51,29 @@ public class ProviderCreateRequest {
     private List<ModelNestedRequest> models;
 
     /**
-     * 转换为核心创建用例入参
+     * 转换为提供商实体
      *
-     * @return 创建用例入参
+     * @return 提供商实体
      */
-    public ProviderCreateCommand toCommand() {
-        List<ModelNestedCommand> modelCommands = models != null
-                ? models.stream().map(ModelNestedRequest::toCommand).toList()
-                : null;
-        return new ProviderCreateCommand(code, providerName, websiteUrl, apiDocUrl, priority, modelCommands);
+    public Provider toEntity() {
+        Provider provider = new Provider();
+        provider.setCode(code);
+        provider.setName(providerName);
+        provider.setWebsiteUrl(websiteUrl);
+        provider.setApiDocUrl(apiDocUrl);
+        provider.setPriority(priority);
+        return provider;
+    }
+
+    /**
+     * 转换为嵌套模型列表
+     *
+     * @return 嵌套模型实体列表（无嵌套时为 null）
+     */
+    public List<Model> toModels() {
+        if (models == null) {
+            return null;
+        }
+        return models.stream().map(ModelNestedRequest::toEntity).toList();
     }
 }

@@ -44,7 +44,7 @@ public class ProviderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProviderResponse create(@Valid @RequestBody ProviderCreateRequest request) {
-        return ProviderResponse.from(providerManager.create(request.toCommand()));
+        return ProviderResponse.from(providerManager.create(request.toEntity(), request.toModels()));
     }
 
     /**
@@ -69,7 +69,7 @@ public class ProviderController {
     @PutMapping("/{id}")
     public ProviderResponse update(@PathVariable Long id,
                                    @Valid @RequestBody ProviderUpdateRequest request) {
-        return ProviderResponse.from(providerManager.update(id, request.toCommand()));
+        return ProviderResponse.from(providerManager.update(id, request.toEntity()));
     }
 
     /**
@@ -97,6 +97,6 @@ public class ProviderController {
     @PostMapping("/test-connectivity")
     public ConnectivityTestResult testConnectivity(
             @Valid @RequestBody ConnectivityTestRequest request) {
-        return providerManager.testConnectivity(request.toCommand());
+        return providerManager.testConnectivity(request.protocolName(), request.baseUrl(), request.apiKey(), request.model());
     }
 }

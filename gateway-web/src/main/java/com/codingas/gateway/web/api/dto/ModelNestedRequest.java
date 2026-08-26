@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.vendor.ModelNestedCommand;
+import com.codingas.gateway.provider.model.Model;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -41,12 +41,16 @@ public class ModelNestedRequest {
     private Map<String, Boolean> capabilities;
 
     /**
-     * 转换为核心嵌套模型用例入参
+     * 转换为模型实体
      *
-     * @return 嵌套模型用例入参
+     * @return 模型实体
      */
-    public ModelNestedCommand toCommand() {
-        return new ModelNestedCommand(modelName, displayName, contextWindow,
-                inputPrice, outputPrice, capabilities);
+    public Model toEntity() {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setContextWindow(contextWindow);
+        model.setCapabilities(capabilities);
+        return model;
     }
 }

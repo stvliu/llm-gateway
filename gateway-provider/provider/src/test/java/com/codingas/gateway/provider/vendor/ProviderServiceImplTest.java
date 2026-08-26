@@ -86,19 +86,16 @@ class ProviderManagerImplTest {
         @Test
         @DisplayName("含嵌套模型时创建模型，priority 缺省为 100")
         void create_withNestedModels() {
-            ModelNestedCommand nested = new ModelNestedCommand(
-                    "gpt-4", "GPT-4", 8000, null, null, Map.of("vision", true));
-            ProviderCreateCommand request = new ProviderCreateCommand(
-                    "openai", "OpenAI", "https://openai.com",
-                    "https://platform.openai.com/docs", null, List.of(nested));
-
+            Model nested = modelEntity(
+                    "gpt-4", "GPT-4", 8000, Map.of("vision", true));
+            Provider request = providerEntity("openai", "OpenAI", "https://openai.com", "https://platform.openai.com/docs", null);
             when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
                 p.setId(1L);
                 return p;
             });
 
-            Provider response = service.create(request);
+            Provider response = service.create(request, List.of(nested));
 
             assertThat(response.getId()).isEqualTo(1L);
             assertThat(response.getName()).isEqualTo("OpenAI");
@@ -116,15 +113,14 @@ class ProviderManagerImplTest {
         @Test
         @DisplayName("无嵌套模型时不创建模型")
         void create_withoutModels() {
-            ProviderCreateCommand request =
-                    new ProviderCreateCommand("anthropic", "Anthropic", null, null, 5, null);
+            Provider request = providerEntity("anthropic", "Anthropic", null, null, 5);
             when(providerRepository.save(any(Provider.class))).thenAnswer(inv -> {
                 Provider p = inv.getArgument(0);
                 p.setId(2L);
                 return p;
             });
 
-            Provider response = service.create(request);
+            Provider response = service.create(request, null);
 
             assertThat(response.getName()).isEqualTo("Anthropic");
             assertThat(response.getCode()).isEqualTo("anthropic");
@@ -237,8 +233,7 @@ class ProviderManagerImplTest {
             when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
             when(providerRepository.save(any(Provider.class))).thenReturn(p);
 
-            ProviderUpdateCommand request = new ProviderUpdateCommand(
-                    "OpenAI 2", "https://openai.com/v2", "https://platform.openai.com/docs/v2", 10);
+            Provider request = providerEntity(null, "OpenAI 2", "https://openai.com/v2", "https://platform.openai.com/docs/v2", 10);
 
             Provider response = service.update(1L, request);
 
@@ -256,7 +251,7 @@ class ProviderManagerImplTest {
             when(providerRepository.findById(1L)).thenReturn(Optional.of(p));
             when(providerRepository.save(any(Provider.class))).thenReturn(p);
 
-            ProviderUpdateCommand request = new ProviderUpdateCommand("New Name", null, null, null);
+            Provider request = providerEntity(null, "New Name", null, null, null);
 
             Provider response = service.update(1L, request);
 
@@ -271,7 +266,7 @@ class ProviderManagerImplTest {
         void missing_throws() {
             when(providerRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> service.update(99L, new ProviderUpdateCommand(null, null, null, null)))
+            assertThatThrownBy(() -> service.update(99L, providerEntity(null, null, null, null, null)))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -370,8 +365,7 @@ class ProviderManagerImplTest {
                     .thenReturn(new com.codingas.gateway.protocol.transport.ConnectivityTestResult(
                             true, null, null, 120L));
 
-            ConnectivityTestResult result = service.testConnectivity(
-                    new ConnectivityTestCommand("openai", "https://api.openai.com", "sk-123", null));
+            ConnectivityTestResult result = service.testConnectivity("openai", "https://api.openai.com", "sk-123", null);
 
             assertThat(result.success()).isTrue();
             assertThat(result.message()).isEqualTo("连通性测试成功");
@@ -388,8 +382,7 @@ class ProviderManagerImplTest {
                     .thenReturn(new com.codingas.gateway.protocol.transport.ConnectivityTestResult(
                             false, null, "401 Unauthorized", 0L));
 
-            ConnectivityTestResult result = service.testConnectivity(
-                    new ConnectivityTestCommand("openai", "https://api.openai.com", "sk-bad", null));
+            ConnectivityTestResult result = service.testConnectivity("openai", "https://api.openai.com", "sk-bad", null);
 
             assertThat(result.success()).isFalse();
             assertThat(result.message()).isEqualTo("401 Unauthorized");
@@ -405,5 +398,28 @@ class ProviderManagerImplTest {
         p.setCode(code);
         p.setName(name);
         return p;
+    }
+
+    /** 构造提供商实体（null 字段表示未设置） */
+    private Provider providerEntity(String code, String name, String websiteUrl, String apiDocUrl,
+                                    Integer priority) {
+        Provider provider = new Provider();
+        provider.setCode(code);
+        provider.setName(name);
+        provider.setWebsiteUrl(websiteUrl);
+        provider.setApiDocUrl(apiDocUrl);
+        provider.setPriority(priority);
+        return provider;
+    }
+
+    /** 构造模型实体（modelName/displayName/contextWindow/capabilities） */
+    private Model modelEntity(String modelName, String displayName, Integer contextWindow,
+                              Map<String, Boolean> capabilities) {
+        Model model = new Model();
+        model.setModelName(modelName);
+        model.setDisplayName(displayName);
+        model.setContextWindow(contextWindow);
+        model.setCapabilities(capabilities);
+        return model;
     }
 }

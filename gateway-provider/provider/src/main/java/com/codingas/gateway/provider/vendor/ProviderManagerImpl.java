@@ -59,29 +59,21 @@ public class ProviderManagerImpl implements ProviderManager {
      */
     @Override
     @Transactional
-    public Provider create(ProviderCreateCommand command) {
+    public Provider create(Provider provider, List<Model> models) {
 
-        Provider provider = new Provider();
-        provider.setName(command.getProviderName());
-        provider.setCode(command.getCode());
-        provider.setWebsiteUrl(command.getWebsiteUrl());
-        provider.setApiDocUrl(command.getApiDocUrl());
-        provider.setPriority(command.getPriority() != null ? command.getPriority() : 100);
+        if (provider.getPriority() == null) {
+            provider.setPriority(100);
+        }
 
         Provider savedProvider = providerRepository.save(provider);
         Long providerId = savedProvider.getId();
 
         // 创建嵌套的模型
-        if (command.getModels() != null && !command.getModels().isEmpty()) {
-            for (ModelNestedCommand modelCommand : command.getModels()) {
-                Model model = new Model();
-                model.setModelName(modelCommand.modelName());
-                model.setDisplayName(modelCommand.displayName());
-                model.setContextWindow(modelCommand.contextWindow());
-                model.setCapabilities(modelCommand.capabilities());
+        if (models != null && !models.isEmpty()) {
+            for (Model model : models) {
                 modelRepository.save(model);
             }
-            log.info("Created {} models for provider {}", command.getModels().size(), providerId);
+            log.info("Created {} models for provider {}", models.size(), providerId);
         }
 
         return savedProvider;
@@ -130,24 +122,25 @@ public class ProviderManagerImpl implements ProviderManager {
      */
     @Override
     @Transactional
-    public Provider update(Long id, ProviderUpdateCommand command) {
-        Provider provider = providerRepository.findById(id)
+    public Provider update(Long id, Provider provider) {
+        Provider existing = providerRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Provider", id));
 
-        if (command.getProviderName() != null) {
-            provider.setName(command.getProviderName());
+        // 实体 null 字段表示不更新
+        if (provider.getName() != null) {
+            existing.setName(provider.getName());
         }
-        if (command.getWebsiteUrl() != null) {
-            provider.setWebsiteUrl(command.getWebsiteUrl());
+        if (provider.getWebsiteUrl() != null) {
+            existing.setWebsiteUrl(provider.getWebsiteUrl());
         }
-        if (command.getApiDocUrl() != null) {
-            provider.setApiDocUrl(command.getApiDocUrl());
+        if (provider.getApiDocUrl() != null) {
+            existing.setApiDocUrl(provider.getApiDocUrl());
         }
-        if (command.getPriority() != null) {
-            provider.setPriority(command.getPriority());
+        if (provider.getPriority() != null) {
+            existing.setPriority(provider.getPriority());
         }
 
-        return providerRepository.save(provider);
+        return providerRepository.save(existing);
     }
 
     /**
@@ -207,11 +200,11 @@ public class ProviderManagerImpl implements ProviderManager {
      * 测试连通性
      */
     @Override
-    public com.codingas.gateway.provider.vendor.ConnectivityTestResult testConnectivity(ConnectivityTestCommand command) {
+    public com.codingas.gateway.provider.vendor.ConnectivityTestResult testConnectivity(String protocolName, String baseUrl, String apiKey, String model) {
         ConnectivityTestResult vo = connectivityTester.test(
-                command.baseUrl(),
-                command.apiKey(),
-                command.protocolName()
+                baseUrl,
+                apiKey,
+                protocolName
         );
 
         // 将 VO 转为应用层用例结果

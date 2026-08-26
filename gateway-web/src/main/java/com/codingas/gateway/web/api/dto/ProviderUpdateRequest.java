@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.provider.vendor.ProviderUpdateCommand;
+import com.codingas.gateway.provider.vendor.Provider;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -36,11 +36,16 @@ public class ProviderUpdateRequest {
     private Integer priority;
 
     /**
-     * 转换为核心更新用例入参
+     * 转换为提供商实体（null 字段表示不更新）
      *
-     * @return 更新用例入参
+     * @return 提供商实体
      */
-    public ProviderUpdateCommand toCommand() {
-        return new ProviderUpdateCommand(providerName, websiteUrl, apiDocUrl, priority);
+    public Provider toEntity() {
+        Provider provider = new Provider();
+        provider.setName(providerName);
+        provider.setWebsiteUrl(websiteUrl);
+        provider.setApiDocUrl(apiDocUrl);
+        provider.setPriority(priority);
+        return provider;
     }
 }

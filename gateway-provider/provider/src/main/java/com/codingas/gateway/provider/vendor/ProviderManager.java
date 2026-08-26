@@ -15,6 +15,8 @@
  */
 package com.codingas.gateway.provider.vendor;
 
+import com.codingas.gateway.provider.model.Model;
+
 import com.codingas.gateway.common.dto.PageResponse;
 
 import java.util.List;
@@ -29,10 +31,11 @@ public interface ProviderManager {
     /**
      * 创建提供商
      *
-     * @param command 创建用例入参
+     * @param provider 提供商实体（承载 code/name/websiteUrl/apiDocUrl/priority）
+     * @param models   嵌套模型列表（可选）
      * @return 创建后的提供商实体
      */
-    Provider create(ProviderCreateCommand command);
+    Provider create(Provider provider, List<Model> models);
 
     /**
      * 根据 ID 获取提供商
@@ -51,13 +54,13 @@ public interface ProviderManager {
     PageResponse<Provider> query(ProviderQuery query);
 
     /**
-     * 更新提供商
+     * 更新提供商（实体 null 字段表示不更新）
      *
-     * @param id      提供商 ID
-     * @param command 更新用例入参（仅非 null 字段生效）
+     * @param id       提供商 ID
+     * @param provider 提供商实体
      * @return 更新后的提供商实体
      */
-    Provider update(Long id, ProviderUpdateCommand command);
+    Provider update(Long id, Provider provider);
 
     /**
      * 删除提供商（软删除）
@@ -82,8 +85,11 @@ public interface ProviderManager {
      *   <li>Level 2：模型可用性验证（发送最小 chat 请求）</li>
      * </ul>
      *
-     * @param command 测试用例入参
+     * @param protocolName 协议名称（如 openai、anthropic）
+     * @param baseUrl      供应商 Base URL（可选）
+     * @param apiKey       待测试的 API Key
+     * @param model        指定测试模型（可选）
      * @return 测试用例结果
      */
-    ConnectivityTestResult testConnectivity(ConnectivityTestCommand command);
+    ConnectivityTestResult testConnectivity(String protocolName, String baseUrl, String apiKey, String model);
 }
