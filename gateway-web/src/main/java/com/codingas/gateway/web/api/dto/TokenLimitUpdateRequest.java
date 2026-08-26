@@ -17,7 +17,8 @@ package com.codingas.gateway.web.api.dto;
 
 import com.codingas.gateway.usage.enums.ExceededAction;
 import com.codingas.gateway.usage.enums.PeriodType;
-import com.codingas.gateway.usage.tokenlimit.TokenLimitUpdateCommand;
+import com.codingas.gateway.usage.tokenlimit.TokenLimit;
+import com.codingas.gateway.usage.tokenlimit.TokenLimit.TokenLimitState;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -43,13 +44,20 @@ public class TokenLimitUpdateRequest {
     private Boolean enabled;
 
     /**
-     * 转换为核心更新用例入参
+     * 转换为限额实体（null 字段表示不更新；enabled 映射状态）
      *
-     * @return 更新用例入参
+     * @return 限额实体
      */
-    public TokenLimitUpdateCommand toCommand() {
-        return new TokenLimitUpdateCommand(
-                maxTokens, periodType, periodDayOfWeek, periodDayOfMonth,
-                exceededAction, switchModelId, enabled);
+    public TokenLimit toEntity() {
+        TokenLimit tokenLimit = new TokenLimit();
+        tokenLimit.setMaxTokens(maxTokens);
+        tokenLimit.setPeriodType(periodType);
+        tokenLimit.setPeriodDayOfWeek(periodDayOfWeek);
+        tokenLimit.setPeriodDayOfMonth(periodDayOfMonth);
+        tokenLimit.setExceededAction(exceededAction);
+        if (enabled != null) {
+            tokenLimit.setState(enabled ? TokenLimitState.ACTIVE : TokenLimitState.SUSPENDED);
+        }
+        return tokenLimit;
     }
 }

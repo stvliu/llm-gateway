@@ -72,7 +72,7 @@ class TokenLimitManagerTest {
     private Provider testProvider;
     private Model testModel;
     private TokenLimit testTokenLimit;
-    private TokenLimitCreateCommand createCommand;
+    private TokenLimit tokenLimitEntity;
 
     @BeforeEach
     void setUp() {
@@ -106,11 +106,12 @@ class TokenLimitManagerTest {
         testTokenLimit.setCreatedAt(Instant.now());
         testTokenLimit.setUpdatedAt(Instant.now());
 
-        // 初始化创建用例入参
-        createCommand = new TokenLimitCreateCommand(
-                null, 1L, 1L, 1L, LimitType.USER_CUSTOM,
-                new BigDecimal("10000"), PeriodType.MONTHLY, null, null,
-                ExceededAction.REJECT, null);
+        // 初始化限额实体（业务字段；userId 等 ID 经 create 单独传入）
+        tokenLimitEntity = new TokenLimit();
+        tokenLimitEntity.setLimitType(LimitType.USER_CUSTOM);
+        tokenLimitEntity.setMaxTokens(new BigDecimal("10000"));
+        tokenLimitEntity.setPeriodType(PeriodType.MONTHLY);
+        tokenLimitEntity.setExceededAction(ExceededAction.REJECT);
     }
 
     @Nested
@@ -121,13 +122,13 @@ class TokenLimitManagerTest {
         @DisplayName("创建 Token 限额成功")
         void create_success() {
             // given
-            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.of(testProvider));
-            when(modelRepository.findById(createCommand.modelId())).thenReturn(Optional.of(testModel));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
             when(tokenLimitRepository.save(any(TokenLimit.class))).thenReturn(testTokenLimit);
 
             // when
-            TokenLimit result = tokenLimitManager.create(createCommand);
+            TokenLimit result = tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity);
 
             // then
             assertThat(result).isNotNull();
@@ -142,9 +143,9 @@ class TokenLimitManagerTest {
                     .isEqualByComparingTo(testTokenLimit.getMaxTokens());
             assertThat(result.getState()).isEqualTo(TokenLimitState.ACTIVE);
 
-            verify(userRepository).findById(createCommand.userId());
-            verify(providerRepository).findById(createCommand.providerId());
-            verify(modelRepository).findById(createCommand.modelId());
+            verify(userRepository).findById(1L);
+            verify(providerRepository).findById(1L);
+            verify(modelRepository).findById(1L);
             verify(tokenLimitRepository).save(any(TokenLimit.class));
         }
 
@@ -152,51 +153,51 @@ class TokenLimitManagerTest {
         @DisplayName("创建 Token 限额失败 - 用户不存在")
         void create_userNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.empty());
+            when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User")
-                .hasMessageContaining(String.valueOf(createCommand.userId()));
+                .hasMessageContaining(String.valueOf(1L));
 
-            verify(userRepository).findById(createCommand.userId());
+            verify(userRepository).findById(1L);
         }
 
         @Test
         @DisplayName("创建 Token 限额失败 - 提供商不存在")
         void create_providerNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.empty());
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Provider")
-                .hasMessageContaining(String.valueOf(createCommand.providerId()));
+                .hasMessageContaining(String.valueOf(1L));
 
-            verify(userRepository).findById(createCommand.userId());
-            verify(providerRepository).findById(createCommand.providerId());
+            verify(userRepository).findById(1L);
+            verify(providerRepository).findById(1L);
         }
 
         @Test
         @DisplayName("创建 Token 限额失败 - 模型不存在")
         void create_modelNotFound_throwsResourceNotFoundException() {
             // given
-            when(userRepository.findById(createCommand.userId())).thenReturn(Optional.of(testUser));
-            when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.of(testProvider));
-            when(modelRepository.findById(createCommand.modelId())).thenReturn(Optional.empty());
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(providerRepository.findById(1L)).thenReturn(Optional.of(testProvider));
+            when(modelRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
-                .hasMessageContaining(String.valueOf(createCommand.modelId()));
+                .hasMessageContaining(String.valueOf(1L));
 
-            verify(userRepository).findById(createCommand.userId());
-            verify(providerRepository).findById(createCommand.providerId());
-            verify(modelRepository).findById(createCommand.modelId());
+            verify(userRepository).findById(1L);
+            verify(providerRepository).findById(1L);
+            verify(modelRepository).findById(1L);
         }
     }
 

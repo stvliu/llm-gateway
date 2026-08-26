@@ -71,7 +71,7 @@ class TokenLimitControllerTest {
             request.setLimitCode("limit-001");
 
             TokenLimit tokenLimit = createTestTokenLimit();
-            when(tokenLimitManager.create(any())).thenReturn(tokenLimit);
+            when(tokenLimitManager.create(any(), any(), any(), any(), any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.create(request);
@@ -135,7 +135,7 @@ class TokenLimitControllerTest {
             request.setMaxTokens(BigDecimal.valueOf(200000));
 
             TokenLimit tokenLimit = createTestTokenLimit();
-            when(tokenLimitManager.update(eq(1L), any())).thenReturn(tokenLimit);
+            when(tokenLimitManager.update(eq(1L), any(), any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.update(1L, request);

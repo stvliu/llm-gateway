@@ -42,7 +42,9 @@ public class TokenLimitController {
      */
     @PostMapping
     public TokenLimitResponse create(@Valid @RequestBody TokenLimitCreateRequest request) {
-        return TokenLimitResponse.from(tokenLimitManager.create(request.toCommand()));
+        return TokenLimitResponse.from(tokenLimitManager.create(
+                request.getUserId(), request.getProviderId(), request.getModelId(),
+                request.getSwitchModelId(), request.toEntity()));
     }
 
     /**
@@ -68,7 +70,7 @@ public class TokenLimitController {
     public TokenLimitResponse update(
             @PathVariable Long id,
             @Valid @RequestBody TokenLimitUpdateRequest request) {
-        return TokenLimitResponse.from(tokenLimitManager.update(id, request.toCommand()));
+        return TokenLimitResponse.from(tokenLimitManager.update(id, request.toEntity(), request.getSwitchModelId()));
     }
 
     /**

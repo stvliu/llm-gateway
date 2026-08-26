@@ -28,10 +28,14 @@ public interface TokenLimitManager {
     /**
      * 创建 Token 限额
      *
-     * @param command 创建用例入参
+     * @param userId       用户 ID
+     * @param providerId   提供商 ID（可选）
+     * @param modelId      模型 ID（可选）
+     * @param switchModelId 切换模型 ID（可选）
+     * @param tokenLimit   限额实体（承载 limitType/maxTokens/period 等业务字段）
      * @return 创建后的限额实体
      */
-    TokenLimit create(TokenLimitCreateCommand command);
+    TokenLimit create(Long userId, Long providerId, Long modelId, Long switchModelId, TokenLimit tokenLimit);
 
     /**
      * 根据 ID 获取 Token 限额
@@ -52,11 +56,12 @@ public interface TokenLimitManager {
     /**
      * 更新 Token 限额
      *
-     * @param id      限额 ID
-     * @param command 更新用例入参（仅非 null 字段生效）
+     * @param id           限额 ID
+     * @param tokenLimit   限额实体（null 字段表示不更新）
+     * @param switchModelId 切换模型 ID（可选，非 null 时更新切换模型）
      * @return 更新后的限额实体
      */
-    TokenLimit update(Long id, TokenLimitUpdateCommand command);
+    TokenLimit update(Long id, TokenLimit tokenLimit, Long switchModelId);
 
     /**
      * 删除 Token 限额（软删除）
