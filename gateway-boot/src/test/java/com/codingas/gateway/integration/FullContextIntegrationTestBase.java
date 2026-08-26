@@ -16,14 +16,14 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.proxy.chat.ChatDispatchService;
+import com.codingas.gateway.proxy.chat.ChatDispatchManager;
 import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.common.event.DomainEventPublisher;
 import com.codingas.gateway.audit.AuditLogRepository;
-import com.codingas.gateway.iam.auth.AuthenticationService;
+import com.codingas.gateway.iam.auth.AuthenticationManager;
 import com.codingas.gateway.iam.valueobject.Identity;
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.provider.upstream.Protocol;
@@ -49,17 +49,17 @@ import static org.mockito.Mockito.when;
 /**
  * 全链路集成测试基类
  *
- * <p>Mock 认证+路由等外部依赖，直接调用 ChatDispatchService 验证完整的七阶段调度链。</p>
+ * <p>Mock 认证+路由等外部依赖，直接调用 ChatDispatchManager 验证完整的七阶段调度链。</p>
  */
 @SpringBootTest(classes = GatewayApplication.class, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 @ActiveProfiles("integration-test")
 public abstract class FullContextIntegrationTestBase {
 
     @Autowired
-    protected ChatDispatchService chatDispatchService;
+    protected ChatDispatchManager chatDispatchManager;
 
     @MockBean
-    protected AuthenticationService authenticationService;
+    protected AuthenticationManager authenticationManager;
 
     @MockBean
     protected RoutingResolver routingResolver;
@@ -98,7 +98,7 @@ public abstract class FullContextIntegrationTestBase {
     @BeforeEach
     protected void setupDefaultMocks() {
         // 认证成功：返回一个默认 Identity（含 applicationId 权限锚点）
-        when(authenticationService.authenticateUser(anyString()))
+        when(authenticationManager.authenticateUser(anyString()))
                 .thenReturn(Identity.of(1L, "user", 100L, 7L));
 
         // 路由解析：返回一个默认 RoutingContext

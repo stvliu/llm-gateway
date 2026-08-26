@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * {@link ApplicationChannelJpaRepository}/{@link ChannelJpaRepository}，验证应用-渠道授权过滤的端到端链路。</p>
  *
  * <p>构造方式说明：基类 {@code FullContextIntegrationTestBase} 通过 {@code @MockBean} mock 了
- * {@code RoutingResolver}（导致 {@code ChatDispatchService} 不触发真实路由链），但 <b>未 mock</b>
+ * {@code RoutingResolver}（导致 {@code ChatDispatchManager} 不触发真实路由链），但 <b>未 mock</b>
  * {@link RouterChain}/{@code PermissionRouter}/{@code ApplicationChannelJpaRepository}。
  * 因此本测试直接注入真实 {@link RouterChain} bean，调用 {@code routerChain.filter(instances, request)}
  * 驱动真实 {@code PermissionRouter} 按 {@code applicationId} 过滤；

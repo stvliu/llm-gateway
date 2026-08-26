@@ -17,7 +17,7 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelCredentialCreateCommand;
-import com.codingas.gateway.provider.channel.ChannelCredentialService;
+import com.codingas.gateway.provider.channel.ChannelCredentialManager;
 import com.codingas.gateway.provider.channel.ChannelCredentialUpdateCommand;
 import com.codingas.gateway.web.api.dto.*;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.*;
 class ChannelCredentialControllerTest {
 
     @Mock
-    private ChannelCredentialService channelCredentialService;
+    private ChannelCredentialManager channelCredentialManager;
 
     @InjectMocks
     private ChannelCredentialController controller;
@@ -72,14 +72,14 @@ class ChannelCredentialControllerTest {
         @Test
         @DisplayName("返回渠道下的凭证列表")
         void returnsCredentialList() {
-            when(channelCredentialService.listByChannelId(CHANNEL_ID))
+            when(channelCredentialManager.listByChannelId(CHANNEL_ID))
                     .thenReturn(List.of(buildCredential()));
 
             List<ChannelCredentialResponse> result = controller.list(CHANNEL_ID);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getId()).isEqualTo(CREDENTIAL_ID);
-            verify(channelCredentialService).listByChannelId(CHANNEL_ID);
+            verify(channelCredentialManager).listByChannelId(CHANNEL_ID);
         }
     }
 
@@ -92,7 +92,7 @@ class ChannelCredentialControllerTest {
         void returnsDetail() {
             ChannelCredential credential = buildCredential();
             credential.setApiKeyPlain("sk-test-api-key-12345");
-            when(channelCredentialService.getDetailById(CHANNEL_ID, CREDENTIAL_ID)).thenReturn(credential);
+            when(channelCredentialManager.getDetailById(CHANNEL_ID, CREDENTIAL_ID)).thenReturn(credential);
 
             ChannelCredentialResponse result = controller.get(CHANNEL_ID, CREDENTIAL_ID);
 
@@ -112,14 +112,14 @@ class ChannelCredentialControllerTest {
             var request = new ChannelCredentialCreateRequest("sk-test-key", 1, 1, "test key");
             var saved = buildCredential();
             saved.setApiKeyPlain("sk-test-key");
-            when(channelCredentialService.create(any(ChannelCredentialCreateCommand.class)))
+            when(channelCredentialManager.create(any(ChannelCredentialCreateCommand.class)))
                     .thenReturn(saved);
 
             ChannelCredentialCreateResponse result = controller.create(CHANNEL_ID, request);
 
             // 验证适配层补全了 channelId
             var captured = ArgumentCaptor.forClass(ChannelCredentialCreateCommand.class);
-            verify(channelCredentialService).create(captured.capture());
+            verify(channelCredentialManager).create(captured.capture());
             assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
 
             assertThat(result.id()).isEqualTo(CREDENTIAL_ID);
@@ -136,14 +136,14 @@ class ChannelCredentialControllerTest {
         void updatesCredential() {
             // 请求体不含 channelId 和 id，由适配层补全
             var request = new ChannelCredentialUpdateRequest(10, 5, null, null);
-            when(channelCredentialService.update(any(ChannelCredentialUpdateCommand.class)))
+            when(channelCredentialManager.update(any(ChannelCredentialUpdateCommand.class)))
                     .thenReturn(buildCredential());
 
             ChannelCredentialResponse result = controller.update(CHANNEL_ID, CREDENTIAL_ID, request);
 
             // 验证适配层补全了 channelId 和 id
             var captured = ArgumentCaptor.forClass(ChannelCredentialUpdateCommand.class);
-            verify(channelCredentialService).update(captured.capture());
+            verify(channelCredentialManager).update(captured.capture());
             assertThat(captured.getValue().channelId()).isEqualTo(CHANNEL_ID);
             assertThat(captured.getValue().id()).isEqualTo(CREDENTIAL_ID);
 
@@ -160,7 +160,7 @@ class ChannelCredentialControllerTest {
         @DisplayName("调用删除服务方法")
         void deletesCredential() {
             controller.delete(CHANNEL_ID, CREDENTIAL_ID);
-            verify(channelCredentialService).delete(CHANNEL_ID, CREDENTIAL_ID);
+            verify(channelCredentialManager).delete(CHANNEL_ID, CREDENTIAL_ID);
         }
     }
 }

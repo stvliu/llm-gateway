@@ -30,16 +30,16 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * ChannelCredentialServiceImpl 单元测试
+ * ChannelCredentialManagerImpl 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-class ChannelCredentialServiceImplTest {
+class ChannelCredentialManagerImplTest {
 
     @Mock
     private ChannelCredentialRepository channelCredentialRepository;
 
     @InjectMocks
-    private ChannelCredentialServiceImpl service;
+    private ChannelCredentialManagerImpl service;
 
     private static final Long CHANNEL_ID = 10L;
     private static final Long API_KEY_ID = 100L;

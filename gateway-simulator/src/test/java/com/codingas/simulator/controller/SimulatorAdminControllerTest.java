@@ -15,7 +15,7 @@
  */
 package com.codingas.simulator.controller;
 
-import com.codingas.simulator.service.SimulatorModeService;
+import com.codingas.simulator.service.SimulatorModeManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -36,18 +36,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 验证管理 API 的模式切换和请求记录查询功能。
  */
 @WebMvcTest(SimulatorAdminController.class)
-@Import(SimulatorModeService.class)
+@Import(SimulatorModeManager.class)
 class SimulatorAdminControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private SimulatorModeService modeService;
+    private SimulatorModeManager modeService;
 
     @BeforeEach
     void resetMode() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
     }
 
     @Nested
@@ -65,7 +65,7 @@ class SimulatorAdminControllerTest {
         @Test
         @DisplayName("切换后返回新模式")
         void afterSwitch_returnsNewMode() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.RATE_LIMITED);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.RATE_LIMITED);
 
             mockMvc.perform(get("/simulator/mode"))
                     .andExpect(status().isOk())
@@ -110,7 +110,7 @@ class SimulatorAdminControllerTest {
         @Test
         @DisplayName("切换回 normal 模式")
         void switchToNormal() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/simulator/mode")
                             .contentType(MediaType.APPLICATION_JSON)

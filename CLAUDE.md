@@ -101,7 +101,7 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 服务（Service） | 域核心模块 `<域>.service/`（按用例分包） | ChannelService, TokenLimitService, AuthenticationService |
+| 管理服务（Manager） | 域核心模块 `<域>.service/`（按用例分包） | ChannelManager, TokenLimitManager, AuthenticationManager |
 
 ## Exception 分类
 
@@ -156,7 +156,7 @@ GatewayException (根异常)
 ## 代码规范
 
 - 实体类: PascalCase + 明确业务含义
-- 服务类: PascalCase + `Service` 后缀
+- 管理服务类: PascalCase + `Manager` 后缀（取代 Service，领域门面）；web 组装层 `XxxFacade`（组装对象 + 跨域访问）
 - 接口: PascalCase + 能力描述（如 `ModelRouter`, `TokenCounter`）
 - 方法: camelCase + 动词开头
 - 常量: UPPER_SNAKE_CASE

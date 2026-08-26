@@ -34,11 +34,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
- * ModelInstanceServiceImpl 状态转换测试
+ * ModelInstanceManagerImpl 状态转换测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelInstanceServiceImpl 状态转换测试")
-class ModelInstanceServiceImplStateTransitionTest {
+@DisplayName("ModelInstanceManagerImpl 状态转换测试")
+class ModelInstanceManagerImplStateTransitionTest {
 
     @Mock
     private ModelInstanceRepository modelInstanceRepository;
@@ -48,11 +48,11 @@ class ModelInstanceServiceImplStateTransitionTest {
     @Captor
     private ArgumentCaptor<ModelInstance> instanceCaptor;
 
-    private ModelInstanceServiceImpl service;
+    private ModelInstanceManagerImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ModelInstanceServiceImpl(modelInstanceRepository, modelRepository);
+        service = new ModelInstanceManagerImpl(modelInstanceRepository, modelRepository);
     }
 
     private ModelInstance createInstance(Long id, Long channelId, ModelInstance.State state) {

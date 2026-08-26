@@ -34,14 +34,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * ChannelEmergencyServiceImpl 单元测试
+ * ChannelEmergencyManagerImpl 单元测试
  *
  * <p>Mock {@link ChannelEndpointCircuitBreakerManager} 与各 Gateway，
  * 验证应急操作的业务校验与委托逻辑。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("渠道应急操作服务测试")
-class ChannelEmergencyServiceImplTest {
+class ChannelEmergencyManagerImplTest {
 
     @Mock
     private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
@@ -50,7 +50,7 @@ class ChannelEmergencyServiceImplTest {
     private ChannelEndpointRepository channelEndpointRepository;
 
     @InjectMocks
-    private ChannelEmergencyServiceImpl channelEmergencyService;
+    private ChannelEmergencyManagerImpl channelEmergencyManager;
 
     @Nested
     @DisplayName("forceOpen 应急熔断")
@@ -62,7 +62,7 @@ class ChannelEmergencyServiceImplTest {
             stubEndpointBelongsToChannel(1L, 10L);
             when(circuitBreakerManager.getState(10L)).thenReturn(CircuitBreakerState.OPEN);
 
-            String result = channelEmergencyService.forceOpen(1L, 10L);
+            String result = channelEmergencyManager.forceOpen(1L, 10L);
 
             assertThat(result).isEqualTo("OPEN");
             verify(circuitBreakerManager).forceOpen(10L);
@@ -73,7 +73,7 @@ class ChannelEmergencyServiceImplTest {
         void forceOpen_endpointNotFound_throwsException() {
             when(channelEndpointRepository.findById(10L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelEmergencyService.forceOpen(1L, 10L))
+            assertThatThrownBy(() -> channelEmergencyManager.forceOpen(1L, 10L))
                     .isInstanceOf(GatewayRequestException.class);
             verify(circuitBreakerManager, never()).forceOpen(any());
         }
@@ -84,7 +84,7 @@ class ChannelEmergencyServiceImplTest {
             ChannelEndpoint endpoint = buildEndpoint(10L, 999L); // 属于渠道 999
             when(channelEndpointRepository.findById(10L)).thenReturn(Optional.of(endpoint));
 
-            assertThatThrownBy(() -> channelEmergencyService.forceOpen(1L, 10L))
+            assertThatThrownBy(() -> channelEmergencyManager.forceOpen(1L, 10L))
                     .isInstanceOf(GatewayRequestException.class);
             verify(circuitBreakerManager, never()).forceOpen(any());
         }
@@ -96,7 +96,7 @@ class ChannelEmergencyServiceImplTest {
             ChannelEndpoint endpoint = buildEndpoint(10L, null);
             when(channelEndpointRepository.findById(10L)).thenReturn(Optional.of(endpoint));
 
-            assertThatThrownBy(() -> channelEmergencyService.forceOpen(1L, 10L))
+            assertThatThrownBy(() -> channelEmergencyManager.forceOpen(1L, 10L))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("不属于");
             verify(circuitBreakerManager, never()).forceOpen(any());
@@ -113,7 +113,7 @@ class ChannelEmergencyServiceImplTest {
             stubEndpointBelongsToChannel(1L, 10L);
             when(circuitBreakerManager.getState(10L)).thenReturn(CircuitBreakerState.CLOSED);
 
-            String result = channelEmergencyService.forceClose(1L, 10L);
+            String result = channelEmergencyManager.forceClose(1L, 10L);
 
             assertThat(result).isEqualTo("CLOSED");
             verify(circuitBreakerManager).forceClose(10L);
@@ -130,7 +130,7 @@ class ChannelEmergencyServiceImplTest {
             stubEndpointBelongsToChannel(1L, 10L);
             when(circuitBreakerManager.getState(10L)).thenReturn(CircuitBreakerState.HALF_OPEN);
 
-            String result = channelEmergencyService.getState(1L, 10L);
+            String result = channelEmergencyManager.getState(1L, 10L);
 
             assertThat(result).isEqualTo("HALF_OPEN");
             verify(circuitBreakerManager, never()).forceOpen(any());

@@ -42,11 +42,11 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
- * UserServiceImpl 单元测试
+ * UserManagerImpl 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserServiceImpl 测试")
-class UserServiceImplTest {
+@DisplayName("UserManagerImpl 测试")
+class UserManagerImplTest {
 
     @Mock
     private UserRepository userRepository;
@@ -55,7 +55,7 @@ class UserServiceImplTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private UserServiceImpl service;
+    private UserManagerImpl service;
 
     @Nested
     @DisplayName("create 方法测试")

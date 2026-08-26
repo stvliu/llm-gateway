@@ -16,7 +16,7 @@
 package com.codingas.simulator.controller;
 
 import com.codingas.simulator.service.BehaviorSequence;
-import com.codingas.simulator.service.SimulatorModeService;
+import com.codingas.simulator.service.SimulatorModeManager;
 import com.codingas.simulator.template.SimulatorResponseTemplates;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -49,7 +49,7 @@ import java.util.concurrent.Executors;
 @RestController
 public class SimulatorController {
 
-    private final SimulatorModeService modeService;
+    private final SimulatorModeManager modeService;
 
     /** 用于异步发送 SSE 事件的线程池（daemon 线程，应用关闭时自动退出） */
     private final ExecutorService sseExecutor = Executors.newCachedThreadPool(r -> {
@@ -58,7 +58,7 @@ public class SimulatorController {
         return t;
     });
 
-    public SimulatorController(SimulatorModeService modeService) {
+    public SimulatorController(SimulatorModeManager modeService) {
         this.modeService = modeService;
     }
 
@@ -75,7 +75,7 @@ public class SimulatorController {
     public ResponseEntity<?> openaiChatCompletions(@RequestBody String body,
                                                     @RequestHeader(value = "Authorization", required = false) String authHeader) {
         modeService.recordRequest("POST", "/v1/chat/completions");
-        SimulatorModeService.SimulatorMode mode = resolveMode(authHeader);
+        SimulatorModeManager.SimulatorMode mode = resolveMode(authHeader);
         modeService.getDelayConfig().applyDelay();
 
         return switch (mode) {
@@ -122,7 +122,7 @@ public class SimulatorController {
     public ResponseEntity<?> anthropicMessages(@RequestBody String body,
                                                 @RequestHeader(value = "Authorization", required = false) String authHeader) {
         modeService.recordRequest("POST", "/v1/messages");
-        SimulatorModeService.SimulatorMode mode = resolveMode(authHeader);
+        SimulatorModeManager.SimulatorMode mode = resolveMode(authHeader);
         modeService.getDelayConfig().applyDelay();
 
         return switch (mode) {
@@ -204,11 +204,11 @@ public class SimulatorController {
      * @param authHeader Authorization 请求头
      * @return 解析后的 SimulatorMode
      */
-    private SimulatorModeService.SimulatorMode resolveMode(String authHeader) {
+    private SimulatorModeManager.SimulatorMode resolveMode(String authHeader) {
         // 1. 行为序列优先
         BehaviorSequence seq = modeService.getBehaviorSequence();
         if (seq != null && seq.isActive()) {
-            Optional<SimulatorModeService.SimulatorMode> seqMode = seq.consume();
+            Optional<SimulatorModeManager.SimulatorMode> seqMode = seq.consume();
             if (seqMode.isPresent()) {
                 return seqMode.get();
             }
@@ -216,16 +216,16 @@ public class SimulatorController {
         // 2. API Key 覆盖
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String apiKey = authHeader.substring(7);
-            Optional<SimulatorModeService.SimulatorMode> overrideMode =
+            Optional<SimulatorModeManager.SimulatorMode> overrideMode =
                     modeService.getApiKeyOverrideConfig().matchOverride(apiKey);
             if (overrideMode.isPresent()) {
                 return overrideMode.get();
             }
         }
         // 3. 全局模式
-        SimulatorModeService.SimulatorMode globalMode = modeService.getMode();
-        if (globalMode == SimulatorModeService.SimulatorMode.INTERMITTENT) {
-            return SimulatorModeService.SimulatorMode.NORMAL;
+        SimulatorModeManager.SimulatorMode globalMode = modeService.getMode();
+        if (globalMode == SimulatorModeManager.SimulatorMode.INTERMITTENT) {
+            return SimulatorModeManager.SimulatorMode.NORMAL;
         }
         return globalMode;
     }

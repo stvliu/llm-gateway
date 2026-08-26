@@ -16,9 +16,9 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
-import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelService;
-import com.codingas.gateway.provider.channel.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
+import com.codingas.gateway.provider.channel.ChannelManager;
+import com.codingas.gateway.provider.channel.ChannelHealthManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -48,13 +48,13 @@ class ChannelEmergencyControllerTest {
     private com.codingas.gateway.web.api.assembler.ChannelFacade channelFacade;
 
     @Mock
-    private ChannelService channelService;
+    private ChannelManager channelManager;
 
     @Mock
-    private ChannelHealthService channelHealthService;
+    private ChannelHealthManager channelHealthManager;
 
     @Mock
-    private ChannelEmergencyService channelEmergencyService;
+    private ChannelEmergencyManager channelEmergencyManager;
 
     private MockMvc mockMvc;
 
@@ -62,8 +62,8 @@ class ChannelEmergencyControllerTest {
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelFacade, channelService,
-                channelHealthService, channelEmergencyService);
+        ChannelController controller = new ChannelController(channelFacade, channelManager,
+                channelHealthManager, channelEmergencyManager);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -72,29 +72,29 @@ class ChannelEmergencyControllerTest {
     @Test
     @DisplayName("POST /channels/{cid}/endpoints/{eid}/circuit-breaker/force-open 一键熔断返回 200 与 OPEN")
     void forceOpen_returns200WithOpen() throws Exception {
-        when(channelEmergencyService.forceOpen(eq(1L), eq(10L))).thenReturn("OPEN");
+        when(channelEmergencyManager.forceOpen(eq(1L), eq(10L))).thenReturn("OPEN");
 
         mockMvc.perform(post("/api/v1/channels/1/endpoints/10/circuit-breaker/force-open"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.state").value("OPEN"));
-        verify(channelEmergencyService).forceOpen(1L, 10L);
+        verify(channelEmergencyManager).forceOpen(1L, 10L);
     }
 
     @Test
     @DisplayName("POST /channels/{cid}/endpoints/{eid}/circuit-breaker/force-close 一键恢复返回 200 与 CLOSED")
     void forceClose_returns200WithClosed() throws Exception {
-        when(channelEmergencyService.forceClose(eq(1L), eq(10L))).thenReturn("CLOSED");
+        when(channelEmergencyManager.forceClose(eq(1L), eq(10L))).thenReturn("CLOSED");
 
         mockMvc.perform(post("/api/v1/channels/1/endpoints/10/circuit-breaker/force-close"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.state").value("CLOSED"));
-        verify(channelEmergencyService).forceClose(1L, 10L);
+        verify(channelEmergencyManager).forceClose(1L, 10L);
     }
 
     @Test
     @DisplayName("GET /channels/{cid}/endpoints/{eid}/circuit-breaker/state 查询状态返回 200")
     void getState_returns200WithState() throws Exception {
-        when(channelEmergencyService.getState(eq(1L), eq(10L))).thenReturn("HALF_OPEN");
+        when(channelEmergencyManager.getState(eq(1L), eq(10L))).thenReturn("HALF_OPEN");
 
         mockMvc.perform(get("/api/v1/channels/1/endpoints/10/circuit-breaker/state"))
                 .andExpect(status().isOk())

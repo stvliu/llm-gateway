@@ -32,13 +32,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * StatsService 单元测试
+ * StatsManager 单元测试
  *
  * <p>mock 4 个域核心 Gateway，断言 getStats 聚合统计结果。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("StatsService 测试")
-class StatsServiceTest {
+@DisplayName("StatsManager 测试")
+class StatsManagerTest {
 
     @Mock
     private ProviderRepository providerRepository;
@@ -53,7 +53,7 @@ class StatsServiceTest {
     private UserRepository userRepository;
 
     @InjectMocks
-    private StatsService statsService;
+    private StatsManager statsManager;
 
     @Nested
     @DisplayName("getStats 方法测试")
@@ -69,7 +69,7 @@ class StatsServiceTest {
             when(userRepository.count()).thenReturn(42L);
 
             // when
-            StatsResult response = statsService.getStats();
+            StatsResult response = statsManager.getStats();
 
             // then
             assertThat(response.providerCount()).isEqualTo(3L);
@@ -91,7 +91,7 @@ class StatsServiceTest {
             when(userRepository.count()).thenReturn(0L);
 
             // when
-            StatsResult response = statsService.getStats();
+            StatsResult response = statsManager.getStats();
 
             // then
             assertThat(response.providerCount()).isZero();
@@ -104,7 +104,7 @@ class StatsServiceTest {
         @DisplayName("依次调用四个 Gateway 的 count 方法")
         void getStats_invokesAllGateways() {
             // when
-            statsService.getStats();
+            statsManager.getStats();
 
             // then
             verify(providerRepository).count();

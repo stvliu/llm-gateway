@@ -1,0 +1,375 @@
+/*
+ * Copyright © 2025-2026 codingas.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.codingas.gateway.proxy.experience;
+
+import com.codingas.gateway.provider.channel.Channel;
+import com.codingas.gateway.provider.channel.ChannelCredential;
+import com.codingas.gateway.provider.model.ModelInstance;
+import com.codingas.gateway.provider.model.Model;
+import com.codingas.gateway.provider.upstream.Protocol;
+import com.codingas.gateway.provider.channel.ChannelCredentialRepository;
+import com.codingas.gateway.provider.channel.ChannelRepository;
+import com.codingas.gateway.provider.model.ModelInstanceRepository;
+import com.codingas.gateway.provider.model.ModelRepository;
+import com.codingas.gateway.protocol.transport.UpstreamClient;
+import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
+import com.codingas.gateway.protocol.StreamCallback;
+import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.ProtocolRequest;
+import com.codingas.gateway.provider.vendor.Provider;
+import com.codingas.gateway.provider.vendor.ProviderRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/**
+ * 模型体验服务
+ *
+ * <p>提供流式聊天体验功能，支持两种模式：</p>
+ * <ol>
+ *   <li>使用已保存配置：传入 channelId，可选 credentialId</li>
+ *   <li>临时配置：传入 protocolName(协议名称), apiKey, baseUrl(可选)</li>
+ * </ol>
+ */
+@Slf4j
+@Service
+public class ModelExperienceManager {
+
+    private final UpstreamClientRegistry upstreamClientRegistry;
+    private final ProviderRepository providerRepository;
+    private final ChannelRepository channelRepository;
+    private final ModelInstanceRepository modelInstanceRepository;
+    private final ChannelCredentialRepository channelCredentialRepository;
+    private final ModelRepository modelRepository;
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
+    private final ObjectMapper objectMapper;
+
+    public ModelExperienceManager(UpstreamClientRegistry upstreamClientRegistry,
+                                  ProviderRepository providerRepository,
+                                  ChannelRepository channelRepository,
+                                  ModelInstanceRepository modelInstanceRepository,
+                                  ChannelCredentialRepository channelCredentialRepository,
+                                  ModelRepository modelRepository,
+                                  ObjectMapper objectMapper) {
+        this.upstreamClientRegistry = upstreamClientRegistry;
+        this.providerRepository = providerRepository;
+        this.channelRepository = channelRepository;
+        this.modelInstanceRepository = modelInstanceRepository;
+        this.channelCredentialRepository = channelCredentialRepository;
+        this.modelRepository = modelRepository;
+        this.objectMapper = objectMapper;
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        log.info("Shutting down ModelExperienceManager executor...");
+        executor.shutdown();
+        try {
+            if (!executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                executor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            executor.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
+     * 获取供应商的模型列表
+     *
+     * <p>通过 Channel → ModelInstance → Model 关联路径查询。</p>
+     *
+     * @param providerId 供应商 ID
+     * @return 模型列表
+     */
+    public List<Model> getModelsByProviderId(Long providerId) {
+        List<Long> channelIds = channelRepository.findByProviderId(providerId)
+                .stream().map(Channel::getId).toList();
+        if (channelIds.isEmpty()) return List.of();
+
+        List<Long> modelIds = channelIds.stream()
+                .flatMap(chId -> modelInstanceRepository.findActiveByChannelId(chId).stream())
+                .map(ModelInstance::getModelId)
+                .distinct()
+                .toList();
+        if (modelIds.isEmpty()) return List.of();
+
+        return modelRepository.findByIds(modelIds).stream()
+            .filter(Model::isAvailable)
+            .toList();
+    }
+
+    /**
+     * 流式聊天体验
+     *
+     * @param request 体验请求
+     * @return SSE Emitter
+     */
+    public SseEmitter chatStream(ExperienceChatCommand request) {
+        // 验证请求
+        if (!request.isValid()) {
+            SseEmitter emitter = new SseEmitter();
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("ERROR")
+                    .data(new ExperienceChatEvent.ErrorData("无效的请求：使用已保存配置时需提供 channelId，临时配置时需提供 protocolName 和 apiKey")));
+                emitter.complete();
+            } catch (IOException e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+
+        // 创建 SSE Emitter（超时 60 秒）
+        SseEmitter emitter = new SseEmitter(60_000L);
+
+        // 异步执行聊天
+        executor.execute(() -> {
+            try {
+                doChatStream(request, emitter);
+            } catch (Exception e) {
+                log.error("Experience chat error: {}", e.getMessage(), e);
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("ERROR")
+                        .data(new ExperienceChatEvent.ErrorData(e.getMessage())));
+                    emitter.complete();
+                } catch (IOException ex) {
+                    log.warn("Failed to send error event: {}", ex.getMessage());
+                    emitter.completeWithError(e);
+                }
+            }
+        });
+
+        // 设置超时和错误处理
+        emitter.onTimeout(() -> {
+            log.warn("Experience chat timeout");
+            emitter.complete();
+        });
+
+        emitter.onError(e -> {
+            log.error("SSE error: {}", e.getMessage());
+        });
+
+        return emitter;
+    }
+
+    /**
+     * 执行流式聊天
+     */
+    private void doChatStream(ExperienceChatCommand request, SseEmitter emitter) throws IOException {
+        ResolvedConfig config = resolveConfig(request);
+        log.info("Experience chat: protocolName={}, model={}", config.protocolName, request.model());
+
+        String baseUrl = config.baseUrl != null ? config.baseUrl : "";
+        UpstreamClient<ProtocolRequest> client = upstreamClientRegistry.getClient(config.protocolName, baseUrl, config.apiKey, 60);
+
+        ProtocolRequest protocolRequest = buildProtocolRequest(config.protocolName, request);
+
+        final int[] completionTokens = {0};
+
+        StreamCallback callback = new StreamCallback() {
+            @Override
+            public void onChunk(String chunk) {
+                try {
+                    String content = extractContent(chunk);
+                    if (content != null && !content.isEmpty()) {
+                        emitter.send(SseEmitter.event()
+                            .name("CONTENT")
+                            .data(new ExperienceChatEvent.ContentData(content)));
+                        completionTokens[0] += estimateTokens(content);
+                    }
+                } catch (Exception e) {
+                    log.error("Error sending chunk: {}", e.getMessage());
+                }
+            }
+
+            @Override
+            public void onComplete() {
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("USAGE")
+                        .data(new ExperienceChatEvent.UsageData(0, completionTokens[0])));
+                    emitter.send(SseEmitter.event().name("DONE"));
+                    emitter.complete();
+                } catch (Exception e) {
+                    log.error("Error completing stream: {}", e.getMessage());
+                }
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                try {
+                    emitter.send(SseEmitter.event()
+                        .name("ERROR")
+                        .data(new ExperienceChatEvent.ErrorData(t.getMessage())));
+                    emitter.complete();
+                } catch (IOException ex) {
+                    emitter.completeWithError(t);
+                }
+            }
+        };
+
+        client.chatStream(protocolRequest, callback);
+    }
+
+    /**
+     * 根据协议类型构建协议请求 DTO
+     */
+    private ProtocolRequest buildProtocolRequest(String protocolName, ExperienceChatCommand request) {
+        List<Map<String, String>> rawMessages = request.messages();
+
+        if ("anthropic".equals(protocolName)) {
+            List<AnthropicMessagesRequest.Message> messages = rawMessages.stream()
+                .map(msg -> AnthropicMessagesRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return AnthropicMessagesRequest.builder()
+                .model(request.model())
+                .messages(messages)
+                .maxTokens(request.maxTokens() != null ? request.maxTokens() : 1024)
+                .temperature(request.temperature())
+                .stream(true)
+                .build();
+        } else {
+            List<OpenAIChatRequest.Message> messages = rawMessages.stream()
+                .map(msg -> OpenAIChatRequest.Message.builder()
+                    .role(msg.get("role"))
+                    .content(msg.get("content"))
+                    .build())
+                .toList();
+
+            return OpenAIChatRequest.builder()
+                .model(request.model())
+                .messages(messages)
+                .maxTokens(request.maxTokens())
+                .temperature(request.temperature())
+                .stream(true)
+                .build();
+        }
+    }
+
+    /**
+     * 解析配置
+     *
+     * <p>支持两种模式：</p>
+     * <ol>
+     *   <li>使用已保存配置：从数据库读取 Channel 和 ChannelCredential</li>
+     *   <li>临时配置：直接使用请求中的配置</li>
+     * </ol>
+     */
+    private ResolvedConfig resolveConfig(ExperienceChatCommand request) {
+        if (request.useSavedConfig()) {
+            // 从数据库读取配置
+            var channel = channelRepository.findById(request.channelId())
+                .orElseThrow(() -> new IllegalArgumentException("渠道不存在: " + request.channelId()));
+
+            ChannelCredential credential;
+            if (request.credentialId() != null) {
+                credential = channelCredentialRepository.findById(request.credentialId())
+                    .orElseThrow(() -> new IllegalArgumentException("凭证不存在: " + request.credentialId()));
+                if (!credential.getChannelId().equals(request.channelId())) {
+                    throw new IllegalArgumentException("凭证不属于该渠道");
+                }
+            } else {
+                credential = channelCredentialRepository.findDefaultByChannelId(request.channelId())
+                    .orElseThrow(() -> new IllegalArgumentException("渠道没有默认凭证，请指定要使用的凭证"));
+            }
+
+            if (!credential.isAvailable()) {
+                throw new IllegalArgumentException("凭证不可用");
+            }
+
+            // TODO: endpointUrl 和 protocol 已下沉到 ChannelEndpoint，将在后续 Task 中通过 ChannelEndpointRepository 获取
+            String protocolName = request.protocolName() != null ? request.protocolName() : "openai";
+
+            return new ResolvedConfig(
+                protocolName,
+                null,
+                credential.getApiKeyPlain()
+            );
+        } else {
+            // 使用临时配置：baseUrl 可选，由协议网关提供默认值
+            return new ResolvedConfig(
+                request.protocolName(),
+                request.baseUrl(),
+                request.apiKey()
+            );
+        }
+    }
+
+    /**
+     * 解析后的配置
+     */
+    private record ResolvedConfig(
+        String protocolName,
+        String baseUrl,
+        String apiKey
+    ) {}
+
+    /**
+     * 从 SSE 数据中提取内容
+     */
+    private String extractContent(String chunk) {
+        try {
+            JsonNode node = objectMapper.readTree(chunk);
+            JsonNode choices = node.path("choices");
+            if (choices.isArray() && choices.size() > 0) {
+                JsonNode delta = choices.get(0).path("delta");
+
+                if (delta.has("content") && !delta.get("content").isNull()) {
+                    String content = delta.get("content").asText();
+                    if (!content.isEmpty()) {
+                        return content;
+                    }
+                }
+
+                if (delta.has("reasoning_content") && !delta.get("reasoning_content").isNull()) {
+                    String reasoningContent = delta.get("reasoning_content").asText();
+                    if (!reasoningContent.isEmpty()) {
+return reasoningContent;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to parse SSE chunk: {}", e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * 估算 Token 数量
+     */
+    private int estimateTokens(String text) {
+        if (text == null || text.isEmpty()) return 0;
+        return Math.max(1, text.length() / 4);
+    }
+}

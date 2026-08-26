@@ -44,11 +44,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * TokenLimitServiceImpl 单元测试
+ * TokenLimitManagerImpl 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TokenLimitServiceImpl 测试")
-class TokenLimitServiceImplTest {
+@DisplayName("TokenLimitManagerImpl 测试")
+class TokenLimitManagerImplTest {
 
     @Mock
     private TokenLimitRepository tokenLimitRepository;
@@ -63,7 +63,7 @@ class TokenLimitServiceImplTest {
     private ModelRepository modelRepository;
 
     @InjectMocks
-    private TokenLimitServiceImpl service;
+    private TokenLimitManagerImpl service;
 
     @Nested
     @DisplayName("create 方法测试")

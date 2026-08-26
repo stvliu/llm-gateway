@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.catalog.PlanCatalogService;
+import com.codingas.gateway.provider.catalog.PlanCatalogManager;
 import com.codingas.gateway.provider.catalog.ModelResponse;
 import com.codingas.gateway.provider.catalog.PlanCatalogResponse;
 import com.codingas.gateway.provider.catalog.PlanDetailResponse;
@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class PlanCatalogController {
 
-    private final PlanCatalogService planCatalogService;
+    private final PlanCatalogManager planCatalogManager;
 
     // ===== 供应商目录 =====
 
@@ -49,7 +49,7 @@ public class PlanCatalogController {
     @GetMapping("/providers")
     public List<ProviderCatalogResponse> listProviders(
             @RequestParam(required = false) String keyword) {
-        return planCatalogService.listProviderCatalogs(keyword);
+        return planCatalogManager.listProviderCatalogs(keyword);
     }
 
     // ===== 套餐目录 =====
@@ -63,7 +63,7 @@ public class PlanCatalogController {
     @GetMapping
     public List<PlanCatalogResponse> listPlans(
             @RequestParam(required = false) String providerCode) {
-        return planCatalogService.listPlanCatalogs(providerCode);
+        return planCatalogManager.listPlanCatalogs(providerCode);
     }
 
     /**
@@ -74,7 +74,7 @@ public class PlanCatalogController {
      */
     @GetMapping("/{planCode}")
     public PlanDetailResponse getPlanDetail(@PathVariable String planCode) {
-        return planCatalogService.getPlanDetail(planCode);
+        return planCatalogManager.getPlanDetail(planCode);
     }
 
     /**
@@ -85,7 +85,7 @@ public class PlanCatalogController {
      */
     @GetMapping("/{planCode}/pricing")
     public List<PlanDetailResponse.PricingInfo> getPlanPricing(@PathVariable String planCode) {
-        return planCatalogService.getPricing(planCode);
+        return planCatalogManager.getPricing(planCode);
     }
 
     // ===== 模型 =====
@@ -101,6 +101,6 @@ public class PlanCatalogController {
     public List<ModelResponse> listModels(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String capability) {
-        return planCatalogService.listModels(null, keyword, capability);
+        return planCatalogManager.listModels(null, keyword, capability);
     }
 }

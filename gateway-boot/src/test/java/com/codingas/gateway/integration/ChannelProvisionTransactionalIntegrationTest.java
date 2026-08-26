@@ -16,7 +16,7 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.provider.channel.ChannelProvisionService;
+import com.codingas.gateway.provider.channel.ChannelProvisionManager;
 import com.codingas.gateway.provider.channel.ProvisionCommand;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.provider.catalog.PlanCatalog;
@@ -46,7 +46,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 /**
- * ChannelProvisionService 事务回滚集成测试
+ * ChannelProvisionManager 事务回滚集成测试
  *
  * <p>验证 inlineProvider 内联创建 Provider 与开通 Channel 处于同一事务边界：</p>
  * <ul>
@@ -64,11 +64,11 @@ import static org.mockito.Mockito.when;
 @SpringBootTest(classes = GatewayApplication.class)
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@DisplayName("ChannelProvisionService 事务回滚 IT")
+@DisplayName("ChannelProvisionManager 事务回滚 IT")
 class ChannelProvisionTransactionalIntegrationTest {
 
     @Autowired
-    private ChannelProvisionService service;
+    private ChannelProvisionManager service;
 
     @Autowired
     private ProviderRepository providerRepository;

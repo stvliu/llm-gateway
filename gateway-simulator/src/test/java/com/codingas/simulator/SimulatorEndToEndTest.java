@@ -15,7 +15,7 @@
  */
 package com.codingas.simulator;
 
-import com.codingas.simulator.service.SimulatorModeService;
+import com.codingas.simulator.service.SimulatorModeManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class SimulatorEndToEndTest {
     private TestRestTemplate restTemplate;
 
     @Autowired
-    private SimulatorModeService modeService;
+    private SimulatorModeManager modeService;
 
     /** OpenAI Chat Completion 请求体 */
     private static final String OPENAI_REQUEST_BODY = """
@@ -62,7 +62,7 @@ class SimulatorEndToEndTest {
      */
     @BeforeEach
     void resetMode() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
         // 清理所有配置，避免测试间状态泄漏
         modeService.clearBehaviorSequence();
         modeService.getDelayConfig().clearDelay();
@@ -214,7 +214,7 @@ class SimulatorEndToEndTest {
     @DisplayName("行为序列 — 设置序列后 3 次请求按序返回 500/401/200，第 4 次恢复全局模式")
     void testBehaviorSequence_consumesStepsViaHttp() {
         // 先设全局为 NORMAL（确保基线）
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置行为序列：[500, 401, 200]
         restTemplate.exchange(
@@ -260,7 +260,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("行为序列 — 循环序列 [200,500] 交替返回，6 次请求交替 200/500")
     void testBehaviorSequence_loop_resetsOnEnd() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置循环行为序列：[200, 500]
         restTemplate.exchange(
@@ -293,7 +293,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("延迟配置 — 设置 100ms 延迟后测量响应时间 ≥ 100ms")
     void testDelayConfig_appliesDelay() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置 100ms 延迟
         restTemplate.exchange(
@@ -317,7 +317,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("延迟配置 — 删除后延迟不再生效")
     void testDelayConfig_deleteResets() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 先设置延迟
         restTemplate.exchange(
@@ -350,7 +350,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("流控制 — 设置中断后流式请求收到中断或异常")
     void testStreamConfig_interruptAfter() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置流中断：发送 3 个 chunk 后中断
         restTemplate.exchange(
@@ -382,7 +382,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("流控制 — 删除配置后恢复正常流式响应")
     void testStreamConfig_deleteResets() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置中断
         restTemplate.exchange(
@@ -414,7 +414,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("API Key 覆盖 — 匹配前缀的 Key 返回 401")
     void testApiKeyOverride_matchesByPrefix() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置 API Key 覆盖：前缀 sk-bad 返回 401
         restTemplate.exchange(
@@ -442,7 +442,7 @@ class SimulatorEndToEndTest {
     @Test
     @DisplayName("API Key 覆盖 — 不匹配的 Key 回退到全局 NORMAL 模式")
     void testApiKeyOverride_noMatch_fallsbackToGlobal() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
 
         // 设置 API Key 覆盖：前缀 sk-bad 返回 401
         restTemplate.exchange(

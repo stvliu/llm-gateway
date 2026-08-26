@@ -17,7 +17,7 @@ package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.resilience.failover.FailoverEvent;
-import com.codingas.gateway.resilience.failover.ResilienceEventService;
+import com.codingas.gateway.resilience.failover.ResilienceEventManager;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * ResilienceEventController HTTP 契约测试
  *
- * <p>使用 standalone setup + Mock {@link ResilienceEventService}，验证转移事件流查询端点路由、
+ * <p>使用 standalone setup + Mock {@link ResilienceEventManager}，验证转移事件流查询端点路由、
  * HTTP 状态码与响应序列化契约，不连数据库。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -51,7 +51,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ResilienceEventControllerTest {
 
     @Mock
-    private ResilienceEventService resilienceEventService;
+    private ResilienceEventManager resilienceEventManager;
 
     private MockMvc mockMvc;
 
@@ -59,7 +59,7 @@ class ResilienceEventControllerTest {
 
     @BeforeEach
     void setUp() {
-        ResilienceEventController controller = new ResilienceEventController(resilienceEventService);
+        ResilienceEventController controller = new ResilienceEventController(resilienceEventManager);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -85,7 +85,7 @@ class ResilienceEventControllerTest {
     @Test
     @DisplayName("GET /api/v1/resilience/events 默认参数返回事件列表")
     void list_defaultParams_returns200WithArray() throws Exception {
-        when(resilienceEventService.findRecent(eq(null), eq(null), eq(100)))
+        when(resilienceEventManager.findRecent(eq(null), eq(null), eq(100)))
                 .thenReturn(List.of(stubEvent()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
@@ -104,7 +104,7 @@ class ResilienceEventControllerTest {
     @DisplayName("GET /api/v1/resilience/events 携带 since/applicationId/limit 过滤参数")
     void list_withFilters_delegatesToService() throws Exception {
         Instant since = Instant.parse("2026-06-22T00:00:00Z");
-        when(resilienceEventService.findRecent(eq(since), eq(7L), eq(50)))
+        when(resilienceEventManager.findRecent(eq(since), eq(7L), eq(50)))
                 .thenReturn(List.of(stubEvent()));
 
         mockMvc.perform(get("/api/v1/resilience/events")
@@ -119,7 +119,7 @@ class ResilienceEventControllerTest {
     @Test
     @DisplayName("GET /api/v1/resilience/events limit 超上限 500 被截断为 500")
     void list_limitOverCap_cappedTo500() throws Exception {
-        when(resilienceEventService.findRecent(eq(null), eq(null), eq(500)))
+        when(resilienceEventManager.findRecent(eq(null), eq(null), eq(500)))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/resilience/events")
@@ -135,7 +135,7 @@ class ResilienceEventControllerTest {
         resp.setExhausted(true);
         resp.setToChannelId(null);
         resp.setToEndpointId(null);
-        when(resilienceEventService.findExhausted(eq(null), eq(50)))
+        when(resilienceEventManager.findExhausted(eq(null), eq(50)))
                 .thenReturn(List.of(resp));
 
         mockMvc.perform(get("/api/v1/resilience/events/exhausted")
@@ -149,7 +149,7 @@ class ResilienceEventControllerTest {
     @DisplayName("GET /api/v1/resilience/events/exhausted 携带 since 和 limit 参数")
     void exhausted_withParams_delegatesToService() throws Exception {
         Instant since = Instant.parse("2026-06-22T00:00:00Z");
-        when(resilienceEventService.findExhausted(eq(since), eq(30)))
+        when(resilienceEventManager.findExhausted(eq(since), eq(30)))
                 .thenReturn(List.of());
 
         mockMvc.perform(get("/api/v1/resilience/events/exhausted")

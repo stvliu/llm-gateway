@@ -51,7 +51,7 @@ public class BehaviorSequence {
      *
      * @return 对应的 SimulatorMode，无活跃序列时返回 empty
      */
-    public synchronized Optional<SimulatorModeService.SimulatorMode> consume() {
+    public synchronized Optional<SimulatorModeManager.SimulatorMode> consume() {
         if (!active || steps.isEmpty()) {
             return Optional.empty();
         }
@@ -110,15 +110,15 @@ public class BehaviorSequence {
      * @return 对应的 SimulatorMode
      * @throws IllegalArgumentException 不支持的 HTTP 状态码
      */
-    private static SimulatorModeService.SimulatorMode httpStatusToMode(int statusCode) {
+    private static SimulatorModeManager.SimulatorMode httpStatusToMode(int statusCode) {
         return switch (statusCode) {
-            case 200 -> SimulatorModeService.SimulatorMode.NORMAL;
-            case 401 -> SimulatorModeService.SimulatorMode.AUTH_ERROR;
-            case 429 -> SimulatorModeService.SimulatorMode.RATE_LIMITED;
-            case 400 -> SimulatorModeService.SimulatorMode.INVALID_REQUEST;
-            case 500 -> SimulatorModeService.SimulatorMode.UPSTREAM_ERROR;
-            case 503 -> SimulatorModeService.SimulatorMode.SERVICE_DOWN;
-            case 408 -> SimulatorModeService.SimulatorMode.TIMEOUT;
+            case 200 -> SimulatorModeManager.SimulatorMode.NORMAL;
+            case 401 -> SimulatorModeManager.SimulatorMode.AUTH_ERROR;
+            case 429 -> SimulatorModeManager.SimulatorMode.RATE_LIMITED;
+            case 400 -> SimulatorModeManager.SimulatorMode.INVALID_REQUEST;
+            case 500 -> SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR;
+            case 503 -> SimulatorModeManager.SimulatorMode.SERVICE_DOWN;
+            case 408 -> SimulatorModeManager.SimulatorMode.TIMEOUT;
             default -> throw new IllegalArgumentException("不支持的状态码: " + statusCode);
         };
     }

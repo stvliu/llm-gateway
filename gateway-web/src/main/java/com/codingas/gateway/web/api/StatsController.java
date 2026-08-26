@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.stats.StatsService;
+import com.codingas.gateway.stats.StatsManager;
 import com.codingas.gateway.web.api.dto.StatsResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,13 +30,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class StatsController {
 
-    private final StatsService statsService;
+    private final StatsManager statsManager;
 
     /**
      * 获取系统统计数据
      */
     @GetMapping
     public StatsResponse getStats() {
-        return StatsResponse.from(statsService.getStats());
+        return StatsResponse.from(statsManager.getStats());
     }
 }

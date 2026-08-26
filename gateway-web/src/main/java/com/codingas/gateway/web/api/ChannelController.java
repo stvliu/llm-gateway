@@ -16,9 +16,9 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ChannelHealthCheckRequest;
-import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelHealthService;
-import com.codingas.gateway.provider.channel.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
+import com.codingas.gateway.provider.channel.ChannelHealthManager;
+import com.codingas.gateway.provider.channel.ChannelManager;
 import com.codingas.gateway.provider.channel.ChannelHealthResult;
 import com.codingas.gateway.web.api.assembler.ChannelFacade;
 import com.codingas.gateway.web.api.dto.*;
@@ -43,9 +43,9 @@ import java.util.List;
 public class ChannelController {
 
     private final ChannelFacade channelFacade;
-    private final ChannelService channelService;
-    private final ChannelHealthService channelHealthService;
-    private final ChannelEmergencyService channelEmergencyService;
+    private final ChannelManager channelManager;
+    private final ChannelHealthManager channelHealthManager;
+    private final ChannelEmergencyManager channelEmergencyManager;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -84,13 +84,13 @@ public class ChannelController {
     public void setState(
             @PathVariable Long id,
             @Valid @RequestBody ChannelStateTransitionRequest request) {
-        channelService.setState(id, request.toCommand());
+        channelManager.setState(id, request.toCommand());
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        channelService.delete(id);
+        channelManager.delete(id);
     }
 
     // ===== 端点管理 =====
@@ -102,7 +102,7 @@ public class ChannelController {
             @Valid @RequestBody ChannelEndpointRequest request) {
         // 适配层补全 channelId（不同协议从各自上下文中提取）
         request.setChannelId(channelId);
-        return ChannelEndpointResponse.from(channelService.addEndpoint(request.toCommand()));
+        return ChannelEndpointResponse.from(channelManager.addEndpoint(request.toCommand()));
     }
 
     @DeleteMapping("/{channelId}/endpoints/{endpointId}")
@@ -110,7 +110,7 @@ public class ChannelController {
     public void removeEndpoint(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        channelService.removeEndpoint(channelId, endpointId);
+        channelManager.removeEndpoint(channelId, endpointId);
     }
 
     @PutMapping("/{channelId}/endpoints/{endpointId}")
@@ -118,7 +118,7 @@ public class ChannelController {
             @PathVariable Long channelId,
             @PathVariable Long endpointId,
             @Valid @RequestBody ChannelEndpointRequest request) {
-        return ChannelEndpointResponse.from(channelService.updateEndpoint(channelId, endpointId, request.toCommand()));
+        return ChannelEndpointResponse.from(channelManager.updateEndpoint(channelId, endpointId, request.toCommand()));
     }
 
     // ===== 健康检查 =====
@@ -136,7 +136,7 @@ public class ChannelController {
     public ChannelHealthResult healthCheck(
             @PathVariable Long id,
             @Valid @RequestBody ChannelHealthCheckRequest request) {
-        return channelHealthService.check(id, request.source());
+        return channelHealthManager.check(id, request.source());
     }
 
     // ===== 应急操作 =====
@@ -155,7 +155,7 @@ public class ChannelController {
     public CircuitBreakerStateResponse forceOpen(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        return new CircuitBreakerStateResponse(channelEmergencyService.forceOpen(channelId, endpointId));
+        return new CircuitBreakerStateResponse(channelEmergencyManager.forceOpen(channelId, endpointId));
     }
 
     /**
@@ -172,7 +172,7 @@ public class ChannelController {
     public CircuitBreakerStateResponse forceClose(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        return new CircuitBreakerStateResponse(channelEmergencyService.forceClose(channelId, endpointId));
+        return new CircuitBreakerStateResponse(channelEmergencyManager.forceClose(channelId, endpointId));
     }
 
     /**
@@ -186,7 +186,7 @@ public class ChannelController {
     public CircuitBreakerStateResponse getCircuitBreakerState(
             @PathVariable Long channelId,
             @PathVariable Long endpointId) {
-        return new CircuitBreakerStateResponse(channelEmergencyService.getState(channelId, endpointId));
+        return new CircuitBreakerStateResponse(channelEmergencyManager.getState(channelId, endpointId));
     }
 
     /**

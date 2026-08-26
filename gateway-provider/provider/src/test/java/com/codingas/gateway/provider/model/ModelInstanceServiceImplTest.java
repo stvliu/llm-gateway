@@ -38,24 +38,24 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ModelInstanceServiceImpl 单元测试（CRUD/更新/删除分支）
+ * ModelInstanceManagerImpl 单元测试（CRUD/更新/删除分支）
  *
- * <p>setEnabled 状态转换分支由 {@code ModelInstanceServiceImplStateTransitionTest} 覆盖。</p>
+ * <p>setEnabled 状态转换分支由 {@code ModelInstanceManagerImplStateTransitionTest} 覆盖。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelInstanceServiceImpl 单元测试")
-class ModelInstanceServiceImplTest {
+@DisplayName("ModelInstanceManagerImpl 单元测试")
+class ModelInstanceManagerImplTest {
 
     @Mock
     private ModelInstanceRepository modelInstanceRepository;
     @Mock
     private ModelRepository modelRepository;
 
-    private ModelInstanceServiceImpl service;
+    private ModelInstanceManagerImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ModelInstanceServiceImpl(modelInstanceRepository, modelRepository);
+        service = new ModelInstanceManagerImpl(modelInstanceRepository, modelRepository);
     }
 
     // ==================== getInstancesByChannelId 测试 ====================

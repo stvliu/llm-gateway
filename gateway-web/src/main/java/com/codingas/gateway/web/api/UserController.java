@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.user.UserService;
-import com.codingas.gateway.iam.apikey.UserApiKeyService;
+import com.codingas.gateway.iam.user.UserManager;
+import com.codingas.gateway.iam.apikey.UserApiKeyManager;
 import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -35,15 +35,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserService userService;
-    private final UserApiKeyService userApiKeyService;
+    private final UserManager userManager;
+    private final UserApiKeyManager userApiKeyManager;
 
     /**
      * 创建用户
      */
     @PostMapping
     public UserResponse create(@Valid @RequestBody UserCreateRequest request) {
-        return UserResponse.from(userService.create(request.toCommand()));
+        return UserResponse.from(userManager.create(request.toCommand()));
     }
 
     /**
@@ -51,7 +51,7 @@ public class UserController {
      */
     @GetMapping("/{id}")
     public UserResponse getById(@PathVariable Long id) {
-        return UserResponse.from(userService.getById(id));
+        return UserResponse.from(userManager.getById(id));
     }
 
     /**
@@ -59,7 +59,7 @@ public class UserController {
      */
     @GetMapping
     public PageResponse<UserResponse> query(@ModelAttribute UserQueryRequest request) {
-        return UserResponse.fromPage(userService.query(request.toQuery()));
+        return UserResponse.fromPage(userManager.query(request.toQuery()));
     }
 
     /**
@@ -69,7 +69,7 @@ public class UserController {
     public UserResponse update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return UserResponse.from(userService.update(id, request.toCommand()));
+        return UserResponse.from(userManager.update(id, request.toCommand()));
     }
 
     /**
@@ -77,7 +77,7 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        userService.delete(id);
+        userManager.delete(id);
     }
 
     /**
@@ -87,7 +87,7 @@ public class UserController {
     public UserResponse updateState(
             @PathVariable Long id,
             @Valid @RequestBody UserStateUpdateRequest request) {
-        return UserResponse.from(userService.updateState(id, request.getState()));
+        return UserResponse.from(userManager.updateState(id, request.getState()));
     }
 
     /**
@@ -97,7 +97,7 @@ public class UserController {
     public UserResponse assignRoles(
             @PathVariable Long id,
             @Valid @RequestBody UserRoleAssignRequest request) {
-        return UserResponse.from(userService.assignRoles(id, request.getRoleCodes()));
+        return UserResponse.from(userManager.assignRoles(id, request.getRoleCodes()));
     }
 
     /**
@@ -108,7 +108,7 @@ public class UserController {
      */
     @PostMapping("/{id}/reset-password")
     public ResetPasswordResponse resetPassword(@PathVariable Long id) {
-        return ResetPasswordResponse.from(userService.resetPassword(id));
+        return ResetPasswordResponse.from(userManager.resetPassword(id));
     }
 
     // ==================== UserApiKey 子资源 ====================
@@ -118,6 +118,6 @@ public class UserController {
      */
     @GetMapping("/{userId}/api-keys")
     public List<UserApiKeyResponse> listUserApiKeys(@PathVariable Long userId) {
-        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
+        return UserApiKeyResponse.from(userApiKeyManager.findByUserId(userId));
     }
 }

@@ -17,7 +17,7 @@ package com.codingas.simulator.controller;
 
 import com.codingas.simulator.service.BehaviorSequence;
 import com.codingas.simulator.service.RequestRecord;
-import com.codingas.simulator.service.SimulatorModeService;
+import com.codingas.simulator.service.SimulatorModeManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,9 +51,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/simulator")
 public class SimulatorAdminController {
 
-    private final SimulatorModeService modeService;
+    private final SimulatorModeManager modeService;
 
-    public SimulatorAdminController(SimulatorModeService modeService) {
+    public SimulatorAdminController(SimulatorModeManager modeService) {
         this.modeService = modeService;
     }
 
@@ -82,7 +82,7 @@ public class SimulatorAdminController {
         }
 
         try {
-            SimulatorModeService.SimulatorMode mode = parseMode(modeStr);
+            SimulatorModeManager.SimulatorMode mode = parseMode(modeStr);
             modeService.setMode(mode);
             return ResponseEntity.ok(Map.of("mode", mode.name()));
         } catch (IllegalArgumentException e) {
@@ -108,17 +108,17 @@ public class SimulatorAdminController {
      * @return 对应的 SimulatorMode 枚举值
      * @throws IllegalArgumentException 如果模式字符串无效
      */
-    private SimulatorModeService.SimulatorMode parseMode(String modeStr) {
+    private SimulatorModeManager.SimulatorMode parseMode(String modeStr) {
         return switch (modeStr.toLowerCase()) {
-            case "normal" -> SimulatorModeService.SimulatorMode.NORMAL;
-            case "rate_limited" -> SimulatorModeService.SimulatorMode.RATE_LIMITED;
-            case "fault", "upstream_error" -> SimulatorModeService.SimulatorMode.UPSTREAM_ERROR;
-            case "auth_error" -> SimulatorModeService.SimulatorMode.AUTH_ERROR;
-            case "quota_exceeded" -> SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED;
-            case "invalid_request" -> SimulatorModeService.SimulatorMode.INVALID_REQUEST;
-            case "service_down" -> SimulatorModeService.SimulatorMode.SERVICE_DOWN;
-            case "timeout" -> SimulatorModeService.SimulatorMode.TIMEOUT;
-            case "intermittent" -> SimulatorModeService.SimulatorMode.INTERMITTENT;
+            case "normal" -> SimulatorModeManager.SimulatorMode.NORMAL;
+            case "rate_limited" -> SimulatorModeManager.SimulatorMode.RATE_LIMITED;
+            case "fault", "upstream_error" -> SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR;
+            case "auth_error" -> SimulatorModeManager.SimulatorMode.AUTH_ERROR;
+            case "quota_exceeded" -> SimulatorModeManager.SimulatorMode.QUOTA_EXCEEDED;
+            case "invalid_request" -> SimulatorModeManager.SimulatorMode.INVALID_REQUEST;
+            case "service_down" -> SimulatorModeManager.SimulatorMode.SERVICE_DOWN;
+            case "timeout" -> SimulatorModeManager.SimulatorMode.TIMEOUT;
+            case "intermittent" -> SimulatorModeManager.SimulatorMode.INTERMITTENT;
             default -> throw new IllegalArgumentException("不支持的模式: " + modeStr);
         };
     }
@@ -291,7 +291,7 @@ public class SimulatorAdminController {
         }
         try {
             int status = asInt(body, "status", 401);
-            SimulatorModeService.SimulatorMode mode = httpStatusToMode(status);
+            SimulatorModeManager.SimulatorMode mode = httpStatusToMode(status);
             modeService.getApiKeyOverrideConfig().setOverride(keyPrefix, mode);
             return ResponseEntity.ok(Map.of("status", "ok", "keyPrefix", keyPrefix, "mode", mode.name()));
         } catch (IllegalArgumentException e) {
@@ -332,15 +332,15 @@ public class SimulatorAdminController {
      * @param statusCode HTTP 状态码
      * @return 对应的 SimulatorMode
      */
-    private static SimulatorModeService.SimulatorMode httpStatusToMode(int statusCode) {
+    private static SimulatorModeManager.SimulatorMode httpStatusToMode(int statusCode) {
         return switch (statusCode) {
-            case 200 -> SimulatorModeService.SimulatorMode.NORMAL;
-            case 401 -> SimulatorModeService.SimulatorMode.AUTH_ERROR;
-            case 429 -> SimulatorModeService.SimulatorMode.RATE_LIMITED;
-            case 400 -> SimulatorModeService.SimulatorMode.INVALID_REQUEST;
-            case 500 -> SimulatorModeService.SimulatorMode.UPSTREAM_ERROR;
-            case 503 -> SimulatorModeService.SimulatorMode.SERVICE_DOWN;
-            case 408 -> SimulatorModeService.SimulatorMode.TIMEOUT;
+            case 200 -> SimulatorModeManager.SimulatorMode.NORMAL;
+            case 401 -> SimulatorModeManager.SimulatorMode.AUTH_ERROR;
+            case 429 -> SimulatorModeManager.SimulatorMode.RATE_LIMITED;
+            case 400 -> SimulatorModeManager.SimulatorMode.INVALID_REQUEST;
+            case 500 -> SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR;
+            case 503 -> SimulatorModeManager.SimulatorMode.SERVICE_DOWN;
+            case 408 -> SimulatorModeManager.SimulatorMode.TIMEOUT;
             default -> throw new IllegalArgumentException("不支持的状态码: " + statusCode);
         };
     }

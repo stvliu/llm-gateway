@@ -32,22 +32,22 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * IpBlocklistService 单元测试
+ * IpBlocklistManager 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("IpBlocklistService")
-class IpBlocklistServiceTest {
+@DisplayName("IpBlocklistManager")
+class IpBlocklistManagerTest {
 
     @Mock
     private IpBlocklistRepository ipBlockRepository;
 
     @InjectMocks
-    private IpBlocklistService ipBlocklistService;
+    private IpBlocklistManager ipBlocklistManager;
 
     @Test
     @DisplayName("isBlocked null IP 应返回 false")
     void isBlocked_nullIp_returnsFalse() {
-        boolean result = ipBlocklistService.isBlocked(null);
+        boolean result = ipBlocklistManager.isBlocked(null);
 
         assertThat(result).isFalse();
     }
@@ -55,7 +55,7 @@ class IpBlocklistServiceTest {
     @Test
     @DisplayName("isBlocked blank IP 应返回 false")
     void isBlocked_blankIp_returnsFalse() {
-        boolean result = ipBlocklistService.isBlocked("");
+        boolean result = ipBlocklistManager.isBlocked("");
 
         assertThat(result).isFalse();
     }
@@ -65,7 +65,7 @@ class IpBlocklistServiceTest {
     void isBlocked_blockedIp_returnsTrue() {
         when(ipBlockRepository.isBlocked("192.168.1.100")).thenReturn(true);
 
-        boolean result = ipBlocklistService.isBlocked("192.168.1.100");
+        boolean result = ipBlocklistManager.isBlocked("192.168.1.100");
 
         assertThat(result).isTrue();
     }
@@ -73,7 +73,7 @@ class IpBlocklistServiceTest {
     @Test
     @DisplayName("blockIp 永久封禁应调用 ipBlockRepository.block 带 null expiresAt")
     void blockIp_permanent_callsBlockWithNullExpires() {
-        ipBlocklistService.blockIp("192.168.1.100", "Brute force", 1L);
+        ipBlocklistManager.blockIp("192.168.1.100", "Brute force", 1L);
 
         verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Brute force"), eq(1L), eq(null));
     }
@@ -81,7 +81,7 @@ class IpBlocklistServiceTest {
     @Test
     @DisplayName("blockIp 临时封禁应计算正确的过期时间")
     void blockIp_temporary_calculatesExpiresAt() {
-        ipBlocklistService.blockIp("192.168.1.100", "Testing", 1L, 30);
+        ipBlocklistManager.blockIp("192.168.1.100", "Testing", 1L, 30);
 
         verify(ipBlockRepository).block(eq("192.168.1.100"), eq("Testing"), eq(1L), any(Instant.class));
     }
@@ -89,7 +89,7 @@ class IpBlocklistServiceTest {
     @Test
     @DisplayName("unblockIp 应调用 ipBlockRepository.unblock")
     void unblockIp_callsUnblock() {
-        ipBlocklistService.unblockIp("192.168.1.100");
+        ipBlocklistManager.unblockIp("192.168.1.100");
 
         verify(ipBlockRepository).unblock("192.168.1.100");
     }

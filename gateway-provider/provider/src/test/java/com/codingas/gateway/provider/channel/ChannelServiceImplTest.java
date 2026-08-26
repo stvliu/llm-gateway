@@ -42,14 +42,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ChannelServiceImpl 单元测试
+ * ChannelManagerImpl 单元测试
  *
  * <p>验证 CRUD、端点管理与 toResponse 透传。状态转换（setState）分支由
- * {@code ChannelServiceImplStateTransitionTest} 覆盖。</p>
+ * {@code ChannelManagerImplStateTransitionTest} 覆盖。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChannelServiceImpl 测试")
-class ChannelServiceImplTest {
+@DisplayName("ChannelManagerImpl 测试")
+class ChannelManagerImplTest {
 
     @Mock
     private ChannelRepository channelRepository;
@@ -67,7 +67,7 @@ class ChannelServiceImplTest {
     private ProviderRepository providerRepository;
 
     @InjectMocks
-    private ChannelServiceImpl channelService;
+    private ChannelManagerImpl channelManager;
 
     // ==================== getById 测试 ====================
 
@@ -81,7 +81,7 @@ class ChannelServiceImplTest {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            Channel result = channelService.getById(1L);
+            Channel result = channelManager.getById(1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
@@ -93,7 +93,7 @@ class ChannelServiceImplTest {
         void getById_missing_throws() {
             when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelService.getById(99L))
+            assertThatThrownBy(() -> channelManager.getById(99L))
                     .isInstanceOf(GatewayRequestException.class)
                     .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
                             .isEqualTo("CHANNEL_NOT_FOUND"));
@@ -111,7 +111,7 @@ class ChannelServiceImplTest {
         void duplicateName_throws() {
             when(channelRepository.existsByProviderIdAndName(10L, "ch-1")).thenReturn(true);
 
-            assertThatThrownBy(() -> channelService.create(request("ch-1")))
+            assertThatThrownBy(() -> channelManager.create(request("ch-1")))
                     .isInstanceOf(GatewayRequestException.class)
                     .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
                             .isEqualTo("CHANNEL_NAME_DUPLICATE"));
@@ -127,7 +127,7 @@ class ChannelServiceImplTest {
                 c.setId(5L);
                 return c;
             });
-            Channel result = channelService.create(request("pay_as_you_go"));
+            Channel result = channelManager.create(request("pay_as_you_go"));
 
             assertThat(result.getId()).isEqualTo(5L);
             assertThat(result.getName()).isEqualTo("ch-1");
@@ -152,7 +152,7 @@ class ChannelServiceImplTest {
         void update_missing_throws() {
             when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelService.update(99L, request("ch-1")))
+            assertThatThrownBy(() -> channelManager.update(99L, request("ch-1")))
                     .isInstanceOf(GatewayRequestException.class)
                     .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
                             .isEqualTo("CHANNEL_NOT_FOUND"));
@@ -165,7 +165,7 @@ class ChannelServiceImplTest {
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
             when(channelRepository.existsByProviderIdAndName(10L, "ch-1")).thenReturn(true);
 
-            assertThatThrownBy(() -> channelService.update(1L, request("ch-1")))
+            assertThatThrownBy(() -> channelManager.update(1L, request("ch-1")))
                     .isInstanceOf(GatewayRequestException.class)
                     .satisfies(ex -> assertThat(((GatewayRequestException) ex).getCode())
                             .isEqualTo("CHANNEL_NAME_DUPLICATE"));
@@ -180,7 +180,7 @@ class ChannelServiceImplTest {
             when(channelRepository.save(any(Channel.class))).thenReturn(channel);
             ChannelCommand request = new ChannelCommand(10L, "ch-1", "pay_as_you_go", 1000L, null, null);
 
-            Channel result = channelService.update(1L, request);
+            Channel result = channelManager.update(1L, request);
 
             assertThat(result.getName()).isEqualTo("ch-1");
             assertThat(result.getQuotaLimit()).isEqualTo(1000L);
@@ -202,7 +202,7 @@ class ChannelServiceImplTest {
             Channel c2 = buildChannel(2L, "ch-2");
             when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
 
-            List<Channel> result = channelService.getAll();
+            List<Channel> result = channelManager.getAll();
 
             assertThat(result).hasSize(2);
             assertThat(result.get(0).getName()).isEqualTo("ch-1");
@@ -215,7 +215,7 @@ class ChannelServiceImplTest {
             Channel c1 = buildChannel(1L, "ch-1");
             when(channelRepository.findByProviderId(10L)).thenReturn(List.of(c1));
 
-            List<Channel> result = channelService.getByProviderId(10L);
+            List<Channel> result = channelManager.getByProviderId(10L);
 
             assertThat(result).hasSize(1);
             assertThat(result.get(0).getProviderId()).isEqualTo(10L);
@@ -229,7 +229,7 @@ class ChannelServiceImplTest {
                     .thenReturn(List.of(c1));
 
             List<Channel> result =
-                    channelService.getByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO);
+                    channelManager.getByProviderIdAndBillingMode(10L, BillingMode.PAY_AS_YOU_GO);
 
             assertThat(result).hasSize(1);
         }
@@ -244,7 +244,7 @@ class ChannelServiceImplTest {
         @Test
         @DisplayName("删除成功")
         void delete_success() {
-            channelService.delete(1L);
+            channelManager.delete(1L);
 
             verify(channelRepository).deleteById(1L);
         }
@@ -261,7 +261,7 @@ class ChannelServiceImplTest {
         void channelNotFound_throws() {
             when(channelRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelService.addEndpoint(endpointRequest(99L, "openai", "https://a.com")))
+            assertThatThrownBy(() -> channelManager.addEndpoint(endpointRequest(99L, "openai", "https://a.com")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("渠道不存在");
         }
@@ -272,7 +272,7 @@ class ChannelServiceImplTest {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            assertThatThrownBy(() -> channelService.addEndpoint(endpointRequest(1L, " ", "https://a.com")))
+            assertThatThrownBy(() -> channelManager.addEndpoint(endpointRequest(1L, " ", "https://a.com")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("协议不能为空");
         }
@@ -283,7 +283,7 @@ class ChannelServiceImplTest {
             Channel channel = buildChannel(1L, "ch-1");
             when(channelRepository.findById(1L)).thenReturn(Optional.of(channel));
 
-            assertThatThrownBy(() -> channelService.addEndpoint(endpointRequest(1L, "openai", "  ")))
+            assertThatThrownBy(() -> channelManager.addEndpoint(endpointRequest(1L, "openai", "  ")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("端点 URL 不能为空");
         }
@@ -299,7 +299,7 @@ class ChannelServiceImplTest {
             existing.setProtocol(Protocol.OPENAI);
             when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of(existing));
 
-            assertThatThrownBy(() -> channelService.addEndpoint(endpointRequest(1L, "openai", "https://b.com")))
+            assertThatThrownBy(() -> channelManager.addEndpoint(endpointRequest(1L, "openai", "https://b.com")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("已存在该协议端点");
         }
@@ -316,7 +316,7 @@ class ChannelServiceImplTest {
             existing.setEndpointUrl("https://a.com");
             when(channelEndpointRepository.findByChannelId(1L)).thenReturn(List.of(existing));
 
-            assertThatThrownBy(() -> channelService.addEndpoint(endpointRequest(1L, "openai", " https://a.com ")))
+            assertThatThrownBy(() -> channelManager.addEndpoint(endpointRequest(1L, "openai", " https://a.com ")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("已存在相同 URL 的端点");
         }
@@ -334,7 +334,7 @@ class ChannelServiceImplTest {
             });
 
             ChannelEndpoint result =
-                    channelService.addEndpoint(endpointRequest(1L, "openai", "https://a.com"));
+                    channelManager.addEndpoint(endpointRequest(1L, "openai", "https://a.com"));
 
             assertThat(result.getId()).isEqualTo(300L);
             assertThat(result.getProtocol()).isEqualTo(Protocol.OPENAI);
@@ -353,7 +353,7 @@ class ChannelServiceImplTest {
         void endpointNotFound_throws() {
             when(channelEndpointRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelService.updateEndpoint(1L, 99L, endpointRequest(1L, "openai", "https://a.com")))
+            assertThatThrownBy(() -> channelManager.updateEndpoint(1L, 99L, endpointRequest(1L, "openai", "https://a.com")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("端点不存在");
         }
@@ -367,7 +367,7 @@ class ChannelServiceImplTest {
             existing.setProtocol(Protocol.OPENAI);
             when(channelEndpointRepository.findById(100L)).thenReturn(Optional.of(existing));
 
-            assertThatThrownBy(() -> channelService.updateEndpoint(1L, 100L, endpointRequest(1L, "openai", "https://a.com")))
+            assertThatThrownBy(() -> channelManager.updateEndpoint(1L, 100L, endpointRequest(1L, "openai", "https://a.com")))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("端点不属于该渠道");
         }
@@ -391,7 +391,7 @@ class ChannelServiceImplTest {
             when(channelEndpointRepository.save(any(ChannelEndpoint.class))).thenAnswer(inv -> inv.getArgument(0));
 
             ChannelEndpoint result =
-                    channelService.updateEndpoint(1L, 100L, endpointRequest(1L, "openai", "https://new.com"));
+                    channelManager.updateEndpoint(1L, 100L, endpointRequest(1L, "openai", "https://new.com"));
 
             assertThat(result.getEndpointUrl()).isEqualTo("https://new.com");
             assertThat(existing.getProtocol()).isEqualTo(Protocol.OPENAI);
@@ -409,7 +409,7 @@ class ChannelServiceImplTest {
         void endpointNotFound_throws() {
             when(channelEndpointRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> channelService.removeEndpoint(1L, 99L))
+            assertThatThrownBy(() -> channelManager.removeEndpoint(1L, 99L))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("端点不存在");
         }
@@ -422,7 +422,7 @@ class ChannelServiceImplTest {
             existing.setChannelId(2L);
             when(channelEndpointRepository.findById(100L)).thenReturn(Optional.of(existing));
 
-            assertThatThrownBy(() -> channelService.removeEndpoint(1L, 100L))
+            assertThatThrownBy(() -> channelManager.removeEndpoint(1L, 100L))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("端点不属于该渠道");
         }
@@ -435,7 +435,7 @@ class ChannelServiceImplTest {
             existing.setChannelId(1L);
             when(channelEndpointRepository.findById(100L)).thenReturn(Optional.of(existing));
 
-            channelService.removeEndpoint(1L, 100L);
+            channelManager.removeEndpoint(1L, 100L);
 
             verify(channelEndpointRepository).deleteById(100L);
         }

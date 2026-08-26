@@ -43,7 +43,7 @@ class CacheVersionCheckerTest {
     private ChannelCredentialRepository channelCredentialRepository;
 
     @Mock
-    private CacheInvalidationService cacheService;
+    private CacheInvalidationManager cacheService;
 
     private CacheVersionChecker checker;
 

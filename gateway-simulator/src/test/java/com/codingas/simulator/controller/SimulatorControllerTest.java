@@ -15,7 +15,7 @@
  */
 package com.codingas.simulator.controller;
 
-import com.codingas.simulator.service.SimulatorModeService;
+import com.codingas.simulator.service.SimulatorModeManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -35,18 +35,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * 验证模拟端点在 NORMAL / RATE_LIMITED / UPSTREAM_ERROR / AUTH_ERROR 等模式下的响应行为。
  */
 @WebMvcTest(SimulatorController.class)
-@Import(SimulatorModeService.class)
+@Import(SimulatorModeManager.class)
 class SimulatorControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @Autowired
-    private SimulatorModeService modeService;
+    private SimulatorModeManager modeService;
 
     @BeforeEach
     void resetMode() {
-        modeService.setMode(SimulatorModeService.SimulatorMode.NORMAL);
+        modeService.setMode(SimulatorModeManager.SimulatorMode.NORMAL);
     }
 
     // ==================== OpenAI 端点测试 ====================
@@ -79,7 +79,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("RATE_LIMITED 模式下返回 429")
         void rateLimitedMode_returns429() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.RATE_LIMITED);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.RATE_LIMITED);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -91,7 +91,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("UPSTREAM_ERROR 模式下返回 500")
         void upstreamErrorMode_returns500() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -103,7 +103,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("AUTH_ERROR 模式下返回 401")
         void authErrorMode_returns401() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.AUTH_ERROR);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.AUTH_ERROR);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -115,7 +115,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("QUOTA_EXCEEDED 模式下返回 429")
         void quotaExceededMode_returns429() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.QUOTA_EXCEEDED);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.QUOTA_EXCEEDED);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -127,7 +127,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("TIMEOUT 模式下返回 408")
         void timeoutMode_returns408() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.TIMEOUT);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.TIMEOUT);
 
             mockMvc.perform(post("/v1/chat/completions")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -159,7 +159,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("RATE_LIMITED 模式下返回 429")
         void rateLimitedMode_returns429() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.RATE_LIMITED);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.RATE_LIMITED);
 
             mockMvc.perform(post("/v1/messages")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -172,7 +172,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("UPSTREAM_ERROR 模式下返回 500")
         void faultMode_returns500() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.UPSTREAM_ERROR);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.UPSTREAM_ERROR);
 
             mockMvc.perform(post("/v1/messages")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -185,7 +185,7 @@ class SimulatorControllerTest {
         @Test
         @DisplayName("AUTH_ERROR 模式下返回 401")
         void authErrorMode_returns401() throws Exception {
-            modeService.setMode(SimulatorModeService.SimulatorMode.AUTH_ERROR);
+            modeService.setMode(SimulatorModeManager.SimulatorMode.AUTH_ERROR);
 
             mockMvc.perform(post("/v1/messages")
                             .contentType(MediaType.APPLICATION_JSON)

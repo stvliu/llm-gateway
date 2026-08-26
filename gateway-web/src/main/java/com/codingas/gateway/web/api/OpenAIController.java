@@ -18,7 +18,7 @@ package com.codingas.gateway.web.api;
 import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
 import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
 import com.codingas.gateway.protocol.ProtocolResponse;
-import com.codingas.gateway.proxy.chat.ChatDispatchService;
+import com.codingas.gateway.proxy.chat.ChatDispatchManager;
 import com.codingas.gateway.provider.upstream.RoutingStrategy;
 import com.codingas.gateway.protocol.openai.OpenAIProtocolValidator;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
@@ -43,7 +43,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class OpenAIController {
 
-    private final ChatDispatchService chatDispatchService;
+    private final ChatDispatchManager chatDispatchManager;
     private final OpenAIProtocolValidator validator;
 
     /**
@@ -64,10 +64,10 @@ public class OpenAIController {
         }
 
         if (request.isStream()) {
-            SseStreamHelper.executeStream(chatDispatchService, request, identity, response);
+            SseStreamHelper.executeStream(chatDispatchManager, request, identity, response);
             return null;
         } else {
-            ProtocolResponse protocolResponse = chatDispatchService.dispatch(request, identity, RoutingStrategy.WEIGHTED);
+            ProtocolResponse protocolResponse = chatDispatchManager.dispatch(request, identity, RoutingStrategy.WEIGHTED);
 
             if (protocolResponse instanceof OpenAIChatResponse openaiResponse) {
                 return ResponseEntity.ok(openaiResponse);

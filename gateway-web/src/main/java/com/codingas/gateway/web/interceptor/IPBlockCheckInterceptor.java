@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.interceptor;
 
-import com.codingas.gateway.security.threat.IpBlocklistService;
+import com.codingas.gateway.security.threat.IpBlocklistManager;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -34,7 +34,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class IPBlockCheckInterceptor extends AbstractGatewayInterceptor {
 
-    private final IpBlocklistService ipBlocklistService;
+    private final IpBlocklistManager ipBlocklistManager;
 
     @Override
     public String name() {
@@ -57,7 +57,7 @@ public class IPBlockCheckInterceptor extends AbstractGatewayInterceptor {
         String clientIp = getClientIp(request);
         log.debug("Checking IP block for: {}", clientIp);
 
-        if (ipBlocklistService.isBlocked(clientIp)) {
+        if (ipBlocklistManager.isBlocked(clientIp)) {
             log.warn("Blocked IP access: ip={}, uri={}", clientIp, request.getRequestURI());
             try {
                 reject(response, "Access denied: IP blocked");

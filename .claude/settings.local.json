@@ -6,7 +6,6 @@
     "PYTHONIOENCODING": "utf-8"
   },
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash",
       "Bash(*)",
@@ -30,7 +29,9 @@
       "Skill(fewer-permission-prompts)",
       "Skill(openspec-propose)",
       "Skill(openspec-apply-change)",
-      "Skill(update-config)"
+      "Skill(update-config)",
+      "Bash(rm -f *.java)",
+      "Bash(rmdir .)"
     ],
     "deny": [
       "Bash(rm -rf *)",
@@ -49,14 +50,15 @@
       "Bash(truncate table *)",
       "Bash(shutdown *)",
       "Bash(reboot *)"
-    ]
+    ],
+    "defaultMode": "bypassPermissions"
   },
-  "askUserQuestionTimeout": "60s",
-  "skipDangerousModePermissionPrompt": true,
-  "skipAutoPermissionPrompt": true,
-  "skipWorkflowUsageWarning": true,
   "skillOverrides": {
     "brainstorming": "user-invocable-only"
   },
-  "outputStyle": "default"
+  "outputStyle": "default",
+  "askUserQuestionTimeout": "60s",
+  "skipDangerousModePermissionPrompt": true,
+  "skipWorkflowUsageWarning": true,
+  "skipAutoPermissionPrompt": true
 }

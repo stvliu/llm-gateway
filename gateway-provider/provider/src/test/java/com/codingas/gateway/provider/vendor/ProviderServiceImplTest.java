@@ -47,13 +47,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ProviderServiceImpl 单元测试
+ * ProviderManagerImpl 单元测试
  *
  * <p>覆盖 CRUD、分页查询、级联删除、连通性测试等全部 public 方法分支。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ProviderServiceImpl 单元测试")
-class ProviderServiceImplTest {
+@DisplayName("ProviderManagerImpl 单元测试")
+class ProviderManagerImplTest {
 
     @Mock
     private ProviderRepository providerRepository;
@@ -68,11 +68,11 @@ class ProviderServiceImplTest {
     @Mock
     private ConnectivityTester connectivityTester;
 
-    private ProviderServiceImpl service;
+    private ProviderManagerImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new ProviderServiceImpl(
+        service = new ProviderManagerImpl(
                 providerRepository, modelRepository, channelRepository,
                 modelInstanceRepository, channelCredentialRepository, connectivityTester);
     }

@@ -17,7 +17,7 @@ package com.codingas.gateway.web.api.assembler;
 
 import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelInstance;
-import com.codingas.gateway.provider.model.ModelInstanceService;
+import com.codingas.gateway.provider.model.ModelInstanceManager;
 import com.codingas.gateway.web.api.dto.ModelInstanceCreateRequest;
 import com.codingas.gateway.web.api.dto.ModelInstanceResponse;
 import com.codingas.gateway.web.api.dto.ModelInstanceUpdateRequest;
@@ -36,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ModelInstanceFacade {
 
-    private final ModelInstanceService modelInstanceService;
+    private final ModelInstanceManager modelInstanceManager;
 
     /**
      * 查询指定渠道下的所有模型实例
@@ -45,7 +45,7 @@ public class ModelInstanceFacade {
      * @return 模型实例响应 DTO 列表
      */
     public List<ModelInstanceResponse> list(Long channelId) {
-        return modelInstanceService.getInstancesByChannelId(channelId).stream()
+        return modelInstanceManager.getInstancesByChannelId(channelId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -59,7 +59,7 @@ public class ModelInstanceFacade {
      */
     public ModelInstanceResponse create(Long channelId, ModelInstanceCreateRequest request) {
         request.setChannelId(channelId);
-        return toResponse(modelInstanceService.create(request.toCommand()));
+        return toResponse(modelInstanceManager.create(request.toCommand()));
     }
 
     /**
@@ -72,7 +72,7 @@ public class ModelInstanceFacade {
      */
     public ModelInstanceResponse update(Long channelId, Long id, ModelInstanceUpdateRequest request) {
         request.setChannelId(channelId);
-        return toResponse(modelInstanceService.update(channelId, id, request.toCommand()));
+        return toResponse(modelInstanceManager.update(channelId, id, request.toCommand()));
     }
 
     /**
@@ -80,7 +80,7 @@ public class ModelInstanceFacade {
      */
     private ModelInstanceResponse toResponse(ModelInstance instance) {
         ModelInstanceResponse response = ModelInstanceResponse.from(instance);
-        Model model = modelInstanceService.getModel(instance.getModelId());
+        Model model = modelInstanceManager.getModel(instance.getModelId());
         if (model != null) {
             response.setModelName(model.getModelName());
             response.setDisplayName(model.getDisplayName());

@@ -47,11 +47,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * TokenLimitService 单元测试
+ * TokenLimitManager 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TokenLimitService 单元测试")
-class TokenLimitServiceTest {
+@DisplayName("TokenLimitManager 单元测试")
+class TokenLimitManagerTest {
 
     @Mock
     private TokenLimitRepository tokenLimitRepository;
@@ -66,7 +66,7 @@ class TokenLimitServiceTest {
     private ModelRepository modelRepository;
 
     @InjectMocks
-    private TokenLimitServiceImpl tokenLimitService;
+    private TokenLimitManagerImpl tokenLimitManager;
 
     private User testUser;
     private Provider testProvider;
@@ -127,7 +127,7 @@ class TokenLimitServiceTest {
             when(tokenLimitRepository.save(any(TokenLimit.class))).thenReturn(testTokenLimit);
 
             // when
-            TokenLimit result = tokenLimitService.create(createCommand);
+            TokenLimit result = tokenLimitManager.create(createCommand);
 
             // then
             assertThat(result).isNotNull();
@@ -155,7 +155,7 @@ class TokenLimitServiceTest {
             when(userRepository.findById(createCommand.userId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining(String.valueOf(createCommand.userId()));
@@ -171,7 +171,7 @@ class TokenLimitServiceTest {
             when(providerRepository.findById(createCommand.providerId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Provider")
                 .hasMessageContaining(String.valueOf(createCommand.providerId()));
@@ -189,7 +189,7 @@ class TokenLimitServiceTest {
             when(modelRepository.findById(createCommand.modelId())).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.create(createCommand))
+            assertThatThrownBy(() -> tokenLimitManager.create(createCommand))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining(String.valueOf(createCommand.modelId()));
@@ -211,7 +211,7 @@ class TokenLimitServiceTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(testTokenLimit));
 
             // when
-            TokenLimit result = tokenLimitService.getById(1L);
+            TokenLimit result = tokenLimitManager.getById(1L);
 
             // then
             assertThat(result).isNotNull();
@@ -236,7 +236,7 @@ class TokenLimitServiceTest {
             when(tokenLimitRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitService.getById(99L))
+            assertThatThrownBy(() -> tokenLimitManager.getById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TokenLimit")
                 .hasMessageContaining("99");

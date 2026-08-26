@@ -548,7 +548,7 @@ gateway:
 | 端口实现 | `JpaXxxRepository` / `HttpXxxClient` | `iamdata.user.JpaUserRepository` |
 | Spring Data 接口 | `XxxJpaRepository`（与 DO 同包） | `iamdata.user.UserJpaRepository` |
 | JPA 实体（DO） | `XxxDo` | `UserDo` |
-| 应用服务 | `XxxService`（接口）/ `XxxServiceImpl`（实现），跟随聚合同包 | `iam.user.UserService` |
+| 应用服务 | `XxxManager`（接口）/ `XxxManagerImpl`（实现），跟随聚合同包 | `iam.user.UserManager` |
 | 技术能力 | 能力动词后缀，**禁止 Service** | `ApiKeyEncryptor`, `UserApiKeyGenerator`, `PasswordEncoder` |
 | 能力接口 | PascalCase + 能力描述 | `ModelRouter`, `TokenCounter`, `Encryptor` |
 | DTO（HTTP 契约） | `XxxRequest`（入）/ `XxxResponse`（出），位于 gateway-web API 层 | `UserCreateRequest`, `UserResponse` |
@@ -568,7 +568,7 @@ gateway:
 
 > 两者都以聚合名开头，区分靠方法签名：**出入参是领域实体 → Repository；出入参是 DTO/用例语义 → Service**。
 
-| | `XxxRepository`（端口） | `XxxService`（应用服务） |
+| | `XxxRepository`（端口） | `XxxManager`（应用服务） |
 |---|---|---|
 | 方法语言 | 数据操作（`save`/`findById`/`findByEmail`/`existsBy…`/`delete`） | 业务用例（`create`/`login`/`assignRoles`/`changePassword`） |
 | 入参/出参 | 领域实体、`Long`、`Optional<Entity>` | DTO、用例参数/结果对象 |
@@ -580,8 +580,8 @@ gateway:
 | 层级 | 定义 | 实例 | 处理 |
 |------|------|------|------|
 | **外部 API** | 跨进程服务契约 | 仅 web Controller 的 REST 端点 | — |
-| **模块公开面** | 跨 Maven 模块的 Java 契约 | 实体、端口 `XxxRepository`、`XxxService`、DTO、异常 | 必须 `public`（Java 硬约束） |
-| **模块内部实现** | 仅本模块引用 | `XxxServiceImpl`、包内辅助类 | 默认 `public` 同包；出现模块私有类时按 `iam.<子域>.internal` 约定收纳 |
+| **模块公开面** | 跨 Maven 模块的 Java 契约 | 实体、端口 `XxxRepository`、`XxxManager`、DTO、异常 | 必须 `public`（Java 硬约束） |
+| **模块内部实现** | 仅本模块引用 | `XxxManagerImpl`、包内辅助类 | 默认 `public` 同包；出现模块私有类时按 `iam.<子域>.internal` 约定收纳 |
 
 > 强制机制：Maven 依赖边界（编译期）+ ArchUnit 铁律（源码期，见 `LayerDependencyTest`）+ 命名信号（`Do`/`Jpa` 前缀 = 内部实现警示）。
 

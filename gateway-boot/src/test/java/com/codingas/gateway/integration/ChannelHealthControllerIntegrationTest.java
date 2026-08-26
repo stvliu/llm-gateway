@@ -16,9 +16,9 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
-import com.codingas.gateway.provider.channel.ChannelEmergencyService;
-import com.codingas.gateway.provider.channel.ChannelService;
-import com.codingas.gateway.provider.channel.ChannelHealthService;
+import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
+import com.codingas.gateway.provider.channel.ChannelManager;
+import com.codingas.gateway.provider.channel.ChannelHealthManager;
 import com.codingas.gateway.provider.upstream.KeyTestResult;
 import com.codingas.gateway.provider.channel.Channel;
 import com.codingas.gateway.provider.channel.ChannelCredential;
@@ -82,13 +82,13 @@ class ChannelHealthControllerIntegrationTest {
     private ProviderRepository providerRepository;
 
     @Autowired
-    private ChannelHealthService channelHealthService;
+    private ChannelHealthManager channelHealthManager;
 
     @Autowired
-    private ChannelService channelService;
+    private ChannelManager channelManager;
 
     @Autowired
-    private ChannelEmergencyService channelEmergencyService;
+    private ChannelEmergencyManager channelEmergencyManager;
 
     @Autowired
     private com.codingas.gateway.web.api.assembler.ChannelFacade channelFacade;
@@ -107,8 +107,8 @@ class ChannelHealthControllerIntegrationTest {
     void setUp() {
         // standaloneSetup 跳过 SecurityInterceptorChain 等业务拦截器，
         // 仅装配本次端点所需的 Controller + 全局异常处理
-        ChannelController controller = new ChannelController(channelFacade, channelService,
-                channelHealthService, channelEmergencyService);
+        ChannelController controller = new ChannelController(channelFacade, channelManager,
+                channelHealthManager, channelEmergencyManager);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(globalExceptionHandler)
                 .build();

@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.model.ModelService;
+import com.codingas.gateway.provider.model.ModelManager;
 import com.codingas.gateway.provider.model.ModelQuery;
 import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 class ModelControllerTest {
 
     @Mock
-    private ModelService modelService;
+    private ModelManager modelManager;
 
     @InjectMocks
     private ModelController controller;
@@ -63,7 +63,7 @@ class ModelControllerTest {
             ModelCreateRequest request = new ModelCreateRequest();
 
             Model model = createTestModel();
-            when(modelService.create(any())).thenReturn(model);
+            when(modelManager.create(any())).thenReturn(model);
 
             // when
             ModelResponse result = controller.create(request);
@@ -82,7 +82,7 @@ class ModelControllerTest {
         void getById_existingId_returnsModel() {
             // given
             Model model = createTestModel();
-            when(modelService.getById(1L)).thenReturn(model);
+            when(modelManager.getById(1L)).thenReturn(model);
 
             // when
             ModelResponse result = controller.getById(1L);
@@ -104,7 +104,7 @@ class ModelControllerTest {
             PageResponse<Model> pageResponse = PageResponse.of(
                 List.of(model), 1, 10, 1L
             );
-            when(modelService.query(any(ModelQuery.class))).thenReturn(pageResponse);
+            when(modelManager.query(any(ModelQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<ModelResponse> result = controller.query(new ModelQueryRequest());
@@ -126,7 +126,7 @@ class ModelControllerTest {
             request.setDisplayName("Updated Model");
 
             Model model = createTestModel();
-            when(modelService.update(eq(1L), any())).thenReturn(model);
+            when(modelManager.update(eq(1L), any())).thenReturn(model);
 
             // when
             ModelResponse result = controller.update(1L, request);
@@ -144,7 +144,7 @@ class ModelControllerTest {
         @DisplayName("删除模型成功")
         void delete_existingId_returnsSuccess() {
             // given
-            doNothing().when(modelService).delete(1L);
+            doNothing().when(modelManager).delete(1L);
 
             // when
             controller.delete(1L);
@@ -162,7 +162,7 @@ class ModelControllerTest {
         void setEnabled_enable_returnsUpdated() {
             // given
             Model model = createTestModel();
-            when(modelService.setEnabled(1L, true)).thenReturn(model);
+            when(modelManager.setEnabled(1L, true)).thenReturn(model);
 
             // when
             ModelResponse result = controller.setEnabled(1L, true);
@@ -176,7 +176,7 @@ class ModelControllerTest {
         void setEnabled_disable_returnsUpdated() {
             // given
             Model model = createTestModel();
-            when(modelService.setEnabled(1L, false)).thenReturn(model);
+            when(modelManager.setEnabled(1L, false)).thenReturn(model);
 
             // when
             ModelResponse result = controller.setEnabled(1L, false);

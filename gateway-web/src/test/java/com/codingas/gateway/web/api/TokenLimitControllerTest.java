@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.usage.tokenlimit.TokenLimitService;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitManager;
 import com.codingas.gateway.usage.tokenlimit.TokenLimit;
 import com.codingas.gateway.usage.tokenlimit.TokenLimitQuery;
 import com.codingas.gateway.web.api.dto.TokenLimitCreateRequest;
@@ -54,7 +54,7 @@ import static org.mockito.Mockito.when;
 class TokenLimitControllerTest {
 
     @Mock
-    private TokenLimitService tokenLimitService;
+    private TokenLimitManager tokenLimitManager;
 
     @InjectMocks
     private TokenLimitController controller;
@@ -71,7 +71,7 @@ class TokenLimitControllerTest {
             request.setLimitCode("limit-001");
 
             TokenLimit tokenLimit = createTestTokenLimit();
-            when(tokenLimitService.create(any())).thenReturn(tokenLimit);
+            when(tokenLimitManager.create(any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.create(request);
@@ -91,7 +91,7 @@ class TokenLimitControllerTest {
         void getById_existingId_returnsTokenLimit() {
             // given
             TokenLimit tokenLimit = createTestTokenLimit();
-            when(tokenLimitService.getById(1L)).thenReturn(tokenLimit);
+            when(tokenLimitManager.getById(1L)).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.getById(1L);
@@ -113,7 +113,7 @@ class TokenLimitControllerTest {
             PageResponse<TokenLimit> pageResponse = PageResponse.of(
                 List.of(tokenLimit), 1, 10, 1L
             );
-            when(tokenLimitService.query(any(TokenLimitQuery.class))).thenReturn(pageResponse);
+            when(tokenLimitManager.query(any(TokenLimitQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<TokenLimitResponse> result = controller.query(new TokenLimitQueryRequest());
@@ -135,7 +135,7 @@ class TokenLimitControllerTest {
             request.setMaxTokens(BigDecimal.valueOf(200000));
 
             TokenLimit tokenLimit = createTestTokenLimit();
-            when(tokenLimitService.update(eq(1L), any())).thenReturn(tokenLimit);
+            when(tokenLimitManager.update(eq(1L), any())).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.update(1L, request);
@@ -153,7 +153,7 @@ class TokenLimitControllerTest {
         @DisplayName("删除 Token 限额成功")
         void delete_existingId_returnsSuccess() {
             // given
-            doNothing().when(tokenLimitService).delete(1L);
+            doNothing().when(tokenLimitManager).delete(1L);
 
             // when
             controller.delete(1L);
@@ -172,7 +172,7 @@ class TokenLimitControllerTest {
             // given
             TokenLimit tokenLimit = createTestTokenLimit();
             tokenLimit.setUsedTokens(BigDecimal.ZERO);
-            when(tokenLimitService.resetUsage(1L)).thenReturn(tokenLimit);
+            when(tokenLimitManager.resetUsage(1L)).thenReturn(tokenLimit);
 
             // when
             TokenLimitResponse result = controller.resetUsage(1L);

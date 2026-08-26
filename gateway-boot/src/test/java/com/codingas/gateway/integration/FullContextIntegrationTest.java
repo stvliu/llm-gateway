@@ -56,7 +56,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
     @Test
     void contextLoads() {
-        assertThat(chatDispatchService).isNotNull();
+        assertThat(chatDispatchManager).isNotNull();
     }
 
     // ==================== Key 故障转移测试 ====================

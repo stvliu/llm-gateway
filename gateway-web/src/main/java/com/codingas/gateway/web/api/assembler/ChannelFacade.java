@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api.assembler;
 
 import com.codingas.gateway.provider.channel.Channel;
-import com.codingas.gateway.provider.channel.ChannelService;
+import com.codingas.gateway.provider.channel.ChannelManager;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.provider.vendor.Provider;
 import com.codingas.gateway.web.api.dto.ChannelEndpointResponse;
@@ -37,7 +37,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChannelFacade {
 
-    private final ChannelService channelService;
+    private final ChannelManager channelManager;
 
     /**
      * 创建渠道
@@ -46,7 +46,7 @@ public class ChannelFacade {
      * @return 渠道响应 DTO
      */
     public ChannelResponse create(ChannelRequest request) {
-        return toResponse(channelService.create(request.toCommand()));
+        return toResponse(channelManager.create(request.toCommand()));
     }
 
     /**
@@ -57,7 +57,7 @@ public class ChannelFacade {
      * @return 渠道响应 DTO
      */
     public ChannelResponse update(Long id, ChannelRequest request) {
-        return toResponse(channelService.update(id, request.toCommand()));
+        return toResponse(channelManager.update(id, request.toCommand()));
     }
 
     /**
@@ -67,7 +67,7 @@ public class ChannelFacade {
      * @return 渠道响应 DTO
      */
     public ChannelResponse getById(Long id) {
-        return toResponse(channelService.getById(id));
+        return toResponse(channelManager.getById(id));
     }
 
     /**
@@ -80,11 +80,11 @@ public class ChannelFacade {
     public List<ChannelResponse> list(Long providerId, String billingMode) {
         List<Channel> channels;
         if (providerId == null) {
-            channels = channelService.getAll();
+            channels = channelManager.getAll();
         } else if (billingMode != null) {
-            channels = channelService.getByProviderIdAndBillingMode(providerId, BillingMode.fromCode(billingMode));
+            channels = channelManager.getByProviderIdAndBillingMode(providerId, BillingMode.fromCode(billingMode));
         } else {
-            channels = channelService.getByProviderId(providerId);
+            channels = channelManager.getByProviderId(providerId);
         }
         return channels.stream().map(this::toResponse).toList();
     }
@@ -95,13 +95,13 @@ public class ChannelFacade {
     private ChannelResponse toResponse(Channel channel) {
         ChannelResponse response = ChannelResponse.from(channel);
         // 提供商名称（经核心 Service 查询，仅展示用）
-        Provider provider = channelService.getProvider(channel.getProviderId());
+        Provider provider = channelManager.getProvider(channel.getProviderId());
         if (provider != null) {
             response.setProviderName(provider.getName());
         }
         // 端点列表（经核心 Service 查询）
         response.setEndpoints(
-            channelService.getEndpoints(channel.getId()).stream()
+            channelManager.getEndpoints(channel.getId()).stream()
                 .map(ChannelEndpointResponse::from)
                 .toList()
         );

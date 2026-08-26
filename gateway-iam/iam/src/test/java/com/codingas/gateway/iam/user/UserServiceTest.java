@@ -40,11 +40,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * UserService 单元测试
+ * UserManager 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserService 单元测试")
-class UserServiceTest {
+@DisplayName("UserManager 单元测试")
+class UserManagerTest {
 
     @Mock
     private UserRepository userRepository;
@@ -53,7 +53,7 @@ class UserServiceTest {
     private PasswordEncoder passwordEncoder;
 
     @InjectMocks
-    private UserServiceImpl userService;
+    private UserManagerImpl userManager;
 
     private User testUser;
 
@@ -84,7 +84,7 @@ class UserServiceTest {
             });
 
             // when
-            User user = userService.create(command);
+            User user = userManager.create(command);
 
             // then
             assertThat(user).isNotNull();
@@ -111,7 +111,7 @@ class UserServiceTest {
             });
 
             // when
-            userService.create(command);
+            userManager.create(command);
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -130,7 +130,7 @@ class UserServiceTest {
             when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> userService.create(command))
+            assertThatThrownBy(() -> userManager.create(command))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining("email");
@@ -154,7 +154,7 @@ class UserServiceTest {
             });
 
             // when
-            userService.create(command);
+            userManager.create(command);
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -177,7 +177,7 @@ class UserServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
             // when
-            User user = userService.getById(1L);
+            User user = userManager.getById(1L);
 
             // then
             assertThat(user).isNotNull();
@@ -193,7 +193,7 @@ class UserServiceTest {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> userService.getById(99L))
+            assertThatThrownBy(() -> userManager.getById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining("99");
@@ -218,7 +218,7 @@ class UserServiceTest {
             query.setLimit(20);
 
             // when
-            PageResponse<User> response = userService.query(query);
+            PageResponse<User> response = userManager.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(2);
@@ -237,7 +237,7 @@ class UserServiceTest {
             query.setLimit(20);
 
             // when
-            PageResponse<User> response = userService.query(query);
+            PageResponse<User> response = userManager.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -256,7 +256,7 @@ class UserServiceTest {
             query.setLimit(20);
 
             // when
-            PageResponse<User> response = userService.query(query);
+            PageResponse<User> response = userManager.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -278,7 +278,7 @@ class UserServiceTest {
             query.setLimit(10);
 
             // when
-            PageResponse<User> response = userService.query(query);
+            PageResponse<User> response = userManager.query(query);
 
             // then
             assertThat(response.getItems()).hasSize(10);
@@ -300,7 +300,7 @@ class UserServiceTest {
             query.setLimit(20);
 
             // when
-            PageResponse<User> response = userService.query(query);
+            PageResponse<User> response = userManager.query(query);
 
             // then
             assertThat(response.getItems()).isEmpty();
@@ -324,7 +324,7 @@ class UserServiceTest {
             UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when
-            User user = userService.update(1L, command);
+            User user = userManager.update(1L, command);
 
             // then
             assertThat(user).isNotNull();
@@ -342,7 +342,7 @@ class UserServiceTest {
             UserUpdateCommand command = new UserUpdateCommand(null, "updated@example.com", null, null);
 
             // when
-            userService.update(1L, command);
+            userManager.update(1L, command);
 
             // then
             verify(userRepository).save(testUser);
@@ -357,7 +357,7 @@ class UserServiceTest {
             UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when & then
-            assertThatThrownBy(() -> userService.update(99L, command))
+            assertThatThrownBy(() -> userManager.update(99L, command))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -376,7 +376,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
             // when
-            userService.delete(1L);
+            userManager.delete(1L);
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -391,7 +391,7 @@ class UserServiceTest {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> userService.delete(99L))
+            assertThatThrownBy(() -> userManager.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -410,7 +410,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            User user = userService.updateState(1L, UserState.INACTIVE);
+            User user = userManager.updateState(1L, UserState.INACTIVE);
 
             // then
             assertThat(testUser.getState()).isEqualTo(UserState.INACTIVE);
@@ -424,7 +424,7 @@ class UserServiceTest {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> userService.updateState(99L, UserState.LOCKED))
+            assertThatThrownBy(() -> userManager.updateState(99L, UserState.LOCKED))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -443,7 +443,7 @@ class UserServiceTest {
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
             // when
-            User user = userService.assignRoles(1L, List.of("ADMIN"));
+            User user = userManager.assignRoles(1L, List.of("ADMIN"));
 
             // then
             assertThat(user).isNotNull();
@@ -458,7 +458,7 @@ class UserServiceTest {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> userService.assignRoles(99L, List.of("ADMIN")))
+            assertThatThrownBy(() -> userManager.assignRoles(99L, List.of("ADMIN")))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }

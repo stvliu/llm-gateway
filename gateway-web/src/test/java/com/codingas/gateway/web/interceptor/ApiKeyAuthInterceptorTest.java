@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
-import com.codingas.gateway.iam.auth.AuthenticationService;
+import com.codingas.gateway.iam.auth.AuthenticationManager;
 import com.codingas.gateway.iam.valueobject.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
 class ApiKeyAuthInterceptorTest {
 
     @Mock
-    private AuthenticationService authenticationService;
+    private AuthenticationManager authenticationManager;
 
     @Mock
     private HttpServletRequest request;
@@ -50,7 +50,7 @@ class ApiKeyAuthInterceptorTest {
 
     @BeforeEach
     void setUp() {
-        interceptor = new ApiKeyAuthInterceptor(authenticationService);
+        interceptor = new ApiKeyAuthInterceptor(authenticationManager);
     }
 
     @Test
@@ -59,7 +59,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn("Bearer sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         Identity identity = Identity.of(1L, "user", 1L, null);
-        when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
+        when(authenticationManager.authenticateUser("sk-test123")).thenReturn(identity);
 
         boolean result = interceptor.preHandle(request, response);
 
@@ -74,7 +74,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("x-api-key")).thenReturn("sk-test123");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
         Identity identity = Identity.of(1L, "user", 1L, null);
-        when(authenticationService.authenticateUser("sk-test123")).thenReturn(identity);
+        when(authenticationManager.authenticateUser("sk-test123")).thenReturn(identity);
 
         boolean result = interceptor.preHandle(request, response);
 
@@ -103,7 +103,7 @@ class ApiKeyAuthInterceptorTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getHeader("x-api-key")).thenReturn("sk-invalid");
         when(request.getRequestURI()).thenReturn("/v1/chat/completions");
-        when(authenticationService.authenticateUser("sk-invalid"))
+        when(authenticationManager.authenticateUser("sk-invalid"))
                 .thenThrow(new AuthenticationFailedException("无效的 API Key"));
         StringWriter sw = new StringWriter();
         when(response.getWriter()).thenReturn(new PrintWriter(sw));

@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.vendor.ConnectivityTestResult;
-import com.codingas.gateway.provider.vendor.ProviderService;
+import com.codingas.gateway.provider.vendor.ProviderManager;
 import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -36,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ProviderController {
 
-    private final ProviderService providerService;
+    private final ProviderManager providerManager;
 
     /**
      * 创建提供商
@@ -44,7 +44,7 @@ public class ProviderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ProviderResponse create(@Valid @RequestBody ProviderCreateRequest request) {
-        return ProviderResponse.from(providerService.create(request.toCommand()));
+        return ProviderResponse.from(providerManager.create(request.toCommand()));
     }
 
     /**
@@ -52,7 +52,7 @@ public class ProviderController {
      */
     @GetMapping("/{id}")
     public ProviderResponse getById(@PathVariable Long id) {
-        return ProviderResponse.from(providerService.getById(id));
+        return ProviderResponse.from(providerManager.getById(id));
     }
 
     /**
@@ -60,7 +60,7 @@ public class ProviderController {
      */
     @GetMapping
     public PageResponse<ProviderResponse> query(ProviderQueryRequest request) {
-        return ProviderResponse.fromPage(providerService.query(request.toQuery()));
+        return ProviderResponse.fromPage(providerManager.query(request.toQuery()));
     }
 
     /**
@@ -69,7 +69,7 @@ public class ProviderController {
     @PutMapping("/{id}")
     public ProviderResponse update(@PathVariable Long id,
                                    @Valid @RequestBody ProviderUpdateRequest request) {
-        return ProviderResponse.from(providerService.update(id, request.toCommand()));
+        return ProviderResponse.from(providerManager.update(id, request.toCommand()));
     }
 
     /**
@@ -78,7 +78,7 @@ public class ProviderController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        providerService.delete(id);
+        providerManager.delete(id);
     }
 
     /**
@@ -88,7 +88,7 @@ public class ProviderController {
      */
     @GetMapping("/names")
     public List<String> getProviderNames() {
-        return providerService.getProviderNames();
+        return providerManager.getProviderNames();
     }
 
     /**
@@ -97,6 +97,6 @@ public class ProviderController {
     @PostMapping("/test-connectivity")
     public ConnectivityTestResult testConnectivity(
             @Valid @RequestBody ConnectivityTestRequest request) {
-        return providerService.testConnectivity(request.toCommand());
+        return providerManager.testConnectivity(request.toCommand());
     }
 }

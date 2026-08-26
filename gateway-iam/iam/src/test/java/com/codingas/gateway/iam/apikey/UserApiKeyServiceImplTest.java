@@ -39,14 +39,14 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
- * UserApiKeyServiceImpl 单元测试
+ * UserApiKeyManagerImpl 单元测试
  *
  * <p>owner 校验：默认用例为管理员上下文（hasRole(ADMIN)=true）；
  * 普通用户上下文（hasRole=false + getLoginIdAsLong）用于归属校验用例。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("UserApiKeyServiceImpl 测试")
-class UserApiKeyServiceImplTest {
+@DisplayName("UserApiKeyManagerImpl 测试")
+class UserApiKeyManagerImplTest {
 
     @Mock
     private UserApiKeyRepository userApiKeyRepository;
@@ -58,7 +58,7 @@ class UserApiKeyServiceImplTest {
     private ApplicationRepository applicationRepository;
 
     @InjectMocks
-    private UserApiKeyServiceImpl service;
+    private UserApiKeyManagerImpl service;
 
     private static final Long USER_ID = 50L;
     private static final Long OTHER_USER_ID = 999L;

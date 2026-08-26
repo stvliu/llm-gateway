@@ -25,7 +25,7 @@ import java.util.concurrent.Executor;
 /**
  * 健康检查独立线程池配置（provider-starter 装配）。
  *
- * <p>供 provider 域 {@code ChannelHealthService} 注入，避免连通性测试阻塞 Tomcat 主线程池：</p>
+ * <p>供 provider 域 {@code ChannelHealthManager} 注入，避免连通性测试阻塞 Tomcat 主线程池：</p>
  * <ul>
  *   <li>core 4 / max 16 / queue 50</li>
  *   <li>线程命名前缀 health-check-</li>

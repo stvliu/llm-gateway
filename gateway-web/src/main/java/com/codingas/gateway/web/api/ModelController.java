@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.model.ModelService;
+import com.codingas.gateway.provider.model.ModelManager;
 import com.codingas.gateway.web.api.dto.*;
 import com.codingas.gateway.common.dto.PageResponse;
 import jakarta.validation.Valid;
@@ -32,14 +32,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ModelController {
 
-    private final ModelService modelService;
+    private final ModelManager modelManager;
 
     /**
      * 创建模型
      */
     @PostMapping
     public ModelResponse create(@Valid @RequestBody ModelCreateRequest request) {
-        return ModelResponse.from(modelService.create(request.toCommand()));
+        return ModelResponse.from(modelManager.create(request.toCommand()));
     }
 
     /**
@@ -47,7 +47,7 @@ public class ModelController {
      */
     @GetMapping("/{id}")
     public ModelResponse getById(@PathVariable Long id) {
-        return ModelResponse.from(modelService.getById(id));
+        return ModelResponse.from(modelManager.getById(id));
     }
 
     /**
@@ -55,7 +55,7 @@ public class ModelController {
      */
     @GetMapping
     public PageResponse<ModelResponse> query(@ModelAttribute ModelQueryRequest request) {
-        return ModelResponse.fromPage(modelService.query(request.toQuery()));
+        return ModelResponse.fromPage(modelManager.query(request.toQuery()));
     }
 
     /**
@@ -65,7 +65,7 @@ public class ModelController {
     public ModelResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ModelUpdateRequest request) {
-        return ModelResponse.from(modelService.update(id, request.toCommand()));
+        return ModelResponse.from(modelManager.update(id, request.toCommand()));
     }
 
     /**
@@ -73,7 +73,7 @@ public class ModelController {
      */
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        modelService.delete(id);
+        modelManager.delete(id);
     }
 
     /**
@@ -83,6 +83,6 @@ public class ModelController {
     public ModelResponse setEnabled(
             @PathVariable Long id,
             @RequestParam boolean enabled) {
-        return ModelResponse.from(modelService.setEnabled(id, enabled));
+        return ModelResponse.from(modelManager.setEnabled(id, enabled));
     }
 }

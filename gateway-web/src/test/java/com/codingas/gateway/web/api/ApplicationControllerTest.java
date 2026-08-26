@@ -15,9 +15,9 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.application.ApplicationService;
+import com.codingas.gateway.iam.application.ApplicationManager;
 import com.codingas.gateway.iam.apikey.UserApiKey;
-import com.codingas.gateway.iam.apikey.UserApiKeyService;
+import com.codingas.gateway.iam.apikey.UserApiKeyManager;
 import com.codingas.gateway.web.api.dto.UserApiKeyResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import org.junit.jupiter.api.DisplayName;
@@ -46,10 +46,10 @@ import static org.mockito.Mockito.when;
 class ApplicationControllerTest {
 
     @Mock
-    private ApplicationService applicationService;
+    private ApplicationManager applicationManager;
 
     @Mock
-    private UserApiKeyService userApiKeyService;
+    private UserApiKeyManager userApiKeyManager;
 
     @InjectMocks
     private ApplicationController controller;
@@ -68,7 +68,7 @@ class ApplicationControllerTest {
             key.setApplicationId(7L);
             key.setKeyPrefix("sk-abc1");
             key.setName("test-key");
-            when(userApiKeyService.findByApplicationId(7L)).thenReturn(List.of(key));
+            when(userApiKeyManager.findByApplicationId(7L)).thenReturn(List.of(key));
 
             // when
             List<UserApiKeyResponse> result = controller.listApiKeys(7L);
@@ -87,10 +87,10 @@ class ApplicationControllerTest {
         @Test
         @DisplayName("应用下有 Key 引用时删除 — 抛 GatewayRequestException(APPLICATION_HAS_API_KEYS)")
         void delete_hasApiKeys_throwsConflict() {
-            // given — ApplicationServiceImpl.delete 前置校验 UserApiKey 引用，有则抛冲突
+            // given — ApplicationManagerImpl.delete 前置校验 UserApiKey 引用，有则抛冲突
             doThrow(new GatewayRequestException("APPLICATION_HAS_API_KEYS",
                     "应用下还有 API Key，请先转移或删除"))
-                    .when(applicationService).delete(7L);
+                    .when(applicationManager).delete(7L);
 
             // when & then — Controller 透传业务异常，由 GlobalExceptionHandler 映射 400
             assertThatThrownBy(() -> controller.delete(7L))
