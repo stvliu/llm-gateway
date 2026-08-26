@@ -15,7 +15,6 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.user.LoginCommand;
 import jakarta.validation.constraints.NotBlank;
 
 /**
@@ -29,13 +28,4 @@ public record LoginRequest(
     String password,
 
     boolean rememberMe
-) {
-    /**
-     * 转换为核心登录用例入参
-     *
-     * @return 登录用例入参
-     */
-    public LoginCommand toCommand() {
-        return new LoginCommand(username, password, rememberMe);
-    }
-}
+) {}

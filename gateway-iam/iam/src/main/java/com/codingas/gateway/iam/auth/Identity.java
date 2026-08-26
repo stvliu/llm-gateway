@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.codingas.gateway.iam.valueobject;
+package com.codingas.gateway.iam.auth;
 
 /**
  * 认证后的身份上下文

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.interceptor;
 
-import com.codingas.gateway.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.Identity;
 import com.codingas.gateway.security.threat.RateLimitManager;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

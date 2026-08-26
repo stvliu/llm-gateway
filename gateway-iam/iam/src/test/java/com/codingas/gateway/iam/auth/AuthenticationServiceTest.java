@@ -18,7 +18,7 @@ package com.codingas.gateway.iam.auth;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
-import com.codingas.gateway.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.Identity;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -68,7 +68,7 @@ class UserControllerTest {
             request.setUsername("testuser");
 
             User user = createTestUser();
-            when(userManager.create(any())).thenReturn(user);
+            when(userManager.create(any(), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.create(request);

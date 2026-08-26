@@ -19,7 +19,7 @@ import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelDiscoveryManager;
 import com.codingas.gateway.web.api.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

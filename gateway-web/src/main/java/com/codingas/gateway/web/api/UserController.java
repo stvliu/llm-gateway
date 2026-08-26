@@ -43,7 +43,7 @@ public class UserController {
      */
     @PostMapping
     public UserResponse create(@Valid @RequestBody UserCreateRequest request) {
-        return UserResponse.from(userManager.create(request.toCommand()));
+        return UserResponse.from(userManager.create(request.toEntity(), request.getPassword()));
     }
 
     /**
@@ -69,7 +69,7 @@ public class UserController {
     public UserResponse update(
             @PathVariable Long id,
             @Valid @RequestBody UserUpdateRequest request) {
-        return UserResponse.from(userManager.update(id, request.toCommand()));
+        return UserResponse.from(userManager.update(id, request.toEntity()));
     }
 
     /**

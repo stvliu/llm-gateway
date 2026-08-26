@@ -18,7 +18,7 @@ package com.codingas.gateway.iam.auth;
 import com.codingas.gateway.iam.apikey.UserApiKey;
 import com.codingas.gateway.iam.apikey.UserApiKeyRepository;
 import com.codingas.gateway.iam.encryption.ApiKeyEncryptor;
-import com.codingas.gateway.iam.valueobject.Identity;
+import com.codingas.gateway.iam.auth.Identity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;

@@ -42,7 +42,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        return LoginResponse.from(userManager.login(request.toCommand()));
+        return LoginResponse.from(userManager.login(request.username(), request.password(), request.rememberMe()));
     }
 
     /**
@@ -68,6 +68,6 @@ public class AuthController {
     @PatchMapping("/me/password")
     public void updatePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
-        userManager.changePassword(userId, request.toCommand());
+        userManager.changePassword(userId, request.currentPassword(), request.newPassword());
     }
 }

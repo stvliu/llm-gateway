@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.user.UserUpdateCommand;
+import com.codingas.gateway.iam.user.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -36,11 +36,16 @@ public class UserUpdateRequest {
     private String avatarUrl;
 
     /**
-     * 转换为核心更新用例入参
+     * 转换为用户实体（null 字段表示不更新）
      *
-     * @return 更新用例入参
+     * @return 用户实体
      */
-    public UserUpdateCommand toCommand() {
-        return new UserUpdateCommand(username, email, phone, avatarUrl);
+    public User toEntity() {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setAvatarUrl(avatarUrl);
+        return user;
     }
 }

@@ -58,22 +58,18 @@ public class UserManagerImpl implements UserManager {
      */
     @Override
     @Transactional
-    public User create(UserCreateCommand command) {
+    public User create(User user, String plainPassword) {
         // 检查邮箱唯一性
-        if (userRepository.existsByEmail(command.getEmail())) {
+        if (userRepository.existsByEmail(user.getEmail())) {
             throw new DuplicateResourceException("User", "email");
         }
 
-        // 创建用户
-        User user = new User();
-        user.setUsername(command.getUsername());
-        user.setEmail(command.getEmail());
-        user.setPasswordHash(passwordEncoder.encode(command.getPassword()));
-        user.setPhone(command.getPhone());
+        // 明文密码编码为哈希后存储
+        user.setPasswordHash(passwordEncoder.encode(plainPassword));
 
         // 设置角色（默认为 USER）
-        if (command.getRole() != null && !command.getRole().isBlank()) {
-            user.setRole(command.getRole());
+        if (user.getRole() != null && !user.getRole().isBlank()) {
+            user.setRole(user.getRole());
         }
 
         return userRepository.save(user);
@@ -129,24 +125,25 @@ public class UserManagerImpl implements UserManager {
      */
     @Override
     @Transactional
-    public User update(Long id, UserUpdateCommand command) {
-        User user = userRepository.findById(id)
+    public User update(Long id, User user) {
+        User existing = userRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("User", id));
 
-        if (command.getUsername() != null) {
-            user.setUsername(command.getUsername());
+        // 实体 null 字段表示不更新
+        if (user.getUsername() != null) {
+            existing.setUsername(user.getUsername());
         }
-        if (command.getEmail() != null) {
-            user.setEmail(command.getEmail());
+        if (user.getEmail() != null) {
+            existing.setEmail(user.getEmail());
         }
-        if (command.getPhone() != null) {
-            user.setPhone(command.getPhone());
+        if (user.getPhone() != null) {
+            existing.setPhone(user.getPhone());
         }
-        if (command.getAvatarUrl() != null) {
-            user.setAvatarUrl(command.getAvatarUrl());
+        if (user.getAvatarUrl() != null) {
+            existing.setAvatarUrl(user.getAvatarUrl());
         }
 
-        return userRepository.save(user);
+        return userRepository.save(existing);
     }
 
     /**
@@ -218,9 +215,9 @@ public class UserManagerImpl implements UserManager {
      */
     @Override
     @Transactional
-    public LoginResult login(LoginCommand command) {
+    public LoginResult login(String username, String password, boolean rememberMe) {
         // 查找用户
-        User user = userRepository.findByUsername(command.username())
+        User user = userRepository.findByUsername(username)
             .orElseThrow(() -> new AuthenticationFailedException("用户名或密码错误"));
 
         // 检查用户状态
@@ -229,7 +226,7 @@ public class UserManagerImpl implements UserManager {
         }
 
         // 验证密码
-        if (!passwordEncoder.matches(command.password(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
             throw new AuthenticationFailedException("用户名或密码错误");
         }
 
@@ -250,17 +247,17 @@ public class UserManagerImpl implements UserManager {
      */
     @Override
     @Transactional
-    public void changePassword(Long userId, ChangePasswordCommand command) {
+    public void changePassword(Long userId, String currentPassword, String newPassword) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User", userId));
 
         // 验证当前密码
-        if (!passwordEncoder.matches(command.currentPassword(), user.getPasswordHash())) {
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
             throw new GatewayRequestException("INVALID_PASSWORD", "当前密码错误");
         }
 
         // 更新密码
-        user.setPasswordHash(passwordEncoder.encode(command.newPassword()));
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
     }
 

@@ -72,8 +72,7 @@ class UserManagerTest {
         @DisplayName("创建用户成功")
         void create_validRequest_returnsUser() {
             // given
-            UserCreateCommand command =
-                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", "13800138000", "ADMIN");
+            
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -84,7 +83,7 @@ class UserManagerTest {
             });
 
             // when
-            User user = userManager.create(command);
+            User user = userManager.create(createUser("newuser", "new@example.com", "13800138000", "ADMIN"), "plainPassword123");
 
             // then
             assertThat(user).isNotNull();
@@ -99,8 +98,7 @@ class UserManagerTest {
         @DisplayName("创建用户时角色默认为 USER")
         void create_withoutRole_defaultsToUser() {
             // given
-            UserCreateCommand command =
-                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", null, null);
+            
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -111,7 +109,7 @@ class UserManagerTest {
             });
 
             // when
-            userManager.create(command);
+            userManager.create(createUser("newuser", "new@example.com", null, null), "plainPassword123");
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -124,13 +122,12 @@ class UserManagerTest {
         @DisplayName("邮箱已存在时抛出 DuplicateResourceException")
         void create_duplicateEmail_throwsException() {
             // given
-            UserCreateCommand command =
-                    new UserCreateCommand("newuser", "existing@example.com", "password123", null, null);
+            
 
             when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
 
             // when & then
-            assertThatThrownBy(() -> userManager.create(command))
+            assertThatThrownBy(() -> userManager.create(createUser("newuser", "existing@example.com", null, null), "password123"))
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining("email");
@@ -142,8 +139,7 @@ class UserManagerTest {
         @DisplayName("创建用户时密码应被哈希")
         void create_validRequest_passwordIsHashed() {
             // given
-            UserCreateCommand command =
-                    new UserCreateCommand("newuser", "new@example.com", "plainPassword123", null, null);
+            
 
             when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
             when(passwordEncoder.encode("plainPassword123")).thenReturn("encodedPassword");
@@ -154,7 +150,7 @@ class UserManagerTest {
             });
 
             // when
-            userManager.create(command);
+            userManager.create(createUser("newuser", "new@example.com", null, null), "plainPassword123");
 
             // then
             ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
@@ -321,10 +317,9 @@ class UserManagerTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when
-            User user = userManager.update(1L, command);
+            User user = userManager.update(1L, createUser("updateduser", null, null, null));
 
             // then
             assertThat(user).isNotNull();
@@ -339,10 +334,9 @@ class UserManagerTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-            UserUpdateCommand command = new UserUpdateCommand(null, "updated@example.com", null, null);
 
             // when
-            userManager.update(1L, command);
+            userManager.update(1L, createUser(null, "updated@example.com", null, null));
 
             // then
             verify(userRepository).save(testUser);
@@ -354,10 +348,9 @@ class UserManagerTest {
             // given
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            UserUpdateCommand command = new UserUpdateCommand("updateduser", null, null, null);
 
             // when & then
-            assertThatThrownBy(() -> userManager.update(99L, command))
+            assertThatThrownBy(() -> userManager.update(99L, createUser("updateduser", null, null, null)))
                 .isInstanceOf(ResourceNotFoundException.class);
         }
     }
@@ -478,6 +471,16 @@ class UserManagerTest {
         user.setCreatedAt(Instant.now());
         user.setUpdatedAt(Instant.now());
 
+        return user;
+    }
+
+    /** 构造用户实体（create/update 共用：null 字段表示不更新） */
+    private User createUser(String username, String email, String phone, String avatarUrl) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setAvatarUrl(avatarUrl);
         return user;
     }
 }

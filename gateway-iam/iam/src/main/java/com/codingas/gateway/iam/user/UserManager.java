@@ -20,9 +20,9 @@ import com.codingas.gateway.common.dto.PageResponse;
 import java.util.List;
 
 /**
- * 用户应用服务接口
+ * 用户管理服务接口
  *
- * <p>处理用户管理的业务逻辑。出入参采用领域实体 {@link User} 与轻量用例对象，
+ * <p>处理用户管理的业务逻辑。出入参采用实体 {@link User} 与查询/结果对象，
  * HTTP 契约（Request/Response DTO）由 web 层负责转换。</p>
  */
 public interface UserManager {
@@ -30,10 +30,11 @@ public interface UserManager {
     /**
      * 创建用户
      *
-     * @param command 创建用例入参
+     * @param user         用户实体（承载 username/email/phone/role）
+     * @param plainPassword 明文密码（由本服务编码哈希后存储）
      * @return 创建后的用户实体
      */
-    User create(UserCreateCommand command);
+    User create(User user, String plainPassword);
 
     /**
      * 根据 ID 获取用户
@@ -52,13 +53,13 @@ public interface UserManager {
     PageResponse<User> query(UserQuery query);
 
     /**
-     * 更新用户
+     * 更新用户（实体 null 字段不更新）
      *
-     * @param id      用户 ID
-     * @param command 更新用例入参（仅非 null 字段生效）
+     * @param id   用户 ID
+     * @param user 用户实体（仅非 null 字段生效）
      * @return 更新后的用户实体
      */
-    User update(Long id, UserUpdateCommand command);
+    User update(Long id, User user);
 
     /**
      * 删除用户（软删除）
@@ -88,10 +89,12 @@ public interface UserManager {
     /**
      * 用户登录
      *
-     * @param command 登录用例入参
-     * @return 登录用例结果（用户实体、令牌与权限码）
+     * @param username   用户名
+     * @param password   密码（明文）
+     * @param rememberMe 是否记住登录态
+     * @return 登录结果（用户实体、令牌与权限码）
      */
-    LoginResult login(LoginCommand command);
+    LoginResult login(String username, String password, boolean rememberMe);
 
     /**
      * 用户登出
@@ -101,10 +104,11 @@ public interface UserManager {
     /**
      * 修改密码
      *
-     * @param userId  用户 ID
-     * @param command 修改密码用例入参
+     * @param userId          用户 ID
+     * @param currentPassword 当前密码（明文）
+     * @param newPassword     新密码（明文）
      */
-    void changePassword(Long userId, ChangePasswordCommand command);
+    void changePassword(Long userId, String currentPassword, String newPassword);
 
     /**
      * 重置密码（管理员触发）

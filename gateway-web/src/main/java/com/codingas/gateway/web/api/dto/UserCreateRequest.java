@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api.dto;
 
-import com.codingas.gateway.iam.user.UserCreateCommand;
+import com.codingas.gateway.iam.user.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -47,11 +47,16 @@ public class UserCreateRequest {
     private String role;
 
     /**
-     * 转换为核心创建用例入参
+     * 转换为用户实体（明文密码经 create 单独传入）
      *
-     * @return 创建用例入参
+     * @return 用户实体
      */
-    public UserCreateCommand toCommand() {
-        return new UserCreateCommand(username, email, password, phone, role);
+    public User toEntity() {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPhone(phone);
+        user.setRole(role);
+        return user;
     }
 }
