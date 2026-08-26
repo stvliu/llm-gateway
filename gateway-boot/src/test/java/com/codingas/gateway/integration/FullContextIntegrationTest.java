@@ -19,10 +19,10 @@ import com.codingas.gateway.proxy.invoker.KeyFailoverInvoker;
 import com.codingas.gateway.proxy.routing.CredentialResolver;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.protocol.Protocol;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
@@ -115,7 +115,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
         }
 
         @Test
-        @DisplayName("所有 Key 均 401 失败 → 抛出 ProviderException")
+        @DisplayName("所有 Key 均 401 失败 → 抛出 UpstreamException")
         void testKeyFailover_allKeysFail() throws IOException {
             try (ProviderSimulator sim = ProviderSimulator.create()) {
                 // 入队响应：两个 Key 均 401
@@ -134,7 +134,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
                         FailureStrategy.FAIL_RETRY);
 
                 assertThatThrownBy(() -> invoker.invoke(ctx, createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .hasMessageContaining("所有 Key 均失败");
 
                 // 验证故障转移计数器：Key1(101) 失败后尝试 Key2，应触发一次

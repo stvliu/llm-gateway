@@ -20,8 +20,8 @@ import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.audit.CallLog;
 import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.protocol.*;
-import com.codingas.gateway.protocol.contract.*;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.raw.*;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.SseErrorFormatter;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;
@@ -150,7 +150,7 @@ public class ChatDispatchManagerImpl implements ChatDispatchManager {
             @Override
             public void onError(Throwable t) {
                 String errorJson;
-                if (t instanceof ProviderException pe) {
+                if (t instanceof UpstreamException pe) {
                     errorJson = SseErrorFormatter.format(pe);
                 } else {
                     errorJson = "{\"error\":\"unknown_error\",\"retry_after\":0}";

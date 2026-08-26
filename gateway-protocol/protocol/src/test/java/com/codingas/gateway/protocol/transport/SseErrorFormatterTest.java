@@ -26,7 +26,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("RATE_LIMIT_ERROR 格式化为 rate_limit 含 retry_after")
     void rateLimit_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "限流",
+        UpstreamException e = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "限流",
                 null, null, null, null, 30);
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"rate_limit\",\"retry_after\":30}");
@@ -35,7 +35,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("QUOTA_EXCEEDED 格式化为 quota_exceeded")
     void quotaExceeded_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限");
+        UpstreamException e = new UpstreamException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"quota_exceeded\",\"retry_after\":0}");
     }
@@ -43,7 +43,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("AUTHENTICATION_ERROR 格式化为 authentication_error")
     void authenticationError_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.AUTHENTICATION_ERROR, "认证失败");
+        UpstreamException e = new UpstreamException(ProviderErrorType.AUTHENTICATION_ERROR, "认证失败");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"authentication_error\",\"retry_after\":0}");
     }
@@ -51,7 +51,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("TIMEOUT_ERROR 格式化为 timeout")
     void timeout_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.TIMEOUT_ERROR, "超时");
+        UpstreamException e = new UpstreamException(ProviderErrorType.TIMEOUT_ERROR, "超时");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"timeout\",\"retry_after\":0}");
     }
@@ -59,7 +59,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("UPSTREAM_ERROR 格式化为 api_error")
     void upstreamError_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "上游错误");
+        UpstreamException e = new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "上游错误");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"api_error\",\"retry_after\":0}");
     }
@@ -67,7 +67,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("SERVICE_UNAVAILABLE 格式化为 server_error")
     void serviceUnavailable_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.SERVICE_UNAVAILABLE, "服务不可用");
+        UpstreamException e = new UpstreamException(ProviderErrorType.SERVICE_UNAVAILABLE, "服务不可用");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"server_error\",\"retry_after\":0}");
     }
@@ -75,7 +75,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("NETWORK_ERROR 格式化为 network_error")
     void networkError_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.NETWORK_ERROR, "网络异常");
+        UpstreamException e = new UpstreamException(ProviderErrorType.NETWORK_ERROR, "网络异常");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"network_error\",\"retry_after\":0}");
     }
@@ -83,7 +83,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("INVALID_REQUEST 格式化为 invalid_request_error")
     void invalidRequest_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.INVALID_REQUEST, "无效请求");
+        UpstreamException e = new UpstreamException(ProviderErrorType.INVALID_REQUEST, "无效请求");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"invalid_request_error\",\"retry_after\":0}");
     }
@@ -91,7 +91,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("UNKNOWN_ERROR 格式化为 unknown_error")
     void unknownError_format() {
-        ProviderException e = new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");
+        UpstreamException e = new UpstreamException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"unknown_error\",\"retry_after\":0}");
     }
@@ -99,7 +99,7 @@ class SseErrorFormatterTest {
     @Test
     @DisplayName("retryAfterSeconds 为 null 时输出 0")
     void retryAfterNull_outputZero() {
-        ProviderException e = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "错误");
+        UpstreamException e = new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "错误");
         assertThat(SseErrorFormatter.format(e))
                 .isEqualTo("{\"error\":\"api_error\",\"retry_after\":0}");
     }

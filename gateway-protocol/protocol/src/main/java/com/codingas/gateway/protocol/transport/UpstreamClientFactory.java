@@ -18,11 +18,11 @@ package com.codingas.gateway.protocol.transport;
 import com.codingas.gateway.protocol.ProtocolRequest;
 
 /**
- * 协议上游客户端工厂（每协议插件注册一个）
+ * 上游客户端工厂（每协议插件注册一个）
  *
  * <p>UpstreamClient 为每请求绑定配置的实例（非单例），注册表收集的是本工厂而非 client 实例。</p>
  */
-public interface ProtocolUpstreamClientFactory {
+public interface UpstreamClientFactory {
 
     /** 支持的协议标识（"openai"/"anthropic"） */
     String supportedProtocol();

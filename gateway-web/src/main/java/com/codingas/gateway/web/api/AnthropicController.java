@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.proxy.chat.ChatDispatchManager;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;

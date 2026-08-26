@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class UpstreamClientRegistryImplTest {
 
-    static class FakeFactory implements ProtocolUpstreamClientFactory {
+    static class FakeFactory implements UpstreamClientFactory {
         private final String protocol;
         FakeFactory(String protocol) { this.protocol = protocol; }
         @Override public String supportedProtocol() { return protocol; }

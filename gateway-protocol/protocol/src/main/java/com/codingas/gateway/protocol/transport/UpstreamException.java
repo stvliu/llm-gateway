@@ -17,13 +17,15 @@ package com.codingas.gateway.protocol.transport;
 
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.enums.ProviderErrorType;
+import lombok.Getter;
 
 /**
- * 供应商异常
+ * 上游调用异常
  *
- * <p>表示调用外部模型供应商时发生的错误，包含错误类型和上下文信息。</p>
+ * <p>表示调用外部模型供应商（上游）时发生的错误，包含错误类型和上下文信息。</p>
  */
-public class ProviderException extends GatewayException {
+@Getter
+public class UpstreamException extends GatewayException {
 
     private final ProviderErrorType errorType;
     private final String traceId;
@@ -32,7 +34,7 @@ public class ProviderException extends GatewayException {
     private final Long channelEndpointId;
     private final Integer retryAfterSeconds;
 
-    public ProviderException(String code, String message) {
+    public UpstreamException(String code, String message) {
         super(code, message);
         this.errorType = ProviderErrorType.UNKNOWN_ERROR;
         this.traceId = null;
@@ -42,7 +44,7 @@ public class ProviderException extends GatewayException {
         this.retryAfterSeconds = null;
     }
 
-    public ProviderException(ProviderErrorType errorType, String message) {
+    public UpstreamException(ProviderErrorType errorType, String message) {
         super(errorType.name(), message);
         this.errorType = errorType;
         this.traceId = null;
@@ -52,7 +54,7 @@ public class ProviderException extends GatewayException {
         this.retryAfterSeconds = null;
     }
 
-    public ProviderException(ProviderErrorType errorType, String message, Throwable cause) {
+    public UpstreamException(ProviderErrorType errorType, String message, Throwable cause) {
         super(errorType.name(), message, cause);
         this.errorType = errorType;
         this.traceId = null;
@@ -62,7 +64,7 @@ public class ProviderException extends GatewayException {
         this.retryAfterSeconds = null;
     }
 
-    public ProviderException(ProviderErrorType errorType, String message,
+    public UpstreamException(ProviderErrorType errorType, String message,
                              String traceId, String model, String provider,
                              Long channelEndpointId, Integer retryAfterSeconds) {
         super(errorType.name(), message);
@@ -74,10 +76,4 @@ public class ProviderException extends GatewayException {
         this.retryAfterSeconds = retryAfterSeconds;
     }
 
-    public ProviderErrorType getErrorType() { return errorType; }
-    public String getTraceId() { return traceId; }
-    public String getModel() { return model; }
-    public String getProvider() { return provider; }
-    public Long getChannelEndpointId() { return channelEndpointId; }
-    public Integer getRetryAfterSeconds() { return retryAfterSeconds; }
 }

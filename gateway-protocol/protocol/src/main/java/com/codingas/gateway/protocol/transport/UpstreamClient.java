@@ -23,7 +23,7 @@ import com.codingas.gateway.protocol.StreamCallback;
  * 上游调用接口（协议传输端口）
  *
  * <p>每个实例绑定特定 Provider 配置（endpointUrl/apiKey/timeout），
- * 由 {@link ProtocolUpstreamClientFactory} 创建、{@link UpstreamClientRegistry} 按协议获取。</p>
+ * 由 {@link UpstreamClientFactory} 创建、{@link UpstreamClientRegistry} 按协议获取。</p>
  *
  * @param <T> 该客户端专署的协议请求类型
  */

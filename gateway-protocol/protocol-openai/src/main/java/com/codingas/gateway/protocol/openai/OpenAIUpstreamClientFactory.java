@@ -17,7 +17,7 @@ package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
-import com.codingas.gateway.protocol.transport.ProtocolUpstreamClientFactory;
+import com.codingas.gateway.protocol.transport.UpstreamClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -25,7 +25,7 @@ import okhttp3.OkHttpClient;
 /**
  * OpenAI 上游客户端工厂（协议插件自包含：格式转换 + 传输调用）
  */
-public class OpenAIUpstreamClientFactory implements ProtocolUpstreamClientFactory {
+public class OpenAIUpstreamClientFactory implements UpstreamClientFactory {
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;

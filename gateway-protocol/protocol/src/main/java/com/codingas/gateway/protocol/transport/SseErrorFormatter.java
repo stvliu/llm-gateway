@@ -20,7 +20,7 @@ import com.codingas.gateway.common.enums.ProviderErrorType;
 /**
  * SSE 错误格式化工具
  *
- * <p>将 ProviderException 格式化为结构化 SSE 错误事件。</p>
+ * <p>将 UpstreamException 格式化为结构化 SSE 错误事件。</p>
  */
 public class SseErrorFormatter {
 
@@ -29,10 +29,10 @@ public class SseErrorFormatter {
     /**
      * 格式化 SSE 错误事件
      *
-     * @param e ProviderException
+     * @param e UpstreamException
      * @return 结构化 JSON 字符串
      */
-    public static String format(ProviderException e) {
+    public static String format(UpstreamException e) {
         String type = switch (e.getErrorType()) {
             case RATE_LIMIT_ERROR -> "rate_limit";
             case QUOTA_EXCEEDED -> "quota_exceeded";

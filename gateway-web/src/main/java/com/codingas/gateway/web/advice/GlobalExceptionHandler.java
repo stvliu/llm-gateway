@@ -18,7 +18,7 @@ package com.codingas.gateway.web.advice;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitOpenException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -63,8 +63,8 @@ public class GlobalExceptionHandler {
     /**
      * 处理提供商异常
      */
-    @ExceptionHandler(ProviderException.class)
-    public ResponseEntity<ApiResponse<Void>> handleProviderException(ProviderException ex) {
+    @ExceptionHandler(UpstreamException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUpstreamException(UpstreamException ex) {
         log.error("Provider error: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_GATEWAY)

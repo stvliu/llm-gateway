@@ -23,8 +23,8 @@ import com.codingas.gateway.protocol.canonical.CanonicalTool;
 import com.codingas.gateway.protocol.canonical.CanonicalToolCall;
 import com.codingas.gateway.protocol.canonical.CanonicalUsage;
 import com.codingas.gateway.protocol.ProtocolAdapter;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

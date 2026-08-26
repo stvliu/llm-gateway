@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * 上游调用注册表（协议域）
  *
- * <p>按协议收集各插件 {@link ProtocolUpstreamClientFactory}，按协议获取绑定配置的 client。
+ * <p>按协议收集各插件 {@link UpstreamClientFactory}，按协议获取绑定配置的 client。
  * 返回类型擦除为 {@code UpstreamClient<ProtocolRequest>}，调用方无需处理通配符。</p>
  */
 public interface UpstreamClientRegistry {

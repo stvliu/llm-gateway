@@ -16,8 +16,8 @@
 package com.codingas.gateway.support;
 
 import com.codingas.gateway.protocol.*;
-import com.codingas.gateway.protocol.contract.*;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.raw.*;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.anthropic.AnthropicUpstreamClient;
 import com.codingas.gateway.protocol.openai.OpenAIUpstreamClient;
 import okhttp3.OkHttpClient;
@@ -65,7 +65,7 @@ class ProviderSimulatorTest {
                 .build();
 
         assertThatThrownBy(() -> client.chat(request))
-                .isInstanceOf(ProviderException.class);
+                .isInstanceOf(UpstreamException.class);
     }
 
     // ==================== OpenAI 客户端 ====================
@@ -139,7 +139,7 @@ class ProviderSimulatorTest {
                     .build();
 
             assertThatThrownBy(() -> client.chat(request))
-                    .isInstanceOf(ProviderException.class);
+                    .isInstanceOf(UpstreamException.class);
         }
     }
 

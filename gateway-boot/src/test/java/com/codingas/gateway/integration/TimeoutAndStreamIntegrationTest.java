@@ -16,9 +16,9 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;
 import org.junit.jupiter.api.DisplayName;
@@ -56,7 +56,7 @@ class TimeoutAndStreamIntegrationTest {
     class TimeoutScenarios {
 
         @Test
-        @DisplayName("读超时 — 抛出 ProviderException 且 errorType=TIMEOUT_ERROR")
+        @DisplayName("读超时 — 抛出 UpstreamException 且 errorType=TIMEOUT_ERROR")
         void testTimeout_throwsTimeoutError() throws Exception {
             // enqueueTimeout 入队 30 秒 body 延迟；client 读超时设为 1 秒，应触发 SocketTimeoutException
             // 超时后 MockWebServer 关闭可能失败，故使用 try/finally 而非 try-with-resources
@@ -67,9 +67,9 @@ class TimeoutAndStreamIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-test-key", 1);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.TIMEOUT_ERROR);
                         });
             } finally {
@@ -144,8 +144,8 @@ class TimeoutAndStreamIntegrationTest {
                 assertThat(latch.await(5, TimeUnit.SECONDS)).as("onError/onComplete 应在超时内触发").isTrue();
                 assertThat(completed.get()).as("上游错误不应触发 onComplete").isFalse();
                 assertThat(errorRef.get()).as("应触发 onError").isNotNull();
-                assertThat(errorRef.get()).isInstanceOf(ProviderException.class);
-                assertThat(((ProviderException) errorRef.get()).getErrorType())
+                assertThat(errorRef.get()).isInstanceOf(UpstreamException.class);
+                assertThat(((UpstreamException) errorRef.get()).getErrorType())
                         .as("HTTP 500 流式错误应映射为 UPSTREAM_ERROR")
                         .isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
             }

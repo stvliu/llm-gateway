@@ -28,25 +28,25 @@ import java.util.stream.Collectors;
 /**
  * 协议域注册表实现
  *
- * <p>注入全部 {@link ProtocolUpstreamClientFactory} Bean，按 supportedProtocol() 建立索引；
+ * <p>注入全部 {@link UpstreamClientFactory} Bean，按 supportedProtocol() 建立索引；
  * getClient 选择工厂创建实例并擦除泛型为基类，调用方无感。</p>
  */
 @Component
 public class UpstreamClientRegistryImpl implements UpstreamClientRegistry {
 
-    private final Map<String, ProtocolUpstreamClientFactory> factories;
+    private final Map<String, UpstreamClientFactory> factories;
 
-    public UpstreamClientRegistryImpl(List<ProtocolUpstreamClientFactory> factoryList) {
+    public UpstreamClientRegistryImpl(List<UpstreamClientFactory> factoryList) {
         // LinkedHashMap 保持工厂装配顺序，getSupportedProtocols 返回稳定（可观测行为）
         this.factories = factoryList.stream()
-                .collect(Collectors.toMap(ProtocolUpstreamClientFactory::supportedProtocol, Function.identity(),
+                .collect(Collectors.toMap(UpstreamClientFactory::supportedProtocol, Function.identity(),
                         (existing, replacement) -> existing, LinkedHashMap::new));
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public UpstreamClient<ProtocolRequest> getClient(String protocol, String endpointUrl, String apiKey, int timeoutSeconds) {
-        ProtocolUpstreamClientFactory factory = factories.get(protocol);
+        UpstreamClientFactory factory = factories.get(protocol);
         if (factory == null) {
             throw new IllegalArgumentException("不支持的协议: " + protocol);
         }

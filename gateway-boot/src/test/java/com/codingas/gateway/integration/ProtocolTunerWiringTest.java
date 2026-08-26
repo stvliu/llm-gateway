@@ -17,8 +17,8 @@ package com.codingas.gateway.integration;
 
 import com.codingas.gateway.boot.GatewayApplication;
 import com.codingas.gateway.proxy.conversion.OutboundTuner;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;

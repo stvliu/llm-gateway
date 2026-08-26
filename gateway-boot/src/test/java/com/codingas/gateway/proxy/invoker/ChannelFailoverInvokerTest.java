@@ -19,10 +19,10 @@ import com.codingas.gateway.proxy.conversion.OutboundTuner;
 import com.codingas.gateway.proxy.chat.ErrorClassifier;
 import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.common.event.FailoverOccurredEvent;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
@@ -33,7 +33,7 @@ import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;
@@ -131,7 +131,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("L1：ch1 AUTH 共因失败后转移到 ch2 成功")
     void l1_failoverToNextCandidate() {
         // ch1 抛 AUTH（共因故障），ErrorClassifier 判定 L1 → 换下一候选
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
@@ -151,7 +151,7 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("INVALID_REQUEST 绝不转移：ch1 失败直接抛出不试 ch2")
     void invalidRequest_noFailover() {
-        ProviderException invalidEx = new ProviderException(
+        UpstreamException invalidEx = new UpstreamException(
                 ProviderErrorType.INVALID_REQUEST, "bad request");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(invalidEx);
         when(errorClassifier.classify(ProviderErrorType.INVALID_REQUEST))
@@ -168,7 +168,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("候选全部耗尽时直接抛最后捕获的异常（L2 降级层已删除，不再换模型）")
     void candidatesExhausted_throwsLastException() {
         // 两候选均 AUTH 共因失败耗尽 → 直接抛最后捕获的 authEx（不再进入 L2 降级）
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
         when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
@@ -199,7 +199,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("流式：首字节前失败（启动失败）换下一候选")
     void streamOnlyBeforeFirstByte() {
         // ch1 流式启动失败（首字节前），L1 决策 → 换 ch2
-        ProviderException startupEx = new ProviderException(
+        UpstreamException startupEx = new UpstreamException(
                 ProviderErrorType.UPSTREAM_ERROR, "启动失败");
         doThrow(startupEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -219,7 +219,7 @@ class ChannelFailoverInvokerTest {
     @Test
     @DisplayName("流式：INVALID_REQUEST 启动失败直接抛不试下一候选")
     void stream_invalidRequest_noFailover() {
-        ProviderException invalidEx = new ProviderException(
+        UpstreamException invalidEx = new UpstreamException(
                 ProviderErrorType.INVALID_REQUEST, "bad request");
         doThrow(invalidEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -240,7 +240,7 @@ class ChannelFailoverInvokerTest {
     void stream_afterFirstByte_noFailover() {
         // 场景：ch1 首字节已发送后同步失败（doAnswer 模拟先 onChunk 再抛异常）
         // 语义：首字节后失败不换渠道，直接抛传播给调用方，不试 ch2
-        ProviderException afterFirstByteEx = new ProviderException(
+        UpstreamException afterFirstByteEx = new UpstreamException(
                 ProviderErrorType.UPSTREAM_ERROR, "首字节后失败");
         doAnswer(invocation -> {
             StreamCallback wrappedCallback = invocation.getArgument(2, StreamCallback.class);
@@ -267,7 +267,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("转移事件发布：L1 换候选时发布 FailoverOccurredEvent（from=失败候选, to=下一候选）")
     void failover_l1Decision_publishesFailoverEvent() {
         // ch1 AUTH 共因失败 → L1 决策 → 换 ch2 成功 → 应发布 1 条转移事件
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
@@ -297,7 +297,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("转移事件发布：NONE 决策不发布事件（请求级错误不转移）")
     void failover_noneDecision_doesNotPublishEvent() {
         // ch1 INVALID_REQUEST → NONE 决策 → 直接抛不转移 → 不应发布事件
-        ProviderException invalidEx = new ProviderException(
+        UpstreamException invalidEx = new UpstreamException(
                 ProviderErrorType.INVALID_REQUEST, "bad request");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(invalidEx);
         when(errorClassifier.classify(ProviderErrorType.INVALID_REQUEST))
@@ -328,7 +328,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("转移事件发布：全部候选耗尽时发布 exhausted=true 事件（to 为 null，直接抛最后异常）")
     void failover_allExhausted_publishesExhaustedEvent() {
         // 两候选均 AUTH 失败耗尽 → 抛最后异常，应发布 exhausted 事件（to=null）
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
         when(keyFailoverInvoker.invoke(ctx2, request)).thenThrow(authEx);
@@ -358,7 +358,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("转移事件发布：流式首字节前转移发布事件")
     void failover_streamBeforeFirstByte_publishesEvent() {
         // ch1 流式启动失败（首字节前）→ L1 决策 → 换 ch2 成功 → 应发布 1 条事件
-        ProviderException startupEx = new ProviderException(
+        UpstreamException startupEx = new UpstreamException(
                 ProviderErrorType.UPSTREAM_ERROR, "启动失败");
         doThrow(startupEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -383,7 +383,7 @@ class ChannelFailoverInvokerTest {
     void failover_eventTraceId_propagatedFromInvoke() {
         // 修复前：publishFailoverEvent 硬编码 traceId=null（调用链暂未透传），事件 traceId 恒为 null
         // 修复后：invoke 接收 traceId 参数并透传给 publishFailoverEvent → 事件 traceId 等于传入值
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(authEx);
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
@@ -405,7 +405,7 @@ class ChannelFailoverInvokerTest {
     @DisplayName("转移事件 traceId 透传：流式 invokeStream 传入的 traceId 同样填充到事件")
     void failover_eventTraceId_propagatedFromInvokeStream() {
         // ch1 流式启动失败（首字节前）→ L1 决策 → 换 ch2 成功 → 发布 1 条事件，traceId 应透传
-        ProviderException startupEx = new ProviderException(
+        UpstreamException startupEx = new UpstreamException(
                 ProviderErrorType.UPSTREAM_ERROR, "启动失败");
         doThrow(startupEx).when(keyFailoverInvoker)
                 .invokeStream(eq(ctx1), eq(request), any(StreamCallback.class));
@@ -506,7 +506,7 @@ class ChannelFailoverInvokerTest {
                 .build();
 
         // 主候选 AUTH 共因失败 → L1 → 换备候选
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(eq(primaryCtx), any(ProtocolRequest.class))).thenThrow(authEx);
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
@@ -561,7 +561,7 @@ class ChannelFailoverInvokerTest {
                 .build();
 
         // 主候选(OpenAI 同协议) AUTH 共因失败 → L1 → 换备候选(Anthropic 跨协议)
-        ProviderException authEx = new ProviderException(
+        UpstreamException authEx = new UpstreamException(
                 ProviderErrorType.AUTHENTICATION_ERROR, "auth fail");
         when(keyFailoverInvoker.invoke(eq(openaiCtx), any(ProtocolRequest.class))).thenThrow(authEx);
         when(errorClassifier.classify(ProviderErrorType.AUTHENTICATION_ERROR))
@@ -664,7 +664,7 @@ class ChannelFailoverInvokerTest {
                 .build();
 
         // 主候选(Anthropic)启动失败（首字节前）→ L1 → 换备候选(OpenAI)
-        ProviderException startupEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        UpstreamException startupEx = new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
         doThrow(startupEx).when(keyFailoverInvoker)
                 .invokeStream(eq(anthropicCtx), any(ProtocolRequest.class), any(StreamCallback.class));
         when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
@@ -716,7 +716,7 @@ class ChannelFailoverInvokerTest {
                 .build();
 
         // 主候选(OpenAI 同协议)启动失败（首字节前）→ L1 → 换备候选(Anthropic 跨协议)
-        ProviderException startupEx = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
+        UpstreamException startupEx = new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "启动失败");
         doThrow(startupEx).when(keyFailoverInvoker)
                 .invokeStream(eq(openaiCtx), any(ProtocolRequest.class), any(StreamCallback.class));
         when(errorClassifier.classify(ProviderErrorType.UPSTREAM_ERROR))
@@ -758,7 +758,7 @@ class ChannelFailoverInvokerTest {
                 Protocol.OPENAI, "sk-2", 60, false, "gpt-4o", null,
                 FailureStrategy.FAIL_RETRY);
 
-        ProviderException invalidEx = new ProviderException(
+        UpstreamException invalidEx = new UpstreamException(
                 ProviderErrorType.INVALID_REQUEST, "bad request");
         when(keyFailoverInvoker.invoke(ctx1, request)).thenThrow(invalidEx);
         when(errorClassifier.classify(ProviderErrorType.INVALID_REQUEST))

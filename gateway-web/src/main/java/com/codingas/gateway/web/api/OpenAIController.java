@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.proxy.chat.ChatDispatchManager;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;

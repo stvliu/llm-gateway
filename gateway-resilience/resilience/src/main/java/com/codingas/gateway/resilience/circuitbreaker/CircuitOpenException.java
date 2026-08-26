@@ -16,14 +16,14 @@
 package com.codingas.gateway.resilience.circuitbreaker;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 
 /**
  * 熔断器开启异常
  *
  * <p>当熔断器处于 OPEN 状态时拒绝请求抛出此异常。</p>
  */
-public class CircuitOpenException extends ProviderException {
+public class CircuitOpenException extends UpstreamException {
 
     public CircuitOpenException(String message) {
         super(ProviderErrorType.UPSTREAM_ERROR, message);

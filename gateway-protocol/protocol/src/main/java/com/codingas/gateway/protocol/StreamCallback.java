@@ -20,8 +20,7 @@ package com.codingas.gateway.protocol;
  *
  * <p>用于 LLM 流式请求的 SSE 事件回调。</p>
  *
- * <p>此接口定义在 Domain 层协议契约包中，供 UpstreamClient 使用。
- * 具体实现在 Infrastructure 层提供。</p>
+ * <p>此接口定义在协议域，供 UpstreamClient 使用；具体实现由调用方提供。</p>
  */
 public interface StreamCallback {
 

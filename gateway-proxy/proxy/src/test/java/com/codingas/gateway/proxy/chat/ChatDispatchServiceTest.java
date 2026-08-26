@@ -19,8 +19,8 @@ import com.codingas.gateway.proxy.invoker.ChannelFailoverInvoker;
 import com.codingas.gateway.proxy.routing.RoutingResolver;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.protocol.*;
-import com.codingas.gateway.protocol.contract.*;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.raw.*;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;
@@ -417,7 +417,7 @@ class ChatDispatchManagerTest {
         }
 
         @Test
-        @DisplayName("流式回调 onError（ProviderException）格式化为 SSE 错误并审计失败")
+        @DisplayName("流式回调 onError（UpstreamException）格式化为 SSE 错误并审计失败")
         void dispatchStream_callback_onError_providerException() {
             // given
             OpenAIChatRequest request = OpenAIChatRequest.builder()
@@ -434,8 +434,8 @@ class ChatDispatchManagerTest {
             verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
 
-            // when — ProviderException 触发 SseErrorFormatter 格式化
-            ProviderException pe = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "限流",
+            // when — UpstreamException 触发 SseErrorFormatter 格式化
+            UpstreamException pe = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "限流",
                     "trace-1", "gpt-4o", "openai", 20L, 30);
             auditCaptor.getValue().onError(pe);
 
@@ -450,7 +450,7 @@ class ChatDispatchManagerTest {
         }
 
         @Test
-        @DisplayName("流式回调 onError（非 ProviderException）使用 unknown_error 兜底")
+        @DisplayName("流式回调 onError（非 UpstreamException）使用 unknown_error 兜底")
         void dispatchStream_callback_onError_unknownError() {
             // given
             OpenAIChatRequest request = OpenAIChatRequest.builder()
@@ -467,7 +467,7 @@ class ChatDispatchManagerTest {
             verify(channelFailoverInvoker).invokeStream(eq(openAIContext), anyList(), any(ProtocolRequest.class),
                     eq(Protocol.OPENAI), eq(7L), anyString(), auditCaptor.capture());
 
-            // when — 非 ProviderException 走 unknown_error 兜底分支
+            // when — 非 UpstreamException 走 unknown_error 兜底分支
             auditCaptor.getValue().onError(new IllegalStateException("boom"));
 
             // then

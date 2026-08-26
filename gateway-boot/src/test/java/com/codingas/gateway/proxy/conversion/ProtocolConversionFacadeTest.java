@@ -15,8 +15,8 @@
  */
 package com.codingas.gateway.proxy.conversion;
 
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.protocol.anthropic.AnthropicProtocolAdapter;
 import com.codingas.gateway.protocol.openai.OpenAIProtocolAdapter;
 import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;

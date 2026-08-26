@@ -17,12 +17,12 @@ package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -81,7 +81,7 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                 String responseBody = response.body() != null ? response.body().string() : "";
                 if (!response.isSuccessful()) {
                     ProviderErrorType errorType = classifier.classify(response.code(), responseBody);
-                    throw new ProviderException(errorType,
+                    throw new UpstreamException(errorType,
                             "Anthropic API 调用失败: " + response.code() + " - " + responseBody);
                 }
                 return objectMapper.readValue(responseBody, AnthropicMessagesResponse.class);
@@ -90,7 +90,7 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
             ProviderErrorType errorType = e instanceof SocketTimeoutException
                     ? ProviderErrorType.TIMEOUT_ERROR
                     : ProviderErrorType.NETWORK_ERROR;
-            throw new ProviderException(errorType, "Anthropic API 调用异常", e);
+            throw new UpstreamException(errorType, "Anthropic API 调用异常", e);
         }
     }
 
@@ -118,7 +118,7 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                     ProviderErrorType errorType = e instanceof SocketTimeoutException
                             ? ProviderErrorType.TIMEOUT_ERROR
                             : ProviderErrorType.NETWORK_ERROR;
-                    callback.onError(new ProviderException(errorType, "Anthropic 网络异常: " + e.getMessage()));
+                    callback.onError(new UpstreamException(errorType, "Anthropic 网络异常: " + e.getMessage()));
                 }
 
                 @Override
@@ -127,7 +127,7 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                         if (!response.isSuccessful() || body == null) {
                             String errorBody = body != null ? body.string() : "no body";
                             ProviderErrorType errorType = classifier.classify(response.code(), errorBody);
-                            callback.onError(new ProviderException(errorType,
+                            callback.onError(new UpstreamException(errorType,
                                     "Anthropic Stream 失败: " + response.code() + " - " + errorBody));
                             return;
                         }
@@ -158,9 +158,9 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                         ProviderErrorType errorType = e instanceof SocketTimeoutException
                                 ? ProviderErrorType.TIMEOUT_ERROR
                                 : ProviderErrorType.NETWORK_ERROR;
-                        callback.onError(new ProviderException(errorType, "Anthropic 流读取异常: " + e.getMessage()));
+                        callback.onError(new UpstreamException(errorType, "Anthropic 流读取异常: " + e.getMessage()));
                     } catch (Exception e) {
-                        callback.onError(new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "Anthropic 流未知异常", e));
+                        callback.onError(new UpstreamException(ProviderErrorType.UNKNOWN_ERROR, "Anthropic 流未知异常", e));
                     }
                 }
             });
@@ -168,7 +168,7 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
             ProviderErrorType errorType = e instanceof SocketTimeoutException
                     ? ProviderErrorType.TIMEOUT_ERROR
                     : ProviderErrorType.NETWORK_ERROR;
-            callback.onError(new ProviderException(errorType, "Anthropic 流式请求异常: " + e.getMessage()));
+            callback.onError(new UpstreamException(errorType, "Anthropic 流式请求异常: " + e.getMessage()));
         }
     }
 

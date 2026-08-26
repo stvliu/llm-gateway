@@ -25,7 +25,7 @@ import com.codingas.gateway.common.event.BizEventPublisher;
 import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.iam.auth.AuthenticationManager;
 import com.codingas.gateway.iam.auth.Identity;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;

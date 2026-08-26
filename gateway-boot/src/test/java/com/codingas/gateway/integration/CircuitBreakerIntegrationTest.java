@@ -16,9 +16,9 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.protocol.ProtocolResponse;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreakerState;
 import com.codingas.gateway.protocol.openai.OpenAIUpstreamClient;
@@ -119,9 +119,9 @@ class CircuitBreakerIntegrationTest {
 
                 // 第一次调用：消费 500 响应 → 抛 UPSTREAM_ERROR
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
                         });
 

@@ -19,7 +19,7 @@ import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitOpenException;
@@ -76,7 +76,7 @@ public class ResilientUpstreamClient implements UpstreamClient<ProtocolRequest> 
             circuitBreaker.recordSuccess();
             metrics.endCall(System.currentTimeMillis() - startTime, true);
             return response;
-        } catch (ProviderException e) {
+        } catch (UpstreamException e) {
             circuitBreaker.recordFailure();
             metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",
@@ -124,7 +124,7 @@ public class ResilientUpstreamClient implements UpstreamClient<ProtocolRequest> 
                 public void onError(Throwable t) {
                     circuitBreaker.recordFailure();
                     metrics.endCall(System.currentTimeMillis() - startTime, false);
-                    if (t instanceof ProviderException pe) {
+                    if (t instanceof UpstreamException pe) {
                         meterRegistry.counter("gateway.provider.errors",
                                 "provider", providerCode,
                                 "error_type", pe.getErrorType().name()).increment();
@@ -136,7 +136,7 @@ public class ResilientUpstreamClient implements UpstreamClient<ProtocolRequest> 
                     callback.onError(t);
                 }
             });
-        } catch (ProviderException e) {
+        } catch (UpstreamException e) {
             circuitBreaker.recordFailure();
             metrics.endCall(System.currentTimeMillis() - startTime, false);
             meterRegistry.counter("gateway.provider.errors",

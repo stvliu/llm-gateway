@@ -22,7 +22,7 @@ import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
@@ -132,7 +132,7 @@ class KeyFailoverInvokerTest {
         UpstreamClient resilientClient2 = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client2, 20L)).thenReturn(resilientClient2);
 
-        when(resilientClient1.chat(request)).thenThrow(new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "fail"));
+        when(resilientClient1.chat(request)).thenThrow(new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "fail"));
         ProtocolResponse expectedResponse = mock(ProtocolResponse.class);
         when(resilientClient2.chat(request)).thenReturn(expectedResponse);
 
@@ -144,8 +144,8 @@ class KeyFailoverInvokerTest {
     }
 
     @Test
-    @DisplayName("所有 Key 失败时抛 ProviderException")
-    void allKeysFailed_throwsProviderException() {
+    @DisplayName("所有 Key 失败时抛 UpstreamException")
+    void allKeysFailed_throwsUpstreamException() {
         ChannelCredential cred = new ChannelCredential();
         cred.setId(100L);
         cred.setApiKeyPlain("sk-key-1");
@@ -158,10 +158,10 @@ class KeyFailoverInvokerTest {
 
         UpstreamClient resilientClient = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client, 20L)).thenReturn(resilientClient);
-        when(resilientClient.chat(request)).thenThrow(new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "fail"));
+        when(resilientClient.chat(request)).thenThrow(new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "fail"));
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("所有 Key 均失败");
     }
 
@@ -176,7 +176,7 @@ class KeyFailoverInvokerTest {
         when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
-                .isInstanceOf(ProviderException.class);
+                .isInstanceOf(UpstreamException.class);
 
         verify(clientRegistry, never()).getClient(anyString(), anyString(), anyString(), anyInt());
     }
@@ -204,7 +204,7 @@ class KeyFailoverInvokerTest {
         UpstreamClient resilientClient2 = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client2, 20L)).thenReturn(resilientClient2);
 
-        doThrow(new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
+        doThrow(new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
                 .when(resilientClient1).chatStream(any(), any());
 
         StreamCallback callback = mock(StreamCallback.class);
@@ -221,7 +221,7 @@ class KeyFailoverInvokerTest {
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("所有 Key 均失败")
                 .hasMessageContaining("无可用 Key");
     }
@@ -238,7 +238,7 @@ class KeyFailoverInvokerTest {
         when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
-                .isInstanceOf(ProviderException.class);
+                .isInstanceOf(UpstreamException.class);
         verify(clientRegistry, never()).getClient(anyString(), anyString(), anyString(), anyInt());
         assertThat(meterRegistry.counter("gateway.failover.exhausted",
                 "provider", "openai", "channel_id", "10").count()).isEqualTo(1);
@@ -250,7 +250,7 @@ class KeyFailoverInvokerTest {
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> invoker.invokeSingleKey(ctx, request))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("无可用 Key");
     }
 
@@ -263,7 +263,7 @@ class KeyFailoverInvokerTest {
         when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeSingleKey(ctx, request))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("端点熔断中");
         verify(clientRegistry, never()).getClient(anyString(), anyString(), anyString(), anyInt());
     }
@@ -302,7 +302,7 @@ class KeyFailoverInvokerTest {
         UpstreamClient resilientClient = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client, 20L)).thenReturn(resilientClient);
 
-        ProviderException failure = new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "失败");
+        UpstreamException failure = new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "失败");
         when(resilientClient.chat(request)).thenThrow(failure);
 
         assertThatThrownBy(() -> invoker.invokeSingleKey(ctx, request)).isSameAs(failure);
@@ -316,7 +316,7 @@ class KeyFailoverInvokerTest {
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of());
 
         assertThatThrownBy(() -> invoker.invokeSingleKeyStream(ctx, request, mock(StreamCallback.class)))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("无可用 Key");
     }
 
@@ -329,7 +329,7 @@ class KeyFailoverInvokerTest {
         when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeSingleKeyStream(ctx, request, mock(StreamCallback.class)))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("端点熔断中");
     }
 
@@ -367,7 +367,7 @@ class KeyFailoverInvokerTest {
         UpstreamClient resilientClient = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client, 20L)).thenReturn(resilientClient);
 
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "限流");
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "限流");
         doThrow(failure).when(resilientClient).chatStream(any(), any());
 
         assertThatThrownBy(() -> invoker.invokeSingleKeyStream(ctx, request, mock(StreamCallback.class)))
@@ -423,13 +423,13 @@ class KeyFailoverInvokerTest {
         UpstreamClient resilientClient2 = mock(UpstreamClient.class);
         when(resilientClientFactory.wrap(client2, 20L)).thenReturn(resilientClient2);
 
-        doThrow(new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
+        doThrow(new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
                 .when(resilientClient1).chatStream(any(), any());
-        doThrow(new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
+        doThrow(new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "启动失败"))
                 .when(resilientClient2).chatStream(any(), any());
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx, request, mock(StreamCallback.class)))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("流式调用：所有 Key 均失败");
         assertThat(meterRegistry.counter("gateway.failover.exhausted",
                 "provider", "openai", "channel_id", "10").count()).isEqualTo(1);
@@ -447,7 +447,7 @@ class KeyFailoverInvokerTest {
         when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx, request, mock(StreamCallback.class)))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .hasMessageContaining("流式调用：所有 Key 均失败");
         verify(clientRegistry, never()).getClient(anyString(), anyString(), anyString(), anyInt());
     }

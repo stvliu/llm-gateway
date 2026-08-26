@@ -21,7 +21,7 @@ import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
@@ -38,7 +38,7 @@ import java.util.List;
  * Key 级故障转移 Invoker
  *
  * <p>遍历同一 Channel 下的多个 Credential（Key），跳过熔断中的端点，
- * 失败切下一个 Key，全部失败抛 ProviderException。</p>
+ * 失败切下一个 Key，全部失败抛 UpstreamException。</p>
  */
 @Component
 public class KeyFailoverInvoker {
@@ -69,7 +69,7 @@ public class KeyFailoverInvoker {
     public ProtocolResponse invoke(RoutingContext ctx, ProtocolRequest request) {
         List<ChannelCredential> credentials = credentialResolver.resolveAll(ctx.channelId());
         String provider = ctx.upstreamProtocol().name().toLowerCase();
-        ProviderException lastException = null;
+        UpstreamException lastException = null;
 
         for (ChannelCredential cred : credentials) {
             if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
@@ -81,7 +81,7 @@ public class KeyFailoverInvoker {
 
             try {
                 return client.chat(request);
-            } catch (ProviderException e) {
+            } catch (UpstreamException e) {
                 lastException = e;
                 meterRegistry.counter("gateway.failover.triggered",
                         "provider", provider,
@@ -94,7 +94,7 @@ public class KeyFailoverInvoker {
         meterRegistry.counter("gateway.failover.exhausted",
                 "provider", provider,
                 "channel_id", String.valueOf(ctx.channelId())).increment();
-        throw new ProviderException(
+        throw new UpstreamException(
                 lastException != null ? lastException.getErrorType() : ProviderErrorType.UPSTREAM_ERROR,
                 "所有 Key 均失败: " + (lastException != null ? lastException.getMessage() : "无可用 Key"),
                 null, request.getModel(), provider, ctx.channelEndpointId(), null);
@@ -112,26 +112,26 @@ public class KeyFailoverInvoker {
      * @param ctx     路由上下文
      * @param request 协议请求
      * @return 上游响应
-     * @throws ProviderException 首个 Key 调用失败、端点熔断中、或无可用 Key 时抛出
+     * @throws UpstreamException 首个 Key 调用失败、端点熔断中、或无可用 Key 时抛出
      */
     public ProtocolResponse invokeSingleKey(RoutingContext ctx, ProtocolRequest request) {
         List<ChannelCredential> credentials = credentialResolver.resolveAll(ctx.channelId());
         String provider = ctx.upstreamProtocol().name().toLowerCase();
         if (credentials.isEmpty()) {
-            throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR,
+            throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "无可用 Key", null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         ChannelCredential cred = credentials.get(0);
         if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
             log.debug("端点 {} 熔断中，FAIL_FAST 不试 Key {}", ctx.channelEndpointId(), cred.getId());
-            throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR,
+            throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "端点熔断中: " + ctx.channelEndpointId(),
                     null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
         try {
             return client.chat(request);
-        } catch (ProviderException e) {
+        } catch (UpstreamException e) {
             meterRegistry.counter("gateway.failover.triggered",
                     "provider", provider,
                     "from_key", String.valueOf(cred.getId()),
@@ -150,26 +150,26 @@ public class KeyFailoverInvoker {
      * @param ctx      路由上下文
      * @param request  协议请求
      * @param callback 流式回调
-     * @throws ProviderException 首个 Key 流式启动失败、端点熔断中、或无可用 Key 时抛出
+     * @throws UpstreamException 首个 Key 流式启动失败、端点熔断中、或无可用 Key 时抛出
      */
     public void invokeSingleKeyStream(RoutingContext ctx, ProtocolRequest request, StreamCallback callback) {
         List<ChannelCredential> credentials = credentialResolver.resolveAll(ctx.channelId());
         String provider = ctx.upstreamProtocol().name().toLowerCase();
         if (credentials.isEmpty()) {
-            throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR,
+            throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "流式调用：无可用 Key", null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         ChannelCredential cred = credentials.get(0);
         if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
             log.debug("端点 {} 熔断中，FAIL_FAST 流式不试 Key {}", ctx.channelEndpointId(), cred.getId());
-            throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR,
+            throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "流式调用：端点熔断中: " + ctx.channelEndpointId(),
                     null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         UpstreamClient<ProtocolRequest> client = buildClient(ctx, cred);
         try {
             client.chatStream(request, callback);
-        } catch (ProviderException e) {
+        } catch (UpstreamException e) {
             meterRegistry.counter("gateway.failover.triggered",
                     "provider", provider,
                     "from_key", String.valueOf(cred.getId()),
@@ -197,7 +197,7 @@ public class KeyFailoverInvoker {
             try {
                 client.chatStream(request, callback);
                 return;
-            } catch (ProviderException e) {
+            } catch (UpstreamException e) {
                 log.warn("Key {} 流式启动失败: {} {}, 尝试下一个 Key",
                         cred.getId(), e.getErrorType(), e.getMessage());
                 meterRegistry.counter("gateway.failover.triggered",
@@ -210,7 +210,7 @@ public class KeyFailoverInvoker {
         meterRegistry.counter("gateway.failover.exhausted",
                 "provider", provider,
                 "channel_id", String.valueOf(ctx.channelId())).increment();
-        throw new ProviderException(
+        throw new UpstreamException(
                 ProviderErrorType.UPSTREAM_ERROR,
                 "流式调用：所有 Key 均失败",
                 null, request.getModel(), provider, ctx.channelEndpointId(), null);

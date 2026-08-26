@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.anthropic;
 
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.tuning.ProtocolTuner;
 
 import java.util.ArrayList;

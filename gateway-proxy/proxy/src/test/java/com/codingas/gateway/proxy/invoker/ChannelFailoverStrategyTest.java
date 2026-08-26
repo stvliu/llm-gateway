@@ -26,7 +26,7 @@ import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -156,7 +156,7 @@ class ChannelFailoverStrategyTest {
     void failFast_firstKeyFailure_throwsImmediately_noChannelSwitch() {
         // 两个候选，第一个 Key 失败应立即抛错，不试第二个候选
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "限流", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invokeSingleKey(any(), any())).thenThrow(failure);
 
@@ -177,7 +177,7 @@ class ChannelFailoverStrategyTest {
     @DisplayName("FAIL_RETRY：同渠道 Key 耗尽后不换渠道，直接抛错")
     void failRetry_sameChannelKeyExhausted_noChannelSwitch_throws() {
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "Key 耗尽", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);
 
@@ -196,7 +196,7 @@ class ChannelFailoverStrategyTest {
     @DisplayName("FAIL_OVER：候选渠道 Key 耗尽后换下一候选")
     void failOver_channelExhausted_switchesToNextCandidate() {
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "限流", null, "gpt-4o", "openai", 20L, null);
         RoutingContext c1 = ctx(10L, FailureStrategy.FAIL_OVER);
         RoutingContext c2 = ctx(11L, FailureStrategy.FAIL_OVER);
@@ -217,7 +217,7 @@ class ChannelFailoverStrategyTest {
     void defaultStrategy_whenNull_failRetry() {
         // failureStrategy 为 null 时回退 FAIL_RETRY
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "限流", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);
 
@@ -242,7 +242,7 @@ class ChannelFailoverStrategyTest {
         // 但实际未转移，误导容灾诊断。修复后 FAIL_RETRY 不发转移事件。
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
         BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "Key 耗尽", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);
 
@@ -263,7 +263,7 @@ class ChannelFailoverStrategyTest {
         // 流式 FAIL_RETRY 首字节前启动失败 break 不换渠道，同样不应发转移事件
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
         BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "Key 耗尽", null, "gpt-4o", "openai", 20L, null);
         // 流式启动失败（首字节前同步抛错，未调 onChunk）
         doThrow(failure).when(keyInvoker).invokeStream(any(), any(), any(StreamCallback.class));
@@ -286,7 +286,7 @@ class ChannelFailoverStrategyTest {
         // 对照测试：FAIL_OVER 换候选前应发转移事件，确保 FAIL_RETRY 收窄修复未误伤 FAIL_OVER 路径
         KeyFailoverInvoker keyInvoker = mock(KeyFailoverInvoker.class);
         BizEventPublisher eventPublisher = mock(BizEventPublisher.class);
-        ProviderException failure = new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR,
+        UpstreamException failure = new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR,
                 "限流", null, "gpt-4o", "openai", 20L, null);
         when(keyInvoker.invoke(any(), any())).thenThrow(failure);
 

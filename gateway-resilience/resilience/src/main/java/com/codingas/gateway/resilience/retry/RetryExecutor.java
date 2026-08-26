@@ -16,7 +16,7 @@
 package com.codingas.gateway.resilience.retry;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -99,7 +99,7 @@ public class RetryExecutor {
     }
 
     private String extractErrorType(Exception e) {
-        if (e instanceof ProviderException pe && pe.getErrorType() != null) {
+        if (e instanceof UpstreamException pe && pe.getErrorType() != null) {
             return pe.getErrorType().name();
         }
         return "UNKNOWN";
@@ -109,7 +109,7 @@ public class RetryExecutor {
      * 根据异常类型选择对应的重试策略
      */
     private RetryStrategy selectStrategy(Exception e) {
-        if (e instanceof ProviderException pe) {
+        if (e instanceof UpstreamException pe) {
             return switch (pe.getErrorType()) {
                 case RATE_LIMIT_ERROR -> new RateLimitRetryStrategy(properties);
                 case TIMEOUT_ERROR -> new FastRetryStrategy(properties);
@@ -124,7 +124,7 @@ public class RetryExecutor {
      * 判断异常是否可重试
      */
     boolean isRetryable(Exception e) {
-        if (e instanceof ProviderException pe) {
+        if (e instanceof UpstreamException pe) {
             return switch (pe.getErrorType()) {
                 case QUOTA_EXCEEDED, AUTHENTICATION_ERROR, INVALID_REQUEST -> false;
                 default -> true;

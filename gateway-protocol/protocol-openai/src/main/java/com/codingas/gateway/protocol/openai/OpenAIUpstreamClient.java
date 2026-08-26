@@ -17,12 +17,12 @@ package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
 import com.codingas.gateway.protocol.transport.ErrorClassificationStrategy;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
@@ -80,7 +80,7 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
                 String responseBody = response.body() != null ? response.body().string() : "";
                 if (!response.isSuccessful()) {
                     ProviderErrorType errorType = classifier.classify(response.code(), responseBody);
-                    throw new ProviderException(errorType,
+                    throw new UpstreamException(errorType,
                             "OpenAI API 调用失败: " + response.code() + " - " + responseBody);
                 }
                 return objectMapper.readValue(responseBody, OpenAIChatResponse.class);
@@ -89,7 +89,7 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
             ProviderErrorType errorType = e instanceof SocketTimeoutException
                     ? ProviderErrorType.TIMEOUT_ERROR
                     : ProviderErrorType.NETWORK_ERROR;
-            throw new ProviderException(errorType, "OpenAI API 调用异常", e);
+            throw new UpstreamException(errorType, "OpenAI API 调用异常", e);
         }
     }
 
@@ -116,7 +116,7 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
                     ProviderErrorType errorType = e instanceof SocketTimeoutException
                             ? ProviderErrorType.TIMEOUT_ERROR
                             : ProviderErrorType.NETWORK_ERROR;
-                    callback.onError(new ProviderException(errorType, "OpenAI 网络异常: " + e.getMessage()));
+                    callback.onError(new UpstreamException(errorType, "OpenAI 网络异常: " + e.getMessage()));
                 }
 
                 @Override
@@ -125,7 +125,7 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
                         if (!response.isSuccessful() || body == null) {
                             String errorBody = body != null ? body.string() : "no body";
                             ProviderErrorType errorType = classifier.classify(response.code(), errorBody);
-                            callback.onError(new ProviderException(errorType,
+                            callback.onError(new UpstreamException(errorType,
                                     "OpenAI Stream 失败: " + response.code() + " - " + errorBody));
                             return;
                         }
@@ -149,9 +149,9 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
                         ProviderErrorType errorType = e instanceof SocketTimeoutException
                                 ? ProviderErrorType.TIMEOUT_ERROR
                                 : ProviderErrorType.NETWORK_ERROR;
-                        callback.onError(new ProviderException(errorType, "OpenAI 流读取异常: " + e.getMessage()));
+                        callback.onError(new UpstreamException(errorType, "OpenAI 流读取异常: " + e.getMessage()));
                     } catch (Exception e) {
-                        callback.onError(new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "OpenAI 流未知异常", e));
+                        callback.onError(new UpstreamException(ProviderErrorType.UNKNOWN_ERROR, "OpenAI 流未知异常", e));
                     }
                 }
             });
@@ -159,7 +159,7 @@ public class OpenAIUpstreamClient implements UpstreamClient<OpenAIChatRequest> {
             ProviderErrorType errorType = e instanceof SocketTimeoutException
                     ? ProviderErrorType.TIMEOUT_ERROR
                     : ProviderErrorType.NETWORK_ERROR;
-            callback.onError(new ProviderException(errorType, "OpenAI 流式请求异常: " + e.getMessage()));
+            callback.onError(new UpstreamException(errorType, "OpenAI 流式请求异常: " + e.getMessage()));
         }
     }
 

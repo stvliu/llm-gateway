@@ -18,7 +18,7 @@ package com.codingas.gateway.web.advice;
 import com.codingas.gateway.common.dto.ApiResponse;
 import com.codingas.gateway.common.exception.GatewayException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -81,17 +81,17 @@ class GlobalExceptionHandlerTest {
     }
 
     @Nested
-    @DisplayName("ProviderException 处理")
-    class HandleProviderExceptionTests {
+    @DisplayName("UpstreamException 处理")
+    class HandleUpstreamExceptionTests {
 
         @Test
         @DisplayName("应返回 BAD_GATEWAY 状态码")
-        void handleProviderException_returnsBadGateway() {
+        void handleUpstreamException_returnsBadGateway() {
             // given
-            ProviderException ex = new ProviderException("PROVIDER_001", "Provider unavailable");
+            UpstreamException ex = new UpstreamException("PROVIDER_001", "Provider unavailable");
 
             // when
-            ResponseEntity<ApiResponse<Void>> response = handler.handleProviderException(ex);
+            ResponseEntity<ApiResponse<Void>> response = handler.handleUpstreamException(ex);
 
             // then
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);

@@ -27,7 +27,7 @@ import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
 import org.junit.jupiter.api.BeforeEach;
@@ -139,7 +139,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         @DisplayName("L1 转移：ch1 AUTHENTICATION_ERROR 共因故障 → ch2 成功")
         void l1Failover_authError_transfersToNextCandidate() {
             // ch1 抛 AUTH 共因故障 → 真实 ErrorClassifier 分流为 L1 → 换 ch2
-            ProviderException authEx = new ProviderException(
+            UpstreamException authEx = new UpstreamException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch1 认证失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             when(keyFailover.invoke(ctx1, request)).thenThrow(authEx);
@@ -163,7 +163,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         @DisplayName("错误分流：INVALID_REQUEST 不转移，ch1 失败直接抛出不试 ch2")
         void invalidRequest_noFailover_throwsDirectly() {
             // ch1 抛 INVALID_REQUEST → 真实 ErrorClassifier 分流为 NONE → 直接抛不转移
-            ProviderException invalidEx = new ProviderException(
+            UpstreamException invalidEx = new UpstreamException(
                     ProviderErrorType.INVALID_REQUEST, "请求格式错误");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             when(keyFailover.invoke(ctx1, request)).thenThrow(invalidEx);
@@ -196,11 +196,11 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
                     FailureStrategy.FAIL_OVER);
 
             // 三个候选均 AUTH 共因失败 → 真实 ErrorClassifier 分流 L1 → 逐个试不跳过
-            ProviderException ch1Ex = new ProviderException(
+            UpstreamException ch1Ex = new UpstreamException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch1 认证失败");
-            ProviderException ch2Ex = new ProviderException(
+            UpstreamException ch2Ex = new UpstreamException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch2 认证失败");
-            ProviderException ch3Ex = new ProviderException(
+            UpstreamException ch3Ex = new UpstreamException(
                     ProviderErrorType.AUTHENTICATION_ERROR, "ch3 认证失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             when(keyFailover.invoke(ch1, request)).thenThrow(ch1Ex);
@@ -231,7 +231,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         @DisplayName("流式：首字节前启动失败（UPSTREAM_ERROR 共因）→ 转移到 ch2")
         void stream_beforeFirstByte_transfersToNextCandidate() {
             // ch1 流式启动失败（首字节前，未触发 onChunk）→ 真实分流 L1 → 换 ch2
-            ProviderException startupEx = new ProviderException(
+            UpstreamException startupEx = new UpstreamException(
                     ProviderErrorType.UPSTREAM_ERROR, "ch1 流式启动失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             doThrow(startupEx).when(keyFailover)
@@ -255,7 +255,7 @@ class ChannelFailoverIntegrationTest extends FullContextIntegrationTestBase {
         void stream_afterFirstByte_noFailover() {
             // 场景：ch1 首字节已发送后同步失败（先 onChunk 再抛异常）
             // 语义：首字节后失败不换渠道，直接抛传播给调用方，不试 ch2
-            ProviderException afterFirstByteEx = new ProviderException(
+            UpstreamException afterFirstByteEx = new UpstreamException(
                     ProviderErrorType.UPSTREAM_ERROR, "ch1 首字节后失败");
             KeyFailoverInvoker keyFailover = mock(KeyFailoverInvoker.class);
             doAnswer(invocation -> {

@@ -17,10 +17,10 @@ package com.codingas.gateway.protocol.anthropic;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -254,9 +254,9 @@ class AnthropicUpstreamClientTest {
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
                 });
     }
@@ -270,9 +270,9 @@ class AnthropicUpstreamClientTest {
         AnthropicUpstreamClient client = createClient("sk-ant-invalid-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
                 });
     }
@@ -286,9 +286,9 @@ class AnthropicUpstreamClientTest {
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
                 });
     }
@@ -303,9 +303,9 @@ class AnthropicUpstreamClientTest {
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 1);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.TIMEOUT_ERROR);
                 });
     }
@@ -351,8 +351,8 @@ class AnthropicUpstreamClientTest {
         });
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(error.get()).isInstanceOf(ProviderException.class);
-        ProviderException pe = (ProviderException) error.get();
+        assertThat(error.get()).isInstanceOf(UpstreamException.class);
+        UpstreamException pe = (UpstreamException) error.get();
         assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
     }
 
@@ -372,8 +372,8 @@ class AnthropicUpstreamClientTest {
         });
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(error.get()).isInstanceOf(ProviderException.class);
-        assertThat(((ProviderException) error.get()).getErrorType())
+        assertThat(error.get()).isInstanceOf(UpstreamException.class);
+        assertThat(((UpstreamException) error.get()).getErrorType())
                 .isEqualTo(ProviderErrorType.NETWORK_ERROR);
     }
 
@@ -438,9 +438,9 @@ class AnthropicUpstreamClientTest {
 
         AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.NETWORK_ERROR);
                 });
     }

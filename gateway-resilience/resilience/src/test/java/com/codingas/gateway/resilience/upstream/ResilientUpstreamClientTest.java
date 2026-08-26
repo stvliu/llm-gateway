@@ -20,7 +20,7 @@ import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreakerState;
@@ -123,13 +123,13 @@ class ResilientUpstreamClientTest {
         }
 
         @Test
-        @DisplayName("ProviderException 时记录错误类型 Metrics")
+        @DisplayName("UpstreamException 时记录错误类型 Metrics")
         void chat_providerException_recordsMetrics() {
-            when(delegate.chat(request)).thenThrow(new ProviderException(
+            when(delegate.chat(request)).thenThrow(new UpstreamException(
                     ProviderErrorType.RATE_LIMIT_ERROR, "429 限流"));
 
             assertThatThrownBy(() -> resilientClient.chat(request))
-                    .isInstanceOf(ProviderException.class);
+                    .isInstanceOf(UpstreamException.class);
 
             assertThat(meterRegistry.counter("gateway.provider.errors",
                     "provider", "test-provider",
@@ -233,12 +233,12 @@ class ResilientUpstreamClientTest {
         }
 
         @Test
-        @DisplayName("流式 ProviderException 错误按错误类型记录 Metrics")
-        void chatStream_onErrorProviderException_recordsErrorTypeMetric() {
+        @DisplayName("流式 UpstreamException 错误按错误类型记录 Metrics")
+        void chatStream_onErrorUpstreamException_recordsErrorTypeMetric() {
             StreamCallback callback = mock(StreamCallback.class);
             doAnswer(invocation -> {
                 StreamCallback inner = invocation.getArgument(1);
-                inner.onError(new ProviderException(ProviderErrorType.SERVICE_UNAVAILABLE, "503"));
+                inner.onError(new UpstreamException(ProviderErrorType.SERVICE_UNAVAILABLE, "503"));
                 return null;
             }).when(delegate).chatStream(any(), any());
 
@@ -251,14 +251,14 @@ class ResilientUpstreamClientTest {
         }
 
         @Test
-        @DisplayName("delegate 同步抛出 ProviderException 时按错误类型记录并上报")
-        void chatStream_delegateThrowsProviderException_recordsAndRethrows() {
+        @DisplayName("delegate 同步抛出 UpstreamException 时按错误类型记录并上报")
+        void chatStream_delegateThrowsUpstreamException_recordsAndRethrows() {
             StreamCallback callback = mock(StreamCallback.class);
-            doThrow(new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))
+            doThrow(new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))
                     .when(delegate).chatStream(any(), any());
 
             assertThatThrownBy(() -> resilientClient.chatStream(request, callback))
-                    .isInstanceOf(ProviderException.class);
+                    .isInstanceOf(UpstreamException.class);
 
             assertThat(meterRegistry.counter("gateway.provider.errors",
                     "provider", "test-provider",

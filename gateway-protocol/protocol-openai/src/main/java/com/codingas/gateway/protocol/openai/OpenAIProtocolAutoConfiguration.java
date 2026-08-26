@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
  * OpenAI 协议能力插件自动装配。
  *
  * <p>注册 {@link OpenAIProtocolAdapter} 为 {@link ProtocolAdapter} Bean、
- * {@link OpenAIUpstreamClientFactory} 为 {@link com.codingas.gateway.protocol.transport.ProtocolUpstreamClientFactory} Bean。
+ * {@link OpenAIUpstreamClientFactory} 为 {@link com.codingas.gateway.protocol.transport.UpstreamClientFactory} Bean。
  * 通过 {@code gateway.protocol.openai.enabled=true}（默认启用）控制插件开关，
  * 未启用时该协议插件不参与装配。</p>
  */

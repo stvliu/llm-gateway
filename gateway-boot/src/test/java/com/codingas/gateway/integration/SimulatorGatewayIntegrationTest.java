@@ -17,9 +17,9 @@ package com.codingas.gateway.integration;
 
 import com.codingas.gateway.protocol.ProtocolResponse;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.retry.RetryExecutor;
 import com.codingas.gateway.protocol.openai.OpenAIUpstreamClient;
@@ -112,9 +112,9 @@ class SimulatorGatewayIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-test-key", 30);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
                         });
             }
@@ -129,9 +129,9 @@ class SimulatorGatewayIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-invalid-key", 30);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
                         });
             }
@@ -146,9 +146,9 @@ class SimulatorGatewayIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-test-key", 30);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
                         });
             }
@@ -164,9 +164,9 @@ class SimulatorGatewayIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-test-key", 1);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.TIMEOUT_ERROR);
                         });
             } finally {
@@ -247,7 +247,7 @@ class SimulatorGatewayIntegrationTest {
 
                     try {
                         client.chat(createTestRequest("gpt-4", false));
-                    } catch (ProviderException e) {
+                    } catch (UpstreamException e) {
                         assertThat(e.getErrorType())
                                 .as("HTTP %d 应映射为 %s", statusCode, expectedType)
                                 .isEqualTo(expectedType);
@@ -267,9 +267,9 @@ class SimulatorGatewayIntegrationTest {
                 var client = sim.createOpenAIIClient("sk-test-key", 30);
 
                 assertThatThrownBy(() -> client.chat(createTestRequest("gpt-4", false)))
-                        .isInstanceOf(ProviderException.class)
+                        .isInstanceOf(UpstreamException.class)
                         .satisfies(ex -> {
-                            ProviderException pe = (ProviderException) ex;
+                            UpstreamException pe = (UpstreamException) ex;
                             assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.QUOTA_EXCEEDED);
                         });
             }

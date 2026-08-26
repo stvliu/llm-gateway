@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.protocol.openai;
 
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
 import org.junit.jupiter.api.Test;
 

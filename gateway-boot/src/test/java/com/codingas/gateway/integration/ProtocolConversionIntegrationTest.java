@@ -16,10 +16,10 @@
 package com.codingas.gateway.integration;
 
 import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesRequest;
-import com.codingas.gateway.protocol.contract.AnthropicMessagesResponse;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
+import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.anthropic.AnthropicProtocolAdapter;
 import com.codingas.gateway.protocol.openai.OpenAIProtocolAdapter;
 import com.codingas.gateway.proxy.conversion.ProtocolStreamConverter;

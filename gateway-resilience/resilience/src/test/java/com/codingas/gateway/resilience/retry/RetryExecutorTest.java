@@ -16,7 +16,7 @@
 package com.codingas.gateway.resilience.retry;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -96,7 +96,7 @@ class RetryExecutorTest {
         }
 
         @Test
-        @DisplayName("ProviderException RATE_LIMIT_ERROR 重试")
+        @DisplayName("UpstreamException RATE_LIMIT_ERROR 重试")
         void rateLimit_retriesWithStrategy() {
             properties.getRateLimit().setMaxAttempts(3);
             properties.getRateLimit().setBackoffInitial(1);
@@ -104,7 +104,7 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             String result = executor.execute(() -> {
                 if (counter.incrementAndGet() < 3) {
-                    throw new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429 限流");
+                    throw new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "429 限流");
                 }
                 return "ok";
             });
@@ -118,8 +118,8 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             assertThatThrownBy(() -> executor.execute(() -> {
                 counter.incrementAndGet();
-                throw new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限");
-            })).isInstanceOf(ProviderException.class);
+                throw new UpstreamException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限");
+            })).isInstanceOf(UpstreamException.class);
             assertThat(counter.get()).isEqualTo(1);
         }
 
@@ -129,8 +129,8 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             assertThatThrownBy(() -> executor.execute(() -> {
                 counter.incrementAndGet();
-                throw new ProviderException(ProviderErrorType.AUTHENTICATION_ERROR, "401");
-            })).isInstanceOf(ProviderException.class);
+                throw new UpstreamException(ProviderErrorType.AUTHENTICATION_ERROR, "401");
+            })).isInstanceOf(UpstreamException.class);
             assertThat(counter.get()).isEqualTo(1);
         }
 
@@ -140,8 +140,8 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             assertThatThrownBy(() -> executor.execute(() -> {
                 counter.incrementAndGet();
-                throw new ProviderException(ProviderErrorType.INVALID_REQUEST, "400");
-            })).isInstanceOf(ProviderException.class);
+                throw new UpstreamException(ProviderErrorType.INVALID_REQUEST, "400");
+            })).isInstanceOf(UpstreamException.class);
             assertThat(counter.get()).isEqualTo(1);
         }
 
@@ -153,7 +153,7 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             String result = executor.execute(() -> {
                 if (counter.incrementAndGet() < 3) {
-                    throw new ProviderException(ProviderErrorType.TIMEOUT_ERROR, "504 超时");
+                    throw new UpstreamException(ProviderErrorType.TIMEOUT_ERROR, "504 超时");
                 }
                 return "ok";
             });
@@ -169,7 +169,7 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             String result = executor.execute(() -> {
                 if (counter.incrementAndGet() < 3) {
-                    throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "502 上游错误");
+                    throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "502 上游错误");
                 }
                 return "ok";
             });
@@ -186,7 +186,7 @@ class RetryExecutorTest {
             AtomicInteger counter = new AtomicInteger(0);
             String result = executor.execute(() -> {
                 if (counter.incrementAndGet() < 3) {
-                    throw new ProviderException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");
+                    throw new UpstreamException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");
                 }
                 return "ok";
             });
@@ -230,8 +230,8 @@ class RetryExecutorTest {
             executor = new RetryExecutor(properties, freshRegistry);
 
             assertThatThrownBy(() -> executor.execute(() -> {
-                throw new ProviderException(ProviderErrorType.UPSTREAM_ERROR, "持续 502");
-            })).isInstanceOf(ProviderException.class);
+                throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR, "持续 502");
+            })).isInstanceOf(UpstreamException.class);
 
             assertThat(freshRegistry.counter("gateway.retry.exhausted",
                     "error_type", "UPSTREAM_ERROR").count()).isPositive();
@@ -255,24 +255,24 @@ class RetryExecutorTest {
         }
 
         @Test
-        @DisplayName("ProviderException RATE_LIMIT_ERROR 可重试")
+        @DisplayName("UpstreamException RATE_LIMIT_ERROR 可重试")
         void isRetryable_rateLimitError_returnsTrue() {
             assertThat(executor.isRetryable(
-                new ProviderException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))).isTrue();
+                new UpstreamException(ProviderErrorType.RATE_LIMIT_ERROR, "429"))).isTrue();
         }
 
         @Test
-        @DisplayName("ProviderException QUOTA_EXCEEDED 不可重试")
+        @DisplayName("UpstreamException QUOTA_EXCEEDED 不可重试")
         void isRetryable_quotaExceeded_returnsFalse() {
             assertThat(executor.isRetryable(
-                new ProviderException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限"))).isFalse();
+                new UpstreamException(ProviderErrorType.QUOTA_EXCEEDED, "配额超限"))).isFalse();
         }
 
         @Test
-        @DisplayName("ProviderException INVALID_REQUEST 不可重试")
+        @DisplayName("UpstreamException INVALID_REQUEST 不可重试")
         void isRetryable_invalidRequest_returnsFalse() {
             assertThat(executor.isRetryable(
-                new ProviderException(ProviderErrorType.INVALID_REQUEST, "400"))).isFalse();
+                new UpstreamException(ProviderErrorType.INVALID_REQUEST, "400"))).isFalse();
         }
 
         @Test

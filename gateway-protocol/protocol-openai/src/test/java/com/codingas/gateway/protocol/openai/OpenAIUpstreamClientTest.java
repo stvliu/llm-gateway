@@ -17,10 +17,10 @@ package com.codingas.gateway.protocol.openai;
 
 import com.codingas.gateway.common.enums.ProviderErrorType;
 import com.codingas.gateway.protocol.StreamCallback;
-import com.codingas.gateway.protocol.contract.OpenAIChatRequest;
-import com.codingas.gateway.protocol.contract.OpenAIChatResponse;
+import com.codingas.gateway.protocol.raw.OpenAIChatRequest;
+import com.codingas.gateway.protocol.raw.OpenAIChatResponse;
 import com.codingas.gateway.protocol.transport.ConnectivityTestResult;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.OkHttpClient;
@@ -246,9 +246,9 @@ class OpenAIUpstreamClientTest {
         OpenAIUpstreamClient client = createClient("sk-test-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
                 });
     }
@@ -262,9 +262,9 @@ class OpenAIUpstreamClientTest {
         OpenAIUpstreamClient client = createClient("sk-invalid-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.AUTHENTICATION_ERROR);
                 });
     }
@@ -278,9 +278,9 @@ class OpenAIUpstreamClientTest {
         OpenAIUpstreamClient client = createClient("sk-test-key", 30);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.UPSTREAM_ERROR);
                 });
     }
@@ -295,9 +295,9 @@ class OpenAIUpstreamClientTest {
         OpenAIUpstreamClient client = createClient("sk-test-key", 1);
 
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.TIMEOUT_ERROR);
                 });
     }
@@ -367,8 +367,8 @@ class OpenAIUpstreamClientTest {
         });
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(error.get()).isInstanceOf(ProviderException.class);
-        ProviderException pe = (ProviderException) error.get();
+        assertThat(error.get()).isInstanceOf(UpstreamException.class);
+        UpstreamException pe = (UpstreamException) error.get();
         assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.RATE_LIMIT_ERROR);
     }
 
@@ -388,8 +388,8 @@ class OpenAIUpstreamClientTest {
         });
 
         assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
-        assertThat(error.get()).isInstanceOf(ProviderException.class);
-        assertThat(((ProviderException) error.get()).getErrorType())
+        assertThat(error.get()).isInstanceOf(UpstreamException.class);
+        assertThat(((UpstreamException) error.get()).getErrorType())
                 .isEqualTo(ProviderErrorType.NETWORK_ERROR);
     }
 
@@ -457,9 +457,9 @@ class OpenAIUpstreamClientTest {
 
         OpenAIUpstreamClient client = createClient("sk-test-key", 30);
         assertThatThrownBy(() -> client.chat(createTestRequest()))
-                .isInstanceOf(ProviderException.class)
+                .isInstanceOf(UpstreamException.class)
                 .satisfies(ex -> {
-                    ProviderException pe = (ProviderException) ex;
+                    UpstreamException pe = (UpstreamException) ex;
                     assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.NETWORK_ERROR);
                 });
     }

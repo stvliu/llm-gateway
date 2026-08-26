@@ -28,7 +28,7 @@ import com.codingas.gateway.proxy.conversion.ProtocolConversionFacade;
 import com.codingas.gateway.common.enums.FailoverDecision;
 import com.codingas.gateway.protocol.Protocol;
 import com.codingas.gateway.common.enums.ProviderErrorType;
-import com.codingas.gateway.protocol.transport.ProviderException;
+import com.codingas.gateway.protocol.transport.UpstreamException;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * 渠道级故障转移 Invoker（L1 候选内逐个试，耗尽抛最后异常）
  *
  * <p>遍历候选渠道列表（同模型不同渠道，已按 priority 升序），对每个候选调用
- * {@link KeyFailoverInvoker}（内部跑 L0 Key 级转移）。捕获 ProviderException 后
+ * {@link KeyFailoverInvoker}（内部跑 L0 Key 级转移）。捕获 UpstreamException 后
  * 经 {@link ErrorClassifier} 分类决定转移层级（D3/D5/深化点5）：</p>
  *
  * <ul>
@@ -125,7 +125,7 @@ public class ChannelFailoverInvoker {
      * @param traceId                  调用链 Trace ID（由上层 ChatDispatchManagerImpl 生成），透传到转移事件
      *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @return 上游响应
-     * @throws ProviderException  INVALID_REQUEST 等请求级错误直接抛出；
+     * @throws UpstreamException  INVALID_REQUEST 等请求级错误直接抛出；
      *                            所有候选失败时抛出最后捕获的异常
      */
     public ProtocolResponse invoke(RoutingContext primaryCtx, List<RoutingContext> candidates,
@@ -134,7 +134,7 @@ public class ChannelFailoverInvoker {
         // 策略读取：所有候选同应用同策略，从主候选读取；null 回退 FAIL_RETRY（默认）
         FailureStrategy strategy = primaryCtx.failureStrategy() != null
                 ? primaryCtx.failureStrategy() : FailureStrategy.FAIL_RETRY;
-        ProviderException lastException = null;
+        UpstreamException lastException = null;
 
         for (int i = 0; i < candidates.size(); i++) {
             RoutingContext candidate = candidates.get(i);
@@ -148,7 +148,7 @@ public class ChannelFailoverInvoker {
                 // 响应转换下沉：基于实际成功候选(非主候选) 转换响应为入站协议格式（与流式 buildStreamCallback 对称）
                 // 修复跨协议换候选时按主候选协议转换方向错误/跳过转换，返回错误协议响应的问题
                 return adaptResponseForCandidate(response, candidate);
-            } catch (ProviderException e) {
+            } catch (UpstreamException e) {
                 FailoverDecision decision = errorClassifier.classify(e.getErrorType());
                 log.warn("候选渠道 channelId={} endpointId={} 失败: {} (决策:{}, 策略:{})",
                         candidate.channelId(), candidate.channelEndpointId(),
@@ -182,7 +182,7 @@ public class ChannelFailoverInvoker {
             throw lastException;
         }
         // 防御性兜底：候选列表非空但无成功无异常（理论不可达）
-        throw new ProviderException(ProviderErrorType.UNKNOWN_ERROR,
+        throw new UpstreamException(ProviderErrorType.UNKNOWN_ERROR,
                 "候选列表处理完成但无结果：candidates=" + (candidates == null ? 0 : candidates.size()));
     }
 
@@ -212,7 +212,7 @@ public class ChannelFailoverInvoker {
      * @param traceId                  调用链 Trace ID（由上层 ChatDispatchManagerImpl 生成），透传到转移事件
      *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @param callback                 流式回调
-     * @throws ProviderException  INVALID_REQUEST 等请求级错误直接抛出；
+     * @throws UpstreamException  INVALID_REQUEST 等请求级错误直接抛出；
      *                            所有候选启动失败时抛出最后捕获的异常
      */
     public void invokeStream(RoutingContext primaryCtx, List<RoutingContext> candidates,
@@ -221,7 +221,7 @@ public class ChannelFailoverInvoker {
         // 策略读取：所有候选同应用同策略，从主候选读取；null 回退 FAIL_RETRY（默认）
         FailureStrategy strategy = primaryCtx.failureStrategy() != null
                 ? primaryCtx.failureStrategy() : FailureStrategy.FAIL_RETRY;
-        ProviderException lastException = null;
+        UpstreamException lastException = null;
 
         for (int i = 0; i < candidates.size(); i++) {
             RoutingContext candidate = candidates.get(i);
@@ -264,7 +264,7 @@ public class ChannelFailoverInvoker {
                     keyFailoverInvoker.invokeStream(candidate, candidateReq, wrappedCallback);
                 }
                 return;
-            } catch (ProviderException e) {
+            } catch (UpstreamException e) {
                 // 首字节已发送：不换候选，直接抛传播给调用方（首字节后转移边界）
                 // 客户端已收到首字节，换候选重发会导致重复首字节，故直接终止
                 if (firstByteSent.get()) {
@@ -304,7 +304,7 @@ public class ChannelFailoverInvoker {
         if (lastException != null) {
             throw lastException;
         }
-        throw new ProviderException(ProviderErrorType.UNKNOWN_ERROR,
+        throw new UpstreamException(ProviderErrorType.UNKNOWN_ERROR,
                 "流式候选列表处理完成但无结果：candidates=" + (candidates == null ? 0 : candidates.size()));
     }
 
