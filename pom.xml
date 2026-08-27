@@ -102,7 +102,6 @@
         <micrometer.version>1.12.6</micrometer.version>
         <opentelemetry.version>1.47.0</opentelemetry.version>
         <testcontainers.version>1.20.4</testcontainers.version>
-        <logstash-logback-encoder.version>7.4</logstash-logback-encoder.version>
         <flyway.version>11.0.0</flyway.version>
 
         <!-- 数据库驱动版本（Flyway Maven 插件需要） -->

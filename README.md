@@ -100,7 +100,6 @@
 
 #### 可观测性
 - ✅ Trace ID (全链路追踪)
-- ✅ 结构化日志 (JSON 格式)
 - ✅ 实时指标 (延迟/QPS/Token/费用)
 - ✅ Prometheus 导出
 - ✅ Grafana 仪表盘
@@ -135,7 +134,6 @@
 | **安全** | Sa-Token | 1.45.0 | 轻量级权限框架 |
 | **HTTP 客户端** | OkHttp | 4.12.0 | 同步/异步调用 + SSE |
 | **可观测性** | OpenTelemetry + Micrometer | 1.47.0 | 链路追踪 + Prometheus 指标 |
-| **日志** | Logstash Logback Encoder | 7.4 | JSON 结构化日志 |
 | **测试** | Testcontainers | 1.20.4 | 容器化集成测试 |
 
 ### 模块化架构

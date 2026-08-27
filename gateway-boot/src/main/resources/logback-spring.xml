@@ -34,23 +34,6 @@
         </encoder>
     </appender>
 
-    <!-- JSON 格式日志 (用于 ELK stack) -->
-    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
-            <includeMdc>true</includeMdc>
-            <includeContext>true</includeContext>
-            <customFields>{"application":"${APP_NAME}"}</customFields>
-            <fieldNames>
-                <timestamp>@timestamp</timestamp>
-                <message>message</message>
-                <logger>logger</logger>
-                <thread>thread</thread>
-                <level>level</level>
-                <levelValue>level_value</levelValue>
-            </fieldNames>
-        </encoder>
-    </appender>
-
     <!-- 文件 Appender -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>logs/${APP_NAME}.log</file>

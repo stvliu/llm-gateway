@@ -45,7 +45,7 @@
 - **其他**：无 .editorconfig/.prettierrc；前端有 ESLint（eslint:recommended + typescript-eslint + react-hooks）；无 PMD/Sonar；Codecov 无阈值配置；622 个 Java 源文件（35 模块）
 - **根 pom**：无 parent，CI-friendly `${revision}=1.0.0-SNAPSHOT` + flatten；Java 21；Spring Boot 3.5.13（BOM import 方式）；属性集中管理版本
 - **模块数**：35（根 + 34 子模块）；声明约 280 条依赖；去重第三方约 38 个
-- **核心第三方**：okhttp 4.12.0、sa-token 1.45.0、logstash-logback-encoder 7.4、flyway-core 11.0.0、caffeine 3.2.3、jgit 6.8.0、archunit 1.3.0（test）、spring-shell 3.3.4
+- **核心第三方**：okhttp 4.12.0、sa-token 1.45.0、flyway-core 11.0.0、caffeine 3.2.3、jgit 6.8.0、archunit 1.3.0（test）、spring-shell 3.3.4
 - **版本漂移**：flyway 11.0.0 vs BOM 11.7.2；postgresql 属性 42.7.4 vs BOM 42.7.10（两处不一致）；spring-boot-maven-plugin 3.5.0 vs Boot 3.5.13；testcontainers 1.20.4 vs BOM 1.21.4
 - **11 条死管理依赖**：redisson、springdoc、micrometer-tracing-bridge-otel、2 个 otel exporter、6 个 testcontainers —— 无模块引用
 - **OWASP suppressions**：6 条；**Jackson 一刀切抑制所有 CVE-2024-\*（过宽）**；**未接入 CI**（security.yml 未传 -Dodc.suppressionFiles，且文件名与插件默认不同）→ 双重失效
