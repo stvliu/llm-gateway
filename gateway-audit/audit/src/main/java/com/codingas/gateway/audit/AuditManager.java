@@ -18,33 +18,17 @@ package com.codingas.gateway.audit;
 import com.codingas.gateway.common.dto.PageResponse;
 
 /**
- * 审计日志网关接口
+ * 审计日志管理服务（查询门面）
  *
- * <p>定义在 domain 层，由 infrastructure 层实现。</p>
+ * <p>提供审计日志分页查询能力，供管理台查询管理操作记录。</p>
  */
-public interface AuditLogRepository {
+public interface AuditManager {
 
     /**
-     * 保存调用日志
-     *
-     * @param callLog 调用日志实体
-     * @return 保存后的实体
-     */
-    CallLog saveCallLog(CallLog callLog);
-
-    /**
-     * 保存操作日志（管理操作审计）
-     *
-     * @param auditLog 审计日志实体
-     * @return 保存后的实体
-     */
-    AuditLog saveAuditLog(AuditLog auditLog);
-
-    /**
-     * 分页查询操作日志
+     * 分页查询审计日志
      *
      * @param query 查询条件（分页 + 筛选）
      * @return 分页结果
      */
-    PageResponse<AuditLog> findAuditLogs(AuditLogQuery query);
+    PageResponse<AuditLog> query(AuditLogQuery query);
 }

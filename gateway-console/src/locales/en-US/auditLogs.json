@@ -1,0 +1,20 @@
+{
+  "title": "Audit Logs",
+  "time": "Time",
+  "user": "User",
+  "action": "Action",
+  "resource": "Resource",
+  "result": "Result",
+  "ip": "Client IP",
+  "success": "Success",
+  "failure": "Failure",
+  "anonymous": "Unauthenticated",
+  "refresh": "Refresh",
+  "filterByResult": "Filter by Result",
+  "filterHint": "Filter by time range",
+  "loadFailed": "Failed to load",
+  "loadFailedHint": "Check your network and try again later",
+  "retry": "Retry",
+  "noLogs": "No audit logs",
+  "total": "{{count}} in total"
+}

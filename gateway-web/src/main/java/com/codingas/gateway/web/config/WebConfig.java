@@ -15,6 +15,7 @@
  */
 package com.codingas.gateway.web.config;
 
+import com.codingas.gateway.web.interceptor.AuditLogInterceptor;
 import com.codingas.gateway.web.interceptor.SecurityInterceptorChain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -41,9 +42,16 @@ public class WebConfig implements WebMvcConfigurer {
 
     private final SecurityInterceptorChain securityInterceptorChain;
     private final ActuatorHealthProperties actuatorHealthProperties;
+    private final AuditLogInterceptor auditLogInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 审计拦截器必须注册在安全链之前：Spring 拦截器对已执行 preHandle 的拦截器
+        // 逆序回调 afterCompletion——若注册在后，安全链 preHandle 拒绝（401/403）时
+        // 审计的 afterCompletion 不会执行，未授权/越权尝试将无审计记录。
+        registry.addInterceptor(auditLogInterceptor)
+                .addPathPatterns("/api/**");
+
         var registration = registry.addInterceptor(new org.springframework.web.servlet.HandlerInterceptor() {
             @Override
             public boolean preHandle(jakarta.servlet.http.HttpServletRequest request,

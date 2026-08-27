@@ -16,35 +16,22 @@
 package com.codingas.gateway.audit;
 
 import com.codingas.gateway.common.dto.PageResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
 /**
- * 审计日志网关接口
+ * 审计日志管理服务实现
  *
- * <p>定义在 domain 层，由 infrastructure 层实现。</p>
+ * <p>委托 {@link AuditLogRepository} 完成分页查询。</p>
  */
-public interface AuditLogRepository {
+@Service
+@RequiredArgsConstructor
+public class AuditManagerImpl implements AuditManager {
 
-    /**
-     * 保存调用日志
-     *
-     * @param callLog 调用日志实体
-     * @return 保存后的实体
-     */
-    CallLog saveCallLog(CallLog callLog);
+    private final AuditLogRepository auditLogRepository;
 
-    /**
-     * 保存操作日志（管理操作审计）
-     *
-     * @param auditLog 审计日志实体
-     * @return 保存后的实体
-     */
-    AuditLog saveAuditLog(AuditLog auditLog);
-
-    /**
-     * 分页查询操作日志
-     *
-     * @param query 查询条件（分页 + 筛选）
-     * @return 分页结果
-     */
-    PageResponse<AuditLog> findAuditLogs(AuditLogQuery query);
+    @Override
+    public PageResponse<AuditLog> query(AuditLogQuery query) {
+        return auditLogRepository.findAuditLogs(query);
+    }
 }

@@ -41,6 +41,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 审计域核心模块（AuditManager 查询门面，AuditLog 实体） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 抽象协议层模块（Canonical IR + ProtocolAdapter SPI + 协议契约 DTO） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

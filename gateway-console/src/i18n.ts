@@ -31,6 +31,7 @@ import zhCNChannels from './locales/zh-CN/channels.json';
 import zhCNQuickstart from './locales/zh-CN/quickstart.json';
 import zhCNApiKeys from './locales/zh-CN/apiKeys.json';
 import zhCNResilience from './locales/zh-CN/resilience.json';
+import zhCNAuditLogs from './locales/zh-CN/auditLogs.json';
 // 英文
 import enUSCommon from './locales/en-US/common.json';
 import enUSLogin from './locales/en-US/login.json';
@@ -45,6 +46,7 @@ import enUSChannels from './locales/en-US/channels.json';
 import enUSQuickstart from './locales/en-US/quickstart.json';
 import enUSApiKeys from './locales/en-US/apiKeys.json';
 import enUSResilience from './locales/en-US/resilience.json';
+import enUSAuditLogs from './locales/en-US/auditLogs.json';
 
 i18n
   .use(LanguageDetector)
@@ -65,6 +67,7 @@ i18n
         quickstart: zhCNQuickstart,
         apiKeys: zhCNApiKeys,
         resilience: zhCNResilience,
+        auditLogs: zhCNAuditLogs,
       },
       'en-US': {
         common: enUSCommon,
@@ -80,6 +83,7 @@ i18n
         quickstart: enUSQuickstart,
         apiKeys: enUSApiKeys,
         resilience: enUSResilience,
+        auditLogs: enUSAuditLogs,
       },
     },
     fallbackLng: 'zh-CN',

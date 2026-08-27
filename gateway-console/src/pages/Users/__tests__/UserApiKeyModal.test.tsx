@@ -32,6 +32,10 @@ import UserApiKeyModal from '@/pages/Users/UserApiKeyModal';
 import type { UserApiKey } from '@/types/userApiKey';
 import type { Application } from '@/types/application';
 
+// 交互密集测试：全量并发（42 文件并行、CPU 争抢）下执行时间接近默认 5s 超时阈值会偶发超时，
+// 单独运行约 2.8s。放宽本文件超时窗口，避免并发负载挤压导致 flaky。
+vi.setConfig({ testTimeout: 15000 });
+
 // mock API 层与 Query hooks，避免引入网络调用与 QueryClientProvider
 const { mockCreate, mockUpdate, mockKeys, mockApplications } = vi.hoisted(() => ({
   mockCreate: vi.fn().mockResolvedValue({ id: 10, keyPrefix: 'sk-', keyPlain: 'sk-new-plain' }),

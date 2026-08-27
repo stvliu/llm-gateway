@@ -28,6 +28,9 @@ import i18n from '@/i18n';
 import ApplicationsPage from '@/pages/Applications';
 import type { Application } from '@/types/application';
 
+// 交互密集测试：全量并发下执行时间接近默认 5s 超时阈值（曾偶发 5.6s 超时），放宽窗口避免并发 flaky。
+vi.setConfig({ testTimeout: 15000 });
+
 // vi.hoisted 提升 mock 引用，保证 vi.mock 工厂能访问
 const {
   mockApplications,

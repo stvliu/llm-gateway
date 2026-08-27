@@ -26,6 +26,7 @@ import Catalog from '@/pages/Catalog';
 import Users from '@/pages/Users';
 import ApplicationsPage from '@/pages/Applications';
 import OverviewPage from '@/pages/resilience/overview';
+import AuditLogs from '@/pages/AuditLogs';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -85,6 +86,10 @@ export const router = createBrowserRouter([
       {
         path: 'resilience/:tab',
         element: <PermissionGuard permission={P.RESILIENCE_READ}><OverviewPage /></PermissionGuard>,
+      },
+      {
+        path: 'audit-logs',
+        element: <PermissionGuard permission={P.AUDIT_READ}><AuditLogs /></PermissionGuard>,
       },
     ],
   },

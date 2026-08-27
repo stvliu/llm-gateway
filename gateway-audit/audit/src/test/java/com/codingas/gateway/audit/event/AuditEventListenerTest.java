@@ -15,131 +15,103 @@
  */
 package com.codingas.gateway.audit.event;
 
-import com.codingas.gateway.audit.event.AuditEventListener;
+import com.codingas.gateway.audit.AuditLog;
+import com.codingas.gateway.audit.AuditLogRepository;
 import com.codingas.gateway.common.event.AuditEvent;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.slf4j.Logger;
 
-import java.time.Instant;
-
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 /**
  * AuditEventListener 单元测试
+ *
+ * <p>验证审计事件正确落库（result 由响应状态推导、未认证主体 userId=0、
+ * 落库失败不抛异常）。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuditEventListener 单元测试")
 class AuditEventListenerTest {
 
     @Mock
-    private Logger logger;
+    private AuditLogRepository auditLogRepository;
 
     @InjectMocks
     private AuditEventListener auditEventListener;
 
-    private AuditEvent testEvent;
+    @Test
+    @DisplayName("成功事件（2xx）落库为 SUCCESS，字段完整透传")
+    void handleAuditEvent_success_savesLogWithSuccessResult() {
+        // given
+        AuditEvent event = AuditEvent.builder()
+                .userId(1L)
+                .action("POST /api/v1/channels")
+                .resource("/api/v1/channels")
+                .clientIp("192.168.1.1")
+                .responseStatus(200)
+                .build();
 
-    @BeforeEach
-    void setUp() {
-        testEvent = new AuditEvent(
-                1L,
-                100L,
-                10L,
-                "API_CALL",
-                "/v1/chat/completions",
-                "192.168.1.1",
-                "Mozilla/5.0",
-                200,
-                "trace-123",
-                Instant.now()
-        );
+        // when
+        auditEventListener.handleAuditEvent(event);
+
+        // then
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).saveAuditLog(captor.capture());
+        AuditLog saved = captor.getValue();
+        assertThat(saved.getUserId()).isEqualTo(1L);
+        assertThat(saved.getAction()).isEqualTo("POST /api/v1/channels");
+        assertThat(saved.getResource()).isEqualTo("/api/v1/channels");
+        assertThat(saved.getResult()).isEqualTo("SUCCESS");
+        assertThat(saved.getIpAddress()).isEqualTo("192.168.1.1");
     }
 
     @Test
-    @DisplayName("handleAuditEvent 应正确记录审计日志")
-    void handleAuditEvent_shouldLogAuditInformation() {
-        // 由于 @InjectMocks 无法注入 Slf4j 的 Logger，需要直接调用并使用 spy
-        AuditEventListener spyListener = spy(new AuditEventListener());
-        doNothing().when(spyListener).handleAuditEvent(any(AuditEvent.class));
+    @DisplayName("失败事件（4xx/5xx）落库为 FAILURE，未认证主体 userId 归一为 0")
+    void handleAuditEvent_failure_resultIsFailureAndUserIdNormalized() {
+        // given：登录失败场景——无 userId、401
+        AuditEvent event = AuditEvent.builder()
+                .userId(null)
+                .action("POST /api/v1/auth/login")
+                .resource("/api/v1/auth/login")
+                .clientIp("1.2.3.4")
+                .responseStatus(401)
+                .build();
 
-        spyListener.handleAuditEvent(testEvent);
+        // when
+        auditEventListener.handleAuditEvent(event);
 
-        verify(spyListener, times(1)).handleAuditEvent(testEvent);
+        // then
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogRepository).saveAuditLog(captor.capture());
+        AuditLog saved = captor.getValue();
+        assertThat(saved.getUserId()).isZero();
+        assertThat(saved.getResult()).isEqualTo("FAILURE");
     }
 
     @Test
-    @DisplayName("handleAuditEvent 应处理空值字段的事件")
-    void handleAuditEvent_withNullFields_shouldHandleGracefully() {
-        AuditEvent eventWithNulls = new AuditEvent(
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null
-        );
+    @DisplayName("落库失败仅记录日志，不向外抛异常")
+    void handleAuditEvent_saveThrows_swallowsException() {
+        // given
+        AuditEvent event = AuditEvent.builder()
+                .userId(1L)
+                .action("DELETE /api/v1/users/1")
+                .clientIp("10.0.0.1")
+                .responseStatus(500)
+                .build();
+        doThrow(new RuntimeException("db down"))
+                .when(auditLogRepository).saveAuditLog(any(AuditLog.class));
 
-        AuditEventListener spyListener = spy(new AuditEventListener());
-        doNothing().when(spyListener).handleAuditEvent(any(AuditEvent.class));
-
-        spyListener.handleAuditEvent(eventWithNulls);
-
-        verify(spyListener, times(1)).handleAuditEvent(eventWithNulls);
-    }
-
-    @Test
-    @DisplayName("handleAuditEvent 应处理不同操作类型")
-    void handleAuditEvent_withDifferentActions_shouldHandleCorrectly() {
-        String[] actions = {"API_CALL", "AUTH_SUCCESS", "AUTH_FAILURE", "CONFIG_CHANGE"};
-
-        AuditEventListener spyListener = spy(new AuditEventListener());
-
-        for (String action : actions) {
-            AuditEvent event = AuditEvent.builder()
-                    .action(action)
-                    .userId(1L)
-                    .resource("/test")
-                    .clientIp("127.0.0.1")
-                    .responseStatus(200)
-                    .build();
-
-            doNothing().when(spyListener).handleAuditEvent(any(AuditEvent.class));
-            spyListener.handleAuditEvent(event);
-
-            verify(spyListener, times(1)).handleAuditEvent(event);
-        }
-    }
-
-    @Test
-    @DisplayName("handleAuditEvent 应处理不同的响应状态码")
-    void handleAuditEvent_withDifferentStatusCodes_shouldHandleCorrectly() {
-        Integer[] statusCodes = {200, 401, 403, 404, 500};
-
-        AuditEventListener spyListener = spy(new AuditEventListener());
-
-        for (Integer status : statusCodes) {
-            AuditEvent event = AuditEvent.builder()
-                    .action("API_CALL")
-                    .userId(1L)
-                    .resource("/test")
-                    .clientIp("127.0.0.1")
-                    .responseStatus(status)
-                    .build();
-
-            doNothing().when(spyListener).handleAuditEvent(any(AuditEvent.class));
-            spyListener.handleAuditEvent(event);
-
-            verify(spyListener, times(1)).handleAuditEvent(event);
-        }
+        // when/then：不抛异常
+        assertThatCode(() -> auditEventListener.handleAuditEvent(event))
+                .doesNotThrowAnyException();
     }
 }

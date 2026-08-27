@@ -127,7 +127,6 @@ export const menuGroups: MenuGroupConfig[] = [
         icon: <FileSearchOutlined />,
         label: 'menu.auditLogs',
         permission: 'audit:read',
-        reserved: true,
       },
     ],
   },

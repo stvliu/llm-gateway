@@ -1,0 +1,20 @@
+{
+  "title": "审计日志",
+  "time": "操作时间",
+  "user": "操作人",
+  "action": "操作",
+  "resource": "资源",
+  "result": "结果",
+  "ip": "客户端 IP",
+  "success": "成功",
+  "failure": "失败",
+  "anonymous": "未认证",
+  "refresh": "刷新",
+  "filterByResult": "筛选结果",
+  "filterHint": "按时间范围筛选",
+  "loadFailed": "加载失败",
+  "loadFailedHint": "请检查网络或稍后重试",
+  "retry": "重试",
+  "noLogs": "暂无审计日志",
+  "total": "共 {{count}} 条"
+}
