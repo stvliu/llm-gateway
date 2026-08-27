@@ -57,7 +57,8 @@ public final class RolePermissions {
             "application:read", "application:write",
             "resilience:read", "resilience:write",
             "quickstart:access",
-            "audit:read"
+            "audit:read",
+            "token-limit:manage"
     );
 
     /**

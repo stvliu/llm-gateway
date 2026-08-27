@@ -15,6 +15,9 @@
  */
 package com.codingas.gateway.audit;
 
+import java.time.Instant;
+import java.util.List;
+
 /**
  * 调用日志网关接口
  */
@@ -24,4 +27,37 @@ public interface CallLogRepository {
      * 保存调用日志
      */
     CallLog save(CallLog callLog);
+
+    /**
+     * 统计指定时间之后的调用次数
+     *
+     * @param since 起始时间（含）
+     * @return 调用次数
+     */
+    long countSince(Instant since);
+
+    /**
+     * 统计指定时间之后的 Token 消耗（输入 + 输出）
+     *
+     * @param since 起始时间（含）
+     * @return Token 总量
+     */
+    long sumTokensSince(Instant since);
+
+    /**
+     * 按天聚合指定时间范围内的调用用量
+     *
+     * @param start 起始时间（含）
+     * @param end   结束时间（含）
+     * @return 按天聚合列表
+     */
+    List<DailyUsage> findDailyUsage(Instant start, Instant end);
+
+    /**
+     * 按模型聚合调用量（Top N）
+     *
+     * @param limit 返回条数上限
+     * @return 按请求数降序的模型用量
+     */
+    List<ModelUsage> findModelUsage(int limit);
 }

@@ -10,13 +10,19 @@
     "applications": "Available Applications"
   },
   "trend": {
-    "title": "Request Trend (7 days)"
+    "title": "Request Trend (7 days)",
+    "requests": "Requests",
+    "tokens": "Tokens",
+    "empty": "No trend data"
   },
   "modelUsage": {
-    "title": "Model Usage Distribution"
+    "title": "Model Usage Distribution",
+    "total": "Total",
+    "empty": "No model usage data"
   },
   "activity": {
     "title": "Recent Activity",
+    "noActivity": "No recent activity",
     "action": "Action",
     "user": "User",
     "target": "Target",
@@ -37,7 +43,8 @@
   "state": {
     "success": "Success",
     "warning": "Warning",
-    "error": "Error"
+    "error": "Error",
+    "failure": "Failed"
   },
   "quickStart": {},
   "usageTrend": {},

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useMemo, useState } from 'react';
-import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card, Tooltip } from 'antd';
+import { Tag, Space, Button, Typography, Spin, Table, Input, Row, Col, Card, Tooltip, Alert } from 'antd';
 import { PlusOutlined, SyncOutlined, CloudDownloadOutlined, ArrowRightOutlined, SearchOutlined, CloseOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { App } from 'antd';
@@ -62,8 +62,18 @@ export default function PlanCatalogView({
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // 数据查询
-  const { data: providers, isLoading: providersLoading } = useProviderCatalogs(searchKeyword);
-  const { data: plans, isLoading: plansLoading } = usePlanCatalogs(providerCode);
+  const {
+    data: providers,
+    isLoading: providersLoading,
+    isError: providersError,
+    refetch: refetchProviders,
+  } = useProviderCatalogs(searchKeyword);
+  const {
+    data: plans,
+    isLoading: plansLoading,
+    isError: plansError,
+    refetch: refetchPlans,
+  } = usePlanCatalogs(providerCode);
 
   // 开通操作
   const provisionBatchMutation = useProvisionBatch();
@@ -99,12 +109,33 @@ export default function PlanCatalogView({
   };
 
   const isLoading = showProviders ? providersLoading : plansLoading;
+  // 加载失败与空态分离：失败展示错误 + 重试，而非伪装"暂无数据"
+  const isError = showProviders ? providersError : plansError;
+  const refetch = showProviders ? refetchProviders : refetchPlans;
   const hasActiveFilters = !!searchKeyword;
+
+  /** 加载失败提示（复用 common 文案） */
+  const renderError = () => (
+    <Alert
+      type="error"
+      showIcon
+      style={{ marginBottom: 16 }}
+      message={t('loadFailed', { ns: 'common' })}
+      description={t('loadFailedHint', { ns: 'common' })}
+      action={
+        <Button size="small" onClick={() => refetch()}>
+          {t('retry', { ns: 'common' })}
+        </Button>
+      }
+    />
+  );
 
   /** 供应商卡片视图 */
   const renderProviders = () => (
     <Spin spinning={isLoading}>
-      {dataList.length === 0 && !isLoading ? (
+      {isError ? (
+        renderError()
+      ) : dataList.length === 0 && !isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}>
           <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
         </div>
@@ -228,7 +259,9 @@ export default function PlanCatalogView({
   /** 套餐表格视图 */
   const renderPlans = () => (
     <Spin spinning={isLoading}>
-      {(dataList as PlanCatalog[]).length === 0 && !isLoading ? (
+      {isError ? (
+        renderError()
+      ) : (dataList as PlanCatalog[]).length === 0 && !isLoading ? (
         <div style={{ textAlign: 'center', padding: 48 }}>
           <Text type="secondary">{t('message.noData', { defaultValue: '暂无数据' })}</Text>
         </div>

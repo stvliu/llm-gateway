@@ -15,7 +15,7 @@
  */
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Table, Button, Popconfirm, App, Input, Typography, Modal, Form, Select, Card } from 'antd';
+import { Table, Button, Popconfirm, App, Input, Typography, Modal, Form, Select, Card, Alert } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useAllUserApiKeys, useDeleteUserApiKey, useCreateUserApiKey } from '@/services/query/useUserApiKeys';
@@ -33,7 +33,7 @@ export default function DownstreamKeysTable() {
   const { message } = App.useApp();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: keys, isLoading } = useAllUserApiKeys();
+  const { data: keys, isLoading, isError, refetch } = useAllUserApiKeys();
   const { data: usersData } = useUsers({ size: 200 });
   const { data: applications } = useApplications();
   const deleteMutation = useDeleteUserApiKey();
@@ -219,6 +219,21 @@ export default function DownstreamKeysTable() {
             {t('createKey', { defaultValue: '创建 API Key' })}
           </Button>
         </div>
+
+        {isError && (
+          <Alert
+            type="error"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message={t('loadFailed', { ns: 'common' })}
+            description={t('loadFailedHint', { ns: 'common' })}
+            action={
+              <Button size="small" onClick={() => refetch()}>
+                {t('retry', { ns: 'common' })}
+              </Button>
+            }
+          />
+        )}
 
         <Table
           dataSource={filtered}

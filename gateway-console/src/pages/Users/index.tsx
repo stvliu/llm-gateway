@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useState, useMemo } from 'react';
-import { Table, Button, Space, Tag, Modal, Form, Input, Select, Card, Tooltip } from 'antd';
+import { Table, Button, Space, Tag, Modal, Form, Input, Select, Card, Tooltip, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, KeyOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useConfirm } from '@/hooks/useConfirm';
@@ -39,7 +39,7 @@ export default function Users() {
   const [apiKeyUserId, setApiKeyUserId] = useState<number | null>(null);
   const [apiKeyUsername, setApiKeyUsername] = useState('');
 
-  const { data, isLoading } = useUsers({ size: 100 });
+  const { data, isLoading, isError, refetch } = useUsers({ size: 100 });
   const createMutation = useCreateUser();
   const updateMutation = useUpdateUser();
   const deleteMutation = useDeleteUser();
@@ -80,30 +80,39 @@ export default function Users() {
       title: 'confirm.resetPassword',
       content: 'confirm.resetPasswordWarning',
       onConfirm: async () => {
-        // resetPassword 现在一次性返回明文密码（不再走邮件），需弹窗展示供管理员转交
-        const { newPassword } = await resetPasswordMutation.mutateAsync(id);
-        Modal.info({
-          title: '重置密码成功',
-          content: (
-            <div>
-              <p>新密码（仅显示一次，请立即保存并转交用户）：</p>
-              <Input value={newPassword} readOnly />
-            </div>
-          ),
-          okText: '已保存',
-        });
+        try {
+          // resetPassword 现在一次性返回明文密码（不再走邮件），需弹窗展示供管理员转交
+          const { newPassword } = await resetPasswordMutation.mutateAsync(id);
+          Modal.info({
+            title: '重置密码成功',
+            content: (
+              <div>
+                <p>新密码（仅显示一次，请立即保存并转交用户）：</p>
+                <Input value={newPassword} readOnly />
+              </div>
+            ),
+            okText: '已保存',
+          });
+        } catch {
+          message.error(t('resetPasswordFailed', { defaultValue: '重置密码失败' }));
+        }
       },
     });
   };
 
   const handleSubmit = async (values: CreateUserRequest) => {
-    if (editingUser) {
-      await updateMutation.mutateAsync({ id: editingUser.id, data: values });
-    } else {
-      await createMutation.mutateAsync(values);
+    try {
+      if (editingUser) {
+        await updateMutation.mutateAsync({ id: editingUser.id, data: values });
+      } else {
+        await createMutation.mutateAsync(values);
+      }
+      message.success(t('message.success', { ns: 'common' }));
+      setModalOpen(false);
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) return;
+      message.error(t('message.error', { ns: 'common' }));
     }
-    message.success(t('message.success', { ns: 'common' }));
-    setModalOpen(false);
   };
 
   const columns: ColumnsType<User> = [
@@ -189,6 +198,21 @@ export default function Users() {
           </Button>
         )}
       </div>
+
+      {isError && (
+        <Alert
+          type="error"
+          showIcon
+          style={{ marginBottom: 16 }}
+          message={t('loadFailed', { ns: 'common' })}
+          description={t('loadFailedHint', { ns: 'common' })}
+          action={
+            <Button size="small" onClick={() => refetch()}>
+              {t('retry', { ns: 'common' })}
+            </Button>
+          }
+        />
+      )}
 
       <Table
         columns={columns}

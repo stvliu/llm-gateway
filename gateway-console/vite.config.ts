@@ -57,6 +57,16 @@ export default defineConfig({
         target: getBackendTarget(),
         changeOrigin: true,
       },
+      // 数据面标准端点（OpenAI /v1/chat/completions、/v1/models 与 Anthropic /anthropic/v1/messages）：
+      // 聊天浮窗/快速开始试玩直连这些路径，需代理到后端，否则 dev 下拿到前端 index.html
+      '/anthropic/v1': {
+        target: getBackendTarget(),
+        changeOrigin: true,
+      },
+      '/v1': {
+        target: getBackendTarget(),
+        changeOrigin: true,
+      },
     },
   },
   build: {

@@ -27,6 +27,7 @@ import Users from '@/pages/Users';
 import ApplicationsPage from '@/pages/Applications';
 import OverviewPage from '@/pages/resilience/overview';
 import AuditLogs from '@/pages/AuditLogs';
+import TokenLimits from '@/pages/TokenLimits';
 import { P } from '@/constants/permissions';
 
 export const router = createBrowserRouter([
@@ -90,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: 'audit-logs',
         element: <PermissionGuard permission={P.AUDIT_READ}><AuditLogs /></PermissionGuard>,
+      },
+      {
+        path: 'token-limits',
+        element: <PermissionGuard permission={P.TOKEN_LIMIT}><TokenLimits /></PermissionGuard>,
       },
     ],
   },

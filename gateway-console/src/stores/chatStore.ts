@@ -52,6 +52,7 @@ interface ChatState {
   togglePanel: () => void;
   setOpen: (open: boolean) => void;
   setCurrentModel: (model: string) => void;
+  setAvailableModels: (models: ModelOption[]) => void;
   setLoading: (loading: boolean) => void;
   setStreaming: (isStreaming: boolean) => void;
 }
@@ -62,23 +63,16 @@ interface ChatState {
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 /**
- * 默认可用模型列表
- */
-const defaultModels: ModelOption[] = [
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'OpenAI' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'OpenAI' },
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'Anthropic' },
-  { id: 'claude-3-5-haiku-20241022', name: 'Claude 3.5 Haiku', provider: 'Anthropic' },
-];
-
-/**
  * 聊天状态管理 Store
+ *
+ * <p>可用模型列表由 ChatPanel 从真实模型接口（useModels）加载后注入，
+ * 不再内置硬编码模型。</p>
  */
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isOpen: false,
-  currentModel: defaultModels[0].id,
-  availableModels: defaultModels,
+  currentModel: '',
+  availableModels: [],
   isLoading: false,
 
   addMessage: (message) => {
@@ -121,6 +115,10 @@ export const useChatStore = create<ChatState>((set) => ({
 
   setCurrentModel: (model) => {
     set({ currentModel: model });
+  },
+
+  setAvailableModels: (models) => {
+    set({ availableModels: models });
   },
 
   setLoading: (loading) => {

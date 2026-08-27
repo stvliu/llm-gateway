@@ -66,9 +66,14 @@ export default function ChannelManageModal({
         const allChannels = await channelApi.list();
         setChannels(allChannels);
 
-        const appChannels = await applicationApi.listChannels(applicationId).catch(() => {
-          // 非管理员可能无权查询应用渠道，此时默认为空
-          return [] as { channelId: number; priority: number | null }[];
+        const appChannels = await applicationApi.listChannels(applicationId).catch((err) => {
+          // 非管理员无权查询（403）→ 按空处理；其它错误抛出由外层统一提示，
+          // 避免把真实加载失败伪装成"无授权渠道"
+          const status = (err as { response?: { status?: number } })?.response?.status;
+          if (status === 403) {
+            return [] as { channelId: number; priority: number | null }[];
+          }
+          throw err;
         });
         // 用应用级 priority 初始化选中渠道
         const next = new Map<number, number | null>();

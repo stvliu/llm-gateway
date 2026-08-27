@@ -25,6 +25,7 @@ import {
   App,
   Switch,
   Tooltip,
+  Alert,
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
@@ -54,7 +55,7 @@ export default function Models() {
     keyword: search || undefined,
     state: stateFilter || undefined,
   };
-  const { data, isLoading } = useModels(params);
+  const { data, isLoading, isError, refetch } = useModels(params);
 
   const handleSearch = (value: string) => {
     setSearch(value);
@@ -265,6 +266,20 @@ export default function Models() {
             ]}
           />
         </div>
+        {isError && (
+          <Alert
+            type="error"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message={t('loadFailed', { ns: 'common' })}
+            description={t('loadFailedHint', { ns: 'common' })}
+            action={
+              <Button size="small" onClick={() => refetch()}>
+                {t('retry', { ns: 'common' })}
+              </Button>
+            }
+          />
+        )}
         <Table
           dataSource={data?.items ?? []}
           columns={columns}

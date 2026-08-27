@@ -42,10 +42,13 @@ interface StreamCallbacks {
 export const chatService = {
   /**
    * 流式聊天
+   *
+   * @param apiKey 用户 API Key（数据面认证，需为真实下游 Key 而非登录 token）
    */
   async streamChat(
     messages: ChatMessage[],
     model: string,
+    apiKey: string,
     callbacks: StreamCallbacks
   ): Promise<void> {
     const apiUrl = '/v1/chat/completions';
@@ -69,8 +72,8 @@ export const chatService = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 使用当前用户的 API Key 或 token
-          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
+          // 数据面认证要求真实 API Key（登录 token 无法通过 ApiKeyAuthInterceptor）
+          'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify(requestBody),
       });

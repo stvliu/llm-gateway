@@ -15,6 +15,7 @@
  */
 import { useRef, useEffect, useState } from 'react';
 import {
+  App,
   Card,
   Input,
   Button,
@@ -36,6 +37,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useChatStore } from '@/stores/chatStore';
 import { chatService } from '@/services/chatService';
+import { useModels } from '@/services/query/useModels';
+import { useMyUserApiKeys } from '@/services/query/useUserApiKeys';
+import { userApiKeyApi } from '@/services/api/userApiKey';
 import { theme } from 'antd';
 
 const { TextArea } = Input;
@@ -60,10 +64,47 @@ export function ChatPanel() {
     updateLastMessage,
     clearMessages,
     setCurrentModel,
+    setAvailableModels,
     setLoading,
     setStreaming,
     setOpen,
   } = useChatStore();
+  const { message } = App.useApp();
+
+  // 数据面认证用的真实 API Key（登录 token 无法通过网关认证）
+  const [chatApiKey, setChatApiKey] = useState<string>();
+
+  // 可用模型：从真实模型接口加载（活跃模型），替代早期硬编码列表
+  const { data: modelsData } = useModels({ limit: 1000 });
+
+  useEffect(() => {
+    const activeModels = modelsData?.items?.filter((m) => m.state === 'ACTIVE') ?? [];
+    if (activeModels.length === 0) return;
+    const options = activeModels.map((m) => ({
+      id: m.modelName,
+      name: m.displayName || m.modelName,
+      provider: m.providerName ?? '',
+    }));
+    setAvailableModels(options);
+    // 当前模型不在列表中时自动切换为第一个
+    const cur = useChatStore.getState().currentModel;
+    if (!options.some((o) => o.id === cur)) {
+      setCurrentModel(options[0].id);
+    }
+  }, [modelsData, setAvailableModels, setCurrentModel]);
+
+  // API Key：自动使用当前用户第一个可用 Key（复用 ApiKeySelector 的取明文模式）
+  const { data: myKeys } = useMyUserApiKeys();
+
+  useEffect(() => {
+    if (chatApiKey || !myKeys || myKeys.length === 0) return;
+    userApiKeyApi
+      .getDetail(myKeys[0].id)
+      .then((detail) => setChatApiKey(detail.keyPlain))
+      .catch(() => {
+        // 获取 Key 明文失败时保持无 Key 状态，由发送保护提示
+      });
+  }, [myKeys, chatApiKey]);
 
   // 自动滚动到底部
   const scrollToBottom = () => {
@@ -79,6 +120,15 @@ export function ChatPanel() {
     const content = inputValue.trim();
     if (!content || isLoading) return;
 
+    if (!chatApiKey) {
+      message.warning(t('noApiKey', { defaultValue: '请先在快速开始页创建 API Key' }));
+      return;
+    }
+    if (!currentModel) {
+      message.warning(t('noModel', { defaultValue: '暂无可用的模型' }));
+      return;
+    }
+
     setInputValue('');
     addMessage({ role: 'user', content });
 
@@ -92,6 +142,7 @@ export function ChatPanel() {
       await chatService.streamChat(
         [...messages, { id: '', role: 'user' as const, content, timestamp: Date.now() }],
         currentModel,
+        chatApiKey,
         {
           onToken: (token) => {
             fullResponse += token;

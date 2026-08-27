@@ -2,6 +2,8 @@
   "title": "AI Chat",
   "emptyMessage": "Start a conversation",
   "inputPlaceholder": "Type a message...",
+  "noApiKey": "Please create an API key in Quickstart first",
+  "noModel": "No available model",
   "inputHint": "Press Enter to send, Shift+Enter for new line",
   "clear": "Clear conversation",
   "close": "Close",

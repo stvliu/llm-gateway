@@ -2,6 +2,8 @@
   "title": "AI聊天",
   "emptyMessage": "开始对话吧",
   "inputPlaceholder": "输入消息...",
+  "noApiKey": "请先在快速开始页创建 API Key",
+  "noModel": "暂无可用的模型",
   "inputHint": "按 Enter 发送，Shift+Enter 换行",
   "clear": "清空对话",
   "close": "关闭",

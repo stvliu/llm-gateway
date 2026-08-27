@@ -27,7 +27,9 @@
     "codeRequired": "请输入应用编码",
     "nameRequired": "请输入应用名称",
     "deleteSuccess": "应用已删除",
-    "deleteFailed": "删除失败"
+    "deleteFailed": "删除失败",
+    "addFailed": "新建应用失败",
+    "editFailed": "编辑应用失败"
   },
   "channelAuthorization": {
     "title": "渠道授权",

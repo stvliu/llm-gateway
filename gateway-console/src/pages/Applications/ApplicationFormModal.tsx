@@ -73,7 +73,8 @@ export default function ApplicationFormModal({ visible, application, onClose }: 
       }
       onClose();
     } catch {
-      message.error(isEdit ? t('application.editApplication') : t('application.addApplication'));
+      // 失败提示用失败文案（此前误用标题 key，用户收到相反的反馈）
+      message.error(isEdit ? t('application.editFailed') : t('application.addFailed'));
     }
   };
 

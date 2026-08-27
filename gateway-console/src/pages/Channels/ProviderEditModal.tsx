@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useEffect } from 'react';
-import { Modal, Form, Input } from 'antd';
+import { App, Modal, Form, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useUpdateProvider } from '@/services/query/useProviders';
 import type { Provider } from '@/types/provider';
@@ -32,6 +32,7 @@ interface ProviderEditModalProps {
  */
 export const ProviderEditModal: FC<ProviderEditModalProps> = ({ open, provider, onClose }) => {
   const { t } = useTranslation('channels');
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const updateProvider = useUpdateProvider();
 
@@ -48,17 +49,23 @@ export const ProviderEditModal: FC<ProviderEditModalProps> = ({ open, provider, 
 
   const handleSave = async () => {
     if (!provider) return;
-    const values = await form.validateFields();
-    await updateProvider.mutateAsync({
-      id: provider.id,
-      data: {
-        providerName: values.providerName,
-        description: values.description,
-        websiteUrl: values.websiteUrl,
-        apiDocUrl: values.apiDocUrl,
-      },
-    });
-    onClose();
+    try {
+      const values = await form.validateFields();
+      await updateProvider.mutateAsync({
+        id: provider.id,
+        data: {
+          providerName: values.providerName,
+          description: values.description,
+          websiteUrl: values.websiteUrl,
+          apiDocUrl: values.apiDocUrl,
+        },
+      });
+      message.success(t('providerEdit.saveSuccess', { defaultValue: '供应商已更新' }));
+      onClose();
+    } catch (error: unknown) {
+      if (error && typeof error === 'object' && 'errorFields' in error) return;
+      message.error(t('providerEdit.saveFailed', { defaultValue: '更新失败' }));
+    }
   };
 
   return (

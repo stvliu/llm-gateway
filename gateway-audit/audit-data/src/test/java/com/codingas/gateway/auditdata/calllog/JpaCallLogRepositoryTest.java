@@ -16,6 +16,8 @@
 package com.codingas.gateway.auditdata.calllog;
 
 import com.codingas.gateway.audit.CallLog;
+import com.codingas.gateway.audit.DailyUsage;
+import com.codingas.gateway.audit.ModelUsage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -143,5 +145,106 @@ class JpaCallLogRepositoryTest {
         assertThat(result.getOutputTokens()).isEqualTo(45);
         assertThat(result.getErrorMessage()).isNull();
         assertThat(result.getCalledAt()).isEqualTo(Instant.parse("2026-08-24T10:00:00Z"));
+    }
+
+    @Nested
+    @DisplayName("统计查询方法测试")
+    class StatsTests {
+
+        @Test
+        @DisplayName("countSince 统计指定时间之后的调用次数（含边界）")
+        void countSince_countsAfterTime() {
+            // given
+            CallLogDo before = new CallLogDo();
+            before.setCalledAt(Instant.parse("2026-08-20T00:00:00Z"));
+            CallLogDo at = new CallLogDo();
+            at.setCalledAt(Instant.parse("2026-08-21T00:00:00Z"));
+            CallLogDo after = new CallLogDo();
+            after.setCalledAt(Instant.parse("2026-08-22T00:00:00Z"));
+            when(repository.findAll()).thenReturn(List.of(before, at, after));
+
+            // when
+            long count = gateway.countSince(Instant.parse("2026-08-21T00:00:00Z"));
+
+            // then：边界值（at）计入
+            assertThat(count).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("sumTokensSince 累加指定时间后的 Token（输入+输出，null 按 0）")
+        void sumTokensSince_sumsInputAndOutput() {
+            // given
+            CallLogDo a = new CallLogDo();
+            a.setCalledAt(Instant.parse("2026-08-21T10:00:00Z"));
+            a.setInputTokens(100);
+            a.setOutputTokens(50);
+            CallLogDo b = new CallLogDo();
+            b.setCalledAt(Instant.parse("2026-08-21T11:00:00Z"));
+            b.setInputTokens(10);
+            b.setOutputTokens(null);
+            when(repository.findAll()).thenReturn(List.of(a, b));
+
+            // when
+            long sum = gateway.sumTokensSince(Instant.parse("2026-08-21T00:00:00Z"));
+
+            // then：100+50 + 10+0 = 160
+            assertThat(sum).isEqualTo(160);
+        }
+
+        @Test
+        @DisplayName("findDailyUsage 按天聚合请求数与 Token，忽略范围外记录")
+        void findDailyUsage_groupsByDate() {
+            // given：两天数据 + 1 条范围外（不硬编码日期字符串，避免测试机时区差异）
+            CallLogDo day1a = new CallLogDo();
+            day1a.setCalledAt(Instant.parse("2026-08-21T10:00:00Z"));
+            day1a.setInputTokens(100);
+            day1a.setOutputTokens(20);
+            CallLogDo day1b = new CallLogDo();
+            day1b.setCalledAt(Instant.parse("2026-08-21T11:00:00Z"));
+            day1b.setInputTokens(50);
+            CallLogDo day2 = new CallLogDo();
+            day2.setCalledAt(Instant.parse("2026-08-22T10:00:00Z"));
+            day2.setInputTokens(10);
+            CallLogDo outOfRange = new CallLogDo();
+            outOfRange.setCalledAt(Instant.parse("2026-08-23T10:00:00Z"));
+            when(repository.findAll()).thenReturn(List.of(day1a, day1b, day2, outOfRange));
+
+            // when
+            List<DailyUsage> usage = gateway.findDailyUsage(
+                    Instant.parse("2026-08-21T00:00:00Z"),
+                    Instant.parse("2026-08-22T23:59:59Z"));
+
+            // then：两天各一组
+            assertThat(usage).hasSize(2);
+            DailyUsage busy = usage.stream().filter(u -> u.requestCount() == 2).findFirst().orElseThrow();
+            assertThat(busy.tokenCount()).isEqualTo(170);
+            DailyUsage light = usage.stream().filter(u -> u.requestCount() == 1).findFirst().orElseThrow();
+            assertThat(light.tokenCount()).isEqualTo(10);
+        }
+
+        @Test
+        @DisplayName("findModelUsage 按请求数降序取 Top N，忽略 model 为空的记录")
+        void findModelUsage_returnsTopByCount() {
+            // given
+            CallLogDo gpt = new CallLogDo();
+            gpt.setModel("gpt-4o");
+            CallLogDo gpt2 = new CallLogDo();
+            gpt2.setModel("gpt-4o");
+            CallLogDo claude = new CallLogDo();
+            claude.setModel("claude");
+            CallLogDo noModel = new CallLogDo();
+            noModel.setModel(null);
+            when(repository.findAll()).thenReturn(List.of(gpt, gpt2, claude, noModel));
+
+            // when
+            List<ModelUsage> usage = gateway.findModelUsage(2);
+
+            // then
+            assertThat(usage).hasSize(2);
+            assertThat(usage.get(0).model()).isEqualTo("gpt-4o");
+            assertThat(usage.get(0).requestCount()).isEqualTo(2);
+            assertThat(usage.get(1).model()).isEqualTo("claude");
+            assertThat(usage.get(1).requestCount()).isEqualTo(1);
+        }
     }
 }

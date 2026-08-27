@@ -19,11 +19,29 @@ import { statsApi } from '@/services/api/stats';
 export const statsKeys = {
   all: ['stats'] as const,
   detail: () => [...statsKeys.all, 'detail'] as const,
+  trend: (days?: number) => [...statsKeys.all, 'trend', days] as const,
+  modelUsage: (limit?: number) => [...statsKeys.all, 'modelUsage', limit] as const,
 };
 
 export function useStats() {
   return useQuery({
     queryKey: statsKeys.detail(),
     queryFn: () => statsApi.get(),
+  });
+}
+
+/** 获取最近 N 天调用趋势 */
+export function useStatsTrend(days = 7) {
+  return useQuery({
+    queryKey: statsKeys.trend(days),
+    queryFn: () => statsApi.trend(days),
+  });
+}
+
+/** 获取模型调用量分布（Top N） */
+export function useStatsModelUsage(limit = 5) {
+  return useQuery({
+    queryKey: statsKeys.modelUsage(limit),
+    queryFn: () => statsApi.modelUsage(limit),
   });
 }

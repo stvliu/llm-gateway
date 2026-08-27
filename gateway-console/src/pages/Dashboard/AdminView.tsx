@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { useMemo } from 'react';
 import { Row, Col, Card, Statistic, Table, Tag, Spin, theme } from 'antd';
 import {
   AppstoreOutlined,
@@ -23,17 +24,26 @@ import {
   CloudServerOutlined,
   HistoryOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/stores/authStore';
 import { P } from '@/constants/permissions';
 import { TrendChart, ModelUsageChart } from '@/components/charts';
-import { useStats } from '@/services/query';
+import { useStats, useStatsTrend, useStatsModelUsage } from '@/services/query';
+import { useAuditLogs } from '@/services/query/useAuditLogs';
+import { useUsers } from '@/services/query/useUsers';
 
 export default function AdminView() {
   const { t } = useTranslation('dashboard');
   const { token } = theme.useToken();
   const { hasPermission } = useAuthStore();
   const { data: statsData, isLoading: statsLoading } = useStats();
+  // 趋势与模型用量：真实统计端点（替代早期模拟数据）
+  const { data: trendData, isLoading: trendLoading } = useStatsTrend(7);
+  const { data: modelUsageData, isLoading: modelUsageLoading } = useStatsModelUsage(5);
+  // 最近活动：真实管理操作审计（最近 5 条），替代早期硬编码假数据
+  const { data: auditData, isLoading: auditLoading } = useAuditLogs({ page: 1, limit: 5 });
+  const { data: usersData } = useUsers({ page: 1, size: 200 });
 
   const stats = {
     providerCount: statsData?.providerCount ?? 0,
@@ -44,29 +54,41 @@ export default function AdminView() {
     tokenUsage: statsData?.tokenUsage ?? '0',
   };
 
-  const recentActivities = [
-    { key: '1', action: t('activity.actions.createUser'), user: 'admin', target: 'user_001', time: t('activity.time.minutesAgo', { count: 2 }), status: 'success' },
-    { key: '2', action: t('activity.actions.addModel'), user: 'admin', target: 'gpt-4-turbo', time: t('activity.time.minutesAgo', { count: 15 }), status: 'success' },
-    { key: '3', action: t('activity.actions.keyExpired'), user: 'system', target: 'key_xxx', time: t('activity.time.hoursAgo', { count: 1 }), status: 'warning' },
-    { key: '4', action: t('activity.actions.userLogin'), user: 'user_001', target: '-', time: t('activity.time.hoursAgo', { count: 2 }), status: 'success' },
-    { key: '5', action: t('activity.actions.rateLimit'), user: 'user_002', target: 'api_calls', time: t('activity.time.hoursAgo', { count: 3 }), status: 'error' },
-  ];
+  // 操作人映射：审计只存 userId，用用户列表展示用户名
+  const userMap = useMemo(() => {
+    const map = new Map<number, { username: string }>();
+    usersData?.items?.forEach((u: { id: number; username: string }) => map.set(u.id, u));
+    return map;
+  }, [usersData]);
 
-  const columns = [
-    { title: t('activity.action'), dataIndex: 'action', key: 'action', width: 120 },
-    { title: t('activity.user'), dataIndex: 'user', key: 'user', width: 100 },
-    { title: t('activity.target'), dataIndex: 'target', key: 'target' },
-    { title: t('activity.columnTime'), dataIndex: 'time', key: 'time', width: 100 },
+  const activityColumns = [
+    {
+      title: t('activity.columnTime'),
+      dataIndex: 'createdAt',
+      key: 'time',
+      width: 170,
+      render: (val: string) => (val ? dayjs(val).format('YYYY-MM-DD HH:mm:ss') : '-'),
+    },
+    {
+      title: t('activity.user'),
+      dataIndex: 'userId',
+      key: 'user',
+      width: 120,
+      render: (userId: number) => userMap.get(userId)?.username ?? (userId === 0 ? '-' : `用户 ${userId}`),
+    },
+    { title: t('activity.action'), dataIndex: 'action', key: 'action', width: 200 },
+    { title: t('activity.target'), dataIndex: 'resource', key: 'target', ellipsis: true },
     {
       title: t('activity.state'),
-      dataIndex: 'status',
+      dataIndex: 'result',
       key: 'state',
       width: 80,
-      render: (status: string) => {
-        const colorMap: Record<string, string> = { success: 'green', warning: 'orange', error: 'red' };
-        const labelMap: Record<string, string> = { success: t('state.success'), warning: t('state.warning'), error: t('state.error') };
-        return <Tag color={colorMap[status]}>{labelMap[status]}</Tag>;
-      },
+      render: (result: string) =>
+        result === 'SUCCESS' ? (
+          <Tag color="green">{t('state.success')}</Tag>
+        ) : (
+          <Tag color="red">{t('state.failure')}</Tag>
+        ),
     },
   ];
 
@@ -107,12 +129,12 @@ export default function AdminView() {
       <Row gutter={16} style={{ flex: 1 }}>
         <Col span={16}>
           <Card title={t('trend.title')} style={{ height: '100%', border: 'none', boxShadow: token.boxShadow }} styles={{ body: { height: 'calc(100% - 57px)', padding: '16px 24px 24px' } }}>
-            <TrendChart />
+            <TrendChart data={trendData} loading={trendLoading} />
           </Card>
         </Col>
         <Col span={8}>
           <Card title={t('modelUsage.title')} style={{ height: '100%', border: 'none', boxShadow: token.boxShadow }} styles={{ body: { height: 'calc(100% - 57px)', padding: '16px 24px 24px' } }}>
-            <ModelUsageChart />
+            <ModelUsageChart data={modelUsageData} loading={modelUsageLoading} />
           </Card>
         </Col>
       </Row>
@@ -122,7 +144,15 @@ export default function AdminView() {
           title={<span><HistoryOutlined style={{ marginRight: 8, color: token.colorPrimary }} />{t('activity.title')}</span>}
           style={{ border: 'none', boxShadow: token.boxShadow }}
         >
-          <Table dataSource={recentActivities} columns={columns} pagination={false} size="small" />
+          <Table
+            dataSource={auditData?.items ?? []}
+            columns={activityColumns}
+            rowKey="id"
+            loading={auditLoading}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: t('activity.noActivity', { defaultValue: '暂无活动' }) }}
+          />
         </Card>
       )}
     </div>

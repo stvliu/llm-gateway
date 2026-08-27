@@ -17,11 +17,23 @@ package com.codingas.gateway.auditdata.calllog;
 
 import com.codingas.gateway.audit.CallLog;
 import com.codingas.gateway.audit.CallLogRepository;
+import com.codingas.gateway.audit.DailyUsage;
+import com.codingas.gateway.audit.ModelUsage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * 调用日志 Gateway 实现
+ *
+ * <p>统计查询沿用项目既有范式（findAll + 内存过滤聚合），
+ * 数据量大后可迁移 SQL/Spring Data 聚合。</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -34,6 +46,59 @@ public class JpaCallLogRepository implements CallLogRepository {
         CallLogDo do_ = toDo(callLog);
         CallLogDo saved = repository.save(do_);
         return toEntity(saved);
+    }
+
+    @Override
+    public long countSince(Instant since) {
+        return repository.findAll().stream()
+                .filter(c -> c.getCalledAt() != null && !c.getCalledAt().isBefore(since))
+                .count();
+    }
+
+    @Override
+    public long sumTokensSince(Instant since) {
+        return repository.findAll().stream()
+                .filter(c -> c.getCalledAt() != null && !c.getCalledAt().isBefore(since))
+                .mapToLong(this::tokenOf)
+                .sum();
+    }
+
+    @Override
+    public List<DailyUsage> findDailyUsage(Instant start, Instant end) {
+        Map<String, long[]> agg = new LinkedHashMap<>();
+        repository.findAll().stream()
+                .filter(c -> c.getCalledAt() != null
+                        && !c.getCalledAt().isBefore(start)
+                        && !c.getCalledAt().isAfter(end))
+                .forEach(c -> {
+                    String date = c.getCalledAt().atZone(ZoneId.systemDefault()).toLocalDate().toString();
+                    agg.merge(date, new long[]{1, tokenOf(c)}, (a, b) -> new long[]{a[0] + b[0], a[1] + b[1]});
+                });
+        return agg.entrySet().stream()
+                .map(e -> new DailyUsage(e.getKey(), e.getValue()[0], e.getValue()[1]))
+                .toList();
+    }
+
+    @Override
+    public List<ModelUsage> findModelUsage(int limit) {
+        Map<String, Long> countByModel = new HashMap<>();
+        repository.findAll().forEach(c -> {
+            if (c.getModel() != null) {
+                countByModel.merge(c.getModel(), 1L, Long::sum);
+            }
+        });
+        return countByModel.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(limit)
+                .map(e -> new ModelUsage(e.getKey(), e.getValue()))
+                .toList();
+    }
+
+    /** 单条调用日志的 Token 消耗（输入 + 输出，null 按 0） */
+    private long tokenOf(CallLogDo do_) {
+        long input = do_.getInputTokens() != null ? do_.getInputTokens() : 0L;
+        long output = do_.getOutputTokens() != null ? do_.getOutputTokens() : 0L;
+        return input + output;
     }
 
     private CallLogDo toDo(CallLog entity) {

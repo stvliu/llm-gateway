@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useState, useMemo } from 'react';
-import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App } from 'antd';
+import { Table, Button, Tag, Space, Input, Select, Popconfirm, Tooltip, Card, App, Alert } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, SafetyOutlined, SearchOutlined, KeyOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +41,7 @@ export default function ApplicationsPage() {
   const { hasPermission } = useAuthStore();
   const canWrite = hasPermission(P.APPLICATION_WRITE);
 
-  const { data: applications, isLoading } = useApplications();
+  const { data: applications, isLoading, isError, refetch } = useApplications();
   const deleteMutation = useDeleteApplication();
 
   const [formVisible, setFormVisible] = useState(false);
@@ -220,6 +220,21 @@ export default function ApplicationsPage() {
             </Button>
           )}
         </div>
+
+        {isError && (
+          <Alert
+            type="error"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message={t('loadFailed', { ns: 'common' })}
+            description={t('loadFailedHint', { ns: 'common' })}
+            action={
+              <Button size="small" onClick={() => refetch()}>
+                {t('retry', { ns: 'common' })}
+              </Button>
+            }
+          />
+        )}
 
         <Table
           rowKey="id"

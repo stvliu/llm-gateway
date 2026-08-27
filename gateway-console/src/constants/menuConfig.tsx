@@ -23,6 +23,7 @@ import {
   BarChartOutlined,
   FileSearchOutlined,
   SafetyOutlined,
+  AccountBookOutlined,
 } from '@ant-design/icons';
 import type { Permission } from '@/constants/permissions';
 
@@ -109,6 +110,12 @@ export const menuGroups: MenuGroupConfig[] = [
     key: 'operations',
     label: 'menu.group.operations',
     items: [
+      {
+        key: '/token-limits',
+        icon: <AccountBookOutlined />,
+        label: 'menu.tokenLimits',
+        permission: 'token-limit:manage',
+      },
       {
         key: '/resilience/overview',
         icon: <SafetyOutlined />,

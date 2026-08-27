@@ -8,6 +8,7 @@
     "users": "用户",
     "stats": "统计",
     "auditLogs": "审计日志",
+    "tokenLimits": "Token 限额",
     "resilience": "容灾",
     "catalog": "目录",
     "changePassword": "修改密码",
@@ -71,5 +72,8 @@
     "confirmPassword": "确认新密码",
     "passwordMismatch": "两次输入的密码不一致"
   },
-  "forbidden": "无访问权限"
+  "forbidden": "无访问权限",
+  "loadFailed": "加载失败",
+  "loadFailedHint": "请检查网络或稍后重试",
+  "retry": "重试"
 }

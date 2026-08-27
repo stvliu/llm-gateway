@@ -24,7 +24,27 @@ export interface StatsResponse {
   tokenUsage: string;
 }
 
+/** 按天调用趋势（与后端 StatsTrendResponse 一致） */
+export interface StatsTrendItem {
+  date: string;
+  requestCount: number;
+  tokenCount: number;
+}
+
+/** 模型用量分布（与后端 StatsModelUsageResponse 一致） */
+export interface StatsModelUsageItem {
+  model: string;
+  requestCount: number;
+}
+
 export const statsApi = {
   /** 获取系统统计数据 */
   get: () => api.get<StatsResponse>('/stats'),
+
+  /** 获取最近 N 天调用趋势 */
+  trend: (days = 7) => api.get<StatsTrendItem[]>('/stats/trend', { params: { days } }),
+
+  /** 获取模型调用量分布（Top N） */
+  modelUsage: (limit = 5) =>
+    api.get<StatsModelUsageItem[]>('/stats/model-usage', { params: { limit } }),
 };

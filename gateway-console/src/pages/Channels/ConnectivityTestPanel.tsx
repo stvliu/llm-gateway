@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { useState } from 'react';
-import { Card, Form, Input, Button, Tag, Typography, Space, Divider, Spin } from 'antd';
+import { App, Card, Form, Input, Button, Tag, Typography, Space, Divider, Spin } from 'antd';
 import { LoadingOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 import { useTestConnectivity } from '@/services/query/useProviders';
@@ -36,6 +36,7 @@ interface ConnectivityTestPanelProps {
  */
 export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: ConnectivityTestPanelProps) {
   const { t } = useTranslation('channels');
+  const { message } = App.useApp();
   const [form] = Form.useForm();
   const testMutation = useTestConnectivity();
   const [result, setResult] = useState<ConnectivityTestResult | null>(null);
@@ -52,7 +53,11 @@ export function ConnectivityTestPanel({ providerCode, defaultBaseUrl }: Connecti
       },
       {
         onSuccess: (data) => setResult(data),
-        onError: () => setResult(null),
+        // 失败不再静默：提示用户重试（此前仅 setResult(null)，无任何反馈）
+        onError: () => {
+          setResult(null);
+          message.error(t('connectivity.testFailed', { defaultValue: '连通性测试失败，请检查配置后重试' }));
+        },
       },
     );
   };

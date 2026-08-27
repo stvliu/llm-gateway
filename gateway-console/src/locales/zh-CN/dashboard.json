@@ -10,13 +10,19 @@
     "applications": "可用应用"
   },
   "trend": {
-    "title": "请求趋势 (7天)"
+    "title": "请求趋势 (7天)",
+    "requests": "请求数",
+    "tokens": "Token数",
+    "empty": "暂无趋势数据"
   },
   "modelUsage": {
-    "title": "模型使用分布"
+    "title": "模型使用分布",
+    "total": "总计",
+    "empty": "暂无模型用量数据"
   },
   "activity": {
     "title": "最近活动",
+    "noActivity": "暂无活动",
     "action": "操作",
     "user": "操作人",
     "target": "对象",
@@ -37,7 +43,8 @@
   "state": {
     "success": "成功",
     "warning": "警告",
-    "error": "错误"
+    "error": "错误",
+    "failure": "失败"
   },
   "quickStart": {},
   "usageTrend": {},

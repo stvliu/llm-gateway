@@ -14,31 +14,37 @@
  * limitations under the License.
  */
 import { Pie } from '@ant-design/charts';
-import { theme } from 'antd';
+import { theme, Empty, Spin } from 'antd';
+import { useTranslation } from 'react-i18next';
+import type { StatsModelUsageItem } from '@/services/api/stats';
 
 interface ModelUsageChartProps {
-  data?: Array<{ model: string; value: number }>;
+  /** 模型用量分布（真实后端数据） */
+  data?: StatsModelUsageItem[];
+  loading?: boolean;
 }
 
 /**
  * 模型使用分布饼图组件
+ *
+ * <p>展示各模型调用量占比。数据来自后端统计端点，
+ * 无数据时显示空态，不再内置模拟数据。</p>
  */
-export function ModelUsageChart({ data }: ModelUsageChartProps) {
+export function ModelUsageChart({ data, loading }: ModelUsageChartProps) {
   const { token } = theme.useToken();
+  const { t } = useTranslation('dashboard');
 
-  // 默认模拟数据
-  const defaultData = [
-    { model: 'GPT-4', value: 40 },
-    { model: 'GPT-3.5', value: 25 },
-    { model: 'Claude-3', value: 20 },
-    { model: 'Gemini', value: 10 },
-    { model: '其他', value: 5 },
-  ];
+  if (loading) {
+    return <div style={{ textAlign: 'center', padding: 48 }}><Spin /></div>;
+  }
+  if (!data || data.length === 0) {
+    return <Empty description={t('modelUsage.empty', { defaultValue: '暂无模型用量数据' })} />;
+  }
 
-  const chartData = data || defaultData;
+  const pieData = data.map((d) => ({ model: d.model, value: d.requestCount }));
 
   const config = {
-    data: chartData,
+    data: pieData,
     angleField: 'value',
     colorField: 'model',
     radius: 0.8,
@@ -76,7 +82,7 @@ export function ModelUsageChart({ data }: ModelUsageChartProps) {
     },
     statistic: {
       title: {
-        content: '总计',
+        content: t('modelUsage.total', { defaultValue: '总计' }),
         style: {
           fill: token.colorTextTertiary,
           fontSize: 12,

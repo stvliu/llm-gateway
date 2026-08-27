@@ -44,6 +44,13 @@
             <artifactId>gateway-provider</artifactId>
             <version>${revision}</version>
         </dependency>
+
+        <!-- 审计域核心模块（CallLog 端口：调用量/Token 统计） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-audit</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- 身份与访问管理域核心端口（StatsService 经 UserGateway 计数） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

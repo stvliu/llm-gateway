@@ -37,6 +37,7 @@ export const P = {
   RESILIENCE_WRITE: 'resilience:write',
   QUICKSTART: 'quickstart:access',
   AUDIT_READ: 'audit:read',
+  TOKEN_LIMIT: 'token-limit:manage',
 } as const;
 
 export type Permission = (typeof P)[keyof typeof P];

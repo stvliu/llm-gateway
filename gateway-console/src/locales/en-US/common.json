@@ -8,6 +8,7 @@
     "users": "Users",
     "stats": "Statistics",
     "auditLogs": "Audit Logs",
+    "tokenLimits": "Token Limits",
     "resilience": "Resilience",
     "catalog": "Catalog",
     "changePassword": "Change Password",
@@ -71,5 +72,8 @@
     "confirmPassword": "Confirm New Password",
     "passwordMismatch": "Passwords do not match"
   },
-  "forbidden": "No permission"
+  "forbidden": "No permission",
+  "loadFailed": "Failed to load",
+  "loadFailedHint": "Check your network and try again later",
+  "retry": "Retry"
 }
