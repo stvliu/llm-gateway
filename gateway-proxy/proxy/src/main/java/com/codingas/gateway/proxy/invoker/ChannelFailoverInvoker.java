@@ -122,7 +122,7 @@ public class ChannelFailoverInvoker {
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID（权限锚点）
-     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchManagerImpl 生成），透传到转移事件
+     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchServiceImpl 生成），透传到转移事件
      *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @return 上游响应
      * @throws UpstreamException  INVALID_REQUEST 等请求级错误直接抛出；
@@ -209,7 +209,7 @@ public class ChannelFailoverInvoker {
      * @param request                  协议请求
      * @param inboundProtocol          入站协议
      * @param applicationId            应用 ID
-     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchManagerImpl 生成），透传到转移事件
+     * @param traceId                  调用链 Trace ID（由上层 ChatDispatchServiceImpl 生成），透传到转移事件
      *                                  串联同请求多次转移；为 null 时事件 traceId 字段为 null
      * @param callback                 流式回调
      * @throws UpstreamException  INVALID_REQUEST 等请求级错误直接抛出；
@@ -332,7 +332,7 @@ public class ChannelFailoverInvoker {
     }
 
     /**
-     * 跨协议请求转换（下沉自 ChatDispatchManagerImpl，每候选独立执行）
+     * 跨协议请求转换（下沉自 ChatDispatchServiceImpl，每候选独立执行）
      *
      * @param request 协议请求（已 copy）
      * @param ctx     路由上下文（提供目标上游协议）
@@ -346,7 +346,7 @@ public class ChannelFailoverInvoker {
     /**
      * 响应转换下沉：基于实际成功候选将上游响应转换为入站协议格式
      *
-     * <p>与 {@link #adaptRequestForCandidate} 对称，下沉自 {@code ChatDispatchManagerImpl.convertResponse}。
+     * <p>与 {@link #adaptRequestForCandidate} 对称，下沉自 {@code ChatDispatchServiceImpl.convertResponse}。
      * 关键差异：基于<b>实际成功候选</b>（非主候选）的 upstreamProtocol 决定转换方向，确保 L1 换到
      * 跨协议备候选时响应被正确转换为入站协议格式。修复前响应转换留在 dispatch 阶段6 且基于主候选：
      * 当主候选同协议(needsAdaptation=false)而实际成功的是跨协议备候选时，阶段6 跳过转换，
@@ -366,7 +366,7 @@ public class ChannelFailoverInvoker {
     }
 
     /**
-     * 跨协议响应转换（下沉自 ChatDispatchManagerImpl，每候选独立执行）
+     * 跨协议响应转换（下沉自 ChatDispatchServiceImpl，每候选独立执行）
      *
      * @param response 上游响应
      * @param ctx      路由上下文（提供上游协议，决定转换方向）
@@ -380,7 +380,7 @@ public class ChannelFailoverInvoker {
     /**
      * 构造流式回调：基于实际候选 upstreamProtocol 重建 chunk 转换方向
      *
-     * <p>下沉自 {@code ChatDispatchManagerImpl.dispatchStream} 的 delegateCallback 构造，关键差异：
+     * <p>下沉自 {@code ChatDispatchServiceImpl.dispatchStream} 的 delegateCallback 构造，关键差异：
      * 转换方向基于<b>当前候选</b>的 upstreamProtocol（非主候选），确保跨协议换候选后
      * chunk 转换方向正确。换候选仅发生在首字节前（callback 未触发），故按成功候选协议
      * 构造转换方向是安全的。</p>
@@ -476,7 +476,7 @@ public class ChannelFailoverInvoker {
         boolean exhausted = !hasTo;
 
         FailoverOccurredEvent event = new FailoverOccurredEvent(
-                traceId,                    // traceId：由上层 ChatDispatchManagerImpl 生成并透传，串联同请求多次转移
+                traceId,                    // traceId：由上层 ChatDispatchServiceImpl 生成并透传，串联同请求多次转移
                 applicationId,
                 candidate.channelId(),
                 candidate.channelEndpointId(),

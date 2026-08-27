@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.channel.ChannelCredentialManager;
+import com.codingas.gateway.provider.channel.ChannelCredentialService;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,14 +31,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ChannelCredentialController {
 
-    private final ChannelCredentialManager channelCredentialManager;
+    private final ChannelCredentialService channelCredentialService;
 
     /**
      * 获取渠道下的凭证列表
      */
     @GetMapping
     public List<ChannelCredentialResponse> list(@PathVariable Long channelId) {
-        return ChannelCredentialResponse.from(channelCredentialManager.listByChannelId(channelId));
+        return ChannelCredentialResponse.from(channelCredentialService.listByChannelId(channelId));
     }
 
     /**
@@ -48,7 +48,7 @@ public class ChannelCredentialController {
     public ChannelCredentialResponse get(
             @PathVariable Long channelId,
             @PathVariable Long id) {
-        return ChannelCredentialResponse.from(channelCredentialManager.getDetailById(channelId, id));
+        return ChannelCredentialResponse.from(channelCredentialService.getDetailById(channelId, id));
     }
 
     /**
@@ -60,7 +60,7 @@ public class ChannelCredentialController {
             @PathVariable Long channelId,
             @Valid @RequestBody ChannelCredentialCreateRequest request) {
         return ChannelCredentialCreateResponse.from(
-                channelCredentialManager.create(request.toEntity(channelId)));
+                channelCredentialService.create(request.toEntity(channelId)));
     }
 
     /**
@@ -73,7 +73,7 @@ public class ChannelCredentialController {
             @PathVariable Long id,
             @Valid @RequestBody ChannelCredentialUpdateRequest request) {
         return ChannelCredentialResponse.from(
-                channelCredentialManager.update(request.toEntity(channelId, id)));
+                channelCredentialService.update(request.toEntity(channelId, id)));
     }
 
     /**
@@ -83,7 +83,7 @@ public class ChannelCredentialController {
     public void delete(
             @PathVariable Long channelId,
             @PathVariable Long id) {
-        channelCredentialManager.delete(channelId, id);
+        channelCredentialService.delete(channelId, id);
     }
 
     /**
@@ -93,6 +93,6 @@ public class ChannelCredentialController {
     public ApiKeyTestResponse testApiKey(
             @PathVariable Long channelId,
             @PathVariable Long id) {
-        return ApiKeyTestResponse.from(channelCredentialManager.testApiKey(channelId, id));
+        return ApiKeyTestResponse.from(channelCredentialService.testApiKey(channelId, id));
     }
 }

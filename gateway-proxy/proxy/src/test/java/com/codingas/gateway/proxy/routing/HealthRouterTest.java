@@ -19,7 +19,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.protocol.Protocol;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.when;
  * HealthRouter 单元测试
  *
  * <p>验证熔断 key 已统一为 endpointId：HealthRouter 通过 {@link EndpointResolver}
- * 按入站协议从 channelId 派生 endpointId，再查询 {@link ChannelEndpointCircuitBreakerManager}
+ * 按入站协议从 channelId 派生 endpointId，再查询 {@link ChannelEndpointCircuitBreakerService}
  * 的端点级熔断状态——与 {@code KeyFailoverInvoker} 共享同一熔断器 bean，确保路由阶段
  * 过滤掉的熔断端点与调用阶段跳过的熔断端点完全一致。</p>
  */
@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
 class HealthRouterTest {
 
     @Mock
-    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private ChannelEndpointCircuitBreakerService circuitBreakerService;
 
     @Mock
     private EndpointResolver endpointResolver;
@@ -69,8 +69,8 @@ class HealthRouterTest {
         ChannelEndpoint ep2 = endpoint(60L, 200L, Protocol.OPENAI);
         when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(ep1);
         when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(ep2);
-        when(circuitBreakerManager.isAvailable(50L)).thenReturn(true);
-        when(circuitBreakerManager.isAvailable(60L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(50L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(60L)).thenReturn(false);
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
@@ -91,8 +91,8 @@ class HealthRouterTest {
         ChannelEndpoint ep2 = endpoint(60L, 200L, Protocol.OPENAI);
         when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(ep1);
         when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(ep2);
-        when(circuitBreakerManager.isAvailable(50L)).thenReturn(false);
-        when(circuitBreakerManager.isAvailable(60L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(50L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(60L)).thenReturn(false);
 
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
         List<ModelInstance> result = router.filter(List.of(mi1, mi2), request);
@@ -125,7 +125,7 @@ class HealthRouterTest {
 
         ChannelEndpoint openaiEp = endpoint(50L, 100L, Protocol.OPENAI);
         when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(openaiEp);
-        when(circuitBreakerManager.isAvailable(50L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(50L)).thenReturn(false);
 
         // 入站协议 OPENAI → 派生 endpointId=50L → 熔断 → 实例被过滤
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.OPENAI);
@@ -143,7 +143,7 @@ class HealthRouterTest {
 
         ChannelEndpoint anthropicEp = endpoint(60L, 100L, Protocol.ANTHROPIC);
         when(endpointResolver.resolve(100L, Protocol.ANTHROPIC)).thenReturn(anthropicEp);
-        when(circuitBreakerManager.isAvailable(60L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(60L)).thenReturn(true);
 
         // 入站协议 ANTHROPIC → 派生 endpointId=60L → 健康 → 实例保留
         RoutingRequest request = new RoutingRequest(1L, 1L, 1L, "USER", RoutingStrategy.WEIGHTED, Protocol.ANTHROPIC);
@@ -184,7 +184,7 @@ class HealthRouterTest {
 
         assertThat(result).isEmpty();
         // 短路保护：既不调用 endpointResolver（无法派生），也不查询熔断器（避免注入未知 key）
-        verifyNoInteractions(endpointResolver, circuitBreakerManager);
+        verifyNoInteractions(endpointResolver, circuitBreakerService);
     }
 
     /** 构造测试用 ChannelEndpoint */

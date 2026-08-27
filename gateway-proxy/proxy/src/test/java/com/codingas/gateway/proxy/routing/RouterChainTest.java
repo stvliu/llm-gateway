@@ -18,7 +18,7 @@ package com.codingas.gateway.proxy.routing;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.protocol.Protocol;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,7 +43,7 @@ class RouterChainTest {
     private RouterChain routerChain;
 
     @Mock
-    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private ChannelEndpointCircuitBreakerService circuitBreakerService;
 
     @Mock
     private EndpointResolver endpointResolver;
@@ -155,7 +155,7 @@ class RouterChainTest {
             }
         }
 
-        HealthRouter health = new HealthRouter(circuitBreakerManager, endpointResolver);
+        HealthRouter health = new HealthRouter(circuitBreakerService, endpointResolver);
         PriorityRouter priority = new PriorityRouter();
         // 故意乱序传入，验证 RouterChain 按 @Order 升序排序
         RouterChain chain = new RouterChain(List.of(
@@ -192,13 +192,13 @@ class RouterChainTest {
         ep2.setProtocol(Protocol.OPENAI);
         when(endpointResolver.resolve(100L, Protocol.OPENAI)).thenReturn(ep1);
         when(endpointResolver.resolve(200L, Protocol.OPENAI)).thenReturn(ep2);
-        when(circuitBreakerManager.isAvailable(150L)).thenReturn(false);
-        when(circuitBreakerManager.isAvailable(250L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(150L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(250L)).thenReturn(true);
 
         // 真实 Health + Priority + LoadBalanceRouter（Task 3.1 已降级为透传，返回候选列表）
         LoadBalanceRouter loadBalance = new LoadBalanceRouter();
         RouterChain chain = new RouterChain(List.of(
-                new HealthRouter(circuitBreakerManager, endpointResolver),
+                new HealthRouter(circuitBreakerService, endpointResolver),
                 new PriorityRouter(),
                 loadBalance));
 

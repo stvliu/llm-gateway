@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.apikey.UserApiKeyManager;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -30,47 +30,47 @@ import java.util.List;
 @RequestMapping("/api/v1/user-api-keys")
 public class UserApiKeyController {
 
-    private final UserApiKeyManager userApiKeyManager;
+    private final UserApiKeyService userApiKeyService;
 
-    public UserApiKeyController(UserApiKeyManager userApiKeyManager) {
-        this.userApiKeyManager = userApiKeyManager;
+    public UserApiKeyController(UserApiKeyService userApiKeyService) {
+        this.userApiKeyService = userApiKeyService;
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public UserApiKeyCreateResponse create(@Valid @RequestBody UserApiKeyCreateRequest request) {
-        return UserApiKeyCreateResponse.from(userApiKeyManager.create(request.toEntity()));
+        return UserApiKeyCreateResponse.from(userApiKeyService.create(request.toEntity()));
     }
 
     @GetMapping(params = "userId")
     public List<UserApiKeyResponse> findByUserId(@RequestParam Long userId) {
-        return UserApiKeyResponse.from(userApiKeyManager.findByUserId(userId));
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
     }
 
     /** 查询所有 API Key（管理员用） */
     @GetMapping
     public List<UserApiKeyResponse> findAll() {
-        return UserApiKeyResponse.from(userApiKeyManager.findAllNonDeleted());
+        return UserApiKeyResponse.from(userApiKeyService.findAllNonDeleted());
     }
 
     @GetMapping("/{id}")
     public UserApiKeyResponse getById(@PathVariable Long id) {
-        return UserApiKeyResponse.from(userApiKeyManager.getById(id));
+        return UserApiKeyResponse.from(userApiKeyService.getById(id));
     }
 
     @GetMapping("/{id}/detail")
     public UserApiKeyResponse getDetailById(@PathVariable Long id) {
-        return UserApiKeyResponse.from(userApiKeyManager.getDetailById(id));
+        return UserApiKeyResponse.from(userApiKeyService.getDetailById(id));
     }
 
     @PutMapping("/{id}")
     public UserApiKeyResponse update(@PathVariable Long id, @Valid @RequestBody UserApiKeyUpdateRequest request) {
-        return UserApiKeyResponse.from(userApiKeyManager.update(id, request.toEntity()));
+        return UserApiKeyResponse.from(userApiKeyService.update(id, request.toEntity()));
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        userApiKeyManager.delete(id);
+        userApiKeyService.delete(id);
     }
 }

@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.interceptor;
 
 import com.codingas.gateway.iam.auth.AuthenticationFailedException;
-import com.codingas.gateway.iam.auth.AuthenticationManager;
+import com.codingas.gateway.iam.auth.AuthenticationService;
 import com.codingas.gateway.iam.auth.Identity;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -32,10 +32,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
 
-    private final AuthenticationManager authenticationManager;
+    private final AuthenticationService authenticationService;
 
-    public ApiKeyAuthInterceptor(AuthenticationManager authenticationManager) {
-        this.authenticationManager = authenticationManager;
+    public ApiKeyAuthInterceptor(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     @Override
@@ -69,7 +69,7 @@ public class ApiKeyAuthInterceptor extends AbstractGatewayInterceptor {
         }
 
         try {
-            Identity identity = authenticationManager.authenticateUser(apiKey);
+            Identity identity = authenticationService.authenticateUser(apiKey);
             request.setAttribute("identity", identity);
             return true;
         } catch (AuthenticationFailedException e) {

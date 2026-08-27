@@ -21,15 +21,15 @@ import org.springframework.cache.annotation.CacheEvict;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@DisplayName("CacheInvalidationManager 测试")
-class CacheInvalidationManagerTest {
+@DisplayName("CacheInvalidationService 测试")
+class CacheInvalidationServiceTest {
 
-    private final CacheInvalidationManager service = new CacheInvalidationManager();
+    private final CacheInvalidationService service = new CacheInvalidationService();
 
     @Test
     @DisplayName("refreshProviders 声明 providers 缓存全量失效")
     void refreshProviders_cacheEvictMetadata() throws Exception {
-        CacheEvict evict = CacheInvalidationManager.class.getMethod("refreshProviders")
+        CacheEvict evict = CacheInvalidationService.class.getMethod("refreshProviders")
                 .getAnnotation(CacheEvict.class);
 
         assertThat(evict.value()).containsExactly(CacheNames.PROVIDERS);
@@ -39,7 +39,7 @@ class CacheInvalidationManagerTest {
     @Test
     @DisplayName("refreshModels 声明 models 缓存全量失效")
     void refreshModels_cacheEvictMetadata() throws Exception {
-        CacheEvict evict = CacheInvalidationManager.class.getMethod("refreshModels")
+        CacheEvict evict = CacheInvalidationService.class.getMethod("refreshModels")
                 .getAnnotation(CacheEvict.class);
 
         assertThat(evict.value()).containsExactly(CacheNames.MODELS);
@@ -49,7 +49,7 @@ class CacheInvalidationManagerTest {
     @Test
     @DisplayName("refreshApiKeys 声明本地 apiKeysLocal 缓存全量失效")
     void refreshApiKeys_cacheEvictMetadata() throws Exception {
-        CacheEvict evict = CacheInvalidationManager.class.getMethod("refreshApiKeys")
+        CacheEvict evict = CacheInvalidationService.class.getMethod("refreshApiKeys")
                 .getAnnotation(CacheEvict.class);
 
         assertThat(evict.value()).containsExactly(CacheNames.API_KEYS_LOCAL);

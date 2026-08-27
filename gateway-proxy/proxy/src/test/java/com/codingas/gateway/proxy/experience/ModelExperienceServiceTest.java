@@ -64,7 +64,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ModelExperienceManager 单元测试
+ * ModelExperienceService 单元测试
  *
  * <p>覆盖模型列表查询与流式聊天体验两条主链路：
  * <ul>
@@ -80,8 +80,8 @@ import static org.mockito.Mockito.when;
  * 确定性捕获实际发送的 SSE 事件，无需 MockMvc 与真实 HTTP 容器。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelExperienceManager 单元测试")
-class ModelExperienceManagerTest {
+@DisplayName("ModelExperienceService 单元测试")
+class ModelExperienceServiceTest {
 
     @Mock
     private UpstreamClientRegistry upstreamClientRegistry;
@@ -103,11 +103,11 @@ class ModelExperienceManagerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private ModelExperienceManager service;
+    private ModelExperienceService service;
 
     @BeforeEach
     void setUp() {
-        service = new ModelExperienceManager(upstreamClientRegistry, providerRepository, channelRepository,
+        service = new ModelExperienceService(upstreamClientRegistry, providerRepository, channelRepository,
                 modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
     }
 
@@ -640,7 +640,7 @@ class ModelExperienceManagerTest {
         @Test
         @DisplayName("shutdown 关闭执行器且不抛异常")
         void shutdown_terminatesCleanly() {
-            ModelExperienceManager fresh = new ModelExperienceManager(upstreamClientRegistry, providerRepository,
+            ModelExperienceService fresh = new ModelExperienceService(upstreamClientRegistry, providerRepository,
                     channelRepository, modelInstanceRepository, channelCredentialRepository, modelRepository, objectMapper);
             fresh.shutdown();
             assertThat(fresh).isNotNull();

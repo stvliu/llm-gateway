@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.provider.model.Model;
-import com.codingas.gateway.provider.model.ModelDiscoveryManager;
+import com.codingas.gateway.provider.model.ModelDiscoveryService;
 import com.codingas.gateway.web.api.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.auth.Identity;
@@ -47,7 +47,7 @@ import static org.mockito.Mockito.when;
 class ModelDiscoveryControllerTest {
 
     @Mock
-    private ModelDiscoveryManager modelDiscoveryManager;
+    private ModelDiscoveryService modelDiscoveryService;
 
     @Mock
     private HttpServletRequest request;
@@ -82,7 +82,7 @@ class ModelDiscoveryControllerTest {
         void listModels_withValidIdentity_returnsModels() {
             // given
             when(request.getAttribute("identity")).thenReturn(identity);
-            when(modelDiscoveryManager.getVisibleModels(APPLICATION_ID)).thenReturn(sampleModels);
+            when(modelDiscoveryService.getVisibleModels(APPLICATION_ID)).thenReturn(sampleModels);
 
             // when
             ModelDiscoveryResponse result = controller.listModels(request);

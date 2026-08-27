@@ -47,11 +47,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * TokenLimitManager 单元测试
+ * TokenLimitService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("TokenLimitManager 单元测试")
-class TokenLimitManagerTest {
+@DisplayName("TokenLimitService 单元测试")
+class TokenLimitServiceTest {
 
     @Mock
     private TokenLimitRepository tokenLimitRepository;
@@ -66,7 +66,7 @@ class TokenLimitManagerTest {
     private ModelRepository modelRepository;
 
     @InjectMocks
-    private TokenLimitManagerImpl tokenLimitManager;
+    private TokenLimitServiceImpl tokenLimitService;
 
     private User testUser;
     private Provider testProvider;
@@ -128,7 +128,7 @@ class TokenLimitManagerTest {
             when(tokenLimitRepository.save(any(TokenLimit.class))).thenReturn(testTokenLimit);
 
             // when
-            TokenLimit result = tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity);
+            TokenLimit result = tokenLimitService.create(1L, 1L, 1L, null, tokenLimitEntity);
 
             // then
             assertThat(result).isNotNull();
@@ -156,7 +156,7 @@ class TokenLimitManagerTest {
             when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
+            assertThatThrownBy(() -> tokenLimitService.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("User")
                 .hasMessageContaining(String.valueOf(1L));
@@ -172,7 +172,7 @@ class TokenLimitManagerTest {
             when(providerRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
+            assertThatThrownBy(() -> tokenLimitService.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Provider")
                 .hasMessageContaining(String.valueOf(1L));
@@ -190,7 +190,7 @@ class TokenLimitManagerTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.create(1L, 1L, 1L, null, tokenLimitEntity))
+            assertThatThrownBy(() -> tokenLimitService.create(1L, 1L, 1L, null, tokenLimitEntity))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining(String.valueOf(1L));
@@ -212,7 +212,7 @@ class TokenLimitManagerTest {
             when(tokenLimitRepository.findById(1L)).thenReturn(Optional.of(testTokenLimit));
 
             // when
-            TokenLimit result = tokenLimitManager.getById(1L);
+            TokenLimit result = tokenLimitService.getById(1L);
 
             // then
             assertThat(result).isNotNull();
@@ -237,7 +237,7 @@ class TokenLimitManagerTest {
             when(tokenLimitRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> tokenLimitManager.getById(99L))
+            assertThatThrownBy(() -> tokenLimitService.getById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TokenLimit")
                 .hasMessageContaining("99");

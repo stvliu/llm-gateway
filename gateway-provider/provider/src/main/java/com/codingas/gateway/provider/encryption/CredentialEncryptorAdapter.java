@@ -24,7 +24,7 @@ import org.springframework.stereotype.Component;
  *
  * <p>供给域基础设施通过 {@link CredentialEncryptor} 契约解耦对 IAM 加密服务的依赖；
  * 本类在组装层把该契约桥接到 IAM 域的 {@link ApiKeyEncryptor}。
- * P3 下沉 provider 门面后，gateway-provider 需依赖 gateway-iam（ModelDiscoveryManager 查询
+ * P3 下沉 provider 门面后，gateway-provider 需依赖 gateway-iam（ModelDiscoveryService 查询
  * 应用渠道），为避免模块依赖环（provider→iam→provider），本桥接类由 gateway-iam 迁至
  * boot 组装层（boot 同时依赖 provider 与 iam）。</p>
  */

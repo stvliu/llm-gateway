@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.model.ModelDiscoveryManager;
+import com.codingas.gateway.provider.model.ModelDiscoveryService;
 import com.codingas.gateway.web.api.dto.ModelDiscoveryResponse;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.iam.auth.Identity;
@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ModelDiscoveryController {
 
-    private final ModelDiscoveryManager modelDiscoveryManager;
+    private final ModelDiscoveryService modelDiscoveryService;
 
     /**
      * 获取可见模型列表
@@ -49,6 +49,6 @@ public class ModelDiscoveryController {
         if (identity == null || identity.applicationId() == null) {
             throw new GatewayRequestException("AUTH_REQUIRED", "缺少认证信息");
         }
-        return ModelDiscoveryResponse.from(modelDiscoveryManager.getVisibleModels(identity.applicationId()));
+        return ModelDiscoveryResponse.from(modelDiscoveryService.getVisibleModels(identity.applicationId()));
     }
 }

@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.interceptor;
 
-import com.codingas.gateway.security.threat.IpBlocklistManager;
+import com.codingas.gateway.security.threat.IpBlocklistService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.*;
 class IPBlockCheckInterceptorTest {
 
     @Mock
-    private IpBlocklistManager ipBlocklistManager;
+    private IpBlocklistService ipBlocklistService;
 
     @Mock
     private HttpServletRequest request;
@@ -45,7 +45,7 @@ class IPBlockCheckInterceptorTest {
 
     @BeforeEach
     void setUp() {
-        interceptor = new IPBlockCheckInterceptor(ipBlocklistManager);
+        interceptor = new IPBlockCheckInterceptor(ipBlocklistService);
     }
 
     @Test
@@ -53,7 +53,7 @@ class IPBlockCheckInterceptorTest {
     void blockedIp_returnsFalse() throws Exception {
         // given
         when(request.getHeader("X-Forwarded-For")).thenReturn("192.168.1.100");
-        when(ipBlocklistManager.isBlocked("192.168.1.100")).thenReturn(true);
+        when(ipBlocklistService.isBlocked("192.168.1.100")).thenReturn(true);
         when(response.getWriter()).thenReturn(new MockPrintWriter());
 
         // when
@@ -69,7 +69,7 @@ class IPBlockCheckInterceptorTest {
     void normalIp_returnsTrue() throws Exception {
         // given
         when(request.getHeader("X-Forwarded-For")).thenReturn("10.0.0.1");
-        when(ipBlocklistManager.isBlocked("10.0.0.1")).thenReturn(false);
+        when(ipBlocklistService.isBlocked("10.0.0.1")).thenReturn(false);
 
         // when
         boolean result = interceptor.preHandle(request, response);

@@ -68,7 +68,7 @@
             <artifactId>gateway-audit</artifactId>
             <version>${revision}</version>
         </dependency>
-        <!-- 韧性域（依赖 ChannelEndpointCircuitBreakerManager） -->
+        <!-- 韧性域（依赖 ChannelEndpointCircuitBreakerService） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
             <artifactId>gateway-resilience</artifactId>

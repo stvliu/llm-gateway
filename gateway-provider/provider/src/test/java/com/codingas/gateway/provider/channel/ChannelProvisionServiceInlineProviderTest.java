@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ChannelProvisionManager.inlineProvider 入参三路径单元测试
+ * ChannelProvisionService.inlineProvider 入参三路径单元测试
  *
  * <p>覆盖 ensureProvider 在 inlineProvider 不同入参下的行为：</p>
  * <ul>
@@ -56,8 +56,8 @@ import static org.mockito.Mockito.when;
  * </ul>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChannelProvisionManager inlineProvider 入参三路径")
-class ChannelProvisionManagerInlineProviderTest {
+@DisplayName("ChannelProvisionService inlineProvider 入参三路径")
+class ChannelProvisionServiceInlineProviderTest {
 
     @Mock
     private PlanCatalogRepository planCatalogRepository;
@@ -78,14 +78,14 @@ class ChannelProvisionManagerInlineProviderTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private ChannelProvisionManager service;
+    private ChannelProvisionService service;
 
     private static final String PLAN_CODE = "openai-paid";
     private static final String PROVIDER_CODE = "openai";
 
     @BeforeEach
     void setUp() {
-        service = new ChannelProvisionManager(
+        service = new ChannelProvisionService(
                 planCatalogRepository,
                 planModelCatalogRepository,
                 providerRepository,

@@ -37,11 +37,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 /**
- * ChannelManagerImpl 状态转换测试
+ * ChannelServiceImpl 状态转换测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChannelManagerImpl 状态转换测试")
-class ChannelManagerImplStateTransitionTest {
+@DisplayName("ChannelServiceImpl 状态转换测试")
+class ChannelServiceImplStateTransitionTest {
 
     @Mock
     private ChannelRepository channelRepository;
@@ -57,11 +57,11 @@ class ChannelManagerImplStateTransitionTest {
     @Captor
     private ArgumentCaptor<Channel> channelCaptor;
 
-    private ChannelManagerImpl channelManager;
+    private ChannelServiceImpl channelService;
 
     @BeforeEach
     void setUp() {
-        channelManager = new ChannelManagerImpl(
+        channelService = new ChannelServiceImpl(
             channelRepository, channelEndpointRepository,
             channelCredentialRepository, modelInstanceRepository,
             providerRepository
@@ -78,11 +78,11 @@ class ChannelManagerImplStateTransitionTest {
     }
 
     private void setState(Long id, String targetState) {
-        channelManager.setState(id, targetState, null);
+        channelService.setState(id, targetState, null);
     }
 
     private void setState(Long id, String targetState, String reason) {
-        channelManager.setState(id, targetState, reason);
+        channelService.setState(id, targetState, reason);
     }
 
     @Nested

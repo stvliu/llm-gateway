@@ -56,7 +56,7 @@ public record ApplicationChannelItem(
     }
 
     /**
-     * 转换为渠道授权实体（applicationId 由 Manager 填充）
+     * 转换为渠道授权实体（applicationId 由 Service 填充）
      *
      * @return 渠道授权实体
      */

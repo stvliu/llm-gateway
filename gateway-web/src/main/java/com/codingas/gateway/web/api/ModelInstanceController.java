@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.model.ModelInstanceManager;
+import com.codingas.gateway.provider.model.ModelInstanceService;
 import com.codingas.gateway.web.api.facade.ModelInstanceFacade;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
@@ -38,7 +38,7 @@ import java.util.Map;
 public class ModelInstanceController {
 
     private final ModelInstanceFacade modelInstanceFacade;
-    private final ModelInstanceManager modelInstanceManager;
+    private final ModelInstanceService modelInstanceService;
 
     @GetMapping
     public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
@@ -56,7 +56,7 @@ public class ModelInstanceController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long channelId, @PathVariable Long id) {
-        modelInstanceManager.delete(channelId, id);
+        modelInstanceService.delete(channelId, id);
     }
 
     @PutMapping("/{id}/state")
@@ -65,7 +65,7 @@ public class ModelInstanceController {
             @PathVariable Long channelId,
             @PathVariable Long id,
             @Valid @RequestBody ModelInstanceStateTransitionRequest request) {
-        modelInstanceManager.setEnabled(channelId, id, request.getTargetState());
+        modelInstanceService.setEnabled(channelId, id, request.getTargetState());
     }
 
     @PatchMapping("/{id}/upstream-model-name")
@@ -75,7 +75,7 @@ public class ModelInstanceController {
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
         String upstreamModelName = body.get("upstreamModelName");
-        modelInstanceManager.updateUpstreamModelName(channelId, id, upstreamModelName);
+        modelInstanceService.updateUpstreamModelName(channelId, id, upstreamModelName);
     }
 
     /**

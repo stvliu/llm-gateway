@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.audit.AuditLog;
-import com.codingas.gateway.audit.AuditManager;
+import com.codingas.gateway.audit.AuditService;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.web.api.dto.AuditLogQueryRequest;
 import com.codingas.gateway.web.api.dto.AuditLogResponse;
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.when;
 class AuditControllerTest {
 
     @Mock
-    private AuditManager auditManager;
+    private AuditService auditService;
 
     @InjectMocks
     private AuditController controller;
@@ -70,7 +70,7 @@ class AuditControllerTest {
         log.setIpAddress("192.168.1.1");
         log.setCreatedAt(Instant.parse("2026-08-27T10:00:00Z"));
 
-        when(auditManager.query(any())).thenAnswer(invocation -> {
+        when(auditService.query(any())).thenAnswer(invocation -> {
             var q = invocation.getArgument(0, com.codingas.gateway.audit.AuditLogQuery.class);
             assertThat(q.getUserId()).isEqualTo(3L);
             assertThat(q.getAction()).isEqualTo("POST /api/v1/channels");
@@ -102,7 +102,7 @@ class AuditControllerTest {
         // given
         AuditLogQueryRequest request = new AuditLogQueryRequest(); // page=1 limit=20
 
-        when(auditManager.query(any())).thenReturn(PageResponse.of(List.of(), 1, 20, 0));
+        when(auditService.query(any())).thenReturn(PageResponse.of(List.of(), 1, 20, 0));
 
         // when
         PageResponse<AuditLogResponse> page = controller.query(request);
@@ -110,7 +110,7 @@ class AuditControllerTest {
         // then
         ArgumentCaptor<com.codingas.gateway.audit.AuditLogQuery> captor =
                 ArgumentCaptor.forClass(com.codingas.gateway.audit.AuditLogQuery.class);
-        org.mockito.Mockito.verify(auditManager).query(captor.capture());
+        org.mockito.Mockito.verify(auditService).query(captor.capture());
         assertThat(captor.getValue().getPage()).isEqualTo(1);
         assertThat(captor.getValue().getLimit()).isEqualTo(20);
         assertThat(page.getItems()).isEmpty();

@@ -19,7 +19,7 @@ import com.codingas.gateway.common.exception.ResourceNotFoundException;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.protocol.Protocol;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ import java.util.List;
  * 确保高优先级渠道熔断时可回退到次优先级健康渠道。</p>
  *
  * <p>熔断 key 统一为 endpointId（与 {@code KeyFailoverInvoker} 共享同一
- * {@link ChannelEndpointCircuitBreakerManager} 单例 bean）：RouterChain 在
+ * {@link ChannelEndpointCircuitBreakerService} 单例 bean）：RouterChain 在
  * ModelInstance（channel 粒度）过滤阶段尚未绑定 endpoint，故采用「运行时派生」方案——
  * 依据 {@link RoutingRequest#getProtocol()} 入站协议，通过 {@link EndpointResolver}
  * 从实例的 channelId 解析对应 {@link ChannelEndpoint}，取其 id 作为熔断 key。
@@ -54,7 +54,7 @@ public class HealthRouter implements Router {
 
     private static final Logger log = LoggerFactory.getLogger(HealthRouter.class);
 
-    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private final ChannelEndpointCircuitBreakerService circuitBreakerService;
     private final EndpointResolver endpointResolver;
 
     @Override
@@ -80,7 +80,7 @@ public class HealthRouter implements Router {
         }
         try {
             ChannelEndpoint endpoint = endpointResolver.resolve(mi.getChannelId(), protocol);
-            return circuitBreakerManager.isAvailable(endpoint.getId());
+            return circuitBreakerService.isAvailable(endpoint.getId());
         } catch (ResourceNotFoundException e) {
             log.debug("实例 {} 的 channel {} 无 {} 协议端点，视为不可用",
                     mi.getId(), mi.getChannelId(), protocol);

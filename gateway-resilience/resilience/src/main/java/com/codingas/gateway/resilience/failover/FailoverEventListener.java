@@ -28,7 +28,7 @@ import org.springframework.stereotype.Component;
  * {@link FailoverEventRepository#save} 持久化。</p>
  *
  * <p><b>非事务监听</b>：使用 {@link EventListener}（而非 {@code @TransactionalEventListener}）。
- * 调用链 {@code ChatDispatchManagerImpl.dispatch} 无 {@code @Transactional}，整个请求处理不开启事务，
+ * 调用链 {@code ChatDispatchServiceImpl.dispatch} 无 {@code @Transactional}，整个请求处理不开启事务，
  * 原 {@code @TransactionalEventListener(AFTER_COMMIT)} 在无事务上下文时静默丢弃事件
  * （fallbackExecution 默认 false），导致转移事件全部丢失、可观测性功能失效。改为 {@link EventListener}
  * 后无事务上下文下事件仍被同步处理。</p>

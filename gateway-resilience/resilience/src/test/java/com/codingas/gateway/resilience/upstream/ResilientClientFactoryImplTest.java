@@ -17,7 +17,7 @@ package com.codingas.gateway.resilience.upstream;
 
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.metrics.EndpointMetricsRegistry;
 import com.codingas.gateway.resilience.retry.RetryExecutor;
@@ -41,7 +41,7 @@ import static org.mockito.Mockito.when;
 class ResilientClientFactoryImplTest {
 
     @Mock
-    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private ChannelEndpointCircuitBreakerService circuitBreakerService;
 
     @Mock
     private RetryExecutor retryExecutor;
@@ -56,16 +56,16 @@ class ResilientClientFactoryImplTest {
     @DisplayName("wrap 返回包装后的韧性客户端")
     void wrap_returnsResilientClient() {
         CircuitBreaker breaker = new CircuitBreaker(0.5, 10, 30000, 3);
-        when(circuitBreakerManager.getBreaker(42L)).thenReturn(breaker);
+        when(circuitBreakerService.getBreaker(42L)).thenReturn(breaker);
         when(rawClient.supportedProvider()).thenReturn("openai");
 
         ResilientClientFactoryImpl factory = new ResilientClientFactoryImpl(
-                circuitBreakerManager, retryExecutor, meterRegistry, metricsRegistry);
+                circuitBreakerService, retryExecutor, meterRegistry, metricsRegistry);
 
         UpstreamClient<ProtocolRequest> wrapped = factory.wrap(rawClient, 42L);
 
         assertThat(wrapped).isInstanceOf(ResilientUpstreamClient.class);
         assertThat(wrapped.supportedProvider()).isEqualTo("openai");
-        verify(circuitBreakerManager).getBreaker(42L);
+        verify(circuitBreakerService).getBreaker(42L);
     }
 }

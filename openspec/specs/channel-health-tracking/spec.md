@@ -69,11 +69,11 @@ GET /api/channels 响应 DTO SHALL 在不破坏现有契约的前提下，附加
 
 ### Requirement: 熔断 key 统一为 endpointId
 
-熔断 key SHALL 统一为 `endpointId`，路由侧（`HealthRouter`）与调用侧（`KeyFailoverInvoker`）共享同一熔断器实例（`ChannelEndpointCircuitBreakerManager`）。
+熔断 key SHALL 统一为 `endpointId`，路由侧（`HealthRouter`）与调用侧（`KeyFailoverInvoker`）共享同一熔断器实例（`ChannelEndpointCircuitBreakerService`）。
 
 **变更要点**:
 - 原 `HealthRouter` 用 `channelId` 查熔断，`KeyFailoverInvoker` 用 `endpointId`，路由侧与调用侧熔断互不可见
-- 现 `HealthRouter`（`@Order(200)`）用 `channelId + protocol` 经 `EndpointResolver` 派生 `endpointId` 后查 `ChannelEndpointCircuitBreakerManager`
+- 现 `HealthRouter`（`@Order(200)`）用 `channelId + protocol` 经 `EndpointResolver` 派生 `endpointId` 后查 `ChannelEndpointCircuitBreakerService`
 - 与 `KeyFailoverInvoker`（用 `RoutingContext.channelEndpointId()`）共享同一 manager bean
 - 不向 `ModelInstance`/`model_instances` 表加 `endpointId` 字段（channel 粒度与 channel×protocol 端点粒度 1:1 不自洽，采用运行时派生方案）
 
@@ -86,7 +86,7 @@ GET /api/channels 响应 DTO SHALL 在不破坏现有契约的前提下，附加
 #### Scenario: 路由侧与调用侧共享熔断器
 
 - **WHEN** `HealthRouter` 过滤熔断渠道
-- **THEN** 系统 SHALL 用 `channelId + protocol` 派生 `endpointId` 查 `ChannelEndpointCircuitBreakerManager`
+- **THEN** 系统 SHALL 用 `channelId + protocol` 派生 `endpointId` 查 `ChannelEndpointCircuitBreakerService`
 - **THEN** 该 manager SHALL 与 `KeyFailoverInvoker` 共享同一 bean 实例
 
 #### Scenario: Health 先于 Priority 使次优先级渠道可被选
@@ -102,13 +102,13 @@ GET /api/channels 响应 DTO SHALL 在不破坏现有契约的前提下，附加
 
 **变更要点**:
 - 原 `ProviderHealthTracker` 驱动 L1 路由决策（与 `HealthRouter` 端点级熔断职责重叠）
-- 现 L1 路由决策由端点级 `ChannelEndpointCircuitBreakerManager` 驱动
+- 现 L1 路由决策由端点级 `ChannelEndpointCircuitBreakerService` 驱动
 - `ProviderHealthTracker` 退为供应商级粗粒度信号，供 L2 备选模型可用性参考
 
 #### Scenario: L1 路由由端点级熔断驱动
 
 - **WHEN** L1 路由过滤熔断渠道
-- **THEN** 系统 SHALL 使用 `ChannelEndpointCircuitBreakerManager`（端点级）而非 `ProviderHealthTracker`（供应商级）
+- **THEN** 系统 SHALL 使用 `ChannelEndpointCircuitBreakerService`（端点级）而非 `ProviderHealthTracker`（供应商级）
 
 #### Scenario: ProviderHealthTracker 仅供 L2 参考
 

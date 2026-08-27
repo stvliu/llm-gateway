@@ -41,7 +41,7 @@ public class CacheVersionChecker {
     private final ProviderRepository providerRepository;
     private final ModelRepository modelRepository;
     private final ChannelCredentialRepository channelCredentialRepository;
-    private final CacheInvalidationManager cacheService;
+    private final CacheInvalidationService cacheService;
 
     // 记录上次检查的版本
     private volatile long lastProviderVersion = 0;

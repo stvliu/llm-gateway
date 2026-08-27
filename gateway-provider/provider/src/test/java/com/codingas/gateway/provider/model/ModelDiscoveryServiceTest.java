@@ -33,14 +33,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * ModelDiscoveryManager 单元测试
+ * ModelDiscoveryService 单元测试
  *
  * <p>D8：废弃团队模型可见性机制后，模型可见性由应用授权的渠道挂哪些 ModelInstance 隐式决定。
  * 本测试验证新契约：以应用 ID（权限锚点）查询应用授权渠道，再发现其上的活跃模型。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelDiscoveryManager 单元测试")
-class ModelDiscoveryManagerTest {
+@DisplayName("ModelDiscoveryService 单元测试")
+class ModelDiscoveryServiceTest {
 
     @Mock
     private ApplicationChannelRepository applicationChannelRepository;
@@ -49,13 +49,13 @@ class ModelDiscoveryManagerTest {
     @Mock
     private ModelRepository modelRepository;
 
-    private ModelDiscoveryManager service;
+    private ModelDiscoveryService service;
 
     private static final Long APPLICATION_ID = 100L;
 
     @BeforeEach
     void setUp() {
-        service = new ModelDiscoveryManager(applicationChannelRepository, modelInstanceRepository, modelRepository);
+        service = new ModelDiscoveryService(applicationChannelRepository, modelInstanceRepository, modelRepository);
     }
 
     @Nested

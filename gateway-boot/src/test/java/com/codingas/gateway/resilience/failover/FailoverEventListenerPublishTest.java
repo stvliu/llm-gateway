@@ -37,7 +37,7 @@ import static org.mockito.Mockito.verify;
 /**
  * FailoverEventListener 事件发布集成测试
  *
- * <p>守护 C2 修复核心点：调用链 {@code ChatDispatchManagerImpl.dispatch} 无 {@code @Transactional}，
+ * <p>守护 C2 修复核心点：调用链 {@code ChatDispatchServiceImpl.dispatch} 无 {@code @Transactional}，
  * {@code FailoverOccurredEvent} 由 {@code ApplicationEventPublisher} 在无事务上下文下发布。
  * 原实现 {@code @TransactionalEventListener(AFTER_COMMIT)} 在无事务时静默丢弃事件（fallbackExecution
  * 默认 false），监听器永不执行，转移事件全部丢失。修复后改用 {@code @EventListener}（非事务监听），
@@ -81,7 +81,7 @@ class FailoverEventListenerPublishTest {
                 Instant.now()
         );
 
-        // 故意不在 @Transactional 方法中发布，模拟 ChatDispatchManagerImpl.dispatch 无事务的真实调用链
+        // 故意不在 @Transactional 方法中发布，模拟 ChatDispatchServiceImpl.dispatch 无事务的真实调用链
         eventPublisher.publishEvent(event);
 
         // timeout 兼容潜在 @Async（当前未启用 @EnableAsync，同步执行立即完成）

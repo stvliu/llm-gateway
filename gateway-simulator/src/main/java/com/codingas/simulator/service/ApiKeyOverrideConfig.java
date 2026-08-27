@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ApiKeyOverrideConfig {
 
-    private final Map<String, SimulatorModeManager.SimulatorMode> overrides = new ConcurrentHashMap<>();
+    private final Map<String, SimulatorModeService.SimulatorMode> overrides = new ConcurrentHashMap<>();
 
     /**
      * 设置 API Key 前缀覆盖。
@@ -35,7 +35,7 @@ public class ApiKeyOverrideConfig {
      * @param keyPrefix API Key 前缀
      * @param mode      覆盖模式
      */
-    public void setOverride(String keyPrefix, SimulatorModeManager.SimulatorMode mode) {
+    public void setOverride(String keyPrefix, SimulatorModeService.SimulatorMode mode) {
         overrides.put(keyPrefix, mode);
     }
 
@@ -60,7 +60,7 @@ public class ApiKeyOverrideConfig {
      *
      * @return 不可修改的覆盖规则 Map
      */
-    public Map<String, SimulatorModeManager.SimulatorMode> getOverrides() {
+    public Map<String, SimulatorModeService.SimulatorMode> getOverrides() {
         return Map.copyOf(overrides);
     }
 
@@ -72,9 +72,9 @@ public class ApiKeyOverrideConfig {
      * @param apiKey API Key
      * @return 匹配的覆盖模式，无匹配时返回 empty
      */
-    public Optional<SimulatorModeManager.SimulatorMode> matchOverride(String apiKey) {
+    public Optional<SimulatorModeService.SimulatorMode> matchOverride(String apiKey) {
         if (apiKey == null) return Optional.empty();
-        for (Map.Entry<String, SimulatorModeManager.SimulatorMode> entry : overrides.entrySet()) {
+        for (Map.Entry<String, SimulatorModeService.SimulatorMode> entry : overrides.entrySet()) {
             if (apiKey.startsWith(entry.getKey())) {
                 return Optional.of(entry.getValue());
             }

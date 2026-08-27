@@ -41,11 +41,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * ModelManager 单元测试
+ * ModelService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ModelManager 单元测试")
-class ModelManagerTest {
+@DisplayName("ModelService 单元测试")
+class ModelServiceTest {
 
     @Mock
     private ModelRepository modelRepository;
@@ -54,7 +54,7 @@ class ModelManagerTest {
     private ProviderRepository providerRepository;
 
     @InjectMocks
-    private ModelManagerImpl modelManager;
+    private ModelServiceImpl modelService;
 
     private Model testModel;
     private Provider testProvider;
@@ -85,7 +85,7 @@ class ModelManagerTest {
             });
 
             // when
-            Model response = modelManager.create(request);
+            Model response = modelService.create(request);
 
             // then
             assertThat(response).isNotNull();
@@ -112,7 +112,7 @@ class ModelManagerTest {
             when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
 
             // when
-            Model response = modelManager.getById(1L);
+            Model response = modelService.getById(1L);
 
             // then
             assertThat(response).isNotNull();
@@ -131,7 +131,7 @@ class ModelManagerTest {
             when(modelRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> modelManager.getById(99L))
+            assertThatThrownBy(() -> modelService.getById(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
@@ -160,7 +160,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(2);
@@ -181,7 +181,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -200,7 +200,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(1);
@@ -219,7 +219,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).isEmpty();
@@ -241,7 +241,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：providerId 过滤暂不生效，返回所有模型
             assertThat(response.getItems()).hasSize(2);
@@ -262,7 +262,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：仅返回启用的模型
             assertThat(response.getItems()).hasSize(1);
@@ -285,7 +285,7 @@ class ModelManagerTest {
             request.setLimit(20);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then：仅返回禁用的模型
             assertThat(response.getItems()).hasSize(1);
@@ -308,7 +308,7 @@ class ModelManagerTest {
             request.setLimit(10);
 
             // when
-            PageResponse<Model> response = modelManager.query(request);
+            PageResponse<Model> response = modelService.query(request);
 
             // then
             assertThat(response.getItems()).hasSize(10);
@@ -336,7 +336,7 @@ class ModelManagerTest {
                     modelEntity(null, "GPT-4 Updated", null, null);
 
             // when
-            Model response = modelManager.update(1L, request);
+            Model response = modelService.update(1L, request);
 
             // then
             assertThat(response).isNotNull();
@@ -355,7 +355,7 @@ class ModelManagerTest {
                     modelEntity(null, null, 200000, null);
 
             // when
-            modelManager.update(1L, request);
+            modelService.update(1L, request);
 
             // then
             ArgumentCaptor<Model> modelCaptor = ArgumentCaptor.forClass(Model.class);
@@ -373,7 +373,7 @@ class ModelManagerTest {
                     modelEntity(null, "Updated Name", null, null);
 
             // when & then
-            assertThatThrownBy(() -> modelManager.update(99L, request))
+            assertThatThrownBy(() -> modelService.update(99L, request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
@@ -394,7 +394,7 @@ class ModelManagerTest {
             doNothing().when(modelRepository).delete(any(Model.class));
 
             // when
-            modelManager.delete(1L);
+            modelService.delete(1L);
 
             // then
             verify(modelRepository).delete(any(Model.class));
@@ -407,7 +407,7 @@ class ModelManagerTest {
             when(modelRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> modelManager.delete(99L))
+            assertThatThrownBy(() -> modelService.delete(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
@@ -431,7 +431,7 @@ class ModelManagerTest {
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            Model response = modelManager.setEnabled(1L, true);
+            Model response = modelService.setEnabled(1L, true);
 
             // then：deprecatedAt 被清空，模型恢复可用
             assertThat(response).isNotNull();
@@ -448,7 +448,7 @@ class ModelManagerTest {
             when(modelRepository.save(any(Model.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
             // when
-            Model response = modelManager.setEnabled(1L, false);
+            Model response = modelService.setEnabled(1L, false);
 
             // then：deprecatedAt 被设置，模型不可用
             assertThat(response).isNotNull();
@@ -464,7 +464,7 @@ class ModelManagerTest {
             when(modelRepository.findById(99L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> modelManager.setEnabled(99L, true))
+            assertThatThrownBy(() -> modelService.setEnabled(99L, true))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");

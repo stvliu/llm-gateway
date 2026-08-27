@@ -27,22 +27,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * IpBlocklistManager 单元测试
+ * IpBlocklistService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("IpBlocklistManager")
-class IpBlocklistManagerTest {
+@DisplayName("IpBlocklistService")
+class IpBlocklistServiceTest {
 
     @Mock
     private IpBlocklistRepository ipBlockRepository;
 
     @InjectMocks
-    private IpBlocklistManager ipBlocklistManager;
+    private IpBlocklistService ipBlocklistService;
 
     @Test
     @DisplayName("isBlocked null IP 应返回 false")
     void isBlocked_nullIp_returnsFalse() {
-        boolean result = ipBlocklistManager.isBlocked(null);
+        boolean result = ipBlocklistService.isBlocked(null);
 
         assertThat(result).isFalse();
     }
@@ -50,7 +50,7 @@ class IpBlocklistManagerTest {
     @Test
     @DisplayName("isBlocked blank IP 应返回 false")
     void isBlocked_blankIp_returnsFalse() {
-        boolean result = ipBlocklistManager.isBlocked("");
+        boolean result = ipBlocklistService.isBlocked("");
 
         assertThat(result).isFalse();
     }
@@ -60,7 +60,7 @@ class IpBlocklistManagerTest {
     void isBlocked_blockedIp_returnsTrue() {
         when(ipBlockRepository.isBlocked("192.168.1.100")).thenReturn(true);
 
-        boolean result = ipBlocklistManager.isBlocked("192.168.1.100");
+        boolean result = ipBlocklistService.isBlocked("192.168.1.100");
 
         assertThat(result).isTrue();
     }

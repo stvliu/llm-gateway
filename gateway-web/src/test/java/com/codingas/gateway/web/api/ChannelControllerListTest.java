@@ -15,11 +15,11 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.provider.channel.ChannelEmergencyManager;
-import com.codingas.gateway.provider.channel.ChannelHealthManager;
+import com.codingas.gateway.provider.channel.ChannelEmergencyService;
+import com.codingas.gateway.provider.channel.ChannelHealthService;
 import com.codingas.gateway.provider.channel.ChannelHealthSource;
 import com.codingas.gateway.provider.channel.ChannelHealthStatus;
-import com.codingas.gateway.provider.channel.ChannelManager;
+import com.codingas.gateway.provider.channel.ChannelService;
 import com.codingas.gateway.web.api.facade.ChannelFacade;
 import com.codingas.gateway.web.api.dto.ChannelResponse;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * <p>验证 GET /api/v1/channels 与 GET /api/v1/channels/{id} 响应中
  * lastHealthCheckAt / lastHealthStatus / lastHealthSource 三个字段存在。</p>
  *
- * <p>使用 standalone setup + Mock ChannelManager，仅校验序列化契约，不连数据库。</p>
+ * <p>使用 standalone setup + Mock ChannelService，仅校验序列化契约，不连数据库。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ChannelController 列表/详情响应字段")
@@ -54,20 +54,20 @@ class ChannelControllerListTest {
     private ChannelFacade channelFacade;
 
     @Mock
-    private ChannelManager channelManager;
+    private ChannelService channelService;
 
     @Mock
-    private ChannelHealthManager channelHealthManager;
+    private ChannelHealthService channelHealthService;
 
     @Mock
-    private ChannelEmergencyManager channelEmergencyManager;
+    private ChannelEmergencyService channelEmergencyService;
 
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        ChannelController controller = new ChannelController(channelFacade, channelManager,
-                channelHealthManager, channelEmergencyManager);
+        ChannelController controller = new ChannelController(channelFacade, channelService,
+                channelHealthService, channelEmergencyService);
         mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
     }
 

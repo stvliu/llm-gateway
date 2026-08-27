@@ -32,20 +32,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 /**
- * {@link StpRoleManager} 测试
+ * {@link StpRoleService} 测试
  *
  * <p>验证 Sa-Token 角色/权限数据源真实解析 users.role（不 mock StpUtil，
  * 确保运行时 {@code hasRole} 有数据来源）。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("StpRoleManager 测试")
-class StpRoleManagerTest {
+@DisplayName("StpRoleService 测试")
+class StpRoleServiceTest {
 
     @Mock
     private UserRepository userRepository;
 
     @InjectMocks
-    private StpRoleManager service;
+    private StpRoleService service;
 
     private User userWithRole(String role) {
         User user = new User();

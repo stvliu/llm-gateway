@@ -42,7 +42,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.*;
 
 /**
- * ApplicationManagerImpl 单元测试
+ * ApplicationServiceImpl 单元测试
  *
  * <p>验证应用根实体的 CRUD 与渠道授权绑定业务逻辑：
  * code 唯一校验、状态默认值、渠道授权先删后建、timeout 透传等。</p>
@@ -50,8 +50,8 @@ import static org.mockito.Mockito.*;
  * <p>Task 8：{@code resilienceProfileId}/bindResilienceProfile 退场，改为 {@code timeout} 透传。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ApplicationManagerImpl 测试")
-class ApplicationManagerImplTest {
+@DisplayName("ApplicationServiceImpl 测试")
+class ApplicationServiceImplTest {
 
     @Mock
     private ApplicationRepository applicationRepository;
@@ -63,7 +63,7 @@ class ApplicationManagerImplTest {
     private UserApiKeyRepository userApiKeyRepository;
 
     @InjectMocks
-    private ApplicationManagerImpl applicationManager;
+    private ApplicationServiceImpl applicationService;
 
     private static final Long APP_ID = 7L;
 
@@ -80,7 +80,7 @@ class ApplicationManagerImplTest {
             Application saved = buildSavedApplication(1L, "APP-001", "测试应用");
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            Application result = applicationManager.create(app);
+            Application result = applicationService.create(app);
 
             assertThat(result).isNotNull();
             assertThat(result.getId()).isEqualTo(1L);
@@ -102,7 +102,7 @@ class ApplicationManagerImplTest {
             saved.setTimeout(60);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            Application result = applicationManager.create(app);
+            Application result = applicationService.create(app);
 
             assertThat(result.getTimeout()).isEqualTo(60);
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
@@ -118,7 +118,7 @@ class ApplicationManagerImplTest {
             when(applicationRepository.findByCode("APP-001"))
                     .thenReturn(buildSavedApplication(1L, "APP-001", "已存在应用"));
 
-            assertThatThrownBy(() -> applicationManager.create(app))
+            assertThatThrownBy(() -> applicationService.create(app))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-001");
             verify(applicationRepository, never()).save(any());
@@ -135,7 +135,7 @@ class ApplicationManagerImplTest {
             saved.setFailureStrategy(FailureStrategy.FAIL_RETRY);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            Application result = applicationManager.create(app);
+            Application result = applicationService.create(app);
 
             assertThat(result.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_RETRY);
             // 验证传入 save 的实体 failureStrategy 被设为默认 FAIL_RETRY
@@ -152,7 +152,7 @@ class ApplicationManagerImplTest {
             saved.setFailureStrategy(FailureStrategy.FAIL_FAST);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            Application result = applicationManager.create(app);
+            Application result = applicationService.create(app);
 
             assertThat(result.getFailureStrategy()).isEqualTo(FailureStrategy.FAIL_FAST);
         }
@@ -172,7 +172,7 @@ class ApplicationManagerImplTest {
             when(applicationRepository.save(any())).thenReturn(
                     buildSavedApplication(1L, "APP-001", "新名称"));
 
-            Application result = applicationManager.update(1L, app);
+            Application result = applicationService.update(1L, app);
 
             assertThat(result).isNotNull();
             assertThat(result.getName()).isEqualTo("新名称");
@@ -185,7 +185,7 @@ class ApplicationManagerImplTest {
                     appEntity("APP-001", "名称", "描述", 0, null);
             when(applicationRepository.findById(999L)).thenReturn(null);
 
-            assertThatThrownBy(() -> applicationManager.update(999L, app))
+            assertThatThrownBy(() -> applicationService.update(999L, app))
                     .isInstanceOf(GatewayRequestException.class);
         }
 
@@ -200,7 +200,7 @@ class ApplicationManagerImplTest {
             when(applicationRepository.findByCode("APP-002"))
                     .thenReturn(buildSavedApplication(2L, "APP-002", "占用应用"));
 
-            assertThatThrownBy(() -> applicationManager.update(1L, app))
+            assertThatThrownBy(() -> applicationService.update(1L, app))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("APP-002");
         }
@@ -216,7 +216,7 @@ class ApplicationManagerImplTest {
             saved.setTimeout(30);
             when(applicationRepository.save(any())).thenReturn(saved);
 
-            Application result = applicationManager.update(1L, app);
+            Application result = applicationService.update(1L, app);
 
             assertThat(result.getTimeout()).isEqualTo(30);
             ArgumentCaptor<Application> captor = ArgumentCaptor.forClass(Application.class);
@@ -235,7 +235,7 @@ class ApplicationManagerImplTest {
             Application app = buildSavedApplication(1L, "APP-001", "应用");
             when(applicationRepository.findById(1L)).thenReturn(app);
 
-            Application result = applicationManager.getById(1L);
+            Application result = applicationService.getById(1L);
 
             assertThat(result).isNotNull();
             assertThat(result.getCode()).isEqualTo("APP-001");
@@ -246,7 +246,7 @@ class ApplicationManagerImplTest {
         void getById_notFound_throwsException() {
             when(applicationRepository.findById(999L)).thenReturn(null);
 
-            assertThatThrownBy(() -> applicationManager.getById(999L))
+            assertThatThrownBy(() -> applicationService.getById(999L))
                     .isInstanceOf(GatewayRequestException.class);
         }
     }
@@ -262,7 +262,7 @@ class ApplicationManagerImplTest {
                     buildSavedApplication(1L, "APP-001", "应用一"),
                     buildSavedApplication(2L, "APP-002", "应用二")));
 
-            List<Application> result = applicationManager.getAll();
+            List<Application> result = applicationService.getAll();
 
             assertThat(result).hasSize(2);
             assertThat(result).extracting(Application::getCode)
@@ -277,7 +277,7 @@ class ApplicationManagerImplTest {
         @Test
         @DisplayName("删除应用并级联清理渠道授权关联")
         void delete_cascadesChannelAuthorizations() {
-            applicationManager.delete(1L);
+            applicationService.delete(1L);
 
             verify(applicationRepository).deleteById(1L);
             verify(applicationChannelRepository).deleteByApplicationId(1L);
@@ -291,7 +291,7 @@ class ApplicationManagerImplTest {
             key.setApplicationId(APP_ID);
             when(userApiKeyRepository.findByApplicationId(APP_ID)).thenReturn(List.of(key));
 
-            assertThatThrownBy(() -> applicationManager.delete(APP_ID))
+            assertThatThrownBy(() -> applicationService.delete(APP_ID))
                     .isInstanceOf(GatewayRequestException.class)
                     .hasMessageContaining("API Key");
             verify(applicationRepository, never()).deleteById(any());
@@ -303,7 +303,7 @@ class ApplicationManagerImplTest {
         void delete_noApiKeys_deletesCascade() {
             when(userApiKeyRepository.findByApplicationId(APP_ID)).thenReturn(List.of());
 
-            assertThatCode(() -> applicationManager.delete(APP_ID)).doesNotThrowAnyException();
+            assertThatCode(() -> applicationService.delete(APP_ID)).doesNotThrowAnyException();
 
             verify(applicationChannelRepository).deleteByApplicationId(APP_ID);
             verify(applicationRepository).deleteById(APP_ID);
@@ -327,7 +327,7 @@ class ApplicationManagerImplTest {
             try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
                 stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(true);
 
-                List<ApplicationChannel> result = applicationManager.listChannels(1L);
+                List<ApplicationChannel> result = applicationService.listChannels(1L);
 
                 assertThat(result).hasSize(2);
                 assertThat(result).extracting(ApplicationChannel::getChannelId)
@@ -350,7 +350,7 @@ class ApplicationManagerImplTest {
             try (MockedStatic<StpUtil> stp = mockStatic(StpUtil.class)) {
                 stp.when(() -> StpUtil.hasRole("ADMIN")).thenReturn(false);
 
-                assertThatThrownBy(() -> applicationManager.listChannels(1L))
+                assertThatThrownBy(() -> applicationService.listChannels(1L))
                         .isInstanceOf(ForbiddenException.class);
                 verify(applicationChannelRepository, never()).findByApplicationId(any());
             }
@@ -363,7 +363,7 @@ class ApplicationManagerImplTest {
                     .thenReturn(buildSavedApplication(1L, "APP-001", "应用"));
 
             // channel 10 配 priority=1，channel 20 不配（null）
-            applicationManager.updateChannels(1L, List.of(
+            applicationService.updateChannels(1L, List.of(
                     appChannel(10L, 1),
                     appChannel(20L, null)));
 
@@ -394,7 +394,7 @@ class ApplicationManagerImplTest {
         void updateChannels_notFound_throwsException() {
             when(applicationRepository.findById(999L)).thenReturn(null);
 
-            assertThatThrownBy(() -> applicationManager.updateChannels(999L,
+            assertThatThrownBy(() -> applicationService.updateChannels(999L,
                     List.of(appChannel(10L, 1))))
                     .isInstanceOf(GatewayRequestException.class);
         }
@@ -405,7 +405,7 @@ class ApplicationManagerImplTest {
             when(applicationRepository.findById(1L))
                     .thenReturn(buildSavedApplication(1L, "APP-001", "应用"));
 
-            applicationManager.updateChannels(1L, List.of());
+            applicationService.updateChannels(1L, List.of());
 
             verify(applicationChannelRepository).deleteByApplicationId(1L);
             verify(applicationChannelRepository, never()).saveAll(any());

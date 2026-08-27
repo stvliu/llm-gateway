@@ -18,7 +18,7 @@ package com.codingas.gateway.web.api;
 import com.codingas.gateway.protocol.raw.AnthropicMessagesRequest;
 import com.codingas.gateway.protocol.raw.AnthropicMessagesResponse;
 import com.codingas.gateway.protocol.ProtocolResponse;
-import com.codingas.gateway.proxy.chat.ChatDispatchManager;
+import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;
 import com.codingas.gateway.protocol.anthropic.AnthropicProtocolValidator;
 import com.codingas.gateway.protocol.validation.ProtocolValidationException;
@@ -43,7 +43,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AnthropicController {
 
-    private final ChatDispatchManager chatDispatchManager;
+    private final ChatDispatchService chatDispatchService;
     private final AnthropicProtocolValidator validator;
 
     /**
@@ -64,10 +64,10 @@ public class AnthropicController {
         }
 
         if (request.isStream()) {
-            SseStreamHelper.executeStream(chatDispatchManager, request, identity, response);
+            SseStreamHelper.executeStream(chatDispatchService, request, identity, response);
             return null;
         } else {
-            ProtocolResponse protocolResponse = chatDispatchManager.dispatch(request, identity, RoutingStrategy.WEIGHTED);
+            ProtocolResponse protocolResponse = chatDispatchService.dispatch(request, identity, RoutingStrategy.WEIGHTED);
 
             if (protocolResponse instanceof AnthropicMessagesResponse anthropicResponse) {
                 return ResponseEntity.ok(anthropicResponse);

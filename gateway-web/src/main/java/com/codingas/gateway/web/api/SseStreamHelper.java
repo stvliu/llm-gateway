@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.proxy.chat.ChatDispatchManager;
+import com.codingas.gateway.proxy.chat.ChatDispatchService;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.StreamCallback;
 import com.codingas.gateway.proxy.routing.RoutingStrategy;
@@ -50,7 +50,7 @@ public final class SseStreamHelper {
      * @param identity          认证结果
      * @param response         HTTP 响应
      */
-    public static void executeStream(ChatDispatchManager dispatchService, ProtocolRequest protocolRequest,
+    public static void executeStream(ChatDispatchService dispatchService, ProtocolRequest protocolRequest,
                                      Identity identity, HttpServletResponse response) throws IOException {
         setupSseResponse(response);
 

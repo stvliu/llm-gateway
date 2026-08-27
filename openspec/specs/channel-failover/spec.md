@@ -23,7 +23,7 @@ TBD - created by archiving change resilience-architecture. Update Purpose after 
 - `FAIL_RETRY`（默认）：L0 跑（同渠道换 Key），L1 不跑（不换渠道），同渠道 Key 耗尽抛错
 - `FAIL_OVER`：L0 跑 + L1 跑（按 priority 换渠道），全耗尽抛错
 
-**故障跳过机制**：L1 不做共因跳过。由端点级熔断器（`ChannelEndpointCircuitBreakerManager`）在端点连续失败 OPEN 后跳过该端点，不引入共因分组。
+**故障跳过机制**：L1 不做共因跳过。由端点级熔断器（`ChannelEndpointCircuitBreakerService`）在端点连续失败 OPEN 后跳过该端点，不引入共因分组。
 
 #### Scenario: L1 候选内逐个尝试（FAIL_OVER 策略）
 

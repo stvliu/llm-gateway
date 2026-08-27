@@ -47,14 +47,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * PlanCatalogManagerImpl 单元测试
+ * PlanCatalogServiceImpl 单元测试
  *
  * <p>覆盖全部 public 方法的分支：关键字查询、物化状态判断、JSON 解析成功/失败、
  * 模型能力提取、供应商反查等。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("PlanCatalogManagerImpl 单元测试")
-class PlanCatalogManagerImplTest {
+@DisplayName("PlanCatalogServiceImpl 单元测试")
+class PlanCatalogServiceImplTest {
 
     @Mock
     private PlanCatalogRepository planCatalogRepository;
@@ -69,11 +69,11 @@ class PlanCatalogManagerImplTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private PlanCatalogManagerImpl service;
+    private PlanCatalogServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new PlanCatalogManagerImpl(
+        service = new PlanCatalogServiceImpl(
                 planCatalogRepository, planModelCatalogRepository,
                 providerRepository, channelRepository, modelRepository,
                 objectMapper);

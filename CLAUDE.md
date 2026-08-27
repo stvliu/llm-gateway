@@ -26,7 +26,7 @@ LLM-Gateway 是新一代企业级 AI 模型 API 聚合分发与智能路由网�
 - **分层依赖**: 上层依赖下层接口，禁止跨层调用或反向依赖
 - **Gateway 模式**: 接口定义在域核心模块（如 `provider.service.CredentialEncryptor`），实现 in 绑定模块（如 `<域>data.gateway`）或域内实现包
 - **依赖倒置**: 业务域只依赖 Gateway 接口，不直接依赖外部资源
-- **职责拆分架构**: 按业务域内聚 Entity + Manager
+- **职责拆分架构**: 按业务域内聚 Entity + Service
 - **模型纯洁性**: JPA 实体只含 Getter/Setter，禁止含业务逻辑
 - **配置外部化**: 所有可变参数通过 `@ConfigurationProperties`，禁止魔法数字
 - **全实体可审计**: 每张业务表必须包含 `created_by/created_at/updated_by/updated_at`
@@ -101,7 +101,7 @@ llm-gateway/                          # 项目根目录（父 POM，统一依赖
 
 | 类型 | 放置位置 | 示例 |
 |------|---------|------|
-| 管理服务（Manager） | 域核心模块 `<域>.service/`（按用例分包） | ChannelManager, TokenLimitManager, AuthenticationManager |
+| 管理服务（Service） | 域核心模块 `<域>.service/`（按用例分包） | ChannelService, TokenLimitService, AuthenticationService |
 
 ## Exception 分类
 
@@ -156,7 +156,7 @@ GatewayException (根异常)
 ## 代码规范
 
 - 实体类: PascalCase + 明确业务含义
-- 管理服务类: PascalCase + `Manager` 后缀（取代 Service，业务门面）；web 组装层 `XxxFacade`（组装对象 + 跨域访问）
+- 管理服务类: PascalCase + `Service` 后缀（业务门面）；web 组装层 `XxxFacade`（组装对象 + 跨域访问）
 - 接口: PascalCase + 能力描述（如 `ModelRouter`, `TokenCounter`）
 - 方法: camelCase + 动词开头
 - 常量: UPPER_SNAKE_CASE

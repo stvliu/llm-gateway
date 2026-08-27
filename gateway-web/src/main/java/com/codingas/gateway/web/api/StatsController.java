@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.stats.StatsManager;
+import com.codingas.gateway.stats.StatsService;
 import com.codingas.gateway.web.api.dto.StatsModelUsageResponse;
 import com.codingas.gateway.web.api.dto.StatsResponse;
 import com.codingas.gateway.web.api.dto.StatsTrendResponse;
@@ -35,14 +35,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class StatsController {
 
-    private final StatsManager statsManager;
+    private final StatsService statsService;
 
     /**
      * 获取系统统计数据
      */
     @GetMapping
     public StatsResponse getStats() {
-        return StatsResponse.from(statsManager.getStats());
+        return StatsResponse.from(statsService.getStats());
     }
 
     /**
@@ -52,7 +52,7 @@ public class StatsController {
      */
     @GetMapping("/trend")
     public List<StatsTrendResponse> trend(@RequestParam(defaultValue = "7") int days) {
-        return statsManager.getTrend(days).stream()
+        return statsService.getTrend(days).stream()
                 .map(StatsTrendResponse::from)
                 .toList();
     }
@@ -64,7 +64,7 @@ public class StatsController {
      */
     @GetMapping("/model-usage")
     public List<StatsModelUsageResponse> modelUsage(@RequestParam(defaultValue = "5") int limit) {
-        return statsManager.getModelUsage(limit).stream()
+        return statsService.getModelUsage(limit).stream()
                 .map(StatsModelUsageResponse::from)
                 .toList();
     }

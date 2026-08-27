@@ -26,7 +26,7 @@ import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.proxy.routing.RoutingContext;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,18 +48,18 @@ public class KeyFailoverInvoker {
     private final CredentialResolver credentialResolver;
     private final UpstreamClientRegistry clientRegistry;
     private final ResilientClientFactory resilientClientFactory;
-    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private final ChannelEndpointCircuitBreakerService circuitBreakerService;
     private final MeterRegistry meterRegistry;
 
     public KeyFailoverInvoker(CredentialResolver credentialResolver,
                                UpstreamClientRegistry clientRegistry,
                                ResilientClientFactory resilientClientFactory,
-                               ChannelEndpointCircuitBreakerManager circuitBreakerManager,
+                               ChannelEndpointCircuitBreakerService circuitBreakerService,
                                MeterRegistry meterRegistry) {
         this.credentialResolver = credentialResolver;
         this.clientRegistry = clientRegistry;
         this.resilientClientFactory = resilientClientFactory;
-        this.circuitBreakerManager = circuitBreakerManager;
+        this.circuitBreakerService = circuitBreakerService;
         this.meterRegistry = meterRegistry;
     }
 
@@ -72,7 +72,7 @@ public class KeyFailoverInvoker {
         UpstreamException lastException = null;
 
         for (ChannelCredential cred : credentials) {
-            if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
+            if (!circuitBreakerService.isAvailable(ctx.channelEndpointId())) {
                 log.debug("端点 {} 熔断中，跳过 Key {}", ctx.channelEndpointId(), cred.getId());
                 continue;
             }
@@ -122,7 +122,7 @@ public class KeyFailoverInvoker {
                     "无可用 Key", null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         ChannelCredential cred = credentials.get(0);
-        if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
+        if (!circuitBreakerService.isAvailable(ctx.channelEndpointId())) {
             log.debug("端点 {} 熔断中，FAIL_FAST 不试 Key {}", ctx.channelEndpointId(), cred.getId());
             throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "端点熔断中: " + ctx.channelEndpointId(),
@@ -160,7 +160,7 @@ public class KeyFailoverInvoker {
                     "流式调用：无可用 Key", null, request.getModel(), provider, ctx.channelEndpointId(), null);
         }
         ChannelCredential cred = credentials.get(0);
-        if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
+        if (!circuitBreakerService.isAvailable(ctx.channelEndpointId())) {
             log.debug("端点 {} 熔断中，FAIL_FAST 流式不试 Key {}", ctx.channelEndpointId(), cred.getId());
             throw new UpstreamException(ProviderErrorType.UPSTREAM_ERROR,
                     "流式调用：端点熔断中: " + ctx.channelEndpointId(),
@@ -188,7 +188,7 @@ public class KeyFailoverInvoker {
         String provider = ctx.upstreamProtocol().name().toLowerCase();
 
         for (ChannelCredential cred : credentials) {
-            if (!circuitBreakerManager.isAvailable(ctx.channelEndpointId())) {
+            if (!circuitBreakerService.isAvailable(ctx.channelEndpointId())) {
                 log.debug("端点 {} 熔断中，跳过 Key {}", ctx.channelEndpointId(), cred.getId());
                 continue;
             }

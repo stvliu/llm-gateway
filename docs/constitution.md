@@ -202,7 +202,7 @@ gateway-project/                       # 父 POM（打包类型: pom）
 |---|------|---------|
 | **web** | 接收请求、返回响应 | Controller、拦截器、全局异常（gateway-web，按用例分包） |
 | **application** | 用例编排，跨域协调 | 编排服务（各功能域核心模块的 service 包，按用例分包） |
-| **domain** | 业务逻辑、模型 | Entity、Manager、端口接口（Repository/Client）、异常、枚举（位于各功能域核心模块） |
+| **domain** | 业务逻辑、模型 | Entity、Service、端口接口（Repository/Client）、异常、枚举（位于各功能域核心模块） |
 | **infrastructure** | 技术实现 | 端口实现（JpaXxxRepository）、配置、工具（位于 `<域>data` 绑定模块） |
 | **common** | 跨领域共享 | 基础异常、技术常量、工具类（gateway-common） |
 
@@ -249,16 +249,16 @@ gateway-project/                       # 父 POM（打包类型: pom）
 
 ### 2.3 服务分类
 
-**管理服务（Manager）**：
+**管理服务（Service）**：
 - 职责：业务逻辑 / 用例编排 / 跨实体读取（按能力定位，如认证、渠道管理、模型管理）
-- 放置：**服务跟随聚合**——与所属聚合同包（如 `iam.user.UserManager`、`iam.apikey.UserApiKeyManager`、`provider.channel.ChannelManager`），不设集中式 service 包
-- 命名：能力名 + `Manager` 后缀（接口）/ `ManagerImpl`（实现），2026-08-26 起取代 `Service` 后缀
-- 示例：`UserManager`, `ChannelManager`, `ProviderManager`, `ModelManager`, `PlanCatalogManager`
+- 放置：**服务跟随聚合**——与所属聚合同包（如 `iam.user.UserService`、`iam.apikey.UserApiKeyService`、`provider.channel.ChannelService`），不设集中式 service 包
+- 命名：能力名 + `Service` 后缀（接口）/ `ServiceImpl`（实现）
+- 示例：`UserService`, `ChannelService`, `ProviderService`, `ModelService`, `PlanCatalogService`
 
 **web 层组装门面（Facade）**：
-- 职责：组装对象（DTO 纯映射 + 跨实体展示数据）与跨域访问（协调核心 Manager）
-- 放置：`gateway-web.web.api.facade`（跟随 Controller），按需导入——仅需要跨实体组装/转换的端点才走 Facade，无组装操作 Controller 直接调 Manager
-- 命名：能力名 + `Facade` 后缀；只依赖核心 Manager，**不访问任何 Repository**
+- 职责：组装对象（DTO 纯映射 + 跨实体展示数据）与跨域访问（协调核心 Service）
+- 放置：`gateway-web.web.api.facade`（跟随 Controller），按需导入——仅需要跨实体组装/转换的端点才走 Facade，无组装操作 Controller 直接调 Service
+- 命名：能力名 + `Facade` 后缀；只依赖核心 Service，**不访问任何 Repository**
 - 示例：`ChannelFacade`（组装 providerName/endpoints）、`ModelInstanceFacade`（组装 modelName 等）
 
 **技术能力类（非用例服务）**：
@@ -269,10 +269,10 @@ gateway-project/                       # 父 POM（打包类型: pom）
 
 **示例对照**：
 ```
-gateway-iam · com.codingas.gateway.iam.user.UserManager            # 用户用例管理（跟随 user 聚合）
-gateway-iam · com.codingas.gateway.iam.apikey.UserApiKeyManager    # API Key 用例管理（跟随 apikey 聚合）
-gateway-iam · com.codingas.gateway.iam.encryption.ApiKeyEncryptor  # API Key 加密能力（非 Manager）
-gateway-provider · com.codingas.gateway.provider.channel.ChannelManager  # 渠道用例管理
+gateway-iam · com.codingas.gateway.iam.user.UserService            # 用户用例管理（跟随 user 聚合）
+gateway-iam · com.codingas.gateway.iam.apikey.UserApiKeyService    # API Key 用例管理（跟随 apikey 聚合）
+gateway-iam · com.codingas.gateway.iam.encryption.ApiKeyEncryptor  # API Key 加密能力（非 Service）
+gateway-provider · com.codingas.gateway.provider.channel.ChannelService  # 渠道用例管理
 gateway-web · com.codingas.gateway.web.api.facade.ChannelFacade    # 渠道 DTO 组装门面（web 层）
 ```
 
@@ -293,7 +293,7 @@ gateway-web · com.codingas.gateway.web.api.facade.ChannelFacade    # 渠道 DTO
 | 业务事件 | 旁路（统计、审计） | ✅ 异步解耦 |
 | Domain 直接调用其他 Domain | 主流程中 | ❌ 禁止 |
 | Domain 直接访问外部资源 | 持久化、外部 API | ❌ 必须通过端口（Repository/Client） |
-| **Web 层访问 Repository** | HTTP 承载 | ❌ **强制禁止**：Web 层（Controller/Interceptor/Facade）不得访问任何 Repository，数据访问全部经核心 Manager |
+| **Web 层访问 Repository** | HTTP 承载 | ❌ **强制禁止**：Web 层（Controller/Interceptor/Facade）不得访问任何 Repository，数据访问全部经核心 Service |
 
 **违规示例**:
 - ❌ 服务直接调用绑定模块的 `XxxJpaRepository` 获取 Entity
@@ -393,7 +393,7 @@ ChatDispatchService (gateway-proxy · com.codingas.gateway.proxy.chat)  ← 统�
 | 转换 | gateway-proxy（编排）+ gateway-protocol（契约/SPI） | `ProtocolConversionFacade`, `ProtocolAdapter`, `ProtocolRequest/ProtocolResponse` |
 | 调谐 | gateway-proxy（编排）+ gateway-protocol（SPI） | `OutboundTuner`, `ProtocolTuner` |
 | 调用 | gateway-protocol（transport 接口 / 插件实现） | `UpstreamClient`, `UpstreamClientRegistry`, `OpenAIUpstreamClient`, `AnthropicUpstreamClient` |
-| 韧性 | gateway-resilience | `RetryStrategy`/`RetryExecutor`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerManager`, `ResilientUpstreamClient` |
+| 韧性 | gateway-resilience | `RetryStrategy`/`RetryExecutor`, `CircuitBreaker`, `ChannelEndpointCircuitBreakerService`, `ResilientUpstreamClient` |
 | 计量 | gateway-usage | `ChatDispatchService` → 发布 `TokenUsedEvent` |
 | 审计 | gateway-audit + audit-data | `AuditRepository.logRequest()`, `AuditRepository.logResponse()` |
 
@@ -556,7 +556,7 @@ gateway:
 | 端口实现 | `JpaXxxRepository` / `HttpXxxClient` | `iamdata.user.JpaUserRepository` |
 | Spring Data 接口 | `XxxJpaRepository`（与 DO 同包） | `iamdata.user.UserJpaRepository` |
 | JPA 实体（DO） | `XxxDo` | `UserDo` |
-| 管理服务 | `XxxManager`（接口）/ `XxxManagerImpl`（实现），跟随聚合子域包 | `iam.user.UserManager` |
+| 管理服务 | `XxxService`（接口）/ `XxxServiceImpl`（实现），跟随聚合子域包 | `iam.user.UserService` |
 | 技术能力 | 能力动词后缀，**禁止 Service** | `ApiKeyEncryptor`, `UserApiKeyGenerator`, `PasswordEncoder` |
 | 能力接口 | PascalCase + 能力描述 | `ModelRouter`, `TokenCounter`, `Encryptor` |
 | DTO（HTTP 契约） | `XxxRequest`（入）/ `XxxResponse`（出），位于 gateway-web API 层 | `UserCreateRequest`, `UserResponse` |
@@ -576,7 +576,7 @@ gateway:
 
 > 两者都以聚合名开头，区分靠方法签名：**出入参是实体 → Repository；出入参是 DTO/用例语义 → Service**。
 
-| | `XxxRepository`（端口） | `XxxManager`（管理服务） |
+| | `XxxRepository`（端口） | `XxxService`（管理服务） |
 |---|---|---|
 | 方法语言 | 数据操作（`save`/`findById`/`findByEmail`/`existsBy…`/`delete`） | 业务用例（`create`/`login`/`assignRoles`/`changePassword`） |
 | 入参/出参 | 实体、`Long`、`Optional<Entity>` | DTO、用例参数/结果对象 |
@@ -588,8 +588,8 @@ gateway:
 | 层级 | 定义 | 实例 | 处理 |
 |------|------|------|------|
 | **外部 API** | 跨进程服务契约 | 仅 web Controller 的 REST 端点 | — |
-| **模块公开面** | 跨 Maven 模块的 Java 契约 | 实体、端口 `XxxRepository`、`XxxManager`、DTO、异常 | 必须 `public`（Java 硬约束） |
-| **模块内部实现** | 仅本模块引用 | `XxxManagerImpl`、包内辅助类 | 默认 `public` 同包；出现模块私有类时按 `iam.<子域>.internal` 约定收纳 |
+| **模块公开面** | 跨 Maven 模块的 Java 契约 | 实体、端口 `XxxRepository`、`XxxService`、DTO、异常 | 必须 `public`（Java 硬约束） |
+| **模块内部实现** | 仅本模块引用 | `XxxServiceImpl`、包内辅助类 | 默认 `public` 同包；出现模块私有类时按 `iam.<子域>.internal` 约定收纳 |
 
 > 强制机制：Maven 依赖边界（编译期）+ ArchUnit 铁律（源码期，见 `LayerDependencyTest`）+ 命名信号（`Do`/`Jpa` 前缀 = 内部实现警示）。
 

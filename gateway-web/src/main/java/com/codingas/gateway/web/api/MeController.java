@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.apikey.UserApiKeyManager;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.web.api.dto.UserApiKeyResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,7 +35,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MeController {
 
-    private final UserApiKeyManager userApiKeyManager;
+    private final UserApiKeyService userApiKeyService;
 
     /**
      * 查询当前用户的所有 API Key
@@ -43,6 +43,6 @@ public class MeController {
     @GetMapping("/api-keys")
     public List<UserApiKeyResponse> listMyApiKeys() {
         Long userId = StpUtil.getLoginIdAsLong();
-        return UserApiKeyResponse.from(userApiKeyManager.findByUserId(userId));
+        return UserApiKeyResponse.from(userApiKeyService.findByUserId(userId));
     }
 }

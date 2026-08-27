@@ -28,7 +28,7 @@ import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
@@ -62,7 +62,7 @@ class KeyFailoverInvokerTest {
     private ResilientClientFactory resilientClientFactory;
 
     @Mock
-    private ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private ChannelEndpointCircuitBreakerService circuitBreakerService;
 
     private MeterRegistry meterRegistry;
     private KeyFailoverInvoker invoker;
@@ -74,7 +74,7 @@ class KeyFailoverInvokerTest {
     void setUp() {
         meterRegistry = new SimpleMeterRegistry();
         invoker = new KeyFailoverInvoker(credentialResolver, clientRegistry,
-                resilientClientFactory, circuitBreakerManager, meterRegistry);
+                resilientClientFactory, circuitBreakerService, meterRegistry);
 
         ctx = new RoutingContext(10L, 20L, "https://api.openai.com/v1",
                 Protocol.OPENAI, "sk-test", 60, false, "test-model", null,
@@ -92,7 +92,7 @@ class KeyFailoverInvokerTest {
         cred.setApiKeyPlain("sk-key-1");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -120,7 +120,7 @@ class KeyFailoverInvokerTest {
         cred2.setApiKeyPlain("sk-key-2");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client1 = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client1);
@@ -151,7 +151,7 @@ class KeyFailoverInvokerTest {
         cred.setApiKeyPlain("sk-key-1");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -173,7 +173,7 @@ class KeyFailoverInvokerTest {
         cred.setApiKeyPlain("sk-key-1");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
                 .isInstanceOf(UpstreamException.class);
@@ -192,7 +192,7 @@ class KeyFailoverInvokerTest {
         cred2.setApiKeyPlain("sk-key-2");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client1 = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client1);
@@ -235,7 +235,7 @@ class KeyFailoverInvokerTest {
         cred2.setId(200L);
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invoke(ctx, request))
                 .isInstanceOf(UpstreamException.class);
@@ -260,7 +260,7 @@ class KeyFailoverInvokerTest {
         ChannelCredential cred = new ChannelCredential();
         cred.setId(100L);
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeSingleKey(ctx, request))
                 .isInstanceOf(UpstreamException.class)
@@ -275,7 +275,7 @@ class KeyFailoverInvokerTest {
         cred.setId(100L);
         cred.setApiKeyPlain("sk-key-1");
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -295,7 +295,7 @@ class KeyFailoverInvokerTest {
         cred.setId(100L);
         cred.setApiKeyPlain("sk-key-1");
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -326,7 +326,7 @@ class KeyFailoverInvokerTest {
         ChannelCredential cred = new ChannelCredential();
         cred.setId(100L);
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeSingleKeyStream(ctx, request, mock(StreamCallback.class)))
                 .isInstanceOf(UpstreamException.class)
@@ -340,7 +340,7 @@ class KeyFailoverInvokerTest {
         cred.setId(100L);
         cred.setApiKeyPlain("sk-key-1");
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -360,7 +360,7 @@ class KeyFailoverInvokerTest {
         cred.setId(100L);
         cred.setApiKeyPlain("sk-key-1");
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client);
@@ -385,7 +385,7 @@ class KeyFailoverInvokerTest {
         cred2.setApiKeyPlain("sk-key-2");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         // 仅 stub 第一个 Key：成功后立即返回，第二个 Key 不会被获取
         UpstreamClient client1 = mock(UpstreamClient.class);
@@ -411,7 +411,7 @@ class KeyFailoverInvokerTest {
         cred2.setApiKeyPlain("sk-key-2");
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(true);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(true);
 
         UpstreamClient client1 = mock(UpstreamClient.class);
         when(clientRegistry.getClient("openai", "https://api.openai.com/v1", "sk-key-1", 60)).thenReturn(client1);
@@ -444,7 +444,7 @@ class KeyFailoverInvokerTest {
         cred2.setId(200L);
 
         when(credentialResolver.resolveAll(10L)).thenReturn(List.of(cred1, cred2));
-        when(circuitBreakerManager.isAvailable(20L)).thenReturn(false);
+        when(circuitBreakerService.isAvailable(20L)).thenReturn(false);
 
         assertThatThrownBy(() -> invoker.invokeStream(ctx, request, mock(StreamCallback.class)))
                 .isInstanceOf(UpstreamException.class)

@@ -51,15 +51,15 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * ChatDispatchManager 单元测试
+ * ChatDispatchService 单元测试
  *
- * <p>Task 4 适配：L2 模型降级层已删除，ChatDispatchManagerImpl 不再解析容灾画像、不再做 L2 重路由循环，
+ * <p>Task 4 适配：L2 模型降级层已删除，ChatDispatchServiceImpl 不再解析容灾画像、不再做 L2 重路由循环，
  * 直接委托 {@link ChannelFailoverInvoker}（候选内逐个试，耗尽抛最后异常）。invoke/invokeStream 签名
  * 移除 profile 参数。测试覆盖同协议/跨协议调度委托、异常传播等核心语义。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChatDispatchManager 单元测试")
-class ChatDispatchManagerTest {
+@DisplayName("ChatDispatchService 单元测试")
+class ChatDispatchServiceTest {
 
     @Mock
     private RoutingResolver routingResolver;
@@ -76,14 +76,14 @@ class ChatDispatchManagerTest {
     @Mock
     private ChannelFailoverInvoker channelFailoverInvoker;
 
-    private ChatDispatchManagerImpl dispatchService;
+    private ChatDispatchServiceImpl dispatchService;
 
     private Identity testIdentity;
     private RoutingContext openAIContext;
 
     @BeforeEach
     void setUp() {
-        dispatchService = new ChatDispatchManagerImpl(routingResolver,
+        dispatchService = new ChatDispatchServiceImpl(routingResolver,
                 auditRepository, eventPublisher, channelFailoverInvoker);
 
         testIdentity = Identity.of(1L, "USER", 1L, 7L);

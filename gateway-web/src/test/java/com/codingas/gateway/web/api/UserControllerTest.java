@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.iam.user.UserManager;
+import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.iam.user.User;
 import com.codingas.gateway.iam.user.UserQuery;
 import com.codingas.gateway.iam.user.UserState;
@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
 class UserControllerTest {
 
     @Mock
-    private UserManager userManager;
+    private UserService userService;
 
     @InjectMocks
     private UserController controller;
@@ -68,7 +68,7 @@ class UserControllerTest {
             request.setUsername("testuser");
 
             User user = createTestUser();
-            when(userManager.create(any(), any())).thenReturn(user);
+            when(userService.create(any(), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.create(request);
@@ -87,7 +87,7 @@ class UserControllerTest {
         void getById_existingId_returnsUser() {
             // given
             User user = createTestUser();
-            when(userManager.getById(1L)).thenReturn(user);
+            when(userService.getById(1L)).thenReturn(user);
 
             // when
             UserResponse result = controller.getById(1L);
@@ -109,7 +109,7 @@ class UserControllerTest {
             PageResponse<User> pageResponse = PageResponse.of(
                 List.of(user), 1, 10, 1L
             );
-            when(userManager.query(any(UserQuery.class))).thenReturn(pageResponse);
+            when(userService.query(any(UserQuery.class))).thenReturn(pageResponse);
 
             // when
             PageResponse<UserResponse> result = controller.query(new UserQueryRequest());
@@ -131,7 +131,7 @@ class UserControllerTest {
             request.setEmail("new@example.com");
 
             User user = createTestUser();
-            when(userManager.update(eq(1L), any())).thenReturn(user);
+            when(userService.update(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.update(1L, request);
@@ -149,7 +149,7 @@ class UserControllerTest {
         @DisplayName("删除用户成功")
         void delete_existingId_returnsSuccess() {
             // given
-            doNothing().when(userManager).delete(1L);
+            doNothing().when(userService).delete(1L);
 
             // when
             controller.delete(1L);
@@ -172,7 +172,7 @@ class UserControllerTest {
 
             User user = createTestUser();
             user.setState(UserState.INACTIVE);
-            when(userManager.updateState(eq(1L), any())).thenReturn(user);
+            when(userService.updateState(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.updateState(1L, request);
@@ -195,7 +195,7 @@ class UserControllerTest {
 
             User user = createTestUser();
             user.setRole("ADMIN");
-            when(userManager.assignRoles(eq(1L), any())).thenReturn(user);
+            when(userService.assignRoles(eq(1L), any())).thenReturn(user);
 
             // when
             UserResponse result = controller.assignRoles(1L, request);
@@ -212,8 +212,8 @@ class UserControllerTest {
         @Test
         @DisplayName("重置密码成功 — 返回 16 位明文")
         void resetPassword_success_returnsPlaintext() {
-            // given — UserManager 生成 16 位随机密码（排除易混字符）一次性返回
-            when(userManager.resetPassword(1L))
+            // given — UserService 生成 16 位随机密码（排除易混字符）一次性返回
+            when(userService.resetPassword(1L))
                     .thenReturn(new ResetPasswordResult("AbcdefghijKmnp23"));
 
             // when
@@ -227,8 +227,8 @@ class UserControllerTest {
         @Test
         @DisplayName("重置内建用户密码 — 抛 ForbiddenException（映射 403）")
         void resetPassword_builtinUser_throwsForbidden() {
-            // given — 内建用户禁止重置密码，UserManager 抛 ForbiddenException
-            when(userManager.resetPassword(2L))
+            // given — 内建用户禁止重置密码，UserService 抛 ForbiddenException
+            when(userService.resetPassword(2L))
                     .thenThrow(new ForbiddenException("不允许重置系统内建用户的密码"));
 
             // when & then — Controller 透传异常，由 IamExceptionHandler 映射 403

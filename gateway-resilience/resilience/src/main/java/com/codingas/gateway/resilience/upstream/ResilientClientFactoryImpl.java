@@ -18,7 +18,7 @@ package com.codingas.gateway.resilience.upstream;
 import com.codingas.gateway.protocol.ProtocolRequest;
 import com.codingas.gateway.protocol.transport.ResilientClientFactory;
 import com.codingas.gateway.protocol.transport.UpstreamClient;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import com.codingas.gateway.resilience.circuitbreaker.CircuitBreaker;
 import com.codingas.gateway.resilience.metrics.EndpointMetricsRegistry;
 import com.codingas.gateway.resilience.retry.RetryExecutor;
@@ -33,15 +33,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class ResilientClientFactoryImpl implements ResilientClientFactory {
 
-    private final ChannelEndpointCircuitBreakerManager circuitBreakerManager;
+    private final ChannelEndpointCircuitBreakerService circuitBreakerService;
     private final RetryExecutor retryExecutor;
     private final MeterRegistry meterRegistry;
     private final EndpointMetricsRegistry metricsRegistry;
 
-    public ResilientClientFactoryImpl(ChannelEndpointCircuitBreakerManager circuitBreakerManager,
+    public ResilientClientFactoryImpl(ChannelEndpointCircuitBreakerService circuitBreakerService,
                                        RetryExecutor retryExecutor, MeterRegistry meterRegistry,
                                        EndpointMetricsRegistry metricsRegistry) {
-        this.circuitBreakerManager = circuitBreakerManager;
+        this.circuitBreakerService = circuitBreakerService;
         this.retryExecutor = retryExecutor;
         this.meterRegistry = meterRegistry;
         this.metricsRegistry = metricsRegistry;
@@ -49,7 +49,7 @@ public class ResilientClientFactoryImpl implements ResilientClientFactory {
 
     @Override
     public UpstreamClient<ProtocolRequest> wrap(UpstreamClient<ProtocolRequest> rawClient, Long channelEndpointId) {
-        CircuitBreaker breaker = circuitBreakerManager.getBreaker(channelEndpointId);
+        CircuitBreaker breaker = circuitBreakerService.getBreaker(channelEndpointId);
         String providerCode = resolveProviderCode(rawClient);
         return new ResilientUpstreamClient(rawClient, breaker, retryExecutor,
                 meterRegistry, metricsRegistry, providerCode, channelEndpointId);

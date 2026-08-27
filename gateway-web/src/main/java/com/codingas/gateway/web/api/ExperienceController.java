@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.proxy.experience.ModelExperienceManager;
+import com.codingas.gateway.proxy.experience.ModelExperienceService;
 import com.codingas.gateway.web.api.dto.ExperienceChatRequest;
 import com.codingas.gateway.web.api.dto.ExperienceModelResponse;
 import jakarta.validation.Valid;
@@ -38,7 +38,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ExperienceController {
 
-    private final ModelExperienceManager modelExperienceManager;
+    private final ModelExperienceService modelExperienceService;
 
     /**
      * 流式聊天体验
@@ -52,7 +52,7 @@ public class ExperienceController {
     public SseEmitter chatStream(@Valid @RequestBody ExperienceChatRequest request) {
         log.info("Experience chat request: channelId={}, model={}",
             request.getChannelId(), request.getModel());
-        return modelExperienceManager.chatStream(request.toCommand());
+        return modelExperienceService.chatStream(request.toCommand());
     }
 
     /**
@@ -63,6 +63,6 @@ public class ExperienceController {
      */
     @GetMapping("/providers/{providerId}/models")
     public List<ExperienceModelResponse> getProviderModels(@PathVariable Long providerId) {
-        return ExperienceModelResponse.from(modelExperienceManager.getModelsByProviderId(providerId));
+        return ExperienceModelResponse.from(modelExperienceService.getModelsByProviderId(providerId));
     }
 }

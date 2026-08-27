@@ -28,7 +28,7 @@ import com.codingas.gateway.protocol.transport.UpstreamClient;
 import com.codingas.gateway.protocol.transport.UpstreamClientRegistry;
 import com.codingas.gateway.proxy.routing.RoutingContext;
 import com.codingas.gateway.common.enums.FailureStrategy;
-import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerManager;
+import com.codingas.gateway.resilience.circuitbreaker.ChannelEndpointCircuitBreakerService;
 import com.codingas.gateway.support.ProviderSimulator;
 import com.codingas.gateway.support.ResponseTemplates;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -56,7 +56,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
 
     @Test
     void contextLoads() {
-        assertThat(chatDispatchManager).isNotNull();
+        assertThat(chatDispatchService).isNotNull();
     }
 
     // ==================== Key 故障转移测试 ====================
@@ -180,7 +180,7 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
          *   <li>{@link CredentialResolver#resolveAll(Long)} 返回传入的凭证列表</li>
          *   <li>{@link UpstreamClientRegistry#getClient} 返回由 ProviderSimulator 创建的真实 OpenAIUpstreamClient</li>
          *   <li>{@link ResilientClientFactory#wrap} 直接返回原始 client（不包装重试/熔断，以便验证真实 HTTP 行为）</li>
-         *   <li>{@link ChannelEndpointCircuitBreakerManager#isAvailable} 始终返回 true（不触发端点熔断跳过）</li>
+         *   <li>{@link ChannelEndpointCircuitBreakerService#isAvailable} 始终返回 true（不触发端点熔断跳过）</li>
          * </ul></p>
          *
          * @param sim           ProviderSimulator（MockWebServer）
@@ -210,12 +210,12 @@ class FullContextIntegrationTest extends FullContextIntegrationTestBase {
                     .thenAnswer(inv -> inv.getArgument(0));
 
             // 熔断管理器：端点始终可用，避免触发熔断跳过逻辑
-            ChannelEndpointCircuitBreakerManager circuitBreakerManager =
-                    mock(ChannelEndpointCircuitBreakerManager.class);
-            when(circuitBreakerManager.isAvailable(anyLong())).thenReturn(true);
+            ChannelEndpointCircuitBreakerService circuitBreakerService =
+                    mock(ChannelEndpointCircuitBreakerService.class);
+            when(circuitBreakerService.isAvailable(anyLong())).thenReturn(true);
 
             return new KeyFailoverInvoker(credentialResolver, clientRegistry,
-                    resilientClientFactory, circuitBreakerManager, meterRegistry);
+                    resilientClientFactory, circuitBreakerService, meterRegistry);
         }
 
         /**

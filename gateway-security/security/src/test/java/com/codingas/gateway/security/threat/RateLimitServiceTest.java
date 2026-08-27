@@ -30,11 +30,11 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 /**
- * RateLimitManager 单元测试
+ * RateLimitService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("RateLimitManager")
-class RateLimitManagerTest {
+@DisplayName("RateLimitService")
+class RateLimitServiceTest {
 
     @Mock
     private TokenBucketRateLimiter rateLimiter;
@@ -49,7 +49,7 @@ class RateLimitManagerTest {
     @Test
     @DisplayName("isAllowed 应使用配置的 bucketSize 和 refillRate")
     void isAllowed_usesConfiguredValues() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(true);
 
         boolean result = service.isAllowed(1L);
@@ -60,7 +60,7 @@ class RateLimitManagerTest {
     @Test
     @DisplayName("isAllowed apiKeyId 为 null 应返回 true")
     void isAllowed_nullApiKey_returnsTrue() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
 
         boolean result = service.isAllowed(null);
 
@@ -70,7 +70,7 @@ class RateLimitManagerTest {
     @Test
     @DisplayName("isAllowed 限流器拒绝时应返回 false")
     void isAllowed_rateLimiterRejects_returnsFalse() {
-        RateLimitManager service = new RateLimitManager(rateLimiter, properties);
+        RateLimitService service = new RateLimitService(rateLimiter, properties);
         when(rateLimiter.tryAcquire(anyString(), anyInt(), anyInt(), anyInt())).thenReturn(false);
 
         boolean result = service.isAllowed(1L);

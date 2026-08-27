@@ -34,11 +34,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 /**
- * AuthenticationManager 单元测试
+ * AuthenticationService 单元测试
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("AuthenticationManager 测试")
-class AuthenticationManagerTest {
+@DisplayName("AuthenticationService 测试")
+class AuthenticationServiceTest {
 
     @Mock
     private UserApiKeyRepository userApiKeyRepository;
@@ -46,11 +46,11 @@ class AuthenticationManagerTest {
     @Mock
     private ApiKeyEncryptor encryptionService;
 
-    private AuthenticationManager service;
+    private AuthenticationService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthenticationManager(userApiKeyRepository, encryptionService);
+        service = new AuthenticationService(userApiKeyRepository, encryptionService);
     }
 
     @Nested

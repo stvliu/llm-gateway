@@ -40,13 +40,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * StatsManager 单元测试
+ * StatsService 单元测试
  *
  * <p>mock 各域核心 Gateway，断言 getStats 聚合统计与趋势/模型用量统计。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("StatsManager 测试")
-class StatsManagerTest {
+@DisplayName("StatsService 测试")
+class StatsServiceTest {
 
     @Mock
     private ProviderRepository providerRepository;
@@ -64,7 +64,7 @@ class StatsManagerTest {
     private CallLogRepository callLogRepository;
 
     @InjectMocks
-    private StatsManager statsManager;
+    private StatsService statsService;
 
     @Nested
     @DisplayName("getStats 方法测试")
@@ -82,7 +82,7 @@ class StatsManagerTest {
             when(callLogRepository.sumTokensSince(any())).thenReturn(4096L);
 
             // when
-            StatsResult response = statsManager.getStats();
+            StatsResult response = statsService.getStats();
 
             // then
             assertThat(response.providerCount()).isEqualTo(3L);
@@ -103,7 +103,7 @@ class StatsManagerTest {
             when(userRepository.count()).thenReturn(0L);
 
             // when
-            StatsResult response = statsManager.getStats();
+            StatsResult response = statsService.getStats();
 
             // then
             assertThat(response.providerCount()).isZero();
@@ -118,7 +118,7 @@ class StatsManagerTest {
         @DisplayName("依次调用各 Gateway 的统计方法")
         void getStats_invokesAllGateways() {
             // when
-            statsManager.getStats();
+            statsService.getStats();
 
             // then
             verify(providerRepository).count();
@@ -143,7 +143,7 @@ class StatsManagerTest {
                     .thenReturn(List.of(new DailyUsage(today, 5, 100)));
 
             // when
-            List<DailyUsage> trend = statsManager.getTrend(7);
+            List<DailyUsage> trend = statsService.getTrend(7);
 
             // then
             assertThat(trend).hasSize(7);
@@ -159,7 +159,7 @@ class StatsManagerTest {
         @DisplayName("getTrend 非正天数回退默认 7 天")
         void getTrend_invalidDays_usesDefault() {
             when(callLogRepository.findDailyUsage(any(), any())).thenReturn(List.of());
-            assertThat(statsManager.getTrend(0)).hasSize(7);
+            assertThat(statsService.getTrend(0)).hasSize(7);
         }
 
         @Test
@@ -170,7 +170,7 @@ class StatsManagerTest {
                     .thenReturn(List.of(new ModelUsage("gpt-4o", 10), new ModelUsage("claude-sonnet", 3)));
 
             // when
-            List<ModelUsage> usage = statsManager.getModelUsage(5);
+            List<ModelUsage> usage = statsService.getModelUsage(5);
 
             // then
             assertThat(usage).hasSize(2);

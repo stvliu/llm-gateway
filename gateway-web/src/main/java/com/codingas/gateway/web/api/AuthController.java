@@ -16,7 +16,7 @@
 package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.stp.StpUtil;
-import com.codingas.gateway.iam.user.UserManager;
+import com.codingas.gateway.iam.user.UserService;
 import com.codingas.gateway.web.api.dto.ChangePasswordRequest;
 import com.codingas.gateway.web.api.dto.LoginRequest;
 import com.codingas.gateway.web.api.dto.LoginResponse;
@@ -35,14 +35,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final UserManager userManager;
+    private final UserService userService;
 
     /**
      * 用户登录
      */
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
-        return LoginResponse.from(userManager.login(request.username(), request.password(), request.rememberMe()));
+        return LoginResponse.from(userService.login(request.username(), request.password(), request.rememberMe()));
     }
 
     /**
@@ -50,7 +50,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     public void logout() {
-        userManager.logout();
+        userService.logout();
     }
 
     /**
@@ -59,7 +59,7 @@ public class AuthController {
     @GetMapping("/me")
     public UserResponse getCurrentUser() {
         Long userId = StpUtil.getLoginIdAsLong();
-        return UserResponse.from(userManager.getById(userId));
+        return UserResponse.from(userService.getById(userId));
     }
 
     /**
@@ -68,6 +68,6 @@ public class AuthController {
     @PatchMapping("/me/password")
     public void updatePassword(@Valid @RequestBody ChangePasswordRequest request) {
         Long userId = StpUtil.getLoginIdAsLong();
-        userManager.changePassword(userId, request.currentPassword(), request.newPassword());
+        userService.changePassword(userId, request.currentPassword(), request.newPassword());
     }
 }

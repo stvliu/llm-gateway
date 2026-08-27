@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.usage.tokenlimit.TokenLimitManager;
+import com.codingas.gateway.usage.tokenlimit.TokenLimitService;
 import com.codingas.gateway.web.api.dto.TokenLimitCreateRequest;
 import com.codingas.gateway.web.api.dto.TokenLimitQueryRequest;
 import com.codingas.gateway.web.api.dto.TokenLimitResponse;
@@ -35,14 +35,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class TokenLimitController {
 
-    private final TokenLimitManager tokenLimitManager;
+    private final TokenLimitService tokenLimitService;
 
     /**
      * 创建 Token 限额
      */
     @PostMapping
     public TokenLimitResponse create(@Valid @RequestBody TokenLimitCreateRequest request) {
-        return TokenLimitResponse.from(tokenLimitManager.create(
+        return TokenLimitResponse.from(tokenLimitService.create(
                 request.getUserId(), request.getProviderId(), request.getModelId(),
                 request.getSwitchModelId(), request.toEntity()));
     }
@@ -52,7 +52,7 @@ public class TokenLimitController {
      */
     @GetMapping("/{id}")
     public TokenLimitResponse getById(@PathVariable Long id) {
-        return TokenLimitResponse.from(tokenLimitManager.getById(id));
+        return TokenLimitResponse.from(tokenLimitService.getById(id));
     }
 
     /**
@@ -60,7 +60,7 @@ public class TokenLimitController {
      */
     @GetMapping
     public PageResponse<TokenLimitResponse> query(@ModelAttribute TokenLimitQueryRequest request) {
-        return TokenLimitResponse.fromPage(tokenLimitManager.query(request.toQuery()));
+        return TokenLimitResponse.fromPage(tokenLimitService.query(request.toQuery()));
     }
 
     /**
@@ -70,7 +70,7 @@ public class TokenLimitController {
     public TokenLimitResponse update(
             @PathVariable Long id,
             @Valid @RequestBody TokenLimitUpdateRequest request) {
-        return TokenLimitResponse.from(tokenLimitManager.update(id, request.toEntity(), request.getSwitchModelId()));
+        return TokenLimitResponse.from(tokenLimitService.update(id, request.toEntity(), request.getSwitchModelId()));
     }
 
     /**
@@ -78,7 +78,7 @@ public class TokenLimitController {
      */
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
-        tokenLimitManager.delete(id);
+        tokenLimitService.delete(id);
     }
 
     /**
@@ -86,6 +86,6 @@ public class TokenLimitController {
      */
     @PatchMapping("/{id}/reset-usage")
     public TokenLimitResponse resetUsage(@PathVariable Long id) {
-        return TokenLimitResponse.from(tokenLimitManager.resetUsage(id));
+        return TokenLimitResponse.from(tokenLimitService.resetUsage(id));
     }
 }

@@ -22,10 +22,10 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * ChannelEndpointCircuitBreakerManager 单元测试
+ * ChannelEndpointCircuitBreakerService 单元测试
  */
 @DisplayName("端点熔断器管理器测试")
-class ChannelEndpointCircuitBreakerManagerTest {
+class ChannelEndpointCircuitBreakerServiceTest {
 
     @Nested
     @DisplayName("getBreaker 获取熔断器")
@@ -34,7 +34,7 @@ class ChannelEndpointCircuitBreakerManagerTest {
         @Test
         @DisplayName("同一端点返回同一熔断器实例")
         void shouldReturnSameBreakerForSameEndpoint() {
-            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            ChannelEndpointCircuitBreakerService manager = new ChannelEndpointCircuitBreakerService();
             CircuitBreaker b1 = manager.getBreaker(1L);
             CircuitBreaker b2 = manager.getBreaker(1L);
             assertThat(b1).isSameAs(b2);
@@ -43,7 +43,7 @@ class ChannelEndpointCircuitBreakerManagerTest {
         @Test
         @DisplayName("不同端点返回不同熔断器实例")
         void shouldReturnDifferentBreakerForDifferentEndpoint() {
-            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            ChannelEndpointCircuitBreakerService manager = new ChannelEndpointCircuitBreakerService();
             CircuitBreaker b1 = manager.getBreaker(1L);
             CircuitBreaker b2 = manager.getBreaker(2L);
             assertThat(b1).isNotSameAs(b2);
@@ -57,7 +57,7 @@ class ChannelEndpointCircuitBreakerManagerTest {
         @Test
         @DisplayName("新端点默认可用")
         void shouldBeAvailableByDefault() {
-            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            ChannelEndpointCircuitBreakerService manager = new ChannelEndpointCircuitBreakerService();
             assertThat(manager.isAvailable(1L)).isTrue();
         }
     }
@@ -69,7 +69,7 @@ class ChannelEndpointCircuitBreakerManagerTest {
         @Test
         @DisplayName("forceOpen 将端点熔断器置为 OPEN")
         void forceOpen_transitionsEndpointBreakerToOpen() {
-            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            ChannelEndpointCircuitBreakerService manager = new ChannelEndpointCircuitBreakerService();
             assertThat(manager.getState(1L)).isEqualTo(CircuitBreakerState.CLOSED);
 
             manager.forceOpen(1L);
@@ -81,7 +81,7 @@ class ChannelEndpointCircuitBreakerManagerTest {
         @Test
         @DisplayName("forceClose 将端点熔断器置为 CLOSED 并恢复可用")
         void forceClose_transitionsEndpointBreakerToClosed() {
-            ChannelEndpointCircuitBreakerManager manager = new ChannelEndpointCircuitBreakerManager();
+            ChannelEndpointCircuitBreakerService manager = new ChannelEndpointCircuitBreakerService();
             manager.forceOpen(1L);
             assertThat(manager.isAvailable(1L)).isFalse();
 

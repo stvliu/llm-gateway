@@ -52,14 +52,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ChannelProvisionManager 单元测试（核心开通/级联/批量逻辑）
+ * ChannelProvisionService 单元测试（核心开通/级联/批量逻辑）
  *
- * <p>inlineProvider 三路径已由 {@code ChannelProvisionManagerInlineProviderTest} 覆盖，此处
+ * <p>inlineProvider 三路径已由 {@code ChannelProvisionServiceInlineProviderTest} 覆盖，此处
  * 补充开通主流程、批量开通、模型级联、上游模型名映射、JSON 解析容错等分支。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChannelProvisionManager 开通逻辑测试")
-class ChannelProvisionManagerTest {
+@DisplayName("ChannelProvisionService 开通逻辑测试")
+class ChannelProvisionServiceTest {
 
     @Mock
     private PlanCatalogRepository planCatalogRepository;
@@ -80,14 +80,14 @@ class ChannelProvisionManagerTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    private ChannelProvisionManager service;
+    private ChannelProvisionService service;
 
     private static final String PLAN_CODE = "openai-paid";
     private static final String PROVIDER_CODE = "openai";
 
     @BeforeEach
     void setUp() {
-        service = new ChannelProvisionManager(
+        service = new ChannelProvisionService(
                 planCatalogRepository, planModelCatalogRepository, providerRepository,
                 channelRepository, channelEndpointRepository, modelInstanceRepository,
                 channelCredentialRepository, modelRepository, objectMapper);

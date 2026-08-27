@@ -18,10 +18,10 @@ package com.codingas.gateway.web.api;
 import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.iam.application.Application;
 import com.codingas.gateway.iam.application.ApplicationChannel;
-import com.codingas.gateway.iam.application.ApplicationManager;
+import com.codingas.gateway.iam.application.ApplicationService;
 import com.codingas.gateway.iam.application.ApplicationState;
 import com.codingas.gateway.web.api.dto.ApplicationRequest;
-import com.codingas.gateway.iam.apikey.UserApiKeyManager;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -46,7 +46,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * ApplicationController HTTP 契约测试
  *
- * <p>使用 standalone setup + Mock ApplicationManager，验证 REST 端点路由、
+ * <p>使用 standalone setup + Mock ApplicationService，验证 REST 端点路由、
  * HTTP 状态码与响应序列化契约，不连数据库。</p>
  */
 @ExtendWith(MockitoExtension.class)
@@ -54,10 +54,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class ApplicationControllerHttpTest {
 
     @Mock
-    private ApplicationManager applicationManager;
+    private ApplicationService applicationService;
 
     @Mock
-    private UserApiKeyManager userApiKeyManager;
+    private UserApiKeyService userApiKeyService;
 
     private MockMvc mockMvc;
 
@@ -65,7 +65,7 @@ class ApplicationControllerHttpTest {
 
     @BeforeEach
     void setUp() {
-        ApplicationController controller = new ApplicationController(applicationManager, userApiKeyManager);
+        ApplicationController controller = new ApplicationController(applicationService, userApiKeyService);
         // 装配 GlobalExceptionHandler 以便校验失败被转为 400（与生产 Web 上下文一致）
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
@@ -90,7 +90,7 @@ class ApplicationControllerHttpTest {
     @Test
     @DisplayName("POST /api/v1/applications 创建成功返回 201 与响应体")
     void create_returns201WithBody() throws Exception {
-        when(applicationManager.create(any())).thenReturn(stubApp());
+        when(applicationService.create(any())).thenReturn(stubApp());
 
         ApplicationRequest request = new ApplicationRequest();
         request.setCode("APP-001");
@@ -109,7 +109,7 @@ class ApplicationControllerHttpTest {
     @Test
     @DisplayName("GET /api/v1/applications 返回应用列表")
     void list_returnsArray() throws Exception {
-        when(applicationManager.getAll()).thenReturn(List.of(stubApp()));
+        when(applicationService.getAll()).thenReturn(List.of(stubApp()));
 
         mockMvc.perform(get("/api/v1/applications"))
                 .andExpect(status().isOk())
@@ -120,7 +120,7 @@ class ApplicationControllerHttpTest {
     @Test
     @DisplayName("GET /api/v1/applications/{id} 返回应用详情")
     void getById_returnsDetail() throws Exception {
-        when(applicationManager.getById(1L)).thenReturn(stubApp());
+        when(applicationService.getById(1L)).thenReturn(stubApp());
 
         mockMvc.perform(get("/api/v1/applications/{id}", 1L))
                 .andExpect(status().isOk())
@@ -131,7 +131,7 @@ class ApplicationControllerHttpTest {
     @Test
     @DisplayName("PUT /api/v1/applications/{id} 更新成功返回 200")
     void update_returns200() throws Exception {
-        when(applicationManager.update(eq(1L), any())).thenReturn(stubApp());
+        when(applicationService.update(eq(1L), any())).thenReturn(stubApp());
 
         ApplicationRequest request = new ApplicationRequest();
         request.setCode("APP-001");
@@ -149,7 +149,7 @@ class ApplicationControllerHttpTest {
     void delete_returns204() throws Exception {
         mockMvc.perform(delete("/api/v1/applications/{id}", 1L))
                 .andExpect(status().isNoContent());
-        verify(applicationManager).delete(1L);
+        verify(applicationService).delete(1L);
     }
 
     @Test
@@ -158,7 +158,7 @@ class ApplicationControllerHttpTest {
         ApplicationChannel rel1 = new ApplicationChannel(1L, 10L);
         rel1.setPriority(1);
         ApplicationChannel rel2 = new ApplicationChannel(1L, 20L);
-        when(applicationManager.listChannels(1L)).thenReturn(List.of(rel1, rel2));
+        when(applicationService.listChannels(1L)).thenReturn(List.of(rel1, rel2));
 
         mockMvc.perform(get("/api/v1/applications/{id}/channels", 1L))
                 .andExpect(status().isOk())
@@ -175,7 +175,7 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"channels\":[{\"channelId\":10,\"priority\":1},{\"channelId\":20}]}"))
                 .andExpect(status().isNoContent());
-        verify(applicationManager).updateChannels(eq(1L), argThat(items ->
+        verify(applicationService).updateChannels(eq(1L), argThat(items ->
                 items != null && items.size() == 2
                         && items.get(0).getChannelId().equals(10L) && items.get(0).getPriority().equals(1)
                         && items.get(1).getChannelId().equals(20L) && items.get(1).getPriority() == null));
@@ -188,7 +188,7 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"channels\":[]}"))
                 .andExpect(status().isNoContent());
-        verify(applicationManager).updateChannels(eq(1L), eq(List.of()));
+        verify(applicationService).updateChannels(eq(1L), eq(List.of()));
     }
 
     @Test
@@ -198,7 +198,7 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"channels\":[{\"channelId\":null}]}"))
                 .andExpect(status().isBadRequest());
-        verify(applicationManager, never()).updateChannels(any(), any());
+        verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
@@ -208,7 +208,7 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"channels\":[{\"channelId\":-1}]}"))
                 .andExpect(status().isBadRequest());
-        verify(applicationManager, never()).updateChannels(any(), any());
+        verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
@@ -218,7 +218,7 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"channels\":[{\"channelId\":0}]}"))
                 .andExpect(status().isBadRequest());
-        verify(applicationManager, never()).updateChannels(any(), any());
+        verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
@@ -228,13 +228,13 @@ class ApplicationControllerHttpTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest());
-        verify(applicationManager, never()).updateChannels(any(), any());
+        verify(applicationService, never()).updateChannels(any(), any());
     }
 
     @Test
     @DisplayName("POST /api/v1/applications 携带 timeout 创建成功返回 201")
     void create_withTimeout_returns201() throws Exception {
-        when(applicationManager.create(any())).thenReturn(stubApp());
+        when(applicationService.create(any())).thenReturn(stubApp());
 
         ApplicationRequest request = new ApplicationRequest();
         request.setCode("APP-001");
@@ -248,6 +248,6 @@ class ApplicationControllerHttpTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1));
         // Task 8：timeout 随 ApplicationRequest 透传至 service（端点契约）
-        verify(applicationManager).create(any());
+        verify(applicationService).create(any());
     }
 }

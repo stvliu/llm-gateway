@@ -16,8 +16,8 @@
 package com.codingas.gateway.web.api;
 
 import com.codingas.gateway.web.api.dto.ApplicationChannelRequest;
-import com.codingas.gateway.iam.application.ApplicationManager;
-import com.codingas.gateway.iam.apikey.UserApiKeyManager;
+import com.codingas.gateway.iam.application.ApplicationService;
+import com.codingas.gateway.iam.apikey.UserApiKeyService;
 import com.codingas.gateway.web.api.dto.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ApplicationController {
 
-    private final ApplicationManager applicationManager;
-    private final UserApiKeyManager userApiKeyManager;
+    private final ApplicationService applicationService;
+    private final UserApiKeyService userApiKeyService;
 
     /**
      * 创建应用
@@ -49,7 +49,7 @@ public class ApplicationController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public ApplicationResponse create(@Valid @RequestBody ApplicationRequest request) {
-        return ApplicationResponse.from(applicationManager.create(request.toEntity()));
+        return ApplicationResponse.from(applicationService.create(request.toEntity()));
     }
 
     /**
@@ -63,7 +63,7 @@ public class ApplicationController {
     public ApplicationResponse update(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationRequest request) {
-        return ApplicationResponse.from(applicationManager.update(id, request.toEntity()));
+        return ApplicationResponse.from(applicationService.update(id, request.toEntity()));
     }
 
     /**
@@ -74,7 +74,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}")
     public ApplicationResponse getById(@PathVariable Long id) {
-        return ApplicationResponse.from(applicationManager.getById(id));
+        return ApplicationResponse.from(applicationService.getById(id));
     }
 
     /**
@@ -84,7 +84,7 @@ public class ApplicationController {
      */
     @GetMapping
     public List<ApplicationResponse> list() {
-        return ApplicationResponse.from(applicationManager.getAll());
+        return ApplicationResponse.from(applicationService.getAll());
     }
 
     /**
@@ -95,7 +95,7 @@ public class ApplicationController {
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
-        applicationManager.delete(id);
+        applicationService.delete(id);
     }
 
     /**
@@ -106,7 +106,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}/api-keys")
     public List<UserApiKeyResponse> listApiKeys(@PathVariable Long id) {
-        return UserApiKeyResponse.from(userApiKeyManager.findByApplicationId(id));
+        return UserApiKeyResponse.from(userApiKeyService.findByApplicationId(id));
     }
 
     /**
@@ -117,7 +117,7 @@ public class ApplicationController {
      */
     @GetMapping("/{id}/channels")
     public List<ApplicationChannelItem> listChannels(@PathVariable Long id) {
-        return ApplicationChannelItem.from(applicationManager.listChannels(id));
+        return ApplicationChannelItem.from(applicationService.listChannels(id));
     }
 
     /**
@@ -131,7 +131,7 @@ public class ApplicationController {
     public void updateChannels(
             @PathVariable Long id,
             @Valid @RequestBody ApplicationChannelRequest request) {
-        applicationManager.updateChannels(id,
+        applicationService.updateChannels(id,
                 request.channels().stream().map(ApplicationChannelItem::toEntity).toList());
     }
 }

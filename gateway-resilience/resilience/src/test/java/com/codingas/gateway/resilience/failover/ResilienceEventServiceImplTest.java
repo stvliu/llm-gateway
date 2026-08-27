@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * ResilienceEventManagerImpl 单元测试
+ * ResilienceEventServiceImpl 单元测试
  *
  * <p>验证管理服务层查询委派逻辑，重点守护 I2 修复：{@code findExhausted} 当 since 为 null 时
  * 由 Service 层补默认窗口（最近 1 小时），避免透传 null 返回全量历史耗尽事件导致前端总览页
@@ -51,14 +51,14 @@ import static org.mockito.Mockito.when;
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-@DisplayName("ResilienceEventManagerImpl 测试")
-class ResilienceEventManagerImplTest {
+@DisplayName("ResilienceEventServiceImpl 测试")
+class ResilienceEventServiceImplTest {
 
     @Mock
     private FailoverEventRepository failoverEventRepository;
 
     @InjectMocks
-    private ResilienceEventManagerImpl service;
+    private ResilienceEventServiceImpl service;
 
     /**
      * RED（修复前）：{@code findExhausted(null, limit)} 透传 null 给 Gateway，断言 since 非 null 失败。

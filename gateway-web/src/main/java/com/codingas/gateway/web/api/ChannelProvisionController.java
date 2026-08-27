@@ -17,7 +17,7 @@ package com.codingas.gateway.web.api;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.codingas.gateway.provider.CatalogSyncFacade;
-import com.codingas.gateway.provider.channel.ChannelProvisionManager;
+import com.codingas.gateway.provider.channel.ChannelProvisionService;
 import com.codingas.gateway.provider.catalog.BatchProvisionResult;
 import com.codingas.gateway.provider.catalog.ProvisionResult;
 import com.codingas.gateway.web.api.dto.BatchProvisionRequest;
@@ -37,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ChannelProvisionController {
 
-    private final ChannelProvisionManager channelProvisionManager;
+    private final ChannelProvisionService channelProvisionService;
     private final CatalogSyncFacade catalogSyncFacade;
 
     // ===== 开通操作（需要 ADMIN 权限） =====
@@ -57,7 +57,7 @@ public class ChannelProvisionController {
     public ProvisionResult provisionFromPlan(
             @PathVariable String planCode,
             @RequestBody(required = false) ProvisionRequest request) {
-        return channelProvisionManager.provisionFromPlan(planCode,
+        return channelProvisionService.provisionFromPlan(planCode,
                 request != null ? request.getApiKeys() : null,
                 request != null ? request.toInlineParams() : null);
     }
@@ -76,7 +76,7 @@ public class ChannelProvisionController {
     public BatchProvisionResult provisionBatch(
             @PathVariable String providerCode,
             @RequestBody(required = false) BatchProvisionRequest request) {
-        return channelProvisionManager.provisionBatch(providerCode,
+        return channelProvisionService.provisionBatch(providerCode,
                 request != null ? request.getPlanCodes() : null);
     }
 
@@ -91,7 +91,7 @@ public class ChannelProvisionController {
     @PostMapping("/model/{modelName}")
     @SaCheckRole("ADMIN")
     public ProvisionResult provisionModel(@PathVariable String modelName) {
-        return channelProvisionManager.provisionModel(modelName);
+        return channelProvisionService.provisionModel(modelName);
     }
 
     // ===== 同步操作（需要 ADMIN 权限） =====

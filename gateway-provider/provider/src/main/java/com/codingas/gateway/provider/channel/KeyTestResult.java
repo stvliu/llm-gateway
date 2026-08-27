@@ -22,7 +22,7 @@ import java.util.List;
  * 单 Key 测试结果（内部不可变对象）
  *
  * <p>由 {@link com.codingas.gateway.provider.channel.ChannelKeyProbe} 返回，
- * 由 com.codingas.gateway.provider.service.ChannelHealthManager
+ * 由 com.codingas.gateway.provider.service.ChannelHealthService
  * 聚合并脱敏后形成对外 {@link KeyMatrixRow}。</p>
  *
  * @param credentialId    凭证 ID

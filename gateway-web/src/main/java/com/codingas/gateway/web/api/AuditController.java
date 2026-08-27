@@ -15,7 +15,7 @@
  */
 package com.codingas.gateway.web.api;
 
-import com.codingas.gateway.audit.AuditManager;
+import com.codingas.gateway.audit.AuditService;
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.web.api.dto.AuditLogQueryRequest;
 import com.codingas.gateway.web.api.dto.AuditLogResponse;
@@ -38,7 +38,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuditController {
 
-    private final AuditManager auditManager;
+    private final AuditService auditService;
 
     /**
      * 分页查询审计日志
@@ -48,6 +48,6 @@ public class AuditController {
      */
     @GetMapping
     public PageResponse<AuditLogResponse> query(@Valid @ModelAttribute AuditLogQueryRequest request) {
-        return AuditLogResponse.fromPage(auditManager.query(request.toQuery()));
+        return AuditLogResponse.fromPage(auditService.query(request.toQuery()));
     }
 }

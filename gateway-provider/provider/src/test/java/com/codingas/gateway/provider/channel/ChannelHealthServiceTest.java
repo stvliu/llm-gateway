@@ -32,13 +32,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * ChannelHealthManager 单元测试
+ * ChannelHealthService 单元测试
  *
  * <p>覆盖聚合规则四分支、PRECHECK 不持久化、持久化失败兜底、aggregate 静态方法多分支。</p>
  */
 @ExtendWith(MockitoExtension.class)
-@DisplayName("ChannelHealthManager 单元测试")
-class ChannelHealthManagerTest {
+@DisplayName("ChannelHealthService 单元测试")
+class ChannelHealthServiceTest {
 
     @Mock
     private ChannelRepository channelRepository;
@@ -50,13 +50,13 @@ class ChannelHealthManagerTest {
     /** 同步 Executor 简化测试 */
     private final Executor executor = Runnable::run;
 
-    private ChannelHealthManager service;
+    private ChannelHealthService service;
 
     private static final Long CHANNEL_ID = 100L;
 
     @BeforeEach
     void setUp() {
-        service = new ChannelHealthManager(channelRepository, credentialRepository, channelKeyProbe, executor);
+        service = new ChannelHealthService(channelRepository, credentialRepository, channelKeyProbe, executor);
     }
 
     /**
@@ -192,34 +192,34 @@ class ChannelHealthManagerTest {
     @DisplayName("aggregate 静态方法覆盖各分支")
     void aggregate_静态方法多分支() {
         // 空列表 → UNKNOWN
-        assertThat(ChannelHealthManager.aggregate(List.of()))
+        assertThat(ChannelHealthService.aggregate(List.of()))
                 .isEqualTo(ChannelHealthStatus.UNKNOWN);
 
         // 全部 PASS 且有模型 → HEALTHY
-        assertThat(ChannelHealthManager.aggregate(List.of(
+        assertThat(ChannelHealthService.aggregate(List.of(
                 KeyTestResult.pass(1L, "sk-a", List.of("m1"), 10L),
                 KeyTestResult.pass(2L, "sk-b", List.of("m2"), 20L)
         ))).isEqualTo(ChannelHealthStatus.HEALTHY);
 
         // 全部 FAIL → FAILED
-        assertThat(ChannelHealthManager.aggregate(List.of(
+        assertThat(ChannelHealthService.aggregate(List.of(
                 KeyTestResult.fail(1L, "sk-a", "err"),
                 KeyTestResult.fail(2L, "sk-b", "err")
         ))).isEqualTo(ChannelHealthStatus.FAILED);
 
         // 部分 PASS 部分 FAIL → DEGRADED
-        assertThat(ChannelHealthManager.aggregate(List.of(
+        assertThat(ChannelHealthService.aggregate(List.of(
                 KeyTestResult.pass(1L, "sk-a", List.of("m1"), 10L),
                 KeyTestResult.fail(2L, "sk-b", "err")
         ))).isEqualTo(ChannelHealthStatus.DEGRADED);
 
         // PASS 但模型列表为空 → 不计为通过 → FAILED
-        assertThat(ChannelHealthManager.aggregate(List.of(
+        assertThat(ChannelHealthService.aggregate(List.of(
                 KeyTestResult.pass(1L, "sk-a", List.of(), 10L)
         ))).isEqualTo(ChannelHealthStatus.FAILED);
 
         // TIMEOUT 算失败
-        assertThat(ChannelHealthManager.aggregate(List.of(
+        assertThat(ChannelHealthService.aggregate(List.of(
                 KeyTestResult.timeout(1L, "sk-a")
         ))).isEqualTo(ChannelHealthStatus.FAILED);
     }
@@ -249,12 +249,12 @@ class ChannelHealthManagerTest {
     @DisplayName("maskKey 脱敏分支：null/空白/短 Key/长 Key")
     void maskKey_脱敏分支() {
         // null / 空白 → 固定 ***
-        assertThat(ChannelHealthManager.maskKey(null)).isEqualTo("***");
-        assertThat(ChannelHealthManager.maskKey("   ")).isEqualTo("***");
+        assertThat(ChannelHealthService.maskKey(null)).isEqualTo("***");
+        assertThat(ChannelHealthService.maskKey("   ")).isEqualTo("***");
         // 长度 <= 8 → 固定 ***
-        assertThat(ChannelHealthManager.maskKey("sk-test")).isEqualTo("***");
+        assertThat(ChannelHealthService.maskKey("sk-test")).isEqualTo("***");
         // 长 Key → 前缀4 + ***... + 后缀4
-        assertThat(ChannelHealthManager.maskKey("sk-test-key-123456789"))
+        assertThat(ChannelHealthService.maskKey("sk-test-key-123456789"))
                 .isEqualTo("sk-t***...6789");
     }
 
