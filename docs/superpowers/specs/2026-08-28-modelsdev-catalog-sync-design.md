@@ -129,7 +129,7 @@ V69 迁移 + Model.java + ModelDo.java 新增列：
    - 新增：`modelName = canonical ID 末段`，映射能力/限额/元信息字段（§5），`source=MODELS_DEV`，写入 external_id。
    - 已存在：更新元信息字段，**跳过人工锁定字段**（§7）；为存量模型补写 external_id（首次同步建立映射）。
    - **不删除** models.dev 未出现的现有模型（保留旧模型，避免破坏渠道/路由/限额）。
-3. **发布事件**：`CatalogSyncCompletedEvent`（同步报告），供 audit 域采集。
+3. **记录同步日志**：每次同步写入 `catalog_sync_logs` 表（结果、各计数、消息、触发时间），供 `GET status` 与前端展示最近同步状态。
 
 ### 6.3 CatalogSyncController（gateway-web）
 
@@ -142,7 +142,7 @@ V69 迁移 + Model.java + ModelDo.java 新增列：
 
 ### 6.4 审计
 
-同步属于管理操作，纳入现有 audit 闭环：发布 `CatalogSyncCompletedEvent`，audit 域采集（谁、何时、同步结果）落库，控制台审计页可查。
+同步属于管理操作，`POST /api/v1/catalog/sync` 在现有 `AuditLogInterceptor` 的审计范围（`/api/v1/**` 的 POST/PUT/PATCH/DELETE）内，自动落审计日志（谁、何时、成败）。同步结果明细由 `catalog_sync_logs` 表承载，二者互补。
 
 ## 7. 人工编辑保护
 
@@ -164,7 +164,7 @@ V69 迁移 + Model.java + ModelDo.java 新增列：
 | 映射 | models.json → Model 转换（canonical ID 末段、能力/限额/元信息映射） |
 | 服务 | ModelCatalogSyncService：upsert 幂等、人工锁定字段保护、不删除旧模型、报告统计 |
 | Web | CatalogSyncController 集成测试（同步触发 + 状态查询） |
-| 审计 | CatalogSyncCompletedEvent 采集落库 |
+| 日志 | CatalogSyncLog 实体/Repository 往返与 findLatest |
 
 ## 10. 风险与对策
 
@@ -180,11 +180,10 @@ V69 迁移 + Model.java + ModelDo.java 新增列：
 
 | 模块 | 变更 |
 |------|------|
-| gateway-provider/provider | Model 实体扩展、ModelCatalogClient、ModelCatalogSyncService、配置属性、CatalogSyncCompletedEvent |
-| gateway-provider/provider-data | ModelDo 扩展 |
-| gateway-boot | V69 迁移（models 表加列） |
+| gateway-provider/provider | Model 实体扩展、ModelCatalogClient、ModelCatalogSyncService、CatalogSyncLog、配置属性 |
+| gateway-provider/provider-data | ModelDo 扩展、CatalogSyncLogDo + Repository |
+| gateway-boot | V69 迁移（models 表加列 + catalog_sync_logs 建表） |
 | gateway-web | CatalogSyncController、Model DTO 扩展 |
-| gateway-audit | CatalogSyncCompletedEvent 采集 |
 | gateway-console | Models 字段展示 + Catalog 同步区域 |
 | gateway-coverage | 新代码测试覆盖（域服务 ≥90%） |
 
