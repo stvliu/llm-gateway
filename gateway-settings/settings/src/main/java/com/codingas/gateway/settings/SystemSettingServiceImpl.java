@@ -56,7 +56,7 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     public boolean getBoolean(String key, boolean defaultValue) {
         return repository.findByKey(key)
                 .map(SystemSetting::getSettingValue)
-                .map(value -> value != null ? Boolean.parseBoolean(value) : defaultValue)
+                .map(value -> parseBoolean(value, defaultValue))
                 .orElse(defaultValue);
     }
 
@@ -99,7 +99,8 @@ public class SystemSettingServiceImpl implements SystemSettingService {
         switch (valueType.toUpperCase()) {
             case "NUMBER" -> {
                 try {
-                    Integer.parseInt(value);
+                    // trim 对齐 getInt 的解析方式，避免带空白值"能读不能写"
+                    Integer.parseInt(value.trim());
                 } catch (NumberFormatException e) {
                     throw new IllegalArgumentException("配置项 " + key + " 需要数值: " + value);
                 }
@@ -132,11 +133,28 @@ public class SystemSettingServiceImpl implements SystemSettingService {
     }
 
     /**
-     * 容错解析枚举，缺失/非法回退默认值
+     * 容错解析布尔值：合法 true/false 返回对应值，非法回退默认值
+     * （与 update 的 BOOLEAN 校验语义一致，避免非法值被静默当作 false）
+     */
+    private boolean parseBoolean(String value, boolean defaultValue) {
+        if (value == null) {
+            return defaultValue;
+        }
+        if ("true".equalsIgnoreCase(value)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return false;
+        }
+        return defaultValue;
+    }
+
+    /**
+     * 容错解析枚举，缺失/非法回退默认值（解析前 trim 容错空白）
      */
     private <E extends Enum<E>> E parseEnum(String value, Class<E> enumType, E defaultValue) {
         try {
-            return Enum.valueOf(enumType, value);
+            return Enum.valueOf(enumType, value.trim());
         } catch (IllegalArgumentException | NullPointerException e) {
             return defaultValue;
         }

@@ -38,7 +38,8 @@ public interface AuditLogJpaRepository extends JpaRepository<AuditLogDo, Long> {
      * @return 删除的条数
      */
     @Transactional
-    @Modifying
+    // clearAutomatically：批量删除后清空持久化上下文，避免同事务后续读取到旧缓存实体
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM AuditLogDo a WHERE a.createdAt < :cutoff")
     int deleteBefore(@Param("cutoff") Instant cutoff);
 }

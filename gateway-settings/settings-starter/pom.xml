@@ -31,7 +31,7 @@
     <artifactId>gateway-settings-starter</artifactId>
     <packaging>jar</packaging>
     <name>Gateway Settings Starter</name>
-    <description>Settings 域纯装配：AutoConfiguration 引入 SettingsConfiguration（零业务逻辑）</description>
+    <description>Settings 域纯装配：AutoConfiguration 组件扫描装配（零业务逻辑）</description>
 
     <dependencies>
         <!-- 装配框架 -->

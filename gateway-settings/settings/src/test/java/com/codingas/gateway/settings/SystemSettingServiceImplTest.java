@@ -192,4 +192,35 @@ class SystemSettingServiceImplTest {
         assertThatThrownBy(() -> service.update("locked", "y"))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    @Test
+    @DisplayName("getBoolean 非法值回退默认值（而非静默 false）")
+    void getBoolean_invalidValueFallsBack() {
+        when(repository.findByKey("bad.boolean"))
+                .thenReturn(Optional.of(setting("bad.boolean", "maybe", "BOOLEAN", true)));
+
+        assertThat(service.getBoolean("bad.boolean", true)).isTrue();
+    }
+
+    @Test
+    @DisplayName("update NUMBER 带空白值可通过校验（trim 对齐 getInt）")
+    void update_numberWithWhitespace_passes() {
+        when(repository.findByKey("audit.retention.days"))
+                .thenReturn(Optional.of(setting("audit.retention.days", "90", "NUMBER", true)));
+        when(repository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        SystemSetting updated = service.update("audit.retention.days", " 120 ");
+
+        assertThat(updated.getSettingValue()).isEqualTo(" 120 ");
+    }
+
+    @Test
+    @DisplayName("getEnum 带空白值解析成功（trim 容错）")
+    void getEnum_whitespaceParses() {
+        when(repository.findByKey("catalog.sync.interval"))
+                .thenReturn(Optional.of(setting("catalog.sync.interval", " WEEKLY ", "ENUM", true)));
+
+        assertThat(service.getEnum("catalog.sync.interval", SyncInterval.class, SyncInterval.DAILY))
+                .isEqualTo(SyncInterval.WEEKLY);
+    }
 }
