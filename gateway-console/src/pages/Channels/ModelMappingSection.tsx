@@ -143,6 +143,12 @@ export function ModelMappingSection({ channelId, channelModels }: ModelMappingSe
         <Tag color={mapping.state === 'ACTIVE' ? 'green' : 'default'}>
           {mapping.state === 'ACTIVE' ? t('status.active') : t('status.inactive')}
         </Tag>
+        {/* 任务 11：DEPRECATED 状态实例显示黄色"即将废弃"标签（无 i18n key 时 defaultValue 兜底） */}
+        {mapping.state === 'DEPRECATED' && (
+          <Tag color="orange" style={{ fontSize: 11 }}>
+            {t('deprecating', { defaultValue: '即将废弃' })}
+          </Tag>
+        )}
         {pulse?.state === 'success' && (
           <span className="save-tip-ok">✓ {savedLabel}</span>
         )}
