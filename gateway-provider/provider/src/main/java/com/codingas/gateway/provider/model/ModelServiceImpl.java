@@ -22,7 +22,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -103,30 +106,50 @@ public class ModelServiceImpl implements ModelService {
         Model existing = modelRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Model", id));
 
-        // 实体 null 字段表示不更新
+        // 记录本次人工修改的字段，加入锁定集合（同步时跳过这些字段，避免覆盖人工编辑）
+        List<String> changedFields = new ArrayList<>();
         if (model.getModelName() != null) {
             existing.setModelName(model.getModelName());
+            changedFields.add("modelName");
         }
         if (model.getDisplayName() != null) {
             existing.setDisplayName(model.getDisplayName());
+            changedFields.add("displayName");
         }
         if (model.getModelFamily() != null) {
             existing.setModelFamily(model.getModelFamily());
+            changedFields.add("modelFamily");
         }
         if (model.getContextWindow() != null) {
             existing.setContextWindow(model.getContextWindow());
+            changedFields.add("contextWindow");
         }
         if (model.getMaxInputTokens() != null) {
             existing.setMaxInputTokens(model.getMaxInputTokens());
+            changedFields.add("maxInputTokens");
         }
         if (model.getMaxOutputTokens() != null) {
             existing.setMaxOutputTokens(model.getMaxOutputTokens());
+            changedFields.add("maxOutputTokens");
         }
         if (model.getCapabilities() != null) {
             existing.setCapabilities(model.getCapabilities());
+            changedFields.add("capabilities");
         }
         if (model.getModalities() != null) {
             existing.setModalities(model.getModalities());
+            changedFields.add("modalities");
+        }
+        if (model.getKnowledgeCutoff() != null) {
+            existing.setKnowledgeCutoff(model.getKnowledgeCutoff());
+            changedFields.add("knowledgeCutoff");
+        }
+
+        if (!changedFields.isEmpty()) {
+            Set<String> locked = new HashSet<>(existing.getLockedFields() == null
+                    ? List.of() : existing.getLockedFields());
+            locked.addAll(changedFields);
+            existing.setLockedFields(new ArrayList<>(locked));
         }
 
         Model saved = modelRepository.save(existing);

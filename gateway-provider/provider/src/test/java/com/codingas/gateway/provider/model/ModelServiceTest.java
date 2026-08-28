@@ -378,6 +378,25 @@ class ModelServiceTest {
                 .hasMessageContaining("Model")
                 .hasMessageContaining("99");
         }
+
+        @Test
+        @DisplayName("更新字段时自动加入人工锁定集合")
+        void update_editsField_addsToLockedFields() {
+            // given
+            when(modelRepository.findById(1L)).thenReturn(Optional.of(testModel));
+            when(modelRepository.save(any(Model.class))).thenAnswer(inv -> inv.getArgument(0));
+
+            Model request = modelEntity(null, "GPT-4 Renamed", 200000, null);
+
+            // when
+            modelService.update(1L, request);
+
+            // then
+            ArgumentCaptor<Model> captor = ArgumentCaptor.forClass(Model.class);
+            verify(modelRepository).save(captor.capture());
+            assertThat(captor.getValue().getLockedFields())
+                    .contains("displayName", "contextWindow");
+        }
     }
 
     // ==================== delete 测试 ====================
