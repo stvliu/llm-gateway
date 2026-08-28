@@ -72,8 +72,8 @@ public class CatalogProbeService {
      *
      * <p>总开关（catalog.deprecation.enabled）或探测子开关
      * （catalog.deprecation.probe.enabled）关闭时直接返回空报告不执行。
-     * 遍历渠道逐渠道探测；单渠道失败仅记录消息并继续。结果写入探测日志
-     * （result=PROBE，整体异常时 FAILURE）。</p>
+     * 遍历渠道逐渠道探测；单渠道失败计入 failedCount 并继续其他渠道。
+     * 结果写入探测日志（result=PROBE；整体异常或存在渠道失败时 FAILURE）。</p>
      *
      * @return 探测报告
      */
@@ -133,7 +133,9 @@ public class CatalogProbeService {
         try {
             upstreamIds = probeClient.fetchModelIds(endpoint, credentials.get(0).getApiKeyPlain());
         } catch (CatalogSyncException e) {
-            // 单渠道探测失败不阻断其他渠道（凭证失效/网络异常不触发废弃）
+            // 单渠道探测失败不阻断其他渠道（凭证失效/网络异常不触发废弃），
+            // 但计入失败数并记入消息，最终探测日志以 FAILURE 呈现该渠道失败
+            report.incrementFailed();
             report.addMessage("渠道探测失败: " + channel.getName() + " - " + e.getMessage());
             return;
         }
@@ -184,20 +186,25 @@ public class CatalogProbeService {
     /**
      * 探测日志落 catalog_sync_logs（result=PROBE/FAILURE）
      *
-     * <p>日志保存失败仅告警，不中断探测主流程。</p>
+     * <p>整体异常或存在渠道探测失败（failedCount &gt; 0）时 result 记 FAILURE，
+     * 否则记 PROBE；日志保存失败仅告警，不中断探测主流程。</p>
      *
      * @param report   探测报告
-     * @param error    失败原因（成功时为 null）
+     * @param error    整体失败原因（成功时为 null）
      * @param syncedAt 探测开始时间
      */
     private void saveProbeLog(CatalogSyncReport report, String error, Instant syncedAt) {
+        boolean hasChannelFailure = report.getFailedCount() > 0;
+        boolean failed = error != null || hasChannelFailure;
         CatalogSyncLog syncLog = new CatalogSyncLog();
-        syncLog.setResult(error == null ? "PROBE" : "FAILURE");
+        syncLog.setResult(failed ? "FAILURE" : "PROBE");
         syncLog.setAddedCount(0);
         syncLog.setUpdatedCount(report.getUpdatedCount());
         syncLog.setSkippedCount(report.getSkippedCount());
         syncLog.setFailedCount(report.getFailedCount());
-        syncLog.setMessage(error != null ? error : "上游列表探测完成");
+        syncLog.setMessage(error != null ? error
+                : hasChannelFailure ? "上游列表探测完成，失败渠道数=" + report.getFailedCount()
+                : "上游列表探测完成");
         syncLog.setSyncedAt(syncedAt);
         try {
             logRepository.save(syncLog);

@@ -21,6 +21,7 @@ import com.codingas.gateway.provider.channel.ChannelCredential;
 import com.codingas.gateway.provider.channel.ChannelCredentialService;
 import com.codingas.gateway.provider.channel.ChannelEndpoint;
 import com.codingas.gateway.provider.channel.ChannelService;
+import com.codingas.gateway.provider.model.Model;
 import com.codingas.gateway.provider.model.ModelDeprecationService;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.ModelInstanceRepository;
@@ -29,13 +30,16 @@ import com.codingas.gateway.settings.SystemSettingService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,7 +49,9 @@ import static org.mockito.Mockito.when;
  * CatalogProbeService 单元测试
  *
  * <p>验证上游列表探测编排：消失连续 N 次转 DEPRECATED、重新出现恢复 ACTIVE、
- * 无凭证/协议不支持渠道跳过、总开关关闭不执行。</p>
+ * 无凭证/协议不支持渠道跳过、总开关关闭不执行、upstreamModelName 为空时经
+ * Model.modelName 兜底解析/无法解析则跳过不误判、单渠道失败 failedCount 计数
+ * 且探测日志 result=FAILURE。</p>
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("CatalogProbeService 列表探测编排")
@@ -139,6 +145,84 @@ class CatalogProbeServiceTest {
         probeService.probe();
 
         verify(probeClient, never()).fetchModelIds(any(), any());
+    }
+
+    @Test
+    @DisplayName("upstreamModelName 为空时经 Model.modelName 兜底参与对比")
+    void nullUpstreamName_resolvesModelNameViaRepository() {
+        // given：实例 upstreamModelName=null（默认与 Model.modelName 相同），
+        //      modelRepository.findById(10) 兜底解析出 "gpt-4"；confirm-count=1
+        whenProbeEnabled();
+        when(settingService.getInt("catalog.deprecation.confirm-count", 3)).thenReturn(1);
+        Channel channel = channel(1L, "渠道A");
+        when(channelService.getAll()).thenReturn(List.of(channel));
+        when(channelService.getEndpoints(1L)).thenReturn(List.of(endpoint(Protocol.OPENAI)));
+        when(credentialService.listByChannelId(1L)).thenReturn(List.of(credential("sk-1")));
+        ModelInstance instance = instance(1L, 10L, null, ModelInstance.State.ACTIVE);
+        when(instanceRepository.findByChannelId(1L)).thenReturn(List.of(instance));
+        Model model = new Model();
+        model.setId(10L);
+        model.setModelName("gpt-4");
+        when(modelRepository.findById(10L)).thenReturn(Optional.of(model));
+        // 上游返回空集合（不含 "gpt-4"）
+        when(probeClient.fetchModelIds(any(), any())).thenReturn(Set.of());
+
+        // when
+        probeService.probe();
+
+        // then：解析到 "gpt-4" 参与对比（上游缺失）→ 触发废弃；而非跳过
+        verify(modelRepository).findById(10L);
+        verify(deprecationService).markInstanceDeprecated(1L);
+    }
+
+    @Test
+    @DisplayName("upstreamModelName 为空且 Model 无法解析时跳过实例不误判")
+    void nullUpstreamName_unresolvable_skips() {
+        // given：实例 upstreamModelName=null，但 modelRepository.findById 返回 empty（Model 不存在）
+        whenProbeEnabled();
+        when(settingService.getInt("catalog.deprecation.confirm-count", 3)).thenReturn(1);
+        Channel channel = channel(1L, "渠道A");
+        when(channelService.getAll()).thenReturn(List.of(channel));
+        when(channelService.getEndpoints(1L)).thenReturn(List.of(endpoint(Protocol.OPENAI)));
+        when(credentialService.listByChannelId(1L)).thenReturn(List.of(credential("sk-1")));
+        ModelInstance instance = instance(1L, 10L, null, ModelInstance.State.ACTIVE);
+        when(instanceRepository.findByChannelId(1L)).thenReturn(List.of(instance));
+        when(modelRepository.findById(10L)).thenReturn(Optional.empty());
+        when(probeClient.fetchModelIds(any(), any())).thenReturn(Set.of());
+
+        // when
+        probeService.probe();
+
+        // then：无法解析 → 跳过该实例，不触发废弃/恢复（不误判）
+        verify(modelRepository).findById(10L);
+        verify(deprecationService, never()).markInstanceDeprecated(any());
+        verify(deprecationService, never()).restoreInstance(any());
+    }
+
+    @Test
+    @DisplayName("单渠道探测失败：failedCount 计数且探测日志 result=FAILURE")
+    void channelProbeFailure_countsAndLogsFailure() {
+        // given：渠道有端点+凭证，但 fetchModelIds 抛 CatalogSyncException（凭证失效/网络异常）
+        whenProbeEnabled();
+        when(settingService.getInt("catalog.deprecation.confirm-count", 3)).thenReturn(3);
+        Channel channel = channel(1L, "渠道A");
+        when(channelService.getAll()).thenReturn(List.of(channel));
+        when(channelService.getEndpoints(1L)).thenReturn(List.of(endpoint(Protocol.OPENAI)));
+        when(credentialService.listByChannelId(1L)).thenReturn(List.of(credential("sk-1")));
+        when(probeClient.fetchModelIds(any(), any()))
+                .thenThrow(new CatalogSyncException("上游模型列表请求失败, status=401"));
+
+        // when：单渠道失败不阻断整体探测
+        CatalogSyncReport report = probeService.probe();
+
+        // then：failedCount 计数；探测日志 result=FAILURE；实例不触发废弃（不误判）
+        assertThat(report.getFailedCount()).isEqualTo(1);
+        ArgumentCaptor<CatalogSyncLog> captor = ArgumentCaptor.forClass(CatalogSyncLog.class);
+        verify(logRepository).save(captor.capture());
+        assertThat(captor.getValue().getResult()).isEqualTo("FAILURE");
+        assertThat(captor.getValue().getFailedCount()).isEqualTo(1);
+        verify(deprecationService, never()).markInstanceDeprecated(any());
+        verify(deprecationService, never()).restoreInstance(any());
     }
 
     /** 打开探测总开关与探测子开关 */

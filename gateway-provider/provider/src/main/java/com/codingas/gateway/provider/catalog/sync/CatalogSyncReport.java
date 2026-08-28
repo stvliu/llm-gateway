@@ -75,6 +75,13 @@ public class CatalogSyncReport {
     }
 
     /**
+     * 失败计数 +1
+     */
+    public void incrementFailed() {
+        this.failedCount++;
+    }
+
+    /**
      * 追加一条同步消息
      *
      * @param message 消息内容
