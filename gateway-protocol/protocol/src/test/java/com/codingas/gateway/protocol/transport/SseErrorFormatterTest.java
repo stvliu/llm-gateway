@@ -89,6 +89,14 @@ class SseErrorFormatterTest {
     }
 
     @Test
+    @DisplayName("MODEL_NOT_FOUND 格式化为 model_not_found")
+    void modelNotFound_format() {
+        UpstreamException e = new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "模型不存在");
+        assertThat(SseErrorFormatter.format(e))
+                .isEqualTo("{\"error\":\"model_not_found\",\"retry_after\":0}");
+    }
+
+    @Test
     @DisplayName("UNKNOWN_ERROR 格式化为 unknown_error")
     void unknownError_format() {
         UpstreamException e = new UpstreamException(ProviderErrorType.UNKNOWN_ERROR, "未知错误");

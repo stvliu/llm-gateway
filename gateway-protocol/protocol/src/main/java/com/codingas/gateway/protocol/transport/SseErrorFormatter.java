@@ -42,6 +42,7 @@ public class SseErrorFormatter {
             case SERVICE_UNAVAILABLE -> "server_error";
             case NETWORK_ERROR -> "network_error";
             case INVALID_REQUEST -> "invalid_request_error";
+            case MODEL_NOT_FOUND -> "model_not_found";
             case UNKNOWN_ERROR -> "unknown_error";
         };
         int retryAfter = e.getRetryAfterSeconds() != null ? e.getRetryAfterSeconds() : 0;

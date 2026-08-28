@@ -36,6 +36,9 @@ public enum ProviderErrorType {
     /** 请求格式错误 */
     INVALID_REQUEST,
 
+    /** 上游返回模型不存在（404 model_not_found / not_found_error） */
+    MODEL_NOT_FOUND,
+
     /** 上游 Provider 错误 */
     UPSTREAM_ERROR,
 

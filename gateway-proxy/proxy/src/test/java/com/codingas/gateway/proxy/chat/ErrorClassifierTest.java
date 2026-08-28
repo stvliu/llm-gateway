@@ -54,6 +54,15 @@ class ErrorClassifierTest {
             // then
             assertThat(decision).isEqualTo(FailoverDecision.NONE);
         }
+
+        @Test
+        @DisplayName("MODEL_NOT_FOUND 归为 NONE（请求级，不故障转移）")
+        void classify_modelNotFound_returnsNone() {
+            // when
+            FailoverDecision decision = errorClassifier.classify(ProviderErrorType.MODEL_NOT_FOUND);
+            // then
+            assertThat(decision).isEqualTo(FailoverDecision.NONE);
+        }
     }
 
     @Nested

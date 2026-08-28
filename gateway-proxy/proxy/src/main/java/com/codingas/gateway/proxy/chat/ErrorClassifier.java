@@ -32,6 +32,8 @@ import java.util.Map;
  * <ul>
  *   <li>{@link ProviderErrorType#INVALID_REQUEST} → {@link FailoverDecision#NONE}
  *       （请求级错误，换哪都无效，直接抛出）</li>
+ *   <li>{@link ProviderErrorType#MODEL_NOT_FOUND} → {@link FailoverDecision#NONE}
+ *       （模型不存在：请求级错误，换哪都无效，直接抛出）</li>
  *   <li>共因故障（{@link ProviderErrorType#AUTHENTICATION_ERROR}/{@link ProviderErrorType#RATE_LIMIT_ERROR}/
  *       {@link ProviderErrorType#QUOTA_EXCEEDED}/{@link ProviderErrorType#TIMEOUT_ERROR}/
  *       {@link ProviderErrorType#UPSTREAM_ERROR}/{@link ProviderErrorType#SERVICE_UNAVAILABLE}/
@@ -55,6 +57,9 @@ public class ErrorClassifier {
     static {
         // 请求级错误：换哪都无效，直接抛出原异常
         DECISION_TABLE.put(ProviderErrorType.INVALID_REQUEST, FailoverDecision.NONE);
+
+        // 模型不存在：请求级错误，换哪都无效，直接抛出（供废弃检测器识别）
+        DECISION_TABLE.put(ProviderErrorType.MODEL_NOT_FOUND, FailoverDecision.NONE);
 
         // 共因故障：换渠道（同一 Provider 下换 Key/Endpoint）
         DECISION_TABLE.put(ProviderErrorType.AUTHENTICATION_ERROR, FailoverDecision.L1);
