@@ -75,14 +75,16 @@ public class ModelDeprecationService {
     }
 
     /**
-     * 探测确认渠道不再提供该模型：ACTIVE→DEPRECATED（即将废弃，继续路由）
+     * 探测确认渠道不再提供该模型：仅 ACTIVE→DEPRECATED（即将废弃，继续路由）。
+     * 非 ACTIVE 实例（RETIRED/PENDING/SUSPENDED/DEPRECATED）直接跳过，
+     * 避免把终态（RETIRED）实例"复活"或对未就绪实例做非法转移。
      *
      * @param instanceId 模型实例 ID
      */
     @Transactional
     public void markInstanceDeprecated(Long instanceId) {
         ModelInstance instance = instanceRepository.findById(instanceId).orElse(null);
-        if (instance == null || instance.getState() == ModelInstance.State.DEPRECATED) {
+        if (instance == null || instance.getState() != ModelInstance.State.ACTIVE) {
             return;
         }
         instance.setState(ModelInstance.State.DEPRECATED);
@@ -108,9 +110,11 @@ public class ModelDeprecationService {
         log.info("模型实例已自动恢复, id={}", instanceId);
     }
 
-    /** 写管理操作审计（自动系统操作，userId 置空） */
+    /** 写管理操作审计（自动系统操作，userId 置 0 表示系统主体） */
     private void writeAudit(String action, String resource, String result) {
         AuditLog auditLog = new AuditLog();
+        // user_id 列为 NOT NULL，系统自动操作以 0 表示（同 AuditEventListener 惯例）
+        auditLog.setUserId(0L);
         auditLog.setAction(action);
         auditLog.setResource(resource);
         auditLog.setResult(result);
