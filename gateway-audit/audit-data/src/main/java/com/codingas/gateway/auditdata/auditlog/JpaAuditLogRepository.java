@@ -23,7 +23,9 @@ import com.codingas.gateway.audit.CallLogRepository;
 import com.codingas.gateway.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -106,6 +108,13 @@ public class JpaAuditLogRepository implements AuditLogRepository {
                 .collect(Collectors.toList());
 
         return PageResponse.of(pagedLogs, query.getPage(), limit, total);
+    }
+
+    @Override
+    @Transactional
+    public int deleteBefore(Instant cutoff) {
+        // 定时任务等无外层事务的调用方，由本方法自含事务保证 @Modifying 生效
+        return auditLogJpaRepository.deleteBefore(cutoff);
     }
 
     private AuditLogDo toDo(AuditLog entity) {

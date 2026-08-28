@@ -19,10 +19,12 @@ import com.codingas.gateway.common.dto.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+
 /**
  * 审计日志管理服务实现
  *
- * <p>委托 {@link AuditLogRepository} 完成分页查询。</p>
+ * <p>委托 {@link AuditLogRepository} 完成分页查询与按保留策略清理。</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -33,5 +35,10 @@ public class AuditServiceImpl implements AuditService {
     @Override
     public PageResponse<AuditLog> query(AuditLogQuery query) {
         return auditLogRepository.findAuditLogs(query);
+    }
+
+    @Override
+    public int deleteBefore(Instant cutoff) {
+        return auditLogRepository.deleteBefore(cutoff);
     }
 }

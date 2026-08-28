@@ -17,6 +17,8 @@ package com.codingas.gateway.audit;
 
 import com.codingas.gateway.common.dto.PageResponse;
 
+import java.time.Instant;
+
 /**
  * 审计日志网关接口
  *
@@ -47,4 +49,14 @@ public interface AuditLogRepository {
      * @return 分页结果
      */
     PageResponse<AuditLog> findAuditLogs(AuditLogQuery query);
+
+    /**
+     * 删除创建时间早于截止时间的审计日志
+     *
+     * <p>用于审计日志保留策略清理：定时任务与手动清理端点共用此能力。</p>
+     *
+     * @param cutoff 截止时间（不含），createdAt 早于该时间的日志将被删除
+     * @return 删除的条数
+     */
+    int deleteBefore(Instant cutoff);
 }

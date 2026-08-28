@@ -18,8 +18,13 @@ package com.codingas.gateway.web.api;
 import com.codingas.gateway.audit.AuditLog;
 import com.codingas.gateway.audit.AuditService;
 import com.codingas.gateway.common.dto.PageResponse;
+import com.codingas.gateway.web.advice.ApiResponseWrapperAdvice;
+import com.codingas.gateway.web.advice.GlobalExceptionHandler;
 import com.codingas.gateway.web.api.dto.AuditLogQueryRequest;
 import com.codingas.gateway.web.api.dto.AuditLogResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,13 +32,21 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * AuditController 单元测试
@@ -47,6 +60,31 @@ class AuditControllerTest {
 
     @InjectMocks
     private AuditController controller;
+
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        // 装配 ApiResponseWrapperAdvice 模拟生产统一响应包装（DELETE 返回普通 Map 会被包装为 {data: {...}}）；
+        // GlobalExceptionHandler 以便异常被转为统一响应；Jackson 关闭时间戳输出（Instant 序列化为 ISO-8601）
+        ObjectMapper objectMapper = Jackson2ObjectMapperBuilder.json()
+                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller)
+                .setControllerAdvice(new ApiResponseWrapperAdvice(), new GlobalExceptionHandler())
+                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
+                .build();
+    }
+
+    @Test
+    @DisplayName("DELETE /api/v1/audit-logs?days=30 手动清理")
+    void deleteAuditLogs_returnsDeletedCount() throws Exception {
+        when(auditService.deleteBefore(any())).thenReturn(10);
+        mockMvc.perform(delete("/api/v1/audit-logs").param("days", "30"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.deleted").value(10));
+        verify(auditService).deleteBefore(any());
+    }
 
     @Test
     @DisplayName("query 透传筛选条件并返回分页响应 DTO")

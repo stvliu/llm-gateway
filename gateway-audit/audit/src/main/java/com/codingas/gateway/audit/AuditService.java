@@ -17,10 +17,12 @@ package com.codingas.gateway.audit;
 
 import com.codingas.gateway.common.dto.PageResponse;
 
+import java.time.Instant;
+
 /**
  * 审计日志管理服务（查询门面）
  *
- * <p>提供审计日志分页查询能力，供管理台查询管理操作记录。</p>
+ * <p>提供审计日志分页查询与按保留策略清理能力，供管理台查询与清理管理操作记录。</p>
  */
 public interface AuditService {
 
@@ -31,4 +33,12 @@ public interface AuditService {
      * @return 分页结果
      */
     PageResponse<AuditLog> query(AuditLogQuery query);
+
+    /**
+     * 删除创建时间早于截止时间的审计日志
+     *
+     * @param cutoff 截止时间（不含）
+     * @return 删除的条数
+     */
+    int deleteBefore(Instant cutoff);
 }
