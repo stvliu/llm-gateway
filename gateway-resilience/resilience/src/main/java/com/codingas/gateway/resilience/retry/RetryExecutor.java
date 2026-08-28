@@ -126,7 +126,8 @@ public class RetryExecutor {
     boolean isRetryable(Exception e) {
         if (e instanceof UpstreamException pe) {
             return switch (pe.getErrorType()) {
-                case QUOTA_EXCEEDED, AUTHENTICATION_ERROR, INVALID_REQUEST -> false;
+                // 永久性错误重试无意义：配额超限、认证失败、请求无效、模型不存在均直接失败
+                case QUOTA_EXCEEDED, AUTHENTICATION_ERROR, INVALID_REQUEST, MODEL_NOT_FOUND -> false;
                 default -> true;
             };
         }

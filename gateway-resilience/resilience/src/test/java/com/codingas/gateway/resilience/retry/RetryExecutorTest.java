@@ -146,6 +146,17 @@ class RetryExecutorTest {
         }
 
         @Test
+        @DisplayName("MODEL_NOT_FOUND 不可重试（永久性错误，重试无意义）")
+        void modelNotFound_notRetryable() {
+            AtomicInteger counter = new AtomicInteger(0);
+            assertThatThrownBy(() -> executor.execute(() -> {
+                counter.incrementAndGet();
+                throw new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "404 模型不存在");
+            })).isInstanceOf(UpstreamException.class);
+            assertThat(counter.get()).isEqualTo(1);
+        }
+
+        @Test
         @DisplayName("TIMEOUT_ERROR 走快速重试策略重试后成功")
         void timeoutError_retriesWithFastRetry() {
             properties.getFastRetry().setBackoffFixed(1);
@@ -273,6 +284,13 @@ class RetryExecutorTest {
         void isRetryable_invalidRequest_returnsFalse() {
             assertThat(executor.isRetryable(
                 new UpstreamException(ProviderErrorType.INVALID_REQUEST, "400"))).isFalse();
+        }
+
+        @Test
+        @DisplayName("UpstreamException MODEL_NOT_FOUND 不可重试")
+        void isRetryable_modelNotFound_returnsFalse() {
+            assertThat(executor.isRetryable(
+                new UpstreamException(ProviderErrorType.MODEL_NOT_FOUND, "404"))).isFalse();
         }
 
         @Test
