@@ -23,6 +23,7 @@ import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.List;
 
@@ -35,6 +36,9 @@ import java.util.List;
  *
  * <p>优先级取最低（{@link Ordered#LOWEST_PRECEDENCE}），确保在业务数据加载
  * （如 BuiltinDataLoader）之后执行，避免与其它种子逻辑竞争。</p>
+ *
+ * <p>写入逐条对唯一约束冲突容错，多实例并发首启时第二个实例撞
+ * {@code setting_key} 唯一约束不会导致启动失败（见 {@link #seedDefaults()}）。</p>
  */
 @Order(Ordered.LOWEST_PRECEDENCE)
 public class SettingsDefaultDataInitializer implements ApplicationRunner {
@@ -64,6 +68,14 @@ public class SettingsDefaultDataInitializer implements ApplicationRunner {
 
     /**
      * 写入默认配置项
+     *
+     * <p>逐条插入并对唯一约束冲突容错：多实例并发首启时，多个实例都可能通过
+     * {@link #run(ApplicationArguments)} 的表空检查，后插入者会撞
+     * {@code setting_key} 唯一约束。捕获数据完整性异常（JPA 场景下 Hibernate
+     * {@code ConstraintViolationException} 被 Spring 翻译为
+     * {@link DataIntegrityViolationException}，其子类
+     * {@link org.springframework.dao.DuplicateKeyException} 为 JDBC 直译路径）
+     * 后记录 warn 忽略，保证实例不因竞态启动失败。</p>
      */
     private void seedDefaults() {
         List<SystemSetting> defaults = List.of(
@@ -71,8 +83,27 @@ public class SettingsDefaultDataInitializer implements ApplicationRunner {
                 setting("catalog.sync.enabled", "true", "BOOLEAN", "CATALOG", "是否启用模型目录自动同步", true),
                 setting("catalog.sync.interval", "DAILY", "ENUM", "CATALOG", "模型目录自动同步周期", true)
         );
-        defaults.forEach(repository::save);
+        defaults.forEach(this::saveWithRaceTolerance);
         log.info("已写入 {} 条默认配置项", defaults.size());
+    }
+
+    /**
+     * 带多实例竞态容错地写入单条默认配置项
+     *
+     * <p>捕获数据完整性异常（唯一约束冲突），记录 warn 后忽略；
+     * 默认值均为固定已知合法值，完整性异常只会来自并发首启的键冲突，
+     * 不吞掉其它类型的启动错误。</p>
+     *
+     * @param setting 默认配置项
+     */
+    private void saveWithRaceTolerance(SystemSetting setting) {
+        try {
+            repository.save(setting);
+        } catch (DataIntegrityViolationException e) {
+            // 多实例并发首启时另一实例已写入同一 setting_key，命中唯一约束属正常竞态，
+            // 记录 warn 忽略即可，无需回滚或导致实例启动失败
+            log.warn("默认配置项 {} 已存在（多实例并发首启竞态），跳过写入", setting.getSettingKey());
+        }
     }
 
     /**
