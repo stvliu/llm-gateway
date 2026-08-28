@@ -61,6 +61,12 @@
             <artifactId>gateway-resilience</artifactId>
             <version>${revision}</version>
         </dependency>
+        <!-- 跨域门面：目录自动同步读取系统设置（SystemSettingService / SyncInterval） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-settings</artifactId>
+            <version>${revision}</version>
+        </dependency>
         <!-- Jackson（BuiltinDataLoader 内置数据 JSON 序列化） -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
