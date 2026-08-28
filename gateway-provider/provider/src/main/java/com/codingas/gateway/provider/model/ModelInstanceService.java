@@ -26,12 +26,25 @@ import java.util.List;
 public interface ModelInstanceService {
 
     /**
-     * 查询指定渠道下的所有模型实例
+     * 查询指定渠道下的所有模型实例（默认按 priority 升序）
      *
      * @param channelId 渠道 ID
      * @return 模型实例实体列表
      */
     List<ModelInstance> getInstancesByChannelId(Long channelId);
+
+    /**
+     * 查询指定渠道下的所有模型实例（支持字段排序）
+     *
+     * <p>排序字段白名单：priority/weight/upstreamModelName/state/id，
+     * 非法字段回退默认 priority。</p>
+     *
+     * @param channelId 渠道 ID
+     * @param sortBy    排序字段
+     * @param sortOrder 排序方向（ASC/DESC）
+     * @return 模型实例实体列表
+     */
+    List<ModelInstance> getInstancesByChannelId(Long channelId, String sortBy, String sortOrder);
 
     /**
      * 创建模型实例

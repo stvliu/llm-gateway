@@ -71,20 +71,24 @@ public class ChannelFacade {
     }
 
     /**
-     * 查询渠道列表（按提供商/计费模式过滤）
+     * 查询渠道列表（按提供商/计费模式过滤，支持字段排序）
      *
      * @param providerId  提供商 ID（可选）
      * @param billingMode 计费模式编码（可选）
+     * @param sortBy      排序字段（name/providerId/state/id，默认 name）
+     * @param sortOrder   排序方向（ASC/DESC）
      * @return 渠道响应 DTO 列表
      */
-    public List<ChannelResponse> list(Long providerId, String billingMode) {
+    public List<ChannelResponse> list(Long providerId, String billingMode,
+                                      String sortBy, String sortOrder) {
         List<Channel> channels;
         if (providerId == null) {
-            channels = channelService.getAll();
+            channels = channelService.getAll(sortBy, sortOrder);
         } else if (billingMode != null) {
-            channels = channelService.getByProviderIdAndBillingMode(providerId, BillingMode.fromCode(billingMode));
+            channels = channelService.getByProviderIdAndBillingMode(
+                    providerId, BillingMode.fromCode(billingMode), sortBy, sortOrder);
         } else {
-            channels = channelService.getByProviderId(providerId);
+            channels = channelService.getByProviderId(providerId, sortBy, sortOrder);
         }
         return channels.stream().map(this::toResponse).toList();
     }

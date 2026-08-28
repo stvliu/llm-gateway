@@ -29,6 +29,8 @@ public class ModelQueryRequest extends PageRequest {
     private String keyword;
     private Long providerId;
     private String state;
+    private String sortBy;
+    private String sortOrder;
 
     /**
      * 转换为核心查询条件入参
@@ -42,6 +44,12 @@ public class ModelQueryRequest extends PageRequest {
         query.setKeyword(keyword);
         query.setProviderId(providerId);
         query.setState(state);
+        if (sortBy != null) {
+            query.setSortBy(sortBy);
+        }
+        if (sortOrder != null) {
+            query.setSortOrder(sortOrder);
+        }
         return query;
     }
 }

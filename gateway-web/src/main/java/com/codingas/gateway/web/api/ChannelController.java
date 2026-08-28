@@ -67,13 +67,15 @@ public class ChannelController {
 
     /**
      * 获取所有渠道列表（用于渠道管理页面）
-     * 不带 providerId 参数时返回所有渠道
+     * 不带 providerId 参数时返回所有渠道；支持 sortBy/sortOrder 字段排序
      */
     @GetMapping
     public List<ChannelResponse> list(
             @RequestParam(required = false) Long providerId,
-            @RequestParam(required = false) String billingMode) {
-        return channelFacade.list(providerId, billingMode);
+            @RequestParam(required = false) String billingMode,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return channelFacade.list(providerId, billingMode, sortBy, sortOrder);
     }
 
     /**

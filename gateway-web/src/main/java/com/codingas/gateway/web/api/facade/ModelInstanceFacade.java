@@ -39,13 +39,15 @@ public class ModelInstanceFacade {
     private final ModelInstanceService modelInstanceService;
 
     /**
-     * 查询指定渠道下的所有模型实例
+     * 查询指定渠道下的所有模型实例（支持字段排序）
      *
      * @param channelId 渠道 ID
+     * @param sortBy    排序字段（priority/weight/upstreamModelName/state/id，默认 priority）
+     * @param sortOrder 排序方向（ASC/DESC）
      * @return 模型实例响应 DTO 列表
      */
-    public List<ModelInstanceResponse> list(Long channelId) {
-        return modelInstanceService.getInstancesByChannelId(channelId).stream()
+    public List<ModelInstanceResponse> list(Long channelId, String sortBy, String sortOrder) {
+        return modelInstanceService.getInstancesByChannelId(channelId, sortBy, sortOrder).stream()
                 .map(this::toResponse)
                 .toList();
     }

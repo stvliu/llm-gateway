@@ -18,12 +18,15 @@ package com.codingas.gateway.provider.model;
 import com.codingas.gateway.common.exception.DuplicateResourceException;
 import com.codingas.gateway.common.exception.GatewayRequestException;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.common.util.SortSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 模型实例管理服务实现
@@ -32,6 +35,11 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ModelInstanceServiceImpl implements ModelInstanceService {
+
+    /** 模型实例可排序字段白名单 */
+    private static final Set<String> INSTANCE_SORT_FIELDS =
+            Set.of("priority", "weight", "upstreamModelName", "state", "id");
+
 
     private final ModelInstanceRepository modelInstanceRepository;
     private final ModelRepository modelRepository;
@@ -42,7 +50,34 @@ public class ModelInstanceServiceImpl implements ModelInstanceService {
     @Transactional(readOnly = true)
     @Override
     public List<ModelInstance> getInstancesByChannelId(Long channelId) {
-        return modelInstanceRepository.findByChannelId(channelId);
+        return getInstancesByChannelId(channelId, "priority", "ASC");
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<ModelInstance> getInstancesByChannelId(Long channelId, String sortBy, String sortOrder) {
+        return sortInstances(modelInstanceRepository.findByChannelId(channelId), sortBy, sortOrder);
+    }
+
+    /**
+     * 模型实例列表排序：字段白名单（priority/weight/upstreamModelName/state/id），
+     * 非法回退默认 priority，防注入
+     */
+    private List<ModelInstance> sortInstances(List<ModelInstance> instances,
+                                              String sortBy, String sortOrder) {
+        String field = SortSupport.normalize(sortBy, INSTANCE_SORT_FIELDS, "priority");
+        boolean desc = SortSupport.isDesc(sortOrder);
+        Comparator<ModelInstance> comparator = switch (field) {
+            case "id" -> SortSupport.byLong(ModelInstance::getId, desc);
+            case "weight" -> SortSupport.byLong(
+                    i -> i.getWeight() == null ? 0L : i.getWeight().longValue(), desc);
+            case "upstreamModelName" -> SortSupport.byString(ModelInstance::getUpstreamModelName, desc);
+            case "state" -> SortSupport.byString(
+                    i -> i.getState() == null ? "" : i.getState().name(), desc);
+            default -> SortSupport.byLong(
+                    i -> i.getPriority() == null ? 0L : i.getPriority().longValue(), desc);
+        };
+        return instances.stream().sorted(comparator).toList();
     }
 
     /**

@@ -16,6 +16,7 @@
 package com.codingas.gateway.provider.channel;
 
 import com.codingas.gateway.common.exception.GatewayRequestException;
+import com.codingas.gateway.common.util.SortSupport;
 import com.codingas.gateway.provider.model.ModelInstance;
 import com.codingas.gateway.provider.model.BillingMode;
 import com.codingas.gateway.protocol.Protocol;
@@ -27,7 +28,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 渠道管理服务实现
@@ -39,6 +42,10 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class ChannelServiceImpl implements ChannelService {
+
+    /** 渠道可排序字段白名单 */
+    private static final Set<String> CHANNEL_SORT_FIELDS = Set.of("name", "providerId", "state", "id");
+
 
     private final ChannelRepository channelRepository;
     private final ChannelEndpointRepository channelEndpointRepository;
@@ -95,17 +102,49 @@ public class ChannelServiceImpl implements ChannelService {
 
     @Override
     public List<Channel> getAll() {
-        return channelRepository.findAll();
+        return getAll("name", "ASC");
+    }
+
+    @Override
+    public List<Channel> getAll(String sortBy, String sortOrder) {
+        return sortChannels(channelRepository.findAll(), sortBy, sortOrder);
     }
 
     @Override
     public List<Channel> getByProviderId(Long providerId) {
-        return channelRepository.findByProviderId(providerId);
+        return getByProviderId(providerId, "name", "ASC");
+    }
+
+    @Override
+    public List<Channel> getByProviderId(Long providerId, String sortBy, String sortOrder) {
+        return sortChannels(channelRepository.findByProviderId(providerId), sortBy, sortOrder);
     }
 
     @Override
     public List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode) {
-        return channelRepository.findByProviderIdAndBillingMode(providerId, billingMode);
+        return getByProviderIdAndBillingMode(providerId, billingMode, "name", "ASC");
+    }
+
+    @Override
+    public List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode,
+                                                       String sortBy, String sortOrder) {
+        return sortChannels(channelRepository.findByProviderIdAndBillingMode(providerId, billingMode),
+                sortBy, sortOrder);
+    }
+
+    /**
+     * 渠道列表排序：字段白名单（name/providerId/state/id），非法回退默认 name，防注入
+     */
+    private List<Channel> sortChannels(List<Channel> channels, String sortBy, String sortOrder) {
+        String field = SortSupport.normalize(sortBy, CHANNEL_SORT_FIELDS, "name");
+        boolean desc = SortSupport.isDesc(sortOrder);
+        Comparator<Channel> comparator = switch (field) {
+            case "providerId" -> SortSupport.byLong(Channel::getProviderId, desc);
+            case "state" -> SortSupport.byString(c -> c.getState() == null ? "" : c.getState().name(), desc);
+            case "id" -> SortSupport.byLong(Channel::getId, desc);
+            default -> SortSupport.byString(Channel::getName, desc);
+        };
+        return channels.stream().sorted(comparator).toList();
     }
 
     /**

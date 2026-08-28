@@ -92,6 +92,48 @@ class ModelInstanceServiceImplTest {
             assertThat(result.get(0).getModelId()).isEqualTo(100L);
             assertThat(result.get(0).getState()).isEqualTo(ModelInstance.State.PENDING);
         }
+
+        @Test
+        @DisplayName("默认按 priority 升序排序")
+        void defaultSortByPriorityAsc() {
+            ModelInstance high = createInstance(1L, 10L, 100L, ModelInstance.State.ACTIVE);
+            high.setPriority(50);
+            ModelInstance low = createInstance(2L, 10L, 101L, ModelInstance.State.ACTIVE);
+            low.setPriority(10);
+            when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(high, low));
+
+            List<ModelInstance> result = service.getInstancesByChannelId(10L);
+
+            assertThat(result).extracting(ModelInstance::getId).containsExactly(2L, 1L);
+        }
+
+        @Test
+        @DisplayName("支持按 weight 降序排序")
+        void sortByWeightDesc() {
+            ModelInstance light = createInstance(1L, 10L, 100L, ModelInstance.State.ACTIVE);
+            light.setWeight(30);
+            ModelInstance heavy = createInstance(2L, 10L, 101L, ModelInstance.State.ACTIVE);
+            heavy.setWeight(80);
+            when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(light, heavy));
+
+            List<ModelInstance> result = service.getInstancesByChannelId(10L, "weight", "DESC");
+
+            assertThat(result).extracting(ModelInstance::getId).containsExactly(2L, 1L);
+        }
+
+        @Test
+        @DisplayName("非法排序字段回退默认 priority 升序（防注入）")
+        void invalidSortBy_fallsBackToPriorityAsc() {
+            ModelInstance high = createInstance(1L, 10L, 100L, ModelInstance.State.ACTIVE);
+            high.setPriority(50);
+            ModelInstance low = createInstance(2L, 10L, 101L, ModelInstance.State.ACTIVE);
+            low.setPriority(10);
+            when(modelInstanceRepository.findByChannelId(10L)).thenReturn(List.of(high, low));
+
+            List<ModelInstance> result = service.getInstancesByChannelId(10L, "id; DROP", "ASC");
+
+            assertThat(result).extracting(ModelInstance::getId).containsExactly(2L, 1L);
+        }
     }
 
     // ==================== create 测试 ====================

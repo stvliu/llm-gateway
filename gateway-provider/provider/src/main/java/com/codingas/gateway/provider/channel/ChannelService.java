@@ -54,14 +54,25 @@ public interface ChannelService {
     Channel getById(Long id);
 
     /**
-     * 获取所有渠道列表
+     * 获取所有渠道列表（默认按渠道名升序）
      *
      * @return 渠道实体列表
      */
     List<Channel> getAll();
 
     /**
-     * 按提供商 ID 获取渠道列表
+     * 获取所有渠道列表（支持字段排序）
+     *
+     * <p>排序字段白名单：name/providerId/state/id，非法字段回退默认 name。</p>
+     *
+     * @param sortBy    排序字段
+     * @param sortOrder 排序方向（ASC/DESC）
+     * @return 渠道实体列表
+     */
+    List<Channel> getAll(String sortBy, String sortOrder);
+
+    /**
+     * 按提供商 ID 获取渠道列表（默认按渠道名升序）
      *
      * @param providerId 提供商 ID
      * @return 渠道实体列表
@@ -69,13 +80,35 @@ public interface ChannelService {
     List<Channel> getByProviderId(Long providerId);
 
     /**
-     * 按提供商 ID 与计费模式获取渠道列表
+     * 按提供商 ID 获取渠道列表（支持字段排序）
+     *
+     * @param providerId 提供商 ID
+     * @param sortBy     排序字段（白名单同 {@link #getAll(String, String)}）
+     * @param sortOrder  排序方向（ASC/DESC）
+     * @return 渠道实体列表
+     */
+    List<Channel> getByProviderId(Long providerId, String sortBy, String sortOrder);
+
+    /**
+     * 按提供商 ID 与计费模式获取渠道列表（默认按渠道名升序）
      *
      * @param providerId  提供商 ID
      * @param billingMode 计费模式
      * @return 渠道实体列表
      */
     List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode);
+
+    /**
+     * 按提供商 ID 与计费模式获取渠道列表（支持字段排序）
+     *
+     * @param providerId  提供商 ID
+     * @param billingMode 计费模式
+     * @param sortBy      排序字段（白名单同 {@link #getAll(String, String)}）
+     * @param sortOrder   排序方向（ASC/DESC）
+     * @return 渠道实体列表
+     */
+    List<Channel> getByProviderIdAndBillingMode(Long providerId, BillingMode billingMode,
+                                                String sortBy, String sortOrder);
 
     /**
      * 按 ID 获取提供商（供展示组装：渠道响应需提供商名称）

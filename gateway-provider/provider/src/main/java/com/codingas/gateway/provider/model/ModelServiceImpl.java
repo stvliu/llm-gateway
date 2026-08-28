@@ -17,12 +17,14 @@ package com.codingas.gateway.provider.model;
 
 import com.codingas.gateway.common.dto.PageResponse;
 import com.codingas.gateway.common.exception.ResourceNotFoundException;
+import com.codingas.gateway.common.util.SortSupport;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +39,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ModelServiceImpl implements ModelService {
+
+    /** 模型可排序字段白名单 */
+    private static final Set<String> MODEL_SORT_FIELDS = Set.of("modelName", "displayName", "id");
 
     private final ModelRepository modelRepository;
 
@@ -85,6 +90,9 @@ public class ModelServiceImpl implements ModelService {
                 .collect(Collectors.toList());
         }
 
+        // 排序：按白名单字段（modelName/displayName/id）字母序排列，非法 sortBy 回退默认，防注入
+        models = models.stream().sorted(comparator(query.getSortBy(), query.getSortOrder())).toList();
+
         // 统计
         long total = models.size();
 
@@ -97,6 +105,26 @@ public class ModelServiceImpl implements ModelService {
             .collect(Collectors.toList());
 
         return PageResponse.of(pagedModels, query.getPage(), limit, total);
+    }
+
+    /**
+     * 构建排序比较器
+     *
+     * <p>排序字段白名单校验（仅允许 modelName/displayName/id，其余回退默认 modelName），
+     * 防止通过查询参数注入任意字段；排序方向仅识别 ASC/DESC，其余回退升序。</p>
+     *
+     * @param sortBy    排序字段
+     * @param sortOrder 排序方向
+     * @return 模型比较器
+     */
+    private Comparator<Model> comparator(String sortBy, String sortOrder) {
+        String field = SortSupport.normalize(sortBy, MODEL_SORT_FIELDS, "modelName");
+        boolean desc = SortSupport.isDesc(sortOrder);
+        return switch (field) {
+            case "displayName" -> SortSupport.byString(Model::getDisplayName, desc);
+            case "id" -> SortSupport.byLong(Model::getId, desc);
+            default -> SortSupport.byString(Model::getModelName, desc);
+        };
     }
 
     /**

@@ -234,6 +234,54 @@ class ChannelServiceImplTest {
 
             assertThat(result).hasSize(1);
         }
+
+        @Test
+        @DisplayName("getAll 默认按渠道名升序排序")
+        void getAll_defaultSortByNameAsc() {
+            Channel c1 = buildChannel(1L, "zeta");
+            Channel c2 = buildChannel(2L, "alpha");
+            when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
+
+            List<Channel> result = channelService.getAll();
+
+            assertThat(result).extracting(Channel::getName).containsExactly("alpha", "zeta");
+        }
+
+        @Test
+        @DisplayName("getAll 支持按名称降序排序")
+        void getAll_sortByNameDesc() {
+            Channel c1 = buildChannel(1L, "beta");
+            Channel c2 = buildChannel(2L, "alpha");
+            when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
+
+            List<Channel> result = channelService.getAll("name", "DESC");
+
+            assertThat(result).extracting(Channel::getName).containsExactly("beta", "alpha");
+        }
+
+        @Test
+        @DisplayName("getAll 非法排序字段回退默认名称升序（防注入）")
+        void getAll_invalidSortBy_fallsBackToNameAsc() {
+            Channel c1 = buildChannel(1L, "beta");
+            Channel c2 = buildChannel(2L, "alpha");
+            when(channelRepository.findAll()).thenReturn(List.of(c1, c2));
+
+            List<Channel> result = channelService.getAll("name; DROP TABLE channels", "ASC");
+
+            assertThat(result).extracting(Channel::getName).containsExactly("alpha", "beta");
+        }
+
+        @Test
+        @DisplayName("getByProviderId 支持按名称升序排序")
+        void getByProviderId_sortByNameAsc() {
+            Channel c1 = buildChannel(1L, "zeta");
+            Channel c2 = buildChannel(2L, "alpha");
+            when(channelRepository.findByProviderId(10L)).thenReturn(List.of(c1, c2));
+
+            List<Channel> result = channelService.getByProviderId(10L, "name", "ASC");
+
+            assertThat(result).extracting(Channel::getName).containsExactly("alpha", "zeta");
+        }
     }
 
     // ==================== delete 测试 ====================

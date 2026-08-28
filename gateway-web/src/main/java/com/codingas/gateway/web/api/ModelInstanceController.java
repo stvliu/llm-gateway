@@ -41,8 +41,11 @@ public class ModelInstanceController {
     private final ModelInstanceService modelInstanceService;
 
     @GetMapping
-    public List<ModelInstanceResponse> list(@PathVariable Long channelId) {
-        return modelInstanceFacade.list(channelId);
+    public List<ModelInstanceResponse> list(
+            @PathVariable Long channelId,
+            @RequestParam(required = false) String sortBy,
+            @RequestParam(required = false) String sortOrder) {
+        return modelInstanceFacade.list(channelId, sortBy, sortOrder);
     }
 
     @PostMapping

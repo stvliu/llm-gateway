@@ -91,7 +91,7 @@ class ChannelControllerListTest {
     @Test
     @DisplayName("GET /api/v1/channels 响应应包含三个健康字段")
     void getChannels_responseContainsHealthFields() throws Exception {
-        when(channelFacade.list(null, null)).thenReturn(List.of(stubResponseWithHealth()));
+        when(channelFacade.list(null, null, null, null)).thenReturn(List.of(stubResponseWithHealth()));
 
         mockMvc.perform(get("/api/v1/channels"))
                 .andExpect(status().isOk())

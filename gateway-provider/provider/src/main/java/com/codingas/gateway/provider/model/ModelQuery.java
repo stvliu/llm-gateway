@@ -36,4 +36,10 @@ public class ModelQuery extends PageRequest {
 
     /** 状态过滤（ACTIVE=未废弃/INACTIVE=已废弃） */
     private String state;
+
+    /** 排序字段（白名单：modelName/displayName/id，默认 modelName） */
+    private String sortBy = "modelName";
+
+    /** 排序方向（ASC/DESC，默认 ASC） */
+    private String sortOrder = "ASC";
 }

@@ -317,6 +317,98 @@ class ModelServiceTest {
             assertThat(response.getPagination().getTotal()).isEqualTo(25);
             assertThat(response.getPagination().getTotalPages()).isEqualTo(3);
         }
+
+        @Test
+        @DisplayName("默认按 modelName 字母升序排序")
+        void query_defaultSortByModelNameAsc() {
+            // given：仓储返回乱序，服务层应默认按 modelName 字母序
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model modelB = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
+            Model modelA = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
+
+            when(modelRepository.findAll()).thenReturn(List.of(modelB, modelA));
+
+            ModelQuery request = new ModelQuery();
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<Model> response = modelService.query(request);
+
+            // then：字母序（claude < gpt）
+            assertThat(response.getItems()).extracting(Model::getModelName)
+                    .containsExactly("claude-3-opus", "gpt-4");
+        }
+
+        @Test
+        @DisplayName("按 displayName 升序排序")
+        void query_sortByDisplayNameAsc() {
+            // given
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model modelZ = createTestModel(1L, "m1", testProvider, "Zeta", true);
+            Model modelA = createTestModel(2L, "m2", provider2, "Alpha", true);
+
+            when(modelRepository.findAll()).thenReturn(List.of(modelZ, modelA));
+
+            ModelQuery request = new ModelQuery();
+            request.setSortBy("displayName");
+            request.setSortOrder("ASC");
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<Model> response = modelService.query(request);
+
+            // then
+            assertThat(response.getItems()).extracting(Model::getDisplayName)
+                    .containsExactly("Alpha", "Zeta");
+        }
+
+        @Test
+        @DisplayName("按 modelName 降序排序")
+        void query_sortDesc() {
+            // given
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model modelA = createTestModel(1L, "claude-3-opus", testProvider, "Claude 3 Opus", true);
+            Model modelB = createTestModel(2L, "gpt-4", provider2, "GPT-4", true);
+
+            when(modelRepository.findAll()).thenReturn(List.of(modelA, modelB));
+
+            ModelQuery request = new ModelQuery();
+            request.setSortOrder("DESC");
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<Model> response = modelService.query(request);
+
+            // then
+            assertThat(response.getItems()).extracting(Model::getModelName)
+                    .containsExactly("gpt-4", "claude-3-opus");
+        }
+
+        @Test
+        @DisplayName("非法 sortBy 回退默认排序，不抛异常")
+        void query_invalidSortBy_fallsBackToModelName() {
+            // given：注入尝试的 sortBy 应被白名单拦截并回退默认
+            Provider provider2 = createTestProvider(2L, "Anthropic");
+            Model modelB = createTestModel(1L, "gpt-4", testProvider, "GPT-4", true);
+            Model modelA = createTestModel(2L, "claude-3-opus", provider2, "Claude 3 Opus", true);
+
+            when(modelRepository.findAll()).thenReturn(List.of(modelB, modelA));
+
+            ModelQuery request = new ModelQuery();
+            request.setSortBy("modelName; DROP TABLE models");
+            request.setPage(1);
+            request.setLimit(20);
+
+            // when
+            PageResponse<Model> response = modelService.query(request);
+
+            // then：回退按 modelName 排序
+            assertThat(response.getItems()).extracting(Model::getModelName)
+                    .containsExactly("claude-3-opus", "gpt-4");
+        }
     }
 
     // ==================== update 测试 ====================
