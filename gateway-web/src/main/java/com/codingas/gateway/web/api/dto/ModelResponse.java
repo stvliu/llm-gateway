@@ -20,6 +20,7 @@ import com.codingas.gateway.provider.model.Model;
 import lombok.Data;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -45,6 +46,33 @@ public class ModelResponse {
     private Instant createdAt;
     private Instant updatedAt;
 
+    /** 模型描述（来自数据源） */
+    private String description;
+
+    /** 发布日期 */
+    private LocalDate releaseDate;
+
+    /** 数据源最后更新日期 */
+    private LocalDate lastUpdated;
+
+    /** 许可证（如 MIT） */
+    private String license;
+
+    /** 是否开源权重 */
+    private Boolean openWeights;
+
+    /** 基准测试分数 [{name, score, metric, source}] */
+    private List<Map<String, Object>> benchmarks;
+
+    /** 权重/模型卡片链接 [{label, url}] */
+    private List<Map<String, Object>> weights;
+
+    /** 数据来源：MODELS_DEV / BUILTIN / MANUAL */
+    private String source;
+
+    /** 数据源外部 ID（如 openai/gpt-4o），同步幂等匹配键 */
+    private String externalId;
+
     /**
      * 从模型实体转换
      *
@@ -68,6 +96,16 @@ public class ModelResponse {
         response.setState(model.isAvailable() ? "ACTIVE" : "INACTIVE");
         response.setCreatedAt(model.getCreatedAt());
         response.setUpdatedAt(model.getUpdatedAt());
+        // 透出同步后的模型元信息（models.dev 同步写入）
+        response.setDescription(model.getDescription());
+        response.setReleaseDate(model.getReleaseDate());
+        response.setLastUpdated(model.getLastUpdated());
+        response.setLicense(model.getLicense());
+        response.setOpenWeights(model.getOpenWeights());
+        response.setBenchmarks(model.getBenchmarks());
+        response.setWeights(model.getWeights());
+        response.setSource(model.getSource());
+        response.setExternalId(model.getExternalId());
         return response;
     }
 
