@@ -108,6 +108,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * 处理参数非法异常（配置项不存在/不可编辑/值格式错误等）
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("BAD_REQUEST", ex.getMessage()));
+    }
+
+    /**
      * 处理通用异常
      */
     @ExceptionHandler(Exception.class)

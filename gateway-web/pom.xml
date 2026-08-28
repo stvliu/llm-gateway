@@ -74,6 +74,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 系统设置域核心模块（SystemSettingService 门面） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-settings</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 身份与访问管理域核心模块（IAM 门面） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>
