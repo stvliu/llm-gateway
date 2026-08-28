@@ -88,6 +88,11 @@ public class JpaModelRepository implements ModelRepository {
                 .toList();
     }
 
+    @Override
+    public Optional<Model> findByExternalId(String externalId) {
+        return modelRepository.findByExternalId(externalId).map(this::toEntity);
+    }
+
     private Model toEntity(ModelDo doObj) {
         Model entity = new Model();
         entity.setId(doObj.getId());
@@ -98,6 +103,16 @@ public class JpaModelRepository implements ModelRepository {
         entity.setMaxInputTokens(doObj.getMaxInputTokens());
         entity.setMaxOutputTokens(doObj.getMaxOutputTokens());
         entity.setKnowledgeCutoff(doObj.getKnowledgeCutoff());
+        entity.setDescription(doObj.getDescription());
+        entity.setReleaseDate(doObj.getReleaseDate());
+        entity.setLastUpdated(doObj.getLastUpdated());
+        entity.setLicense(doObj.getLicense());
+        entity.setOpenWeights(doObj.getOpenWeights());
+        entity.setBenchmarks(doObj.getBenchmarks());
+        entity.setWeights(doObj.getWeights());
+        entity.setSource(doObj.getSource());
+        entity.setExternalId(doObj.getExternalId());
+        entity.setLockedFields(doObj.getLockedFields());
         entity.setCapabilities(doObj.getCapabilities());
         entity.setModalities(doObj.getModalities());
         entity.setDeprecatedAt(doObj.getDeprecatedAt());
@@ -120,6 +135,16 @@ public class JpaModelRepository implements ModelRepository {
         doObj.setMaxInputTokens(entity.getMaxInputTokens());
         doObj.setMaxOutputTokens(entity.getMaxOutputTokens());
         doObj.setKnowledgeCutoff(entity.getKnowledgeCutoff());
+        doObj.setDescription(entity.getDescription());
+        doObj.setReleaseDate(entity.getReleaseDate());
+        doObj.setLastUpdated(entity.getLastUpdated());
+        doObj.setLicense(entity.getLicense());
+        doObj.setOpenWeights(entity.getOpenWeights());
+        doObj.setBenchmarks(entity.getBenchmarks());
+        doObj.setWeights(entity.getWeights());
+        doObj.setSource(entity.getSource());
+        doObj.setExternalId(entity.getExternalId());
+        doObj.setLockedFields(entity.getLockedFields());
         doObj.setCapabilities(entity.getCapabilities());
         doObj.setModalities(entity.getModalities());
         doObj.setDeprecatedAt(entity.getDeprecatedAt());

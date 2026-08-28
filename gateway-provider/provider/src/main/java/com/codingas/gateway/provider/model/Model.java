@@ -21,6 +21,7 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -49,6 +50,36 @@ public class Model extends BaseEntity {
 
     /** 知识截止日期 */
     private String knowledgeCutoff;
+
+    /** 模型描述（来自数据源） */
+    private String description;
+
+    /** 发布日期 */
+    private LocalDate releaseDate;
+
+    /** 数据源最后更新日期 */
+    private LocalDate lastUpdated;
+
+    /** 许可证（如 MIT） */
+    private String license;
+
+    /** 是否开源权重 */
+    private Boolean openWeights;
+
+    /** 基准测试分数 [{name, score, metric, source}] */
+    private List<Map<String, Object>> benchmarks;
+
+    /** 权重/模型卡片链接 [{label, url}] */
+    private List<Map<String, Object>> weights;
+
+    /** 数据来源：MODELS_DEV / BUILTIN / MANUAL */
+    private String source;
+
+    /** 数据源外部 ID（如 openai/gpt-4o），同步幂等匹配键 */
+    private String externalId;
+
+    /** 人工锁定字段名集合（同步不覆盖） */
+    private List<String> lockedFields;
 
     private Map<String, Boolean> capabilities;
 

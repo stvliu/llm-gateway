@@ -18,6 +18,7 @@ package com.codingas.gateway.providerdata.model;
 import com.codingas.gateway.common.data.BaseDo;
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.time.LocalDate;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -57,6 +58,39 @@ public class ModelDo extends BaseDo {
     /** 知识截止日期 */
     @Column(name = "knowledge_cutoff", length = 32)
     private String knowledgeCutoff;
+
+    @Column(name = "description", columnDefinition = "text")
+    private String description;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "last_updated")
+    private LocalDate lastUpdated;
+
+    @Column(name = "license", length = 128)
+    private String license;
+
+    @Column(name = "open_weights")
+    private Boolean openWeights;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "benchmarks", columnDefinition = "jsonb")
+    private List<Map<String, Object>> benchmarks;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "weights", columnDefinition = "jsonb")
+    private List<Map<String, Object>> weights;
+
+    @Column(name = "source", length = 32)
+    private String source;
+
+    @Column(name = "external_id", length = 256)
+    private String externalId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "locked_fields", columnDefinition = "jsonb")
+    private List<String> lockedFields;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "capabilities", columnDefinition = "jsonb")

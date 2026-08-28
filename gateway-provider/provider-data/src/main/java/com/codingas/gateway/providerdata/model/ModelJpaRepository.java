@@ -43,4 +43,9 @@ public interface ModelJpaRepository extends JpaRepository<ModelDo, Long> {
      */
     @Query(value = "SELECT * FROM models WHERE CAST(capabilities AS text) LIKE CONCAT('%', :capability, '%')", nativeQuery = true)
     List<ModelDo> findByCapability(@Param("capability") String capability);
+
+    /**
+     * 根据数据源外部 ID 查找模型（同步幂等匹配）
+     */
+    Optional<ModelDo> findByExternalId(String externalId);
 }

@@ -25,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +61,16 @@ class ModelGatewayImplTest {
         m.setMaxInputTokens(64000);
         m.setMaxOutputTokens(8192);
         m.setKnowledgeCutoff("2026-06");
+        m.setDescription("多模态旗舰模型");
+        m.setReleaseDate(LocalDate.of(2024, 5, 13));
+        m.setLastUpdated(LocalDate.of(2026, 7, 1));
+        m.setLicense("Proprietary");
+        m.setOpenWeights(false);
+        m.setBenchmarks(List.of(Map.of("name", "MMMU", "score", 69.1)));
+        m.setWeights(List.of(Map.of("label", "model-card", "url", "https://example.com/card")));
+        m.setSource("MODELS_DEV");
+        m.setExternalId("openai/gpt-4o");
+        m.setLockedFields(List.of("displayName"));
         m.setCapabilities(Map.of("chat", true));
         m.setModalities(List.of("text"));
         m.setDeprecatedAt(null);
@@ -82,6 +93,16 @@ class ModelGatewayImplTest {
         doObj.setMaxInputTokens(64000);
         doObj.setMaxOutputTokens(8192);
         doObj.setKnowledgeCutoff("2026-06");
+        doObj.setDescription("多模态旗舰模型");
+        doObj.setReleaseDate(LocalDate.of(2024, 5, 13));
+        doObj.setLastUpdated(LocalDate.of(2026, 7, 1));
+        doObj.setLicense("Proprietary");
+        doObj.setOpenWeights(false);
+        doObj.setBenchmarks(List.of(Map.of("name", "MMMU", "score", 69.1)));
+        doObj.setWeights(List.of(Map.of("label", "model-card", "url", "https://example.com/card")));
+        doObj.setSource("MODELS_DEV");
+        doObj.setExternalId("openai/gpt-4o");
+        doObj.setLockedFields(List.of("displayName"));
         doObj.setCapabilities(Map.of("chat", true));
         doObj.setModalities(List.of("text"));
         doObj.setDeprecatedAt(null);
@@ -113,6 +134,17 @@ class ModelGatewayImplTest {
         assertThat(result.getKnowledgeCutoff()).isEqualTo("2026-06");
         assertThat(result.getCapabilities()).containsEntry("chat", true);
         assertThat(result.getModalities()).containsExactly("text");
+        // 目录同步新增字段（toEntity 读字段）
+        assertThat(result.getDescription()).isEqualTo("多模态旗舰模型");
+        assertThat(result.getReleaseDate()).isEqualTo(LocalDate.of(2024, 5, 13));
+        assertThat(result.getLastUpdated()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(result.getLicense()).isEqualTo("Proprietary");
+        assertThat(result.getOpenWeights()).isFalse();
+        assertThat(result.getBenchmarks()).containsExactly(Map.of("name", "MMMU", "score", 69.1));
+        assertThat(result.getWeights()).containsExactly(Map.of("label", "model-card", "url", "https://example.com/card"));
+        assertThat(result.getSource()).isEqualTo("MODELS_DEV");
+        assertThat(result.getExternalId()).isEqualTo("openai/gpt-4o");
+        assertThat(result.getLockedFields()).containsExactly("displayName");
 
         // toDo 写字段
         ArgumentCaptor<ModelDo> captor = ArgumentCaptor.forClass(ModelDo.class);
@@ -127,6 +159,17 @@ class ModelGatewayImplTest {
         assertThat(written.getKnowledgeCutoff()).isEqualTo("2026-06");
         assertThat(written.getCapabilities()).containsEntry("chat", true);
         assertThat(written.getModalities()).containsExactly("text");
+        // 目录同步新增字段（toDo 写字段）
+        assertThat(written.getDescription()).isEqualTo("多模态旗舰模型");
+        assertThat(written.getReleaseDate()).isEqualTo(LocalDate.of(2024, 5, 13));
+        assertThat(written.getLastUpdated()).isEqualTo(LocalDate.of(2026, 7, 1));
+        assertThat(written.getLicense()).isEqualTo("Proprietary");
+        assertThat(written.getOpenWeights()).isFalse();
+        assertThat(written.getBenchmarks()).containsExactly(Map.of("name", "MMMU", "score", 69.1));
+        assertThat(written.getWeights()).containsExactly(Map.of("label", "model-card", "url", "https://example.com/card"));
+        assertThat(written.getSource()).isEqualTo("MODELS_DEV");
+        assertThat(written.getExternalId()).isEqualTo("openai/gpt-4o");
+        assertThat(written.getLockedFields()).containsExactly("displayName");
         assertThat(written.getCreatedBy()).isEqualTo(10L);
         assertThat(written.getUpdatedBy()).isEqualTo(20L);
     }
@@ -211,5 +254,18 @@ class ModelGatewayImplTest {
 
         assertThat(gateway.findByCapability("vision")).hasSize(1);
         assertThat(gateway.findByCapability("none")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("findByExternalId：按数据源外部 ID 查找并转换，未命中返回空")
+    void findByExternalId_returnsConvertedOrEmpty() {
+        when(modelRepository.findByExternalId("openai/gpt-4o")).thenReturn(Optional.of(sampleDo(1L, "gpt-4o")));
+        when(modelRepository.findByExternalId("unknown")).thenReturn(Optional.empty());
+
+        assertThat(gateway.findByExternalId("openai/gpt-4o")).isPresent()
+                .get()
+                .extracting(Model::getExternalId)
+                .isEqualTo("openai/gpt-4o");
+        assertThat(gateway.findByExternalId("unknown")).isEmpty();
     }
 }

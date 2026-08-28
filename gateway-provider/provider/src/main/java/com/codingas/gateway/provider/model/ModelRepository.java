@@ -72,6 +72,11 @@ public interface ModelRepository {
     List<Model> findByCapability(String capability);
 
     /**
+     * 根据数据源外部 ID 查找模型（同步幂等匹配）
+     */
+    Optional<Model> findByExternalId(String externalId);
+
+    /**
      * 获取最大版本号
      */
     default long getMaxVersion() {
