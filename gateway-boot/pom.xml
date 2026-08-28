@@ -115,6 +115,13 @@
             <version>${revision}</version>
         </dependency>
 
+        <!-- 系统设置域 starter（Settings 域装配入口） -->
+        <dependency>
+            <groupId>com.codingas.gateway</groupId>
+            <artifactId>gateway-settings-starter</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <!-- 模型代理域 starter（Proxy 域装配入口） -->
         <dependency>
             <groupId>com.codingas.gateway</groupId>

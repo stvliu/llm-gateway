@@ -46,7 +46,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.codingas.gateway.usagedata",
         "com.codingas.gateway.securitydata",
         "com.codingas.gateway.resiliencedata",
-        "com.codingas.gateway.auditdata"
+        "com.codingas.gateway.auditdata",
+        "com.codingas.gateway.settingsdata"
 })
 @EntityScan(basePackages = {
         "com.codingas.gateway.providerdata",
@@ -55,7 +56,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         "com.codingas.gateway.securitydata",
         "com.codingas.gateway.resiliencedata",
         "com.codingas.gateway.auditdata",
-        "com.codingas.gateway.alertdata"
+        "com.codingas.gateway.alertdata",
+        "com.codingas.gateway.settingsdata"
 })
 @EnableScheduling
 public class GatewayApplication {
