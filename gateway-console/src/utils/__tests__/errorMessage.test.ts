@@ -52,6 +52,37 @@ describe('extractErrorMessage', () => {
     expect(extractErrorMessage(axiosErr)).toBe('bad gateway');
   });
 
+  it('AxiosError 含 ApiResponse 嵌套 error.message（HTTP 400 业务错误）应返回后端 message', () => {
+    // 后端非 2xx 由 GlobalExceptionHandler 包装为 { success:false, error:{ code, message } }，
+    // 不经过响应拦截器解包，需从 response.data.error.message 提取
+    const axiosErr = {
+      isAxiosError: true,
+      message: 'Request failed with status code 400',
+      response: {
+        status: 400,
+        statusText: 'Bad Request',
+        data: {
+          success: false,
+          error: { code: 'BAD_REQUEST', message: '清理天数必须大于 0' },
+        },
+      },
+    };
+    expect(extractErrorMessage(axiosErr)).toBe('清理天数必须大于 0');
+  });
+
+  it('AxiosError 嵌套 error 对象无 message 时回退到 statusText', () => {
+    const axiosErr = {
+      isAxiosError: true,
+      message: 'Request failed with status code 400',
+      response: {
+        status: 400,
+        statusText: 'Bad Request',
+        data: { success: false, error: { code: 'BAD_REQUEST' } },
+      },
+    };
+    expect(extractErrorMessage(axiosErr)).toBe('Bad Request');
+  });
+
   it('AxiosError 无 response（网络错误）应回退到 error.message', () => {
     const axiosErr = {
       isAxiosError: true,

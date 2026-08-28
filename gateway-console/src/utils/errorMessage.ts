@@ -19,7 +19,8 @@
  * 把任意 unknown 错误对象抽取成可向用户展示的字符串：
  * - AntD `Form.validateFields()` 抛出的对象（含 `errorFields` 数组）→ 返回空字符串。
  *   调用方据此跳过 toast，因为 AntD 表单已就地展示行内错误。
- * - AxiosError → 优先取 `response.data.message` / `response.data.error`，再回退到 `error.message`。
+ * - AxiosError → 优先取 `response.data.message` / `response.data.error`（字符串或
+ *   ApiResponse 嵌套对象 `error.message`），再回退到 `error.message`。
  * - 原生 Error → 返回 `message`。
  * - string → 原样返回。
  * - 其它 → 返回通用中文兜底"未知错误"。
@@ -54,6 +55,15 @@ export function extractErrorMessage(err: unknown): string {
         }
         if (typeof dataObj.error === 'string' && dataObj.error.trim()) {
           return dataObj.error;
+        }
+        // ApiResponse 错误形态：{ success: false, error: { code, message, details } }
+        // （HTTP 400/500 由 GlobalExceptionHandler 等统一包装，非 2xx 不走响应拦截器解包，
+        //   此处需自行提取 error.message 供用户查看具体原因）
+        if (dataObj.error && typeof dataObj.error === 'object') {
+          const nested = dataObj.error as { message?: unknown };
+          if (typeof nested.message === 'string' && nested.message.trim()) {
+            return nested.message;
+          }
         }
       }
       if (typeof data === 'string' && data.trim()) {

@@ -37,16 +37,10 @@ import {
   useCatalogSync,
   useCatalogSyncStatus,
 } from '@/services/query/useCatalogSync';
+import { extractErrorMessage } from '@/utils/errorMessage';
 import type { CatalogSyncInterval } from '@/types/settings';
 
 const { Text } = Typography;
-
-/**
- * 从错误对象中提取可展示信息（后端 400 由拦截器转换为 Error.message）
- */
-function getErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof Error && error.message ? error.message : fallback;
-}
 
 /**
  * 系统设置页
@@ -93,8 +87,9 @@ export default function SettingsPage() {
       setDaysDraft(null);
       message.success(t('settings.saveSuccess', { defaultValue: '设置已保存' }));
     } catch (error) {
+      // extractErrorMessage 优先提取后端 ApiResponse.error.message（400 业务原因）
       message.error(
-        getErrorMessage(error, t('settings.saveFailed', { defaultValue: '保存失败' })),
+        extractErrorMessage(error) || t('settings.saveFailed', { defaultValue: '保存失败' }),
       );
     }
   };
@@ -122,7 +117,7 @@ export default function SettingsPage() {
       );
     } catch (error) {
       message.error(
-        getErrorMessage(error, t('settings.cleanupFailed', { defaultValue: '清理失败' })),
+        extractErrorMessage(error) || t('settings.cleanupFailed', { defaultValue: '清理失败' }),
       );
     }
   };
