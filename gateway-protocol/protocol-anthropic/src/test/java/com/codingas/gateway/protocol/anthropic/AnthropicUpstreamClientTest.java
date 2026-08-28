@@ -277,6 +277,47 @@ class AnthropicUpstreamClientTest {
                 });
     }
 
+    // ==================== 场景 5.5：404 模型不存在 ====================
+
+    @Test
+    void chat_404模型不存在_抛出MODEL_NOT_FOUND并透传httpStatus() throws IOException {
+        enqueueJson(404, "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-20250514\"}}");
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+
+        assertThatThrownBy(() -> client.chat(createTestRequest()))
+                .isInstanceOf(UpstreamException.class)
+                .satisfies(ex -> {
+                    UpstreamException pe = (UpstreamException) ex;
+                    assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.MODEL_NOT_FOUND);
+                    assertThat(pe.getHttpStatus()).isEqualTo(404);
+                });
+    }
+
+    @Test
+    void chatStream_HTTP404_触发onError并透传httpStatus() throws Exception {
+        server.enqueue(new MockResponse()
+                .setResponseCode(404)
+                .setHeader("Content-Type", "application/json")
+                .setBody("{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-sonnet-4-20250514\"}}"));
+
+        AnthropicUpstreamClient client = createClient("sk-ant-test-key", 30);
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicReference<Throwable> error = new AtomicReference<>();
+
+        client.chatStream(createTestRequest(), new StreamCallback() {
+            @Override public void onChunk(String data) { }
+            @Override public void onComplete() { latch.countDown(); }
+            @Override public void onError(Throwable t) { error.set(t); latch.countDown(); }
+        });
+
+        assertThat(latch.await(5, TimeUnit.SECONDS)).isTrue();
+        assertThat(error.get()).isInstanceOf(UpstreamException.class);
+        UpstreamException pe = (UpstreamException) error.get();
+        assertThat(pe.getErrorType()).isEqualTo(ProviderErrorType.MODEL_NOT_FOUND);
+        assertThat(pe.getHttpStatus()).isEqualTo(404);
+    }
+
     // ==================== 场景 6：500 服务端错误 ====================
 
     @Test

@@ -112,6 +112,21 @@ class OpenAIErrorClassifierTest {
             assertThat(classifier.classify(499, "{}"))
                     .isEqualTo(ProviderErrorType.UNKNOWN_ERROR);
         }
+
+        @Test
+        @DisplayName("404 且错误码 model_not_found 归类为 MODEL_NOT_FOUND")
+        void classify_404ModelNotFound_returnsModelNotFound() {
+            assertThat(classifier.classify(404,
+                    "{\"error\":{\"message\":\"The model 'xxx' does not exist\",\"type\":\"invalid_request_error\",\"code\":\"model_not_found\"}}"))
+                    .isEqualTo(ProviderErrorType.MODEL_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("普通 404 无 model_not_found 标志仍归 UNKNOWN")
+        void classify_plain404_notModelNotFound() {
+            assertThat(classifier.classify(404, "{\"error\":{\"message\":\"not found\"}}"))
+                    .isEqualTo(ProviderErrorType.UNKNOWN_ERROR);
+        }
     }
 
     @Nested

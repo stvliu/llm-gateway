@@ -34,6 +34,8 @@ public class OpenAIErrorClassifier implements ErrorClassificationStrategy {
             case 401 -> ProviderErrorType.AUTHENTICATION_ERROR;
             case 429 -> classifyRateLimit(responseBody);
             case 400 -> ProviderErrorType.INVALID_REQUEST;
+            case 404 -> isModelNotFound(responseBody) ? ProviderErrorType.MODEL_NOT_FOUND
+                    : ProviderErrorType.UNKNOWN_ERROR;
             case 408 -> ProviderErrorType.TIMEOUT_ERROR;
             case 504 -> ProviderErrorType.TIMEOUT_ERROR;
             case 500, 502 -> ProviderErrorType.UPSTREAM_ERROR;
@@ -49,6 +51,13 @@ public class OpenAIErrorClassifier implements ErrorClassificationStrategy {
             return ProviderErrorType.QUOTA_EXCEEDED;
         }
         return ProviderErrorType.RATE_LIMIT_ERROR;
+    }
+
+    /** 识别 OpenAI model_not_found 错误码（body 含 code=model_not_found 或消息含 does not exist） */
+    private boolean isModelNotFound(String responseBody) {
+        if (responseBody == null) return false;
+        return responseBody.contains("model_not_found")
+                || responseBody.toLowerCase().contains("does not exist");
     }
 
     @Override

@@ -108,6 +108,14 @@ class AnthropicErrorClassifierTest {
         void status499_unknown() {
             assertThat(classifier.classify(499, "{}")).isEqualTo(ProviderErrorType.UNKNOWN_ERROR);
         }
+
+        @Test
+        @DisplayName("404 且错误类型 not_found_error 归类为 MODEL_NOT_FOUND")
+        void classify_404NotFoundError_returnsModelNotFound() {
+            assertThat(classifier.classify(404,
+                    "{\"type\":\"error\",\"error\":{\"type\":\"not_found_error\",\"message\":\"model: claude-x\"}}"))
+                    .isEqualTo(ProviderErrorType.MODEL_NOT_FOUND);
+        }
     }
 
     @Nested

@@ -81,8 +81,8 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                 String responseBody = response.body() != null ? response.body().string() : "";
                 if (!response.isSuccessful()) {
                     ProviderErrorType errorType = classifier.classify(response.code(), responseBody);
-                    throw new UpstreamException(errorType,
-                            "Anthropic API 调用失败: " + response.code() + " - " + responseBody);
+                    throw new UpstreamException(errorType, responseBody,
+                            response.code(), null, null, null, null, null);
                 }
                 return objectMapper.readValue(responseBody, AnthropicMessagesResponse.class);
             }
@@ -127,8 +127,8 @@ public class AnthropicUpstreamClient implements UpstreamClient<AnthropicMessages
                         if (!response.isSuccessful() || body == null) {
                             String errorBody = body != null ? body.string() : "no body";
                             ProviderErrorType errorType = classifier.classify(response.code(), errorBody);
-                            callback.onError(new UpstreamException(errorType,
-                                    "Anthropic Stream 失败: " + response.code() + " - " + errorBody));
+                            callback.onError(new UpstreamException(errorType, errorBody,
+                                    response.code(), null, null, null, null, null));
                             return;
                         }
                         BufferedReader reader = new BufferedReader(

@@ -28,6 +28,8 @@ import lombok.Getter;
 public class UpstreamException extends GatewayException {
 
     private final ProviderErrorType errorType;
+    /** HTTP 状态码（上游响应；网络异常等场景为 null） */
+    private final Integer httpStatus;
     private final String traceId;
     private final String model;
     private final String provider;
@@ -37,6 +39,7 @@ public class UpstreamException extends GatewayException {
     public UpstreamException(String code, String message) {
         super(code, message);
         this.errorType = ProviderErrorType.UNKNOWN_ERROR;
+        this.httpStatus = null;
         this.traceId = null;
         this.model = null;
         this.provider = null;
@@ -47,6 +50,7 @@ public class UpstreamException extends GatewayException {
     public UpstreamException(ProviderErrorType errorType, String message) {
         super(errorType.name(), message);
         this.errorType = errorType;
+        this.httpStatus = null;
         this.traceId = null;
         this.model = null;
         this.provider = null;
@@ -57,6 +61,7 @@ public class UpstreamException extends GatewayException {
     public UpstreamException(ProviderErrorType errorType, String message, Throwable cause) {
         super(errorType.name(), message, cause);
         this.errorType = errorType;
+        this.httpStatus = null;
         this.traceId = null;
         this.model = null;
         this.provider = null;
@@ -69,6 +74,25 @@ public class UpstreamException extends GatewayException {
                              Long channelEndpointId, Integer retryAfterSeconds) {
         super(errorType.name(), message);
         this.errorType = errorType;
+        this.httpStatus = null;
+        this.traceId = traceId;
+        this.model = model;
+        this.provider = provider;
+        this.channelEndpointId = channelEndpointId;
+        this.retryAfterSeconds = retryAfterSeconds;
+    }
+
+    /**
+     * 带 HTTP 状态码的完整构造（errorType + message + httpStatus + 上下文信息）
+     *
+     * <p>httpStatus 为上游 HTTP 响应状态码，网络异常等无法获取状态码的场景应传 null。</p>
+     */
+    public UpstreamException(ProviderErrorType errorType, String message,
+                             Integer httpStatus, String traceId, String model,
+                             String provider, Long channelEndpointId, Integer retryAfterSeconds) {
+        super(errorType.name(), message);
+        this.errorType = errorType;
+        this.httpStatus = httpStatus;
         this.traceId = traceId;
         this.model = model;
         this.provider = provider;

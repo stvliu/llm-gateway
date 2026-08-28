@@ -34,6 +34,8 @@ public class AnthropicErrorClassifier implements ErrorClassificationStrategy {
             case 401 -> ProviderErrorType.AUTHENTICATION_ERROR;
             case 429 -> classifyRateLimit(responseBody);
             case 400 -> ProviderErrorType.INVALID_REQUEST;
+            case 404 -> responseBody != null && responseBody.contains("not_found_error")
+                    ? ProviderErrorType.MODEL_NOT_FOUND : ProviderErrorType.UNKNOWN_ERROR;
             case 408 -> ProviderErrorType.TIMEOUT_ERROR;
             case 504 -> ProviderErrorType.TIMEOUT_ERROR;
             case 500, 502, 529 -> ProviderErrorType.UPSTREAM_ERROR;
