@@ -20,7 +20,6 @@ import {
   DatabaseOutlined,
   KeyOutlined,
   UserSwitchOutlined,
-  BarChartOutlined,
   FileSearchOutlined,
   SafetyOutlined,
   AccountBookOutlined,
@@ -121,13 +120,6 @@ export const menuGroups: MenuGroupConfig[] = [
         icon: <SafetyOutlined />,
         label: 'menu.resilience',
         permission: 'resilience:read',
-      },
-      {
-        key: '/stats',
-        icon: <BarChartOutlined />,
-        label: 'menu.stats',
-        permission: 'dashboard:admin',
-        reserved: true,
       },
       {
         key: '/audit-logs',
