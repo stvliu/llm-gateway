@@ -181,6 +181,40 @@ export default function Models() {
       render: (val?: boolean) => (val == null ? '-' : val ? '是' : '否'),
     },
     {
+      title: t('description', { defaultValue: '描述' }),
+      dataIndex: 'description',
+      key: 'description',
+      width: 240,
+      ellipsis: true,
+      render: (val: string) =>
+        val ? (
+          <Tooltip title={val}>
+            <span>{val}</span>
+          </Tooltip>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      title: t('benchmarks', { defaultValue: '基准测试' }),
+      key: 'benchmarks',
+      width: 200,
+      render: (_: unknown, record: Model) => {
+        const benches = record.benchmarks;
+        if (!benches || benches.length === 0) return '-';
+        // 有值才显示，最多渲染前 3 条 name:score
+        return (
+          <Space size={4} wrap>
+            {benches.slice(0, 3).map((b, i) => (
+              <Tag key={i} color="geekblue" style={{ fontSize: 11 }}>
+                {`${String(b?.name ?? '-')}: ${String(b?.score ?? '-')}`}
+              </Tag>
+            ))}
+          </Space>
+        );
+      },
+    },
+    {
       title: t('pricing', { defaultValue: '定价' }),
       key: 'pricing',
       width: 140,

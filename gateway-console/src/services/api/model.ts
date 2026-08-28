@@ -42,4 +42,8 @@ export const modelApi = {
   /** 启用/禁用模型 */
   setEnabled: (id: number, enabled: boolean) =>
     api.patch<Model>(`/models/${id}/state`, null, { params: { enabled } }),
+
+  /** 清除字段人工锁定（恢复 models.dev 同步覆盖权限） */
+  unlock: (id: number) =>
+    api.post<Model>(`/models/${id}/unlock`),
 };

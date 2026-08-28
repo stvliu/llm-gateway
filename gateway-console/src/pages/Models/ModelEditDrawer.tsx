@@ -16,7 +16,7 @@
 import { useEffect } from 'react';
 import { Drawer, Form, Input, InputNumber, Select, Tag, Switch, Button, App } from 'antd';
 import { useTranslation } from 'react-i18next';
-import { useUpdateModel, useSetEnabledModel } from '@/services/query/useModels';
+import { useUpdateModel, useSetEnabledModel, useUnlockModel } from '@/services/query/useModels';
 import type { Model } from '@/types/model';
 
 interface Props {
@@ -43,6 +43,7 @@ export default function ModelEditDrawer({ open, model, onClose }: Props) {
   const [form] = Form.useForm();
   const updateMutation = useUpdateModel();
   const setEnabledMutation = useSetEnabledModel();
+  const unlockMutation = useUnlockModel();
 
   useEffect(() => {
     if (open && model) {
@@ -79,6 +80,18 @@ export default function ModelEditDrawer({ open, model, onClose }: Props) {
     }
   };
 
+  const handleUnlock = async () => {
+    if (!model) return;
+    try {
+      // 清除字段人工锁定，恢复 models.dev 同步对这些字段的覆盖权限
+      await unlockMutation.mutateAsync(model.id);
+      message.success(t('unlocked', { defaultValue: '已清除字段锁定' }));
+      onClose();
+    } catch {
+      message.error(t('unlockFailed', { defaultValue: '清除锁定失败' }));
+    }
+  };
+
   const handleToggleState = async (checked: boolean) => {
     if (!model) return;
     try {
@@ -98,11 +111,16 @@ export default function ModelEditDrawer({ open, model, onClose }: Props) {
       onClose={onClose}
       width={560}
       footer={
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-          <Button onClick={onClose}>{t('cancel', { defaultValue: '取消' })}</Button>
-          <Button type="primary" onClick={handleSave} loading={updateMutation.isPending}>
-            {t('save', { defaultValue: '保存' })}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <Button onClick={handleUnlock} loading={unlockMutation.isPending}>
+            {t('unlockFields', { defaultValue: '清除锁定' })}
           </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button onClick={onClose}>{t('cancel', { defaultValue: '取消' })}</Button>
+            <Button type="primary" onClick={handleSave} loading={updateMutation.isPending}>
+              {t('save', { defaultValue: '保存' })}
+            </Button>
+          </div>
         </div>
       }
     >

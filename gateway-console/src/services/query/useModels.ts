@@ -69,6 +69,18 @@ export function useDeleteModel() {
   });
 }
 
+/** 清除模型字段人工锁定（恢复 models.dev 同步覆盖权限） */
+export function useUnlockModel() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => modelApi.unlock(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: modelKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: modelKeys.lists() });
+    },
+  });
+}
+
 /** 启用/禁用模型 */
 export function useSetEnabledModel() {
   const queryClient = useQueryClient();
